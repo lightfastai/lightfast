@@ -353,14 +353,36 @@ export function PlatformSection() {
 							/>
 						</div>
 					</div>
-				</div>
+			</div>
 
-				{/* Desktop - Side by side */}
+			{/* Desktop - Side by side */}
 				<div className="hidden lg:grid lg:grid-cols-5 gap-8 items-stretch">
-					{/* Left side - Feature list (2/5) */}
+					{/* Left side - Code display (3/5) */}
+					<div className="lg:col-span-3">
+						<div className="relative rounded-lg border bg-card h-[500px] flex flex-col overflow-hidden">
+							<div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
+								<div className="flex items-center gap-2">
+									<div className="h-3 w-3 rounded-full bg-destructive" />
+									<div className="h-3 w-3 rounded-full bg-yellow-500" />
+									<div className="h-3 w-3 rounded-full bg-green-500" />
+								</div>
+								<span className="text-xs text-muted-foreground font-mono">
+									agent.ts
+								</span>
+							</div>
+							<div className="flex-1 overflow-y-auto">
+								<CodeHighlighter
+									code={activeFeature.code}
+									language="typescript"
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Right side - Feature list (2/5) */}
 					<div className="lg:col-span-2">
-						<div className="h-[500px] rounded-md overflow-y-auto">
-							<div className="space-y-1">
+						<div className="h-[500px] rounded-md flex items-center">
+							<div className="space-y-1 w-full">
 								{features.map((feature) => {
 									const Icon = feature.icon;
 									return (
@@ -399,29 +421,7 @@ export function PlatformSection() {
 							</div>
 						</div>
 					</div>
-
-					{/* Right side - Code display (3/5) */}
-					<div className="lg:col-span-3">
-						<div className="relative rounded-lg border bg-card h-[500px] flex flex-col overflow-hidden">
-							<div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
-								<div className="flex items-center gap-2">
-									<div className="h-3 w-3 rounded-full bg-destructive" />
-									<div className="h-3 w-3 rounded-full bg-yellow-500" />
-									<div className="h-3 w-3 rounded-full bg-green-500" />
-								</div>
-								<span className="text-xs text-muted-foreground font-mono">
-									agent.ts
-								</span>
-							</div>
-							<div className="flex-1 overflow-y-auto">
-								<CodeHighlighter
-									code={activeFeature.code}
-									language="typescript"
-								/>
-							</div>
-						</div>
 				</div>
-			</div>
 		</>
 	);
 }
