@@ -11,7 +11,7 @@
 	--foreground: oklch(0.8853 0 0);
 	--card: oklch(0.2435 0 0);
 	--card-foreground: oklch(0.8853 0 0);
-	--popover: oklch(0.2435 0 0);
+	--popover: oklch(0.2178 0 0); /* Match background for consistency */
 	--popover-foreground: oklch(0.8853 0 0);
 	--primary: oklch(0.7058 0 0);
 	--primary-foreground: oklch(0.2178 0 0);
@@ -19,7 +19,7 @@
 	--secondary-foreground: oklch(0.8853 0 0);
 	--muted: oklch(0.285 0 0);
 	--muted-foreground: oklch(0.5999 0 0);
-	--accent: oklch(0.32 0 0); /* More subtle accent for hover states */
+	--accent: oklch(0.26 0 0); /* Consistent accent color matching sidebar */
 	--accent-foreground: oklch(0.8853 0 0);
 	--destructive: oklch(0.6591 0.153 22.1703);
 	--destructive-foreground: oklch(1 0 0);

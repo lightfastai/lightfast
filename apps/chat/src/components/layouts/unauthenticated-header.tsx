@@ -15,7 +15,7 @@ export function UnauthenticatedHeader() {
 				<div className="flex items-center">
 					<Button variant="ghost" size="xs" asChild>
 						<Link href={getAppUrl("www")}>
-							<Icons.logoShort className="h-4 w-auto" />
+							<Icons.logoShort className="h-4 w-auto text-foreground" />
 						</Link>
 					</Button>
 				</div>
@@ -31,7 +31,7 @@ export function UnauthenticatedHeader() {
 			<div className="hidden lg:flex absolute top-0 left-0 h-14 items-center pl-2 z-10 w-fit">
 				<Button variant="ghost" size="lg" asChild>
 					<Link href={getAppUrl("www")}>
-						<Icons.logo className="size-22" />
+						<Icons.logo className="size-22 text-foreground" />
 					</Link>
 				</Button>
 			</div>

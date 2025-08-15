@@ -46,6 +46,7 @@
     "lucide-react": "catalog:",
     "nanoid": "^5.1.5",
     "next": "catalog:",
+    "next-themes": "^0.4.6",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "server-only": "^0.0.1",

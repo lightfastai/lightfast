@@ -124,7 +124,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 					<div className="flex gap-2">
 						<div className="flex-1 min-w-0">
 							{/* Main input container */}
-							<div className="w-full border shadow-md border-border/50 p-2 rounded-2xl overflow-hidden flex flex-col transition-all bg-input-bg dark:bg-input-bg">
+							<div className="w-full border dark:shadow-md border-border/50 p-2 rounded-2xl overflow-hidden flex flex-col transition-all bg-input-bg dark:bg-input-bg">
 								{/* Textarea area - grows with content up to max height */}
 								<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 									<Textarea
@@ -159,7 +159,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 											disabled={!canSend}
 											size="icon"
 											variant="outline"
-											className="h-8 w-8 dark:border-border/50 rounded-full shadow-sm"
+											className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
 										>
 											<ArrowUp className="w-4 h-4" />
 										</Button>

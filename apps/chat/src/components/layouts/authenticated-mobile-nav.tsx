@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Menu, X, LogOut, Settings, User } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
@@ -106,20 +106,6 @@ export function AuthenticatedMobileNav() {
 									</div>
 								</div>
 
-								{/* Divider */}
-								<Separator className="my-6" />
-
-								{/* Settings */}
-								<div className="space-y-1">
-									<Link
-										href="/settings"
-										onClick={() => setOpen(false)}
-										className="flex items-center gap-3 text-base py-2 hover:text-muted-foreground transition-colors"
-									>
-										<Settings className="h-4 w-4" />
-										Settings
-									</Link>
-								</div>
 							</div>
 						</ScrollArea>
 
