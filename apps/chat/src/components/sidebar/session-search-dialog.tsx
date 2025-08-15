@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -10,9 +10,14 @@ import {
 	CommandItem,
 	CommandList,
 } from "@repo/ui/components/ui/command";
+import { Icons } from "@repo/ui/components/icons";
 import { useSearchSessions } from "~/hooks/sidebar/use-search-sessions";
 import { formatDistanceToNow } from "date-fns";
 import { MessageSquareIcon } from "lucide-react";
+import { groupByDate, DATE_GROUP_ORDER } from "~/lib/date";
+import type { DateGroup } from "~/lib/date";
+import { useTRPC } from "~/trpc/react";
+import { useQuery } from "@tanstack/react-query";
 
 interface SessionSearchDialogProps {
 	open: boolean;
@@ -24,6 +29,8 @@ export function SessionSearchDialog({
 	onOpenChange,
 }: SessionSearchDialogProps) {
 	const router = useRouter();
+	const trpc = useTRPC();
+	
 	const {
 		searchQuery,
 		searchResults,
@@ -32,6 +39,33 @@ export function SessionSearchDialog({
 		isSearchLoading,
 		hasResults,
 	} = useSearchSessions();
+	
+	// Fetch pinned sessions using useQuery with enabled flag
+	const { data: pinnedSessions = [] } = useQuery({
+		...trpc.chat.session.listPinned.queryOptions(),
+		enabled: open, // Only fetch when dialog is open
+	});
+	
+	// Group pinned sessions by date
+	const groupedPinnedSessions = useMemo(() => {
+		if (!pinnedSessions || pinnedSessions.length === 0) return null;
+		
+		const sessionsWithDates = pinnedSessions.map(session => ({
+			...session,
+			createdAt: new Date(session.createdAt)
+		}));
+		const grouped = groupByDate(sessionsWithDates);
+		
+		// Convert back to original Session type with string dates
+		const result: Record<DateGroup, typeof pinnedSessions> = {} as Record<DateGroup, typeof pinnedSessions>;
+		Object.entries(grouped).forEach(([category, sessionArray]) => {
+			result[category as DateGroup] = sessionArray.map(session => ({
+				...session,
+				createdAt: session.createdAt.toISOString()
+			}));
+		});
+		return result;
+	}, [pinnedSessions]);
 
 	// Clear search when dialog closes
 	useEffect(() => {
@@ -61,7 +95,7 @@ export function SessionSearchDialog({
 			shouldFilter={false}
 		>
 			<CommandInput
-				placeholder="Type to search sessions..."
+				placeholder="Search chats..."
 				value={searchQuery}
 				onValueChange={handleSearchChange}
 				showSearchIcon={false}
@@ -110,9 +144,53 @@ export function SessionSearchDialog({
 				)}
 
 				{!searchQuery && (
-					<div className="py-6 text-center text-sm text-muted-foreground">
-						Start typing to search your sessions
-					</div>
+					<>
+						{/* New Chat option */}
+						<CommandGroup>
+							<CommandItem
+								value="new-chat"
+								onSelect={() => {
+									onOpenChange(false);
+									router.push('/new');
+								}}
+								className="flex items-center gap-3 py-3 cursor-pointer"
+							>
+								<Icons.newChat className="h-4 w-4 text-muted-foreground shrink-0" />
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-medium">New chat</p>
+								</div>
+							</CommandItem>
+						</CommandGroup>
+
+						{/* Pinned sessions grouped by date */}
+						{groupedPinnedSessions && DATE_GROUP_ORDER.map((category) => {
+							const categorySessions = groupedPinnedSessions[category];
+							if (!categorySessions || categorySessions.length === 0) return null;
+							
+							return (
+								<CommandGroup key={category} heading={category}>
+									{categorySessions.map((session) => (
+										<CommandItem
+											key={session.id}
+											value={session.id}
+											onSelect={() => {
+												onOpenChange(false);
+												router.push(`/${session.id}`);
+											}}
+											className="flex items-center gap-3 py-3 cursor-pointer"
+										>
+											<MessageSquareIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium truncate">
+													{session.title}
+												</p>
+											</div>
+										</CommandItem>
+									))}
+								</CommandGroup>
+							);
+						})}
+					</>
 				)}
 			</CommandList>
 		</CommandDialog>
