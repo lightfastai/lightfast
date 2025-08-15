@@ -21,13 +21,13 @@ interface SettingsDialogProps {
 	onOpenChange?: (open: boolean) => void;
 }
 
-export function SettingsDialog({ children, open: controlledOpen, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open: controlledOpen, onOpenChange }: SettingsDialogProps) {
 	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
 	// Use controlled state if provided, otherwise use internal state
-	const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
-	const setOpen = onOpenChange || setUncontrolledOpen;
+	const open = controlledOpen ?? uncontrolledOpen;
+	const setOpen = onOpenChange ?? setUncontrolledOpen;
 
 	const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
 		{

@@ -43,7 +43,7 @@ export function SessionSearchDialog({
 
 	// Group pinned sessions by date
 	const groupedPinnedSessions = useMemo(() => {
-		if (!pinnedSessions || pinnedSessions.length === 0) return null;
+		if (pinnedSessions.length === 0) return null;
 
 		const sessionsWithDates = pinnedSessions.map((session) => ({
 			...session,
@@ -52,10 +52,7 @@ export function SessionSearchDialog({
 		const grouped = groupByDate(sessionsWithDates);
 
 		// Convert back to original Session type with string dates
-		const result: Record<DateGroup, typeof pinnedSessions> = {} as Record<
-			DateGroup,
-			typeof pinnedSessions
-		>;
+		const result: Partial<Record<DateGroup, typeof pinnedSessions>> = {};
 		Object.entries(grouped).forEach(([category, sessionArray]) => {
 			result[category as DateGroup] = sessionArray.map((session) => ({
 				...session,

@@ -80,7 +80,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 				<DropdownMenuContent align="end">
 					<div className="px-2 py-1.5">
 						<p className="text-xs text-muted-foreground">
-							{user.email || user.username || "User"}
+							{user.email ?? user.username ?? "User"}
 						</p>
 					</div>
 					<DropdownMenuItem 
