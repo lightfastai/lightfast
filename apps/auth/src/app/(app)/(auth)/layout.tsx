@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { siteConfig } from "@repo/lightfast-config";
+import { getAppUrl } from "@repo/url-utils";
 
 export default function AuthLayout({
 	children,
@@ -14,16 +14,21 @@ export default function AuthLayout({
 }) {
 	const pathname = usePathname();
 	const isSignUpPage = pathname.includes("/sign-up");
+	const wwwUrl = getAppUrl("www");
 
 	return (
 		<div className="min-h-screen bg-background flex flex-col">
 			{/* Header - Fixed height matching apps/chat */}
 			<header className="h-14 flex items-center justify-between app-container bg-background">
-				<Link href={siteConfig.url} className="flex items-center">
-					<Icons.logoShort className="w-7 h-5 text-foreground" />
-				</Link>
 				<div className="flex items-center gap-2">
-					<Button variant="outline" size="sm" asChild>
+					<Button variant="ghost" size="lg" asChild>
+						<Link href={wwwUrl} className="flex items-center">
+							<Icons.logoShort className="text-foreground size-7" />
+						</Link>
+					</Button>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button variant="outline" size="lg" asChild>
 						<Link href={isSignUpPage ? "/sign-in" : "/sign-up"}>
 							{isSignUpPage ? "Sign In" : "Sign Up"}
 						</Link>
