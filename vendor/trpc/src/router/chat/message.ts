@@ -37,7 +37,7 @@ export const messageRouter = {
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);
@@ -84,7 +84,7 @@ export const messageRouter = {
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);
@@ -130,7 +130,7 @@ export const messageRouter = {
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);
@@ -168,7 +168,7 @@ export const messageRouter = {
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId!)
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);

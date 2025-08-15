@@ -20,9 +20,10 @@ import { AgentId } from "~/app/(agents)/types";
 import {
 	BROWSER_010_SYSTEM_PROMPT,
 	browser010Tools,
-	type Browser010ToolSchema,
-	cleanup as cleanupBrowser,
+	
+	cleanup as cleanupBrowser
 } from "~/app/(agents)/browser";
+import type {Browser010ToolSchema} from "~/app/(agents)/browser";
 import { redis } from "~/vendor/upstash";
 import { env } from "~/env";
 import type { AppRuntimeContext } from "~/app/(agents)/shared-types";

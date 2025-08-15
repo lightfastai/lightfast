@@ -17,7 +17,16 @@ export const metadata: Metadata = {
 	},
 	metadataBase: new URL(siteConfig.url),
 	description: "Real-time chat application powered by Lightfast",
-	keywords: ["Lightfast", "Chat", "Messaging", "Real-time"],
+	keywords: [
+		"Lightfast Chat",
+		"AI chat interface",
+		"agent conversation",
+		"developer chat",
+		"AI assistant chat",
+		"real-time AI communication",
+		"agent messaging platform",
+		"collaborative AI workspace",
+	],
 	authors: [
 		{
 			name: siteConfig.name,

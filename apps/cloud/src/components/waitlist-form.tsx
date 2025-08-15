@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { joinWaitlistAction } from "../app/actions/waitlist";
 import Link from "next/link";
 import { getAppUrl } from "@repo/url-utils";
@@ -22,6 +23,7 @@ function SubmitButton() {
 export function WaitlistForm() {
 	const [state, formAction] = useActionState(joinWaitlistAction, { status: "idle" });
 	const wwwUrl = getAppUrl("www");
+	const authUrl = getAppUrl("auth");
 
 	if (state.status === "success") {
 		return (
@@ -41,7 +43,7 @@ export function WaitlistForm() {
 	}
 
 	return (
-		<div className="w-full space-y-16">
+		<div className="w-full space-y-4">
 			<form action={formAction} className="w-full flex flex-col gap-3">
 				<Input
 					type="email"
@@ -63,22 +65,42 @@ export function WaitlistForm() {
 				<SubmitButton />
 			</form>
 
-			<div className="text-xs text-muted-foreground text-center">
-				By continuing, you agree to Lightfast's{" "}
+			<div className="space-y-4">
+				{/* Separator */}
+				<div className="relative">
+					<div className="absolute inset-0 flex items-center">
+						<Separator className="w-full" />
+					</div>
+					<div className="relative flex justify-center text-xs uppercase">
+						<span className="bg-background px-2 text-muted-foreground">Or</span>
+					</div>
+				</div>
+				
+				{/* Sign In Button */}
 				<Link 
-					href={`${wwwUrl}/legal/terms`} 
-					className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
+					href={`${authUrl}/sign-in`}
+					className="inline-flex items-center justify-center w-full h-12 px-4 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input bg-background hover:bg-accent hover:text-accent-foreground"
 				>
-					Terms of Service
-				</Link>{" "}
-				and acknowledge our{" "}
-				<Link 
-					href={`${wwwUrl}/legal/privacy`} 
-					className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
-				>
-					Privacy Policy
+					Sign in with developer account
 				</Link>
-				.
+				
+				<div className="text-xs text-muted-foreground text-center">
+					By continuing, you agree to Lightfast's{" "}
+					<Link 
+						href={`${wwwUrl}/legal/terms`} 
+						className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
+					>
+						Terms of Service
+					</Link>{" "}
+					and acknowledge our{" "}
+					<Link 
+						href={`${wwwUrl}/legal/privacy`} 
+						className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline transition-colors"
+					>
+						Privacy Policy
+					</Link>
+					.
+				</div>
 			</div>
 		</div>
 	);

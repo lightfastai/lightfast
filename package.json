@@ -42,9 +42,13 @@
 		"postinstall": "pnpm lint:ws",
 		"typecheck": "turbo run typecheck",
 		"ui": "pnpm --filter @repo/ui ui",
-		"vercel:link": "vercel link --repo"
+		"vercel:link": "vercel link --repo",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "changeset publish"
 	},
 	"devDependencies": {
+		"@changesets/cli": "^2.29.5",
 		"@repo/prettier-config": "workspace:*",
 		"envmcp": "^0.2.1",
 		"prettier": "catalog:",

@@ -20,10 +20,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   description: "Interactive AI agent playground",
   keywords: [
-    "Lightfast",
-    "Playground",
-    "AI",
-    "Agents",
+    "Lightfast Playground",
+    "AI agent testing",
+    "interactive agent sandbox",
+    "agent prototyping",
+    "AI workflow testing",
+    "developer playground",
+    "agent experimentation",
+    "browser automation testing",
   ],
   authors: [
     {
