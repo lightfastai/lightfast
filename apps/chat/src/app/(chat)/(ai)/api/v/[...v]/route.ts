@@ -1,6 +1,6 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
+import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/lib/ai/providers";
 import {
