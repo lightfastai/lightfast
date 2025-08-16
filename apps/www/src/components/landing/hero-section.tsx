@@ -1,5 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
+import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
 import { getAppUrl } from "@repo/url-utils";
@@ -7,6 +10,17 @@ import { getAppUrl } from "@repo/url-utils";
 export function HeroSection() {
 	const cloudUrl = getAppUrl("cloud");
 	const authUrl = getAppUrl("auth");
+	const [copied, setCopied] = useState(false);
+
+	const copyToClipboard = async () => {
+		try {
+			await navigator.clipboard.writeText("npm i lightfast");
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		} catch (err) {
+			console.error("Failed to copy:", err);
+		}
+	};
 
 	return (
 		<div className="text-center space-y-4 sm:space-y-6 lg:space-y-8 flex flex-col items-center">
@@ -22,10 +36,28 @@ export function HeroSection() {
 				</p>
 			</div>
 
-			<div className="flex items-center justify-center flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
-				<Button size="default" asChild>
-					<Link href={cloudUrl}>Join waitlist</Link>
-				</Button>
+			<div className="flex items-center justify-center flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
+				<div className="flex items-center gap-3">
+					<Button size="default" asChild>
+						<Link href={cloudUrl}>Join waitlist</Link>
+					</Button>
+					<div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg border">
+						<span className="text-sm font-mono text-muted-foreground">$</span>
+						<span className="text-sm font-mono">npm i lightfast</span>
+						<Button
+							size="sm"
+							variant="ghost"
+							className="h-6 w-6 p-0 hover:bg-transparent"
+							onClick={copyToClipboard}
+						>
+							{copied ? (
+								<CheckIcon className="h-4 w-4 text-green-600" />
+							) : (
+								<CopyIcon className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+							)}
+						</Button>
+					</div>
+				</div>
 				<Button
 					size="default"
 					variant="outline"
