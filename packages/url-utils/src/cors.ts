@@ -65,7 +65,6 @@ export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
     "https://docs.lightfast.ai",
     // Development URLs
     "http://localhost:4101", // www
-    "http://localhost:4102", // darkarmy
     "http://localhost:4103", // cloud
     "http://localhost:4104", // auth
     "http://localhost:4105", // playground

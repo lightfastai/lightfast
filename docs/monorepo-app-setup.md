@@ -202,7 +202,6 @@ Create `package.json` based on app type:
 
 **Port Assignment Convention:**
 - www: 4101
-- darkarmy: 4102
 - app: 4103
 - chat: 4104
 - New apps: Continue incrementing from 4105
@@ -1332,7 +1331,6 @@ When setting up a new app, follow this checklist:
 
 ### Port Assignment
 - 4101: www
-- 4102: darkarmy  
 - 4103: app
 - 4104: auth (was mistakenly noted as chat earlier)
 - 4105: playground  

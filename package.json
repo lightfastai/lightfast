@@ -9,7 +9,6 @@
 	"scripts": {
 		"build": "turbo run build",
 		"build:www": "turbo run build -F @lightfast/www",
-		"build:darkarmy": "turbo run build -F @lightfast/darkarmy",
 		"build:cloud": "turbo run build -F @lightfast/cloud",
 		"build:auth": "turbo run build -F @lightfast/auth",
 		"build:experimental": "turbo run build -F @lightfast/experimental",
@@ -23,7 +22,6 @@
 		"db:studio": "turbo -F @vendor/db lightfast:studio",
 		"dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/experimental --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth --filter=@lightfast/chat --filter=@lightfast/playground",
 		"dev:www": "turbo watch dev -F @lightfast/www --continue",
-		"dev:darkarmy": "turbo watch dev -F @lightfast/darkarmy --continue",
 		"dev:cloud": "turbo watch dev -F @lightfast/cloud --continue",
 		"dev:auth": "turbo watch dev -F @lightfast/auth --continue",
 		"dev:experimental": "turbo watch dev -F @lightfast/experimental --continue",

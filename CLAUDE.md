@@ -9,7 +9,6 @@ See @SPEC.md for business goals and product vision.
 pnpm build:www      # Build www app only
 pnpm build:auth     # Build auth app only
 pnpm build:cloud    # Build cloud app only
-pnpm build:darkarmy # Build darkarmy app only
 
 # Linting and formatting (global commands)
 pnpm lint           # Lint all packages
@@ -21,7 +20,6 @@ pnpm format:fix     # Fix formatting issues
 # Development servers
 pnpm dev            # Start development servers
 pnpm dev:www        # Start www app only (port 4101)
-pnpm dev:darkarmy   # Start darkarmy app (port 4102)
 
 # Other useful commands
 pnpm clean          # Clean all build artifacts
@@ -55,7 +53,6 @@ vercel env ls                   # List environment variables
 - **Monorepo**: pnpm workspace with Turbo
 - **Apps**:
   - `apps/www` - Marketing site (port 4101)
-  - `apps/darkarmy` - Binary matrix display app (port 4102)
 - **Packages**: Shared libraries in `packages/`
 - **Vendor**: Third-party integrations in `vendor/`
 - **Internal**: ESLint, Prettier, TypeScript configs in `internal/`
@@ -327,8 +324,6 @@ When working with Claude Code, run dev servers in the background to avoid blocki
 # Run specific app dev server in background
 pnpm dev:www > /tmp/www-dev.log 2>&1 &
 pnpm dev:app > /tmp/app-dev.log 2>&1 &
-pnpm dev:darkarmy > /tmp/darkarmy-dev.log 2>&1 &
-
 # Check dev server logs
 cat /tmp/www-dev.log
 tail -f /tmp/app-dev.log  # Follow logs in real-time

@@ -35,7 +35,6 @@ Lightfast is a monorepo containing multiple applications and packages:
 - **☁️ cloud** - Main platform application
 - **🎮 playground** - Interactive agent playground and testing environment
 - **🧪 experimental** - Experimental features and prototypes
-- **🎨 darkarmy** - Binary matrix display application
 - **💬 chat** - AI chat application demo
 - **📚 docs** - Documentation site
 
@@ -131,7 +130,6 @@ Third-party integrations and services:
 - `pnpm run dev:auth` - Authentication service
 - `pnpm run dev:playground` - Agent playground
 - `pnpm run dev:experimental` - Experimental features
-- `pnpm run dev:darkarmy` - Binary matrix app (localhost:4102)
 - `pnpm run dev:chat` - Chat application
 - `pnpm run dev:docs` - Documentation site
 
@@ -142,7 +140,6 @@ Third-party integrations and services:
 - `pnpm run build:auth` - Build auth service only
 - `pnpm run build:playground` - Build playground only
 - `pnpm run build:experimental` - Build experimental features only
-- `pnpm run build:darkarmy` - Build darkarmy app only
 - `pnpm run build:chat` - Build chat app only
 - `pnpm run build:docs` - Build documentation only
 
@@ -211,7 +208,6 @@ lightfast/
 │   ├── auth/                  # Authentication service
 │   ├── playground/            # Interactive playground
 │   ├── experimental/          # Experimental features
-│   ├── darkarmy/             # Binary matrix display
 │   ├── chat/                 # Chat application
 │   └── docs/                 # Documentation site
 ├── packages/                  # Shared packages
