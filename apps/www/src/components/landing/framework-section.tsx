@@ -2,25 +2,25 @@
 
 import { useState } from "react";
 import ReactOriginal from "react-devicons/react/original";
-import NextjsOriginal from "react-devicons/nextjs/original";
-import VuejsOriginal from "react-devicons/vuejs/original";
-import NuxtjsOriginal from "react-devicons/nuxtjs/original";
-import SvelteOriginal from "react-devicons/svelte/original";
-import AstroOriginal from "react-devicons/astro/original";
-import AngularOriginal from "react-devicons/angular/original";
-import FlutterOriginal from "react-devicons/flutter/original";
-import TailwindcssOriginal from "react-devicons/tailwindcss/original";
+import NextjsPlain from "react-devicons/nextjs/plain";
+import VuejsPlain from "react-devicons/vuejs/plain";
+import NuxtjsPlain from "react-devicons/nuxtjs/plain";
+import SveltePlain from "react-devicons/svelte/plain";
+import AstroPlain from "react-devicons/astro/plain";
+import AngularPlain from "react-devicons/angular/plain";
+import FlutterPlain from "react-devicons/flutter/plain";
+import VitejsPlain from "react-devicons/vitejs/plain";
 
 const frameworks = [
 	{ name: "React", Icon: ReactOriginal },
-	{ name: "Next.js", Icon: NextjsOriginal },
-	{ name: "Vue", Icon: VuejsOriginal },
-	{ name: "Nuxt", Icon: NuxtjsOriginal },
-	{ name: "Svelte", Icon: SvelteOriginal },
-	{ name: "Astro", Icon: AstroOriginal },
-	{ name: "Angular", Icon: AngularOriginal },
-	{ name: "Flutter", Icon: FlutterOriginal },
-	{ name: "Tailwind", Icon: TailwindcssOriginal },
+	{ name: "Next.js", Icon: NextjsPlain },
+	{ name: "Vue", Icon: VuejsPlain },
+	{ name: "Nuxt", Icon: NuxtjsPlain },
+	{ name: "Svelte", Icon: SveltePlain },
+	{ name: "Astro", Icon: AstroPlain },
+	{ name: "Angular", Icon: AngularPlain },
+	{ name: "Flutter", Icon: FlutterPlain },
+	{ name: "Vite", Icon: VitejsPlain },
 ];
 
 export function FrameworkSection() {
@@ -52,6 +52,7 @@ export function FrameworkSection() {
 						>
 							<framework.Icon
 								size="1.25rem"
+								color="currentColor"
 								className="text-muted-foreground hover:text-foreground transition-colors duration-200 [&>*]:!w-5 [&>*]:!h-5 lg:[&>*]:!w-10 lg:[&>*]:!h-10"
 							/>
 						</div>

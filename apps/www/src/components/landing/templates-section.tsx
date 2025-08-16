@@ -11,8 +11,14 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@repo/ui/components/ui/carousel";
-import NextjsOriginal from "react-devicons/nextjs/original";
+import NextjsPlain from "react-devicons/nextjs/plain";
 import ReactOriginal from "react-devicons/react/original";
+import TypescriptPlain from "react-devicons/typescript/plain";
+import NodejsPlain from "react-devicons/nodejs/plain";
+import PlaywrightPlain from "react-devicons/playwright/plain";
+import PythonPlain from "react-devicons/python/plain";
+import DockerPlain from "react-devicons/docker/plain";
+import KubernetesPlain from "react-devicons/kubernetes/plain";
 
 const templates = [
 	{
@@ -20,9 +26,9 @@ const templates = [
 		description:
 			"Production-ready AI chatbot with streaming responses, conversation history, and rate limiting built with Next.js and Vercel AI SDK.",
 		icons: [
-			<NextjsOriginal size="1.5rem" className="text-muted-foreground" />,
-			<div className="text-lg font-bold text-muted-foreground">AI</div>,
-			<ReactOriginal size="1.5rem" className="text-muted-foreground" />,
+			<NextjsPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<TypescriptPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<ReactOriginal size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/nextjs-ai-chatbot",
 	},
@@ -31,8 +37,9 @@ const templates = [
 		description:
 			"Complete Braintrust setup for AI evaluation, monitoring, and prompt management with automatic logging and scoring.",
 		icons: [
-			<div className="text-lg font-bold text-muted-foreground">BT</div>,
-			<NextjsOriginal size="1.5rem" className="text-muted-foreground" />,
+			<PythonPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<NextjsPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<TypescriptPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/braintrust-integration",
 	},
@@ -41,9 +48,9 @@ const templates = [
 		description:
 			"State-machine orchestration template with resource scheduling, error handling, and automatic retry logic for complex agent workflows.",
 		icons: [
-			<div className="text-xl text-muted-foreground">⚡</div>,
-			<ReactOriginal size="1.5rem" className="text-muted-foreground" />,
-			<div className="text-lg font-bold text-muted-foreground">SM</div>,
+			<NodejsPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<ReactOriginal size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<TypescriptPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/agent-workflow-starter",
 	},
@@ -52,8 +59,9 @@ const templates = [
 		description:
 			"Interactive dashboard for human review and approval workflows with real-time notifications and task queue management.",
 		icons: [
-			<div className="text-xl text-muted-foreground">👤</div>,
-			<NextjsOriginal size="1.5rem" className="text-muted-foreground" />,
+			<NextjsPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<ReactOriginal size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<TypescriptPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/human-in-the-loop-dashboard",
 	},
@@ -62,9 +70,9 @@ const templates = [
 		description:
 			"Coordinate multiple AI agents with shared memory, task delegation, and inter-agent communication for complex problem solving.",
 		icons: [
-			<div className="text-xl text-muted-foreground">🤖</div>,
-			<div className="text-xl text-muted-foreground">🔄</div>,
-			<div className="text-xl text-muted-foreground">🤖</div>,
+			<PythonPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<DockerPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<KubernetesPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/multi-agent-system",
 	},
@@ -73,8 +81,9 @@ const templates = [
 		description:
 			"Web scraping and automation agent with Browserbase integration, screenshot capture, and intelligent element selection.",
 		icons: [
-			<div className="text-xl text-muted-foreground">🌐</div>,
-			<ReactOriginal size="1.5rem" className="text-muted-foreground" />,
+			<PlaywrightPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<NodejsPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
+			<TypescriptPlain size="1.5rem" color="currentColor" className="text-muted-foreground" />,
 		],
 		href: "https://github.com/lightfastai/lightfast/tree/main/examples/browser-automation-agent",
 	},
