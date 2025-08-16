@@ -3,11 +3,12 @@
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	type DeltaStreamMessage,
-	DeltaStreamType,
-	type ToolCallPart,
-	type ToolResultPart,
+	
+	DeltaStreamType
+	
+	
 } from "../server/stream/types";
+import type {DeltaStreamMessage, ToolCallPart, ToolResultPart} from "../server/stream/types";
 import { uuidv4 } from "../utils/uuid";
 import { useDeltaStream, validateMessage } from "./use-delta-stream";
 
@@ -56,7 +57,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 		onComplete,
 		onError,
 	} = options;
-	const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "completed" | "error">("idle");
+	const [status, setStatus] = useState<
+		"idle" | "loading" | "streaming" | "completed" | "error"
+	>("idle");
 	const [response, setResponse] = useState("");
 	const [chunkCount, setChunkCount] = useState(0);
 	const [messageId, setMessageId] = useState<string | undefined>();
@@ -66,12 +69,12 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	const responseRef = useRef<HTMLDivElement>(null);
 	const messageIdRef = useRef<string | undefined>(undefined);
 	const messagePartsRef = useRef<
-		Array<{
+		{
 			type: "text" | "tool-call";
 			text?: string;
 			toolCall?: ToolCallPart;
 			toolResult?: ToolResultPart;
-		}>
+		}[]
 	>([]);
 	const isStreamingMessageAddedRef = useRef<boolean>(false);
 
@@ -129,7 +132,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
 		// Update or add the assistant message
 		setMessages((prev) => {
-			const existingIndex = prev.findIndex((msg) => msg.id === currentMessageId);
+			const existingIndex = prev.findIndex(
+				(msg) => msg.id === currentMessageId,
+			);
 			const assistantMessage: UIMessage = {
 				id: currentMessageId,
 				role: "assistant",
@@ -156,7 +161,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			setResponse((prev) => prev + chunk);
 			setChunkCount((prev) => prev + 1);
 			// Accumulate text in the current part
-			const lastPart = messagePartsRef.current[messagePartsRef.current.length - 1];
+			const lastPart =
+				messagePartsRef.current[messagePartsRef.current.length - 1];
 			if (!lastPart || lastPart.type !== "text") {
 				messagePartsRef.current.push({ type: "text", text: chunk });
 			} else {
@@ -180,7 +186,10 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			// Update the messagePartsRef to include the tool result
 			// This is important because the streaming message is built from messagePartsRef
 			const updatedPartsRef = messagePartsRef.current.map((part) => {
-				if (part.type === "tool-call" && part.toolCall?.toolCallId === toolResult.toolCallId) {
+				if (
+					part.type === "tool-call" &&
+					part.toolCall?.toolCallId === toolResult.toolCallId
+				) {
 					// Add the tool result to the part
 					return {
 						...part,
@@ -228,7 +237,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 	// Send message function
 	const sendMessage = useCallback(
 		async (prompt: string) => {
-			if (!prompt.trim() || status === "loading" || status === "streaming") return;
+			if (!prompt.trim() || status === "loading" || status === "streaming")
+				return;
 
 			try {
 				// Reset any existing stream state
@@ -258,7 +268,9 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 				});
 
 				if (!initResponse.ok) {
-					throw new Error(`Failed to initialize stream: ${initResponse.statusText}`);
+					throw new Error(
+						`Failed to initialize stream: ${initResponse.statusText}`,
+					);
 				}
 
 				const initData = await initResponse.json();
@@ -273,7 +285,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 					await deltaStream.connect(newMessageId);
 				}
 			} catch (err) {
-				const error = err instanceof Error ? err : new Error("Failed to send message");
+				const error =
+					err instanceof Error ? err : new Error("Failed to send message");
 				setStatus("error");
 				onError?.(error);
 			}

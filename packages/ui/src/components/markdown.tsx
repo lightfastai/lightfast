@@ -3,7 +3,7 @@
 import type React from "react";
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
-import type {Components} from "react-markdown";
+import type {Components as ReactMarkdownComponents} from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -22,7 +22,7 @@ interface CodeComponentProps extends MarkdownComponentProps {
  * Custom components for react-markdown with Next.js optimizations
  * All components are properly typed and styled with Tailwind CSS
  */
-const components: Partial<Components> = {
+const components: Partial<ReactMarkdownComponents> = {
   // Code components - handles both inline and block code
   code({ inline, className, children, ...props }: CodeComponentProps) {
     // Inline code styling
@@ -282,3 +282,6 @@ export const Markdown = memo(NonMemoizedMarkdown, (prevProps, nextProps) => prev
 
 // Export the non-memoized version for cases where memoization isn't needed
 export { NonMemoizedMarkdown };
+
+// Export the components object for use with Fumadocs and other MDX systems
+export const markdownComponents = components;

@@ -1,9 +1,18 @@
-import type { UIMessage } from "ai";
+import type { UIMessage, ToolSet } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import { type ApiError, GenericBadRequestError, MethodNotAllowedError, NoMessagesError, toApiError } from "../errors";
+import type { ToolFactorySet } from "../../primitives/tool";
+import {
+	GenericBadRequestError,
+	MethodNotAllowedError,
+	NoMessagesError,
+	toApiError
+} from "../errors";
+import type {ApiError} from "../errors";
 import { resumeStream, streamChat } from "../runtime";
+import type { ResumeOptions } from "../runtime";
 import type { RequestContext, SystemContext } from "./types";
+import type { LifecycleCallbacks } from "../lifecycle";
 
 /**
  * Helper to convert ApiError to Response
@@ -16,10 +25,10 @@ function errorToResponse(error: ApiError): Response {
 }
 
 export interface FetchRequestHandlerOptions<
-	TAgent extends Agent<any, any>,
+	TAgent extends Agent<ToolSet | ToolFactorySet<unknown>, unknown> = Agent<ToolSet | ToolFactorySet<unknown>, unknown>,
 	TRequestContext extends RequestContext = RequestContext,
 	TFetchContext = {},
-> {
+> extends LifecycleCallbacks {
 	agent: TAgent;
 	sessionId: string;
 	memory: Memory<UIMessage, TFetchContext>;
@@ -29,12 +38,12 @@ export interface FetchRequestHandlerOptions<
 	createRequestContext?: (req: Request) => TRequestContext;
 	generateId?: () => string;
 	enableResume?: boolean;
-	onError?: (error: { error: Error }) => void;
+	resumeOptions?: ResumeOptions;
 }
 
 /**
  * Handles agent streaming requests
- * 
+ *
  * TODO: Add testing for:
  * - Test undefined sessionId handling (v1 runtime doesn't error on undefined sessionId)
  * - Add comprehensive test coverage for error cases
@@ -76,11 +85,29 @@ export interface FetchRequestHandlerOptions<
  * ```
  */
 export async function fetchRequestHandler<
-	TAgent extends Agent<any, any>,
+	TAgent extends Agent<ToolSet | ToolFactorySet<unknown>, unknown> = Agent<ToolSet | ToolFactorySet<unknown>, unknown>,
 	TRequestContext extends RequestContext = RequestContext,
 	TFetchContext = {},
->(options: FetchRequestHandlerOptions<TAgent, TRequestContext, TFetchContext>): Promise<Response> {
-	const { agent, sessionId, memory, req, resourceId, context, createRequestContext, generateId, enableResume, onError } = options;
+>(
+	options: FetchRequestHandlerOptions<TAgent, TRequestContext, TFetchContext>,
+): Promise<Response> {
+	const {
+		agent,
+		sessionId,
+		memory,
+		req,
+		resourceId,
+		context,
+		createRequestContext,
+		generateId,
+		enableResume,
+		resumeOptions,
+		onError,
+		onStreamStart,
+		onStreamComplete,
+		onAgentStart,
+		onAgentComplete,
+	} = options;
 
 	try {
 		// Check HTTP method
@@ -121,6 +148,12 @@ export async function fetchRequestHandler<
 				context,
 				generateId,
 				enableResume,
+				resumeOptions,
+				onError,
+				onStreamStart,
+				onStreamComplete,
+				onAgentStart,
+				onAgentComplete,
 			});
 
 			if (!result.ok) {
@@ -130,7 +163,8 @@ export async function fetchRequestHandler<
 			return result.value;
 		}
 		// Handle GET request (resume)
-		if (req.method === "GET" && enableResume) {
+		const shouldEnableResume = enableResume || resumeOptions?.enabled;
+		if (req.method === "GET" && shouldEnableResume) {
 			const result = await resumeStream(memory, sessionId, resourceId);
 
 			if (!result.ok) {
@@ -151,7 +185,12 @@ export async function fetchRequestHandler<
 		const apiError = toApiError(error);
 
 		// Call error handler if provided
-		onError?.({ error: apiError });
+		onError?.({ 
+			systemContext: { sessionId, resourceId },
+			requestContext: createRequestContext?.(req),
+			error: apiError,
+			timestamp: Date.now(),
+		});
 
 		// Return error response
 		return errorToResponse(apiError);

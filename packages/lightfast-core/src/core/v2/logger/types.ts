@@ -66,12 +66,16 @@ interface BaseLogContext {
 }
 
 // Agent loop events - extend from parameter types
-export interface AgentLoopStartContext extends BaseLogContext, AgentLoopStartParams {
+export interface AgentLoopStartContext
+	extends BaseLogContext,
+		AgentLoopStartParams {
 	messageCount?: number;
 	systemPrompt?: string;
 }
 
-export interface AgentLoopCompleteContext extends BaseLogContext, AgentLoopCompleteParams {
+export interface AgentLoopCompleteContext
+	extends BaseLogContext,
+		AgentLoopCompleteParams {
 	tokenUsage?: {
 		prompt: number;
 		completion: number;
@@ -86,11 +90,15 @@ export interface AgentLoopErrorContext extends BaseLogContext {
 }
 
 // Step events - extend from parameter types
-export interface AgentStepStartContext extends BaseLogContext, AgentStepStartParams {
+export interface AgentStepStartContext
+	extends BaseLogContext,
+		AgentStepStartParams {
 	previousOutput?: string;
 }
 
-export interface AgentStepCompleteContext extends BaseLogContext, AgentStepCompleteParams {
+export interface AgentStepCompleteContext
+	extends BaseLogContext,
+		AgentStepCompleteParams {
 	toolCallCount?: number;
 	tokenUsage?: {
 		prompt: number;
@@ -100,11 +108,15 @@ export interface AgentStepCompleteContext extends BaseLogContext, AgentStepCompl
 }
 
 // Tool events - extend from parameter types
-export interface AgentToolCallContext extends BaseLogContext, AgentToolCallParams {
+export interface AgentToolCallContext
+	extends BaseLogContext,
+		AgentToolCallParams {
 	stepIndex?: number;
 }
 
-export interface AgentToolResultContext extends BaseLogContext, AgentToolResultParams {
+export interface AgentToolResultContext
+	extends BaseLogContext,
+		AgentToolResultParams {
 	stepIndex?: number;
 }
 
@@ -243,7 +255,10 @@ export interface ILogger {
 	fatal(message: string, error?: Error | Record<string, any>): void;
 
 	// Strongly typed event logging
-	logEvent<T extends keyof LogEventContextMap>(eventName: T, context: LogEventContextMap[T]): void;
+	logEvent<T extends keyof LogEventContextMap>(
+		eventName: T,
+		context: LogEventContextMap[T],
+	): void;
 
 	// Child logger creation
 	child(bindings: Record<string, any>): ILogger;

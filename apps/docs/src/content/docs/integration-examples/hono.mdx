@@ -1,0 +1,504 @@
+---
+title: Hono
+description: Learn how to integrate Lightfast agents with Hono, the ultrafast web framework with Web API compatibility.
+---
+
+You can use Lightfast agents with [Hono](https://hono.dev/), a fast and lightweight web framework that provides excellent Web API compatibility.
+
+## Installation
+
+Install Hono:
+
+```bash
+npm install hono
+# or
+yarn add hono
+# or
+pnpm add hono
+```
+
+## Examples
+
+The examples start a Hono server that listens on port 8080. You can test it using `curl`:
+
+```bash
+curl -X POST http://localhost:8080/agents/my-session \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"What'\''s the weather like?"}]}'
+```
+
+The examples use the OpenAI `gpt-4o` model. Ensure that the OpenAI API key is set in the `OPENAI_API_KEY` environment variable.
+
+**Full example**: Available in our examples repository
+
+## Setup
+
+First, create your agent and memory configuration:
+
+```typescript
+import { createAgent } from '@lightfastai/core/agent';
+import { createTool } from '@lightfastai/core/tool';
+import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+// Create a simple tool
+const weatherTool = createTool({
+  name: 'get_weather',
+  description: 'Get weather for a location',
+  parameters: z.object({
+    location: z.string().describe('The location to get weather for')
+  }),
+  execute: async ({ location }) => {
+    return `Weather in ${location}: Sunny, 72°F`;
+  }
+});
+
+// Create the agent
+const agent = createAgent({
+  name: 'weather-assistant',
+  model: openai('gpt-4o'),
+  system: 'You are a helpful weather assistant.',
+  tools: { weather: weatherTool },
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    timestamp: Date.now(),
+    framework: 'hono'
+  })
+});
+
+// Create memory adapter
+const memory = new RedisMemory({
+  url: process.env.REDIS_URL!,
+  token: process.env.REDIS_TOKEN!
+});
+```
+
+## Basic Integration
+
+Hono's native Web API support makes integration extremely simple:
+
+```typescript
+import { Hono } from 'hono';
+import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+
+const app = new Hono();
+
+app.post('/agents/:sessionId', async (c) => {
+  // Hono provides native Web API Request/Response support!
+  return fetchRequestHandler({
+    agent,
+    sessionId: c.req.param('sessionId'),
+    memory,
+    req: c.req.raw, // Direct Web API Request
+    resourceId: c.get('userId') || 'anonymous',
+    createRequestContext: (req) => ({
+      userAgent: req.headers.get('user-agent'),
+      hono: true,
+      runtime: c.env?.runtime || 'unknown'
+    })
+  });
+  // Returns Web API Response - Hono handles it natively
+});
+
+export default {
+  port: 8080,
+  fetch: app.fetch,
+};
+```
+
+## Advanced Integration with Middleware
+
+```typescript
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { rateLimiter } from 'hono/rate-limiter';
+import { logger } from 'hono/logger';
+import { jwt } from 'hono/jwt';
+import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+
+type Bindings = {
+  REDIS_URL: string;
+  REDIS_TOKEN: string;
+  JWT_SECRET: string;
+}
+
+type Variables = {
+  userId: string;
+  userRole: string;
+}
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+// Global middleware
+app.use('*', logger());
+app.use('*', cors({
+  origin: ['http://localhost:3000', 'https://myapp.com'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ['POST', 'GET', 'OPTIONS'],
+}));
+
+// Rate limiting
+app.use('/agents/*', rateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // limit each IP to 100 requests per windowMs
+  keyGenerator: (c) => c.req.header('x-forwarded-for') ?? 'anonymous',
+}));
+
+// JWT Authentication middleware
+app.use('/agents/*', jwt({
+  secret: (c) => c.env.JWT_SECRET,
+}), async (c, next) => {
+  const payload = c.get('jwtPayload');
+  c.set('userId', payload.sub);
+  c.set('userRole', payload.role || 'user');
+  await next();
+});
+
+// Agent endpoint with authentication
+app.post('/agents/:sessionId', async (c) => {
+  const userId = c.get('userId');
+  const userRole = c.get('userRole');
+  
+  return fetchRequestHandler({
+    agent,
+    sessionId: c.req.param('sessionId'),
+    memory,
+    req: c.req.raw,
+    resourceId: userId,
+    createRequestContext: (req) => ({
+      userAgent: req.headers.get('user-agent'),
+      userRole,
+      hono: true,
+      cloudflare: !!c.env?.CF_RAY,
+      timestamp: Date.now()
+    }),
+    onError: ({ error }) => {
+      console.error(`Agent error for user ${userId}:`, error);
+    }
+  });
+});
+
+// Health check
+app.get('/health', (c) => {
+  return c.json({ 
+    status: 'ok', 
+    timestamp: Date.now(),
+    runtime: c.env?.runtime || 'unknown'
+  });
+});
+
+// Session management endpoints
+app.get('/agents/:sessionId/history', async (c) => {
+  const userId = c.get('userId');
+  const sessionId = c.req.param('sessionId');
+  
+  try {
+    // Verify session ownership
+    const session = await memory.getSession(sessionId);
+    if (!session || session.resourceId !== userId) {
+      return c.json({ error: 'Session not found' }, 404);
+    }
+    
+    const messages = await memory.getMessages(sessionId);
+    return c.json({ messages });
+  } catch (error) {
+    console.error('History retrieval error:', error);
+    return c.json({ error: 'Failed to retrieve history' }, 500);
+  }
+});
+
+app.delete('/agents/:sessionId', async (c) => {
+  const userId = c.get('userId');
+  const sessionId = c.req.param('sessionId');
+  
+  try {
+    // Verify session ownership
+    const session = await memory.getSession(sessionId);
+    if (!session || session.resourceId !== userId) {
+      return c.json({ error: 'Session not found' }, 404);
+    }
+    
+    await memory.deleteSession(sessionId);
+    return c.body(null, 204);
+  } catch (error) {
+    console.error('Session deletion error:', error);
+    return c.json({ error: 'Failed to delete session' }, 500);
+  }
+});
+
+// Error handling
+app.onError((err, c) => {
+  console.error('Hono error:', err);
+  return c.json({ 
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  }, 500);
+});
+
+// 404 handler
+app.notFound((c) => {
+  return c.json({ error: 'Not Found' }, 404);
+});
+
+export default app;
+```
+
+## Multi-Runtime Support
+
+Hono works across multiple runtimes. Here are examples for different deployment targets:
+
+### Node.js
+
+```typescript
+// server.ts
+import { serve } from '@hono/node-server';
+import app from './app';
+
+const port = process.env.PORT ? parseInt(process.env.PORT) : 8080;
+
+console.log(`Server is running on port ${port}`);
+
+serve({
+  fetch: app.fetch,
+  port,
+});
+```
+
+### Cloudflare Workers
+
+```typescript
+// worker.ts
+import app from './app';
+
+export default {
+  fetch: app.fetch,
+} satisfies ExportedHandler<Env>;
+```
+
+### Bun
+
+```typescript
+// server.ts
+import app from './app';
+
+export default {
+  port: 8080,
+  fetch: app.fetch,
+};
+```
+
+### Deno
+
+```typescript
+// server.ts
+import app from './app';
+
+Deno.serve({ port: 8080 }, app.fetch);
+```
+
+## Middleware Examples
+
+### Custom Authentication
+
+```typescript
+import { createMiddleware } from 'hono/factory';
+
+const customAuth = createMiddleware<{
+  Variables: {
+    userId: string;
+    apiKey: string;
+  }
+}>(async (c, next) => {
+  const apiKey = c.req.header('x-api-key');
+  
+  if (!apiKey) {
+    return c.json({ error: 'Missing API key' }, 401);
+  }
+  
+  // Validate API key (implement your logic)
+  const userId = await validateApiKey(apiKey);
+  if (!userId) {
+    return c.json({ error: 'Invalid API key' }, 401);
+  }
+  
+  c.set('userId', userId);
+  c.set('apiKey', apiKey);
+  await next();
+});
+
+app.use('/agents/*', customAuth);
+```
+
+### Request Logging
+
+```typescript
+const requestLogger = createMiddleware(async (c, next) => {
+  const start = Date.now();
+  const requestId = crypto.randomUUID();
+  
+  console.log(`[${requestId}] ${c.req.method} ${c.req.url} - Start`);
+  
+  await next();
+  
+  const duration = Date.now() - start;
+  console.log(`[${requestId}] ${c.req.method} ${c.req.url} - ${c.res.status} (${duration}ms)`);
+});
+
+app.use('*', requestLogger);
+```
+
+### Error Tracking
+
+```typescript
+const errorTracking = createMiddleware(async (c, next) => {
+  try {
+    await next();
+  } catch (error) {
+    // Send to error tracking service
+    await trackError(error, {
+      url: c.req.url,
+      method: c.req.method,
+      userId: c.get('userId'),
+      timestamp: Date.now()
+    });
+    
+    throw error; // Re-throw for default error handler
+  }
+});
+
+app.use('*', errorTracking);
+```
+
+## Testing
+
+```typescript
+// test/agents.test.ts
+import { describe, it, expect } from 'vitest';
+import app from '../src/app';
+
+describe('Agents API', () => {
+  it('should handle chat requests', async () => {
+    const req = new Request('http://localhost/agents/test-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'user', content: 'Hello' }
+        ]
+      })
+    });
+
+    const res = await app.fetch(req);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toMatch(/text\/plain/);
+  });
+
+  it('should require authentication', async () => {
+    const req = new Request('http://localhost/agents/test-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'Hello' }]
+      })
+    });
+
+    const res = await app.fetch(req);
+    expect(res.status).toBe(401);
+  });
+});
+```
+
+## Environment Configuration
+
+```typescript
+// config.ts
+import { z } from 'zod';
+
+const envSchema = z.object({
+  REDIS_URL: z.string(),
+  REDIS_TOKEN: z.string(),
+  JWT_SECRET: z.string(),
+  OPENAI_API_KEY: z.string(),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  PORT: z.string().transform(Number).default('8080'),
+});
+
+export const env = envSchema.parse(process.env);
+```
+
+## Performance Optimizations
+
+### Streaming with Compression
+
+```typescript
+import { compress } from 'hono/compress';
+
+app.use('*', compress({
+  threshold: 1024, // Only compress responses larger than 1KB
+}));
+```
+
+### Caching Headers
+
+```typescript
+app.get('/agents/:sessionId/history', async (c) => {
+  const history = await getSessionHistory(c.req.param('sessionId'));
+  
+  // Cache for 5 minutes
+  c.header('Cache-Control', 'public, max-age=300');
+  c.header('ETag', generateETag(history));
+  
+  return c.json({ messages: history });
+});
+```
+
+## Advantages
+
+- **Web API Native**: Perfect compatibility with `fetchRequestHandler`
+- **Multi-Runtime**: Works on Node.js, Cloudflare Workers, Bun, Deno
+- **Performance**: Extremely fast and lightweight
+- **TypeScript**: Excellent TypeScript support with type inference
+- **Minimal Setup**: Very simple integration with Lightfast
+
+## Disadvantages
+
+- **Newer Framework**: Smaller ecosystem compared to Express
+- **Learning Curve**: Different patterns from traditional Express apps
+- **Documentation**: Less third-party tutorials and examples
+
+## Deployment Examples
+
+### Cloudflare Workers
+
+```typescript
+// wrangler.toml
+name = "lightfast-agent"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+NODE_ENV = "production"
+
+[secrets]
+REDIS_URL = "..."
+REDIS_TOKEN = "..."
+JWT_SECRET = "..."
+OPENAI_API_KEY = "..."
+```
+
+### Vercel
+
+```json
+{
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  }
+}
+```
+
+Hono provides the best integration experience with Lightfast due to its native Web API compatibility and multi-runtime support.

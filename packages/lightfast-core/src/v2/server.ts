@@ -3,7 +3,10 @@
  * @module @lightfast/ai/v2/server
  */
 
-export { type FetchRequestHandlerOptions, fetchRequestHandler } from "../core/v2/server/adapters/fetch";
+export {
+	type FetchRequestHandlerOptions,
+	fetchRequestHandler,
+} from "../core/v2/server/adapters/fetch";
 export { EventConsumer } from "../core/v2/server/events/consumer";
 export { EventWriter } from "../core/v2/server/events/event-writer";
 export * from "../core/v2/server/events/types";

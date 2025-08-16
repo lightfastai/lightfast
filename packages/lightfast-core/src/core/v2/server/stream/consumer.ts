@@ -7,7 +7,13 @@ import type { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey } from "../keys";
-import { type DeltaStreamMessage, DeltaStreamType, type ToolCallPart, type ToolResultPart } from "./types";
+import {
+	
+	DeltaStreamType
+	
+	
+} from "./types";
+import type {DeltaStreamMessage, ToolCallPart, ToolResultPart} from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -33,7 +39,9 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 };
 
 // Validate delta stream message
-function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessage | null {
+function validateDeltaMessage(
+	rawObj: Record<string, string>,
+): DeltaStreamMessage | null {
 	if (!rawObj.type) return null;
 
 	const type = rawObj.type as DeltaStreamType;
@@ -51,13 +59,20 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 
 		case DeltaStreamType.CHUNK:
 			if (!rawObj.content) return null;
-			return { type: DeltaStreamType.CHUNK, content: rawObj.content, timestamp };
+			return {
+				type: DeltaStreamType.CHUNK,
+				content: rawObj.content,
+				timestamp,
+			};
 
 		case DeltaStreamType.TOOL_CALL:
 			if (!rawObj.toolCall) return null;
 			try {
 				// Parse the JSON string back to ToolCallPart
-				const toolCall = typeof rawObj.toolCall === "string" ? JSON.parse(rawObj.toolCall) : rawObj.toolCall;
+				const toolCall =
+					typeof rawObj.toolCall === "string"
+						? JSON.parse(rawObj.toolCall)
+						: rawObj.toolCall;
 				return { type: DeltaStreamType.TOOL_CALL, toolCall, timestamp };
 			} catch {
 				return null;
@@ -67,7 +82,10 @@ function validateDeltaMessage(rawObj: Record<string, string>): DeltaStreamMessag
 			if (!rawObj.toolResult) return null;
 			try {
 				// Parse the JSON string back to ToolResultPart
-				const toolResult = typeof rawObj.toolResult === "string" ? JSON.parse(rawObj.toolResult) : rawObj.toolResult;
+				const toolResult =
+					typeof rawObj.toolResult === "string"
+						? JSON.parse(rawObj.toolResult)
+						: rawObj.toolResult;
 				return { type: DeltaStreamType.TOOL_RESULT, toolResult, timestamp };
 			} catch {
 				return null;
@@ -96,7 +114,10 @@ export class StreamConsumer {
 	 * Create an optimized delta stream following your clean pattern
 	 * Simple, readable, and efficient
 	 */
-	createDeltaStream(streamId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
+	createDeltaStream(
+		streamId: string,
+		signal?: AbortSignal,
+	): ReadableStream<Uint8Array> {
 		const streamKey = getDeltaStreamKey(streamId);
 		const groupName = `sse-group-${uuidv4()}`;
 		const redis = this.redis;
@@ -113,19 +134,29 @@ export class StreamConsumer {
 						group: groupName,
 						id: "0",
 					});
-					console.log(`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+					console.log(
+						`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`,
+					);
 				} catch (err) {
-					console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
-						stream: streamKey,
-						error: err instanceof Error ? err.message : String(err),
-					});
+					console.log(
+						`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`,
+						{
+							stream: streamKey,
+							error: err instanceof Error ? err.message : String(err),
+						},
+					);
 				}
 
 				let subscription: ReturnType<typeof redis.subscribe> | null = null;
 
 				// Read stream messages using consumer group
 				const readStreamMessages = async () => {
-					const chunks = (await redis.xreadgroup(groupName, "consumer-1", streamKey, ">")) as StreamData[];
+					const chunks = (await redis.xreadgroup(
+						groupName,
+						"consumer-1",
+						streamKey,
+						">",
+					)) as StreamData[];
 
 					if (chunks && chunks.length > 0) {
 						const streamData = chunks[0];
@@ -138,7 +169,11 @@ export class StreamConsumer {
 
 									if (validatedMessage) {
 										console.log("Sending stream message:", validatedMessage);
-										controller.enqueue(json(validatedMessage as unknown as Record<string, unknown>));
+										controller.enqueue(
+											json(
+												validatedMessage as unknown as Record<string, unknown>,
+											),
+										);
 
 										// Check for completion
 										if (validatedMessage.type === DeltaStreamType.COMPLETE) {
@@ -211,19 +246,27 @@ export class StreamConsumer {
 					group: groupName,
 					id: "0",
 				});
-				console.log(`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+				console.log(
+					`[StreamConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`,
+				);
 			} catch (err) {
-				console.log(`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
-					stream: streamKey,
-					error: err instanceof Error ? err.message : String(err),
-				});
+				console.log(
+					`[StreamConsumer] Consumer group creation failed (likely exists): ${groupName}`,
+					{
+						stream: streamKey,
+						error: err instanceof Error ? err.message : String(err),
+					},
+				);
 			}
 
 			// Read stream messages
 			const readStreamMessages = async () => {
-				const chunks = (await this.redis.xreadgroup(groupName, `consumer-${uuidv4()}`, streamKey, ">")) as
-					| StreamData[]
-					| null;
+				const chunks = (await this.redis.xreadgroup(
+					groupName,
+					`consumer-${uuidv4()}`,
+					streamKey,
+					">",
+				)) as StreamData[] | null;
 
 				if (chunks && chunks.length > 0) {
 					const streamData = chunks[0];

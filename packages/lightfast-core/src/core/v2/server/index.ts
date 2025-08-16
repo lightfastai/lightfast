@@ -2,7 +2,10 @@
  * V2 Server exports for resumable LLM streams
  */
 
-export { type FetchRequestHandlerOptions, fetchRequestHandler } from "./adapters/fetch";
+export {
+	type FetchRequestHandlerOptions,
+	fetchRequestHandler,
+} from "./adapters/fetch";
 export { EventConsumer } from "./events/consumer";
 export { EventWriter } from "./events/event-writer";
 export * from "./events/types";

@@ -3,7 +3,12 @@
  */
 
 export type { UseChatOptions, UseChatReturn } from "./use-chat";
-export { type DeltaStreamMessage, DeltaStreamType, useChat, validateMessage } from "./use-chat";
+export {
+	type DeltaStreamMessage,
+	DeltaStreamType,
+	useChat,
+	validateMessage,
+} from "./use-chat";
 
 export type {
 	UseDeltaStreamOptions,
@@ -15,4 +20,9 @@ export type {
 	UseEventStreamOptions,
 	UseEventStreamReturn,
 } from "./use-event-stream";
-export { useAgentErrorEvents, useAgentLoopEvents, useAgentToolEvents, useEventStream } from "./use-event-stream";
+export {
+	useAgentErrorEvents,
+	useAgentLoopEvents,
+	useAgentToolEvents,
+	useEventStream,
+} from "./use-event-stream";

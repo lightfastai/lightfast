@@ -2,7 +2,11 @@
 export type { CacheControl, ProviderCache } from "./base";
 
 // Providers
-export { type AnthropicCacheConfig, AnthropicProviderCache, anthropicCache } from "./provider";
+export {
+	type AnthropicCacheConfig,
+	AnthropicProviderCache,
+	anthropicCache,
+} from "./provider";
 
 // Strategies
 export {

@@ -47,7 +47,9 @@ export class ClineConversationStrategy implements CacheStrategy {
 		);
 
 		// Get the last N user message indices to cache
-		const messageIndicesToCache = userMessageIndices.slice(-this.recentUserMessagesToCache);
+		const messageIndicesToCache = userMessageIndices.slice(
+			-this.recentUserMessagesToCache,
+		);
 
 		return {
 			messageIndicesToCache,

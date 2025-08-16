@@ -13,11 +13,11 @@ export interface SessionState {
 	stepIndex: number;
 	startTime: number;
 	toolCallCount: number;
-	pendingToolCalls?: Array<{
+	pendingToolCalls?: {
 		id: string;
 		name: string;
 		args: any;
-	}>;
+	}[];
 	agentId: string;
 	temperature?: number;
 	assistantMessageId: string;

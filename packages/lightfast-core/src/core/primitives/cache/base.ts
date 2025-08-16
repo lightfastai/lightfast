@@ -21,5 +21,8 @@ export interface ProviderCache {
 	/**
 	 * Apply cache control to user messages based on provider-specific logic
 	 */
-	applyMessageCaching<TMessage extends UIMessage>(messages: CoreMessage[], originalMessages: TMessage[]): CoreMessage[];
+	applyMessageCaching<TMessage extends UIMessage>(
+		messages: CoreMessage[],
+		originalMessages: TMessage[],
+	): CoreMessage[];
 }

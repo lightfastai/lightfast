@@ -3,7 +3,12 @@
  */
 
 import type { Logger as PinoLogger } from "pino";
-import type { ILogger, LogEventContextMap, LogEventName, LoggerFactory } from "./types";
+import type {
+	ILogger,
+	LogEventContextMap,
+	LogEventName,
+	LoggerFactory,
+} from "./types";
 
 export class PinoLoggerAdapter implements ILogger {
 	constructor(private readonly pino: PinoLogger) {}
@@ -40,7 +45,10 @@ export class PinoLoggerAdapter implements ILogger {
 		}
 	}
 
-	logEvent<T extends keyof LogEventContextMap>(eventName: T, context: LogEventContextMap[T]): void {
+	logEvent<T extends keyof LogEventContextMap>(
+		eventName: T,
+		context: LogEventContextMap[T],
+	): void {
 		// Log events at info level with event name and full context
 		this.pino.info(
 			{

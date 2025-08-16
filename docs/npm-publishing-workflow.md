@@ -77,10 +77,18 @@ pnpm changeset status # View pending changes
 - Check bot has repo access
 - Confirm token scopes are correct
 
+## Workflows
+
+### `release.yml`
+Main release workflow triggered by changesets merged to main.
+
+### `verify-changeset.yml` 
+Validates changeset format and semantic versioning on PRs.
+
 ## Checklist
 
 - [ ] Create release bot accounts (GitHub + NPM)
-- [ ] Add bot to GitHub repo (write access)
+- [ ] Add bot to GitHub repo (write access)  
 - [ ] Add bot to npm org (`@lightfastai`)
 - [ ] Generate & add tokens to repo secrets
 - [ ] Create changeset: `pnpm changeset`

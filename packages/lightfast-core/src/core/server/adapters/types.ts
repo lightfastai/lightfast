@@ -20,4 +20,6 @@ export interface RequestContext {
  * Merges system, request, and agent-specific contexts
  * @template TAgentContext - Agent-specific context defined by the user
  */
-export type RuntimeContext<TAgentContext = {}> = SystemContext & RequestContext & TAgentContext;
+export type RuntimeContext<TAgentContext = {}> = SystemContext &
+	RequestContext &
+	TAgentContext;

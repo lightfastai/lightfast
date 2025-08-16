@@ -1,28 +1,54 @@
-import type { UIMessage, UIMessageStreamOptions } from "ai";
+import type { UIMessage, UIMessageStreamOptions, ToolSet } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
 import type {
 	RequestContext,
-	RuntimeContext,
 	SystemContext,
 } from "./adapters/types";
 import {
-	type ApiError,
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
-	toMemoryApiError,
+	toAgentApiError,
+	toMemoryApiError
 } from "./errors";
-import { Err, Ok, type Result } from "./result";
+import type {ApiError} from "./errors";
+import { Err, Ok  } from "./result";
+import type {Result} from "./result";
+import type { 
+	LifecycleCallbacks,
+	ErrorLifecycleEvent,
+	StreamStartEvent,
+	StreamCompleteEvent,
+	AgentStartEvent,
+	AgentCompleteEvent
+} from "./lifecycle";
+
+export interface ResumeOptions {
+	/** Enable resume capability for streaming */
+	enabled: boolean;
+	/** 
+	 * Guard: Continue streaming even if stream creation fails
+	 * @default false - Stream creation failure will propagate via onError
+	 * @description When true, stream creation failures are logged but don't interrupt the stream
+	 */
+	silentStreamFailure?: boolean;
+	/** 
+	 * Guard: Fail fast on stream creation errors
+	 * @default false - Continue streaming on error
+	 * @description When true, stream creation failure will stop the entire streaming operation
+	 */
+	failOnStreamError?: boolean;
+}
 
 export interface StreamChatOptions<
 	TMessage extends UIMessage = UIMessage,
 	TRequestContext = {},
 	TFetchContext = {},
-> {
-	agent: Agent<any, any>;
+> extends LifecycleCallbacks {
+	agent: Agent<ToolSet | ToolFactorySet<unknown>, unknown>;
 	sessionId: string;
 	message: TMessage;
 	memory: Memory<TMessage, TFetchContext>;
@@ -32,6 +58,7 @@ export interface StreamChatOptions<
 	context?: TFetchContext;
 	generateId?: () => string;
 	enableResume?: boolean;
+	resumeOptions?: ResumeOptions;
 }
 
 export interface ValidatedSession {
@@ -47,7 +74,10 @@ export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
 /**
  * Validates session ownership and authorization
  */
-export async function validateSession<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+export async function validateSession<
+	TMessage extends UIMessage = UIMessage,
+	TFetchContext = {},
+>(
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
@@ -73,7 +103,10 @@ export async function validateSession<TMessage extends UIMessage = UIMessage, TF
 /**
  * Processes incoming message and manages session state
  */
-export async function processMessage<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+export async function processMessage<
+	TMessage extends UIMessage = UIMessage,
+	TFetchContext = {},
+>(
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	message: TMessage,
@@ -131,6 +164,12 @@ export async function streamChat<
 		context,
 		generateId,
 		enableResume,
+		resumeOptions,
+		onError,
+		onStreamStart,
+		onStreamComplete,
+		onAgentStart,
+		onAgentComplete,
 	} = options;
 
 	// Validate session
@@ -159,48 +198,146 @@ export async function streamChat<
 
 	const { allMessages } = processResult.value;
 
-	// Stream the response
-	const {
-		result,
-		streamId,
-		sessionId: sid,
-	} = await agent.stream({
-		sessionId,
-		messages: allMessages,
-		memory,
-		resourceId,
+	// Call onAgentStart lifecycle callback
+	const agentStartTime = Date.now();
+	const agentName = 'config' in agent && agent.config?.name ? agent.config.name : 'unknown';
+	onAgentStart?.({
 		systemContext,
-		requestContext,
+		requestContext: requestContext as RequestContext | undefined,
+		agentName,
+		messageCount: allMessages.length,
+		timestamp: agentStartTime,
 	});
 
-	// Store stream ID for resumption
+	// Stream the response
+	let streamResult: Awaited<ReturnType<typeof agent.stream>>;
 	try {
-		await memory.createStream({ sessionId, streamId, context });
+		streamResult = await agent.stream({
+			sessionId,
+			messages: allMessages,
+			memory,
+			resourceId,
+			systemContext,
+			requestContext,
+		});
 	} catch (error) {
-		// Stream creation errors are not critical, log but continue
-		console.warn(
-			`Failed to create stream ${streamId} for session ${sessionId}:`,
-			error,
-		);
-		// Note: We don't return an error here as the stream itself is working
+		// Convert agent errors to appropriate API errors
+		return Err(toAgentApiError(error, "stream"));
+	}
+
+	const { result, streamId, sessionId: sid } = streamResult;
+
+	// Call onStreamStart lifecycle callback
+	onStreamStart?.({
+		systemContext,
+		requestContext: requestContext as RequestContext | undefined,
+		streamId,
+		agentName,
+		messageCount: allMessages.length,
+		timestamp: Date.now(),
+	});
+
+	// Store stream ID for resumption (only if resume is enabled)
+	const shouldEnableResume = enableResume || resumeOptions?.enabled;
+	
+	if (shouldEnableResume) {
+		try {
+			await memory.createStream({ sessionId, streamId, context });
+		} catch (error) {
+			const apiError = toMemoryApiError(error, "createStream");
+			
+			// Check guard: failOnStreamError FIRST (highest priority)
+			if (resumeOptions?.failOnStreamError) {
+				// Fail fast mode: log and return error immediately
+				console.warn(
+					`[Fail Fast] Stream creation failed, stopping operation for session ${sessionId}:`,
+					{
+						error: apiError.message,
+						statusCode: apiError.statusCode,
+						errorCode: apiError.errorCode,
+						originalError: error,
+					},
+				);
+				return Err(apiError);
+			}
+			
+			// Check guard: silentStreamFailure
+			if (resumeOptions?.silentStreamFailure) {
+				// Silent mode: only log, don't call onError
+				console.warn(
+					`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`,
+					{
+						error: apiError.message,
+						statusCode: apiError.statusCode,
+						errorCode: apiError.errorCode,
+						originalError: error,
+					},
+				);
+			} else {
+				// Normal mode: log and propagate via onError
+				console.warn(
+					`Failed to create stream ${streamId} for session ${sessionId}:`,
+					{
+						error: apiError.message,
+						statusCode: apiError.statusCode,
+						errorCode: apiError.errorCode,
+						originalError: error,
+					},
+				);
+				
+				// Propagate stream creation failure to route for monitoring
+				onError?.({ 
+					systemContext,
+					requestContext: requestContext as RequestContext | undefined,
+					error: apiError,
+					timestamp: Date.now(),
+				});
+			}
+			
+			// Default: Continue streaming despite error
+		}
 	}
 
 	// Create UI message stream response with proper options
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
 		generateMessageId: generateId,
 		sendReasoning: true, // Enable sending reasoning parts to the client
-		onFinish: async ({ messages: finishedMessages, responseMessage }) => {
+		onFinish: async (result) => {
+			const agentEndTime = Date.now();
+			const agentDuration = agentEndTime - agentStartTime;
+			
+			// Call onAgentComplete lifecycle callback with all AI SDK data
+			onAgentComplete?.({
+				systemContext,
+				requestContext: requestContext as RequestContext | undefined,
+				agentName,
+				duration: agentDuration,
+				timestamp: agentEndTime,
+				// Spread all AI SDK onFinish data:
+				...result,
+			});
+			
+			// Call onStreamComplete lifecycle callback
+			onStreamComplete?.({
+				systemContext,
+				requestContext: requestContext as RequestContext | undefined,
+				streamId,
+				agentName,
+				duration: agentDuration,
+				timestamp: agentEndTime,
+			});
+			
 			// Save the assistant's response to memory
-			if (responseMessage && responseMessage.role === "assistant") {
+			if (result.responseMessage && result.responseMessage.role === "assistant") {
 				console.log(
 					`\n[V1 onFinish] responseMessage:`,
-					JSON.stringify(responseMessage, null, 2),
+					JSON.stringify(result.responseMessage, null, 2),
 				);
-				if (responseMessage.parts) {
+				if (result.responseMessage.parts) {
 					console.log(
-						`[V1 onFinish] Parts count: ${responseMessage.parts.length}`,
+						`[V1 onFinish] Parts count: ${result.responseMessage.parts.length}`,
 					);
-					responseMessage.parts.forEach((part: any, idx: number) => {
+					result.responseMessage.parts.forEach((part: any, idx: number) => {
 						console.log(
 							`  Part ${idx}: type=${part.type}`,
 							part.type === "tool-result" ? `state=${part.state}` : "",
@@ -211,23 +348,39 @@ export async function streamChat<
 				try {
 					await memory.appendMessage({
 						sessionId: sid,
-						message: responseMessage,
+						message: result.responseMessage,
 						context,
 					});
 				} catch (error) {
-					// Log the error but don't break the stream
+					// Convert to proper API error for consistent error handling
+					const apiError = toMemoryApiError(error, "appendMessage");
 					console.error(
 						`Failed to save assistant message to memory for session ${sid}:`,
-						error,
+						{
+							error: apiError.message,
+							statusCode: apiError.statusCode,
+							errorCode: apiError.errorCode,
+							originalError: error,
+						},
 					);
+					
+					// Call onError callback to propagate memory failure to route
+					onError?.({ 
+						systemContext,
+						requestContext: requestContext as RequestContext | undefined,
+						error: apiError,
+						timestamp: Date.now(),
+					});
+					
 					// Note: We don't throw here as the response has already been streamed to the client
+					// but we propagate the error via callback for route handling
 				}
 			}
 		},
 	};
 
 	// Return response with optional resume support
-	if (enableResume) {
+	if (shouldEnableResume) {
 		return Ok(
 			result.toUIMessageStreamResponse<TMessage>({
 				...streamOptions,
@@ -258,7 +411,10 @@ export async function streamChat<
 /**
  * Resumes an existing stream
  */
-export async function resumeStream<TMessage extends UIMessage = UIMessage, TFetchContext = {}>(
+export async function resumeStream<
+	TMessage extends UIMessage = UIMessage,
+	TFetchContext = {},
+>(
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,

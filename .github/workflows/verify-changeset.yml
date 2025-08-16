@@ -1,0 +1,71 @@
+# Verify that changesets follow semantic versioning guidelines
+# - patch: Bug fixes, performance improvements  
+# - minor: New features, non-breaking changes
+# - major: Breaking changes, API changes
+name: Verify Changesets
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches:
+      - main
+    paths:
+      - '.changeset/*.md'
+
+jobs:
+  verify-changesets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get changed changeset files
+        id: changeset-files
+        run: |
+          echo "changed-files=$(git diff --diff-filter=dr --name-only $BASE_SHA -- '.changeset/*.md' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+
+      - name: Verify changeset format
+        if: steps.changeset-files.outputs.changed-files != ''
+        run: |
+          echo "Checking changeset files: ${{ steps.changeset-files.outputs.changed-files }}"
+          
+          for file in ${{ steps.changeset-files.outputs.changed-files }}; do
+            echo "Checking $file..."
+            
+            # Check if file exists
+            if [ ! -f "$file" ]; then
+              echo "::error::Changeset file $file not found"
+              exit 1
+            fi
+            
+            # Check if it mentions @lightfastai/core
+            if ! grep -q "@lightfastai/core" "$file"; then
+              echo "::error::Changeset $file must include @lightfastai/core package"
+              exit 1
+            fi
+            
+            # Check for valid version types
+            if ! grep -E "^\"@lightfastai/core\": (patch|minor|major)$" "$file"; then
+              echo "::error::Changeset $file must use patch, minor, or major for @lightfastai/core"
+              exit 1
+            fi
+            
+            # Check for summary
+            if ! grep -A 5 "^---$" "$file" | tail -n +2 | grep -v "^---$" | grep -q "."; then
+              echo "::error::Changeset $file must include a summary description"
+              exit 1
+            fi
+            
+            echo "✓ $file is valid"
+          done
+          
+          echo "All changesets are valid!"

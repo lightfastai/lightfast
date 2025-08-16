@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { type AgentEvent, EventName } from "../server/events/types";
+import {  EventName } from "../server/events/types";
+import type {AgentEvent} from "../server/events/types";
 
 export interface UseEventStreamOptions {
 	streamEndpoint?: string;
@@ -22,8 +23,15 @@ export interface UseEventStreamReturn {
 	clearEvents: () => void;
 }
 
-export function useEventStream(options: UseEventStreamOptions = {}): UseEventStreamReturn {
-	const { streamEndpoint = "/api/v2/events", onEvent, onError, filter } = options;
+export function useEventStream(
+	options: UseEventStreamOptions = {},
+): UseEventStreamReturn {
+	const {
+		streamEndpoint = "/api/v2/events",
+		onEvent,
+		onError,
+		filter,
+	} = options;
 
 	// State
 	const [isConnected, setIsConnected] = useState(false);
@@ -55,7 +63,9 @@ export function useEventStream(options: UseEventStreamOptions = {}): UseEventStr
 
 				setIsConnected(true);
 
-				const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+				const reader = res.body
+					.pipeThrough(new TextDecoderStream())
+					.getReader();
 
 				while (true) {
 					const { value, done } = await reader.read();
@@ -91,7 +101,10 @@ export function useEventStream(options: UseEventStreamOptions = {}): UseEventStr
 				setIsConnected(false);
 			} catch (err) {
 				setIsConnected(false);
-				const error = err instanceof Error ? err : new Error("Event stream connection failed");
+				const error =
+					err instanceof Error
+						? err
+						: new Error("Event stream connection failed");
 				setError(error);
 				onError?.(error);
 			}
@@ -126,28 +139,42 @@ export function useEventStream(options: UseEventStreamOptions = {}): UseEventStr
 
 // Utility hooks for specific event types
 
-export function useAgentLoopEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
+export function useAgentLoopEvents(
+	options: Omit<UseEventStreamOptions, "filter"> = {},
+) {
 	return useEventStream({
 		...options,
-		filter: (event) => event.name === EventName.AGENT_LOOP_START || event.name === EventName.AGENT_LOOP_COMPLETE,
+		filter: (event) =>
+			event.name === EventName.AGENT_LOOP_START ||
+			event.name === EventName.AGENT_LOOP_COMPLETE,
 	});
 }
 
-export function useAgentToolEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
+export function useAgentToolEvents(
+	options: Omit<UseEventStreamOptions, "filter"> = {},
+) {
 	return useEventStream({
 		...options,
-		filter: (event) => event.name === EventName.AGENT_TOOL_CALL || event.name === EventName.AGENT_TOOL_RESULT,
+		filter: (event) =>
+			event.name === EventName.AGENT_TOOL_CALL ||
+			event.name === EventName.AGENT_TOOL_RESULT,
 	});
 }
 
-export function useAgentStepEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
+export function useAgentStepEvents(
+	options: Omit<UseEventStreamOptions, "filter"> = {},
+) {
 	return useEventStream({
 		...options,
-		filter: (event) => event.name === EventName.AGENT_STEP_START || event.name === EventName.AGENT_STEP_COMPLETE,
+		filter: (event) =>
+			event.name === EventName.AGENT_STEP_START ||
+			event.name === EventName.AGENT_STEP_COMPLETE,
 	});
 }
 
-export function useAgentErrorEvents(options: Omit<UseEventStreamOptions, "filter"> = {}) {
+export function useAgentErrorEvents(
+	options: Omit<UseEventStreamOptions, "filter"> = {},
+) {
 	return useEventStream({
 		...options,
 		filter: (event) => event.name === EventName.AGENT_ERROR,

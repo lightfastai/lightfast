@@ -22,7 +22,9 @@ interface StreamData {
 /**
  * Redis-based implementation of Memory interface
  */
-export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> implements Memory<TMessage, TContext> {
+export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
+	implements Memory<TMessage, TContext>
+{
 	private redis: Redis;
 
 	// Redis key patterns
@@ -43,7 +45,15 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 		this.redis = new Redis(config);
 	}
 
-	async appendMessage({ sessionId, message, context }: { sessionId: string; message: TMessage; context?: TContext }): Promise<void> {
+	async appendMessage({
+		sessionId,
+		message,
+		context,
+	}: {
+		sessionId: string;
+		message: TMessage;
+		context?: TContext;
+	}): Promise<void> {
 		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Check if the key exists first
@@ -53,7 +63,11 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 			// Initialize with the first message if session doesn't exist
 			const data: SessionMessagesData<TMessage> = { messages: [message] };
 			// Type assertion is safe here - we know the structure matches
-			await this.redis.json.set(key, "$", data as RedisJsonData<SessionMessagesData<TMessage>>);
+			await this.redis.json.set(
+				key,
+				"$",
+				data as RedisJsonData<SessionMessagesData<TMessage>>,
+			);
 		} else {
 			// Append to existing messages array
 			await this.redis.json.arrappend(key, "$.messages", message);
@@ -64,9 +78,10 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Use JSON.GET for JSON-stored data
-		const jsonData = (await this.redis.json.get(key, "$")) as SessionMessagesData<TMessage>[] | null;
-		if (jsonData && jsonData.length > 0 && jsonData[0]) {
-			return jsonData[0].messages || [];
+		const jsonData = await this.redis.json.get(key, "$") as unknown;
+		if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
+			const firstItem = jsonData[0] as { messages?: TMessage[] };
+			return firstItem.messages || [];
 		}
 
 		return [];
@@ -114,7 +129,15 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 		return { resourceId: sessionData.resourceId };
 	}
 
-	async createStream({ sessionId, streamId, context }: { sessionId: string; streamId: string; context?: TContext }): Promise<void> {
+	async createStream({
+		sessionId,
+		streamId,
+		context,
+	}: {
+		sessionId: string;
+		streamId: string;
+		context?: TContext;
+	}): Promise<void> {
 		// Store stream data
 		const streamData: StreamData = {
 			id: streamId,
@@ -122,7 +145,11 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 			createdAt: new Date().toISOString(),
 		};
 
-		await this.redis.setex(this.KEYS.stream(streamId), this.TTL.STREAM, JSON.stringify(streamData));
+		await this.redis.setex(
+			this.KEYS.stream(streamId),
+			this.TTL.STREAM,
+			JSON.stringify(streamData),
+		);
 
 		// Add to session's stream list
 		await this.redis.lpush(this.KEYS.sessionStreams(sessionId), streamId);
@@ -132,8 +159,11 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}> 
 	}
 
 	async getSessionStreams(sessionId: string): Promise<string[]> {
-		const streamIds = await this.redis.lrange(this.KEYS.sessionStreams(sessionId), 0, -1);
+		const streamIds = await this.redis.lrange(
+			this.KEYS.sessionStreams(sessionId),
+			0,
+			-1,
+		);
 		return streamIds || [];
 	}
-
 }

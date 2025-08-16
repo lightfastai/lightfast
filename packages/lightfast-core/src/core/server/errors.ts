@@ -67,7 +67,9 @@ export class MethodNotAllowedError extends ApiError {
 	readonly errorCode = "METHOD_NOT_ALLOWED";
 
 	constructor(method: string, allowed: string[]) {
-		super(`Method ${method} not allowed. Allowed methods: ${allowed.join(", ")}`);
+		super(
+			`Method ${method} not allowed. Allowed methods: ${allowed.join(", ")}`,
+		);
 	}
 }
 
@@ -199,6 +201,75 @@ export class StreamOperationError extends ApiError {
 }
 
 /**
+ * Agent streaming error - for errors during agent stream execution
+ */
+export class AgentStreamError extends ApiError {
+	readonly statusCode = 500;
+	readonly errorCode = "AGENT_STREAM_ERROR";
+
+	constructor(message: string, public readonly cause?: Error) {
+		super(`Agent streaming failed: ${message}`);
+	}
+}
+
+/**
+ * Agent configuration error - for invalid agent setup
+ */
+export class AgentConfigurationError extends BadRequestError {
+	readonly errorCode = "AGENT_CONFIGURATION_ERROR";
+
+	constructor(field: string, details?: string) {
+		super(`Agent configuration error: ${field}${details ? ` - ${details}` : ""}`);
+	}
+}
+
+/**
+ * Tool execution error - for errors during tool creation or execution
+ */
+export class ToolExecutionError extends ApiError {
+	readonly statusCode = 500;
+	readonly errorCode = "TOOL_EXECUTION_ERROR";
+
+	constructor(toolName: string, message: string, public readonly cause?: Error) {
+		super(`Tool execution failed: ${toolName} - ${message}`);
+	}
+}
+
+/**
+ * Context creation error - for errors during runtime/request context creation
+ */
+export class ContextCreationError extends BadRequestError {
+	readonly errorCode = "CONTEXT_CREATION_ERROR";
+
+	constructor(contextType: string, message?: string, public readonly cause?: Error) {
+		super(`Failed to create ${contextType} context${message ? `: ${message}` : ""}`);
+	}
+}
+
+/**
+ * Cache operation error - for errors during cache operations
+ */
+export class CacheOperationError extends ApiError {
+	readonly statusCode = 500;
+	readonly errorCode = "CACHE_OPERATION_ERROR";
+
+	constructor(operation: string, message?: string, public readonly cause?: Error) {
+		super(`Cache operation failed: ${operation}${message ? ` - ${message}` : ""}`);
+	}
+}
+
+/**
+ * Message conversion error - for errors during message format conversion
+ */
+export class MessageConversionError extends BadRequestError {
+	readonly errorCode = "MESSAGE_CONVERSION_ERROR";
+
+	constructor(operation: string, message?: string, public readonly cause?: Error) {
+		super(`Message conversion failed: ${operation}${message ? ` - ${message}` : ""}`);
+	}
+}
+
+/**
  * Helper to convert unknown errors to ApiError
  */
 export function toApiError(error: unknown): ApiError {
@@ -224,38 +295,104 @@ export function toMemoryApiError(error: unknown, operation: string): ApiError {
 
 	if (error instanceof Error) {
 		const message = error.message.toLowerCase();
-		
+
 		// Handle authentication/authorization errors
-		if (message.includes('unauthorized') || message.includes('session expired') || message.includes('invalid')) {
+		if (
+			message.includes("unauthorized") ||
+			message.includes("session expired") ||
+			message.includes("invalid")
+		) {
 			return new UnauthorizedError(error.message);
 		}
-		
-		if (message.includes('forbidden') || message.includes('access denied') || message.includes('belongs to another user')) {
+
+		if (
+			message.includes("forbidden") ||
+			message.includes("access denied") ||
+			message.includes("belongs to another user")
+		) {
 			return new SessionForbiddenError();
 		}
-		
-		if (message.includes('not found') && message.includes('session')) {
+
+		if (message.includes("not found") && message.includes("session")) {
 			return new SessionNotFoundError();
 		}
-		
+
 		// Handle specific operation errors
-		if (operation === 'createSession') {
+		if (operation === "createSession") {
 			return new SessionCreationError(error.message);
 		}
-		
-		if (operation === 'appendMessage' || operation === 'getMessages') {
+
+		if (operation === "appendMessage" || operation === "getMessages") {
 			return new MessageOperationError(operation, error.message);
 		}
-		
-		if (operation === 'createStream' || operation === 'getSessionStreams') {
+
+		if (operation === "createStream" || operation === "getSessionStreams") {
 			return new StreamOperationError(operation, error.message);
 		}
-		
+
 		// Default to memory error for other cases
 		return new MemoryError(operation, error);
 	}
 
 	return new MemoryError(operation);
+}
+
+/**
+ * Helper to convert agent operation errors to appropriate ApiError types
+ * This function intelligently maps agent errors and provides fallbacks for unknown errors
+ */
+export function toAgentApiError(error: unknown, operation: string): ApiError {
+	if (error instanceof ApiError) {
+		return error; // Already a proper lightfast error
+	}
+
+	if (error instanceof Error) {
+		const message = error.message.toLowerCase();
+
+		// Pattern matching for common agent error patterns
+		if (message.includes("model") && message.includes("configuration")) {
+			return new AgentConfigurationError("model", error.message);
+		}
+
+		if (message.includes("context") && message.includes("creation")) {
+			return new ContextCreationError("runtime", error.message, error);
+		}
+
+		if (message.includes("tool") && (message.includes("factory") || message.includes("execution"))) {
+			return new ToolExecutionError("unknown", error.message, error);
+		}
+
+		if (message.includes("cache") && message.includes("operation")) {
+			return new CacheOperationError(operation, error.message, error);
+		}
+
+		if (message.includes("message") && message.includes("conversion")) {
+			return new MessageConversionError(operation, error.message, error);
+		}
+
+		if (message.includes("no messages") || message.includes("messages required")) {
+			return new NoMessagesError();
+		}
+
+		// Operation-specific mapping
+		if (operation === "stream") {
+			return new AgentStreamError(error.message, error);
+		}
+
+		if (operation === "createRuntimeContext") {
+			return new ContextCreationError("runtime", error.message, error);
+		}
+
+		if (operation === "resolveTools") {
+			return new ToolExecutionError("factory", error.message, error);
+		}
+
+		// Default to agent stream error for unknown errors
+		return new AgentStreamError(`${operation}: ${error.message}`, error);
+	}
+
+	// Handle non-Error thrown values
+	return new AgentStreamError(`${operation}: ${String(error)}`);
 }
 
 /**

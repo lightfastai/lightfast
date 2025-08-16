@@ -1,0 +1,708 @@
+---
+title: Fastify
+description: Learn how to integrate Lightfast agents with Fastify, the fast and low overhead web framework.
+---
+
+You can use Lightfast agents with [Fastify](https://fastify.dev/), a fast and low overhead web framework for Node.js.
+
+## Installation
+
+Install Fastify and required dependencies:
+
+```bash
+npm install fastify @fastify/cors @fastify/rate-limit @fastify/jwt
+# or
+yarn add fastify @fastify/cors @fastify/rate-limit @fastify/jwt
+# or
+pnpm add fastify @fastify/cors @fastify/rate-limit @fastify/jwt
+```
+
+## Examples
+
+The examples start a Fastify server that listens on port 8080. You can test it using `curl`:
+
+```bash
+curl -X POST http://localhost:8080/agents/my-session \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"What'\''s the weather like?"}]}'
+```
+
+The examples use the OpenAI `gpt-4o` model. Ensure that the OpenAI API key is set in the `OPENAI_API_KEY` environment variable.
+
+**Full example**: Available in our examples repository
+
+## Setup
+
+First, create your agent and memory configuration:
+
+```typescript
+import { createAgent } from '@lightfastai/core/agent';
+import { createTool } from '@lightfastai/core/tool';
+import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+// Create a simple tool
+const weatherTool = createTool({
+  name: 'get_weather',
+  description: 'Get weather for a location',
+  parameters: z.object({
+    location: z.string().describe('The location to get weather for')
+  }),
+  execute: async ({ location }) => {
+    return `Weather in ${location}: Sunny, 72°F`;
+  }
+});
+
+// Create the agent
+const agent = createAgent({
+  name: 'weather-assistant',
+  model: openai('gpt-4o'),
+  system: 'You are a helpful weather assistant.',
+  tools: { weather: weatherTool },
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    timestamp: Date.now(),
+    framework: 'fastify'
+  })
+});
+
+// Create memory adapter
+const memory = new RedisMemory({
+  url: process.env.REDIS_URL!,
+  token: process.env.REDIS_TOKEN!
+});
+```
+
+## Basic Integration
+
+```typescript
+import Fastify from 'fastify';
+import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+
+const fastify = Fastify({ 
+  logger: true,
+  bodyLimit: 10 * 1024 * 1024 // 10MB
+});
+
+fastify.post('/agents/:sessionId', async (request, reply) => {
+  // Convert Fastify request to Web API Request
+  const webRequest = new Request(`${request.protocol}://${request.hostname}${request.url}`, {
+    method: request.method,
+    headers: request.headers as any,
+    body: request.method === 'POST' ? JSON.stringify(request.body) : undefined
+  });
+
+  try {
+    const response = await fetchRequestHandler({
+      agent,
+      sessionId: request.params.sessionId,
+      memory,
+      req: webRequest,
+      resourceId: request.user?.id || 'anonymous',
+      createRequestContext: (req) => ({
+        userAgent: req.headers.get('user-agent'),
+        fastify: true,
+        version: fastify.version
+      })
+    });
+
+    // Convert Web API Response back to Fastify response
+    reply.status(response.status);
+    for (const [key, value] of response.headers) {
+      reply.header(key, value);
+    }
+
+    if (response.body) {
+      // Stream the response body
+      const reader = response.body.getReader();
+      const stream = new ReadableStream({
+        start(controller) {
+          const pump = async () => {
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              pump();
+            } catch (error) {
+              controller.error(error);
+            }
+          };
+          pump();
+        }
+      });
+      
+      return reply.send(stream);
+    } else {
+      return reply.send();
+    }
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
+const start = async () => {
+  try {
+    await fastify.listen({ port: 8080 });
+    console.log('Fastify server running on http://localhost:8080');
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
+```
+
+## Advanced Integration with Plugins
+
+```typescript
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
+import jwt from '@fastify/jwt';
+import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+
+// Create Fastify instance with TypeScript support
+const fastify = Fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || 'info',
+    prettyPrint: process.env.NODE_ENV === 'development'
+  }
+});
+
+// Register CORS
+await fastify.register(cors, {
+  origin: (origin, callback) => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
+  credentials: true
+});
+
+// Register rate limiting
+await fastify.register(rateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+  keyGenerator: (request) => {
+    return request.ip;
+  }
+});
+
+// Register JWT
+await fastify.register(jwt, {
+  secret: process.env.JWT_SECRET || 'supersecret'
+});
+
+// TypeScript declarations for Fastify
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: {
+      id: string;
+      email: string;
+      role: string;
+    };
+  }
+}
+
+// Authentication hook
+fastify.addHook('preHandler', async (request, reply) => {
+  // Skip authentication for health check
+  if (request.url === '/health') {
+    return;
+  }
+
+  try {
+    const token = request.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return reply.status(401).send({ error: 'Missing authorization token' });
+    }
+
+    const decoded = fastify.jwt.verify(token) as any;
+    request.user = {
+      id: decoded.sub,
+      email: decoded.email,
+      role: decoded.role || 'user'
+    };
+  } catch (error) {
+    return reply.status(401).send({ error: 'Invalid token' });
+  }
+});
+
+// Agent chat endpoint
+fastify.post<{
+  Params: { sessionId: string };
+  Body: { messages: Array<{ role: string; content: string }> };
+}>('/agents/:sessionId', async (request, reply) => {
+  const { sessionId } = request.params;
+  const user = request.user!;
+
+  // Convert to Web API Request
+  const webRequest = new Request(`${request.protocol}://${request.hostname}${request.url}`, {
+    method: request.method,
+    headers: request.headers as any,
+    body: JSON.stringify(request.body)
+  });
+
+  try {
+    const response = await fetchRequestHandler({
+      agent,
+      sessionId,
+      memory,
+      req: webRequest,
+      resourceId: user.id,
+      createRequestContext: (req) => ({
+        userAgent: req.headers.get('user-agent'),
+        userRole: user.role,
+        fastify: true,
+        requestId: request.id
+      }),
+      onError: ({ error }) => {
+        fastify.log.error({ sessionId, userId: user.id, error }, 'Agent error');
+      }
+    });
+
+    // Handle streaming response
+    reply.status(response.status);
+    for (const [key, value] of response.headers) {
+      reply.header(key, value);
+    }
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      const stream = new ReadableStream({
+        start(controller) {
+          const pump = async () => {
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              pump();
+            } catch (streamError) {
+              fastify.log.error({ sessionId, error: streamError }, 'Streaming error');
+              controller.error(streamError);
+            }
+          };
+          pump();
+        }
+      });
+      
+      return reply.send(stream);
+    } else {
+      return reply.send();
+    }
+  } catch (error) {
+    fastify.log.error({ sessionId, userId: user.id, error }, 'Request processing error');
+    return reply.status(500).send({ 
+      error: 'Internal Server Error',
+      requestId: request.id
+    });
+  }
+});
+
+// Session management endpoints
+fastify.get<{
+  Params: { sessionId: string };
+}>('/agents/:sessionId/history', async (request, reply) => {
+  const { sessionId } = request.params;
+  const user = request.user!;
+
+  try {
+    // Verify session ownership
+    const session = await memory.getSession(sessionId);
+    if (!session || session.resourceId !== user.id) {
+      return reply.status(404).send({ error: 'Session not found' });
+    }
+
+    const messages = await memory.getMessages(sessionId);
+    return reply.send({ messages });
+  } catch (error) {
+    fastify.log.error({ sessionId, userId: user.id, error }, 'History retrieval error');
+    return reply.status(500).send({ error: 'Failed to retrieve history' });
+  }
+});
+
+fastify.delete<{
+  Params: { sessionId: string };
+}>('/agents/:sessionId', async (request, reply) => {
+  const { sessionId } = request.params;
+  const user = request.user!;
+
+  try {
+    // Verify session ownership
+    const session = await memory.getSession(sessionId);
+    if (!session || session.resourceId !== user.id) {
+      return reply.status(404).send({ error: 'Session not found' });
+    }
+
+    await memory.deleteSession(sessionId);
+    return reply.status(204).send();
+  } catch (error) {
+    fastify.log.error({ sessionId, userId: user.id, error }, 'Session deletion error');
+    return reply.status(500).send({ error: 'Failed to delete session' });
+  }
+});
+
+// Health check endpoint
+fastify.get('/health', async (request, reply) => {
+  return reply.send({ 
+    status: 'ok', 
+    timestamp: Date.now(),
+    version: process.env.npm_package_version || '1.0.0',
+    uptime: process.uptime()
+  });
+});
+
+// Error handler
+fastify.setErrorHandler((error, request, reply) => {
+  fastify.log.error(error);
+  
+  // Don't leak error details in production
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Internal Server Error' 
+    : error.message;
+
+  reply.status(500).send({ 
+    error: message,
+    requestId: request.id
+  });
+});
+
+// Graceful shutdown
+const gracefulShutdown = async () => {
+  fastify.log.info('Received shutdown signal, closing server...');
+  try {
+    await fastify.close();
+    fastify.log.info('Server closed successfully');
+    process.exit(0);
+  } catch (error) {
+    fastify.log.error(error, 'Error during shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
+
+const start = async () => {
+  try {
+    const port = process.env.PORT ? parseInt(process.env.PORT) : 8080;
+    const host = process.env.HOST || '0.0.0.0';
+    
+    await fastify.listen({ port, host });
+    fastify.log.info(`Server listening on ${host}:${port}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
+```
+
+## Plugin-based Architecture
+
+Create reusable plugins for common functionality:
+
+```typescript
+// plugins/lightfast.ts
+import fp from 'fastify-plugin';
+import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import type { FastifyPluginAsync } from 'fastify';
+
+interface LightfastOptions {
+  agent: any;
+  memory: any;
+  prefix?: string;
+}
+
+const lightfastPlugin: FastifyPluginAsync<LightfastOptions> = async (fastify, options) => {
+  const { agent, memory, prefix = '/agents' } = options;
+
+  // Chat endpoint
+  fastify.post(`${prefix}/:sessionId`, async (request, reply) => {
+    const webRequest = new Request(`${request.protocol}://${request.hostname}${request.url}`, {
+      method: request.method,
+      headers: request.headers as any,
+      body: JSON.stringify(request.body)
+    });
+
+    try {
+      const response = await fetchRequestHandler({
+        agent,
+        sessionId: request.params.sessionId,
+        memory,
+        req: webRequest,
+        resourceId: request.user?.id || 'anonymous',
+        createRequestContext: (req) => ({
+          userAgent: req.headers.get('user-agent'),
+          fastify: true,
+          plugin: true
+        })
+      });
+
+      reply.status(response.status);
+      for (const [key, value] of response.headers) {
+        reply.header(key, value);
+      }
+
+      if (response.body) {
+        const reader = response.body.getReader();
+        const stream = new ReadableStream({
+          start(controller) {
+            const pump = async () => {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              pump();
+            };
+            pump();
+          }
+        });
+        
+        return reply.send(stream);
+      } else {
+        return reply.send();
+      }
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Session history
+  fastify.get(`${prefix}/:sessionId/history`, async (request, reply) => {
+    try {
+      const messages = await memory.getMessages(request.params.sessionId);
+      return reply.send({ messages });
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to retrieve history' });
+    }
+  });
+};
+
+export default fp(lightfastPlugin, {
+  fastify: '4.x',
+  name: 'lightfast'
+});
+```
+
+```typescript
+// server.ts
+import Fastify from 'fastify';
+import lightfastPlugin from './plugins/lightfast';
+
+const fastify = Fastify({ logger: true });
+
+// Register the Lightfast plugin
+await fastify.register(lightfastPlugin, {
+  agent,
+  memory,
+  prefix: '/api/agents'
+});
+
+await fastify.listen({ port: 8080 });
+```
+
+## Testing
+
+```typescript
+// test/agents.test.ts
+import { build } from '../src/app';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+describe('Agents API', () => {
+  let app: any;
+
+  beforeEach(async () => {
+    app = build({ logger: false });
+    await app.ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('should handle chat requests', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/agents/test-session',
+      headers: {
+        'content-type': 'application/json',
+        'authorization': 'Bearer valid-token'
+      },
+      payload: {
+        messages: [
+          { role: 'user', content: 'Hello' }
+        ]
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toMatch(/text\/plain/);
+  });
+
+  it('should require authentication', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/agents/test-session',
+      headers: {
+        'content-type': 'application/json'
+      },
+      payload: {
+        messages: [
+          { role: 'user', content: 'Hello' }
+        ]
+      }
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+});
+```
+
+## Performance Optimizations
+
+### Response Compression
+
+```typescript
+import compress from '@fastify/compress';
+
+await fastify.register(compress, {
+  threshold: 1024,
+  encodings: ['gzip', 'deflate']
+});
+```
+
+### Request Validation
+
+```typescript
+const chatSchema = {
+  body: {
+    type: 'object',
+    required: ['messages'],
+    properties: {
+      messages: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['role', 'content'],
+          properties: {
+            role: { type: 'string', enum: ['user', 'assistant'] },
+            content: { type: 'string', minLength: 1 }
+          }
+        }
+      }
+    }
+  },
+  params: {
+    type: 'object',
+    required: ['sessionId'],
+    properties: {
+      sessionId: { type: 'string', minLength: 1 }
+    }
+  }
+};
+
+fastify.post('/agents/:sessionId', { schema: chatSchema }, async (request, reply) => {
+  // Request is automatically validated
+  // ...
+});
+```
+
+### Connection Pooling
+
+```typescript
+// config/database.ts
+export const redisConfig = {
+  url: process.env.REDIS_URL!,
+  token: process.env.REDIS_TOKEN!,
+  pool: {
+    min: 5,
+    max: 20,
+    acquireTimeoutMillis: 30000,
+    idleTimeoutMillis: 30000
+  }
+};
+```
+
+## Deployment
+
+### Docker
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+EXPOSE 8080
+
+USER node
+
+CMD ["node", "dist/server.js"]
+```
+
+### PM2
+
+```javascript
+// ecosystem.config.js
+module.exports = {
+  apps: [{
+    name: 'lightfast-api',
+    script: 'dist/server.js',
+    instances: 'max',
+    exec_mode: 'cluster',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 8080
+    },
+    error_file: './logs/err.log',
+    out_file: './logs/out.log',
+    log_file: './logs/combined.log',
+    time: true
+  }]
+};
+```
+
+## Advantages
+
+- **Performance**: One of the fastest Node.js frameworks
+- **TypeScript**: Excellent TypeScript support with schema validation
+- **Plugin System**: Rich ecosystem of plugins
+- **Logging**: Built-in structured logging
+- **Validation**: JSON Schema validation out of the box
+
+## Disadvantages
+
+- **Manual Streaming**: Requires manual conversion for Web API streaming
+- **Learning Curve**: Different from Express patterns
+- **Plugin Dependencies**: Some features require additional plugins
+
+## Best Practices
+
+1. **Use TypeScript** for better type safety
+2. **Validate inputs** with JSON schemas
+3. **Implement proper logging** with structured logs
+4. **Use plugins** for common functionality
+5. **Handle errors gracefully** with proper error handlers
+6. **Monitor performance** with built-in metrics

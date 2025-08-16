@@ -12,7 +12,12 @@ import { getMessageKey, getSessionKey } from "../keys";
 import { MessageReader } from "../readers/message-reader";
 import { StreamWriter } from "../stream/stream-writer";
 import { MessageWriter } from "../writers/message-writer";
-import type { QStashClient, Runtime, SessionState, ToolRegistry } from "./types";
+import type {
+	QStashClient,
+	Runtime,
+	SessionState,
+	ToolRegistry,
+} from "./types";
 
 export class AgentRuntime implements Runtime {
 	private eventWriter: EventWriter;
@@ -78,7 +83,11 @@ export class AgentRuntime implements Runtime {
 			await this.saveSessionState(sessionId, state);
 
 			// Track continuation
-			await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex);
+			await this.eventWriter.writeAgentStepStart(
+				sessionId,
+				agent.getName(),
+				stepIndex,
+			);
 
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_STEP_START, {
@@ -92,7 +101,9 @@ export class AgentRuntime implements Runtime {
 			// This prevents tool calls from previous steps being incorrectly grouped
 			if (stepIndex > 0) {
 				const messageWriter = new MessageWriter(this.redis);
-				await messageWriter.appendMessageParts(sessionId, assistantMessageId, [{ type: "step-start" }]);
+				await messageWriter.appendMessageParts(sessionId, assistantMessageId, [
+					{ type: "step-start" },
+				]);
 			}
 		}
 
@@ -137,7 +148,12 @@ export class AgentRuntime implements Runtime {
 		}
 
 		// Track tool call
-		await this.eventWriter.writeAgentToolCall(sessionId, state.agentId, toolName, toolCallId);
+		await this.eventWriter.writeAgentToolCall(
+			sessionId,
+			state.agentId,
+			toolName,
+			toolCallId,
+		);
 
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_TOOL_CALL, {
@@ -173,7 +189,9 @@ export class AgentRuntime implements Runtime {
 
 			// Update pending tool calls and save state
 			if (state.pendingToolCalls) {
-				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
+				state.pendingToolCalls = state.pendingToolCalls.filter(
+					(tc) => tc.id !== toolCallId,
+				);
 				await this.saveSessionState(sessionId, state);
 			}
 
@@ -183,7 +201,10 @@ export class AgentRuntime implements Runtime {
 				streamId: state.assistantMessageId,
 				toolCallId,
 				toolName,
-				result: typeof result === "object" ? JSON.stringify(result).slice(0, 100) + "..." : result,
+				result:
+					typeof result === "object"
+						? JSON.stringify(result).slice(0, 100) + "..."
+						: result,
 			});
 			await streamWriter.writeToolResult(state.assistantMessageId, {
 				toolCallId,
@@ -196,7 +217,10 @@ export class AgentRuntime implements Runtime {
 			const messageReader = new MessageReader(this.redis);
 
 			// Get the current assistant message
-			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
+			const assistantMessage = await messageReader.getMessage(
+				sessionId,
+				state.assistantMessageId,
+			);
 
 			if (assistantMessage && assistantMessage.parts) {
 				// Add tool result part using AI SDK v5 format
@@ -210,9 +234,15 @@ export class AgentRuntime implements Runtime {
 				};
 
 				// Append the tool result part to the existing message
-				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [toolResultPart]);
+				await messageWriter.appendMessageParts(
+					sessionId,
+					state.assistantMessageId,
+					[toolResultPart],
+				);
 			} else {
-				throw new Error(`Assistant message not found: ${state.assistantMessageId}`);
+				throw new Error(
+					`Assistant message not found: ${state.assistantMessageId}`,
+				);
 			}
 
 			// Don't store tool results in state - they're already in the messages
@@ -270,7 +300,10 @@ export class AgentRuntime implements Runtime {
 			const messageWriter = new MessageWriter(this.redis);
 			const messageReader = new MessageReader(this.redis);
 
-			const assistantMessage = await messageReader.getMessage(sessionId, state.assistantMessageId);
+			const assistantMessage = await messageReader.getMessage(
+				sessionId,
+				state.assistantMessageId,
+			);
 
 			if (assistantMessage && assistantMessage.parts) {
 				// Add error tool result part using AI SDK v5 format
@@ -284,12 +317,18 @@ export class AgentRuntime implements Runtime {
 				};
 
 				// Append the error result part to the existing message
-				await messageWriter.appendMessageParts(sessionId, state.assistantMessageId, [errorResultPart]);
+				await messageWriter.appendMessageParts(
+					sessionId,
+					state.assistantMessageId,
+					[errorResultPart],
+				);
 			}
 
 			// Update pending tool calls and save state
 			if (state.pendingToolCalls) {
-				state.pendingToolCalls = state.pendingToolCalls.filter((tc) => tc.id !== toolCallId);
+				state.pendingToolCalls = state.pendingToolCalls.filter(
+					(tc) => tc.id !== toolCallId,
+				);
 				await this.saveSessionState(sessionId, state);
 			}
 
@@ -320,10 +359,21 @@ export class AgentRuntime implements Runtime {
 		baseUrl: string;
 		assistantMessageId: string;
 	}): Promise<void> {
-		const { sessionId, agent, messages, stepIndex, baseUrl, assistantMessageId } = params;
+		const {
+			sessionId,
+			agent,
+			messages,
+			stepIndex,
+			baseUrl,
+			assistantMessageId,
+		} = params;
 
 		// Track step start
-		await this.eventWriter.writeAgentStepStart(sessionId, agent.getName(), stepIndex);
+		await this.eventWriter.writeAgentStepStart(
+			sessionId,
+			agent.getName(),
+			stepIndex,
+		);
 
 		// Log to structured logger
 		this.logger.logEvent(LogEventName.AGENT_STEP_START, {
@@ -343,19 +393,22 @@ export class AgentRuntime implements Runtime {
 			}
 
 			// Agent makes decision and streams response
-			const { decision, chunkCount, fullContent } = await agent.makeDecisionForRuntime(
-				sessionId,
-				state.resourceId,
-				messages,
-				state.temperature || 0.7,
-				assistantMessageId,
-			);
+			const { decision, chunkCount, fullContent } =
+				await agent.makeDecisionForRuntime(
+					sessionId,
+					state.resourceId,
+					messages,
+					state.temperature || 0.7,
+					assistantMessageId,
+				);
 
 			// The agent has already written the assistant message during streaming
 			// We just need to get the latest messages from state
 			const updatedState = await this.getSessionState(sessionId);
 			if (!updatedState) {
-				throw new Error(`Session state not found after decision for ${sessionId}`);
+				throw new Error(
+					`Session state not found after decision for ${sessionId}`,
+				);
 			}
 
 			// Update state
@@ -364,7 +417,12 @@ export class AgentRuntime implements Runtime {
 			await this.saveSessionState(sessionId, updatedState);
 
 			// Track step complete
-			await this.eventWriter.writeAgentStepComplete(sessionId, agent.getName(), stepIndex, Date.now() - stepStartTime);
+			await this.eventWriter.writeAgentStepComplete(
+				sessionId,
+				agent.getName(),
+				stepIndex,
+				Date.now() - stepStartTime,
+			);
 
 			// Log to structured logger
 			this.logger.logEvent(LogEventName.AGENT_STEP_COMPLETE, {
@@ -399,7 +457,12 @@ export class AgentRuntime implements Runtime {
 				});
 			} else {
 				// No tools - complete the loop
-				await this.completeAgentLoop(sessionId, agent.getName(), updatedState, baseUrl);
+				await this.completeAgentLoop(
+					sessionId,
+					agent.getName(),
+					updatedState,
+					baseUrl,
+				);
 			}
 		} catch (error) {
 			await this.eventWriter.writeAgentError(
@@ -469,7 +532,10 @@ export class AgentRuntime implements Runtime {
 						toolsUsed.add((part as any).toolName);
 					}
 					// Tool result part (type: tool-{toolName} with state)
-					if (part.type.startsWith("tool-") && (part as any).state === "output-available") {
+					if (
+						part.type.startsWith("tool-") &&
+						(part as any).state === "output-available"
+					) {
 						// Extract tool name from type
 						const toolName = part.type.split("-").slice(1).join("-");
 						toolsUsed.add(toolName);
@@ -502,7 +568,9 @@ export class AgentRuntime implements Runtime {
 	/**
 	 * Get session state from Redis
 	 */
-	private async getSessionState(sessionId: string): Promise<SessionState | null> {
+	private async getSessionState(
+		sessionId: string,
+	): Promise<SessionState | null> {
 		const key = getSessionKey(sessionId);
 		const data = await this.redis.get(key);
 		return data as SessionState | null;
@@ -511,7 +579,10 @@ export class AgentRuntime implements Runtime {
 	/**
 	 * Save session state to Redis
 	 */
-	private async saveSessionState(sessionId: string, state: SessionState): Promise<void> {
+	private async saveSessionState(
+		sessionId: string,
+		state: SessionState,
+	): Promise<void> {
 		const key = getSessionKey(sessionId);
 		await this.redis.set(key, state);
 	}

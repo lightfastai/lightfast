@@ -5,7 +5,8 @@
 
 import type { Redis } from "@upstash/redis";
 import { uuidv4 } from "../../utils/uuid";
-import { type AgentEvent, EventName } from "./types";
+import {  EventName } from "./types";
+import type {AgentEvent} from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -32,7 +33,12 @@ const json = (data: Record<string, unknown>): Uint8Array => {
 
 // Validate and parse event message
 function parseEventMessage(rawObj: Record<string, string>): AgentEvent | null {
-	if (!rawObj.name || !rawObj.timestamp || !rawObj.sessionId || !rawObj.agentId) {
+	if (
+		!rawObj.name ||
+		!rawObj.timestamp ||
+		!rawObj.sessionId ||
+		!rawObj.agentId
+	) {
 		return null;
 	}
 
@@ -72,7 +78,8 @@ function parseEventMessage(rawObj: Record<string, string>): AgentEvent | null {
 			};
 
 		case EventName.AGENT_TOOL_RESULT:
-			if (!rawObj.toolName || !rawObj.toolCallId || !rawObj.duration) return null;
+			if (!rawObj.toolName || !rawObj.toolCallId || !rawObj.duration)
+				return null;
 			return {
 				...baseEvent,
 				name: EventName.AGENT_TOOL_RESULT,
@@ -131,7 +138,10 @@ export class EventConsumer {
 	/**
 	 * Create an event stream for SSE following the clean pattern
 	 */
-	createEventStream(sessionId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
+	createEventStream(
+		sessionId: string,
+		signal?: AbortSignal,
+	): ReadableStream<Uint8Array> {
 		const streamKey = this.getEventStreamKey(sessionId);
 		const groupName = `sse-group-${uuidv4()}`;
 		const redis = this.redis;
@@ -145,19 +155,29 @@ export class EventConsumer {
 						group: groupName,
 						id: "0",
 					});
-					console.log(`[EventConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+					console.log(
+						`[EventConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`,
+					);
 				} catch (err) {
-					console.log(`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
-						stream: streamKey,
-						error: err instanceof Error ? err.message : String(err),
-					});
+					console.log(
+						`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`,
+						{
+							stream: streamKey,
+							error: err instanceof Error ? err.message : String(err),
+						},
+					);
 				}
 
 				let subscription: ReturnType<typeof redis.subscribe> | null = null;
 
 				// Read stream messages using consumer group
 				const readStreamMessages = async () => {
-					const chunks = (await redis.xreadgroup(groupName, "consumer-1", streamKey, ">")) as StreamData[];
+					const chunks = (await redis.xreadgroup(
+						groupName,
+						"consumer-1",
+						streamKey,
+						">",
+					)) as StreamData[];
 
 					if (chunks && chunks.length > 0) {
 						const streamData = chunks[0];
@@ -170,7 +190,9 @@ export class EventConsumer {
 
 									if (event) {
 										console.log("Sending event:", event);
-										controller.enqueue(json(event as unknown as Record<string, unknown>));
+										controller.enqueue(
+											json(event as unknown as Record<string, unknown>),
+										);
 									}
 								}
 							}
@@ -190,7 +212,10 @@ export class EventConsumer {
 				});
 
 				subscription.on("error", (error) => {
-					console.error(`Event stream subscription error on ${streamKey}:`, error);
+					console.error(
+						`Event stream subscription error on ${streamKey}:`,
+						error,
+					);
 					controller.error(error);
 				});
 
@@ -235,19 +260,27 @@ export class EventConsumer {
 					group: groupName,
 					id: "0",
 				});
-				console.log(`[EventConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`);
+				console.log(
+					`[EventConsumer] Created consumer group: ${groupName} for stream: ${streamKey}`,
+				);
 			} catch (err) {
-				console.log(`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`, {
-					stream: streamKey,
-					error: err instanceof Error ? err.message : String(err),
-				});
+				console.log(
+					`[EventConsumer] Consumer group creation failed (likely exists): ${groupName}`,
+					{
+						stream: streamKey,
+						error: err instanceof Error ? err.message : String(err),
+					},
+				);
 			}
 
 			// Read stream messages
 			const readStreamMessages = async () => {
-				const chunks = (await this.redis.xreadgroup(groupName, `consumer-${uuidv4()}`, streamKey, ">")) as
-					| StreamData[]
-					| null;
+				const chunks = (await this.redis.xreadgroup(
+					groupName,
+					`consumer-${uuidv4()}`,
+					streamKey,
+					">",
+				)) as StreamData[] | null;
 
 				if (chunks && chunks.length > 0) {
 					const streamData = chunks[0];
@@ -310,7 +343,12 @@ export class EventConsumer {
 
 		try {
 			// Read all messages from the stream
-			const messages = (await this.redis.xrange(streamKey, "-", "+", limit)) as unknown as StreamMessage[];
+			const messages = (await this.redis.xrange(
+				streamKey,
+				"-",
+				"+",
+				limit,
+			)) as unknown as StreamMessage[];
 
 			for (const [_messageId, fields] of messages) {
 				const rawObj = arrToObj(fields);

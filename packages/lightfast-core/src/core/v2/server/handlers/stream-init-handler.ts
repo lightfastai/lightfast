@@ -42,17 +42,24 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	request: Request,
 	deps: StreamInitDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent: _agent, redis, qstash, baseUrl, resourceId, loggerFactory } = deps;
+	const {
+		agent: _agent,
+		redis,
+		qstash,
+		baseUrl,
+		resourceId,
+		loggerFactory,
+	} = deps;
 
 	const body = (await request.json()) as StreamInitRequestBody;
 	const { prompt, sessionId } = body;
 
 	// Validate required fields
-	if (!prompt || !prompt.trim()) {
+	if (!prompt?.trim()) {
 		return Response.json({ error: "Prompt is required" }, { status: 400 });
 	}
 
-	if (!sessionId || !sessionId.trim()) {
+	if (!sessionId?.trim()) {
 		return Response.json({ error: "Session ID is required" }, { status: 400 });
 	}
 
@@ -68,8 +75,8 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
-		redis.get(sessionKey) as Promise<SessionState | null>,
-		redis.json.get(messageKey, "$") as Promise<LightfastDBMessage[] | null>,
+		redis.get(sessionKey),
+		redis.json.get(messageKey, "$"),
 	]);
 
 	// Determine the step index
@@ -101,10 +108,18 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 			createdAt: now,
 			updatedAt: now,
 		};
-		writePipeline.json.set(messageKey, "$", storage as unknown as Record<string, unknown>);
+		writePipeline.json.set(
+			messageKey,
+			"$",
+			storage as unknown as Record<string, unknown>,
+		);
 	} else {
 		// Append to existing messages
-		writePipeline.json.arrappend(messageKey, "$.messages", userMessage as unknown as Record<string, unknown>);
+		writePipeline.json.arrappend(
+			messageKey,
+			"$.messages",
+			userMessage as unknown as Record<string, unknown>,
+		);
 		writePipeline.json.set(messageKey, "$.updatedAt", now);
 	}
 
@@ -115,7 +130,10 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	});
 
 	// Publish notification
-	writePipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.INIT }));
+	writePipeline.publish(
+		streamKey,
+		JSON.stringify({ type: DeltaStreamType.INIT }),
+	);
 
 	// Set TTL on the stream (24 hours)
 	writePipeline.expire(streamKey, 86400);
@@ -173,10 +191,15 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 				},
 			})
 			.catch((error) => {
-				console.error(`[Stream Init] Failed to publish agent loop step message for session ${sessionId}:`, error);
+				console.error(
+					`[Stream Init] Failed to publish agent loop step message for session ${sessionId}:`,
+					error,
+				);
 			});
 	} else {
-		console.warn(`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`);
+		console.warn(
+			`[Stream Init] QStash not configured, cannot start agent loop for session ${sessionId}`,
+		);
 	}
 
 	// Return session info immediately with message ID

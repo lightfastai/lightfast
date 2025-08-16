@@ -22,14 +22,18 @@ export class MessageWriter {
 	/**
 	 * Write multiple UIMessages at once
 	 */
-	async writeUIMessages(sessionId: string, resourceId: string, messages: UIMessage[]): Promise<void> {
+	async writeUIMessages(
+		sessionId: string,
+		resourceId: string,
+		messages: UIMessage[],
+	): Promise<void> {
 		if (messages.length === 0) return;
 
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		const existing = (await this.redis.json.get(key, "$"));
 
 		if (!existing || existing.length === 0) {
 			// Create new storage
@@ -40,11 +44,19 @@ export class MessageWriter {
 				createdAt: now,
 				updatedAt: now,
 			};
-			await this.redis.json.set(key, "$", storage as unknown as Record<string, unknown>);
+			await this.redis.json.set(
+				key,
+				"$",
+				storage as unknown as Record<string, unknown>,
+			);
 		} else {
 			// Use pipeline for atomic operation
 			const pipeline = this.redis.pipeline();
-			pipeline.json.arrappend(key, "$.messages", ...(messages as unknown as Record<string, unknown>[]));
+			pipeline.json.arrappend(
+				key,
+				"$.messages",
+				...(messages as unknown as Record<string, unknown>[]),
+			);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
 		}
@@ -53,7 +65,11 @@ export class MessageWriter {
 	/**
 	 * Write a single UIMessage (convenience method)
 	 */
-	async writeUIMessage(sessionId: string, resourceId: string, message: UIMessage): Promise<void> {
+	async writeUIMessage(
+		sessionId: string,
+		resourceId: string,
+		message: UIMessage,
+	): Promise<void> {
 		await this.writeUIMessages(sessionId, resourceId, [message]);
 	}
 
@@ -61,19 +77,25 @@ export class MessageWriter {
 	 * Update an existing message by replacing its parts
 	 * Used for updating assistant messages with complete content
 	 */
-	async updateMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
+	async updateMessageParts(
+		sessionId: string,
+		messageId: string,
+		newParts: any[],
+	): Promise<void> {
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		const existing = (await this.redis.json.get(key, "$"));
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
 		const messages = existing[0]?.messages || [];
-		const messageIndex = messages.findIndex((m: UIMessage) => m.id === messageId);
+		const messageIndex = messages.findIndex(
+			(m: UIMessage) => m.id === messageId,
+		);
 
 		if (messageIndex < 0) {
 			throw new Error(`Message ${messageId} not found in session ${sessionId}`);
@@ -89,7 +111,11 @@ export class MessageWriter {
 
 			// Update the specific message in the array
 			const pipeline = this.redis.pipeline();
-			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
+			pipeline.json.set(
+				key,
+				`$.messages[${messageIndex}]`,
+				updatedMessage as unknown as Record<string, unknown>,
+			);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
 		}
@@ -99,19 +125,25 @@ export class MessageWriter {
 	 * Add new parts to an existing message
 	 * Used for adding tool results to assistant messages
 	 */
-	async appendMessageParts(sessionId: string, messageId: string, newParts: any[]): Promise<void> {
+	async appendMessageParts(
+		sessionId: string,
+		messageId: string,
+		newParts: any[],
+	): Promise<void> {
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		const existing = (await this.redis.json.get(key, "$"));
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
 		const messages = existing[0]?.messages || [];
-		const messageIndex = messages.findIndex((m: UIMessage) => m.id === messageId);
+		const messageIndex = messages.findIndex(
+			(m: UIMessage) => m.id === messageId,
+		);
 
 		if (messageIndex < 0) {
 			throw new Error(`Message ${messageId} not found in session ${sessionId}`);
@@ -127,7 +159,11 @@ export class MessageWriter {
 
 			// Update the specific message in the array
 			const pipeline = this.redis.pipeline();
-			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
+			pipeline.json.set(
+				key,
+				`$.messages[${messageIndex}]`,
+				updatedMessage as unknown as Record<string, unknown>,
+			);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
 		}
@@ -137,19 +173,26 @@ export class MessageWriter {
 	 * Update a tool call part with its result
 	 * Finds the existing tool call part and updates it with the output
 	 */
-	async updateToolCallResult(sessionId: string, messageId: string, toolCallId: string, toolResult: any): Promise<void> {
+	async updateToolCallResult(
+		sessionId: string,
+		messageId: string,
+		toolCallId: string,
+		toolResult: any,
+	): Promise<void> {
 		const key = getMessageKey(sessionId);
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = (await this.redis.json.get(key, "$")) as LightfastDBMessage[] | null;
+		const existing = (await this.redis.json.get(key, "$"));
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
 		const messages = existing[0]?.messages || [];
-		const messageIndex = messages.findIndex((m: UIMessage) => m.id === messageId);
+		const messageIndex = messages.findIndex(
+			(m: UIMessage) => m.id === messageId,
+		);
 
 		if (messageIndex < 0) {
 			throw new Error(`Message ${messageId} not found in session ${sessionId}`);
@@ -157,7 +200,7 @@ export class MessageWriter {
 
 		// Update the tool call part with the result
 		const existingMessage = messages[messageIndex];
-		if (existingMessage && existingMessage.parts) {
+		if (existingMessage?.parts) {
 			// Find the tool call part
 			const updatedParts = existingMessage.parts.map((part: any) => {
 				if (part.toolCallId === toolCallId) {
@@ -178,7 +221,11 @@ export class MessageWriter {
 
 			// Update the specific message in the array
 			const pipeline = this.redis.pipeline();
-			pipeline.json.set(key, `$.messages[${messageIndex}]`, updatedMessage as unknown as Record<string, unknown>);
+			pipeline.json.set(
+				key,
+				`$.messages[${messageIndex}]`,
+				updatedMessage as unknown as Record<string, unknown>,
+			);
 			pipeline.json.set(key, "$.updatedAt", now);
 			await pipeline.exec();
 		}
@@ -199,7 +246,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = (await this.redis.json.get(messageKey, "$")) as LightfastDBMessage[] | null;
+		const existing = (await this.redis.json.get(messageKey, "$"));
 
 		const pipeline = this.redis.pipeline();
 
@@ -212,11 +259,17 @@ export class MessageWriter {
 				createdAt: now,
 				updatedAt: now,
 			};
-			pipeline.json.set(messageKey, "$", storage as unknown as Record<string, unknown>);
+			pipeline.json.set(
+				messageKey,
+				"$",
+				storage as unknown as Record<string, unknown>,
+			);
 		} else {
 			// Check if this message ID already exists
 			const messages = existing[0]?.messages || [];
-			const existingMessageIndex = messages.findIndex((m: UIMessage) => m.id === message.id);
+			const existingMessageIndex = messages.findIndex(
+				(m: UIMessage) => m.id === message.id,
+			);
 
 			if (existingMessageIndex >= 0) {
 				// Message exists - merge parts instead of creating duplicate
@@ -236,7 +289,11 @@ export class MessageWriter {
 				}
 			} else {
 				// New message - append to array
-				pipeline.json.arrappend(messageKey, "$.messages", message as unknown as Record<string, unknown>);
+				pipeline.json.arrappend(
+					messageKey,
+					"$.messages",
+					message as unknown as Record<string, unknown>,
+				);
 			}
 			pipeline.json.set(messageKey, "$.updatedAt", now);
 		}
@@ -248,7 +305,10 @@ export class MessageWriter {
 		});
 
 		// Publish for real-time notifications
-		pipeline.publish(streamKey, JSON.stringify({ type: DeltaStreamType.COMPLETE }));
+		pipeline.publish(
+			streamKey,
+			JSON.stringify({ type: DeltaStreamType.COMPLETE }),
+		);
 
 		// Execute all operations atomically
 		await pipeline.exec();

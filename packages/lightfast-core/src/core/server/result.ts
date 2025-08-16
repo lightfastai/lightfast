@@ -2,7 +2,9 @@
  * Result type for better error handling
  * Inspired by Rust's Result<T, E> type
  */
-export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+export type Result<T, E = Error> =
+	| { ok: true; value: T }
+	| { ok: false; error: E };
 
 /**
  * Helper functions for creating Result types
@@ -20,7 +22,10 @@ export const Err = <E>(error: E): Result<never, E> => ({
 /**
  * Helper to map over a successful result
  */
-export function mapResult<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
+export function mapResult<T, U, E>(
+	result: Result<T, E>,
+	fn: (value: T) => U,
+): Result<U, E> {
 	if (result.ok) {
 		return Ok(fn(result.value));
 	}
@@ -30,7 +35,10 @@ export function mapResult<T, U, E>(result: Result<T, E>, fn: (value: T) => U): R
 /**
  * Helper to chain Result operations
  */
-export function andThen<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<U, E>): Result<U, E> {
+export function andThen<T, U, E>(
+	result: Result<T, E>,
+	fn: (value: T) => Result<U, E>,
+): Result<U, E> {
 	if (result.ok) {
 		return fn(result.value);
 	}
@@ -40,7 +48,10 @@ export function andThen<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<
 /**
  * Helper to map error types
  */
-export function mapError<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
+export function mapError<T, E, F>(
+	result: Result<T, E>,
+	fn: (error: E) => F,
+): Result<T, F> {
 	if (!result.ok) {
 		return Err(fn(result.error));
 	}
@@ -57,7 +68,9 @@ export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
 /**
  * Helper to check if all Results in an array are Ok
  */
-export function allOk<T, E>(results: Result<T, E>[]): results is { ok: true; value: T }[] {
+export function allOk<T, E>(
+	results: Result<T, E>[],
+): results is { ok: true; value: T }[] {
 	return results.every((r) => r.ok);
 }
 

@@ -22,10 +22,22 @@ export interface StepHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent loop step event
  */
 export async function handleAgentStep<TRuntimeContext = unknown>(
-	body: { sessionId: string; stepIndex: number; resourceId?: string; assistantMessageId?: string },
+	body: {
+		sessionId: string;
+		stepIndex: number;
+		resourceId?: string;
+		assistantMessageId?: string;
+	},
 	deps: StepHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
-	const { agent, redis, qstash, baseUrl, resourceId: depsResourceId, loggerFactory } = deps;
+	const {
+		agent,
+		redis,
+		qstash,
+		baseUrl,
+		resourceId: depsResourceId,
+		loggerFactory,
+	} = deps;
 
 	// Create logger for this session
 	const logger = loggerFactory
@@ -48,7 +60,9 @@ export async function handleAgentStep<TRuntimeContext = unknown>(
 		}
 
 		if (!assistantMessageId) {
-			throw new Error("assistantMessageId is required for agent step execution");
+			throw new Error(
+				"assistantMessageId is required for agent step execution",
+			);
 		}
 
 		await runtime.executeStep({

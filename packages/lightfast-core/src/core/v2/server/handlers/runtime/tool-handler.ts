@@ -23,7 +23,12 @@ export interface ToolHandlerDependencies<TRuntimeContext = unknown> {
  * Handle agent tool call event
  */
 export async function handleToolCall<TRuntimeContext = unknown>(
-	body: { sessionId: string; toolCallId: string; toolName: string; toolArgs: Record<string, any> },
+	body: {
+		sessionId: string;
+		toolCallId: string;
+		toolName: string;
+		toolArgs: Record<string, any>;
+	},
 	deps: ToolHandlerDependencies<TRuntimeContext>,
 ): Promise<Response> {
 	const { agent, redis, qstash, baseUrl, resourceId, loggerFactory } = deps;

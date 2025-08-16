@@ -1,15 +1,21 @@
-import { type Tool as AiTool, tool as aiTool } from "ai";
+import {  tool as aiTool } from "ai";
+import type {Tool as AiTool} from "ai";
 import type { z } from "zod";
 
 /**
  * A tool factory function that creates a tool with runtime context
  */
-export type ToolFactory<TRuntimeContext = unknown> = (context: TRuntimeContext) => AiTool;
+export type ToolFactory<TRuntimeContext = unknown> = (
+	context: TRuntimeContext,
+) => AiTool;
 
 /**
  * Type for a collection of tool factories
  */
-export type ToolFactorySet<TRuntimeContext = unknown> = Record<string, ToolFactory<TRuntimeContext>>;
+export type ToolFactorySet<TRuntimeContext = unknown> = Record<
+	string,
+	ToolFactory<TRuntimeContext>
+>;
 
 /**
  * Creates a tool that injects runtime context
@@ -47,7 +53,9 @@ export function createTool<
 		input: z.infer<TInputSchema>,
 		context: TRuntimeContext,
 	) =>
-		| Promise<TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown>
+		| Promise<
+				TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown
+		  >
 		| (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
 }): ToolFactory<TRuntimeContext> {
 	return (context: TRuntimeContext) => {
@@ -71,4 +79,6 @@ export type InferToolContext<T> = T extends ToolFactory<infer C> ? C : never;
 /**
  * Type helper to extract the return type of a tool factory
  */
-export type InferTool<T> = T extends ToolFactory<infer _> ? ReturnType<T> : never;
+export type InferTool<T> = T extends ToolFactory<infer _>
+	? ReturnType<T>
+	: never;

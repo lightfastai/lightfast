@@ -98,6 +98,8 @@ export class AnthropicProviderCache implements ProviderCache {
 /**
  * Factory function for creating an Anthropic cache provider
  */
-export function anthropicCache(config?: AnthropicCacheConfig): AnthropicProviderCache {
+export function anthropicCache(
+	config?: AnthropicCacheConfig,
+): AnthropicProviderCache {
 	return new AnthropicProviderCache(config);
 }

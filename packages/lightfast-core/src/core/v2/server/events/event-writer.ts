@@ -4,7 +4,8 @@
 
 import type { Redis } from "@upstash/redis";
 import { uuidv4 } from "../../utils/uuid";
-import { type AgentEvent, EventName } from "./types";
+import {  EventName } from "./types";
+import type {AgentEvent} from "./types";
 
 export class EventWriter {
 	constructor(private redis: Redis) {}
@@ -33,7 +34,8 @@ export class EventWriter {
 			...Object.entries(event).reduce(
 				(acc, [key, value]) => {
 					if (!["name", "timestamp", "sessionId", "agentId"].includes(key)) {
-						acc[key] = typeof value === "object" ? JSON.stringify(value) : String(value);
+						acc[key] =
+							typeof value === "object" ? JSON.stringify(value) : String(value);
 					}
 					return acc;
 				},
@@ -93,7 +95,12 @@ export class EventWriter {
 	/**
 	 * Write agent tool call event
 	 */
-	async writeAgentToolCall(sessionId: string, agentId: string, toolName: string, toolCallId: string): Promise<void> {
+	async writeAgentToolCall(
+		sessionId: string,
+		agentId: string,
+		toolName: string,
+		toolCallId: string,
+	): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_TOOL_CALL,
 			timestamp: new Date().toISOString(),
@@ -128,7 +135,11 @@ export class EventWriter {
 	/**
 	 * Write agent step start event
 	 */
-	async writeAgentStepStart(sessionId: string, agentId: string, stepIndex: number): Promise<void> {
+	async writeAgentStepStart(
+		sessionId: string,
+		agentId: string,
+		stepIndex: number,
+	): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_STEP_START,
 			timestamp: new Date().toISOString(),
@@ -141,7 +152,12 @@ export class EventWriter {
 	/**
 	 * Write agent step complete event
 	 */
-	async writeAgentStepComplete(sessionId: string, agentId: string, stepIndex: number, duration: number): Promise<void> {
+	async writeAgentStepComplete(
+		sessionId: string,
+		agentId: string,
+		stepIndex: number,
+		duration: number,
+	): Promise<void> {
 		await this.writeEvent({
 			name: EventName.AGENT_STEP_COMPLETE,
 			timestamp: new Date().toISOString(),

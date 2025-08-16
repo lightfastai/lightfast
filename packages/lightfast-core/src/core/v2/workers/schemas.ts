@@ -35,9 +35,18 @@ export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
  * Schema for worker configuration
  */
 export const WorkerConfigSchema = z.object({
-	maxExecutionTime: z.number().default(25000).describe("Maximum execution time in milliseconds"),
-	retryAttempts: z.number().default(3).describe("Number of retry attempts for recoverable errors"),
-	retryDelay: z.number().default(1000).describe("Delay between retries in milliseconds"),
+	maxExecutionTime: z
+		.number()
+		.default(25000)
+		.describe("Maximum execution time in milliseconds"),
+	retryAttempts: z
+		.number()
+		.default(3)
+		.describe("Number of retry attempts for recoverable errors"),
+	retryDelay: z
+		.number()
+		.default(1000)
+		.describe("Delay between retries in milliseconds"),
 });
 
 export type WorkerConfig = z.infer<typeof WorkerConfigSchema>;

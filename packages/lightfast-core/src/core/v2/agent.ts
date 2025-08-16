@@ -7,14 +7,15 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
 import {
-	type Tool as AiTool,
+	
 	convertToModelMessages,
 	smoothStream,
 	streamText,
-	type ToolSet,
-	type UIMessage,
-	wrapLanguageModel,
+	
+	
+	wrapLanguageModel
 } from "ai";
+import type {Tool as AiTool, ToolSet, UIMessage} from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -24,7 +25,12 @@ import { MessageReader } from "./server/readers/message-reader";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
-import { type AgentDecision, AgentDecisionSchema, type WorkerConfig } from "./workers/schemas";
+import {
+	
+	AgentDecisionSchema
+	
+} from "./workers/schemas";
+import type {AgentDecision, WorkerConfig} from "./workers/schemas";
 
 // Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
@@ -35,7 +41,9 @@ export interface AgentToolDefinition {
 }
 
 // Extract core types from streamText
-type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
+type StreamTextParameters<TOOLS extends ToolSet> = Parameters<
+	typeof streamText<TOOLS>
+>[0];
 
 // Properties to exclude from streamText parameters
 type ExcludedStreamTextProps =
@@ -55,7 +63,8 @@ type ExcludedStreamTextProps =
 	| "experimental_transform"; // We handle this separately
 
 // Agent-specific configuration extending streamText parameters
-export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
+export interface AgentConfig
+	extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
 	// Agent-specific required fields
 	name: string;
 }
@@ -66,7 +75,10 @@ export interface AgentOptions<TRuntimeContext = unknown> extends AgentConfig {
 	// Support both legacy tools and tool factories
 	tools?: AgentToolDefinition[] | ToolFactorySet<TRuntimeContext>;
 	// Function to create runtime context from session
-	createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
+	createRuntimeContext?: (params: {
+		sessionId: string;
+		userId?: string;
+	}) => TRuntimeContext;
 	// Allow passing commonly used streamText options directly
 	experimental_transform?: StreamTextParameters<ToolSet>["experimental_transform"];
 }
@@ -80,7 +92,10 @@ export class Agent<TRuntimeContext = unknown> {
 	private streamWriter: StreamWriter;
 	private tools: Map<string, AgentToolDefinition>;
 	private toolFactories?: ToolFactorySet<TRuntimeContext>;
-	private createRuntimeContext?: (params: { sessionId: string; userId?: string }) => TRuntimeContext;
+	private createRuntimeContext?: (params: {
+		sessionId: string;
+		userId?: string;
+	}) => TRuntimeContext;
 	private workerConfig: Partial<WorkerConfig>;
 
 	private messageReader: MessageReader;
@@ -91,7 +106,13 @@ export class Agent<TRuntimeContext = unknown> {
 		workerConfig: Partial<WorkerConfig> = {},
 	) {
 		// Destructure agent-specific properties from streamText config
-		const { systemPrompt, tools, createRuntimeContext, experimental_transform, ...streamTextConfig } = options;
+		const {
+			systemPrompt,
+			tools,
+			createRuntimeContext,
+			experimental_transform,
+			...streamTextConfig
+		} = options;
 
 		// Store agent-specific properties
 		this.systemPrompt = systemPrompt;
@@ -133,7 +154,11 @@ export class Agent<TRuntimeContext = unknown> {
 	/**
 	 * Execute a tool by name with runtime context support
 	 */
-	async executeTool(toolName: string, args: Record<string, any>, sessionId?: string): Promise<any> {
+	async executeTool(
+		toolName: string,
+		args: Record<string, any>,
+		sessionId?: string,
+	): Promise<any> {
 		// First check legacy tools
 		const tool = this.tools.get(toolName);
 		if (tool) {
@@ -141,7 +166,10 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Check tool factories with runtime context
-		if (this.toolFactories && this.toolFactories[toolName] && this.createRuntimeContext) {
+		if (
+			this.toolFactories?.[toolName] &&
+			this.createRuntimeContext
+		) {
 			const runtimeContext = this.createRuntimeContext({
 				sessionId: sessionId || "",
 				userId: undefined, // Would come from session in real implementation
@@ -159,7 +187,9 @@ export class Agent<TRuntimeContext = unknown> {
 	 */
 	getAvailableTools(): string[] {
 		const legacyTools = Array.from(this.tools.keys());
-		const factoryTools = this.toolFactories ? Object.keys(this.toolFactories) : [];
+		const factoryTools = this.toolFactories
+			? Object.keys(this.toolFactories)
+			: [];
 		return [...legacyTools, ...factoryTools];
 	}
 
@@ -186,7 +216,7 @@ export class Agent<TRuntimeContext = unknown> {
 			});
 
 			for (const [name, factory] of Object.entries(this.toolFactories)) {
-				const toolInstance = factory(runtimeContext as TRuntimeContext);
+				const toolInstance = factory(runtimeContext);
 				resolvedTools[name] = toolInstance;
 			}
 		}
@@ -217,7 +247,7 @@ export class Agent<TRuntimeContext = unknown> {
 			});
 
 			for (const [name, factory] of Object.entries(this.toolFactories)) {
-				const toolInstance = factory(runtimeContext as TRuntimeContext);
+				const toolInstance = factory(runtimeContext);
 				schedulingTools[name] = {
 					description: toolInstance.description,
 					inputSchema: toolInstance.inputSchema,
@@ -240,7 +270,10 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Check tool factories
-		if (this.toolFactories && this.toolFactories[toolName] && this.createRuntimeContext) {
+		if (
+			this.toolFactories?.[toolName] &&
+			this.createRuntimeContext
+		) {
 			const runtimeContext = this.createRuntimeContext({
 				sessionId: sessionId || "",
 				userId: undefined,
@@ -282,7 +315,11 @@ export class Agent<TRuntimeContext = unknown> {
 		messages: UIMessage[],
 		temperature: number,
 		assistantMessageId: string,
-	): Promise<{ decision: AgentDecision; chunkCount: number; fullContent: string }> {
+	): Promise<{
+		decision: AgentDecision;
+		chunkCount: number;
+		fullContent: string;
+	}> {
 		// Get tools for scheduling (without execute functions)
 		const toolsForScheduling = this.getToolsForScheduling(sessionId);
 
@@ -329,23 +366,29 @@ export class Agent<TRuntimeContext = unknown> {
 		// IMPORTANT: maxSteps=1 to prevent internal looping - we handle the loop via QStash
 		const { fullStream } = streamText({
 			...this.config, // Spread all streamText-compatible properties
-			model: this.config.model!, // Required field
+			model: this.config.model, // Required field
 			system: this.systemPrompt,
 			messages: modelMessages,
 			temperature: temperature ?? this.config.temperature,
 			tools: toolsForScheduling,
 			maxSteps: 1, // Critical: Only one LLM call per HTTP request
 			// Apply experimental transform if provided
-			...(this.experimental_transform && { experimental_transform: this.experimental_transform }),
+			...(this.experimental_transform && {
+				experimental_transform: this.experimental_transform,
+			}),
 		} as Parameters<typeof streamText>[0]);
 
 		// Stream content AND collect tool calls
 		// Keep track of parts separately to preserve their order and types
-		const parts: Array<{ type: "text" | "reasoning"; content: string }> = [];
+		const parts: { type: "text" | "reasoning"; content: string }[] = [];
 		let currentTextContent = "";
 		let currentReasoningContent = "";
 		let chunkCount = 0;
-		let pendingToolCall: { id: string; name: string; args: Record<string, any> } | null = null;
+		let pendingToolCall: {
+			id: string;
+			name: string;
+			args: Record<string, any>;
+		} | null = null;
 
 		for await (const chunk of fullStream) {
 			switch (chunk.type) {
@@ -353,7 +396,10 @@ export class Agent<TRuntimeContext = unknown> {
 					if ("text" in chunk && typeof chunk.text === "string") {
 						// If we were accumulating reasoning, flush it first
 						if (currentReasoningContent) {
-							parts.push({ type: "reasoning", content: currentReasoningContent });
+							parts.push({
+								type: "reasoning",
+								content: currentReasoningContent,
+							});
 							currentReasoningContent = "";
 						}
 						currentTextContent += chunk.text;
@@ -401,7 +447,12 @@ export class Agent<TRuntimeContext = unknown> {
 						args: chunk.input,
 					});
 					// Also write tool call event for tracking
-					await this.eventWriter.writeAgentToolCall(sessionId, this.config.name, chunk.toolName, chunk.toolCallId);
+					await this.eventWriter.writeAgentToolCall(
+						sessionId,
+						this.config.name,
+						chunk.toolName,
+						chunk.toolCallId,
+					);
 					break;
 
 				case "finish-step":
@@ -430,9 +481,14 @@ export class Agent<TRuntimeContext = unknown> {
 		// Write the assistant message WITHOUT completing stream
 		// Check if the message already exists
 		const existingMessages = await this.messageReader.getMessages(sessionId);
-		const existingMessage = existingMessages.find((m) => m.id === assistantMessageId);
+		const existingMessage = existingMessages.find(
+			(m) => m.id === assistantMessageId,
+		);
 
-		if (existingMessage && existingMessage.parts && existingMessage.parts.length > 0) {
+		if (
+			existingMessage?.parts &&
+			existingMessage.parts.length > 0
+		) {
 			// Message already exists - append new parts if any
 			if (parts.length > 0) {
 				// This is a subsequent response after tool execution
@@ -441,7 +497,11 @@ export class Agent<TRuntimeContext = unknown> {
 					type: part.type,
 					text: part.content,
 				}));
-				await this.messageWriter.appendMessageParts(sessionId, assistantMessageId, newParts);
+				await this.messageWriter.appendMessageParts(
+					sessionId,
+					assistantMessageId,
+					newParts,
+				);
 			}
 		} else if (parts.length > 0 || pendingToolCall) {
 			// First time writing this message
@@ -473,11 +533,17 @@ export class Agent<TRuntimeContext = unknown> {
 			// }
 
 			// Write the new message
-			await this.messageWriter.writeUIMessage(sessionId, resourceId, assistantMessage);
+			await this.messageWriter.writeUIMessage(
+				sessionId,
+				resourceId,
+				assistantMessage,
+			);
 		}
 
 		// Return decision based on what streamText naturally decided
-		const decision: AgentDecision = pendingToolCall ? { toolCall: pendingToolCall } : {}; // No tool needed
+		const decision: AgentDecision = pendingToolCall
+			? { toolCall: pendingToolCall }
+			: {}; // No tool needed
 
 		// Calculate full content from all parts
 		const fullContent = parts.map((p) => p.content).join("");

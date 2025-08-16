@@ -1,0 +1,118 @@
+---
+title: API Servers
+description: Learn how to integrate Lightfast agents with popular Node.js frameworks and HTTP servers.
+---
+
+You can use Lightfast agents with any Node.js framework or HTTP server. The `fetchRequestHandler` provides a framework-agnostic interface that works with Web API Request/Response objects.
+
+## Supported Frameworks
+
+Choose your preferred framework for detailed integration guides:
+
+- **[Node.js HTTP Server](./node-http-server)** - Native Node.js HTTP server with full control
+- **[Express](./express)** - Popular and flexible web framework with rich middleware ecosystem
+- **[Hono](./hono)** - Ultrafast web framework with excellent Web API compatibility ⭐ **Recommended**
+- **[Fastify](./fastify)** - High-performance framework with schema validation
+- **[NestJS](./nestjs)** - Progressive framework for building scalable applications
+
+## Quick Comparison
+
+| Framework | Web API Support | Setup Complexity | Performance | Best For |
+|-----------|----------------|------------------|-------------|----------|
+| **Hono** | ✅ Native | Simple | Excellent | Modern apps, edge deployment |
+| **Node.js HTTP** | ⚠️ Manual | Medium | Good | Full control, minimal dependencies |
+| **Fastify** | ⚠️ Manual | Medium | Excellent | High-performance APIs |
+| **Express** | ⚠️ Manual | Medium | Good | Traditional web apps, large ecosystem |
+| **NestJS** | ⚠️ Manual | Complex | Good | Enterprise applications, large teams |
+
+## Common Setup
+
+All frameworks use the same agent configuration:
+
+```typescript
+import { createAgent } from '@lightfastai/core/agent';
+import { createTool } from '@lightfastai/core/tool';
+import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+// Create a simple tool
+const weatherTool = createTool({
+  name: 'get_weather',
+  description: 'Get weather for a location',
+  parameters: z.object({
+    location: z.string().describe('The location to get weather for')
+  }),
+  execute: async ({ location }) => {
+    // Your weather API logic here
+    return `Weather in ${location}: Sunny, 72°F`;
+  }
+});
+
+// Create the agent
+const agent = createAgent({
+  name: 'weather-assistant',
+  model: openai('gpt-4o'),
+  system: 'You are a helpful weather assistant.',
+  tools: { weather: weatherTool },
+  createRuntimeContext: ({ sessionId, resourceId }) => ({
+    // Add any runtime context here
+    timestamp: Date.now()
+  })
+});
+
+// Create memory adapter
+const memory = new RedisMemory({
+  url: process.env.REDIS_URL!,
+  token: process.env.REDIS_TOKEN!
+});
+```
+
+## Getting Started
+
+1. **Choose your framework** from the list above
+2. **Follow the specific integration guide** for detailed setup instructions
+3. **Configure your agent and memory** using the common setup above
+4. **Deploy and test** your AI-powered API
+
+Each framework guide includes:
+- Installation instructions
+- Basic and advanced integration examples
+- Authentication and middleware setup
+- Error handling and logging
+- Testing strategies
+- Production deployment tips
+
+## Why Lightfast Works Everywhere
+
+Lightfast's **Web API-first design** makes it naturally compatible with any framework that supports standard Request/Response objects. This means:
+
+- ✅ **Future-proof** - Works with new frameworks as they emerge
+- ✅ **Edge compatible** - Runs on Cloudflare Workers, Vercel Edge, etc.
+- ✅ **Consistent API** - Same integration pattern across all frameworks
+- ✅ **No vendor lock-in** - Easy to migrate between frameworks
+
+## Testing Your Integration
+
+You can test any framework integration using curl:
+
+```bash
+# Test the agent endpoint
+curl -X POST http://localhost:8080/agents/my-session \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "What'\''s the weather like in San Francisco?"
+      }
+    ]
+  }'
+```
+
+## Next Steps
+
+- Choose your framework and follow the detailed integration guide
+- Explore [Agent Development](/agent-development/creating-agents) for advanced agent features
+- Learn about [Memory & State](/memory-state) for persistent conversations
+- Check out [Tool Factories](/agent-development/tool-factories) for dynamic tool creation

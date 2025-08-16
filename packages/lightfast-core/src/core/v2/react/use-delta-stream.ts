@@ -2,11 +2,12 @@
 
 import { useCallback, useRef, useState } from "react";
 import {
-	type DeltaStreamMessage,
-	DeltaStreamType,
-	type ToolCallPart,
-	type ToolResultPart,
+	
+	DeltaStreamType
+	
+	
 } from "../server/stream/types";
+import type {DeltaStreamMessage, ToolCallPart, ToolResultPart} from "../server/stream/types";
 
 export function validateMessage(data: any): DeltaStreamMessage | null {
 	if (!data || typeof data !== "object" || !data.type || !data.timestamp) {
@@ -30,7 +31,10 @@ export function validateMessage(data: any): DeltaStreamMessage | null {
 			if (!data.toolCall) return null;
 			// Parse the JSON string back to object
 			try {
-				const toolCall = typeof data.toolCall === "string" ? JSON.parse(data.toolCall) : data.toolCall;
+				const toolCall =
+					typeof data.toolCall === "string"
+						? JSON.parse(data.toolCall)
+						: data.toolCall;
 				data.toolCall = toolCall;
 			} catch {
 				return null;
@@ -40,7 +44,10 @@ export function validateMessage(data: any): DeltaStreamMessage | null {
 			if (!data.toolResult) return null;
 			// Parse the JSON string back to object
 			try {
-				const toolResult = typeof data.toolResult === "string" ? JSON.parse(data.toolResult) : data.toolResult;
+				const toolResult =
+					typeof data.toolResult === "string"
+						? JSON.parse(data.toolResult)
+						: data.toolResult;
 				data.toolResult = toolResult;
 			} catch {
 				return null;
@@ -88,7 +95,9 @@ export interface UseDeltaStreamReturn {
 	disconnect: () => void;
 }
 
-export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStreamReturn {
+export function useDeltaStream(
+	options: UseDeltaStreamOptions = {},
+): UseDeltaStreamReturn {
 	const {
 		streamEndpoint = "/api/v2/stream",
 		onChunk,
@@ -133,7 +142,9 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 							setTimeout(() => attemptConnection(), retryDelay);
 							return;
 						} else {
-							throw new PreconditionFailedError("Stream not ready after max retries");
+							throw new PreconditionFailedError(
+								"Stream not ready after max retries",
+							);
 						}
 					}
 
@@ -145,7 +156,9 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 
 					setIsConnected(true);
 
-					const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+					const reader = res.body
+						.pipeThrough(new TextDecoderStream())
+						.getReader();
 
 					while (true) {
 						const { value, done } = await reader.read();
@@ -189,7 +202,10 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 
 											case DeltaStreamType.TOOL_RESULT: {
 												if (validatedMessage.toolResult) {
-													console.log("[use-delta-stream] Received TOOL_RESULT:", validatedMessage.toolResult);
+													console.log(
+														"[use-delta-stream] Received TOOL_RESULT:",
+														validatedMessage.toolResult,
+													);
 													onToolResult?.(validatedMessage.toolResult);
 												}
 												break;
@@ -223,11 +239,17 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 				} catch (err) {
 					setIsConnected(false);
 
-					if (err instanceof PreconditionFailedError && retryCount < maxRetries) {
+					if (
+						err instanceof PreconditionFailedError &&
+						retryCount < maxRetries
+					) {
 						retryCount++;
 						setTimeout(() => attemptConnection(), retryDelay);
 					} else {
-						const error = err instanceof Error ? err : new Error("Stream connection failed");
+						const error =
+							err instanceof Error
+								? err
+								: new Error("Stream connection failed");
 						setError(error);
 						onError?.(error);
 					}
@@ -236,7 +258,16 @@ export function useDeltaStream(options: UseDeltaStreamOptions = {}): UseDeltaStr
 
 			await attemptConnection();
 		},
-		[streamEndpoint, onChunk, onToolCall, onToolResult, onComplete, onError, maxRetries, retryDelay],
+		[
+			streamEndpoint,
+			onChunk,
+			onToolCall,
+			onToolResult,
+			onComplete,
+			onError,
+			maxRetries,
+			retryDelay,
+		],
 	);
 
 	// Disconnect from stream

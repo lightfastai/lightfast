@@ -1,5 +1,22 @@
-import { type CoreMessage, convertToModelMessages, streamText, type Tool, type ToolSet, type UIMessage } from "ai";
+import {
+	
+	convertToModelMessages,
+	streamText
+	
+	
+	
+} from "ai";
+import type {CoreMessage, Tool, ToolSet, UIMessage} from "ai";
 import type { Memory } from "../memory";
+import { 
+	AgentConfigurationError,
+	AgentStreamError,
+	CacheOperationError,
+	ContextCreationError,
+	MessageConversionError,
+	NoMessagesError,
+	ToolExecutionError
+} from "../server/errors";
 import type { SystemContext } from "../server/adapters/types";
 import type { ProviderCache } from "./cache";
 import type { ToolFactory, ToolFactorySet } from "./tool";
@@ -13,15 +30,29 @@ function resolveToolFactories<TRuntimeContext = unknown>(
 	context: TRuntimeContext,
 ): ToolSet {
 	// First resolve if it's a function
-	const resolved = typeof toolsOrFactories === "function" ? toolsOrFactories(context) : toolsOrFactories;
+	const resolved =
+		typeof toolsOrFactories === "function"
+			? toolsOrFactories(context)
+			: toolsOrFactories;
+
+	// Null/undefined check
+	if (!resolved || typeof resolved !== "object") {
+		throw new Error("Tools resolution returned null, undefined, or non-object value");
+	}
 
 	// Check if it's a ToolFactorySet by checking if the first property is a function
-	const firstKey = Object.keys(resolved)[0];
+	const keys = Object.keys(resolved);
+	const firstKey = keys[0];
+	
 	if (firstKey && typeof resolved[firstKey] === "function") {
 		// It's a ToolFactorySet, resolve each factory
 		const toolSet: ToolSet = {};
 		for (const [key, factory] of Object.entries(resolved)) {
-			toolSet[key] = (factory as ToolFactory<TRuntimeContext>)(context);
+			try {
+				toolSet[key] = (factory as ToolFactory<TRuntimeContext>)(context);
+			} catch (error) {
+				throw new Error(`Failed to resolve tool factory '${key}': ${error instanceof Error ? error.message : String(error)}`);
+			}
 		}
 		return toolSet;
 	}
@@ -40,7 +71,9 @@ function uuidv4() {
 }
 
 // Extract core types from streamText
-type StreamTextParameters<TOOLS extends ToolSet> = Parameters<typeof streamText<TOOLS>>[0];
+type StreamTextParameters<TOOLS extends ToolSet> = Parameters<
+	typeof streamText<TOOLS>
+>[0];
 
 // Properties we need to handle specially or exclude
 type ExcludedStreamTextProps =
@@ -60,12 +93,17 @@ type ExcludedStreamTextProps =
 	| "experimental_transform"; // Needs generic typing
 
 // Agent-specific configuration extending streamText parameters
-export interface AgentConfig extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
+export interface AgentConfig
+	extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
 	// Agent-specific required fields
 	name: string;
 }
 
-export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestContext = {}, TMemoryContext = {}> {
+export interface StreamOptions<
+	TMessage extends UIMessage = UIMessage,
+	TRequestContext = {},
+	TMemoryContext = {},
+> {
 	sessionId: string;
 	messages: TMessage[];
 	memory: Memory<TMessage, TMemoryContext>;
@@ -74,14 +112,19 @@ export interface StreamOptions<TMessage extends UIMessage = UIMessage, TRequestC
 	requestContext: TRequestContext;
 }
 
-export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRuntimeContext = {}>
-	extends AgentConfig {
+export interface AgentOptions<
+	TTools extends ToolSet | ToolFactorySet<any> = ToolSet,
+	TRuntimeContext = {},
+> extends AgentConfig {
 	// Required: system prompt for the agent
 	system: string;
 	// Required: tools that will be passed to streamText (can be tool factories or direct tools)
 	tools: TTools | ((context: TRuntimeContext) => TTools);
 	// Required: function to create runtime context from request parameters
-	createRuntimeContext: (params: { sessionId: string; resourceId: string }) => TRuntimeContext;
+	createRuntimeContext: (params: {
+		sessionId: string;
+		resourceId: string;
+	}) => TRuntimeContext;
 	// Optional: provider-specific cache implementation
 	cache?: ProviderCache;
 	// Optional: tool choice and stop conditions with strong typing based on the resolved tools
@@ -94,25 +137,41 @@ export interface AgentOptions<TTools extends ToolSet | ToolFactorySet<any> = Too
 	onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
 	onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
 	prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
-	experimental_transform?: StreamTextParameters<ResolvedTools<TTools>>["experimental_transform"];
+	experimental_transform?: StreamTextParameters<
+		ResolvedTools<TTools>
+	>["experimental_transform"];
 }
 
-export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRuntimeContext = {}> {
+export class Agent<
+	TTools extends ToolSet | ToolFactorySet<any> = ToolSet,
+	TRuntimeContext = {},
+> {
 	public readonly config: AgentConfig;
 	private generateId: () => string;
 	private tools: TTools | ((context: TRuntimeContext) => TTools);
-	private createRuntimeContext: (params: { sessionId: string; resourceId: string }) => TRuntimeContext;
+	private createRuntimeContext: (params: {
+		sessionId: string;
+		resourceId: string;
+	}) => TRuntimeContext;
 	private system: string;
 	private cache?: ProviderCache;
-	private toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
+	private toolChoice?: StreamTextParameters<
+		ResolvedTools<TTools>
+	>["toolChoice"];
 	private stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
 	private onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
 	private onFinish?: StreamTextParameters<ResolvedTools<TTools>>["onFinish"];
-	private onStepFinish?: StreamTextParameters<ResolvedTools<TTools>>["onStepFinish"];
+	private onStepFinish?: StreamTextParameters<
+		ResolvedTools<TTools>
+	>["onStepFinish"];
 	private onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
 	private onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
-	private prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
-	private experimental_transform?: StreamTextParameters<ResolvedTools<TTools>>["experimental_transform"];
+	private prepareStep?: StreamTextParameters<
+		ResolvedTools<TTools>
+	>["prepareStep"];
+	private experimental_transform?: StreamTextParameters<
+		ResolvedTools<TTools>
+	>["experimental_transform"];
 
 	constructor(options: AgentOptions<TTools, TRuntimeContext>) {
 		const {
@@ -153,7 +212,11 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		this.experimental_transform = experimental_transform;
 	}
 
-	async stream<TMessage extends UIMessage = UIMessage, TRequestContext = {}, TMemoryContext = {}>({
+	async stream<
+		TMessage extends UIMessage = UIMessage,
+		TRequestContext = {},
+		TMemoryContext = {},
+	>({
 		sessionId,
 		messages,
 		memory,
@@ -162,13 +225,22 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		requestContext,
 	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>) {
 		if (!messages || messages.length === 0) {
-			throw new Error("At least one message is required");
+			throw new NoMessagesError();
 		}
 
 		const streamId = this.generateId();
 
 		// Create agent-specific runtime context
-		const agentContext = this.createRuntimeContext({ sessionId, resourceId });
+		let agentContext: TRuntimeContext;
+		try {
+			agentContext = this.createRuntimeContext({ sessionId, resourceId });
+		} catch (error) {
+			throw new ContextCreationError(
+				"runtime",
+				error instanceof Error ? error.message : String(error),
+				error instanceof Error ? error : undefined
+			);
+		}
 
 		// Merge all three context levels: system -> request -> agent
 		const mergedContext = {
@@ -178,14 +250,23 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		};
 
 		// Resolve tools using helper function
-		const resolvedTools = resolveToolFactories(this.tools, mergedContext);
+		let resolvedTools: ToolSet;
+		try {
+			resolvedTools = resolveToolFactories(this.tools, mergedContext);
+		} catch (error) {
+			throw new ToolExecutionError(
+				"factory",
+				error instanceof Error ? error.message : String(error),
+				error instanceof Error ? error : undefined
+			);
+		}
 
 		// Extract name from config as it's not a streamText property
 		const { name, ...streamTextConfig } = this.config;
 
 		// Ensure model is set
 		if (!streamTextConfig.model) {
-			throw new Error("Model must be configured");
+			throw new AgentConfigurationError("model", "Model must be configured");
 		}
 
 		// Convert system config to messages with cache control
@@ -193,25 +274,48 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 		let modelMessages: CoreMessage[];
 
 		if (this.cache) {
-			// Use provider cache implementation
-			systemMessages = this.cache.applySystemCaching(this.system);
+			try {
+				// Use provider cache implementation
+				systemMessages = this.cache.applySystemCaching(this.system);
 
-			// console.log(messages.forEach((x) => console.log(x)));
-			// Convert messages to model messages
-			const baseModelMessages = convertToModelMessages(messages, { tools: resolvedTools });
+				// console.log(messages.forEach((x) => console.log(x)));
+				// Convert messages to model messages
+				const baseModelMessages = convertToModelMessages(messages, {
+					tools: resolvedTools,
+				});
 
-			console.log(baseModelMessages.forEach((x) => console.log(x)));
-			// Apply message caching
-			modelMessages = this.cache.applyMessageCaching(baseModelMessages, messages);
+				console.log(baseModelMessages.forEach((x) => console.log(x)));
+				// Apply message caching
+				modelMessages = this.cache.applyMessageCaching(
+					baseModelMessages,
+					messages,
+				);
+			} catch (error) {
+				throw new CacheOperationError(
+					"system and message caching",
+					error instanceof Error ? error.message : String(error),
+					error instanceof Error ? error : undefined
+				);
+			}
 		} else {
-			// No cache provider - use simple system message
-			systemMessages.push({
-				role: "system",
-				content: this.system,
-			});
+			try {
+				// No cache provider - use simple system message
+				systemMessages.push({
+					role: "system",
+					content: this.system,
+				});
 
-			// Convert messages without caching
-			modelMessages = convertToModelMessages(messages, { tools: resolvedTools });
+				// Convert messages without caching
+				modelMessages = convertToModelMessages(messages, {
+					tools: resolvedTools,
+				});
+			} catch (error) {
+				throw new MessageConversionError(
+					"convert to model messages",
+					error instanceof Error ? error.message : String(error),
+					error instanceof Error ? error : undefined
+				);
+			}
 		}
 
 		// Prepend system messages to the model messages
@@ -229,23 +333,34 @@ export class Agent<TTools extends ToolSet | ToolFactorySet<any> = ToolSet, TRunt
 			// These callbacks need to be cast because they're typed with ResolvedTools<TTools>
 			// but streamText expects them typed with ToolSet. This is safe because
 			// resolvedTools is guaranteed to be a ToolSet at runtime.
-			toolChoice: this.toolChoice as StreamTextParameters<ToolSet>["toolChoice"],
+			toolChoice: this
+				.toolChoice as StreamTextParameters<ToolSet>["toolChoice"],
 			stopWhen: this.stopWhen as StreamTextParameters<ToolSet>["stopWhen"],
 			onChunk: this.onChunk as StreamTextParameters<ToolSet>["onChunk"],
 			onFinish: this.onFinish as StreamTextParameters<ToolSet>["onFinish"],
-			onStepFinish: this.onStepFinish as StreamTextParameters<ToolSet>["onStepFinish"],
+			onStepFinish: this
+				.onStepFinish as StreamTextParameters<ToolSet>["onStepFinish"],
 			onAbort: this.onAbort as StreamTextParameters<ToolSet>["onAbort"],
-			onError: this.onError as StreamTextParameters<ToolSet>["onError"],
-			prepareStep: this.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
-			experimental_transform: this.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
+			onError: this.onError,
+			prepareStep: this
+				.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
+			experimental_transform: this
+				.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
 		};
 
 		// Return the stream result with necessary metadata
-		return {
-			result: streamText(streamTextParams),
-			streamId,
-			sessionId,
-		};
+		try {
+			return {
+				result: streamText(streamTextParams),
+				streamId,
+				sessionId,
+			};
+		} catch (error) {
+			// Transform streaming errors into consistent lightfast error format
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const cause = error instanceof Error ? error : undefined;
+			throw new AgentStreamError(errorMessage, cause);
+		}
 	}
 }
 
@@ -262,7 +377,10 @@ export type ResolvedTools<T> = T extends ToolFactorySet<any>
 /**
  * Factory function to create an agent with proper type inference
  */
-export function createAgent<TTools extends ToolSet | ToolFactorySet<any>, TRuntimeContext = {}>(
+export function createAgent<
+	TTools extends ToolSet | ToolFactorySet<any>,
+	TRuntimeContext = {},
+>(
 	options: AgentOptions<TTools, TRuntimeContext>,
 ): Agent<TTools, TRuntimeContext> {
 	return new Agent(options);

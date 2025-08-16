@@ -102,8 +102,13 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 			// Extract path from URL
 			const url = new URL(request.url);
 			// Extract just the path part from baseUrl if it includes the full URL
-			const baseUrlPath = baseUrl.includes("://") ? new URL(baseUrl).pathname : baseUrl;
-			const pathSegments = url.pathname.replace(baseUrlPath, "").split("/").filter(Boolean);
+			const baseUrlPath = baseUrl.includes("://")
+				? new URL(baseUrl).pathname
+				: baseUrl;
+			const pathSegments = url.pathname
+				.replace(baseUrlPath, "")
+				.split("/")
+				.filter(Boolean);
 
 			console.log(
 				`[V2 Fetch Handler] URL: ${request.url}, Path: ${url.pathname}, BaseUrlPath: ${baseUrlPath}, Segments:`,
@@ -115,7 +120,14 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 				if (pathSegments[1] === "init") {
 					// Handle POST /stream/init
 					if (request.method === "POST") {
-						return handleStreamInit(request, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
+						return handleStreamInit(request, {
+							agent,
+							redis,
+							qstash,
+							baseUrl,
+							resourceId,
+							loggerFactory,
+						});
 					}
 				} else if (pathSegments[1]) {
 					// Handle GET /stream/[streamId] (can be sessionId or messageId)
@@ -128,13 +140,19 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 			if (pathSegments[0] === "workers") {
 				// Worker endpoints require QStash
 				if (!qstash) {
-					return Response.json({ error: "QStash client is required for worker endpoints" }, { status: 500 });
+					return Response.json(
+						{ error: "QStash client is required for worker endpoints" },
+						{ status: 500 },
+					);
 				}
 
 				// Always verify QStash signature - keys are required in production
 				const signature = request.headers.get("upstash-signature");
 				if (!signature) {
-					return Response.json({ error: "Missing QStash signature" }, { status: 401 });
+					return Response.json(
+						{ error: "Missing QStash signature" },
+						{ status: 401 },
+					);
 				}
 
 				// Clone request to read body for verification
@@ -154,11 +172,20 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 					});
 
 					if (!isValid) {
-						return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
+						return Response.json(
+							{ error: "Invalid QStash signature" },
+							{ status: 401 },
+						);
 					}
 				} catch (error) {
-					console.error("[V2 Worker Handler] QStash signature verification failed:", error);
-					return Response.json({ error: "Invalid QStash signature" }, { status: 401 });
+					console.error(
+						"[V2 Worker Handler] QStash signature verification failed:",
+						error,
+					);
+					return Response.json(
+						{ error: "Invalid QStash signature" },
+						{ status: 401 },
+					);
 				}
 
 				const workerAction = pathSegments[1];
@@ -168,20 +195,37 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 						// Handle POST /workers/agent-loop-step
 						const body = (await request.json()) as AgentLoopStepRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.loop.step event`);
-						return handleAgentStep(body, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
+						return handleAgentStep(body, {
+							agent,
+							redis,
+							qstash,
+							baseUrl,
+							resourceId,
+							loggerFactory,
+						});
 					}
 
 					case "agent-tool-call": {
 						// Handle POST /workers/agent-tool-call
 						const body = (await request.json()) as AgentToolCallRequestBody;
 						console.log(`[V2 Worker Handler] Processing agent.tool.call event`);
-						return handleToolCall(body, { agent, redis, qstash, baseUrl, resourceId, loggerFactory });
+						return handleToolCall(body, {
+							agent,
+							redis,
+							qstash,
+							baseUrl,
+							resourceId,
+							loggerFactory,
+						});
 					}
 
 					case "tool-execution-complete": {
 						// Handle POST /workers/tool-execution-complete
-						const body = (await request.json()) as ToolExecutionCompleteRequestBody;
-						console.log(`[V2 Worker Handler] Processing tool.execution.complete event`);
+						const body =
+							(await request.json()) as ToolExecutionCompleteRequestBody;
+						console.log(
+							`[V2 Worker Handler] Processing tool.execution.complete event`,
+						);
 						// TODO: This event handler needs to be refactored to work without EventEmitter
 						// For now, just acknowledge the event
 						return Response.json({ success: true });
@@ -190,13 +234,18 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 					case "agent-loop-complete": {
 						// Handle POST /workers/agent-loop-complete
 						const body = (await request.json()) as AgentLoopCompleteRequestBody;
-						console.log(`[V2 Worker Handler] Processing agent.loop.complete event`);
+						console.log(
+							`[V2 Worker Handler] Processing agent.loop.complete event`,
+						);
 						// TODO: Implement new event system handling
 						return Response.json({ success: true });
 					}
 
 					default:
-						return Response.json({ error: `Unknown worker action: ${workerAction}` }, { status: 404 });
+						return Response.json(
+							{ error: `Unknown worker action: ${workerAction}` },
+							{ status: 404 },
+						);
 				}
 			}
 
