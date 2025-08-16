@@ -1,22 +1,22 @@
-# @lightfast/core
+# @lightfastai/core
 
 AI agents, tools, and workflows for Lightfast v1.
 
 ## Installation
 
 ```bash
-npm install @lightfast/core
+npm install @lightfastai/core
 # or
-pnpm add @lightfast/core
+pnpm add @lightfastai/core
 # or  
-yarn add @lightfast/core
+yarn add @lightfastai/core
 ```
 
 ## Quick Start
 
 ```typescript
-import { createAgent } from '@lightfast/core/agent';
-import { createTool } from '@lightfast/core/tool';
+import { createAgent } from '@lightfastai/core/agent';
+import { createTool } from '@lightfastai/core/tool';
 
 // Create a simple tool
 const weatherTool = createTool({

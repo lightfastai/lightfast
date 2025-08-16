@@ -68,7 +68,7 @@ let config: NextConfig = withBetterStack(
       "@repo/lightfast-config",
       "@repo/ai",
       "@repo/url-utils",
-      "@lightfast/core",
+      "@lightfastai/core",
       "@vendor/observability",
       "@vendor/next",
       "@vendor/storage",

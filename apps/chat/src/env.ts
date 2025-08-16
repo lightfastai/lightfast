@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
-import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
+import { braintrustEnv } from "@lightfastai/core/v2/braintrust-env";
 import { dbEnv } from "@vendor/db/env";
 import { env as securityEnv } from "@vendor/security/env";
 

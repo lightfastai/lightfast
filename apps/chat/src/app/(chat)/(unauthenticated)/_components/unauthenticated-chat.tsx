@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
-import { uuidv4 } from "@lightfast/core/v2/utils";
+import { uuidv4 } from "@lightfastai/core/v2/utils";
 
 interface UnauthenticatedChatProps {
 	agentId: string;

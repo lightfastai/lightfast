@@ -12,5 +12,5 @@
     "types": ["node"]
   },
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../lightfast-core" }, { "path": "../lightfast-types" }]
+  "references": [{ "path": "../lightfast-types" }]
 }

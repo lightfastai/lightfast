@@ -1,11 +1,11 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { auth } from "@clerk/nextjs/server";
-import { createAgent } from "@lightfast/core/agent";
-import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
-import { RedisMemory } from "@lightfast/core/agent/memory/redis";
+import { createAgent } from "@lightfastai/core/agent";
+import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
+import { RedisMemory } from "@lightfastai/core/agent/memory/redis";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
-import { uuidv4 } from "@lightfast/core/v2/utils";
+import { uuidv4 } from "@lightfastai/core/v2/utils";
 import {
 	BraintrustMiddleware,
 	currentSpan,
@@ -15,7 +15,7 @@ import {
 import {
 	getBraintrustConfig,
 	isOtelEnabled,
-} from "@lightfast/core/v2/braintrust-env";
+} from "@lightfastai/core/v2/braintrust-env";
 import { AgentId } from "~/app/(agents)/types";
 import {
 	BROWSER_010_SYSTEM_PROMPT,

@@ -1,8 +1,14 @@
 {
-	"name": "@lightfast/core",
+	"name": "@lightfastai/core",
 	"version": "0.1.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
-	"keywords": ["ai", "agents", "llm", "typescript", "workflow"],
+	"keywords": [
+		"ai",
+		"agents",
+		"llm",
+		"typescript",
+		"workflow"
+	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/lightfastai/lightfast.git",
@@ -27,25 +33,15 @@
 			"import": "./dist/tool.js",
 			"require": "./dist/tool.cjs"
 		},
-		"./agent/handlers": {
-			"types": "./dist/agent/handlers.d.ts",
-			"import": "./dist/agent/handlers.js",
-			"require": "./dist/agent/handlers.cjs"
+		"./server/adapters/fetch": {
+			"types": "./dist/server/adapters/fetch.d.ts",
+			"import": "./dist/server/adapters/fetch.js",
+			"require": "./dist/server/adapters/fetch.cjs"
 		},
-		"./agent/server/adapters/fetch": {
-			"types": "./dist/agent/server/adapters/fetch.d.ts",
-			"import": "./dist/agent/server/adapters/fetch.js",
-			"require": "./dist/agent/server/adapters/fetch.cjs"
-		},
-		"./agent/server/adapters/types": {
-			"types": "./dist/agent/server/adapters/types.d.ts",
-			"import": "./dist/agent/server/adapters/types.js",
-			"require": "./dist/agent/server/adapters/types.cjs"
-		},
-		"./agent/memory": {
-			"types": "./dist/agent/memory.d.ts",
-			"import": "./dist/agent/memory.js",
-			"require": "./dist/agent/memory.cjs"
+		"./server/adapters/types": {
+			"types": "./dist/server/adapters/types.d.ts",
+			"import": "./dist/server/adapters/types.js",
+			"require": "./dist/server/adapters/types.cjs"
 		},
 		"./memory": {
 			"types": "./dist/memory.d.ts",
@@ -57,25 +53,15 @@
 			"import": "./dist/memory/adapters/in-memory.js",
 			"require": "./dist/memory/adapters/in-memory.cjs"
 		},
-		"./agent/memory/adapters/redis": {
-			"types": "./dist/agent/memory/adapters/redis.d.ts",
-			"import": "./dist/agent/memory/adapters/redis.js",
-			"require": "./dist/agent/memory/adapters/redis.cjs"
+		"./memory/adapters/redis": {
+			"types": "./dist/memory/adapters/redis.d.ts",
+			"import": "./dist/memory/adapters/redis.js",
+			"require": "./dist/memory/adapters/redis.cjs"
 		},
-		"./agent/memory/redis": {
-			"types": "./dist/agent/memory/redis.d.ts",
-			"import": "./dist/agent/memory/redis.js",
-			"require": "./dist/agent/memory/redis.cjs"
-		},
-		"./agent/redis-memory": {
-			"types": "./dist/agent/redis-memory.d.ts",
-			"import": "./dist/agent/redis-memory.js",
-			"require": "./dist/agent/redis-memory.cjs"
-		},
-		"./agent/primitives/cache": {
-			"types": "./dist/agent/primitives/cache.d.ts",
-			"import": "./dist/agent/primitives/cache.js",
-			"require": "./dist/agent/primitives/cache.cjs"
+		"./cache": {
+			"types": "./dist/cache.d.ts",
+			"import": "./dist/cache.js",
+			"require": "./dist/cache.cjs"
 		},
 		"./providers": {
 			"types": "./dist/providers.d.ts",
@@ -101,16 +87,41 @@
 			"types": "./dist/v2/core.d.ts",
 			"import": "./dist/v2/core.js",
 			"require": "./dist/v2/core.cjs"
+		},
+		"./v2": {
+			"types": "./dist/v2/index.d.ts",
+			"import": "./dist/v2/index.js",
+			"require": "./dist/v2/index.cjs"
+		},
+		"./v2/utils": {
+			"types": "./dist/v2/utils.d.ts",
+			"import": "./dist/v2/utils.js",
+			"require": "./dist/v2/utils.cjs"
+		},
+		"./v2/events": {
+			"types": "./dist/v2/events.d.ts",
+			"import": "./dist/v2/events.js",
+			"require": "./dist/v2/events.cjs"
+		},
+		"./v2/env": {
+			"types": "./dist/v2/env.d.ts",
+			"import": "./dist/v2/env.js",
+			"require": "./dist/v2/env.cjs"
+		},
+		"./v2/braintrust-env": {
+			"types": "./dist/v2/braintrust-env.d.ts",
+			"import": "./dist/v2/braintrust-env.js",
+			"require": "./dist/v2/braintrust-env.cjs"
 		}
 	},
 	"scripts": {
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"build": "tsup && pnpm build:types",
-		"build:js": "tsup",
-		"build:types": "tsc --project tsconfig.build.json",
-		"build:turbo": "tsc",
-		"dev": "tsc",
-		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"test": "vitest",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest run --coverage",
+		"typecheck": "tsc --noEmit",
 		"lint": "biome check --write ."
 	},
 	"dependencies": {
@@ -129,10 +140,13 @@
 	},
 	"devDependencies": {
 		"@repo/typescript-config": "workspace:*",
+		"@rollup/rollup-darwin-arm64": "^4.46.2",
 		"@types/node": "^24.0.15",
 		"@types/react": "^19.1.8",
 		"@types/uuid": "^10.0.0",
+		"rollup": "^4.46.2",
 		"tsup": "^8.5.0",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "^3.2.4"
 	}
 }

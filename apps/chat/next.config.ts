@@ -24,7 +24,7 @@ let config: NextConfig = withBetterStack(
 			"@vendor/next",
 			"@vendor/trpc",
 			"@vendor/db",
-			"@lightfast/core",
+			"@lightfastai/core",
 		],
 		experimental: {
 			optimizeCss: true,

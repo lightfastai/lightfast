@@ -20,7 +20,7 @@ Before installing Lightfast Core, ensure you have:
 Install the core package and its peer dependencies:
 
 ```bash
-pnpm add @lightfast/core ai @ai-sdk/gateway
+pnpm add @lightfastai/core ai @ai-sdk/gateway
 ```
 
 ### Optional Dependencies
@@ -209,8 +209,8 @@ Create a simple test file to verify everything is working:
 
 ```typescript
 // test-agent.ts
-import { createAgent } from "@lightfast/core/agent";
-import { InMemoryMemory } from "@lightfast/core/agent/memory";
+import { createAgent } from "@lightfastai/core/agent";
+import { InMemoryMemory } from "@lightfastai/core/agent/memory";
 import { gateway } from "@ai-sdk/gateway";
 
 const agent = createAgent({

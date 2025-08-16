@@ -1,14 +1,12 @@
-name: Release @lightfast/core
+name: Release @lightfastai/core
 
 on:
   push:
     paths:
-      - 'packages/lightfast-core/**'
       - '.changeset/**'
     branches: [main]
   pull_request:
     paths:
-      - 'packages/lightfast-core/**'
       - '.changeset/**'
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -48,22 +46,22 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build lightfast-core
-        run: pnpm --filter @lightfast/core build
+        run: pnpm --filter @lightfastai/core build
 
       - name: Run tests (if any)
-        run: pnpm --filter @lightfast/core test || echo "No tests configured"
+        run: pnpm --filter @lightfastai/core test || echo "No tests configured"
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
           # Only release lightfast-core package
-          publish: pnpm changeset publish --filter @lightfast/core
+          publish: pnpm changeset publish --filter @lightfastai/core
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_NPM_TOKEN }}
 
       - name: Send a Slack notification if a publish happens
         if: steps.changesets.outputs.published == 'true'
         # You can do something when a publish happens.
-        run: echo "A new version of @lightfast/core was published!"
+        run: echo "A new version of @lightfastai/core was published!"

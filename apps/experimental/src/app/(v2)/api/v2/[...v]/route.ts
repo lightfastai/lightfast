@@ -6,9 +6,9 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
-import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
-import { Agent } from "@lightfast/core/v2/core";
-import { fetchRequestHandler } from "@lightfast/core/v2/server";
+import type { RuntimeContext } from "@lightfastai/core/server/adapters/types";
+import { Agent } from "@lightfastai/core/v2/core";
+import { fetchRequestHandler } from "@lightfastai/core/v2/server";
 import { smoothStream, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { NextRequest } from "next/server";

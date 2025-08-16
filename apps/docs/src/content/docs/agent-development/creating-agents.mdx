@@ -12,7 +12,7 @@ This guide walks through creating production-ready AI agents with Lightfast Core
 Every agent requires these core components:
 
 ```typescript
-import { createAgent } from "@lightfast/core/agent";
+import { createAgent } from "@lightfastai/core/agent";
 import { gateway } from "@ai-sdk/gateway";
 
 const agent = createAgent({
@@ -82,7 +82,7 @@ model: gateway("openai/gpt-5", {
 Equip your agent with necessary tools:
 
 ```typescript
-import { createTool } from "@lightfast/core/tool";
+import { createTool } from "@lightfastai/core/tool";
 import { z } from "zod";
 
 // Define tools
@@ -157,7 +157,7 @@ Enhance your agent with additional capabilities:
 
 ```typescript
 import { smoothStream, stepCountIs } from "ai";
-import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfast/core/agent/primitives/cache";
+import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfastai/core/agent/primitives/cache";
 
 const advancedAgent = createAgent({
   // ... basic config
@@ -415,7 +415,7 @@ Test agent components in isolation:
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { InMemoryMemory } from "@lightfast/core/memory/adapters/in-memory";
+import { InMemoryMemory } from "@lightfastai/core/memory/adapters/in-memory";
 
 describe("SupportAgent", () => {
   it("should handle order lookup", async () => {

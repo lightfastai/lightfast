@@ -1,6 +1,6 @@
-# @lightfast/core NPM Publishing Workflow
+# @lightfastai/core NPM Publishing Workflow
 
-Complete guide for publishing `@lightfast/core` to npm using automated release bot with Changesets.
+Complete guide for publishing `@lightfastai/core` to npm using automated release bot with Changesets.
 
 ## 🚀 Quick Start
 
@@ -16,7 +16,7 @@ pnpm changeset
 ```
 
 The CLI will prompt you:
-- **Package selection**: Choose `@lightfast/core`
+- **Package selection**: Choose `@lightfastai/core`
 - **Change type**: `patch` (bug fix), `minor` (new feature), `major` (breaking change)
 - **Summary**: Brief description for changelog
 
@@ -45,8 +45,8 @@ git checkout -b feat/postgres-memory-adapter
 # Add new export path for the postgres adapter
 
 # 3. Build and test
-pnpm --filter @lightfast/core build
-pnpm --filter @lightfast/core test
+pnpm --filter @lightfastai/core build
+pnpm --filter @lightfastai/core test
 
 # 4. Commit your changes
 git add .
@@ -62,9 +62,9 @@ pnpm changeset
 **Changeset CLI Flow:**
 ```
 🦋  Which packages would you like to include?
-    ✅ @lightfast/core
+    ✅ @lightfastai/core
 
-🦋  Which type of change is this for @lightfast/core?
+🦋  Which type of change is this for @lightfastai/core?
     ◯ patch   (bug fix - 0.1.0 → 0.1.1)
     ● minor   (new feature - 0.1.0 → 0.2.0)  
     ◯ major   (breaking change - 0.1.0 → 1.0.0)
@@ -73,7 +73,7 @@ pnpm changeset
     Add PostgreSQL memory adapter with connection pooling
 
 🦋  === Summary of changesets ===
-    minor:  @lightfast/core
+    minor:  @lightfastai/core
     
 🦋  Is this your desired changeset? (Y/n) Y
 ```
@@ -132,13 +132,17 @@ pnpm changeset  # minor: Add batch operations support
 Add to GitHub repository secrets:
 
 ```bash
-# NPM_TOKEN: Get from npmjs.com
+# LIGHTFAST_RELEASE_BOT_NPM_TOKEN: Get from npmjs.com
 # 1. Login to npmjs.com with release bot account
 # 2. Access Tokens → Generate New Token
 # 3. Choose "Automation" type
-# 4. Copy token to GitHub secrets
+# 4. Add to GitHub secrets with name: LIGHTFAST_RELEASE_BOT_NPM_TOKEN
 
-# GITHUB_TOKEN: Automatically provided by GitHub Actions
+# LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN: Personal Access Token
+# 1. Login to GitHub as release bot account
+# 2. Settings → Developer settings → Personal access tokens → Tokens (classic)
+# 3. Generate new token with 'repo' and 'workflow' scopes
+# 4. Add to GitHub secrets with name: LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN
 ```
 
 ### Changesets Configuration
@@ -164,7 +168,7 @@ Add to GitHub repository secrets:
 ### Publishing Configuration
 ```json
 {
-  "name": "@lightfast/core",
+  "name": "@lightfastai/core",
   "version": "0.1.0",
   "exports": {
     "./agent": {
@@ -218,46 +222,49 @@ Add to GitHub repository secrets:
 ### Release Status
 ```bash
 # Check current version
-npm view @lightfast/core version
+npm view @lightfastai/core version
 
 # Check GitHub Actions
 # https://github.com/lightfastai/lightfast/actions
 
 # Check npm package
-# https://www.npmjs.com/package/@lightfast/core
+# https://www.npmjs.com/package/@lightfastai/core
 ```
 
 ### Common Issues
 
 **Release failed?**
 1. Check GitHub Actions logs
-2. Verify NPM_TOKEN is valid
+2. Verify LIGHTFAST_RELEASE_BOT_NPM_TOKEN is valid
 3. Ensure package builds successfully
 4. Check npm package name availability
+5. Confirm bot account has npm org access
 
 **Version PR not created?**
 1. Verify changesets exist in `.changeset/`
 2. Check GitHub Actions permissions
 3. Ensure bot account has repo access
+4. Verify LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN has correct scopes
 
 **Build failures?**
 ```bash
 # Test locally first:
-pnpm --filter @lightfast/core build
-pnpm --filter @lightfast/core typecheck
+pnpm --filter @lightfastai/core build
+pnpm --filter @lightfastai/core typecheck
 ```
 
 ## 📋 Checklist: First Release
 
 - [ ] Set up release bot GitHub account
-- [ ] Generate NPM_TOKEN and add to repo secrets
+- [ ] Generate LIGHTFAST_RELEASE_BOT_NPM_TOKEN and add to repo secrets
+- [ ] Generate LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN and add to repo secrets
 - [ ] Make changes to `packages/lightfast-core/`
 - [ ] Create changeset: `pnpm changeset`
 - [ ] Push changes and create PR
 - [ ] Verify Version Packages PR is created
 - [ ] Merge Version Packages PR
 - [ ] Confirm package appears on npm
-- [ ] Test installation: `npm install @lightfast/core@latest`
+- [ ] Test installation: `npm install @lightfastai/core@latest`
 
 ## 🚀 Next Steps
 

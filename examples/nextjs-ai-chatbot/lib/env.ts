@@ -19,6 +19,7 @@ export const env = createEnv({
 
   /**
    * Runtime environment - for Next.js runtime
+   * These are accessed from process.env in the route handler
    */
   runtimeEnv: {
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,

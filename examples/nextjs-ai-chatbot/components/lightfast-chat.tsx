@@ -15,10 +15,13 @@ export function LightfastChat() {
   const [input, setInput] = useState('');
   const [error, setError] = useState<Error | null>(null);
   
-  // Create transport for the chat
+  // Create transport for the chat using the new fetchHandler API
   const transport = useMemo(() => {
+    // Use the /api/chat/{sessionId} pattern
+    const apiPath = `/api/chat/${sessionId}`;
+    
     return new DefaultChatTransport({
-      api: '/api/chat',
+      api: apiPath,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -28,7 +31,6 @@ export function LightfastChat() {
           headers,
           body: {
             messages,
-            sessionId,
             ...body,
           },
         };
@@ -90,20 +92,20 @@ export function LightfastChat() {
             <Bot className="w-12 h-12 mb-4 text-gray-400" />
             <p className="text-lg font-medium mb-2">Start a conversation</p>
             <p className="text-sm text-center max-w-md">
-              Powered by Lightfast Core v1 with agent orchestration, memory persistence, and tool support
+              Powered by Lightfast Core with fetchRequestHandler for agent orchestration, memory persistence, and tool support
             </p>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
               <div className="p-3 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-1">🤖 Agent System</h3>
-                <p className="text-xs text-gray-600">Structured agents with system prompts and versioning</p>
+                <h3 className="font-semibold text-gray-700 mb-1">🚀 fetchHandler</h3>
+                <p className="text-xs text-gray-600">Production-ready request handling with built-in streaming</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-700 mb-1">💾 Memory</h3>
                 <p className="text-xs text-gray-600">Redis-backed conversation persistence</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-1">🛠️ Tools</h3>
-                <p className="text-xs text-gray-600">Extensible tool system for agent capabilities</p>
+                <h3 className="font-semibold text-gray-700 mb-1">🤖 Agent System</h3>
+                <p className="text-xs text-gray-600">Structured agents with telemetry and error handling</p>
               </div>
             </div>
           </div>
@@ -136,9 +138,9 @@ export function LightfastChat() {
                       {(message as any).parts?.[0]?.text || ''}
                     </p>
                   ) : (
-                    <ReactMarkdown 
-                      className="prose prose-sm max-w-none"
-                      components={{
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown 
+                        components={{
                         pre: ({ children }) => (
                           <pre className="bg-gray-800 text-gray-100 p-2 rounded overflow-x-auto">
                             {children}
@@ -154,10 +156,11 @@ export function LightfastChat() {
                             <code>{children}</code>
                           );
                         },
-                      }}
-                    >
-                      {(message as any).parts?.[0]?.text || ''}
-                    </ReactMarkdown>
+                        }}
+                      >
+                        {(message as any).parts?.[0]?.text || ''}
+                      </ReactMarkdown>
+                    </div>
                   )}
                 </div>
                 
@@ -229,7 +232,7 @@ export function LightfastChat() {
         </form>
         
         <p className="text-xs text-gray-500 mt-2 text-center">
-          Powered by Lightfast Core v1 • Session persisted with Redis
+          Powered by Lightfast Core fetchRequestHandler • Session persisted with Redis
         </p>
       </div>
     </div>

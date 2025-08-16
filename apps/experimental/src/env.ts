@@ -1,5 +1,5 @@
-import { env as aiEnv } from "@lightfast/core/v2/env";
-import { braintrustEnv } from "@lightfast/core/v2/braintrust-env";
+import { env as aiEnv } from "@lightfastai/core/v2/env";
+import { braintrustEnv } from "@lightfastai/core/v2/braintrust-env";
 import { anthropicEnv } from "@repo/ai/anthropic-env";
 import { browserbaseEnv } from "@repo/ai/browserbase-env";
 import { vercel } from "@t3-oss/env-core/presets-zod";

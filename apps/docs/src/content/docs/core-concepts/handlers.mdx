@@ -12,7 +12,7 @@ Request handlers in Lightfast Core provide the bridge between HTTP requests and 
 The primary handler for Next.js and other fetch-based frameworks:
 
 ```typescript
-import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
+import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -528,8 +528,8 @@ export async function POST(req: Request) {
 Build custom handlers for other frameworks:
 
 ```typescript
-import { Agent } from "@lightfast/core/agent";
-import { Memory } from "@lightfast/core/memory";
+import { Agent } from "@lightfastai/core/agent";
+import { Memory } from "@lightfastai/core/memory";
 
 export async function expressHandler(
   agent: Agent,

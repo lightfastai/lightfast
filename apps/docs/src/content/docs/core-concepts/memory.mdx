@@ -51,7 +51,7 @@ Lightfast Core provides two memory adapters out of the box:
 The `RedisMemory` adapter uses Upstash Redis for scalable, persistent storage:
 
 ```typescript
-import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { RedisMemory } from "@lightfastai/core/agent/memory/adapters/redis";
 
 const memory = new RedisMemory({
   url: process.env.KV_REST_API_URL,
@@ -79,7 +79,7 @@ stream:{streamId}               # Stream data
 The `InMemoryMemory` adapter stores data in process memory:
 
 ```typescript
-import { InMemoryMemory } from "@lightfast/core/memory/adapters/in-memory";
+import { InMemoryMemory } from "@lightfastai/core/memory/adapters/in-memory";
 
 const memory = new InMemoryMemory();
 ```
@@ -284,7 +284,7 @@ await memory.createSession({
 Implement the `Memory` interface for custom storage backends:
 
 ```typescript
-import { Memory } from "@lightfast/core/memory";
+import { Memory } from "@lightfastai/core/memory";
 import { Database } from "your-database";
 
 export class DatabaseMemory implements Memory {

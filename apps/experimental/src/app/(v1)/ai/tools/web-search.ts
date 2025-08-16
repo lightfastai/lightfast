@@ -1,5 +1,5 @@
-import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
-import { createTool } from "@lightfast/core/tool";
+import type { RuntimeContext } from "@lightfastai/core/server/adapters/types";
+import { createTool } from "@lightfastai/core/tool";
 import { currentSpan, wrapTraced } from "braintrust";
 import Exa from "exa-js";
 import type {RegularSearchOptions, SearchResponse} from "exa-js";

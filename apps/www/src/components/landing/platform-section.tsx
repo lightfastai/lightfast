@@ -13,8 +13,8 @@ const features = [
 		filename: "agent.ts",
 		description:
 			"Build agents with tool factories and runtime context injection",
-		code: `import { createAgent } from '@lightfast/core/agent';
-import { createTool } from '@lightfast/core/tool';
+		code: `import { createAgent } from '@lightfastai/core/agent';
+import { createTool } from '@lightfastai/core/tool';
 
 // Define tools with runtime context access
 const searchTool = createTool({
@@ -56,7 +56,7 @@ const agent = createAgent({
 		title: "Resource Management",
 		filename: "resource.ts",
 		description: "Sandboxes, browser automation, and file operations",
-		code: `import { createTool } from '@lightfast/core/tool';
+		code: `import { createTool } from '@lightfastai/core/tool';
 import Sandbox from '@e2b/code-interpreter';
 
 // Sandbox execution tool with session persistence
@@ -105,7 +105,7 @@ export const browserTool = createTool({
 		title: "Security & Validation",
 		filename: "security.ts",
 		description: "Input validation, session auth, and audit logging",
-		code: `import { fetchRequestHandler } from '@lightfast/core/agent/handlers';
+		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 
@@ -159,7 +159,7 @@ const secureTool = createTool({
 		title: "Human-in-the-Loop",
 		filename: "human.ts",
 		description: "Approval workflows and human oversight (coming soon)",
-		code: `import { createTool } from '@lightfast/core/tool';
+		code: `import { createTool } from '@lightfastai/core/tool';
 import { notifySlack, waitForApproval } from '@lightfast/human';
 
 // Tool that requires human approval
@@ -209,8 +209,8 @@ const deployTool = createTool({
 		title: "Memory & Performance",
 		filename: "memory.ts",
 		description: "Persistent memory, caching, and streaming",
-		code: `import { RedisMemory } from '@lightfast/core/agent/memory/adapters/redis';
-import { AnthropicProviderCache, ClineConversationStrategy } from '@lightfast/core/agent/primitives/cache';
+		code: `import { RedisMemory } from '@lightfastai/core/agent/memory/adapters/redis';
+import { AnthropicProviderCache, ClineConversationStrategy } from '@lightfastai/core/agent/primitives/cache';
 import { smoothStream } from 'ai';
 
 // Redis-based persistent memory
@@ -263,7 +263,7 @@ const agent = createAgent({
 		title: "Production Ready",
 		filename: "production.ts",
 		description: "Observability, error handling, and deployment",
-		code: `import { fetchRequestHandler } from '@lightfast/core/agent/handlers';
+		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
 import { BraintrustMiddleware, traced } from 'braintrust';
 import { wrapLanguageModel } from 'ai';
 

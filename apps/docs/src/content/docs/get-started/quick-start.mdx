@@ -13,7 +13,7 @@ Let's start by creating a basic agent without any tools:
 
 ```typescript
 // src/agents/assistant.ts
-import { createAgent } from "@lightfast/core/agent";
+import { createAgent } from "@lightfastai/core/agent";
 import { gateway } from "@ai-sdk/gateway";
 
 export const assistantAgent = createAgent({
@@ -35,7 +35,7 @@ Now let's add a web search tool to make our agent more capable:
 
 ```typescript
 // src/tools/web-search.ts
-import { createTool } from "@lightfast/core/tool";
+import { createTool } from "@lightfastai/core/tool";
 import { z } from "zod";
 
 export const webSearchTool = createTool({
@@ -66,7 +66,7 @@ Update your agent to use the tool:
 
 ```typescript
 // src/agents/assistant.ts
-import { createAgent } from "@lightfast/core/agent";
+import { createAgent } from "@lightfastai/core/agent";
 import { gateway } from "@ai-sdk/gateway";
 import { webSearchTool } from "../tools/web-search";
 
@@ -92,8 +92,8 @@ Set up an API route to handle agent requests:
 
 ```typescript
 // app/api/chat/route.ts (Next.js App Router)
-import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
-import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
+import { RedisMemory } from "@lightfastai/core/agent/memory/adapters/redis";
 import { assistantAgent } from "@/agents/assistant";
 
 // Initialize memory adapter
@@ -205,7 +205,7 @@ The agent automatically persists conversation history. Let's explore how to work
 
 ```typescript
 // src/lib/chat-utils.ts
-import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
+import { RedisMemory } from "@lightfastai/core/agent/memory/adapters/redis";
 
 const memory = new RedisMemory({
   url: process.env.KV_REST_API_URL!,
@@ -341,9 +341,9 @@ Here's a complete, production-ready example combining everything:
 ```typescript
 // app/api/agents/[agentId]/sessions/[sessionId]/route.ts
 import { auth } from "@clerk/nextjs/server";
-import { fetchRequestHandler } from "@lightfast/core/agent/handlers";
-import { RedisMemory } from "@lightfast/core/agent/memory/adapters/redis";
-import { createAgent } from "@lightfast/core/agent";
+import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
+import { RedisMemory } from "@lightfastai/core/agent/memory/adapters/redis";
+import { createAgent } from "@lightfastai/core/agent";
 import { gateway } from "@ai-sdk/gateway";
 import { smoothStream } from "ai";
 import { webSearchTool } from "@/tools/web-search";

@@ -16,7 +16,7 @@
 		"lint": "biome check --write ."
 	},
 	"dependencies": {
-		"@lightfast/core": "workspace:*",
+		"@lightfastai/core": "workspace:*",
 		"ai": "catalog:"
 	},
 	"devDependencies": {

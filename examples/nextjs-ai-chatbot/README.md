@@ -1,15 +1,17 @@
-# Lightfast Core AI Chatbot Example
+# Lightfast Core AI Chatbot Example with fetchRequestHandler
 
-A Next.js AI chatbot demonstrating Lightfast Core v1 infrastructure with memory persistence and streaming responses.
+A Next.js AI chatbot demonstrating Lightfast Core's `fetchRequestHandler` pattern - the same architecture used in production chat applications.
 
 ## Features
 
-- 🤖 **AI Gateway Integration** - Uses Vercel AI Gateway for unified model access
+- 🚀 **fetchRequestHandler** - Production-ready request handling with built-in streaming support
+- 🤖 **Agent System** - Structured agents with telemetry, error handling, and versioning
 - 💾 **Memory Persistence** - Optional Redis-backed conversation history  
-- 🔄 **Streaming Responses** - Real-time AI responses with Vercel AI SDK
+- 🔄 **Streaming Responses** - Real-time AI responses with smooth streaming
 - 🎨 **Modern UI** - Clean interface with Tailwind CSS
 - 🔐 **Environment Validation** - Type-safe environment variables with @t3-oss/env
 - ⚡ **Edge Runtime** - Fast, globally distributed API routes
+- 📊 **Built-in Telemetry** - Request tracking and performance monitoring
 
 ## Quick Start
 
@@ -21,13 +23,26 @@ pnpm install
 
 ### 2. Environment Variables
 
-Create a `.env.local` file:
+Create a `.env.local` file based on `.env.example`:
+
+```bash
+cp .env.example .env.local
+```
+
+Then fill in your values:
 
 ```env
+# Required: Vercel AI Gateway API key for model access
+AI_GATEWAY_API_KEY=your_gateway_api_key_here
+
 # Optional: Redis for conversation persistence
-UPSTASH_REDIS_REST_URL=your_redis_url
+UPSTASH_REDIS_REST_URL=your_redis_url  # Leave empty for in-memory storage
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
 ```
+
+**Getting the required keys:**
+- **Vercel AI Gateway**: Sign up at [vercel.com/dashboard/ai-gateway](https://vercel.com/dashboard/ai-gateway) to get your API key
+- **Upstash Redis** (optional): Get a free instance at [upstash.com](https://upstash.com)
 
 ### 3. Run Development Server
 
@@ -39,9 +54,10 @@ Visit http://localhost:3000
 
 ## Architecture
 
-This example showcases:
+This example showcases the production-ready pattern used in Lightfast chat applications:
 
-- **Lightfast Core v1** - Memory system for conversation persistence
+- **fetchRequestHandler** - Unified request handling with streaming, memory, and error management
+- **createAgent** - Structured agent definition with system prompts and tool support
 - **Vercel AI Gateway** - Unified access to AI models (OpenAI, Anthropic, etc.)
 - **Edge Runtime** - Fast, globally distributed API routes
 - **Type-safe Environment** - Validated configuration with @t3-oss/env
@@ -53,7 +69,8 @@ nextjs-ai-chatbot/
 ├── app/
 │   ├── api/
 │   │   └── chat/
-│   │       └── route.ts      # Chat API using gateway
+│   │       └── [sessionId]/
+│   │           └── route.ts  # fetchRequestHandler API
 │   ├── layout.tsx           # Root layout
 │   └── page.tsx             # Home page
 ├── components/
@@ -61,6 +78,24 @@ nextjs-ai-chatbot/
 ├── lib/
 │   └── env.ts              # Environment validation
 └── package.json           # Dependencies
+```
+
+## API Routes
+
+### Route Pattern: `/api/chat/[sessionId]`
+
+The API route uses the fetchRequestHandler pattern:
+
+```typescript
+// Dynamic route handles session management
+/api/chat/abc-123-def
+
+// Uses fetchRequestHandler for:
+- Automatic streaming response handling
+- Memory persistence with Redis
+- Error boundaries
+- Request/response telemetry
+- Resume capabilities
 ```
 
 ## Key Technologies
@@ -75,14 +110,12 @@ nextjs-ai-chatbot/
 
 ## Customization
 
-### Change Default Model
+### Model Configuration
 
-Edit the `DEFAULT_MODEL` in `/app/api/chat/route.ts`:
+The chatbot uses a fixed model (`openai/gpt-5-nano`) configured in `/app/api/chat/[sessionId]/route.ts`:
 
 ```typescript
-const DEFAULT_MODEL = 'anthropic/claude-3-5-sonnet-20241022';
-// or
-const DEFAULT_MODEL = 'openai/gpt-4o';
+const MODEL = "openai/gpt-5-nano";
 ```
 
 ### Enable Memory Persistence
@@ -98,7 +131,33 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 ### System Prompt
 
-Customize the AI behavior by editing the system prompt in `/app/api/chat/route.ts`.
+Customize the AI behavior by editing the agent definition in `/app/api/chat/[sessionId]/route.ts`:
+
+```typescript
+agent: createAgent({
+  name: "assistant",
+  system: "Your custom system prompt here...",
+  // ... other configuration
+})
+```
+
+### Add Tools
+
+Extend the agent's capabilities by adding tools:
+
+```typescript
+const chatTools = {
+  calculator: tool({
+    description: "Perform calculations",
+    parameters: z.object({
+      expression: z.string(),
+    }),
+    execute: async ({ expression }) => {
+      // Tool implementation
+    },
+  }),
+} as const;
+```
 
 ## Deployment
 

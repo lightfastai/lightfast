@@ -14,7 +14,7 @@ let nextConfig: NextConfig = withBetterStack(
 		transpilePackages: [
 			"@repo/ui",
 			"@repo/lightfast-config",
-			"@lightfast/core",
+			"@lightfastai/core",
 			"@lightfast/types",
 			"@lightfast/evals",
 			"@vendor/analytics",

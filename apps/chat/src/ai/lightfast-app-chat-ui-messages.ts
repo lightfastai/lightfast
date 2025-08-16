@@ -1,4 +1,4 @@
-import type { RuntimeContext } from "@lightfast/core/agent/server/adapters/types";
+import type { RuntimeContext } from "@lightfastai/core/agent/server/adapters/types";
 import type { InferUITools, UIMessage } from "ai";
 import type { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
