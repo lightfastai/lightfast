@@ -37,27 +37,23 @@ export function HeroSection() {
 			</div>
 
 			<div className="flex items-center justify-center flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
-				<div className="flex items-center gap-3">
-					<Button size="default" asChild>
-						<Link href={cloudUrl}>Join waitlist</Link>
-					</Button>
-					<div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg border">
-						<span className="text-sm font-mono text-muted-foreground">$</span>
-						<span className="text-sm font-mono">npm i lightfast</span>
-						<Button
-							size="sm"
-							variant="ghost"
-							className="h-6 w-6 p-0 hover:bg-transparent"
-							onClick={copyToClipboard}
-						>
-							{copied ? (
-								<CheckIcon className="h-4 w-4 text-green-600" />
-							) : (
-								<CopyIcon className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-							)}
-						</Button>
-					</div>
-				</div>
+				<Button size="default" asChild>
+					<Link href={cloudUrl}>Join waitlist</Link>
+				</Button>
+				<Button
+					size="default"
+					variant="outline"
+					onClick={copyToClipboard}
+					className="font-mono"
+				>
+					<span className="text-muted-foreground mr-1">$</span>
+					npm i lightfast
+					{copied ? (
+						<CheckIcon className="ml-2 h-4 w-4 text-green-600" />
+					) : (
+						<CopyIcon className="ml-2 h-4 w-4" />
+					)}
+				</Button>
 				<Button
 					size="default"
 					variant="outline"
