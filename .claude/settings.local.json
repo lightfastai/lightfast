@@ -121,7 +121,8 @@
       "mcp__playwright__browser_take_screenshot",
       "Bash(pnpm --filter @lightfast/cloud typecheck)",
       "Bash(pnpm --filter @lightfast/chat build)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(pnpm tsc:*)"
     ],
     "deny": []
   },

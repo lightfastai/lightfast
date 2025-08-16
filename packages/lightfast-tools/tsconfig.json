@@ -11,7 +11,8 @@
     "noEmit": false,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "target": "ES2022"
+    "target": "ES2022",
+    "composite": false
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

@@ -1,8 +1,8 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { auth } from "@clerk/nextjs/server";
 import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
-import { RedisMemory } from "@lightfastai/core/agent/memory/redis";
+import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
+import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { uuidv4 } from "@lightfastai/core/v2/utils";

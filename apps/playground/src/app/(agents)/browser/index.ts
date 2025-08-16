@@ -1,4 +1,4 @@
-import type { RuntimeContext } from "@lightfastai/core/agent/server/adapters/types";
+import type { RuntimeContext } from "@lightfastai/core/server/adapters/types";
 import { createTool } from "@lightfastai/core/tool";
 import {
   StagehandSessionManager,
