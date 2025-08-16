@@ -6,8 +6,8 @@
 
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
-import { RedisMemory } from "@lightfastai/core/memory";
+import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
+import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
 import { v4 as uuidv4 } from "uuid";
 
 // Define the runtime context type
