@@ -19,8 +19,22 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/gateway": "catalog:",
+    "@ai-sdk/openai": "2.0.0-beta.7",
+    "@ai-sdk/react": "^2.0.14",
+    "@lightfast/core": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.12.0",
+    "@types/uuid": "^10.0.0",
+    "@upstash/redis": "catalog:",
+    "ai": "^5.0.14",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
     "next": "14.2.21",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "react-markdown": "^9.0.1",
+    "uuid": "^11.1.0",
+    "zod": "catalog:"
   }
 }

@@ -81,6 +81,26 @@
 			"types": "./dist/providers.d.ts",
 			"import": "./dist/providers.js",
 			"require": "./dist/providers.cjs"
+		},
+		"./v2/agent": {
+			"types": "./dist/v2/agent.d.ts",
+			"import": "./dist/v2/agent.js",
+			"require": "./dist/v2/agent.cjs"
+		},
+		"./v2/server": {
+			"types": "./dist/v2/server.d.ts",
+			"import": "./dist/v2/server.js",
+			"require": "./dist/v2/server.cjs"
+		},
+		"./v2/react": {
+			"types": "./dist/v2/react.d.ts",
+			"import": "./dist/v2/react.js",
+			"require": "./dist/v2/react.cjs"
+		},
+		"./v2/core": {
+			"types": "./dist/v2/core.d.ts",
+			"import": "./dist/v2/core.js",
+			"require": "./dist/v2/core.cjs"
 		}
 	},
 	"scripts": {

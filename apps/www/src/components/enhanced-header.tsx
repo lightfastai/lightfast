@@ -14,6 +14,7 @@ import {
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
 import { getAppUrl } from "@repo/url-utils";
+import { UnauthenticatedMobileNav } from "./layouts/unauthenticated-mobile-nav";
 
 export function EnhancedHeader() {
 	const chatUrl = getAppUrl("chat");
@@ -28,12 +29,12 @@ export function EnhancedHeader() {
 					</Link>
 				</Button>
 
-				<div className="flex h-4 items-center px-4">
+				<div className="hidden xl:flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
 
-				{/* Navigation Menu */}
-				<NavigationMenu className="hidden md:flex ml-4">
+				{/* Navigation Menu - hidden on lg and below */}
+				<NavigationMenu className="hidden xl:flex ml-4">
 					<NavigationMenuList>
 						{/* Products */}
 						<NavigationMenuItem>
@@ -42,35 +43,70 @@ export function EnhancedHeader() {
 							>
 								Products
 							</NavigationMenuTrigger>
-							<NavigationMenuContent>
-								<div className="flex gap-2 md:w-[500px] lg:w-[300px]">
-									<div className="flex flex-col gap-2 flex-1">
-										<Link
-											href={cloudUrl}
-											className="block p-3 hover:bg-accent rounded-md transition-colors"
-										>
-											<div className="text-sm font-medium leading-none">
-												Cloud
-											</div>
-											<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
-												Enterprise-grade AI infrastructure built for scale and
-												reliability.
-											</p>
-										</Link>
+							<NavigationMenuContent className="bg-background p-2">
+								<div className="flex flex-col gap-3 border p-3 bg-muted/30 rounded-sm md:w-[300px]">
+									<h3 className="text-2xs font-medium text-muted-foreground px-4">
+										Core Features
+									</h3>
+									{/* Chat Product */}
+									<Button
+										variant="ghost"
+										className="h-auto justify-start w-full"
+										asChild
+									>
 										<Link
 											href={chatUrl}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="block p-3 hover:bg-accent rounded-md transition-colors"
 										>
-											<div className="text-sm font-medium leading-none">
-												Chat
+											<div className="text-left w-full">
+												<div className="text-xs font-medium leading-none mb-1">
+													Chat
+												</div>
+												<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
+													Interactive AI assistant for your development workflow
+												</p>
 											</div>
-											<p className="text-muted-foreground line-clamp-2 text-sm leading-snug mt-1">
-												Interactive AI chat experiences for your applications.
-											</p>
 										</Link>
-									</div>
+									</Button>
+
+									{/* Cloud Product */}
+									<Button
+										variant="ghost"
+										className="h-auto justify-start w-full"
+										asChild
+									>
+										<Link href={cloudUrl}>
+											<div className="text-left w-full">
+												<div className="text-xs font-medium leading-none mb-1">
+													Cloud
+												</div>
+												<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
+													Managed infrastructure for deploying AI agents at
+													scale
+												</p>
+											</div>
+										</Link>
+									</Button>
+
+									{/* SDK Product */}
+									<Button
+										variant="ghost"
+										className="h-auto justify-start w-full"
+										asChild
+									>
+										<Link href="/docs/sdk">
+											<div className="text-left w-full">
+												<div className="text-xs font-medium leading-none mb-1">
+													SDK
+												</div>
+												<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
+													Developer tools for building and orchestrating AI
+													agents
+												</p>
+											</div>
+										</Link>
+									</Button>
 								</div>
 							</NavigationMenuContent>
 						</NavigationMenuItem>
@@ -100,24 +136,32 @@ export function EnhancedHeader() {
 
 			{/* Right side actions */}
 			<div className="flex items-center gap-2">
-				<Button variant="default" asChild>
-					<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
-						Try Chat
-					</Link>
-				</Button>
-				<div className="flex h-4 items-center px-3">
-					<Separator orientation="vertical" />
+				{/* Desktop actions - hidden on lg and below */}
+				<div className="hidden xl:flex items-center gap-2">
+					<Button variant="default" asChild>
+						<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+							Try Chat
+						</Link>
+					</Button>
+					<div className="flex h-4 items-center px-3">
+						<Separator orientation="vertical" />
+					</div>
+					<Button variant="ghost" size="xs" asChild>
+						<Link
+							href="https://github.com/lightfastai/lightfast"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Icons.gitHub className="h-4 w-4" />
+							<span className="sr-only">GitHub</span>
+						</Link>
+					</Button>
 				</div>
-				<Button variant="ghost" size="xs" asChild>
-					<Link
-						href="https://github.com/lightfastai/lightfast"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Icons.gitHub className="h-4 w-4" />
-						<span className="sr-only">GitHub</span>
-					</Link>
-				</Button>
+				
+				{/* Mobile navigation - shown on lg and below */}
+				<div className="xl:hidden">
+					<UnauthenticatedMobileNav />
+				</div>
 			</div>
 		</header>
 	);

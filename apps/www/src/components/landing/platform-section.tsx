@@ -10,6 +10,7 @@ const features = [
 		id: "orchestration",
 		icon: Workflow,
 		title: "Agent Orchestration",
+		filename: "agent.ts",
 		description:
 			"Build agents with tool factories and runtime context injection",
 		code: `import { createAgent } from '@lightfast/core/agent';
@@ -53,6 +54,7 @@ const agent = createAgent({
 		id: "resources",
 		icon: Cpu,
 		title: "Resource Management",
+		filename: "resource.ts",
 		description: "Sandboxes, browser automation, and file operations",
 		code: `import { createTool } from '@lightfast/core/tool';
 import Sandbox from '@e2b/code-interpreter';
@@ -101,6 +103,7 @@ export const browserTool = createTool({
 		id: "security",
 		icon: Shield,
 		title: "Security & Validation",
+		filename: "security.ts",
 		description: "Input validation, session auth, and audit logging",
 		code: `import { fetchRequestHandler } from '@lightfast/core/agent/handlers';
 import { auth } from '@clerk/nextjs/server';
@@ -154,6 +157,7 @@ const secureTool = createTool({
 		id: "human",
 		icon: Users,
 		title: "Human-in-the-Loop",
+		filename: "human.ts",
 		description: "Approval workflows and human oversight (coming soon)",
 		code: `import { createTool } from '@lightfast/core/tool';
 import { notifySlack, waitForApproval } from '@lightfast/human';
@@ -203,6 +207,7 @@ const deployTool = createTool({
 		id: "scale",
 		icon: Zap,
 		title: "Memory & Performance",
+		filename: "memory.ts",
 		description: "Persistent memory, caching, and streaming",
 		code: `import { RedisMemory } from '@lightfast/core/agent/memory/adapters/redis';
 import { AnthropicProviderCache, ClineConversationStrategy } from '@lightfast/core/agent/primitives/cache';
@@ -256,6 +261,7 @@ const agent = createAgent({
 		id: "sdk",
 		icon: Code,
 		title: "Production Ready",
+		filename: "production.ts",
 		description: "Observability, error handling, and deployment",
 		code: `import { fetchRequestHandler } from '@lightfast/core/agent/handlers';
 import { BraintrustMiddleware, traced } from 'braintrust';
@@ -318,48 +324,43 @@ export function PlatformSection() {
 		<>
 			{/* Mobile - Tabs */}
 			<div className="block lg:hidden">
-					<div className="flex overflow-x-auto pb-2 mb-4 gap-2 scrollbar-hide">
-						{features.map((feature) => {
-							const Icon = feature.icon;
-							return (
-								<Button
-									key={feature.id}
-									variant={selectedFeature === feature.id ? "default" : "outline"}
-									onClick={() => setSelectedFeature(feature.id)}
-									className="flex-shrink-0 gap-2"
-									size="sm"
-								>
-									<Icon className="h-4 w-4" />
-									<span className="whitespace-nowrap">{feature.title}</span>
-								</Button>
-							);
-						})}
-					</div>
-					<div className="relative rounded-lg border bg-card h-[350px] sm:h-[400px] flex flex-col overflow-hidden">
-						<div className="flex items-center justify-between border-b px-3 py-2 flex-shrink-0">
-							<div className="flex items-center gap-1.5">
-								<div className="h-2.5 w-2.5 rounded-full bg-destructive" />
-								<div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
-								<div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-							</div>
-							<span className="text-xs text-muted-foreground font-mono">
-								agent.ts
-							</span>
+					<div className="space-y-3">
+						<div className="px-3">
+							<h3 className="font-semibold text-sm">{activeFeature.title}</h3>
+							<p className="text-xs text-muted-foreground mt-1">{activeFeature.description}</p>
 						</div>
-						<div className="flex-1 overflow-y-auto">
-							<CodeHighlighter
-								code={activeFeature.code}
-								language="typescript"
-							/>
+						<div className="relative rounded-lg border bg-background h-[350px] sm:h-[400px] md:h-[450px] flex flex-col overflow-hidden">
+							<div className="flex items-center border-b flex-shrink-0 overflow-x-auto scrollbar-hide">
+								{features.map((feature) => (
+									<Button
+										key={feature.id}
+										variant="ghost"
+										onClick={() => setSelectedFeature(feature.id)}
+										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r ${
+											selectedFeature === feature.id 
+												? "bg-accent" 
+												: ""
+										}`}
+									>
+										{feature.filename}
+									</Button>
+								))}
+							</div>
+							<div className="flex-1 overflow-y-auto">
+								<CodeHighlighter
+									code={activeFeature.code}
+									language="typescript"
+								/>
+							</div>
 						</div>
 					</div>
 			</div>
 
 			{/* Desktop - Side by side */}
-				<div className="hidden lg:grid lg:grid-cols-5 gap-8 items-stretch">
+				<div className="hidden lg:grid lg:grid-cols-5 gap-6 xl:gap-8 items-stretch">
 					{/* Left side - Code display (3/5) */}
 					<div className="lg:col-span-3">
-						<div className="relative rounded-lg border bg-card h-[500px] flex flex-col overflow-hidden">
+						<div className="relative rounded-lg border bg-background h-[500px] flex flex-col overflow-hidden">
 							<div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
 								<div className="flex items-center gap-2">
 									<div className="h-3 w-3 rounded-full bg-destructive" />
@@ -367,7 +368,7 @@ export function PlatformSection() {
 									<div className="h-3 w-3 rounded-full bg-green-500" />
 								</div>
 								<span className="text-xs text-muted-foreground font-mono">
-									agent.ts
+									{activeFeature.filename}
 								</span>
 							</div>
 							<div className="flex-1 overflow-y-auto">
@@ -390,10 +391,10 @@ export function PlatformSection() {
 											key={feature.id}
 											variant="ghost"
 											onClick={() => setSelectedFeature(feature.id)}
-											className={`w-full justify-start h-auto p-3 transition-all duration-200 ${
+											className={`w-full justify-start h-auto p-3 ${
 												selectedFeature === feature.id
-													? "bg-primary/10 hover:bg-primary/15"
-													: "hover:bg-accent"
+													? "bg-accent"
+													: ""
 											}`}
 										>
 											<div className="flex items-center gap-3 w-full">

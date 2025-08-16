@@ -84,25 +84,25 @@ export function TemplatesSection() {
 	return (
 		<>
 			{/* Header */}
-			<div className="text-center space-y-4 mb-12">
-				<h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+			<div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-12">
+				<h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
 					Start building in seconds
 				</h2>
-				<p className="mx-auto max-w-2xl text-sm text-muted-foreground">
+				<p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
 					Kickstart your next project with templates built by us and our
 					community.
 				</p>
 
 				{/* Action Buttons */}
-				<div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-					<Button variant="outline" size="lg" asChild>
+				<div className="flex flex-row gap-3 sm:gap-4 justify-center items-center pt-2 sm:pt-4">
+					<Button variant="outline" size="default" asChild>
 						<Link href="https://github.com/lightfastai/lightfast/tree/main/examples" target="_blank" rel="noopener noreferrer">
 							View all examples
 						</Link>
 					</Button>
-					<Button variant="default" size="lg" className="gap-2" asChild>
+					<Button variant="default" size="default" className="gap-2" asChild>
 						<Link href="/docs">
-							<BookOpen className="size-3" />
+							<BookOpen className="size-3 sm:size-4" />
 							Docs
 						</Link>
 					</Button>
@@ -118,9 +118,9 @@ export function TemplatesSection() {
 					}}
 					className="w-full"
 				>
-					<CarouselContent className="-ml-2 md:-ml-4">
+					<CarouselContent className="-ml-2 sm:-ml-3 md:-ml-4">
 						{templates.map((template, index) => (
-							<CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2">
+							<CarouselItem key={index} className="pl-2 sm:pl-3 md:pl-4 basis-full sm:basis-1/2 md:basis-1/2">
 								<TemplateCard
 									title={template.title}
 									description={template.description}
@@ -130,8 +130,8 @@ export function TemplatesSection() {
 							</CarouselItem>
 						))}
 					</CarouselContent>
-					<CarouselPrevious className="left-2" />
-					<CarouselNext className="right-2" />
+					<CarouselPrevious className="left-1 sm:left-2" />
+					<CarouselNext className="right-1 sm:right-2" />
 				</Carousel>
 			</div>
 

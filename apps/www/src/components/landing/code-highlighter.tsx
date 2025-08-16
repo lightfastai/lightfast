@@ -47,7 +47,7 @@ export function CodeHighlighter({
 
 	if (!highlightedCode) {
 		return (
-			<pre className="bg-card p-4 text-xs">
+			<pre className="bg-background p-4 text-xs">
 				<code className="text-muted-foreground">{code}</code>
 			</pre>
 		);
@@ -55,7 +55,7 @@ export function CodeHighlighter({
 
 	return (
 		<div
-			className="bg-card text-card-foreground p-4 text-xs overflow-x-auto [&_pre]:!bg-transparent [&_code]:!bg-transparent"
+			className="bg-background text-card-foreground p-4 text-xs overflow-x-auto [&_pre]:!bg-transparent [&_code]:!bg-transparent"
 			dangerouslySetInnerHTML={{ __html: highlightedCode }}
 		/>
 	);

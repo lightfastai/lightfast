@@ -24,7 +24,13 @@ export default defineConfig({
     "agent/primitives/cache": "./src/core/primitives/cache/index.ts",
     
     // Providers
-    "providers": "./src/utils/providers.ts"
+    "providers": "./src/utils/providers.ts",
+    
+    // V2 exports
+    "v2/agent": "./src/core/v2/agent.ts",
+    "v2/server": "./src/v2/server.ts",
+    "v2/react": "./src/v2/react.ts",
+    "v2/core": "./src/core/v2/index.ts"
   },
   
   // Output settings

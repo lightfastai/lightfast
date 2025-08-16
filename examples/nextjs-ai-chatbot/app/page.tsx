@@ -1,18 +1,9 @@
+import { LightfastChat } from '@/components/lightfast-chat';
+
 export default function Home() {
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Next.js AI Chatbot</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          A production-ready AI chatbot built with Next.js and Lightfast
-        </p>
-        <div className="bg-gray-100 rounded-lg p-6">
-          <p className="text-sm text-gray-500 mb-2">Chat interface coming soon...</p>
-          <div className="bg-white rounded p-4 shadow-sm">
-            <p>Welcome! This is a placeholder for the AI chatbot interface.</p>
-          </div>
-        </div>
-      </div>
+    <main className="min-h-screen bg-gray-50">
+      <LightfastChat />
     </main>
   );
 }
