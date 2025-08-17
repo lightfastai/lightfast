@@ -28,9 +28,11 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	// Get session data - will use prefetched data if available
 	const { data: sessionData } = useSuspenseQuery({
 		...trpc.chat.session.get.queryOptions({ sessionId }),
-		// Session data rarely changes, cache for longer to enable instant navigation
-		staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-		gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache even if inactive
+		// Reduced cache times to ensure data freshness after updates
+		staleTime: 10 * 1000, // 10 seconds - data considered fresh
+		gcTime: 60 * 1000, // 1 minute - keep in cache when inactive
+		refetchOnWindowFocus: true, // Refetch when user returns to tab
+		refetchOnMount: "always", // Always refetch when component mounts
 	});
 
 	// Convert database messages to UI format
@@ -55,10 +57,16 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={() => {
+				onFinish={async () => {
 					// Invalidate the session query to refresh from database
 					// This ensures the cache is updated with the latest messages
-					void queryClient.invalidateQueries({
+					await queryClient.invalidateQueries({
+						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
+					});
+					
+					// Also refetch the query immediately to ensure fresh data
+					// This is important for when users navigate away and back
+					await queryClient.refetchQueries({
 						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
 					});
 				}}

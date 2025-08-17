@@ -62,10 +62,15 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={() => {
+				onFinish={async () => {
 					// Invalidate the session query to ensure cache is populated
 					// This is important for new sessions that didn't exist in cache before
-					void queryClient.invalidateQueries({
+					await queryClient.invalidateQueries({
+						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
+					});
+					
+					// Also refetch the query immediately to ensure fresh data
+					await queryClient.refetchQueries({
 						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
 					});
 				}}
