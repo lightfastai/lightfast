@@ -88,11 +88,13 @@
 		},
 		"./v2/env": {
 			"types": "./dist/v2/env.d.ts",
-			"import": "./dist/v2/env.mjs"
+			"import": "./dist/v2/env.mjs",
+			"default": "./dist/v2/env.mjs"
 		},
 		"./v2/braintrust-env": {
 			"types": "./dist/v2/braintrust-env.d.ts",
-			"import": "./dist/v2/braintrust-env.mjs"
+			"import": "./dist/v2/braintrust-env.mjs",
+			"default": "./dist/v2/braintrust-env.mjs"
 		}
 	},
 	"scripts": {
