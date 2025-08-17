@@ -6,10 +6,10 @@ import NextjsPlain from "react-devicons/nextjs/plain";
 import VuejsPlain from "react-devicons/vuejs/plain";
 import NuxtjsPlain from "react-devicons/nuxtjs/plain";
 import SveltePlain from "react-devicons/svelte/plain";
-import AstroPlain from "react-devicons/astro/plain";
 import AngularPlain from "react-devicons/angular/plain";
 import FlutterPlain from "react-devicons/flutter/plain";
-import VitejsPlain from "react-devicons/vitejs/plain";
+import FastifyPlain from "react-devicons/fastify/plain";
+import NodejsPlain from "react-devicons/nodejs/plain";
 
 const frameworks = [
 	{ name: "React", Icon: ReactOriginal },
@@ -17,10 +17,10 @@ const frameworks = [
 	{ name: "Vue", Icon: VuejsPlain },
 	{ name: "Nuxt", Icon: NuxtjsPlain },
 	{ name: "Svelte", Icon: SveltePlain },
-	{ name: "Astro", Icon: AstroPlain },
+	{ name: "Hono", Icon: NodejsPlain },
 	{ name: "Angular", Icon: AngularPlain },
 	{ name: "Flutter", Icon: FlutterPlain },
-	{ name: "Vite", Icon: VitejsPlain },
+	{ name: "Fastify", Icon: FastifyPlain },
 ];
 
 export function FrameworkSection() {
