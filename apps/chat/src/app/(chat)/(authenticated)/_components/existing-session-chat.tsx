@@ -15,39 +15,53 @@ interface ExistingSessionChatProps {
  * Client component that loads existing session data and renders the chat interface.
  * With prefetched data from the server, this should render instantly.
  */
-export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatProps) {
+export function ExistingSessionChat({
+	sessionId,
+	agentId,
+}: ExistingSessionChatProps) {
 	const trpc = useTRPC();
-	
+
 	// Get user info - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
-	
+
 	// Get session data - will use prefetched data if available
 	const { data: sessionData, refetch } = useSuspenseQuery({
 		...trpc.chat.session.get.queryOptions({ sessionId }),
-		staleTime: 30 * 1000, // 30 seconds
+		staleTime: 0, // Always consider data stale to ensure fresh fetches
 		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
 		refetchOnWindowFocus: true, // Refetch when user returns to tab
 		refetchOnMount: "always", // Always refetch when component mounts
 	});
-	
-	// For sessions with no messages (likely new sessions with stale cache),
-	// trigger an immediate refetch to get the latest data
+
+	// For sessions with no messages, continuously poll for data
+	// This handles the race condition where navigation happens before session creation
 	useEffect(() => {
 		if (sessionData.messages.length === 0) {
-			console.log(`[ExistingSessionChat] Empty messages detected for session ${sessionId}, refetching...`);
-			void refetch();
+			console.log(
+				`[ExistingSessionChat] Empty messages detected for session ${sessionId}, starting polling...`,
+			);
+			
+			// Poll every 500ms until we get messages
+			const pollInterval = setInterval(() => {
+				void refetch();
+			}, 500);
+			
+			// Clean up interval when component unmounts or messages arrive
+			return () => clearInterval(pollInterval);
 		}
 	}, [sessionId, sessionData.messages.length, refetch]);
 
 	// Convert database messages to UI format
-	const initialMessages: LightfastAppChatUIMessage[] = sessionData.messages.map((msg) => ({
-		id: msg.id,
-		role: msg.role,
-		parts: msg.parts,
-	})) as LightfastAppChatUIMessage[];
+	const initialMessages: LightfastAppChatUIMessage[] = sessionData.messages.map(
+		(msg) => ({
+			id: msg.id,
+			role: msg.role,
+			parts: msg.parts,
+		}),
+	) as LightfastAppChatUIMessage[];
 
 	// No-op for existing sessions - session already exists
 	const handleSessionCreation = () => {
@@ -57,19 +71,19 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	return (
 		<>
 			<ChatInterface
-				key={`${agentId}-${sessionId}`}
+				key={`${agentId}-${sessionId}-${initialMessages.length}`}
 				agentId={agentId}
 				sessionId={sessionId}
 				initialMessages={initialMessages}
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={() => {
-					// Don't invalidate here - it can cause race conditions
-					// The messages are saved server-side, and will be fetched
-					// fresh when the user navigates back due to staleTime: 0
+				onFinish={async () => {
+					// Refetch to ensure we have the latest messages
+					await refetch();
 				}}
 			/>
 		</>
 	);
 }
+
