@@ -7,6 +7,7 @@ import { sentryEnv } from "@vendor/observability/sentry-env";
 import { braintrustEnv } from "@lightfastai/core/v2/braintrust-env";
 import { dbEnv } from "@vendor/db/env";
 import { env as securityEnv } from "@vendor/security/env";
+import { env as inngestEnv } from "@vendor/inngest/env";
 
 export const env = createEnv({
   extends: [
@@ -16,6 +17,7 @@ export const env = createEnv({
     braintrustEnv,
     dbEnv,
     securityEnv,
+    inngestEnv,
   ],
   shared: {
     NODE_ENV: z

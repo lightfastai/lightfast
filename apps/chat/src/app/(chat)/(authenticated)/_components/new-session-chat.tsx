@@ -5,7 +5,6 @@ import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useTRPC } from "~/trpc/react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { ErrorTestPanel } from "~/components/dev/error-test-panel";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -75,7 +74,6 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 					});
 				}}
 			/>
-			<ErrorTestPanel />
 		</>
 	);
 }

@@ -285,26 +285,8 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 							// Tool called
 						}
 					},
-					onFinish: (result) => {
-						// Log to Braintrust for POST requests
-						if (req.method === "POST") {
-							currentSpan().log({
-								input: {
-									agentId,
-									sessionId,
-									userId,
-								},
-								output:
-									result.response.messages.length > 0
-										? result.response.messages
-										: result.text,
-								metadata: {
-									finishReason: result.finishReason,
-									usage: result.usage,
-								},
-							});
-						}
-					},
+					// NOTE: DO NOT add onFinish here - it will override the runtime's onFinish
+					// which is responsible for saving the assistant message to the database
 				}),
 				sessionId,
 				memory,
