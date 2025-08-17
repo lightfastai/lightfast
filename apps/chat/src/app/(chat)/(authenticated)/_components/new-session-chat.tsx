@@ -4,8 +4,7 @@ import { ChatInterface } from "../../_components/chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -23,8 +22,6 @@ interface NewSessionChatProps {
  * 5. If user hits back button to /new, a new ID is generated
  */
 export function NewSessionChat({ agentId }: NewSessionChatProps) {
-	const router = useRouter();
-	
 	// Use the hook to manage session ID generation and navigation state
 	const { sessionId, isNewSession } = useSessionId();
 
@@ -38,6 +35,15 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Hook for creating sessions optimistically
 	const createSession = useCreateSession();
 
+	// Prepare session query but don't execute it yet (enabled: false)
+	// This allows us to refetch when the assistant finishes responding
+	const { refetch: refetchSession } = useQuery({
+		...trpc.chat.session.get.queryOptions({ sessionId }),
+		enabled: false, // Don't fetch on mount - only manual refetch
+		staleTime: 0, // Always consider data stale
+		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+	});
+
 	// Handle session creation when the first message is sent
 	const handleSessionCreation = () => {
 		if (!isNewSession) {
@@ -45,9 +51,8 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 			return;
 		}
 
-		// Use Next.js router for proper navigation
-		// This ensures the page component executes and prefetches data
-		router.replace(`/${sessionId}`);
+		// Update the URL immediately for instant feedback
+		window.history.replaceState({}, "", `/${sessionId}`);
 
 		// Create the session optimistically (fire-and-forget)
 		// The backend will also create it if needed (upsert behavior)
@@ -64,11 +69,11 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={() => {
-					// For new sessions, do NOT invalidate/refetch here
-					// The session query hasn't been made yet (we're still on /new route)
-					// and the assistant message may not be saved to DB yet
-					// Let the natural navigation and prefetch handle data loading
+				onFinish={async () => {
+					// After assistant finishes responding, fetch the session data
+					// This populates the cache so when user navigates away and back,
+					// the data is already there, preventing loading skeleton
+					await refetchSession();
 				}}
 			/>
 		</>

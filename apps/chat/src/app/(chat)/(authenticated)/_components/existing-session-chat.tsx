@@ -1,7 +1,6 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -35,24 +34,6 @@ export function ExistingSessionChat({
 		refetchOnWindowFocus: true, // Refetch when user returns to tab
 		refetchOnMount: "always", // Always refetch when component mounts
 	});
-
-	// For sessions with no messages, continuously poll for data
-	// This handles the race condition where navigation happens before session creation
-	useEffect(() => {
-		if (sessionData.messages.length === 0) {
-			console.log(
-				`[ExistingSessionChat] Empty messages detected for session ${sessionId}, starting polling...`,
-			);
-			
-			// Poll every 500ms until we get messages
-			const pollInterval = setInterval(() => {
-				void refetch();
-			}, 500);
-			
-			// Clean up interval when component unmounts or messages arrive
-			return () => clearInterval(pollInterval);
-		}
-	}, [sessionId, sessionData.messages.length, refetch]);
 
 	// Convert database messages to UI format
 	const initialMessages: LightfastAppChatUIMessage[] = sessionData.messages.map(
