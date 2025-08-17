@@ -10,15 +10,12 @@ import {
   isForbidden,
   isUnauthorized 
 } from "~/lib/trpc-errors";
-import { inngest } from "~/inngest/client";
 
 /**
  * PlanetScale implementation of Memory interface using tRPC for all database operations
  * This ensures consistent authentication and authorization across the app
  */
 export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, ChatFetchContext> {
-	// Track message count per session for title generation
-	private sessionMessageCounts = new Map<string, number>();
 
 	/**
 	 * Append a single message to a session
@@ -49,31 +46,6 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				},
 			});
 			
-			// Track message count and trigger title generation after 3rd message (user, assistant, user or similar)
-			const currentCount = (this.sessionMessageCounts.get(sessionId) || 0) + 1;
-			this.sessionMessageCounts.set(sessionId, currentCount);
-			
-			// Trigger title generation after the 3rd message (typically first AI response)
-			// This ensures we have enough context for a meaningful title
-			if (currentCount === 3 && message.role === 'assistant') {
-				// Get the user ID from the caller context
-				const authContext = await caller.auth.user.getUser();
-				
-				// Trigger title generation in the background (fire and forget)
-				inngest.send({
-					name: "chat/session.title.generate",
-					data: {
-						sessionId,
-						userId: authContext.userId,
-					},
-				}).catch((error) => {
-					// Log but don't throw - title generation is non-critical
-					console.warn('[PlanetScaleMemory] Failed to trigger title generation:', {
-						sessionId,
-						error,
-					});
-				});
-			}
 		} catch (error) {
 			console.error('[PlanetScaleMemory] Failed to append message:', {
 				sessionId,
@@ -106,8 +78,6 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				sessionId,
 			});
 
-			// Update message count for this session
-			this.sessionMessageCounts.set(sessionId, messages.length);
 
 			return messages as LightfastAppChatUIMessage[];
 		} catch (error) {

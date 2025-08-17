@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
@@ -17,7 +17,6 @@ interface ExistingSessionChatProps {
  */
 export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
-	const queryClient = useQueryClient();
 	
 	// Get user info - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
@@ -39,7 +38,7 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	useEffect(() => {
 		if (sessionData.messages.length === 0) {
 			console.log(`[ExistingSessionChat] Empty messages detected for session ${sessionId}, refetching...`);
-			refetch();
+			void refetch();
 		}
 	}, [sessionId, sessionData.messages.length, refetch]);
 

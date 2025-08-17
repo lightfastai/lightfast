@@ -10,7 +10,6 @@ import {
 } from "~/lib/ai/providers";
 import {
 	BraintrustMiddleware,
-	currentSpan,
 	initLogger,
 	traced,
 } from "braintrust";
@@ -285,8 +284,6 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 							// Tool called
 						}
 					},
-					// NOTE: DO NOT add onFinish here - it will override the runtime's onFinish
-					// which is responsible for saving the assistant message to the database
 				}),
 				sessionId,
 				memory,
