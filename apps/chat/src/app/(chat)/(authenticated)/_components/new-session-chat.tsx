@@ -61,17 +61,11 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={async () => {
-					// Invalidate the session query to ensure cache is populated
-					// This is important for new sessions that didn't exist in cache before
-					await queryClient.invalidateQueries({
-						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
-					});
-					
-					// Also refetch the query immediately to ensure fresh data
-					await queryClient.refetchQueries({
-						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
-					});
+				onFinish={() => {
+					// For new sessions, do NOT invalidate/refetch here
+					// The session query hasn't been made yet (we're still on /new route)
+					// and the assistant message may not be saved to DB yet
+					// Let the natural navigation and prefetch handle data loading
 				}}
 			/>
 		</>

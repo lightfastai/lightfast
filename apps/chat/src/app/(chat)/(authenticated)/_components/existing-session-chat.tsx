@@ -25,20 +25,16 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	});
 	
 	// Get session data - will use prefetched data if available
-	// For new sessions (detected by having 0 messages), we use very short cache times
-	// to ensure fresh data is fetched when navigating back after the first message
 	const { data: sessionData } = useSuspenseQuery({
 		...trpc.chat.session.get.queryOptions({ sessionId }),
-		// Dynamic cache configuration based on whether session has messages
-		staleTime: (query) => {
-			// If the cached data has no messages, don't cache it
-			// This ensures new sessions always fetch fresh data
-			const data = query.state.data as typeof sessionData | undefined;
-			return data?.messages?.length === 0 ? 0 : 30 * 1000;
-		},
-		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+		// Use very short stale time to ensure fresh data
+		// The prefetch from the layout will populate initial data
+		// but we'll refetch in background to get any updates
+		staleTime: 0, // Always considered stale, will refetch in background
+		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes for instant navigation
 		refetchOnWindowFocus: true, // Refetch when user returns to tab
 		refetchOnMount: "always", // Always refetch when component mounts
+		refetchInterval: false, // No polling
 	});
 
 	// Convert database messages to UI format
@@ -63,18 +59,10 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={async () => {
-					// Invalidate the session query to refresh from database
-					// This ensures the cache is updated with the latest messages
-					await queryClient.invalidateQueries({
-						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
-					});
-					
-					// Also refetch the query immediately to ensure fresh data
-					// This is important for when users navigate away and back
-					await queryClient.refetchQueries({
-						queryKey: trpc.chat.session.get.queryOptions({ sessionId }).queryKey,
-					});
+				onFinish={() => {
+					// Don't invalidate here - it can cause race conditions
+					// The messages are saved server-side, and will be fetched
+					// fresh when the user navigates back due to staleTime: 0
 				}}
 			/>
 		</>
