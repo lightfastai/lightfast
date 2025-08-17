@@ -206,7 +206,6 @@ export async function streamChat<
 		requestContext: requestContext as RequestContext | undefined,
 		agentName,
 		messageCount: allMessages.length,
-		timestamp: agentStartTime,
 	});
 
 	// Stream the response
@@ -234,7 +233,6 @@ export async function streamChat<
 		streamId,
 		agentName,
 		messageCount: allMessages.length,
-		timestamp: Date.now(),
 	});
 
 	// Store stream ID for resumption (only if resume is enabled)
@@ -290,7 +288,6 @@ export async function streamChat<
 					systemContext,
 					requestContext: requestContext as RequestContext | undefined,
 					error: apiError,
-					timestamp: Date.now(),
 				});
 			}
 			
@@ -306,15 +303,11 @@ export async function streamChat<
 			const agentEndTime = Date.now();
 			const agentDuration = agentEndTime - agentStartTime;
 			
-			// Call onAgentComplete lifecycle callback with all AI SDK data
+			// Call onAgentComplete lifecycle callback
 			onAgentComplete?.({
 				systemContext,
 				requestContext: requestContext as RequestContext | undefined,
 				agentName,
-				duration: agentDuration,
-				timestamp: agentEndTime,
-				// Spread all AI SDK onFinish data:
-				...result,
 			});
 			
 			// Call onStreamComplete lifecycle callback
@@ -323,8 +316,6 @@ export async function streamChat<
 				requestContext: requestContext as RequestContext | undefined,
 				streamId,
 				agentName,
-				duration: agentDuration,
-				timestamp: agentEndTime,
 			});
 			
 			// Save the assistant's response to memory
@@ -369,7 +360,6 @@ export async function streamChat<
 						systemContext,
 						requestContext: requestContext as RequestContext | undefined,
 						error: apiError,
-						timestamp: Date.now(),
 					});
 					
 					// Note: We don't throw here as the response has already been streamed to the client

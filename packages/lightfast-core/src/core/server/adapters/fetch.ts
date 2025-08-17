@@ -189,7 +189,6 @@ export async function fetchRequestHandler<
 			systemContext: { sessionId, resourceId },
 			requestContext: createRequestContext?.(req),
 			error: apiError,
-			timestamp: Date.now(),
 		});
 
 		// Return error response

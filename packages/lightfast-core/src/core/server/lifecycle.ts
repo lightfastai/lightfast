@@ -18,8 +18,6 @@ export interface BaseLifecycleEvent {
   systemContext: SystemContext;
   /** Request context including userAgent and ipAddress */
   requestContext?: RequestContext;
-  /** Timestamp of the event */
-  timestamp: number;
 }
 
 /**
@@ -47,8 +45,6 @@ export interface StreamCompleteEvent extends BaseLifecycleEvent {
   streamId: string;
   /** Agent name */
   agentName: string;
-  /** Duration in milliseconds */
-  duration: number;
 }
 
 /**
@@ -82,17 +78,9 @@ type UIMessageStreamOnFinishEvent<UI_MESSAGE extends UIMessage = UIMessage> = {
  * In practice, when using streamText, additional fields are provided
  * beyond what UIMessageStreamOnFinishCallback types expose.
  */
-export interface AgentCompleteEvent extends 
-  BaseLifecycleEvent,
-  Partial<UIMessageStreamOnFinishEvent> {
+export interface AgentCompleteEvent extends BaseLifecycleEvent {
   /** Agent name */
   agentName: string;
-  /** Duration in milliseconds */
-  duration: number;
-  
-  // Allow any additional fields from the AI SDK's actual runtime data
-  // This includes fields from StepResult when using streamText
-  [key: string]: unknown;
 }
 
 /**
@@ -121,6 +109,5 @@ export function createLifecycleEvent(
   return {
     systemContext,
     requestContext,
-    timestamp: Date.now(),
   };
 }

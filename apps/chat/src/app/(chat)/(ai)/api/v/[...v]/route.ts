@@ -324,147 +324,89 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 				generateId: uuidv4,
 				enableResume: true,
 				onError(event) {
-					const { error, phase, criticality, operation, impact, systemContext } = event;
+					const { error, systemContext, requestContext } = event;
 					console.error(
-						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Phase: ${phase}, Criticality: ${criticality || 'unknown'}`,
+						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
 						{
 							error: error.message,
 							statusCode: error.statusCode,
 							errorCode: error.errorCode,
-							phase,
-							criticality,
-							operation,
-							impact,
 							stack: error.stack,
 							agentId,
 							sessionId: systemContext.sessionId,
 							userId: systemContext.resourceId,
 							method: req.method,
 							url: req.url,
-							timestamp: event.timestamp,
+							requestContext,
 						},
 					);
-					
-					// Handle memory errors by criticality
-					if (phase === 'memory') {
-						if (criticality === 'critical') {
-							console.error(
-								`[CRITICAL Memory Error] ${operation} failed for user ${systemContext.resourceId}`,
-								{
-									sessionId: systemContext.sessionId,
-									agentId,
-									operation,
-									impact,
-									errorType: error.errorCode,
-									errorMessage: error.message,
-									timestamp: event.timestamp,
-								}
-							);
-							
-							// Critical memory failures could trigger:
-							// - Immediate retry mechanism
-							// - User notification via WebSocket
-							// - Priority alerts to monitoring system
-							// - Fallback to read-only mode for this session
-							
-						} else if (criticality === 'warning') {
-							console.warn(
-								`[Memory Warning] ${operation} failed for user ${systemContext.resourceId}`,
-								{
-									sessionId: systemContext.sessionId,
-									agentId,
-									operation,
-									impact,
-									errorType: error.errorCode,
-									errorMessage: error.message,
-									timestamp: event.timestamp,
-								}
-							);
-							
-							// Warning-level failures could trigger:
-							// - Background retry queue
-							// - Analytics tracking for service health
-							// - Graceful degradation notifications
-						}
+
+					// Handle specific error types
+					if (error.errorCode === "MEMORY_ERROR") {
+						console.error(
+							`[Memory Error] Failed for user ${systemContext.resourceId}`,
+							{
+								sessionId: systemContext.sessionId,
+								agentId,
+								errorType: error.errorCode,
+								errorMessage: error.message,
+							},
+						);
+
+						// Memory failures could trigger:
+						// - Immediate retry mechanism
+						// - User notification via WebSocket
+						// - Priority alerts to monitoring system
+						// - Fallback to read-only mode for this session
 					}
 				},
 				onStreamStart(event) {
-					const { streamId, agentName, messageCount, systemContext, timestamp } = event;
+					const {
+						streamId,
+						agentName,
+						messageCount,
+						systemContext,
+					} = event;
 					console.log(`[Stream Started] ${agentName}`, {
 						streamId,
 						sessionId: systemContext.sessionId,
 						agentName,
 						messageCount,
 						userId: systemContext.resourceId,
-						timestamp: new Date(timestamp).toISOString(),
 					});
 				},
 				onStreamComplete(event) {
-					const { streamId, agentName, duration, tokenUsage, finishReason, systemContext, timestamp } = event;
+					const { streamId, agentName, systemContext } = event;
 					console.log(`[Stream Completed] ${agentName}`, {
 						streamId,
 						sessionId: systemContext.sessionId,
 						agentName,
-						duration,
-						tokenUsage,
-						finishReason,
 						userId: systemContext.resourceId,
-						timestamp: new Date(timestamp).toISOString(),
 					});
-					
+
 					// Here you could send analytics data to external systems
 					// analytics.track('agent_stream_complete', { ... });
 				},
 				onAgentStart(event) {
-					const { agentName, messageCount, systemContext, timestamp } = event;
+					const { agentName, messageCount, systemContext } = event;
 					console.log(`[Agent Started] ${agentName}`, {
 						agentName,
 						sessionId: systemContext.sessionId,
 						messageCount,
-						timestamp,
 						userId: systemContext.resourceId,
 					});
 				},
 				onAgentComplete(event) {
-					const { 
-						agentName, 
-						duration, 
-						usage, 
-						finishReason, 
-						systemContext, 
-						timestamp,
-						text,
-						reasoningText,
-						toolCalls,
-						toolResults,
-						warnings,
-						files,
-						sources
-					} = event;
-					
+					const { agentName, systemContext } = event;
+
 					console.log(`[Agent Completed] ${agentName}`, {
 						agentName,
 						sessionId: systemContext.sessionId,
-						duration,
-						tokenUsage: usage,
-						finishReason,
-						timestamp,
 						userId: systemContext.resourceId,
-						// Additional AI SDK data for analytics:
-						textLength: text?.length || 0,
-						hasReasoning: !!reasoningText,
-						toolCallCount: toolCalls?.length || 0,
-						toolResultCount: toolResults?.length || 0,
-						warningCount: warnings?.length || 0,
-						fileCount: files?.length || 0,
-						sourceCount: sources?.length || 0,
 					});
-					
-					// Here you could track comprehensive agent metrics
-					// metrics.histogram('agent_duration', duration, { agent: agentName });
-					// metrics.counter('agent_completions', 1, { agent: agentName, finish_reason: finishReason });
-					// metrics.histogram('agent_token_usage', usage?.totalTokens || 0, { agent: agentName });
-					// metrics.counter('agent_tool_calls', toolCalls?.length || 0, { agent: agentName });
+
+					// Here you could track agent completion metrics
+					// metrics.counter('agent_completions', 1, { agent: agentName });
 				},
 			});
 
