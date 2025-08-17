@@ -524,6 +524,8 @@ importers:
         specifier: 'catalog:'
         version: 5.9.2
 
+  apps/darkarmy: {}
+
   apps/docs:
     dependencies:
       '@repo/ui':
