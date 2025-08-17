@@ -1,7 +1,6 @@
 "use client";
 
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -19,18 +18,6 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 	
-	// Invalidate and refetch session data on mount to ensure fresh data
-	// This solves the issue where cached empty messages persist after navigation
-	useEffect(() => {
-		const queryKey = trpc.chat.session.get.queryOptions({ sessionId }).queryKey;
-		
-		// Invalidate immediately on mount
-		queryClient.invalidateQueries({ queryKey });
-		
-		// Also refetch to ensure we have the latest data
-		queryClient.refetchQueries({ queryKey });
-	}, [sessionId, queryClient, trpc.chat.session.get]);
-	
 	// Get user info - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
@@ -38,10 +25,17 @@ export function ExistingSessionChat({ sessionId, agentId }: ExistingSessionChatP
 	});
 	
 	// Get session data - will use prefetched data if available
+	// For new sessions (detected by having 0 messages), we use very short cache times
+	// to ensure fresh data is fetched when navigating back after the first message
 	const { data: sessionData } = useSuspenseQuery({
 		...trpc.chat.session.get.queryOptions({ sessionId }),
-		// Keep normal cache times since we're invalidating on mount
-		staleTime: 30 * 1000, // 30 seconds - data considered fresh
+		// Dynamic cache configuration based on whether session has messages
+		staleTime: (query) => {
+			// If the cached data has no messages, don't cache it
+			// This ensures new sessions always fetch fresh data
+			const data = query.state.data as typeof sessionData | undefined;
+			return data?.messages?.length === 0 ? 0 : 30 * 1000;
+		},
 		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
 		refetchOnWindowFocus: true, // Refetch when user returns to tab
 		refetchOnMount: "always", // Always refetch when component mounts
