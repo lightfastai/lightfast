@@ -8,6 +8,7 @@ import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { TRPCReactProvider } from "~/trpc/react";
 import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
 import { ThemeProvider } from "next-themes";
+import { KeyboardShortcuts } from "~/components/keyboard-shortcuts";
 
 interface AuthenticatedLayoutProps {
 	children: React.ReactNode;
@@ -39,6 +40,7 @@ export default function AuthenticatedLayout({
 				>
 					<TooltipProvider>
 						<SidebarProvider defaultOpen={true}>
+							<KeyboardShortcuts />
 							<div className="flex h-screen w-full">
 								<AppSidebar />
 								<div className="flex border-l border-muted/30 flex-col w-full relative">
