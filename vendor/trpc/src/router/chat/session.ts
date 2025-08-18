@@ -122,18 +122,26 @@ export const sessionRouter = {
     }),
 
   /**
-   * Get a specific session with its messages
+   * Get session metadata only (without messages)
+   * Used by the AI memory system to check session ownership
    */
-  get: protectedProcedure
+  getMetadata: protectedProcedure
     .input(
       z.object({
         sessionId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
-      // Get the session
+      // Get the session metadata only
       const session = await db
-        .select()
+        .select({
+          id: LightfastChatSession.id,
+          clerkUserId: LightfastChatSession.clerkUserId,
+          title: LightfastChatSession.title,
+          pinned: LightfastChatSession.pinned,
+          createdAt: LightfastChatSession.createdAt,
+          updatedAt: LightfastChatSession.updatedAt,
+        })
         .from(LightfastChatSession)
         .where(eq(LightfastChatSession.id, input.sessionId))
         .limit(1);
@@ -145,17 +153,7 @@ export const sessionRouter = {
         });
       }
 
-      // Get messages for the session
-      const messages = await db
-        .select()
-        .from(LightfastChatMessage)
-        .where(eq(LightfastChatMessage.sessionId, input.sessionId))
-        .orderBy(LightfastChatMessage.createdAt);
-
-      return {
-        session: session[0],
-        messages,
-      };
+      return session[0];
     }),
 
   /**

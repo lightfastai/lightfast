@@ -27,7 +27,7 @@ interface ChatInterfaceProps {
 	isNewSession: boolean;
 	handleSessionCreation: () => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
-	onFinish?: () => void; // Optional callback when AI finishes responding
+	onFinish?: (assistantMessage: LightfastAppChatUIMessage, allMessages: LightfastAppChatUIMessage[]) => void; // Optional callback when AI finishes responding
 }
 
 export function ChatInterface({
@@ -99,9 +99,10 @@ export function ChatInterface({
 			// Throw to error boundary with our extracted information
 			throwToErrorBoundary(errorForBoundary);
 		},
-		onFinish: () => {
-			// Call the optional onFinish callback
-			onFinish?.();
+		onFinish: (event) => {
+			// Pass the assistant message and all messages to the onFinish callback
+			// This allows parent components to optimistically update the cache
+			onFinish?.(event.message, messages);
 		},
 		resume:
 			initialMessages.length > 0 &&

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Accordion,
   AccordionContent,
@@ -35,7 +36,17 @@ const faqs = [
   },
   {
     question: "Is Lightfast Chat open-source?",
-    answer: "Yes! Lightfast Chat is fully open-source. We believe in transparency and encourage users to own their infrastructure. You can self-host the entire application on your own servers for complete control over your data and infrastructure. Check out github.com/lightfastai/chat for the source code and deployment guides."
+    answer: (
+      <>
+        Yes! Lightfast Chat is fully open-source. We believe in transparency and encourage users to own their infrastructure. 
+        You can self-host the entire application on your own servers for complete control over your data and infrastructure. 
+        Check out{" "}
+        <Link href="https://github.com/lightfastai/lightfast" className="text-primary underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+          github.com/lightfastai/lightfast
+        </Link>{" "}
+        for the source code and deployment guides.
+      </>
+    )
   },
   {
     question: "How does team collaboration work?",

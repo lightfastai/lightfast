@@ -13,21 +13,27 @@ interface SessionChatErrorProps {
 	reset: () => void;
 }
 
-export default function SessionChatError({ error, reset }: SessionChatErrorProps) {
+export default function SessionChatError({
+	error,
+	reset,
+}: SessionChatErrorProps) {
 	useEffect(() => {
 		// Capture all errors to Sentry for session chat page
 		captureException(error);
-		
+
 		// Always log for local debugging
 		console.error("Session chat error:", error);
 	}, [error]);
 
-	const { errorCode, description } = ChatErrorHandler.getErrorPageConfig(error, "session");
+	const { errorCode, description } = ChatErrorHandler.getErrorPageConfig(
+		error,
+		"session",
+	);
 
 	return (
 		<LightfastCustomGridBackground.Root
 			marginVertical="25vh"
-			marginHorizontal="25vw"
+			marginHorizontal="15vw"
 			marginVerticalMobile="25vh"
 			marginHorizontalMobile="10vw"
 		>
@@ -46,3 +52,4 @@ export default function SessionChatError({ error, reset }: SessionChatErrorProps
 		</LightfastCustomGridBackground.Root>
 	);
 }
+

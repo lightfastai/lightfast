@@ -12,12 +12,27 @@ catalogs:
     '@ai-sdk/gateway':
       specifier: 1.0.0-beta.11
       version: 1.0.0-beta.11
+    '@ai-sdk/provider':
+      specifier: 2.0.0-beta.1
+      version: 2.0.0-beta.1
     '@ai-sdk/react':
       specifier: 2.0.0-beta.26
       version: 2.0.0-beta.26
+    '@browserbasehq/stagehand':
+      specifier: ^2.3.1
+      version: 2.4.2
+    '@clerk/elements':
+      specifier: ^0.23.48
+      version: 0.23.48
     '@clerk/nextjs':
       specifier: ^6.28.1
       version: 6.28.1
+    '@clerk/themes':
+      specifier: ^2.4.4
+      version: 2.4.4
+    '@t3-oss/env-core':
+      specifier: ^0.12.0
+      version: 0.12.0
     '@tanstack/react-query':
       specifier: ^5.80.7
       version: 5.84.0
@@ -33,6 +48,15 @@ catalogs:
     '@types/node':
       specifier: ^20.16.11
       version: 20.19.9
+    '@upstash/redis':
+      specifier: ^1.35.1
+      version: 1.35.3
+    '@vercel/blob':
+      specifier: ^1.1.1
+      version: 1.1.1
+    '@vercel/sandbox':
+      specifier: ^0.0.13
+      version: 0.0.13
     ai:
       specifier: 5.0.0-beta.26
       version: 5.0.0-beta.26
@@ -51,12 +75,24 @@ catalogs:
     next:
       specifier: ^15.4.0
       version: 15.4.5
+    prettier:
+      specifier: ^3.5.3
+      version: 3.6.2
+    redis:
+      specifier: ^5.6.0
+      version: 5.7.0
+    resumable-stream:
+      specifier: ^2.0.0
+      version: 2.2.3
     typescript:
       specifier: ^5.8.2
       version: 5.9.2
     zod:
       specifier: ^3.24.0
       version: 3.25.76
+    zustand:
+      specifier: ^5.0.7
+      version: 5.0.7
   react19:
     '@types/react':
       specifier: 19.1.2
@@ -487,8 +523,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
-
-  apps/darkarmy: {}
 
   apps/docs:
     dependencies:

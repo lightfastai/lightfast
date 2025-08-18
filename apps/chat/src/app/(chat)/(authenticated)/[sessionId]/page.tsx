@@ -13,9 +13,9 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	const { sessionId } = await params;
 	const agentId = "c010"; // Default agent ID
 
-	// Prefetch the session data here in the page
+	// Prefetch the messages here in the page
 	// Pages re-execute on navigation, ensuring fresh data
-	prefetch(trpc.chat.session.get.queryOptions({ sessionId }));
+	prefetch(trpc.chat.message.list.queryOptions({ sessionId }));
 
 	return (
 		<HydrateClient>

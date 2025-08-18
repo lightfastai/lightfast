@@ -152,13 +152,13 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	async getSession(sessionId: string): Promise<{ resourceId: string; id: string } | null> {
 		try {
 			const caller = await createCaller();
-			const result = await caller.chat.session.get({
+			const session = await caller.chat.session.getMetadata({
 				sessionId,
 			});
 			
 			return {
-				resourceId: result.session.clerkUserId,
-				id: result.session.id,
+				resourceId: session.clerkUserId,
+				id: session.id,
 			};
 		} catch (error) {
 			// For read operations, return null for NOT_FOUND (session doesn't exist)

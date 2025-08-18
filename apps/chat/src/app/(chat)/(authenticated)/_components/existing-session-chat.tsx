@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -19,6 +19,7 @@ export function ExistingSessionChat({
 	agentId,
 }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 
 	// Get user info - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
@@ -26,9 +27,10 @@ export function ExistingSessionChat({
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
 
-	// Get session data - will use prefetched data if available
-	const { data: sessionData, refetch } = useSuspenseQuery({
-		...trpc.chat.session.get.queryOptions({ sessionId }),
+	// Get messages - will use prefetched data if available
+	const messagesQueryOptions = trpc.chat.message.list.queryOptions({ sessionId });
+	const { data: messages } = useSuspenseQuery({
+		...messagesQueryOptions,
 		staleTime: 0, // Always consider data stale to ensure fresh fetches
 		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
 		refetchOnWindowFocus: true, // Refetch when user returns to tab
@@ -36,7 +38,7 @@ export function ExistingSessionChat({
 	});
 
 	// Convert database messages to UI format
-	const initialMessages: LightfastAppChatUIMessage[] = sessionData.messages.map(
+	const initialMessages: LightfastAppChatUIMessage[] = messages.map(
 		(msg) => ({
 			id: msg.id,
 			role: msg.role,
@@ -59,9 +61,22 @@ export function ExistingSessionChat({
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={async () => {
-					// Refetch to ensure we have the latest messages
-					await refetch();
+				onFinish={(assistantMessage, allMessages) => {
+					// Optimistically update the cache with the complete messages
+					// This ensures the cache is immediately updated with the new assistant message
+					queryClient.setQueryData(messagesQueryOptions.queryKey, 
+						// Simply return the updated messages array
+						allMessages.map(msg => ({
+							id: msg.id,
+							role: msg.role,
+							parts: msg.parts,
+							modelId: null,
+						}))
+					);
+					
+					// Trigger a background refetch to sync with database
+					// This ensures eventual consistency with the persisted data
+					void queryClient.invalidateQueries({ queryKey: messagesQueryOptions.queryKey });
 				}}
 			/>
 		</>

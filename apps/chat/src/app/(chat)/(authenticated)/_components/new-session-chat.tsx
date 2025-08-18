@@ -4,7 +4,7 @@ import { ChatInterface } from "../../_components/chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -35,14 +35,13 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Hook for creating sessions optimistically
 	const createSession = useCreateSession();
 
-	// Prepare session query but don't execute it yet (enabled: false)
-	// This allows us to refetch when the assistant finishes responding
-	const { refetch: refetchSession } = useQuery({
-		...trpc.chat.session.get.queryOptions({ sessionId }),
-		enabled: false, // Don't fetch on mount - only manual refetch
-		staleTime: 0, // Always consider data stale
-		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-	});
+	// Get query client to optimistically update cache
+	const queryClient = useQueryClient();
+
+	// Get the query key for messages
+	const messagesQueryKey = trpc.chat.message.list.queryOptions({
+		sessionId,
+	}).queryKey;
 
 	// Handle session creation when the first message is sent
 	const handleSessionCreation = () => {
@@ -69,11 +68,23 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={async () => {
-					// After assistant finishes responding, fetch the session data
-					// This populates the cache so when user navigates away and back,
-					// the data is already there, preventing loading skeleton
-					await refetchSession();
+				onFinish={(assistantMessage, allMessages) => {
+					// Optimistically update the cache with the complete messages
+					// This prevents stale state issues when navigating
+					queryClient.setQueryData(
+						messagesQueryKey,
+						// Simply set the messages array
+						allMessages.map((msg) => ({
+							id: msg.id,
+							role: msg.role,
+							parts: msg.parts,
+							modelId: null,
+						})),
+					);
+
+					// Also trigger a background refetch to ensure data consistency
+					// This will update with the actual database data once it's persisted
+					void queryClient.invalidateQueries({ queryKey: messagesQueryKey });
 				}}
 			/>
 		</>
