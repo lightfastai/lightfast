@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
@@ -22,25 +22,29 @@ export function ExistingSessionChat({
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 
-	// Get user info - using suspense for instant loading
-	const { data: user } = useSuspenseQuery({
-		...trpc.auth.user.getUser.queryOptions(),
-		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
-
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
 
-	// Get messages - will use prefetched data if available
+	// Get messages query options for cache updates
 	const messagesQueryOptions = trpc.chat.message.list.queryOptions({ sessionId });
-	const { data: messages } = useSuspenseQuery({
-		...messagesQueryOptions,
-		staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
-		gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
-		refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
-		refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
+
+	// Batch both queries together for better performance
+	const [{ data: user }, { data: messages }] = useSuspenseQueries({
+		queries: [
+			{
+				...trpc.auth.user.getUser.queryOptions(),
+				staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+				refetchOnMount: false, // Prevent blocking navigation
+				refetchOnWindowFocus: false, // Don't refetch on window focus
+			},
+			{
+				...messagesQueryOptions,
+				staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
+				gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
+				refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
+			},
+		],
 	});
 
 	// Convert database messages to UI format
