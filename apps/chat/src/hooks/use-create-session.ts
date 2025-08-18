@@ -11,6 +11,7 @@ type SessionsInfiniteData = InfiniteData<Session[]>;
 
 interface CreateSessionInput {
 	id: string;
+	firstMessage?: string; // Optional for internal calls, required from UI
 }
 
 /**
@@ -23,7 +24,7 @@ export function useCreateSession() {
 
 	return useMutation(
 		trpc.chat.session.create.mutationOptions({
-			onMutate: async ({ id }: CreateSessionInput) => {
+			onMutate: async ({ id, firstMessage }: CreateSessionInput) => {
 				// Cancel any outgoing refetches for session list queries
 				await queryClient.cancelQueries({
 					queryKey: [["chat", "session", "list"]],
@@ -89,7 +90,7 @@ export function useCreateSession() {
 				}
 
 				// Return context for rollback
-				return { previousDataMap, optimisticSession, id };
+				return { previousDataMap, optimisticSession, id, firstMessage };
 			},
 
 			onError: (err, _variables, context) => {
@@ -109,12 +110,40 @@ export function useCreateSession() {
 				// The optimistic update already has the correct ID
 			},
 
-			onSettled: () => {
+			onSettled: (_data, _error, variables) => {
 				// Invalidate all session list queries to ensure consistency
 				void queryClient.invalidateQueries({
 					queryKey: [["chat", "session", "list"]],
 					refetchType: "none", // Don't trigger suspense
 				});
+				
+				// If a firstMessage was provided, title generation is happening
+				// Set up delayed invalidations to pick up the generated title
+				if (variables.firstMessage) {
+					// Invalidate after 2 seconds (typical Inngest processing time)
+					setTimeout(() => {
+						void queryClient.invalidateQueries({
+							queryKey: [["chat", "session", "list"]],
+							refetchType: "none",
+						});
+						void queryClient.invalidateQueries({
+							queryKey: [["chat", "session", "listPinned"]],
+							refetchType: "none",
+						});
+					}, 2000);
+					
+					// And again after 5 seconds as a fallback
+					setTimeout(() => {
+						void queryClient.invalidateQueries({
+							queryKey: [["chat", "session", "list"]],
+							refetchType: "none",
+						});
+						void queryClient.invalidateQueries({
+							queryKey: [["chat", "session", "listPinned"]],
+							refetchType: "none",
+						});
+					}, 5000);
+				}
 			},
 		}),
 	);

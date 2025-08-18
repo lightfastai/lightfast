@@ -60,7 +60,7 @@ export interface AgentStartEvent extends BaseLifecycleEvent {
 /**
  * The base type from UIMessageStreamOnFinishCallback
  */
-type UIMessageStreamOnFinishEvent<UI_MESSAGE extends UIMessage = UIMessage> = {
+interface UIMessageStreamOnFinishEvent<UI_MESSAGE extends UIMessage = UIMessage> {
   /** The updated list of messages */
   messages: UI_MESSAGE[];
   /** Whether the response is a continuation */
@@ -69,7 +69,7 @@ type UIMessageStreamOnFinishEvent<UI_MESSAGE extends UIMessage = UIMessage> = {
   isAborted: boolean;
   /** The response message that was generated */
   responseMessage: UI_MESSAGE;
-};
+}
 
 /**
  * AgentCompleteEvent extends the base lifecycle event and spreads

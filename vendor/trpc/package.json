@@ -25,6 +25,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
     "@repo/ai": "workspace:^",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
@@ -34,6 +35,7 @@
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:^",
     "@vendor/observability": "workspace:*",
+    "ai": "catalog:",
     "bcrypt-ts": "^5.0.2",
     "react": "catalog:react19",
     "superjson": "2.2.1",

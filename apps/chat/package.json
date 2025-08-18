@@ -32,6 +32,7 @@
     "@vendor/analytics": "workspace:^",
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
+    "@vendor/inngest": "workspace:^",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",

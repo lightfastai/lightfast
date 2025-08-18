@@ -25,7 +25,7 @@ interface ChatInterfaceProps {
 	sessionId: string;
 	initialMessages: LightfastAppChatUIMessage[];
 	isNewSession: boolean;
-	handleSessionCreation: () => void; // Required - pass no-op function for scenarios where session creation isn't needed
+	handleSessionCreation: (firstMessage: string) => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
 	onFinish?: (assistantMessage: LightfastAppChatUIMessage, allMessages: LightfastAppChatUIMessage[]) => void; // Optional callback when AI finishes responding
 }
@@ -131,7 +131,7 @@ export function ChatInterface({
 			// Only call when this is truly the first message (no existing messages)
 			// Fires optimistically - backend will handle session creation if needed
 			if (isNewSession && messages.length === 0) {
-				handleSessionCreation();
+				handleSessionCreation(message);
 			}
 
 			// Generate UUID for the user message

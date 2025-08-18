@@ -44,7 +44,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	}).queryKey;
 
 	// Handle session creation when the first message is sent
-	const handleSessionCreation = () => {
+	const handleSessionCreation = (firstMessage: string) => {
 		if (!isNewSession) {
 			// Already transitioned to /{sessionId}, no need to create
 			return;
@@ -56,7 +56,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		// Create the session optimistically (fire-and-forget)
 		// The backend will also create it if needed (upsert behavior)
 		// This ensures instant UI updates without blocking message sending
-		createSession.mutate({ id: sessionId });
+		createSession.mutate({ id: sessionId, firstMessage });
 	};
 
 	return (

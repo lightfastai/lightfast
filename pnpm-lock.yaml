@@ -317,6 +317,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/inngest':
+        specifier: workspace:^
+        version: link:../../vendor/inngest
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
@@ -2190,6 +2193,9 @@ importers:
 
   vendor/trpc:
     dependencies:
+      '@ai-sdk/gateway':
+        specifier: 'catalog:'
+        version: 1.0.0-beta.11(zod@3.25.76)
       '@repo/ai':
         specifier: workspace:^
         version: link:../../packages/ai
@@ -2217,6 +2223,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../observability
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.0-beta.26(zod@3.25.76)
       bcrypt-ts:
         specifier: ^5.0.2
         version: 5.0.3

@@ -21,7 +21,7 @@ export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
 	sessionIdRef.current ??= uuidv4();
 
 	// No-op function for session creation (not needed for unauthenticated users)
-	const handleSessionCreation = () => {
+	const handleSessionCreation = (_firstMessage: string) => {
 		// Unauthenticated users don't have persistent sessions
 		// This is a no-op handler to satisfy the interface
 	};

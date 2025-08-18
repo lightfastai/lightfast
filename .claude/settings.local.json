@@ -122,7 +122,9 @@
       "Bash(pnpm --filter @lightfast/cloud typecheck)",
       "Bash(pnpm --filter @lightfast/chat build)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm --filter @vendor/trpc build)",
+      "Bash(pnpm --filter @lightfast/chat typecheck)"
     ],
     "deny": []
   },
