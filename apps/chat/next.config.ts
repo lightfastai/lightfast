@@ -29,6 +29,12 @@ let config: NextConfig = withBetterStack(
 		experimental: {
 			optimizeCss: true,
 			optimizePackageImports: ["@repo/ui", "lucide-react"],
+			// Configure Router Cache to cache pages for 30 seconds (like Next.js 14)
+			// This prevents RSC fetches when navigating back to previously visited pages
+			staleTimes: {
+				dynamic: 30, // Cache dynamic pages for 30 seconds
+				static: 180, // Cache static pages for 3 minutes
+			},
 		},
 	}),
 );
