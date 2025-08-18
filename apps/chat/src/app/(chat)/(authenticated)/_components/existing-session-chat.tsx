@@ -2,6 +2,7 @@
 
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
+import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 
@@ -26,6 +27,9 @@ export function ExistingSessionChat({
 		...trpc.auth.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
+
+	// Model selection (authenticated users only have model selection)
+	const { selectedModelId } = useModelSelection(true);
 
 	// Get messages - will use prefetched data if available
 	const messagesQueryOptions = trpc.chat.message.list.queryOptions({ sessionId });
@@ -61,18 +65,43 @@ export function ExistingSessionChat({
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				onFinish={(assistantMessage, allMessages) => {
-					// Optimistically update the cache with the complete messages
-					// This ensures the cache is immediately updated with the new assistant message
-					queryClient.setQueryData(messagesQueryOptions.queryKey, 
-						// Simply return the updated messages array
-						allMessages.map(msg => ({
-							id: msg.id,
-							role: msg.role,
-							parts: msg.parts,
-							modelId: null,
-						}))
-					);
+				onNewUserMessage={(userMessage) => {
+					// Optimistically append the user message to the cache
+					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
+						const currentMessages = oldData ?? [];
+						// Check if message with this ID already exists
+						if (currentMessages.some(msg => msg.id === userMessage.id)) {
+							return currentMessages;
+						}
+						return [
+							...currentMessages,
+							{
+								id: userMessage.id,
+								role: userMessage.role,
+								parts: userMessage.parts,
+								modelId: selectedModelId,
+							},
+						];
+					});
+				}}
+				onNewAssistantMessage={(assistantMessage) => {
+					// Optimistically append the assistant message to the cache
+					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
+						const currentMessages = oldData ?? [];
+						// Check if message with this ID already exists
+						if (currentMessages.some(msg => msg.id === assistantMessage.id)) {
+							return currentMessages;
+						}
+						return [
+							...currentMessages,
+							{
+								id: assistantMessage.id,
+								role: assistantMessage.role,
+								parts: assistantMessage.parts,
+								modelId: null,
+							},
+						];
+					});
 					
 					// Trigger a background refetch to sync with database
 					// This ensures eventual consistency with the persisted data

@@ -27,7 +27,8 @@ interface ChatInterfaceProps {
 	isNewSession: boolean;
 	handleSessionCreation: (firstMessage: string) => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
-	onFinish?: (assistantMessage: LightfastAppChatUIMessage, allMessages: LightfastAppChatUIMessage[]) => void; // Optional callback when AI finishes responding
+	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
+	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 }
 
 export function ChatInterface({
@@ -37,7 +38,8 @@ export function ChatInterface({
 	isNewSession,
 	handleSessionCreation,
 	user,
-	onFinish,
+	onNewUserMessage,
+	onNewAssistantMessage,
 }: ChatInterfaceProps) {
 	// ALL errors now go to error boundary - no inline error state needed
 
@@ -100,9 +102,9 @@ export function ChatInterface({
 			throwToErrorBoundary(errorForBoundary);
 		},
 		onFinish: (event) => {
-			// Pass the assistant message and all messages to the onFinish callback
+			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
-			onFinish?.(event.message, messages);
+			onNewAssistantMessage?.(event.message);
 		},
 		resume:
 			initialMessages.length > 0 &&
@@ -137,13 +139,20 @@ export function ChatInterface({
 			// Generate UUID for the user message
 			const userMessageId = crypto.randomUUID();
 
+			// Create the user message object
+			const userMessage: LightfastAppChatUIMessage = {
+				role: "user",
+				parts: [{ type: "text", text: message }],
+				id: userMessageId,
+			};
+
+			// Call the callback to update cache BEFORE sending
+			// This ensures the user message is in cache before assistant responds
+			onNewUserMessage?.(userMessage);
+
 			// Send message using Vercel's format
 			await vercelSendMessage(
-				{
-					role: "user",
-					parts: [{ type: "text", text: message }],
-					id: userMessageId,
-				},
+				userMessage,
 				{
 					body: {
 						userMessageId,
