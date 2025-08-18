@@ -35,10 +35,10 @@ export function ExistingSessionChat({
 	const messagesQueryOptions = trpc.chat.message.list.queryOptions({ sessionId });
 	const { data: messages } = useSuspenseQuery({
 		...messagesQueryOptions,
-		staleTime: 0, // Always consider data stale to ensure fresh fetches
-		gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-		refetchOnWindowFocus: true, // Refetch when user returns to tab
-		refetchOnMount: "always", // Always refetch when component mounts
+		staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
+		gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
+		refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+		refetchOnMount: true, // Only refetch if data is stale (respects staleTime)
 	});
 
 	// Convert database messages to UI format
