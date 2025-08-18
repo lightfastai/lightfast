@@ -31,6 +31,8 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+		refetchOnMount: false, // Prevent blocking navigation
+		refetchOnWindowFocus: false, // Don't refetch on window focus
 	});
 
 	// Model selection (authenticated users only have model selection)

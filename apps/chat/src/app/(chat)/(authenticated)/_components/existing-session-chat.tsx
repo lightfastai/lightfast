@@ -26,6 +26,8 @@ export function ExistingSessionChat({
 	const { data: user } = useSuspenseQuery({
 		...trpc.auth.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+		refetchOnMount: false, // Prevent blocking navigation
+		refetchOnWindowFocus: false, // Don't refetch on window focus
 	});
 
 	// Model selection (authenticated users only have model selection)
@@ -38,7 +40,7 @@ export function ExistingSessionChat({
 		staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
 		gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
 		refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
-		refetchOnMount: true, // Only refetch if data is stale (respects staleTime)
+		refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 	});
 
 	// Convert database messages to UI format
