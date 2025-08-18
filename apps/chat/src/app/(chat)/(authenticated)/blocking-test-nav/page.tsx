@@ -19,6 +19,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/blocking-test-1" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						→ Test 1: Basic page (no data)
 					</Link>
@@ -26,6 +27,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/blocking-test-2" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						→ Test 2: Basic page 2 (no data)
 					</Link>
@@ -33,6 +35,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/blocking-test-3" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						→ Test 3: With prefetch + HydrateClient
 					</Link>
@@ -40,6 +43,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/blocking-test-4" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						→ Test 4: With useSuspenseQuery
 					</Link>
@@ -49,6 +53,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/new" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						→ Real /new page
 					</Link>
@@ -56,6 +61,7 @@ export default function BlockingTestNavPage() {
 					<Link 
 						href="/blocking-test-nav" 
 						className="p-3 border rounded hover:bg-muted transition-colors"
+						prefetch={true}
 					>
 						↻ Refresh Nav Page
 					</Link>

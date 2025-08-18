@@ -5,7 +5,7 @@ import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 export default function BlockingTest3Page() {
 	// Prefetch user data like the real pages do
 	prefetch(trpc.auth.user.getUser.queryOptions());
-	
+
 	return (
 		<HydrateClient>
 			<Suspense fallback={<div>Loading...</div>}>
@@ -18,3 +18,4 @@ export default function BlockingTest3Page() {
 		</HydrateClient>
 	);
 }
+
