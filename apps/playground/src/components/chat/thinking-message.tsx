@@ -15,7 +15,7 @@ export function ThinkingMessage({ status, show, className }: ThinkingMessageProp
   const statusText = {
     thinking: "Thinking",
     streaming: "Streaming",
-    reasoning: "Reasoning",
+    reasoningText: "Reasoning",
     done: "Done",
   }[status];
 

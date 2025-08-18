@@ -17,7 +17,7 @@ const MODEL = "openai/gpt-5-nano";
 // Weather tool implementation (example from docs)
 const weatherTool = tool({
   description: "Get the current weather in a location",
-  parameters: z.object({
+  inputSchema: z.object({
     location: z.string().describe("The location to get weather for"),
   }),
   execute: async ({ location }) => {
@@ -36,7 +36,7 @@ const weatherTool = tool({
 // Calculator tool implementation
 const calculatorTool = tool({
   description: "Perform basic mathematical calculations",
-  parameters: z.object({
+  inputSchema: z.object({
     expression: z.string().describe("The mathematical expression to evaluate (e.g., '2 + 3 * 4')"),
   }),
   execute: async ({ expression }) => {

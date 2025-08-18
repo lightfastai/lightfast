@@ -171,11 +171,20 @@ export async function fetchRequestHandler<
 				throw result.error;
 			}
 
+			// Handle null stream (no stream to resume)
 			if (!result.value) {
-				return new Response(null, { status: 204 });
+				throw new GenericBadRequestError("No active stream to resume");
 			}
 
-			return new Response(result.value);
+			// Return the stream as a proper Response
+			return new Response(result.value, {
+				headers: {
+					"Content-Type": "text/event-stream",
+					"Cache-Control": "no-cache",
+					"Connection": "keep-alive",
+					"Content-Encoding": "none",
+				},
+			});
 		}
 
 		// This should not happen due to earlier check

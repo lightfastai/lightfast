@@ -203,7 +203,7 @@ export class Agent<TRuntimeContext = unknown> {
 		for (const [name, tool] of this.tools) {
 			resolvedTools[name] = {
 				description: tool.description,
-				parameters: tool.schema || {},
+				inputSchema: tool.schema || {},
 				execute: async (args: any) => tool.execute(args),
 			} as AiTool;
 		}
@@ -392,7 +392,7 @@ export class Agent<TRuntimeContext = unknown> {
 
 		for await (const chunk of fullStream) {
 			switch (chunk.type) {
-				case "text-delta":
+				case 'text-delta':
 					if ("text" in chunk && typeof chunk.text === "string") {
 						// If we were accumulating reasoning, flush it first
 						if (currentReasoningContent) {

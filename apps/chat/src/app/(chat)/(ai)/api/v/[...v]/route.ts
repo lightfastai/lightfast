@@ -8,11 +8,7 @@ import {
 	getModelStreamingDelay,
 	MODELS,
 } from "~/lib/ai/providers";
-import {
-	BraintrustMiddleware,
-	initLogger,
-	traced,
-} from "braintrust";
+import { BraintrustMiddleware, initLogger, traced } from "braintrust";
 import {
 	getBraintrustConfig,
 	isOtelEnabled,
@@ -63,18 +59,18 @@ const anonymousArcjet = arcjet({
 		shield({ mode: "LIVE" }),
 		// Block all bots for anonymous users (disabled in dev for testing)
 		detectBot({
-			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
 			allow: [],
 		}),
 		// Fixed window: 10 requests per day (86400 seconds)
 		slidingWindow({
-			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
 			max: 10,
 			interval: 86400, // 24 hours in seconds
 		}),
 		// Token bucket: Very limited for anonymous
 		tokenBucket({
-			mode: process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
 			refillRate: 1,
 			interval: 8640, // 1 token every 2.4 hours (10 per day)
 			capacity: 10, // Allow up to 10 messages in burst (full daily limit)
@@ -159,34 +155,112 @@ const handler = async (
 	}
 
 	// Define the handler function that will be used for both GET and POST
-	const executeHandler = async () => {
+	const executeHandler = async (): Promise<Response> => {
 		try {
-			// Extract modelId and messages from request body for POST requests
+			// Create memory instance based on authentication status (needed for both GET and POST)
+			let memory;
+			try {
+				memory = isAnonymous
+					? new AnonymousRedisMemory({
+							url: env.KV_REST_API_URL,
+							token: env.KV_REST_API_TOKEN,
+						})
+					: new PlanetScaleMemory();
+			} catch (error) {
+				console.error(`[API] Failed to create memory instance:`, error);
+				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
+			}
+
+			// For GET requests (resume), skip all the model/message logic
+			if (req.method === "GET") {
+				console.log("[Chat API] GET request for stream resume", {
+					sessionId,
+					agentId,
+					userId,
+				});
+
+				// Just pass a minimal agent configuration for resume
+				// The actual model doesn't matter for resuming an existing stream
+				const response = await fetchRequestHandler({
+					agent: createAgent<C010ToolSchema, AppRuntimeContext>({
+						name: "c010",
+						system: `Stream resume agent`,
+						tools: c010Tools,
+						createRuntimeContext: ({
+							sessionId: _sessionId,
+							resourceId: _resourceId,
+						}): AppRuntimeContext => ({
+							userId,
+							agentId,
+						}),
+						model: wrapLanguageModel({
+							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
+							middleware: BraintrustMiddleware({ debug: true }),
+						}),
+					}),
+					sessionId,
+					memory,
+					req,
+					resourceId: userId,
+					context: {
+						modelId: "unknown", // Model is not relevant for resume
+						isAnonymous,
+					},
+					createRequestContext: (req) => ({
+						userAgent: req.headers.get("user-agent") ?? undefined,
+						ipAddress:
+							req.headers.get("x-forwarded-for") ??
+							req.headers.get("x-real-ip") ??
+							undefined,
+					}),
+					generateId: uuidv4,
+					enableResume: true,
+					onError(event) {
+						const { error, systemContext, requestContext } = event;
+						console.error(
+							`[API Error - Resume] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
+							{
+								error: error.message,
+								statusCode: error.statusCode,
+								errorCode: error.errorCode,
+								stack: error.stack,
+								sessionId: systemContext.sessionId,
+								userId: systemContext.resourceId,
+								method: req.method,
+								url: req.url,
+								requestContext,
+							},
+						);
+					},
+				});
+
+				return response;
+			}
+
+			// POST request logic - extract modelId and messages
 			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
 			let lastUserMessage = "";
 
-			if (req.method === "POST") {
-				try {
-					const requestBody = (await req.clone().json()) as {
-						modelId?: string;
-						messages?: { role: string; parts?: { text?: string }[] }[];
-					};
-					if (requestBody.modelId && typeof requestBody.modelId === "string") {
-						selectedModelId = requestBody.modelId as ModelId;
-					}
-
-					// Extract last user message for command detection
-					if (requestBody.messages && Array.isArray(requestBody.messages)) {
-						const lastMessage =
-							requestBody.messages[requestBody.messages.length - 1];
-						if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
-							lastUserMessage = lastMessage.parts[0].text;
-						}
-					}
-				} catch (error) {
-					// If parsing fails, use default model
-					console.warn("Failed to parse request body:", error);
+			try {
+				const requestBody = (await req.clone().json()) as {
+					modelId?: string;
+					messages?: { role: string; parts?: { text?: string }[] }[];
+				};
+				if (requestBody.modelId && typeof requestBody.modelId === "string") {
+					selectedModelId = requestBody.modelId as ModelId;
 				}
+
+				// Extract last user message for command detection
+				if (requestBody.messages && Array.isArray(requestBody.messages)) {
+					const lastMessage =
+						requestBody.messages[requestBody.messages.length - 1];
+					if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
+						lastUserMessage = lastMessage.parts[0].text;
+					}
+				}
+			} catch (error) {
+				// If parsing fails, use default model
+				console.warn("Failed to parse request body:", error);
 			}
 
 			// Development-only: Check for test error commands
@@ -230,20 +304,6 @@ const handler = async (
 				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`,
 			);
 
-			// Create memory instance based on authentication status
-			let memory;
-			try {
-				memory = isAnonymous
-					? new AnonymousRedisMemory({
-							url: env.KV_REST_API_URL,
-							token: env.KV_REST_API_TOKEN,
-						})
-					: new PlanetScaleMemory();
-			} catch (error) {
-				console.error(`[API] Failed to create memory instance:`, error);
-				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
-			}
-
 			// Pass everything to fetchRequestHandler with inline agent
 			const response = await fetchRequestHandler({
 				agent: createAgent<C010ToolSchema, AppRuntimeContext>({
@@ -278,11 +338,6 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 							modelId: selectedModelId,
 							modelProvider: modelConfig.provider,
 						},
-					},
-					onChunk: ({ chunk }) => {
-						if (chunk.type === "tool-call") {
-							// Tool called
-						}
 					},
 				}),
 				sessionId,
@@ -340,12 +395,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 					}
 				},
 				onStreamStart(event) {
-					const {
-						streamId,
-						agentName,
-						messageCount,
-						systemContext,
-					} = event;
+					const { streamId, agentName, messageCount, systemContext } = event;
 					console.log(`[Stream Started] ${agentName}`, {
 						streamId,
 						sessionId: systemContext.sessionId,
@@ -414,7 +464,7 @@ When searching, be thoughtful about your queries and provide comprehensive, well
 	// Only wrap with traced for POST requests
 	if (req.method === "POST") {
 		try {
-			return await traced(executeHandler, {
+			return traced(executeHandler, {
 				type: "function",
 				name: `POST /api/v/${agentId}/${sessionId}`,
 			});

@@ -1,4 +1,4 @@
-import type { CoreMessage } from "ai";
+import type { ModelMessage } from "ai";
 
 /**
  * Result of running a cache strategy
@@ -18,5 +18,5 @@ export interface CacheStrategy {
 	/**
 	 * Run the caching strategy and return which messages should be cached
 	 */
-	run(messages: CoreMessage[]): CacheStrategyResult;
+	run(messages: ModelMessage[]): CacheStrategyResult;
 }

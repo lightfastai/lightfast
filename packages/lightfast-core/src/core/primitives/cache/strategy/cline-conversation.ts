@@ -1,4 +1,4 @@
-import type { CoreMessage } from "ai";
+import type { ModelMessage } from "ai";
 import type { CacheStrategy, CacheStrategyResult } from "./base";
 
 export interface ClineConversationStrategyConfig {
@@ -39,7 +39,7 @@ export class ClineConversationStrategy implements CacheStrategy {
 	 * 1. Always cache system prompt (biggest efficiency gain, works with thinking)
 	 * 2. Cache last N user messages only (strategic conversation breakpoints)
 	 */
-	run(messages: CoreMessage[]): CacheStrategyResult {
+	run(messages: ModelMessage[]): CacheStrategyResult {
 		// Find all user message indices
 		const userMessageIndices = messages.reduce(
 			(acc, msg, index) => (msg.role === "user" ? [...acc, index] : acc),
