@@ -26,19 +26,27 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 	);
 
 	return (
-		<SidebarMenuItem className="w-full max-w-full min-w-0 overflow-hidden">
+		<SidebarMenuItem>
 			<ActiveMenuItem
 				sessionId={session.id}
 				href={`/${session.id}`}
 				prefetch={true}
 			>
-				{!session.title ? (
+				{!session.title || session.title === "New Session" ? (
 					<div className="relative h-4 w-full flex-1 overflow-hidden rounded">
 						<div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
 						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
 					</div>
 				) : (
-					<span className="font-medium truncate text-ellipsis overflow-hidden min-w-0 flex-1 text-xs">
+					<span 
+						className="font-medium text-xs block truncate" 
+						style={{ 
+							maxWidth: "180px",
+							overflow: "hidden",
+							textOverflow: "ellipsis",
+							whiteSpace: "nowrap"
+						}}
+					>
 						{session.title}
 					</span>
 				)}

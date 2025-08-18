@@ -2,8 +2,9 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
-import { db, LightfastChatSession, LightfastChatMessage } from "@vendor/db";
+import { db, LightfastChatSession, LightfastChatMessage, DEFAULT_SESSION_TITLE } from "@vendor/db";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
+import { inngest } from "../../inngest/client/client";
 
 export const sessionRouter = {
   /**
@@ -160,11 +161,13 @@ export const sessionRouter = {
    * Create a new session (with upsert behavior)
    * If the session already exists and belongs to the user, returns success
    * If it belongs to another user, throws FORBIDDEN error
+   * Triggers title generation if firstMessage is provided
    */
   create: protectedProcedure
     .input(
       z.object({
         id: z.string().uuid("Session ID must be a valid UUID v4"),
+        firstMessage: z.string().min(1).optional(), // Optional for internal calls, but should be provided from UI
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -177,6 +180,20 @@ export const sessionRouter = {
             clerkUserId: ctx.session.userId,
           })
           .execute();
+
+        // Trigger title generation for the new session if firstMessage is provided
+        if (input.firstMessage) {
+          void inngest.send({
+            name: "apps-chat/generate-title",
+            data: {
+              sessionId: input.id,
+              userId: ctx.session.userId,
+              firstMessage: input.firstMessage,
+            },
+          }).catch((error) => {
+            console.error("Failed to trigger title generation:", error);
+          });
+        }
 
         return { 
           id: input.id,

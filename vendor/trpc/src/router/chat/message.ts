@@ -7,11 +7,9 @@ import {
   LightfastChatSession, 
   LightfastChatMessage, 
   LightfastChatStream,
-  insertLightfastChatMessageSchema,
-  insertLightfastChatStreamSchema
+  insertLightfastChatMessageSchema
 } from "@vendor/db";
-import { eq, desc, and, inArray, sql } from "drizzle-orm";
-import type { UIMessage } from "ai";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export const messageRouter = {
   /**

@@ -47,7 +47,7 @@ export function ExistingSessionChat({
 	) as LightfastAppChatUIMessage[];
 
 	// No-op for existing sessions - session already exists
-	const handleSessionCreation = () => {
+	const handleSessionCreation = (_firstMessage: string) => {
 		// Existing sessions don't need creation
 	};
 

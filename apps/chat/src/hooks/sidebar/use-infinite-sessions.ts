@@ -18,6 +18,10 @@ export function useInfiniteSessions() {
       // Use the last item's ID as the cursor for the next page
       return lastPage[lastPage.length - 1]?.id ?? null;
     },
+    // Poll every 10 seconds to pick up title updates from Inngest
+    refetchInterval: 10000,
+    // Keep refetching even when window is not focused
+    refetchIntervalInBackground: false,
   });
 
   // Handle errors with useEffect to avoid showing toast on every render

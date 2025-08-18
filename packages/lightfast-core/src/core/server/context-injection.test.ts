@@ -77,7 +77,7 @@ describe("Context Injection from Request to Tools", () => {
 		const { streamText } = await import("ai");
 		(streamText as any).mockImplementation((params: any) => {
 			// Simulate the AI SDK calling our tool
-			if (params.tools && params.tools.captureTool) {
+			if (params.tools?.captureTool) {
 				// Execute the tool to capture context
 				params.tools.captureTool.execute({ action: "test-action" });
 			}
@@ -166,7 +166,7 @@ describe("Context Injection from Request to Tools", () => {
 		// Mock streamText
 		const { streamText } = await import("ai");
 		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools && params.tools.mergeTestTool) {
+			if (params.tools?.mergeTestTool) {
 				params.tools.mergeTestTool.execute({ test: "value" });
 			}
 			return {
@@ -249,7 +249,7 @@ describe("Context Injection from Request to Tools", () => {
 		// Mock streamText
 		const { streamText } = await import("ai");
 		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools && params.tools.dynamicTool) {
+			if (params.tools?.dynamicTool) {
 				params.tools.dynamicTool.execute({ input: "test" });
 			}
 			return {
@@ -306,7 +306,7 @@ describe("Context Injection from Request to Tools", () => {
 
 		const { streamText } = await import("ai");
 		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools && params.tools.testTool) {
+			if (params.tools?.testTool) {
 				params.tools.testTool.execute({ value: "test" });
 			}
 			return {

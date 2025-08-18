@@ -1,11 +1,11 @@
 import { serve } from "inngest/next";
 
 import { inngest } from "./client/client";
-import { deepResearchNetworkFunction } from "./workflow/handle-blender-agent";
+import { generateChatTitle } from "./workflow/generate-chat-title";
 
 export const createInngestRouteContext = () =>
   serve({
     client: inngest,
-    functions: [deepResearchNetworkFunction],
+    functions: [generateChatTitle],
     servePath: "/api/inngest",
   });

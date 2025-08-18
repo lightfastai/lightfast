@@ -78,7 +78,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 		const key = this.KEYS.sessionMessages(sessionId);
 
 		// Use JSON.GET for JSON-stored data
-		const jsonData = await this.redis.json.get(key, "$") as unknown;
+		const jsonData = await this.redis.json.get(key, "$");
 		if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
 			const firstItem = jsonData[0] as { messages?: TMessage[] };
 			return firstItem.messages || [];
