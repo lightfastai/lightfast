@@ -48,6 +48,14 @@ export default function BlockingTestNavPage() {
 						→ Test 4: With useSuspenseQuery
 					</Link>
 					
+					<Link 
+						href="/blocking-test-links" 
+						className="p-3 border rounded hover:bg-muted transition-colors bg-yellow-50 dark:bg-yellow-950"
+						prefetch={true}
+					>
+						⚡ Test Links: Compare Link implementations
+					</Link>
+					
 					<hr className="my-2" />
 					
 					<Link 
