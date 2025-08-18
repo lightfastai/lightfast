@@ -26,7 +26,9 @@ export function ExistingSessionChat({
 	const { selectedModelId } = useModelSelection(true);
 
 	// Get messages query options for cache updates
-	const messagesQueryOptions = trpc.chat.message.list.queryOptions({ sessionId });
+	const messagesQueryOptions = trpc.chat.message.list.queryOptions({
+		sessionId,
+	});
 
 	// Batch both queries together for better performance
 	const [{ data: user }, { data: messages }] = useSuspenseQueries({
@@ -48,13 +50,11 @@ export function ExistingSessionChat({
 	});
 
 	// Convert database messages to UI format
-	const initialMessages: LightfastAppChatUIMessage[] = messages.map(
-		(msg) => ({
-			id: msg.id,
-			role: msg.role,
-			parts: msg.parts,
-		}),
-	) as LightfastAppChatUIMessage[];
+	const initialMessages: LightfastAppChatUIMessage[] = messages.map((msg) => ({
+		id: msg.id,
+		role: msg.role,
+		parts: msg.parts,
+	})) as LightfastAppChatUIMessage[];
 
 	// No-op for existing sessions - session already exists
 	const handleSessionCreation = (_firstMessage: string) => {
@@ -64,7 +64,7 @@ export function ExistingSessionChat({
 	return (
 		<>
 			<ChatInterface
-				key={`${agentId}-${sessionId}-${initialMessages.length}`}
+				key={`${agentId}-${sessionId}`}
 				agentId={agentId}
 				sessionId={sessionId}
 				initialMessages={initialMessages}
@@ -76,7 +76,7 @@ export function ExistingSessionChat({
 					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
 						const currentMessages = oldData ?? [];
 						// Check if message with this ID already exists
-						if (currentMessages.some(msg => msg.id === userMessage.id)) {
+						if (currentMessages.some((msg) => msg.id === userMessage.id)) {
 							return currentMessages;
 						}
 						return [
@@ -95,7 +95,7 @@ export function ExistingSessionChat({
 					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
 						const currentMessages = oldData ?? [];
 						// Check if message with this ID already exists
-						if (currentMessages.some(msg => msg.id === assistantMessage.id)) {
+						if (currentMessages.some((msg) => msg.id === assistantMessage.id)) {
 							return currentMessages;
 						}
 						return [
@@ -108,13 +108,14 @@ export function ExistingSessionChat({
 							},
 						];
 					});
-					
+
 					// Trigger a background refetch to sync with database
 					// This ensures eventual consistency with the persisted data
-					void queryClient.invalidateQueries({ queryKey: messagesQueryOptions.queryKey });
+					void queryClient.invalidateQueries({
+						queryKey: messagesQueryOptions.queryKey,
+					});
 				}}
 			/>
 		</>
 	);
 }
-
