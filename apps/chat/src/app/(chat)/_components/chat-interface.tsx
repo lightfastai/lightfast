@@ -6,9 +6,10 @@ import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { AuthPromptSelector } from "./auth-prompt-selector";
 import { RateLimitIndicator } from "./rate-limit-indicator";
+import { RateLimitDialog } from "./rate-limit-dialog";
 import { PromptSuggestions } from "./prompt-suggestions";
 import { useChat } from "@ai-sdk/react";
-import React from "react";
+import React, { useState } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -47,6 +48,9 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
+	
+	// State for rate limit dialog
+	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -158,13 +162,8 @@ export function ChatInterface({
 
 		// For unauthenticated users, check if they've reached the limit
 		if (!isAuthenticated && hasReachedLimit) {
-			// This is a client-side check - throw to error boundary
-			interface LimitError extends Error {
-				statusCode?: number;
-			}
-			const limitError = new Error("Daily message limit reached") as LimitError;
-			limitError.statusCode = 429;
-			throwToErrorBoundary(limitError);
+			// Show the sign-in dialog instead of throwing error
+			setShowRateLimitDialog(true);
 			return;
 		}
 
@@ -240,8 +239,7 @@ export function ChatInterface({
 						placeholder="Ask anything..."
 						disabled={
 							status === "streaming" ||
-							status === "submitted" ||
-							(!isAuthenticated && hasReachedLimit)
+							status === "submitted"
 						}
 						modelSelector={modelSelector}
 					/>
@@ -252,6 +250,12 @@ export function ChatInterface({
 						</div>
 					</div>
 				</div>
+				
+				{/* Rate limit dialog - shown when anonymous user hits limit */}
+				<RateLimitDialog 
+					open={showRateLimitDialog}
+					onOpenChange={setShowRateLimitDialog}
+				/>
 			</div>
 		);
 	}
@@ -273,8 +277,7 @@ export function ChatInterface({
 						placeholder="Continue the conversation..."
 						disabled={
 							status === "streaming" ||
-							status === "submitted" ||
-							(!isAuthenticated && hasReachedLimit)
+							status === "submitted"
 						}
 						withGradient={isAuthenticated}
 						withDescription={
@@ -286,6 +289,12 @@ export function ChatInterface({
 					/>
 				</div>
 			</div>
+			
+			{/* Rate limit dialog - shown when anonymous user hits limit */}
+			<RateLimitDialog 
+				open={showRateLimitDialog}
+				onOpenChange={setShowRateLimitDialog}
+			/>
 		</div>
 	);
 }
