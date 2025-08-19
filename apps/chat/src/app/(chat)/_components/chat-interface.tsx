@@ -17,8 +17,6 @@ import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
-import { toast } from "sonner";
-import { getAppUrl } from "@repo/url-utils";
 
 type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
 
@@ -160,18 +158,13 @@ export function ChatInterface({
 
 		// For unauthenticated users, check if they've reached the limit
 		if (!isAuthenticated && hasReachedLimit) {
-			// Show a toast with a link to sign in
-			const authUrl = getAppUrl("auth");
-			toast.error("Daily message limit reached", {
-				description: "You've used all 10 free messages for today.",
-				action: {
-					label: "Sign in to continue",
-					onClick: () => {
-						window.location.href = `${authUrl}/sign-in`;
-					},
-				},
-				duration: 6000, // Show for 6 seconds
-			});
+			// This is a client-side check - throw to error boundary
+			interface LimitError extends Error {
+				statusCode?: number;
+			}
+			const limitError = new Error("Daily message limit reached") as LimitError;
+			limitError.statusCode = 429;
+			throwToErrorBoundary(limitError);
 			return;
 		}
 
