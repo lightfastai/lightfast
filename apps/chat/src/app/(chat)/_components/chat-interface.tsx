@@ -1,12 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "@repo/ui/components/chat/chat-input";
-import { ProviderModelSelector } from "./provider-model-selector";
-import { AuthPromptSelector } from "./auth-prompt-selector";
-import { RateLimitIndicator } from "./rate-limit-indicator";
-import { RateLimitDialog } from "./rate-limit-dialog";
 import { PromptSuggestions } from "./prompt-suggestions";
 import { useChat } from "@ai-sdk/react";
 import React, { useState } from "react";
@@ -18,6 +15,27 @@ import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
+
+// Dynamic imports for components that are conditionally rendered
+const ProviderModelSelector = dynamic(
+	() => import("./provider-model-selector").then(mod => mod.ProviderModelSelector),
+	{ ssr: false }
+);
+
+const AuthPromptSelector = dynamic(
+	() => import("./auth-prompt-selector").then(mod => mod.AuthPromptSelector),
+	{ ssr: false }
+);
+
+const RateLimitIndicator = dynamic(
+	() => import("./rate-limit-indicator").then(mod => mod.RateLimitIndicator),
+	{ ssr: false }
+);
+
+const RateLimitDialog = dynamic(
+	() => import("./rate-limit-dialog").then(mod => mod.RateLimitDialog),
+	{ ssr: false }
+);
 
 type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
 
