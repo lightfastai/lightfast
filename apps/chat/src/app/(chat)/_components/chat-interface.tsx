@@ -14,7 +14,7 @@ import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
-import type { ChatErrorType } from "~/lib/errors/types";
+import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { RouterOutputs } from "@vendor/trpc";
 
@@ -80,28 +80,57 @@ export function ChatInterface({
 		experimental_throttle: 32,
 		messages: initialMessages,
 		onError: (error) => {
-			// ALL errors from API go to error boundary
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
 
-			// Create an error with our extracted information
-			// This ensures the error boundary gets the right status code
-			interface EnhancedError extends Error {
-				statusCode?: number;
-				type?: ChatErrorType;
-				details?: string;
-				metadata?: Record<string, unknown>;
+			// Define which errors are critical and should use error boundary
+			// These are errors that prevent the chat from functioning
+			const CRITICAL_ERROR_TYPES = [
+				ChatErrorType.AUTHENTICATION,
+				ChatErrorType.BOT_DETECTION,
+				ChatErrorType.SECURITY_BLOCKED,
+				ChatErrorType.MODEL_ACCESS_DENIED,
+				// Rate limit is only critical for anonymous users
+				...(isAuthenticated ? [] : [ChatErrorType.RATE_LIMIT]),
+			];
+
+			// Check if this is a critical error
+			if (CRITICAL_ERROR_TYPES.includes(chatError.type)) {
+				// Create an error with our extracted information
+				// This ensures the error boundary gets the right status code
+				interface EnhancedError extends Error {
+					statusCode?: number;
+					type?: ChatErrorType;
+					details?: string;
+					metadata?: Record<string, unknown>;
+				}
+				const errorForBoundary = new Error(chatError.message) as EnhancedError;
+				errorForBoundary.statusCode = chatError.statusCode;
+				errorForBoundary.type = chatError.type;
+				errorForBoundary.details = chatError.details;
+				errorForBoundary.metadata = chatError.metadata;
+
+				console.error("[Critical Error] Throwing to error boundary:", {
+					type: chatError.type,
+					statusCode: chatError.statusCode,
+					message: chatError.message,
+				});
+
+				// Throw to error boundary with our extracted information
+				throwToErrorBoundary(errorForBoundary);
+			} else {
+				// Non-critical errors (streaming, network, temporary server issues)
+				// Log but don't crash the UI
+				console.error("[Streaming Error] Non-critical error occurred:", {
+					type: chatError.type,
+					statusCode: chatError.statusCode,
+					message: chatError.message,
+					details: chatError.details,
+				});
+
+				// Could show a toast or inline message here
+				// For now, just log and let the user retry
 			}
-			const errorForBoundary = new Error(chatError.message) as EnhancedError;
-			errorForBoundary.statusCode = chatError.statusCode;
-			errorForBoundary.type = chatError.type;
-			errorForBoundary.details = chatError.details;
-			errorForBoundary.metadata = chatError.metadata;
-
-			console.log(error);
-
-			// Throw to error boundary with our extracted information
-			// throwToErrorBoundary(errorForBoundary);
 		},
 		onFinish: (event) => {
 			// Pass the assistant message to the callback
