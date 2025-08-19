@@ -18,23 +18,26 @@ import type { RouterOutputs } from "@vendor/trpc";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
-	() => import("./provider-model-selector").then(mod => mod.ProviderModelSelector),
-	{ ssr: false }
+	() =>
+		import("./provider-model-selector").then(
+			(mod) => mod.ProviderModelSelector,
+		),
+	{ ssr: false },
 );
 
 const AuthPromptSelector = dynamic(
-	() => import("./auth-prompt-selector").then(mod => mod.AuthPromptSelector),
-	{ ssr: false }
+	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
+	{ ssr: false },
 );
 
 const RateLimitIndicator = dynamic(
-	() => import("./rate-limit-indicator").then(mod => mod.RateLimitIndicator),
-	{ ssr: false }
+	() => import("./rate-limit-indicator").then((mod) => mod.RateLimitIndicator),
+	{ ssr: false },
 );
 
 const RateLimitDialog = dynamic(
-	() => import("./rate-limit-dialog").then(mod => mod.RateLimitDialog),
-	{ ssr: false }
+	() => import("./rate-limit-dialog").then((mod) => mod.RateLimitDialog),
+	{ ssr: false },
 );
 
 type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
@@ -66,7 +69,7 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
-	
+
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
@@ -108,7 +111,7 @@ export function ChatInterface({
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
-		experimental_throttle: 32,
+		experimental_throttle: 45,
 		messages: initialMessages,
 		onError: (error) => {
 			// Extract the chat error information
@@ -263,10 +266,7 @@ export function ChatInterface({
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						placeholder="Ask anything..."
-						disabled={
-							status === "streaming" ||
-							status === "submitted"
-						}
+						disabled={status === "streaming" || status === "submitted"}
 						modelSelector={modelSelector}
 					/>
 					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
@@ -276,9 +276,9 @@ export function ChatInterface({
 						</div>
 					</div>
 				</div>
-				
+
 				{/* Rate limit dialog - shown when anonymous user hits limit */}
-				<RateLimitDialog 
+				<RateLimitDialog
 					open={showRateLimitDialog}
 					onOpenChange={setShowRateLimitDialog}
 				/>
@@ -301,10 +301,7 @@ export function ChatInterface({
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						placeholder="Continue the conversation..."
-						disabled={
-							status === "streaming" ||
-							status === "submitted"
-						}
+						disabled={status === "streaming" || status === "submitted"}
 						withGradient={isAuthenticated}
 						withDescription={
 							messages.length > 0
@@ -315,9 +312,9 @@ export function ChatInterface({
 					/>
 				</div>
 			</div>
-			
+
 			{/* Rate limit dialog - shown when anonymous user hits limit */}
-			<RateLimitDialog 
+			<RateLimitDialog
 				open={showRateLimitDialog}
 				onOpenChange={setShowRateLimitDialog}
 			/>

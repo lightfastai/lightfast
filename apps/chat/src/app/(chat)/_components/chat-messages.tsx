@@ -82,8 +82,8 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
-			<Conversation resize="smooth">
-				<ConversationContent>
+			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
+				<ConversationContent className=" flex flex-col p-0">
 					{/* Messages container with proper padding */}
 					<div className="flex-1 py-4">
 						{messagesWithStatus.map((message, index) => {
