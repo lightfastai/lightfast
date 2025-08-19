@@ -28,7 +28,6 @@ let config: NextConfig = withBetterStack(
 			"@vendor/upstash",
 			"@repo/lightfast-config",
 			"@repo/lightfast-email",
-			"@repo/lightfast-react",
 			"@repo/lib",
 		],
 

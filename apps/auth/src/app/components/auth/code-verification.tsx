@@ -2,83 +2,88 @@
 
 import * as React from "react";
 import { useSignIn } from "@clerk/nextjs";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormMessage,
-} from "@repo/ui/components/ui/form";
-import { Icons } from "@repo/ui/components/icons";
-import { getErrorMessage, formatErrorForLogging, isAccountLockedError, formatLockoutTime } from "~/app/lib/clerk/error-handling";
-import { useLogger } from '@vendor/observability/client-log';
-
-const codeSchema = z.object({
-	code: z.string().min(6, "Code must be at least 6 characters"),
-});
-
-type CodeFormData = z.infer<typeof codeSchema>;
+import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
+import { useCodeVerification } from "~/app/hooks/use-code-verification";
+import { CodeVerificationUI } from "./shared/code-verification-ui";
 
 interface CodeVerificationProps {
 	email: string;
 	onReset: () => void;
-	onError: (error: string) => void;
+	onError: (_error: string) => void;
 }
 
 export function CodeVerification({
 	email,
-	onReset: _onReset,
-	onError,
+	onReset,
+	onError: _onError,
 }: CodeVerificationProps) {
 	const { signIn, setActive } = useSignIn();
-	const log = useLogger();
-	const [isResending, setIsResending] = React.useState(false);
+	const {
+		code,
+		setCode,
+		isVerifying,
+		setIsVerifying,
+		inlineError,
+		setInlineError,
+		isRedirecting,
+		setIsRedirecting,
+		isResending,
+		setIsResending,
+		handleError,
+		log,
+	} = useCodeVerification({ email });
 
-	const form = useForm<CodeFormData>({
-		resolver: zodResolver(codeSchema),
-		defaultValues: {
-			code: "",
-		},
-	});
-
-	async function onSubmit(data: CodeFormData) {
+	async function handleComplete(value: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (!signIn || !setActive) return;
+
+		setIsVerifying(true);
+		setInlineError(null);
 
 		try {
 			// Attempt to verify the code
 			const result = await signIn.attemptFirstFactor({
 				strategy: "email_code",
-				code: data.code,
+				code: value,
 			});
 
 			if (result.status === "complete") {
 				// Sign-in successful, set the active session
+				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
-				log.info('[CodeVerification.onSubmit] Authentication success', { 
-					email, 
+				log.info("[CodeVerification] Authentication success", {
+					email,
 					sessionId: result.createdSessionId,
-					timestamp: new Date().toISOString()
+					timestamp: new Date().toISOString(),
 				});
+			} else {
+				// Create error with full context for Sentry
+				const errorContext = {
+					component: "CodeVerification",
+					status: result.status,
+					email,
+					timestamp: new Date().toISOString(),
+					signInData: result,
+				};
+
+				const unexpectedError = new Error(
+					`Unexpected sign-in status: ${result.status} | Context: ${JSON.stringify(errorContext)}`,
+				);
+
+				// Log for debugging
+				log.warn("[CodeVerification] Unexpected sign-in status", errorContext);
+
+				// Capture to Sentry without showing toast (we show inline error instead)
+				handleErrorWithSentry(unexpectedError, false);
+
+				setInlineError("Unexpected response. Please try again.");
+				setIsVerifying(false);
 			}
 		} catch (err) {
-			log.error('[CodeVerification.onSubmit] Authentication error', formatErrorForLogging('CodeVerification.onSubmit', err));
-			
-			// Check for account lockout
-			const lockoutInfo = isAccountLockedError(err);
-			if (lockoutInfo.locked && lockoutInfo.expiresInSeconds) {
-				onError(`Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`);
-			} else {
-				onError(getErrorMessage(err));
-			}
-
-			form.reset();
+			handleError(err, "CodeVerification");
+			// Don't clear the code - let user see what they typed
+			setIsVerifying(false);
 		}
 	}
 
@@ -86,92 +91,60 @@ export function CodeVerification({
 		if (!signIn) return;
 
 		setIsResending(true);
+		setInlineError(null);
 		try {
 			// Resend the verification code
 			const emailFactor = signIn.supportedFirstFactors?.find(
-				(factor) => factor.strategy === "email_code"
+				(factor) => factor.strategy === "email_code",
 			);
-			
+
 			if (!emailFactor?.emailAddressId) {
-				onError("Unable to resend code. Please try again.");
+				setInlineError("Unable to resend code. Please try again.");
 				return;
 			}
-			
+
 			await signIn.prepareFirstFactor({
 				strategy: "email_code",
 				emailAddressId: emailFactor.emailAddressId,
 			});
-			
-			log.info('[CodeVerification.handleResendCode] Code resent successfully', {
+
+			log.info("[CodeVerification.handleResendCode] Code resent successfully", {
 				email,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
-			
+
 			// Show success message to user
 			toast.success("Verification code sent to your email");
-			form.setValue("code", "");
+			setCode("");
 		} catch (err) {
-			log.error('[CodeVerification.handleResendCode] Error resending code', formatErrorForLogging('CodeVerification.handleResendCode', err));
-			onError(getErrorMessage(err));
+			handleError(err, "CodeVerification.handleResendCode");
 		} finally {
 			setIsResending(false);
 		}
 	}
 
+	// Auto-submit when code is complete (but not if there's an error showing)
+	React.useEffect(() => {
+		if (code.length === 6 && !inlineError) {
+			// Handle the promise to avoid unhandled rejection
+			handleComplete(code).catch(() => {
+				// Error is already handled in handleComplete
+			});
+		}
+	}, [code, inlineError]);
+
 	return (
-		<div className="space-y-6">
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<FormField
-						control={form.control}
-						name="code"
-						render={({ field }) => (
-							<FormItem>
-								<FormControl>
-									<Input
-										type="text"
-										placeholder="Enter verification code"
-										className="h-12"
-										autoFocus
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					<Button
-						type="submit"
-						className="w-full h-12"
-						disabled={form.formState.isSubmitting}
-					>
-						{form.formState.isSubmitting ? (
-							<>
-								<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-								Verifying...
-							</>
-						) : (
-							"Verify Code"
-						)}
-					</Button>
-				</form>
-			</Form>
-
-			<div className="space-y-2">
-				<div className="text-center text-sm text-muted-foreground">
-					Didn't get your code?{" "}
-					<button
-						onClick={handleResendCode}
-						disabled={isResending}
-						className="text-primary hover:text-primary/80 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{isResending && <Icons.spinner className="inline h-3 w-3 animate-spin mr-1" />}
-						Resend
-					</button>
-				</div>
-			</div>
-		</div>
+		<CodeVerificationUI
+			email={email}
+			code={code}
+			onCodeChange={setCode}
+			isVerifying={isVerifying}
+			isRedirecting={isRedirecting}
+			isResending={isResending}
+			inlineError={inlineError}
+			onResend={handleResendCode}
+			onReset={onReset}
+		/>
 	);
 }
 

@@ -2,124 +2,137 @@
 
 import * as React from "react";
 import { useSignUp } from "@clerk/nextjs";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormMessage,
-} from "@repo/ui/components/ui/form";
-import { Icons } from "@repo/ui/components/icons";
-import { getErrorMessage, formatErrorForLogging } from "~/app/lib/clerk/error-handling";
-import { useLogger } from '@vendor/observability/client-log';
-
-const codeSchema = z.object({
-	code: z.string().min(6, "Code must be at least 6 characters"),
-});
-
-type CodeFormData = z.infer<typeof codeSchema>;
+import { toast } from "sonner";
+import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
+import { useCodeVerification } from "~/app/hooks/use-code-verification";
+import { CodeVerificationUI } from "./shared/code-verification-ui";
 
 interface SignUpCodeVerificationProps {
 	email: string;
 	onReset: () => void;
-	onError: (error: string) => void;
+	onError: (_error: string) => void;
 }
 
 export function SignUpCodeVerification({
 	email,
 	onReset,
-	onError,
+	onError: _onError,
 }: SignUpCodeVerificationProps) {
 	const { signUp, setActive } = useSignUp();
-	const log = useLogger();
+	const {
+		code,
+		setCode,
+		isVerifying,
+		setIsVerifying,
+		inlineError,
+		setInlineError,
+		isRedirecting,
+		setIsRedirecting,
+		isResending,
+		setIsResending,
+		handleError,
+		log,
+	} = useCodeVerification({ email });
 
-	const form = useForm<CodeFormData>({
-		resolver: zodResolver(codeSchema),
-		defaultValues: {
-			code: "",
-		},
-	});
-
-	async function onSubmit(data: CodeFormData) {
+	async function handleComplete(value: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (!signUp || !setActive) return;
+		
+		setIsVerifying(true);
+		setInlineError(null);
 
 		try {
 			// Attempt to verify the code
 			const result = await signUp.attemptEmailAddressVerification({
-				code: data.code,
+				code: value,
 			});
 
 			if (result.status === "complete") {
 				// Sign-up successful, set the active session
+				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
-				log.info('[SignUpCodeVerification.onSubmit] Authentication success', { 
+				log.info('[SignUpCodeVerification] Authentication success', { 
 					email, 
 					sessionId: result.createdSessionId,
 					timestamp: new Date().toISOString()
 				});
+			} else {
+				// Create error with full context for Sentry
+				const errorContext = {
+					component: "SignUpCodeVerification",
+					status: result.status,
+					email,
+					timestamp: new Date().toISOString(),
+					signUpData: result,
+				};
+				
+				const unexpectedError = new Error(
+					`Unexpected sign-up status: ${result.status} | Context: ${JSON.stringify(errorContext)}`
+				);
+				
+				// Log for debugging
+				log.warn('[SignUpCodeVerification] Unexpected sign-up status', errorContext);
+				
+				// Capture to Sentry without showing toast (we show inline error instead)
+				handleErrorWithSentry(unexpectedError, false);
+				
+				setInlineError("Unexpected response. Please try again.");
+				setIsVerifying(false);
 			}
 		} catch (err) {
-			log.error('[SignUpCodeVerification.onSubmit] Authentication error', formatErrorForLogging('SignUpCodeVerification.onSubmit', err));
-			onError(getErrorMessage(err));
-			form.reset();
+			handleError(err, "SignUpCodeVerification");
+			// Don't clear the code - let user see what they typed
+			setIsVerifying(false);
 		}
 	}
 
+	async function handleResendCode() {
+		if (!signUp) return;
+
+		setIsResending(true);
+		setInlineError(null);
+		try {
+			// Resend the verification code
+			await signUp.prepareEmailAddressVerification({
+				strategy: 'email_code',
+			});
+			
+			log.info('[SignUpCodeVerification.handleResendCode] Code resent successfully', {
+				email,
+				timestamp: new Date().toISOString()
+			});
+			
+			// Show success message to user
+			toast.success("Verification code sent to your email");
+			setCode("");
+		} catch (err) {
+			handleError(err, "SignUpCodeVerification.handleResendCode");
+		} finally {
+			setIsResending(false);
+		}
+	}
+
+	// Auto-submit when code is complete (but not if there's an error showing)
+	React.useEffect(() => {
+		if (code.length === 6 && !inlineError) {
+			// Handle the promise to avoid unhandled rejection
+			handleComplete(code).catch(() => {
+				// Error is already handled in handleComplete
+			});
+		}
+	}, [code, inlineError]);
+
 	return (
-		<div className="space-y-4">
-			<div className="text-center">
-				<p className="text-sm text-muted-foreground">
-					We sent a verification code to {email}
-				</p>
-			</div>
-
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<FormField
-						control={form.control}
-						name="code"
-						render={({ field }) => (
-							<FormItem>
-								<FormControl>
-									<Input
-										type="text"
-										placeholder="Enter verification code"
-										className="h-12"
-										autoFocus
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					<Button
-						type="submit"
-						className="w-full h-12"
-						disabled={form.formState.isSubmitting}
-					>
-						{form.formState.isSubmitting ? (
-							<>
-								<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-								Verifying...
-							</>
-						) : (
-							"Verify Email"
-						)}
-					</Button>
-				</form>
-			</Form>
-
-			<Button onClick={onReset} variant="ghost" className="w-full h-12 text-sm">
-				Use a different email
-			</Button>
-		</div>
+		<CodeVerificationUI
+			email={email}
+			code={code}
+			onCodeChange={setCode}
+			isVerifying={isVerifying}
+			isRedirecting={isRedirecting}
+			isResending={isResending}
+			inlineError={inlineError}
+			onResend={handleResendCode}
+			onReset={onReset}
+		/>
 	);
 }

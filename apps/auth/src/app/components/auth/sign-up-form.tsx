@@ -33,12 +33,14 @@ export function SignUpForm() {
 
 	return (
 		<div className="w-full space-y-8">
-			{/* Header */}
-			<div className="text-center">
-				<h1 className="text-3xl font-semibold text-foreground">
-					Sign up for Lightfast
-				</h1>
-			</div>
+			{/* Header - only show on email step */}
+			{verificationStep === "email" && (
+				<div className="text-center">
+					<h1 className="text-3xl font-semibold text-foreground">
+						Sign up for Lightfast
+					</h1>
+				</div>
+			)}
 
 			<div className="space-y-4">
 				{error && (
@@ -114,12 +116,13 @@ export function SignUpForm() {
 			{verificationStep === "email" && (
 				<div className="text-center text-sm">
 					<span className="text-muted-foreground">Already have an account? </span>
-					<Link
-						href="/sign-in"
-						className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 transition-colors"
+					<Button
+						asChild
+						variant="link-blue"
+						className="inline-flex h-auto p-0 rounded-none text-sm"
 					>
-						Log In
-					</Link>
+						<Link href="/sign-in">Log In</Link>
+					</Button>
 				</div>
 			)}
 		</div>

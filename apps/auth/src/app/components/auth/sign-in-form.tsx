@@ -43,17 +43,14 @@ export function SignInForm({
 
 	return (
 		<div className="w-full space-y-8">
-			{/* Header */}
-			<div className="text-center">
-				<h1 className="text-3xl font-semibold text-foreground">
-					Log in to Lightfast
-				</h1>
-				{verificationStep === "code" && emailAddress && (
-					<p className="text-sm text-muted-foreground mt-2">
-						We sent a verification code to {emailAddress}
-					</p>
-				)}
-			</div>
+			{/* Header - only show on email step */}
+			{verificationStep === "email" && (
+				<div className="text-center">
+					<h1 className="text-3xl font-semibold text-foreground">
+						Log in to Lightfast
+					</h1>
+				</div>
+			)}
 
 			<div className="space-y-4">
 				{error && (
@@ -100,12 +97,13 @@ export function SignInForm({
 			{verificationStep === "email" && (
 				<div className="text-center text-sm">
 					<span className="text-muted-foreground">Don't have an account? </span>
-					<Link
-						href="/sign-up"
-						className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 transition-colors"
+					<Button
+						asChild
+						variant="link-blue"
+						className="inline-flex h-auto p-0 rounded-none text-sm"
 					>
-						Sign Up
-					</Link>
+						<Link href="/sign-up">Sign Up</Link>
+					</Button>
 				</div>
 			)}
 		</div>
