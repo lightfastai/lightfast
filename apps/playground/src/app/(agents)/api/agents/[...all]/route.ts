@@ -148,9 +148,9 @@ const handler = async (
 											finishReason: result.finishReason,
 											usage: result.usage,
 											// Include thinking metadata if available
-											reasoning: result.reasoning,
 											reasoningText: result.reasoningText,
-											providerMetadata: result.providerMetadata,
+											reasoningText: result.reasoningText,
+											providerOptions: result.providerOptions,
 										},
 									});
 								}

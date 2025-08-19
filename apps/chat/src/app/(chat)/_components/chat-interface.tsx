@@ -47,8 +47,6 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
-	console.log("User data:", user);
-	console.log("isAuthenticated:", isAuthenticated);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -75,6 +73,7 @@ export function ChatInterface({
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
+		resumeStream,
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
@@ -98,18 +97,29 @@ export function ChatInterface({
 			errorForBoundary.details = chatError.details;
 			errorForBoundary.metadata = chatError.metadata;
 
+			console.log(error);
+
 			// Throw to error boundary with our extracted information
-			throwToErrorBoundary(errorForBoundary);
+			// throwToErrorBoundary(errorForBoundary);
 		},
 		onFinish: (event) => {
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
 		},
-		resume:
-			initialMessages.length > 0 &&
-			initialMessages[initialMessages.length - 1]?.role === "user",
 	});
+
+	// Auto-resume streaming if requested and there's an incomplete stream
+	React.useEffect(() => {
+		if (
+			initialMessages.length > 0 &&
+			initialMessages[initialMessages.length - 1]?.role === "user"
+		) {
+			void resumeStream();
+		}
+		// We want to disable the exhaustive deps rule here because we only want to run this effect once
+		// eslint-disable-next-line
+	}, []);
 
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || status === "streaming" || status === "submitted") {
@@ -151,15 +161,12 @@ export function ChatInterface({
 			onNewUserMessage?.(userMessage);
 
 			// Send message using Vercel's format
-			await vercelSendMessage(
-				userMessage,
-				{
-					body: {
-						userMessageId,
-						modelId: selectedModelId,
-					},
+			await vercelSendMessage(userMessage, {
+				body: {
+					userMessageId,
+					modelId: selectedModelId,
 				},
-			);
+			});
 
 			// Increment count for anonymous users after successful send
 			if (!isAuthenticated) {

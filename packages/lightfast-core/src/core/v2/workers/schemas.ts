@@ -26,7 +26,7 @@ export type AgentDecision = z.infer<typeof AgentDecisionSchema>;
 export const ToolDefinitionSchema = z.object({
 	name: z.string(),
 	description: z.string(),
-	parameters: z.record(z.any()),
+	inputSchema: z.record(z.any()),
 });
 
 export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;

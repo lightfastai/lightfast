@@ -1,4 +1,4 @@
-import type { CoreMessage, UIMessage } from "ai";
+import type { ModelMessage, UIMessage } from "ai";
 
 /**
  * Cache control configuration for provider-specific caching
@@ -16,13 +16,13 @@ export interface ProviderCache {
 	/**
 	 * Apply cache control to system messages
 	 */
-	applySystemCaching(system: string): CoreMessage[];
+	applySystemCaching(system: string): ModelMessage[];
 
 	/**
 	 * Apply cache control to user messages based on provider-specific logic
 	 */
 	applyMessageCaching<TMessage extends UIMessage>(
-		messages: CoreMessage[],
+		messages: ModelMessage[],
 		originalMessages: TMessage[],
-	): CoreMessage[];
+	): ModelMessage[];
 }

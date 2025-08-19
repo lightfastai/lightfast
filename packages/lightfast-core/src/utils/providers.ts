@@ -1,5 +1,5 @@
 import { gateway } from "@ai-sdk/gateway";
-import type { LanguageModelV2 } from "@ai-sdk/provider";
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 
 // Vercel AI Gateway Models
 // All AI models are accessed through Vercel AI Gateway for unified management

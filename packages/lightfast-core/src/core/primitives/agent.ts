@@ -1,12 +1,7 @@
 import {
-	
-	convertToModelMessages,
-	streamText
-	
-	
-	
+	convertToModelMessages
 } from "ai";
-import type {CoreMessage, Tool, ToolSet, UIMessage} from "ai";
+import type {ModelMessage, Tool, ToolSet, UIMessage} from "ai";
 import type { Memory } from "../memory";
 import { 
 	AgentConfigurationError,
@@ -70,10 +65,22 @@ function uuidv4() {
 	});
 }
 
-// Extract core types from streamText
-type StreamTextParameters<TOOLS extends ToolSet> = Parameters<
-	typeof streamText<TOOLS>
->[0];
+// Type for streamText parameters - matching AI SDK v5
+export type StreamTextParameters<TOOLS extends ToolSet = ToolSet> = {
+	model: any; // LanguageModel type from AI SDK
+	messages: ModelMessage[];
+	tools?: TOOLS;
+	toolChoice?: any;
+	stopWhen?: any;
+	onChunk?: any;
+	onFinish?: any;
+	onStepFinish?: any;
+	onAbort?: any;
+	onError?: any;
+	prepareStep?: any;
+	experimental_transform?: any;
+	[key: string]: any; // Allow additional properties like headers, providerOptions, etc.
+};
 
 // Properties we need to handle specially or exclude
 type ExcludedStreamTextProps =
@@ -212,7 +219,11 @@ export class Agent<
 		this.experimental_transform = experimental_transform;
 	}
 
-	async stream<
+	/**
+	 * Builds streamText parameters for the given messages and context
+	 * Does not actually call streamText - that's handled by runtime.ts
+	 */
+	buildStreamParams<
 		TMessage extends UIMessage = UIMessage,
 		TRequestContext = {},
 		TMemoryContext = {},
@@ -223,7 +234,7 @@ export class Agent<
 		resourceId,
 		systemContext,
 		requestContext,
-	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>) {
+	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): StreamTextParameters<ToolSet> {
 		if (!messages || messages.length === 0) {
 			throw new NoMessagesError();
 		}
@@ -270,8 +281,8 @@ export class Agent<
 		}
 
 		// Convert system config to messages with cache control
-		let systemMessages: CoreMessage[] = [];
-		let modelMessages: CoreMessage[];
+		let systemMessages: ModelMessage[] = [];
+		let modelMessages: ModelMessage[];
 
 		if (this.cache) {
 			try {
@@ -324,9 +335,10 @@ export class Agent<
 
 		// Create properly typed parameters for streamText
 		// We know resolvedTools is a ToolSet at runtime, so we can safely type the parameters
-		const streamTextParams: Parameters<typeof streamText<ToolSet>>[0] = {
+		const streamTextParams: StreamTextParameters<ToolSet> = {
 			// Spread all streamText config properties (includes headers, providerOptions, etc.)
 			...streamTextConfig,
+			model: streamTextConfig.model, // Explicitly include model to satisfy TypeScript
 			// Override with our specific handling - no more system parameter
 			messages: allModelMessages,
 			tools: resolvedTools,
@@ -348,19 +360,9 @@ export class Agent<
 				.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
 		};
 
-		// Return the stream result with necessary metadata
-		try {
-			return {
-				result: streamText(streamTextParams),
-				streamId,
-				sessionId,
-			};
-		} catch (error) {
-			// Transform streaming errors into consistent lightfast error format
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			const cause = error instanceof Error ? error : undefined;
-			throw new AgentStreamError(errorMessage, cause);
-		}
+		// Return the parameters for streamText
+		// The actual streaming is handled by runtime.ts
+		return streamTextParams;
 	}
 }
 

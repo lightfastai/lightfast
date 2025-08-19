@@ -1,41 +1,40 @@
 import type { UIMessage, UIMessageStreamOptions, ToolSet } from "ai";
+import { streamText } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
+import { v4 as uuidv4 } from "uuid";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type {
-	RequestContext,
-	SystemContext,
-} from "./adapters/types";
+import type { RequestContext, SystemContext } from "./adapters/types";
 import {
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
 	toAgentApiError,
-	toMemoryApiError
+	toMemoryApiError,
 } from "./errors";
-import type {ApiError} from "./errors";
-import { Err, Ok  } from "./result";
-import type {Result} from "./result";
-import type { 
+import type { ApiError } from "./errors";
+import { Err, Ok } from "./result";
+import type { Result } from "./result";
+import type {
 	LifecycleCallbacks,
 	ErrorLifecycleEvent,
 	StreamStartEvent,
 	StreamCompleteEvent,
 	AgentStartEvent,
-	AgentCompleteEvent
+	AgentCompleteEvent,
 } from "./lifecycle";
 
 export interface ResumeOptions {
 	/** Enable resume capability for streaming */
 	enabled: boolean;
-	/** 
+	/**
 	 * Guard: Continue streaming even if stream creation fails
 	 * @default false - Stream creation failure will propagate via onError
 	 * @description When true, stream creation failures are logged but don't interrupt the stream
 	 */
 	silentStreamFailure?: boolean;
-	/** 
+	/**
 	 * Guard: Fail fast on stream creation errors
 	 * @default false - Continue streaming on error
 	 * @description When true, stream creation failure will stop the entire streaming operation
@@ -200,7 +199,8 @@ export async function streamChat<
 
 	// Call onAgentStart lifecycle callback
 	const agentStartTime = Date.now();
-	const agentName = 'config' in agent && agent.config?.name ? agent.config.name : 'unknown';
+	const agentName =
+		"config" in agent && agent.config?.name ? agent.config.name : "unknown";
 	onAgentStart?.({
 		systemContext,
 		requestContext: requestContext as RequestContext | undefined,
@@ -208,10 +208,10 @@ export async function streamChat<
 		messageCount: allMessages.length,
 	});
 
-	// Stream the response
-	let streamResult: Awaited<ReturnType<typeof agent.stream>>;
+	// Build stream parameters using the agent's method
+	let streamParams;
 	try {
-		streamResult = await agent.stream({
+		streamParams = agent.buildStreamParams({
 			sessionId,
 			messages: allMessages,
 			memory,
@@ -221,10 +221,21 @@ export async function streamChat<
 		});
 	} catch (error) {
 		// Convert agent errors to appropriate API errors
-		return Err(toAgentApiError(error, "stream"));
+		return Err(toAgentApiError(error, "buildStreamParams"));
 	}
 
-	const { result, streamId, sessionId: sid } = streamResult;
+	// Stream the response using the built parameters
+	let result;
+	let streamId = generateId ? generateId() : uuidv4();
+	try {
+		result = await streamText(streamParams);
+	} catch (error) {
+		// Convert streaming errors to appropriate API errors
+		return Err(toAgentApiError(error, "streamText"));
+	}
+
+	// Use the same sessionId
+	const sid = sessionId;
 
 	// Call onStreamStart lifecycle callback
 	onStreamStart?.({
@@ -237,13 +248,13 @@ export async function streamChat<
 
 	// Store stream ID for resumption (only if resume is enabled)
 	const shouldEnableResume = enableResume || resumeOptions?.enabled;
-	
+
 	if (shouldEnableResume) {
 		try {
 			await memory.createStream({ sessionId, streamId, context });
 		} catch (error) {
 			const apiError = toMemoryApiError(error, "createStream");
-			
+
 			// Check guard: failOnStreamError FIRST (highest priority)
 			if (resumeOptions?.failOnStreamError) {
 				// Fail fast mode: log and return error immediately
@@ -258,7 +269,7 @@ export async function streamChat<
 				);
 				return Err(apiError);
 			}
-			
+
 			// Check guard: silentStreamFailure
 			if (resumeOptions?.silentStreamFailure) {
 				// Silent mode: only log, don't call onError
@@ -282,15 +293,15 @@ export async function streamChat<
 						originalError: error,
 					},
 				);
-				
+
 				// Propagate stream creation failure to route for monitoring
-				onError?.({ 
+				onError?.({
 					systemContext,
 					requestContext: requestContext as RequestContext | undefined,
 					error: apiError,
 				});
 			}
-			
+
 			// Default: Continue streaming despite error
 		}
 	}
@@ -299,17 +310,17 @@ export async function streamChat<
 	const streamOptions: UIMessageStreamOptions<TMessage> = {
 		generateMessageId: generateId,
 		sendReasoning: true, // Enable sending reasoning parts to the client
-		onFinish: async (result) => {
+		onFinish: async (finishResult) => {
 			const agentEndTime = Date.now();
 			const agentDuration = agentEndTime - agentStartTime;
-			
+
 			// Call onAgentComplete lifecycle callback
 			onAgentComplete?.({
 				systemContext,
 				requestContext: requestContext as RequestContext | undefined,
 				agentName,
 			});
-			
+
 			// Call onStreamComplete lifecycle callback
 			onStreamComplete?.({
 				systemContext,
@@ -317,29 +328,34 @@ export async function streamChat<
 				streamId,
 				agentName,
 			});
-			
+
 			// Save the assistant's response to memory
-			if (result.responseMessage && result.responseMessage.role === "assistant") {
+			if (
+				finishResult.responseMessage &&
+				finishResult.responseMessage.role === "assistant"
+			) {
 				console.log(
 					`\n[V1 onFinish] responseMessage:`,
-					JSON.stringify(result.responseMessage, null, 2),
+					JSON.stringify(finishResult.responseMessage, null, 2),
 				);
-				if (result.responseMessage.parts) {
+				if (finishResult.responseMessage.parts) {
 					console.log(
-						`[V1 onFinish] Parts count: ${result.responseMessage.parts.length}`,
+						`[V1 onFinish] Parts count: ${finishResult.responseMessage.parts.length}`,
 					);
-					result.responseMessage.parts.forEach((part: any, idx: number) => {
-						console.log(
-							`  Part ${idx}: type=${part.type}`,
-							part.type === "tool-result" ? `state=${part.state}` : "",
-						);
-					});
+					finishResult.responseMessage.parts.forEach(
+						(part: any, idx: number) => {
+							console.log(
+								`  Part ${idx}: type=${part.type}`,
+								part.type === "tool-result" ? `state=${part.state}` : "",
+							);
+						},
+					);
 				}
 
 				try {
 					await memory.appendMessage({
 						sessionId: sid,
-						message: result.responseMessage,
+						message: finishResult.responseMessage,
 						context,
 					});
 				} catch (error) {
@@ -354,14 +370,14 @@ export async function streamChat<
 							originalError: error,
 						},
 					);
-					
+
 					// Call onError callback to propagate memory failure to route
-					onError?.({ 
+					onError?.({
 						systemContext,
 						requestContext: requestContext as RequestContext | undefined,
 						error: apiError,
 					});
-					
+
 					// Note: We don't throw here as the response has already been streamed to the client
 					// but we propagate the error via callback for route handling
 				}
@@ -412,13 +428,14 @@ export async function resumeStream<
 	try {
 		// Check authentication and ownership
 		const session = await memory.getSession(sessionId);
+		console.log("[Resume Stream] Found session", session);
 		if (!session || session.resourceId !== resourceId) {
 			return Err(new SessionNotFoundError());
 		}
 
 		// Get session streams
 		const streamIds = await memory.getSessionStreams(sessionId);
-
+		console.log("[Resume Stream]", streamIds);
 		if (!streamIds.length) {
 			return Ok(null);
 		}
@@ -438,6 +455,7 @@ export async function resumeStream<
 			await streamContext.resumeExistingStream(recentStreamId);
 		return Ok(resumedStream ?? null);
 	} catch (error) {
+		console.error("[Resume Stream]", error);
 		// Convert memory errors to appropriate API errors
 		return Err(toMemoryApiError(error, "resumeStream"));
 	}

@@ -42,7 +42,7 @@ describe("createAgent", () => {
 	it("should create an agent with static tools", () => {
 		const testTool = {
 			description: "Test tool",
-			parameters: z.object({ query: z.string() }),
+			inputSchema: z.object({ query: z.string() }),
 			execute: async ({ query }: { query: string }) => `Result: ${query}`,
 		};
 
@@ -120,7 +120,7 @@ describe("createAgent", () => {
 			model: {} as any,
 			system: "You are a helpful assistant",
 			temperature: 0.7,
-			maxTokens: 1000,
+			maxOutputTokens: 1000,
 			providerOptions: {
 				anthropic: {
 					cacheControl: true,

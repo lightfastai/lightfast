@@ -55,7 +55,7 @@ export const ModelConfigSchema = z.object({
 	name: z.string(),
 	displayName: z.string(),
 	description: z.string(),
-	maxTokens: z.number(),
+	maxOutputTokens: z.number(),
 	costPer1KTokens: z.object({
 		input: z.number(),
 		output: z.number(),

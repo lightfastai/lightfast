@@ -15,7 +15,7 @@ export const ACTIVE_MODELS = {
 		name: "anthropic/claude-4-sonnet",
 		displayName: "Claude 4 Sonnet",
 		description: "Latest generation superior coding and reasoning model",
-		maxTokens: 200000,
+		maxOutputTokens: 200000,
 		costPer1KTokens: { input: 3.0, output: 15.0 },
 		features: {
 			streaming: true,
@@ -36,7 +36,7 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5-nano",
 		displayName: "GPT-5 Nano",
 		description: "Ultra-efficient GPT-5 model for simple tasks",
-		maxTokens: 400000,
+		maxOutputTokens: 400000,
 		costPer1KTokens: { input: 0.05, output: 0.4 },
 		features: {
 			streaming: true,
@@ -55,7 +55,7 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5-mini",
 		displayName: "GPT-5 Mini",
 		description: "Efficient GPT-5 model for everyday tasks",
-		maxTokens: 400000,
+		maxOutputTokens: 400000,
 		costPer1KTokens: { input: 0.25, output: 2.0 },
 		features: {
 			streaming: true,
@@ -74,7 +74,7 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-5",
 		displayName: "GPT-5",
 		description: "Most advanced GPT-5 model with enhanced capabilities",
-		maxTokens: 400000,
+		maxOutputTokens: 400000,
 		costPer1KTokens: { input: 1.25, output: 10.0 },
 		features: {
 			streaming: true,
@@ -95,7 +95,7 @@ export const ACTIVE_MODELS = {
 		name: "google/gemini-2.5-flash",
 		displayName: "Gemini 2.5 Flash",
 		description: "Fast and efficient model for most tasks",
-		maxTokens: 1048576,
+		maxOutputTokens: 1048576,
 		costPer1KTokens: { input: 0.3, output: 2.5 },
 		features: {
 			streaming: true,
@@ -114,7 +114,7 @@ export const ACTIVE_MODELS = {
 		name: "google/gemini-2.5-pro",
 		displayName: "Gemini 2.5 Pro",
 		description: "Most advanced Gemini model for complex reasoning",
-		maxTokens: 1048576,
+		maxOutputTokens: 1048576,
 		costPer1KTokens: { input: 2.5, output: 10.0 },
 		features: {
 			streaming: true,
@@ -136,7 +136,7 @@ export const ACTIVE_MODELS = {
 		name: "openai/gpt-oss-120b",
 		displayName: "GPT OSS 120B",
 		description: "Open source 120B parameter model",
-		maxTokens: 131072,
+		maxOutputTokens: 131072,
 		costPer1KTokens: { input: 0.1, output: 0.5 },
 		features: {
 			streaming: true,
@@ -157,7 +157,7 @@ export const ACTIVE_MODELS = {
 		name: "moonshotai/kimi-k2",
 		displayName: "Kimi K2",
 		description: "Advanced Chinese/English bilingual model",
-		maxTokens: 131072,
+		maxOutputTokens: 131072,
 		costPer1KTokens: { input: 0.55, output: 2.2 },
 		features: {
 			streaming: true,

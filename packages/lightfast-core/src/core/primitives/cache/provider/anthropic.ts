@@ -1,4 +1,4 @@
-import type { CoreMessage, UIMessage } from "ai";
+import type { ModelMessage, UIMessage } from "ai";
 import type { CacheControl, ProviderCache } from "../base";
 import type { CacheStrategy } from "../strategy/base";
 import { ClineConversationStrategy } from "../strategy/cline-conversation";
@@ -28,7 +28,7 @@ export class AnthropicProviderCache implements ProviderCache {
 		this.enabled = config.enabled ?? true;
 	}
 
-	applySystemCaching(system: string): CoreMessage[] {
+	applySystemCaching(system: string): ModelMessage[] {
 		if (!this.enabled) {
 			return [
 				{
@@ -67,9 +67,9 @@ export class AnthropicProviderCache implements ProviderCache {
 	}
 
 	applyMessageCaching<TMessage extends UIMessage>(
-		messages: CoreMessage[],
+		messages: ModelMessage[],
 		originalMessages: TMessage[],
-	): CoreMessage[] {
+	): ModelMessage[] {
 		if (!this.enabled) {
 			return messages;
 		}
