@@ -28,6 +28,7 @@
 		"@trpc/react-query": "^11.4.4",
 		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "catalog:",
+		"@types/react-syntax-highlighter": "^15.5.13",
 		"@vendor/analytics": "workspace:^",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/db": "workspace:*",
@@ -49,7 +50,9 @@
 		"next-themes": "^0.4.6",
 		"react": "catalog:react19",
 		"react-dom": "catalog:react19",
+		"react-syntax-highlighter": "^15.6.1",
 		"server-only": "^0.0.1",
+		"streamdown": "^1.0.11",
 		"superjson": "2.2.1",
 		"use-debounce": "^10.0.5",
 		"use-stick-to-bottom": "1.1.1",
@@ -71,4 +74,3 @@
 		"typescript": "catalog:"
 	}
 }
-

@@ -179,7 +179,6 @@ export function ChatInterface({
 			void resumeStream();
 		}
 		// We want to disable the exhaustive deps rule here because we only want to run this effect once
-		// eslint-disable-next-line
 	}, []);
 
 	const handleSendMessage = async (message: string) => {

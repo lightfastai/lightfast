@@ -1,13 +1,9 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { ArrowDown } from "lucide-react";
-import { memo, useMemo, useRef } from "react";
-import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
-import { Markdown } from "@repo/ui/components/markdown";
+import { memo, useMemo } from "react";
 import { ThinkingMessage } from "@repo/ui/components/chat";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
-import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import {
@@ -15,6 +11,13 @@ import {
 	isTextPart,
 	isToolPart,
 } from "~/ai/lightfast-app-chat-ui-messages";
+import {
+	Conversation,
+	ConversationContent,
+	ConversationScrollButton,
+} from "~/components/ai-elements/conversation";
+import { Message, MessageContent } from "~/components/ai-elements/message";
+import { Response } from "~/components/ai-elements/response";
 
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
@@ -48,29 +51,7 @@ const ReasoningBlock = memo(function ReasoningBlock({
 	);
 });
 
-function ScrollButton() {
-	const { isAtBottom, scrollToBottom } = useStickToBottomContext();
-
-	return (
-		<Button
-			onClick={() => scrollToBottom()}
-			className={cn(
-				"absolute bottom-4 right-4 rounded-full p-2 shadow-lg transition-all duration-200",
-				isAtBottom ? "opacity-0 pointer-events-none" : "opacity-100",
-			)}
-			variant="secondary"
-			size="icon"
-		>
-			<ArrowDown className="h-4 w-4" />
-		</Button>
-	);
-}
-
 export function ChatMessages({ messages, status }: ChatMessagesProps) {
-	// Track initial message count for scroll anchor
-	const initialMessageCount = useRef<number | null>(null);
-	initialMessageCount.current ??= messages.length;
-
 	// Add runtime status to messages and inject thinking placeholder
 	const messagesWithStatus: MessageWithRuntimeStatus[] = messages.map(
 		(msg, index) => {
@@ -101,45 +82,37 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
-			<StickToBottom
-				className="flex-1 overflow-y-auto scrollbar-thin"
-				resize="smooth"
-				initial="instant"
-				role="log"
-			>
-				<StickToBottom.Content className="min-h-full flex flex-col">
+			<Conversation resize="smooth">
+				<ConversationContent>
 					{/* Messages container with proper padding */}
 					<div className="flex-1 py-4">
 						{messagesWithStatus.map((message, index) => {
 							const isLast = index === messagesWithStatus.length - 1;
-							const hasScrollAnchor =
-								isLast &&
-								initialMessageCount.current !== null &&
-								messagesWithStatus.length > initialMessageCount.current;
 							return (
 								<MessageItem
 									key={message.id}
 									message={message}
-									hasScrollAnchor={hasScrollAnchor}
 									isLast={isLast}
 								/>
 							);
 						})}
 					</div>
-				</StickToBottom.Content>
-				<ScrollButton />
-			</StickToBottom>
+				</ConversationContent>
+				<ConversationScrollButton
+					className="absolute bottom-4 right-4 rounded-full shadow-lg transition-all duration-200"
+					variant="secondary"
+					size="icon"
+				/>
+			</Conversation>
 		</div>
 	);
 }
 
 function MessageItem({
 	message,
-	hasScrollAnchor,
 	isLast,
 }: {
 	message: MessageWithRuntimeStatus;
-	hasScrollAnchor?: boolean;
 	isLast?: boolean;
 }) {
 	// Determine if the latest part during streaming is a reasoning part
@@ -160,15 +133,13 @@ function MessageItem({
 			.join("\n");
 
 		return (
-			<div className={cn("py-3", hasScrollAnchor && "min-h-[100px]")}>
+			<div className="py-3">
 				<div className="mx-auto max-w-3xl px-8">
-					<div className="flex justify-end">
-						<div className="max-w-[80%]">
-							<div className="border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30">
-								<p className="whitespace-pre-wrap text-sm">{textContent}</p>
-							</div>
-						</div>
-					</div>
+					<Message from="user" className="justify-end">
+						<MessageContent className="border border-muted/30 rounded-xl px-4 py-1 bg-transparent dark:bg-input/30 group-[.is-user]:bg-transparent group-[.is-user]:text-foreground">
+							<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+						</MessageContent>
+					</Message>
 				</div>
 			</div>
 		);
@@ -177,61 +148,69 @@ function MessageItem({
 	// For assistant messages, render parts in order
 
 	return (
-		<div
-			className={cn(
-				"py-3",
-				hasScrollAnchor && "min-h-[100px]",
-				isLast && "pb-8",
-			)}
-		>
-			<div className="mx-auto max-w-3xl px-4 space-y-4">
-				{/* Show thinking animation at top of assistant message based on runtime status */}
-				{message.runtimeStatus && (
-					<div className="px-4">
-						<ThinkingMessage
-							status={
-								hasActiveReasoningPart ? "reasoning" : message.runtimeStatus
-							}
-							show={true}
-						/>
-					</div>
-				)}
-				{message.parts.map((part, index) => {
-					// Text part
-					if (isTextPart(part)) {
-						return (
-							<div key={`${message.id}-part-${index}`} className="w-full px-8">
-								<Markdown>{part.text}</Markdown>
-							</div>
-						);
-					}
+		<div className={cn("py-3", isLast && "pb-8")}>
+			<div className="mx-auto max-w-3xl px-4">
+				<Message
+					from="assistant"
+					className="flex-col items-start gap-4 [&>div]:max-w-full"
+				>
+					{/* Show thinking animation at top of assistant message based on runtime status */}
+					{message.runtimeStatus && (
+						<div className="w-full px-4">
+							<ThinkingMessage
+								status={
+									hasActiveReasoningPart ? "reasoning" : message.runtimeStatus
+								}
+								show={true}
+							/>
+						</div>
+					)}
+					{message.parts.map((part, index) => {
+						// Text part
+						if (isTextPart(part)) {
+							return (
+								<MessageContent
+									key={`${message.id}-part-${index}`}
+									className="w-full bg-transparent group-[.is-assistant]:bg-transparent px-8 py-0"
+								>
+									<Response>{part.text}</Response>
+								</MessageContent>
+							);
+						}
 
-					// Reasoning part
-					if (isReasoningPart(part) && part.text.length > 1) {
-						return (
-							<div key={`${message.id}-part-${index}`} className="w-full px-8">
-								<ReasoningBlock text={part.text} />
-							</div>
-						);
-					}
+						// Reasoning part
+						if (isReasoningPart(part) && part.text.length > 1) {
+							return (
+								<div
+									key={`${message.id}-part-${index}`}
+									className="w-full px-8"
+								>
+									<ReasoningBlock text={part.text} />
+								</div>
+							);
+						}
 
-					// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
-					if (isToolPart(part)) {
-						const toolName = part.type.replace("tool-", "");
+						// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
+						if (isToolPart(part)) {
+							const toolName = part.type.replace("tool-", "");
 
-						return (
-							<div key={`${message.id}-part-${index}`} className="w-full px-8">
-								<ToolCallRenderer
-									toolPart={part as ToolUIPart}
-									toolName={toolName}
-								/>
-							</div>
-						);
-					}
+							return (
+								<div
+									key={`${message.id}-part-${index}`}
+									className="w-full px-8"
+								>
+									<ToolCallRenderer
+										toolPart={part as ToolUIPart}
+										toolName={toolName}
+									/>
+								</div>
+							);
+						}
 
-					// Unknown part type
-					return null;
-				})}
+						// Unknown part type
+						return null;
+					})}
+				</Message>
 			</div>
 		</div>
 	);
