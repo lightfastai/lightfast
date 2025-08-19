@@ -97,7 +97,7 @@ export const Response = memo(
 				className,
 			)}
 			components={{
-				...customComponents,
+				// ...customComponents,
 				...components,
 			}}
 			{...props}
