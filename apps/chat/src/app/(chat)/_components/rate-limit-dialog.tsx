@@ -47,6 +47,8 @@ export function RateLimitDialog({ open, onOpenChange }: RateLimitDialogProps) {
 						className="object-cover p-2 rounded-2xl"
 						priority
 						quality={20}
+						loading="eager"
+						sizes="(max-width: 384px) 100vw, 384px"
 					/>
 				</div>
 

@@ -70,6 +70,8 @@ export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 						className="object-cover p-2 rounded-2xl"
 						priority
 						quality={20}
+						loading="eager"
+						sizes="(max-width: 640px) 100vw, 640px"
 					/>
 				</div>
 

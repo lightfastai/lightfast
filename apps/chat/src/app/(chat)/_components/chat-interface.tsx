@@ -79,6 +79,15 @@ export function ChatInterface({
 		isLoading: isLimitLoading,
 	} = useAnonymousMessageLimit();
 
+	// Preload dialog image when user is close to limit (3 messages left)
+	React.useEffect(() => {
+		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0) {
+			// Preload the image using Next.js Image preloader
+			const img = new Image();
+			img.src = "/og-bg-only.jpg";
+		}
+	}, [isAuthenticated, remainingMessages]);
+
 	// Model selection with persistence
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
