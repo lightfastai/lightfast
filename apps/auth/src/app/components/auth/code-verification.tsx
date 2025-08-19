@@ -6,6 +6,11 @@ import { toast } from "sonner";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
+import {
+	getErrorMessage,
+	isAccountLockedError,
+	formatLockoutTime,
+} from "~/app/lib/clerk/error-handling";
 
 interface CodeVerificationProps {
 	email: string;
@@ -25,12 +30,12 @@ export function CodeVerification({
 		isVerifying,
 		setIsVerifying,
 		inlineError,
-		setInlineError,
 		isRedirecting,
 		setIsRedirecting,
 		isResending,
 		setIsResending,
 		handleError,
+		setCustomError,
 		log,
 	} = useCodeVerification({ email });
 
@@ -39,7 +44,7 @@ export function CodeVerification({
 		if (!signIn || !setActive) return;
 
 		setIsVerifying(true);
-		setInlineError(null);
+		setCustomError("");
 
 		try {
 			// Attempt to verify the code
@@ -77,11 +82,28 @@ export function CodeVerification({
 				// Capture to Sentry without showing toast (we show inline error instead)
 				handleErrorWithSentry(unexpectedError, false);
 
-				setInlineError("Unexpected response. Please try again.");
+				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			handleError(err, "CodeVerification");
+			// Handle Clerk-specific errors
+			const baseErrorMessage = handleError(err, "CodeVerification");
+			
+			// Check for account lockout (Clerk-specific)
+			const lockoutInfo = isAccountLockedError(err);
+			if (lockoutInfo.locked && lockoutInfo.expiresInSeconds) {
+				setCustomError(`Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`);
+			} else {
+				// Check for incorrect code (Clerk-specific error message)
+				const clerkErrorMessage = getErrorMessage(err);
+				if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
+					setCustomError("The entered code is incorrect. Please try again and check for typos.");
+				} else {
+					// Use the generic error message
+					setCustomError(baseErrorMessage);
+				}
+			}
+			
 			// Don't clear the code - let user see what they typed
 			setIsVerifying(false);
 		}
@@ -91,7 +113,7 @@ export function CodeVerification({
 		if (!signIn) return;
 
 		setIsResending(true);
-		setInlineError(null);
+		setCustomError("");
 		try {
 			// Resend the verification code
 			const emailFactor = signIn.supportedFirstFactors?.find(
@@ -99,7 +121,7 @@ export function CodeVerification({
 			);
 
 			if (!emailFactor?.emailAddressId) {
-				setInlineError("Unable to resend code. Please try again.");
+				setCustomError("Unable to resend code. Please try again.");
 				return;
 			}
 
@@ -117,7 +139,10 @@ export function CodeVerification({
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			handleError(err, "CodeVerification.handleResendCode");
+			// Handle generic error and apply Clerk-specific formatting
+			const baseErrorMessage = handleError(err, "CodeVerification.handleResendCode");
+			const clerkErrorMessage = getErrorMessage(err);
+			setCustomError(clerkErrorMessage || baseErrorMessage);
 		} finally {
 			setIsResending(false);
 		}

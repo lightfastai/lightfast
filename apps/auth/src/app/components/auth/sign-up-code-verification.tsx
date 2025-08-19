@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
+import { getErrorMessage } from "~/app/lib/clerk/error-handling";
 
 interface SignUpCodeVerificationProps {
 	email: string;
@@ -25,12 +26,12 @@ export function SignUpCodeVerification({
 		isVerifying,
 		setIsVerifying,
 		inlineError,
-		setInlineError,
 		isRedirecting,
 		setIsRedirecting,
 		isResending,
 		setIsResending,
 		handleError,
+		setCustomError,
 		log,
 	} = useCodeVerification({ email });
 
@@ -39,7 +40,7 @@ export function SignUpCodeVerification({
 		if (!signUp || !setActive) return;
 		
 		setIsVerifying(true);
-		setInlineError(null);
+		setCustomError("");
 
 		try {
 			// Attempt to verify the code
@@ -76,11 +77,22 @@ export function SignUpCodeVerification({
 				// Capture to Sentry without showing toast (we show inline error instead)
 				handleErrorWithSentry(unexpectedError, false);
 				
-				setInlineError("Unexpected response. Please try again.");
+				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			handleError(err, "SignUpCodeVerification");
+			// Handle Clerk-specific errors
+			const baseErrorMessage = handleError(err, "SignUpCodeVerification");
+			
+			// Check for incorrect code (Clerk-specific error message)
+			const clerkErrorMessage = getErrorMessage(err);
+			if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
+				setCustomError("The entered code is incorrect. Please try again and check for typos.");
+			} else {
+				// Use the Clerk error message if available, otherwise generic
+				setCustomError(clerkErrorMessage || baseErrorMessage);
+			}
+			
 			// Don't clear the code - let user see what they typed
 			setIsVerifying(false);
 		}
@@ -90,7 +102,7 @@ export function SignUpCodeVerification({
 		if (!signUp) return;
 
 		setIsResending(true);
-		setInlineError(null);
+		setCustomError("");
 		try {
 			// Resend the verification code
 			await signUp.prepareEmailAddressVerification({
@@ -106,7 +118,10 @@ export function SignUpCodeVerification({
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			handleError(err, "SignUpCodeVerification.handleResendCode");
+			// Handle generic error and apply Clerk-specific formatting
+			const baseErrorMessage = handleError(err, "SignUpCodeVerification.handleResendCode");
+			const clerkErrorMessage = getErrorMessage(err);
+			setCustomError(clerkErrorMessage || baseErrorMessage);
 		} finally {
 			setIsResending(false);
 		}

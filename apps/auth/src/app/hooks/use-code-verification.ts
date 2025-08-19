@@ -1,24 +1,16 @@
 import * as React from "react";
 import { useLogger } from "@vendor/observability/client-log";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
-import {
-	getErrorMessage,
-	formatErrorForLogging,
-	isAccountLockedError,
-	formatLockoutTime,
-} from "~/app/lib/clerk/error-handling";
 
 interface UseCodeVerificationOptions {
 	email: string;
-	onSuccess?: () => void;
-	onError?: (_error: string) => void;
 }
 
-export function useCodeVerification({
-	email,
-	onSuccess: _onSuccess,
-	onError: _onError,
-}: UseCodeVerificationOptions) {
+/**
+ * Generic hook for code verification UI state and error handling.
+ * This hook is auth-provider agnostic and handles only UI concerns.
+ */
+export function useCodeVerification({ email }: UseCodeVerificationOptions) {
 	const log = useLogger();
 	const [code, setCode] = React.useState("");
 	const [isVerifying, setIsVerifying] = React.useState(false);
@@ -34,88 +26,75 @@ export function useCodeVerification({
 		setCode(value);
 	}, [code, inlineError]);
 
-	const handleError = React.useCallback((err: unknown, context: string) => {
-		// Log the error with full context
-		const errorContext = formatErrorForLogging(context, err);
-		log.error(`[${context}] Authentication error`, errorContext);
-		
-		// Check for account lockout (primarily for sign-in)
-		const lockoutInfo = isAccountLockedError(err);
-		if (lockoutInfo.locked && lockoutInfo.expiresInSeconds) {
-			const errorMsg = `Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`;
-			
-			// Create error with context for Sentry
-			const lockoutError = new Error(
-				`Account locked | Context: ${JSON.stringify({ 
-					context, 
-					email, 
-					lockoutSeconds: lockoutInfo.expiresInSeconds,
-					timestamp: new Date().toISOString()
-				})}`
-			);
-			
-			// Capture to Sentry without toast (we show inline error)
-			handleErrorWithSentry(lockoutError, false);
-			
-			setInlineError(errorMsg);
-			return errorMsg;
+	/**
+	 * Generic error handler that logs and captures to Sentry.
+	 * Returns the error message for further processing.
+	 */
+	const handleError = React.useCallback((err: unknown, context: string): string => {
+		// Extract error message
+		let errorMessage = "An error occurred";
+		if (err instanceof Error) {
+			errorMessage = err.message;
+		} else if (err && typeof err === "object" && "message" in err) {
+			errorMessage = String((err as { message: unknown }).message);
+		} else if (typeof err === "string") {
+			errorMessage = err;
+		} else if (typeof err === "number" || typeof err === "boolean") {
+			errorMessage = String(err);
 		}
 		
-		const errorMessage = getErrorMessage(err);
-		if (errorMessage.toLowerCase().includes('incorrect') || errorMessage.toLowerCase().includes('invalid')) {
-			const errorMsg = "The entered code is incorrect. Please try again and check for typos.";
-			
-			// Create error with context for Sentry
-			const incorrectCodeError = new Error(
-				`Incorrect verification code | Context: ${JSON.stringify({ 
-					context, 
-					email,
-					originalError: errorMessage,
-					timestamp: new Date().toISOString()
-				})}`
-			);
-			
-			// Capture to Sentry without toast (we show inline error)
-			handleErrorWithSentry(incorrectCodeError, false);
-			
-			setInlineError(errorMsg);
-			return errorMsg;
-		}
+		// Log the error
+		log.error(`[${context}] Authentication error`, { 
+			error: err, 
+			email,
+			timestamp: new Date().toISOString()
+		});
 		
-		// For any other error, capture to Sentry with context
-		const generalError = new Error(
-			`Authentication error: ${errorMessage} | Context: ${JSON.stringify({ 
-				context, 
+		// Create error with context for Sentry
+		const contextualError = new Error(
+			`${context}: ${errorMessage} | Context: ${JSON.stringify({ 
 				email,
-				timestamp: new Date().toISOString(),
-				errorDetails: errorContext
+				timestamp: new Date().toISOString()
 			})}`
 		);
 		
 		// Capture to Sentry without toast (we show inline error)
-		handleErrorWithSentry(generalError, false);
+		handleErrorWithSentry(contextualError, false);
 		
-		setInlineError(errorMessage);
 		return errorMessage;
 	}, [log, email]);
+
+	/**
+	 * Set a custom error message (used by components for provider-specific errors)
+	 */
+	const setCustomError = React.useCallback((message: string) => {
+		setInlineError(message);
+	}, []);
 
 	const resetError = React.useCallback(() => {
 		setInlineError(null);
 	}, []);
 
 	return {
+		// State
 		code,
-		setCode: handleCodeChange,
 		isVerifying,
-		setIsVerifying,
 		inlineError,
-		setInlineError,
 		isRedirecting,
-		setIsRedirecting,
 		isResending,
+		
+		// State setters
+		setCode: handleCodeChange,
+		setIsVerifying,
+		setIsRedirecting,
 		setIsResending,
+		
+		// Error handling
 		handleError,
+		setCustomError,
 		resetError,
+		
+		// Utilities
 		log,
 	};
 }
