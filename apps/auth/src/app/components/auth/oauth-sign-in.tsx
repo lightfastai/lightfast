@@ -3,9 +3,10 @@
 import * as React from "react";
 import type { OAuthStrategy } from "@clerk/types";
 import { useSignIn } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { formatErrorForLogging } from "~/app/lib/clerk/error-handling";
+import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 
 export function OAuthSignIn() {
@@ -24,12 +25,24 @@ export function OAuthSignIn() {
 				redirectUrlComplete: "/",
 			});
 		} catch (err) {
-			log.error(
-				"[OAuthSignIn.signInWith] Authentication error",
-				formatErrorForLogging("OAuthSignIn.signInWith", err),
-			);
+			// Log the error
+			log.error("[OAuthSignIn] OAuth authentication failed", {
+				strategy,
+				error: err,
+			});
+
+			// Handle the error with proper context
+			const errorResult = handleClerkError(err, {
+				component: "OAuthSignIn",
+				action: "oauth_redirect",
+				strategy,
+			});
+
+			// Show user-friendly error message
+			// For OAuth, we show a toast since redirect failed
+			toast.error(errorResult.userMessage);
+
 			setLoading(null);
-			// OAuth errors are typically shown on the callback page
 		}
 	};
 
@@ -76,4 +89,3 @@ export function OAuthSignIn() {
 		</div>
 	);
 }
-

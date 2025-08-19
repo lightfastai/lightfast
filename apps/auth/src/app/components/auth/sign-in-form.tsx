@@ -3,7 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { EmailInput } from "./email-input";
+import { SignInEmailInput } from "./sign-in-email-input";
 import { SignInCodeVerification } from "./sign-in-code-verification";
 import { OAuthSignIn } from "./oauth-sign-in";
 
@@ -67,7 +67,7 @@ export function SignInForm({
 				{!error && verificationStep === "email" && (
 					<>
 						{/* Email Sign In */}
-						<EmailInput onSuccess={handleEmailSuccess} onError={handleError} />
+						<SignInEmailInput onSuccess={handleEmailSuccess} onError={handleError} />
 
 						{/* Separator */}
 						<div className="relative">

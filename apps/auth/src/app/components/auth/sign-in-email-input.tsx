@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignIn } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,16 +24,13 @@ const emailSchema = z.object({
 
 type EmailFormData = z.infer<typeof emailSchema>;
 
-interface SignUpEmailInputProps {
+interface SignInEmailInputProps {
 	onSuccess: (email: string) => void;
 	onError: (error: string) => void;
 }
 
-export function SignUpEmailInput({
-	onSuccess,
-	onError,
-}: SignUpEmailInputProps) {
-	const { signUp, isLoaded } = useSignUp();
+export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) {
+	const { signIn, isLoaded } = useSignIn();
 	const log = useLogger();
 
 	const form = useForm<EmailFormData>({
@@ -44,38 +41,47 @@ export function SignUpEmailInput({
 	});
 
 	async function onSubmit(data: EmailFormData) {
-		if (!signUp) return;
+		if (!signIn) return;
 
 		try {
-			// Create sign-up attempt with email
-			await signUp.create({
-				emailAddress: data.email,
+			// Create sign-in attempt with email
+			await signIn.create({
+				identifier: data.email,
 			});
 
 			// Send verification code
-			await signUp.prepareEmailAddressVerification({
+			const emailFactor = signIn.supportedFirstFactors?.find(
+				(factor) => factor.strategy === "email_code",
+			);
+
+			if (!emailFactor?.emailAddressId) {
+				throw new Error("Email verification is not supported");
+			}
+
+			await signIn.prepareFirstFactor({
 				strategy: "email_code",
+				emailAddressId: emailFactor.emailAddressId,
 			});
 
-			log.info("[SignUpEmailInput] Authentication success", {
+			log.info("[SignInEmailInput] Authentication success", {
 				email: data.email,
 				timestamp: new Date().toISOString(),
 			});
 			onSuccess(data.email);
 		} catch (err) {
 			// Log the error
-			log.error("[SignUpEmailInput] Authentication failed", {
+			log.error("[SignInEmailInput] Authentication failed", {
 				email: data.email,
 				error: err,
 			});
-
+			
 			// Handle the error with proper context
 			const errorResult = handleClerkError(err, {
-				component: "SignUpEmailInput",
-				action: "create_sign_up",
+				component: "SignInEmailInput",
+				action: "create_sign_in",
 				email: data.email,
 			});
-
+			
 			// Pass the user-friendly error message to parent
 			onError(errorResult.userMessage);
 		}
