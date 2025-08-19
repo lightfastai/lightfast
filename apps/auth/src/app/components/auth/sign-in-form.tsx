@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { EmailInput } from "./email-input";
-import { CodeVerification } from "./code-verification";
+import { SignInCodeVerification } from "./sign-in-code-verification";
 import { OAuthSignIn } from "./oauth-sign-in";
 
 interface SignInFormProps {
@@ -85,7 +85,7 @@ export function SignInForm({
 				)}
 
 				{!error && verificationStep === "code" && (
-					<CodeVerification
+					<SignInCodeVerification
 						email={emailAddress}
 						onReset={handleReset}
 						onError={handleError}

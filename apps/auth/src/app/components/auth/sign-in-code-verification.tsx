@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { useLogger } from "@vendor/observability/client-log";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
@@ -12,18 +13,19 @@ import {
 	formatLockoutTime,
 } from "~/app/lib/clerk/error-handling";
 
-interface CodeVerificationProps {
+interface SignInCodeVerificationProps {
 	email: string;
 	onReset: () => void;
 	onError: (_error: string) => void;
 }
 
-export function CodeVerification({
+export function SignInCodeVerification({
 	email,
 	onReset,
 	onError: _onError,
-}: CodeVerificationProps) {
+}: SignInCodeVerificationProps) {
 	const { signIn, setActive } = useSignIn();
+	const log = useLogger();
 	const {
 		code,
 		setCode,
@@ -34,10 +36,8 @@ export function CodeVerification({
 		setIsRedirecting,
 		isResending,
 		setIsResending,
-		handleError,
 		setCustomError,
-		log,
-	} = useCodeVerification({ email });
+	} = useCodeVerification();
 
 	async function handleComplete(value: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -57,15 +57,10 @@ export function CodeVerification({
 				// Sign-in successful, set the active session
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
-				log.info("[CodeVerification] Authentication success", {
-					email,
-					sessionId: result.createdSessionId,
-					timestamp: new Date().toISOString(),
-				});
 			} else {
 				// Create error with full context for Sentry
 				const errorContext = {
-					component: "CodeVerification",
+					component: "SignInCodeVerification",
 					status: result.status,
 					email,
 					timestamp: new Date().toISOString(),
@@ -77,7 +72,7 @@ export function CodeVerification({
 				);
 
 				// Log for debugging
-				log.warn("[CodeVerification] Unexpected sign-in status", errorContext);
+				log.warn("[SignInCodeVerification] Unexpected sign-in status", errorContext);
 
 				// Capture to Sentry without showing toast (we show inline error instead)
 				handleErrorWithSentry(unexpectedError, false);
@@ -86,8 +81,8 @@ export function CodeVerification({
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			// Handle Clerk-specific errors
-			const baseErrorMessage = handleError(err, "CodeVerification");
+			// Log and capture to Sentry (once)
+			handleErrorWithSentry(err, false);
 			
 			// Check for account lockout (Clerk-specific)
 			const lockoutInfo = isAccountLockedError(err);
@@ -99,8 +94,8 @@ export function CodeVerification({
 				if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
 					setCustomError("The entered code is incorrect. Please try again and check for typos.");
 				} else {
-					// Use the generic error message
-					setCustomError(baseErrorMessage);
+					// Use the Clerk error message
+					setCustomError(clerkErrorMessage);
 				}
 			}
 			
@@ -130,19 +125,16 @@ export function CodeVerification({
 				emailAddressId: emailFactor.emailAddressId,
 			});
 
-			log.info("[CodeVerification.handleResendCode] Code resent successfully", {
-				email,
-				timestamp: new Date().toISOString(),
-			});
-
 			// Show success message to user
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			// Handle generic error and apply Clerk-specific formatting
-			const baseErrorMessage = handleError(err, "CodeVerification.handleResendCode");
+			// Log and capture to Sentry (once)
+			handleErrorWithSentry(err, false);
+			
+			// Use Clerk error message
 			const clerkErrorMessage = getErrorMessage(err);
-			setCustomError(clerkErrorMessage || baseErrorMessage);
+			setCustomError(clerkErrorMessage);
 		} finally {
 			setIsResending(false);
 		}

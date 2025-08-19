@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { useLogger } from "@vendor/observability/client-log";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
@@ -20,6 +21,7 @@ export function SignUpCodeVerification({
 	onError: _onError,
 }: SignUpCodeVerificationProps) {
 	const { signUp, setActive } = useSignUp();
+	const log = useLogger();
 	const {
 		code,
 		setCode,
@@ -30,10 +32,8 @@ export function SignUpCodeVerification({
 		setIsRedirecting,
 		isResending,
 		setIsResending,
-		handleError,
 		setCustomError,
-		log,
-	} = useCodeVerification({ email });
+	} = useCodeVerification();
 
 	async function handleComplete(value: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -52,11 +52,6 @@ export function SignUpCodeVerification({
 				// Sign-up successful, set the active session
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
-				log.info('[SignUpCodeVerification] Authentication success', { 
-					email, 
-					sessionId: result.createdSessionId,
-					timestamp: new Date().toISOString()
-				});
 			} else {
 				// Create error with full context for Sentry
 				const errorContext = {
@@ -81,16 +76,16 @@ export function SignUpCodeVerification({
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			// Handle Clerk-specific errors
-			const baseErrorMessage = handleError(err, "SignUpCodeVerification");
+			// Log and capture to Sentry (once)
+			handleErrorWithSentry(err, false);
 			
 			// Check for incorrect code (Clerk-specific error message)
 			const clerkErrorMessage = getErrorMessage(err);
 			if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
 				setCustomError("The entered code is incorrect. Please try again and check for typos.");
 			} else {
-				// Use the Clerk error message if available, otherwise generic
-				setCustomError(clerkErrorMessage || baseErrorMessage);
+				// Use the Clerk error message
+				setCustomError(clerkErrorMessage);
 			}
 			
 			// Don't clear the code - let user see what they typed
@@ -109,19 +104,16 @@ export function SignUpCodeVerification({
 				strategy: 'email_code',
 			});
 			
-			log.info('[SignUpCodeVerification.handleResendCode] Code resent successfully', {
-				email,
-				timestamp: new Date().toISOString()
-			});
-			
 			// Show success message to user
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			// Handle generic error and apply Clerk-specific formatting
-			const baseErrorMessage = handleError(err, "SignUpCodeVerification.handleResendCode");
+			// Log and capture to Sentry (once)
+			handleErrorWithSentry(err, false);
+			
+			// Use Clerk error message
 			const clerkErrorMessage = getErrorMessage(err);
-			setCustomError(clerkErrorMessage || baseErrorMessage);
+			setCustomError(clerkErrorMessage);
 		} finally {
 			setIsResending(false);
 		}
