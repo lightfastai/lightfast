@@ -58,30 +58,31 @@ export function SignInCodeVerification({
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
 			} else {
-				// Create error with full context for Sentry
-				const errorContext = {
-					component: "SignInCodeVerification",
+				// Log unexpected status for debugging
+				log.warn("[SignInCodeVerification] Unexpected sign-in status", {
 					status: result.status,
 					email,
 					timestamp: new Date().toISOString(),
 					signInData: result,
-				};
+				});
 
+				// Capture to Sentry with context in error message
 				const unexpectedError = new Error(
-					`Unexpected sign-in status: ${result.status} | Context: ${JSON.stringify(errorContext)}`,
+					`[SignIn] Unexpected status: ${result.status} | Email: ${email}`
 				);
-
-				// Log for debugging
-				log.warn("[SignInCodeVerification] Unexpected sign-in status", errorContext);
-
-				// Capture to Sentry without showing toast (we show inline error instead)
 				handleErrorWithSentry(unexpectedError, false);
 
 				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			// Log and capture to Sentry (once)
+			// Log the error with context
+			log.error("[SignInCodeVerification] Verification failed", { 
+				email,
+				error: err 
+			});
+			
+			// Capture to Sentry once (parseError in handleErrorWithSentry does this)
 			handleErrorWithSentry(err, false);
 			
 			// Check for account lockout (Clerk-specific)
@@ -129,7 +130,13 @@ export function SignInCodeVerification({
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			// Log and capture to Sentry (once)
+			// Log the error with context
+			log.error("[SignInCodeVerification] Resend failed", { 
+				email,
+				error: err 
+			});
+			
+			// Capture to Sentry once
 			handleErrorWithSentry(err, false);
 			
 			// Use Clerk error message

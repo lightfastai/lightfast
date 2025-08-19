@@ -53,30 +53,31 @@ export function SignUpCodeVerification({
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
 			} else {
-				// Create error with full context for Sentry
-				const errorContext = {
-					component: "SignUpCodeVerification",
+				// Log unexpected status for debugging
+				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {
 					status: result.status,
 					email,
 					timestamp: new Date().toISOString(),
 					signUpData: result,
-				};
+				});
 				
+				// Capture to Sentry with context in error message
 				const unexpectedError = new Error(
-					`Unexpected sign-up status: ${result.status} | Context: ${JSON.stringify(errorContext)}`
+					`[SignUp] Unexpected status: ${result.status} | Email: ${email}`
 				);
-				
-				// Log for debugging
-				log.warn('[SignUpCodeVerification] Unexpected sign-up status', errorContext);
-				
-				// Capture to Sentry without showing toast (we show inline error instead)
 				handleErrorWithSentry(unexpectedError, false);
 				
 				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			// Log and capture to Sentry (once)
+			// Log the error with context
+			log.error("[SignUpCodeVerification] Verification failed", { 
+				email,
+				error: err 
+			});
+			
+			// Capture to Sentry once (parseError in handleErrorWithSentry does this)
 			handleErrorWithSentry(err, false);
 			
 			// Check for incorrect code (Clerk-specific error message)
@@ -108,7 +109,13 @@ export function SignUpCodeVerification({
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			// Log and capture to Sentry (once)
+			// Log the error with context
+			log.error("[SignUpCodeVerification] Resend failed", { 
+				email,
+				error: err 
+			});
+			
+			// Capture to Sentry once
 			handleErrorWithSentry(err, false);
 			
 			// Use Clerk error message
