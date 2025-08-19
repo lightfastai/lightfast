@@ -77,6 +77,7 @@ export function ChatInterface({
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
+		experimental_throttle: 32,
 		messages: initialMessages,
 		onError: (error) => {
 			// ALL errors from API go to error boundary
