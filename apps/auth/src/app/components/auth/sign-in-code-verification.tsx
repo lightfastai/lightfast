@@ -1,25 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignIn } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
 import { handleClerkError, handleUnexpectedStatus } from "~/app/lib/clerk/error-handler";
 
-interface SignUpCodeVerificationProps {
+interface SignInCodeVerificationProps {
 	email: string;
 	onReset: () => void;
 	onError: (_error: string) => void;
 }
 
-export function SignUpCodeVerification({
+export function SignInCodeVerification({
 	email,
 	onReset,
 	onError: _onError,
-}: SignUpCodeVerificationProps) {
-	const { signUp, setActive } = useSignUp();
+}: SignInCodeVerificationProps) {
+	const { signIn, setActive } = useSignIn();
 	const log = useLogger();
 	const {
 		code,
@@ -36,51 +36,52 @@ export function SignUpCodeVerification({
 
 	async function handleComplete(value: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (!signUp || !setActive) return;
-		
+		if (!signIn || !setActive) return;
+
 		setIsVerifying(true);
 		setCustomError("");
 
 		try {
 			// Attempt to verify the code
-			const result = await signUp.attemptEmailAddressVerification({
+			const result = await signIn.attemptFirstFactor({
+				strategy: "email_code",
 				code: value,
 			});
 
 			if (result.status === "complete") {
-				// Sign-up successful, set the active session
+				// Sign-in successful, set the active session
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
 			} else {
 				// Log unexpected status for debugging
-				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {
+				log.warn("[SignInCodeVerification] Unexpected sign-in status", {
 					status: result.status,
 					email,
 					timestamp: new Date().toISOString(),
-					signUpData: result,
+					signInData: result,
 				});
-				
+
 				// Handle unexpected status with proper context
 				handleUnexpectedStatus(result.status ?? 'unknown', {
-					component: 'SignUpCodeVerification',
+					component: 'SignInCodeVerification',
 					action: 'verify_code',
 					email,
 					result: result,
 				});
-				
+
 				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
 			// Log the error
-			log.error("[SignUpCodeVerification] Verification failed", { 
+			log.error("[SignInCodeVerification] Verification failed", { 
 				email,
-				error: err 
+				error: err
 			});
 			
 			// Handle the Clerk error with full context
 			const errorResult = handleClerkError(err, {
-				component: 'SignUpCodeVerification',
+				component: 'SignInCodeVerification',
 				action: 'verify_code',
 				email,
 			});
@@ -94,29 +95,39 @@ export function SignUpCodeVerification({
 	}
 
 	async function handleResendCode() {
-		if (!signUp) return;
+		if (!signIn) return;
 
 		setIsResending(true);
 		setCustomError("");
 		try {
 			// Resend the verification code
-			await signUp.prepareEmailAddressVerification({
-				strategy: 'email_code',
+			const emailFactor = signIn.supportedFirstFactors?.find(
+				(factor) => factor.strategy === "email_code",
+			);
+
+			if (!emailFactor?.emailAddressId) {
+				setCustomError("Unable to resend code. Please try again.");
+				return;
+			}
+
+			await signIn.prepareFirstFactor({
+				strategy: "email_code",
+				emailAddressId: emailFactor.emailAddressId,
 			});
-			
+
 			// Show success message to user
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
 			// Log the error
-			log.error("[SignUpCodeVerification] Resend failed", { 
+			log.error("[SignInCodeVerification] Resend failed", { 
 				email,
-				error: err 
+				error: err
 			});
 			
 			// Handle the Clerk error with full context
 			const errorResult = handleClerkError(err, {
-				component: 'SignUpCodeVerification',
+				component: 'SignInCodeVerification',
 				action: 'resend_code',
 				email,
 			});
@@ -152,3 +163,4 @@ export function SignUpCodeVerification({
 		/>
 	);
 }
+
