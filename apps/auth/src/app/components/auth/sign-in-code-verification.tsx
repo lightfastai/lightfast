@@ -10,6 +10,7 @@ import { CodeVerificationUI } from "./shared/code-verification-ui";
 import {
 	getErrorMessage,
 	isAccountLockedError,
+	isRateLimitError,
 	formatLockoutTime,
 } from "~/app/lib/clerk/error-handling";
 
@@ -85,10 +86,22 @@ export function SignInCodeVerification({
 			// Capture to Sentry once (parseError in handleErrorWithSentry does this)
 			handleErrorWithSentry(err, false);
 			
+			// Check for rate limit first (highest priority)
+			const rateLimitInfo = isRateLimitError(err);
+			if (rateLimitInfo.rateLimited) {
+				const retryMessage = rateLimitInfo.retryAfterSeconds 
+					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
+					: "Rate limit exceeded. Please wait a moment and try again.";
+				setCustomError(retryMessage);
+			} 
 			// Check for account lockout (Clerk-specific)
-			const lockoutInfo = isAccountLockedError(err);
-			if (lockoutInfo.locked && lockoutInfo.expiresInSeconds) {
-				setCustomError(`Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`);
+			else if (isAccountLockedError(err).locked) {
+				const lockoutInfo = isAccountLockedError(err);
+				if (lockoutInfo.expiresInSeconds) {
+					setCustomError(`Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`);
+				} else {
+					setCustomError("Account locked. Please try again later.");
+				}
 			} else {
 				// Check for incorrect code (Clerk-specific error message)
 				const clerkErrorMessage = getErrorMessage(err);
@@ -139,9 +152,18 @@ export function SignInCodeVerification({
 			// Capture to Sentry once
 			handleErrorWithSentry(err, false);
 			
-			// Use Clerk error message
-			const clerkErrorMessage = getErrorMessage(err);
-			setCustomError(clerkErrorMessage);
+			// Check for rate limit
+			const rateLimitInfo = isRateLimitError(err);
+			if (rateLimitInfo.rateLimited) {
+				const retryMessage = rateLimitInfo.retryAfterSeconds 
+					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
+					: "Rate limit exceeded. Please wait a moment and try again.";
+				setCustomError(retryMessage);
+			} else {
+				// Use Clerk error message
+				const clerkErrorMessage = getErrorMessage(err);
+				setCustomError(clerkErrorMessage);
+			}
 		} finally {
 			setIsResending(false);
 		}

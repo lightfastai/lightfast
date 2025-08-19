@@ -4,6 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { captureException } from "@sentry/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import {
+	LightfastErrorPage,
+	ErrorCode,
+} from "@repo/ui/components/lightfast-error-page";
 
 interface AuthErrorProps {
 	error: Error & { digest?: string };
@@ -27,28 +32,25 @@ export default function AuthError({ error, reset }: AuthErrorProps) {
 	}, [error]);
 
 	return (
-		<div className="flex min-h-screen items-center justify-center p-4">
-			<div className="w-full max-w-md space-y-6 text-center">
-				<div className="space-y-2">
-					<h1 className="text-3xl font-semibold text-foreground">
-						Authentication Error
-					</h1>
-					<p className="text-muted-foreground">
-						We encountered an issue with authentication. Please try again.
-					</p>
-					{error.digest && (
-						<p className="text-xs text-muted-foreground">
-							Error ID: {error.digest}
-						</p>
-					)}
-				</div>
-				<div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+		<LightfastCustomGridBackground.Root
+			marginVertical="25vh"
+			marginHorizontal="25vw"
+			marginVerticalMobile="25vh"
+			marginHorizontalMobile="10vw"
+		>
+			<LightfastCustomGridBackground.Container>
+				<LightfastErrorPage
+					code={ErrorCode.InternalServerError}
+					description="We encountered an issue with authentication. Please try again."
+					errorId={error.digest}
+				>
 					<Button onClick={() => reset()}>Try again</Button>
 					<Button variant="outline" asChild>
 						<Link href="/sign-in">Back to Sign In</Link>
 					</Button>
-				</div>
-			</div>
-		</div>
+				</LightfastErrorPage>
+			</LightfastCustomGridBackground.Container>
+		</LightfastCustomGridBackground.Root>
 	);
 }
+

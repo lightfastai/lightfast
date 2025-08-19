@@ -7,7 +7,11 @@ import { useLogger } from "@vendor/observability/client-log";
 import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
-import { getErrorMessage } from "~/app/lib/clerk/error-handling";
+import { 
+	getErrorMessage,
+	isRateLimitError,
+	formatLockoutTime 
+} from "~/app/lib/clerk/error-handling";
 
 interface SignUpCodeVerificationProps {
 	email: string;
@@ -80,13 +84,22 @@ export function SignUpCodeVerification({
 			// Capture to Sentry once (parseError in handleErrorWithSentry does this)
 			handleErrorWithSentry(err, false);
 			
-			// Check for incorrect code (Clerk-specific error message)
-			const clerkErrorMessage = getErrorMessage(err);
-			if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
-				setCustomError("The entered code is incorrect. Please try again and check for typos.");
+			// Check for rate limit first (highest priority)
+			const rateLimitInfo = isRateLimitError(err);
+			if (rateLimitInfo.rateLimited) {
+				const retryMessage = rateLimitInfo.retryAfterSeconds 
+					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
+					: "Rate limit exceeded. Please wait a moment and try again.";
+				setCustomError(retryMessage);
 			} else {
-				// Use the Clerk error message
-				setCustomError(clerkErrorMessage);
+				// Check for incorrect code (Clerk-specific error message)
+				const clerkErrorMessage = getErrorMessage(err);
+				if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
+					setCustomError("The entered code is incorrect. Please try again and check for typos.");
+				} else {
+					// Use the Clerk error message
+					setCustomError(clerkErrorMessage);
+				}
 			}
 			
 			// Don't clear the code - let user see what they typed
@@ -118,9 +131,18 @@ export function SignUpCodeVerification({
 			// Capture to Sentry once
 			handleErrorWithSentry(err, false);
 			
-			// Use Clerk error message
-			const clerkErrorMessage = getErrorMessage(err);
-			setCustomError(clerkErrorMessage);
+			// Check for rate limit
+			const rateLimitInfo = isRateLimitError(err);
+			if (rateLimitInfo.rateLimited) {
+				const retryMessage = rateLimitInfo.retryAfterSeconds 
+					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
+					: "Rate limit exceeded. Please wait a moment and try again.";
+				setCustomError(retryMessage);
+			} else {
+				// Use Clerk error message
+				const clerkErrorMessage = getErrorMessage(err);
+				setCustomError(clerkErrorMessage);
+			}
 		} finally {
 			setIsResending(false);
 		}
