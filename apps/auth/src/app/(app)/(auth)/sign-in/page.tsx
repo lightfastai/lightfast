@@ -1,5 +1,5 @@
-import { SignInPageWrapper } from "~/app/components/auth/sign-in-page-wrapper";
+import { SignInForm } from "~/app/components/auth/sign-in-form";
 
 export default function SignInPage() {
-	return <SignInPageWrapper />;
+	return <SignInForm />;
 }

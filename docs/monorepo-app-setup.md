@@ -281,7 +281,6 @@ let config: NextConfig = withBetterStack(
       "@repo/ui",
       "@repo/lightfast-config",
       // Add these only if using auth:
-      "@repo/lightfast-react",
       "@repo/url-utils",
       "@vendor/clerk",
       // Always include:
