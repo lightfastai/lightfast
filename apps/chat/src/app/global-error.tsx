@@ -2,7 +2,6 @@
 
 import type NextError from "next/error";
 import { useEffect } from "react";
-import Link from "next/link";
 import { captureException } from "@sentry/nextjs";
 
 import { Button } from "@repo/ui/components/ui/button";
@@ -43,8 +42,11 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
               errorId={error.digest}
             >
               <Button onClick={() => reset()}>Try again</Button>
-              <Button variant="outline" asChild>
-                <Link href="/">Return Home</Link>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = '/'}
+              >
+                Return Home
               </Button>
             </LightfastErrorPage>
           </LightfastCustomGridBackground.Container>
