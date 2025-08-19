@@ -25,7 +25,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true,
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 12,
+		streamingDelay: 24,
 	}),
 
 	// ===== OpenAI GPT-5 Models =====
@@ -65,7 +65,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: false,
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 18,
+		streamingDelay: 30,
 	}),
 	"openai/gpt-5": ModelConfigSchema.parse({
 		id: "openai/gpt-5",
@@ -84,7 +84,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: false,
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 15,
+		streamingDelay: 25,
 	}),
 
 	// ===== Google Gemini Models =====
@@ -105,7 +105,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true, // Supports multimodal document processing
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 15,
+		streamingDelay: 25,
 	}),
 	"google/gemini-2.5-pro": ModelConfigSchema.parse({
 		id: "google/gemini-2.5-pro",
@@ -124,7 +124,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true, // Supports multimodal document processing
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 15,
+		streamingDelay: 30,
 	}),
 
 	// ===== OpenAI Open Source Models =====
@@ -146,7 +146,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: false,
 		},
 		accessLevel: "anonymous",
-		streamingDelay: 30,
+		streamingDelay: 40,
 	}),
 
 	// ===== MoonshotAI Models =====
@@ -167,6 +167,6 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true,
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 18,
+		streamingDelay: 25,
 	}),
 } as const;
