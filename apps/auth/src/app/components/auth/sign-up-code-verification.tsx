@@ -4,14 +4,9 @@ import * as React from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useLogger } from "@vendor/observability/client-log";
-import { handleError as handleErrorWithSentry } from "@repo/ui/lib/utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
-import { 
-	getErrorMessage,
-	isRateLimitError,
-	formatLockoutTime 
-} from "~/app/lib/clerk/error-handling";
+import { handleClerkError, handleUnexpectedStatus } from "~/app/lib/clerk/error-handler";
 
 interface SignUpCodeVerificationProps {
 	email: string;
@@ -65,42 +60,33 @@ export function SignUpCodeVerification({
 					signUpData: result,
 				});
 				
-				// Capture to Sentry with context in error message
-				const unexpectedError = new Error(
-					`[SignUp] Unexpected status: ${result.status} | Email: ${email}`
-				);
-				handleErrorWithSentry(unexpectedError, false);
+				// Handle unexpected status with proper context
+				handleUnexpectedStatus(result.status ?? 'unknown', {
+					component: 'SignUpCodeVerification',
+					action: 'verify_code',
+					email,
+					result: result,
+				});
 				
 				setCustomError("Unexpected response. Please try again.");
 				setIsVerifying(false);
 			}
 		} catch (err) {
-			// Log the error with context
+			// Log the error
 			log.error("[SignUpCodeVerification] Verification failed", { 
 				email,
 				error: err 
 			});
 			
-			// Capture to Sentry once (parseError in handleErrorWithSentry does this)
-			handleErrorWithSentry(err, false);
+			// Handle the Clerk error with full context
+			const errorResult = handleClerkError(err, {
+				component: 'SignUpCodeVerification',
+				action: 'verify_code',
+				email,
+			});
 			
-			// Check for rate limit first (highest priority)
-			const rateLimitInfo = isRateLimitError(err);
-			if (rateLimitInfo.rateLimited) {
-				const retryMessage = rateLimitInfo.retryAfterSeconds 
-					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
-					: "Rate limit exceeded. Please wait a moment and try again.";
-				setCustomError(retryMessage);
-			} else {
-				// Check for incorrect code (Clerk-specific error message)
-				const clerkErrorMessage = getErrorMessage(err);
-				if (clerkErrorMessage.toLowerCase().includes('incorrect') || clerkErrorMessage.toLowerCase().includes('invalid')) {
-					setCustomError("The entered code is incorrect. Please try again and check for typos.");
-				} else {
-					// Use the Clerk error message
-					setCustomError(clerkErrorMessage);
-				}
-			}
+			// Set the user-friendly error message
+			setCustomError(errorResult.userMessage);
 			
 			// Don't clear the code - let user see what they typed
 			setIsVerifying(false);
@@ -122,27 +108,21 @@ export function SignUpCodeVerification({
 			toast.success("Verification code sent to your email");
 			setCode("");
 		} catch (err) {
-			// Log the error with context
+			// Log the error
 			log.error("[SignUpCodeVerification] Resend failed", { 
 				email,
 				error: err 
 			});
 			
-			// Capture to Sentry once
-			handleErrorWithSentry(err, false);
+			// Handle the Clerk error with full context
+			const errorResult = handleClerkError(err, {
+				component: 'SignUpCodeVerification',
+				action: 'resend_code',
+				email,
+			});
 			
-			// Check for rate limit
-			const rateLimitInfo = isRateLimitError(err);
-			if (rateLimitInfo.rateLimited) {
-				const retryMessage = rateLimitInfo.retryAfterSeconds 
-					? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
-					: "Rate limit exceeded. Please wait a moment and try again.";
-				setCustomError(retryMessage);
-			} else {
-				// Use Clerk error message
-				const clerkErrorMessage = getErrorMessage(err);
-				setCustomError(clerkErrorMessage);
-			}
+			// Set the user-friendly error message
+			setCustomError(errorResult.userMessage);
 		} finally {
 			setIsResending(false);
 		}
