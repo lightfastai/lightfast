@@ -47,8 +47,6 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
-	console.log("User data:", user);
-	console.log("isAuthenticated:", isAuthenticated);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -80,7 +78,6 @@ export function ChatInterface({
 		id: `${agentId}-${sessionId}`,
 		transport,
 		messages: initialMessages,
-		experimental_throttle: 20,
 		onError: (error) => {
 			// ALL errors from API go to error boundary
 			// Extract the chat error information
