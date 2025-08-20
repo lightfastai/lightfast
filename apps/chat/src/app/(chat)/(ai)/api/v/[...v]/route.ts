@@ -310,7 +310,14 @@ const handler = async (
 					name: "c010",
 					system: `You are a helpful AI assistant with access to web search capabilities.
 You can help users find information, answer questions, and provide insights based on current web data.
-When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.`,
+When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.
+
+IMPORTANT: When displaying code in your responses, ALWAYS use the triple backtick format:
+\`\`\`language
+code here
+\`\`\`
+
+Never use any other format for code blocks. Always specify the language after the opening backticks when known.`,
 					tools: c010Tools,
 					createRuntimeContext: ({
 						sessionId: _sessionId,

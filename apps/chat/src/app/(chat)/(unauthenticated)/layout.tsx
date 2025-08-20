@@ -8,7 +8,7 @@ interface UnauthenticatedLayoutProps {
 export default function UnauthenticatedLayout({ children }: UnauthenticatedLayoutProps) {
   return (
     <TooltipProvider>
-      <div className="relative h-screen flex flex-col">
+      <div className="dark relative h-screen flex flex-col">
         <UnauthenticatedHeader />
         <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
       </div>
