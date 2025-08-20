@@ -1,15 +1,18 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
-import { createContext, useContext, useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-	oneDark,
-	oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import type { ComponentProps, HTMLAttributes } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { BundledLanguage } from "shiki";
+import { codeToHtml } from "shiki";
+import { cn } from "@repo/ui/lib/utils";
+import { useTheme } from "next-themes";
+import { Button } from "@repo/ui/components/ui/button";
+
+interface CodeBlockProps extends HTMLAttributes<HTMLDivElement> {
+	code: string;
+	language: BundledLanguage;
+}
 
 interface CodeBlockContextType {
 	code: string;
@@ -19,87 +22,65 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
 	code: "",
 });
 
-export type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
-	code: string;
-	language: string;
-	showLineNumbers?: boolean;
-	children?: ReactNode;
-};
+export async function highlightCode(
+	code: string,
+	language: BundledLanguage,
+	theme: "github-light" | "github-dark" = "github-light",
+) {
+	return await codeToHtml(code, {
+		lang: language,
+		theme: theme,
+	});
+}
 
 export const CodeBlock = ({
 	code,
 	language,
-	showLineNumbers = false,
 	className,
 	children,
 	...props
-}: CodeBlockProps) => (
-	<CodeBlockContext.Provider value={{ code }}>
-		<div
-			className={cn(
-				"relative w-full overflow-hidden rounded-md border bg-background text-foreground",
-				className,
-			)}
-			{...props}
-		>
-			<div className="relative">
-				{/* @ts-expect-error - SyntaxHighlighter is not a valid JSX component */}
-				<SyntaxHighlighter
-					className="overflow-hidden dark:hidden"
-					codeTagProps={{
-						className: "font-mono text-xs",
-					}}
-					customStyle={{
-						margin: 0,
-						padding: "1rem",
-						fontSize: "0.875rem",
-						background: "hsl(var(--background))",
-						color: "hsl(var(--foreground))",
-					}}
-					language={language}
-					lineNumberStyle={{
-						color: "hsl(var(--muted-foreground))",
-						paddingRight: "1rem",
-						minWidth: "2.5rem",
-					}}
-					showLineNumbers={showLineNumbers}
-					style={oneLight}
-				>
-					{code}
-				</SyntaxHighlighter>
-				{/* @ts-expect-error - SyntaxHighlighter is not a valid JSX component */}
-				<SyntaxHighlighter
-					className="hidden overflow-hidden dark:block"
-					codeTagProps={{
-						className: "font-mono text-xs",
-					}}
-					customStyle={{
-						margin: 0,
-						padding: "1rem",
-						fontSize: "0.875rem",
-						background: "hsl(var(--background))",
-						color: "hsl(var(--foreground))",
-					}}
-					language={language}
-					lineNumberStyle={{
-						color: "hsl(var(--muted-foreground))",
-						paddingRight: "1rem",
-						minWidth: "2.5rem",
-					}}
-					showLineNumbers={showLineNumbers}
-					style={oneDark}
-				>
-					{code}
-				</SyntaxHighlighter>
-				{children && (
-					<div className="absolute top-2 right-2 flex items-center gap-2">
-						{children}
-					</div>
-				)}
+}: CodeBlockProps) => {
+	const [html, setHtml] = useState<string>("");
+	const { theme, resolvedTheme } = useTheme();
+
+	useEffect(() => {
+		let isMounted = true;
+
+		// Use resolvedTheme to get the actual theme when theme is "system"
+		// resolvedTheme will be either "dark" or "light" based on system preference
+		const effectiveTheme = theme === "system" ? resolvedTheme : theme;
+		const codeTheme = effectiveTheme === "dark" ? "github-dark" : "github-light";
+
+		void highlightCode(code, language, codeTheme).then((result) => {
+			if (isMounted) {
+				setHtml(result);
+			}
+		});
+
+		return () => {
+			isMounted = false;
+		};
+	}, [code, language, theme, resolvedTheme]);
+
+	return (
+		<CodeBlockContext.Provider value={{ code }}>
+			<div className="group relative">
+				<div
+					className={cn(
+						"overflow-x-auto text-xs",
+						// Override Shiki's default background styles
+						"[&>pre]:!bg-transparent [&>pre]:!p-0",
+						className,
+					)}
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: "this is needed."
+					dangerouslySetInnerHTML={{ __html: html }}
+					{...props}
+				/>
+				{children}
 			</div>
-		</div>
-	</CodeBlockContext.Provider>
-);
+		</CodeBlockContext.Provider>
+	);
+};
 
 export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
 	onCopy?: () => void;
@@ -119,12 +100,6 @@ export const CodeBlockCopyButton = ({
 	const { code } = useContext(CodeBlockContext);
 
 	const copyToClipboard = async () => {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (typeof window === "undefined" || !navigator.clipboard.writeText) {
-			onError?.(new Error("Clipboard API not available"));
-			return;
-		}
-
 		try {
 			await navigator.clipboard.writeText(code);
 			setIsCopied(true);
@@ -139,13 +114,19 @@ export const CodeBlockCopyButton = ({
 
 	return (
 		<Button
-			className={cn("shrink-0", className)}
-			onClick={copyToClipboard}
-			size="icon"
 			variant="ghost"
+			size="icon"
+			className={cn(
+				"absolute top-2 right-2 h-8 w-8 opacity-0 transition-all",
+				"group-hover:opacity-100",
+				className,
+			)}
+			onClick={copyToClipboard}
+			type="button"
 			{...props}
 		>
-			{children ?? <Icon size={14} />}
+			{children ?? <Icon className="h-4 w-4" />}
 		</Button>
 	);
 };
+
