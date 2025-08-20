@@ -83,7 +83,7 @@ export function FrameworkShowcase() {
 								key={index}
 								className="flex-shrink-0 px-6 lg:px-8 py-1"
 								onMouseEnter={() =>
-									setHoveredFramework(frameworks[originalIndex].name)
+									setHoveredFramework(frameworks[originalIndex]?.name || null)
 								}
 								onMouseLeave={() => setHoveredFramework(null)}
 							>
