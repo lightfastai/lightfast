@@ -30,10 +30,10 @@ export function HeroSection() {
 						Build modern AI agents
 					</p>
 					<h1 className="font-bold tracking-tighter leading-[0.9] max-w-7xl">
-						<span className="block text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] xl:text-[10rem]">
+						<span className="block text-7xl -mx-1 md:-mx-2 sm:text-8xl md:text-9xl lg:text-[8rem] xl:text-[10rem]">
 							Build. Ship.
 						</span>
-						<span className="block text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] xl:text-[10rem] text-right">
+						<span className="block text-7xl sm:text-8xl md:text-9xl lg:text-[8rem] xl:text-[10rem] text-right">
 							Monitor.
 						</span>
 					</h1>

@@ -21,8 +21,8 @@ export function EnhancedHeader() {
 	const cloudUrl = getAppUrl("cloud");
 
 	return (
-		<header className="h-14 bg-background">
-			<div className="max-w-7xl mx-auto h-full flex items-center justify-between">
+		<header className="h-14 bg-background px-4 sm:px-6 lg:px-8">
+			<div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto h-full flex items-center justify-between">
 				<div className="flex items-center">
 					<Link href="/">
 						<Icons.logo className="size-26 text-foreground" />

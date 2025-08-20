@@ -344,7 +344,7 @@ export function PlatformSection() {
 										key={feature.id}
 										variant="ghost"
 										onClick={() => setSelectedFeature(feature.id)}
-										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r ${
+										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r text-foreground ${
 											selectedFeature === feature.id ? "bg-accent" : ""
 										}`}
 									>

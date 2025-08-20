@@ -1,9 +1,9 @@
 /* Import the base UI globals */
 @import "@repo/ui/globals.css";
 
-/* Override Tailwind border-radius to subtle value */
-* {
-	border-radius: 0.25rem !important;
+/* Override shadcn border-radius via CSS variable */
+:root {
+	--radius: 0.25rem;
 }
 
 /* Light section - inverted colors for specific sections */
