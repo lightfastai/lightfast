@@ -3,13 +3,16 @@
 import React, { useState } from "react";
 import { Shield, Cpu, Workflow, Users, Zap, Code } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { CodeHighlighter } from "./code-highlighter";
+import {
+	CodeBlock,
+	CodeBlockCopyButton,
+} from "@repo/ui/components/ai-elements/code-block";
 
 const features = [
 	{
 		id: "orchestration",
 		icon: Workflow,
-		title: "Agent Orchestration",
+		title: "Orchestration",
 		filename: "agent.ts",
 		description:
 			"Build agents with tool factories and runtime context injection",
@@ -53,7 +56,7 @@ const agent = createAgent({
 	{
 		id: "resources",
 		icon: Cpu,
-		title: "Resource Management",
+		title: "Resources",
 		filename: "resource.ts",
 		description: "Sandboxes, browser automation, and file operations",
 		code: `import { createTool } from '@lightfastai/core/tool';
@@ -102,7 +105,7 @@ export const browserTool = createTool({
 	{
 		id: "security",
 		icon: Shield,
-		title: "Security & Validation",
+		title: "Security",
 		filename: "security.ts",
 		description: "Input validation, session auth, and audit logging",
 		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
@@ -156,7 +159,7 @@ const secureTool = createTool({
 	{
 		id: "human",
 		icon: Users,
-		title: "Human-in-the-Loop",
+		title: "Human",
 		filename: "human.ts",
 		description: "Approval workflows and human oversight (coming soon)",
 		code: `import { createTool } from '@lightfastai/core/tool';
@@ -206,7 +209,7 @@ const deployTool = createTool({
 	{
 		id: "scale",
 		icon: Zap,
-		title: "Memory & Performance",
+		title: "Memory",
 		filename: "memory.ts",
 		description: "Persistent memory, caching, and streaming",
 		code: `import { RedisMemory } from '@lightfastai/core/agent/memory/adapters/redis';
@@ -260,7 +263,7 @@ const agent = createAgent({
 	{
 		id: "sdk",
 		icon: Code,
-		title: "Production Ready",
+		title: "Production",
 		filename: "production.ts",
 		description: "Observability, error handling, and deployment",
 		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
@@ -314,22 +317,27 @@ export async function POST(req: Request) {
 
 export function PlatformSection() {
 	const [selectedFeature, setSelectedFeature] = useState("orchestration");
-	const activeFeature = features.find((f) => f.id === selectedFeature) ?? features[0];
+	const activeFeature =
+		features.find((f) => f.id === selectedFeature) ?? features[0];
 
 	if (!activeFeature) {
 		return null;
 	}
 
 	return (
-		<>
-			{/* Mobile - Tabs */}
-			<div className="block lg:hidden">
+		<div className="space-y-20 sm:space-y-24 lg:space-y-32">
+			{/* Code showcase section */}
+			<div>
+				{/* Mobile - Tabs */}
+				<div className="block lg:hidden">
 					<div className="space-y-3">
 						<div className="px-3">
-							<h3 className="font-semibold text-sm">{activeFeature.title}</h3>
-							<p className="text-xs text-muted-foreground mt-1">{activeFeature.description}</p>
+							<h3 className="font-semibold text-sm text-foreground">{activeFeature.title}</h3>
+							<p className="text-xs text-muted-foreground mt-1">
+								{activeFeature.description}
+							</p>
 						</div>
-						<div className="relative rounded-lg border bg-background h-[350px] sm:h-[400px] md:h-[450px] flex flex-col overflow-hidden">
+						<div className="relative rounded-lg border bg-background h-[450px] sm:h-[500px] md:h-[550px] flex flex-col overflow-hidden">
 							<div className="flex items-center border-b flex-shrink-0 overflow-x-auto scrollbar-hide">
 								{features.map((feature) => (
 									<Button
@@ -337,30 +345,46 @@ export function PlatformSection() {
 										variant="ghost"
 										onClick={() => setSelectedFeature(feature.id)}
 										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r ${
-											selectedFeature === feature.id 
-												? "bg-accent" 
-												: ""
+											selectedFeature === feature.id ? "bg-accent" : ""
 										}`}
 									>
 										{feature.filename}
 									</Button>
 								))}
 							</div>
-							<div className="flex-1 overflow-y-auto">
-								<CodeHighlighter
-									code={activeFeature.code}
-									language="typescript"
-								/>
+							<div className="flex-1 overflow-y-auto p-4">
+								<CodeBlock code={activeFeature.code} language="typescript" forceTheme="github-dark" />
 							</div>
 						</div>
 					</div>
-			</div>
+				</div>
 
-			{/* Desktop - Side by side */}
-				<div className="hidden lg:grid lg:grid-cols-5 gap-6 xl:gap-8 items-stretch">
-					{/* Left side - Code display (3/5) */}
-					<div className="lg:col-span-3">
-						<div className="relative rounded-lg border bg-background h-[500px] flex flex-col overflow-hidden">
+				{/* Desktop - New layout with selector on top-left, code block full width */}
+				<div className="hidden lg:block space-y-6">
+					{/* Feature selector - Top left */}
+					<div className="flex flex-wrap gap-2">
+						{features.map((feature) => {
+							const Icon = feature.icon;
+							return (
+								<Button
+									key={feature.id}
+									variant={
+										selectedFeature === feature.id ? "secondary" : "ghost"
+									}
+									size="sm"
+									onClick={() => setSelectedFeature(feature.id)}
+									className="h-auto py-2 px-3"
+								>
+									<Icon className="h-4 w-4 mr-2 text-foreground" />
+									<span className="font-medium text-foreground">{feature.title}</span>
+								</Button>
+							);
+						})}
+					</div>
+
+					{/* Code display - Full width */}
+					<div className="w-full">
+						<div className="relative rounded-lg border bg-background h-[800px] flex flex-col overflow-hidden">
 							<div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
 								<div className="flex items-center gap-2">
 									<div className="h-3 w-3 rounded-full bg-destructive" />
@@ -371,58 +395,127 @@ export function PlatformSection() {
 									{activeFeature.filename}
 								</span>
 							</div>
-							<div className="flex-1 overflow-y-auto">
-								<CodeHighlighter
-									code={activeFeature.code}
-									language="typescript"
-								/>
-							</div>
-						</div>
-					</div>
-
-					{/* Right side - Feature list (2/5) */}
-					<div className="lg:col-span-2">
-						<div className="h-[500px] rounded-md flex items-center">
-							<div className="space-y-1 w-full">
-								{features.map((feature) => {
-									const Icon = feature.icon;
-									return (
-										<Button
-											key={feature.id}
-											variant="ghost"
-											onClick={() => setSelectedFeature(feature.id)}
-											className={`w-full justify-start h-auto p-3 ${
-												selectedFeature === feature.id
-													? "bg-accent"
-													: ""
-											}`}
-										>
-											<div className="flex items-center gap-3 w-full">
-												<div
-													className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200 ${
-														selectedFeature === feature.id
-															? "bg-primary/20"
-															: "bg-primary/10"
-													}`}
-												>
-													<Icon className="h-4 w-4 text-primary" />
-												</div>
-												<div className="flex-1 text-left">
-													<div className="font-semibold text-sm leading-tight">
-														{feature.title}
-													</div>
-													<div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-														{feature.description}
-													</div>
-												</div>
-											</div>
-										</Button>
-									);
-								})}
+							<div className="flex-1 overflow-y-auto p-4">
+								<CodeBlock code={activeFeature.code} language="typescript" forceTheme="github-dark" />
 							</div>
 						</div>
 					</div>
 				</div>
-		</>
+			</div>
+
+			{/* Evals section */}
+			<div className="space-y-12">
+				<div className="space-y-6">
+					<div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
+						<span>Why Run Evals?</span>
+					</div>
+					<h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+						Agents fail in unpredictable ways
+					</h2>
+				</div>
+
+				<div className="grid md:grid-cols-2 gap-12 lg:gap-16">
+					{/* Left side - Visual representation */}
+					<div className="space-y-6">
+						<div className="rounded-lg border bg-card p-6 space-y-4">
+							<div className="flex items-center gap-4">
+								<div className="font-mono text-sm bg-muted text-foreground px-3 py-1.5 rounded">
+									AI IN YOUR APP
+								</div>
+								<div className="text-muted-foreground">→</div>
+								<div className="space-y-2">
+									<div className="text-sm font-medium text-foreground">SCORES</div>
+									<div className="space-y-1 text-sm">
+										<div className="flex items-center gap-2">
+											<span className="text-green-500">✓</span>
+											<span className="text-foreground">98% Toxicity</span>
+										</div>
+										<div className="flex items-center gap-2">
+											<span className="text-green-500">✓</span>
+											<span className="text-foreground">83% Accuracy</span>
+										</div>
+										<div className="flex items-center gap-2">
+											<span className="text-red-500">✗</span>
+											<span className="text-foreground">74% Hallucination</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className="rounded-lg border bg-card p-6">
+							<div className="grid grid-cols-3 gap-4">
+								<div className="space-y-2">
+									<div className="flex items-center gap-2">
+										<span className="text-green-500">✓</span>
+										<span className="text-xs font-mono text-foreground">PROMPT A</span>
+									</div>
+									<div className="h-2 bg-muted rounded" />
+									<div className="h-2 bg-muted rounded w-4/5" />
+									<div className="h-2 bg-muted rounded w-3/5" />
+								</div>
+								<div className="space-y-2">
+									<div className="flex items-center gap-2">
+										<span className="text-red-500">✗</span>
+										<span className="text-xs font-mono text-foreground">PROMPT B</span>
+									</div>
+									<div className="h-2 bg-muted rounded" />
+									<div className="h-2 bg-muted rounded w-5/6" />
+									<div className="h-2 bg-muted rounded w-2/3" />
+								</div>
+								<div className="space-y-2">
+									<div className="flex items-center gap-2">
+										<span className="text-green-500">✓</span>
+										<span className="text-xs font-mono text-foreground">PROMPT C</span>
+									</div>
+									<div className="h-2 bg-muted rounded" />
+									<div className="h-2 bg-muted rounded w-3/4" />
+									<div className="h-2 bg-muted rounded w-1/2" />
+								</div>
+							</div>
+						</div>
+
+						<Button variant="outline" size="sm" className="w-fit text-foreground">
+							Get started with evals →
+						</Button>
+					</div>
+
+					{/* Right side - Questions and explanations */}
+					<div className="space-y-8">
+						<div className="space-y-3">
+							<h3 className="text-xl font-semibold text-foreground">
+								How do you know your AI feature works?
+							</h3>
+							<p className="text-muted-foreground">
+								Evals test your AI with real data and score the results. You can
+								determine whether changes improve or hurt performance.
+							</p>
+						</div>
+
+						<div className="space-y-3">
+							<h3 className="text-xl font-semibold text-foreground">
+								Are bad responses reaching users?
+							</h3>
+							<p className="text-muted-foreground">
+								Production monitoring tracks live model responses and alerts you
+								when quality drops or incorrect outputs increase.
+							</p>
+						</div>
+
+						<div className="space-y-3">
+							<h3 className="text-xl font-semibold text-foreground">
+								Can your team improve quality without guesswork?
+							</h3>
+							<p className="text-muted-foreground">
+								Side-by-side diffs allow you to compare the scores of different
+								prompts and models, and see exactly why one version performs
+								better than another.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }
+
