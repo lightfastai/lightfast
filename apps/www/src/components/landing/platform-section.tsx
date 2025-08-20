@@ -10,6 +10,59 @@ import {
 
 const features = [
 	{
+		id: "production",
+		icon: Code,
+		title: "Production",
+		filename: "production.ts",
+		description: "Observability, error handling, and deployment",
+		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
+import { BraintrustMiddleware, traced } from 'braintrust';
+import { wrapLanguageModel } from 'ai';
+
+// API route handler with auth and tracing
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  return traced(
+    async () => {
+      return fetchRequestHandler({
+        agent,
+        sessionId,
+        memory,
+        req,
+        resourceId: userId,
+        enableResume: true,  // Resumable streams
+        
+        onError({ error }) {
+          console.error('Agent Error:', error);
+          // Send to Sentry, LogDNA, etc.
+        },
+        
+        onFinish(result) {
+          // Log to observability platform
+          currentSpan().log({
+            input: { sessionId, userId },
+            output: result.text,
+            metadata: {
+              usage: result.usage,
+              reasoning: result.reasoning,
+              finishReason: result.finishReason
+            }
+          });
+        }
+      });
+    },
+    { name: 'POST /api/agent' }
+  );
+}
+
+// Deploy to Vercel, Railway, or self-host
+// Works with any Node.js runtime`,
+	},
+	{
 		id: "orchestration",
 		icon: Workflow,
 		title: "Orchestration",
@@ -260,63 +313,10 @@ const agent = createAgent({
   }
 });`,
 	},
-	{
-		id: "sdk",
-		icon: Code,
-		title: "Production",
-		filename: "production.ts",
-		description: "Observability, error handling, and deployment",
-		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
-import { BraintrustMiddleware, traced } from 'braintrust';
-import { wrapLanguageModel } from 'ai';
-
-// API route handler with auth and tracing
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  return traced(
-    async () => {
-      return fetchRequestHandler({
-        agent,
-        sessionId,
-        memory,
-        req,
-        resourceId: userId,
-        enableResume: true,  // Resumable streams
-        
-        onError({ error }) {
-          console.error('Agent Error:', error);
-          // Send to Sentry, LogDNA, etc.
-        },
-        
-        onFinish(result) {
-          // Log to observability platform
-          currentSpan().log({
-            input: { sessionId, userId },
-            output: result.text,
-            metadata: {
-              usage: result.usage,
-              reasoning: result.reasoning,
-              finishReason: result.finishReason
-            }
-          });
-        }
-      });
-    },
-    { name: 'POST /api/agent' }
-  );
-}
-
-// Deploy to Vercel, Railway, or self-host
-// Works with any Node.js runtime`,
-	},
 ];
 
 export function PlatformSection() {
-	const [selectedFeature, setSelectedFeature] = useState("orchestration");
+	const [selectedFeature, setSelectedFeature] = useState("production");
 	const activeFeature =
 		features.find((f) => f.id === selectedFeature) ?? features[0];
 
@@ -325,14 +325,14 @@ export function PlatformSection() {
 	}
 
 	return (
-		<div className="space-y-20 sm:space-y-24 lg:space-y-32">
-			{/* Code showcase section */}
-			<div>
+		<div>
 				{/* Mobile - Tabs */}
 				<div className="block lg:hidden">
 					<div className="space-y-3">
 						<div className="px-3">
-							<h3 className="font-semibold text-sm text-foreground">{activeFeature.title}</h3>
+							<h3 className="font-semibold text-sm text-foreground">
+								{activeFeature.title}
+							</h3>
 							<p className="text-xs text-muted-foreground mt-1">
 								{activeFeature.description}
 							</p>
@@ -353,7 +353,11 @@ export function PlatformSection() {
 								))}
 							</div>
 							<div className="flex-1 overflow-y-auto p-4">
-								<CodeBlock code={activeFeature.code} language="typescript" forceTheme="github-dark" />
+								<CodeBlock
+									code={activeFeature.code}
+									language="typescript"
+									forceTheme="github-dark"
+								/>
 							</div>
 						</div>
 					</div>
@@ -376,7 +380,9 @@ export function PlatformSection() {
 									className="h-auto py-2 px-3"
 								>
 									<Icon className="h-4 w-4 mr-2 text-foreground" />
-									<span className="font-medium text-foreground">{feature.title}</span>
+									<span className="font-medium text-foreground">
+										{feature.title}
+									</span>
 								</Button>
 							);
 						})}
@@ -396,126 +402,15 @@ export function PlatformSection() {
 								</span>
 							</div>
 							<div className="flex-1 overflow-y-auto p-4">
-								<CodeBlock code={activeFeature.code} language="typescript" forceTheme="github-dark" />
+								<CodeBlock
+									code={activeFeature.code}
+									language="typescript"
+									forceTheme="github-dark"
+								/>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-
-			{/* Evals section */}
-			<div className="space-y-12">
-				<div className="space-y-6">
-					<div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
-						<span>Why Run Evals?</span>
-					</div>
-					<h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-						Agents fail in unpredictable ways
-					</h2>
-				</div>
-
-				<div className="grid md:grid-cols-2 gap-12 lg:gap-16">
-					{/* Left side - Visual representation */}
-					<div className="space-y-6">
-						<div className="rounded-lg border bg-card p-6 space-y-4">
-							<div className="flex items-center gap-4">
-								<div className="font-mono text-sm bg-muted text-foreground px-3 py-1.5 rounded">
-									AI IN YOUR APP
-								</div>
-								<div className="text-muted-foreground">→</div>
-								<div className="space-y-2">
-									<div className="text-sm font-medium text-foreground">SCORES</div>
-									<div className="space-y-1 text-sm">
-										<div className="flex items-center gap-2">
-											<span className="text-green-500">✓</span>
-											<span className="text-foreground">98% Toxicity</span>
-										</div>
-										<div className="flex items-center gap-2">
-											<span className="text-green-500">✓</span>
-											<span className="text-foreground">83% Accuracy</span>
-										</div>
-										<div className="flex items-center gap-2">
-											<span className="text-red-500">✗</span>
-											<span className="text-foreground">74% Hallucination</span>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<div className="rounded-lg border bg-card p-6">
-							<div className="grid grid-cols-3 gap-4">
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<span className="text-green-500">✓</span>
-										<span className="text-xs font-mono text-foreground">PROMPT A</span>
-									</div>
-									<div className="h-2 bg-muted rounded" />
-									<div className="h-2 bg-muted rounded w-4/5" />
-									<div className="h-2 bg-muted rounded w-3/5" />
-								</div>
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<span className="text-red-500">✗</span>
-										<span className="text-xs font-mono text-foreground">PROMPT B</span>
-									</div>
-									<div className="h-2 bg-muted rounded" />
-									<div className="h-2 bg-muted rounded w-5/6" />
-									<div className="h-2 bg-muted rounded w-2/3" />
-								</div>
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<span className="text-green-500">✓</span>
-										<span className="text-xs font-mono text-foreground">PROMPT C</span>
-									</div>
-									<div className="h-2 bg-muted rounded" />
-									<div className="h-2 bg-muted rounded w-3/4" />
-									<div className="h-2 bg-muted rounded w-1/2" />
-								</div>
-							</div>
-						</div>
-
-						<Button variant="outline" size="sm" className="w-fit text-foreground">
-							Get started with evals →
-						</Button>
-					</div>
-
-					{/* Right side - Questions and explanations */}
-					<div className="space-y-8">
-						<div className="space-y-3">
-							<h3 className="text-xl font-semibold text-foreground">
-								How do you know your AI feature works?
-							</h3>
-							<p className="text-muted-foreground">
-								Evals test your AI with real data and score the results. You can
-								determine whether changes improve or hurt performance.
-							</p>
-						</div>
-
-						<div className="space-y-3">
-							<h3 className="text-xl font-semibold text-foreground">
-								Are bad responses reaching users?
-							</h3>
-							<p className="text-muted-foreground">
-								Production monitoring tracks live model responses and alerts you
-								when quality drops or incorrect outputs increase.
-							</p>
-						</div>
-
-						<div className="space-y-3">
-							<h3 className="text-xl font-semibold text-foreground">
-								Can your team improve quality without guesswork?
-							</h3>
-							<p className="text-muted-foreground">
-								Side-by-side diffs allow you to compare the scores of different
-								prompts and models, and see exactly why one version performs
-								better than another.
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 }
-

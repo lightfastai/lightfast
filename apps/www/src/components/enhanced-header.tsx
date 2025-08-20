@@ -40,8 +40,8 @@ export function EnhancedHeader() {
 								>
 									Products
 								</NavigationMenuTrigger>
-								<NavigationMenuContent className="bg-background p-2">
-									<div className="flex flex-col gap-3 border p-3 bg-muted/30 rounded-sm md:w-[300px]">
+								<NavigationMenuContent className="bg-background">
+									<div className="flex flex-col gap-3 p-3 rounded-sm md:w-[300px]">
 										<h3 className="text-2xs font-medium text-muted-foreground px-4">
 											Core Features
 										</h3>
