@@ -33,7 +33,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get(key, "$");
 
 		if (!existing || existing.length === 0) {
 			// Create new storage
@@ -86,7 +86,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get(key, "$");
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
@@ -134,7 +134,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get(key, "$");
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
@@ -183,7 +183,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get(key, "$");
 		if (!existing || existing.length === 0) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
@@ -246,7 +246,7 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = await this.redis.json.get(messageKey, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get(messageKey, "$");
 
 		const pipeline = this.redis.pipeline();
 

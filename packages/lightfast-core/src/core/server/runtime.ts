@@ -226,7 +226,7 @@ export async function streamChat<
 
 	// Stream the response using the built parameters
 	let result;
-	let streamId = generateId ? generateId() : uuidv4();
+	const streamId = generateId ? generateId() : uuidv4();
 	try {
 		result = await streamText(streamParams);
 	} catch (error) {

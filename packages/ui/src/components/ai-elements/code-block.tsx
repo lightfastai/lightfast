@@ -12,6 +12,7 @@ import { Button } from "@repo/ui/components/ui/button";
 interface CodeBlockProps extends HTMLAttributes<HTMLDivElement> {
 	code: string;
 	language: BundledLanguage;
+	forceTheme?: "github-light" | "github-dark";
 }
 
 interface CodeBlockContextType {
@@ -36,6 +37,7 @@ export async function highlightCode(
 export const CodeBlock = ({
 	code,
 	language,
+	forceTheme,
 	className,
 	children,
 	...props
@@ -46,10 +48,11 @@ export const CodeBlock = ({
 	useEffect(() => {
 		let isMounted = true;
 
-		// Use resolvedTheme to get the actual theme when theme is "system"
-		// resolvedTheme will be either "dark" or "light" based on system preference
-		const effectiveTheme = theme === "system" ? resolvedTheme : theme;
-		const codeTheme = effectiveTheme === "dark" ? "github-dark" : "github-light";
+		// Use forceTheme if provided, otherwise determine from system theme
+		const codeTheme = forceTheme || (() => {
+			const effectiveTheme = theme === "system" ? resolvedTheme : theme;
+			return effectiveTheme === "dark" ? "github-dark" : "github-light";
+		})();
 
 		void highlightCode(code, language, codeTheme).then((result) => {
 			if (isMounted) {
@@ -60,7 +63,7 @@ export const CodeBlock = ({
 		return () => {
 			isMounted = false;
 		};
-	}, [code, language, theme, resolvedTheme]);
+	}, [code, language, theme, resolvedTheme, forceTheme]);
 
 	return (
 		<CodeBlockContext.Provider value={{ code }}>

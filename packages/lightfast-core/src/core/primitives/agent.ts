@@ -66,7 +66,7 @@ function uuidv4() {
 }
 
 // Type for streamText parameters - matching AI SDK v5
-export type StreamTextParameters<TOOLS extends ToolSet = ToolSet> = {
+export interface StreamTextParameters<TOOLS extends ToolSet = ToolSet> {
 	model: any; // LanguageModel type from AI SDK
 	messages: ModelMessage[];
 	tools?: TOOLS;
@@ -80,7 +80,7 @@ export type StreamTextParameters<TOOLS extends ToolSet = ToolSet> = {
 	prepareStep?: any;
 	experimental_transform?: any;
 	[key: string]: any; // Allow additional properties like headers, providerOptions, etc.
-};
+}
 
 // Properties we need to handle specially or exclude
 type ExcludedStreamTextProps =
@@ -346,18 +346,18 @@ export class Agent<
 			// but streamText expects them typed with ToolSet. This is safe because
 			// resolvedTools is guaranteed to be a ToolSet at runtime.
 			toolChoice: this
-				.toolChoice as StreamTextParameters<ToolSet>["toolChoice"],
-			stopWhen: this.stopWhen as StreamTextParameters<ToolSet>["stopWhen"],
-			onChunk: this.onChunk as StreamTextParameters<ToolSet>["onChunk"],
-			onFinish: this.onFinish as StreamTextParameters<ToolSet>["onFinish"],
+				.toolChoice,
+			stopWhen: this.stopWhen,
+			onChunk: this.onChunk,
+			onFinish: this.onFinish,
 			onStepFinish: this
-				.onStepFinish as StreamTextParameters<ToolSet>["onStepFinish"],
-			onAbort: this.onAbort as StreamTextParameters<ToolSet>["onAbort"],
+				.onStepFinish,
+			onAbort: this.onAbort,
 			onError: this.onError,
 			prepareStep: this
-				.prepareStep as StreamTextParameters<ToolSet>["prepareStep"],
+				.prepareStep,
 			experimental_transform: this
-				.experimental_transform as StreamTextParameters<ToolSet>["experimental_transform"],
+				.experimental_transform,
 		};
 
 		// Return the parameters for streamText

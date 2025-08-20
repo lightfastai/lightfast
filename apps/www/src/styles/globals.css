@@ -1,75 +1,48 @@
 /* Import the base UI globals */
 @import "@repo/ui/globals.css";
 
-/* 
- * Custom color overrides for Chat app dark mode only
- * Light mode uses the default colors from @repo/ui
- */
-.dark {
-	--background: oklch(0.2178 0 0);
-	--foreground: oklch(0.8853 0 0);
-	--card: oklch(0.2435 0 0);
-	--card-foreground: oklch(0.8853 0 0);
-	--popover: oklch(0.2178 0 0); /* Match background for consistency */
-	--popover-foreground: oklch(0.8853 0 0);
-	--primary: oklch(0.7058 0 0);
-	--primary-foreground: oklch(0.2178 0 0);
-	--secondary: oklch(0.3092 0 0);
-	--secondary-foreground: oklch(0.8853 0 0);
-	--muted: oklch(0.285 0 0);
-	--muted-foreground: oklch(0.5999 0 0);
-	--accent: oklch(0.26 0 0); /* Consistent accent color matching sidebar */
-	--accent-foreground: oklch(0.8853 0 0);
-	--destructive: oklch(0.6591 0.153 22.1703);
-	--destructive-foreground: oklch(1 0 0);
-	--border: oklch(0.329 0 0);
-	--input: oklch(0.3092 0 0);
-	--input-bg: oklch(0.24 0 0); /* Very subtle, slightly lighter than background */
-	--ring: oklch(0.7058 0 0);
-	--chart-1: oklch(0.7058 0 0);
-	--chart-2: oklch(0.6714 0.0339 206.3482);
-	--chart-3: oklch(0.5452 0 0);
-	--chart-4: oklch(0.4604 0 0);
-	--chart-5: oklch(0.3715 0 0);
-	--sidebar: oklch(0.2178 0 0); /* Same as background */
-	--sidebar-foreground: oklch(0.8853 0 0);
-	--sidebar-primary: oklch(0.7058 0 0);
-	--sidebar-primary-foreground: oklch(0.2178 0 0);
-	--sidebar-accent: oklch(0.26 0 0); /* Subtle accent, same as input-bg */
-	--sidebar-accent-foreground: oklch(0.8853 0 0);
-	--sidebar-border: oklch(0.329 0 0);
-	--sidebar-ring: oklch(0.7058 0 0);
+/* Override shadcn border-radius via CSS variable */
+:root {
+	--radius: 0.25rem;
 }
 
-
-/* Additional custom styles specific to the chat app */
-@layer utilities {
-	/* Add any chat-specific utility classes here */
+/* Light section - inverted colors for specific sections */
+.light-section,
+.framework {
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.145 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0 0);
+	--primary: oklch(0.205 0 0);
+	--primary-foreground: oklch(0.985 0 0);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.205 0 0);
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.556 0 0);
+	--accent: oklch(0.97 0 0);
+	--accent-foreground: oklch(0.205 0 0);
+	--destructive: oklch(0.577 0.245 27.325);
+	--border: oklch(0.922 0 0);
+	--input: oklch(0.922 0 0);
+	--input-bg: oklch(1 0 0);
+	--ring: oklch(0.708 0 0);
 }
 
-/* Logo cloud animations */
-@keyframes scroll-left {
-	0% {
+/* Framework showcase animations */
+@keyframes framework-scroll {
+	from {
 		transform: translateX(0);
 	}
-	100% {
+	to {
 		transform: translateX(-33.333%);
 	}
 }
 
-@keyframes scroll-right {
-	0% {
-		transform: translateX(-33.333%);
-	}
-	100% {
-		transform: translateX(0);
-	}
-}
-
-.animate-scroll-left {
-	animation: scroll-left linear infinite;
-}
-
-.animate-scroll-right {
-	animation: scroll-right linear infinite;
+.animate-framework-scroll {
+	animation-name: framework-scroll;
+	animation-duration: 30s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
 }

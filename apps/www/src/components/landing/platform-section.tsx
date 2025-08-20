@@ -3,13 +3,69 @@
 import React, { useState } from "react";
 import { Shield, Cpu, Workflow, Users, Zap, Code } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { CodeHighlighter } from "./code-highlighter";
+import {
+	CodeBlock,
+	// CodeBlockCopyButton,
+} from "@repo/ui/components/ai-elements/code-block";
 
 const features = [
 	{
+		id: "production",
+		icon: Code,
+		title: "Production",
+		filename: "production.ts",
+		description: "Observability, error handling, and deployment",
+		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
+import { BraintrustMiddleware, traced } from 'braintrust';
+import { wrapLanguageModel } from 'ai';
+
+// API route handler with auth and tracing
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  return traced(
+    async () => {
+      return fetchRequestHandler({
+        agent,
+        sessionId,
+        memory,
+        req,
+        resourceId: userId,
+        enableResume: true,  // Resumable streams
+        
+        onError({ error }) {
+          console.error('Agent Error:', error);
+          // Send to Sentry, LogDNA, etc.
+        },
+        
+        onFinish(result) {
+          // Log to observability platform
+          currentSpan().log({
+            input: { sessionId, userId },
+            output: result.text,
+            metadata: {
+              usage: result.usage,
+              reasoning: result.reasoning,
+              finishReason: result.finishReason
+            }
+          });
+        }
+      });
+    },
+    { name: 'POST /api/agent' }
+  );
+}
+
+// Deploy to Vercel, Railway, or self-host
+// Works with any Node.js runtime`,
+	},
+	{
 		id: "orchestration",
 		icon: Workflow,
-		title: "Agent Orchestration",
+		title: "Orchestration",
 		filename: "agent.ts",
 		description:
 			"Build agents with tool factories and runtime context injection",
@@ -53,7 +109,7 @@ const agent = createAgent({
 	{
 		id: "resources",
 		icon: Cpu,
-		title: "Resource Management",
+		title: "Resources",
 		filename: "resource.ts",
 		description: "Sandboxes, browser automation, and file operations",
 		code: `import { createTool } from '@lightfastai/core/tool';
@@ -102,7 +158,7 @@ export const browserTool = createTool({
 	{
 		id: "security",
 		icon: Shield,
-		title: "Security & Validation",
+		title: "Security",
 		filename: "security.ts",
 		description: "Input validation, session auth, and audit logging",
 		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
@@ -156,7 +212,7 @@ const secureTool = createTool({
 	{
 		id: "human",
 		icon: Users,
-		title: "Human-in-the-Loop",
+		title: "Human",
 		filename: "human.ts",
 		description: "Approval workflows and human oversight (coming soon)",
 		code: `import { createTool } from '@lightfastai/core/tool';
@@ -206,7 +262,7 @@ const deployTool = createTool({
 	{
 		id: "scale",
 		icon: Zap,
-		title: "Memory & Performance",
+		title: "Memory",
 		filename: "memory.ts",
 		description: "Persistent memory, caching, and streaming",
 		code: `import { RedisMemory } from '@lightfastai/core/agent/memory/adapters/redis';
@@ -257,110 +313,84 @@ const agent = createAgent({
   }
 });`,
 	},
-	{
-		id: "sdk",
-		icon: Code,
-		title: "Production Ready",
-		filename: "production.ts",
-		description: "Observability, error handling, and deployment",
-		code: `import { fetchRequestHandler } from '@lightfastai/core/agent/handlers';
-import { BraintrustMiddleware, traced } from 'braintrust';
-import { wrapLanguageModel } from 'ai';
-
-// API route handler with auth and tracing
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  return traced(
-    async () => {
-      return fetchRequestHandler({
-        agent,
-        sessionId,
-        memory,
-        req,
-        resourceId: userId,
-        enableResume: true,  // Resumable streams
-        
-        onError({ error }) {
-          console.error('Agent Error:', error);
-          // Send to Sentry, LogDNA, etc.
-        },
-        
-        onFinish(result) {
-          // Log to observability platform
-          currentSpan().log({
-            input: { sessionId, userId },
-            output: result.text,
-            metadata: {
-              usage: result.usage,
-              reasoning: result.reasoning,
-              finishReason: result.finishReason
-            }
-          });
-        }
-      });
-    },
-    { name: 'POST /api/agent' }
-  );
-}
-
-// Deploy to Vercel, Railway, or self-host
-// Works with any Node.js runtime`,
-	},
 ];
 
 export function PlatformSection() {
-	const [selectedFeature, setSelectedFeature] = useState("orchestration");
-	const activeFeature = features.find((f) => f.id === selectedFeature) ?? features[0];
+	const [selectedFeature, setSelectedFeature] = useState("production");
+	const activeFeature =
+		features.find((f) => f.id === selectedFeature) ?? features[0];
 
 	if (!activeFeature) {
 		return null;
 	}
 
 	return (
-		<>
-			{/* Mobile - Tabs */}
-			<div className="block lg:hidden">
+		<div>
+				{/* Mobile - Tabs */}
+				<div className="block lg:hidden">
 					<div className="space-y-3">
 						<div className="px-3">
-							<h3 className="font-semibold text-sm">{activeFeature.title}</h3>
-							<p className="text-xs text-muted-foreground mt-1">{activeFeature.description}</p>
+							<h3 className="font-semibold text-sm text-foreground">
+								{activeFeature.title}
+							</h3>
+							<p className="text-xs text-muted-foreground mt-1">
+								{activeFeature.description}
+							</p>
 						</div>
-						<div className="relative rounded-lg border bg-background h-[350px] sm:h-[400px] md:h-[450px] flex flex-col overflow-hidden">
+						<div className="relative rounded-lg border bg-background h-[450px] sm:h-[500px] md:h-[550px] flex flex-col overflow-hidden">
 							<div className="flex items-center border-b flex-shrink-0 overflow-x-auto scrollbar-hide">
 								{features.map((feature) => (
 									<Button
 										key={feature.id}
 										variant="ghost"
 										onClick={() => setSelectedFeature(feature.id)}
-										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r ${
-											selectedFeature === feature.id 
-												? "bg-accent" 
-												: ""
+										className={`rounded-none px-3 py-2 h-auto text-[10px] sm:text-xs font-mono whitespace-nowrap border-r text-foreground ${
+											selectedFeature === feature.id ? "bg-accent" : ""
 										}`}
 									>
 										{feature.filename}
 									</Button>
 								))}
 							</div>
-							<div className="flex-1 overflow-y-auto">
-								<CodeHighlighter
+							<div className="flex-1 overflow-y-auto p-4">
+								<CodeBlock
 									code={activeFeature.code}
 									language="typescript"
+									forceTheme="github-dark"
 								/>
 							</div>
 						</div>
 					</div>
-			</div>
+				</div>
 
-			{/* Desktop - Side by side */}
-				<div className="hidden lg:grid lg:grid-cols-5 gap-6 xl:gap-8 items-stretch">
-					{/* Left side - Code display (3/5) */}
-					<div className="lg:col-span-3">
-						<div className="relative rounded-lg border bg-background h-[500px] flex flex-col overflow-hidden">
+				{/* Desktop - New layout with selector on top-left, code block full width */}
+				<div className="hidden lg:block space-y-6">
+					{/* Feature selector - Top left */}
+					<div className="flex flex-wrap gap-2">
+						{features.map((feature) => {
+							const Icon = feature.icon;
+							return (
+								<Button
+									key={feature.id}
+									variant={
+										selectedFeature === feature.id ? "secondary" : "ghost"
+									}
+									size="sm"
+									onClick={() => setSelectedFeature(feature.id)}
+									className="h-auto py-2 px-3"
+								>
+									<Icon className="h-4 w-4 mr-2 text-foreground" />
+									<span className="font-medium text-foreground">
+										{feature.title}
+									</span>
+								</Button>
+							);
+						})}
+					</div>
+
+					{/* Code display - Full width */}
+					<div className="w-full">
+						<div className="relative rounded-lg border bg-background h-[800px] flex flex-col overflow-hidden">
 							<div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
 								<div className="flex items-center gap-2">
 									<div className="h-3 w-3 rounded-full bg-destructive" />
@@ -371,58 +401,16 @@ export function PlatformSection() {
 									{activeFeature.filename}
 								</span>
 							</div>
-							<div className="flex-1 overflow-y-auto">
-								<CodeHighlighter
+							<div className="flex-1 overflow-y-auto p-4">
+								<CodeBlock
 									code={activeFeature.code}
 									language="typescript"
+									forceTheme="github-dark"
 								/>
 							</div>
 						</div>
 					</div>
-
-					{/* Right side - Feature list (2/5) */}
-					<div className="lg:col-span-2">
-						<div className="h-[500px] rounded-md flex items-center">
-							<div className="space-y-1 w-full">
-								{features.map((feature) => {
-									const Icon = feature.icon;
-									return (
-										<Button
-											key={feature.id}
-											variant="ghost"
-											onClick={() => setSelectedFeature(feature.id)}
-											className={`w-full justify-start h-auto p-3 ${
-												selectedFeature === feature.id
-													? "bg-accent"
-													: ""
-											}`}
-										>
-											<div className="flex items-center gap-3 w-full">
-												<div
-													className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200 ${
-														selectedFeature === feature.id
-															? "bg-primary/20"
-															: "bg-primary/10"
-													}`}
-												>
-													<Icon className="h-4 w-4 text-primary" />
-												</div>
-												<div className="flex-1 text-left">
-													<div className="font-semibold text-sm leading-tight">
-														{feature.title}
-													</div>
-													<div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-														{feature.description}
-													</div>
-												</div>
-											</div>
-										</Button>
-									);
-								})}
-							</div>
-						</div>
-					</div>
 				</div>
-		</>
+		</div>
 	);
 }
