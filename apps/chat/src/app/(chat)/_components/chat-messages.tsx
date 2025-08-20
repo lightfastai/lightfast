@@ -15,9 +15,9 @@ import {
 	Conversation,
 	ConversationContent,
 	ConversationScrollButton,
-} from "~/components/ai-elements/conversation";
-import { Message, MessageContent } from "~/components/ai-elements/message";
-import { Response } from "~/components/ai-elements/response";
+} from "@repo/ui/components/ai-elements/conversation";
+import { Message, MessageContent } from "@repo/ui/components/ai-elements/message";
+import { Response } from "@repo/ui/components/ai-elements/response";
 
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
