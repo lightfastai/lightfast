@@ -89,7 +89,7 @@ export function FrameworkShowcase() {
 							>
 								<div
 									className={`p-2 rounded-sm transition-all duration-200 cursor-pointer ${
-										hoveredFramework === frameworks[originalIndex].name
+										hoveredFramework === frameworks[originalIndex]?.name
 											? "outline outline-2 outline-muted outline-offset-2"
 											: ""
 									}`}
@@ -98,7 +98,7 @@ export function FrameworkShowcase() {
 										size={40}
 										color="currentColor"
 										className={`w-10 h-10 lg:w-12 lg:h-12 transition-colors duration-200 ${
-											hoveredFramework === frameworks[originalIndex].name
+											hoveredFramework === frameworks[originalIndex]?.name
 												? "text-foreground"
 												: "text-muted-foreground"
 										}`}
