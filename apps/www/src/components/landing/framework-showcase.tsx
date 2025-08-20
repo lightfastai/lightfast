@@ -60,7 +60,7 @@ export function FrameworkShowcase() {
 			</div>
 
 			{/* Frameworks - Infinite Scroll */}
-			<div 
+			<div
 				className="relative w-full overflow-hidden py-3"
 				onMouseEnter={() => setIsHovering(true)}
 				onMouseLeave={() => {
@@ -68,11 +68,11 @@ export function FrameworkShowcase() {
 					setHoveredFramework(null);
 				}}
 			>
-				<div 
-					className="flex animate-framework-scroll" 
-					style={{ 
-						width: 'max-content',
-						animationPlayState: isHovering ? 'paused' : 'running'
+				<div
+					className="flex animate-framework-scroll"
+					style={{
+						width: "max-content",
+						animationPlayState: isHovering ? "paused" : "running",
 					}}
 				>
 					{/* Triple the frameworks for seamless loop */}
@@ -82,14 +82,16 @@ export function FrameworkShowcase() {
 							<div
 								key={index}
 								className="flex-shrink-0 px-6 lg:px-8 py-1"
-								onMouseEnter={() => setHoveredFramework(frameworks[originalIndex].name)}
+								onMouseEnter={() =>
+									setHoveredFramework(frameworks[originalIndex].name)
+								}
 								onMouseLeave={() => setHoveredFramework(null)}
 							>
 								<div
 									className={`p-2 rounded-sm transition-all duration-200 cursor-pointer ${
-										hoveredFramework === frameworks[originalIndex].name 
-											? 'outline outline-2 outline-muted outline-offset-2' 
-											: ''
+										hoveredFramework === frameworks[originalIndex].name
+											? "outline outline-2 outline-muted outline-offset-2"
+											: ""
 									}`}
 								>
 									<framework.Icon
@@ -97,8 +99,8 @@ export function FrameworkShowcase() {
 										color="currentColor"
 										className={`w-10 h-10 lg:w-12 lg:h-12 transition-colors duration-200 ${
 											hoveredFramework === frameworks[originalIndex].name
-												? 'text-foreground'
-												: 'text-muted-foreground'
+												? "text-foreground"
+												: "text-muted-foreground"
 										}`}
 									/>
 								</div>
@@ -113,4 +115,3 @@ export function FrameworkShowcase() {
 		</div>
 	);
 }
-

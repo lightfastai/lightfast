@@ -27,14 +27,17 @@
 
 /* Framework showcase animations */
 @keyframes framework-scroll {
-	0% {
+	from {
 		transform: translateX(0);
 	}
-	100% {
+	to {
 		transform: translateX(-33.333%);
 	}
 }
 
 .animate-framework-scroll {
-	animation: framework-scroll 30s linear infinite;
+	animation-name: framework-scroll;
+	animation-duration: 30s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
 }

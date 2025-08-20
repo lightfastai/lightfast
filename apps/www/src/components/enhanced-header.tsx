@@ -25,15 +25,13 @@ export function EnhancedHeader() {
 			<div className="max-w-7xl mx-auto h-full flex items-center justify-between">
 				<div className="flex items-center">
 					<Link href="/">
-						<Icons.logoShort className="size-6 text-foreground" />
+						<Icons.logo className="size-26 text-foreground" />
 					</Link>
+				</div>
 
-					<div className="hidden xl:flex h-4 items-center px-4">
-						<Separator orientation="vertical" />
-					</div>
-
-					{/* Navigation Menu - hidden on lg and below */}
-					<NavigationMenu className="hidden xl:flex ml-4">
+				{/* Navigation Menu - moved to right, hidden on lg and below */}
+				<div className="flex items-center gap-4">
+					<NavigationMenu className="hidden xl:flex">
 						<NavigationMenuList>
 							{/* Products */}
 							<NavigationMenuItem>
@@ -132,10 +130,7 @@ export function EnhancedHeader() {
 							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>
-				</div>
 
-				{/* Right side actions */}
-				<div className="flex items-center gap-2">
 					{/* Desktop actions - hidden on lg and below */}
 					<div className="hidden xl:flex items-center gap-2">
 						<Button variant="default" asChild>
