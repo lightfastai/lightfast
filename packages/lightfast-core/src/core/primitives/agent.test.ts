@@ -36,7 +36,7 @@ describe("createAgent", () => {
 		});
 
 		expect(agent).toBeDefined();
-		expect(typeof agent.stream).toBe("function");
+		expect(typeof agent.buildStreamParams).toBe("function");
 	});
 
 	it("should create an agent with static tools", () => {
@@ -159,8 +159,8 @@ describe("createAgent", () => {
 			createRuntimeContext: () => ({}),
 		} as any);
 
-		await expect(async () => {
-			await agent.stream({
+		expect(() => {
+			agent.buildStreamParams({
 				sessionId: "test-session",
 				messages: [{ id: "1", role: "user", content: "test" }],
 				memory: {} as any,
@@ -168,7 +168,7 @@ describe("createAgent", () => {
 				systemContext: {},
 				requestContext: {},
 			});
-		}).rejects.toThrow("Model must be configured");
+		}).toThrow("Model must be configured");
 	});
 
 	it("should create an agent with experimental features", () => {

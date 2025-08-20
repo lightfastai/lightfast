@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UIMessage } from "ai";
+import { streamText } from "ai";
 import {
 	NoUserMessageError,
 	SessionForbiddenError,
@@ -16,6 +17,9 @@ import {
 import type { Agent } from "../primitives/agent";
 import type { Memory } from "../memory";
 
+// Mock the AI SDK
+vi.mock("ai");
+
 // Mock dependencies
 const mockMemory = {
 	getSession: vi.fn(),
@@ -30,7 +34,7 @@ const mockAgent = {
 	config: {
 		name: "test-agent",
 	},
-	stream: vi.fn(),
+	buildStreamParams: vi.fn(),
 } as unknown as Agent<unknown, unknown>;
 
 describe("Runtime Functions", () => {
@@ -181,9 +185,7 @@ describe("Runtime Functions", () => {
 		};
 
 		const mockStreamResult = {
-			result: {
-				toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
-			},
+			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -194,7 +196,13 @@ describe("Runtime Functions", () => {
 			mockMemory.appendMessage = vi.fn().mockResolvedValue(undefined);
 			mockMemory.getMessages = vi.fn().mockResolvedValue([validUserMessage]);
 			mockMemory.createStream = vi.fn().mockResolvedValue(undefined);
-			mockAgent.stream = vi.fn().mockResolvedValue(mockStreamResult);
+			// Mock buildStreamParams to return parameters for streamText
+			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
+				model: {},
+				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+			});
+			// Mock streamText to return the stream result
+			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
 		});
 
 		it("should execute successful streaming flow with all callbacks", async () => {
@@ -226,15 +234,13 @@ describe("Runtime Functions", () => {
 				requestContext,
 				agentName: "test-agent",
 				messageCount: 1,
-				timestamp: expect.any(Number),
 			});
 			expect(callbacks.onStreamStart).toHaveBeenCalledWith({
 				systemContext,
 				requestContext,
-				streamId: "stream123",
+				streamId: expect.any(String),
 				agentName: "test-agent",
 				messageCount: 1,
-				timestamp: expect.any(Number),
 			});
 		});
 
@@ -257,7 +263,9 @@ describe("Runtime Functions", () => {
 
 		it("should handle agent streaming failures with toAgentApiError", async () => {
 			const agentError = new Error("Model configuration invalid");
-			mockAgent.stream = vi.fn().mockRejectedValue(agentError);
+			mockAgent.buildStreamParams = vi.fn().mockImplementation(() => {
+				throw agentError;
+			});
 
 			const result = await streamChat({
 				agent: mockAgent,
@@ -293,7 +301,7 @@ describe("Runtime Functions", () => {
 			expect(result.ok).toBe(true); // Stream still succeeds even with potential memory errors
 			
 			// Verify that the onFinish callback is properly configured with onError
-			expect(mockStreamResult.result.toUIMessageStreamResponse).toHaveBeenCalledWith(
+			expect(mockStreamResult.toUIMessageStreamResponse).toHaveBeenCalledWith(
 				expect.objectContaining({
 					onFinish: expect.any(Function),
 				}),
@@ -343,7 +351,7 @@ describe("Runtime Functions", () => {
 			});
 
 			expect(result.ok).toBe(true);
-			expect(mockStreamResult.result.toUIMessageStreamResponse).toHaveBeenCalledWith(
+			expect(mockStreamResult.toUIMessageStreamResponse).toHaveBeenCalledWith(
 				expect.objectContaining({
 					headers: { "Content-Encoding": "none" },
 					consumeSseStream: expect.any(Function),
@@ -430,7 +438,12 @@ describe("Runtime Functions", () => {
 			mockMemory.getMessages = vi.fn().mockResolvedValue([]);
 			
 			const streamingError = new Error("Model configuration invalid");
-			mockAgent.stream = vi.fn().mockRejectedValue(streamingError);
+			// Mock buildStreamParams to succeed but streamText to fail
+			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
+				model: {},
+				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+			});
+			vi.mocked(streamText).mockRejectedValue(streamingError);
 
 			const result = await streamChat({
 				agent: mockAgent,
@@ -456,9 +469,7 @@ describe("Runtime Functions", () => {
 		};
 
 		const mockStreamResult = {
-			result: {
-				toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
-			},
+			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -468,7 +479,11 @@ describe("Runtime Functions", () => {
 			mockMemory.getSession = vi.fn().mockResolvedValue({ resourceId: "resource1" });
 			mockMemory.appendMessage = vi.fn().mockResolvedValue(undefined);
 			mockMemory.getMessages = vi.fn().mockResolvedValue([validUserMessage]);
-			mockAgent.stream = vi.fn().mockResolvedValue(mockStreamResult);
+			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
+				model: {},
+				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+			});
+			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
 		});
 
 		it("should silently handle stream failures with silentStreamFailure guard", async () => {
@@ -603,9 +618,7 @@ describe("Runtime Functions", () => {
 		};
 
 		const mockStreamResult = {
-			result: {
-				toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
-			},
+			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -615,7 +628,11 @@ describe("Runtime Functions", () => {
 			mockMemory.getSession = vi.fn().mockResolvedValue({ resourceId: "resource1" });
 			mockMemory.appendMessage = vi.fn().mockResolvedValue(undefined);
 			mockMemory.getMessages = vi.fn().mockResolvedValue([validUserMessage]);
-			mockAgent.stream = vi.fn().mockResolvedValue(mockStreamResult);
+			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
+				model: {},
+				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+			});
+			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
 		});
 
 		it("should handle createStream failures with warning criticality", async () => {
@@ -643,7 +660,6 @@ describe("Runtime Functions", () => {
 				systemContext,
 				requestContext,
 				error: expect.any(Object),
-				timestamp: expect.any(Number),
 			});
 		});
 
@@ -722,7 +738,6 @@ describe("Runtime Functions", () => {
 				systemContext,
 				requestContext: {},
 				error: expect.any(Object),
-				timestamp: expect.any(Number),
 			});
 		});
 
@@ -743,10 +758,10 @@ describe("Runtime Functions", () => {
 				onError,
 			});
 
-			const errorCall = onError.mock.calls[0][0];
-			expect(errorCall.error.message).toContain("Table does not exist");
-			expect(errorCall.systemContext).toEqual({ sessionId: "session1", resourceId: "resource1" });
-			expect(errorCall.timestamp).toBeDefined();
+			const errorCall = onError.mock.calls[0];
+			expect(errorCall).toBeDefined();
+			expect(errorCall[0].error.message).toContain("Table does not exist");
+			expect(errorCall[0].systemContext).toEqual({ sessionId: "session1", resourceId: "resource1" });
 		});
 	});
 });
