@@ -54,7 +54,7 @@ export function FrameworkShowcase() {
 				<h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
 					<span className="text-muted-foreground">Use Lightfast with </span>
 					<span className="text-foreground inline-block min-w-[120px]">
-						{hoveredFramework || frameworks[currentFrameworkIndex].name}
+						{hoveredFramework || frameworks[currentFrameworkIndex]?.name || 'React'}
 					</span>
 				</h2>
 			</div>
