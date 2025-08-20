@@ -7,7 +7,6 @@ import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { TRPCReactProvider } from "~/trpc/react";
 import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
-import { ThemeProvider } from "next-themes";
 import { KeyboardShortcuts } from "~/components/keyboard-shortcuts";
 
 interface AuthenticatedLayoutProps {
@@ -32,13 +31,7 @@ export default function AuthenticatedLayout({
 	return (
 		<TRPCReactProvider>
 			<HydrateClient>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
-					<TooltipProvider>
+				<TooltipProvider>
 						<SidebarProvider defaultOpen={true}>
 							<KeyboardShortcuts />
 							<div className="flex h-screen w-full">
@@ -54,8 +47,7 @@ export default function AuthenticatedLayout({
 								</div>
 							</div>
 						</SidebarProvider>
-					</TooltipProvider>
-				</ThemeProvider>
+				</TooltipProvider>
 			</HydrateClient>
 		</TRPCReactProvider>
 	);

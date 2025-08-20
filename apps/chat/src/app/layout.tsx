@@ -9,6 +9,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getClerkConfig } from "@repo/url-utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
 	title: {
@@ -113,8 +114,15 @@ export default function RootLayout({
 			<html lang="en" suppressHydrationWarning>
 				<head />
 				<body className={cn("bg-background min-h-screen", fonts)}>
-					{children}
-					<Toaster />
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="dark"
+						enableSystem={false}
+						disableTransitionOnChange
+					>
+						{children}
+						<Toaster />
+					</ThemeProvider>
 					<VercelAnalytics />
 					<SpeedInsights />
 				</body>
