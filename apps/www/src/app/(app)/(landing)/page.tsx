@@ -4,12 +4,15 @@ import { FrameworkShowcase } from "~/components/landing/framework-showcase";
 import { BuildShipMonitorSection } from "~/components/landing/build-ship-monitor-section";
 import { PlatformSection } from "~/components/landing/platform-section";
 import { TemplatesSection } from "~/components/landing/templates-section";
+import { BackgroundGrid } from "~/components/landing/background-grid";
 
 export default function HomePage() {
 	return (
-		<div>
+		<div className="relative">
+			<BackgroundGrid />
+
 			{/* Hero section in light theme */}
-			<div className="framework bg-background pt-20 pb-4 sm:pt-24 sm:pb-8 lg:pt-32 lg:pb-12">
+			<div className="pt-12 pb-4 sm:pt-16 sm:pb-8 lg:pt-12 lg:pb-12 relative">
 				<div className="mx-auto max-w-7xl space-y-12 sm:space-y-24 lg:space-y-32">
 					<HeroSection />
 					<FrameworkShowcase />
