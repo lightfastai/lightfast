@@ -54,7 +54,7 @@ export function FrameworkShowcase() {
 				<h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
 					<span className="text-muted-foreground">Use Lightfast with </span>
 					<span className="text-foreground inline-block min-w-[120px]">
-						{hoveredFramework || frameworks[currentFrameworkIndex]?.name || 'React'}
+						{hoveredFramework ?? frameworks[currentFrameworkIndex]?.name ?? 'React'}
 					</span>
 				</h2>
 			</div>
@@ -83,7 +83,7 @@ export function FrameworkShowcase() {
 								key={index}
 								className="flex-shrink-0 px-6 lg:px-8 py-1"
 								onMouseEnter={() =>
-									setHoveredFramework(frameworks[originalIndex]?.name || null)
+									setHoveredFramework(frameworks[originalIndex]?.name ?? null)
 								}
 								onMouseLeave={() => setHoveredFramework(null)}
 							>

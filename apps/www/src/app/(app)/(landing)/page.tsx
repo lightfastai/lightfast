@@ -3,7 +3,7 @@ import { HeroSection } from "~/components/landing/hero-section";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
 // import { BuildShipMonitorSection } from "~/components/landing/build-ship-monitor-section";
 import { PlatformSection } from "~/components/landing/platform-section";
-import { TemplatesSection } from "~/components/landing/templates-section";
+// import { TemplatesSection } from "~/components/landing/templates-section";
 import { BackgroundGrid } from "~/components/landing/background-grid";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";

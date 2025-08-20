@@ -24,7 +24,7 @@ export class MessageReader {
 		const key = getMessageKey(sessionId);
 
 		// Use JSON.GET to retrieve the messages
-		const data = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const data = await this.redis.json.get(key, "$");
 
 		if (!data || data.length === 0 || !data[0]) {
 			return [];
@@ -46,7 +46,7 @@ export class MessageReader {
 	 */
 	async getResourceId(sessionId: string): Promise<string | null> {
 		const key = getMessageKey(sessionId);
-		const data = await this.redis.json.get(key, "$.resourceId") as string[] | null;
+		const data = await this.redis.json.get(key, "$.resourceId");
 		return data?.[0] || null;
 	}
 
@@ -55,7 +55,7 @@ export class MessageReader {
 	 */
 	async getSessionData(sessionId: string): Promise<LightfastDBMessage | null> {
 		const key = getMessageKey(sessionId);
-		const data = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const data = await this.redis.json.get(key, "$");
 		return data?.[0] || null;
 	}
 

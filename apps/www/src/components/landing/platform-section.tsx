@@ -5,7 +5,7 @@ import { Shield, Cpu, Workflow, Users, Zap, Code } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	CodeBlock,
-	CodeBlockCopyButton,
+	// CodeBlockCopyButton,
 } from "@repo/ui/components/ai-elements/code-block";
 
 const features = [

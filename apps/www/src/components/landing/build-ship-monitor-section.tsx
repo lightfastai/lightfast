@@ -7,10 +7,10 @@ interface SectionContent {
 	label: string;
 	title: string;
 	description: string;
-	features: Array<{
+	features: {
 		title: string;
 		description: string;
-	}>;
+	}[];
 }
 
 const sections: SectionContent[] = [

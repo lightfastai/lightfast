@@ -1,4 +1,4 @@
-export type Events = {
+export interface Events {
   "apps-chat/generate-title": {
     data: {
       sessionId: string;
@@ -6,4 +6,4 @@ export type Events = {
       firstMessage: string;
     };
   };
-};
+}
