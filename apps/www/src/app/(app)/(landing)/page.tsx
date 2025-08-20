@@ -182,10 +182,8 @@ export default function HomePage() {
 				</div>
 			</div>
 
-			{/* Build, Ship, Monitor section */}
-			<div className="mt-20 sm:mt-24 lg:mt-32">
-				<BuildShipMonitorSection />
-			</div>
+			{/* Build, Ship, Monitor section - full width */}
+			<BuildShipMonitorSection />
 
 			<div className="mt-20 sm:mt-24 lg:mt-32">
 				<div className="mx-auto max-w-7xl space-y-20 sm:space-y-24 lg:space-y-32">
