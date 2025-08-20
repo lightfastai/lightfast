@@ -1,4 +1,4 @@
-import { Markdown } from "@repo/ui/components/markdown";
+import { Response } from "@repo/ui/components/ai-elements/response";
 
 import { privacyContent } from "~/content/legal/privacy";
 import { termsContent } from "~/content/legal/terms";
@@ -13,5 +13,5 @@ const content = {
 } as const;
 
 export function LegalContent({ type }: LegalContentProps) {
-  return <Markdown>{content[type]}</Markdown>;
+  return <Response>{content[type]}</Response>;
 }
