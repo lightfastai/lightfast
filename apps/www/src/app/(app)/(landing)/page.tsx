@@ -6,6 +6,7 @@ import { PlatformSection } from "~/components/landing/platform-section";
 import { TemplatesSection } from "~/components/landing/templates-section";
 import { BackgroundGrid } from "~/components/landing/background-grid";
 import { Button } from "@repo/ui/components/ui/button";
+import Link from "next/link";
 
 export default function HomePage() {
 	return (
@@ -51,16 +52,16 @@ export default function HomePage() {
 				</div>
 			</div>
 
-			{/* Evals section */}
-			<div className="dark bg-background py-20 sm:py-24 lg:py-32">
+			{/* Why Cloud Infrastructure section */}
+			<div className="dark bg-background py-20 sm:py-24 lg:pt-32 lg:pb-56">
 				<div className="mx-auto max-w-7xl">
 					<div className="space-y-12">
 						<div className="space-y-6">
 							<div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
-								<span>Why Run Evals?</span>
+								<span>Why Cloud Infrastructure?</span>
 							</div>
 							<h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-								Agents fail in unpredictable ways
+								Building agent infrastructure is complex
 							</h2>
 						</div>
 
@@ -70,26 +71,30 @@ export default function HomePage() {
 								<div className="rounded-lg border bg-card p-6 space-y-4">
 									<div className="flex items-center gap-4">
 										<div className="font-mono text-sm bg-muted text-foreground px-3 py-1.5 rounded">
-											AI IN YOUR APP
+											DIY INFRASTRUCTURE
 										</div>
 										<div className="text-muted-foreground">→</div>
 										<div className="space-y-2">
 											<div className="text-sm font-medium text-foreground">
-												SCORES
+												CHALLENGES
 											</div>
 											<div className="space-y-1 text-sm">
 												<div className="flex items-center gap-2">
-													<span className="text-green-500">✓</span>
-													<span className="text-foreground">98% Toxicity</span>
-												</div>
-												<div className="flex items-center gap-2">
-													<span className="text-green-500">✓</span>
-													<span className="text-foreground">83% Accuracy</span>
+													<span className="text-red-500">✗</span>
+													<span className="text-foreground">
+														Resource leaks
+													</span>
 												</div>
 												<div className="flex items-center gap-2">
 													<span className="text-red-500">✗</span>
 													<span className="text-foreground">
-														74% Hallucination
+														Scaling issues
+													</span>
+												</div>
+												<div className="flex items-center gap-2">
+													<span className="text-red-500">✗</span>
+													<span className="text-foreground">
+														Security vulnerabilities
 													</span>
 												</div>
 											</div>
@@ -101,31 +106,31 @@ export default function HomePage() {
 									<div className="grid grid-cols-3 gap-4">
 										<div className="space-y-2">
 											<div className="flex items-center gap-2">
-												<span className="text-green-500">✓</span>
+												<span className="text-orange-500">!</span>
 												<span className="text-xs font-mono text-foreground">
-													PROMPT A
+													SANDBOX
 												</span>
 											</div>
 											<div className="h-2 bg-muted rounded" />
-											<div className="h-2 bg-muted rounded w-4/5" />
+											<div className="h-2 bg-red-500/20 rounded w-4/5" />
 											<div className="h-2 bg-muted rounded w-3/5" />
 										</div>
 										<div className="space-y-2">
 											<div className="flex items-center gap-2">
 												<span className="text-red-500">✗</span>
 												<span className="text-xs font-mono text-foreground">
-													PROMPT B
+													BROWSER
 												</span>
 											</div>
 											<div className="h-2 bg-muted rounded" />
-											<div className="h-2 bg-muted rounded w-5/6" />
-											<div className="h-2 bg-muted rounded w-2/3" />
+											<div className="h-2 bg-red-500/20 rounded w-5/6" />
+											<div className="h-2 bg-red-500/20 rounded w-2/3" />
 										</div>
 										<div className="space-y-2">
 											<div className="flex items-center gap-2">
 												<span className="text-green-500">✓</span>
 												<span className="text-xs font-mono text-foreground">
-													PROMPT C
+													API
 												</span>
 											</div>
 											<div className="h-2 bg-muted rounded" />
@@ -135,45 +140,49 @@ export default function HomePage() {
 									</div>
 								</div>
 
-								<Button
-									variant="outline"
-									size="sm"
-									className="w-fit text-foreground"
-								>
-									Get started with evals →
-								</Button>
+								<Link href="http://localhost:4103">
+									<Button
+										variant="outline"
+										size="sm"
+										className="w-fit text-foreground"
+									>
+										Join our waitlist →
+									</Button>
+								</Link>
 							</div>
 
 							{/* Right side - Questions and explanations */}
 							<div className="space-y-8">
 								<div className="space-y-3">
 									<h3 className="text-xl font-semibold text-foreground">
-										How do you know your AI feature works?
+										Are your sandboxes leaking resources?
 									</h3>
 									<p className="text-muted-foreground">
-										Evals test your AI with real data and score the results. You
-										can determine whether changes improve or hurt performance.
+										Unmanaged containers and browser sessions accumulate costs.
+										Our platform automatically cleans up resources and pools
+										connections for efficiency.
 									</p>
 								</div>
 
 								<div className="space-y-3">
 									<h3 className="text-xl font-semibold text-foreground">
-										Are bad responses reaching users?
+										Can you handle sudden traffic spikes?
 									</h3>
 									<p className="text-muted-foreground">
-										Production monitoring tracks live model responses and alerts
-										you when quality drops or incorrect outputs increase.
+										Agent workloads are unpredictable. We provide auto-scaling
+										infrastructure that handles bursts while maintaining
+										consistent performance.
 									</p>
 								</div>
 
 								<div className="space-y-3">
 									<h3 className="text-xl font-semibold text-foreground">
-										Can your team improve quality without guesswork?
+										How do you secure agent execution?
 									</h3>
 									<p className="text-muted-foreground">
-										Side-by-side diffs allow you to compare the scores of
-										different prompts and models, and see exactly why one
-										version performs better than another.
+										Agents need isolated environments with proper sandboxing.
+										Our infrastructure provides secure execution with built-in
+										safety rails and monitoring.
 									</p>
 								</div>
 							</div>
@@ -183,13 +192,15 @@ export default function HomePage() {
 			</div>
 
 			{/* Build, Ship, Monitor section - full width */}
-			<BuildShipMonitorSection />
+			<div className="bg-background">
+				<BuildShipMonitorSection />
+			</div>
 
-			<div className="mt-20 sm:mt-24 lg:mt-32">
+			{/* <div className="mt-20 sm:mt-24 lg:mt-32">
 				<div className="mx-auto max-w-7xl space-y-20 sm:space-y-24 lg:space-y-32">
 					<TemplatesSection />
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 }
