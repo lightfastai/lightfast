@@ -1,6 +1,7 @@
 import React from "react";
 import { HeroSection } from "~/components/landing/hero-section";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
+import { BuildShipMonitorSection } from "~/components/landing/build-ship-monitor-section";
 import { PlatformSection } from "~/components/landing/platform-section";
 import { TemplatesSection } from "~/components/landing/templates-section";
 
@@ -20,6 +21,11 @@ export default function HomePage() {
 				<div className="mx-auto max-w-7xl">
 					<PlatformSection />
 				</div>
+			</div>
+
+			{/* Build, Ship, Monitor section */}
+			<div className="mt-20 sm:mt-24 lg:mt-32">
+				<BuildShipMonitorSection />
 			</div>
 
 			<div className="mt-20 sm:mt-24 lg:mt-32">
