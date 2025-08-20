@@ -7,8 +7,11 @@ import { PlatformSection } from "~/components/landing/platform-section";
 import { BackgroundGrid } from "~/components/landing/background-grid";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
+import { getAppUrl } from "@repo/url-utils";
 
 export default function HomePage() {
+	const cloudUrl = getAppUrl("cloud");
+	
 	return (
 		<div className="relative">
 			<BackgroundGrid />
@@ -140,7 +143,7 @@ export default function HomePage() {
 									</div>
 								</div>
 
-								<Link href="http://localhost:4103">
+								<Link href={cloudUrl}>
 									<Button
 										variant="outline"
 										size="sm"
