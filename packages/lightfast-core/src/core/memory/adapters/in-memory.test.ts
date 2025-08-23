@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryMemory } from "./in-memory";
+import { createUserMessage, createAssistantMessage, getMessageText } from "../../test-utils/message-helpers";
 
 interface TestContext {
 	userId: string;
@@ -50,16 +51,8 @@ describe("InMemoryMemory", () => {
 	describe("message management", () => {
 		it("should append and retrieve messages", async () => {
 			const sessionId = "test-session-1";
-			const message1: UIMessage = {
-				id: "msg-1",
-				role: "user",
-				content: "Hello",
-			};
-			const message2: UIMessage = {
-				id: "msg-2",
-				role: "assistant",
-				content: "Hi there!",
-			};
+			const message1 = createUserMessage("msg-1", "Hello");
+			const message2 = createAssistantMessage("msg-2", "Hi there!");
 
 			await memory.appendMessage({ sessionId, message: message1 });
 			await memory.appendMessage({ sessionId, message: message2 });
@@ -79,16 +72,8 @@ describe("InMemoryMemory", () => {
 			const session1 = "session-1";
 			const session2 = "session-2";
 
-			const message1: UIMessage = {
-				id: "msg-1",
-				role: "user",
-				content: "Session 1 message",
-			};
-			const message2: UIMessage = {
-				id: "msg-2",
-				role: "user",
-				content: "Session 2 message",
-			};
+			const message1 = createUserMessage("msg-1", "Session 1 message");
+			const message2 = createUserMessage("msg-2", "Session 2 message");
 
 			await memory.appendMessage({ sessionId: session1, message: message1 });
 			await memory.appendMessage({ sessionId: session2, message: message2 });
@@ -98,17 +83,17 @@ describe("InMemoryMemory", () => {
 
 			expect(messages1).toHaveLength(1);
 			expect(messages2).toHaveLength(1);
-			expect(messages1[0].content).toBe("Session 1 message");
-			expect(messages2[0].content).toBe("Session 2 message");
+			expect(getMessageText(messages1[0]!)).toBe("Session 1 message");
+			expect(getMessageText(messages2[0]!)).toBe("Session 2 message");
 		});
 
 		it("should preserve message order", async () => {
 			const sessionId = "order-test";
 			const messages: UIMessage[] = [
-				{ id: "1", role: "user", content: "First" },
-				{ id: "2", role: "assistant", content: "Second" },
-				{ id: "3", role: "user", content: "Third" },
-				{ id: "4", role: "assistant", content: "Fourth" },
+				createUserMessage("1", "First"),
+				createAssistantMessage("2", "Second"),
+				createUserMessage("3", "Third"),
+				createAssistantMessage("4", "Fourth"),
 			];
 
 			for (const message of messages) {
@@ -116,7 +101,7 @@ describe("InMemoryMemory", () => {
 			}
 
 			const retrieved = await memory.getMessages(sessionId);
-			expect(retrieved.map((m) => m.content)).toEqual([
+			expect(retrieved.map((m) => getMessageText(m))).toEqual([
 				"First",
 				"Second",
 				"Third",
@@ -188,10 +173,10 @@ describe("InMemoryMemory", () => {
 
 			// Add conversation messages
 			const messages: UIMessage[] = [
-				{ id: "1", role: "user", content: "What is 2+2?" },
-				{ id: "2", role: "assistant", content: "2+2 equals 4." },
-				{ id: "3", role: "user", content: "Thanks!" },
-				{ id: "4", role: "assistant", content: "You're welcome!" },
+				createUserMessage("1", "What is 2+2?"),
+				createAssistantMessage("2", "2+2 equals 4."),
+				createUserMessage("3", "Thanks!"),
+				createAssistantMessage("4", "You're welcome!"),
 			];
 
 			for (const message of messages) {

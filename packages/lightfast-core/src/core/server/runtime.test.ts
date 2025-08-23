@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UIMessage } from "ai";
 import { streamText } from "ai";
+import { createUserMessage, createAssistantMessage } from "../test-utils/message-helpers";
 import {
 	NoUserMessageError,
 	SessionForbiddenError,
@@ -87,17 +88,9 @@ describe("Runtime Functions", () => {
 	});
 
 	describe("processMessage", () => {
-		const validUserMessage: UIMessage = {
-			id: "msg1",
-			role: "user",
-			content: "Hello",
-		};
+		const validUserMessage = createUserMessage("msg1", "Hello");
 
-		const invalidAssistantMessage: UIMessage = {
-			id: "msg2",
-			role: "assistant",
-			content: "Hi there",
-		};
+		const invalidAssistantMessage = createAssistantMessage("msg2", "Hi there");
 
 		it("should reject non-user messages", async () => {
 			const result = await processMessage(
@@ -178,11 +171,7 @@ describe("Runtime Functions", () => {
 	});
 
 	describe("streamChat", () => {
-		const validUserMessage: UIMessage = {
-			id: "msg1",
-			role: "user",
-			content: "Hello",
-		};
+		const validUserMessage = createUserMessage("msg1", "Hello");
 
 		const mockStreamResult = {
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
@@ -199,7 +188,7 @@ describe("Runtime Functions", () => {
 			// Mock buildStreamParams to return parameters for streamText
 			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
 				model: {},
-				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+				messages: [createUserMessage("msg1", "Hello")],
 			});
 			// Mock streamText to return the stream result
 			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
@@ -420,7 +409,7 @@ describe("Runtime Functions", () => {
 			await streamChat({
 				agent: mockAgent,
 				sessionId: "session1",
-				message: { id: "msg1", role: "user", content: "Hello" },
+				message: createUserMessage("msg1", "Hello"),
 				memory: mockMemory,
 				resourceId: "resource1",
 				systemContext: { sessionId: "session1", resourceId: "resource1" },
@@ -441,14 +430,14 @@ describe("Runtime Functions", () => {
 			// Mock buildStreamParams to succeed but streamText to fail
 			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
 				model: {},
-				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+				messages: [createUserMessage("msg1", "Hello")],
 			});
 			vi.mocked(streamText).mockRejectedValue(streamingError);
 
 			const result = await streamChat({
 				agent: mockAgent,
 				sessionId: "session1",
-				message: { id: "msg1", role: "user", content: "Hello" },
+				message: createUserMessage("msg1", "Hello"),
 				memory: mockMemory,
 				resourceId: "resource1",
 				systemContext: { sessionId: "session1", resourceId: "resource1" },
@@ -462,11 +451,7 @@ describe("Runtime Functions", () => {
 	});
 
 	describe("Guard-Based Failure Handling", () => {
-		const validUserMessage: UIMessage = {
-			id: "msg1",
-			role: "user",
-			content: "Hello",
-		};
+		const validUserMessage = createUserMessage("msg1", "Hello");
 
 		const mockStreamResult = {
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
@@ -481,7 +466,7 @@ describe("Runtime Functions", () => {
 			mockMemory.getMessages = vi.fn().mockResolvedValue([validUserMessage]);
 			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
 				model: {},
-				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+				messages: [createUserMessage("msg1", "Hello")],
 			});
 			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
 		});
@@ -611,11 +596,7 @@ describe("Runtime Functions", () => {
 	});
 
 	describe("Memory Failure Edge Cases During Streaming", () => {
-		const validUserMessage: UIMessage = {
-			id: "msg1",
-			role: "user",
-			content: "Hello",
-		};
+		const validUserMessage = createUserMessage("msg1", "Hello");
 
 		const mockStreamResult = {
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
@@ -630,7 +611,7 @@ describe("Runtime Functions", () => {
 			mockMemory.getMessages = vi.fn().mockResolvedValue([validUserMessage]);
 			mockAgent.buildStreamParams = vi.fn().mockReturnValue({
 				model: {},
-				messages: [{ id: "msg1", role: "user", content: "Hello" }],
+				messages: [createUserMessage("msg1", "Hello")],
 			});
 			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
 		});

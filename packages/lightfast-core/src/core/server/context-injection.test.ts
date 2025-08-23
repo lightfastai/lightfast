@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { z } from "zod";
 import type { UIMessage } from "ai";
+import { createUserMessage } from "../test-utils/message-helpers";
 import { createAgent } from "../primitives/agent";
 import { createTool } from "../primitives/tool";
 import { InMemoryMemory } from "../memory/adapters/in-memory";
@@ -106,11 +107,7 @@ describe("Context Injection from Request to Tools", () => {
 		};
 
 		// Create a test message
-		const userMessage: UIMessage = {
-			id: "msg-1",
-			role: "user",
-			content: "Test message",
-		};
+		const userMessage = createUserMessage("msg-1", "Test message");
 
 		// Call streamChat which should merge contexts and pass to tools
 		await streamChat({
@@ -188,7 +185,7 @@ describe("Context Injection from Request to Tools", () => {
 		await streamChat({
 			agent,
 			sessionId: "system-session",
-			message: { id: "1", role: "user", content: "test" } as UIMessage,
+			message: createUserMessage("1", "test"),
 			memory,
 			resourceId: "system-resource",
 			systemContext,
@@ -261,7 +258,7 @@ describe("Context Injection from Request to Tools", () => {
 		await streamChat({
 			agent,
 			sessionId: "dynamic-session",
-			message: { id: "1", role: "user", content: "test" } as UIMessage,
+			message: createUserMessage("1", "test"),
 			memory,
 			resourceId: "dynamic-resource",
 			systemContext: {
@@ -318,7 +315,7 @@ describe("Context Injection from Request to Tools", () => {
 		await streamChat({
 			agent,
 			sessionId: "session",
-			message: { id: "1", role: "user", content: "test" } as UIMessage,
+			message: createUserMessage("1", "test"),
 			memory,
 			resourceId: "resource",
 			systemContext: { sessionId: "session", resourceId: "resource" },
@@ -389,7 +386,7 @@ describe("Context Injection from Request to Tools", () => {
 		await streamChat({
 			agent,
 			sessionId: "chain-session",
-			message: { id: "1", role: "user", content: "test" } as UIMessage,
+			message: createUserMessage("1", "test"),
 			memory,
 			resourceId: "chain-resource",
 			systemContext: { sessionId: "chain-session", resourceId: "chain-resource" },
