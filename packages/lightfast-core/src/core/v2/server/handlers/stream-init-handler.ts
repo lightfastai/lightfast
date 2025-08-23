@@ -75,12 +75,12 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
-		redis.get(sessionKey),
-		redis.json.get(messageKey, "$"),
+		redis.get(sessionKey) as Promise<SessionState | null>,
+		redis.json.get(messageKey, "$") as Promise<LightfastDBMessage[] | null>,
 	]);
 
 	// Determine the step index
-	const stepIndex = existingState ? existingState.stepIndex + 1 : 0;
+	const stepIndex = existingState?.stepIndex ? existingState.stepIndex + 1 : 0;
 
 	console.log(
 		existingState
@@ -99,7 +99,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 	const writePipeline = redis.pipeline();
 
 	// Write user message to storage
-	if (!existingMessages || existingMessages.length === 0) {
+	if (!existingMessages || !Array.isArray(existingMessages) || existingMessages.length === 0) {
 		// Create new message storage
 		const storage: LightfastDBMessage = {
 			sessionId,

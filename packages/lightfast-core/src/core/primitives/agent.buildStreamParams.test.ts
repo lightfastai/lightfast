@@ -1,6 +1,7 @@
 import type { ToolSet, UIMessage } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createUserMessage, createSystemMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
 import { InMemoryMemory } from "../memory/adapters/in-memory";
 import { 
 	AgentConfigurationError,
@@ -37,8 +38,11 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 		// Default successful mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
-		vi.mocked(convertToModelMessages).mockImplementation((messages) =>
-			messages.map((msg) => ({ role: msg.role, content: msg.content })),
+		vi.mocked(convertToModelMessages).mockImplementation((messages: UIMessage[]) =>
+			messages.map((msg) => ({ 
+				role: msg.role, 
+				content: getMessageText(msg) || "" 
+			})),
 		);
 	});
 
@@ -57,6 +61,8 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			});
 
 			const systemContext = {
+				sessionId: "test-session",
+				resourceId: "test-resource",
 				sharedKey: "system-value",
 				systemOnly: "system-data",
 			};
@@ -68,7 +74,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "test-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
 				systemContext,
@@ -94,10 +100,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "test-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -110,10 +116,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		it("should use cache provider for system and message caching", () => {
 			const mockCache = {
 				applySystemCaching: vi.fn().mockReturnValue([
-					{ role: "system", content: "Cached system message" }
+					createSystemMessage("cached-system", "Cached system message")
 				]),
 				applyMessageCaching: vi.fn().mockReturnValue([
-					{ role: "user", content: "Cached user message" }
+					createUserMessage("cached-1", "Cached user message")
 				]),
 			};
 
@@ -128,17 +134,17 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "cached-session",
-				messages: [{ id: "1", role: "user", content: "Original message" }],
+				messages: [createUserMessage("1", "Original message")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
 			expect(mockCache.applySystemCaching).toHaveBeenCalledWith("Original system message");
 			expect(mockCache.applyMessageCaching).toHaveBeenCalled();
 			expect(streamParams.messages).toHaveLength(2); // system + user message
-			expect(streamParams.messages[0]).toEqual({ role: "system", content: "Cached system message" });
+			expect(streamParams.messages[0]).toEqual(createSystemMessage("cached-system", "Cached system message"));
 		});
 
 		it("should handle cache provider errors with CacheOperationError", () => {
@@ -161,10 +167,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "cache-error-session",
-					messages: [{ id: "1", role: "user", content: "test" }],
+					messages: [createUserMessage("1", "test")],
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(CacheOperationError);
@@ -181,10 +187,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "no-cache-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -213,10 +219,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "conversion-error-session",
-					messages: [{ id: "1", role: "user", content: "test" }],
+					messages: [createUserMessage("1", "test")],
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(MessageConversionError);
@@ -236,12 +242,12 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			const streamParams = agent.buildStreamParams({
 				sessionId: "system-test-session",
 				messages: [
-					{ id: "1", role: "user", content: "Hello" },
-					{ id: "2", role: "assistant", content: "Hi there" }
+					createUserMessage("1", "Hello"),
+					createAssistantMessage("2", "Hi there")
 				],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -249,8 +255,8 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				role: "system",
 				content: "You are a test assistant"
 			});
-			expect(streamParams.messages[1]).toEqual({ role: "user", content: "Hello" });
-			expect(streamParams.messages[2]).toEqual({ role: "assistant", content: "Hi there" });
+			expect(getMessageText(streamParams.messages[1])).toEqual("Hello");
+			expect(getMessageText(streamParams.messages[2])).toEqual("Hi there");
 		});
 	});
 
@@ -292,10 +298,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "params-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -332,10 +338,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "exclusion-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -375,10 +381,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "function-tools-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [createUserMessage("1", "test")],
 				memory,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -401,10 +407,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "null-tools-session",
-					messages: [{ id: "1", role: "user", content: "test" }],
+					messages: [createUserMessage("1", "test")],
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow("Tools resolution returned null, undefined, or non-object value");
@@ -438,10 +444,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "mixed-tools-session",
-					messages: [{ id: "1", role: "user", content: "test" }],
+					messages: [createUserMessage("1", "test")],
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow("Failed to resolve tool factory 'badTool'");
@@ -464,7 +470,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 					messages: null as any,
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(NoMessagesError);
@@ -485,7 +491,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 					messages: undefined as any,
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(NoMessagesError);
@@ -503,10 +509,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "no-model-session",
-					messages: [{ id: "1", role: "user", content: "test" }],
+					messages: [createUserMessage("1", "test")],
 					memory,
 					resourceId: "test-resource",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(AgentConfigurationError);

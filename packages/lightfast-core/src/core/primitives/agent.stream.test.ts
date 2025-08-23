@@ -1,5 +1,6 @@
 import type { ToolSet, UIMessage } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createUserMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
 import { z } from "zod";
 import { InMemoryMemory } from "../memory/adapters/in-memory";
 import { 
@@ -42,8 +43,11 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 		// Default mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
-		vi.mocked(convertToModelMessages).mockImplementation((messages) =>
-			messages.map((msg) => ({ role: msg.role, content: msg.content })),
+		vi.mocked(convertToModelMessages).mockImplementation((messages: UIMessage[]) =>
+			messages.map((msg) => ({ 
+				role: msg.role, 
+				content: getMessageText(msg) || "" 
+			})),
 		);
 	});
 
@@ -75,10 +79,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			// even when configured with potentially long-running tools
 			const streamParams = agent.buildStreamParams({
 				sessionId: "cancellation-session",
-				messages: [{ id: "1", role: "user", content: "Start a long task" }],
+				messages: [createUserMessage("1", "Start a long task")],
 				memory,
 				resourceId: "user-123",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -103,10 +107,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 			const streamParams = agent.buildStreamParams({
 				sessionId: "corruption-session",
-				messages: [{ id: "1", role: "user", content: "Say hello" }],
+				messages: [createUserMessage("1", "Say hello")],
 				memory,
 				resourceId: "user-123",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -128,10 +132,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			const streamParams = Array.from({ length: 5 }, (_, i) =>
 				agent.buildStreamParams({
 					sessionId: `concurrent-session-${i}`,
-					messages: [{ id: "1", role: "user", content: `Message ${i}` }],
+					messages: [createUserMessage("1", `Message ${i}`)],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				}),
 			);
@@ -196,10 +200,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			for (let i = 0; i < 3; i++) {
 				const streamParams = agent.buildStreamParams({
 					sessionId: `stateful-session-${i}`,
-					messages: [{ id: "1", role: "user", content: "Increment counter" }],
+					messages: [createUserMessage("1", "Increment counter")],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 
@@ -224,10 +228,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			expect(() => {
 				errorAgent.buildStreamParams({
 					sessionId: "error-session",
-					messages: [{ id: "1", role: "user", content: "Test message" }],
+					messages: [createUserMessage("1", "Test message")],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(AgentConfigurationError);
@@ -249,10 +253,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			expect(() => {
 				errorAgent.buildStreamParams({
 					sessionId: "error-session",
-					messages: [{ id: "1", role: "user", content: "Test message" }],
+					messages: [createUserMessage("1", "Test message")],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(ContextCreationError);
@@ -328,11 +332,11 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			const streamParams = agent.buildStreamParams({
 				sessionId: "circular-session",
 				messages: [
-					{ id: "1", role: "user", content: "Start circular tool usage" },
+					createUserMessage("1", "Start circular tool usage"),
 				],
 				memory,
 				resourceId: "user-123",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 
@@ -383,11 +387,11 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				const streamParams = agent.buildStreamParams({
 					sessionId: `validation-session-${index}`,
 					messages: [
-						{ id: "1", role: "user", content: "Use tool with invalid input" },
+						createUserMessage("1", "Use tool with invalid input"),
 					],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 
@@ -408,11 +412,9 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			// Create a conversation with many messages
 			const largeMessages: UIMessage[] = Array.from(
 				{ length: 100 },
-				(_, i) => ({
-					id: `msg-${i}`,
-					role: i % 2 === 0 ? "user" : "assistant",
-					content: `Message ${i}`,
-				}),
+				(_, i) => i % 2 === 0
+					? createUserMessage(`msg-${i}`, `Message ${i}`)
+					: createAssistantMessage(`msg-${i}`, `Message ${i}`)
 			);
 
 			// Add all messages to memory
@@ -435,7 +437,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				messages: largeMessages.slice(-2), // Use only the last 2 messages for the immediate request
 				memory: largeMemory,
 				resourceId: "user-123",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 			const endTime = Date.now();
@@ -462,7 +464,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 					messages: [],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(NoMessagesError);
@@ -488,10 +490,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			expect(() => {
 				agent.buildStreamParams({
 					sessionId: "factory-error-session",
-					messages: [{ id: "1", role: "user", content: "Test" }],
+					messages: [createUserMessage("1", "Test")],
 					memory,
 					resourceId: "user-123",
-					systemContext: {},
+					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
 			}).toThrow(ToolExecutionError);
