@@ -14,7 +14,7 @@ export function HeroSection() {
 
 	const copyToClipboard = async () => {
 		try {
-			await navigator.clipboard.writeText("npm i lightfast");
+			await navigator.clipboard.writeText("npm i @lightfastai/core");
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
 		} catch (err) {
@@ -57,7 +57,7 @@ export function HeroSection() {
 							className="font-mono"
 						>
 							<span className="text-muted-foreground mr-1">$</span>
-							npm i lightfast
+							npm i @lightfastai/core
 							{copied ? (
 								<CheckIcon className="ml-2 h-4 w-4 text-green-600" />
 							) : (
