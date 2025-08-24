@@ -7,7 +7,7 @@
 
 const http = require('http');
 const url = require('url');
-const { fetchRequestHandler } = require('@lightfastai/core/server/adapters/fetch');
+const { fetchRequestHandler } = require('lightfast/server/adapters/fetch');
 const {
   createChatAgent,
   createMemory,

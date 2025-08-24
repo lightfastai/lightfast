@@ -47,15 +47,15 @@ jobs:
               exit 1
             fi
             
-            # Check if it mentions @lightfastai/core
-            if ! grep -q "@lightfastai/core" "$file"; then
-              echo "::error::Changeset $file must include @lightfastai/core package"
+            # Check if it mentions lightfast
+            if ! grep -q "lightfast" "$file"; then
+              echo "::error::Changeset $file must include lightfast package"
               exit 1
             fi
             
             # Check for valid version types
-            if ! grep -E "^\"@lightfastai/core\": (patch|minor|major)$" "$file"; then
-              echo "::error::Changeset $file must use patch, minor, or major for @lightfastai/core"
+            if ! grep -E "^\"lightfast\": (patch|minor|major)$" "$file"; then
+              echo "::error::Changeset $file must use patch, minor, or major for lightfast"
               exit 1
             fi
             

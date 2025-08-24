@@ -16,7 +16,7 @@
 		"@clerk/elements": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@hookform/resolvers": "^3.10.0",
-		"@repo/lightfast-config": "workspace:*",
+		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",
 		"@repo/url-utils": "workspace:*",
 		"@t3-oss/env-nextjs": "^0.12.0",

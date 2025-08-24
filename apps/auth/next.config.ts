@@ -16,7 +16,7 @@ let config: NextConfig = withBetterStack(
 		reactStrictMode: true,
 		transpilePackages: [
 			"@repo/ui",
-			"@repo/lightfast-config",
+			"@repo/site-config",
 			"@repo/url-utils",
 			"@vendor/observability",
 			"@vendor/next",

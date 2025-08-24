@@ -36,9 +36,9 @@ The examples use the OpenAI `gpt-4o` model. Ensure that the OpenAI API key is se
 First, create your agent and memory configuration:
 
 ```typescript
-import { createAgent } from '@lightfastai/core/agent';
-import { createTool } from '@lightfastai/core/tool';
-import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { createAgent } from 'lightfast/agent';
+import { createTool } from 'lightfast/tool';
+import { RedisMemory } from 'lightfast/memory/adapters/redis';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -79,7 +79,7 @@ Hono's native Web API support makes integration extremely simple:
 
 ```typescript
 import { Hono } from 'hono';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 const app = new Hono();
 
@@ -114,7 +114,7 @@ import { cors } from 'hono/cors';
 import { rateLimiter } from 'hono/rate-limiter';
 import { logger } from 'hono/logger';
 import { jwt } from 'hono/jwt';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 type Bindings = {
   REDIS_URL: string;

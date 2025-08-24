@@ -7,7 +7,7 @@ import type {
   CreateEmailOptions,
   CreateEmailResponseSuccess,
 } from "@vendor/email/types";
-import { emailConfig } from "@repo/lightfast-config";
+import { emailConfig } from "@repo/site-config";
 import { createEmailClient } from "@vendor/email";
 import { env } from "@vendor/email/env";
 

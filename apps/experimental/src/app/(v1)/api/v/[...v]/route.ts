@@ -1,13 +1,13 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
-import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
-import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
-import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfastai/core/cache";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
+import { AnthropicProviderCache, ClineConversationStrategy } from "lightfast/cache";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, currentSpan, initLogger, traced } from "braintrust";
-import { getBraintrustConfig, isOtelEnabled } from "@lightfastai/core/v2/braintrust-env";
+import { getBraintrustConfig, isOtelEnabled } from "lightfast/v2/braintrust-env";
 import { A011_SYSTEM_PROMPT } from "@/app/(v1)/ai/agents/a011";
 import {
 	fileDeleteTool,

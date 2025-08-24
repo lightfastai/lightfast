@@ -122,7 +122,7 @@ Create `package.json` based on app type:
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@repo/lightfast-config": "workspace:*",
+    "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/next": "workspace:*",
@@ -279,7 +279,7 @@ let config: NextConfig = withBetterStack(
     reactStrictMode: true,
     transpilePackages: [
       "@repo/ui",
-      "@repo/lightfast-config",
+      "@repo/site-config",
       // Add these only if using auth:
       "@repo/url-utils",
       "@vendor/clerk",
@@ -330,7 +330,7 @@ let config: NextConfig = withBetterStack(
     reactStrictMode: true,
     transpilePackages: [
       "@repo/ui",
-      "@repo/lightfast-config",
+      "@repo/site-config",
       "@vendor/observability",
       "@vendor/next",
     ],
@@ -571,7 +571,7 @@ import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
@@ -658,7 +658,7 @@ import type { Metadata, Viewport } from "next";
 
 import "@repo/ui/globals.css";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
@@ -910,7 +910,7 @@ Create `src/app/manifest.ts`:
 ```typescript
 import type { MetadataRoute } from "next";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {

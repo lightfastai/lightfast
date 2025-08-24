@@ -34,7 +34,7 @@ interface AgentOptions {
 The `createAgent` function is the primary way to instantiate agents:
 
 ```typescript
-import { createAgent } from "@lightfastai/core/agent";
+import { createAgent } from "lightfast/agent";
 import { gateway } from "@ai-sdk/gateway";
 
 const agent = createAgent({
@@ -434,7 +434,7 @@ maxTokens: 2000,
 For Anthropic models, use caching to reduce latency and costs:
 
 ```typescript
-import { AnthropicProviderCache, ClineConversationStrategy } from "@lightfastai/core/agent/primitives/cache";
+import { AnthropicProviderCache, ClineConversationStrategy } from "lightfast/agent/primitives/cache";
 
 cache: new AnthropicProviderCache({
   strategy: new ClineConversationStrategy({

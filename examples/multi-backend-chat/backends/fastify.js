@@ -6,7 +6,7 @@
  */
 
 const fastify = require('fastify');
-const { fetchRequestHandler } = require('@lightfastai/core/server/adapters/fetch');
+const { fetchRequestHandler } = require('lightfast/server/adapters/fetch');
 const {
   createChatAgent,
   createMemory,

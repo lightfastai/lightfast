@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";

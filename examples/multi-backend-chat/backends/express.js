@@ -7,7 +7,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const { fetchRequestHandler } = require('@lightfastai/core/server/adapters/fetch');
+const { fetchRequestHandler } = require('lightfast/server/adapters/fetch');
 const {
   createChatAgent,
   createMemory,

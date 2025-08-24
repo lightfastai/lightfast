@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { emailConfig, siteConfig } from "@repo/lightfast-config";
+import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
 import { getAppUrl } from "@repo/url-utils";
 

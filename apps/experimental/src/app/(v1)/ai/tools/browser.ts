@@ -1,12 +1,12 @@
-import type { RuntimeContext } from "@lightfastai/core/server/adapters/types";
-import { createTool } from "@lightfastai/core/tool";
+import type { RuntimeContext } from "lightfast/server/adapters/types";
+import { createTool } from "lightfast/tool";
 import {
 	StagehandSessionManager,
 	performWebAction,
 	performWebObservation,
 	performWebExtraction,
 	performWebNavigation,
-} from "@lightfast/lightfast-tools/browserbase";
+} from "@repo/ai-tools/browserbase";
 import { currentSpan, wrapTraced } from "braintrust";
 import { z } from "zod";
 import type { AppRuntimeContext } from "@/app/(v1)/ai/types";

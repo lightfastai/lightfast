@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { list } from "@vendor/storage";
 import { auth } from "@clerk/nextjs/server";
 import { env } from "~/env";
-import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
 
 interface ScreenshotBlob {
   url: string;

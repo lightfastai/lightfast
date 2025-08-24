@@ -1,4 +1,4 @@
-import type { Memory } from "@lightfastai/core/memory";
+import type { Memory } from "lightfast/memory";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatFetchContext } from "~/ai/types";
 import { createCaller } from "~/trpc/server";

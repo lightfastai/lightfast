@@ -1,4 +1,4 @@
-import type { RuntimeContext } from "@lightfastai/core/agent/server/adapters/types";
+import type { RuntimeContext } from "lightfast/server/adapters/types";
 import type { InferUITool, UIMessage } from "ai";
 import type {
   stagehandNavigateTool,
