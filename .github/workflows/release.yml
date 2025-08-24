@@ -46,11 +46,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build lightfast
-        run: pnpm --filter lightfast build
+      - name: Build packages
+        run: |
+          pnpm --filter lightfast build
+          pnpm --filter @lightfastai/cli build
 
       - name: Run tests (if any)
-        run: pnpm --filter lightfast test || echo "No tests configured"
+        run: |
+          pnpm --filter lightfast test || echo "No tests configured"
+          pnpm --filter @lightfastai/cli test || echo "No tests configured"
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
