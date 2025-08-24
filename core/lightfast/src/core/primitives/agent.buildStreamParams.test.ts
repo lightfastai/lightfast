@@ -1,4 +1,4 @@
-import type { ToolSet, UIMessage } from "ai";
+import type { LanguageModel, UIMessage, ToolSet } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createUserMessage, createSystemMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
@@ -13,6 +13,7 @@ import {
 } from "../server/errors";
 import { createAgent } from "./agent";
 import { createTool } from "./tool";
+import type { ToolFactorySet } from "./tool";
 
 // Mock the AI SDK
 vi.mock("ai", async () => {
@@ -29,6 +30,25 @@ interface TestRuntimeContext {
 	agentData?: string;
 }
 
+// Mock language model for testing
+const mockModel: LanguageModel = {
+	specificationVersion: "v1",
+	provider: "test",
+	modelId: "test-model",
+	supportedUrls: [],
+	doGenerate: vi.fn(),
+	doStream: vi.fn(),
+} as unknown as LanguageModel;
+
+// Create a dummy tool factory for tests that don't care about tools
+const createDummyTools = (): ToolFactorySet<TestRuntimeContext> => ({
+	dummyTool: createTool<TestRuntimeContext>({
+		description: "Dummy tool",
+		inputSchema: z.object({ input: z.string() }),
+		execute: async ({ input }) => ({ result: input }),
+	}),
+});
+
 describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 	let memory: InMemoryMemory;
 
@@ -38,21 +58,22 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 		// Default successful mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
-		vi.mocked(convertToModelMessages).mockImplementation((messages: UIMessage[]) =>
-			messages.map((msg) => ({ 
-				role: msg.role, 
-				content: getMessageText(msg) || "" 
-			})),
+		vi.mocked(convertToModelMessages).mockImplementation(
+			(messages: Array<Omit<UIMessage, 'id'>>, options?: { tools?: ToolSet; ignoreIncompleteToolCalls?: boolean }) =>
+				messages.map((msg) => ({ 
+					role: msg.role as "system" | "user" | "assistant", 
+					content: getMessageText(msg as UIMessage) || "" 
+				}))
 		);
 	});
 
 	describe("Context Merging Logic", () => {
 		it("should merge contexts with correct precedence: system < request < agent", () => {
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "context-test-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
-				tools: {},
+				tools: createDummyTools(),
 				createRuntimeContext: ({ sessionId, resourceId }) => ({
 					sessionId,
 					resourceId,
@@ -87,11 +108,11 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		});
 
 		it("should handle empty contexts gracefully", () => {
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "empty-context-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
-				tools: {},
+				tools: createDummyTools(),
 				createRuntimeContext: ({ sessionId, resourceId }) => ({
 					sessionId,
 					resourceId,
@@ -125,11 +146,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const agent = createAgent({
 				name: "cached-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Original system message",
-				tools: {},
+				// No tools or runtime context needed for this test
 				cache: mockCache,
-				createRuntimeContext: () => ({}),
 			});
 
 			const streamParams = agent.buildStreamParams({
@@ -143,8 +163,8 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			expect(mockCache.applySystemCaching).toHaveBeenCalledWith("Original system message");
 			expect(mockCache.applyMessageCaching).toHaveBeenCalled();
-			expect(streamParams.messages).toHaveLength(2); // system + user message
-			expect(streamParams.messages[0]).toEqual(createSystemMessage("cached-system", "Cached system message"));
+			expect(streamParams.messages!).toHaveLength(2); // system + user message
+			expect(streamParams.messages![0]).toEqual(createSystemMessage("cached-system", "Cached system message"));
 		});
 
 		it("should handle cache provider errors with CacheOperationError", () => {
@@ -157,11 +177,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const agent = createAgent({
 				name: "cache-error-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
-				tools: {},
+				// No tools or runtime context needed for this test
 				cache: mockCache,
-				createRuntimeContext: () => ({}),
 			});
 
 			expect(() => {
@@ -179,10 +198,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		it("should use simple system message when no cache provider", () => {
 			const agent = createAgent({
 				name: "no-cache-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Simple system message",
-				tools: {},
-				createRuntimeContext: () => ({}),
+				// No tools or runtime context - simplest agent
 			});
 
 			const streamParams = agent.buildStreamParams({
@@ -194,7 +212,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				requestContext: {},
 			});
 
-			expect(streamParams.messages[0]).toEqual({
+			expect(streamParams.messages![0]).toEqual({
 				role: "system",
 				content: "Simple system message"
 			});
@@ -210,10 +228,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const agent = createAgent({
 				name: "conversion-error-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
-				tools: {},
-				createRuntimeContext: () => ({}),
+				// No tools or runtime context needed
 			});
 
 			expect(() => {
@@ -233,10 +250,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		it("should prepend system messages to model messages", () => {
 			const agent = createAgent({
 				name: "system-message-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "You are a test assistant",
-				tools: {},
-				createRuntimeContext: () => ({}),
+				// No tools or runtime context needed
 			});
 
 			const streamParams = agent.buildStreamParams({
@@ -251,12 +267,12 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				requestContext: {},
 			});
 
-			expect(streamParams.messages[0]).toEqual({
+			expect(streamParams.messages![0]).toEqual({
 				role: "system",
 				content: "You are a test assistant"
 			});
-			expect(getMessageText(streamParams.messages[1])).toEqual("Hello");
-			expect(getMessageText(streamParams.messages[2])).toEqual("Hi there");
+			expect((streamParams.messages![1] as any).content).toEqual("Hello");
+			expect((streamParams.messages![2] as any).content).toEqual("Hi there");
 		});
 	});
 
@@ -271,9 +287,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			const agent = createAgent({
 				name: "params-test-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
-				tools: {},
+				// No tools needed - testing parameters
 				temperature: 0.7,
 				maxOutputTokens: 1000,
 				topP: 0.9,
@@ -291,9 +307,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				onAbort: mockOnAbort,
 				onError: mockOnError,
 				prepareStep: mockPrepareStep,
-				experimental_continueSteps: true,
-				experimental_generateMessageId: () => "test-id",
-				createRuntimeContext: () => ({}),
+				// experimental_continueSteps was removed in newer versions
 			});
 
 			const streamParams = agent.buildStreamParams({
@@ -323,14 +337,13 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			expect(streamParams.onAbort).toBe(mockOnAbort);
 			expect(streamParams.onError).toBe(mockOnError);
 			expect(streamParams.prepareStep).toBe(mockPrepareStep);
-			expect(streamParams.experimental_continueSteps).toBe(true);
-			expect(typeof streamParams.experimental_generateMessageId).toBe("function");
+			// experimental_continueSteps was removed in newer versions
 		});
 
 		it("should exclude agent-specific config from streamText params", () => {
 			const agent = createAgent({
 				name: "exclusion-test-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: {},
 				createRuntimeContext: () => ({}),
@@ -363,13 +376,13 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				execute: async ({ input }, context) => ({ result: `${input}-${context.sessionId}` }),
 			});
 
-			const toolsFunction = (context: TestRuntimeContext) => ({
-				contextTool: contextTool(context),
+			const toolsFunction = (context: TestRuntimeContext): ToolFactorySet<TestRuntimeContext> => ({
+				contextTool: contextTool,
 			});
 
-			const agent = createAgent<any, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "function-tools-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: toolsFunction,
 				createRuntimeContext: ({ sessionId, resourceId }) => ({
@@ -389,13 +402,13 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			});
 
 			expect(streamParams.tools).toHaveProperty("contextTool");
-			expect(typeof streamParams.tools.contextTool.execute).toBe("function");
+			expect(typeof streamParams.tools?.contextTool?.execute).toBe("function");
 		});
 
 		it("should handle tool resolution returning null or undefined", () => {
-			const agent = createAgent<any, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "null-tools-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: () => null as any,
 				createRuntimeContext: ({ sessionId, resourceId }) => ({
@@ -427,9 +440,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				throw new Error("Individual tool factory failed");
 			};
 
-			const agent = createAgent<any, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "mixed-tools-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: {
 					goodTool: goodTool,
@@ -450,7 +463,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 					systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 					requestContext: {},
 				});
-			}).toThrow("Failed to resolve tool factory 'badTool'");
+			}).toThrow("Failed to resolve tool factory 'badTool': Individual tool factory failed");
 		});
 	});
 
@@ -458,7 +471,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		it("should throw NoMessagesError for null messages", () => {
 			const agent = createAgent({
 				name: "validation-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: {},
 				createRuntimeContext: () => ({}),
@@ -479,7 +492,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		it("should throw NoMessagesError for undefined messages", () => {
 			const agent = createAgent({
 				name: "validation-agent",
-				model: { provider: "test", modelId: "test" },
+				model: mockModel,
 				system: "Test system",
 				tools: {},
 				createRuntimeContext: () => ({}),

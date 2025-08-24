@@ -741,8 +741,8 @@ describe("Runtime Functions", () => {
 
 			const errorCall = onError.mock.calls[0];
 			expect(errorCall).toBeDefined();
-			expect(errorCall[0].error.message).toContain("Table does not exist");
-			expect(errorCall[0].systemContext).toEqual({ sessionId: "session1", resourceId: "resource1" });
+			expect(errorCall?.[0].error.message).toContain("Table does not exist");
+			expect(errorCall?.[0].systemContext).toEqual({ sessionId: "session1", resourceId: "resource1" });
 		});
 	});
 });

@@ -227,7 +227,7 @@ describe("Context Injection from Request to Tools", () => {
 			});
 
 			return {
-				dynamicTool: dynamicTool(context),
+				dynamicTool: dynamicTool,
 			};
 		};
 
@@ -245,9 +245,10 @@ describe("Context Injection from Request to Tools", () => {
 
 		// Mock streamText
 		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
+		(streamText as any).mockImplementation(async (params: any) => {
 			if (params.tools?.dynamicTool) {
-				params.tools.dynamicTool.execute({ input: "test" });
+				// Execute the tool to capture the execution context
+				await params.tools.dynamicTool.execute({ input: "test" });
 			}
 			return {
 				textStream: { [Symbol.asyncIterator]: async function* () { yield ""; } },
