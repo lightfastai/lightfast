@@ -1,6 +1,7 @@
 {
 	"name": "@lightfast/types",
 	"version": "1.0.1",
+	"private": true,
 	"description": "Shared TypeScript types for Lightfast",
 	"exports": {
 		".": {
