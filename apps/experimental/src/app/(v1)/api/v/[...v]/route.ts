@@ -51,7 +51,7 @@ const a011Tools = {
 	createSandboxWithPorts: createSandboxWithPortsTool,
 	getSandboxDomain: getSandboxDomainTool,
 	listSandboxRoutes: listSandboxRoutesTool,
-} as const;
+};
 
 // Infer the tool schema type
 type A011ToolSchema = typeof a011Tools;
@@ -97,7 +97,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 
 		// Pass everything to fetchRequestHandler with inline agent
 		const response = await fetchRequestHandler({
-			agent: createAgent<A011ToolSchema, AppRuntimeContext>({
+			agent: createAgent<AppRuntimeContext, A011ToolSchema>({
 				name: "a011",
 				system: A011_SYSTEM_PROMPT,
 				tools: a011Tools,

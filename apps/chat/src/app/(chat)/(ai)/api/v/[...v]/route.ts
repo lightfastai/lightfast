@@ -1,5 +1,6 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "lightfast/agent";
+import type { Agent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/lib/ai/providers";
@@ -37,10 +38,12 @@ import {
 // Create tools object for c010 agent
 const c010Tools = {
 	webSearch: webSearchTool,
-} as const;
+};
 
-// Infer the tool schema type
-type C010ToolSchema = typeof c010Tools;
+// Define the tool schema type with proper context
+type C010ToolSchema = {
+	webSearch: typeof webSearchTool;
+};
 
 // Initialize Braintrust logging
 const braintrustConfig = getBraintrustConfig();
@@ -181,8 +184,8 @@ const handler = async (
 
 				// Just pass a minimal agent configuration for resume
 				// The actual model doesn't matter for resuming an existing stream
-				const response = await fetchRequestHandler({
-					agent: createAgent<C010ToolSchema, AppRuntimeContext>({
+				const response = await fetchRequestHandler<Agent<AppRuntimeContext, C010ToolSchema>>({
+					agent: createAgent<AppRuntimeContext, C010ToolSchema>({
 						name: "c010",
 						system: `Stream resume agent`,
 						tools: c010Tools,
@@ -305,8 +308,8 @@ const handler = async (
 			);
 
 			// Pass everything to fetchRequestHandler with inline agent
-			const response = await fetchRequestHandler({
-				agent: createAgent<C010ToolSchema, AppRuntimeContext>({
+			const response = await fetchRequestHandler<Agent<AppRuntimeContext, C010ToolSchema>>({
+				agent: createAgent<AppRuntimeContext, C010ToolSchema>({
 					name: "c010",
 					system: `You are a helpful AI assistant with access to web search capabilities.
 You can help users find information, answer questions, and provide insights based on current web data.

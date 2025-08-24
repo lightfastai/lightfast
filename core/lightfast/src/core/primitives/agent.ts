@@ -297,7 +297,7 @@ export class Agent<
 	}
 
 	// Expose config for testing or inspection
-	get config() {
+	get config(): LightfastConfig<TRuntimeContext, TTools> & VercelAIConfig<ToolSet> {
 		return {
 			...this.lightfastConfig,
 			...this.vercelConfig,

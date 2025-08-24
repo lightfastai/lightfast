@@ -47,7 +47,7 @@ export interface StreamChatOptions<
 	TRequestContext = {},
 	TFetchContext = {},
 > extends LifecycleCallbacks {
-	agent: Agent<unknown, ToolFactorySet<unknown>>;
+	agent: Agent<any, any>;
 	sessionId: string;
 	message: TMessage;
 	memory: Memory<TMessage, TFetchContext>;

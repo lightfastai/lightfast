@@ -36,7 +36,7 @@ const mockAgent = {
 		name: "test-agent",
 	},
 	buildStreamParams: vi.fn(),
-} as unknown as Agent<unknown, unknown>;
+} as unknown as Agent<unknown, ToolFactorySet<unknown>>;
 
 describe("Runtime Functions", () => {
 	beforeEach(() => {
@@ -50,8 +50,10 @@ describe("Runtime Functions", () => {
 			const result = await validateSession(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(true);
-			expect(result.value?.exists).toBe(false);
-			expect(result.value?.session).toBeUndefined();
+			if (result.ok) {
+				expect(result.value.exists).toBe(false);
+				expect(result.value.session).toBeUndefined();
+			}
 		});
 
 		it("should return exists: true for valid session with matching resourceId", async () => {
@@ -61,8 +63,10 @@ describe("Runtime Functions", () => {
 			const result = await validateSession(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(true);
-			expect(result.value?.exists).toBe(true);
-			expect(result.value?.session).toBe(mockSession);
+			if (result.ok) {
+				expect(result.value.exists).toBe(true);
+				expect(result.value.session).toBe(mockSession);
+			}
 		});
 
 		it("should return SessionForbiddenError for mismatched resourceId", async () => {
@@ -72,7 +76,9 @@ describe("Runtime Functions", () => {
 			const result = await validateSession(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeInstanceOf(SessionForbiddenError);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(SessionForbiddenError);
+			}
 		});
 
 		it("should convert memory errors using toMemoryApiError", async () => {
@@ -82,7 +88,9 @@ describe("Runtime Functions", () => {
 			const result = await validateSession(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			// Should be converted via toMemoryApiError
 		});
 	});
@@ -102,7 +110,9 @@ describe("Runtime Functions", () => {
 			);
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeInstanceOf(NoUserMessageError);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(NoUserMessageError);
+			}
 		});
 
 		it("should process valid user message for existing session", async () => {
@@ -119,8 +129,10 @@ describe("Runtime Functions", () => {
 			);
 
 			expect(result.ok).toBe(true);
-			expect(result.value?.allMessages).toBe(mockMessages);
-			expect(result.value?.recentUserMessage).toBe(validUserMessage);
+			if (result.ok) {
+				expect(result.value.allMessages).toBe(mockMessages);
+				expect(result.value.recentUserMessage).toBe(validUserMessage);
+			}
 			expect(mockMemory.createSession).not.toHaveBeenCalled();
 			expect(mockMemory.appendMessage).toHaveBeenCalledWith({
 				sessionId: "session1",
@@ -165,7 +177,9 @@ describe("Runtime Functions", () => {
 			);
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			// Should be converted via toMemoryApiError
 		});
 	});
@@ -247,7 +261,9 @@ describe("Runtime Functions", () => {
 			});
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeInstanceOf(SessionForbiddenError);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(SessionForbiddenError);
+			}
 		});
 
 		it("should handle agent streaming failures with toAgentApiError", async () => {
@@ -267,7 +283,9 @@ describe("Runtime Functions", () => {
 			});
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			// Should be converted via toAgentApiError
 		});
 
@@ -365,7 +383,9 @@ describe("Runtime Functions", () => {
 			const result = await resumeStream(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeInstanceOf(SessionNotFoundError);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(SessionNotFoundError);
+			}
 		});
 
 		it("should return null for session with wrong resourceId", async () => {
@@ -374,7 +394,9 @@ describe("Runtime Functions", () => {
 			const result = await resumeStream(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeInstanceOf(SessionNotFoundError);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(SessionNotFoundError);
+			}
 		});
 
 		it("should return null when no streams exist", async () => {
@@ -394,7 +416,9 @@ describe("Runtime Functions", () => {
 			const result = await resumeStream(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			// Should be converted via toMemoryApiError
 		});
 	});
@@ -445,7 +469,9 @@ describe("Runtime Functions", () => {
 			});
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			// Should be converted to AgentConfigurationError via toAgentApiError pattern matching
 		});
 	});
@@ -665,7 +691,9 @@ describe("Runtime Functions", () => {
 
 			// When appendMessage fails in processMessage, the entire operation fails
 			expect(result.ok).toBe(false);
-			expect(result.error).toBeDefined();
+			if (!result.ok) {
+				expect(result.error).toBeDefined();
+			}
 			expect(onError).not.toHaveBeenCalled(); // No onError since stream never starts
 		});
 

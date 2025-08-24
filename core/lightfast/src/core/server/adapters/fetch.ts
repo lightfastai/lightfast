@@ -25,7 +25,7 @@ function errorToResponse(error: ApiError): Response {
 }
 
 export interface FetchRequestHandlerOptions<
-	TAgent extends Agent<ToolSet | ToolFactorySet<unknown>, unknown> = Agent<ToolSet | ToolFactorySet<unknown>, unknown>,
+	TAgent extends Agent<any, any> = Agent<any, any>,
 	TRequestContext extends RequestContext = RequestContext,
 	TFetchContext = {},
 > extends LifecycleCallbacks {
@@ -85,7 +85,7 @@ export interface FetchRequestHandlerOptions<
  * ```
  */
 export async function fetchRequestHandler<
-	TAgent extends Agent<ToolSet | ToolFactorySet<unknown>, unknown> = Agent<ToolSet | ToolFactorySet<unknown>, unknown>,
+	TAgent extends Agent<any, any> = Agent<any, any>,
 	TRequestContext extends RequestContext = RequestContext,
 	TFetchContext = {},
 >(
