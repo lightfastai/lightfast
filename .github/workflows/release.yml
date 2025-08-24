@@ -41,6 +41,7 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -55,11 +56,11 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm changeset publish --access public
+          publish: pnpm changeset publish
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Send a Slack notification if a publish happens
