@@ -21,12 +21,12 @@ pnpm changeset
 
 ### Release Bot Account
 - GitHub: `lightfast-release-bot` (collaborator with write access)
-- NPM: Same bot account (member of `@lightfastai` org)
+- NPM: Same bot account (admin of `@lightfastai` org for new packages)
 
 ### Repository Secrets
 ```bash
 LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN  # GitHub PAT with 'repo' + 'workflow' scopes
-LIGHTFAST_RELEASE_BOT_NPM_TOKEN     # NPM automation token
+LIGHTFAST_RELEASE_BOT_NPM_TOKEN     # NPM automation token (not classic)
 ```
 
 ### Version Types
@@ -52,12 +52,13 @@ pnpm changeset status # View pending changes
 ```json
 {
   "name": "@lightfastai/core",
+  "version": "0.2.0",
   "exports": {
     "./agent": {
       "types": "./dist/agent.d.ts",
-      "import": "./dist/agent.js",
-      "require": "./dist/agent.cjs"
+      "import": "./dist/agent.mjs"
     }
+    // Multiple exports supported
   }
 }
 ```
@@ -69,13 +70,19 @@ pnpm changeset status # View pending changes
 
 **Release failed?**
 - Check GitHub Actions logs
-- Verify tokens are valid
-- Ensure bot has npm org access
+- Verify NODE_AUTH_TOKEN is used (not NPM_TOKEN)
+- Ensure bot has npm org admin access
+- Confirm workflow has `id-token: write` permission
 
 **Version PR not created?**
 - Verify changesets exist in `.changeset/`
-- Check bot has repo access
+- Check bot has repo write access
 - Confirm token scopes are correct
+
+**First-time package publish fails?**
+- Bot needs admin role in npm org
+- Token must be automation type
+- Changeset config needs `"access": "public"`
 
 ## Workflows
 
@@ -89,7 +96,13 @@ Validates changeset format and semantic versioning on PRs.
 
 - [ ] Create release bot accounts (GitHub + NPM)
 - [ ] Add bot to GitHub repo (write access)  
-- [ ] Add bot to npm org (`@lightfastai`)
-- [ ] Generate & add tokens to repo secrets
+- [ ] Add bot to npm org as admin (`@lightfastai`)
+- [ ] Generate NPM automation token & add to secrets
 - [ ] Create changeset: `pnpm changeset`
 - [ ] Merge "Version Packages" PR to release
+
+## Notes
+
+- Node.js 22+ required (matches package.json engine)
+- Private packages need `"private": true` in package.json
+- Published to: https://www.npmjs.com/package/@lightfastai/core

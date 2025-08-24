@@ -125,7 +125,10 @@
       "Bash(pnpm tsc:*)",
       "Bash(pnpm --filter @vendor/trpc build)",
       "Bash(pnpm --filter @lightfast/chat typecheck)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm --filter @lightfastai/core test)",
+      "Bash(pnpm --filter @lightfastai/core typecheck)"
     ],
     "deny": []
   },
