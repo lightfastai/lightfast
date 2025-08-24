@@ -1,5 +1,5 @@
 {
-  "name": "@repo/lightfast-config",
+  "name": "@repo/email",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,10 +7,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./templates": "./src/templates.ts",
+    "./functions": "./src/functions.ts"
   },
   "license": "MIT",
   "scripts": {
+    "dev:email": "email dev --dir ./src/templates -p 4109",
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
@@ -19,9 +22,15 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@react-email/components": "^0.0.36",
+    "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/url-utils": "workspace:*",
-    "typescript": "catalog:"
+    "@vendor/email": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "react-email": "4.0.7",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

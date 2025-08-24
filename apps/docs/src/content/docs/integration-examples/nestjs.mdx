@@ -38,9 +38,9 @@ First, create your agent and memory configuration:
 
 ```typescript
 // config/agent.config.ts
-import { createAgent } from '@lightfastai/core/agent';
-import { createTool } from '@lightfastai/core/tool';
-import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { createAgent } from 'lightfast/agent';
+import { createTool } from 'lightfast/tool';
+import { RedisMemory } from 'lightfast/memory/adapters/redis';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -82,7 +82,7 @@ export const memory = new RedisMemory({
 ```typescript
 // services/agent.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 import { agent, memory } from '../config/agent.config';
 
 @Injectable()

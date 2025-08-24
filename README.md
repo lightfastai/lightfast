@@ -28,6 +28,10 @@ Lightfast is a production-ready agent execution platform that provides the infra
 
 Lightfast is a monorepo containing multiple applications and packages:
 
+### Core (`core/`)
+
+- **⚡ lightfast** - Core AI agent framework and execution engine
+
 ### Applications (`apps/`)
 
 - **🌐 www** - Marketing website and landing pages
@@ -42,9 +46,9 @@ Lightfast is a monorepo containing multiple applications and packages:
 
 - **🎨 ui** - Shared UI component library based on shadcn/ui
 - **⚙️ lib** - Shared utilities and helper functions
-- **📧 lightfast-email** - Email templates and sending utilities
-- **⚛️ lightfast-react** - React components and hooks
-- **🔧 lightfast-config** - Shared configuration utilities
+- **📧 email** - Email templates and sending utilities
+- **🤖 ai-tools** - AI browser automation and tool utilities
+- **🔧 site-config** - Shared configuration utilities
 
 ### Vendor (`vendor/`)
 
@@ -202,33 +206,37 @@ Each application may require additional environment variables. Check each app's 
 
 ```
 lightfast/
-├── apps/                       # Applications
-│   ├── www/                   # Marketing website
-│   ├── cloud/                 # Main platform app
-│   ├── auth/                  # Authentication service
-│   ├── playground/            # Interactive playground
-│   ├── experimental/          # Experimental features
+├── core/                      # Core framework
+│   └── lightfast/            # AI agent framework and execution engine
+├── apps/                      # Applications
+│   ├── www/                  # Marketing website
+│   ├── cloud/                # Main platform app
+│   ├── auth/                 # Authentication service
+│   ├── playground/           # Interactive playground
+│   ├── experimental/         # Experimental features
 │   ├── chat/                 # Chat application
 │   └── docs/                 # Documentation site
 ├── packages/                  # Shared packages
 │   ├── ui/                   # UI component library
 │   ├── lib/                  # Shared utilities
-│   ├── lightfast-*/          # Lightfast-specific packages
+│   ├── ai-tools/             # AI browser automation tools
+│   ├── email/                # Email utilities
+│   ├── site-config/          # Site configuration
 │   └── url-utils/            # URL utilities
-├── vendor/                   # Third-party integrations
+├── vendor/                    # Third-party integrations
 │   ├── analytics/            # PostHog, Vercel Analytics
-│   ├── auth/                # Authentication services
-│   ├── email/               # Email services
-│   ├── observability/       # Monitoring and logging
-│   └── security/            # Security services
-├── internal/                # Internal tooling
-│   ├── eslint/              # ESLint configurations
-│   ├── prettier/            # Prettier configurations
-│   └── typescript/          # TypeScript configurations
-├── scripts/                 # Development scripts
-├── submodules/              # Git submodules
-│   └── chat/               # Chat application submodule
-└── turbo.json              # Turborepo configuration
+│   ├── auth/                 # Authentication services
+│   ├── email/                # Email services
+│   ├── observability/        # Monitoring and logging
+│   └── security/             # Security services
+├── internal/                  # Internal tooling
+│   ├── eslint/               # ESLint configurations
+│   ├── prettier/             # Prettier configurations
+│   └── typescript/           # TypeScript configurations
+├── scripts/                   # Development scripts
+├── submodules/                # Git submodules
+│   └── chat/                 # Chat application submodule
+└── turbo.json                # Turborepo configuration
 ```
 
 ## Development Workflows

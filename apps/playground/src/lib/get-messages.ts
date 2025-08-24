@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
 import type { PlaygroundUIMessage } from "~/types/playground-ui-messages";
 import { env } from "~/env";
 

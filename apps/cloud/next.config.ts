@@ -18,7 +18,7 @@ let config: NextConfig = withBetterStack(
 		transpilePackages: [
 			"@vendor/upstash",
 			"@repo/ui",
-			"@repo/lightfast-config",
+			"@repo/site-config",
 			"@repo/url-utils",
 			"@vendor/clerk",
 			"@vendor/observability",

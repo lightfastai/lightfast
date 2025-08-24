@@ -30,9 +30,9 @@ Choose your preferred framework for detailed integration guides:
 All frameworks use the same agent configuration:
 
 ```typescript
-import { createAgent } from '@lightfastai/core/agent';
-import { createTool } from '@lightfastai/core/tool';
-import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { createAgent } from 'lightfast/agent';
+import { createTool } from 'lightfast/tool';
+import { RedisMemory } from 'lightfast/memory/adapters/redis';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 

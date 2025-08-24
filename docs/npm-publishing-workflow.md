@@ -1,14 +1,14 @@
 # NPM Publishing Workflow
 
-Automated release workflow for `@lightfastai/core` using Changesets.
+Automated release workflow for `lightfast` using Changesets.
 
 ## Quick Start
 
 ### 1. Create Changeset
 ```bash
-# After making changes to packages/lightfast-core/
+# After making changes to core/lightfast/
 pnpm changeset
-# Select: @lightfastai/core
+# Select: lightfast
 # Choose: patch/minor/major
 # Enter: changelog summary
 ```
@@ -38,9 +38,9 @@ LIGHTFAST_RELEASE_BOT_NPM_TOKEN     # NPM automation token (not classic)
 
 ```bash
 # Development
-pnpm --filter @lightfastai/core build     # Build package
-pnpm --filter @lightfastai/core test      # Run tests
-pnpm --filter @lightfastai/core typecheck # Type check
+pnpm --filter lightfast build     # Build package
+pnpm --filter lightfast test      # Run tests
+pnpm --filter lightfast typecheck # Type check
 
 # Release
 pnpm changeset        # Create changeset
@@ -51,7 +51,7 @@ pnpm changeset status # View pending changes
 
 ```json
 {
-  "name": "@lightfastai/core",
+  "name": "lightfast",
   "version": "0.2.0",
   "exports": {
     "./agent": {
@@ -105,4 +105,4 @@ Validates changeset format and semantic versioning on PRs.
 
 - Node.js 22+ required (matches package.json engine)
 - Private packages need `"private": true` in package.json
-- Published to: https://www.npmjs.com/package/@lightfastai/core
+- Published to: https://www.npmjs.com/package/lightfast

@@ -63,10 +63,10 @@ let config: NextConfig = withBetterStack(
 		},
 		transpilePackages: [
 			"@repo/ui",
-			"@repo/lightfast-config",
+			"@repo/site-config",
 			"@repo/ai",
 			"@repo/url-utils",
-			"@lightfastai/core",
+			"lightfast",
 			"@vendor/observability",
 			"@vendor/next",
 			"@vendor/storage",

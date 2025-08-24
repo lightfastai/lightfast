@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";

@@ -1,6 +1,6 @@
 import { gateway } from "@ai-sdk/gateway";
-import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/lib/ai/providers";
 import {
@@ -12,8 +12,8 @@ import { BraintrustMiddleware, initLogger, traced } from "braintrust";
 import {
 	getBraintrustConfig,
 	isOtelEnabled,
-} from "@lightfastai/core/v2/braintrust-env";
-import { uuidv4 } from "@lightfastai/core/v2/utils";
+} from "lightfast/v2/braintrust-env";
+import { uuidv4 } from "lightfast/v2/utils";
 import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/types";
 import { auth } from "@clerk/nextjs/server";

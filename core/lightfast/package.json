@@ -1,5 +1,5 @@
 {
-	"name": "@lightfastai/core",
+	"name": "lightfast",
 	"version": "0.2.0",
 	"description": "AI agents, tools, and workflows for Lightfast",
 	"keywords": [
@@ -12,7 +12,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/lightfastai/lightfast.git",
-		"directory": "packages/lightfast-core"
+		"directory": "core/lightfast"
 	},
 	"homepage": "https://lightfast.ai",
 	"bugs": "https://github.com/lightfastai/lightfast/issues",

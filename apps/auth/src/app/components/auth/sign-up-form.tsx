@@ -6,7 +6,7 @@ import { SignUpEmailInput } from "./sign-up-email-input";
 import { SignUpCodeVerification } from "./sign-up-code-verification";
 import { OAuthSignUp } from "./oauth-sign-up";
 import Link from "next/link";
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 
 export function SignUpForm() {
 	const [verificationStep, setVerificationStep] = React.useState<

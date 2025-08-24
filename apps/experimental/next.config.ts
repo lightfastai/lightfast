@@ -13,8 +13,8 @@ let nextConfig: NextConfig = withBetterStack(
 		/** Enables hot reloading for local packages without a build step */
 		transpilePackages: [
 			"@repo/ui",
-			"@repo/lightfast-config",
-			"@lightfastai/core",
+			"@repo/site-config",
+			"lightfast",
 			"@lightfast/types",
 			"@lightfast/evals",
 			"@vendor/analytics",

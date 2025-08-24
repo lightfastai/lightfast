@@ -7,6 +7,9 @@ description: Introduction to Lightfast Core - A modern AI agent framework
 
 Lightfast Core is a production-ready AI agent framework built on top of Vercel AI SDK. It provides a streamlined, type-safe way to build AI agents with advanced features like memory management, tool factories, and provider-specific optimizations.
 
+[![npm version](https://img.shields.io/npm/v/lightfast)](https://www.npmjs.com/package/lightfast)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Why Lightfast Core?
 
 Building production AI agents requires more than just calling an LLM API. You need:
@@ -78,9 +81,9 @@ const memory = new RedisMemory({
 Here's a complete example of creating and using an agent:
 
 ```typescript
-import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/agent/handlers";
-import { RedisMemory } from "@lightfastai/core/agent/memory/adapters/redis";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/agent/handlers";
+import { RedisMemory } from "lightfast/agent/memory/adapters/redis";
 import { gateway } from "@ai-sdk/gateway";
 
 // Create your agent

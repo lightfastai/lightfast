@@ -5,7 +5,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 // Import shared configuration - we need to use require for CommonJS modules
 const {

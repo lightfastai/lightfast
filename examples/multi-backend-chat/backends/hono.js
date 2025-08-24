@@ -9,7 +9,7 @@ const { Hono } = require('hono');
 const { cors } = require('hono/cors');
 const { logger } = require('hono/logger');
 const { serve } = require('@hono/node-server');
-const { fetchRequestHandler } = require('@lightfastai/core/server/adapters/fetch');
+const { fetchRequestHandler } = require('lightfast/server/adapters/fetch');
 const {
   createChatAgent,
   createMemory,

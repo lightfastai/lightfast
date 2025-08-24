@@ -1,13 +1,13 @@
 /**
- * Chat API Route using fetchRequestHandler from @lightfastai/core
+ * Chat API Route using fetchRequestHandler from lightfast
  * 
  * This implementation uses the actual fetchRequestHandler pattern from production.
  */
 
 import { gateway } from "@ai-sdk/gateway";
-import { createAgent } from "@lightfastai/core/agent";
-import { fetchRequestHandler } from "@lightfastai/core/server/adapters/fetch";
-import { RedisMemory } from "@lightfastai/core/memory/adapters/redis";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
 import { v4 as uuidv4 } from "uuid";
 
 // Define the runtime context type
@@ -71,7 +71,7 @@ const handler = async (
         name: "assistant",
         system: `You are a helpful AI assistant powered by Lightfast Core infrastructure.
         
-This implementation uses the actual fetchRequestHandler from @lightfastai/core/agent/handlers.
+This implementation uses the actual fetchRequestHandler from lightfast/agent/handlers.
 
 Key features:
 - Agent orchestration with createAgent

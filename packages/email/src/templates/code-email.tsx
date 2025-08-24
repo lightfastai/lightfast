@@ -9,7 +9,7 @@ import {
   Text,
 } from "@react-email/components";
 
-import { siteConfig } from "@repo/lightfast-config";
+import { siteConfig } from "@repo/site-config";
 
 interface CodeEmailProps {
   email: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "@lightfastai/core/v2/react";
+import { useChat } from "lightfast/v2/react";
 import type { UIMessage } from "ai";
 import { Bot, Loader2, Send, User } from "lucide-react";
 import { useRouter } from "next/navigation";

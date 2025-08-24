@@ -26,8 +26,8 @@ let config: NextConfig = withBetterStack(
 			"@vendor/observability",
 			"@vendor/next",
 			"@vendor/upstash",
-			"@repo/lightfast-config",
-			"@repo/lightfast-email",
+			"@repo/site-config",
+			"@repo/email",
 			"@repo/lib",
 		],
 

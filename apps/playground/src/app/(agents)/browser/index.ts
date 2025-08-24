@@ -1,5 +1,5 @@
-import type { RuntimeContext } from "@lightfastai/core/server/adapters/types";
-import { createTool } from "@lightfastai/core/tool";
+import type { RuntimeContext } from "lightfast/server/adapters/types";
+import { createTool } from "lightfast/tool";
 import {
   StagehandSessionManager,
   performWebAction,
@@ -7,7 +7,7 @@ import {
   performWebExtraction,
   performWebNavigation,
   takeScreenshot,
-} from "@lightfast/lightfast-tools/browserbase";
+} from "@repo/ai-tools/browserbase";
 import { z } from "zod";
 import { put } from "@vendor/storage";
 import { env } from "~/env";

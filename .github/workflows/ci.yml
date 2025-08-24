@@ -28,7 +28,7 @@ jobs:
         with:
           filters: |
             lightfast-core:
-              - 'packages/lightfast-core/**'
+              - 'core/lightfast/**'
               - 'pnpm-lock.yaml'
               - '.github/workflows/ci.yml'
 
@@ -56,8 +56,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint lightfast-core
-        run: pnpm --filter @lightfastai/core lint || echo "⚠️ Linting issues found but not blocking CI"
+      - name: Lint lightfast
+        run: pnpm --filter lightfast lint || echo "⚠️ Linting issues found but not blocking CI"
 
   # Type checking (medium speed)
   typecheck:
@@ -83,8 +83,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check lightfast-core
-        run: pnpm --filter @lightfastai/core typecheck || echo "⚠️ Type errors found but not blocking CI"
+      - name: Type check lightfast
+        run: pnpm --filter lightfast typecheck || echo "⚠️ Type errors found but not blocking CI"
 
   # Test (simple test run on Node 22)
   test:
@@ -110,8 +110,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Test lightfast-core
-        run: pnpm --filter @lightfastai/core test
+      - name: Test lightfast
+        run: pnpm --filter lightfast test
 
 
   # Build check (runs on Node 22)
@@ -138,13 +138,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build lightfast-core
-        run: pnpm --filter @lightfastai/core build
+      - name: Build lightfast
+        run: pnpm --filter lightfast build
 
       - name: Check build outputs
         run: |
           echo "📦 Build outputs:"
-          ls -la packages/lightfast-core/dist/
+          ls -la core/lightfast/dist/
           echo "✅ Build completed successfully"
 
   # Summary job (required status check)

@@ -34,9 +34,9 @@ The examples use the OpenAI `gpt-4o` model. Ensure that the OpenAI API key is se
 First, create your agent and memory configuration:
 
 ```typescript
-import { createAgent } from '@lightfastai/core/agent';
-import { createTool } from '@lightfastai/core/tool';
-import { RedisMemory } from '@lightfastai/core/memory/adapters/redis';
+import { createAgent } from 'lightfast/agent';
+import { createTool } from 'lightfast/tool';
+import { RedisMemory } from 'lightfast/memory/adapters/redis';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -75,7 +75,7 @@ const memory = new RedisMemory({
 
 ```typescript
 import express from 'express';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 const app = express();
 
@@ -142,7 +142,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 const app = express();
 
@@ -302,7 +302,7 @@ For larger applications, organize routes using Express Router:
 ```typescript
 // routes/agents.ts
 import { Router } from 'express';
-import { fetchRequestHandler } from '@lightfastai/core/server/adapters/fetch';
+import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
 
 const router = Router();
 

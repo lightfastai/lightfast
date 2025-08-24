@@ -6,9 +6,9 @@
  */
 
 const { gateway } = require("@ai-sdk/gateway");
-const { createAgent } = require("@lightfastai/core/agent");
-const { RedisMemory } = require("@lightfastai/core/memory/adapters/redis");
-const { tool } = require("@lightfastai/core/tools");
+const { createAgent } = require("lightfast/agent");
+const { RedisMemory } = require("lightfast/memory/adapters/redis");
+const { tool } = require("lightfast/tools");
 const { z } = require("zod");
 
 // Model configuration
