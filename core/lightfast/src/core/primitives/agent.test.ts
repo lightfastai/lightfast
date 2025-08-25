@@ -184,6 +184,7 @@ describe("createAgent", () => {
 	});
 });
 
+
 describe("agent utility functions", () => {
 	it("should generate valid UUIDs", () => {
 		// Since the UUID function is internal, we test it indirectly

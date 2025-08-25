@@ -19,7 +19,7 @@ export function ThinkingMessage({
 	const statusText = {
 		thinking: "Thinking",
 		streaming: "Streaming",
-		reasoningText: "Reasoning",
+		reasoning: "Reasoning",
 		done: "Done",
 	}[status];
 

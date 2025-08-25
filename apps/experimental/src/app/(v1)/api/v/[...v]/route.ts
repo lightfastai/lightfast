@@ -97,7 +97,7 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 
 		// Pass everything to fetchRequestHandler with inline agent
 		const response = await fetchRequestHandler({
-			agent: createAgent<AppRuntimeContext, A011ToolSchema>({
+			agent: createAgent<AppRuntimeContext, typeof a011Tools>({
 				name: "a011",
 				system: A011_SYSTEM_PROMPT,
 				tools: a011Tools,
@@ -186,8 +186,6 @@ const handler = async (req: Request, { params }: { params: Promise<{ v: string[]
 								usage: result.usage,
 								// Include thinking metadata if available
 								reasoningText: result.reasoningText,
-								reasoningText: result.reasoningText,
-								providerOptions: result.providerOptions,
 							},
 						});
 					}

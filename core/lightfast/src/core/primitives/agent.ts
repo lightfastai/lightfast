@@ -26,7 +26,7 @@ import {
 	NoMessagesError,
 	ToolExecutionError,
 } from "../server/errors";
-import type { SystemContext } from "../server/adapters/types";
+import type { SystemContext, RuntimeContext } from "../server/adapters/types";
 import type { ProviderCache } from "./cache";
 import type { ToolFactory, ToolFactorySet } from "./tool";
 
@@ -65,7 +65,7 @@ export type VercelAIConfig<TOOLS extends ToolSet = ToolSet> = Omit<
 export interface LightfastConfig<
 	TRuntimeContext = {},
 	TTools extends
-		ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > {
 	// Required Lightfast fields
 	name: string;
@@ -97,7 +97,7 @@ export interface StreamOptions<
 export interface AgentOptions<
 	TRuntimeContext = {},
 	TTools extends
-		ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > extends LightfastConfig<TRuntimeContext, TTools>,
 		VercelAIConfig<ToolSet> {
 	// All fields are inherited from the two interfaces
@@ -107,7 +107,7 @@ export interface AgentOptions<
 export class Agent<
 	TRuntimeContext = {},
 	TTools extends
-		ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > {
 	// Clean separation: Vercel AI SDK config vs Lightfast config
 	private readonly vercelConfig: VercelAIConfig<ToolSet>;
@@ -190,11 +190,12 @@ export class Agent<
 		}
 
 		// Merge all three context levels: system -> request -> agent
-		const mergedContext = {
+		// The merged context is what tools actually receive
+		const mergedContext: SystemContext & TRequestContext & TRuntimeContext = {
 			...systemContext,
 			...requestContext,
 			...agentContext,
-		};
+		} as SystemContext & TRequestContext & TRuntimeContext;
 
 		// Resolve tool factories into actual tools by injecting merged context
 		let resolvedTools: ToolSet = {};
@@ -214,7 +215,7 @@ export class Agent<
 
 			for (const [name, factory] of Object.entries(tools)) {
 				try {
-					resolvedTools[name] = factory(mergedContext as TRuntimeContext);
+					resolvedTools[name] = factory(mergedContext as unknown as RuntimeContext<TRuntimeContext>);
 				} catch (error) {
 					throw new ToolExecutionError(
 						name,
@@ -241,13 +242,11 @@ export class Agent<
 					this.lightfastConfig.system,
 				);
 
-				// console.log(messages.forEach((x) => console.log(x)));
 				// Convert messages to model messages
 				const baseModelMessages = convertToModelMessages(messages, {
 					tools: resolvedTools,
 				});
 
-				console.log(baseModelMessages.forEach((x) => console.log(x)));
 				// Apply message caching
 				modelMessages = this.lightfastConfig.cache.applyMessageCaching(
 					baseModelMessages,
@@ -312,7 +311,7 @@ export class Agent<
 export function createAgent<
 	TRuntimeContext = {},
 	TTools extends
-		ToolFactorySet<TRuntimeContext> = ToolFactorySet<TRuntimeContext>,
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 >(
 	options: AgentOptions<TRuntimeContext, TTools>,
 ): Agent<TRuntimeContext, TTools> {
