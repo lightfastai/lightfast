@@ -43,7 +43,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 		// Default mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
-		vi.mocked(convertToModelMessages).mockImplementation((messages: UIMessage[]) =>
+		vi.mocked(convertToModelMessages).mockImplementation((messages: Array<Omit<UIMessage, 'id'>>) =>
 			messages.map((msg) => ({ 
 				role: msg.role, 
 				content: getMessageText(msg) || "" 
@@ -63,7 +63,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				},
 			});
 
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "cancellation-test-agent",
 				model: mockModel,
 				system: "You can use tools to help users",
@@ -93,7 +93,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 			// Verify that the stream params contain the long-running tool
 			expect(streamParams.tools).toHaveProperty("longRunningTool");
-			expect(streamParams.tools.longRunningTool).toHaveProperty("execute");
+			expect(streamParams.tools!.longRunningTool).toHaveProperty("execute");
 		});
 
 		it("should build params for handling partial message corruption", () => {
@@ -185,7 +185,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				},
 			});
 
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "stateful-test-agent",
 				model: mockModel,
 				system: "You can increment counters",
@@ -209,8 +209,8 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 				expect(streamParams).toBeDefined();
 				expect(streamParams.tools).toHaveProperty("statefulTool");
-				expect(streamParams.tools.statefulTool).toHaveProperty("execute");
-				expect(typeof streamParams.tools.statefulTool.execute).toBe("function");
+				expect(streamParams.tools!.statefulTool).toHaveProperty("execute");
+				expect(typeof streamParams.tools!.statefulTool!.execute).toBe("function");
 			}
 		});
 
@@ -317,7 +317,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				},
 			});
 
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "circular-test-agent",
 				model: mockModel,
 				system: "You can use tools that might call each other",
@@ -344,8 +344,8 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			expect(streamParams.tools).toHaveProperty("toolA");
 			expect(streamParams.tools).toHaveProperty("toolB");
 			// Both tools should be properly configured even with circular dependencies
-			expect(typeof streamParams.tools.toolA.execute).toBe("function");
-			expect(typeof streamParams.tools.toolB.execute).toBe("function");
+			expect(typeof streamParams.tools!.toolA!.execute).toBe("function");
+			expect(typeof streamParams.tools!.toolB!.execute).toBe("function");
 		});
 
 		it("should configure tools with strict schema validation", () => {
@@ -362,7 +362,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				},
 			});
 
-			const agent = createAgent<ToolSet, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext>({
 				name: "validation-test-agent",
 				model: mockModel,
 				system: "You use tools with strict input requirements",

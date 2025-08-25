@@ -1,109 +1,83 @@
-import {
-	convertToModelMessages
+import { convertToModelMessages, streamText } from "ai";
+import type {
+	ModelMessage,
+	Tool,
+	ToolSet,
+	UIMessage,
+	LanguageModel,
+	ToolChoice,
+	StopCondition,
+	PrepareStepFunction,
+	StreamTextTransform,
+	StreamTextOnChunkCallback,
+	StreamTextOnErrorCallback,
+	StreamTextOnFinishCallback,
+	StreamTextOnStepFinishCallback,
+	TelemetrySettings,
+	StepResult,
 } from "ai";
-import type {ModelMessage, Tool, ToolSet, UIMessage} from "ai";
 import type { Memory } from "../memory";
-import { 
+import {
 	AgentConfigurationError,
 	AgentStreamError,
 	CacheOperationError,
 	ContextCreationError,
 	MessageConversionError,
 	NoMessagesError,
-	ToolExecutionError
+	ToolExecutionError,
 } from "../server/errors";
-import type { SystemContext } from "../server/adapters/types";
+import type { SystemContext, RuntimeContext } from "../server/adapters/types";
 import type { ProviderCache } from "./cache";
 import type { ToolFactory, ToolFactorySet } from "./tool";
 
-// Helper function to resolve tools from factories
-function resolveToolFactories<TRuntimeContext = unknown>(
-	toolsOrFactories:
-		| ToolSet
-		| ToolFactorySet<TRuntimeContext>
-		| ((context: TRuntimeContext) => ToolSet | ToolFactorySet<TRuntimeContext>),
-	context: TRuntimeContext,
-): ToolSet {
-	// First resolve if it's a function
-	const resolved =
-		typeof toolsOrFactories === "function"
-			? toolsOrFactories(context)
-			: toolsOrFactories;
+// Extract the base streamText parameters type
+type StreamTextParams = Parameters<typeof streamText>[0];
 
-	// Null/undefined check
-	if (!resolved || typeof resolved !== "object") {
-		throw new Error("Tools resolution returned null, undefined, or non-object value");
-	}
+// Vercel AI SDK configuration - derived from actual streamText parameters
+// We omit the fields that Lightfast handles (messages, tools, system) and re-type with proper generics
+export type VercelAIConfig<TOOLS extends ToolSet = ToolSet> = Omit<
+	StreamTextParams,
+	| "messages"
+	| "tools"
+	| "system"
+	| "prompt"
+	| "toolChoice"
+	| "stopWhen"
+	| "onChunk"
+	| "onFinish"
+	| "onStepFinish"
+	| "prepareStep"
+	| "experimental_transform"
+> & {
+	// Re-type the generic-dependent fields with our TOOLS type
+	toolChoice?: ToolChoice<TOOLS>;
+	stopWhen?: StopCondition<TOOLS> | Array<StopCondition<TOOLS>>;
+	onChunk?: StreamTextOnChunkCallback<TOOLS>;
+	onFinish?: StreamTextOnFinishCallback<TOOLS>;
+	onStepFinish?: StreamTextOnStepFinishCallback<TOOLS>;
+	prepareStep?: PrepareStepFunction<TOOLS>;
+	experimental_transform?:
+		| StreamTextTransform<TOOLS>
+		| Array<StreamTextTransform<TOOLS>>;
+};
 
-	// Check if it's a ToolFactorySet by checking if the first property is a function
-	const keys = Object.keys(resolved);
-	const firstKey = keys[0];
-	
-	if (firstKey && typeof resolved[firstKey] === "function") {
-		// It's a ToolFactorySet, resolve each factory
-		const toolSet: ToolSet = {};
-		for (const [key, factory] of Object.entries(resolved)) {
-			try {
-				toolSet[key] = (factory as ToolFactory<TRuntimeContext>)(context);
-			} catch (error) {
-				throw new Error(`Failed to resolve tool factory '${key}': ${error instanceof Error ? error.message : String(error)}`);
-			}
-		}
-		return toolSet;
-	}
-
-	// It's already a ToolSet
-	return resolved as ToolSet;
-}
-
-// Utility function for generating UUIDs
-function uuidv4() {
-	return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-		const r = (Math.random() * 16) | 0;
-		const v = c === "x" ? r : (r & 0x3) | 0x8;
-		return v.toString(16);
-	});
-}
-
-// Type for streamText parameters - matching AI SDK v5
-export interface StreamTextParameters<TOOLS extends ToolSet = ToolSet> {
-	model: any; // LanguageModel type from AI SDK
-	messages: ModelMessage[];
-	tools?: TOOLS;
-	toolChoice?: any;
-	stopWhen?: any;
-	onChunk?: any;
-	onFinish?: any;
-	onStepFinish?: any;
-	onAbort?: any;
-	onError?: any;
-	prepareStep?: any;
-	experimental_transform?: any;
-	[key: string]: any; // Allow additional properties like headers, providerOptions, etc.
-}
-
-// Properties we need to handle specially or exclude
-type ExcludedStreamTextProps =
-	| "messages" // We get this from stream() method
-	| "tools" // We use tool factories
-	| "system" // We store separately
-	| "prompt" // We use messages instead
-	| "toolChoice" // Needs generic typing
-	| "stopWhen" // Needs generic typing
-	| "onChunk" // Needs generic typing
-	| "onFinish" // Needs generic typing
-	| "onStepFinish" // Needs generic typing
-	| "onAbort" // Needs generic typing
-	| "onError" // Needs generic typing
-	| "_internal" // We don't use this
-	| "prepareStep" // Needs generic typing
-	| "experimental_transform"; // Needs generic typing
-
-// Agent-specific configuration extending streamText parameters
-export interface AgentConfig
-	extends Omit<StreamTextParameters<ToolSet>, ExcludedStreamTextProps> {
-	// Agent-specific required fields
+// Lightfast-specific configuration
+export interface LightfastConfig<
+	TRuntimeContext = {},
+	TTools extends
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+> {
+	// Required Lightfast fields
 	name: string;
+	system: string;
+	tools?: TTools | ((context: TRuntimeContext) => TTools);  // Optional - user might not have tools
+	createRuntimeContext?: (params: {  // Optional - user might not need runtime context
+		sessionId: string;
+		resourceId: string;
+	}) => TRuntimeContext;
+
+	// Optional Lightfast features
+	cache?: ProviderCache;
 }
 
 export interface StreamOptions<
@@ -119,108 +93,65 @@ export interface StreamOptions<
 	requestContext: TRequestContext;
 }
 
+// Combined options for creating an agent
 export interface AgentOptions<
-	TTools extends ToolSet | ToolFactorySet<any> = ToolSet,
 	TRuntimeContext = {},
-> extends AgentConfig {
-	// Required: system prompt for the agent
-	system: string;
-	// Required: tools that will be passed to streamText (can be tool factories or direct tools)
-	tools: TTools | ((context: TRuntimeContext) => TTools);
-	// Required: function to create runtime context from request parameters
-	createRuntimeContext: (params: {
-		sessionId: string;
-		resourceId: string;
-	}) => TRuntimeContext;
-	// Optional: provider-specific cache implementation
-	cache?: ProviderCache;
-	// Optional: tool choice and stop conditions with strong typing based on the resolved tools
-	toolChoice?: StreamTextParameters<ResolvedTools<TTools>>["toolChoice"];
-	stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
-	// Strongly typed callbacks based on the agent's specific tools
-	onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
-	onFinish?: StreamTextParameters<ResolvedTools<TTools>>["onFinish"];
-	onStepFinish?: StreamTextParameters<ResolvedTools<TTools>>["onStepFinish"];
-	onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
-	onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
-	prepareStep?: StreamTextParameters<ResolvedTools<TTools>>["prepareStep"];
-	experimental_transform?: StreamTextParameters<
-		ResolvedTools<TTools>
-	>["experimental_transform"];
+	TTools extends
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+> extends LightfastConfig<TRuntimeContext, TTools>,
+		VercelAIConfig<ToolSet> {
+	// All fields are inherited from the two interfaces
+	// Note: VercelAIConfig uses ToolSet since factories are resolved to tools at runtime
 }
 
 export class Agent<
-	TTools extends ToolSet | ToolFactorySet<any> = ToolSet,
 	TRuntimeContext = {},
+	TTools extends
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > {
-	public readonly config: AgentConfig;
-	private generateId: () => string;
-	private tools: TTools | ((context: TRuntimeContext) => TTools);
-	private createRuntimeContext: (params: {
-		sessionId: string;
-		resourceId: string;
-	}) => TRuntimeContext;
-	private system: string;
-	private cache?: ProviderCache;
-	private toolChoice?: StreamTextParameters<
-		ResolvedTools<TTools>
-	>["toolChoice"];
-	private stopWhen?: StreamTextParameters<ResolvedTools<TTools>>["stopWhen"];
-	private onChunk?: StreamTextParameters<ResolvedTools<TTools>>["onChunk"];
-	private onFinish?: StreamTextParameters<ResolvedTools<TTools>>["onFinish"];
-	private onStepFinish?: StreamTextParameters<
-		ResolvedTools<TTools>
-	>["onStepFinish"];
-	private onAbort?: StreamTextParameters<ResolvedTools<TTools>>["onAbort"];
-	private onError?: StreamTextParameters<ResolvedTools<TTools>>["onError"];
-	private prepareStep?: StreamTextParameters<
-		ResolvedTools<TTools>
-	>["prepareStep"];
-	private experimental_transform?: StreamTextParameters<
-		ResolvedTools<TTools>
-	>["experimental_transform"];
+	// Clean separation: Vercel AI SDK config vs Lightfast config
+	private readonly vercelConfig: VercelAIConfig<ToolSet>;
+	private readonly lightfastConfig: LightfastConfig<TRuntimeContext, TTools>;
 
-	constructor(options: AgentOptions<TTools, TRuntimeContext>) {
+	constructor(options: AgentOptions<TRuntimeContext, TTools>) {
+		// Destructure into Lightfast and Vercel configs
 		const {
+			// Lightfast-specific fields
+			name,
 			system,
 			tools,
 			createRuntimeContext,
 			cache,
-			toolChoice,
-			stopWhen,
-			onChunk,
-			onFinish,
-			onStepFinish,
-			onAbort,
-			onError,
-			prepareStep,
-			experimental_transform,
-			...config
+			// Everything else is Vercel AI SDK config
+			...vercelConfig
 		} = options;
 
-		this.tools = tools;
-		this.createRuntimeContext = createRuntimeContext;
-		this.system = system;
-		this.cache = cache;
-		this.generateId = uuidv4;
+		// Store Lightfast configuration
+		this.lightfastConfig = {
+			name,
+			system,
+			tools,
+			createRuntimeContext,
+			cache,
+		};
 
-		// Store base configuration (all streamText properties except excluded ones)
-		this.config = config;
+		// Store Vercel AI SDK configuration
+		this.vercelConfig = vercelConfig as VercelAIConfig<ToolSet>;
+	}
 
-		// Store tool-specific properties separately
-		this.toolChoice = toolChoice;
-		this.stopWhen = stopWhen;
-		this.onChunk = onChunk;
-		this.onFinish = onFinish;
-		this.onStepFinish = onStepFinish;
-		this.onAbort = onAbort;
-		this.onError = onError;
-		this.prepareStep = prepareStep;
-		this.experimental_transform = experimental_transform;
+	// Public getter for agent name
+	get name(): string {
+		return this.lightfastConfig.name;
+	}
+
+	// Public getter for the model (commonly needed)
+	get model(): LanguageModel {
+		return this.vercelConfig.model;
 	}
 
 	/**
-	 * Builds streamText parameters for the given messages and context
+	 * Builds parameters for streamText for the given messages and context
+	 * Returns an object that can be directly passed to streamText
 	 * Does not actually call streamText - that's handled by runtime.ts
 	 */
 	buildStreamParams<
@@ -234,49 +165,69 @@ export class Agent<
 		resourceId,
 		systemContext,
 		requestContext,
-	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): StreamTextParameters<ToolSet> {
+	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): Parameters<
+		typeof streamText
+	>[0] {
 		if (!messages || messages.length === 0) {
 			throw new NoMessagesError();
 		}
 
-		const streamId = this.generateId();
-
-		// Create agent-specific runtime context
-		let agentContext: TRuntimeContext;
-		try {
-			agentContext = this.createRuntimeContext({ sessionId, resourceId });
-		} catch (error) {
-			throw new ContextCreationError(
-				"runtime",
-				error instanceof Error ? error.message : String(error),
-				error instanceof Error ? error : undefined
-			);
+		// Create agent-specific runtime context if provided
+		let agentContext: TRuntimeContext | {} = {};
+		if (this.lightfastConfig.createRuntimeContext) {
+			try {
+				agentContext = this.lightfastConfig.createRuntimeContext({
+					sessionId,
+					resourceId,
+				});
+			} catch (error) {
+				throw new ContextCreationError(
+					"runtime",
+					error instanceof Error ? error.message : String(error),
+					error instanceof Error ? error : undefined,
+				);
+			}
 		}
 
 		// Merge all three context levels: system -> request -> agent
-		const mergedContext = {
+		// The merged context is what tools actually receive
+		const mergedContext: SystemContext & TRequestContext & TRuntimeContext = {
 			...systemContext,
 			...requestContext,
 			...agentContext,
-		};
+		} as SystemContext & TRequestContext & TRuntimeContext;
 
-		// Resolve tools using helper function
-		let resolvedTools: ToolSet;
-		try {
-			resolvedTools = resolveToolFactories(this.tools, mergedContext);
-		} catch (error) {
-			throw new ToolExecutionError(
-				"factory",
-				error instanceof Error ? error.message : String(error),
-				error instanceof Error ? error : undefined
-			);
+		// Resolve tool factories into actual tools by injecting merged context
+		let resolvedTools: ToolSet = {};
+		if (this.lightfastConfig.tools) {
+			const tools =
+				typeof this.lightfastConfig.tools === "function"
+					? this.lightfastConfig.tools(mergedContext as TRuntimeContext)
+					: this.lightfastConfig.tools;
+
+			// Validate tools is a valid object
+			if (!tools || typeof tools !== "object") {
+				throw new ToolExecutionError(
+					"tools",
+					"Tools resolution returned null, undefined, or non-object value",
+				);
+			}
+
+			for (const [name, factory] of Object.entries(tools)) {
+				try {
+					resolvedTools[name] = factory(mergedContext as unknown as RuntimeContext<TRuntimeContext>);
+				} catch (error) {
+					throw new ToolExecutionError(
+						name,
+						`Failed to resolve tool factory '${name}': ${error instanceof Error ? error.message : String(error)}`,
+						error instanceof Error ? error : undefined,
+					);
+				}
+			}
 		}
 
-		// Extract name from config as it's not a streamText property
-		const { name, ...streamTextConfig } = this.config;
-
 		// Ensure model is set
-		if (!streamTextConfig.model) {
+		if (!this.vercelConfig.model) {
 			throw new AgentConfigurationError("model", "Model must be configured");
 		}
 
@@ -284,20 +235,20 @@ export class Agent<
 		let systemMessages: ModelMessage[] = [];
 		let modelMessages: ModelMessage[];
 
-		if (this.cache) {
+		if (this.lightfastConfig.cache) {
 			try {
 				// Use provider cache implementation
-				systemMessages = this.cache.applySystemCaching(this.system);
+				systemMessages = this.lightfastConfig.cache.applySystemCaching(
+					this.lightfastConfig.system,
+				);
 
-				// console.log(messages.forEach((x) => console.log(x)));
 				// Convert messages to model messages
 				const baseModelMessages = convertToModelMessages(messages, {
 					tools: resolvedTools,
 				});
 
-				console.log(baseModelMessages.forEach((x) => console.log(x)));
 				// Apply message caching
-				modelMessages = this.cache.applyMessageCaching(
+				modelMessages = this.lightfastConfig.cache.applyMessageCaching(
 					baseModelMessages,
 					messages,
 				);
@@ -305,7 +256,7 @@ export class Agent<
 				throw new CacheOperationError(
 					"system and message caching",
 					error instanceof Error ? error.message : String(error),
-					error instanceof Error ? error : undefined
+					error instanceof Error ? error : undefined,
 				);
 			}
 		} else {
@@ -313,7 +264,7 @@ export class Agent<
 				// No cache provider - use simple system message
 				systemMessages.push({
 					role: "system",
-					content: this.system,
+					content: this.lightfastConfig.system,
 				});
 
 				// Convert messages without caching
@@ -324,7 +275,7 @@ export class Agent<
 				throw new MessageConversionError(
 					"convert to model messages",
 					error instanceof Error ? error.message : String(error),
-					error instanceof Error ? error : undefined
+					error instanceof Error ? error : undefined,
 				);
 			}
 		}
@@ -333,57 +284,36 @@ export class Agent<
 		// This way we maintain proper typing
 		const allModelMessages = [...systemMessages, ...modelMessages];
 
-		// Create properly typed parameters for streamText
-		// We know resolvedTools is a ToolSet at runtime, so we can safely type the parameters
-		const streamTextParams: StreamTextParameters<ToolSet> = {
-			// Spread all streamText config properties (includes headers, providerOptions, etc.)
-			...streamTextConfig,
-			model: streamTextConfig.model, // Explicitly include model to satisfy TypeScript
-			// Override with our specific handling - no more system parameter
-			messages: allModelMessages,
-			tools: resolvedTools,
-			// These callbacks need to be cast because they're typed with ResolvedTools<TTools>
-			// but streamText expects them typed with ToolSet. This is safe because
-			// resolvedTools is guaranteed to be a ToolSet at runtime.
-			toolChoice: this
-				.toolChoice,
-			stopWhen: this.stopWhen,
-			onChunk: this.onChunk,
-			onFinish: this.onFinish,
-			onStepFinish: this
-				.onStepFinish,
-			onAbort: this.onAbort,
-			onError: this.onError,
-			prepareStep: this
-				.prepareStep,
-			experimental_transform: this
-				.experimental_transform,
-		};
-
 		// Return the parameters for streamText
 		// The actual streaming is handled by runtime.ts
-		return streamTextParams;
+		return {
+			// Spread all Vercel AI SDK config
+			...this.vercelConfig,
+			// Override with our specific runtime values
+			messages: allModelMessages,
+			tools: resolvedTools,
+		} as Parameters<typeof streamText>[0];
+	}
+
+	// Expose config for testing or inspection
+	get config(): LightfastConfig<TRuntimeContext, TTools> & VercelAIConfig<ToolSet> {
+		return {
+			...this.lightfastConfig,
+			...this.vercelConfig,
+		};
 	}
 }
 
-// Type helper to resolve tool factories to tools
-type ResolveFactory<T> = T extends ToolFactory<any> ? ReturnType<T> : T;
-
-// Type helper to get the resolved tools type
-export type ResolvedTools<T> = T extends ToolFactorySet<any>
-	? { [K in keyof T]: ResolveFactory<T[K]> }
-	: T extends ToolSet
-		? T
-		: never;
-
 /**
  * Factory function to create an agent with proper type inference
+ * All tools must be created using createTool() which returns ToolFactory functions
  */
 export function createAgent<
-	TTools extends ToolSet | ToolFactorySet<any>,
 	TRuntimeContext = {},
+	TTools extends
+		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 >(
-	options: AgentOptions<TTools, TRuntimeContext>,
-): Agent<TTools, TRuntimeContext> {
+	options: AgentOptions<TRuntimeContext, TTools>,
+): Agent<TRuntimeContext, TTools> {
 	return new Agent(options);
 }
