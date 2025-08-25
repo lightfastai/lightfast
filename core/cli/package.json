@@ -34,30 +34,31 @@
 		"build:server": "tsup",
 		"build:client": "vite build",
 		"start": "node dist/index.js",
+		"prepublishOnly": "pnpm build",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --fix",
 		"clean": "git clean -xdf .cache .turbo dist node_modules"
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.19.0",
-		"@types/react": "^19.1.11",
-		"@types/react-dom": "^19.1.7",
-		"@vitejs/plugin-react": "^5.0.1",
 		"chalk": "^5.3.0",
 		"commander": "^12.1.0",
 		"hono": "^4.9.4",
-		"ora": "^8.1.1",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
-		"vite": "^7.1.2"
+		"ora": "^8.1.1"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "^24.3.0",
+		"@types/react": "^19.1.11",
+		"@types/react-dom": "^19.1.7",
+		"@vitejs/plugin-react": "^5.0.1",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
 		"tsup": "^8.5.0",
 		"tsx": "^4.20.5",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vite": "^7.1.2"
 	},
 	"engines": {
 		"node": ">=18"
