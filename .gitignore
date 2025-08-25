@@ -121,3 +121,6 @@ mastra.db-wal
 
 # Storybook
 storybook-static
+
+# Playwright
+.playwright-mcp/*
