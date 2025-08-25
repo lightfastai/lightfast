@@ -16,14 +16,8 @@ type AppRuntimeContext = {
   sessionId: string;
 };
 
-// Define the system context type
-type SystemContext = {
-  sessionId: string;
-  resourceId: string;
-};
-
 // Empty tools object (can be extended with actual tools)
-const chatTools = {} as const;
+const chatTools = {};
 
 // Fixed model - using gpt-5-nano
 const MODEL = "openai/gpt-5-nano";
@@ -67,7 +61,7 @@ const handler = async (
 
     // Use fetchRequestHandler with inline agent definition
     const response = await fetchRequestHandler({
-      agent: createAgent({
+      agent: createAgent<AppRuntimeContext, typeof chatTools>({
         name: "assistant",
         system: `You are a helpful AI assistant powered by Lightfast Core infrastructure.
         
@@ -85,24 +79,17 @@ Be concise, helpful, and friendly in your responses.`,
         createRuntimeContext: ({
           sessionId: _sessionId,
           resourceId: _resourceId,
-        }: SystemContext): AppRuntimeContext => ({
+        }): AppRuntimeContext => ({
           userId,
           sessionId,
         }),
         model: gateway(MODEL),
-        onChunk: ({ chunk }: { chunk: { type?: string } }) => {
-          if ("type" in chunk && chunk.type === "tool-call") {
+        onChunk: ({ chunk }) => {
+          if (chunk.type === "tool-call") {
             console.log("Tool called:", chunk);
           }
         },
-        onFinish: (result: {
-          finishReason: string;
-          usage?: {
-            promptTokens?: number;
-            completionTokens?: number;
-            totalTokens?: number;
-          };
-        }) => {
+        onFinish: (result) => {
           console.log("Chat finished:", {
             sessionId,
             userId,
@@ -127,7 +114,8 @@ Be concise, helpful, and friendly in your responses.`,
       }),
       generateId: uuidv4,
       enableResume: true,
-      onError({ error }: { error: Error }) {
+      onError(event) {
+        const { error } = event;
         console.error(
           `[API Error] Session: ${sessionId}, User: ${userId}`,
           {
