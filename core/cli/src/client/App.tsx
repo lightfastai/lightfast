@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Dashboard } from './components/dashboard'
 import { StatusBar } from './components/status-bar'
 import { useApiStatus } from './hooks/use-api-status'

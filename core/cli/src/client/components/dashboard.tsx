@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect } from 'react'
 
 interface AgentData {
   agents: any[]
@@ -16,15 +16,15 @@ interface ResourceData {
 }
 
 export function Dashboard() {
-  const [agents, setAgents] = React.useState<AgentData>({ agents: [], total: 0 })
-  const [executions, setExecutions] = React.useState<ExecutionData>({ executions: [], total: 0 })
-  const [resources, setResources] = React.useState<ResourceData>({
+  const [agents, setAgents] = useState<AgentData>({ agents: [], total: 0 })
+  const [executions, setExecutions] = useState<ExecutionData>({ executions: [], total: 0 })
+  const [resources, setResources] = useState<ResourceData>({
     sandbox: { available: 0, total: 0 },
     browser: { available: 0, total: 0 }
   })
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = useState(true)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const [agentsRes, executionsRes, resourcesRes] = await Promise.all([

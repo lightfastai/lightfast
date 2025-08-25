@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect } from 'react'
 
 interface ApiStatus {
   status: string
@@ -7,11 +7,11 @@ interface ApiStatus {
 }
 
 export function useApiStatus() {
-  const [status, setStatus] = React.useState<ApiStatus | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<Error | null>(null)
+  const [status, setStatus] = useState<ApiStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchStatus = async () => {
       try {
         const response = await fetch('/api/status')
