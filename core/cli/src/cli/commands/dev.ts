@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import { spawn } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -17,22 +18,56 @@ export const devCommand = new Command('dev')
   .option('-p, --port <port>', 'Port to run the server on', '3000')
   .option('-h, --host <host>', 'Host to bind the server to', 'localhost')
   .action(async (options: DevOptions) => {
-    console.log(chalk.blue('→ Starting Lightfast dev server...'))
+    console.log(chalk.blue('→ Starting Lightfast server...'))
     
     try {
       const port = options.port || '3000'
       const host = options.host || 'localhost'
       
-      // Get the CLI package root directory (from src/cli/commands to root)
-      const cliRoot = path.resolve(__dirname, '..', '..', '..')
+      // When running from dist (production/installed), use the built app
+      const isProduction = __dirname.includes('/dist/')
+      
+      if (process.env.DEBUG) {
+        console.log(chalk.gray(`Debug: __dirname = ${__dirname}`))
+        console.log(chalk.gray(`Debug: isProduction = ${isProduction}`))
+      }
+      
+      let cliRoot: string
+      let startCommand: string[]
+      
+      if (isProduction) {
+        // Running from installed package - use built server
+        cliRoot = path.resolve(__dirname, '..', '..')
+        const serverPath = path.join(cliRoot, '.output', 'server', 'index.mjs')
+        
+        // Check if built app exists
+        if (!fs.existsSync(serverPath)) {
+          console.error(chalk.red('✖ Built app not found. This is a packaging error.'))
+          console.error(chalk.yellow('  If you are developing, use "pnpm dev" instead.'))
+          process.exit(1)
+        }
+        
+        startCommand = ['node', serverPath]
+        console.log(chalk.blue('→ Starting production server...'))
+      } else {
+        // Development mode - run from source
+        cliRoot = path.resolve(__dirname, '..', '..', '..')
+        startCommand = ['pnpm', 'vite', 'dev', '--port', port, '--host', host]
+        console.log(chalk.blue('→ Starting development server...'))
+      }
       
       console.log(chalk.blue('→ Launching Lightfast UI...'))
       
-      // Run TanStack Start dev server
-      const devProcess = spawn('pnpm', ['vite', 'dev', '--port', port, '--host', host], {
+      // Run the appropriate command
+      const devProcess = spawn(startCommand[0], startCommand.slice(1), {
         cwd: cliRoot,
         stdio: 'pipe',
-        shell: true
+        shell: true,
+        env: {
+          ...process.env,
+          PORT: port,
+          HOST: host
+        }
       })
 
       let serverStarted = false
@@ -40,23 +75,25 @@ export const devCommand = new Command('dev')
       devProcess.stdout?.on('data', (data) => {
         const output = data.toString()
         
-        // Check if server has started
-        if (output.includes('Local:') && !serverStarted) {
+        // Check if server has started (works for both vite and production)
+        if ((output.includes('Local:') || output.includes('Listening on')) && !serverStarted) {
           serverStarted = true
-          console.log(chalk.green('✔ Lightfast dev server started'))
+          console.log(chalk.green('✔ Lightfast server started'))
           
           console.log('')
-          console.log(chalk.bold('  🚀 Lightfast CLI Dev Server'))
+          console.log(chalk.bold('  🚀 Lightfast CLI Server'))
           console.log('')
           console.log(`  ${chalk.gray('Local:')}    ${chalk.cyan(`http://${host}:${port}`)}`)
-          console.log(`  ${chalk.gray('Network:')}  ${chalk.cyan(`http://${host === 'localhost' ? 'http://localhost' : `http://${host}`}:${port}`)}`)
+          if (host !== 'localhost') {
+            console.log(`  ${chalk.gray('Network:')}  ${chalk.cyan(`http://${host}:${port}`)}`)
+          }
           console.log('')
           console.log(chalk.gray('  View and manage your Lightfast agents in the browser'))
           console.log(chalk.gray('  Press Ctrl+C to stop'))
           console.log('')
         }
         
-        // Show other output in debug mode
+        // Show output in debug mode
         if (process.env.DEBUG) {
           console.log(chalk.gray(output))
         }
@@ -73,20 +110,23 @@ export const devCommand = new Command('dev')
       })
 
       devProcess.on('error', (error) => {
-        console.error(chalk.red(`✖ Failed to start dev server: ${error.message}`))
+        console.error(chalk.red(`✖ Failed to start server: ${error.message}`))
+        if (isProduction) {
+          console.error(chalk.yellow('  Try reinstalling the package.'))
+        }
         process.exit(1)
       })
 
       devProcess.on('close', (code) => {
         if (code !== 0 && code !== null) {
-          console.error(chalk.red(`✖ Dev server exited with code ${code}`))
+          console.error(chalk.red(`✖ Server exited with code ${code}`))
           process.exit(code)
         }
       })
 
       // Handle graceful shutdown
       process.on('SIGINT', () => {
-        console.log(chalk.yellow('\n\nShutting down Lightfast dev server...'))
+        console.log(chalk.yellow('\n\nShutting down Lightfast server...'))
         devProcess.kill('SIGTERM')
         setTimeout(() => {
           devProcess.kill('SIGKILL')
@@ -100,7 +140,7 @@ export const devCommand = new Command('dev')
       })
 
     } catch (error) {
-      console.error(chalk.red('✖ Failed to start dev server'))
+      console.error(chalk.red('✖ Failed to start server'))
       console.error(chalk.red('\nError:'), error)
       process.exit(1)
     }

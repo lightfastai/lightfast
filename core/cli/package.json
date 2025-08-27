@@ -25,13 +25,15 @@
 		"cli": "./dist/index.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		".output"
 	],
 	"scripts": {
 		"cli:dev": "tsup --watch",
-		"cli:build": "tsup",
+		"cli:build": "pnpm build:app && tsup",
 		"prepublishOnly": "pnpm cli:build",
 		"dev": "vite dev",
+		"build:app": "vite build",
 		"build": "vite build && tsc --noEmit",
 		"start": "node .output/server/index.mjs",
 		"typecheck": "tsc --noEmit",
