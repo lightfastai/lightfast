@@ -1,32 +1,25 @@
-
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@font-face {
+  font-family: "Geist Sans";
+  src: url("/fonts/GeistVF.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+}
 
-@layer base {
-  html {
-    color-scheme: light dark;
-  }
-
-  * {
-    @apply border-gray-200 dark:border-gray-800;
-  }
-
-  html,
-  body {
-    @apply text-gray-900 bg-gray-50 dark:bg-gray-950 dark:text-gray-200;
-  }
-
-  .using-mouse * {
-    outline: none !important;
-  }
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMonoVF.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
 }
 
 @theme inline {
+  --font-family-sans: "Geist Sans", system-ui, sans-serif;
+  --font-family-mono: "Geist Mono", monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

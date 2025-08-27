@@ -1,19 +1,23 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "outDir": "dist",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["node", "vite/client"],
+    "strict": true,
+    "esModuleInterop": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
-    }
-  },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "app.config.ts", "vite.config.ts"],
-  "exclude": ["node_modules", "dist"]
+    },
+    "noEmit": true,
+    "types": ["node", "vite/client"]
+  }
 }
