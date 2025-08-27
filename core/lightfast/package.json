@@ -18,10 +18,18 @@
 	"bugs": "https://github.com/lightfastai/lightfast/issues",
 	"license": "MIT",
 	"author": "Lightfast <hello@lightfast.ai>",
-	"main": "./dist/agent.mjs",
-	"types": "./dist/agent.d.ts",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
 	"type": "module",
 	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"import": "./dist/client/index.mjs"
+		},
 		"./agent": {
 			"types": "./dist/agent.d.ts",
 			"import": "./dist/agent.mjs"

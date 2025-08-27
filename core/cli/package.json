@@ -28,37 +28,46 @@
 		"dist"
 	],
 	"scripts": {
-		"dev": "tsup --watch",
-		"dev:client": "vite",
-		"build": "pnpm build:server && pnpm build:client",
-		"build:server": "tsup",
-		"build:client": "vite build",
-		"start": "node dist/index.js",
-		"prepublishOnly": "pnpm build",
+		"cli:dev": "tsup --watch",
+		"cli:build": "tsup",
+		"prepublishOnly": "pnpm cli:build",
+		"dev": "vite dev",
+		"build": "vite build && tsc --noEmit",
+		"start": "node .output/server/index.mjs",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --fix",
-		"clean": "git clean -xdf .cache .turbo dist node_modules"
+		"clean": "git clean -xdf .cache .turbo dist node_modules .output .vinxi"
 	},
 	"dependencies": {
-		"@hono/node-server": "^1.19.0",
-		"chalk": "^5.3.0",
+		"@tanstack/react-router": "^1.131.28",
+		"@tanstack/react-router-devtools": "^1.131.28",
+		"@tanstack/react-start": "^1.131.28",
+		"chalk": "^5.6.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
 		"commander": "^12.1.0",
-		"hono": "^4.9.4",
-		"ora": "^8.1.1"
+		"lucide-react": "^0.451.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"tailwind-merge": "^3.3.1",
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
+		"@tailwindcss/postcss": "^4.1.12",
+		"@tailwindcss/typography": "^0.5.16",
 		"@types/node": "^24.3.0",
 		"@types/react": "^19.1.11",
-		"@types/react-dom": "^19.1.7",
-		"@vitejs/plugin-react": "^5.0.1",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
+		"@types/react-dom": "^19.1.8",
+		"@vitejs/plugin-react": "^4.7.0",
+		"postcss": "^8.5.6",
+		"tailwindcss": "^4.1.12",
 		"tsup": "^8.5.0",
-		"tsx": "^4.20.5",
-		"typescript": "catalog:",
-		"vite": "^7.1.2"
+		"tw-animate-css": "^1.3.7",
+		"typescript": "^5.9.2",
+		"vite": "^7.1.3",
+		"vite-tsconfig-paths": "^5.1.4"
 	},
 	"engines": {
 		"node": ">=18"

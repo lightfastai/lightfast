@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/cli/index.ts'],
   format: ['esm'],
   dts: true,
   clean: true,
@@ -10,5 +10,7 @@ export default defineConfig({
   target: 'node18',
   banner: {
     js: '#!/usr/bin/env node'
-  }
+  },
+  external: ['vite'],
+  platform: 'node'
 })
