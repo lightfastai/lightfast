@@ -250,7 +250,8 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     minify,
     platform: 'node',
     metafile: true,
-    external: [...defaultExternals, ...external], // Always apply externals to avoid huge bundles
+    // Only set external when bundling is enabled
+    ...(bundle ? { external: [...defaultExternals, ...external] } : {}),
     plugins: [
       createWorkspaceResolver(),
       createTypeScriptPathsPlugin(baseDir),
@@ -341,7 +342,7 @@ export async function transpileConfig(configPath: string, options: Partial<Trans
     baseDir,
     format: 'esm',
     target: 'es2022',
-    bundle: false, // Don't bundle by default - just transpile TypeScript
+    bundle: true, // Bundle to resolve imports, but keep workspace packages external
     sourcemap: true,
     external: [
       // Always external for config files
