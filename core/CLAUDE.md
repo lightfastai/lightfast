@@ -26,14 +26,14 @@ graph TD
     E --> F[lightfast core]
 ```
 
-**Clean Architecture:** The meta package depends only on cli-core, which provides access to all functionality through transitive dependencies.
+**Architecture:** The meta package depends only on cli-core, which provides access to all functionality through transitive dependencies.
 
 ## Package Details
 
 ### 1. `@lightfastai/cli` (Meta Package)
 **Purpose:** Lightweight publishable package that delegates to cli-core  
 **Size:** ~100 bytes  
-**Dependencies:** Only `@lightfastai/cli-core` (clean delegation)
+**Dependencies:** `@lightfastai/cli-core` (single dependency)
 
 ```typescript
 // core/cli/src/index.ts
@@ -358,33 +358,33 @@ npm publish  # Only the meta package needs publishing
 ## Key Design Principles
 
 1. **Modular Architecture** - Each package has single responsibility
-2. **Clean Dependencies** - Meta package depends only on cli-core (no duplicates)  
+2. **Minimal Dependencies** - Meta package depends only on cli-core for simplicity  
 3. **Developer Experience** - Simple `cli dev` command hides complexity
 4. **Production Ready** - Optimized builds with proper error handling
 5. **Extensible** - Easy to add commands, compiler features, and UI routes
 
-## Optimized Architecture
+## Dependency Structure
 
-The dependency structure is now clean and efficient:
+The CLI uses a layered dependency approach:
 
 ```json
-// core/cli/package.json - Meta package (optimized)
+// core/cli/package.json - Meta package
 "dependencies": {
-  "@lightfastai/cli-core": "workspace:*"      // Clean delegation
+  "@lightfastai/cli-core": "workspace:*"      // Single dependency
 }
 
 // core/cli-core/package.json - Core package  
 "dependencies": {
-  "@lightfastai/compiler": "workspace:*",     // Implementation dependencies
-  "@lightfastai/dev-server": "workspace:*"   // Available through cli-core
+  "@lightfastai/compiler": "workspace:*",     // Compilation functionality
+  "@lightfastai/dev-server": "workspace:*"   // Development server
 }
 ```
 
-### Benefits Achieved:
-- ✅ **Minimal package size** - Meta package contains only delegation code
-- ✅ **No duplicate dependencies** - Clean transitive dependency resolution  
-- ✅ **Clear separation** - Meta package purely for publishing, cli-core for implementation
-- ✅ **Maintained functionality** - All CLI commands work through indirect access
+### Architecture Benefits:
+- **Minimal package size** - Meta package contains only delegation code
+- **Transitive dependencies** - Functionality accessed through cli-core  
+- **Clear separation** - Meta package for publishing, cli-core for implementation
+- **Simplified maintenance** - Changes isolated to appropriate packages
 
 ## File Structure Reference
 
