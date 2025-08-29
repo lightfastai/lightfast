@@ -1,6 +1,51 @@
 import type { Agent } from "../primitives/agent";
 
 /**
+ * Collection of agents available in a Lightfast instance
+ */
+export type LightfastAgentSet = Record<string, Agent>;
+
+/**
+ * Dev server configuration options
+ */
+export interface LightfastDevConfig {
+	/**
+	 * Port for the dev UI (defaults to 3000)
+	 */
+	port?: number;
+
+	/**
+	 * Enable hot reload (defaults to true)
+	 */
+	hotReload?: boolean;
+
+	/**
+	 * Enable verbose logging (defaults to false)
+	 */
+	verbose?: boolean;
+}
+
+/**
+ * Metadata about the Lightfast instance
+ */
+export interface LightfastMetadata {
+	/**
+	 * Name of the project
+	 */
+	name?: string;
+
+	/**
+	 * Version of the project
+	 */
+	version?: string;
+
+	/**
+	 * Description of the project
+	 */
+	description?: string;
+}
+
+/**
  * Configuration options for the Lightfast client
  */
 export interface LightfastConfig {
@@ -8,47 +53,17 @@ export interface LightfastConfig {
 	 * Collection of agents available in this Lightfast instance
 	 * Each agent is identified by a unique key
 	 */
-	agents: Record<string, Agent>;
+	agents: LightfastAgentSet;
 
 	/**
 	 * Optional configuration for the dev server
 	 */
-	dev?: {
-		/**
-		 * Port for the dev UI (defaults to 3000)
-		 */
-		port?: number;
-
-		/**
-		 * Enable hot reload (defaults to true)
-		 */
-		hotReload?: boolean;
-
-		/**
-		 * Enable verbose logging (defaults to false)
-		 */
-		verbose?: boolean;
-	};
+	dev?: LightfastDevConfig;
 
 	/**
 	 * Optional metadata about the Lightfast instance
 	 */
-	metadata?: {
-		/**
-		 * Name of the project
-		 */
-		name?: string;
-
-		/**
-		 * Version of the project
-		 */
-		version?: string;
-
-		/**
-		 * Description of the project
-		 */
-		description?: string;
-	};
+	metadata?: LightfastMetadata;
 }
 
 /**
@@ -122,7 +137,7 @@ export class Lightfast {
 	/**
 	 * Get all configured agents
 	 */
-	getAgents(): Record<string, Agent> {
+	getAgents(): LightfastAgentSet {
 		return this.config.agents;
 	}
 
@@ -150,14 +165,14 @@ export class Lightfast {
 	/**
 	 * Get metadata
 	 */
-	getMetadata(): LightfastConfig["metadata"] {
+	getMetadata(): LightfastMetadata | undefined {
 		return this.config.metadata;
 	}
 
 	/**
 	 * Get dev configuration
 	 */
-	getDevConfig(): LightfastConfig["dev"] {
+	getDevConfig(): LightfastDevConfig | undefined {
 		return this.config.dev;
 	}
 
@@ -165,31 +180,9 @@ export class Lightfast {
 	 * Export configuration for CLI consumption
 	 * This method is used by the CLI to discover and display agents
 	 */
-	toJSON(): {
-		agents: Array<{
-			key: string;
-			name: string;
-			model: string;
-			hasTools: boolean;
-			hasCache: boolean;
-		}>;
-		metadata: LightfastConfig["metadata"];
-		dev: LightfastConfig["dev"];
-	} {
-		const agents = Object.entries(this.config.agents).map(([key, agent]) => ({
-			key,
-			name: agent.name,
-			model: typeof agent.model === 'object' && 'provider' in agent.model 
-				? agent.model.provider 
-				: typeof agent.model === 'string' 
-				? agent.model 
-				: "unknown",
-			hasTools: Boolean(agent.config?.tools),
-			hasCache: Boolean(agent.config?.cache),
-		}));
-
+	toJSON(): LightfastJSON {
 		return {
-			agents,
+			agents: this.config.agents,
 			metadata: this.config.metadata,
 			dev: this.config.dev,
 		};
@@ -223,4 +216,11 @@ export function createLightfast(config: LightfastConfig): Lightfast {
 }
 
 // Re-export the Agent type for convenience
-export type { Agent } from "../primitives/agent";
+export type { Agent, AgentOptions } from "../primitives/agent";
+
+// Export the type of the JSON representation
+export type LightfastJSON = {
+	agents: LightfastAgentSet;
+	metadata?: LightfastMetadata;
+	dev?: LightfastDevConfig;
+};

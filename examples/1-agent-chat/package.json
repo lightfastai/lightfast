@@ -1,0 +1,22 @@
+{
+  "name": "lightfast-example-agent-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example project demonstrating Lightfast agents with CLI",
+  "scripts": {
+    "dev": "node ../../core/cli/dist/index.js dev",
+    "dev:verbose": "DEBUG=1 node ../../core/cli/dist/index.js dev",
+    "agents": "node -e \"import('./lightfast.config.ts').then(m => console.log(JSON.stringify(m.default.toJSON(), null, 2)))\""
+  },
+  "dependencies": {
+    "lightfast": "workspace:*",
+    "@lightfastai/cli": "workspace:*",
+    "@ai-sdk/gateway": "workspace:*",
+    "ai": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  },
+  "type": "module"
+}
