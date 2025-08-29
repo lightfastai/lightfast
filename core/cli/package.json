@@ -31,7 +31,7 @@
 	"scripts": {
 		"cli:dev": "tsup --watch",
 		"cli:build": "pnpm build:app && tsup",
-		"prepare": "pnpm cli:build",
+		"postinstall": "pnpm cli:build",
 		"prepublishOnly": "pnpm cli:build",
 		"dev": "vite dev",
 		"build:app": "vite build",
