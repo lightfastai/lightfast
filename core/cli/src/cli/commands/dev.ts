@@ -4,6 +4,8 @@ import { spawn } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import { createCompiler, findConfig } from '../../compiler/index.js'
+import { createConfigWatcher } from '../../compiler/watcher.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -11,18 +13,73 @@ const __dirname = path.dirname(__filename)
 interface DevOptions {
   port?: string
   host?: string
+  noWatch?: boolean
+  noCompile?: boolean
 }
 
 export const devCommand = new Command('dev')
   .description('Start the Lightfast development server')
   .option('-p, --port <port>', 'Port to run the server on', '3000')
   .option('-h, --host <host>', 'Host to bind the server to', 'localhost')
+  .option('--no-watch', 'Disable file watching for config changes')
+  .option('--no-compile', 'Disable TypeScript compilation (use existing JS files only)')
   .action(async (options: DevOptions) => {
     console.log(chalk.blue('→ Starting Lightfast server...'))
     
     try {
       const port = options.port || '3000'
       const host = options.host || 'localhost'
+      
+      // Compile TypeScript config if needed
+      if (!options.noCompile) {
+        const configPath = await findConfig(process.cwd());
+        if (configPath && configPath.endsWith('.ts')) {
+          console.log(chalk.blue('→ Compiling TypeScript configuration...'))
+          const compiler = createCompiler({ baseDir: process.cwd() });
+          
+          try {
+            const result = await compiler.compile({ configPath });
+            console.log(chalk.green('✔ Configuration compiled successfully'))
+            
+            // Start watcher if not disabled
+            if (!options.noWatch) {
+              console.log(chalk.blue('→ Starting configuration watcher...'))
+              const watcher = createConfigWatcher({
+                baseDir: process.cwd(),
+                compiler,
+                debounceDelay: 500,
+                additionalWatchPaths: [configPath]
+              });
+              
+              watcher.on('compile-start', () => {
+                console.log(chalk.blue('↻ Recompiling configuration...'))
+              });
+              
+              watcher.on('compile-success', () => {
+                console.log(chalk.green('✔ Configuration recompiled successfully'))
+              });
+              
+              watcher.on('compile-error', (error) => {
+                console.error(chalk.red('✖ Compilation error:'), error.message)
+              });
+              
+              await watcher.start();
+              console.log(chalk.green('✔ Watching for configuration changes'))
+              
+              // Cleanup on exit
+              process.on('SIGINT', () => {
+                watcher.stop();
+              });
+              process.on('SIGTERM', () => {
+                watcher.stop();
+              });
+            }
+          } catch (error) {
+            console.error(chalk.red('✖ Failed to compile configuration:'), error)
+            console.error(chalk.yellow('  Continuing with existing configuration...'))
+          }
+        }
+      }
       
       // When running from dist (production/installed), use the built app
       const isProduction = __dirname.includes('/dist/')

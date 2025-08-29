@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
 import type { Lightfast, LightfastJSON, LightfastAgentSet, LightfastMetadata, LightfastDevConfig } from 'lightfast/client';
+import { loadConfig } from '../compiler';
 
 /**
  * Service for discovering and loading Lightfast configurations
@@ -32,27 +33,15 @@ export class AgentDiscoveryService {
     }
 
     try {
-      // Look for configuration files in common locations
       const projectRoot = this.findProjectRoot();
-      const configPaths = [
-        path.join(projectRoot, 'lightfast.config.mjs'),
-        path.join(projectRoot, 'lightfast.config.js'),
-        path.join(projectRoot, 'lightfast.config.ts'),
-        path.join(projectRoot, 'src', 'lightfast.config.mjs'),
-        path.join(projectRoot, 'src', 'lightfast.config.js'),
-        path.join(projectRoot, 'src', 'lightfast.config.ts'),
-      ];
-
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          console.info(`Found Lightfast config at: ${configPath}`);
-          
-          // Dynamic import of the config file
-          // @vite-ignore comment is needed because this is a runtime import of user config files
-          const fileUrl = pathToFileURL(configPath).href;
+      
+      // First, check if there's a compiled config in .lightfast folder
+      const compiledConfigPath = path.join(projectRoot, '.lightfast', 'lightfast.config.mjs');
+      if (fs.existsSync(compiledConfigPath)) {
+        console.info(`Loading compiled config from: ${compiledConfigPath}`);
+        try {
+          const fileUrl = pathToFileURL(compiledConfigPath).href;
           const module = await import(/* @vite-ignore */ fileUrl);
-          
-          // Extract the Lightfast instance
           const lightfast = module.default || module.lightfast;
           
           if (lightfast && typeof lightfast.toJSON === 'function') {
@@ -60,6 +49,54 @@ export class AgentDiscoveryService {
             this.configCache = jsonConfig;
             this.lastCheckTime = now;
             return jsonConfig;
+          }
+        } catch (error) {
+          console.warn('Failed to load compiled config, trying source files...', error);
+        }
+      }
+      
+      // Try to compile TypeScript config if available
+      const tsConfigPath = path.join(projectRoot, 'lightfast.config.ts');
+      if (fs.existsSync(tsConfigPath)) {
+        console.info(`Found TypeScript config, attempting to compile: ${tsConfigPath}`);
+        try {
+          const lightfast = await loadConfig(tsConfigPath);
+          if (lightfast && typeof lightfast.toJSON === 'function') {
+            const jsonConfig = lightfast.toJSON();
+            this.configCache = jsonConfig;
+            this.lastCheckTime = now;
+            return jsonConfig;
+          }
+        } catch (error) {
+          console.error('Failed to compile TypeScript config:', error);
+        }
+      }
+
+      // Fallback to direct JavaScript/ESM files
+      const configPaths = [
+        path.join(projectRoot, 'lightfast.config.mjs'),
+        path.join(projectRoot, 'lightfast.config.js'),
+        path.join(projectRoot, 'src', 'lightfast.config.mjs'),
+        path.join(projectRoot, 'src', 'lightfast.config.js'),
+      ];
+
+      for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+          console.info(`Found Lightfast config at: ${configPath}`);
+          
+          try {
+            const fileUrl = pathToFileURL(configPath).href;
+            const module = await import(/* @vite-ignore */ fileUrl);
+            const lightfast = module.default || module.lightfast;
+            
+            if (lightfast && typeof lightfast.toJSON === 'function') {
+              const jsonConfig = lightfast.toJSON();
+              this.configCache = jsonConfig;
+              this.lastCheckTime = now;
+              return jsonConfig;
+            }
+          } catch (error) {
+            console.warn(`Failed to load config from ${configPath}:`, error);
           }
         }
       }
