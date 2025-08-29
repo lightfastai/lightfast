@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import HotReloadStatus from '../components/HotReloadStatus'
+import HotReloadStatus from '../components/hot-reload-status'
 
 export const Route = createFileRoute('/')({
   component: Home,

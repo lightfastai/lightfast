@@ -1,4 +1,4 @@
-import { useHotReload } from '../hooks/useHotReload';
+import { useHotReload } from '../hooks/use-hot-reload';
 
 export interface HotReloadStatusProps {
   /**
