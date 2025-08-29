@@ -106,7 +106,7 @@
 		}
 	},
 	"scripts": {
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"clean": "rm -rf dist .cache .turbo node_modules",
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"test": "vitest",

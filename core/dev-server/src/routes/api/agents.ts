@@ -1,7 +1,7 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { json } from '@tanstack/react-start'
 import { AgentDiscoveryService } from '../../server/agent-discovery'
-import type { LightfastJSON, Agent } from 'lightfast/client'
+import type { LightfastJSON } from 'lightfast/client'
 
 export const ServerRoute = createServerFileRoute('/api/agents')
   .methods({

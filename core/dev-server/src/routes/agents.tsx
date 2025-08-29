@@ -7,11 +7,11 @@ export const Route = createFileRoute("/agents")({
 });
 
 // Type for the API response
-type APIResponse = {
-  agents: Array<{ key: string } & Agent>; // Agent with key added
+interface APIResponse {
+  agents: ({ key: string } & Agent)[]; // Agent with key added
   metadata?: LightfastMetadata;
   dev?: LightfastDevConfig;
-};
+}
 
 function AgentsPage() {
   const [lightfastData, setLightfastData] = useState<APIResponse | null>(null);
@@ -28,12 +28,12 @@ function AgentsPage() {
           throw new Error(`Failed to fetch agents: ${response.statusText}`);
         }
         
-        const result = await response.json();
+        const result = await response.json() as { success: boolean; data?: APIResponse; message?: string };
         
-        if (result.success) {
+        if (result.success && result.data) {
           setLightfastData(result.data);
         } else {
-          throw new Error(result.message || 'Failed to load agents');
+          throw new Error(result.message ?? 'Failed to load agents');
         }
       } catch (err) {
         console.error('Error fetching agents:', err);
@@ -43,7 +43,7 @@ function AgentsPage() {
       }
     };
 
-    fetchAgents();
+    void fetchAgents();
   }, []);
 
   if (loading) {
@@ -129,7 +129,7 @@ function AgentsPage() {
 
 function AgentCard({ agent }: { agent: { key: string } & Agent }) {
   const getModelBadgeColor = (agent: Agent) => {
-    const model = agent.config?.model || '';
+    const model = agent.config.model || '';
     if (typeof model === 'string') {
       if (model.includes("claude")) return "bg-purple-500/10 text-purple-500 border-purple-500/20";
       if (model.includes("gpt")) return "bg-green-500/10 text-green-500 border-green-500/20";
@@ -138,7 +138,7 @@ function AgentCard({ agent }: { agent: { key: string } & Agent }) {
   };
 
   const getModelDisplayName = (agent: Agent) => {
-    const model = agent.config?.model || 'unknown';
+    const model = agent.config.model || 'unknown';
     if (typeof model === 'string') {
       if (model.includes("claude-3-5-sonnet")) return "Claude 3.5 Sonnet";
       if (model.includes("gpt-4-turbo")) return "GPT-4 Turbo";
@@ -165,13 +165,9 @@ function AgentCard({ agent }: { agent: { key: string } & Agent }) {
 
       {/* Agent Configuration */}
       <div className="text-sm text-muted-foreground space-y-1">
-        {agent.config && (
-          <>
-            <p>Model: {typeof agent.config.model === 'object' ? 'Custom Model' : (agent.config.model || 'Default')}</p>
-            {agent.config.temperature !== undefined && (
-              <p>Temperature: {agent.config.temperature}</p>
-            )}
-          </>
+        <p>Model: {typeof agent.config.model === 'object' ? 'Custom Model' : (agent.config.model || 'Default')}</p>
+        {(agent.config as { temperature?: number }).temperature !== undefined && (
+          <p>Temperature: {(agent.config as { temperature?: number }).temperature}</p>
         )}
       </div>
 

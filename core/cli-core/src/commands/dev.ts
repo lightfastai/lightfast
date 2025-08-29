@@ -1,6 +1,7 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn  } from 'child_process'
+import type {ChildProcess} from 'child_process';
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -100,7 +101,7 @@ export const devCommand = new Command('dev')
                   watchSpinner.stop();
                   delete (watcher as any)._spinner;
                 }
-                if (result && result.errors) {
+                if (result?.errors) {
                   console.error(formatCompilationErrors(result.errors));
                 } else {
                   console.error(chalk.red('✖ Compilation error:'), error.message);

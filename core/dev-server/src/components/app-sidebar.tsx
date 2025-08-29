@@ -11,19 +11,19 @@ import {
   SidebarMenuItem,
 } from "~/components/ui/sidebar"
 
-type NavigationItem = {
+interface NavigationItem {
   title: string;
   href: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   active?: boolean;
   disabled?: boolean;
   external?: boolean;
-};
+}
 
-type NavigationGroup = {
+interface NavigationGroup {
   title: string;
   items: NavigationItem[];
-};
+}
 
 export function AppSidebar() {
   const location = useLocation()
@@ -160,7 +160,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <div className="rounded-lg border bg-card p-3">
           <p className="text-xs text-muted-foreground">
-            {process.env.NODE_ENV === 'development' ? 'Development' : 'Production'} Mode
+            Development Mode
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Port: {typeof window !== 'undefined' ? window.location.port || '80' : '3000'}

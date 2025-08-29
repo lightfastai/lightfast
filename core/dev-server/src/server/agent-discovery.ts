@@ -1,24 +1,23 @@
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
-import type { Lightfast, LightfastJSON, LightfastAgentSet, LightfastMetadata, LightfastDevConfig } from 'lightfast/client';
+import type { LightfastJSON } from 'lightfast/client';
 import { loadConfig } from '@lightfastai/compiler';
 
 /**
  * Service for discovering and loading Lightfast configurations
  */
 export class AgentDiscoveryService {
-  private static instance: AgentDiscoveryService;
+  private static instance: AgentDiscoveryService | undefined;
   private configCache: LightfastJSON | null = null;
-  private lastCheckTime: number = 0;
+  private lastCheckTime = 0;
   private readonly CACHE_TTL = 5000; // 5 seconds cache
 
   private constructor() {}
 
   static getInstance(): AgentDiscoveryService {
-    if (!AgentDiscoveryService.instance) {
-      AgentDiscoveryService.instance = new AgentDiscoveryService();
-    }
+    // Singleton pattern - create instance on first call
+    AgentDiscoveryService.instance ??= new AgentDiscoveryService();
     return AgentDiscoveryService.instance;
   }
 
@@ -41,11 +40,11 @@ export class AgentDiscoveryService {
         console.info(`Loading compiled config from: ${compiledConfigPath}`);
         try {
           const fileUrl = pathToFileURL(compiledConfigPath).href;
-          const module = await import(/* @vite-ignore */ fileUrl);
-          const lightfast = module.default || module.lightfast;
+          const module = await import(/* @vite-ignore */ fileUrl) as { default?: unknown; lightfast?: unknown };
+          const lightfast = module.default ?? module.lightfast;
           
-          if (lightfast && typeof lightfast.toJSON === 'function') {
-            const jsonConfig = lightfast.toJSON();
+          if (lightfast && typeof (lightfast as { toJSON?: () => unknown }).toJSON === 'function') {
+            const jsonConfig = (lightfast as { toJSON: () => LightfastJSON }).toJSON();
             this.configCache = jsonConfig;
             this.lastCheckTime = now;
             return jsonConfig;
@@ -60,9 +59,9 @@ export class AgentDiscoveryService {
       if (fs.existsSync(tsConfigPath)) {
         console.info(`Found TypeScript config, attempting to compile: ${tsConfigPath}`);
         try {
-          const lightfast = await loadConfig(tsConfigPath);
-          if (lightfast && typeof lightfast.toJSON === 'function') {
-            const jsonConfig = lightfast.toJSON();
+          const lightfast = await loadConfig(tsConfigPath) as unknown;
+          if (lightfast && typeof (lightfast as { toJSON?: () => unknown }).toJSON === 'function') {
+            const jsonConfig = (lightfast as { toJSON: () => LightfastJSON }).toJSON();
             this.configCache = jsonConfig;
             this.lastCheckTime = now;
             return jsonConfig;
@@ -86,11 +85,11 @@ export class AgentDiscoveryService {
           
           try {
             const fileUrl = pathToFileURL(configPath).href;
-            const module = await import(/* @vite-ignore */ fileUrl);
-            const lightfast = module.default || module.lightfast;
+            const module = await import(/* @vite-ignore */ fileUrl) as { default?: unknown; lightfast?: unknown };
+            const lightfast = module.default ?? module.lightfast;
             
-            if (lightfast && typeof lightfast.toJSON === 'function') {
-              const jsonConfig = lightfast.toJSON();
+            if (lightfast && typeof (lightfast as { toJSON?: () => unknown }).toJSON === 'function') {
+              const jsonConfig = (lightfast as { toJSON: () => LightfastJSON }).toJSON();
               this.configCache = jsonConfig;
               this.lastCheckTime = now;
               return jsonConfig;

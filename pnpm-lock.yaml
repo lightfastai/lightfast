@@ -1085,12 +1085,6 @@ importers:
       '@lightfastai/cli-core':
         specifier: workspace:*
         version: link:../cli-core
-      '@lightfastai/compiler':
-        specifier: workspace:*
-        version: link:../compiler
-      '@lightfastai/dev-server':
-        specifier: workspace:*
-        version: link:../dev-server
       lightfast:
         specifier: '>=0.1.0'
         version: link:../lightfast
@@ -6600,7 +6594,6 @@ packages:
 
   '@rollup/rollup-darwin-arm64@4.48.1':
     resolution: {integrity: sha512-+XjmyChHfc4TSs6WUQGmVf7Hkg8ferMAE2aNYYWjiLzAS/T62uOsdfnqv+GHRjq7rKRnYh4mwWb4Hz7h/alp8A==}
-    cpu: [arm64]
     os: [darwin]
 
   '@rollup/rollup-darwin-x64@4.48.1':
@@ -16405,8 +16398,6 @@ snapshots:
   '@lightfastai/cli@file:core/cli(lightfast@file:core/lightfast(typescript@5.9.2))':
     dependencies:
       '@lightfastai/cli-core': link:core/cli-core
-      '@lightfastai/compiler': link:core/compiler
-      '@lightfastai/dev-server': link:core/dev-server
     optionalDependencies:
       lightfast: file:core/lightfast(typescript@5.9.2)
 
