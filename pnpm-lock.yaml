@@ -1404,7 +1404,7 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       lightfast:
-        specifier: 0.2.1
+        specifier: file:../../core/lightfast
         version: link:../../core/lightfast
       lucide-react:
         specifier: ^0.468.0

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "ui:add": "npx shadcn@latest add",
-    "ui:init": "npx shadcn@latest init"
+    "ui:init": "npx shadcn@latest init",
+    "clean": "rm -rf .next node_modules package-lock.json"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12",
@@ -64,7 +65,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
-    "lightfast": "0.2.1",
+    "lightfast": "file:../../core/lightfast",
     "lucide-react": "^0.468.0",
     "nanoid": "^5.1.5",
     "next": "14.2.21",
