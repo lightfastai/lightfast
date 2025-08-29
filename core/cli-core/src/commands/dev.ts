@@ -69,6 +69,7 @@ export const devCommand = new Command('dev')
                 baseDir: process.cwd(),
                 compiler,
                 debounceDelay: 500,
+                ignoreInitial: true,  // Skip initial compilation since we already compiled above
                 additionalWatchPaths: [configPath]
               });
               

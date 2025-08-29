@@ -7,6 +7,7 @@ import { customerSupportAgent } from "./agents/customer-support.js";
 import { codeReviewAgent } from "./agents/code-reviewer.js";
 import { dataAnalystAgent } from "./agents/data-analyst.js";
 import { contentWriterAgent } from "./agents/content-writer.js";
+import { testAgent } from "./agents/test-agent.js";
 
 /**
  * Example Lightfast configuration with modular agent imports
@@ -48,6 +49,7 @@ const lightfast = createLightfast({
     contentWriter: contentWriterAgent,
     codeGenerator: codeGeneratorAgent,
     qaTester: qaTestAgent,
+    test: testAgent,
   },
   metadata: {
     name: "Agent Chat Example",

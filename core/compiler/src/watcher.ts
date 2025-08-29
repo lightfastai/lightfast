@@ -72,6 +72,7 @@ export class ConfigWatcher extends EventEmitter {
   private debounceTimer?: NodeJS.Timeout;
   private isCompiling = false;
   private watchedConfigPaths = new Set<string>();
+  private watchedDependencies = new Set<string>();
   
   constructor(options: WatcherOptions = {}) {
     super();
@@ -171,6 +172,7 @@ export class ConfigWatcher extends EventEmitter {
     }
     
     this.watchedConfigPaths.clear();
+    this.watchedDependencies.clear();
     this.isCompiling = false;
   }
   
@@ -185,7 +187,46 @@ export class ConfigWatcher extends EventEmitter {
    * Get the watched configuration file paths
    */
   getWatchedPaths(): string[] {
-    return Array.from(this.watchedConfigPaths);
+    return Array.from(new Set([...this.watchedConfigPaths, ...this.watchedDependencies]));
+  }
+
+  /**
+   * Update watched dependencies based on compilation result
+   */
+  private updateWatchedDependencies(metafile: any, baseDir: string): void {
+    const newDependencies = new Set<string>();
+    
+    if (metafile?.inputs) {
+      for (const inputPath of Object.keys(metafile.inputs)) {
+        const absolutePath = resolve(baseDir, inputPath);
+        if (existsSync(absolutePath)) {
+          newDependencies.add(absolutePath);
+        }
+      }
+    }
+    
+    // Add new dependencies to watcher
+    const dependenciesToAdd = [...newDependencies].filter(dep => !this.watchedDependencies.has(dep));
+    const dependenciesToRemove = [...this.watchedDependencies].filter(dep => !newDependencies.has(dep));
+    
+    if (this.watcher && (dependenciesToAdd.length > 0 || dependenciesToRemove.length > 0)) {
+      this.log(`Updating watched dependencies: +${dependenciesToAdd.length}, -${dependenciesToRemove.length}`);
+      
+      // Add new dependencies
+      if (dependenciesToAdd.length > 0) {
+        this.watcher.add(dependenciesToAdd);
+        dependenciesToAdd.forEach(dep => this.watchedDependencies.add(dep));
+      }
+      
+      // Remove old dependencies  
+      if (dependenciesToRemove.length > 0) {
+        this.watcher.unwatch(dependenciesToRemove);
+        dependenciesToRemove.forEach(dep => this.watchedDependencies.delete(dep));
+      }
+    } else {
+      // Update the set even if no watcher changes
+      this.watchedDependencies = newDependencies;
+    }
   }
   
   /**
@@ -233,7 +274,18 @@ export class ConfigWatcher extends EventEmitter {
     if (!this.watcher) return;
     
     this.watcher.on('change', (path: string) => {
-      this.handleFileChange('change', path);
+      // If it's a config file, handle directly
+      if (this.watchedConfigPaths.has(path)) {
+        this.handleFileChange('change', path);
+      } 
+      // If it's a dependency file, find the config that imports it and recompile
+      else if (this.watchedDependencies.has(path)) {
+        this.log(`Dependency changed: ${path}`);
+        const configPath = this.findAnyConfigFile();
+        if (configPath) {
+          this.handleFileChange('change', configPath);
+        }
+      }
     });
     
     this.watcher.on('add', (path: string) => {
@@ -289,6 +341,12 @@ export class ConfigWatcher extends EventEmitter {
         const error = new Error(`Compilation failed: ${result.errors.join(', ')}`);
         this.emit('compile-error', error, result);
       } else {
+        // Update watched dependencies based on metafile
+        if (result.transpileResult.metafile) {
+          const baseDir = dirname(configPath);
+          this.updateWatchedDependencies(result.transpileResult.metafile, baseDir);
+        }
+        
         this.emit('compile-success', result);
       }
       

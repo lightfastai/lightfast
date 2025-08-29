@@ -172,8 +172,24 @@ export class LightfastCompiler {
     const resolvedConfigPath = resolve(configPath);
     const force = options.force || false;
     
-    // Check cache first (if enabled and not forced)
-    if (this.useCache && !force && this.cacheManager.isCached(resolvedConfigPath)) {
+    // Compile the configuration file first to get metafile for cache check
+    const transpileResult = await transpileConfig(resolvedConfigPath, options.transpileOptions);
+    
+    if (transpileResult.errors.length > 0) {
+      const endTime = performance.now();
+      return {
+        outputPath: '',
+        fromCache: false,
+        compilationTime: endTime - startTime,
+        sourcePath: resolvedConfigPath,
+        transpileResult,
+        warnings: transpileResult.warnings,
+        errors: transpileResult.errors
+      };
+    }
+
+    // Check cache with metafile (if enabled and not forced)
+    if (this.useCache && !force && this.cacheManager.isCached(resolvedConfigPath, transpileResult.metafile)) {
       const cachedOutputPath = this.cacheManager.getCachedOutputPath(resolvedConfigPath);
       if (cachedOutputPath) {
         const endTime = performance.now();
@@ -193,31 +209,16 @@ export class LightfastCompiler {
       }
     }
 
-    // Compile the configuration file
-    const transpileResult = await transpileConfig(resolvedConfigPath, options.transpileOptions);
-    
-    if (transpileResult.errors.length > 0) {
-      const endTime = performance.now();
-      return {
-        outputPath: '',
-        fromCache: false,
-        compilationTime: endTime - startTime,
-        sourcePath: resolvedConfigPath,
-        transpileResult,
-        warnings: transpileResult.warnings,
-        errors: transpileResult.errors
-      };
-    }
-
     // Store in cache and write main output
     let outputPath: string;
     
     if (this.useCache) {
-      // Store in cache with unique filename
+      // Store in cache with unique filename and metafile
       const cachedPath = this.cacheManager.setCached(
         resolvedConfigPath,
         transpileResult.code,
-        transpileResult.sourcemap
+        transpileResult.sourcemap,
+        transpileResult.metafile
       );
       outputPath = cachedPath;
     } else {

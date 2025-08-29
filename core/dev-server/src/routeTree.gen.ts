@@ -13,7 +13,6 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as IndexRouteImport } from './routes/index'
-import { ServerRoute as ApiHotReloadServerRouteImport } from './routes/api/hot-reload'
 import { ServerRoute as ApiAgentsServerRouteImport } from './routes/api/agents'
 import { ServerRoute as ApiAgentsAgentIdServerRouteImport } from './routes/api/agents.$agentId'
 
@@ -28,11 +27,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ApiHotReloadServerRoute = ApiHotReloadServerRouteImport.update({
-  id: '/api/hot-reload',
-  path: '/api/hot-reload',
-  getParentRoute: () => rootServerRouteImport,
 } as any)
 const ApiAgentsServerRoute = ApiAgentsServerRouteImport.update({
   id: '/api/agents',
@@ -72,31 +66,27 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/hot-reload': typeof ApiHotReloadServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/hot-reload': typeof ApiHotReloadServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/hot-reload': typeof ApiHotReloadServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/agents' | '/api/hot-reload' | '/api/agents/$agentId'
+  fullPaths: '/api/agents' | '/api/agents/$agentId'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/agents' | '/api/hot-reload' | '/api/agents/$agentId'
-  id: '__root__' | '/api/agents' | '/api/hot-reload' | '/api/agents/$agentId'
+  to: '/api/agents' | '/api/agents/$agentId'
+  id: '__root__' | '/api/agents' | '/api/agents/$agentId'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiAgentsServerRoute: typeof ApiAgentsServerRouteWithChildren
-  ApiHotReloadServerRoute: typeof ApiHotReloadServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -119,13 +109,6 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
-    '/api/hot-reload': {
-      id: '/api/hot-reload'
-      path: '/api/hot-reload'
-      fullPath: '/api/hot-reload'
-      preLoaderRoute: typeof ApiHotReloadServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
     '/api/agents': {
       id: '/api/agents'
       path: '/api/agents'
@@ -164,7 +147,6 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAgentsServerRoute: ApiAgentsServerRouteWithChildren,
-  ApiHotReloadServerRoute: ApiHotReloadServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

@@ -129,12 +129,14 @@
       "Bash(pnpm test:*)",
       "Bash(pnpm --filter @lightfastai/core test)",
       "Bash(pnpm --filter @lightfastai/core typecheck)",
-      "Bash(pnpm:*)"
+      "Bash(pnpm:*)",
+      "Bash(DEBUG=1 node ../../core/cli/dist/index.js compile)"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "playwright"
-  ]
+  ],
+  "outputStyle": "default"
 }

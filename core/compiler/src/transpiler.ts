@@ -198,6 +198,11 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
       code += `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(sourcemapContent).toString('base64')}`;
     }
 
+    // Debug logging for metafile (only in DEBUG mode)
+    if (process.env.DEBUG === '1' && result.metafile) {
+      console.log('[transpiler] Metafile inputs:', Object.keys(result.metafile.inputs || {}));
+    }
+
     return {
       code,
       sourcemap: sourcemapContent,

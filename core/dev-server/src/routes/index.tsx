@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import HotReloadStatus from '../components/hot-reload-status'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -53,7 +52,7 @@ function Home() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Runtime:</span>
-              <span className="font-mono">Node {process.version || 'v20+'}</span>
+              <span className="font-mono">Node v20+</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status:</span>
@@ -74,7 +73,21 @@ function Home() {
         
         <div>
           <h2 className="text-lg font-semibold mb-3">Development Tools</h2>
-          <HotReloadStatus detailed={true} />
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border">
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="text-lg">👁️</span>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Auto Reload
+              </h3>
+              <span className="text-xs font-medium text-green-500">
+                Active
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              The dev server automatically reloads when you make changes to your configuration files.
+              Watch your CLI terminal for compilation status.
+            </p>
+          </div>
         </div>
       </div>
     </div>

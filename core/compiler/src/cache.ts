@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 
 export interface CacheOptions {
@@ -24,6 +24,10 @@ export interface CacheEntry {
   sourcePath: string;
   /** Path to the compiled JavaScript file */
   outputPath: string;
+  /** Dependency file paths and their hashes */
+  dependencies?: Record<string, string>;
+  /** Combined hash of all dependencies */
+  dependencyHash?: string;
 }
 
 /**
@@ -61,6 +65,39 @@ export class CacheManager {
    */
   private generateHash(content: string): string {
     return createHash('sha256').update(content).digest('hex').slice(0, 16);
+  }
+
+  /**
+   * Extracts dependency files from esbuild metafile and calculates their hashes
+   */
+  private extractDependencies(metafile: any, baseDir: string): { dependencies: Record<string, string>; dependencyHash: string } {
+    const dependencies: Record<string, string> = {};
+    const dependencyPaths: string[] = [];
+    
+    if (metafile?.inputs) {
+      for (const inputPath of Object.keys(metafile.inputs)) {
+        // Convert relative path to absolute path
+        const absolutePath = resolve(baseDir, inputPath);
+        
+        if (existsSync(absolutePath)) {
+          try {
+            const content = readFileSync(absolutePath, 'utf-8');
+            const hash = this.generateHash(content);
+            dependencies[absolutePath] = hash;
+            dependencyPaths.push(absolutePath);
+          } catch (error) {
+            console.warn(`Failed to read dependency ${absolutePath}: ${error}`);
+          }
+        }
+      }
+    }
+    
+    // Create combined hash from all dependency hashes in deterministic order
+    const sortedPaths = dependencyPaths.sort();
+    const combinedHashInput = sortedPaths.map(path => dependencies[path]).join('|');
+    const dependencyHash = this.generateHash(combinedHashInput);
+    
+    return { dependencies, dependencyHash };
   }
 
   /**
@@ -103,7 +140,7 @@ export class CacheManager {
   /**
    * Checks if a cached version exists and is still valid
    */
-  isCached(sourcePath: string): boolean {
+  isCached(sourcePath: string, metafile?: any): boolean {
     const resolvedSourcePath = resolve(sourcePath);
     
     if (!existsSync(resolvedSourcePath)) {
@@ -126,7 +163,30 @@ export class CacheManager {
     try {
       const sourceContent = readFileSync(resolvedSourcePath, 'utf-8');
       const currentHash = this.generateHash(sourceContent);
-      return currentHash === cacheEntry.hash;
+      
+      if (currentHash !== cacheEntry.hash) {
+        return false;
+      }
+      
+      // If we have a metafile, check dependencies
+      if (metafile && cacheEntry.dependencies && cacheEntry.dependencyHash) {
+        const baseDir = dirname(resolvedSourcePath);
+        const { dependencies, dependencyHash } = this.extractDependencies(metafile, baseDir);
+        
+        // Check if dependency hash has changed
+        if (dependencyHash !== cacheEntry.dependencyHash) {
+          return false;
+        }
+        
+        // Check each individual dependency
+        for (const [depPath, expectedHash] of Object.entries(cacheEntry.dependencies)) {
+          if (dependencies[depPath] !== expectedHash) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
     } catch (error) {
       return false;
     }
@@ -150,7 +210,7 @@ export class CacheManager {
   /**
    * Stores a compiled file in the cache
    */
-  setCached(sourcePath: string, compiledContent: string, sourceMapContent?: string): string {
+  setCached(sourcePath: string, compiledContent: string, sourceMapContent?: string, metafile?: any): string {
     const resolvedSourcePath = resolve(sourcePath);
     const sourceContent = readFileSync(resolvedSourcePath, 'utf-8');
     const hash = this.generateHash(sourceContent);
@@ -169,13 +229,26 @@ export class CacheManager {
       writeFileSync(sourceMapPath, sourceMapContent, 'utf-8');
     }
     
+    // Extract dependencies if metafile is provided
+    let dependencies: Record<string, string> | undefined;
+    let dependencyHash: string | undefined;
+    
+    if (metafile) {
+      const baseDir = dirname(resolvedSourcePath);
+      const depInfo = this.extractDependencies(metafile, baseDir);
+      dependencies = depInfo.dependencies;
+      dependencyHash = depInfo.dependencyHash;
+    }
+    
     // Update cache metadata
     const metadata = this.loadCacheMetadata();
     const cacheEntry: CacheEntry = {
       hash,
       timestamp: Date.now(),
       sourcePath: resolvedSourcePath,
-      outputPath
+      outputPath,
+      dependencies,
+      dependencyHash
     };
     
     metadata[resolvedSourcePath] = cacheEntry;
