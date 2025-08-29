@@ -9,10 +9,10 @@
     "agents": "node -e \"import('./lightfast.config.ts').then(m => console.log(JSON.stringify(m.default.toJSON(), null, 2)))\""
   },
   "dependencies": {
-    "lightfast": "workspace:*",
-    "@lightfastai/cli": "workspace:*",
-    "@ai-sdk/gateway": "workspace:*",
-    "ai": "workspace:*"
+    "@ai-sdk/gateway": "^1.0.15",
+    "@lightfastai/cli": "file:../../core/cli",
+    "ai": "5.0.15",
+    "lightfast": "file:../../core/lightfast"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

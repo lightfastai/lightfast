@@ -116,18 +116,18 @@
 		"lint": "eslint . --fix"
 	},
 	"dependencies": {
-		"@ai-sdk/anthropic": "catalog:",
-		"@ai-sdk/gateway": "catalog:",
-		"@ai-sdk/provider": "catalog:",
-		"@t3-oss/env-core": "catalog:",
+		"@ai-sdk/anthropic": "2.0.4",
+		"@ai-sdk/gateway": "^1.0.15",
+		"@ai-sdk/provider": "2.0.0",
+		"@t3-oss/env-core": "^0.12.0",
 		"@upstash/qstash": "^2.8.1",
-		"@upstash/redis": "catalog:",
-		"ai": "catalog:",
-		"braintrust": "catalog:",
+		"@upstash/redis": "^1.35.1",
+		"ai": "5.0.15",
+		"braintrust": "^0.2.1",
 		"pino": "^9.7.0",
-		"resumable-stream": "catalog:",
+		"resumable-stream": "^2.0.0",
 		"uuid": "^11.1.0",
-		"zod": "catalog:"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
@@ -140,7 +140,7 @@
 		"@vitest/ui": "^3.2.4",
 		"rollup": "^4.46.2",
 		"tsup": "^8.5.0",
-		"typescript": "catalog:",
+		"typescript": "^5.9.2",
 		"vite": "^7.1.3",
 		"vitest": "^3.2.4"
 	},

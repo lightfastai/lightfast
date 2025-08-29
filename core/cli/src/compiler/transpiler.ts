@@ -82,121 +82,6 @@ export interface TranspileResult {
   metafile?: any;
 }
 
-/**
- * Creates an esbuild plugin for workspace package resolution
- */
-function createWorkspaceResolver(): Plugin {
-  return {
-    name: 'workspace-resolver',
-    setup(build) {
-      // Handle workspace: protocol for pnpm workspaces
-      build.onResolve({ filter: /^workspace:/ }, (args) => {
-        const packageName = args.path.replace(/^workspace:/, '');
-        
-        // Try to resolve from node_modules first (hoisted packages)
-        const nodeModulesPath = join(process.cwd(), 'node_modules', packageName);
-        if (existsSync(join(nodeModulesPath, 'package.json'))) {
-          return {
-            path: nodeModulesPath,
-            external: true
-          };
-        }
-        
-        // Try to resolve from workspace packages
-        const workspacePaths = [
-          join(process.cwd(), 'packages', packageName),
-          join(process.cwd(), 'core', packageName),
-          join(process.cwd(), 'apps', packageName),
-        ];
-        
-        for (const workspacePath of workspacePaths) {
-          if (existsSync(join(workspacePath, 'package.json'))) {
-            return {
-              path: workspacePath,
-              external: true
-            };
-          }
-        }
-        
-        // Fallback to external
-        return {
-          path: packageName,
-          external: true
-        };
-      });
-    }
-  };
-}
-
-/**
- * Creates an esbuild plugin for handling TypeScript paths
- */
-function createTypeScriptPathsPlugin(baseDir: string): Plugin {
-  return {
-    name: 'typescript-paths',
-    setup(build) {
-      // Try to load tsconfig.json for path mapping
-      const tsconfigPath = join(baseDir, 'tsconfig.json');
-      let paths: Record<string, string[]> = {};
-      let baseUrl = baseDir;
-      
-      if (existsSync(tsconfigPath)) {
-        try {
-          const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8'));
-          if (tsconfig.compilerOptions?.paths) {
-            paths = tsconfig.compilerOptions.paths;
-          }
-          if (tsconfig.compilerOptions?.baseUrl) {
-            baseUrl = resolve(baseDir, tsconfig.compilerOptions.baseUrl);
-          }
-        } catch (error) {
-          // Ignore tsconfig parsing errors
-        }
-      }
-      
-      // Handle path mapping
-      build.onResolve({ filter: /.*/ }, (args) => {
-        // Skip relative and absolute paths
-        if (args.path.startsWith('.') || args.path.startsWith('/')) {
-          return;
-        }
-        
-        // Check if path matches any path mapping
-        for (const [pattern, replacements] of Object.entries(paths)) {
-          const regex = new RegExp(pattern.replace('*', '(.*)'));
-          const match = args.path.match(regex);
-          
-          if (match) {
-            for (const replacement of replacements) {
-              const resolvedPath = resolve(
-                baseUrl,
-                replacement.replace('*', match[1] || '')
-              );
-              
-              // Check for various file extensions
-              const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs'];
-              for (const ext of extensions) {
-                const fullPath = resolvedPath + ext;
-                if (existsSync(fullPath)) {
-                  return { path: fullPath };
-                }
-              }
-              
-              // Check for index files
-              const indexExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs'];
-              for (const ext of indexExtensions) {
-                const indexPath = join(resolvedPath, `index${ext}`);
-                if (existsSync(indexPath)) {
-                  return { path: indexPath };
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-  };
-}
 
 /**
  * Transpiles a TypeScript file to JavaScript using esbuild
@@ -224,37 +109,24 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     };
   }
 
-  // Default external dependencies for config files
-  const defaultExternals = [
-    'lightfast',
-    '@lightfastai/core',
-    '@lightfastai/*',
-    'node:*',
-    // Common Node.js built-ins
-    'fs', 'path', 'url', 'util', 'crypto', 'os', 'events',
-    // Common dependencies that should remain external
-    'zod', 'typescript', 'esbuild',
-    // Workspace packages - keep as external to avoid bundling
-    '@repo/*',
-    '@vendor/*',
-    'workspace:*'
-  ];
-
   const buildOptions: BuildOptions = {
     entryPoints: [resolvedSourcePath],
     write: false,
-    bundle: bundle, // Use the bundle option from parameters
+    bundle, // Usually false for config files
     format,
     target,
     sourcemap,
     minify,
     platform: 'node',
     metafile: true,
-    // Only set external when bundling is enabled
-    ...(bundle ? { external: [...defaultExternals, ...external] } : {}),
+    // When bundling, use packages: 'external' to keep all imports external
+    // This is the key setting that makes TypeScript transpilation work
+    // without needing the packages to be installed
+    ...(bundle ? {
+      packages: 'external' as any
+    } : {}),
+    // Don't use plugins or extra options that might interfere with resolution
     plugins: [
-      createWorkspaceResolver(),
-      createTypeScriptPathsPlugin(baseDir),
       ...plugins
     ],
     loader: {
@@ -263,10 +135,22 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
       '.js': 'js',
       '.jsx': 'jsx'
     },
-    tsconfig: join(baseDir, 'tsconfig.json'),
+    // Don't use tsconfig as it might have moduleResolution settings
+    // that interfere with our packages: 'external' approach
+    // tsconfig: undefined,
     // Enable JSX if the file has .tsx extension
     jsx: resolvedSourcePath.endsWith('.tsx') ? 'automatic' : undefined
   };
+  
+  // Debug logging (only in DEBUG mode)
+  if (process.env.DEBUG === '1') {
+    console.log('[transpiler] Build options:', {
+      bundle,
+      packages: (buildOptions as any).packages,
+      platform: buildOptions.platform,
+      entryPoint: resolvedSourcePath
+    });
+  }
 
   try {
     const result: BuildResult = await build(buildOptions);
@@ -331,7 +215,9 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
 }
 
 /**
- * Transpiles a TypeScript configuration file and handles common config patterns
+ * Transpiles a TypeScript configuration file
+ * Uses bundle: true with packages: 'external' to transpile TypeScript
+ * while keeping all package imports external for runtime resolution
  */
 export async function transpileConfig(configPath: string, options: Partial<TranspileOptions> = {}): Promise<TranspileResult> {
   const resolvedConfigPath = resolve(configPath);
@@ -342,17 +228,9 @@ export async function transpileConfig(configPath: string, options: Partial<Trans
     baseDir,
     format: 'esm',
     target: 'es2022',
-    bundle: true, // Bundle to resolve imports, but keep workspace packages external
+    bundle: true, // Must bundle to use packages: 'external'
     sourcemap: true,
-    external: [
-      // Always external for config files
-      'lightfast',
-      '@lightfastai/*',
-      'node:*',
-      '@repo/*',
-      '@vendor/*',
-      'workspace:*'
-    ],
+    minify: false,
     ...options
   };
   
@@ -364,9 +242,14 @@ export async function transpileConfig(configPath: string, options: Partial<Trans
     const header = `// Generated by Lightfast CLI from ${relative(process.cwd(), resolvedConfigPath)}\n`;
     result.code = header + result.code;
     
-    // Ensure the config has a default export if it doesn't already
-    if (!result.code.includes('export default') && !result.code.includes('module.exports')) {
-      console.warn(`Warning: Config file ${configPath} doesn't have a default export. This may cause issues.`);
+    // Check for default export
+    const hasDefaultExport = 
+      result.code.includes('export default') || 
+      result.code.includes('export {') && result.code.includes('as default') ||
+      result.code.includes('module.exports');
+      
+    if (!hasDefaultExport) {
+      result.warnings.push(`Config file ${configPath} doesn't have a default export. This may cause issues.`);
     }
   }
   

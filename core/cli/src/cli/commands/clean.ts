@@ -30,17 +30,17 @@ export const cleanCommand = new Command('clean')
         {
           path: join(baseDir, '.lightfast'),
           name: '.lightfast cache',
-          shouldClean: cleanAll || options.cache
+          shouldClean: cleanAll || !!options.cache
         },
         {
           path: join(baseDir, 'dist'),
           name: 'dist',
-          shouldClean: cleanAll || options.dist
+          shouldClean: cleanAll || !!options.dist
         },
         {
           path: join(baseDir, '.output'),
           name: '.output',
-          shouldClean: cleanAll || options.output
+          shouldClean: cleanAll || !!options.output
         }
       ];
       
