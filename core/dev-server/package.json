@@ -69,6 +69,7 @@
     "tailwindcss": "^4.1.12",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5.9.2",
+    "vinxi": "^0.5.8",
     "vite": "^7.1.3",
     "vite-tsconfig-paths": "^5.1.4"
   },
