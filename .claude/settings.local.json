@@ -128,7 +128,8 @@
       "WebSearch",
       "Bash(pnpm test:*)",
       "Bash(pnpm --filter @lightfastai/core test)",
-      "Bash(pnpm --filter @lightfastai/core typecheck)"
+      "Bash(pnpm --filter @lightfastai/core typecheck)",
+      "Bash(pnpm:*)"
     ],
     "deny": []
   },

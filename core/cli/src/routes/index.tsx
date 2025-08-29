@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import HotReloadStatus from '../components/HotReloadStatus'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -62,12 +63,19 @@ function Home() {
         </div>
       </div>
 
-      <div className="mt-8 p-6 rounded-lg bg-muted/50">
-        <h2 className="text-lg font-semibold mb-3">Configuration Status</h2>
-        <p className="text-sm text-muted-foreground">
-          This dev server automatically discovers and loads agents from your lightfast.config.ts file.
-          Place the configuration file in your project root to see your agents here.
-        </p>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="p-6 rounded-lg bg-muted/50">
+          <h2 className="text-lg font-semibold mb-3">Configuration Status</h2>
+          <p className="text-sm text-muted-foreground">
+            This dev server automatically discovers and loads agents from your lightfast.config.ts file.
+            Place the configuration file in your project root to see your agents here.
+          </p>
+        </div>
+        
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Development Tools</h2>
+          <HotReloadStatus detailed={true} />
+        </div>
       </div>
     </div>
   )

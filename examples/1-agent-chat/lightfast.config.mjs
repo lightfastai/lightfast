@@ -1,4 +1,6 @@
-// Simple mock config for testing without imports
+// Simple test configuration for base CLI functionality
+// This will be replaced with TypeScript compilation in the next PR
+
 const mockAgent = {
   name: "test-agent",
   model: { provider: "mock", model: "test-model" },
@@ -27,7 +29,7 @@ const lightfast = {
       metadata: {
         name: "Test Configuration",
         version: "1.0.0",
-        description: "Simple test configuration"
+        description: "Simple test configuration for CLI development"
       },
       dev: {
         port: 3000
