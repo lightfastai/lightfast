@@ -12,7 +12,13 @@ export const router = createTanStackRouter({
 })
 
 export function createRouter() {
-  return router
+  return createTanStackRouter({
+    routeTree,
+    defaultPreload: 'intent',
+    defaultErrorComponent: DefaultCatchBoundary,
+    defaultNotFoundComponent: () => <NotFound />,
+    scrollRestoration: true,
+  })
 }
 
 declare module '@tanstack/react-router' {
