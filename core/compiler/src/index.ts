@@ -5,6 +5,8 @@ import type { CacheManager} from './cache.js';
 import { createCacheManager } from './cache.js';
 import { transpileConfig, validateConfig   } from './transpiler.js';
 import type {TranspileOptions, TranspileResult} from './transpiler.js';
+import { createBundleGenerator } from './bundler.js';
+import type { BundleGenerator, BundleOutput } from './bundler.js';
 
 const DEFAULT_CONFIG_PATTERNS = [
   'lightfast.config.ts',
@@ -77,6 +79,11 @@ export interface CompilationResult {
   transpileResult: TranspileResult;
   
   /**
+   * Generated bundles (when bundling is enabled)
+   */
+  bundles?: BundleOutput[];
+  
+  /**
    * Any warnings or errors encountered
    */
   warnings: string[];
@@ -89,12 +96,17 @@ export interface CompilationResult {
 export class LightfastCompiler {
   private readonly baseDir: string;
   private readonly cacheManager: CacheManager;
+  private readonly bundleGenerator: BundleGenerator;
   private readonly configPatterns: string[];
   private readonly useCache: boolean;
 
   constructor(options: CompilerOptions = {}) {
     this.baseDir = options.baseDir ?? process.cwd();
     this.cacheManager = options.cacheManager ?? createCacheManager({ baseDir: this.baseDir });
+    this.bundleGenerator = createBundleGenerator({ 
+      baseDir: this.baseDir,
+      outputDir: join(this.baseDir, '.lightfast/dist')
+    });
     this.configPatterns = options.configPatterns ?? DEFAULT_CONFIG_PATTERNS;
     this.useCache = options.useCache !== false;
   }
@@ -228,8 +240,17 @@ export class LightfastCompiler {
       _outputPath = this.cacheManager.getMainOutputPath();
     }
     
-    // Always write to the main output location for consistency
+    // Always write to the main output location for consistency (legacy support)
     this.cacheManager.writeMainOutput(transpileResult.code);
+    
+    // Generate bundles with the new structure
+    let bundles: BundleOutput[] | undefined;
+    try {
+      bundles = await this.bundleGenerator.generateBundles(transpileResult, resolvedConfigPath);
+    } catch (error) {
+      console.warn('Failed to generate bundles:', error);
+      // Continue without bundles for backward compatibility
+    }
     
     const endTime = performance.now();
     
@@ -239,6 +260,7 @@ export class LightfastCompiler {
       compilationTime: endTime - startTime,
       sourcePath: resolvedConfigPath,
       transpileResult,
+      bundles,
       warnings: transpileResult.warnings,
       errors: []
     };
@@ -464,6 +486,15 @@ export {
   CompilationSpinner,
   type CompilationError
 } from './error-formatter.js';
+
+export {
+  BundleGenerator,
+  createBundleGenerator,
+  type BundleMetadata,
+  type BundleOutput,
+  type BundlerOptions,
+  type AgentMetadata
+} from './bundler.js';
 
 // Default export
 export default LightfastCompiler;

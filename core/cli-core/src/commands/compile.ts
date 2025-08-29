@@ -62,6 +62,15 @@ export const compileCommand = new Command('compile')
         }
         
         console.log(chalk.gray(`  Output: ${result.outputPath}`));
+        
+        // Show bundle information if available
+        if (result.bundles && result.bundles.length > 0) {
+          console.log(chalk.blue('\n→ Generated bundles:'));
+          for (const bundle of result.bundles) {
+            console.log(chalk.gray(`  ${bundle.id}: ${bundle.filename} (${bundle.hash})`));
+          }
+          console.log(chalk.gray(`  Bundle directory: .lightfast/dist/bundles/`));
+        }
       }
       
       // Watch mode
