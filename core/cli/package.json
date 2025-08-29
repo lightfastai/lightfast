@@ -35,9 +35,7 @@
 		"clean": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"@lightfastai/cli-core": "workspace:*",
-		"@lightfastai/compiler": "workspace:*",
-		"@lightfastai/dev-server": "workspace:*"
+		"@lightfastai/cli-core": "workspace:*"
 	},
 	"peerDependencies": {
 		"lightfast": ">=0.1.0"

@@ -19,23 +19,21 @@ core/
 ```mermaid  
 graph TD
     A[cli - Meta Package] --> B[cli-core]
-    A --> C[compiler]
-    A --> D[dev-server]
-    B --> C
-    B --> D
+    B --> C[compiler]
+    B --> D[dev-server]
     
     E[examples/1-agent-chat] --> A
     E --> F[lightfast core]
 ```
 
-**Note:** Currently both `cli` and `cli-core` depend on `compiler` and `dev-server`, creating duplicate dependencies. This works but could be optimized by making `cli` depend only on `cli-core`.
+**Clean Architecture:** The meta package depends only on cli-core, which provides access to all functionality through transitive dependencies.
 
 ## Package Details
 
 ### 1. `@lightfastai/cli` (Meta Package)
 **Purpose:** Lightweight publishable package that delegates to cli-core  
 **Size:** ~100 bytes  
-**Dependencies:** `@lightfastai/cli-core`, `@lightfastai/compiler`, `@lightfastai/dev-server` (all workspace packages)
+**Dependencies:** Only `@lightfastai/cli-core` (clean delegation)
 
 ```typescript
 // core/cli/src/index.ts
@@ -360,47 +358,33 @@ npm publish  # Only the meta package needs publishing
 ## Key Design Principles
 
 1. **Modular Architecture** - Each package has single responsibility
-2. **Clean Dependencies** - Meta package imports workspace packages  
+2. **Clean Dependencies** - Meta package depends only on cli-core (no duplicates)  
 3. **Developer Experience** - Simple `cli dev` command hides complexity
 4. **Production Ready** - Optimized builds with proper error handling
 5. **Extensible** - Easy to add commands, compiler features, and UI routes
 
-## Architecture Optimization
+## Optimized Architecture
 
-### Current Dependency Issue
+The dependency structure is now clean and efficient:
 
-The current dependency structure creates duplication:
 ```json
-// core/cli/package.json - Meta package
+// core/cli/package.json - Meta package (optimized)
 "dependencies": {
-  "@lightfastai/cli-core": "workspace:*",
-  "@lightfastai/compiler": "workspace:*",      // Duplicate
-  "@lightfastai/dev-server": "workspace:*"    // Duplicate
+  "@lightfastai/cli-core": "workspace:*"      // Clean delegation
 }
 
 // core/cli-core/package.json - Core package  
 "dependencies": {
-  "@lightfastai/compiler": "workspace:*",      // Duplicate
-  "@lightfastai/dev-server": "workspace:*"    // Duplicate  
+  "@lightfastai/compiler": "workspace:*",     // Implementation dependencies
+  "@lightfastai/dev-server": "workspace:*"   // Available through cli-core
 }
 ```
 
-### Recommended Fix
-
-For cleaner architecture, the meta package should only depend on cli-core:
-
-```json
-// core/cli/package.json - Optimized
-"dependencies": {
-  "@lightfastai/cli-core": "workspace:*"      // Only direct dependency
-}
-```
-
-This would:
-- Reduce published package size
-- Eliminate duplicate dependencies
-- Create cleaner separation of concerns
-- Match the originally intended architecture
+### Benefits Achieved:
+- ✅ **Minimal package size** - Meta package contains only delegation code
+- ✅ **No duplicate dependencies** - Clean transitive dependency resolution  
+- ✅ **Clear separation** - Meta package purely for publishing, cli-core for implementation
+- ✅ **Maintained functionality** - All CLI commands work through indirect access
 
 ## File Structure Reference
 
