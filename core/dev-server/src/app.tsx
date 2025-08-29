@@ -1,6 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import { StartClient } from '@tanstack/react-start/client'
-import { router } from './router'
+import { createRouter } from './router'
+
+const router = createRouter()
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {

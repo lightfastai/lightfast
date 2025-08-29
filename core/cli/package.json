@@ -32,7 +32,7 @@
 		"dev": "tsup --watch",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --fix",
-		"clean": "rm -rf dist .turbo node_modules"
+		"clean": "rm -rf dist .turbo node_modules .output .lightfast .nitro .tanstack"
 	},
 	"dependencies": {
 		"@lightfastai/cli-core": "workspace:*"
