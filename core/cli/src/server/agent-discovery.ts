@@ -116,6 +116,11 @@ export class AgentDiscoveryService {
    * Find the project root directory
    */
   private findProjectRoot(): string {
+    // First check if LIGHTFAST_PROJECT_ROOT is set (passed from CLI)
+    if (process.env.LIGHTFAST_PROJECT_ROOT) {
+      return process.env.LIGHTFAST_PROJECT_ROOT;
+    }
+    
     // Start from current working directory
     let dir = process.cwd();
     

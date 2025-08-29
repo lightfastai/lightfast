@@ -168,7 +168,8 @@ export const devCommand = new Command('dev')
         env: {
           ...process.env,
           PORT: port,
-          HOST: host
+          HOST: host,
+          LIGHTFAST_PROJECT_ROOT: process.cwd()  // Pass the original working directory
         }
       })
 
