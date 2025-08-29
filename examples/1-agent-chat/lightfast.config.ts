@@ -1,7 +1,6 @@
 import { createLightfast } from "lightfast/client";
 import { createAgent } from "lightfast/agent";
 import { gateway } from "@ai-sdk/gateway";
-import { wrapLanguageModel } from "ai";
 
 /**
  * Example Lightfast configuration with multiple agents
@@ -14,9 +13,7 @@ const customerSupportAgent = createAgent({
   system: `You are a helpful customer support agent. 
 Be polite, professional, and solution-oriented.
 Always aim to resolve customer issues efficiently.`,
-  model: wrapLanguageModel({
-    model: gateway("claude-3-5-sonnet-20241022"),
-  }),
+  model: gateway("claude-3-5-sonnet-20241022"),
   // Tools would be added here in a real implementation
   // tools: { searchKB: searchKnowledgeBaseTool },
 });
@@ -27,9 +24,7 @@ const codeReviewAgent = createAgent({
   system: `You are an expert code reviewer. 
 Focus on code quality, security vulnerabilities, and best practices.
 Provide constructive feedback with specific suggestions for improvement.`,
-  model: wrapLanguageModel({
-    model: gateway("claude-3-5-sonnet-20241022"),
-  }),
+  model: gateway("claude-3-5-sonnet-20241022"),
   // Tools for code analysis would be added here
   // tools: { analyzeCode: codeAnalysisTool },
 });
@@ -40,9 +35,7 @@ const dataAnalystAgent = createAgent({
   system: `You are a data analyst specialized in business intelligence.
 Analyze data patterns, create visualizations, and provide actionable insights.
 Always back your conclusions with data.`,
-  model: wrapLanguageModel({
-    model: gateway("gpt-4-turbo"),
-  }),
+  model: gateway("gpt-4-turbo"),
   // Data processing tools would be added here
   // tools: { queryData: databaseQueryTool, createChart: chartTool },
 });
@@ -53,9 +46,7 @@ const contentWriterAgent = createAgent({
   system: `You are a creative content writer.
 Create engaging, SEO-friendly content that resonates with the target audience.
 Use a clear, compelling writing style.`,
-  model: wrapLanguageModel({
-    model: gateway("claude-3-5-sonnet-20241022"),
-  }),
+  model: gateway("claude-3-5-sonnet-20241022"),
   // No tools for this agent - pure generation
 });
 
@@ -70,9 +61,7 @@ IMPORTANT: When displaying code, ALWAYS use triple backticks:
 \`\`\`language
 code here
 \`\`\``,
-  model: wrapLanguageModel({
-    model: gateway("claude-3-5-sonnet-20241022"),
-  }),
+  model: gateway("claude-3-5-sonnet-20241022"),
   // Code manipulation tools would be added here
   // tools: { writeFile: fileWriterTool, runTests: testRunnerTool },
 });
@@ -83,9 +72,7 @@ const qaTestAgent = createAgent({
   system: `You are a QA engineer.
 Find bugs, edge cases, and ensure quality.
 Create comprehensive test plans and report issues clearly.`,
-  model: wrapLanguageModel({
-    model: gateway("gpt-4"),
-  }),
+  model: gateway("gpt-4"),
   // Testing tools would be added here
   // tools: { runTests: testSuiteTool, fileReport: bugReportTool },
 });
