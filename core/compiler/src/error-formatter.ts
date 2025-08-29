@@ -15,14 +15,14 @@ export interface CompilationError {
 export function formatCompilationError(error: string | CompilationError): string {
   if (typeof error === 'string') {
     // Try to parse esbuild error format: "file:line:column: message"
-    const match = error.match(/^(.+?):(\d+):(\d+):\s*(.+)$/);
+    const match = /^(.+?):(\d+):(\d+):\s*(.+)$/.exec(error);
     if (match) {
       const [, file, line, column, message] = match;
       return formatStructuredError({
-        file: file || '',
-        line: parseInt(line || '0', 10),
-        column: parseInt(column || '0', 10),
-        message: message || ''
+        file: file ?? '',
+        line: parseInt(line ?? '0', 10),
+        column: parseInt(column ?? '0', 10),
+        message: message ?? ''
       });
     }
     
@@ -58,7 +58,7 @@ function formatStructuredError(error: CompilationError): string {
   }
   
   // Add error message
-  parts.push(error.message || error.text || 'Unknown error');
+  parts.push(error.text ? `${error.message} - ${error.text}` : error.message);
   
   return `  ${parts.join(' ')}`;
 }
@@ -90,12 +90,12 @@ export function formatCompilationWarnings(warnings: string[]): string {
   
   const formattedWarnings = warnings.map(warning => {
     // Try to parse esbuild warning format
-    const match = warning.match(/^(.+?):(\d+):(\d+):\s*(.+)$/);
+    const match = /^(.+?):(\d+):(\d+):\s*(.+)$/.exec(warning);
     if (match) {
       const [, file, line, column, message] = match;
-      const relativeFile = relative(process.cwd(), file || '');
-      const location = `${chalk.cyan(relativeFile)}:${chalk.yellow(line || '0')}:${chalk.yellow(column || '0')}`;
-      return `  ${chalk.yellow('⚠')} ${location} ${message || ''}`;
+      const relativeFile = relative(process.cwd(), file ?? '');
+      const location = `${chalk.cyan(relativeFile)}:${chalk.yellow(line ?? '0')}:${chalk.yellow(column ?? '0')}`;
+      return `  ${chalk.yellow('⚠')} ${location} ${message ?? ''}`;
     }
     
     return `  ${chalk.yellow('⚠')} ${warning}`;
@@ -168,7 +168,7 @@ export class CompilationSpinner {
   private currentFrame = 0;
   private message: string;
   
-  constructor(message: string = 'Compiling...') {
+  constructor(message = 'Compiling...') {
     this.message = message;
   }
   
@@ -181,7 +181,7 @@ export class CompilationSpinner {
     }, 80);
   }
   
-  stop(success: boolean = true): void {
+  stop(_success = true): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = undefined;

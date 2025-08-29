@@ -40,8 +40,8 @@ export class CacheManager {
   private readonly outputDir: string;
 
   constructor(options: CacheOptions = {}) {
-    this.baseDir = options.baseDir || process.cwd();
-    this.cacheDir = options.cacheDir || '.lightfast';
+    this.baseDir = options.baseDir ?? process.cwd();
+    this.cacheDir = options.cacheDir ?? '.lightfast';
     this.cachePath = join(this.baseDir, this.cacheDir);
     this.outputDir = join(this.cachePath, 'compiled');
     
@@ -70,12 +70,13 @@ export class CacheManager {
   /**
    * Extracts dependency files from esbuild metafile and calculates their hashes
    */
-  private extractDependencies(metafile: any, baseDir: string): { dependencies: Record<string, string>; dependencyHash: string } {
+  private extractDependencies(metafile: unknown, baseDir: string): { dependencies: Record<string, string>; dependencyHash: string } {
     const dependencies: Record<string, string> = {};
     const dependencyPaths: string[] = [];
     
-    if (metafile?.inputs) {
-      for (const inputPath of Object.keys(metafile.inputs)) {
+    const metafileObj = metafile as { inputs?: Record<string, unknown> } | null | undefined;
+    if (metafileObj?.inputs) {
+      for (const inputPath of Object.keys(metafileObj.inputs)) {
         // Convert relative path to absolute path
         const absolutePath = resolve(baseDir, inputPath);
         
@@ -86,7 +87,7 @@ export class CacheManager {
             dependencies[absolutePath] = hash;
             dependencyPaths.push(absolutePath);
           } catch (error) {
-            console.warn(`Failed to read dependency ${absolutePath}: ${error}`);
+            console.warn(`Failed to read dependency ${absolutePath}: ${String(error)}`);
           }
         }
       }
@@ -118,9 +119,9 @@ export class CacheManager {
 
     try {
       const content = readFileSync(metadataPath, 'utf-8');
-      return JSON.parse(content);
+      return JSON.parse(content) as Record<string, CacheEntry>;
     } catch (error) {
-      console.warn(`Failed to load cache metadata: ${error}`);
+      console.warn(`Failed to load cache metadata: ${String(error)}`);
       return {};
     }
   }
@@ -133,14 +134,14 @@ export class CacheManager {
     try {
       writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
     } catch (error) {
-      console.warn(`Failed to save cache metadata: ${error}`);
+      console.warn(`Failed to save cache metadata: ${String(error)}`);
     }
   }
 
   /**
    * Checks if a cached version exists and is still valid
    */
-  isCached(sourcePath: string, metafile?: any): boolean {
+  isCached(sourcePath: string, metafile?: unknown): boolean {
     const resolvedSourcePath = resolve(sourcePath);
     
     if (!existsSync(resolvedSourcePath)) {
@@ -187,7 +188,7 @@ export class CacheManager {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -210,13 +211,14 @@ export class CacheManager {
   /**
    * Stores a compiled file in the cache
    */
-  setCached(sourcePath: string, compiledContent: string, sourceMapContent?: string, metafile?: any): string {
+  setCached(sourcePath: string, compiledContent: string, sourceMapContent?: string, metafile?: unknown): string {
     const resolvedSourcePath = resolve(sourcePath);
     const sourceContent = readFileSync(resolvedSourcePath, 'utf-8');
     const hash = this.generateHash(sourceContent);
     
     // Generate output filename based on source file
-    const sourceFileName = resolvedSourcePath.split('/').pop()!;
+    const sourceFileNameParts = resolvedSourcePath.split('/');
+    const sourceFileName = sourceFileNameParts[sourceFileNameParts.length - 1] ?? 'config';
     const outputFileName = sourceFileName.replace(/\.tsx?$/, '.mjs');
     const outputPath = join(this.outputDir, `${hash}-${outputFileName}`);
     
@@ -298,7 +300,7 @@ export class CacheManager {
           try {
             rmSync(cacheEntry.outputPath);
           } catch (error) {
-            console.warn(`Failed to remove stale cache file: ${error}`);
+            console.warn(`Failed to remove stale cache file: ${String(error)}`);
           }
         }
       }
@@ -329,7 +331,7 @@ export class CacheManager {
         try {
           const stats = statSync(entry.outputPath);
           totalSize += stats.size;
-        } catch (error) {
+        } catch {
           // Ignore errors getting file stats
         }
       }
@@ -357,7 +359,7 @@ export class CacheManager {
   isAccessible(): boolean {
     try {
       return existsSync(this.cachePath) && statSync(this.cachePath).isDirectory();
-    } catch (error) {
+    } catch {
       return false;
     }
   }

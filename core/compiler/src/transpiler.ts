@@ -1,7 +1,7 @@
-import { build, type BuildOptions, type BuildResult, type Plugin } from 'esbuild';
-import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve, dirname, relative } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
+import type {BuildOptions, BuildResult, Plugin} from 'esbuild';
+import { existsSync } from 'node:fs';
+import { resolve, dirname, relative } from 'node:path';
 
 export interface TranspileOptions {
   /**
@@ -79,7 +79,7 @@ export interface TranspileResult {
   /**
    * Build metadata
    */
-  metafile?: any;
+  metafile?: unknown;
 }
 
 
@@ -94,8 +94,8 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     sourcemap = true,
     minify = false,
     plugins = [],
-    external = [],
-    baseDir = process.cwd(),
+    external: _external = [],
+    baseDir: _baseDir = process.cwd(),
     bundle = false
   } = options;
 
@@ -123,7 +123,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     // This is the key setting that makes TypeScript transpilation work
     // without needing the packages to be installed
     ...(bundle ? {
-      packages: 'external' as any
+      packages: 'external' as const
     } : {}),
     // Don't use plugins or extra options that might interfere with resolution
     plugins: [
@@ -143,10 +143,11 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
   };
   
   // Debug logging (only in DEBUG mode)
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
   if (process.env.DEBUG === '1') {
     console.log('[transpiler] Build options:', {
       bundle,
-      packages: (buildOptions as any).packages,
+      packages: (buildOptions as { packages?: string }).packages,
       platform: buildOptions.platform,
       entryPoint: resolvedSourcePath
     });
@@ -199,8 +200,10 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     }
 
     // Debug logging for metafile (only in DEBUG mode)
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
     if (process.env.DEBUG === '1' && result.metafile) {
-      console.log('[transpiler] Metafile inputs:', Object.keys(result.metafile.inputs || {}));
+      const metafileObj = result.metafile as { inputs?: Record<string, unknown> } | null | undefined;
+      console.log('[transpiler] Metafile inputs:', Object.keys(metafileObj?.inputs ?? {}));
     }
 
     return {
@@ -271,7 +274,7 @@ export function isTranspilable(filePath: string): boolean {
 /**
  * Gets the output extension for a given input file
  */
-export function getOutputExtension(inputPath: string, format: 'esm' | 'cjs' = 'esm'): string {
+export function getOutputExtension(_inputPath: string, format: 'esm' | 'cjs' = 'esm'): string {
   if (format === 'esm') {
     return '.mjs';
   } else {

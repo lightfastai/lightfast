@@ -1,8 +1,10 @@
 import { existsSync, watch } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { CacheManager, createCacheManager } from './cache.js';
-import { transpileConfig, validateConfig, type TranspileOptions, type TranspileResult } from './transpiler.js';
+import type { CacheManager} from './cache.js';
+import { createCacheManager } from './cache.js';
+import { transpileConfig, validateConfig   } from './transpiler.js';
+import type {TranspileOptions, TranspileResult} from './transpiler.js';
 
 const DEFAULT_CONFIG_PATTERNS = [
   'lightfast.config.ts',
@@ -91,9 +93,9 @@ export class LightfastCompiler {
   private readonly useCache: boolean;
 
   constructor(options: CompilerOptions = {}) {
-    this.baseDir = options.baseDir || process.cwd();
-    this.cacheManager = options.cacheManager || createCacheManager({ baseDir: this.baseDir });
-    this.configPatterns = options.configPatterns || DEFAULT_CONFIG_PATTERNS;
+    this.baseDir = options.baseDir ?? process.cwd();
+    this.cacheManager = options.cacheManager ?? createCacheManager({ baseDir: this.baseDir });
+    this.configPatterns = options.configPatterns ?? DEFAULT_CONFIG_PATTERNS;
     this.useCache = options.useCache !== false;
   }
 
@@ -119,7 +121,7 @@ export class LightfastCompiler {
     warnings: string[];
     configPath?: string;
   }> {
-    const resolvedConfigPath = configPath || this.findConfigFile();
+    const resolvedConfigPath = configPath ?? this.findConfigFile();
     
     if (!resolvedConfigPath) {
       return {
@@ -151,7 +153,7 @@ export class LightfastCompiler {
     const startTime = performance.now();
     
     // Find configuration file
-    const configPath = options.configPath || this.findConfigFile();
+    const configPath = options.configPath ?? this.findConfigFile();
     if (!configPath) {
       const endTime = performance.now();
       return {
@@ -170,7 +172,7 @@ export class LightfastCompiler {
     }
 
     const resolvedConfigPath = resolve(configPath);
-    const force = options.force || false;
+    const force = options.force ?? false;
     
     // Compile the configuration file first to get metafile for cache check
     const transpileResult = await transpileConfig(resolvedConfigPath, options.transpileOptions);
@@ -210,7 +212,7 @@ export class LightfastCompiler {
     }
 
     // Store in cache and write main output
-    let outputPath: string;
+    let _outputPath: string;
     
     if (this.useCache) {
       // Store in cache with unique filename and metafile
@@ -220,10 +222,10 @@ export class LightfastCompiler {
         transpileResult.sourcemap,
         transpileResult.metafile
       );
-      outputPath = cachedPath;
+      _outputPath = cachedPath;
     } else {
       // Write directly to main output path
-      outputPath = this.cacheManager.getMainOutputPath();
+      _outputPath = this.cacheManager.getMainOutputPath();
     }
     
     // Always write to the main output location for consistency
@@ -245,7 +247,7 @@ export class LightfastCompiler {
   /**
    * Compiles and loads the configuration as a module
    */
-  async compileAndLoad<T = any>(options: {
+  async compileAndLoad<T = unknown>(options: {
     configPath?: string;
     force?: boolean;
     transpileOptions?: Partial<TranspileOptions>;
@@ -261,8 +263,8 @@ export class LightfastCompiler {
 
     try {
       // Dynamic import of the compiled configuration
-      const configModule = await import(compilationResult.outputPath);
-      const config = configModule.default || configModule;
+      const configModule = await import(compilationResult.outputPath) as { default?: T } & T;
+      const config = configModule.default ?? configModule;
       
       return {
         config,
@@ -288,29 +290,31 @@ export class LightfastCompiler {
   } {
     const { onCompile, onError } = options;
     
-    const configPath = options.configPath || this.findConfigFile();
+    const configPath = options.configPath ?? this.findConfigFile();
     if (!configPath) {
       onError?.(new Error('No configuration file found to watch'));
-      return { close: () => {} };
+      return { close: () => { /* No-op */ } };
     }
 
     let isCompiling = false;
     
-    const watcher = watch(configPath, async (eventType: string) => {
+    const watcher = watch(configPath, (eventType) => {
       if (eventType === 'change' && !isCompiling) {
         isCompiling = true;
-        try {
-          const result = await this.compile({
-            configPath,
-            force: true, // Always recompile on file change
-            transpileOptions: options.transpileOptions
-          });
-          onCompile?.(result);
-        } catch (error) {
-          onError?.(error instanceof Error ? error : new Error(String(error)));
-        } finally {
-          isCompiling = false;
-        }
+        void (async () => {
+          try {
+            const result = await this.compile({
+              configPath,
+              force: true, // Always recompile on file change
+              transpileOptions: options.transpileOptions
+            });
+            onCompile?.(result);
+          } catch (error) {
+            onError?.(error instanceof Error ? error : new Error(String(error)));
+          } finally {
+            isCompiling = false;
+          }
+        })();
       }
     });
 
@@ -381,7 +385,7 @@ export async function compileConfig(
 /**
  * Quickly compile and load a configuration file
  */
-export async function loadConfig<T = any>(
+export async function loadConfig<T = unknown>(
   configPath?: string,
   options: Partial<CompilerOptions & { force?: boolean }> = {}
 ): Promise<T> {
@@ -396,10 +400,10 @@ export async function loadConfig<T = any>(
 /**
  * Find a configuration file in the given directory
  */
-export async function findConfig(
+export function findConfig(
   baseDir: string = process.cwd(),
   patterns: string[] = DEFAULT_CONFIG_PATTERNS
-): Promise<string | null> {
+): string | null {
   for (const pattern of patterns) {
     const configPath = join(baseDir, pattern);
     if (existsSync(configPath)) {

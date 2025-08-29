@@ -1,8 +1,10 @@
 import { EventEmitter } from 'node:events';
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import chokidar, { type FSWatcher } from 'chokidar';
-import { LightfastCompiler, type CompilationResult } from './index.js';
+import chokidar from 'chokidar';
+import type {FSWatcher} from 'chokidar';
+import { LightfastCompiler  } from './index.js';
+import type {CompilationResult} from './index.js';
 
 export interface WatcherOptions {
   /**
@@ -77,8 +79,8 @@ export class ConfigWatcher extends EventEmitter {
   constructor(options: WatcherOptions = {}) {
     super();
     
-    this.baseDir = options.baseDir || process.cwd();
-    this.configPatterns = options.configPatterns || [
+    this.baseDir = options.baseDir ?? process.cwd();
+    this.configPatterns = options.configPatterns ?? [
       'lightfast.config.ts',
       'lightfast.config.tsx', 
       'lightfast.config.js',
@@ -88,9 +90,9 @@ export class ConfigWatcher extends EventEmitter {
     this.debounceDelay = options.debounceDelay ?? 500;
     this.ignoreInitial = options.ignoreInitial ?? false;
     this.debug = options.debug ?? false;
-    this.additionalWatchPaths = options.additionalWatchPaths || [];
+    this.additionalWatchPaths = options.additionalWatchPaths ?? [];
     
-    this.compiler = options.compiler || new LightfastCompiler({
+    this.compiler = options.compiler ?? new LightfastCompiler({
       baseDir: this.baseDir,
       configPatterns: this.configPatterns
     });
@@ -276,14 +278,14 @@ export class ConfigWatcher extends EventEmitter {
     this.watcher.on('change', (path: string) => {
       // If it's a config file, handle directly
       if (this.watchedConfigPaths.has(path)) {
-        this.handleFileChange('change', path);
+        void this.handleFileChange('change', path);
       } 
       // If it's a dependency file, find the config that imports it and recompile
       else if (this.watchedDependencies.has(path)) {
         this.log(`Dependency changed: ${path}`);
         const configPath = this.findAnyConfigFile();
         if (configPath) {
-          this.handleFileChange('change', configPath);
+          void this.handleFileChange('change', configPath);
         }
       }
     });
@@ -293,7 +295,7 @@ export class ConfigWatcher extends EventEmitter {
       if (this.isConfigFile(path)) {
         this.watchedConfigPaths.add(path);
         this.emit('config-added', path);
-        this.handleFileChange('add', path);
+        void this.handleFileChange('add', path);
       }
     });
     
@@ -376,7 +378,7 @@ export class ConfigWatcher extends EventEmitter {
   }
   
   private isConfigFile(filePath: string): boolean {
-    const fileName = filePath.split('/').pop() || '';
+    const fileName = filePath.split('/').pop() ?? '';
     return this.configPatterns.some(pattern => {
       // Simple pattern matching - you could make this more sophisticated
       const patternRegex = new RegExp(pattern.replace(/\./g, '\\.').replace(/\*/g, '.*'));
