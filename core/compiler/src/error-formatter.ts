@@ -19,10 +19,10 @@ export function formatCompilationError(error: string | CompilationError): string
     if (match) {
       const [, file, line, column, message] = match;
       return formatStructuredError({
-        file,
-        line: parseInt(line, 10),
-        column: parseInt(column, 10),
-        message
+        file: file || '',
+        line: parseInt(line || '0', 10),
+        column: parseInt(column || '0', 10),
+        message: message || ''
       });
     }
     
@@ -93,9 +93,9 @@ export function formatCompilationWarnings(warnings: string[]): string {
     const match = warning.match(/^(.+?):(\d+):(\d+):\s*(.+)$/);
     if (match) {
       const [, file, line, column, message] = match;
-      const relativeFile = relative(process.cwd(), file);
-      const location = `${chalk.cyan(relativeFile)}:${chalk.yellow(line)}:${chalk.yellow(column)}`;
-      return `  ${chalk.yellow('⚠')} ${location} ${message}`;
+      const relativeFile = relative(process.cwd(), file || '');
+      const location = `${chalk.cyan(relativeFile)}:${chalk.yellow(line || '0')}:${chalk.yellow(column || '0')}`;
+      return `  ${chalk.yellow('⚠')} ${location} ${message || ''}`;
     }
     
     return `  ${chalk.yellow('⚠')} ${warning}`;

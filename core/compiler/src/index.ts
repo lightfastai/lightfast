@@ -453,13 +453,12 @@ export {
 } from './watcher.js';
 
 export {
-  HotReloadService,
-  createHotReloadService,
-  createSSEHandler,
-  type HotReloadServiceOptions,
-  type HotReloadSSEMessage,
-  type HotReloadClientConnection
-} from '../server/hot-reload.js';
+  formatCompilationErrors,
+  formatCompilationWarnings,
+  displayCompilationSummary,
+  CompilationSpinner,
+  type CompilationError
+} from './error-formatter.js';
 
 // Default export
 export default LightfastCompiler;

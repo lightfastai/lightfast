@@ -1,6 +1,7 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { json } from '@tanstack/react-start'
-import { createConfigWatcher, createSSEHandler } from '../../compiler/index.js'
+import { createConfigWatcher } from '@lightfastai/compiler'
+import { createSSEHandler } from '../../server/hot-reload.js'
 
 // Global watcher instance for the dev server
 let watcherInstance: ReturnType<typeof createConfigWatcher> | null = null;

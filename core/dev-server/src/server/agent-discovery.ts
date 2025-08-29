@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
 import type { Lightfast, LightfastJSON, LightfastAgentSet, LightfastMetadata, LightfastDevConfig } from 'lightfast/client';
-import { loadConfig } from '../compiler';
+import { loadConfig } from '@lightfastai/compiler';
 
 /**
  * Service for discovering and loading Lightfast configurations

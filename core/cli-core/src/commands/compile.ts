@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { createCompiler, findConfig } from '../../compiler/index.js';
-import { displayCompilationSummary, CompilationSpinner } from '../../compiler/error-formatter.js';
+import { createCompiler, findConfig, displayCompilationSummary, CompilationSpinner } from '@lightfastai/compiler';
 
 interface CompileOptions {
   config?: string;

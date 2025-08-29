@@ -1,6 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ConfigWatcher, WatcherEvents } from '../compiler/watcher.js';
-import type { CompilationResult } from '../compiler/index.js';
+import type { ConfigWatcher, ConfigWatcherEvents as WatcherEvents, CompilationResult } from '@lightfastai/compiler';
 
 export interface HotReloadOptions {
   /**

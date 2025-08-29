@@ -1,0 +1,57 @@
+{
+  "name": "@lightfastai/cli-core",
+  "version": "0.1.0",
+  "description": "Core CLI for Lightfast agent execution engine",
+  "keywords": [
+    "lightfast",
+    "cli",
+    "ai",
+    "agents"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/cli-core"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "MIT",
+  "author": "Lightfast <hello@lightfast.ai>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "lightfast-cli": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --fix",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "@lightfastai/compiler": "workspace:*",
+    "@lightfastai/dev-server": "workspace:*",
+    "chalk": "^5.6.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

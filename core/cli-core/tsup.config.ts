@@ -12,14 +12,15 @@ export default defineConfig({
     const fs = await import('node:fs');
     const path = await import('node:path');
     
-    // Add shebang to main entry
-    const entryPath = path.join(process.cwd(), 'dist/index.js');
-    if (fs.existsSync(entryPath)) {
-      const content = fs.readFileSync(entryPath, 'utf-8');
+    // Add shebang to CLI entry
+    const cliPath = path.join(process.cwd(), 'dist/index.js');
+    if (fs.existsSync(cliPath)) {
+      const content = fs.readFileSync(cliPath, 'utf-8');
       if (!content.startsWith('#!')) {
-        fs.writeFileSync(entryPath, '#!/usr/bin/env node\n' + content);
+        fs.writeFileSync(cliPath, '#!/usr/bin/env node\n' + content);
       }
     }
   },
-  platform: 'node'
+  platform: 'node',
+  splitting: false
 })

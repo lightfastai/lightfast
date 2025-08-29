@@ -1,17 +1,16 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { spawn } from 'child_process'
+import { spawn, type ChildProcess } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
-import { createCompiler, findConfig } from '../../compiler/index.js'
-import { createConfigWatcher } from '../../compiler/watcher.js'
+import { createCompiler, findConfig, createConfigWatcher } from '@lightfastai/compiler'
 import { 
   formatCompilationErrors, 
   formatCompilationWarnings, 
   displayCompilationSummary,
   CompilationSpinner 
-} from '../../compiler/error-formatter.js'
+} from '@lightfastai/compiler'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -134,34 +133,53 @@ export const devCommand = new Command('dev')
         console.log(chalk.gray(`Debug: isProduction = ${isProduction}`))
       }
       
-      let cliRoot: string
-      let startCommand: string[]
+      let cliRoot: string = process.cwd()
+      let startCommand: string[] = []
       
       if (isProduction) {
-        // Running from installed package - use built server
-        cliRoot = path.resolve(__dirname, '..', '..')
-        const serverPath = path.join(cliRoot, '.output', 'server', 'index.mjs')
-        
-        // Check if built app exists
-        if (!fs.existsSync(serverPath)) {
-          console.error(chalk.red('✖ Built app not found. This is a packaging error.'))
-          console.error(chalk.yellow('  If you are developing, use "pnpm dev" instead.'))
+        // Running from installed package - check for dev-server package
+        try {
+          const devServerPath = require.resolve('@lightfastai/dev-server/.output/server/index.mjs')
+          startCommand = ['node', devServerPath]
+          cliRoot = path.dirname(devServerPath)
+          console.log(chalk.blue('→ Starting production server...'))
+        } catch {
+          console.error(chalk.red('✖ @lightfastai/dev-server package not found.'))
+          console.error(chalk.yellow('  Make sure @lightfastai/dev-server is installed.'))
           process.exit(1)
         }
-        
-        startCommand = ['node', serverPath]
-        console.log(chalk.blue('→ Starting production server...'))
       } else {
-        // Development mode - run from source
-        cliRoot = path.resolve(__dirname, '..', '..', '..')
-        startCommand = ['pnpm', 'vite', 'dev', '--port', port, '--host', host]
-        console.log(chalk.blue('→ Starting development server...'))
+        // Development mode - run dev-server in development
+        cliRoot = process.cwd()
+        try {
+          const devServerPackage = require.resolve('@lightfastai/dev-server/package.json')
+          const devServerRoot = path.dirname(devServerPackage)
+          startCommand = ['pnpm', 'dev', '--port', port, '--host', host]
+          cliRoot = devServerRoot
+          console.log(chalk.blue('→ Starting development server...'))
+        } catch {
+          // Fallback for workspace development
+          const fallbackPath = path.resolve(__dirname, '..', '..', 'dev-server')
+          if (fs.existsSync(fallbackPath)) {
+            cliRoot = fallbackPath
+            startCommand = ['pnpm', 'dev', '--port', port, '--host', host]
+            console.log(chalk.blue('→ Starting development server from workspace...'))
+          } else {
+            console.error(chalk.red('✖ @lightfastai/dev-server not found.'))
+            process.exit(1)
+          }
+        }
       }
       
       console.log(chalk.blue('→ Launching Lightfast UI...'))
       
-      // Run the appropriate command
-      const devProcess = spawn(startCommand[0], startCommand.slice(1), {
+      // Run the appropriate command  
+      if (startCommand.length === 0) {
+        console.error(chalk.red('✖ No start command configured'))
+        process.exit(1)
+      }
+      
+      const devProcess: ChildProcess = spawn(startCommand[0]!, startCommand.slice(1), {
         cwd: cliRoot,
         stdio: 'pipe',
         shell: true,
