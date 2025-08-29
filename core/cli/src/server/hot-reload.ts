@@ -213,13 +213,14 @@ export class HotReloadService extends EventEmitter {
       });
     });
     
-    this.watcher.on('compile-error', (error: Error, configPath: string) => {
+    this.watcher.on('compile-error', (error: Error, result?: CompilationResult) => {
       this.broadcast({
         type: 'compile-error',
         data: {
           error: error.message,
           stack: error.stack,
-          configPath
+          configPath: result?.sourcePath,
+          errors: result?.errors
         }
       });
     });

@@ -6,6 +6,12 @@ import { fileURLToPath } from 'url'
 import fs from 'fs'
 import { createCompiler, findConfig } from '../../compiler/index.js'
 import { createConfigWatcher } from '../../compiler/watcher.js'
+import { 
+  formatCompilationErrors, 
+  formatCompilationWarnings, 
+  displayCompilationSummary,
+  CompilationSpinner 
+} from '../../compiler/error-formatter.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -34,12 +40,28 @@ export const devCommand = new Command('dev')
       if (!options.noCompile) {
         const configPath = await findConfig(process.cwd());
         if (configPath && configPath.endsWith('.ts')) {
-          console.log(chalk.blue('→ Compiling TypeScript configuration...'))
+          const spinner = new CompilationSpinner('Compiling TypeScript configuration...');
+          spinner.start();
+          
           const compiler = createCompiler({ baseDir: process.cwd() });
           
           try {
             const result = await compiler.compile({ configPath });
-            console.log(chalk.green('✔ Configuration compiled successfully'))
+            spinner.stop();
+            
+            if (result.errors.length > 0) {
+              // Display formatted errors
+              console.error(formatCompilationErrors(result.errors));
+              console.error(chalk.yellow('  Continuing with existing configuration if available...'));
+            } else {
+              // Display success with any warnings
+              displayCompilationSummary(
+                result.errors, 
+                result.warnings, 
+                result.sourcePath, 
+                result.compilationTime
+              );
+            }
             
             // Start watcher if not disabled
             if (!options.noWatch) {
@@ -52,15 +74,37 @@ export const devCommand = new Command('dev')
               });
               
               watcher.on('compile-start', () => {
-                console.log(chalk.blue('↻ Recompiling configuration...'))
+                const watchSpinner = new CompilationSpinner('Recompiling configuration...');
+                watchSpinner.start();
+                // Store spinner reference for later use
+                (watcher as any)._spinner = watchSpinner;
               });
               
-              watcher.on('compile-success', () => {
-                console.log(chalk.green('✔ Configuration recompiled successfully'))
+              watcher.on('compile-success', (result) => {
+                const watchSpinner = (watcher as any)._spinner;
+                if (watchSpinner) {
+                  watchSpinner.stop();
+                  delete (watcher as any)._spinner;
+                }
+                displayCompilationSummary(
+                  result.errors,
+                  result.warnings,
+                  result.sourcePath,
+                  result.compilationTime
+                );
               });
               
-              watcher.on('compile-error', (error) => {
-                console.error(chalk.red('✖ Compilation error:'), error.message)
+              watcher.on('compile-error', (error, result) => {
+                const watchSpinner = (watcher as any)._spinner;
+                if (watchSpinner) {
+                  watchSpinner.stop();
+                  delete (watcher as any)._spinner;
+                }
+                if (result && result.errors) {
+                  console.error(formatCompilationErrors(result.errors));
+                } else {
+                  console.error(chalk.red('✖ Compilation error:'), error.message);
+                }
               });
               
               await watcher.start();
@@ -75,6 +119,7 @@ export const devCommand = new Command('dev')
               });
             }
           } catch (error) {
+            spinner.stop();
             console.error(chalk.red('✖ Failed to compile configuration:'), error)
             console.error(chalk.yellow('  Continuing with existing configuration...'))
           }

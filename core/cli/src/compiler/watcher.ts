@@ -49,7 +49,7 @@ export interface WatcherOptions {
 export interface WatcherEvents {
   'compile-start': (configPath: string) => void;
   'compile-success': (result: CompilationResult) => void;
-  'compile-error': (error: Error, configPath: string) => void;
+  'compile-error': (error: Error, result?: CompilationResult) => void;
   'config-added': (configPath: string) => void;
   'config-removed': (configPath: string) => void;
   'watcher-ready': () => void;
@@ -287,14 +287,14 @@ export class ConfigWatcher extends EventEmitter {
       
       if (result.errors.length > 0) {
         const error = new Error(`Compilation failed: ${result.errors.join(', ')}`);
-        this.emit('compile-error', error, configPath);
+        this.emit('compile-error', error, result);
       } else {
         this.emit('compile-success', result);
       }
       
     } catch (error) {
       const compileError = error instanceof Error ? error : new Error(String(error));
-      this.emit('compile-error', compileError, configPath);
+      this.emit('compile-error', compileError, undefined);
       
     } finally {
       this.isCompiling = false;

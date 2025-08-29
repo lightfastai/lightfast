@@ -228,24 +228,29 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
   const defaultExternals = [
     'lightfast',
     '@lightfastai/core',
+    '@lightfastai/*',
     'node:*',
     // Common Node.js built-ins
     'fs', 'path', 'url', 'util', 'crypto', 'os', 'events',
     // Common dependencies that should remain external
-    'zod', 'typescript', 'esbuild'
+    'zod', 'typescript', 'esbuild',
+    // Workspace packages - keep as external to avoid bundling
+    '@repo/*',
+    '@vendor/*',
+    'workspace:*'
   ];
 
   const buildOptions: BuildOptions = {
     entryPoints: [resolvedSourcePath],
     write: false,
-    bundle: true, // Always bundle for config files to be self-contained
+    bundle: bundle, // Use the bundle option from parameters
     format,
     target,
     sourcemap,
     minify,
     platform: 'node',
     metafile: true,
-    external: bundle ? [...defaultExternals, ...external] : [], // Only use external if bundling
+    external: [...defaultExternals, ...external], // Always apply externals to avoid huge bundles
     plugins: [
       createWorkspaceResolver(),
       createTypeScriptPathsPlugin(baseDir),
@@ -336,13 +341,16 @@ export async function transpileConfig(configPath: string, options: Partial<Trans
     baseDir,
     format: 'esm',
     target: 'es2022',
-    bundle: true, // Enable bundling by default for configs
+    bundle: false, // Don't bundle by default - just transpile TypeScript
     sourcemap: true,
     external: [
       // Always external for config files
       'lightfast',
       '@lightfastai/*',
-      'node:*'
+      'node:*',
+      '@repo/*',
+      '@vendor/*',
+      'workspace:*'
     ],
     ...options
   };
