@@ -15,6 +15,13 @@ core/
 └── lightfast/             # 🚀 Core Lightfast runtime
 ```
 
+### Package Status (as of 2025-08-30)
+- ✅ **cli**: Builds and bundles successfully
+- ✅ **cli-core**: All commands working (dev, compile, clean)
+- ✅ **compiler**: Compiles and caches TypeScript configs
+- ✅ **dev-server**: React UI builds and serves correctly
+- ⚠️ **lightfast**: Runtime builds but DTS generation disabled due to type error
+
 ## 📊 Package Dependency Graph
 
 ```mermaid  
@@ -55,6 +62,9 @@ pnpm build
 # 3. Build @lightfastai/cli-core → dist/
 # 4. Build @lightfastai/dev-server → .output/
 # 5. Bundle CLI with everything → dist/
+
+# Build lightfast runtime separately (required for examples)
+cd ../lightfast && pnpm build
 ```
 
 ### Build Outputs
@@ -64,10 +74,13 @@ core/
 ├── compiler/dist/          # Compiled TypeScript compiler
 ├── cli-core/dist/         # Compiled CLI commands
 ├── dev-server/.output/    # Built React app (Vite/Nitro)
+├── lightfast/dist/        # Compiled runtime modules
 └── cli/dist/             # Final bundled CLI package
     ├── index.js          # 54KB bundled CLI
     └── dev-server-output/# Copied React app
 ```
+
+**Note**: The lightfast package must be built before testing with examples.
 
 ## 📦 Publishing Strategy
 
@@ -219,12 +232,25 @@ pnpm lint
 node dist/index.js --help
 node dist/index.js dev --port 3001
 
-# Test with example
+# Test with example (requires lightfast to be built)
 cd ../../examples/1-agent-chat
+pnpm install --force  # Update file: references
 node ../../core/cli/dist/index.js dev
 
 # Or use npm scripts
 npm run dev
+```
+
+### Verifying the Dev Server
+
+```bash
+# Check if server is running
+curl http://localhost:3000
+
+# Check agents API
+curl http://localhost:3000/api/agents | jq
+
+# Should return configured agents from lightfast.config.ts
 ```
 
 ### Adding New Features
@@ -348,6 +374,21 @@ rm -rf dist ../*/dist ../*/.output
 pnpm build
 ```
 
+**Lightfast module not found in examples**
+```bash
+# Build lightfast package
+cd core/lightfast && pnpm build
+
+# Force update example dependencies
+cd examples/1-agent-chat && pnpm install --force
+```
+
+**TypeScript errors in lightfast package**
+```bash
+# Currently DTS generation is disabled in tsup.config.ts
+# The package builds and works without type definitions
+```
+
 ## 📊 Performance & Size
 
 ### Bundle Sizes
@@ -370,10 +411,12 @@ pnpm build
 ## 🎯 Best Practices
 
 1. **Always run full build for releases** - Ensures consistency
-2. **Test with examples** - Validates real usage
-3. **Monitor bundle size** - Keep CLI lightweight
-4. **Document breaking changes** - Update CHANGELOG
-5. **Clean builds for debugging** - Eliminates cache issues
+2. **Build lightfast separately** - Required for example projects
+3. **Test with examples** - Validates real usage  
+4. **Monitor bundle size** - Keep CLI lightweight (~54KB)
+5. **Document breaking changes** - Update CHANGELOG
+6. **Clean builds for debugging** - Eliminates cache issues
+7. **Force update dependencies** - Use `pnpm install --force` when testing file: references
 
 ## 📚 Related Documentation
 
@@ -385,11 +428,14 @@ pnpm build
 
 ## 🚦 Future Improvements
 
+- [ ] Fix TypeScript DTS generation in lightfast package
+- [ ] Include lightfast build in main build pipeline
 - [ ] Parallel package builds for speed
 - [ ] Incremental compilation support
 - [ ] Tree-shaking for smaller bundles
 - [ ] Plugin system for extensibility
 - [ ] Remote dev server support
+- [ ] Automated testing for all commands
 
 ---
 

@@ -174,18 +174,20 @@ Total installed size: ~1MB
 ### Prerequisites
 - Node.js >= 18
 - pnpm 10.5.2 (for development)
+- Lightfast runtime must be built (see Building from Source)
 
 ### Building from Source
 
 ```bash
 # Clone repository
 git clone https://github.com/lightfastai/lightfast.git
-cd lightfast/core/cli
+cd lightfast
 
-# Install dependencies
+# Install all workspace dependencies
 pnpm install
 
-# Full build (builds all dependencies)
+# Build the CLI and its dependencies
+cd core/cli
 pnpm build
 # This runs:
 # 1. Build @lightfastai/compiler
@@ -193,7 +195,12 @@ pnpm build
 # 3. Build @lightfastai/dev-server
 # 4. Bundle everything into CLI
 
+# Build the runtime (required for examples)
+cd ../lightfast
+pnpm build
+
 # Quick rebuild (if deps already built)
+cd ../cli
 pnpm build:quick
 
 # Development mode

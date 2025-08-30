@@ -180,6 +180,17 @@ cp core/cli/dist/* node_modules/@lightfastai/cli/dist/
 pnpm build
 ```
 
+**Problem:** "Cannot find module 'lightfast/dist/client/index.mjs'"
+```bash
+# Solution: Build the lightfast package
+cd ../lightfast
+pnpm build
+
+# Then update example dependencies
+cd ../../examples/1-agent-chat
+pnpm install --force
+```
+
 **Problem:** Changes not reflected
 ```bash
 # Solution: Clean and rebuild
