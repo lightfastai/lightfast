@@ -1,251 +1,259 @@
-# Lightfast CLI Architecture
+# Lightfast Core Architecture
 
-This document describes the modular CLI architecture, build processes, and development workflows for the Lightfast CLI ecosystem.
+This document describes the complete architecture, build system, and development workflows for the Lightfast Core packages.
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
-The Lightfast CLI is built as a modular system with clean separation of concerns:
+The Lightfast Core is organized as a monorepo with multiple packages that work together to provide a complete CLI solution:
 
 ```
 core/
-├── cli/                    # 📦 Meta package (publishable)
+├── cli/                    # 📦 Published CLI package (bundles everything)
 ├── cli-core/              # 🧠 Core CLI logic & commands  
 ├── compiler/              # ⚙️ TypeScript compilation engine
-└── dev-server/            # 🌐 Development server (TanStack Start)
+├── dev-server/            # 🌐 Development server (React UI)
+└── lightfast/             # 🚀 Core Lightfast runtime
 ```
 
-### Package Dependencies
+## 📊 Package Dependency Graph
 
 ```mermaid  
 graph TD
-    A[cli - Meta Package] --> B[cli-core]
-    B --> C[compiler]
-    B --> D[dev-server]
+    CLI[cli - Published Package] --> |bundles| CORE[cli-core]
+    CORE --> |imports| COMPILER[compiler]
+    CORE --> |imports| DEVSERVER[dev-server]
     
-    E[examples/1-agent-chat] --> A
-    E --> F[lightfast core]
+    CLI -.->|bundles code| COMPILER
+    CLI -.->|copies output| DEVSERVER
+    
+    EXAMPLE[Example Project] --> CLI
+    EXAMPLE --> LIGHTFAST[lightfast runtime]
 ```
 
-**Architecture:** The meta package depends only on cli-core, which provides access to all functionality through transitive dependencies.
+## 🔨 Build System
 
-## Package Details
+### Build Order & Dependencies
 
-### 1. `@lightfastai/cli` (Meta Package)
-**Purpose:** Lightweight publishable package that delegates to cli-core  
-**Size:** ~100 bytes  
-**Dependencies:** `@lightfastai/cli-core` (single dependency)
+The packages must be built in a specific order due to their dependencies:
+
+1. **compiler** → No workspace dependencies, builds first
+2. **cli-core** → Depends on compiler, builds second  
+3. **dev-server** → Independent React app, builds third
+4. **cli** → Bundles everything, builds last
+
+### Complete Build Process
+
+The CLI package includes a sophisticated build script (`scripts/build-all.js`) that handles the entire build pipeline:
+
+```bash
+# From core/cli directory
+pnpm build
+
+# This executes:
+# 1. Clean all previous builds (ensures fresh state)
+# 2. Build @lightfastai/compiler → dist/
+# 3. Build @lightfastai/cli-core → dist/
+# 4. Build @lightfastai/dev-server → .output/
+# 5. Bundle CLI with everything → dist/
+```
+
+### Build Outputs
+
+```
+core/
+├── compiler/dist/          # Compiled TypeScript compiler
+├── cli-core/dist/         # Compiled CLI commands
+├── dev-server/.output/    # Built React app (Vite/Nitro)
+└── cli/dist/             # Final bundled CLI package
+    ├── index.js          # 54KB bundled CLI
+    └── dev-server-output/# Copied React app
+```
+
+## 📦 Publishing Strategy
+
+**Only `@lightfastai/cli` is published to npm.** This single package contains everything users need:
+
+### What Gets Published
+
+```
+@lightfastai/cli/
+├── dist/
+│   ├── index.js              # Bundled CLI (includes cli-core + compiler)
+│   ├── index.d.ts           # TypeScript definitions
+│   └── dev-server-output/   # Pre-built React UI
+│       ├── public/          # Client-side assets
+│       └── server/          # SSR server
+├── package.json             # Runtime dependencies
+└── README.md               # Documentation
+```
+
+**Package Size:** ~240KB compressed
+
+### Why This Architecture?
+
+1. **Single Installation** - Users only need `npm install @lightfastai/cli`
+2. **No Version Conflicts** - All components versioned together
+3. **Faster Startup** - Pre-bundled, no runtime compilation
+4. **Smaller Size** - Shared dependencies bundled once
+
+## 📋 Package Details
+
+### 1. `@lightfastai/cli` (Published Package)
+
+**Purpose:** The single npm package users install  
+**Size:** ~240KB compressed  
+**Contains:** Bundled CLI + pre-built UI
 
 ```typescript
-// core/cli/src/index.ts
-#!/usr/bin/env node
-import '@lightfastai/cli-core'
+// src/index.ts - Entry point that imports cli-core
+import { Command } from 'commander'
+import { devCommand } from '../../cli-core/src/commands/dev.js'
+// ... imports and setup
 ```
 
 **Key Files:**
-- `src/index.ts` - Simple delegation entry point
-- `package.json` - Clean dependencies, publishing config
-- `tsup.config.ts` - Minimal build with shebang injection
+- `src/index.ts` - CLI entry point
+- `scripts/build-all.js` - Complete build pipeline
+- `tsup.config.ts` - Bundling configuration
+- `package.json` - Runtime dependencies
+
+**Build Configuration:**
+```typescript
+// tsup.config.ts
+{
+  noExternal: [
+    '@lightfastai/cli-core',
+    '@lightfastai/compiler',
+    /^\.\.\//  // Bundle relative imports
+  ],
+  external: ['@lightfastai/dev-server'], // Copied separately
+}
+```
 
 ### 2. `@lightfastai/cli-core` (Core Logic)
-**Purpose:** Contains all CLI commands, logic, and orchestration  
+
+**Purpose:** Contains all CLI commands and orchestration  
 **Commands:** `dev`, `compile`, `clean`
 
-```typescript
-// core/cli-core/src/index.ts
-import { Command } from 'commander'
-import { devCommand } from './commands/dev.js'
-import { compileCommand } from './commands/compile.js'  
-import { cleanCommand } from './commands/clean.js'
-
-const program = new Command()
-  .name('@lightfastai/cli')
-  .addCommand(devCommand)
-  .addCommand(compileCommand) 
-  .addCommand(cleanCommand)
-```
-
 **Key Files:**
-- `src/commands/dev.ts` - Development server orchestration
-- `src/commands/compile.ts` - TypeScript compilation commands
-- `src/commands/clean.ts` - Build artifact cleanup
-- `src/utils/package.ts` - Package info utilities
+- `src/commands/dev.ts` - Development server command
+- `src/commands/compile.ts` - TypeScript compilation
+- `src/commands/clean.ts` - Cleanup command
+- `src/utils/package.ts` - Package utilities
 
 ### 3. `@lightfastai/compiler` (Compilation Engine)
-**Purpose:** TypeScript compilation with caching and bundling
+
+**Purpose:** TypeScript compilation with caching and hot reload
 
 ```typescript
-// Usage in cli-core
-import { createCompiler, createConfigWatcher } from '@lightfastai/compiler'
+// API Example
+import { createCompiler } from '@lightfastai/compiler'
 
 const compiler = createCompiler({
   entryPoint: 'lightfast.config.ts',
   outputPath: '.lightfast/',
   watch: true
 })
-
-const result = await compiler.compile()
 ```
 
-**Key Files:**
-- `src/index.ts` - Main compiler API
-- `src/transpiler.ts` - esbuild-based TypeScript transpilation
-- `src/cache.ts` - File-based compilation caching
-- `src/watcher.ts` - File watching and hot reload
-- `src/error-formatter.ts` - Pretty error formatting
+**Key Features:**
+- esbuild-based transpilation
+- File-based caching
+- Hot reload support
+- Pretty error formatting
 
-### 4. `@lightfastai/dev-server` (Development Server)
-**Purpose:** TanStack Start-based web UI for agent management
+### 4. `@lightfastai/dev-server` (Development UI)
 
-**Key Files:**
-- `src/app.tsx` - Main React application
-- `src/routes/` - TanStack Router routes
-- `src/routes/api/agents.ts` - Agent listing API
-- `src/routes/api/agents.$agentId.ts` - Individual agent API  
-- `src/routes/api/hot-reload.ts` - Hot reload API
-- `src/server/agent-discovery.ts` - Agent introspection
-- `vite.config.ts` - Vite configuration
+**Purpose:** React-based development server UI  
+**Stack:** TanStack Start + React 19 + Vite
 
-## Development Workflow
+**Build Process:**
+- Vite builds client and SSR bundles
+- Nitro packages for production
+- Output copied to CLI dist
 
-### Adding New CLI Commands
+### 5. `@lightfastai/lightfast` (Runtime)
 
-1. **Create command in cli-core:**
-```typescript
-// core/cli-core/src/commands/my-command.ts
-import { Command } from 'commander'
+**Purpose:** Core Lightfast runtime and agent framework  
+**Used by:** Example projects and user applications
 
-export const myCommand = new Command('my-command')
-  .description('My new command')
-  .option('-f, --flag', 'Example flag')
-  .action(async (options) => {
-    // Command implementation
-  })
-```
+## 🛠️ Development Workflow
 
-2. **Register in main CLI:**
-```typescript
-// core/cli-core/src/index.ts
-import { myCommand } from './commands/my-command.js'
-program.addCommand(myCommand)
-```
-
-3. **Build and test:**
-```bash
-cd core/cli-core && pnpm build
-cd ../cli && pnpm build
-cd ../../examples/1-agent-chat && node ../../core/cli/dist/index.js my-command --help
-```
-
-### Adding Compiler Features
-
-1. **Extend compiler API:**
-```typescript
-// core/compiler/src/index.ts
-export interface CompilerOptions {
-  entryPoint: string
-  outputPath: string
-  minify?: boolean      // New option
-  sourcemap?: boolean   // New option
-}
-```
-
-2. **Update transpiler:**
-```typescript
-// core/compiler/src/transpiler.ts
-const buildOptions: BuildOptions = {
-  // ... existing options
-  minify: options.minify ?? false,
-  sourcemap: options.sourcemap ?? true
-}
-```
-
-3. **Test compilation:**
-```bash
-cd core/compiler && pnpm build
-cd ../../examples/1-agent-chat && node ../../core/cli/dist/index.js compile --help
-```
-
-### Adding Dev Server Features
-
-1. **Add new route:**
-```typescript
-// core/dev-server/src/routes/my-route.tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/my-route')({
-  component: MyComponent
-})
-
-function MyComponent() {
-  return <div>My new feature</div>
-}
-```
-
-2. **Add API endpoint:**
-```typescript
-// core/dev-server/src/routes/api/my-api.ts
-import { createAPIFileRoute } from '@tanstack/react-start/api'
-
-export const Route = createAPIFileRoute('/api/my-api')({
-  GET: async ({ request }) => {
-    return Response.json({ data: 'my-data' })
-  }
-})
-```
-
-3. **Test server:**
-```bash
-cd core/dev-server && pnpm build
-cd ../../examples/1-agent-chat && node ../../core/cli/dist/index.js dev --port 3001
-```
-
-## Build Process
-
-### Individual Package Builds
+### Initial Setup
 
 ```bash
-# Build specific packages
-cd core/compiler && pnpm build     # TypeScript + bundling
-cd core/dev-server && pnpm build   # Vite build (SSG + SSR)
-cd core/cli-core && pnpm build     # CLI bundling with shebang
-cd core/cli && pnpm build          # Meta package (delegates)
+# Clone repository
+git clone https://github.com/lightfastai/lightfast.git
+cd lightfast
+
+# Install all dependencies
+pnpm install
+
+# Navigate to core
+cd core/cli
 ```
 
-### Complete Build Pipeline
+### Development Commands
 
 ```bash
-# 1. Build all packages in dependency order
-pnpm --filter @lightfastai/compiler build
-pnpm --filter @lightfastai/dev-server build  
-pnpm --filter @lightfastai/cli-core build
-pnpm --filter @lightfastai/cli build
+# Full build (required after major changes)
+pnpm build
 
-# 2. Or use workspace command
-pnpm build  # Turbo handles dependency order
+# Quick rebuild (CLI only, assumes deps built)
+pnpm build:quick
+
+# Watch mode (CLI changes only)
+pnpm dev
+
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
 ```
 
-### Build Outputs
+### Testing Changes
 
-```
-core/cli/dist/index.js              # #!/usr/bin/env node + delegation
-core/cli-core/dist/index.js         # CLI commands bundle  
-core/compiler/dist/                 # Compiler API + utilities
-core/dev-server/.output/             # TanStack Start SSG/SSR build
-```
-
-## Integration with Examples
-
-### Setting Up New Example
-
-1. **Create example project:**
 ```bash
-mkdir examples/my-example
-cd examples/my-example
-pnpm init
+# Direct testing
+node dist/index.js --help
+node dist/index.js dev --port 3001
+
+# Test with example
+cd ../../examples/1-agent-chat
+node ../../core/cli/dist/index.js dev
+
+# Or use npm scripts
+npm run dev
 ```
 
-2. **Add CLI dependency:**
+### Adding New Features
+
+#### New CLI Command
+
+1. Create command in `cli-core/src/commands/`
+2. Register in `cli-core/src/index.ts`
+3. Run `pnpm build` to rebuild everything
+4. Test with `node dist/index.js <command>`
+
+#### Compiler Enhancement
+
+1. Modify `compiler/src/`
+2. Run `pnpm build` (rebuilds entire chain)
+3. Changes automatically bundled into CLI
+
+#### UI Update
+
+1. Edit `dev-server/src/`
+2. Run `pnpm build` to rebuild UI
+3. Output automatically copied to CLI
+
+## 🚀 Integration with Examples
+
+### Example Project Setup
+
 ```json
+// examples/1-agent-chat/package.json
 {
   "dependencies": {
     "@lightfastai/cli": "file:../../core/cli",
@@ -258,162 +266,131 @@ pnpm init
 }
 ```
 
-3. **Create lightfast.config.ts:**
+### Lightfast Configuration
+
 ```typescript
-// examples/my-example/lightfast.config.ts
-import { createLightfast } from "lightfast/client"
+// lightfast.config.ts
+import { createLightfast } from "lightfast"
 import { createAgent } from "lightfast/agent"
 
 const myAgent = createAgent({
-  name: "my-agent",
+  name: "assistant",
   system: "You are a helpful assistant",
-  model: gateway("claude-3-5-sonnet-20241022")
+  model: "claude-3-5-sonnet"
 })
 
 export default createLightfast({
   agents: { myAgent },
-  metadata: { name: "My Example" }
+  metadata: {
+    name: "My Project",
+    version: "1.0.0"
+  }
 })
 ```
 
-### Testing Integration
+## 📝 Important Notes
+
+### Workspace Development
+
+When using `file:` references in examples:
 
 ```bash
-# From example directory
-cd examples/my-example
-
-# Test compilation
-node ../../core/cli/dist/index.js compile
-# ✔ Compiled lightfast.config.ts in 12.08ms
-
-# Test dev server  
-node ../../core/cli/dist/index.js dev --port 3001
-# ✔ Lightfast server started at http://localhost:3001
-
-# Test agent API
-curl http://localhost:3001/api/agents
-# {"success":true,"data":{"agents":[...]}}
-
-# Test cleanup
-node ../../core/cli/dist/index.js clean --cache
-# ✔ Cleaned .lightfast cache
-```
-
-### Modular Agent Organization
-
-Create `agents/` directory for better organization:
-
-```typescript
-// agents/my-agent.ts
-import { createAgent } from "lightfast/agent"
-export const myAgent = createAgent({ ... })
-
-// lightfast.config.ts  
-import { myAgent } from "./agents/my-agent.js"
-export default createLightfast({ agents: { myAgent } })
-```
-
-## Testing & Debugging
-
-### Manual Testing Workflow
-
-```bash
-# 1. Build packages
-pnpm --filter @lightfastai/cli build
-
-# 2. Test from example
+# After rebuilding CLI
 cd examples/1-agent-chat
-node ../../core/cli/dist/index.js --help
-node ../../core/cli/dist/index.js dev --port 3001
 
-# 3. Debug with verbose output
-DEBUG=1 node ../../core/cli/dist/index.js dev
+# Force update node_modules
+pnpm install --force
+
+# Or manually copy
+cp ../../core/cli/dist/* node_modules/@lightfastai/cli/dist/
 ```
 
-### Common Issues & Solutions
+### Clean Builds
 
-**Issue:** `@lightfastai/dev-server not found`  
-**Solution:** Check workspace path resolution in `core/cli-core/src/commands/dev.ts:162`
+The build system always performs clean builds to avoid stale code:
+- Removes all `dist/` directories
+- Rebuilds from source
+- Ensures consistent output
 
-**Issue:** TypeScript compilation errors  
-**Solution:** Verify agent imports use `.js` extensions: `./agents/my-agent.js`
+### Bundle vs Copy Strategy
 
-**Issue:** Dev server React errors  
-**Solution:** These are often non-critical TanStack Start hydration issues
+- **Bundled:** TypeScript packages (cli-core, compiler)
+  - Pure Node.js code
+  - Can be bundled with tsup
+  - Reduces dependencies
+  
+- **Copied:** React application (dev-server)
+  - Different build system (Vite)
+  - Includes client + server
+  - Copied as static assets
 
-### Package Publishing
+## 🐛 Troubleshooting
 
+### Common Issues
+
+**"Dev-server output not found"**
 ```bash
-# 1. Build all packages
+# Run full build
 pnpm build
-
-# 2. Test meta package
-cd core/cli
-npm pack --dry-run
-
-# 3. Publish (when ready)
-npm publish  # Only the meta package needs publishing
 ```
 
-## Key Design Principles
-
-1. **Modular Architecture** - Each package has single responsibility
-2. **Minimal Dependencies** - Meta package depends only on cli-core for simplicity  
-3. **Developer Experience** - Simple `cli dev` command hides complexity
-4. **Production Ready** - Builds with proper error handling
-5. **Extensible** - Easy to add commands, compiler features, and UI routes
-
-## Dependency Structure
-
-The CLI uses a layered dependency approach:
-
-```json
-// core/cli/package.json - Meta package
-"dependencies": {
-  "@lightfastai/cli-core": "workspace:*"      // Single dependency
-}
-
-// core/cli-core/package.json - Core package  
-"dependencies": {
-  "@lightfastai/compiler": "workspace:*",     // Compilation functionality
-  "@lightfastai/dev-server": "workspace:*"   // Development server
-}
+**Module not found errors**
+```bash
+# Reinstall and rebuild
+pnpm install --force
+pnpm build
 ```
 
-### Architecture Benefits:
-- **Minimal package size** - Meta package contains only delegation code
-- **Transitive dependencies** - Functionality accessed through cli-core  
-- **Clear separation** - Meta package for publishing, cli-core for implementation
-- **Isolated maintenance** - Changes isolated to appropriate packages
-
-## File Structure Reference
-
-```
-core/
-├── cli/                           # Meta package (publishable)
-│   ├── src/index.ts              # Delegation entry point  
-│   ├── package.json              # Clean dependencies
-│   └── tsup.config.ts            # Build with shebang
-├── cli-core/                     # Core CLI logic
-│   ├── src/
-│   │   ├── commands/             # CLI command implementations
-│   │   ├── utils/               # Shared utilities  
-│   │   └── index.ts            # Commander.js setup
-│   └── package.json            # Depends on compiler + dev-server
-├── compiler/                    # Compilation engine
-│   ├── src/
-│   │   ├── index.ts            # Main compiler API
-│   │   ├── transpiler.ts       # esbuild integration
-│   │   ├── cache.ts           # File-based caching
-│   │   └── watcher.ts         # File watching
-│   └── package.json           # esbuild, chokidar deps
-└── dev-server/                # Development server
-    ├── src/
-    │   ├── routes/            # TanStack Router routes
-    │   ├── server/           # Server-side utilities
-    │   └── app.tsx          # React application
-    ├── vite.config.ts       # Vite configuration
-    └── package.json         # React, TanStack deps
+**Changes not reflected**
+```bash
+# Clean and rebuild
+rm -rf dist ../*/dist ../*/.output
+pnpm build
 ```
 
-This architecture enables rapid development while maintaining separation of concerns and developer experience.
+## 📊 Performance & Size
+
+### Bundle Sizes
+- CLI bundle: ~54KB
+- Dev-server output: ~600KB
+- Total package: ~240KB compressed
+
+### Build Times
+- Full build: ~15 seconds
+- Quick rebuild: ~2 seconds
+- Dev mode: Instant hot reload
+
+## 🔐 Security Considerations
+
+- TypeScript compiled away (no source exposure)
+- Dependencies bundled (version locked)
+- React app pre-built (no build-time vulnerabilities)
+- Minimal runtime dependencies
+
+## 🎯 Best Practices
+
+1. **Always run full build for releases** - Ensures consistency
+2. **Test with examples** - Validates real usage
+3. **Monitor bundle size** - Keep CLI lightweight
+4. **Document breaking changes** - Update CHANGELOG
+5. **Clean builds for debugging** - Eliminates cache issues
+
+## 📚 Related Documentation
+
+- [cli/README.md](./cli/README.md) - CLI user documentation
+- [cli/CLAUDE.md](./cli/CLAUDE.md) - CLI architecture details
+- [compiler/README.md](./compiler/README.md) - Compiler documentation
+- [dev-server/README.md](./dev-server/README.md) - UI documentation
+- [lightfast/README.md](./lightfast/README.md) - Runtime documentation
+
+## 🚦 Future Improvements
+
+- [ ] Parallel package builds for speed
+- [ ] Incremental compilation support
+- [ ] Tree-shaking for smaller bundles
+- [ ] Plugin system for extensibility
+- [ ] Remote dev server support
+
+---
+
+This architecture provides a robust, maintainable foundation for the Lightfast CLI ecosystem while keeping the user experience simple with a single npm package installation.

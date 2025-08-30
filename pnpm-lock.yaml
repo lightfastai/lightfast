@@ -1075,12 +1075,24 @@ importers:
 
   core/cli:
     dependencies:
-      '@lightfastai/cli-core':
-        specifier: workspace:*
-        version: link:../cli-core
+      chalk:
+        specifier: ^5.6.0
+        version: 5.6.0
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+      esbuild:
+        specifier: ^0.25.9
+        version: 0.25.9
       lightfast:
         specifier: '>=0.1.0'
         version: link:../lightfast
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -16254,7 +16266,11 @@ snapshots:
 
   '@lightfastai/cli@file:core/cli(lightfast@file:core/lightfast(typescript@5.9.2))':
     dependencies:
-      '@lightfastai/cli-core': link:core/cli-core
+      chalk: 5.6.0
+      chokidar: 4.0.3
+      commander: 12.1.0
+      esbuild: 0.25.9
+      zod: 3.25.76
     optionalDependencies:
       lightfast: file:core/lightfast(typescript@5.9.2)
 

@@ -128,27 +128,41 @@ export const devCommand = new Command('dev')
       }
       
       // When running from dist (production/installed), use the built app
-      const isProduction = __dirname.includes('/dist/')
+      // Check if we're running from a dist folder (either local build or installed package)
+      const isProduction = __dirname.includes('/dist') || __dirname.includes('\\dist')
       
       if (process.env.DEBUG) {
+        console.log(chalk.gray(`Debug: __filename = ${__filename}`))
         console.log(chalk.gray(`Debug: __dirname = ${__dirname}`))
         console.log(chalk.gray(`Debug: isProduction = ${isProduction}`))
+        console.log(chalk.gray(`Debug: import.meta.url = ${import.meta.url}`))
       }
       
       let cliRoot: string = process.cwd()
       let startCommand: string[] = []
       
       if (isProduction) {
-        // Running from installed package - check for dev-server package
-        try {
-          const devServerPath = require.resolve('@lightfastai/dev-server/.output/server/index.mjs')
-          startCommand = ['node', devServerPath]
-          cliRoot = path.dirname(devServerPath)
-          console.log(chalk.blue('→ Starting production server...'))
-        } catch {
-          console.error(chalk.red('✖ @lightfastai/dev-server package not found.'))
-          console.error(chalk.yellow('  Make sure @lightfastai/dev-server is installed.'))
-          process.exit(1)
+        // Running from installed package - check for bundled dev-server output
+        const bundledDevServer = path.resolve(__dirname, 'dev-server-output/server/index.mjs')
+        
+        if (fs.existsSync(bundledDevServer)) {
+          // Use bundled dev-server (new bundled approach)
+          startCommand = ['node', bundledDevServer]
+          cliRoot = path.dirname(bundledDevServer)
+          console.log(chalk.blue('→ Starting production server (bundled)...'))
+        } else {
+          // Fallback to old approach for backward compatibility
+          try {
+            const devServerPath = require.resolve('@lightfastai/dev-server/.output/server/index.mjs')
+            startCommand = ['node', devServerPath]
+            cliRoot = path.dirname(devServerPath)
+            console.log(chalk.blue('→ Starting production server...'))
+          } catch {
+            console.error(chalk.red('✖ Dev server not found.'))
+            console.error(chalk.yellow('  The CLI package may not be properly built.'))
+            console.error(chalk.yellow('  Try running: pnpm --filter @lightfastai/cli build'))
+            process.exit(1)
+          }
         }
       } else {
         // Development mode - run dev-server in development
