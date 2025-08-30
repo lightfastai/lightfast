@@ -1,7 +1,12 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { devCommand } from './commands/dev.js'
-import { getPackageInfo } from './utils/package.js'
+import { devCommand } from '../../cli-core/src/commands/dev.js'
+import { compileCommand } from '../../cli-core/src/commands/compile.js'
+import { cleanCommand } from '../../cli-core/src/commands/clean.js'
+import { bundleCommand } from '../../cli-core/src/commands/bundle.js'
+import { getPackageInfo } from '../../cli-core/src/utils/package.js'
 
 const packageInfo = getPackageInfo()
 
@@ -13,15 +18,20 @@ const program = new Command()
 ${chalk.gray('Examples:')}
   $ npx @lightfastai/cli dev
   $ npx @lightfastai/cli dev --port 3000
-  $ npx @lightfastai/cli dev --host 0.0.0.0
+  $ npx @lightfastai/cli compile
+  $ npx @lightfastai/cli compile --watch
+  $ npx @lightfastai/cli clean
 
 ${chalk.gray('Learn more:')}
   Documentation: ${chalk.cyan('https://lightfast.ai/docs')}
   GitHub: ${chalk.cyan('https://github.com/lightfastai/lightfast')}
 `)
 
-// Add dev command
+// Add commands
 program.addCommand(devCommand)
+program.addCommand(compileCommand)
+program.addCommand(cleanCommand)
+program.addCommand(bundleCommand)
 
 // Parse arguments
 program.parse(process.argv)

@@ -7,15 +7,12 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
 import {
-	
 	convertToModelMessages,
 	smoothStream,
 	streamText,
-	
-	
-	wrapLanguageModel
+	wrapLanguageModel,
 } from "ai";
-import type {Tool as AiTool, ToolSet, UIMessage} from "ai";
+import type { Tool as AiTool, ToolSet, UIMessage } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
 import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
@@ -25,12 +22,8 @@ import { MessageReader } from "./server/readers/message-reader";
 import { StreamWriter } from "./server/stream/stream-writer";
 import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
-import {
-	
-	AgentDecisionSchema
-	
-} from "./workers/schemas";
-import type {AgentDecision, WorkerConfig} from "./workers/schemas";
+import { AgentDecisionSchema } from "./workers/schemas";
+import type { AgentDecision, WorkerConfig } from "./workers/schemas";
 
 // Legacy v2 tool definition (for backward compatibility)
 export interface AgentToolDefinition {
@@ -166,10 +159,7 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Check tool factories with runtime context
-		if (
-			this.toolFactories?.[toolName] &&
-			this.createRuntimeContext
-		) {
+		if (this.toolFactories?.[toolName] && this.createRuntimeContext) {
 			const runtimeContext = this.createRuntimeContext({
 				sessionId: sessionId || "",
 				userId: undefined, // Would come from session in real implementation
@@ -270,10 +260,7 @@ export class Agent<TRuntimeContext = unknown> {
 		}
 
 		// Check tool factories
-		if (
-			this.toolFactories?.[toolName] &&
-			this.createRuntimeContext
-		) {
+		if (this.toolFactories?.[toolName] && this.createRuntimeContext) {
 			const runtimeContext = this.createRuntimeContext({
 				sessionId: sessionId || "",
 				userId: undefined,
@@ -392,7 +379,7 @@ export class Agent<TRuntimeContext = unknown> {
 
 		for await (const chunk of fullStream) {
 			switch (chunk.type) {
-				case 'text-delta':
+				case "text-delta":
 					if ("text" in chunk && typeof chunk.text === "string") {
 						// If we were accumulating reasoning, flush it first
 						if (currentReasoningContent) {
@@ -485,10 +472,7 @@ export class Agent<TRuntimeContext = unknown> {
 			(m) => m.id === assistantMessageId,
 		);
 
-		if (
-			existingMessage?.parts &&
-			existingMessage.parts.length > 0
-		) {
+		if (existingMessage?.parts && existingMessage.parts.length > 0) {
 			// Message already exists - append new parts if any
 			if (parts.length > 0) {
 				// This is a subsequent response after tool execution

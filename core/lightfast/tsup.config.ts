@@ -2,6 +2,12 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
 	entry: {
+		// Main entry point
+		index: "./src/core/index.ts",
+		
+		// Client API
+		"client/index": "./src/core/client/index.ts",
+		
 		// Core primitives
 		agent: "./src/core/primitives/agent.ts",
 		tool: "./src/core/primitives/tool.ts",

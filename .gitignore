@@ -124,3 +124,7 @@ storybook-static
 
 # Playwright
 .playwright-mcp/*
+
+# Lightfast CLI
+.lightfast/
+.tanstack/

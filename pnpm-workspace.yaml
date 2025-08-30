@@ -4,6 +4,7 @@ packages:
   - packages/*
   - internal/*
   - vendor/*
+  - examples/*
 catalog:
   '@tanstack/react-query': ^5.80.7
   '@trpc/client': ^11.4.0
