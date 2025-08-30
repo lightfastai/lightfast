@@ -1,172 +1,89 @@
-import { Link, useLocation } from "@tanstack/react-router"
-import { Home, Zap, Settings, Book, Terminal, Activity, ExternalLink } from "lucide-react"
+import { Link, useLocation } from "@tanstack/react-router";
+import { Bot } from "lucide-react";
 import {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenuItem,
-} from "~/components/ui/sidebar"
-
-interface NavigationItem {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active?: boolean;
-  disabled?: boolean;
-  external?: boolean;
-}
-
-interface NavigationGroup {
-  title: string;
-  items: NavigationItem[];
-}
+	Sidebar,
+	SidebarHeader,
+	SidebarContent,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarMenu,
+	SidebarMenuItem,
+	SidebarMenuButton,
+	useSidebar,
+} from "~/components/ui/sidebar";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export function AppSidebar() {
-  const location = useLocation()
-  const currentPath = location.pathname
+	const location = useLocation();
+	const currentPath = location.pathname;
+	const { state } = useSidebar();
+	const isCollapsed = state === "collapsed";
 
-  const navigation: NavigationGroup[] = [
-    {
-      title: "Overview",
-      items: [
-        {
-          title: "Home",
-          href: "/",
-          icon: Home,
-          active: currentPath === "/",
-        },
-        {
-          title: "Agents",
-          href: "/agents",
-          icon: Zap,
-          active: currentPath === "/agents",
-        },
-      ],
-    },
-    {
-      title: "Developer",
-      items: [
-        {
-          title: "API Status",
-          href: "/api/agents",
-          icon: Activity,
-          disabled: false,
-          active: currentPath === "/api/agents",
-        },
-        {
-          title: "Console",
-          href: "#",
-          icon: Terminal,
-          disabled: true,
-        },
-      ],
-    },
-    {
-      title: "Resources",
-      items: [
-        {
-          title: "Documentation",
-          href: "https://lightfast.ai/docs",
-          icon: Book,
-          external: true,
-        },
-        {
-          title: "Settings",
-          href: "#",
-          icon: Settings,
-          disabled: true,
-        },
-      ],
-    },
-  ]
+	return (
+		<Sidebar
+			variant="inset"
+			collapsible="icon"
+			className="w-64 max-w-64 p-0 border-r border-border/50 group/sidebar"
+		>
+			<SidebarHeader className="p-0">
+				{/* Logo/brand group - matching chat app structure */}
+				<SidebarGroup className="px-4 py-3">
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<div className="flex items-center gap-2 px-2 py-1.5">
+									<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
+										<Bot className="h-4 w-4 text-white" />
+									</div>
+									<div className="group-data-[collapsible=icon]:hidden">
+										<h2 className="text-lg font-semibold">Lightfast</h2>
+										<p className="text-xs text-muted-foreground">CLI v0.2.1</p>
+									</div>
+								</div>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 
-  return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
-            <Zap className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">Lightfast</h2>
-            <p className="text-xs text-muted-foreground">CLI v0.2.1</p>
-          </div>
-        </div>
-      </SidebarHeader>
+				{/* Main navigation group - matching chat app spacing */}
+				<SidebarGroup className="px-4 pb-8">
+					<SidebarGroupContent>
+						<SidebarMenu className="space-y-1">
+							<SidebarMenuItem>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<SidebarMenuButton
+											asChild
+											size="default"
+											isActive={currentPath === "/agents"}
+											className="group-data-[collapsible=expanded]:pr-2"
+										>
+											<Link to="/agents">
+												<Bot className="size-4" />
+												<span className="group-data-[collapsible=icon]:hidden text-xs flex-1">
+													Agents
+												</span>
+											</Link>
+										</SidebarMenuButton>
+									</TooltipTrigger>
+									<TooltipContent side="right" hidden={!isCollapsed}>
+										<p className="text-xs">Agents</p>
+									</TooltipContent>
+								</Tooltip>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+			</SidebarHeader>
 
-      <SidebarContent>
-        {navigation.map((group) => (
-          <SidebarGroup key={group.title}>
-            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              {group.items.map((item) => {
-                const Icon = item.icon
-                
-                if (item.external) {
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 w-full"
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        <ExternalLink className="ml-auto h-3 w-3" />
-                      </a>
-                    </SidebarMenuItem>
-                  )
-                }
-
-                if (item.disabled || item.href === "#") {
-                  return (
-                    <SidebarMenuItem
-                      key={item.title}
-                      disabled={true}
-                      className="cursor-not-allowed"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuItem>
-                  )
-                }
-
-                return (
-                  <Link
-                    key={item.title}
-                    to={item.href}
-                    className="block"
-                  >
-                    <SidebarMenuItem
-                      active={item.active}
-                      disabled={item.disabled}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuItem>
-                  </Link>
-                )
-              })}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-
-      <SidebarFooter>
-        <div className="rounded-lg border bg-card p-3">
-          <p className="text-xs text-muted-foreground">
-            Development Mode
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Port: {typeof window !== 'undefined' ? window.location.port || '80' : '3000'}
-          </p>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
-  )
+			<SidebarContent>
+				{/* Empty for now - future content sections can go here */}
+			</SidebarContent>
+		</Sidebar>
+	);
 }
+

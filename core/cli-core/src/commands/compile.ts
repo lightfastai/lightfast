@@ -31,7 +31,8 @@ export const compileCommand = new Command('compile')
       
       const compiler = createCompiler({ 
         baseDir,
-        useCache: !options.force 
+        useCache: !options.force,
+        generateBundles: false // Only transpile, no bundling for dev
       });
       
       const result = await compiler.compile({
@@ -62,15 +63,7 @@ export const compileCommand = new Command('compile')
         }
         
         console.log(chalk.gray(`  Output: ${result.outputPath}`));
-        
-        // Show bundle information if available
-        if (result.bundles && result.bundles.length > 0) {
-          console.log(chalk.blue('\n→ Generated bundles:'));
-          for (const bundle of result.bundles) {
-            console.log(chalk.gray(`  ${bundle.id}: ${bundle.filename} (${bundle.hash})`));
-          }
-          console.log(chalk.gray(`  Bundle directory: .lightfast/dist/bundles/`));
-        }
+        console.log(chalk.gray(`  To generate deployment bundles, run: npx @lightfastai/cli bundle`));
       }
       
       // Watch mode

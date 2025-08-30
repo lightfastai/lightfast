@@ -43,7 +43,10 @@ export const devCommand = new Command('dev')
           const spinner = new CompilationSpinner('Compiling TypeScript configuration...');
           spinner.start();
           
-          const compiler = createCompiler({ baseDir: process.cwd() });
+          const compiler = createCompiler({ 
+            baseDir: process.cwd(),
+            generateBundles: false // Only transpile for development
+          });
           
           try {
             const result = await compiler.compile({ configPath });

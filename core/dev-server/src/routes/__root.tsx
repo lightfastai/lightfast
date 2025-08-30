@@ -12,6 +12,8 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { fonts } from "~/lib/fonts";
 import appCss from "~/styles/globals.css?url";
 import { seo } from "~/utils/seo";
+import { SidebarProvider } from "~/components/ui/sidebar";
+import { TooltipProvider } from "~/components/ui/tooltip";
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -62,17 +64,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				<HeadContent />
 			</head>
-			<body className={`dark ${fonts}`}>
-				<div className="flex h-screen bg-background">
-					<AppSidebar />
-					<div className="flex-1 flex flex-col overflow-hidden">
-						<main className="flex-1 overflow-auto">
-							<div className="container mx-auto p-6">
-								{children}
+			<body className={`bg-background min-h-screen ${fonts}`}>
+				<TooltipProvider>
+					<SidebarProvider defaultOpen={true}>
+						<div className="flex h-screen w-full">
+							<AppSidebar />
+							<div className="flex border-l border-muted/30 flex-col w-full relative">
+								{/* Content area */}
+								<div className="flex-1 min-h-0 overflow-hidden">
+									<main className="h-full overflow-auto">
+										<div className="container mx-auto p-6">
+											{children}
+										</div>
+									</main>
+								</div>
 							</div>
-						</main>
-					</div>
-				</div>
+						</div>
+					</SidebarProvider>
+				</TooltipProvider>
 				<TanStackRouterDevtools position="bottom-right" />
 				<Scripts />
 			</body>

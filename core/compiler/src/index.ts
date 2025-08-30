@@ -47,6 +47,12 @@ export interface CompilerOptions {
   force?: boolean;
   
   /**
+   * Whether to generate deployment bundles
+   * @default false (only transpile for development)
+   */
+  generateBundles?: boolean;
+  
+  /**
    * Additional transpile options
    */
   transpileOptions?: Partial<TranspileOptions>;
@@ -96,17 +102,21 @@ export interface CompilationResult {
 export class LightfastCompiler {
   private readonly baseDir: string;
   private readonly cacheManager: CacheManager;
-  private readonly bundleGenerator: BundleGenerator;
+  private readonly bundleGenerator: BundleGenerator | null;
   private readonly configPatterns: string[];
   private readonly useCache: boolean;
+  private readonly generateBundles: boolean;
 
   constructor(options: CompilerOptions = {}) {
     this.baseDir = options.baseDir ?? process.cwd();
     this.cacheManager = options.cacheManager ?? createCacheManager({ baseDir: this.baseDir });
-    this.bundleGenerator = createBundleGenerator({ 
-      baseDir: this.baseDir,
-      outputDir: join(this.baseDir, '.lightfast/dist')
-    });
+    this.generateBundles = options.generateBundles ?? false;
+    this.bundleGenerator = this.generateBundles 
+      ? createBundleGenerator({ 
+          baseDir: this.baseDir,
+          outputDir: join(this.baseDir, '.lightfast/dist')
+        })
+      : null;
     this.configPatterns = options.configPatterns ?? DEFAULT_CONFIG_PATTERNS;
     this.useCache = options.useCache !== false;
   }
@@ -243,13 +253,15 @@ export class LightfastCompiler {
     // Always write to the main output location for consistency (legacy support)
     this.cacheManager.writeMainOutput(transpileResult.code);
     
-    // Generate bundles with the new structure
+    // Generate bundles only if explicitly enabled (for deployment)
     let bundles: BundleOutput[] | undefined;
-    try {
-      bundles = await this.bundleGenerator.generateBundles(transpileResult, resolvedConfigPath);
-    } catch (error) {
-      console.warn('Failed to generate bundles:', error);
-      // Continue without bundles for backward compatibility
+    if (this.generateBundles && this.bundleGenerator) {
+      try {
+        bundles = await this.bundleGenerator.generateBundles(transpileResult, resolvedConfigPath);
+      } catch (error) {
+        console.warn('Failed to generate bundles:', error);
+        // Continue without bundles for backward compatibility
+      }
     }
     
     const endTime = performance.now();
@@ -378,6 +390,47 @@ export class LightfastCompiler {
    */
   getConfigPatterns(): string[] {
     return [...this.configPatterns];
+  }
+
+  /**
+   * Explicitly generate deployment bundles (on-demand)
+   * This is separate from compilation for development
+   */
+  async generateDeploymentBundles(options: {
+    configPath?: string;
+    force?: boolean;
+  } = {}): Promise<{
+    bundles: BundleOutput[];
+    sourcePath: string;
+    outputDir: string;
+  }> {
+    // First compile to ensure we have fresh transpiled code
+    const compilationResult = await this.compile({
+      configPath: options.configPath,
+      force: options.force
+    });
+
+    if (compilationResult.errors.length > 0) {
+      throw new Error(`Configuration compilation failed: ${compilationResult.errors.join(', ')}`);
+    }
+
+    // Create bundle generator if not already created
+    const bundleGenerator = this.bundleGenerator ?? createBundleGenerator({
+      baseDir: this.baseDir,
+      outputDir: join(this.baseDir, '.lightfast/dist')
+    });
+
+    // Generate bundles
+    const bundles = await bundleGenerator.generateBundles(
+      compilationResult.transpileResult,
+      compilationResult.sourcePath
+    );
+
+    return {
+      bundles,
+      sourcePath: compilationResult.sourcePath,
+      outputDir: join(this.baseDir, '.lightfast/dist')
+    };
   }
 }
 

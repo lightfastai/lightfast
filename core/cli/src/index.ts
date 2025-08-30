@@ -5,6 +5,7 @@ import chalk from 'chalk'
 import { devCommand } from '../../cli-core/src/commands/dev.js'
 import { compileCommand } from '../../cli-core/src/commands/compile.js'
 import { cleanCommand } from '../../cli-core/src/commands/clean.js'
+import { bundleCommand } from '../../cli-core/src/commands/bundle.js'
 import { getPackageInfo } from '../../cli-core/src/utils/package.js'
 
 const packageInfo = getPackageInfo()
@@ -30,6 +31,7 @@ ${chalk.gray('Learn more:')}
 program.addCommand(devCommand)
 program.addCommand(compileCommand)
 program.addCommand(cleanCommand)
+program.addCommand(bundleCommand)
 
 // Parse arguments
 program.parse(process.argv)
