@@ -130,7 +130,8 @@
       "Bash(pnpm --filter @lightfastai/core test)",
       "Bash(pnpm --filter @lightfastai/core typecheck)",
       "Bash(pnpm:*)",
-      "Bash(DEBUG=1 node ../../core/cli/dist/index.js compile)"
+      "Bash(DEBUG=1 node ../../core/cli/dist/index.js compile)",
+      "Bash(npm pack:*)"
     ],
     "deny": []
   },
