@@ -115,7 +115,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     bundle, // Usually false for config files
     format,
     target,
-    sourcemap,
+    sourcemap: sourcemap ? 'inline' : false,
     minify,
     platform: 'node',
     metafile: true,
@@ -185,10 +185,21 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
 
     // Get source map if available
     let sourcemapContent: string | undefined;
-    if (sourcemap && result.outputFiles && result.outputFiles.length > 1) {
-      const sourcemapFile = result.outputFiles.find(file => file.path.endsWith('.map'));
-      if (sourcemapFile) {
-        sourcemapContent = new TextDecoder().decode(sourcemapFile.contents);
+    if (sourcemap && result.outputFiles) {
+      // Check if we have a separate source map file
+      if (result.outputFiles.length > 1) {
+        const sourcemapFile = result.outputFiles.find(file => file.path.endsWith('.map'));
+        if (sourcemapFile) {
+          sourcemapContent = new TextDecoder().decode(sourcemapFile.contents);
+        }
+      }
+      // If no separate file, check if source map is inline
+      if (!sourcemapContent && result.outputFiles[0]) {
+        const code = new TextDecoder().decode(result.outputFiles[0].contents);
+        const inlineMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;base64,(.+)$/m);
+        if (inlineMatch) {
+          sourcemapContent = Buffer.from(inlineMatch[1], 'base64').toString('utf-8');
+        }
       }
     }
 

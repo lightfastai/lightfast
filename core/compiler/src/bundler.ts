@@ -101,7 +101,7 @@ export default {
   // The actual compiled configuration
   config: compiledConfig.default || compiledConfig,
   
-  // Execution interface for Vercel/Cloud layer
+  // Execute function
   async execute(params, context) {
     // This will be replaced by the cloud layer with actual runtime execution
     // For now, it's a placeholder that returns the config
@@ -129,6 +129,11 @@ export class BundleGenerator {
     this.baseDir = options.baseDir;
     this.outputDir = options.outputDir || resolve(this.baseDir, '.lightfast/dist');
     this.compilerVersion = options.compilerVersion || '0.1.0';
+    
+    // Ensure output directory exists
+    if (!existsSync(this.outputDir)) {
+      mkdirSync(this.outputDir, { recursive: true });
+    }
   }
 
   /**
@@ -165,7 +170,7 @@ export class BundleGenerator {
     }
 
     // Write bundle file with hash in filename
-    const filename = `${agentId}-${hash}.js`;
+    const filename = `${agentId}.${hash}.js`;
     const filepath = resolve(bundlesDir, filename);
     writeFileSync(filepath, bundleCode, 'utf-8');
 
@@ -196,11 +201,16 @@ export class BundleGenerator {
     transpileResult: TranspileResult,
     sourcePath: string
   ): Promise<BundleOutput[]> {
-    // For now, assume single agent with name derived from config filename
-    const configName = basename(sourcePath, '.ts').replace('lightfast.config', 'default');
-    const agentId = configName === '' ? 'default' : configName;
+    // For now, generate a single bundle with ID 'main' for the main configuration
+    const agentId = 'main';
     
     const bundle = await this.generateBundle(transpileResult, agentId, sourcePath);
+    
+    // Write source map if available
+    if (transpileResult.sourcemap) {
+      const mapPath = bundle.filepath + '.map';
+      writeFileSync(mapPath, transpileResult.sourcemap, 'utf-8');
+    }
     
     // Write manifest
     await this.updateManifest([bundle]);

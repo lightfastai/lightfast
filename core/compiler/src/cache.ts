@@ -38,6 +38,7 @@ export class CacheManager {
   private readonly cacheDir: string;
   private readonly cachePath: string;
   private readonly outputDir: string;
+  private maxCacheAge: number = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
   constructor(options: CacheOptions = {}) {
     this.baseDir = options.baseDir ?? process.cwd();
@@ -285,20 +286,30 @@ export class CacheManager {
   }
 
   /**
-   * Removes stale cache entries (files that no longer exist)
+   * Removes stale cache entries (files that no longer exist or are too old)
    */
   cleanStaleEntries(): void {
     const metadata = this.loadCacheMetadata();
     const validEntries: Record<string, CacheEntry> = {};
+    const now = Date.now();
     
     for (const [sourcePath, cacheEntry] of Object.entries(metadata)) {
-      if (existsSync(sourcePath) && existsSync(cacheEntry.outputPath)) {
+      const isStale = (now - cacheEntry.timestamp) > this.maxCacheAge;
+      const sourceExists = existsSync(sourcePath);
+      const outputExists = existsSync(cacheEntry.outputPath);
+      
+      if (!isStale && sourceExists && outputExists) {
         validEntries[sourcePath] = cacheEntry;
       } else {
         // Remove stale output file if it exists
-        if (existsSync(cacheEntry.outputPath)) {
+        if (outputExists) {
           try {
             rmSync(cacheEntry.outputPath);
+            // Also remove source map if it exists
+            const mapPath = cacheEntry.outputPath + '.map';
+            if (existsSync(mapPath)) {
+              rmSync(mapPath);
+            }
           } catch (error) {
             console.warn(`Failed to remove stale cache file: ${String(error)}`);
           }
@@ -314,23 +325,26 @@ export class CacheManager {
    */
   getCacheStats(): {
     cacheDir: string;
-    totalEntries: number;
+    entries: number;
     totalSize: number;
-    oldestEntry?: Date;
-    newestEntry?: Date;
+    oldestEntry: number;
+    newestEntry: number;
+    files: string[];
   } {
     const metadata = this.loadCacheMetadata();
-    const entries = Object.values(metadata);
+    const entryList = Object.values(metadata);
     
     let totalSize = 0;
     let oldestTimestamp = Number.MAX_SAFE_INTEGER;
     let newestTimestamp = 0;
+    const files: string[] = [];
     
-    for (const entry of entries) {
+    for (const entry of entryList) {
       if (existsSync(entry.outputPath)) {
         try {
           const stats = statSync(entry.outputPath);
           totalSize += stats.size;
+          files.push(entry.outputPath);
         } catch {
           // Ignore errors getting file stats
         }
@@ -346,10 +360,11 @@ export class CacheManager {
     
     return {
       cacheDir: this.cachePath,
-      totalEntries: entries.length,
+      entries: entryList.length,
       totalSize,
-      oldestEntry: oldestTimestamp !== Number.MAX_SAFE_INTEGER ? new Date(oldestTimestamp) : undefined,
-      newestEntry: newestTimestamp > 0 ? new Date(newestTimestamp) : undefined
+      oldestEntry: oldestTimestamp !== Number.MAX_SAFE_INTEGER ? oldestTimestamp : Date.now(),
+      newestEntry: newestTimestamp > 0 ? newestTimestamp : Date.now(),
+      files
     };
   }
 
