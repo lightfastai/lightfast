@@ -17,6 +17,7 @@
 	"bugs": "https://github.com/lightfastai/lightfast/issues",
 	"license": "MIT",
 	"author": "Lightfast <hello@lightfast.ai>",
+	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -49,10 +50,6 @@
 	},
 	"engines": {
 		"node": ">=18"
-	},
-	"publishConfig": {
-		"access": "public",
-		"registry": "https://registry.npmjs.org"
 	}
 }
 

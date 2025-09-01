@@ -1,8 +1,5 @@
 ---
 "@lightfastai/cli": minor
-"@lightfastai/cli-core": minor
-"@lightfastai/compiler": minor
-"@lightfastai/dev-server": minor
 ---
 
 Initial release of the Lightfast CLI ecosystem
