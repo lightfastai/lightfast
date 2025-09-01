@@ -1,6 +1,6 @@
 {
 	"name": "@lightfastai/cli-core",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Core CLI for Lightfast agent execution engine",
 	"keywords": [
 		"lightfast",
@@ -52,4 +52,3 @@
 		"node": ">=18"
 	}
 }
-
