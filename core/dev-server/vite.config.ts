@@ -15,8 +15,8 @@ export default defineConfig({
     viteReact(),
   ],
   ssr: {
-    // Bundle dependencies instead of externalizing them
+    // Bundle ALL dependencies instead of externalizing them
     // This makes the dev-server output self-contained for CLI distribution
-    noExternal: ['react', 'react-dom', '@radix-ui/*', 'lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+    noExternal: true,
   },
 })
