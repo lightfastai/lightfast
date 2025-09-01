@@ -10,7 +10,6 @@ const __dirname = path.dirname(__filename)
 
 const cliRoot = path.resolve(__dirname, '..')
 const compilerPath = path.resolve(cliRoot, '../compiler')
-const cliCorePath = path.resolve(cliRoot, '../cli-core')
 const devServerPath = path.resolve(cliRoot, '../dev-server')
 
 console.log('🚀 Building @lightfastai/cli with all dependencies...\n')
@@ -19,7 +18,6 @@ console.log('🚀 Building @lightfastai/cli with all dependencies...\n')
 console.log('🧹 Cleaning previous builds...')
 const cleanPaths = [
   path.join(compilerPath, 'dist'),
-  path.join(cliCorePath, 'dist'),
   path.join(devServerPath, '.output'),
   path.join(cliRoot, 'dist')
 ]
@@ -45,20 +43,8 @@ try {
   process.exit(1)
 }
 
-// Step 2: Build cli-core (depends on compiler)
-console.log('🔨 Building @lightfastai/cli-core...')
-try {
-  execSync('pnpm build', {
-    cwd: cliCorePath,
-    stdio: 'inherit'
-  })
-  console.log('✅ CLI-core built successfully\n')
-} catch (error) {
-  console.error('❌ Failed to build cli-core:', error.message)
-  process.exit(1)
-}
-
-// Step 3: Build dev-server
+// Step 2: Build dev-server
+// Note: cli-core is bundled directly from source by the CLI, no separate build needed
 console.log('🔨 Building @lightfastai/dev-server...')
 try {
   execSync('pnpm build', {
@@ -71,7 +57,7 @@ try {
   process.exit(1)
 }
 
-// Step 4: Build CLI (which will bundle everything)
+// Step 3: Build CLI (which will bundle everything including cli-core from source)
 console.log('🔨 Building @lightfastai/cli...')
 try {
   execSync('pnpm build:bundle', {
