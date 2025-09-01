@@ -8,7 +8,7 @@ export function getPackageInfo(): PackageInfo {
   // Static values to avoid file system reads at runtime
   return {
     name: '@lightfastai/cli',
-    version: '0.1.0',
+    version: '0.2.1',
     description: 'CLI for Lightfast agent execution engine'
   }
 }

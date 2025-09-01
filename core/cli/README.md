@@ -88,6 +88,26 @@ npx @lightfastai/cli compile --watch
 npx @lightfastai/cli compile --config src/agents.config.ts
 ```
 
+### `bundle`
+Generate deployment bundles for cloud execution (on-demand).
+
+**Options:**
+- `-c, --config <path>` - Path to lightfast.config.ts file
+- `-o, --output <dir>` - Output directory for bundles (default: .lightfast/dist)
+- `-f, --force` - Force regeneration even if cache is valid
+
+**Examples:**
+```bash
+# Generate deployment bundles
+npx @lightfastai/cli bundle
+
+# Force regeneration
+npx @lightfastai/cli bundle --force
+
+# Custom config path
+npx @lightfastai/cli bundle --config src/agents.config.ts
+```
+
 ### `clean`
 Remove build artifacts and caches.
 

@@ -13,11 +13,13 @@ const SidebarContext = React.createContext<{
   state: "expanded" | "collapsed"
   open: boolean
   setOpen: (open: boolean) => void
+  toggleSidebar: () => void
   isMobile: boolean
 }>({
   state: "expanded",
   open: true,
   setOpen: () => {},
+  toggleSidebar: () => {},
   isMobile: false,
 })
 
@@ -30,12 +32,17 @@ export function SidebarProvider({
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
   
+  const toggleSidebar = React.useCallback(() => {
+    setOpen((prev) => !prev)
+  }, [])
+  
   return (
     <SidebarContext.Provider
       value={{
         state: open ? "expanded" : "collapsed",
         open,
         setOpen,
+        toggleSidebar,
         isMobile: false,
       }}
     >
@@ -55,17 +62,23 @@ export function useSidebar() {
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   SidebarProps
->(({ className, variant = "default", collapsible = "none", ...props }, ref) => (
-  <div
-    ref={ref}
-    data-collapsible={collapsible}
-    className={cn(
-      "flex h-full w-64 flex-col bg-background border-r",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, variant = "default", collapsible = "none", ...props }, ref) => {
+  const { state } = useSidebar()
+  
+  return (
+    <div
+      ref={ref}
+      data-collapsible={collapsible}
+      data-state={state}
+      className={cn(
+        "group flex h-full flex-col bg-background border-r transition-[width] duration-200",
+        state === "collapsed" && collapsible === "icon" ? "w-16" : "w-64",
+        className
+      )}
+      {...props}
+    />
+  )
+})
 Sidebar.displayName = "Sidebar"
 
 const SidebarHeader = React.forwardRef<
