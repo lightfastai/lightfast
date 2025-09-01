@@ -1,4 +1,6 @@
-import type { ToolSet, UIMessage } from "ai";
+import type { ToolSet, UIMessage, CoreMessage } from "ai";
+
+type MessageWithContent = CoreMessage;
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createUserMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
 import { z } from "zod";
@@ -43,10 +45,10 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 		// Default mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
-		vi.mocked(convertToModelMessages).mockImplementation((messages: Array<Omit<UIMessage, 'id'>>) =>
-			messages.map((msg) => ({ 
-				role: msg.role, 
-				content: getMessageText(msg) || "" 
+		vi.mocked(convertToModelMessages).mockImplementation((messages) =>
+			messages.map((msg: any) => ({ 
+				role: 'role' in msg ? msg.role : 'user', 
+				content: 'parts' in msg ? getMessageText(msg) : msg.content || ""
 			})),
 		);
 	});
@@ -475,7 +477,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				throw new Error("Tool factory failed");
 			};
 
-			const agent = createAgent<any, TestRuntimeContext>({
+			const agent = createAgent<TestRuntimeContext, any>({
 				name: "tool-factory-error-agent",
 				model: mockModel,
 				system: "You use tools",

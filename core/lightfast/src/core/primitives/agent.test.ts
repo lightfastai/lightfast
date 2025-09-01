@@ -40,13 +40,14 @@ describe("createAgent", () => {
 	});
 
 	it("should create an agent with static tools", () => {
-		const testTool = {
+		// Tool factories are functions that return tool objects
+		const testTool = () => ({
 			description: "Test tool",
 			inputSchema: z.object({ query: z.string() }),
 			execute: async ({ query }: { query: string }) => `Result: ${query}`,
-		};
+		});
 
-		const tools: ToolSet = {
+		const tools = {
 			testTool,
 		};
 
@@ -96,7 +97,7 @@ describe("createAgent", () => {
 			});
 
 			return {
-				dynamicTool: tool(context),
+				dynamicTool: tool,  // Return the factory, not the resolved tool
 			};
 		};
 
@@ -137,6 +138,8 @@ describe("createAgent", () => {
 			set: vi.fn(),
 			delete: vi.fn(),
 			clear: vi.fn(),
+			applySystemCaching: vi.fn(),
+			applyMessageCaching: vi.fn(),
 		};
 
 		const agent = createAgent({
@@ -162,10 +165,14 @@ describe("createAgent", () => {
 		expect(() => {
 			agent.buildStreamParams({
 				sessionId: "test-session",
-				messages: [{ id: "1", role: "user", content: "test" }],
+				messages: [{ 
+					id: "1", 
+					role: "user", 
+					parts: [{ type: "text", text: "test" }] 
+				}],
 				memory: {} as any,
 				resourceId: "test-resource",
-				systemContext: {},
+				systemContext: { sessionId: "test-session", resourceId: "test-resource" },
 				requestContext: {},
 			});
 		}).toThrow("Model must be configured");
@@ -176,8 +183,7 @@ describe("createAgent", () => {
 			name: "experimental-agent",
 			model: {} as any,
 			system: "You are an experimental assistant",
-			experimental_continueSteps: true,
-			experimental_generateMessageId: () => "custom-id",
+			experimental_context: {},
 		});
 
 		expect(agent).toBeDefined();

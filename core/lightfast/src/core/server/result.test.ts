@@ -16,26 +16,26 @@ describe("Result", () => {
 		it("should create a successful result", () => {
 			const result = Ok("success");
 			expect(result.ok).toBe(true);
-			expect(result.value).toBe("success");
+			if (result.ok) expect(result.value).toBe("success");
 		});
 
 		it("should create ok result with complex data", () => {
 			const data = { id: 1, name: "test", items: [1, 2, 3] };
 			const result = Ok(data);
 			expect(result.ok).toBe(true);
-			expect(result.value).toEqual(data);
+			if (result.ok) expect(result.value).toEqual(data);
 		});
 
 		it("should create ok result with null data", () => {
 			const result = Ok(null);
 			expect(result.ok).toBe(true);
-			expect(result.value).toBeNull();
+			if (result.ok) expect(result.value).toBeNull();
 		});
 
 		it("should create ok result with undefined data", () => {
 			const result = Ok(undefined);
 			expect(result.ok).toBe(true);
-			expect(result.value).toBeUndefined();
+			if (result.ok) expect(result.value).toBeUndefined();
 		});
 	});
 
@@ -43,21 +43,21 @@ describe("Result", () => {
 		it("should create an error result", () => {
 			const result = Err("something went wrong");
 			expect(result.ok).toBe(false);
-			expect(result.error).toBe("something went wrong");
+			if (!result.ok) expect(result.error).toBe("something went wrong");
 		});
 
 		it("should create error result with Error object", () => {
 			const error = new Error("test error");
 			const result = Err(error);
 			expect(result.ok).toBe(false);
-			expect(result.error).toBe(error);
+			if (!result.ok) expect(result.error).toBe(error);
 		});
 
 		it("should create error result with custom error object", () => {
 			const customError = { code: "E001", message: "Custom error" };
 			const result = Err(customError);
 			expect(result.ok).toBe(false);
-			expect(result.error).toEqual(customError);
+			if (!result.ok) expect(result.error).toEqual(customError);
 		});
 	});
 

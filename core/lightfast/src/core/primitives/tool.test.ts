@@ -44,7 +44,7 @@ describe("createTool", () => {
 		expect(typeof tool.execute).toBe("function");
 
 		// Test tool execution
-		const result = await tool.execute({ message: "world" });
+		const result = await tool.execute?.({ message: "world" }, { toolCallId: "test", messages: [] });
 		expect(result).toEqual({ result: "Hello world from test-session-123" });
 	});
 
@@ -68,7 +68,7 @@ describe("createTool", () => {
 		const tool = toolFactory(context);
 
 		// Valid input should work
-		const validResult = await tool.execute({ count: 5, name: "test" });
+		const validResult = await tool.execute?.({ count: 5, name: "test" }, { toolCallId: "test", messages: [] });
 		expect(validResult).toEqual({ result: "test: 5" });
 	});
 
@@ -96,7 +96,7 @@ describe("createTool", () => {
 		};
 
 		const tool = toolFactory(context);
-		const result = await tool.execute({ value: "hello" });
+		const result = await tool.execute?.({ value: "hello" }, { toolCallId: "test", messages: [] });
 
 		expect(result).toMatchObject({
 			processed: "HELLO",
@@ -123,7 +123,7 @@ describe("createTool", () => {
 
 		const tool = toolFactory(context);
 		const start = Date.now();
-		const result = await tool.execute({ delay: 10 });
+		const result = await tool.execute?.({ delay: 10 }, { toolCallId: "test", messages: [] });
 		const end = Date.now();
 
 		expect(result).toEqual({
@@ -145,7 +145,7 @@ describe("createTool", () => {
 		});
 
 		const tool = toolFactory(undefined);
-		const result = await tool.execute({ text: "hello world" });
+		const result = await tool.execute?.({ text: "hello world" }, { toolCallId: "test", messages: [] });
 
 		expect(result).toEqual({ uppercase: "HELLO WORLD" });
 	});

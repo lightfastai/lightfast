@@ -6,7 +6,7 @@ import { createAgent } from "../primitives/agent";
 import { createTool } from "../primitives/tool";
 import { InMemoryMemory } from "../memory/adapters/in-memory";
 import { streamChat } from "./runtime";
-import type { SystemContext, RequestContext } from "./adapters/types";
+import type { SystemContext, RequestContext, RuntimeContext } from "./adapters/types";
 
 // Mock the AI SDK's streamText
 vi.mock("ai", async () => {
@@ -43,7 +43,7 @@ describe("Context Injection from Request to Tools", () => {
 
 	it("should inject createRequestContext data into tool execution context", async () => {
 		// Create a tool that captures the context it receives
-		const contextCaptureTool = createTool<AgentRuntimeContext & CustomRequestContext>({
+		const contextCaptureTool = createTool<RuntimeContext<AgentRuntimeContext>>({
 			description: "Captures context for testing",
 			inputSchema: z.object({ 
 				action: z.string() 
@@ -54,7 +54,7 @@ describe("Context Injection from Request to Tools", () => {
 				return { 
 					result: `Executed ${action}`,
 					sessionId: context.sessionId,
-					userAgent: context.userAgent,
+					userAgent: (context as AgentRuntimeContext & CustomRequestContext).userAgent,
 				};
 			},
 		});
@@ -320,7 +320,7 @@ describe("Context Injection from Request to Tools", () => {
 			memory,
 			resourceId: "resource",
 			systemContext: { sessionId: "session", resourceId: "resource" },
-			// No requestContext provided
+			requestContext: {},  // Empty request context
 		});
 
 		// Should still have systemContext at minimum

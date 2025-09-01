@@ -16,6 +16,7 @@ import {
 	validateSession,
 } from "./runtime";
 import type { Agent } from "../primitives/agent";
+import type { ToolFactorySet } from "../primitives/tool";
 import type { Memory } from "../memory";
 
 // Mock the AI SDK
@@ -51,8 +52,10 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(true);
 			if (result.ok) {
-				expect(result.value.exists).toBe(false);
-				expect(result.value.session).toBeUndefined();
+				if (result.ok) {
+					expect(result.value.exists).toBe(false);
+					expect(result.value.session).toBeUndefined();
+				}
 			}
 		});
 
@@ -64,8 +67,10 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(true);
 			if (result.ok) {
-				expect(result.value.exists).toBe(true);
-				expect(result.value.session).toBe(mockSession);
+				if (result.ok) {
+					expect(result.value.exists).toBe(true);
+					expect(result.value.session).toBe(mockSession);
+				}
 			}
 		});
 
@@ -77,7 +82,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeInstanceOf(SessionForbiddenError);
+				if (!result.ok) expect(result.error).toBeInstanceOf(SessionForbiddenError);
 			}
 		});
 
@@ -89,7 +94,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			// Should be converted via toMemoryApiError
 		});
@@ -111,7 +116,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeInstanceOf(NoUserMessageError);
+				if (!result.ok) expect(result.error).toBeInstanceOf(NoUserMessageError);
 			}
 		});
 
@@ -130,8 +135,10 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(true);
 			if (result.ok) {
-				expect(result.value.allMessages).toBe(mockMessages);
-				expect(result.value.recentUserMessage).toBe(validUserMessage);
+				if (result.ok) {
+					expect(result.value.allMessages).toBe(mockMessages);
+					expect(result.value.recentUserMessage).toBe(validUserMessage);
+				}
 			}
 			expect(mockMemory.createSession).not.toHaveBeenCalled();
 			expect(mockMemory.appendMessage).toHaveBeenCalledWith({
@@ -178,17 +185,97 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			// Should be converted via toMemoryApiError
 		});
 	});
 
-	describe("streamChat", () => {
+	// Helper to create an async iterable stream
+function createAsyncIterableStream<T>(generator: AsyncGenerator<T>): ReadableStream<T> & AsyncIterable<T> {
+	const stream = new ReadableStream<T>({
+		async start(controller) {
+			for await (const chunk of generator) {
+				controller.enqueue(chunk);
+			}
+			controller.close();
+		}
+	});
+	// Add AsyncIterable protocol
+	(stream as any)[Symbol.asyncIterator] = () => generator;
+	return stream as ReadableStream<T> & AsyncIterable<T>;
+}
+
+describe("streamChat", () => {
 		const validUserMessage = createUserMessage("msg1", "Hello");
 
+		// Create a proper mock that implements StreamTextResult
 		const mockStreamResult = {
+			// Core streaming properties
+			textStream: createAsyncIterableStream((async function* () { yield "test"; })()),
+			fullStream: createAsyncIterableStream((async function* () { yield { type: "text-delta" as const, id: "delta1", text: "test" }; })()),
+			reasoningStream: createAsyncIterableStream((async function* () { yield "reasoning"; })()),
+			
+			// Promise-based results
+			content: Promise.resolve([{ type: "text" as const, text: "test content" }]),
+			text: Promise.resolve("test text"),
+			reasoning: Promise.resolve([{ type: "reasoning" as const, text: "test reasoning" }]),
+			reasoningText: Promise.resolve("test reasoning text"),
+			toolCalls: Promise.resolve([]),
+			toolResults: Promise.resolve([]),
+			finishReason: Promise.resolve("stop" as const),
+			usage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			rawResponse: Promise.resolve({}),
+			response: Promise.resolve({
+				id: "response1",
+				model: "test-model",
+				modelId: "test-model",
+				timestamp: new Date(),
+				headers: {},
+				messages: []
+			}),
+			experimental_providerMetadata: Promise.resolve(undefined),
+			
+			// Additional required properties for StreamTextResult
+			files: Promise.resolve([]),
+			sources: Promise.resolve([]),
+			staticToolCalls: Promise.resolve([]),
+			dynamicToolCalls: Promise.resolve([]),
+			allToolCalls: Promise.resolve([]),
+			modelConfigurations: Promise.resolve([]),
+			system: Promise.resolve(undefined),
+			maxTokens: Promise.resolve(undefined),
+			requestId: Promise.resolve("request123"),
+			request: Promise.resolve({}),
+			responseMessages: Promise.resolve([]),
+			steps: Promise.resolve([]),
+			pipeDataStream: vi.fn(),
+			staticToolResults: Promise.resolve([]),
+			dynamicToolResults: Promise.resolve([]),
+			totalUsage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			providerMetadata: Promise.resolve(undefined),
+			experimental_telemetry: Promise.resolve(undefined),
+			logprobs: Promise.resolve(undefined),
+			allSteps: Promise.resolve([]),
+			responseMetadata: Promise.resolve({}),
+			
+			// Response conversion methods
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
+			pipeDataStreamToResponse: vi.fn(),
+			pipeTextStreamToResponse: vi.fn(),
+			toDataStream: vi.fn(),
+			toDataStreamResponse: vi.fn(),
+			toTextStreamResponse: vi.fn(),
+			toAIStream: vi.fn(),
+			pipeAIStreamToResponse: vi.fn(),
+			toAIStreamResponse: vi.fn(),
+			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
+			consumeStream: vi.fn().mockResolvedValue(undefined),
+			toUIMessageStream: vi.fn(),
+			pipeUIMessageStreamToResponse: vi.fn(),
+			
+			// Additional properties
+			warnings: Promise.resolve(undefined),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -262,7 +349,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeInstanceOf(SessionForbiddenError);
+				if (!result.ok) expect(result.error).toBeInstanceOf(SessionForbiddenError);
 			}
 		});
 
@@ -284,7 +371,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			// Should be converted via toAgentApiError
 		});
@@ -384,7 +471,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeInstanceOf(SessionNotFoundError);
+				if (!result.ok) expect(result.error).toBeInstanceOf(SessionNotFoundError);
 			}
 		});
 
@@ -395,7 +482,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeInstanceOf(SessionNotFoundError);
+				if (!result.ok) expect(result.error).toBeInstanceOf(SessionNotFoundError);
 			}
 		});
 
@@ -406,7 +493,7 @@ describe("Runtime Functions", () => {
 			const result = await resumeStream(mockMemory, "session1", "resource1");
 
 			expect(result.ok).toBe(true);
-			expect(result.value).toBeNull();
+			if (result.ok) expect(result.value).toBeNull();
 		});
 
 		it("should convert memory errors using toMemoryApiError", async () => {
@@ -417,7 +504,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			// Should be converted via toMemoryApiError
 		});
@@ -470,7 +557,7 @@ describe("Runtime Functions", () => {
 
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			// Should be converted to AgentConfigurationError via toAgentApiError pattern matching
 		});
@@ -479,8 +566,73 @@ describe("Runtime Functions", () => {
 	describe("Guard-Based Failure Handling", () => {
 		const validUserMessage = createUserMessage("msg1", "Hello");
 
+		// Create a proper mock that implements StreamTextResult
 		const mockStreamResult = {
+			// Core streaming properties
+			textStream: createAsyncIterableStream((async function* () { yield "test"; })()),
+			fullStream: createAsyncIterableStream((async function* () { yield { type: "text-delta" as const, id: "delta1", text: "test" }; })()),
+			reasoningStream: createAsyncIterableStream((async function* () { yield "reasoning"; })()),
+			
+			// Promise-based results
+			content: Promise.resolve([{ type: "text" as const, text: "test content" }]),
+			text: Promise.resolve("test text"),
+			reasoning: Promise.resolve([{ type: "reasoning" as const, text: "test reasoning" }]),
+			reasoningText: Promise.resolve("test reasoning text"),
+			toolCalls: Promise.resolve([]),
+			toolResults: Promise.resolve([]),
+			finishReason: Promise.resolve("stop" as const),
+			usage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			rawResponse: Promise.resolve({}),
+			response: Promise.resolve({
+				id: "response1",
+				model: "test-model",
+				modelId: "test-model",
+				timestamp: new Date(),
+				headers: {},
+				messages: []
+			}),
+			experimental_providerMetadata: Promise.resolve(undefined),
+			
+			// Additional required properties for StreamTextResult
+			files: Promise.resolve([]),
+			sources: Promise.resolve([]),
+			staticToolCalls: Promise.resolve([]),
+			dynamicToolCalls: Promise.resolve([]),
+			allToolCalls: Promise.resolve([]),
+			modelConfigurations: Promise.resolve([]),
+			system: Promise.resolve(undefined),
+			maxTokens: Promise.resolve(undefined),
+			requestId: Promise.resolve("request123"),
+			request: Promise.resolve({}),
+			responseMessages: Promise.resolve([]),
+			steps: Promise.resolve([]),
+			pipeDataStream: vi.fn(),
+			staticToolResults: Promise.resolve([]),
+			dynamicToolResults: Promise.resolve([]),
+			totalUsage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			providerMetadata: Promise.resolve(undefined),
+			experimental_telemetry: Promise.resolve(undefined),
+			logprobs: Promise.resolve(undefined),
+			allSteps: Promise.resolve([]),
+			responseMetadata: Promise.resolve({}),
+			
+			// Response conversion methods
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
+			pipeDataStreamToResponse: vi.fn(),
+			pipeTextStreamToResponse: vi.fn(),
+			toDataStream: vi.fn(),
+			toDataStreamResponse: vi.fn(),
+			toTextStreamResponse: vi.fn(),
+			toAIStream: vi.fn(),
+			pipeAIStreamToResponse: vi.fn(),
+			toAIStreamResponse: vi.fn(),
+			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
+			consumeStream: vi.fn().mockResolvedValue(undefined),
+			toUIMessageStream: vi.fn(),
+			pipeUIMessageStreamToResponse: vi.fn(),
+			
+			// Additional properties
+			warnings: Promise.resolve(undefined),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -547,7 +699,7 @@ describe("Runtime Functions", () => {
 			});
 
 			expect(result.ok).toBe(false); // Fails immediately
-			expect(result.error?.message).toContain("Critical stream error");
+			if (!result.ok) expect(result.error?.message).toContain("Critical stream error");
 			expect(onError).not.toHaveBeenCalled(); // Returned error instead
 		});
 
@@ -624,8 +776,73 @@ describe("Runtime Functions", () => {
 	describe("Memory Failure Edge Cases During Streaming", () => {
 		const validUserMessage = createUserMessage("msg1", "Hello");
 
+		// Create a proper mock that implements StreamTextResult
 		const mockStreamResult = {
+			// Core streaming properties
+			textStream: createAsyncIterableStream((async function* () { yield "test"; })()),
+			fullStream: createAsyncIterableStream((async function* () { yield { type: "text-delta" as const, id: "delta1", text: "test" }; })()),
+			reasoningStream: createAsyncIterableStream((async function* () { yield "reasoning"; })()),
+			
+			// Promise-based results
+			content: Promise.resolve([{ type: "text" as const, text: "test content" }]),
+			text: Promise.resolve("test text"),
+			reasoning: Promise.resolve([{ type: "reasoning" as const, text: "test reasoning" }]),
+			reasoningText: Promise.resolve("test reasoning text"),
+			toolCalls: Promise.resolve([]),
+			toolResults: Promise.resolve([]),
+			finishReason: Promise.resolve("stop" as const),
+			usage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			rawResponse: Promise.resolve({}),
+			response: Promise.resolve({
+				id: "response1",
+				model: "test-model",
+				modelId: "test-model",
+				timestamp: new Date(),
+				headers: {},
+				messages: []
+			}),
+			experimental_providerMetadata: Promise.resolve(undefined),
+			
+			// Additional required properties for StreamTextResult
+			files: Promise.resolve([]),
+			sources: Promise.resolve([]),
+			staticToolCalls: Promise.resolve([]),
+			dynamicToolCalls: Promise.resolve([]),
+			allToolCalls: Promise.resolve([]),
+			modelConfigurations: Promise.resolve([]),
+			system: Promise.resolve(undefined),
+			maxTokens: Promise.resolve(undefined),
+			requestId: Promise.resolve("request123"),
+			request: Promise.resolve({}),
+			responseMessages: Promise.resolve([]),
+			steps: Promise.resolve([]),
+			pipeDataStream: vi.fn(),
+			staticToolResults: Promise.resolve([]),
+			dynamicToolResults: Promise.resolve([]),
+			totalUsage: Promise.resolve({ promptTokens: 0, completionTokens: 0, totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
+			providerMetadata: Promise.resolve(undefined),
+			experimental_telemetry: Promise.resolve(undefined),
+			logprobs: Promise.resolve(undefined),
+			allSteps: Promise.resolve([]),
+			responseMetadata: Promise.resolve({}),
+			
+			// Response conversion methods
 			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
+			pipeDataStreamToResponse: vi.fn(),
+			pipeTextStreamToResponse: vi.fn(),
+			toDataStream: vi.fn(),
+			toDataStreamResponse: vi.fn(),
+			toTextStreamResponse: vi.fn(),
+			toAIStream: vi.fn(),
+			pipeAIStreamToResponse: vi.fn(),
+			toAIStreamResponse: vi.fn(),
+			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
+			consumeStream: vi.fn().mockResolvedValue(undefined),
+			toUIMessageStream: vi.fn(),
+			pipeUIMessageStreamToResponse: vi.fn(),
+			
+			// Additional properties
+			warnings: Promise.resolve(undefined),
 			streamId: "stream123",
 			sessionId: "session1",
 		};
@@ -692,7 +909,7 @@ describe("Runtime Functions", () => {
 			// When appendMessage fails in processMessage, the entire operation fails
 			expect(result.ok).toBe(false);
 			if (!result.ok) {
-				expect(result.error).toBeDefined();
+				if (!result.ok) expect(result.error).toBeDefined();
 			}
 			expect(onError).not.toHaveBeenCalled(); // No onError since stream never starts
 		});
