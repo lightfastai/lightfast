@@ -8,6 +8,7 @@ import { codeReviewAgent } from "./agents/code-reviewer.js";
 import { dataAnalystAgent } from "./agents/data-analyst.js";
 import { contentWriterAgent } from "./agents/content-writer.js";
 import { testAgent } from "./agents/test-agent.js";
+import { echoTestAgent } from "./agents/echo-test.js";
 
 /**
  * Example Lightfast configuration with modular agent imports
@@ -50,6 +51,7 @@ const lightfast = createLightfast({
     codeGenerator: codeGeneratorAgent,
     qaTester: qaTestAgent,
     test: testAgent,
+    echoTest: echoTestAgent,
   },
   metadata: {
     name: "Agent Chat Example",
