@@ -232,22 +232,22 @@ describe('CacheManager', () => {
       // Cache first file
       cacheManager.setCached(sourcePath1, 'var a = 1;');
       
-      // Wait a bit
-      await delay(100);
+      // Wait a bit to ensure different timestamps
+      await delay(50);
       
       // Cache second file
       cacheManager.setCached(sourcePath2, 'var b = 2;');
       
-      // Override the max age for testing (1ms)
+      // Override the max age for testing (40ms - between the two files)
       const originalMaxAge = (cacheManager as any).maxCacheAge;
-      (cacheManager as any).maxCacheAge = 1;
+      (cacheManager as any).maxCacheAge = 40;
       
-      // Wait for first entry to become stale
-      await delay(10);
+      // Wait just a bit more so first is older than 40ms but second is not
+      await delay(5);
       
       cacheManager.cleanStaleEntries();
       
-      // First should be cleaned, second should remain
+      // First should be cleaned (>40ms old), second should remain (<40ms old)
       expect(cacheManager.isCached(sourcePath1)).toBe(false);
       expect(cacheManager.isCached(sourcePath2)).toBe(true);
       

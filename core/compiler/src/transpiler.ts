@@ -109,6 +109,26 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     };
   }
 
+  // Plugin to handle dynamic imports
+  const dynamicImportPlugin: Plugin = {
+    name: 'dynamic-import-plugin',
+    setup(build) {
+      // Mark all dynamic imports as external
+      build.onResolve({ filter: /.*/ }, (args) => {
+        // If this is a dynamic import (namespace is empty for dynamic imports in some cases)
+        // and contains template literal pattern indicators
+        if (args.path.includes('*') || args.path.includes('${')) {
+          return { 
+            path: args.path, 
+            external: true,
+            namespace: 'dynamic-import'
+          };
+        }
+        return null;
+      });
+    }
+  };
+
   const buildOptions: BuildOptions = {
     entryPoints: [resolvedSourcePath],
     write: false,
@@ -127,6 +147,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     } : {}),
     // Don't use plugins or extra options that might interfere with resolution
     plugins: [
+      dynamicImportPlugin,
       ...plugins
     ],
     loader: {

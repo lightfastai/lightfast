@@ -217,6 +217,9 @@ export class CacheManager {
     const sourceContent = readFileSync(resolvedSourcePath, 'utf-8');
     const hash = this.generateHash(sourceContent);
     
+    // Ensure cache directories exist (in case they were deleted)
+    this.ensureCacheDir();
+    
     // Generate output filename based on source file
     const sourceFileNameParts = resolvedSourcePath.split('/');
     const sourceFileName = sourceFileNameParts[sourceFileNameParts.length - 1] ?? 'config';

@@ -313,7 +313,15 @@ describe('LightfastCompiler', () => {
   describe('compileAndLoad', () => {
     it('should compile and load config module', async () => {
       const configPath = join(tempDir, 'lightfast.config.ts');
-      writeFile(configPath, fixtures.simpleConfig);
+      // Use a simple config without external dependencies for loading test
+      const simpleConfig = `
+        export default {
+          name: 'test-config',
+          version: '1.0.0',
+          agents: []
+        };
+      `;
+      writeFile(configPath, simpleConfig);
 
       const { config, compilationResult } = await compiler.compileAndLoad({
         configPath
