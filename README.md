@@ -7,7 +7,7 @@
 A cloud-native agent execution engine that abstracts infrastructure complexity, enabling developers to focus on building AI agent applications.
 
 🌐 **Website**: [lightfast.ai](https://lightfast.ai)  
-📚 **Documentation**: [docs.lightfast.ai](https://docs.lightfast.ai)  
+📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)  
 🎮 **Playground**: [playground.lightfast.ai](https://playground.lightfast.ai)  
 💬 **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)  
 
@@ -305,7 +305,7 @@ Lightfast provides several APIs for agent execution and management:
 - **Resource API**: Manage sandboxes, browser sessions, and quotas
 - **Webhook API**: Handle real-time events and notifications
 
-Full API documentation is available at [docs.lightfast.ai/api](https://docs.lightfast.ai/api).
+Full API documentation is available at [lightfast.ai/docs/api](https://lightfast.ai/docs/api).
 
 ## Contributing
 
@@ -331,7 +331,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## Community
 
 - **Website**: [lightfast.ai](https://lightfast.ai)
-- **Documentation**: [docs.lightfast.ai](https://docs.lightfast.ai)
+- **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
 - **GitHub**: [github.com/lightfastai/lightfast](https://github.com/lightfastai/lightfast)
 - **Discord**: [Join our community](https://discord.gg/YqPDfcar2C)
 - **Twitter**: [@lightfastai](https://x.com/lightfastai)

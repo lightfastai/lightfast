@@ -18,10 +18,18 @@
 	"bugs": "https://github.com/lightfastai/lightfast/issues",
 	"license": "MIT",
 	"author": "Lightfast <hello@lightfast.ai>",
-	"main": "./dist/agent.mjs",
-	"types": "./dist/agent.d.ts",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
 	"type": "module",
 	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"import": "./dist/client/index.mjs"
+		},
 		"./agent": {
 			"types": "./dist/agent.d.ts",
 			"import": "./dist/agent.mjs"
@@ -98,7 +106,7 @@
 		}
 	},
 	"scripts": {
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"clean": "rm -rf dist .cache .turbo node_modules",
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"test": "vitest",
@@ -108,18 +116,18 @@
 		"lint": "eslint . --fix"
 	},
 	"dependencies": {
-		"@ai-sdk/anthropic": "catalog:",
-		"@ai-sdk/gateway": "catalog:",
-		"@ai-sdk/provider": "catalog:",
-		"@t3-oss/env-core": "catalog:",
+		"@ai-sdk/anthropic": "2.0.4",
+		"@ai-sdk/gateway": "^1.0.15",
+		"@ai-sdk/provider": "2.0.0",
+		"@t3-oss/env-core": "^0.12.0",
 		"@upstash/qstash": "^2.8.1",
-		"@upstash/redis": "catalog:",
-		"ai": "catalog:",
-		"braintrust": "catalog:",
+		"@upstash/redis": "^1.35.1",
+		"ai": "5.0.15",
+		"braintrust": "^0.2.1",
 		"pino": "^9.7.0",
-		"resumable-stream": "catalog:",
+		"resumable-stream": "^2.0.0",
 		"uuid": "^11.1.0",
-		"zod": "catalog:"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
@@ -132,8 +140,8 @@
 		"@vitest/ui": "^3.2.4",
 		"rollup": "^4.46.2",
 		"tsup": "^8.5.0",
-		"typescript": "catalog:",
-		"vite": "^7.1.2",
+		"typescript": "^5.9.2",
+		"vite": "^6.3.5",
 		"vitest": "^3.2.4"
 	},
 	"engines": {

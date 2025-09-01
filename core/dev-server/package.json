@@ -1,0 +1,87 @@
+{
+	"name": "@lightfastai/dev-server",
+	"version": "0.1.0",
+	"description": "Development server UI for Lightfast agents",
+	"keywords": [
+		"lightfast",
+		"dev-server",
+		"react",
+		"ui",
+		"agents"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lightfastai/lightfast.git",
+		"directory": "core/dev-server"
+	},
+	"homepage": "https://lightfast.ai",
+	"bugs": "https://github.com/lightfastai/lightfast/issues",
+	"license": "MIT",
+	"author": "Lightfast <hello@lightfast.ai>",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		".output"
+	],
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"start": "node .output/server/index.mjs",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint . --fix",
+		"test": "echo \"No tests yet\"",
+		"clean": "rm -rf .output .tanstack .nitro .lightfast .cache .turbo node_modules dist"
+	},
+	"dependencies": {
+		"@lightfastai/compiler": "workspace:*",
+		"@radix-ui/react-dialog": "^1.1.14",
+		"@radix-ui/react-separator": "^1.1.7",
+		"@radix-ui/react-slot": "^1.2.3",
+		"@radix-ui/react-tooltip": "^1.2.7",
+		"@tanstack/react-router": "^1.131.28",
+		"@tanstack/react-router-devtools": "^1.131.28",
+		"@tanstack/react-start": "^1.131.28",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.468.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"tailwind-merge": "^3.3.1",
+		"zod": "^3.25.76"
+	},
+	"peerDependencies": {
+		"lightfast": ">=0.1.0"
+	},
+	"peerDependenciesMeta": {
+		"lightfast": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@tailwindcss/postcss": "^4.1.12",
+		"@tailwindcss/typography": "^0.5.16",
+		"@types/node": "^24.3.0",
+		"@types/react": "^19.1.11",
+		"@types/react-dom": "^19.1.8",
+		"@vitejs/plugin-react": "^4.7.0",
+		"lightfast": "workspace:*",
+		"postcss": "^8.5.6",
+		"tailwindcss": "^4.1.12",
+		"tw-animate-css": "^1.3.7",
+		"typescript": "^5.9.2",
+		"vinxi": "^0.5.8",
+		"vite": "^6.3.5",
+		"vite-tsconfig-paths": "^5.1.4"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org"
+	}
+}

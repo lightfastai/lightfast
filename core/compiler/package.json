@@ -1,0 +1,72 @@
+{
+  "name": "@lightfastai/compiler",
+  "version": "0.1.0",
+  "description": "TypeScript configuration compiler for Lightfast",
+  "keywords": [
+    "lightfast",
+    "compiler",
+    "typescript",
+    "config"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/compiler"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "MIT",
+  "author": "Lightfast <hello@lightfast.ai>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache.d.ts",
+      "import": "./dist/cache.js"
+    },
+    "./transpiler": {
+      "types": "./dist/transpiler.d.ts",
+      "import": "./dist/transpiler.js"
+    },
+    "./watcher": {
+      "types": "./dist/watcher.d.ts",
+      "import": "./dist/watcher.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --fix",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "chalk": "^5.6.0",
+    "chokidar": "^4.0.3",
+    "esbuild": "^0.25.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

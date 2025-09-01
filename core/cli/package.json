@@ -25,40 +25,39 @@
 		"cli": "./dist/index.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"README.md"
 	],
 	"scripts": {
+		"build": "node scripts/build-all.js",
+		"build:bundle": "tsup",
+		"build:quick": "tsup",
 		"dev": "tsup --watch",
-		"dev:client": "vite",
-		"build": "pnpm build:server && pnpm build:client",
-		"build:server": "tsup",
-		"build:client": "vite build",
-		"start": "node dist/index.js",
-		"prepublishOnly": "pnpm build",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --fix",
-		"clean": "git clean -xdf .cache .turbo dist node_modules"
+		"clean": "rm -rf dist .turbo node_modules .output .lightfast .nitro .tanstack"
 	},
 	"dependencies": {
-		"@hono/node-server": "^1.19.0",
-		"chalk": "^5.3.0",
+		"chalk": "^5.6.0",
+		"chokidar": "^4.0.3",
 		"commander": "^12.1.0",
-		"hono": "^4.9.4",
-		"ora": "^8.1.1"
+		"esbuild": "^0.25.9",
+		"zod": "^3.25.76"
+	},
+	"peerDependencies": {
+		"lightfast": ">=0.1.0"
+	},
+	"peerDependenciesMeta": {
+		"lightfast": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "^24.3.0",
-		"@types/react": "^19.1.11",
-		"@types/react-dom": "^19.1.7",
-		"@vitejs/plugin-react": "^5.0.1",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
 		"tsup": "^8.5.0",
-		"tsx": "^4.20.5",
-		"typescript": "catalog:",
-		"vite": "^7.1.2"
+		"typescript": "^5.9.2"
 	},
 	"engines": {
 		"node": ">=18"
