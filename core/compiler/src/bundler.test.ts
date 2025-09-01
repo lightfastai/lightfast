@@ -87,7 +87,7 @@ export default {
       
       expect(bundles).toHaveLength(1);
       
-      const bundle = bundles[0]!!;
+      const bundle = bundles[0]!;
       expect(bundle.id).toBe('main');
       expect(bundle.filename).toMatch(/^main\.[a-f0-9]{8}\.js$/);
       expect(existsSync(bundle.filepath)).toBe(true);

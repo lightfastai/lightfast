@@ -94,7 +94,7 @@ describe('Integration Tests', () => {
       expect(result.bundles!.length).toBeGreaterThan(0);
 
       // Verify bundle structure
-      const bundle = result.bundles![0]!!;
+      const bundle = result.bundles![0]!;
       expect(bundle.id).toBe('main');
       expect(existsSync(bundle.filepath)).toBe(true);
 
