@@ -1,4 +1,4 @@
-import { existsSync, watch } from 'node:fs';
+import { existsSync, watch, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import type { CacheManager} from './cache.js';
@@ -216,6 +216,8 @@ export class LightfastCompiler {
     if (this.useCache && !force && this.cacheManager.isCached(resolvedConfigPath, transpileResult.metafile)) {
       const cachedOutputPath = this.cacheManager.getCachedOutputPath(resolvedConfigPath);
       if (cachedOutputPath) {
+        // Read cached code for bundle generation
+        const cachedCode = readFileSync(cachedOutputPath, 'utf-8');
         const endTime = performance.now();
         return {
           outputPath: cachedOutputPath,
@@ -223,9 +225,10 @@ export class LightfastCompiler {
           compilationTime: endTime - startTime,
           sourcePath: resolvedConfigPath,
           transpileResult: {
-            code: '',
+            code: cachedCode,
             warnings: [],
-            errors: []
+            errors: [],
+            metafile: transpileResult.metafile
           },
           warnings: ['Using cached compilation'],
           errors: []

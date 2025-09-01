@@ -320,20 +320,17 @@ describe('Error Scenarios', () => {
   describe('Loading Errors', () => {
     it('should throw when loading fails after compilation', async () => {
       const configPath = join(tempDir, 'lightfast.config.ts');
-      writeFile(configPath, 'export default { name: "test" };');
+      // Write config that will compile but fail to load (runtime error)
+      writeFile(configPath, `
+        throw new Error('Runtime error during module load');
+        export default { name: "test" };
+      `);
 
       const compiler = new LightfastCompiler({ baseDir: tempDir });
-      
-      // Mock dynamic import to fail
-      const originalImport = (global as any).import;
-      (global as any).import = vi.fn().mockRejectedValue(new Error('Module not found'));
 
       await expect(
         compiler.compileAndLoad({ configPath })
       ).rejects.toThrow('Failed to load compiled configuration');
-
-      // Restore
-      (global as any).import = originalImport;
     });
 
     it('should handle configs without default export when loading', async () => {
