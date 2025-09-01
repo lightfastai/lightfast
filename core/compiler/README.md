@@ -1,5 +1,9 @@
 # @lightfastai/compiler
 
+[![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/%40lightfastai%2Fcompiler.svg)](https://badge.fury.io/js/%40lightfastai%2Fcompiler)
+[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](./coverage/index.html)
+
 TypeScript compilation engine for Lightfast configuration files. Provides fast, cached compilation with hot-reload support using esbuild.
 
 ## Overview
