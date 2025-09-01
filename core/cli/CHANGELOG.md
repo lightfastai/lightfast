@@ -1,5 +1,17 @@
 # @lightfastai/cli
 
+## 0.3.2
+
+### Patch Changes
+
+- Bundle updated dev-server v0.2.2 with comprehensive dependency bundling
+
+  The CLI needs to include the updated dev-server v0.2.2 which contains the comprehensive bundling fix.
+  This ensures users get the fully self-contained dev-server when installing the CLI via npx.
+  - Includes dev-server v0.2.2 with all dependencies bundled
+  - Fixes all React and @tanstack/react-router module resolution errors
+  - Ensures CLI works correctly when installed via npx
+
 ## 0.3.1
 
 ### Patch Changes
