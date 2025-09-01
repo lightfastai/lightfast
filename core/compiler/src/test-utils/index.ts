@@ -213,7 +213,7 @@ export async function waitFor(
  * Creates a mock file watcher for testing
  */
 export function createMockWatcher() {
-  const callbacks: Array<(eventType: string, filename: string) => void> = [];
+  const callbacks: ((eventType: string, filename: string) => void)[] = [];
   
   return {
     on: (event: string, callback: (eventType: string, filename: string) => void) => {

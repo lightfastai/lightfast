@@ -59,9 +59,9 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		// Default successful mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
 		vi.mocked(convertToModelMessages).mockImplementation(
-			(messages: Array<Omit<UIMessage, 'id'>>, options?: { tools?: ToolSet; ignoreIncompleteToolCalls?: boolean }) =>
+			(messages: Omit<UIMessage, 'id'>[], options?: { tools?: ToolSet; ignoreIncompleteToolCalls?: boolean }) =>
 				messages.map((msg) => ({ 
-					role: msg.role as "system" | "user" | "assistant", 
+					role: msg.role, 
 					content: getMessageText(msg as UIMessage) || "" 
 				}))
 		);

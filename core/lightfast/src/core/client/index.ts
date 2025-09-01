@@ -219,8 +219,8 @@ export function createLightfast(config: LightfastConfig): Lightfast {
 export type { Agent, AgentOptions } from "../primitives/agent";
 
 // Export the type of the JSON representation
-export type LightfastJSON = {
+export interface LightfastJSON {
 	agents: LightfastAgentSet;
 	metadata?: LightfastMetadata;
 	dev?: LightfastDevConfig;
-};
+}

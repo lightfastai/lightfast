@@ -94,7 +94,7 @@ describe('Integration Tests', () => {
       expect(result.bundles!.length).toBeGreaterThan(0);
 
       // Verify bundle structure
-      const bundle = result.bundles![0];
+      const bundle = result.bundles![0]!!;
       expect(bundle.id).toBe('main');
       expect(existsSync(bundle.filepath)).toBe(true);
 
@@ -187,7 +187,7 @@ describe('Integration Tests', () => {
       }
 
       // First should compile, rest should use cache
-      expect(results[0].fromCache).toBe(false);
+      expect(results[0]!.fromCache).toBe(false);
       results.slice(1).forEach(result => {
         expect(result.fromCache).toBe(true);
       });
@@ -245,7 +245,7 @@ describe('Integration Tests', () => {
 
       const compiler = new LightfastCompiler({ baseDir: tempDir });
       
-      let compilations: any[] = [];
+      const compilations: any[] = [];
       const watcher = compiler.watch({
         onCompile: (result) => {
           compilations.push(result);

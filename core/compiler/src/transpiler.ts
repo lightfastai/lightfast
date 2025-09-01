@@ -217,8 +217,8 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
       // If no separate file, check if source map is inline
       if (!sourcemapContent && result.outputFiles[0]) {
         const code = new TextDecoder().decode(result.outputFiles[0].contents);
-        const inlineMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;base64,(.+)$/m);
-        if (inlineMatch && inlineMatch[1]) {
+        const inlineMatch = /\/\/# sourceMappingURL=data:application\/json;base64,(.+)$/m.exec(code);
+        if (inlineMatch?.[1]) {
           sourcemapContent = Buffer.from(inlineMatch[1], 'base64').toString('utf-8');
         }
       }

@@ -1,4 +1,4 @@
-import { convertToModelMessages, streamText } from "ai";
+import { convertToModelMessages } from "ai";
 import type {
 	ModelMessage,
 	Tool,
@@ -15,7 +15,7 @@ import type {
 	StreamTextOnStepFinishCallback,
 	TelemetrySettings,
 	StepResult,
-} from "ai";
+ streamText } from "ai";
 import type { Memory } from "../memory";
 import {
 	AgentConfigurationError,
@@ -51,14 +51,14 @@ export type VercelAIConfig<TOOLS extends ToolSet = ToolSet> = Omit<
 > & {
 	// Re-type the generic-dependent fields with our TOOLS type
 	toolChoice?: ToolChoice<TOOLS>;
-	stopWhen?: StopCondition<TOOLS> | Array<StopCondition<TOOLS>>;
+	stopWhen?: StopCondition<TOOLS> | StopCondition<TOOLS>[];
 	onChunk?: StreamTextOnChunkCallback<TOOLS>;
 	onFinish?: StreamTextOnFinishCallback<TOOLS>;
 	onStepFinish?: StreamTextOnStepFinishCallback<TOOLS>;
 	prepareStep?: PrepareStepFunction<TOOLS>;
 	experimental_transform?:
 		| StreamTextTransform<TOOLS>
-		| Array<StreamTextTransform<TOOLS>>;
+		| StreamTextTransform<TOOLS>[];
 };
 
 // Lightfast-specific configuration
@@ -198,7 +198,7 @@ export class Agent<
 		} as SystemContext & TRequestContext & TRuntimeContext;
 
 		// Resolve tool factories into actual tools by injecting merged context
-		let resolvedTools: ToolSet = {};
+		const resolvedTools: ToolSet = {};
 		if (this.lightfastConfig.tools) {
 			const tools =
 				typeof this.lightfastConfig.tools === "function"

@@ -47,12 +47,8 @@ describe('Error Scenarios', () => {
       expect(result.fromCache).toBe(false);
     });
 
-    it('should handle permission errors gracefully', async function() {
+    it.skipIf(process.platform === 'win32')('should handle permission errors gracefully', async () => {
       // Skip on Windows as permission handling is different
-      if (process.platform === 'win32') {
-        this.skip();
-        return;
-      }
 
       const configPath = join(tempDir, 'lightfast.config.ts');
       writeFile(configPath, 'export default { name: "test" };');

@@ -124,7 +124,7 @@ export class LightfastCompiler {
   /**
    * Finds the configuration file in the base directory
    */
-  private findConfigFile(): string | null {
+  findConfigFile(): string | null {
     for (const pattern of this.configPatterns) {
       const configPath = join(this.baseDir, pattern);
       if (existsSync(configPath)) {

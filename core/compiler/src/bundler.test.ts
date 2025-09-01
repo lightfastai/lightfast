@@ -87,7 +87,7 @@ export default {
       
       expect(bundles).toHaveLength(1);
       
-      const bundle = bundles[0];
+      const bundle = bundles[0]!!;
       expect(bundle.id).toBe('main');
       expect(bundle.filename).toMatch(/^main\.[a-f0-9]{8}\.js$/);
       expect(existsSync(bundle.filepath)).toBe(true);
@@ -106,7 +106,7 @@ export default {
         sourcePath
       );
       
-      const bundle = bundles[0];
+      const bundle = bundles[0]!;
       expect(bundle.metadata).toMatchObject({
         id: 'main',
         hash: expect.any(String),
@@ -170,7 +170,7 @@ export default {
       );
       
       expect(bundles).toHaveLength(1);
-      expect(bundles[0].id).toBe('main');
+      expect(bundles[0]!.id).toBe('main');
     });
 
     it('should include source map reference if available', async () => {
@@ -187,7 +187,7 @@ export default {
       );
       
       // Source map should be written as separate file
-      const mapPath = bundles[0].filepath + '.map';
+      const mapPath = bundles[0]!.filepath + '.map';
       expect(existsSync(mapPath)).toBe(true);
       
       const mapContent = readFileSync(mapPath, 'utf-8');
@@ -202,7 +202,7 @@ export default {
         sourcePath
       );
       
-      const bundle = bundles[0];
+      const bundle = bundles[0]!;
       const actualSize = require('fs').statSync(bundle.filepath).size;
       
       expect(bundle.size).toBe(actualSize);
@@ -224,7 +224,7 @@ export default {
       );
       
       expect(bundles).toHaveLength(1);
-      expect(existsSync(bundles[0].filepath)).toBe(true);
+      expect(existsSync(bundles[0]!.filepath)).toBe(true);
     });
 
     it('should preserve original code in bundle', async () => {
@@ -235,7 +235,7 @@ export default {
         sourcePath
       );
       
-      const content = readFileSync(bundles[0].filepath, 'utf-8');
+      const content = readFileSync(bundles[0]!.filepath, 'utf-8');
       
       // Should contain the original compiled code
       expect(content).toContain('test-config');
@@ -259,7 +259,7 @@ export default {
       
       const afterTime = new Date().toISOString();
       
-      const compiledAt = bundles[0].metadata.compiledAt;
+      const compiledAt = bundles[0]!.metadata.compiledAt;
       expect(new Date(compiledAt).getTime()).toBeGreaterThanOrEqual(new Date(beforeTime).getTime());
       expect(new Date(compiledAt).getTime()).toBeLessThanOrEqual(new Date(afterTime).getTime());
     });
@@ -303,9 +303,9 @@ export default {
       );
       
       expect(bundles).toHaveLength(1);
-      expect(bundles[0].size).toBeGreaterThan(100000);
+      expect(bundles[0]!.size).toBeGreaterThan(100000);
       
-      const content = readFileSync(bundles[0].filepath, 'utf-8');
+      const content = readFileSync(bundles[0]!.filepath, 'utf-8');
       expect(content).toContain('a'.repeat(1000)); // Check partial content
     });
 
@@ -329,7 +329,7 @@ export default {
         sourcePath
       );
       
-      const content = readFileSync(bundles[0].filepath, 'utf-8');
+      const content = readFileSync(bundles[0]!.filepath, 'utf-8');
       expect(content).toContain('测试配置 🚀');
       expect(content).toContain('€£¥');
     });
@@ -357,7 +357,7 @@ export default {
       expect(allBundles).toHaveLength(5);
       allBundles.forEach((bundles, i) => {
         expect(bundles).toHaveLength(1);
-        const content = readFileSync(bundles[0].filepath, 'utf-8');
+        const content = readFileSync(bundles[0]!.filepath, 'utf-8');
         expect(content).toContain(`id: ${i}`);
       });
     });
@@ -406,7 +406,7 @@ export default {
       );
       
       expect(bundles).toHaveLength(1);
-      expect(bundles[0].metadata).toBeDefined();
+      expect(bundles[0]!.metadata).toBeDefined();
     });
   });
 });

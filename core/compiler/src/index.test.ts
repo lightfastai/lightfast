@@ -71,7 +71,7 @@ describe('LightfastCompiler', () => {
       const configPath = join(tempDir, 'lightfast.config.ts');
       writeFile(configPath, fixtures.simpleConfig);
 
-      const result = compiler['findConfigFile']();
+      const result = compiler.findConfigFile();
       expect(result).toBe(configPath);
     });
 
@@ -79,7 +79,7 @@ describe('LightfastCompiler', () => {
       const configPath = join(tempDir, 'lightfast.config.js');
       writeFile(configPath, fixtures.cjsConfig);
 
-      const result = compiler['findConfigFile']();
+      const result = compiler.findConfigFile();
       expect(result).toBe(configPath);
     });
 
@@ -87,12 +87,12 @@ describe('LightfastCompiler', () => {
       const configPath = join(tempDir, 'lightfast.config.tsx');
       writeFile(configPath, fixtures.jsxConfig);
 
-      const result = compiler['findConfigFile']();
+      const result = compiler.findConfigFile();
       expect(result).toBe(configPath);
     });
 
     it('should return null when no config found', () => {
-      const result = compiler['findConfigFile']();
+      const result = compiler.findConfigFile();
       expect(result).toBeNull();
     });
 
@@ -105,7 +105,7 @@ describe('LightfastCompiler', () => {
       const configPath = join(tempDir, 'app.config.ts');
       writeFile(configPath, fixtures.simpleConfig);
 
-      const result = customCompiler['findConfigFile']();
+      const result = customCompiler.findConfigFile();
       expect(result).toBe(configPath);
     });
 
@@ -113,7 +113,7 @@ describe('LightfastCompiler', () => {
       writeFile(join(tempDir, 'lightfast.config.js'), 'js config');
       writeFile(join(tempDir, 'lightfast.config.ts'), 'ts config');
 
-      const result = compiler['findConfigFile']();
+      const result = compiler.findConfigFile();
       expect(result).toBe(join(tempDir, 'lightfast.config.ts'));
     });
   });
