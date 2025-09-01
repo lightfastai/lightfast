@@ -6,7 +6,7 @@ import type { Memory } from "../";
  */
 export class InMemoryMemory<
 	TMessage extends UIMessage = UIMessage,
-	TContext = {},
+	TContext = Record<string, unknown>,
 > implements Memory<TMessage, TContext>
 {
 	private sessions = new Map<string, { resourceId: string }>();
@@ -16,24 +16,24 @@ export class InMemoryMemory<
 	async appendMessage({
 		sessionId,
 		message,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		message: TMessage;
 		context?: TContext;
 	}): Promise<void> {
-		const existing = this.messages.get(sessionId) || [];
+		const existing = this.messages.get(sessionId) ?? [];
 		this.messages.set(sessionId, [...existing, message]);
 	}
 
 	async getMessages(sessionId: string): Promise<TMessage[]> {
-		return this.messages.get(sessionId) || [];
+		return this.messages.get(sessionId) ?? [];
 	}
 
 	async createSession({
 		sessionId,
 		resourceId,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		resourceId: string;
@@ -52,17 +52,17 @@ export class InMemoryMemory<
 	async createStream({
 		sessionId,
 		streamId,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		streamId: string;
 		context?: TContext;
 	}): Promise<void> {
-		const existing = this.streams.get(sessionId) || [];
+		const existing = this.streams.get(sessionId) ?? [];
 		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100)); // Keep last 100
 	}
 
 	async getSessionStreams(sessionId: string): Promise<string[]> {
-		return this.streams.get(sessionId) || [];
+		return this.streams.get(sessionId) ?? [];
 	}
 }
