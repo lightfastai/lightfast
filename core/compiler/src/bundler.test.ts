@@ -3,9 +3,7 @@ import { createBundleGenerator, BundleGenerator } from './bundler.js';
 import type { TranspileResult } from './transpiler.js';
 import { 
   createTempDir, 
-  cleanupDir, 
-  readFile,
-  assertFileExists
+  cleanupDir
 } from './test-utils/index.js';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
@@ -34,17 +32,17 @@ describe('BundleGenerator', () => {
     });
 
     it('should use default compiler version if not provided', () => {
-      const generator = new BundleGenerator({
+      const _generator = new BundleGenerator({
         baseDir: tempDir
       });
       
       // Should have a default version
-      expect(generator).toBeDefined();
+      expect(_generator).toBeDefined();
     });
 
     it('should use custom output directory', () => {
       const customOutputDir = join(tempDir, 'custom-output');
-      const generator = new BundleGenerator({
+      const _generator = new BundleGenerator({
         baseDir: tempDir,
         outputDir: customOutputDir
       });
@@ -276,7 +274,7 @@ export default {
 
     it('should pass options through factory', () => {
       const customDir = join(tempDir, 'custom');
-      const generator = createBundleGenerator({
+      const _generator = createBundleGenerator({
         baseDir: tempDir,
         outputDir: customDir,
         compilerVersion: '2.0.0'

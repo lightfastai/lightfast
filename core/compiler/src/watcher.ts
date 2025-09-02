@@ -98,7 +98,7 @@ export class ConfigWatcher extends EventEmitter {
     });
   }
   
-  private log(message: string, ...args: any[]): void {
+  private log(message: string, ...args: unknown[]): void {
     if (this.debug) {
       console.log(`[ConfigWatcher] ${message}`, ...args);
     }
@@ -312,19 +312,19 @@ export class ConfigWatcher extends EventEmitter {
     });
   }
   
-  private async handleFileChange(eventType: 'change' | 'add', configPath: string): Promise<void> {
+  private handleFileChange(eventType: 'change' | 'add', configPath: string): void {
     // Clear any existing debounce timer
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
     
     // Set up debounced compilation
-    this.debounceTimer = setTimeout(async () => {
+    this.debounceTimer = setTimeout(() => {
       if (this.isCompiling) {
         return; // Skip if already compiling
       }
       
-      await this.compileConfig(configPath);
+      void this.compileConfig(configPath);
     }, this.debounceDelay);
   }
   

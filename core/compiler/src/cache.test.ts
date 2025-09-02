@@ -1,16 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { CacheManager, createCacheManager } from './cache.js';
 import { 
   createTempDir, 
   cleanupDir, 
   writeFile, 
-  readFile,
-  assertFileExists,
-  assertFileNotExists,
   delay
 } from './test-utils/index.js';
 import { join } from 'node:path';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
 
 describe('CacheManager', () => {
   let tempDir: string;
@@ -35,7 +32,7 @@ describe('CacheManager', () => {
     });
 
     it('should use custom cache directory name', () => {
-      const customCacheManager = new CacheManager({
+      const _customCacheManager = new CacheManager({
         baseDir: tempDir,
         cacheDir: '.custom-cache'
       });
@@ -48,10 +45,10 @@ describe('CacheManager', () => {
       // Create directories manually first
       const cacheDir = join(tempDir, '.lightfast');
       const compiledDir = join(cacheDir, 'compiled');
-      require('fs').mkdirSync(compiledDir, { recursive: true });
+      mkdirSync(compiledDir, { recursive: true });
       
       // Should not throw when directories already exist
-      const manager = new CacheManager({ baseDir: tempDir });
+      const _manager = new CacheManager({ baseDir: tempDir });
       expect(existsSync(cacheDir)).toBe(true);
     });
   });
@@ -384,7 +381,7 @@ describe('CacheManager', () => {
       
       // Delete cache directory
       const cacheDir = join(tempDir, '.lightfast');
-      require('fs').rmSync(cacheDir, { recursive: true, force: true });
+      rmSync(cacheDir, { recursive: true, force: true });
       
       // Should handle gracefully
       expect(cacheManager.isCached(sourcePath)).toBe(false);

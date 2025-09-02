@@ -9,22 +9,47 @@ export default [
   {
     files: ["**/*.ts", "**/*.js"],
     rules: {
-      // Allow some flexibility for compiler/CLI code while keeping most rules strict
-      "@typescript-eslint/no-explicit-any": "warn", // Warn but don't error on any
+      // Strict TypeScript rules for compiler code
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/require-await": "error",
+      "no-useless-escape": "error",
+      "@typescript-eslint/no-unnecessary-condition": ["error", { allowConstantLoopConditions: true }],
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "@typescript-eslint/no-require-imports": "error",
+      "@typescript-eslint/unbound-method": "error",
+    },
+  },
+  {
+    // Test files need some flexibility
+    files: ["**/*.test.ts", "**/*.test.js"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "warn", // Tests often assert on values
+      "@typescript-eslint/no-explicit-any": "warn", // Mock data might use any
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-call": "warn",
       "@typescript-eslint/no-unsafe-argument": "warn",
-      "@typescript-eslint/no-unsafe-return": "warn",
-      "@typescript-eslint/no-floating-promises": ["error", { ignoreVoid: true }], // Allow void operator
-      "@typescript-eslint/prefer-nullish-coalescing": "off", // Disable nullish coalescing rule
-      "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: false }], // Allow async functions in event handlers
-      "@typescript-eslint/require-await": "warn", // Warn on async without await
-      "no-useless-escape": "warn", // Warn on escape issues
-      "@typescript-eslint/no-unnecessary-condition": ["error", { allowConstantLoopConditions: true, allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing: true }],
-      "@typescript-eslint/no-non-null-assertion": "off", // Allow non-null assertions
-      "@typescript-eslint/no-require-imports": "off", // Allow require imports
-      "@typescript-eslint/unbound-method": "off", // Allow unbound methods
+      "@typescript-eslint/unbound-method": "off", // expect() methods are unbound
+      "@typescript-eslint/no-require-imports": "warn", // Dynamic imports in tests
+    },
+  },
+  {
+    // Bundler code needs to work with dynamic modules
+    files: ["src/bundler.ts"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "warn", // Dynamic module loading
+      "@typescript-eslint/no-explicit-any": "warn", // Manifest typing
+      "@typescript-eslint/no-unsafe-assignment": "warn",
+      "@typescript-eslint/no-unsafe-member-access": "warn",
+      "@typescript-eslint/require-await": "warn", // Async plugin hooks
     },
   },
 ];

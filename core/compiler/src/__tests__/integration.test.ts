@@ -4,12 +4,9 @@ import {
   createTempDir,
   cleanupDir,
   writeFile,
-  readFile,
   fixtures,
-  createTestProject,
   delay,
-  waitFor,
-  assertFileExists
+  waitFor
 } from '../test-utils/index.js';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';

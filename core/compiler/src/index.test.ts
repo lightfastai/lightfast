@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   LightfastCompiler,
   createCompiler,
@@ -11,14 +11,11 @@ import {
   createTempDir,
   cleanupDir,
   writeFile,
-  readFile,
   fixtures,
-  createTestProject,
-  delay,
-  assertFileExists
+  delay
 } from './test-utils/index.js';
 import { join } from 'node:path';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 describe('LightfastCompiler', () => {
   let tempDir: string;
@@ -417,9 +414,9 @@ describe('LightfastCompiler', () => {
       let compilationCount = 0;
       const watcher = compiler.watch({
         configPath,
-        onCompile: async () => {
+        onCompile: () => {
           compilationCount++;
-          await delay(500); // Simulate slow compilation
+          void delay(500); // Simulate slow compilation
         }
       });
 
