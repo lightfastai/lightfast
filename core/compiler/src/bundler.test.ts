@@ -129,7 +129,9 @@ export default {
         sourcePath
       );
       
-      expect(bundles1[0].hash).toBe(bundles2[0].hash);
+      expect(bundles1[0]).toBeDefined();
+      expect(bundles2[0]).toBeDefined();
+      expect(bundles1[0]?.hash).toBe(bundles2[0]?.hash);
     });
 
     it('should generate different hash for different content', async () => {
@@ -141,7 +143,9 @@ export default {
       const bundles1 = await bundleGenerator.generateBundles(result1, sourcePath);
       const bundles2 = await bundleGenerator.generateBundles(result2, sourcePath);
       
-      expect(bundles1[0].hash).not.toBe(bundles2[0].hash);
+      expect(bundles1[0]).toBeDefined();
+      expect(bundles2[0]).toBeDefined();
+      expect(bundles1[0]?.hash).not.toBe(bundles2[0]?.hash);
     });
 
     it('should handle multiple agents in future', async () => {

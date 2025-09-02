@@ -6,7 +6,8 @@ import {
   writeFile,
   fixtures,
   delay,
-  waitFor
+  waitFor,
+  createTestProject
 } from '../test-utils/index.js';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
@@ -323,11 +324,12 @@ describe('Integration Tests', () => {
 
       // Verify bundle integrity
       const bundle = bundleResult.bundles[0];
-      const bundleContent = readFileSync(bundle.filepath, 'utf-8');
+      expect(bundle).toBeDefined();
+      const bundleContent = readFileSync(bundle!.filepath, 'utf-8');
       
       expect(bundleContent).toContain('large-config');
       expect(bundleContent).toContain('agent99');
-      expect(bundleContent).toContain(bundle.hash);
+      expect(bundleContent).toContain(bundle!.hash);
     });
 
     it('should generate consistent bundles across compilations', async () => {
@@ -343,8 +345,10 @@ describe('Integration Tests', () => {
       const result2 = await compiler.generateDeploymentBundles();
 
       // Should produce identical bundles
-      expect(result1.bundles[0].hash).toBe(result2.bundles[0].hash);
-      expect(result1.bundles[0].metadata.id).toBe(result2.bundles[0].metadata.id);
+      expect(result1.bundles[0]).toBeDefined();
+      expect(result2.bundles[0]).toBeDefined();
+      expect(result1.bundles[0]?.hash).toBe(result2.bundles[0]?.hash);
+      expect(result1.bundles[0]?.metadata.id).toBe(result2.bundles[0]?.metadata.id);
     });
   });
 

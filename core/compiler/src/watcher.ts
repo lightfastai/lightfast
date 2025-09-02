@@ -130,7 +130,7 @@ export class ConfigWatcher extends EventEmitter {
       
       // Initialize chokidar watcher
       this.watcher = chokidar.watch(watchPaths, {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        ignored: /(^|[/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true, // We handle initial compilation separately
         ignorePermissionErrors: true,
@@ -195,10 +195,10 @@ export class ConfigWatcher extends EventEmitter {
   /**
    * Update watched dependencies based on compilation result
    */
-  private updateWatchedDependencies(metafile: any, baseDir: string): void {
+  private updateWatchedDependencies(metafile: { inputs?: Record<string, unknown> }, baseDir: string): void {
     const newDependencies = new Set<string>();
     
-    if (metafile?.inputs) {
+    if (metafile.inputs) {
       for (const inputPath of Object.keys(metafile.inputs)) {
         const absolutePath = resolve(baseDir, inputPath);
         if (existsSync(absolutePath)) {
@@ -234,14 +234,14 @@ export class ConfigWatcher extends EventEmitter {
   /**
    * Force a recompilation of all configuration files
    */
-  async forceCompilation(): Promise<void> {
+  forceCompilation(): void {
     if (this.isCompiling) {
       return; // Already compiling
     }
     
     const configPath = this.findAnyConfigFile();
     if (configPath) {
-      await this.handleFileChange('change', configPath);
+      this.handleFileChange('change', configPath);
     }
   }
   

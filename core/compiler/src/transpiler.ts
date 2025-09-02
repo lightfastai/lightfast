@@ -164,7 +164,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
   };
   
   // Debug logging (only in DEBUG mode)
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
+   
   if (process.env.DEBUG === '1') {
     console.log('[transpiler] Build options:', {
       bundle,
@@ -232,7 +232,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     }
 
     // Debug logging for metafile (only in DEBUG mode)
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
+     
     if (process.env.DEBUG === '1' && result.metafile) {
       const metafileObj = result.metafile as { inputs?: Record<string, unknown> } | null | undefined;
       console.log('[transpiler] Metafile inputs:', Object.keys(metafileObj?.inputs ?? {}));

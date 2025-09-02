@@ -9,7 +9,7 @@ export const bundleCommand = new Command("bundle")
   .option("-c, --config <path>", "Path to lightfast.config.ts file")
   .option("-o, --output <dir>", "Output directory for bundles", ".lightfast/dist")
   .option("-f, --force", "Force regeneration even if cache is valid")
-  .action(async (options) => {
+  .action(async (options: { config?: string; output?: string; force?: boolean }) => {
     const spinner = new CompilationSpinner("Generating deployment bundles...");
     spinner.start();
 
@@ -18,7 +18,7 @@ export const bundleCommand = new Command("bundle")
       const projectRoot = process.cwd();
 
       // Check if config exists
-      const configPath = options.config || "lightfast.config.ts";
+      const configPath = options.config ?? "lightfast.config.ts";
       const resolvedConfigPath = resolve(projectRoot, configPath);
 
       if (!existsSync(resolvedConfigPath)) {
@@ -37,7 +37,7 @@ export const bundleCommand = new Command("bundle")
       // Generate bundles explicitly
       const result = await compiler.generateDeploymentBundles({
         configPath: resolvedConfigPath,
-        force: options.force,
+        force: options.force ?? false,
       });
 
       spinner.stop();

@@ -22,7 +22,7 @@ export const cleanCommand = new Command("clean")
   .action(async (options: CleanOptions) => {
     try {
       const baseDir = process.cwd();
-      const cleanAll = options.all || (!options.cache && !options.dist && !options.output);
+      const cleanAll = options.all ?? (!options.cache && !options.dist && !options.output);
 
       console.log(chalk.blue("→ Cleaning build artifacts..."));
 

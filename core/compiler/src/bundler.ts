@@ -34,14 +34,14 @@ export interface BundleManifest {
   version: string;
   compiledAt: string;
   compilerVersion: string;
-  bundles: Array<{
+  bundles: {
     id: string;
     hash: string;
     file: string;
     size: number;
     tools: string[];
     models: string[];
-  }>;
+  }[];
 }
 
 export interface BundlerOptions {
@@ -200,7 +200,7 @@ export class BundleGenerator {
         name: metadata.name,
         description: metadata.description,
         tools: metadata.tools ?? [],
-        models: metadata.models ?? []
+        models: metadata.models ?? [],
         compiledAt: new Date().toISOString(),
         compilerVersion: this.compilerVersion
       }

@@ -66,12 +66,12 @@ describe('Error Scenarios', () => {
 
     it('should handle cache directory creation failure', () => {
       // Mock file system to simulate failure
-      const originalMkdirSync = fs.mkdirSync;
-      vi.spyOn(fs, 'mkdirSync').mockImplementation((path: string | fs.PathLike) => {
+      vi.spyOn(fs, 'mkdirSync').mockImplementation((path: fs.PathLike) => {
         if (path.toString().includes('.lightfast')) {
           throw new Error('Permission denied');
         }
-        return originalMkdirSync(path as string);
+        // For test purposes, we don't need to actually create other directories
+        return undefined;
       });
 
       expect(() => {
@@ -204,11 +204,11 @@ describe('Error Scenarios', () => {
     it('should handle cache write failures', () => {
       const originalWriteFileSync = fs.writeFileSync;
       // @ts-expect-error - mocking fs function
-      fs.writeFileSync = vi.fn().mockImplementation((path: string) => {
+      fs.writeFileSync = vi.fn().mockImplementation((path: string, data: string | NodeJS.ArrayBufferView, options?: fs.WriteFileOptions) => {
         if (path.includes('cache.json')) {
           throw new Error('Disk full');
         }
-        return originalWriteFileSync(path);
+        return originalWriteFileSync(path, data, options);
       });
 
       const cacheManager = new CacheManager({ baseDir: tempDir });

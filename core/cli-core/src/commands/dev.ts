@@ -5,16 +5,17 @@ import type { ChildProcess } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { createCompiler, findConfig, createConfigWatcher } from "@lightfastai/compiler";
 import {
+  createCompiler,
+  findConfig,
+  createConfigWatcher,
   formatCompilationErrors,
-  formatCompilationWarnings,
   displayCompilationSummary,
   CompilationSpinner,
 } from "@lightfastai/compiler";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 interface DevOptions {
   port?: string
@@ -33,13 +34,13 @@ export const devCommand = new Command("dev")
     console.log(chalk.blue("→ Starting Lightfast server..."));
 
     try {
-      const port = options.port || "3000";
-      const host = options.host || "localhost";
+      const port = options.port ?? "3000";
+      const host = options.host ?? "localhost";
 
       // Compile TypeScript config if needed
       if (!options.noCompile) {
-        const configPath = await findConfig(process.cwd());
-        if (configPath && configPath.endsWith(".ts")) {
+        const configPath = findConfig(process.cwd());
+        if (configPath?.endsWith(".ts")) {
           const spinner = new CompilationSpinner("Compiling TypeScript configuration...");
           spinner.start();
 
@@ -81,14 +82,14 @@ export const devCommand = new Command("dev")
                 const watchSpinner = new CompilationSpinner("Recompiling configuration...");
                 watchSpinner.start();
                 // Store spinner reference for later use
-                (watcher as any)._spinner = watchSpinner;
+                (watcher as { _spinner?: CompilationSpinner })._spinner = watchSpinner;
               });
 
               watcher.on("compile-success", (result) => {
-                const watchSpinner = (watcher as any)._spinner;
+                const watchSpinner = (watcher as { _spinner?: CompilationSpinner })._spinner;
                 if (watchSpinner) {
                   watchSpinner.stop();
-                  delete (watcher as any)._spinner;
+                  delete (watcher as { _spinner?: CompilationSpinner })._spinner;
                 }
                 displayCompilationSummary(
                   result.errors,
@@ -99,10 +100,10 @@ export const devCommand = new Command("dev")
               });
 
               watcher.on("compile-error", (error, result) => {
-                const watchSpinner = (watcher as any)._spinner;
+                const watchSpinner = (watcher as { _spinner?: CompilationSpinner })._spinner;
                 if (watchSpinner) {
                   watchSpinner.stop();
-                  delete (watcher as any)._spinner;
+                  delete (watcher as { _spinner?: CompilationSpinner })._spinner;
                 }
                 if (result?.errors) {
                   console.error(formatCompilationErrors(result.errors));
@@ -116,10 +117,10 @@ export const devCommand = new Command("dev")
 
               // Cleanup on exit
               process.on("SIGINT", () => {
-                watcher.stop();
+                void watcher.stop();
               });
               process.on("SIGTERM", () => {
-                watcher.stop();
+                void watcher.stop();
               });
             }
           } catch (error) {
@@ -132,12 +133,12 @@ export const devCommand = new Command("dev")
 
       // When running from dist (production/installed), use the built app
       // Check if we're running from a dist folder (either local build or installed package)
-      const isProduction = __dirname.includes("/dist") || __dirname.includes("\\dist");
+      const isProduction = dirname.includes("/dist") || dirname.includes("\\dist");
 
       if (process.env.DEBUG) {
-        console.log(chalk.gray(`Debug: __filename = ${__filename}`));
-        console.log(chalk.gray(`Debug: __dirname = ${__dirname}`));
-        console.log(chalk.gray(`Debug: isProduction = ${isProduction}`));
+        console.log(chalk.gray(`Debug: filename = ${filename}`));
+        console.log(chalk.gray(`Debug: dirname = ${dirname}`));
+        console.log(chalk.gray(`Debug: isProduction = ${String(isProduction)}`));
         console.log(chalk.gray(`Debug: import.meta.url = ${import.meta.url}`));
       }
 
@@ -146,7 +147,7 @@ export const devCommand = new Command("dev")
 
       if (isProduction) {
         // Running from installed package - check for bundled dev-server output
-        const bundledDevServer = path.resolve(__dirname, "dev-server-output/server/index.mjs");
+        const bundledDevServer = path.resolve(dirname, "dev-server-output/server/index.mjs");
 
         if (fs.existsSync(bundledDevServer)) {
           // Use bundled dev-server (new bundled approach)
@@ -178,7 +179,7 @@ export const devCommand = new Command("dev")
           console.log(chalk.blue("→ Starting development server..."));
         } catch {
           // Fallback for workspace development
-          const fallbackPath = path.resolve(__dirname, "..", "..", "dev-server");
+          const fallbackPath = path.resolve(dirname, "..", "..", "dev-server");
           if (fs.existsSync(fallbackPath)) {
             cliRoot = fallbackPath;
             startCommand = ["pnpm", "dev", "--port", port, "--host", host];
@@ -198,7 +199,7 @@ export const devCommand = new Command("dev")
         process.exit(1);
       }
 
-      const devProcess: ChildProcess = spawn(startCommand[0]!, startCommand.slice(1), {
+      const devProcess: ChildProcess = spawn(startCommand[0], startCommand.slice(1), {
         cwd: cliRoot,
         stdio: "pipe",
         shell: true,
@@ -212,7 +213,7 @@ export const devCommand = new Command("dev")
 
       let serverStarted = false;
 
-      devProcess.stdout?.on("data", (data) => {
+      devProcess.stdout?.on("data", (data: Buffer) => {
         const output = data.toString();
 
         // Check if server has started (works for both vite and production)
@@ -239,10 +240,10 @@ export const devCommand = new Command("dev")
         }
       });
 
-      devProcess.stderr?.on("data", (data) => {
+      devProcess.stderr?.on("data", (data: Buffer) => {
         const error = data.toString();
         // Only show errors, not warnings
-        if (error.toLowerCase().includes("error")) {
+        if ((error).toLowerCase().includes("error")) {
           console.error(chalk.red(error));
         } else if (process.env.DEBUG) {
           console.error(chalk.yellow(error));

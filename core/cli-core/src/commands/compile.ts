@@ -18,7 +18,7 @@ export const compileCommand = new Command("compile")
   .action(async (options: CompileOptions) => {
     try {
       const baseDir = process.cwd();
-      const configPath = options.config || await findConfig(baseDir);
+      const configPath = options.config ?? findConfig(baseDir);
 
       if (!configPath) {
         console.error(chalk.red("✖ No configuration file found"));

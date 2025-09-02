@@ -13,7 +13,7 @@ export class InMemoryMemory<
 	private messages = new Map<string, TMessage[]>();
 	private streams = new Map<string, string[]>();
 
-	async appendMessage({
+	appendMessage({
 		sessionId,
 		message,
 		context: _context,
@@ -24,13 +24,14 @@ export class InMemoryMemory<
 	}): Promise<void> {
 		const existing = this.messages.get(sessionId) ?? [];
 		this.messages.set(sessionId, [...existing, message]);
+		return Promise.resolve();
 	}
 
-	async getMessages(sessionId: string): Promise<TMessage[]> {
-		return this.messages.get(sessionId) ?? [];
+	getMessages(sessionId: string): Promise<TMessage[]> {
+		return Promise.resolve(this.messages.get(sessionId) ?? []);
 	}
 
-	async createSession({
+	createSession({
 		sessionId,
 		resourceId,
 		context: _context,
@@ -42,14 +43,15 @@ export class InMemoryMemory<
 		if (!this.sessions.has(sessionId)) {
 			this.sessions.set(sessionId, { resourceId });
 		}
+		return Promise.resolve();
 	}
 
-	async getSession(sessionId: string): Promise<{ resourceId: string } | null> {
+	getSession(sessionId: string): Promise<{ resourceId: string } | null> {
 		const session = this.sessions.get(sessionId);
-		return session ? { resourceId: session.resourceId } : null;
+		return Promise.resolve(session ? { resourceId: session.resourceId } : null);
 	}
 
-	async createStream({
+	createStream({
 		sessionId,
 		streamId,
 		context: _context,
@@ -60,9 +62,10 @@ export class InMemoryMemory<
 	}): Promise<void> {
 		const existing = this.streams.get(sessionId) ?? [];
 		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100)); // Keep last 100
+		return Promise.resolve();
 	}
 
-	async getSessionStreams(sessionId: string): Promise<string[]> {
-		return this.streams.get(sessionId) ?? [];
+	getSessionStreams(sessionId: string): Promise<string[]> {
+		return Promise.resolve(this.streams.get(sessionId) ?? []);
 	}
 }
