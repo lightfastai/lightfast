@@ -27,6 +27,7 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
     isLoading,
     error,
     setInput,
+    append,
   } = useChat({
     api: "/api/stream",
     body: {
@@ -48,20 +49,17 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
     }
   }, [messages]);
 
-  // Handle sending message via the ChatInput component
+  // Handle sending message using append
   const handleSendMessage = useCallback(async (message: string) => {
     if (!message.trim() || isLoading) return;
     
-    // Set the input value
-    setInput(message);
-    
-    // Create a synthetic event for the form submission
-    const form = document.createElement('form');
-    const event = new Event('submit', { bubbles: true, cancelable: true });
-    
-    // Submit the form
-    handleSubmit(event as any);
-  }, [setInput, handleSubmit, isLoading]);
+    // Use append to add the message
+    await append({
+      id: crypto.randomUUID(),
+      role: "user",
+      content: message,
+    });
+  }, [append, isLoading]);
 
   // Handle input change for controlled component
   const handleInputValueChange = useCallback((value: string) => {
