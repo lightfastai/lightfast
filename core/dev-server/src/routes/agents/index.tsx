@@ -117,7 +117,7 @@ function AgentCard({ agentKey, agent }: { agentKey: string; agent: SerializedAge
 
 			{/* Model Badge */}
 			<div className="mb-4">
-				<span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border bg-gray-500/10 text-gray-500 border-gray-500/20">
+				<span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border bg-muted text-muted-foreground border-border">
 					{modelId}
 				</span>
 			</div>

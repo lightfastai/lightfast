@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ChatInterface } from '../../components/chat/chat-interface'
+import { ChatInterface } from '../../components/chat-interface'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@repo/ui/components/ui/button'
 // Type for the serialized agent data structure from the API
