@@ -2,7 +2,7 @@ import { createServerFileRoute } from '@tanstack/react-start/server'
 import { json } from '@tanstack/react-start'
 import { fetchRequestHandler } from 'lightfast/server/adapters/fetch'
 import { InMemoryMemory } from 'lightfast/memory'
-import { AgentLoaderService } from '../../server/agent-loader'
+import { AgentRuntimeService } from '../../server/agent-runtime'
 
 // Singleton memory instance for development
 // This ensures conversation history persists during the dev session
@@ -103,12 +103,12 @@ export const ServerRoute = createServerFileRoute('/api/stream')
         
         console.info(`📤 POST /api/stream [${agentId}/${sessionId}]`)
         
-        // Load agent using the loader service
-        const agentLoader = AgentLoaderService.getInstance()
-        const agent = await agentLoader.getAgent(agentId)
+        // Load agent using the runtime service
+        const agentRuntime = AgentRuntimeService.getInstance()
+        const agent = await agentRuntime.getAgent(agentId)
         
         if (!agent) {
-          const availableAgentIds = await agentLoader.getAgentIds()
+          const availableAgentIds = await agentRuntime.getAgentIds()
           
           if (availableAgentIds.length === 0) {
             return json(

@@ -1,6 +1,6 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { json } from '@tanstack/react-start'
-import { AgentDiscoveryService } from '../../server/agent-discovery'
+import { LightfastConfigService } from '../../server/lightfast-config'
 import type { LightfastJSON } from 'lightfast/client'
 
 export const ServerRoute = createServerFileRoute('/api/agents/$agentId')
@@ -10,9 +10,9 @@ export const ServerRoute = createServerFileRoute('/api/agents/$agentId')
       console.info(`GET /api/agents/${agentId} @`, request.url);
       
       try {
-        // Get the Lightfast configuration from discovery service
-        const discovery = AgentDiscoveryService.getInstance();
-        const config: LightfastJSON = await discovery.discoverConfig();
+        // Get the Lightfast configuration from config service
+        const configService = LightfastConfigService.getInstance();
+        const config: LightfastJSON = await configService.getConfig();
         
         // Find the specific agent from the configuration (agents is a LightfastAgentSet)
         // Check if agentId exists in the agents record

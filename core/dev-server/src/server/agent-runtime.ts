@@ -6,21 +6,20 @@ import type { Lightfast } from 'lightfast/client'
 import { TEST_AGENTS } from './test-agents'
 
 /**
- * Service for loading compiled agents from the .lightfast directory
- * This complements the AgentDiscoveryService by loading actual Agent instances
- * rather than just configuration metadata
+ * Service for loading runtime agent instances from compiled Lightfast configurations
+ * Returns actual Agent instances that can be executed, not just metadata
  */
-export class AgentLoaderService {
-  private static instance: AgentLoaderService | undefined
+export class AgentRuntimeService {
+  private static instance: AgentRuntimeService | undefined
   private agentCache: Record<string, Agent<any, any>> | null = null
   private lastLoadTime = 0
   private readonly CACHE_TTL = 1000 // 1 second cache for hot reload
   
   private constructor() {}
   
-  static getInstance(): AgentLoaderService {
-    AgentLoaderService.instance ??= new AgentLoaderService()
-    return AgentLoaderService.instance
+  static getInstance(): AgentRuntimeService {
+    AgentRuntimeService.instance ??= new AgentRuntimeService()
+    return AgentRuntimeService.instance
   }
   
   /**
