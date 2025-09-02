@@ -101,7 +101,7 @@ export class Lightfast {
 	 * Validates the configuration
 	 */
 	private validateConfig(config: LightfastConfig): void {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		 
 		if (!config.agents || typeof config.agents !== "object") {
 			throw new Error("Lightfast configuration must include 'agents' object");
 		}
@@ -113,7 +113,7 @@ export class Lightfast {
 
 		// Validate each agent
 		for (const [key, agent] of Object.entries(config.agents)) {
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			 
 			if (!agent || typeof agent !== "object") {
 				throw new Error(`Agent '${key}' is not a valid Agent instance`);
 			}

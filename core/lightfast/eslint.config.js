@@ -8,14 +8,14 @@ export default [
   ...baseConfig,
   {
     rules: {
-      // Disable unsafe-related checks
+      // Disable unsafe-related checks (these are all related to any types)
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       // Disable other problematic rules
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "@typescript-eslint/prefer-nullish-coalescing": "off", // Keep disabled - only 25 errors but requires careful review
       "@typescript-eslint/no-unnecessary-condition": "off",
       // Allow empty object type
       "@typescript-eslint/no-empty-object-type": "off",
