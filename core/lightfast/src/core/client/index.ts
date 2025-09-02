@@ -101,6 +101,7 @@ export class Lightfast {
 	 * Validates the configuration
 	 */
 	private validateConfig(config: LightfastConfig): void {
+		 
 		if (!config.agents || typeof config.agents !== "object") {
 			throw new Error("Lightfast configuration must include 'agents' object");
 		}
@@ -112,6 +113,7 @@ export class Lightfast {
 
 		// Validate each agent
 		for (const [key, agent] of Object.entries(config.agents)) {
+			 
 			if (!agent || typeof agent !== "object") {
 				throw new Error(`Agent '${key}' is not a valid Agent instance`);
 			}
@@ -219,8 +221,8 @@ export function createLightfast(config: LightfastConfig): Lightfast {
 export type { Agent, AgentOptions } from "../primitives/agent";
 
 // Export the type of the JSON representation
-export type LightfastJSON = {
+export interface LightfastJSON {
 	agents: LightfastAgentSet;
 	metadata?: LightfastMetadata;
 	dev?: LightfastDevConfig;
-};
+}

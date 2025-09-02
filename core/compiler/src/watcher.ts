@@ -98,7 +98,7 @@ export class ConfigWatcher extends EventEmitter {
     });
   }
   
-  private log(message: string, ...args: any[]): void {
+  private log(message: string, ...args: unknown[]): void {
     if (this.debug) {
       console.log(`[ConfigWatcher] ${message}`, ...args);
     }
@@ -130,7 +130,7 @@ export class ConfigWatcher extends EventEmitter {
       
       // Initialize chokidar watcher
       this.watcher = chokidar.watch(watchPaths, {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        ignored: /(^|[/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true, // We handle initial compilation separately
         ignorePermissionErrors: true,
@@ -195,10 +195,10 @@ export class ConfigWatcher extends EventEmitter {
   /**
    * Update watched dependencies based on compilation result
    */
-  private updateWatchedDependencies(metafile: any, baseDir: string): void {
+  private updateWatchedDependencies(metafile: { inputs?: Record<string, unknown> }, baseDir: string): void {
     const newDependencies = new Set<string>();
     
-    if (metafile?.inputs) {
+    if (metafile.inputs) {
       for (const inputPath of Object.keys(metafile.inputs)) {
         const absolutePath = resolve(baseDir, inputPath);
         if (existsSync(absolutePath)) {
@@ -234,14 +234,14 @@ export class ConfigWatcher extends EventEmitter {
   /**
    * Force a recompilation of all configuration files
    */
-  async forceCompilation(): Promise<void> {
+  forceCompilation(): void {
     if (this.isCompiling) {
       return; // Already compiling
     }
     
     const configPath = this.findAnyConfigFile();
     if (configPath) {
-      await this.handleFileChange('change', configPath);
+      this.handleFileChange('change', configPath);
     }
   }
   
@@ -312,19 +312,19 @@ export class ConfigWatcher extends EventEmitter {
     });
   }
   
-  private async handleFileChange(eventType: 'change' | 'add', configPath: string): Promise<void> {
+  private handleFileChange(eventType: 'change' | 'add', configPath: string): void {
     // Clear any existing debounce timer
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
     
     // Set up debounced compilation
-    this.debounceTimer = setTimeout(async () => {
+    this.debounceTimer = setTimeout(() => {
       if (this.isCompiling) {
         return; // Skip if already compiling
       }
       
-      await this.compileConfig(configPath);
+      void this.compileConfig(configPath);
     }, this.debounceDelay);
   }
   

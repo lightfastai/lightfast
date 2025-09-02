@@ -22,7 +22,7 @@ interface StreamData {
 /**
  * Redis-based implementation of Memory interface
  */
-export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
+export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = Record<string, unknown>>
 	implements Memory<TMessage, TContext>
 {
 	private redis: Redis;
@@ -48,7 +48,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 	async appendMessage({
 		sessionId,
 		message,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		message: TMessage;
@@ -81,7 +81,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 		const jsonData = await this.redis.json.get(key, "$");
 		if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
 			const firstItem = jsonData[0] as { messages?: TMessage[] };
-			return firstItem.messages || [];
+			return firstItem.messages ?? [];
 		}
 
 		return [];
@@ -90,7 +90,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 	async createSession({
 		sessionId,
 		resourceId,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		resourceId: string;
@@ -132,7 +132,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 	async createStream({
 		sessionId,
 		streamId,
-		context,
+		context: _context,
 	}: {
 		sessionId: string;
 		streamId: string;
@@ -164,6 +164,6 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = {}>
 			0,
 			-1,
 		);
-		return streamIds || [];
+		return streamIds ?? [];
 	}
 }

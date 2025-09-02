@@ -164,7 +164,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
   };
   
   // Debug logging (only in DEBUG mode)
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
+   
   if (process.env.DEBUG === '1') {
     console.log('[transpiler] Build options:', {
       bundle,
@@ -217,8 +217,8 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
       // If no separate file, check if source map is inline
       if (!sourcemapContent && result.outputFiles[0]) {
         const code = new TextDecoder().decode(result.outputFiles[0].contents);
-        const inlineMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;base64,(.+)$/m);
-        if (inlineMatch) {
+        const inlineMatch = /\/\/# sourceMappingURL=data:application\/json;base64,(.+)$/m.exec(code);
+        if (inlineMatch?.[1]) {
           sourcemapContent = Buffer.from(inlineMatch[1], 'base64').toString('utf-8');
         }
       }
@@ -232,7 +232,7 @@ export async function transpile(options: TranspileOptions): Promise<TranspileRes
     }
 
     // Debug logging for metafile (only in DEBUG mode)
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
+     
     if (process.env.DEBUG === '1' && result.metafile) {
       const metafileObj = result.metafile as { inputs?: Record<string, unknown> } | null | undefined;
       console.log('[transpiler] Metafile inputs:', Object.keys(metafileObj?.inputs ?? {}));

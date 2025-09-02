@@ -14,4 +14,9 @@ export default defineConfig({
     tanstackStart({ customViteReactPlugin: true }),
     viteReact(),
   ],
+  ssr: {
+    // Bundle ALL dependencies instead of externalizing them
+    // This makes the dev-server output self-contained for CLI distribution
+    noExternal: true,
+  },
 })

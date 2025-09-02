@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { resolve, basename } from 'node:path';
+import { resolve } from 'node:path';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import type { TranspileResult } from './transpiler.js';
 
@@ -28,6 +28,20 @@ export interface BundleOutput {
   filepath: string;
   size: number;
   metadata: BundleMetadata;
+}
+
+export interface BundleManifest {
+  version: string;
+  compiledAt: string;
+  compilerVersion: string;
+  bundles: {
+    id: string;
+    hash: string;
+    file: string;
+    size: number;
+    tools: string[];
+    models: string[];
+  }[];
 }
 
 export interface BundlerOptions {
@@ -73,8 +87,8 @@ function wrapInBundleFormat(
     hash,
     name: metadata.name,
     description: metadata.description,
-    tools: metadata.tools || [],
-    models: metadata.models || [],
+    tools: metadata.tools ?? [],
+    models: metadata.models ?? [],
     compiledAt: new Date().toISOString(),
     compilerVersion
   };
@@ -127,8 +141,8 @@ export class BundleGenerator {
 
   constructor(options: BundlerOptions) {
     this.baseDir = options.baseDir;
-    this.outputDir = options.outputDir || resolve(this.baseDir, '.lightfast/dist');
-    this.compilerVersion = options.compilerVersion || '0.1.0';
+    this.outputDir = options.outputDir ?? resolve(this.baseDir, '.lightfast/dist');
+    this.compilerVersion = options.compilerVersion ?? '0.1.0';
     
     // Ensure output directory exists
     if (!existsSync(this.outputDir)) {
@@ -142,7 +156,7 @@ export class BundleGenerator {
   async generateBundle(
     transpileResult: TranspileResult,
     agentId: string,
-    sourcePath: string
+    _sourcePath: string
   ): Promise<BundleOutput> {
     if (transpileResult.errors.length > 0) {
       throw new Error(`Cannot bundle due to transpilation errors: ${transpileResult.errors.join(', ')}`);
@@ -185,8 +199,8 @@ export class BundleGenerator {
         hash,
         name: metadata.name,
         description: metadata.description,
-        tools: metadata.tools || [],
-        models: metadata.models || [],
+        tools: metadata.tools ?? [],
+        models: metadata.models ?? [],
         compiledAt: new Date().toISOString(),
         compilerVersion: this.compilerVersion
       }
@@ -213,7 +227,7 @@ export class BundleGenerator {
     }
     
     // Write manifest
-    await this.updateManifest([bundle]);
+    this.updateManifest([bundle]);
     
     return [bundle];
   }
@@ -221,11 +235,11 @@ export class BundleGenerator {
   /**
    * Updates the manifest file with bundle information
    */
-  private async updateManifest(bundles: BundleOutput[]): Promise<void> {
+  private updateManifest(bundles: BundleOutput[]): void {
     const manifestPath = resolve(this.outputDir, 'manifest.json');
     
     // Read existing manifest if it exists
-    let manifest: any = {
+    let manifest: BundleManifest = {
       version: '1.0.0',
       compiledAt: new Date().toISOString(),
       compilerVersion: this.compilerVersion,

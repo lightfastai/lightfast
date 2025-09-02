@@ -1,5 +1,33 @@
 # @lightfastai/dev-server
 
+## 0.2.2
+
+### Patch Changes
+
+- dea3e10: Fix CLI React dependency errors with comprehensive bundling
+
+  The CLI v0.3.1 was still failing with "@tanstack/react-router" module not found errors despite the previous selective bundling fix. This changes the dev-server build to bundle ALL dependencies instead of selectively bundling specific packages.
+
+  Changes:
+  - Set `ssr.noExternal: true` in Vite config to bundle all dependencies
+  - SSR bundle grows from 262kB to 1.1MB but becomes completely self-contained
+  - Dev-server output package.json now has empty dependencies: {}
+  - Eliminates all module resolution errors when CLI is installed via npx
+
+  This makes the dev-server truly self-contained for CLI distribution without needing any external dependencies at runtime.
+
+## 0.2.1
+
+### Patch Changes
+
+- b653ea7: Fix CLI React dependency errors by bundling UI deps in dev-server
+
+  The CLI v0.3.0 was failing when installed via npx with "Cannot find package 'react'" errors. Instead of adding React dependencies to the CLI package (which would bloat it), we configure the dev-server build to bundle all UI dependencies.
+  - Configure Vite SSR to bundle React/UI deps instead of externalizing them
+  - Keep CLI package.json clean with only core dependencies (5 vs 15+ deps)
+  - Self-contained dev-server output that works via npx
+  - Architecturally cleaner than polluting CLI deps with UI libraries
+
 ## 0.2.0
 
 ### Minor Changes

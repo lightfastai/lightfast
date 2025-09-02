@@ -1,0 +1,13 @@
+examples/
+dist/
+node_modules/
+.cache/
+.turbo/
+*.test.ts
+*.test.js
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+src/**/__tests__/**
+src/**/__mocks__/**
