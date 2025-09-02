@@ -10,12 +10,12 @@ import {
 	SidebarMenuItem,
 	SidebarMenuButton,
 	useSidebar,
-} from "~/components/ui/sidebar";
+} from "@repo/ui/components/ui/sidebar";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@repo/ui/components/ui/tooltip";
 import { SidebarTriggerButton } from "./sidebar-trigger-button";
 
 export function AppSidebar() {

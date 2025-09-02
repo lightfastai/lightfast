@@ -1,9 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { LightfastMetadata, LightfastDevConfig } from "lightfast/client";
-import type { Agent } from "lightfast/agent";
-
-// Infer the serialized Agent type from what JSON.stringify would produce
-type SerializedAgent = Pick<Agent, 'vercelConfig' | 'lightfastConfig'>;
+// Type for the serialized agent data structure from the API  
+interface SerializedAgent {
+  vercelConfig: {
+    model: {
+      modelId: string;
+    };
+  };
+  lightfastConfig: {
+    name: string;
+  };
+}
 
 // Type for the API response data structure  
 interface APIResponseData {
@@ -83,7 +90,7 @@ function AgentsPage() {
 					<AgentCard
 						key={agentKey}
 						agentKey={agentKey}
-						agent={agent}
+						agent={agent as SerializedAgent}
 					/>
 				))}
 			</div>

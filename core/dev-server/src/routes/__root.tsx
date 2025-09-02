@@ -13,8 +13,8 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { fonts } from "~/lib/fonts";
 import appCss from "~/styles/globals.css?url";
 import { seo } from "~/utils/seo";
-import { SidebarProvider } from "~/components/ui/sidebar";
-import { TooltipProvider } from "~/components/ui/tooltip";
+import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 
 const queryClient = new QueryClient();
 

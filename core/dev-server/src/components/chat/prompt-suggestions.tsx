@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "../ui/button";
-import { cn } from "../../lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import { BookOpen, Code2, Palette, X } from "lucide-react";
 import { useState } from "react";
 

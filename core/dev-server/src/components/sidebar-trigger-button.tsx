@@ -1,13 +1,13 @@
 "use client";
 
-import { SidebarMenuButton, useSidebar } from "~/components/ui/sidebar";
+import { SidebarMenuButton, useSidebar } from "@repo/ui/components/ui/sidebar";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@repo/ui/components/ui/tooltip";
 import { PanelLeftIcon } from "lucide-react";
-import { Icons } from "~/components/icons";
+import { Icons } from "@repo/ui/components/icons";
 
 export function SidebarTriggerButton() {
 	const { toggleSidebar } = useSidebar();

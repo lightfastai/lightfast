@@ -1,11 +1,18 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChatInterface } from '../../components/chat/chat-interface'
 import { ArrowLeft } from 'lucide-react'
-import { Button } from '../../components/ui/button'
-import type { Agent } from 'lightfast/agent'
-
-// Infer the serialized Agent type from what JSON.stringify would produce
-type SerializedAgent = Pick<Agent, 'vercelConfig' | 'lightfastConfig'>;
+import { Button } from '@repo/ui/components/ui/button'
+// Type for the serialized agent data structure from the API
+interface SerializedAgent {
+  vercelConfig: {
+    model: {
+      modelId: string;
+    };
+  };
+  lightfastConfig: {
+    name: string;
+  };
+}
 
 export const Route = createFileRoute('/agents/$agentId')({
   component: AgentChatPage,

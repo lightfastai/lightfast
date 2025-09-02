@@ -2,9 +2,9 @@
 
 import { ArrowUp, Paperclip, Mic } from "lucide-react";
 import { useState, useCallback, useRef, useEffect, forwardRef, memo, useImperativeHandle } from "react";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { cn } from "../../lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void> | void;
