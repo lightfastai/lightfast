@@ -1,5 +1,12 @@
 # @lightfastai/cli-core
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [455b595]
+  - @lightfastai/dev-server@0.3.0
+
 ## 0.2.3
 
 ### Patch Changes
