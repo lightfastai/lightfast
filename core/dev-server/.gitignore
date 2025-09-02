@@ -1,0 +1,17 @@
+# Environment variables
+.env
+.env.local
+
+# Build outputs
+.output/
+.tanstack/
+.nitro/
+.lightfast/
+dist/
+
+# Cache
+.cache/
+.turbo/
+
+# Dependencies
+node_modules/
