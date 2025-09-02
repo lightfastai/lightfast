@@ -36,7 +36,7 @@
     "@ai-sdk/google": "^1.2.17",
     "@ai-sdk/google-vertex": "^2.2.21",
     "@ai-sdk/openai": "^0.0.70",
-    "@ai-sdk/react": "^2.0.14",
+    "@ai-sdk/react": "2.0.15",
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
     "@openrouter/ai-sdk-provider": "^0.4.5",

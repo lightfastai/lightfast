@@ -1433,7 +1433,7 @@ importers:
         specifier: ^0.0.70
         version: 0.0.70(zod@3.25.76)
       '@ai-sdk/react':
-        specifier: ^2.0.14
+        specifier: 2.0.15
         version: 2.0.15(react@19.1.1)(zod@3.25.76)
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
@@ -1720,7 +1720,7 @@ importers:
         specifier: ^0.0.70
         version: 0.0.70(zod@3.25.76)
       '@ai-sdk/react':
-        specifier: ^2.0.14
+        specifier: 2.0.15
         version: 2.0.15(react@19.1.1)(zod@3.25.76)
       '@fal-ai/client':
         specifier: ^1.2.0
