@@ -153,7 +153,6 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
 	} = useChat<DevServerUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
-		experimental_throttle: 45,
 		messages: [],
 		onError: (err) => {
 			console.error("Chat error:", err);
