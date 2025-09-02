@@ -3,6 +3,7 @@ import fs from 'fs'
 import { pathToFileURL } from 'url'
 import type { Agent } from 'lightfast/agent'
 import type { Lightfast } from 'lightfast/client'
+import { TEST_AGENTS } from './test-agents'
 
 /**
  * Service for loading compiled agents from the .lightfast directory
@@ -27,6 +28,12 @@ export class AgentLoaderService {
    * Returns actual Agent instances that can be used with fetchRequestHandler
    */
   async loadAgents(): Promise<Record<string, Agent<any, any>>> {
+    // Use test agents if flag is set (for dev-server UI development)
+    if (process.env.USE_TEST_AGENTS === 'true') {
+      console.info('🧪 Using test agents for streaming')
+      return TEST_AGENTS as Record<string, Agent<any, any>>
+    }
+    
     const now = Date.now()
     
     // Return cached agents if still fresh

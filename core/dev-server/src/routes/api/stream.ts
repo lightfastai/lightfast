@@ -84,11 +84,11 @@ export const ServerRoute = createServerFileRoute('/api/stream')
       try {
         // Parse request body to get agentId and sessionId
         const body = await request.json()
-        const { agentId, sessionId, messages } = body as {
-          agentId?: string
-          sessionId?: string
-          messages?: any[]
-        }
+        
+        // Support both direct format and AI SDK format (which nests in body.body)
+        const agentId = body.agentId || body.body?.agentId
+        const sessionId = body.sessionId || body.body?.sessionId
+        let messages = body.messages || []
         
         if (!agentId || !sessionId) {
           return json(
@@ -137,11 +137,26 @@ export const ServerRoute = createServerFileRoute('/api/stream')
         // Get memory instance
         const memory = getDevMemory()
         
+        // Convert AI SDK messages format to Lightfast format if needed
+        // AI SDK uses { role, content, id } while Lightfast uses { role, parts, id }
+        const lightfastMessages = messages.map((msg: any) => {
+          if (msg.content && !msg.parts) {
+            // Convert from AI SDK format
+            return {
+              role: msg.role,
+              parts: [{ type: 'text', text: msg.content }],
+              id: msg.id || crypto.randomUUID(),
+            }
+          }
+          // Already in Lightfast format
+          return msg
+        })
+        
         // Create a new request with the messages in the expected format
         const streamRequest = new Request(request.url, {
           method: 'POST',
           headers: request.headers,
-          body: JSON.stringify({ messages: messages || [] }),
+          body: JSON.stringify({ messages: lightfastMessages }),
         })
         
         // Use fetchRequestHandler to handle the streaming

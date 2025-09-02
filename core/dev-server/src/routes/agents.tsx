@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import type { LightfastMetadata, LightfastDevConfig, Agent } from 'lightfast/client';
 
@@ -171,10 +171,19 @@ function AgentCard({ agent }: { agent: any }) {
         )}
       </div>
 
-      {/* Action Button (for future functionality) */}
-      <button className="mt-4 w-full px-3 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors">
-        View Details →
-      </button>
+      {/* Action Buttons */}
+      <div className="mt-4 flex gap-2">
+        <Link
+          to="/agents/$agentId"
+          params={{ agentId: agent.key }}
+          className="flex-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-center"
+        >
+          💬 Chat
+        </Link>
+        <button className="flex-1 px-3 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors">
+          View Details
+        </button>
+      </div>
     </div>
   );
 }
