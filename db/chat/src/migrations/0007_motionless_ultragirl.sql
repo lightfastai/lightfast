@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_chat_message` ADD `model_id` varchar(100);

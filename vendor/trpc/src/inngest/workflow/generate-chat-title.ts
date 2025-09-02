@@ -4,7 +4,7 @@ import {
 	LightfastChatSession,
 	LightfastChatMessage,
 	DEFAULT_SESSION_TITLE,
-} from "@vendor/db";
+} from "@db/chat";
 import { eq } from "drizzle-orm";
 import { gateway } from "@ai-sdk/gateway";
 import { generateText } from "ai";

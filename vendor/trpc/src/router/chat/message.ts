@@ -8,7 +8,7 @@ import {
   LightfastChatMessage, 
   LightfastChatStream,
   insertLightfastChatMessageSchema
-} from "@vendor/db";
+} from "@db/chat";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 export const messageRouter = {

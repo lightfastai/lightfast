@@ -11,8 +11,8 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
-import type { db as DB } from "@vendor/db/client";
-import { db } from "@vendor/db/client";
+import type { db as DB } from "@db/chat/client";
+import { db } from "@db/chat/client";
 import { $TRPCHeaderName, getHeaderFromTRPCHeaders } from "./headers";
 
 /**

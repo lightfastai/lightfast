@@ -1396,6 +1396,104 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/ui@3.2.4)(jiti@2.5.1)(jsdom@26.1.0(bufferutil@4.0.9))(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.0)
 
+  db/chat:
+    dependencies:
+      '@planetscale/database':
+        specifier: ^1.19.0
+        version: 1.19.0
+      '@repo/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      '@t3-oss/env-nextjs':
+        specifier: ^0.12.0
+        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@3.25.76)
+      drizzle-orm:
+        specifier: ^0.43.1
+        version: 0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7)
+      drizzle-zod:
+        specifier: ^0.7.1
+        version: 0.7.1(drizzle-orm@0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7))(zod@3.25.76)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      dotenv-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      drizzle-kit:
+        specifier: ^0.31.0
+        version: 0.31.4
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  db/cloud:
+    dependencies:
+      '@planetscale/database':
+        specifier: ^1.19.0
+        version: 1.19.0
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      '@t3-oss/env-nextjs':
+        specifier: ^0.12.0
+        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      drizzle-orm:
+        specifier: ^0.43.1
+        version: 0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7)
+      drizzle-zod:
+        specifier: ^0.7.1
+        version: 0.7.1(drizzle-orm@0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7))(zod@3.25.76)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      dotenv-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      drizzle-kit:
+        specifier: ^0.31.0
+        version: 0.31.4
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
   examples/1-agent-chat:
     dependencies:
       '@ai-sdk/gateway':
@@ -2576,6 +2674,9 @@ importers:
       '@ai-sdk/gateway':
         specifier: 'catalog:'
         version: 1.0.7(zod@3.25.76)
+      '@db/chat':
+        specifier: workspace:*
+        version: link:../../db/chat
       '@repo/ai':
         specifier: workspace:^
         version: link:../../packages/ai
@@ -2594,9 +2695,6 @@ importers:
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../clerk
-      '@vendor/db':
-        specifier: workspace:*
-        version: link:../db
       '@vendor/inngest':
         specifier: workspace:^
         version: link:../inngest

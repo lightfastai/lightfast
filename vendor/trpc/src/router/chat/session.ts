@@ -7,7 +7,7 @@ import {
 	LightfastChatSession,
 	LightfastChatMessage,
 	DEFAULT_SESSION_TITLE,
-} from "@vendor/db";
+} from "@db/chat";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
 import { inngest } from "../../inngest/client/client";
 

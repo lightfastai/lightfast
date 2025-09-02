@@ -4,7 +4,7 @@ import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
 import type { RouterOutputs } from "@vendor/trpc";
-import { DEFAULT_SESSION_TITLE } from "@vendor/db/lightfast/schema";
+import { DEFAULT_SESSION_TITLE } from "@db/chat";
 
 type Session = RouterOutputs["chat"]["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;

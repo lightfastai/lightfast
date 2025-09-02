@@ -22,7 +22,7 @@ let config: NextConfig = withBetterStack(
 			"@vendor/observability",
 			"@vendor/next",
 			"@vendor/trpc",
-			"@vendor/db",
+			"@db/chat",
 			"lightfast",
 		],
 		experimental: {
