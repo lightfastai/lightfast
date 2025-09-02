@@ -1,5 +1,11 @@
 # @lightfastai/dev-server
 
+## 0.2.3
+
+### Patch Changes
+
+- 27173bc: Deploy latest CLI and dev-server with integrated build system improvements and UI enhancements
+
 ## 0.2.2
 
 ### Patch Changes
