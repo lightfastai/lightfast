@@ -13,17 +13,11 @@ export const ServerRoute = createServerFileRoute('/api/agents')
         const configService = LightfastConfigService.getInstance();
         const config: LightfastJSON = await configService.getConfig();
         
-        // Convert agents Record to array for API response (for UI consumption)
-        const agentsArray = Object.entries(config.agents).map(([key, agent]) => ({
-          key,
-          ...agent, // Include the full Agent object
-        }));
-        
-        // Return the configuration with agents as array
+        // Return full agents record
         return json({
           success: true,
           data: {
-            agents: agentsArray,
+            agents: config.agents,
             metadata: config.metadata,
             dev: config.dev,
           },

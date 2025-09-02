@@ -1,41 +1,48 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChatInterface } from '../../components/chat/chat-interface'
-import { useAgents } from '../../hooks/use-agents'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '../../components/ui/button'
+import type { Agent } from 'lightfast/agent'
 
-// Type for agent as returned by API
-interface AgentWithKey {
-  key: string;
-  lightfastConfig?: {
-    name?: string;
-    system?: string;
-  };
-}
+// Infer the serialized Agent type from what JSON.stringify would produce
+type SerializedAgent = Pick<Agent, 'vercelConfig' | 'lightfastConfig'>;
 
 export const Route = createFileRoute('/agents/$agentId')({
   component: AgentChatPage,
+  loader: async ({ params }) => {
+    const agentId = params.agentId;
+    
+    try {
+      // Fetch from the API endpoint instead of directly importing server modules
+      const response = await fetch(`/api/agents/${agentId}`);
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Agent not found',
+          message: `Agent with key "${agentId}" does not exist`,
+        };
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error(`Error fetching agent config for ${agentId}:`, error);
+      
+      return {
+        success: false,
+        error: 'Failed to load agent configuration',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
 })
 
 function AgentChatPage() {
   const { agentId } = Route.useParams()
-  const { data: agentsData, isLoading } = useAgents()
+  const agentData = Route.useLoaderData()
   
-  // Find the specific agent
-  const agent = agentsData?.data?.agents?.find((a: AgentWithKey) => a.key === agentId)
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading agent...</p>
-        </div>
-      </div>
-    )
-  }
-  
-  if (!agent) {
+  if (!agentData.success || !agentData.data?.agent) {
     return (
       <div className="flex flex-col h-screen">
         <div className="border-b px-6 py-4">
@@ -50,7 +57,7 @@ function AgentChatPage() {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-2">Agent Not Found</h2>
             <p className="text-muted-foreground mb-4">
-              The agent "{agentId}" does not exist.
+              {agentData.message || agentData.error || `The agent "${agentId}" does not exist.`}
             </p>
             <Link to="/agents">
               <Button>
@@ -63,11 +70,14 @@ function AgentChatPage() {
     )
   }
   
+  const agent: SerializedAgent = agentData.data.agent
+  const agentName = agent.lightfastConfig.name;
+  
   return (
     <div className="h-screen flex flex-col">
       <ChatInterface 
         agentId={agentId} 
-        agentName={agent.lightfastConfig?.name || agentId}
+        agentName={agentName}
       />
     </div>
   )

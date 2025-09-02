@@ -1,226 +1,125 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import type {
-	LightfastMetadata,
-	LightfastDevConfig,
-	LightfastJSON,
-} from "lightfast/client";
+import type { LightfastMetadata, LightfastDevConfig } from "lightfast/client";
+import type { Agent } from "lightfast/agent";
 
-export const Route = createFileRoute("/agents/")({
-	component: AgentsPage,
-});
+// Infer the serialized Agent type from what JSON.stringify would produce
+type SerializedAgent = Pick<Agent, 'vercelConfig' | 'lightfastConfig'>;
 
-// Type for agent as returned by API (Agent spread with key)
-interface AgentWithKey {
-	key: string;
-	vercelConfig?: {
-		model?: {
-			modelId?: string;
-			config?: Record<string, unknown>;
-		};
-	};
-	lightfastConfig?: {
-		name?: string;
-		system?: string;
-	};
-}
-
-// Type for the API response data structure
+// Type for the API response data structure  
 interface APIResponseData {
-	agents: AgentWithKey[];
+	agents: Record<string, SerializedAgent>;
 	metadata?: LightfastMetadata;
 	dev?: LightfastDevConfig;
 }
 
-function AgentsPage() {
-	const [lightfastData, setLightfastData] = useState<APIResponseData | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		// Fetch agents from the API
-		const fetchAgents = async () => {
-			try {
-				const response = await fetch("/api/agents");
-
-				if (!response.ok) {
-					throw new Error(`Failed to fetch agents: ${response.statusText}`);
-				}
-
-				const result = (await response.json()) as {
-					success: boolean;
-					data?: APIResponseData;
-					message?: string;
-				}
-
-				if (result.success && result.data) {
-					setLightfastData(result.data);
-				} else {
-					throw new Error(result.message ?? "Failed to load agents");
-				}
-			} catch (err) {
-				console.error("Error fetching agents:", err);
-				setError(err instanceof Error ? err.message : "Failed to load agents");
-			} finally {
-				setLoading(false);
-			}
+export const Route = createFileRoute("/agents/")({
+	component: AgentsPage,
+	loader: async () => {
+		// Fetch from the API endpoint instead of directly importing server modules
+		const response = await fetch('/api/agents');
+		
+		if (!response.ok) {
+			return {
+				success: false,
+				error: 'Failed to fetch agents',
+				message: `API request failed: ${response.statusText}`,
+			};
 		}
 
-		void fetchAgents();
-	}, []);
+		const result = await response.json();
+		
+		if (!result.success) {
+			return result;
+		}
 
-	if (loading) {
+		// The API now returns the full agents record directly
+		return {
+			success: true,
+			data: {
+				agents: result.data.agents,
+				metadata: result.data.metadata,
+				dev: result.data.dev,
+			},
+		};
+	},
+});
+
+function AgentsPage() {
+	const loaderData = Route.useLoaderData();
+
+	// Handle error state
+	if (!loaderData.success) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center text-destructive">
+					<p className="text-lg font-semibold">Error loading agents</p>
+					<p className="text-sm mt-2">{loaderData.message || loaderData.error}</p>
+				</div>
+			</div>
+		);
+	}
+
+	const lightfastData = loaderData.data;
+
+	// Handle no agents case
+	if (!lightfastData || !lightfastData.agents || Object.keys(lightfastData.agents).length === 0) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
 				<div className="text-center">
-					<div className="animate-pulse text-2xl mb-2">⚡</div>
-					<p className="text-muted-foreground">Loading agents...</p>
-				</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="flex items-center justify-center min-h-[60vh]">
-				<div className="text-center max-w-md">
-					<div className="text-2xl mb-2">!</div>
-					<h2 className="text-xl font-bold mb-2">Error Loading Agents</h2>
-					<p className="text-muted-foreground mb-4">{error}</p>
-					<button
-						onClick={() => window.location.reload()}
-						className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-					>
-						Retry
-					</button>
-				</div>
-			</div>
-		)
-	}
-
-	if (!lightfastData || lightfastData.agents.length === 0) {
-		return (
-			<div className="flex items-center justify-center min-h-[60vh]">
-				<div className="text-center">
-					<h2 className="text-2xl font-bold mb-2">No Agents Configured</h2>
-					<p className="text-muted-foreground">
-						Configure agents using the Lightfast client API
+					<p className="text-lg font-semibold">No agents configured</p>
+					<p className="text-sm text-muted-foreground mt-2">
+						Configure agents in your lightfast.config.ts file
 					</p>
 				</div>
 			</div>
-		)
+		);
 	}
 
 	return (
-		<div>
-			{/* Header with metadata */}
-			<div className="mb-8">
-				<h1 className="text-4xl font-bold mb-2">⚡ Lightfast Agents</h1>
-				{lightfastData.metadata && (
-					<div className="text-muted-foreground">
-						{lightfastData.metadata.name && (
-							<p className="text-lg">{lightfastData.metadata.name}</p>
-						)}
-						{lightfastData.metadata.description && (
-							<p className="text-sm mt-1">
-								{lightfastData.metadata.description}
-							</p>
-						)}
-						{lightfastData.metadata.version && (
-							<p className="text-sm mt-1">
-								Version: {lightfastData.metadata.version}
-							</p>
-						)}
-					</div>
-				)}
-			</div>
-
-			{/* Agent count */}
-			<div className="mb-6">
-				<p className="text-sm text-muted-foreground">
-					{lightfastData.agents.length} agent
-					{lightfastData.agents.length !== 1 ? "s" : ""} configured
-				</p>
-			</div>
-
+		<div className="container mx-auto p-6 max-w-7xl">
 			{/* Agents Grid */}
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{lightfastData.agents.map((agent) => (
-					<AgentCard key={agent.key} agent={agent} />
+				{Object.entries(lightfastData.agents).map(([agentKey, agent]) => (
+					<AgentCard
+						key={agentKey}
+						agentKey={agentKey}
+						agent={agent}
+					/>
 				))}
 			</div>
 		</div>
-	)
+	);
 }
 
-function AgentCard({ agent }: { agent: AgentWithKey }) {
-	const getModelBadgeColor = (modelStr: string) => {
-		if (modelStr.includes("claude"))
-			return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-		if (modelStr.includes("gpt"))
-			return "bg-green-500/10 text-green-500 border-green-500/20";
-		return "bg-gray-500/10 text-gray-500 border-gray-500/20";
-	}
-
-	const getModelDisplayName = (modelStr: string) => {
-		if (modelStr.includes("claude-3-5-sonnet")) return "Claude 3.5 Sonnet";
-		if (modelStr.includes("gpt-4-turbo")) return "GPT-4 Turbo";
-		if (modelStr.includes("gpt-4")) return "GPT-4";
-		return modelStr;
-	}
-	
-	// Extract model and name from the correct nested properties
-	const modelString = agent.vercelConfig?.model?.modelId || "unknown";
-	const agentName = agent.lightfastConfig?.name || agent.key;
-	const systemPrompt = agent.lightfastConfig?.system;
+function AgentCard({ agentKey, agent }: { agentKey: string; agent: SerializedAgent }) {
+	// Access the serialized agent data structure with proper types
+	const agentName = agent.lightfastConfig.name;
+	const modelId = agent.vercelConfig.model.modelId;
 
 	return (
-		<div className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
+		<Link
+			to="/agents/$agentId"
+			params={{ agentId: agentKey }}
+			className="block bg-card border border-border rounded-lg p-6 hover:shadow-lg hover:border-primary/20 transition-all cursor-pointer"
+		>
 			{/* Agent Name */}
-			<h3 className="text-lg font-semibold mb-2">
-				{agentName}
-			</h3>
+			<h3 className="text-lg font-semibold mb-2">{agentName}</h3>
 
 			{/* Agent Key */}
-			<p className="text-sm text-muted-foreground font-mono mb-4">
-				{agent.key}
-			</p>
+			<p className="text-sm text-muted-foreground font-mono mb-4">{agentKey}</p>
 
 			{/* Model Badge */}
 			<div className="mb-4">
-				<span
-					className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${getModelBadgeColor(modelString)}`}
-				>
-					{getModelDisplayName(modelString)}
+				<span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border bg-gray-500/10 text-gray-500 border-gray-500/20">
+					{modelId}
 				</span>
 			</div>
 
 			{/* Agent Configuration */}
 			<div className="text-sm text-muted-foreground space-y-1">
-				<p>
-					Model: {getModelDisplayName(modelString)}
-				</p>
-				{systemPrompt && (
-					<p className="line-clamp-2" title={systemPrompt}>
-						System: {systemPrompt.split('\n')[0]}...
-					</p>
-				)}
+				<p>Model: {modelId}</p>
 			</div>
-
-			{/* Action Buttons */}
-			<div className="mt-4 flex gap-2">
-				<Link
-					to="/agents/$agentId"
-					params={{ agentId: agent.key }}
-					className="flex-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-center"
-				>
-					💬 Chat
-				</Link>
-				<button className="flex-1 px-3 py-2 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors">
-					View Details
-				</button>
-			</div>
-		</div>
-	)
+		</Link>
+	);
 }
 

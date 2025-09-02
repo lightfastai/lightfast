@@ -53,11 +53,14 @@ export function AppSidebar() {
 											asChild
 											size="default"
 											isActive={currentPath === "/agents"}
-											className="group-data-[collapsible=expanded]:pr-2"
+											className="group-data-[collapsible=expanded]:pr-4"
 										>
-											<Link to="/agents">
-												<Bot className="size-4" />
-												<span className="group-data-[state=collapsed]:hidden text-xs flex-1">
+											<Link
+												to="/agents"
+												className="flex items-center gap-2 w-full"
+											>
+												<Bot className="size-4 shrink-0" />
+												<span className="group-data-[collapsible=icon]:hidden text-xs flex-1">
 													Agents
 												</span>
 											</Link>

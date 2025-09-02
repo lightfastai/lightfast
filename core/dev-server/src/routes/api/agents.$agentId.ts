@@ -14,37 +14,35 @@ export const ServerRoute = createServerFileRoute('/api/agents/$agentId')
         const configService = LightfastConfigService.getInstance();
         const config: LightfastJSON = await configService.getConfig();
         
-        // Find the specific agent from the configuration (agents is a LightfastAgentSet)
-        // Check if agentId exists in the agents record
-        if (!(agentId in config.agents)) {
+        // Get the specific agent from the agents record
+        const agent = config.agents[agentId];
+        
+        if (!agent) {
           return json(
             {
               success: false,
               error: 'Agent not found',
-              message: `No agent found with ID: ${agentId}`,
+              message: `Agent with key "${agentId}" does not exist`,
             },
             { status: 404 }
           );
         }
         
-        const agent = config.agents[agentId];
-        
-        // Return the agent details
+        // Return the full agent instance
         return json({
           success: true,
           data: {
-            key: agentId,
-            ...agent, // Include the full Agent object
+            agent: agent,
           },
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error(`Error fetching agent ${agentId}:`, error);
+        console.error(`Error fetching agent config for ${agentId}:`, error);
         
         return json(
           {
             success: false,
-            error: 'Failed to load agent details',
+            error: 'Failed to load agent configuration',
             message: error instanceof Error ? error.message : 'Unknown error',
           },
           { status: 500 }
