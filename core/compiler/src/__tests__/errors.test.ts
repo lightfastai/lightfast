@@ -390,7 +390,7 @@ describe('Error Scenarios', () => {
   describe('Edge Case Errors', () => {
     it('should handle extremely long file paths', async () => {
       const deepPath = join(tempDir, ...Array(20).fill('very-long-directory-name'));
-      const configPath = join(deepPath, 'lightfast.config.ts');
+      const _configPath = join(deepPath, 'lightfast.config.ts');
       
       createTestProject(deepPath, {
         'lightfast.config.ts': 'export default { name: "deep" };'
@@ -404,7 +404,7 @@ describe('Error Scenarios', () => {
 
     it('should handle special characters in paths', async () => {
       const specialDir = join(tempDir, 'special-chars-@#$%');
-      const configPath = join(specialDir, 'lightfast.config.ts');
+      const _configPath = join(specialDir, 'lightfast.config.ts');
       
       createTestProject(specialDir, {
         'lightfast.config.ts': 'export default { name: "special" };'

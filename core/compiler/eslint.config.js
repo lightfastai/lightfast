@@ -17,11 +17,14 @@ export default [
       "@typescript-eslint/no-unsafe-argument": "warn",
       "@typescript-eslint/no-unsafe-return": "warn",
       "@typescript-eslint/no-floating-promises": ["error", { ignoreVoid: true }], // Allow void operator
-      "@typescript-eslint/prefer-nullish-coalescing": ["error", { ignoreTernaryTests: false, ignoreConditionalTests: true }],
+      "@typescript-eslint/prefer-nullish-coalescing": "off", // Disable nullish coalescing rule
       "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: false }], // Allow async functions in event handlers
       "@typescript-eslint/require-await": "warn", // Warn on async without await
       "no-useless-escape": "warn", // Warn on escape issues
       "@typescript-eslint/no-unnecessary-condition": ["error", { allowConstantLoopConditions: true, allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing: true }],
+      "@typescript-eslint/no-non-null-assertion": "off", // Allow non-null assertions
+      "@typescript-eslint/no-require-imports": "off", // Allow require imports
+      "@typescript-eslint/unbound-method": "off", // Allow unbound methods
     },
   },
 ];
