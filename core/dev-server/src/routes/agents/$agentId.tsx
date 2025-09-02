@@ -3,7 +3,6 @@ import { ChatInterface } from '../../components/chat/chat-interface'
 import { useAgents } from '../../hooks/use-agents'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '../../components/ui/button'
-import type { AgentInfo } from '../../types/agent'
 
 export const Route = createFileRoute('/agents/$agentId')({
   component: AgentChatPage,
@@ -14,7 +13,7 @@ function AgentChatPage() {
   const { data: agentsData, isLoading } = useAgents()
   
   // Find the specific agent
-  const agent = agentsData?.data?.agents?.find((a: AgentInfo) => a.key === agentId)
+  const agent = agentsData?.data?.agents?.find((a: any) => a.key === agentId)
   
   if (isLoading) {
     return (
@@ -59,7 +58,7 @@ function AgentChatPage() {
     <div className="h-screen flex flex-col">
       <ChatInterface 
         agentId={agentId} 
-        agentName={agent.name || agentId}
+        agentName={agent.lightfastConfig?.name || agentId}
       />
     </div>
   )

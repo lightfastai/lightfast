@@ -3,22 +3,36 @@ import { useState, useEffect } from "react";
 import type {
 	LightfastMetadata,
 	LightfastDevConfig,
-	Agent,
 } from "lightfast/client";
 
 export const Route = createFileRoute("/agents/")({
 	component: AgentsPage,
 });
 
+// Type for the actual agent data from API
+interface AgentData {
+	key: string;
+	vercelConfig?: {
+		model?: {
+			modelId?: string;
+			config?: any;
+		};
+	};
+	lightfastConfig?: {
+		name?: string;
+		system?: string;
+	};
+}
+
 // Type for the API response
 interface APIResponse {
-	agents: ({ key: string } & Agent)[]; // Agent with key added
+	agents: AgentData[];
 	metadata?: LightfastMetadata;
 	dev?: LightfastDevConfig;
 }
 
 // Type for agent with key for UI purposes
-type AgentWithKey = { key: string } & Agent;
+type AgentWithKey = AgentData;
 
 function AgentsPage() {
 	const [lightfastData, setLightfastData] = useState<APIResponse | null>(null);
@@ -157,14 +171,16 @@ function AgentCard({ agent }: { agent: AgentWithKey }) {
 		return modelStr;
 	}
 	
-	// Try to extract model information from agent properties
-	const modelString = agent.model?.toString() || "unknown";
+	// Extract model and name from the correct nested properties
+	const modelString = agent.vercelConfig?.model?.modelId || "unknown";
+	const agentName = agent.lightfastConfig?.name || agent.key;
+	const systemPrompt = agent.lightfastConfig?.system;
 
 	return (
 		<div className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
 			{/* Agent Name */}
 			<h3 className="text-lg font-semibold mb-2">
-				{agent.name || agent.key}
+				{agentName}
 			</h3>
 
 			{/* Agent Key */}
@@ -184,8 +200,13 @@ function AgentCard({ agent }: { agent: AgentWithKey }) {
 			{/* Agent Configuration */}
 			<div className="text-sm text-muted-foreground space-y-1">
 				<p>
-					Model: {modelString}
+					Model: {getModelDisplayName(modelString)}
 				</p>
+				{systemPrompt && (
+					<p className="line-clamp-2" title={systemPrompt}>
+						System: {systemPrompt.split('\n')[0]}...
+					</p>
+				)}
 			</div>
 
 			{/* Action Buttons */}
