@@ -2,7 +2,6 @@
  * Runtime types for executing agent loops and tools with event tracking
  */
 
-import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
 
 /**
@@ -16,7 +15,7 @@ export interface SessionState {
 	pendingToolCalls?: {
 		id: string;
 		name: string;
-		args: any;
+		args: Record<string, unknown>;
 	}[];
 	agentId: string;
 	temperature?: number;

@@ -15,8 +15,16 @@ export default defineConfig({
     viteReact(),
   ],
   ssr: {
-    // Bundle ALL dependencies instead of externalizing them
-    // This makes the dev-server output self-contained for CLI distribution
-    noExternal: true,
+    // Don't externalize these problematic CommonJS modules
+    // They need to be transpiled for ESM compatibility
+    noExternal: ['use-sync-external-store', '@tanstack/react-store'],
+  },
+  optimizeDeps: {
+    // Pre-bundle these dependencies for better performance
+    include: [
+      'use-sync-external-store',
+      'use-sync-external-store/shim/with-selector',
+      '@tanstack/react-store',
+    ],
   },
 })

@@ -11,22 +11,34 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentsIndexRouteImport } from './routes/agents/index'
+import { Route as AgentsAgentIdRouteImport } from './routes/agents/$agentId'
+import { ServerRoute as ApiStreamServerRouteImport } from './routes/api/stream'
 import { ServerRoute as ApiAgentsServerRouteImport } from './routes/api/agents'
 import { ServerRoute as ApiAgentsAgentIdServerRouteImport } from './routes/api/agents.$agentId'
 
 const rootServerRouteImport = createServerRootRoute()
 
-const AgentsRoute = AgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsIndexRoute = AgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsAgentIdRoute = AgentsAgentIdRouteImport.update({
+  id: '/agents/$agentId',
+  path: '/agents/$agentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStreamServerRoute = ApiStreamServerRouteImport.update({
+  id: '/api/stream',
+  path: '/api/stream',
+  getParentRoute: () => rootServerRouteImport,
 } as any)
 const ApiAgentsServerRoute = ApiAgentsServerRouteImport.update({
   id: '/api/agents',
@@ -41,63 +53,64 @@ const ApiAgentsAgentIdServerRoute = ApiAgentsAgentIdServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/agents': typeof AgentsRoute
+  '/agents/$agentId': typeof AgentsAgentIdRoute
+  '/agents': typeof AgentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/agents': typeof AgentsRoute
+  '/agents/$agentId': typeof AgentsAgentIdRoute
+  '/agents': typeof AgentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/agents': typeof AgentsRoute
+  '/agents/$agentId': typeof AgentsAgentIdRoute
+  '/agents/': typeof AgentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/agents'
+  fullPaths: '/' | '/agents/$agentId' | '/agents'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/agents'
-  id: '__root__' | '/' | '/agents'
+  to: '/' | '/agents/$agentId' | '/agents'
+  id: '__root__' | '/' | '/agents/$agentId' | '/agents/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AgentsRoute: typeof AgentsRoute
+  AgentsAgentIdRoute: typeof AgentsAgentIdRoute
+  AgentsIndexRoute: typeof AgentsIndexRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
+  '/api/stream': typeof ApiStreamServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
+  '/api/stream': typeof ApiStreamServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/agents': typeof ApiAgentsServerRouteWithChildren
+  '/api/stream': typeof ApiStreamServerRoute
   '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/agents' | '/api/agents/$agentId'
+  fullPaths: '/api/agents' | '/api/stream' | '/api/agents/$agentId'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/agents' | '/api/agents/$agentId'
-  id: '__root__' | '/api/agents' | '/api/agents/$agentId'
+  to: '/api/agents' | '/api/stream' | '/api/agents/$agentId'
+  id: '__root__' | '/api/agents' | '/api/stream' | '/api/agents/$agentId'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiAgentsServerRoute: typeof ApiAgentsServerRouteWithChildren
+  ApiStreamServerRoute: typeof ApiStreamServerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/agents': {
-      id: '/agents'
-      path: '/agents'
-      fullPath: '/agents'
-      preLoaderRoute: typeof AgentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -105,10 +118,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/': {
+      id: '/agents/'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AgentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/$agentId': {
+      id: '/agents/$agentId'
+      path: '/agents/$agentId'
+      fullPath: '/agents/$agentId'
+      preLoaderRoute: typeof AgentsAgentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/stream': {
+      id: '/api/stream'
+      path: '/api/stream'
+      fullPath: '/api/stream'
+      preLoaderRoute: typeof ApiStreamServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/agents': {
       id: '/api/agents'
       path: '/api/agents'
@@ -140,13 +174,15 @@ const ApiAgentsServerRouteWithChildren = ApiAgentsServerRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AgentsRoute: AgentsRoute,
+  AgentsAgentIdRoute: AgentsAgentIdRoute,
+  AgentsIndexRoute: AgentsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAgentsServerRoute: ApiAgentsServerRouteWithChildren,
+  ApiStreamServerRoute: ApiStreamServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

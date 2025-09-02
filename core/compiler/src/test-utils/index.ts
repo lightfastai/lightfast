@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomBytes } from 'node:crypto';
@@ -263,7 +263,7 @@ export function assertFileNotExists(path: string): void {
  * Gets the size of a file in bytes
  */
 export function getFileSize(path: string): number {
-  const stats = require('fs').statSync(path);
+  const stats = statSync(path);
   return stats.size;
 }
 
@@ -326,7 +326,7 @@ export function createCacheStructure(baseDir: string) {
     cacheFile,
     addCacheEntry: (entry: Record<string, unknown>) => {
       const existing = existsSync(cacheFile) 
-        ? JSON.parse(readFileSync(cacheFile, 'utf-8'))
+        ? JSON.parse(readFileSync(cacheFile, 'utf-8')) as Record<string, unknown>
         : {};
       writeFileSync(cacheFile, JSON.stringify({ ...existing, ...entry }, null, 2));
     }

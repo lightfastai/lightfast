@@ -111,6 +111,7 @@
     "VERCEL_ENV",
     "VERCEL_URL",
     "npm_lifecycle_event",
-    "ENVIRONMENT"
+    "ENVIRONMENT",
+    "DEBUG"
   ]
 }

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { LightfastCompiler } from '../index.js';
-import { transpileConfig } from '../transpiler.js';
 import { CacheManager } from '../cache.js';
 import { BundleGenerator } from '../bundler.js';
 import {
@@ -11,10 +10,10 @@ import {
   delay
 } from '../test-utils/index.js';
 import { join } from 'node:path';
-import { chmod, constants } from 'node:fs';
+import * as fs from 'node:fs';
 import { promisify } from 'node:util';
 
-const chmodAsync = promisify(chmod);
+const chmodAsync = promisify(fs.chmod);
 
 describe('Error Scenarios', () => {
   let tempDir: string;
@@ -67,12 +66,12 @@ describe('Error Scenarios', () => {
 
     it('should handle cache directory creation failure', () => {
       // Mock file system to simulate failure
-      const originalMkdirSync = require('fs').mkdirSync;
-      require('fs').mkdirSync = vi.fn().mockImplementation((path: string) => {
-        if (path.includes('.lightfast')) {
+      vi.spyOn(fs, 'mkdirSync').mockImplementation((path: fs.PathLike) => {
+        if (path.toString().includes('.lightfast')) {
           throw new Error('Permission denied');
         }
-        return originalMkdirSync(path);
+        // For test purposes, we don't need to actually create other directories
+        return undefined;
       });
 
       expect(() => {
@@ -80,7 +79,7 @@ describe('Error Scenarios', () => {
       }).toThrow();
 
       // Restore
-      require('fs').mkdirSync = originalMkdirSync;
+      vi.restoreAllMocks();
     });
   });
 
@@ -171,7 +170,7 @@ describe('Error Scenarios', () => {
     it('should handle corrupted cache JSON', async () => {
       const cacheFile = join(tempDir, '.lightfast', 'cache.json');
       const cacheDir = join(tempDir, '.lightfast');
-      require('fs').mkdirSync(cacheDir, { recursive: true });
+      fs.mkdirSync(cacheDir, { recursive: true });
       writeFile(cacheFile, 'invalid json {]');
 
       const compiler = new LightfastCompiler({ baseDir: tempDir });
@@ -194,7 +193,7 @@ describe('Error Scenarios', () => {
 
       // Delete cached output file
       const cacheDir = join(tempDir, '.lightfast', 'compiled');
-      require('fs').rmSync(cacheDir, { recursive: true, force: true });
+      fs.rmSync(cacheDir, { recursive: true, force: true });
 
       // Should recompile when cached file is missing
       const result = await compiler.compile();
@@ -203,12 +202,13 @@ describe('Error Scenarios', () => {
     });
 
     it('should handle cache write failures', () => {
-      const originalWriteFileSync = require('fs').writeFileSync;
-      require('fs').writeFileSync = vi.fn().mockImplementation((path: string) => {
+      const originalWriteFileSync = fs.writeFileSync;
+      // @ts-expect-error - mocking fs function
+      fs.writeFileSync = vi.fn().mockImplementation((path: string, data: string | NodeJS.ArrayBufferView, options?: fs.WriteFileOptions) => {
         if (path.includes('cache.json')) {
           throw new Error('Disk full');
         }
-        return originalWriteFileSync(path);
+        return originalWriteFileSync(path, data, options);
       });
 
       const cacheManager = new CacheManager({ baseDir: tempDir });
@@ -221,7 +221,8 @@ describe('Error Scenarios', () => {
       }).toThrow();
 
       // Restore
-      require('fs').writeFileSync = originalWriteFileSync;
+      // @ts-expect-error - restoring fs function
+      fs.writeFileSync = originalWriteFileSync;
     });
   });
 
@@ -251,8 +252,9 @@ describe('Error Scenarios', () => {
     });
 
     it('should handle output directory creation failure', () => {
-      const originalMkdirSync = require('fs').mkdirSync;
-      require('fs').mkdirSync = vi.fn().mockImplementation((path: string) => {
+      const originalMkdirSync = fs.mkdirSync;
+      // @ts-expect-error - mocking fs function
+      fs.mkdirSync = vi.fn().mockImplementation((path: string) => {
         if (path.includes('dist')) {
           throw new Error('Permission denied');
         }
@@ -267,7 +269,7 @@ describe('Error Scenarios', () => {
       }).toThrow();
 
       // Restore
-      require('fs').mkdirSync = originalMkdirSync;
+      vi.restoreAllMocks();
     });
   });
 
@@ -388,7 +390,7 @@ describe('Error Scenarios', () => {
   describe('Edge Case Errors', () => {
     it('should handle extremely long file paths', async () => {
       const deepPath = join(tempDir, ...Array(20).fill('very-long-directory-name'));
-      const configPath = join(deepPath, 'lightfast.config.ts');
+      const _configPath = join(deepPath, 'lightfast.config.ts');
       
       createTestProject(deepPath, {
         'lightfast.config.ts': 'export default { name: "deep" };'
@@ -402,7 +404,7 @@ describe('Error Scenarios', () => {
 
     it('should handle special characters in paths', async () => {
       const specialDir = join(tempDir, 'special-chars-@#$%');
-      const configPath = join(specialDir, 'lightfast.config.ts');
+      const _configPath = join(specialDir, 'lightfast.config.ts');
       
       createTestProject(specialDir, {
         'lightfast.config.ts': 'export default { name: "special" };'
@@ -470,7 +472,7 @@ describe('Error Scenarios', () => {
       expect(result1.errors).toHaveLength(0);
 
       // Temporarily delete config
-      require('fs').unlinkSync(configPath);
+      fs.unlinkSync(configPath);
 
       // Should fail
       const result2 = await compiler.compile();

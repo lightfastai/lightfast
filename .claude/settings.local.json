@@ -131,7 +131,9 @@
       "Bash(pnpm --filter @lightfastai/core typecheck)",
       "Bash(pnpm:*)",
       "Bash(DEBUG=1 node ../../core/cli/dist/index.js compile)",
-      "Bash(npm pack:*)"
+      "Bash(npm pack:*)",
+      "Bash(npx eslint:*)",
+      "Bash(USE_TEST_AGENTS=true pnpm start)"
     ],
     "deny": []
   },

@@ -3,28 +3,36 @@ import fs from 'fs';
 import { pathToFileURL } from 'url';
 import type { LightfastJSON } from 'lightfast/client';
 import { loadConfig } from '@lightfastai/compiler';
+import { TEST_CONFIG } from './test-agents';
 
 /**
- * Service for discovering and loading Lightfast configurations
+ * Service for loading Lightfast configurations (agents, metadata, dev settings)
  */
-export class AgentDiscoveryService {
-  private static instance: AgentDiscoveryService | undefined;
+export class LightfastConfigService {
+  private static instance: LightfastConfigService | undefined;
   private configCache: LightfastJSON | null = null;
   private lastCheckTime = 0;
   private readonly CACHE_TTL = 5000; // 5 seconds cache
 
   private constructor() {}
 
-  static getInstance(): AgentDiscoveryService {
+  static getInstance(): LightfastConfigService {
     // Singleton pattern - create instance on first call
-    AgentDiscoveryService.instance ??= new AgentDiscoveryService();
-    return AgentDiscoveryService.instance;
+    LightfastConfigService.instance ??= new LightfastConfigService();
+    return LightfastConfigService.instance;
   }
 
   /**
-   * Discover Lightfast configuration from the user's project
+   * Get Lightfast configuration from the user's project
    */
-  async discoverConfig(): Promise<LightfastJSON> {
+  async getConfig(): Promise<LightfastJSON> {
+    // Use test agents if flag is set (for dev-server UI development)
+    console.info('USE_TEST_AGENTS env var:', process.env.USE_TEST_AGENTS);
+    if (process.env.USE_TEST_AGENTS === 'true') {
+      console.info('🧪 Using test agents for dev-server development');
+      return TEST_CONFIG;
+    }
+
     // Check cache
     const now = Date.now();
     if (this.configCache && (now - this.lastCheckTime) < this.CACHE_TTL) {
@@ -106,7 +114,7 @@ export class AgentDiscoveryService {
       return this.getDefaultConfig();
       
     } catch (error) {
-      console.error('Error discovering Lightfast config:', error);
+      console.error('Error loading Lightfast config:', error);
       return this.getDefaultConfig();
     }
   }
