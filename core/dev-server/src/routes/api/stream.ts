@@ -3,6 +3,7 @@ import { json } from '@tanstack/react-start'
 import { fetchRequestHandler } from 'lightfast/server/adapters/fetch'
 import { InMemoryMemory } from 'lightfast/memory'
 import { AgentRuntimeService } from '../../server/agent-runtime'
+import type { LightfastMessage } from '../../types/chat'
 
 // Singleton memory instance for development
 // This ensures conversation history persists during the dev session
@@ -139,17 +140,21 @@ export const ServerRoute = createServerFileRoute('/api/stream')
         
         // Convert AI SDK messages format to Lightfast format if needed
         // AI SDK uses { role, content, id } while Lightfast uses { role, parts, id }
-        const lightfastMessages = messages.map((msg: any) => {
+        const lightfastMessages: LightfastMessage[] = messages.map((msg: { role: string; content?: string; parts?: Array<{ type: string; text: string }>; id?: string }) => {
           if (msg.content && !msg.parts) {
             // Convert from AI SDK format
             return {
-              role: msg.role,
+              role: msg.role as 'user' | 'assistant' | 'system',
               parts: [{ type: 'text', text: msg.content }],
               id: msg.id || crypto.randomUUID(),
             }
           }
           // Already in Lightfast format
-          return msg
+          return {
+            role: msg.role as 'user' | 'assistant' | 'system',
+            parts: msg.parts || [],
+            id: msg.id || crypto.randomUUID(),
+          }
         })
         
         // Create a new request with the messages in the expected format

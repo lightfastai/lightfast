@@ -1,11 +1,12 @@
 "use client";
 
 import { cn } from "../../lib/utils";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
+import type { DevServerUIMessage } from "../../types/chat";
 import { Bot, User } from "lucide-react";
 
 interface ChatMessageProps {
-  message: Message;
+  message: DevServerUIMessage;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
@@ -36,7 +37,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
           )}
         >
           <p className="text-sm whitespace-pre-wrap leading-relaxed">
-            {message.content}
+            {message.parts
+              .filter(part => part.type === 'text')
+              .map((part: any) => part.text)
+              .join('')}
           </p>
         </div>
       </div>

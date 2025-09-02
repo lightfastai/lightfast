@@ -1,12 +1,14 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useRef, useEffect, useCallback } from "react";
+import { DefaultChatTransport } from "ai";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { ChatInput } from "./chat-input";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "../../lib/utils";
 import { Bot, Sparkles } from "lucide-react";
+import type { DevServerUIMessage } from "../../types/chat";
 
 interface ChatInterfaceProps {
   agentId: string;
@@ -19,21 +21,41 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
   // Generate a stable session ID for this chat session
   const sessionId = useRef(`session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`).current;
   
+  // State for managing input
+  const [input, setInput] = useState('');
+  
+  // Create transport for the chat
+  const transport = useMemo(() => {
+    return new DefaultChatTransport<DevServerUIMessage>({
+      api: "/api/stream",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      prepareSendMessagesRequest: ({ body, headers, messages, api }) => {
+        return {
+          api,
+          headers,
+          body: {
+            agentId,
+            sessionId,
+            messages,
+            ...body,
+          },
+        };
+      },
+    });
+  }, [agentId, sessionId]);
+  
   const {
     messages,
-    input,
-    handleInputChange,
     sendMessage: vercelSendMessage,
-    isLoading,
     error,
-    setInput,
     status,
-  } = useChat({
-    api: "/api/stream",
-    body: {
-      agentId,
-      sessionId,
-    },
+  } = useChat<DevServerUIMessage>({
+    id: `${agentId}-${sessionId}`,
+    transport,
+    experimental_throttle: 45,
+    messages: [],
     onError: (err) => {
       console.error("Chat error:", err);
     },
@@ -51,7 +73,7 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
 
   // Handle sending message - matching apps/chat pattern exactly
   const handleSendMessage = useCallback(async (message: string) => {
-    if (!message.trim() || status === "streaming" || status === "submitted") {
+    if (!message.trim() || status === "streaming") {
       return;
     }
     
@@ -59,19 +81,22 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
       // Generate UUID for the user message
       const userMessageId = crypto.randomUUID();
       
-      // Create the user message object in Lightfast format (matching apps/chat)
-      const userMessage = {
-        role: "user" as const,
-        parts: [{ type: "text" as const, text: message }],
+      // Create the user message object in the UI format expected by useChat
+      const userMessage: DevServerUIMessage = {
+        role: "user",
+        parts: [{ type: "text", text: message }],
         id: userMessageId,
       };
       
       // Send message using sendMessage from useChat (renamed to vercelSendMessage like apps/chat)
-      await vercelSendMessage(userMessage as any, {
+      await vercelSendMessage(userMessage, {
         body: {
           userMessageId,
         },
       });
+      
+      // Clear the input after successful send
+      setInput('');
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -79,13 +104,8 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
 
   // Handle input change for controlled component
   const handleInputValueChange = useCallback((value: string) => {
-    // Create a synthetic event for handleInputChange
-    const syntheticEvent = {
-      target: { value }
-    } as React.ChangeEvent<HTMLTextAreaElement>;
-    
-    handleInputChange(syntheticEvent);
-  }, [handleInputChange]);
+    setInput(value);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -128,7 +148,7 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
               <ChatMessage key={message.id} message={message} />
             ))}
             
-            {(status === "streaming" || status === "submitted") && (
+            {status === "streaming" && (
               <div className="flex items-start gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                   <Bot className="h-4 w-4 text-primary" />
@@ -163,7 +183,7 @@ export function ChatInterface({ agentId, agentName }: ChatInterfaceProps) {
             value={input}
             onChange={handleInputValueChange}
             onSendMessage={handleSendMessage}
-            disabled={status === "streaming" || status === "submitted"}
+            disabled={status === "streaming"}
             placeholder={`Message ${agentName || "agent"}...`}
           />
         </div>

@@ -17,6 +17,9 @@ interface APIResponse {
 	dev?: LightfastDevConfig;
 }
 
+// Type for agent with key for UI purposes
+type AgentWithKey = { key: string } & Agent;
+
 function AgentsPage() {
 	const [lightfastData, setLightfastData] = useState<APIResponse | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -138,35 +141,30 @@ function AgentsPage() {
 	)
 }
 
-function AgentCard({ agent }: { agent: any }) {
-	const getModelBadgeColor = (agent: any) => {
-		const model = agent.vercelConfig?.model?.modelId || agent.model || "";
-		if (typeof model === "string") {
-			if (model.includes("claude"))
-				return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-			if (model.includes("gpt"))
-				return "bg-green-500/10 text-green-500 border-green-500/20";
-		}
+function AgentCard({ agent }: { agent: AgentWithKey }) {
+	const getModelBadgeColor = (modelStr: string) => {
+		if (modelStr.includes("claude"))
+			return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+		if (modelStr.includes("gpt"))
+			return "bg-green-500/10 text-green-500 border-green-500/20";
 		return "bg-gray-500/10 text-gray-500 border-gray-500/20";
 	}
 
-	const getModelDisplayName = (agent: any) => {
-		const model =
-			agent.vercelConfig?.model?.modelId || agent.model || "unknown";
-		if (typeof model === "string") {
-			if (model.includes("claude-3-5-sonnet")) return "Claude 3.5 Sonnet";
-			if (model.includes("gpt-4-turbo")) return "GPT-4 Turbo";
-			if (model.includes("gpt-4")) return "GPT-4";
-			return model;
-		}
-		return "Custom Model";
+	const getModelDisplayName = (modelStr: string) => {
+		if (modelStr.includes("claude-3-5-sonnet")) return "Claude 3.5 Sonnet";
+		if (modelStr.includes("gpt-4-turbo")) return "GPT-4 Turbo";
+		if (modelStr.includes("gpt-4")) return "GPT-4";
+		return modelStr;
 	}
+	
+	// Try to extract model information from agent properties
+	const modelString = agent.model?.toString() || "unknown";
 
 	return (
 		<div className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
 			{/* Agent Name */}
 			<h3 className="text-lg font-semibold mb-2">
-				{agent.lightfastConfig?.name || agent.name || agent.key}
+				{agent.name || agent.key}
 			</h3>
 
 			{/* Agent Key */}
@@ -177,21 +175,17 @@ function AgentCard({ agent }: { agent: any }) {
 			{/* Model Badge */}
 			<div className="mb-4">
 				<span
-					className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${getModelBadgeColor(agent)}`}
+					className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${getModelBadgeColor(modelString)}`}
 				>
-					{getModelDisplayName(agent)}
+					{getModelDisplayName(modelString)}
 				</span>
 			</div>
 
 			{/* Agent Configuration */}
 			<div className="text-sm text-muted-foreground space-y-1">
 				<p>
-					Model:{" "}
-					{agent.vercelConfig?.model?.modelId || agent.model || "Default"}
+					Model: {modelString}
 				</p>
-				{agent.vercelConfig?.temperature !== undefined && (
-					<p>Temperature: {agent.vercelConfig.temperature}</p>
-				)}
 			</div>
 
 			{/* Action Buttons */}
