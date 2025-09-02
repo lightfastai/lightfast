@@ -3,7 +3,7 @@ import { json } from '@tanstack/react-start'
 import { fetchRequestHandler } from 'lightfast/server/adapters/fetch'
 import { InMemoryMemory } from 'lightfast/memory'
 import { AgentRuntimeService } from '../../server/agent-runtime'
-import type { LightfastMessage } from '../../types/chat'
+import type { DevServerUIMessage } from '../../types/chat'
 
 // Singleton memory instance for development
 // This ensures conversation history persists during the dev session
@@ -83,13 +83,22 @@ export const ServerRoute = createServerFileRoute('/api/stream')
     
     POST: async ({ request }) => {
       try {
-        // Parse request body to get agentId and sessionId
-        const body = await request.json()
+        // Parse request body
+        const body = await request.json() as {
+          agentId?: string
+          sessionId?: string
+          messages?: DevServerUIMessage[]
+          body?: {
+            agentId?: string
+            sessionId?: string
+            userMessageId?: string
+          }
+        }
         
-        // Support both direct format and AI SDK format (which nests in body.body)
-        const agentId = body.agentId || body.body?.agentId
-        const sessionId = body.sessionId || body.body?.sessionId
-        let messages = body.messages || []
+        // Extract agentId and sessionId (transport sends them at top level)
+        const agentId = body.agentId
+        const sessionId = body.sessionId
+        const messages = body.messages || []
         
         if (!agentId || !sessionId) {
           return json(
@@ -103,6 +112,7 @@ export const ServerRoute = createServerFileRoute('/api/stream')
         }
         
         console.info(`📤 POST /api/stream [${agentId}/${sessionId}]`)
+        console.info(`📨 Received ${messages.length} message(s)`)
         
         // Load agent using the runtime service
         const agentRuntime = AgentRuntimeService.getInstance()
@@ -138,30 +148,12 @@ export const ServerRoute = createServerFileRoute('/api/stream')
         // Get memory instance
         const memory = getDevMemory()
         
-        // Convert AI SDK messages format to Lightfast format if needed
-        // AI SDK uses { role, content, id } while Lightfast uses { role, parts, id }
-        const lightfastMessages: LightfastMessage[] = messages.map((msg: { role: string; content?: string; parts?: Array<{ type: string; text: string }>; id?: string }) => {
-          if (msg.content && !msg.parts) {
-            // Convert from AI SDK format
-            return {
-              role: msg.role as 'user' | 'assistant' | 'system',
-              parts: [{ type: 'text', text: msg.content }],
-              id: msg.id || crypto.randomUUID(),
-            }
-          }
-          // Already in Lightfast format
-          return {
-            role: msg.role as 'user' | 'assistant' | 'system',
-            parts: msg.parts || [],
-            id: msg.id || crypto.randomUUID(),
-          }
-        })
-        
-        // Create a new request with the messages in the expected format
+        // Messages from transport are already in the correct UIMessage format
+        // Just pass them through to fetchRequestHandler
         const streamRequest = new Request(request.url, {
           method: 'POST',
           headers: request.headers,
-          body: JSON.stringify({ messages: lightfastMessages }),
+          body: JSON.stringify({ messages }),
         })
         
         // Use fetchRequestHandler to handle the streaming
