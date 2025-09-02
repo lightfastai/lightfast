@@ -4,6 +4,15 @@ import { useAgents } from '../../hooks/use-agents'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 
+// Type for agent as returned by API
+interface AgentWithKey {
+  key: string;
+  lightfastConfig?: {
+    name?: string;
+    system?: string;
+  };
+}
+
 export const Route = createFileRoute('/agents/$agentId')({
   component: AgentChatPage,
 })
@@ -13,7 +22,7 @@ function AgentChatPage() {
   const { data: agentsData, isLoading } = useAgents()
   
   // Find the specific agent
-  const agent = agentsData?.data?.agents?.find((a: any) => a.key === agentId)
+  const agent = agentsData?.data?.agents?.find((a: AgentWithKey) => a.key === agentId)
   
   if (isLoading) {
     return (

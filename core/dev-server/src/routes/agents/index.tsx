@@ -3,19 +3,20 @@ import { useState, useEffect } from "react";
 import type {
 	LightfastMetadata,
 	LightfastDevConfig,
+	LightfastJSON,
 } from "lightfast/client";
 
 export const Route = createFileRoute("/agents/")({
 	component: AgentsPage,
 });
 
-// Type for the actual agent data from API
-interface AgentData {
+// Type for agent as returned by API (Agent spread with key)
+interface AgentWithKey {
 	key: string;
 	vercelConfig?: {
 		model?: {
 			modelId?: string;
-			config?: any;
+			config?: Record<string, unknown>;
 		};
 	};
 	lightfastConfig?: {
@@ -24,18 +25,15 @@ interface AgentData {
 	};
 }
 
-// Type for the API response
-interface APIResponse {
-	agents: AgentData[];
+// Type for the API response data structure
+interface APIResponseData {
+	agents: AgentWithKey[];
 	metadata?: LightfastMetadata;
 	dev?: LightfastDevConfig;
 }
 
-// Type for agent with key for UI purposes
-type AgentWithKey = AgentData;
-
 function AgentsPage() {
-	const [lightfastData, setLightfastData] = useState<APIResponse | null>(null);
+	const [lightfastData, setLightfastData] = useState<APIResponseData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +49,7 @@ function AgentsPage() {
 
 				const result = (await response.json()) as {
 					success: boolean;
-					data?: APIResponse;
+					data?: APIResponseData;
 					message?: string;
 				}
 

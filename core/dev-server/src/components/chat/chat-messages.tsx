@@ -66,7 +66,7 @@ function MessageItem({
 	// Extract text from parts
 	const textContent = message.parts
 		.filter(part => part.type === 'text')
-		.map((part: any) => part.text)
+		.map((part) => 'text' in part ? part.text : '')
 		.join('');
 
 	// For user messages
