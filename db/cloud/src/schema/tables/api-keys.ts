@@ -1,5 +1,5 @@
-import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+import { boolean, datetime, index, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { uuidv4 } from "@repo/lib";
 
@@ -82,90 +82,10 @@ export const CloudApiKey = mysqlTable("lightfast_cloud_api_key", {
   keyHashIdx: index("key_hash_idx").on(table.keyHash),
 }));
 
-/**
- * CloudApiKeyUsage table tracks usage statistics for API keys.
- * 
- * This helps monitor API key usage patterns and can be used for
- * rate limiting, analytics, and abuse detection.
- */
-export const CloudApiKeyUsage = mysqlTable("lightfast_cloud_api_key_usage", {
-  /**
-   * Unique identifier for the usage record
-   */
-  id: varchar("id", { length: 191 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => uuidv4()),
-  
-  /**
-   * Reference to the API key this usage belongs to
-   */
-  apiKeyId: varchar("api_key_id", { length: 191 }).notNull(),
-  
-  /**
-   * The endpoint that was accessed
-   */
-  endpoint: varchar("endpoint", { length: 255 }).notNull(),
-  
-  /**
-   * HTTP method used
-   */
-  method: varchar("method", { length: 10 }).notNull(),
-  
-  /**
-   * HTTP status code returned
-   */
-  statusCode: int("status_code").notNull(),
-  
-  /**
-   * IP address of the request
-   */
-  ipAddress: varchar("ip_address", { length: 45 }),
-  
-  /**
-   * User agent string
-   */
-  userAgent: varchar("user_agent", { length: 500 }),
-  
-  /**
-   * Timestamp when the request was made
-   */
-  createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-}, (table) => ({
-  // Index for looking up usage by API key
-  apiKeyIdIdx: index("api_key_id_idx").on(table.apiKeyId),
-  // Index for time-based queries
-  createdAtIdx: index("created_at_idx").on(table.createdAt),
-}));
-
-/**
- * Drizzle Relations
- */
-
-// API Key relations - one key can have many usage records
-export const cloudApiKeyRelations = relations(CloudApiKey, ({ many }) => ({
-  usage: many(CloudApiKeyUsage),
-}));
-
-// Usage relations - each usage record belongs to one API key
-export const cloudApiKeyUsageRelations = relations(CloudApiKeyUsage, ({ one }) => ({
-  apiKey: one(CloudApiKey, {
-    fields: [CloudApiKeyUsage.apiKeyId],
-    references: [CloudApiKey.id],
-  }),
-}));
-
 // Type exports for API Key
 export type CloudApiKey = typeof CloudApiKey.$inferSelect;
 export type InsertCloudApiKey = typeof CloudApiKey.$inferInsert;
 
-// Type exports for Usage
-export type CloudApiKeyUsage = typeof CloudApiKeyUsage.$inferSelect;
-export type InsertCloudApiKeyUsage = typeof CloudApiKeyUsage.$inferInsert;
-
 // Zod Schema exports for validation
 export const insertCloudApiKeySchema = createInsertSchema(CloudApiKey);
 export const selectCloudApiKeySchema = createSelectSchema(CloudApiKey);
-
-export const insertCloudApiKeyUsageSchema = createInsertSchema(CloudApiKeyUsage);
-export const selectCloudApiKeyUsageSchema = createSelectSchema(CloudApiKeyUsage);
