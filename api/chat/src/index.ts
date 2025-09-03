@@ -7,8 +7,7 @@ export { chatAppRouter } from "./root";
 export type { ChatAppRouter } from "./root";
 
 // Export context creation
-export { createChatContext } from "./context";
-export type { ChatContext } from "./context";
+export { createTRPCContext } from "./trpc";
 
 // Export router types for client usage
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
