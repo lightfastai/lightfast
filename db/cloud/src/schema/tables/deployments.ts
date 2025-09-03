@@ -38,7 +38,6 @@ export const CloudDeployment = mysqlTable("lightfast_cloud_deployment", {
    */
   metadata: json("metadata").$type<{
     agents?: string[];
-    [key: string]: any;
   }>(),
   
   /**
