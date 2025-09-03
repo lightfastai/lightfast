@@ -1,6 +1,6 @@
 import { inngest } from "../client/client";
+import { db } from "@db/chat/client";
 import {
-	db,
 	LightfastChatSession,
 	LightfastChatMessage,
 	DEFAULT_SESSION_TITLE,
