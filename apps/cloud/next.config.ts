@@ -16,6 +16,8 @@ let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
 		transpilePackages: [
+			"@api/cloud",
+			"@db/cloud",
 			"@vendor/upstash",
 			"@repo/ui",
 			"@repo/site-config",

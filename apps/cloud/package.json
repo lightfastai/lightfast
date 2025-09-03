@@ -13,12 +13,18 @@
 		"with-env": "dotenv -e ./.vercel/.env.development.local --"
 	},
 	"dependencies": {
+		"@api/cloud": "workspace:*",
 		"@browserbasehq/stagehand": "catalog:",
 		"@clerk/nextjs": "catalog:",
+		"@db/cloud": "workspace:*",
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",
 		"@repo/url-utils": "workspace:*",
 		"@t3-oss/env-nextjs": "^0.12.0",
+		"@tanstack/react-query": "catalog:",
+		"@trpc/client": "catalog:",
+		"@trpc/server": "catalog:",
+		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/next": "workspace:*",
 		"@vendor/observability": "workspace:*",
@@ -29,6 +35,7 @@
 		"react": "catalog:react19",
 		"react-confetti": "^6.4.0",
 		"react-dom": "catalog:react19",
+		"superjson": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

@@ -26,7 +26,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@vendor/clerk": "workspace:*",
     "react": "catalog:react19",
-    "superjson": "2.2.1",
+    "superjson": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
