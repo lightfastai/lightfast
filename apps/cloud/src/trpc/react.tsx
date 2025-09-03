@@ -9,7 +9,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import SuperJSON from "superjson";
 
 import { env } from "~/env";
-import { $TRPCSource, createTRPCHeaders } from "@vendor/trpc";
 import type { CloudAppRouter } from "@api/cloud";
 
 /**
@@ -74,10 +73,9 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",
           headers: () => {
-            const headers = createTRPCHeaders({
-              source: $TRPCSource.enum["lightfast-cloud"],
-            });
-            return headers;
+            return {
+              "x-trpc-source": "lightfast-cloud",
+            };
           },
         }),
       ],

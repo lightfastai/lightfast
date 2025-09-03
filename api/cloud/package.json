@@ -20,9 +20,12 @@
   },
   "dependencies": {
     "@db/cloud": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "@trpc/tanstack-react-query": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "@vendor/trpc": "workspace:*",
+    "react": "catalog:react19",
     "superjson": "2.2.1",
     "zod": "catalog:"
   },

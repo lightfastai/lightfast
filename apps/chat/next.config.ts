@@ -22,7 +22,6 @@ let config: NextConfig = withBetterStack(
 			"@vendor/clerk",
 			"@vendor/observability",
 			"@vendor/next",
-			"@vendor/trpc",
 			"@db/chat",
 			"lightfast",
 		],

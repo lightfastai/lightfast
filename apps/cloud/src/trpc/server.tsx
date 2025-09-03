@@ -6,7 +6,6 @@ import { cache } from "react";
 
 import type { CloudAppRouter } from "@api/cloud";
 import { cloudAppRouter, createCloudContext, createCallerFactory } from "@api/cloud";
-import { $TRPCHeaderName } from "@vendor/trpc";
 import { createQueryClient } from "./query-client";
 
 /**
@@ -15,7 +14,7 @@ import { createQueryClient } from "./query-client";
  */
 const createContext = cache(() => {
   const heads = new Headers(headers());
-  heads.set($TRPCHeaderName.enum["x-lightfast-trpc-source"], "lightfast-cloud-rsc");
+  heads.set("x-trpc-source", "lightfast-cloud-rsc");
 
   return createCloudContext({
     headers: heads,
