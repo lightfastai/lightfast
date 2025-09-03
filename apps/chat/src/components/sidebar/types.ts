@@ -1,7 +1,7 @@
-import type { RouterOutputs } from "@api/chat";
+import type { ChatRouterOutputs } from "@api/chat";
 
 // Core session type from API
-export type Session = RouterOutputs["session"]["list"][number];
+export type Session = ChatRouterOutputs["session"]["list"][number];
 
 // Props types
 export interface SidebarProps {
