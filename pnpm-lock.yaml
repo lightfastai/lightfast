@@ -1398,9 +1398,6 @@ importers:
 
   db/chat:
     dependencies:
-      '@planetscale/database':
-        specifier: ^1.19.0
-        version: 1.19.0
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -1410,15 +1407,12 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@vendor/db':
+        specifier: workspace:*
+        version: link:../../vendor/db
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@3.25.76)
-      drizzle-orm:
-        specifier: ^0.43.1
-        version: 0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7)
-      drizzle-zod:
-        specifier: ^0.7.1
-        version: 0.7.1(drizzle-orm@0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7))(zod@3.25.76)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -1450,21 +1444,15 @@ importers:
 
   db/cloud:
     dependencies:
-      '@planetscale/database':
-        specifier: ^1.19.0
-        version: 1.19.0
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
-      drizzle-orm:
-        specifier: ^0.43.1
-        version: 0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7)
-      drizzle-zod:
-        specifier: ^0.7.1
-        version: 0.7.1(drizzle-orm@0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7))(zod@3.25.76)
+      '@vendor/db':
+        specifier: workspace:*
+        version: link:../../vendor/db
       zod:
         specifier: 'catalog:'
         version: 3.25.76

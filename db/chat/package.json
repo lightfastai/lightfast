@@ -28,13 +28,11 @@
     "with-env": "dotenv -e ../../apps/chat/.env.local --"
   },
   "dependencies": {
-    "@planetscale/database": "^1.19.0",
     "@repo/ai": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
+    "@vendor/db": "workspace:*",
     "ai": "catalog:",
-    "drizzle-orm": "^0.43.1",
-    "drizzle-zod": "^0.7.1",
     "zod": "catalog:"
   },
   "devDependencies": {
