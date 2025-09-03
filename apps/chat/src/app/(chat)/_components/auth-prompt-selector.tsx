@@ -9,7 +9,6 @@ import {
 import { Icons } from "@repo/ui/components/ui/icons";
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronDown } from "lucide-react";
-import { getAppUrl } from "@repo/url-utils";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useMemo } from "react";
@@ -25,7 +24,6 @@ interface AuthPromptSelectorProps {
 
 export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 	const [open, setOpen] = useState(false);
-	const authUrl = getAppUrl("auth");
 
 	// Get the default model for unauthenticated users
 	const defaultModel = useMemo(() => {
@@ -95,7 +93,7 @@ export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 								variant="outline"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-in`}>Sign In</Link>
+								<Link href="/sign-in">Sign In</Link>
 							</Button>
 							<Button
 								size="default"
@@ -103,7 +101,7 @@ export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 								variant="secondary"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-up`}>Sign Up</Link>
+								<Link href="/sign-up">Sign Up</Link>
 							</Button>
 						</div>
 					</div>

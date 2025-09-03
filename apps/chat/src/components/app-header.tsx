@@ -7,7 +7,6 @@ import { AppHeaderNav } from "./app-header-nav";
 
 export function AppHeader() {
 	const cloudUrl = getAppUrl("cloud");
-	const authUrl = getAppUrl("auth");
 
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
@@ -18,10 +17,10 @@ export function AppHeader() {
 			{/* Right side actions */}
 			<div className="flex items-center gap-2">
 				<Button variant="ghost" size="sm" asChild>
-					<Link href={`${authUrl}/sign-in`}>Log in</Link>
+					<Link href="/sign-in">Log in</Link>
 				</Button>
 				<Button size="sm" asChild>
-					<Link href={`${authUrl}/sign-up`}>Sign up</Link>
+					<Link href="/sign-up">Sign up</Link>
 				</Button>
 				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />

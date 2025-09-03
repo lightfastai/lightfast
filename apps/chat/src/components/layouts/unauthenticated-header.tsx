@@ -5,7 +5,6 @@ import { getAppUrl } from "@repo/url-utils";
 import { UnauthenticatedMobileNav } from "./unauthenticated-mobile-nav";
 
 export function UnauthenticatedHeader() {
-	const authUrl = getAppUrl("auth");
 
 	return (
 		<>
@@ -39,7 +38,7 @@ export function UnauthenticatedHeader() {
 			{/* Desktop Right side - Login only */}
 			<div className="hidden lg:flex absolute top-0 right-0 h-14 items-center pr-2 z-10 w-fit">
 				<Button variant="ghost" size="lg" asChild>
-					<Link href={`${authUrl}/sign-in`}>
+					<Link href="/sign-in">
 						<span className="text-md font-semibold">Log in</span>
 					</Link>
 				</Button>
