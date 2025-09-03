@@ -6,7 +6,6 @@ import {
 	DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { getAppUrl } from "@repo/url-utils";
 import Link from "next/link";
 import Image from "next/image";
 import { X } from "lucide-react";
@@ -18,7 +17,6 @@ interface RateLimitDialogProps {
 }
 
 export function RateLimitDialog({ open, onOpenChange }: RateLimitDialogProps) {
-	const authUrl = getAppUrl("auth");
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,7 +78,7 @@ export function RateLimitDialog({ open, onOpenChange }: RateLimitDialogProps) {
 								variant="outline"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-in`}>Sign In</Link>
+								<Link href={`/sign-in`}>Sign In</Link>
 							</Button>
 							<Button
 								size="default"
@@ -88,7 +86,7 @@ export function RateLimitDialog({ open, onOpenChange }: RateLimitDialogProps) {
 								variant="secondary"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-up`}>Sign Up</Link>
+								<Link href={`/sign-up`}>Sign Up</Link>
 							</Button>
 						</div>
 					</div>

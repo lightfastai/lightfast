@@ -16,5 +16,7 @@ export const clerkEnvBase = createEnv({
     // Note: Server variables are not included in experimental__runtimeEnv by default
   },
   skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+    !!process.env.CI || 
+    process.env.npm_lifecycle_event === "lint" ||
+    process.env.SKIP_ENV_VALIDATION === "true",
 });

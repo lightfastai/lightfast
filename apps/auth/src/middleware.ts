@@ -30,10 +30,10 @@ export default clerkMiddleware(async (auth, req) => {
 	// Create the appropriate response
 	let response: NextResponse;
 	if (userId) {
-		// User is signed in, redirect to app
+		// User is signed in, redirect to cloud app
 		const { getAllAppUrls } = await import("@repo/url-utils");
 		const urls = getAllAppUrls();
-		response = NextResponse.redirect(new URL(urls.chat));
+		response = NextResponse.redirect(new URL(urls.cloud));
 	} else if (req.nextUrl.pathname === "/") {
 		// Not signed in and at root, redirect to sign-in
 		response = NextResponse.redirect(new URL("/sign-in", req.url));
