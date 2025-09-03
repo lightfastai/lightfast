@@ -5,7 +5,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { ChatAppRouter } from "@api/chat";
-import { chatAppRouter, createChatContext } from "@api/chat";
+import { chatAppRouter, createTRPCContext } from "@api/chat";
 
 import { createQueryClient } from "./client";
 
@@ -17,7 +17,7 @@ const createContext = cache(async () => {
 	const heads = new Headers(await headers());
 	heads.set("x-trpc-source", "rsc");
 
-	return createChatContext({
+	return createTRPCContext({
 		headers: heads,
 	});
 });

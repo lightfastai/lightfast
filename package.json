@@ -52,7 +52,7 @@
 		"prettier": "catalog:",
 		"turbo": "^2.5.5",
 		"turbo-ignore": "^2.5.5",
-		"typescript": "catalog:",
+		"typescript": "^5.9.2",
 		"vite": "^6.3.5"
 	},
 	"prettier": "@repo/prettier-config",

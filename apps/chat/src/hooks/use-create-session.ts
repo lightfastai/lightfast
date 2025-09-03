@@ -3,10 +3,10 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
-import type { RouterOutputs } from "@api/chat";
+import type { ChatRouterOutputs } from "@api/chat";
 import { DEFAULT_SESSION_TITLE } from "@db/chat";
 
-type Session = RouterOutputs["session"]["list"][number];
+type Session = ChatRouterOutputs["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
 
 interface CreateSessionInput {

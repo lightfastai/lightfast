@@ -7,8 +7,7 @@ export { cloudAppRouter } from "./root";
 export type { CloudAppRouter } from "./root";
 
 // Export context creation
-export { createCloudContext } from "./context";
-export type { CloudContext } from "./context";
+export { createTRPCContext } from "./trpc";
 
 // Export router types for client usage
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";

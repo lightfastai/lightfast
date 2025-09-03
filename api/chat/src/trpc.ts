@@ -1,21 +1,59 @@
 /**
- * Chat application TRPC setup
- * 
- * This is where all the tRPC server stuff is created and plugged in.
- * The pieces you will need to use are documented accordingly near the end.
+ * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
+ * 1. You want to modify request context (see Part 1)
+ * 2. You want to create a new middleware or type of procedure (see Part 3)
+ *
+ * tl;dr - this is where all the tRPC server stuff is created and plugged in.
+ * The pieces you will need to use are documented accordingly near the end
  */
 
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { createChatContext } from "./context";
+
+import { auth } from "@vendor/clerk/server";
+import { db } from "@db/chat/client";
 
 /**
- * INITIALIZATION
- * 
- * This is where the tRPC API is initialized, connecting the context and transformer
+ * 1. CONTEXT
+ *
+ * This section defines the "contexts" that are available in the backend API.
+ *
+ * These allow you to access things when processing a request, like the database, the session, etc.
+ *
+ * This helper generates the "internals" for a tRPC context. The API handler and RSC clients each
+ * wrap this and provides the required context.
+ *
+ * @see https://trpc.io/docs/server/context
  */
-const t = initTRPC.context<typeof createChatContext>().create({
+
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+}) => {
+  const session = await auth();
+
+  // Get the source header for logging
+  const source = opts.headers.get("x-trpc-source") ?? "unknown";
+
+  if (session?.userId) {
+    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
+  } else {
+    console.info(`>>> tRPC Request from ${source} by unknown`);
+  }
+
+  return {
+    session,
+    db,
+  };
+};
+
+/**
+ * 2. INITIALIZATION
+ *
+ * This is where the trpc api is initialized, connecting the context and
+ * transformer
+ */
+const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => ({
     ...shape,
@@ -30,7 +68,14 @@ const t = initTRPC.context<typeof createChatContext>().create({
 });
 
 /**
- * Create new routers and subrouters in your tRPC API
+ * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
+ *
+ * These are the pieces you use to build your tRPC API. You should import these
+ * a lot in the /src/server/api/routers folder
+ */
+
+/**
+ * This is how you create new routers and subrouters in your tRPC API
  * @see https://trpc.io/docs/router
  */
 export const createTRPCRouter = t.router;
@@ -43,14 +88,14 @@ export const createCallerFactory = t.createCallerFactory;
 
 /**
  * Middleware for timing procedure execution and adding an artificial delay in development.
- * 
+ *
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
   const start = Date.now();
 
-  if (process.env.NODE_ENV === 'development') {
+  if (t._config.isDev) {
     // artificial delay in dev 100-500ms
     const waitMs = Math.floor(Math.random() * 400) + 100;
     await new Promise((resolve) => setTimeout(resolve, waitMs));
@@ -97,4 +142,3 @@ export const protectedProcedure = t.procedure
 
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";
-export { createChatContext };
