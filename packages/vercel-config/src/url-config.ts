@@ -80,8 +80,8 @@ export function getAuthUrls() {
   return {
     signIn: `${urls.auth}/sign-in`,
     signUp: `${urls.auth}/sign-up`,
-    afterSignIn: urls.chat,
-    afterSignUp: urls.chat,
+    afterSignIn: urls.cloud,
+    afterSignUp: urls.cloud,
     afterSignOut: urls.www,
   };
 }

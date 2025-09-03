@@ -9,12 +9,15 @@ import type { NextRequest } from "next/server";
 
 const clerkConfig = getClerkMiddlewareConfig("chat");
 
-// Define routes that need protection
-// Note: /new and /[sessionId] are NOT here because they're already in (authenticated) route group
-// "/" is public, "/api/health" is public, "/api/v/*" is public
-const isProtectedRoute = createRouteMatcher([
-	// Add any routes that need protection here
-	// Currently empty since all our routes are either public or already protected
+// Define public routes that don't need authentication
+const isPublicRoute = createRouteMatcher([
+	"/",
+	"/api/health",
+	"/api/v/(.*)",
+	"/sign-in",
+	"/sign-in/sso-callback",
+	"/sign-up",
+	"/sign-up/sso-callback",
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -24,16 +27,24 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 		return preflightResponse;
 	}
 
-	// Only get auth state when needed for redirects
+	const { userId } = await auth();
+
+	// Handle redirects for authenticated/unauthenticated users
 	if (req.nextUrl.pathname === "/") {
-		const { userId } = await auth();
 		if (userId) {
 			return NextResponse.redirect(new URL("/new", req.url));
+		} else {
+			return NextResponse.redirect(new URL("/sign-in", req.url));
 		}
 	}
 
-	// Only protect routes that explicitly need protection
-	if (isProtectedRoute(req)) {
+	// Redirect authenticated users away from auth pages
+	if (userId && (req.nextUrl.pathname.startsWith("/sign-in") || req.nextUrl.pathname.startsWith("/sign-up"))) {
+		return NextResponse.redirect(new URL("/new", req.url));
+	}
+
+	// Protect all routes except public ones
+	if (!isPublicRoute(req)) {
 		await auth.protect();
 	}
 
