@@ -24,9 +24,6 @@ export default defineConfig({
 		// Cache
 		cache: "./src/core/primitives/cache/index.ts",
 
-		// Providers
-		providers: "./src/utils/providers.ts",
-
 		// V2 exports
 		"v2/agent": "./src/core/v2/agent.ts",
 		"v2/server": "./src/v2/server.ts",

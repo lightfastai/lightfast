@@ -62,10 +62,6 @@
 			"types": "./dist/cache.d.ts",
 			"import": "./dist/cache.mjs"
 		},
-		"./providers": {
-			"types": "./dist/providers.d.ts",
-			"import": "./dist/providers.mjs"
-		},
 		"./v2/agent": {
 			"types": "./dist/v2/agent.d.ts",
 			"import": "./dist/v2/agent.mjs"
