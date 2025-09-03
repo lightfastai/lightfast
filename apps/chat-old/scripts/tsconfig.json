@@ -1,0 +1,10 @@
+{
+  "extends": "../tooling/typescript/node.json",
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["*.ts"],
+  "exclude": ["node_modules"]
+}

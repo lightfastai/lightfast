@@ -1,0 +1,130 @@
+{
+  "Next.js Page Component": {
+    "prefix": "nextjs-page",
+    "body": [
+      "export default function ${1:PageName}() {",
+      "  return (",
+      "    <div className=\"${2:container}\">",
+      "      <h1>${3:Page Title}</h1>",
+      "      ${4:// Page content}",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a Next.js page component"
+  },
+  "Next.js Layout Component": {
+    "prefix": "nextjs-layout",
+    "body": [
+      "import type { Metadata } from \"next\"",
+      "",
+      "export const metadata: Metadata = {",
+      "  title: \"${1:Page Title}\",",
+      "  description: \"${2:Page description}\",",
+      "}",
+      "",
+      "export default function ${3:Layout}({",
+      "  children,",
+      "}: {",
+      "  children: React.ReactNode",
+      "}) {",
+      "  return (",
+      "    <div className=\"${4:layout-container}\">",
+      "      ${5:// Layout content}",
+      "      {children}",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a Next.js layout component"
+  },
+  "React Component with Props": {
+    "prefix": "react-component-props",
+    "body": [
+      "interface ${1:ComponentName}Props {",
+      "  ${2:// Define props here}",
+      "}",
+      "",
+      "export function ${1:ComponentName}({ ${3:props} }: ${1:ComponentName}Props) {",
+      "  return (",
+      "    <div className=\"${4:component-container}\">",
+      "      ${5:// Component content}",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a React component with TypeScript props"
+  },
+  "React Hook": {
+    "prefix": "react-hook",
+    "body": [
+      "import { useState${1:, useEffect} } from \"react\"",
+      "",
+      "export function use${2:HookName}(${3:initialValue}) {",
+      "  const [${4:state}, set${4/(.*)/${4:/capitalize}/}] = useState(${3:initialValue})",
+      "",
+      "  ${5:// Hook logic here}",
+      "",
+      "  return {",
+      "    ${4:state},",
+      "    set${4/(.*)/${4:/capitalize}/},",
+      "    ${6:// Other returns}",
+      "  }",
+      "}"
+    ],
+    "description": "Create a custom React hook"
+  },
+  "Use Convex Query": {
+    "prefix": "use-convex-query",
+    "body": [
+      "const ${1:data} = useQuery(api.${2:module}.${3:functionName}${4:, args})"
+    ],
+    "description": "Use a Convex query in React"
+  },
+  "Use Convex Mutation": {
+    "prefix": "use-convex-mutation",
+    "body": [
+      "const ${1:mutate} = useMutation(api.${2:module}.${3:functionName})"
+    ],
+    "description": "Use a Convex mutation in React"
+  },
+  "Use Convex Action": {
+    "prefix": "use-convex-action",
+    "body": [
+      "const ${1:action} = useAction(api.${2:module}.${3:functionName})"
+    ],
+    "description": "Use a Convex action in React"
+  },
+  "Tailwind Container": {
+    "prefix": "tw-container",
+    "body": [
+      "<div className=\"container mx-auto px-4 py-8\">",
+      "  ${1:// Content here}",
+      "</div>"
+    ],
+    "description": "Create a Tailwind container div"
+  },
+  "Tailwind Card": {
+    "prefix": "tw-card",
+    "body": [
+      "<div className=\"bg-white dark:bg-gray-800 rounded-lg shadow-md p-6\">",
+      "  <h3 className=\"text-lg font-semibold mb-4\">${1:Card Title}</h3>",
+      "  ${2:// Card content}",
+      "</div>"
+    ],
+    "description": "Create a Tailwind card component"
+  },
+  "Tailwind Button": {
+    "prefix": "tw-button",
+    "body": [
+      "<button",
+      "  type=\"${1:button}\"",
+      "  className=\"bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors\"",
+      "  onClick={${2:handleClick}}",
+      ">",
+      "  ${3:Button Text}",
+      "</button>"
+    ],
+    "description": "Create a Tailwind button"
+  }
+}
