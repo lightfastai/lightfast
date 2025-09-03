@@ -9,10 +9,6 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
-    "./inngest": {
-      "types": "./inngest/dist/index.d.ts",
-      "default": "./src/inngest/index.ts"
-    },
     "./headers": "./src/headers.ts"
   },
   "license": "MIT",

@@ -1,3 +1,3 @@
-import { createInngestRouteContext } from "@vendor/trpc/inngest";
+import { createInngestRouteContext } from "@api/chat/inngest";
 
 export const { GET, POST, PUT } = createInngestRouteContext();
