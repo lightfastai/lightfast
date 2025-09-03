@@ -1,3 +1,0 @@
-[submodule "submodules/chat"]
-	path = submodules/chat
-	url = https://github.com/lightfastai/chat.git

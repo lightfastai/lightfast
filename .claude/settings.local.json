@@ -138,7 +138,9 @@
       "Read(/tmp/create-t3-turbo/apps/nextjs/src/trpc/**)",
       "Read(/tmp/create-t3-turbo/packages/api/src/router/**)",
       "Read(/tmp/create-t3-turbo/**)",
-      "Read(/tmp/create-t3-turbo/**)"
+      "Read(/tmp/create-t3-turbo/**)",
+      "Bash(gh:*)",
+      "Bash(git read-tree:*)"
     ],
     "deny": []
   },
