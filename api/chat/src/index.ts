@@ -16,10 +16,6 @@ import type { ChatAppRouter } from "./root";
 export type ChatRouterInputs = inferRouterInputs<ChatAppRouter>;
 export type ChatRouterOutputs = inferRouterOutputs<ChatAppRouter>;
 
-// For backward compatibility during migration
-export type RouterOutputs = ChatRouterOutputs;
-export type RouterInputs = ChatRouterInputs;
-export { chatAppRouter as appRouter } from "./root";
 
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";
