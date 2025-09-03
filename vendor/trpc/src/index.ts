@@ -1,33 +1,33 @@
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-
-import type { AppRouter } from "./root";
-import { appRouter } from "./root";
-import { createCallerFactory, createTRPCContext } from "./trpc";
-
 /**
- * Create a server-side caller for the tRPC API
- * @example
- * const trpc = createCaller(createContext);
- * const res = await trpc.post.all();
- *       ^? Post[]
+ * Lightweight TRPC SDK for Lightfast infrastructure
+ * Provides core TRPC utilities that can be used by any app
  */
-const createCaller = createCallerFactory(appRouter);
 
-/**
- * Inference helpers for input types
- * @example
- * type PostByIdInput = RouterInputs['post']['byId']
- *      ^? { id: number }
- **/
-type RouterInputs = inferRouterInputs<AppRouter>;
+// Export core TRPC utilities
+export type { BaseContext } from "./core";
+export {
+  createTRPCBase,
+  createTimingMiddleware,
+  createAuthMiddleware,
+  TRPCError,
+} from "./core";
+export type {
+  inferRouterInputs,
+  inferRouterOutputs,
+  inferProcedureInput,
+  inferProcedureOutput,
+} from "./core";
 
-/**
- * Inference helpers for output types
- * @example
- * type AllPostsOutput = RouterOutputs['post']['all']
- *      ^? Post[]
- **/
-type RouterOutputs = inferRouterOutputs<AppRouter>;
+// Export header utilities (shared across apps)
+export {
+  $TRPCSource,
+  $TRPCHeaderName,
+  createTRPCHeaders,
+  getHeaderFromTRPCHeaders,
+} from "./headers";
+export type {
+  TRPCSource,
+  TRPCHeaderName,
+} from "./headers";
 
-export { createTRPCContext, appRouter, createCaller };
-export type { AppRouter, RouterInputs, RouterOutputs };
+// Note: App-specific routers are now in their own packages (api/chat, api/cloud)

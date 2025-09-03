@@ -15,6 +15,7 @@ let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
 		transpilePackages: [
+			"@api/chat",
 			"@repo/ui",
 			"@repo/site-config",
 			"@repo/url-utils",

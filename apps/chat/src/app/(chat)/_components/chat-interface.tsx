@@ -14,7 +14,7 @@ import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import type { RouterOutputs } from "@vendor/trpc";
+import type { RouterOutputs } from "@api/chat";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(

@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@vendor/trpc";
+import type { RouterOutputs } from "@api/chat";
 
 // Core session type from API
 export type Session = RouterOutputs["chat"]["session"]["list"][number];

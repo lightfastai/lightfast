@@ -4,9 +4,9 @@ import { headers } from "next/headers";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import type { AppRouter } from "@vendor/trpc";
-import { appRouter, createTRPCContext } from "@vendor/trpc";
-import { $TRPCHeaderName } from "@vendor/trpc/headers";
+import type { ChatAppRouter } from "@api/chat";
+import { chatAppRouter, createChatContext } from "@api/chat";
+import { $TRPCHeaderName } from "@vendor/trpc";
 
 import { createQueryClient } from "./client";
 
@@ -18,15 +18,15 @@ const createContext = cache(async () => {
 	const heads = new Headers(await headers());
 	heads.set($TRPCHeaderName.Enum["x-lightfast-trpc-source"], "lightfast-chat-rsc");
 
-	return createTRPCContext({
+	return createChatContext({
 		headers: heads,
 	});
 });
 
 export const getQueryClient = cache(createQueryClient);
 
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-	router: appRouter,
+export const trpc = createTRPCOptionsProxy<ChatAppRouter>({
+	router: chatAppRouter,
 	ctx: createContext,
 	queryClient: getQueryClient,
 });
@@ -37,7 +37,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
  */
 export const createCaller = cache(async () => {
 	const ctx = await createContext();
-	return appRouter.createCaller(ctx);
+	return chatAppRouter.createCaller(ctx);
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {

@@ -1,13 +1,11 @@
+import { defineConfig } from "drizzle-kit";
 import { env } from "../env";
-import { createDrizzleConfig } from "./utils/create-drizzle-config";
 
-const config = createDrizzleConfig({
-	host: env.DATABASE_HOST,
-	username: env.DATABASE_USERNAME,
-	password: env.DATABASE_PASSWORD,
-	database: "lightfast-cloud",
+export default defineConfig({
 	schema: "./src/schema/index.ts",
 	out: "./src/migrations",
+	dialect: "mysql",
+	dbCredentials: {
+		url: `mysql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-cloud?ssl={"rejectUnauthorized":true}`
+	},
 });
-
-export default config;
