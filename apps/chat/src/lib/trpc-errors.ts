@@ -1,6 +1,6 @@
 import type { TRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
-import type { AppRouter } from "@vendor/trpc";
+import type { ChatAppRouter } from "@api/chat";
 
 /**
  * TRPC error codes that can be returned from the server
@@ -50,7 +50,7 @@ export const ERROR_MESSAGES: Record<TRPCErrorCode, string> = {
  */
 export function isTRPCClientError(
 	error: unknown
-): error is TRPCClientError<AppRouter> {
+): error is TRPCClientError<ChatAppRouter> {
 	return error instanceof Error && error.name === "TRPCClientError";
 }
 

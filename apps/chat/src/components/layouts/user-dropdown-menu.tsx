@@ -27,7 +27,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	// Get user info from tRPC - using suspense for instant loading
 	const trpc = useTRPC();
 	const { data: user } = useSuspenseQuery({
-		...trpc.auth.user.getUser.queryOptions(),
+		...trpc.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
 

@@ -3,9 +3,9 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
-import type { RouterOutputs } from "@vendor/trpc";
+import type { RouterOutputs } from "@api/chat";
 
-type Session = RouterOutputs["chat"]["session"]["list"][number];
+type Session = RouterOutputs["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
 
 export function usePinSession() {
@@ -13,20 +13,20 @@ export function usePinSession() {
 	const queryClient = useQueryClient();
 
 	return useMutation(
-		trpc.chat.session.setPinned.mutationOptions({
+		trpc.session.setPinned.mutationOptions({
 			onMutate: async ({ sessionId, pinned }) => {
 				// Cancel queries
 				await queryClient.cancelQueries({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 				});
 				await queryClient.cancelQueries({
-					queryKey: [["chat", "session", "listPinned"]],
+					queryKey: [["session", "listPinned"]],
 				});
 
 				// Get session from infinite list
 				const queryCache = queryClient.getQueryCache();
 				const queries = queryCache.findAll({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 					type: "active",
 				});
 
@@ -59,7 +59,7 @@ export function usePinSession() {
 				});
 
 				// Update pinned list
-				const pinnedQueryKey = trpc.chat.session.listPinned.queryOptions().queryKey;
+				const pinnedQueryKey = trpc.session.listPinned.queryOptions().queryKey;
 				const previousPinned = queryClient.getQueryData<Session[]>(pinnedQueryKey);
 				
 				// Update pinned list with the found session (session is guaranteed to exist here)
@@ -98,29 +98,29 @@ export function usePinSession() {
 				showTRPCErrorToast(err, "Failed to update pin status");
 				// Rollback pinned list on error
 				if (context?.previousPinned !== undefined) {
-					const pinnedQueryKey = trpc.chat.session.listPinned.queryOptions().queryKey;
+					const pinnedQueryKey = trpc.session.listPinned.queryOptions().queryKey;
 					queryClient.setQueryData<Session[]>(pinnedQueryKey, context.previousPinned);
 				}
 				// Invalidate to get fresh data
 				// Invalidate all list queries (both regular and infinite)
 				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 				});
 				// Invalidate pinned list
 				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "listPinned"]],
+					queryKey: [["session", "listPinned"]],
 				});
 			},
 			onSettled: () => {
 				// Always invalidate to ensure consistency
 				// Invalidate all list queries (both regular and infinite)
 				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 					refetchType: "none",
 				});
 				// Invalidate pinned list
 				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "listPinned"]],
+					queryKey: [["session", "listPinned"]],
 					refetchType: "none",
 				});
 			},

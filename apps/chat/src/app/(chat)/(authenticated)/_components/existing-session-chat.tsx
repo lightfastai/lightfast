@@ -26,7 +26,7 @@ export function ExistingSessionChat({
 	const { selectedModelId } = useModelSelection(true);
 
 	// Get messages query options for cache updates
-	const messagesQueryOptions = trpc.chat.message.list.queryOptions({
+	const messagesQueryOptions = trpc.message.list.queryOptions({
 		sessionId,
 	});
 
@@ -34,7 +34,7 @@ export function ExistingSessionChat({
 	const [{ data: user }, { data: messages }] = useSuspenseQueries({
 		queries: [
 			{
-				...trpc.auth.user.getUser.queryOptions(),
+				...trpc.user.getUser.queryOptions(),
 				staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 				refetchOnMount: false, // Prevent blocking navigation
 				refetchOnWindowFocus: false, // Don't refetch on window focus

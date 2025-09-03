@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { appRouter, createTRPCContext } from "@vendor/trpc";
+import { chatAppRouter, createChatContext } from "@api/chat";
 
 export const runtime = "edge";
 
@@ -27,10 +27,10 @@ export const OPTIONS = () => {
 const handler = async (req: NextRequest) => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
-    router: appRouter,
+    router: chatAppRouter,
     req,
     createContext: () =>
-      createTRPCContext({
+      createChatContext({
         headers: req.headers,
       }),
     onError({ error, path }) {

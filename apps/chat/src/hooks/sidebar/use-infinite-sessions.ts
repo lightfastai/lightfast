@@ -8,7 +8,7 @@ export function useInfiniteSessions() {
   const trpc = useTRPC();
   
   const query = useInfiniteQuery({
-    ...trpc.chat.session.list.infiniteQueryOptions({
+    ...trpc.session.list.infiniteQueryOptions({
       limit: ITEMS_PER_PAGE,
     }),
     initialPageParam: null as string | null,

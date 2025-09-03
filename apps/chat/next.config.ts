@@ -15,14 +15,14 @@ let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
 		transpilePackages: [
+			"@api/chat",
 			"@repo/ui",
 			"@repo/site-config",
 			"@repo/url-utils",
 			"@vendor/clerk",
 			"@vendor/observability",
 			"@vendor/next",
-			"@vendor/trpc",
-			"@vendor/db",
+			"@db/chat",
 			"lightfast",
 		],
 		experimental: {

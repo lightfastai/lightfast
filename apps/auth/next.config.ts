@@ -22,7 +22,6 @@ let config: NextConfig = withBetterStack(
 			"@vendor/next",
 			"@vendor/clerk",
 			"@vendor/analytics",
-			"@vendor/db",
 		],
 	}),
 );

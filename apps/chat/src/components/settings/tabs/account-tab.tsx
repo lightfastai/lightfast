@@ -6,7 +6,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 export function AccountTab() {
 	const trpc = useTRPC();
 	const { data: user } = useSuspenseQuery({
-		...trpc.auth.user.getUser.queryOptions(),
+		...trpc.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache for 5 minutes
 	})
 

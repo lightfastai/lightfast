@@ -3,10 +3,10 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
-import type { RouterOutputs } from "@vendor/trpc";
-import { DEFAULT_SESSION_TITLE } from "@vendor/db/lightfast/schema";
+import type { RouterOutputs } from "@api/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat";
 
-type Session = RouterOutputs["chat"]["session"]["list"][number];
+type Session = RouterOutputs["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
 
 interface CreateSessionInput {
@@ -23,17 +23,17 @@ export function useCreateSession() {
 	const queryClient = useQueryClient();
 
 	return useMutation(
-		trpc.chat.session.create.mutationOptions({
+		trpc.session.create.mutationOptions({
 			onMutate: async ({ id, firstMessage }: CreateSessionInput) => {
 				// Cancel any outgoing refetches for session list queries
 				await queryClient.cancelQueries({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 				});
 
 				// Get all infinite query cache entries for session list
 				const queryCache = queryClient.getQueryCache();
 				const queries = queryCache.findAll({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 					type: "active",
 				});
 
@@ -76,7 +76,7 @@ export function useCreateSession() {
 				});
 
 				// Also update regular (non-infinite) queries if they exist
-				const regularQueryKey = trpc.chat.session.list.queryOptions({ limit: 20 }).queryKey;
+				const regularQueryKey = trpc.session.list.queryOptions({ limit: 20 }).queryKey;
 				const regularData =
 					queryClient.getQueryData<Session[]>(regularQueryKey);
 
@@ -113,7 +113,7 @@ export function useCreateSession() {
 			onSettled: (_data, _error, variables) => {
 				// Invalidate all session list queries to ensure consistency
 				void queryClient.invalidateQueries({
-					queryKey: [["chat", "session", "list"]],
+					queryKey: [["session", "list"]],
 					refetchType: "none", // Don't trigger suspense
 				});
 				
@@ -123,11 +123,11 @@ export function useCreateSession() {
 					// Invalidate after 2 seconds (typical Inngest processing time)
 					setTimeout(() => {
 						void queryClient.invalidateQueries({
-							queryKey: [["chat", "session", "list"]],
+							queryKey: [["session", "list"]],
 							refetchType: "none",
 						});
 						void queryClient.invalidateQueries({
-							queryKey: [["chat", "session", "listPinned"]],
+							queryKey: [["session", "listPinned"]],
 							refetchType: "none",
 						});
 					}, 2000);
@@ -135,11 +135,11 @@ export function useCreateSession() {
 					// And again after 5 seconds as a fallback
 					setTimeout(() => {
 						void queryClient.invalidateQueries({
-							queryKey: [["chat", "session", "list"]],
+							queryKey: [["session", "list"]],
 							refetchType: "none",
 						});
 						void queryClient.invalidateQueries({
-							queryKey: [["chat", "session", "listPinned"]],
+							queryKey: [["session", "listPinned"]],
 							refetchType: "none",
 						});
 					}, 5000);
