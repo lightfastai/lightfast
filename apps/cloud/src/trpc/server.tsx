@@ -5,7 +5,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { CloudAppRouter } from "@api/cloud";
-import { cloudAppRouter, createCloudContext } from "@api/cloud";
+import { cloudAppRouter, createTRPCContext } from "@api/cloud";
 
 import { createQueryClient } from "./client";
 
@@ -17,7 +17,7 @@ const createContext = cache(async () => {
 	const heads = new Headers(await headers());
 	heads.set("x-trpc-source", "rsc");
 
-	return createCloudContext({
+	return createTRPCContext({
 		headers: heads,
 	});
 });

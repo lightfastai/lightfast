@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { cloudAppRouter, createCloudContext } from "@api/cloud";
+import { cloudAppRouter, createTRPCContext } from "@api/cloud";
 
 export const runtime = "edge";
 
@@ -30,7 +30,7 @@ const handler = async (req: NextRequest) => {
     router: cloudAppRouter,
     req,
     createContext: () =>
-      createCloudContext({
+      createTRPCContext({
         headers: req.headers,
       }),
     onError({ error, path }) {
