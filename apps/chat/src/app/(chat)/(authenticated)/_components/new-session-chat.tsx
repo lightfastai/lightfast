@@ -29,7 +29,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Get user info - using suspense for instant loading
 	const trpc = useTRPC();
 	const { data: user } = useSuspenseQuery({
-		...trpc.auth.user.getUser.queryOptions(),
+		...trpc.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 		refetchOnMount: false, // Prevent blocking navigation
 		refetchOnWindowFocus: false, // Don't refetch on window focus
@@ -45,7 +45,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	const queryClient = useQueryClient();
 
 	// Get the query key for messages
-	const messagesQueryKey = trpc.chat.message.list.queryOptions({
+	const messagesQueryKey = trpc.message.list.queryOptions({
 		sessionId,
 	}).queryKey;
 

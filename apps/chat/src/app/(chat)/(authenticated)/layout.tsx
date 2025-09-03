@@ -18,10 +18,10 @@ export default function AuthenticatedLayout({
 	children,
 }: AuthenticatedLayoutProps) {
 	// Prefetch user data for instant loading
-	prefetch(trpc.auth.user.getUser.queryOptions());
+	prefetch(trpc.user.getUser.queryOptions());
 	
 	// Prefetch pinned sessions for sidebar
-	prefetch(trpc.chat.session.listPinned.queryOptions());
+	prefetch(trpc.session.listPinned.queryOptions());
 
 	// Note: We don't prefetch infinite sessions here because:
 	// 1. prefetchInfiniteQuery can't be used in RSC (serialization issues)

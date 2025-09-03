@@ -32,7 +32,7 @@ export function useSearchSessions() {
 
 	// Search query using the tRPC pattern
 	const searchResults = useQuery({
-		...trpc.chat.session.search.queryOptions({
+		...trpc.session.search.queryOptions({
 			query: debouncedQuery,
 			limit: 30,
 		}),

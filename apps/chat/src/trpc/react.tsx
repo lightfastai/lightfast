@@ -15,7 +15,6 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
 import type { ChatAppRouter } from "@api/chat";
-import { createTRPCHeaders, $TRPCSource } from "@vendor/trpc";
 import { createQueryClient } from "./client";
 import { env } from "~/env";
 
@@ -47,10 +46,9 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 					transformer: SuperJSON,
 					url: getBaseUrl() + "/api/trpc",
 					headers() {
-						const headers = createTRPCHeaders({
-							source: $TRPCSource.Enum["lightfast-chat"],
-						});
-						return headers;
+						return {
+							"x-trpc-source": "client",
+						};
 					},
 				}),
 			],

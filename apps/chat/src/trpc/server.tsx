@@ -6,7 +6,6 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { ChatAppRouter } from "@api/chat";
 import { chatAppRouter, createChatContext } from "@api/chat";
-import { $TRPCHeaderName } from "@vendor/trpc";
 
 import { createQueryClient } from "./client";
 
@@ -16,7 +15,7 @@ import { createQueryClient } from "./client";
  */
 const createContext = cache(async () => {
 	const heads = new Headers(await headers());
-	heads.set($TRPCHeaderName.Enum["x-lightfast-trpc-source"], "lightfast-chat-rsc");
+	heads.set("x-trpc-source", "rsc");
 
 	return createChatContext({
 		headers: heads,
@@ -25,6 +24,7 @@ const createContext = cache(async () => {
 
 export const getQueryClient = cache(createQueryClient);
 
+// Create the TRPC proxy
 export const trpc = createTRPCOptionsProxy<ChatAppRouter>({
 	router: chatAppRouter,
 	ctx: createContext,

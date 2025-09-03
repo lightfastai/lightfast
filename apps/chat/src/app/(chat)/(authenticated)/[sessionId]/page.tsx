@@ -15,7 +15,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
 
 	// Prefetch the messages here in the page
 	// Pages re-execute on navigation, ensuring fresh data
-	prefetch(trpc.chat.message.list.queryOptions({ sessionId }));
+	prefetch(trpc.message.list.queryOptions({ sessionId }));
 
 	return (
 		<HydrateClient>

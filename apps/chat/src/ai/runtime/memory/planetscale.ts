@@ -36,7 +36,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				? context.modelId 
 				: null;
 			
-			await caller.chat.message.append({
+			await caller.message.append({
 				sessionId,
 				message: {
 					id: message.id,
@@ -74,7 +74,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
 		try {
 			const caller = await createCaller();
-			const messages = await caller.chat.message.list({
+			const messages = await caller.message.list({
 				sessionId,
 			});
 
@@ -120,7 +120,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 			// The resourceId is the Clerk user ID, but we're already authenticated via tRPC
 			// Use the session router to create/ensure the session exists
 			const caller = await createCaller();
-			await caller.chat.session.create({
+			await caller.session.create({
 				id: sessionId,
 			});
 		} catch (error) {
@@ -152,7 +152,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	async getSession(sessionId: string): Promise<{ resourceId: string; id: string } | null> {
 		try {
 			const caller = await createCaller();
-			const session = await caller.chat.session.getMetadata({
+			const session = await caller.session.getMetadata({
 				sessionId,
 			});
 			
@@ -209,7 +209,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	}): Promise<void> {
 		try {
 			const caller = await createCaller();
-			await caller.chat.message.createStream({
+			await caller.message.createStream({
 				sessionId,
 				streamId,
 			});
@@ -245,7 +245,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	async getSessionStreams(sessionId: string): Promise<string[]> {
 		try {
 			const caller = await createCaller();
-			const streamIds = await caller.chat.message.getStreams({
+			const streamIds = await caller.message.getStreams({
 				sessionId,
 			});
 

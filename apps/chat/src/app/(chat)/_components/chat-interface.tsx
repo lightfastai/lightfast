@@ -40,7 +40,7 @@ const RateLimitDialog = dynamic(
 	{ ssr: false },
 );
 
-type UserInfo = RouterOutputs["auth"]["user"]["getUser"];
+type UserInfo = RouterOutputs["user"]["getUser"];
 
 interface ChatInterfaceProps {
 	agentId: string;
