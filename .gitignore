@@ -128,3 +128,6 @@ storybook-static
 # Lightfast CLI
 .lightfast/
 .tanstack/
+
+# Git worktrees
+worktrees/

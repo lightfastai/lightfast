@@ -140,7 +140,9 @@
       "Read(/tmp/create-t3-turbo/**)",
       "Read(/tmp/create-t3-turbo/**)",
       "Bash(gh:*)",
-      "Bash(git read-tree:*)"
+      "Bash(git read-tree:*)",
+      "Read(/private/tmp/create-t3-turbo/**)",
+      "Bash(git worktree:*)"
     ],
     "deny": []
   },
