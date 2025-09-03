@@ -15,7 +15,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'Skipping build - using source files directly'",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",

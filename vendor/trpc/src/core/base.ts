@@ -4,6 +4,7 @@
  */
 
 import { initTRPC, TRPCError } from "@trpc/server";
+import type { AnyRouter } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -15,10 +16,16 @@ export interface BaseContext {
 }
 
 /**
+ * Type for the TRPC instance
+ */
+export type TRPCInstance<TContext extends BaseContext> = ReturnType<typeof initTRPC.context<TContext>>;
+
+/**
  * Create base TRPC instance with shared configuration
  */
 export function createTRPCBase<TContext extends BaseContext = BaseContext>() {
-  return initTRPC.context<TContext>().create({
+  const t = initTRPC.context<TContext>();
+  return t.create({
     transformer: superjson,
     errorFormatter: ({ shape, error }) => ({
       ...shape,
