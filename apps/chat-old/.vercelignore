@@ -1,6 +1,0 @@
-# Ignore worktrees
-worktrees
-
-# Ignore temporary directories
-tmp_context
-tmp_repo
