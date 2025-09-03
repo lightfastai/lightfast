@@ -3,7 +3,6 @@
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import Link from "next/link";
-import { getAppUrl } from "@repo/url-utils";
 
 interface RateLimitIndicatorProps {
 	remainingMessages: number;

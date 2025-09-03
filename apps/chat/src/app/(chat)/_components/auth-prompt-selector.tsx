@@ -9,7 +9,6 @@ import {
 import { Icons } from "@repo/ui/components/ui/icons";
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronDown } from "lucide-react";
-import { getAppUrl } from "@repo/url-utils";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useMemo } from "react";

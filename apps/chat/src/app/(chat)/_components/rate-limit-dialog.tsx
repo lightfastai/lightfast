@@ -6,7 +6,6 @@ import {
 	DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { getAppUrl } from "@repo/url-utils";
 import Link from "next/link";
 import Image from "next/image";
 import { X } from "lucide-react";
