@@ -29,13 +29,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 	const { userId } = await auth();
 
-	// Handle redirects for authenticated/unauthenticated users
-	if (req.nextUrl.pathname === "/") {
-		if (userId) {
-			return NextResponse.redirect(new URL("/new", req.url));
-		} else {
-			return NextResponse.redirect(new URL("/sign-in", req.url));
-		}
+	// Handle redirects for authenticated users only
+	if (req.nextUrl.pathname === "/" && userId) {
+		return NextResponse.redirect(new URL("/new", req.url));
 	}
 
 	// Redirect authenticated users away from auth pages
