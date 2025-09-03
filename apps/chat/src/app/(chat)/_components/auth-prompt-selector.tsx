@@ -25,7 +25,6 @@ interface AuthPromptSelectorProps {
 
 export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 	const [open, setOpen] = useState(false);
-	const authUrl = getAppUrl("auth");
 
 	// Get the default model for unauthenticated users
 	const defaultModel = useMemo(() => {
@@ -95,7 +94,7 @@ export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 								variant="outline"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-in`}>Sign In</Link>
+								<Link href="/sign-in">Sign In</Link>
 							</Button>
 							<Button
 								size="default"
@@ -103,7 +102,7 @@ export function AuthPromptSelector({ className }: AuthPromptSelectorProps) {
 								variant="secondary"
 								asChild
 							>
-								<Link href={`${authUrl}/sign-up`}>Sign Up</Link>
+								<Link href="/sign-up">Sign Up</Link>
 							</Button>
 						</div>
 					</div>

@@ -19,7 +19,6 @@ export function RateLimitIndicator({
 		return null;
 	}
 
-	const authUrl = getAppUrl("auth");
 
 	const getAlertVariant = () => {
 		if (remainingMessages === 0) return "destructive";
@@ -31,7 +30,7 @@ export function RateLimitIndicator({
 			return (
 				<span>
 					You've reached your daily message limit.{" "}
-					<Link href={`${authUrl}/sign-in`} className="underline font-medium hover:no-underline">
+					<Link href={`/sign-in`} className="underline font-medium hover:no-underline">
 						Sign in
 					</Link>{" "}
 					to continue chatting.
@@ -43,7 +42,7 @@ export function RateLimitIndicator({
 			return (
 				<span>
 					You have 1 message remaining.{" "}
-					<Link href={`${authUrl}/sign-in`} className="underline font-medium hover:no-underline">
+					<Link href={`/sign-in`} className="underline font-medium hover:no-underline">
 						Sign in
 					</Link>{" "}
 					to reset your limit.
@@ -54,7 +53,7 @@ export function RateLimitIndicator({
 		return (
 			<span>
 				You have {remainingMessages} messages remaining.{" "}
-				<Link href={`${authUrl}/sign-in`} className="underline font-medium hover:no-underline">
+				<Link href={`/sign-in`} className="underline font-medium hover:no-underline">
 					Sign in
 				</Link>{" "}
 				to reset your limit.
