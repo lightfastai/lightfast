@@ -571,6 +571,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/security':
+        specifier: workspace:*
+        version: link:../../vendor/security
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
@@ -1094,9 +1097,6 @@ importers:
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
       '@vendor/email':
         specifier: workspace:*
         version: link:../../vendor/email

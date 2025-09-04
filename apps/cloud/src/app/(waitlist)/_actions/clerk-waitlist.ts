@@ -2,11 +2,12 @@
 
 import { z } from "zod";
 import { redis } from "~/lib/redis";
+import { handleClerkAPIError, handleServerActionError } from "~/lib/error-handler";
 
 export type ClerkWaitlistState =
 	| { status: "idle" }
 	| { status: "success"; message: string }
-	| { status: "error"; error: string }
+	| { status: "error"; error: string; isRateLimit?: boolean }
 	| {
 			status: "validation_error";
 			fieldErrors: { email?: string[] };
@@ -47,12 +48,22 @@ export async function joinClerkWaitlistAction(
 		const { email } = validatedFields.data;
 
 		// Check if email already exists in our Redis set
-		const emailExists = await redis.sismember(WAITLIST_EMAILS_SET_KEY, email);
-		if (emailExists) {
-			return {
-				status: "error",
-				error: "This email is already on the waitlist!",
-			};
+		try {
+			const emailExists = await redis.sismember(WAITLIST_EMAILS_SET_KEY, email);
+			if (emailExists) {
+				return {
+					status: "error",
+					error: "This email is already on the waitlist!",
+				};
+			}
+		} catch (redisError) {
+			// Log Redis errors but don't block the user
+			handleServerActionError(redisError, {
+				action: "joinClerkWaitlist:redis-check",
+				email,
+				operation: "sismember",
+			});
+			// Continue with the request even if Redis check fails
 		}
 
 		try {
@@ -81,13 +92,6 @@ export async function joinClerkWaitlistAction(
 					status?: number;
 				};
 				
-				// Log the error for debugging
-				console.error("Clerk API error:", {
-					status: response.status,
-					clerk_trace_id: errorData.clerk_trace_id,
-					errors: errorData.errors
-				});
-				
 				// Check if the error is because the email already exists
 				if (response.status === 400 || response.status === 422) {
 					const firstError = errorData.errors?.[0];
@@ -105,10 +109,31 @@ export async function joinClerkWaitlistAction(
 					}
 				}
 				
-				// Return the first error message or a generic error
+				// Get the error message
 				const errorMessage = errorData.errors?.[0]?.message ?? 
 					errorData.errors?.[0]?.long_message ?? 
 					`Failed to join waitlist: ${response.status}`;
+				
+				// Report to Sentry with full context
+				const errorResult = handleClerkAPIError(
+					new Error(errorMessage),
+					{
+						action: "joinClerkWaitlist:api-call",
+						email,
+						clerkTraceId: errorData.clerk_trace_id,
+						status: response.status,
+						errorData,
+					}
+				);
+				
+				// Check for rate limit
+				if (response.status === 429 || errorResult.isRateLimit) {
+					return {
+						status: "error",
+						error: errorResult.userMessage,
+						isRateLimit: true,
+					};
+				}
 				
 				throw new Error(errorMessage);
 			}
@@ -125,25 +150,38 @@ export async function joinClerkWaitlistAction(
 				message:
 					"Successfully joined the waitlist! We'll send you an invite when Lightfast Cloud is ready.",
 			};
-		} catch (error) {
-			// If it's already an error we want to show, throw it
-			if (error instanceof Error && error.message.includes("already on the waitlist")) {
+		} catch (clerkError) {
+			// If it's already an error we want to show, return it
+			if (clerkError instanceof Error && clerkError.message.includes("already on the waitlist")) {
 				return {
 					status: "error",
-					error: error.message,
+					error: clerkError.message,
 				};
 			}
 
-			throw error;
+			// Handle unexpected Clerk errors
+			const errorResult = handleServerActionError(clerkError, {
+				action: "joinClerkWaitlist:unexpected",
+				email,
+			});
+
+			return {
+				status: "error",
+				error: errorResult.userMessage,
+				isRateLimit: errorResult.isRateLimit,
+			};
 		}
 	} catch (error) {
-		console.error("Clerk waitlist error:", error);
+		// Handle any outer errors (validation, etc.)
+		const errorResult = handleServerActionError(error, {
+			action: "joinClerkWaitlist:outer",
+			formData: Object.fromEntries(formData.entries()),
+		});
+
 		return {
 			status: "error",
-			error:
-				error instanceof Error
-					? error.message
-					: "Something went wrong. Please try again.",
+			error: errorResult.userMessage,
+			isRateLimit: errorResult.isRateLimit,
 		};
 	}
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -9,6 +9,7 @@ import { joinClerkWaitlistAction } from "../app/(waitlist)/_actions/clerk-waitli
 import Link from "next/link";
 import { getAppUrl } from "@repo/url-utils";
 import { ConfettiWrapper } from "./confetti-wrapper";
+import { captureException } from "@sentry/nextjs";
 
 function SubmitButton() {
 	const { pending } = useFormStatus();
@@ -24,6 +25,25 @@ export function WaitlistForm() {
 	const [state, formAction] = useActionState(joinClerkWaitlistAction, { status: "idle" });
 	const wwwUrl = getAppUrl("www");
 	const authUrl = getAppUrl("auth");
+
+	// Track client-side errors
+	useEffect(() => {
+		if (state.status === "error") {
+			// Report to Sentry when an error occurs on the client
+			captureException(new Error(`Waitlist form error: ${state.error}`), {
+				tags: {
+					component: "waitlist-form",
+					error_type: state.isRateLimit ? "rate_limit" : "form_error",
+				},
+				extra: {
+					errorMessage: state.error,
+					isRateLimit: state.isRateLimit,
+					timestamp: new Date().toISOString(),
+				},
+				level: state.isRateLimit ? "warning" : "error",
+			});
+		}
+	}, [state]);
 
 	if (state.status === "success") {
 		return (
@@ -60,7 +80,16 @@ export function WaitlistForm() {
 					</p>
 				)}
 				{state.status === "error" && (
-					<p className="text-xs text-destructive">{state.error}</p>
+					<div className="space-y-1">
+						<p className={`text-xs ${state.isRateLimit ? "text-yellow-600 dark:text-yellow-500" : "text-destructive"}`}>
+							{state.error}
+						</p>
+						{state.isRateLimit && (
+							<p className="text-xs text-muted-foreground">
+								Please wait a moment before trying again.
+							</p>
+						)}
+					</div>
 				)}
 				<SubmitButton />
 			</form>

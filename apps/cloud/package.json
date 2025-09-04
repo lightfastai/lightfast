@@ -28,6 +28,7 @@
 		"@vendor/clerk": "workspace:*",
 		"@vendor/next": "workspace:*",
 		"@vendor/observability": "workspace:*",
+		"@vendor/security": "workspace:*",
 		"@vendor/upstash": "workspace:*",
 		"@vercel/toolbar": "^0.1.28",
 		"nanoid": "^5.1.5",
