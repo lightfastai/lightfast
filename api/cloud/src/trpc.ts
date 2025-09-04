@@ -7,12 +7,12 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 
+import { db } from "@db/cloud/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
-import { db } from "@db/cloud/client";
 
 /**
  * 1. CONTEXT
@@ -27,9 +27,7 @@ import { db } from "@db/cloud/client";
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}) => {
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
 
   // Get the source header for logging
@@ -59,10 +57,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     ...shape,
     data: {
       ...shape.data,
-      zodError:
-        error.cause instanceof ZodError
-          ? error.cause.flatten()
-          : null,
+      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
 });
@@ -111,7 +106,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
 /**
  * Public (unauthed) procedure
- * 
+ *
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
@@ -120,10 +115,10 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
- * 
+ *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
  * the session is valid and guarantees `ctx.session.userId` is not null.
- * 
+ *
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure

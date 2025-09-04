@@ -3,17 +3,17 @@
  * This is the main router for cloud-specific API endpoints
  */
 
+import { apiKeyRouter } from "./routers/apiKey";
 import { createTRPCRouter } from "./trpc";
 
 /**
  * Primary cloud app router
- * TODO: Add cloud-specific routers (deployments, API keys, etc.)
+ * Contains all cloud-specific API endpoints
  */
 export const cloudAppRouter = createTRPCRouter({
-  // Cloud routers will be added here
-  // Example structure:
+  apiKey: apiKeyRouter,
+  // Additional routers will be added here
   // deployment: deploymentRouter,
-  // apiKey: apiKeyRouter,
 });
 
 // Export type for use in client

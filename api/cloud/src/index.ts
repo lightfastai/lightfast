@@ -1,3 +1,8 @@
+// Export router types for client usage
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+
+import type { CloudAppRouter } from "./root";
+
 /**
  * Cloud API exports
  */
@@ -8,10 +13,6 @@ export type { CloudAppRouter } from "./root";
 
 // Export context creation
 export { createTRPCContext } from "./trpc";
-
-// Export router types for client usage
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { CloudAppRouter } from "./root";
 
 export type CloudRouterInputs = inferRouterInputs<CloudAppRouter>;
 export type CloudRouterOutputs = inferRouterOutputs<CloudAppRouter>;
