@@ -131,7 +131,7 @@ export const apiKeyRouter = {
       const whereClause = includeInactive
         ? eq(CloudApiKey.clerkUserId, session.data.userId)
         : and(
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId!),
             eq(CloudApiKey.active, true),
           );
 
@@ -177,7 +177,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId!),
           ),
         )
         .limit(1);
@@ -298,6 +298,81 @@ export const apiKeyRouter = {
     }),
 
   /**
+   * Get user information using an API key (for CLI whoami command)
+   */
+  whoami: publicProcedure
+    .input(
+      z.object({
+        key: z
+          .string()
+          .min(1, "API key is required")
+          .refine(
+            (val) => val.startsWith(API_KEY_PREFIX),
+            `API key must start with ${API_KEY_PREFIX}`,
+          ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
+      const { key } = input;
+
+      // Get all active keys (we need to check hashes)
+      const activeKeys = await db
+        .select({
+          id: CloudApiKey.id,
+          keyHash: CloudApiKey.keyHash,
+          clerkUserId: CloudApiKey.clerkUserId,
+          expiresAt: CloudApiKey.expiresAt,
+          active: CloudApiKey.active,
+        })
+        .from(CloudApiKey)
+        .where(eq(CloudApiKey.active, true));
+
+      // Find the matching key by verifying the hash
+      let validKey = null;
+      for (const dbKey of activeKeys) {
+        const isValid = await argon2.verify(dbKey.keyHash, key);
+        if (isValid) {
+          validKey = dbKey;
+          break;
+        }
+      }
+
+      // Check if key was found and is valid
+      if (!validKey) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Invalid API key",
+        });
+      }
+
+      // Check if key is expired
+      if (validKey.expiresAt && validKey.expiresAt < new Date()) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "API key has expired",
+        });
+      }
+
+      // Update last used timestamp
+      await db
+        .update(CloudApiKey)
+        .set({
+          lastUsedAt: new Date(),
+        })
+        .where(eq(CloudApiKey.id, validKey.id));
+
+      // Return user information
+      // Note: We're returning limited info since we don't have Clerk session here
+      return {
+        userId: validKey.clerkUserId,
+        email: null, // Would need to fetch from Clerk API if needed
+        organizationId: null, // Would need to fetch from Clerk API if needed
+        keyId: validKey.id,
+      };
+    }),
+
+  /**
    * Delete an API key permanently (hard delete)
    * Only allowed for keys that have been revoked
    */
@@ -322,7 +397,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId!),
           ),
         )
         .limit(1);

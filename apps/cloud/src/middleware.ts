@@ -13,6 +13,8 @@ const clerkConfig = getClerkMiddlewareConfig("cloud");
 const isPublicRoute = createRouteMatcher([
 	"/",
 	"/api/health",
+	"/api/trpc/apiKey.validate", // tRPC endpoint for API key validation
+	"/api/trpc/apiKey.whoami", // tRPC endpoint for whoami command
 	"/playground",
 	"/playground/(.*)",
 	"/settings/api-keys", // Temporarily public for testing

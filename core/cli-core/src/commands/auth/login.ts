@@ -117,7 +117,7 @@ ${chalk.cyan("Authentication Methods:")}
       console.log(chalk.gray("  Storing credentials securely..."));
       
       try {
-        // Store the API key in keychain
+        // Store the API key in auth file (Vercel-style)
         await configStore.setApiKey(profile, apiKey);
         
         // Store profile information
@@ -135,23 +135,16 @@ ${chalk.cyan("Authentication Methods:")}
         
         console.log(chalk.green("✔ Authentication successful!"));
         console.log(chalk.gray(`  Credentials saved to profile: ${profile}`));
-        
-        const keychainAvailable = await configStore.isKeychainAvailable();
-        if (!keychainAvailable) {
-          console.log(chalk.yellow("⚠ Warning: Keychain not available"));
-          console.log(chalk.gray("  Credentials may not be stored securely"));
-        }
+        console.log(chalk.gray(`  Auth file: ~/.lightfast/auth.json (mode 600)`));
         
       } catch (storageError: any) {
         console.error(chalk.red("✖ Failed to store credentials"));
         console.error(chalk.red("Error:"), storageError.message);
         
-        if (storageError.message.includes("keychain")) {
-          console.log(chalk.gray("\n💡 Troubleshooting:"));
-          console.log(chalk.gray("  • Your system may not support secure credential storage"));
-          console.log(chalk.gray("  • Try running with elevated permissions if on Linux"));
-          console.log(chalk.gray("  • Check if your keyring is unlocked"));
-        }
+        console.log(chalk.gray("\n💡 Troubleshooting:"));
+        console.log(chalk.gray("  • Check if ~/.lightfast directory is writable"));
+        console.log(chalk.gray("  • Ensure you have permission to create files"));
+        console.log(chalk.gray("  • Try manually creating ~/.lightfast directory"));
         
         process.exit(1);
       }

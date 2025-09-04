@@ -112,7 +112,16 @@ export class LightfastClient {
    * Validate an API key by calling the tRPC validation endpoint
    */
   async validateApiKey(apiKey: string): Promise<ApiResponse<{ valid: boolean; userId: string; keyId: string }>> {
-    const url = `${this.baseUrl}${API_ENDPOINTS.VALIDATE_API_KEY}`;
+    // Use tRPC endpoint with proper format
+    const url = `${this.baseUrl}/api/trpc/apiKey.validate`;
+    
+    // tRPC expects input wrapped in specific format for mutations
+    const requestBody = {
+      json: {
+        key: apiKey
+      }
+    };
+    
     
     try {
       const response = await fetch(url, {
@@ -121,11 +130,7 @@ export class LightfastClient {
           'Content-Type': 'application/json',
           'User-Agent': 'lightfast-cli',
         },
-        body: JSON.stringify({
-          json: {
-            key: apiKey
-          }
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       let data: any;
@@ -144,9 +149,11 @@ export class LightfastClient {
         };
       }
 
-      // tRPC returns result in a specific format
-      const result = data?.result?.data;
-      if (!result) {
+      // tRPC returns result in a specific format for non-batched requests
+      // The response has an extra 'json' wrapper that needs to be handled
+      const result = data?.result?.data?.json || data?.result?.data;
+      
+      if (!result || !result.valid) {
         return {
           success: false,
           error: 'InvalidResponse',
@@ -168,21 +175,32 @@ export class LightfastClient {
   }
 
   /**
-   * Get information about the current user using Clerk session
-   * This uses the standard authentication middleware
+   * Get information about the current user using API key
+   * Uses tRPC endpoint for consistency
    */
   async whoami(): Promise<ApiResponse<WhoAmIResponse>> {
-    // First try the authentication endpoint with API key
-    const url = `${this.baseUrl}/api/user/whoami`;
+    if (!this.apiKey) {
+      await this.init();
+    }
+
+    // Use tRPC endpoint with proper format
+    const url = `${this.baseUrl}/api/trpc/apiKey.whoami`;
+    
+    // tRPC expects input wrapped in specific format for mutations
+    const requestBody = {
+      json: {
+        key: this.apiKey
+      }
+    };
     
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
           'User-Agent': 'lightfast-cli',
         },
+        body: JSON.stringify(requestBody),
       });
 
       let data: any;
@@ -197,13 +215,31 @@ export class LightfastClient {
         return {
           success: false,
           error: `HTTP ${response.status}`,
-          message: data?.message || data?.error || data || 'Failed to get user information',
+          message: data?.error?.message || data?.message || data?.error || data || 'Failed to get user information',
         };
       }
 
+      // tRPC returns result in a specific format for non-batched requests
+      // The response has an extra 'json' wrapper that needs to be handled
+      const result = data?.result?.data?.json || data?.result?.data;
+      
+      if (!result) {
+        return {
+          success: false,
+          error: 'InvalidResponse',
+          message: 'Unexpected response format from API',
+        };
+      }
+
+      // Map the response to WhoAmIResponse format
       return {
         success: true,
-        data,
+        data: {
+          userId: result.userId,
+          email: result.email || 'Unknown',
+          organizationId: result.organizationId,
+          organization: result.organization,
+        },
       };
     } catch (error: any) {
       return {

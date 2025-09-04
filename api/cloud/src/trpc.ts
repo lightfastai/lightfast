@@ -13,7 +13,6 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
-import type { Auth } from "@clerk/nextjs/server";
 
 import { authenticateApiKey } from "./middleware/apiKey";
 

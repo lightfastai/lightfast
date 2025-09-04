@@ -147,8 +147,9 @@ ${chalk.cyan("Information Displayed:")}
           console.log(chalk.gray(`  Profile Created: ${storedProfile.createdAt ? new Date(storedProfile.createdAt).toLocaleString() : 'Unknown'}`));
           console.log(chalk.gray(`  Config Path: ${configStore.getConfigPath()}`));
           
-          const keychainAvailable = await configStore.isKeychainAvailable();
-          console.log(chalk.gray(`  Keychain Available: ${keychainAvailable ? 'Yes' : 'No'}`));
+          const authPath = configStore.getAuthPath();
+          console.log(chalk.gray(`  Auth File: ${authPath}`));
+          console.log(chalk.gray(`  Storage: File-based with chmod 600`));
           
           const allProfiles = await configStore.listProfiles();
           const defaultProfile = await configStore.getDefaultProfile();

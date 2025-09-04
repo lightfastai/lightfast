@@ -49,6 +49,7 @@
 		"@changesets/cli": "^2.29.5",
 		"@repo/prettier-config": "workspace:*",
 		"envmcp": "^0.2.1",
+		"keytar": "^7.9.0",
 		"prettier": "catalog:",
 		"turbo": "^2.5.5",
 		"turbo-ignore": "^2.5.5",

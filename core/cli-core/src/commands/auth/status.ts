@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { configStore } from "../../lib/config.js";
 import { LightfastClient } from "../../lib/client.js";
-import { getApiUrl, getDashboardUrl, KEYTAR_SERVICE } from "../../lib/config-constants.js";
+import { getApiUrl, getDashboardUrl } from "../../lib/config-constants.js";
 
 interface StatusOptions {
   profile?: string;
@@ -32,8 +32,8 @@ ${chalk.cyan("Status Information:")}
     try {
       const profiles = await configStore.listProfiles();
       const defaultProfile = await configStore.getDefaultProfile();
-      const keychainAvailable = await configStore.isKeychainAvailable();
       const configPath = configStore.getConfigPath();
+      const authPath = configStore.getAuthPath();
       
       // Determine which profile to check
       const targetProfile = options.profile || defaultProfile;
@@ -50,7 +50,7 @@ ${chalk.cyan("Status Information:")}
           activeProfile: targetProfile,
           profiles: profiles,
           defaultProfile: defaultProfile,
-          keychainAvailable: keychainAvailable,
+          authFile: authPath,
           configPath: configPath,
           apiEndpoint: "https://api.lightfast.ai",
           profile: profile,
@@ -123,14 +123,12 @@ ${chalk.cyan("Status Information:")}
         console.log("");
         console.log(chalk.cyan("📊 Detailed Information:"));
         console.log(chalk.gray(`  Config File: ${configPath}`));
-        console.log(chalk.gray(`  Keychain Available: ${keychainAvailable ? 'Yes' : 'No'}`));
+        console.log(chalk.gray(`  Auth File: ${authPath}`));
         console.log(chalk.gray(`  Total Profiles: ${profiles.length}`));
         console.log(chalk.gray(`  Available Profiles: ${profiles.length > 0 ? profiles.join(", ") : 'None'}`));
         console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
-        
-        if (!keychainAvailable) {
-          console.log(chalk.yellow("  ⚠ Keychain unavailable - credentials may not be stored securely"));
-        }
+        console.log(chalk.gray("  Storage: File-based with chmod 600 (Vercel-style)"));
+        console.log(chalk.gray("  Environment: Set LIGHTFAST_API_KEY to override"));
       }
 
       console.log("");

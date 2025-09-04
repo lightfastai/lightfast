@@ -12,7 +12,7 @@ export const userRouter = {
       const user = await currentUser();
       
       return {
-        userId: ctx.userId,
+        userId: ctx.session.data.userId,
         email: user?.emailAddresses?.[0]?.emailAddress || null,
         firstName: user?.firstName || null,
         lastName: user?.lastName || null,

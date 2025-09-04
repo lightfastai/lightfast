@@ -43,7 +43,6 @@ export function getDashboardUrl(path: string = ''): string {
  */
 export const CONFIG_DIR = '.lightfast';
 export const CONFIG_FILE = 'config.json';
-export const KEYTAR_SERVICE = 'lightfast-cli';
 
 /**
  * Default profile name

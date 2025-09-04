@@ -1,15 +1,12 @@
 import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { homedir } from 'os';
-import { CONFIG_DIR, CONFIG_FILE, KEYTAR_SERVICE, DEFAULT_PROFILE, getApiUrl } from './config-constants.js';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_PROFILE } from './config-constants.js';
 
-// Keytar module - will be loaded dynamically
-let keytar: any = null;
-let keytarError: string | null = null;
-
-const SERVICE_NAME = KEYTAR_SERVICE;
 const CONFIG_DIR_PATH = join(homedir(), CONFIG_DIR);
 const CONFIG_FILE_PATH = join(CONFIG_DIR_PATH, CONFIG_FILE);
+const AUTH_FILE = 'auth.json';
+const AUTH_FILE_PATH = join(CONFIG_DIR_PATH, AUTH_FILE);
 
 export interface Profile {
   name: string;
@@ -25,38 +22,28 @@ export interface Config {
   profiles: Record<string, Profile>;
 }
 
+export interface AuthData {
+  tokens: Record<string, string>; // profileName -> token
+}
+
 export class ConfigStore {
   private config: Config | null = null;
-
-  /**
-   * Load keytar module dynamically
-   */
-  private async loadKeytar(): Promise<boolean> {
-    if (keytar !== null) return true;
-    if (keytarError !== null) return false;
-
-    try {
-      keytar = await import('keytar');
-      return true;
-    } catch (error: any) {
-      keytarError = error.message || 'Failed to load keytar';
-      return false;
-    }
-  }
+  private authData: AuthData | null = null;
 
   /**
    * Initialize the config store and ensure the config directory exists
    */
   private async init(): Promise<void> {
-    if (this.config !== null) return;
+    if (this.config !== null && this.authData !== null) return;
 
     try {
-      await fs.mkdir(CONFIG_DIR, { recursive: true });
+      await fs.mkdir(CONFIG_DIR_PATH, { recursive: true });
     } catch (error) {
       throw new Error(`Failed to create config directory: ${error}`);
     }
 
     await this.loadConfig();
+    await this.loadAuth();
   }
 
   /**
@@ -80,6 +67,25 @@ export class ConfigStore {
   }
 
   /**
+   * Load auth data from disk
+   */
+  private async loadAuth(): Promise<void> {
+    try {
+      const data = await fs.readFile(AUTH_FILE_PATH, 'utf8');
+      this.authData = JSON.parse(data);
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        // Auth file doesn't exist, create default
+        this.authData = {
+          tokens: {}
+        };
+      } else {
+        throw new Error(`Failed to load auth: ${error.message}`);
+      }
+    }
+  }
+
+  /**
    * Save configuration to disk
    */
   private async saveConfig(): Promise<void> {
@@ -95,58 +101,70 @@ export class ConfigStore {
   }
 
   /**
+   * Save auth data to disk with restricted permissions (like Vercel CLI)
+   */
+  private async saveAuth(): Promise<void> {
+    if (!this.authData) {
+      throw new Error('Auth not initialized');
+    }
+
+    try {
+      // Write the file
+      await fs.writeFile(AUTH_FILE_PATH, JSON.stringify(this.authData, null, 2), {
+        encoding: 'utf8',
+        mode: 0o600 // Read/write for owner only (chmod 600)
+      });
+
+      // Double-check permissions on existing file
+      await fs.chmod(AUTH_FILE_PATH, 0o600);
+    } catch (error) {
+      throw new Error(`Failed to save auth: ${error}`);
+    }
+  }
+
+  /**
    * Get a profile by name (or default profile if no name provided)
    */
   async getProfile(name?: string): Promise<Profile | null> {
     await this.init();
-    
-    if (!name) {
-      name = this.config!.defaultProfile;
-    }
-
-    return this.config!.profiles[name] || null;
+    const profileName = name || this.config!.defaultProfile;
+    return this.config!.profiles[profileName] || null;
   }
 
   /**
-   * Set or update a profile
+   * Set/update a profile
    */
-  async setProfile(name: string, data: Partial<Profile>): Promise<void> {
+  async setProfile(name: string, profile: Partial<Profile>): Promise<void> {
     await this.init();
-
+    
     const now = new Date().toISOString();
-    const existing = this.config!.profiles[name];
+    const existingProfile = this.config!.profiles[name];
     
     this.config!.profiles[name] = {
+      ...existingProfile,
+      ...profile,
       name,
-      endpoint: getApiUrl(), // Default endpoint
-      ...existing,
-      ...data,
-      createdAt: existing?.createdAt || now,
-      updatedAt: now
+      updatedAt: now,
+      createdAt: existingProfile?.createdAt || now
     };
 
     await this.saveConfig();
   }
 
   /**
-   * Remove a profile and its API key from keychain
+   * Remove a profile and its API key
    */
   async removeProfile(name: string): Promise<void> {
     await this.init();
-
+    
     if (!this.config!.profiles[name]) {
       throw new Error(`Profile '${name}' does not exist`);
     }
 
-    // Remove API key from keychain
-    const keytarAvailable = await this.loadKeytar();
-    if (keytarAvailable) {
-      try {
-        await keytar.deletePassword(SERVICE_NAME, name);
-      } catch (error) {
-        // Keychain errors are non-fatal for profile removal
-        console.warn(`Warning: Could not remove API key from keychain: ${error}`);
-      }
+    // Remove API key from auth file
+    if (this.authData!.tokens[name]) {
+      delete this.authData!.tokens[name];
+      await this.saveAuth();
     }
 
     // Remove profile from config
@@ -192,55 +210,54 @@ export class ConfigStore {
   }
 
   /**
-   * Store an API key securely in the OS keychain
+   * Store an API key (Vercel-style: in separate auth.json with chmod 600)
    */
   async setApiKey(profileName: string, apiKey: string): Promise<void> {
-    const keytarAvailable = await this.loadKeytar();
-    if (!keytarAvailable) {
-      throw new Error(`Cannot store API key: keychain not available. ${keytarError || 'Unknown error'}`);
-    }
-
-    try {
-      await keytar.setPassword(SERVICE_NAME, profileName, apiKey);
-    } catch (error) {
-      throw new Error(`Failed to store API key in keychain: ${error}. Your system may not support secure storage.`);
+    await this.init();
+    
+    // Store in auth file (like Vercel's ~/.vercel/auth.json)
+    this.authData!.tokens[profileName] = apiKey;
+    await this.saveAuth();
+    
+    // Ensure profile exists
+    if (!this.config!.profiles[profileName]) {
+      this.config!.profiles[profileName] = { name: profileName };
+      await this.saveConfig();
     }
   }
 
   /**
-   * Retrieve an API key from the OS keychain
+   * Retrieve an API key (first check env var, then auth file)
    */
   async getApiKey(profileName: string): Promise<string | null> {
-    const keytarAvailable = await this.loadKeytar();
-    if (!keytarAvailable) {
-      return null;
+    // Check environment variable first (like Vercel CLI)
+    const envKey = process.env.LIGHTFAST_API_KEY || process.env.LIGHTFAST_TOKEN;
+    if (envKey) {
+      return envKey;
     }
 
-    try {
-      const password = await keytar.getPassword(SERVICE_NAME, profileName);
-      return password || null;
-    } catch (error) {
-      console.warn(`Warning: Could not retrieve API key from keychain: ${error}`);
-      return null;
+    await this.init();
+    return this.authData!.tokens[profileName] || null;
+  }
+
+  /**
+   * Delete an API key
+   */
+  async deleteApiKey(profileName: string): Promise<void> {
+    await this.init();
+    
+    if (this.authData!.tokens[profileName]) {
+      delete this.authData!.tokens[profileName];
+      await this.saveAuth();
     }
   }
 
   /**
-   * Check if keychain is available on this system
+   * Check if keychain is available (always returns false now)
    */
   async isKeychainAvailable(): Promise<boolean> {
-    const keytarAvailable = await this.loadKeytar();
-    if (!keytarAvailable) {
-      return false;
-    }
-
-    try {
-      // Test keychain availability by attempting a simple operation
-      await keytar.findCredentials(SERVICE_NAME);
-      return true;
-    } catch (error) {
-      return false;
-    }
+    // We're not using keychain anymore, following Vercel's approach
+    return false;
   }
 
   /**
@@ -248,6 +265,13 @@ export class ConfigStore {
    */
   getConfigPath(): string {
     return CONFIG_FILE_PATH;
+  }
+
+  /**
+   * Get the auth file path for debugging
+   */
+  getAuthPath(): string {
+    return AUTH_FILE_PATH;
   }
 
   /**
@@ -264,29 +288,20 @@ export class ConfigStore {
   async clear(): Promise<void> {
     await this.init();
 
-    // Remove all API keys from keychain
-    const keytarAvailable = await this.loadKeytar();
-    if (keytarAvailable) {
-      const profileNames = Object.keys(this.config!.profiles);
-      for (const profileName of profileNames) {
-        try {
-          await keytar.deletePassword(SERVICE_NAME, profileName);
-        } catch (error) {
-          // Non-fatal
-          console.warn(`Warning: Could not remove API key for profile '${profileName}': ${error}`);
-        }
-      }
-    }
+    // Clear auth data
+    this.authData = {
+      tokens: {}
+    };
+    await this.saveAuth();
 
     // Reset config
     this.config = {
       defaultProfile: DEFAULT_PROFILE,
       profiles: {}
     };
-
     await this.saveConfig();
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const configStore = new ConfigStore();
