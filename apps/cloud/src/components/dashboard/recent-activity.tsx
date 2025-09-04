@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -28,28 +29,13 @@ type ApiKey = {
 };
 
 export function RecentActivity() {
-	const api = useTRPC();
+	const trpc = useTRPC();
 	
-	if (!api?.apiKey?.list) {
-		return (
-			<Card className="border-destructive/50 bg-destructive/10">
-				<CardContent className="p-6">
-					<div className="flex items-center space-x-2 text-destructive">
-						<AlertTriangle className="h-5 w-5" />
-						<p className="font-medium">API not available</p>
-					</div>
-				</CardContent>
-			</Card>
-		);
-	}
-	
-	const { data: apiKeys, isLoading, error } = (api as any).apiKey.list.useQuery(
-		{ includeInactive: false },
-		{
-			staleTime: 2 * 60 * 1000, // 2 minutes
-			refetchOnWindowFocus: true,
-		}
-	);
+	const { data: apiKeys, isLoading, error } = useQuery({
+		...trpc.apiKey.list.queryOptions({ includeInactive: false }),
+		staleTime: 2 * 60 * 1000, // 2 minutes
+		refetchOnWindowFocus: true,
+	});
 
 	if (error) {
 		return (

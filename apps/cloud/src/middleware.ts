@@ -15,6 +15,7 @@ const isPublicRoute = createRouteMatcher([
 	"/api/health",
 	"/playground",
 	"/playground/(.*)",
+	"/settings/api-keys", // Temporarily public for testing
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { 
   Dialog, 
   DialogContent, 
@@ -49,10 +50,11 @@ export function CreateKeyDialog({
   const [isKeyCopied, setIsKeyCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const api = useTRPC();
+  const trpc = useTRPC();
   
   // Safe fallback if tRPC is not fully initialized
-  const createKeyMutation = (api as any)?.apiKey?.create?.useMutation?.({
+  const createKeyMutation = useMutation({
+    ...trpc.apiKey.create.mutationOptions(),
     onSuccess: (data: any) => {
       // Clear any previous errors
       setError(null);
@@ -100,7 +102,7 @@ export function CreateKeyDialog({
       
       await createKeyMutation.mutateAsync({
         name: formData.name,
-        expiresAt: expiresAt?.toISOString() || null,
+        ...(expiresAt && { expiresInDays: Math.ceil((expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) }),
       });
       
     } catch (error) {
@@ -197,7 +199,7 @@ export function CreateKeyDialog({
   const isLoading = createKeyMutation?.isPending ?? false;
 
   // Don't render if API is not available
-  if (!(api as any)?.apiKey?.create) {
+  if (!trpc?.apiKey?.create) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px]">

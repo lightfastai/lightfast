@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useTRPC } from "~/trpc/react";
@@ -22,9 +23,10 @@ export interface ApiKeyAction {
 export function useApiKeyActions() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   
-  const api = useTRPC();
-  const revokeMutation = (api as any).apiKey.revoke.useMutation({});
-  const deleteMutation = (api as any).apiKey.delete.useMutation({});
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const revokeMutation = useMutation(trpc.apiKey.revoke.mutationOptions({}));
+  const deleteMutation = useMutation(trpc.apiKey.delete.mutationOptions({}));
 
   /**
    * Revoke an API key with optimistic update
@@ -36,38 +38,34 @@ export function useApiKeyActions() {
 
     try {
       // Optimistic update - immediately mark as revoked
-      (api as any).apiKey.list.setData?.(
-        { includeInactive: false },
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((key: any) =>
-            key.id === keyId ? { ...key, active: false } : key
-          );
-        }
-      );
+      const listQueryKey = trpc.apiKey.list.queryOptions({ includeInactive: false }).queryKey;
+      queryClient.setQueryData(listQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((key: any) =>
+          key.id === keyId ? { ...key, active: false } : key
+        );
+      });
 
       // Also update the inclusive list if it exists
-      (api as any).apiKey.list.setData?.(
-        { includeInactive: true },
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((key: any) =>
-            key.id === keyId ? { ...key, active: false } : key
-          );
-        }
-      );
+      const inclusiveListQueryKey = trpc.apiKey.list.queryOptions({ includeInactive: true }).queryKey;
+      queryClient.setQueryData(inclusiveListQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((key: any) =>
+          key.id === keyId ? { ...key, active: false } : key
+        );
+      });
 
       const result = await revokeMutation.mutateAsync({ keyId });
 
       toast.success(result.message || `API key "${keyName}" has been revoked`);
 
       // Invalidate queries to ensure fresh data
-      await (api as any).apiKey.list.invalidate?.();
+      await queryClient.invalidateQueries({ queryKey: [["apiKey", "list"]] });
 
       return { success: true };
     } catch (error: any) {
       // Rollback optimistic update
-      await (api as any).apiKey.list.invalidate?.();
+      await queryClient.invalidateQueries({ queryKey: [["apiKey", "list"]] });
 
       const errorMessage = error?.message || "Failed to revoke API key";
       toast.error(errorMessage);
@@ -88,33 +86,29 @@ export function useApiKeyActions() {
 
     try {
       // Optimistic update - immediately remove from list
-      (api as any).apiKey.list.setData?.(
-        { includeInactive: false },
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.filter((key: any) => key.id !== keyId);
-        }
-      );
+      const listQueryKey = trpc.apiKey.list.queryOptions({ includeInactive: false }).queryKey;
+      queryClient.setQueryData(listQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((key: any) => key.id !== keyId);
+      });
 
-      (api as any).apiKey.list.setData?.(
-        { includeInactive: true },
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.filter((key: any) => key.id !== keyId);
-        }
-      );
+      const inclusiveListQueryKey = trpc.apiKey.list.queryOptions({ includeInactive: true }).queryKey;
+      queryClient.setQueryData(inclusiveListQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((key: any) => key.id !== keyId);
+      });
 
       const result = await deleteMutation.mutateAsync({ keyId });
 
       toast.success(result.message || `API key "${keyName}" has been permanently deleted`);
 
       // Invalidate queries to ensure fresh data
-      await (api as any).apiKey.list.invalidate?.();
+      await queryClient.invalidateQueries({ queryKey: [["apiKey", "list"]] });
 
       return { success: true };
     } catch (error: any) {
       // Rollback optimistic update
-      await (api as any).apiKey.list.invalidate?.();
+      await queryClient.invalidateQueries({ queryKey: [["apiKey", "list"]] });
 
       const errorMessage = error?.message || "Failed to delete API key";
       toast.error(errorMessage);
@@ -188,7 +182,7 @@ export function useApiKeyActions() {
    * Refresh the API key list
    */
   const refreshList = async () => {
-    await (api as any).apiKey.list.invalidate?.();
+    await queryClient.invalidateQueries({ queryKey: [["apiKey", "list"]] });
   };
 
   /**

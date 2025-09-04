@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -31,33 +32,21 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
   const [includeInactive, setIncludeInactive] = useState(false);
   const { toast } = useToast();
 
-  const api = useTRPC();
-  
-  if (!api?.apiKey?.list) {
-    return (
-      <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
-        <AlertCircle className="size-4" />
-        <AlertDescription>
-          API not available. Please refresh the page.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const trpc = useTRPC();
 
   const {
     data: apiKeys,
     isLoading,
     error,
     refetch,
-  } = (api as any).apiKey.list.useQuery(
-    { includeInactive },
-    {
-      refetchOnWindowFocus: false,
-      staleTime: 30000, // 30 seconds
-    }
-  );
+  } = useQuery({
+    ...trpc.apiKey.list.queryOptions({ includeInactive }),
+    refetchOnWindowFocus: false,
+    staleTime: 30000, // 30 seconds
+  });
 
-  const revokeMutation = (api as any).apiKey.revoke.useMutation({
+  const revokeMutation = useMutation({
+    ...trpc.apiKey.revoke.mutationOptions(),
     onSuccess: (data: any) => {
       toast({
         title: "API key revoked",
@@ -74,7 +63,8 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
     },
   });
 
-  const deleteMutation = (api as any).apiKey.delete.useMutation({
+  const deleteMutation = useMutation({
+    ...trpc.apiKey.delete.mutationOptions(),
     onSuccess: (data: any) => {
       toast({
         title: "API key deleted",
