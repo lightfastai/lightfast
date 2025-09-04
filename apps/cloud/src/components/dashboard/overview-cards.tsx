@@ -42,16 +42,16 @@ export function OverviewCards() {
 		const now = new Date();
 		const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-		const active = apiKeys.filter((key: ApiKey) => key.active && !key.isExpired).length;
-		const recentlyUsed = apiKeys.filter((key: ApiKey) => {
+		const active = apiKeys.filter((key) => key.active && !key.isExpired).length;
+		const recentlyUsed = apiKeys.filter((key) => {
 			if (!key.lastUsedAt) return false;
-			const lastUsed = new Date(key.lastUsedAt);
+			const lastUsed = key.lastUsedAt;
 			const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 			return lastUsed > thirtyDaysAgo;
 		}).length;
-		const expiring = apiKeys.filter((key: ApiKey) => {
+		const expiring = apiKeys.filter((key) => {
 			if (!key.expiresAt || key.isExpired || !key.active) return false;
-			const expiresAt = new Date(key.expiresAt);
+			const expiresAt = key.expiresAt;
 			return expiresAt <= sevenDaysFromNow;
 		}).length;
 

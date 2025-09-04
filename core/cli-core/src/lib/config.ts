@@ -12,7 +12,6 @@ export interface Profile {
   name: string;
   endpoint?: string;
   userId?: string;
-  organizationId?: string;
   createdAt?: string;
   updatedAt?: string;
 }

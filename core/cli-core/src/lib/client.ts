@@ -8,20 +8,15 @@ export interface ApiResponse<T = any> {
   message?: string;
 }
 
-export interface WhoAmIResponse {
+export interface ValidateKeyResponse {
+  valid: boolean;
   userId: string;
-  email: string;
-  organizationId?: string;
-  organization?: {
-    id: string;
-    name: string;
-  };
+  keyId: string;
 }
 
-export interface DeployResponse {
-  deploymentId: string;
-  url: string;
-  status: 'pending' | 'building' | 'ready' | 'error';
+export interface WhoAmIResponse {
+  userId: string;
+  keyId: string;
 }
 
 export class LightfastClient {
@@ -111,7 +106,7 @@ export class LightfastClient {
   /**
    * Validate an API key by calling the tRPC validation endpoint
    */
-  async validateApiKey(apiKey: string): Promise<ApiResponse<{ valid: boolean; userId: string; keyId: string }>> {
+  async validateApiKey(apiKey: string): Promise<ApiResponse<ValidateKeyResponse>> {
     // Use tRPC endpoint with proper format
     const url = `${this.baseUrl}/api/trpc/apiKey.validate`;
     
@@ -231,15 +226,10 @@ export class LightfastClient {
         };
       }
 
-      // Map the response to WhoAmIResponse format
+      // Return the simplified response
       return {
         success: true,
-        data: {
-          userId: result.userId,
-          email: result.email || 'Unknown',
-          organizationId: result.organizationId,
-          organization: result.organization,
-        },
+        data: result,
       };
     } catch (error: any) {
       return {
@@ -250,73 +240,6 @@ export class LightfastClient {
     }
   }
 
-  /**
-   * Deploy an agent (stub implementation)
-   */
-  async deploy(options: {
-    name: string;
-    source: string;
-    environment?: 'development' | 'staging' | 'production';
-    config?: Record<string, any>;
-  }): Promise<ApiResponse<DeployResponse>> {
-    return this.request<DeployResponse>('/v1/deployments', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: options.name,
-        source: options.source,
-        environment: options.environment || 'development',
-        config: options.config || {},
-      }),
-    });
-  }
-
-  /**
-   * Get deployment status
-   */
-  async getDeployment(deploymentId: string): Promise<ApiResponse<DeployResponse>> {
-    return this.request<DeployResponse>(`/v1/deployments/${deploymentId}`);
-  }
-
-  /**
-   * List deployments
-   */
-  async listDeployments(options: {
-    limit?: number;
-    environment?: string;
-  } = {}): Promise<ApiResponse<DeployResponse[]>> {
-    const params = new URLSearchParams();
-    if (options.limit) params.set('limit', options.limit.toString());
-    if (options.environment) params.set('environment', options.environment);
-
-    const endpoint = `/v1/deployments${params.toString() ? `?${params.toString()}` : ''}`;
-    return this.request<DeployResponse[]>(endpoint);
-  }
-
-  /**
-   * Delete a deployment
-   */
-  async deleteDeployment(deploymentId: string): Promise<ApiResponse<{ deleted: boolean }>> {
-    return this.request<{ deleted: boolean }>(`/v1/deployments/${deploymentId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  /**
-   * Get agent logs
-   */
-  async getLogs(deploymentId: string, options: {
-    since?: string;
-    tail?: number;
-    follow?: boolean;
-  } = {}): Promise<ApiResponse<{ logs: string[] }>> {
-    const params = new URLSearchParams();
-    if (options.since) params.set('since', options.since);
-    if (options.tail) params.set('tail', options.tail.toString());
-    if (options.follow) params.set('follow', options.follow.toString());
-
-    const endpoint = `/v1/deployments/${deploymentId}/logs${params.toString() ? `?${params.toString()}` : ''}`;
-    return this.request<{ logs: string[] }>(endpoint);
-  }
 
   /**
    * Update client configuration

@@ -312,14 +312,14 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
                         <KeyStatusBadge
                           isActive={key.active}
                           isExpired={key.isExpired}
-                          expiresAt={key.expiresAt}
+                          expiresAt={key.expiresAt ? key.expiresAt.toISOString() : null}
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatDate(key.createdAt)}
+                        {formatDate(key.createdAt.toISOString())}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Never"}
+                        {key.lastUsedAt ? formatDate(key.lastUsedAt.toISOString()) : "Never"}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -374,7 +374,12 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
             {filteredAndSortedKeys.map((key) => (
               <ApiKeyCard
                 key={key.id}
-                apiKey={key}
+                apiKey={{
+                  ...key,
+                  createdAt: key.createdAt.toISOString(),
+                  lastUsedAt: key.lastUsedAt ? key.lastUsedAt.toISOString() : null,
+                  expiresAt: key.expiresAt ? key.expiresAt.toISOString() : null,
+                }}
                 onRevoke={handleRevoke}
                 onDelete={handleDelete}
                 isRevoking={revokeMutation.isPending}

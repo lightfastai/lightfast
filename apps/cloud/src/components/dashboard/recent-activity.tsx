@@ -59,13 +59,13 @@ export function RecentActivity() {
 
 	// Sort keys by most recent activity (created or last used)
 	const sortedKeys = apiKeys
-		?.map((key: ApiKey) => ({
+		?.map((key) => ({
 			...key,
 			mostRecentDate: key.lastUsedAt 
-				? new Date(Math.max(new Date(key.createdAt).getTime(), new Date(key.lastUsedAt).getTime()))
-				: new Date(key.createdAt)
+				? new Date(Math.max(key.createdAt.getTime(), key.lastUsedAt.getTime()))
+				: key.createdAt
 		}))
-		.sort((a: ApiKey & { mostRecentDate: Date }, b: ApiKey & { mostRecentDate: Date }) => b.mostRecentDate.getTime() - a.mostRecentDate.getTime())
+		.sort((a, b) => b.mostRecentDate.getTime() - a.mostRecentDate.getTime())
 		.slice(0, 5) || [];
 
 	if (sortedKeys.length === 0) {
@@ -101,11 +101,11 @@ export function RecentActivity() {
 			</CardHeader>
 			<CardContent className="p-0">
 				<div className="space-y-0">
-					{sortedKeys.map((key: ApiKey & { mostRecentDate: Date }, index: number) => {
+					{sortedKeys.map((key, index) => {
 						const wasRecentlyUsed = key.lastUsedAt && 
-							new Date(key.lastUsedAt) > new Date(key.createdAt);
+							key.lastUsedAt > key.createdAt;
 						const isExpiringSoon = key.expiresAt && 
-							new Date(key.expiresAt) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+							key.expiresAt <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 						
 						return (
 							<div

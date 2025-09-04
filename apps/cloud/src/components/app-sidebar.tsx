@@ -101,7 +101,7 @@ function UserSection() {
 									className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 								>
 									<Avatar className="h-8 w-8">
-										<AvatarImage src={avatarUrl} alt={displayName} />
+										<AvatarImage src={avatarUrl || undefined} alt={displayName} />
 										<AvatarFallback className="bg-primary/10 text-primary">
 											{displayName.charAt(0).toUpperCase()}
 										</AvatarFallback>

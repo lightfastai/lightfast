@@ -75,7 +75,6 @@ export const apiKeyRouter = {
 
       // Store the API key in the database
       await db.insert(CloudApiKey).values({
-        id: keyId,
         clerkUserId: session.data.userId,
         keyHash,
         keyPreview: getKeyPreview(apiKey),
@@ -94,7 +93,8 @@ export const apiKeyRouter = {
           expiresAt: CloudApiKey.expiresAt,
         })
         .from(CloudApiKey)
-        .where(eq(CloudApiKey.id, keyId))
+        .where(eq(CloudApiKey.clerkUserId, session.data.userId))
+        .orderBy(desc(CloudApiKey.createdAt))
         .limit(1);
 
       // Key should always exist since we just created it
@@ -131,7 +131,7 @@ export const apiKeyRouter = {
       const whereClause = includeInactive
         ? eq(CloudApiKey.clerkUserId, session.data.userId)
         : and(
-            eq(CloudApiKey.clerkUserId, session.data.userId!),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
             eq(CloudApiKey.active, true),
           );
 
@@ -177,7 +177,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId!),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
           ),
         )
         .limit(1);
@@ -363,11 +363,8 @@ export const apiKeyRouter = {
         .where(eq(CloudApiKey.id, validKey.id));
 
       // Return user information
-      // Note: We're returning limited info since we don't have Clerk session here
       return {
         userId: validKey.clerkUserId,
-        email: null, // Would need to fetch from Clerk API if needed
-        organizationId: null, // Would need to fetch from Clerk API if needed
         keyId: validKey.id,
       };
     }),
@@ -397,7 +394,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId!),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
           ),
         )
         .limit(1);

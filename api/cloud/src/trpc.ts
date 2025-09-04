@@ -76,7 +76,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session: Session = clerkSession?.userId
     ? {
         type: 'clerk',
-        data: clerkSession,
+        data: clerkSession as typeof clerkSession & { userId: string },
       }
     : null;
 
@@ -176,8 +176,8 @@ export const protectedProcedure = t.procedure
     }
     return next({
       ctx: {
-        // infers the `session` as non-nullable
-        session: ctx.session,
+        // After check above, we know session exists and userId is non-null
+        session: ctx.session as typeof ctx.session & { data: { userId: string } },
       },
     });
   });

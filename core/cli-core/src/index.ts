@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import chalk from "chalk";
-import { compileCommand } from "./commands/compile.js";
-import { bundleCommand } from "./commands/bundle.js";
-import { devCommand } from "./commands/dev.js";
-import { cleanCommand } from "./commands/clean.js";
-import { deployCommand } from "./commands/deploy.js";
+import { compileCommand } from "./commands/compile/index.js";
+import { bundleCommand } from "./commands/bundle/index.js";
+import { devCommand } from "./commands/dev/index.js";
+import { cleanCommand } from "./commands/clean/index.js";
+//import { deployCommand } from "./commands/deploy/index.js";
 import { authCommand } from "./commands/auth/index.js";
 import { getPackageInfo } from "./utils/package.js";
 
@@ -26,7 +26,7 @@ program.addCommand(compileCommand);
 program.addCommand(bundleCommand);
 program.addCommand(devCommand);
 program.addCommand(cleanCommand);
-program.addCommand(deployCommand);
+// program.addCommand(deployCommand);
 program.addCommand(authCommand);
 
 // Enhanced help with examples
@@ -59,4 +59,3 @@ program.on("--help", () => {
 
 // Parse arguments and execute
 program.parse();
-
