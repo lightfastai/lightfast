@@ -11,7 +11,7 @@ import { Copy, MoreHorizontal, Ban, Trash2, Key, AlertCircle, RefreshCw } from "
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
-import { useTRPCApi } from "~/trpc/react";
+import { useTRPC } from "~/trpc/react";
 import { KeyStatusBadge } from "./key-status-badge";
 import { ApiKeyCard } from "./api-key-card";
 import { ListFilters } from "./list-filters";
@@ -31,7 +31,7 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
   const [includeInactive, setIncludeInactive] = useState(false);
   const { toast } = useToast();
 
-  const api = useTRPCApi();
+  const api = useTRPC();
   
   if (!api?.apiKey?.list) {
     return (

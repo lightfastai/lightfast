@@ -13,7 +13,7 @@ import {
 	Activity
 } from "lucide-react";
 
-import { useTRPCApi } from "~/trpc/react";
+import { useTRPC } from "~/trpc/react";
 import { formatDistanceToNow } from "date-fns";
 
 type ApiKey = {
@@ -28,7 +28,7 @@ type ApiKey = {
 };
 
 export function RecentActivity() {
-	const api = useTRPCApi();
+	const api = useTRPC();
 	
 	if (!api?.apiKey?.list) {
 		return (

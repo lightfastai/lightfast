@@ -14,7 +14,7 @@ import { AlertTriangle, ArrowLeft, X } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
 
-import { useTRPCApi } from "~/trpc/react";
+import { useTRPC } from "~/trpc/react";
 import { CreateKeyForm } from "./create-key-form";
 import { KeyDisplay } from "./key-display";
 import { CreationSuccess } from "./creation-success";
@@ -49,7 +49,7 @@ export function CreateKeyDialog({
   const [isKeyCopied, setIsKeyCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const api = useTRPCApi();
+  const api = useTRPC();
   
   // Safe fallback if tRPC is not fully initialized
   const createKeyMutation = (api as any)?.apiKey?.create?.useMutation?.({

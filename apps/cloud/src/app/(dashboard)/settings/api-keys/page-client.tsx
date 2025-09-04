@@ -5,9 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo
 import { Plus, ExternalLink } from "lucide-react";
 import { useState, useCallback } from "react";
 
-import { CreateKeyDialog } from "~/components/api-keys";
-// TODO: Import ApiKeyList component when implemented
-// import { ApiKeyList } from "~/components/api-keys/api-key-list";
+import { CreateKeyDialog, ApiKeyList } from "~/components/api-keys";
 
 export function ApiKeysPageClient() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -41,33 +39,8 @@ export function ApiKeysPageClient() {
         </Button>
       </div>
 
-      {/* TODO: Replace with actual ApiKeyList when implemented */}
-      {/* <ApiKeyList onCreateKey={handleCreateKey} key={keyListRefreshTrigger} /> */}
-      
-      {/* Placeholder content - remove when ApiKeyList is implemented */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Your API Keys</CardTitle>
-          <CardDescription>
-            Your created API keys will be listed here
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
-              <Plus className="size-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">No API keys created yet</p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Create your first API key to get started
-            </p>
-            <Button onClick={handleCreateKey} size="sm">
-              <Plus className="size-4 mr-2" />
-              Create Your First API Key
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* API Key List Component */}
+      <ApiKeyList onCreateKey={handleCreateKey} key={_keyListRefreshTrigger} />
 
       {/* Documentation Card */}
       <Card>

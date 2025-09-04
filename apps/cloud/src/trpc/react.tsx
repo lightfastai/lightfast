@@ -29,11 +29,7 @@ const getQueryClient = () => {
 	}
 };
 
-const { TRPCProvider, useTRPC } = createTRPCContext<CloudAppRouter>();
-
-export function useTRPCApi() {
-	return useTRPC();
-}
+export const { useTRPC, TRPCProvider } = createTRPCContext<CloudAppRouter>();
 
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
 	const queryClient = getQueryClient();
@@ -71,5 +67,5 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 const getBaseUrl = () => {
 	if (typeof window !== "undefined") return window.location.origin;
 	if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
-	return `http://localhost:${process.env.PORT ?? 4104}`;
+	return `http://localhost:${process.env.PORT ?? 4103}`;
 };

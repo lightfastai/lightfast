@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { useTRPCApi } from "~/trpc/react";
+import { useTRPC } from "~/trpc/react";
 
 export interface ApiKeyAction {
   id: string;
@@ -22,7 +22,7 @@ export interface ApiKeyAction {
 export function useApiKeyActions() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   
-  const api = useTRPCApi();
+  const api = useTRPC();
   const revokeMutation = (api as any).apiKey.revoke.useMutation({});
   const deleteMutation = (api as any).apiKey.delete.useMutation({});
 

@@ -1,10 +1,4 @@
-/**
- * API Key management router for Lightfast Cloud
- *
- * Handles creation, listing, revocation, and validation of API keys
- * for CLI authentication against the platform.
- */
-
+import type { TRPCRouterRecord } from "@trpc/server";
 import { CloudApiKey } from "@db/cloud/schema";
 import * as argon2 from "argon2";
 import { and, desc, eq } from "drizzle-orm";
@@ -14,7 +8,6 @@ import { z } from "zod";
 import { uuidv4 } from "@repo/lib";
 
 import {
-  createTRPCRouter,
   protectedProcedure,
   publicProcedure,
   TRPCError,
@@ -42,7 +35,7 @@ function getKeyPreview(key: string): string {
   return `...${key.slice(-KEY_PREVIEW_LENGTH)}`;
 }
 
-export const apiKeyRouter = createTRPCRouter({
+export const apiKeyRouter = {
   /**
    * Create a new API key for the authenticated user
    */
@@ -359,4 +352,4 @@ export const apiKeyRouter = createTRPCRouter({
         message: `API key "${existingKey.name}" has been permanently deleted`,
       };
     }),
-});
+} satisfies TRPCRouterRecord;

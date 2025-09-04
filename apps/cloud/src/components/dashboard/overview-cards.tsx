@@ -6,7 +6,7 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { AlertTriangle, Key, Activity, Clock } from "lucide-react";
 
-import { useTRPCApi } from "~/trpc/react";
+import { useTRPC } from "~/trpc/react";
 
 type ApiKey = {
 	id: string;
@@ -20,7 +20,7 @@ type ApiKey = {
 };
 
 export function OverviewCards() {
-	const api = useTRPCApi();
+	const api = useTRPC();
 	
 	if (!api?.apiKey?.list) {
 		return (

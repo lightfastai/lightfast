@@ -13,17 +13,26 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
+import type { Auth } from "@clerk/nextjs/server";
 
 import { authenticateApiKey } from "./middleware/apiKey";
 
 /**
- * Extended session type that includes API key authentication
+ * Session types for different authentication methods
  */
-export type ExtendedSession = {
-  userId: string;
-  isApiKeyAuth?: boolean;
-  apiKeyId?: string;
-} | null;
+export type Session = 
+  | {
+      type: 'api-key';
+      data: {
+        userId: string;
+        apiKeyId: string;
+      };
+    }
+  | {
+      type: 'clerk';
+      data: Awaited<ReturnType<typeof auth>>;
+    }
+  | null;
 
 /**
  * 1. CONTEXT
@@ -48,24 +57,32 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   if (apiKeyAuth) {
     console.info(`>>> tRPC Request from ${source} by ${apiKeyAuth.userId} (API Key: ${apiKeyAuth.apiKeyId})`);
     
-    // Return context with API key authentication
-    // Format it to match the expected session shape
-    return {
-      session: {
+    const session: Session = {
+      type: 'api-key',
+      data: {
         userId: apiKeyAuth.userId,
-        // Add a flag to indicate this is API key auth
-        isApiKeyAuth: true,
         apiKeyId: apiKeyAuth.apiKeyId,
-      } as any, // We use 'as any' here because we're extending the session type
+      },
+    };
+    
+    return {
+      session,
       db,
     };
   }
   
   // Fall back to Clerk session authentication
-  const session = await auth();
+  const clerkSession = await auth();
+  
+  const session: Session = clerkSession?.userId
+    ? {
+        type: 'clerk',
+        data: clerkSession,
+      }
+    : null;
 
-  if (session?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId} (Session Auth)`);
+  if (session?.data?.userId) {
+    console.info(`>>> tRPC Request from ${source} by ${session.data.userId} (Session Auth)`);
   } else {
     console.info(`>>> tRPC Request from ${source} by unknown`);
   }
@@ -155,7 +172,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
+    if (!ctx.session?.data?.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
