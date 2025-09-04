@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { Calendar, CalendarIcon, Clock, Key, AlertCircle } from "lucide-react";
+import { CalendarIcon, Clock, Key, AlertCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/ui/popover";
 import { Calendar as CalendarComponent } from "@repo/ui/components/ui/calendar";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
@@ -74,26 +74,6 @@ export function CreateKeyForm({ onSubmit, isLoading = false, onCancel }: CreateK
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-          <Key className="h-6 w-6 text-primary" />
-        </div>
-        <h2 className="text-xl font-semibold">Create API Key</h2>
-        <p className="text-muted-foreground text-sm">
-          Generate a new API key to access the Lightfast Cloud API.
-        </p>
-      </div>
-
-      {/* Security Notice */}
-      <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20">
-        <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertDescription className="text-blue-800 dark:text-blue-200">
-          <strong>Security Note:</strong> API keys will only be shown once after creation. 
-          Store them securely and never share them publicly.
-        </AlertDescription>
-      </Alert>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Key Name Field */}

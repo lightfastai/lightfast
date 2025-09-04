@@ -9,7 +9,6 @@ export { EmptyState } from "./empty-state";
 export { CreateKeyDialog } from "./create-key-dialog";
 export { CreateKeyForm } from "./create-key-form";
 export { KeyDisplay } from "./key-display";
-export { CreationSuccess } from "./creation-success";
 export { CopyKeyButton, CopyKeyIconButton } from "./copy-key-button";
 
 // Validation and types

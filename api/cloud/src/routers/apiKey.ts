@@ -67,9 +67,7 @@ export const apiKeyRouter = {
 
       // Calculate expiry date if specified
       const expiresAt = expiresInDays
-        ? new Date(
-            Date.now() + expiresInDays * 24 * 60 * 60 * 1000,
-          ).toISOString()
+        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
         : null;
 
       // Generate a unique ID for the key
@@ -78,7 +76,7 @@ export const apiKeyRouter = {
       // Store the API key in the database
       await db.insert(CloudApiKey).values({
         id: keyId,
-        clerkUserId: session.userId,
+        clerkUserId: session.data.userId,
         keyHash,
         keyPreview: getKeyPreview(apiKey),
         name,
@@ -131,9 +129,9 @@ export const apiKeyRouter = {
 
       // Build the where clause
       const whereClause = includeInactive
-        ? eq(CloudApiKey.clerkUserId, session.userId)
+        ? eq(CloudApiKey.clerkUserId, session.data.userId)
         : and(
-            eq(CloudApiKey.clerkUserId, session.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
             eq(CloudApiKey.active, true),
           );
 
@@ -155,7 +153,7 @@ export const apiKeyRouter = {
       // Add computed fields
       return keys.map((key) => ({
         ...key,
-        isExpired: key.expiresAt ? new Date(key.expiresAt) < new Date() : false,
+        isExpired: key.expiresAt ? key.expiresAt < new Date() : false,
       }));
     }),
 
@@ -179,7 +177,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
           ),
         )
         .limit(1);
@@ -276,7 +274,7 @@ export const apiKeyRouter = {
       }
 
       // Check if key is expired
-      if (validKey.expiresAt && new Date(validKey.expiresAt) < new Date()) {
+      if (validKey.expiresAt && validKey.expiresAt < new Date()) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "API key has expired",
@@ -287,7 +285,7 @@ export const apiKeyRouter = {
       await db
         .update(CloudApiKey)
         .set({
-          lastUsedAt: new Date().toISOString(),
+          lastUsedAt: new Date(),
         })
         .where(eq(CloudApiKey.id, validKey.id));
 
@@ -324,7 +322,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.userId),
+            eq(CloudApiKey.clerkUserId, session.data.userId),
           ),
         )
         .limit(1);

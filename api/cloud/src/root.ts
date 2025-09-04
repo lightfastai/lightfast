@@ -4,7 +4,8 @@
  */
 
 import { apiKeyRouter } from "./routers/apiKey";
-import { createTRPCRouter } from "./trpc";
+import { userRouter } from "./routers/auth/user";
+import { createCallerFactory, createTRPCRouter } from "./trpc";
 
 /**
  * Primary cloud app router
@@ -12,9 +13,13 @@ import { createTRPCRouter } from "./trpc";
  */
 export const cloudAppRouter = createTRPCRouter({
   apiKey: apiKeyRouter,
+  user: userRouter,
   // Additional routers will be added here
   // deployment: deploymentRouter,
 });
+
+// Create server-side caller
+export const createCaller = createCallerFactory(cloudAppRouter);
 
 // Export type for use in client
 export type CloudAppRouter = typeof cloudAppRouter;

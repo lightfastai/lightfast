@@ -19,7 +19,7 @@ import {
   LogOut 
 } from "lucide-react";
 
-export function UserMenu() {
+export function UserDropdownMenu() {
   const { user } = useUser();
   const { signOut } = useClerk();
 

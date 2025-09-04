@@ -116,7 +116,7 @@ export async function validateApiKey(
     }
 
     // Check if key is expired
-    if (validKey.expiresAt && new Date(validKey.expiresAt) < new Date()) {
+    if (validKey.expiresAt && validKey.expiresAt < new Date()) {
       console.info(`API key ${validKey.id} has expired`);
       return null;
     }
@@ -126,7 +126,7 @@ export async function validateApiKey(
     // This is a fire-and-forget operation for performance
     db.update(CloudApiKey)
       .set({
-        lastUsedAt: new Date().toISOString(),
+        lastUsedAt: new Date(),
       })
       .where(eq(CloudApiKey.id, validKey.id))
       .then(() => {

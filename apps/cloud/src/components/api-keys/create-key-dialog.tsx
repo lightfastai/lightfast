@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import { useTRPC } from "~/trpc/react";
 import { CreateKeyForm } from "./create-key-form";
 import { KeyDisplay } from "./key-display";
-import { CreationSuccess } from "./creation-success";
 import { 
   type CreateApiKeyFormData, 
   calculateExpirationDate 
@@ -30,7 +29,7 @@ interface CreateKeyDialogProps {
   onKeyCreated?: () => void;
 }
 
-type DialogStep = "form" | "display" | "success";
+type DialogStep = "form" | "display";
 
 interface CreatedApiKey {
   id: string;
@@ -52,46 +51,41 @@ export function CreateKeyDialog({
 
   const trpc = useTRPC();
   
-  // Safe fallback if tRPC is not fully initialized
-  const createKeyMutation = useMutation({
-    ...trpc.apiKey.create.mutationOptions(),
-    onSuccess: (data: any) => {
-      // Clear any previous errors
-      setError(null);
-      
-      // Store the created key data
-      setCreatedKey({
-        id: data.id,
-        key: data.key,
-        name: data.name,
-        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-        createdAt: new Date(data.createdAt),
-      });
-      
-      // Move to key display step
-      setCurrentStep("display");
-      
-      // Show success toast
-      toast.success("API key created!", {
-        description: `"${data.name}" has been created successfully.`,
-      });
-    },
-    onError: (error: any) => {
-      setError(error.message || "Failed to create API key. Please try again.");
-      
-      // Show error toast
-      toast.error("Failed to create API key", {
-        description: error.message || "An unexpected error occurred.",
-      });
-    },
-  });
+  const createKeyMutation = useMutation(
+    trpc.apiKey.create.mutationOptions({
+      onSuccess: (data: any) => {
+        // Clear any previous errors
+        setError(null);
+        
+        // Store the created key data
+        setCreatedKey({
+          id: data.id,
+          key: data.key,
+          name: data.name,
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+          createdAt: new Date(data.createdAt),
+        });
+        
+        // Move to key display step
+        setCurrentStep("display");
+        
+        // Show success toast
+        toast.success("API key created!", {
+          description: `"${data.name}" has been created successfully.`,
+        });
+      },
+      onError: (error: any) => {
+        setError(error.message || "Failed to create API key. Please try again.");
+        
+        // Show error toast
+        toast.error("Failed to create API key", {
+          description: error.message || "An unexpected error occurred.",
+        });
+      },
+    })
+  );
 
   const handleFormSubmit = useCallback(async (formData: CreateApiKeyFormData) => {
-    if (!createKeyMutation) {
-      setError("API is not available. Please refresh the page and try again.");
-      return;
-    }
-
     try {
       setError(null);
       
@@ -113,10 +107,6 @@ export function CreateKeyDialog({
 
   const handleKeyCopied = useCallback(() => {
     setIsKeyCopied(true);
-  }, []);
-
-  const handleContinueToSuccess = useCallback(() => {
-    setCurrentStep("success");
   }, []);
 
   const handleComplete = useCallback(() => {
@@ -165,9 +155,8 @@ export function CreateKeyDialog({
   // Calculate progress based on current step
   const getProgress = () => {
     switch (currentStep) {
-      case "form": return 33;
-      case "display": return 66;
-      case "success": return 100;
+      case "form": return 50;
+      case "display": return 100;
       default: return 0;
     }
   };
@@ -185,47 +174,13 @@ export function CreateKeyDialog({
           title: "Your API Key",
           description: "Copy your API key now - you won't be able to see it again."
         };
-      case "success":
-        return {
-          title: "Setup Complete",
-          description: "Your API key is ready to use. Here's what you can do next."
-        };
       default:
         return { title: "", description: "" };
     }
   };
 
   const stepInfo = getStepInfo();
-  const isLoading = createKeyMutation?.isPending ?? false;
-
-  // Don't render if API is not available
-  if (!trpc?.apiKey?.create) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>API Key Creation Unavailable</DialogTitle>
-            <DialogDescription>
-              API key creation is not available right now.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Alert className="border-destructive/50 bg-destructive/10">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <AlertDescription className="text-destructive">
-              The API key service is currently unavailable. Please refresh the page and try again.
-            </AlertDescription>
-          </Alert>
-          
-          <div className="flex justify-end">
-            <Button onClick={() => onOpenChange(false)} variant="outline">
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const isLoading = createKeyMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -274,7 +229,7 @@ export function CreateKeyDialog({
           {/* Progress bar */}
           <div className="mt-4">
             <div className="flex justify-between text-xs text-muted-foreground mb-2">
-              <span>Step {currentStep === "form" ? "1" : currentStep === "display" ? "2" : "3"} of 3</span>
+              <span>Step {currentStep === "form" ? "1" : "2"} of 2</span>
               <span>{getProgress()}% complete</span>
             </div>
             <Progress value={getProgress()} className="h-2" />
@@ -312,22 +267,6 @@ export function CreateKeyDialog({
             />
           )}
 
-          {currentStep === "success" && createdKey && (
-            <CreationSuccess
-              keyName={createdKey.name}
-              keyId={createdKey.id}
-              wasKeyCopied={isKeyCopied}
-              onComplete={handleComplete}
-              onViewDocumentation={() => {
-                // TODO: Open documentation in new tab
-                window.open("/docs/api", "_blank");
-              }}
-              onSetupCLI={() => {
-                // TODO: Open CLI setup guide in new tab
-                window.open("/docs/cli", "_blank");
-              }}
-            />
-          )}
         </div>
 
         {/* Footer Actions for Display Step */}
@@ -341,11 +280,11 @@ export function CreateKeyDialog({
               )}
             </div>
             <Button 
-              onClick={handleContinueToSuccess}
+              onClick={handleComplete}
               disabled={!isKeyCopied}
               className="ml-4"
             >
-              Continue
+              Done
               {!isKeyCopied && (
                 <span className="ml-2 text-xs opacity-70">(Copy key first)</span>
               )}

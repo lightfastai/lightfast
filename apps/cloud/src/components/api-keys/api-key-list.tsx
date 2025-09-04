@@ -45,41 +45,43 @@ export function ApiKeyList({ onCreateKey, isCreating = false }: ApiKeyListProps)
     staleTime: 30000, // 30 seconds
   });
 
-  const revokeMutation = useMutation({
-    ...trpc.apiKey.revoke.mutationOptions(),
-    onSuccess: (data: any) => {
-      toast({
-        title: "API key revoked",
-        description: data.message,
-      });
-      refetch();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to revoke API key",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const revokeMutation = useMutation(
+    trpc.apiKey.revoke.mutationOptions({
+      onSuccess: (data: any) => {
+        toast({
+          title: "API key revoked",
+          description: data.message,
+        });
+        refetch();
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Failed to revoke API key",
+          description: error.message || "An error occurred",
+          variant: "destructive",
+        });
+      },
+    })
+  );
 
-  const deleteMutation = useMutation({
-    ...trpc.apiKey.delete.mutationOptions(),
-    onSuccess: (data: any) => {
-      toast({
-        title: "API key deleted",
-        description: data.message,
-      });
-      refetch();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to delete API key",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const deleteMutation = useMutation(
+    trpc.apiKey.delete.mutationOptions({
+      onSuccess: (data: any) => {
+        toast({
+          title: "API key deleted",
+          description: data.message,
+        });
+        refetch();
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Failed to delete API key",
+          description: error.message || "An error occurred",
+          variant: "destructive",
+        });
+      },
+    })
+  );
 
   // Filter and sort the API keys
   const filteredAndSortedKeys = useMemo(() => {

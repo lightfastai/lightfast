@@ -63,18 +63,18 @@ export const CloudApiKey = mysqlTable(
      * Timestamp when the API key was last used
      * Helps track key usage and identify unused keys
      */
-    lastUsedAt: datetime("last_used_at", { mode: "string" }),
+    lastUsedAt: datetime("last_used_at", { mode: "date" }),
 
     /**
      * Timestamp when the API key expires
      * Null means the key never expires
      */
-    expiresAt: datetime("expires_at", { mode: "string" }),
+    expiresAt: datetime("expires_at", { mode: "date" }),
 
     /**
      * Timestamp when the API key was created
      */
-    createdAt: datetime("created_at", { mode: "string" })
+    createdAt: datetime("created_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
@@ -82,10 +82,10 @@ export const CloudApiKey = mysqlTable(
      * Timestamp when the API key was last updated
      * Automatically updates on any modification
      */
-    updatedAt: datetime("updated_at", { mode: "string" })
+    updatedAt: datetime("updated_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull()
-      .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
+      .$onUpdateFn(() => new Date()),
   },
   (table) => ({
     // Index for looking up keys by user

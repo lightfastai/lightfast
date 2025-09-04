@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ApiKeysPageClient } from "./page-client";
 
 export const metadata: Metadata = {
-  title: "API Keys",
+  title: "API Keys - Settings",
   description: "Manage your API keys and access tokens.",
 };
 

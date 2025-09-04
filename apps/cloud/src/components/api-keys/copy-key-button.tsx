@@ -11,6 +11,7 @@ interface CopyKeyButtonProps {
   size?: "default" | "sm" | "lg";
   showIcon?: boolean;
   className?: string;
+  onCopy?: () => void;
 }
 
 type CopyState = "idle" | "copying" | "copied" | "error";
@@ -21,6 +22,7 @@ export function CopyKeyButton({
   size = "default",
   showIcon = true,
   className,
+  onCopy,
 }: CopyKeyButtonProps) {
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
@@ -37,6 +39,9 @@ export function CopyKeyButton({
 
       await navigator.clipboard.writeText(apiKey);
       setCopyState("copied");
+      
+      // Call the onCopy callback if provided
+      onCopy?.();
       
       toast.success("API key copied!", {
         description: "The API key has been copied to your clipboard.",
@@ -63,6 +68,7 @@ export function CopyKeyButton({
         
         if (document.execCommand("copy")) {
           setCopyState("copied");
+          onCopy?.();
           toast.success("API key copied!", {
             description: "The API key has been copied to your clipboard.",
           });
@@ -86,7 +92,7 @@ export function CopyKeyButton({
         }, 1000);
       }
     }
-  }, [apiKey, copyState]);
+  }, [apiKey, copyState, onCopy]);
 
   const getButtonContent = () => {
     switch (copyState) {
