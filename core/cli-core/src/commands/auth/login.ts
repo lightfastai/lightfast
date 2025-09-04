@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { password } from "@inquirer/prompts";
 import { configStore } from "../../lib/config.js";
-import { LightfastClient } from "../../lib/client.js";
+import { createLightfastCloudClient } from "@lightfastai/cloud-client";
 import { getDashboardUrl } from "../../lib/config-constants.js";
 
 interface LoginOptions {
@@ -85,20 +85,44 @@ ${chalk.cyan("Authentication Methods:")}
       console.log(chalk.gray(`  Profile: ${profile}`));
       console.log(chalk.gray("  Validating API key..."));
       
-      // Validate the API key by calling the API
-      const client = new LightfastClient({ baseUrl: options.baseUrl });
-      const validationResult = await client.validateApiKey(apiKey);
+      // Validate the API key using the new cloud client
+      const client = createLightfastCloudClient({ baseUrl: options.baseUrl });
       
-      if (!validationResult.success) {
-        console.error(chalk.red("✖ API key validation failed"));
-        console.error(chalk.red("Error:"), validationResult.message || validationResult.error);
+      let validationResult: any;
+      try {
+        validationResult = await client.apiKey.validate.mutate({ key: apiKey });
         
-        if (validationResult.error === "HTTP 401" || validationResult.message?.includes("Invalid")) {
+        if (!validationResult.valid) {
+          console.error(chalk.red("✖ API key validation failed"));
+          console.error(chalk.red("Error: API key is not valid"));
+          
           console.log(chalk.gray("\n💡 Troubleshooting:"));
           console.log(chalk.gray("  • Double-check your API key is correct"));
           console.log(chalk.gray("  • Verify the key hasn't expired"));
           console.log(chalk.gray(`  • Generate a new key at ${getDashboardUrl('/settings/api-keys')}`));
-        } else if (validationResult.error === "NetworkError") {
+          process.exit(1);
+        }
+        
+        console.log(chalk.green("✔ API key is valid!"));
+        console.log(chalk.gray(`  User ID: ${validationResult.userId}`));
+        console.log(chalk.gray(`  Key ID: ${validationResult.keyId}`));
+        
+      } catch (error: any) {
+        console.error(chalk.red("✖ API key validation failed"));
+        
+        if (error.data?.code === 'UNAUTHORIZED') {
+          console.error(chalk.red("Error: Invalid API key"));
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Double-check your API key is correct"));
+          console.log(chalk.gray("  • Verify the key hasn't expired"));
+          console.log(chalk.gray(`  • Generate a new key at ${getDashboardUrl('/settings/api-keys')}`));
+        } else if (error.code === 'INTERNAL_SERVER_ERROR') {
+          console.error(chalk.red("Error: Server error"));
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Try again in a few moments"));
+          console.log(chalk.gray("  • Check Lightfast status page"));
+        } else {
+          console.error(chalk.red("Error:"), error.message || "Network error");
           console.log(chalk.gray("\n💡 Troubleshooting:"));
           console.log(chalk.gray("  • Check your internet connection"));
           console.log(chalk.gray("  • Verify Lightfast API is accessible"));
@@ -107,11 +131,6 @@ ${chalk.cyan("Authentication Methods:")}
         
         process.exit(1);
       }
-      
-      const validationData = validationResult.data;
-      console.log(chalk.green("✔ API key is valid!"));
-      console.log(chalk.gray(`  User ID: ${validationData?.userId || 'Unknown'}`));
-      console.log(chalk.gray(`  Key ID: ${validationData?.keyId || 'Unknown'}`));
       
       // Store credentials
       console.log(chalk.gray("  Storing credentials securely..."));
@@ -122,7 +141,7 @@ ${chalk.cyan("Authentication Methods:")}
         
         // Store profile information
         await configStore.setProfile(profile, {
-          userId: validationData?.userId,
+          userId: validationResult.userId,
           endpoint: options.baseUrl, // Store custom base URL if provided
         });
         

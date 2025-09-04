@@ -1,17 +1,19 @@
 {
-	"name": "@lightfastai/cli-core",
-	"version": "0.2.4",
-	"description": "Core CLI for Lightfast agent execution engine",
+	"name": "@lightfastai/cloud-client",
+	"version": "0.1.0",
+	"description": "TypeScript client for Lightfast Cloud API (CLI internal)",
 	"keywords": [
 		"lightfast",
-		"cli",
-		"ai",
-		"agents"
+		"cloud",
+		"api",
+		"client",
+		"trpc",
+		"cli"
 	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/lightfastai/lightfast.git",
-		"directory": "core/cli-core"
+		"directory": "core/cloud-client"
 	},
 	"homepage": "https://lightfast.ai",
 	"bugs": "https://github.com/lightfastai/lightfast/issues",
@@ -21,9 +23,6 @@
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"bin": {
-		"lightfast-cli": "./dist/index.js"
-	},
 	"files": [
 		"dist"
 	],
@@ -33,17 +32,15 @@
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --fix",
 		"test": "echo \"No tests yet\"",
-		"clean": "rm -rf dist .cache .lightfast .turbo node_modules"
+		"test:validate": "node dist/test.js",
+		"clean": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"@inquirer/prompts": "^7.8.4",
-		"@lightfastai/cloud-client": "workspace:*",
-		"@lightfastai/compiler": "workspace:*",
-		"@lightfastai/dev-server": "workspace:*",
-		"chalk": "^5.6.0",
-		"commander": "^12.1.0"
+		"@trpc/client": "^11.0.0",
+		"superjson": "^2.2.1"
 	},
 	"devDependencies": {
+		"@api/cloud": "workspace:*",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "^24.3.0",

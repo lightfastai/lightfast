@@ -4,8 +4,8 @@ import { createCompiler, CompilationSpinner } from "@lightfastai/compiler";
 import { resolve } from "path";
 import { existsSync } from "fs";
 import { configStore } from "../../lib/config.js";
-import { LightfastClient } from "../../lib/client.js";
-import { getDashboardUrl } from "../../lib/config-constants.js";
+import { createLightfastCloudClient } from "@lightfastai/cloud-client";
+import { getDashboardUrl, getApiUrl } from "../../lib/config-constants.js";
 
 interface DeployOptions {
 	config?: string;
@@ -98,26 +98,24 @@ ${chalk.cyan("Authentication:")}
 
 			// Test API connection
 			console.log(chalk.gray("  Testing API connection..."));
-			const client = new LightfastClient({ profileName });
-			const whoamiResult = await client.whoami();
-
-			if (!whoamiResult.success) {
+			const baseUrl = profile.endpoint || getApiUrl();
+			const client = createLightfastCloudClient({ baseUrl, apiKey });
+			
+			let whoamiResult;
+			try {
+				whoamiResult = await client.apiKey.validate.mutate({ key: apiKey });
+				if (!whoamiResult.valid) {
+					throw new Error("API key is not valid");
+				}
+			} catch (error: any) {
 				console.error(chalk.red("× Authentication failed"));
-				console.error(
-					chalk.gray(`  Error: ${whoamiResult.message || whoamiResult.error}`),
-				);
-
-				if (whoamiResult.error === "HTTP 401") {
-					console.error(
-						chalk.gray("  Your API key may have expired or been revoked"),
-					);
-					console.error(
-						chalk.gray("  Run 'lightfast auth login' to re-authenticate"),
-					);
-				} else if (whoamiResult.error === "NetworkError") {
-					console.error(
-						chalk.gray("  Check your internet connection and try again"),
-					);
+				console.error(chalk.gray(`  Error: ${error.message}`));
+				
+				if (error.message?.includes("unauthorized") || error.message?.includes("401")) {
+					console.error(chalk.gray("  Your API key may have expired or been revoked"));
+					console.error(chalk.gray("  Run 'lightfast auth login' to re-authenticate"));
+				} else if (error.message?.includes("network") || error.message?.includes("fetch")) {
+					console.error(chalk.gray("  Check your internet connection and try again"));
 				}
 
 				process.exit(1);
@@ -125,15 +123,9 @@ ${chalk.cyan("Authentication:")}
 
 			console.log(chalk.green("√ Authenticated successfully"));
 			if (options.verbose) {
-				console.log(chalk.gray(`  User: ${whoamiResult.data.email}`));
+				console.log(chalk.gray(`  User ID: ${whoamiResult.userId}`));
 				console.log(chalk.gray(`  Profile: ${profileName}`));
-				if (whoamiResult.data.organization) {
-					console.log(
-						chalk.gray(
-							`  Organization: ${whoamiResult.data.organization.name}`,
-						),
-					);
-				}
+				console.log(chalk.gray(`  Key ID: ${whoamiResult.keyId}`));
 			}
 
 			// Step 2: Find and validate project configuration
@@ -232,89 +224,14 @@ ${chalk.cyan("Authentication:")}
 			spinner.start();
 
 			// TODO: Replace this with actual deployment when API is ready
-			const deployResult = await client.deploy({
-				name: deploymentName,
-				source: bundleResult.outputDir, // This would contain the bundle paths
-				environment: environment,
-				config: {
-					version: deploymentVersion,
-					bundles: bundleResult.bundles.map((bundle) => ({
-						id: bundle.id,
-						hash: bundle.hash,
-						path: bundle.path,
-						size: bundle.size,
-					})),
-				},
-			});
-
 			spinner.stop();
+			console.error(chalk.red("× Deployment not implemented yet"));
+			console.error(chalk.gray("  The deployment API is not yet available"));
+			console.error(chalk.gray("  Your bundle has been compiled and is ready at:"));
+			console.error(chalk.gray(`  ${bundleResult.outputDir}`));
+			process.exit(1);
 
-			if (!deployResult.success) {
-				console.error(chalk.red("× Deployment failed"));
-				console.error(
-					chalk.red(`  Error: ${deployResult.message || deployResult.error}`),
-				);
-
-				if (deployResult.error === "HTTP 400") {
-					console.error(
-						chalk.gray("  Check your deployment configuration and try again"),
-					);
-				} else if (deployResult.error === "HTTP 403") {
-					console.error(
-						chalk.gray(
-							"  You may not have permission to deploy to this environment",
-						),
-					);
-				} else if (deployResult.error === "HTTP 500") {
-					console.error(chalk.gray("  Server error - please try again later"));
-				}
-
-				process.exit(1);
-			}
-
-			// Step 6: Success output
-			console.log(chalk.green("√ Deployment completed successfully!"));
-			console.log("");
-			console.log(chalk.cyan("📋 Deployment Details:"));
-			console.log(
-				chalk.gray(`  Deployment ID: ${deployResult.data.deploymentId}`),
-			);
-			console.log(chalk.gray(`  URL: ${deployResult.data.url}`));
-			console.log(chalk.gray(`  Status: ${deployResult.data.status}`));
-			console.log(chalk.gray(`  Environment: ${environment}`));
-
-			if (
-				deployResult.data.status === "pending" ||
-				deployResult.data.status === "building"
-			) {
-				console.log("");
-				console.log(chalk.yellow("⏳ Your deployment is being processed"));
-				console.log(
-					chalk.gray(
-						"  Check status with: lightfast deployments status <deployment-id>",
-					),
-				);
-				console.log(
-					chalk.gray(
-						"  View logs with: lightfast deployments logs <deployment-id>",
-					),
-				);
-			}
-
-			console.log("");
-			console.log(chalk.cyan("📋 Next Steps:"));
-			console.log(
-				chalk.gray(`  • Monitor your deployment at: ${getDashboardUrl()}`),
-			);
-			console.log(
-				chalk.gray("  • View deployment status: lightfast deployments list"),
-			);
-			console.log(
-				chalk.gray(
-					"  • Test your agent: curl -X POST " + deployResult.data.url,
-				),
-			);
-		} catch (error) {
+		} catch (error: any) {
 			if (spinner) {
 				spinner.stop();
 			}
@@ -324,27 +241,25 @@ ${chalk.cyan("Authentication:")}
 			if (error instanceof Error) {
 				console.error(chalk.red("Error:"), error.message);
 
-				// Provide helpful suggestions based on error type
-				if (error.message.includes("ENOENT")) {
-					console.error(
-						chalk.gray("  File not found - check your configuration path"),
-					);
+				// Common error suggestions
+				if (error.message.includes("network") || error.message.includes("fetch")) {
+					console.error(chalk.gray("\n💡 Troubleshooting:"));
+					console.error(chalk.gray("  • Check your internet connection"));
+					console.error(chalk.gray("  • Verify Lightfast API is accessible"));
+					console.error(chalk.gray("  • Try again in a few moments"));
 				} else if (
-					error.message.includes("permission") ||
-					error.message.includes("EACCES")
+					error.message.includes("unauthorized") ||
+					error.message.includes("401")
 				) {
-					console.error(
-						chalk.gray(
-							"  Permission denied - check file/directory permissions",
-						),
-					);
-				} else if (
-					error.message.includes("network") ||
-					error.message.includes("fetch")
-				) {
-					console.error(
-						chalk.gray("  Network error - check your internet connection"),
-					);
+					console.error(chalk.gray("\n💡 Troubleshooting:"));
+					console.error(chalk.gray("  • Your API key may have expired"));
+					console.error(chalk.gray("  • Run 'lightfast auth login --force' to re-authenticate"));
+					console.error(chalk.gray("  • Check 'lightfast auth status' for details"));
+				} else if (error.message.includes("compilation")) {
+					console.error(chalk.gray("\n💡 Troubleshooting:"));
+					console.error(chalk.gray("  • Check your lightfast.config.ts file"));
+					console.error(chalk.gray("  • Ensure all agents are properly configured"));
+					console.error(chalk.gray("  • Run with --verbose for detailed error output"));
 				}
 			} else {
 				console.error(chalk.red("Unknown error occurred"));
@@ -367,4 +282,3 @@ ${chalk.cyan("Authentication:")}
 			process.exit(1);
 		}
 	});
-

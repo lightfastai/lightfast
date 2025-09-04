@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { configStore } from "../../lib/config.js";
-import { LightfastClient } from "../../lib/client.js";
-import { getDashboardUrl } from "../../lib/config-constants.js";
+import { createLightfastCloudClient } from "@lightfastai/cloud-client";
+import { getDashboardUrl, getApiUrl } from "../../lib/config-constants.js";
 
 interface WhoamiOptions {
   profile?: string;
@@ -69,50 +69,62 @@ ${chalk.cyan("Information Displayed:")}
       }
       
       try {
-        const client = new LightfastClient({ profileName: profile });
-        const userResult = await client.whoami();
-        
-        if (!userResult.success) {
+        const apiKey = await configStore.getApiKey(profile);
+        if (!apiKey) {
           if (options.json) {
             console.log(JSON.stringify({
               authenticated: false,
               profile: profile,
-              error: userResult.error,
-              message: userResult.message
+              error: "NO_API_KEY",
+              message: "No API key found for this profile"
+            }, null, 2));
+            return;
+          }
+          
+          console.error(chalk.red("✖ No API key found"));
+          console.error(chalk.gray(`  Run 'lightfast auth login --profile ${profile}' first`));
+          process.exit(1);
+        }
+
+        const storedProfile = await configStore.getProfile(profile);
+        const baseUrl = storedProfile?.endpoint || getApiUrl();
+        const client = createLightfastCloudClient({ baseUrl, apiKey });
+        
+        const userResult = await client.apiKey.validate.mutate({ key: apiKey });
+        
+        if (!userResult.valid) {
+          if (options.json) {
+            console.log(JSON.stringify({
+              authenticated: false,
+              profile: profile,
+              error: "INVALID_API_KEY",
+              message: "API key is not valid"
             }, null, 2));
             return;
           }
           
           console.log(chalk.red("✖ Failed to fetch user information"));
-          console.log(chalk.red("Error:"), userResult.message || userResult.error);
+          console.log(chalk.red("Error: API key is not valid"));
           
-          if (userResult.error === "HTTP 401" || userResult.message?.includes("unauthorized")) {
-            console.log(chalk.gray("\n💡 Troubleshooting:"));
-            console.log(chalk.gray("  • Your credentials may have expired"));
-            console.log(chalk.gray("  • Run 'lightfast auth login --force' to re-authenticate"));
-            console.log(chalk.gray("  • Check 'lightfast auth status' for more details"));
-          } else if (userResult.error === "NetworkError") {
-            console.log(chalk.gray("\n💡 Troubleshooting:"));
-            console.log(chalk.gray("  • Check your internet connection"));
-            console.log(chalk.gray("  • Verify Lightfast API is accessible"));
-            console.log(chalk.gray("  • Try again in a few moments"));
-          }
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Your credentials may have expired"));
+          console.log(chalk.gray("  • Run 'lightfast auth login --force' to re-authenticate"));
+          console.log(chalk.gray("  • Check 'lightfast auth status' for more details"));
           
           process.exit(1);
         }
         
-        const userData = userResult.data;
         const maskedApiKey = apiKey ? `${apiKey.slice(0, 6)}****${apiKey.slice(-4)}` : 'Unknown';
         
         if (options.json) {
           console.log(JSON.stringify({
             authenticated: true,
             profile: profile,
-            userId: userData.userId,
-            keyId: userData.keyId,
+            userId: userResult.userId,
+            keyId: userResult.keyId,
             apiKey: maskedApiKey,
-            lastLogin: storedProfile.updatedAt,
-            endpoint: client.getBaseUrl()
+            lastLogin: storedProfile?.updatedAt,
+            endpoint: baseUrl
           }, null, 2));
           return;
         }
@@ -122,30 +134,32 @@ ${chalk.cyan("Information Displayed:")}
         console.log("");
         
         console.log(chalk.cyan("👤 User Information:"));
-        console.log(chalk.gray(`  User ID: ${userData.userId || 'Unknown'}`));
-        console.log(chalk.gray(`  Key ID: ${userData.keyId || 'Unknown'}`));
+        console.log(chalk.gray(`  User ID: ${userResult.userId}`));
+        console.log(chalk.gray(`  Key ID: ${userResult.keyId}`));
         
         console.log("");
         console.log(chalk.cyan("🔑 Authentication Details:"));
         console.log(chalk.gray(`  Profile: ${profile}`));
         console.log(chalk.gray(`  API Key: ${maskedApiKey}`));
-        console.log(chalk.gray(`  Endpoint: ${client.getBaseUrl()}`));
-        console.log(chalk.gray(`  Last Login: ${storedProfile.updatedAt ? new Date(storedProfile.updatedAt).toLocaleString() : 'Unknown'}`));
+        console.log(chalk.gray(`  Endpoint: ${baseUrl}`));
+        console.log(chalk.gray(`  Last Login: ${storedProfile?.updatedAt ? new Date(storedProfile.updatedAt).toLocaleString() : 'Unknown'}`));
         
         if (options.verbose) {
           console.log("");
           console.log(chalk.cyan("🔧 Additional Information:"));
-          console.log(chalk.gray(`  Profile Created: ${storedProfile.createdAt ? new Date(storedProfile.createdAt).toLocaleString() : 'Unknown'}`));
+          console.log(chalk.gray(`  Profile Created: ${storedProfile?.createdAt ? new Date(storedProfile.createdAt).toLocaleString() : 'Unknown'}`));
           console.log(chalk.gray(`  Config Path: ${configStore.getConfigPath()}`));
           
           const authPath = configStore.getAuthPath();
           console.log(chalk.gray(`  Auth File: ${authPath}`));
           console.log(chalk.gray(`  Storage: File-based with chmod 600`));
           
-          const allProfiles = await configStore.listProfiles();
-          const defaultProfile = await configStore.getDefaultProfile();
-          console.log(chalk.gray(`  Available Profiles: ${allProfiles.join(", ")}`));
-          console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
+          if (storedProfile) {
+            const allProfiles = await configStore.listProfiles();
+            const defaultProfile = await configStore.getDefaultProfile();
+            console.log(chalk.gray(`  Available Profiles: ${allProfiles.join(", ")}`));
+            console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
+          }
         }
         
         console.log("");

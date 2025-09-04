@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { configStore } from "../../lib/config.js";
-import { LightfastClient } from "../../lib/client.js";
+import { createLightfastCloudClient } from "@lightfastai/cloud-client";
 import { getApiUrl, getDashboardUrl } from "../../lib/config-constants.js";
 
 interface StatusOptions {
@@ -84,19 +84,24 @@ ${chalk.cyan("Status Information:")}
           console.log(chalk.gray("  Validating API key..."));
           
           try {
-            const client = new LightfastClient({ profileName: targetProfile });
-            const validationResult = await client.whoami();
+            const apiKey = await configStore.getApiKey(targetProfile);
+            if (!apiKey) {
+              console.log(chalk.red("  ✖ No API key found for this profile"));
+              return;
+            }
+
+            const baseUrl = profile.endpoint || getApiUrl();
+            const client = createLightfastCloudClient({ baseUrl, apiKey });
+            const validationResult = await client.apiKey.validate.mutate({ key: apiKey });
             
-            if (validationResult.success) {
+            if (validationResult.valid) {
               console.log(chalk.green("  ✔ API key is valid"));
-              console.log(chalk.gray(`  Connected to: ${client.getBaseUrl()}`));
+              console.log(chalk.gray(`  Connected to: ${baseUrl}`));
+              console.log(chalk.gray(`  User ID: ${validationResult.userId}`));
+              console.log(chalk.gray(`  Key ID: ${validationResult.keyId}`));
             } else {
               console.log(chalk.red("  ✖ API key validation failed"));
-              console.log(chalk.red(`  Error: ${validationResult.message || validationResult.error}`));
-              
-              if (validationResult.error === "HTTP 401") {
-                console.log(chalk.gray("  Your API key may have expired or been revoked"));
-              }
+              console.log(chalk.red("  Error: API key is not valid"));
             }
           } catch (validationError: any) {
             console.log(chalk.red("  ✖ Could not validate API key"));
