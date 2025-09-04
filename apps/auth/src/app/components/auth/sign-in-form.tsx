@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { SignInEmailInput } from "./sign-in-email-input";
@@ -92,20 +91,6 @@ export function SignInForm({
 					/>
 				)}
 			</div>
-
-			{/* Sign Up Link - only show on email step */}
-			{verificationStep === "email" && (
-				<div className="text-center text-sm">
-					<span className="text-muted-foreground">Don't have an account? </span>
-					<Button
-						asChild
-						variant="link-blue"
-						className="inline-flex h-auto p-0 rounded-none text-sm"
-					>
-						<Link href="/sign-up">Sign Up</Link>
-					</Button>
-				</div>
-			)}
 		</div>
 	);
 }

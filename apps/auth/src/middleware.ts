@@ -8,8 +8,6 @@ const clerkConfig = getClerkMiddlewareConfig("auth");
 const isPublicRoute = createRouteMatcher([
 	"/sign-in",
 	"/sign-in/sso-callback",
-	"/sign-up",
-	"/sign-up/sso-callback",
 	"/api/health",
 ]);
 

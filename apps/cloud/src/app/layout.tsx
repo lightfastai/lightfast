@@ -103,6 +103,7 @@ export default function RootLayout({
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       {...clerkConfig}
+      waitlistUrl="/"
       appearance={{
         variables: {
           colorPrimary: "#3b82f6",

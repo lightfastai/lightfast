@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { joinWaitlistAction } from "../app/actions/waitlist";
+import { joinClerkWaitlistAction } from "../app/actions/clerk-waitlist";
 import Link from "next/link";
 import { getAppUrl } from "@repo/url-utils";
 import { ConfettiWrapper } from "./confetti-wrapper";
@@ -21,7 +21,7 @@ function SubmitButton() {
 }
 
 export function WaitlistForm() {
-	const [state, formAction] = useActionState(joinWaitlistAction, { status: "idle" });
+	const [state, formAction] = useActionState(joinClerkWaitlistAction, { status: "idle" });
 	const wwwUrl = getAppUrl("www");
 	const authUrl = getAppUrl("auth");
 

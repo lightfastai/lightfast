@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { getAppUrl } from "@repo/url-utils";
@@ -12,9 +11,8 @@ export default function AuthLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const pathname = usePathname();
-	const isSignUpPage = pathname.includes("/sign-up");
 	const wwwUrl = getAppUrl("www");
+	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<div className="min-h-screen bg-background flex flex-col">
@@ -29,9 +27,7 @@ export default function AuthLayout({
 				</div>
 				<div className="flex items-center gap-2">
 					<Button variant="outline" size="lg" asChild>
-						<Link href={isSignUpPage ? "/sign-in" : "/sign-up"}>
-							{isSignUpPage ? "Sign In" : "Sign Up"}
-						</Link>
+						<Link href={cloudUrl}>Join the waitlist</Link>
 					</Button>
 				</div>
 			</header>
