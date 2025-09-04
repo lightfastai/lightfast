@@ -11,21 +11,21 @@ interface WhoamiOptions {
 }
 
 export const whoamiCommand = new Command("whoami")
-  .description("Display current user information and account details")
+  .description("Display current user information and authentication details")
   .option("--profile <name>", "Show information for specific profile", "default")
   .option("--json", "Output in JSON format")
-  .option("-v, --verbose", "Show detailed account information")
+  .option("-v, --verbose", "Show detailed authentication information")
   .addHelpText("after", `
 ${chalk.cyan("Examples:")}
   $ lightfast auth whoami                    # Show current user info
   $ lightfast auth whoami --profile work     # Show info for 'work' profile
-  $ lightfast auth whoami --verbose          # Show detailed account info
+  $ lightfast auth whoami --verbose          # Show detailed auth info
   $ lightfast auth whoami --json             # JSON output for scripts
 
 ${chalk.cyan("Information Displayed:")}
-  • User ID and email
-  • Organization and plan details
-  • Account limits and usage
+  • User ID and key information
+  • Authentication details
+  • Profile configuration
   • API key information (masked)
 `)
   .action(async (options: WhoamiOptions) => {
