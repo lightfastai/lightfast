@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { joinClerkWaitlistAction } from "../app/actions/clerk-waitlist";
+import { joinClerkWaitlistAction } from "../app/(waitlist)/_actions/clerk-waitlist";
 import Link from "next/link";
 import { getAppUrl } from "@repo/url-utils";
 import { ConfettiWrapper } from "./confetti-wrapper";
