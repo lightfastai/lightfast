@@ -61,10 +61,12 @@ ${chalk.cyan("Information Displayed:")}
       }
       
       // Fetch user information from API
-      console.log(chalk.blue("→ Lightfast User Information"));
-      console.log(chalk.gray(`  Profile: ${profile}`));
-      console.log(chalk.gray("  Fetching user details..."));
-      console.log("");
+      if (!options.json) {
+        console.log(chalk.blue("→ Lightfast User Information"));
+        console.log(chalk.gray(`  Profile: ${profile}`));
+        console.log(chalk.gray("  Fetching user details..."));
+        console.log("");
+      }
       
       try {
         const client = new LightfastClient({ profileName: profile });
@@ -106,11 +108,8 @@ ${chalk.cyan("Information Displayed:")}
           console.log(JSON.stringify({
             authenticated: true,
             profile: profile,
-            user: {
-              id: userData.userId,
-              email: userData.email,
-            },
-            organization: userData.organization || null,
+            userId: userData.userId,
+            keyId: userData.keyId,
             apiKey: maskedApiKey,
             lastLogin: storedProfile.updatedAt,
             endpoint: client.getBaseUrl()
@@ -123,16 +122,8 @@ ${chalk.cyan("Information Displayed:")}
         console.log("");
         
         console.log(chalk.cyan("👤 User Information:"));
-        console.log(chalk.gray(`  Email: ${userData.email || 'Unknown'}`));
         console.log(chalk.gray(`  User ID: ${userData.userId || 'Unknown'}`));
-        
-        if (userData.organization) {
-          console.log(chalk.gray(`  Organization: ${userData.organization.name} (${userData.organization.id})`));
-        } else if (userData.organizationId) {
-          console.log(chalk.gray(`  Organization ID: ${userData.organizationId}`));
-        } else {
-          console.log(chalk.gray("  Organization: None"));
-        }
+        console.log(chalk.gray(`  Key ID: ${userData.keyId || 'Unknown'}`));
         
         console.log("");
         console.log(chalk.cyan("🔑 Authentication Details:"));

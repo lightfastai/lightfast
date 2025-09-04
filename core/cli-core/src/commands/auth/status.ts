@@ -77,7 +77,6 @@ ${chalk.cyan("Status Information:")}
         console.log(chalk.green("✔ Authenticated"));
         console.log(chalk.gray(`  Profile: ${targetProfile}`));
         console.log(chalk.gray(`  User ID: ${profile.userId || 'Unknown'}`));
-        console.log(chalk.gray(`  Organization: ${profile.organizationId || 'None'}`));
         console.log(chalk.gray(`  Last Updated: ${profile.updatedAt ? new Date(profile.updatedAt).toLocaleString() : 'Unknown'}`));
         
         // Try to validate the API key if requested

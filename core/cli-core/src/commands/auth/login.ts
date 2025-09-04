@@ -123,7 +123,6 @@ ${chalk.cyan("Authentication Methods:")}
         // Store profile information
         await configStore.setProfile(profile, {
           userId: validationData?.userId,
-          organizationId: validationData?.organizationId,
           endpoint: options.baseUrl, // Store custom base URL if provided
         });
         

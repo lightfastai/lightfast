@@ -2,11 +2,11 @@
 
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { devCommand } from '../../cli-core/src/commands/dev.js'
-import { compileCommand } from '../../cli-core/src/commands/compile.js'
-import { cleanCommand } from '../../cli-core/src/commands/clean.js'
-import { bundleCommand } from '../../cli-core/src/commands/bundle.js'
-import { deployCommand } from '../../cli-core/src/commands/deploy.js'
+import { devCommand } from '../../cli-core/src/commands/dev/index.js'
+import { compileCommand } from '../../cli-core/src/commands/compile/index.js'
+import { cleanCommand } from '../../cli-core/src/commands/clean/index.js'
+import { bundleCommand } from '../../cli-core/src/commands/bundle/index.js'
+import { deployCommand } from '../../cli-core/src/commands/deploy/index.js'
 import { authCommand } from '../../cli-core/src/commands/auth/index.js'
 import { getPackageInfo } from '../../cli-core/src/utils/package.js'
 
