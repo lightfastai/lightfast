@@ -14,6 +14,17 @@ import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
 
+import { authenticateApiKey } from "./middleware/apiKey";
+
+/**
+ * Extended session type that includes API key authentication
+ */
+export type ExtendedSession = {
+  userId: string;
+  isApiKeyAuth?: boolean;
+  apiKeyId?: string;
+} | null;
+
 /**
  * 1. CONTEXT
  *
@@ -28,13 +39,33 @@ import { auth } from "@vendor/clerk/server";
  */
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth();
-
   // Get the source header for logging
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  
+  // First, try to authenticate via API key
+  const apiKeyAuth = await authenticateApiKey(opts.headers, db);
+  
+  if (apiKeyAuth) {
+    console.info(`>>> tRPC Request from ${source} by ${apiKeyAuth.userId} (API Key: ${apiKeyAuth.apiKeyId})`);
+    
+    // Return context with API key authentication
+    // Format it to match the expected session shape
+    return {
+      session: {
+        userId: apiKeyAuth.userId,
+        // Add a flag to indicate this is API key auth
+        isApiKeyAuth: true,
+        apiKeyId: apiKeyAuth.apiKeyId,
+      } as any, // We use 'as any' here because we're extending the session type
+      db,
+    };
+  }
+  
+  // Fall back to Clerk session authentication
+  const session = await auth();
 
   if (session?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
+    console.info(`>>> tRPC Request from ${source} by ${session.userId} (Session Auth)`);
   } else {
     console.info(`>>> tRPC Request from ${source} by unknown`);
   }

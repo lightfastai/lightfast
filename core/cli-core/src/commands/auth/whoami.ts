@@ -1,5 +1,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
+import { configStore } from "../../lib/config.js";
+import { LightfastClient } from "../../lib/client.js";
+import { getDashboardUrl } from "../../lib/config-constants.js";
 
 interface WhoamiOptions {
   profile?: string;
@@ -29,68 +32,159 @@ ${chalk.cyan("Information Displayed:")}
     try {
       const profile = options.profile || "default";
       
-      if (options.json) {
-        // TODO: Implement JSON output with real user data
-        const userData = {
-          authenticated: false,
-          profile: profile,
-          user: null,
-          organization: null,
-          plan: null,
-          apiKey: null,
-          limits: null,
-          usage: null,
-          implementation: "stub"
-        };
+      // Check if authenticated
+      const storedProfile = await configStore.getProfile(profile);
+      const apiKey = await configStore.getApiKey(profile);
+      
+      if (!storedProfile || !apiKey) {
+        if (options.json) {
+          console.log(JSON.stringify({
+            authenticated: false,
+            profile: profile,
+            error: "Not authenticated",
+            message: "No credentials found for this profile"
+          }, null, 2));
+          return;
+        }
         
-        console.log(JSON.stringify(userData, null, 2));
+        console.log(chalk.blue("→ Lightfast User Information"));
+        console.log(chalk.gray(`  Profile: ${profile}`));
+        console.log("");
+        console.log(chalk.red("❌ Not Authenticated"));
+        console.log(chalk.gray("  No credentials found for this profile"));
+        console.log("");
+        console.log(chalk.cyan("📋 Next Steps:"));
+        console.log(chalk.gray("  • Run 'lightfast auth login' to authenticate"));
+        console.log(chalk.gray("  • Use 'lightfast auth login --profile <name>' for specific profile"));
+        console.log(chalk.gray("  • Check 'lightfast auth status' for authentication details"));
         return;
       }
-
+      
+      // Fetch user information from API
       console.log(chalk.blue("→ Lightfast User Information"));
       console.log(chalk.gray(`  Profile: ${profile}`));
+      console.log(chalk.gray("  Fetching user details..."));
       console.log("");
-
-      // TODO: Implement actual user info fetching
-      console.log(chalk.yellow("⚠ User information retrieval not yet implemented"));
-      console.log(chalk.gray("  This will fetch:"));
-      console.log(chalk.gray("  1. User profile from stored credentials"));
-      console.log(chalk.gray("  2. Account details from Lightfast API"));
-      console.log(chalk.gray("  3. Organization and billing information"));
-      console.log("");
-
-      // Check authentication first
-      console.log(chalk.red("❌ Not Authenticated"));
-      console.log(chalk.gray("  No credentials found for this profile"));
-      console.log("");
-
-      console.log(chalk.cyan("📋 What you would see when authenticated:"));
-      console.log(chalk.gray("  👤 User: john.doe@example.com (ID: usr_123...)"));
-      console.log(chalk.gray("  🏢 Organization: Acme Corp"));
-      console.log(chalk.gray("  💳 Plan: Pro"));
-      console.log(chalk.gray("  🔑 API Key: lf_live_****...****1234"));
-      console.log(chalk.gray("  🕒 Last Login: 2024-01-15 14:30:00 UTC"));
-
-      if (options.verbose) {
+      
+      try {
+        const client = new LightfastClient({ profileName: profile });
+        const userResult = await client.whoami();
+        
+        if (!userResult.success) {
+          if (options.json) {
+            console.log(JSON.stringify({
+              authenticated: false,
+              profile: profile,
+              error: userResult.error,
+              message: userResult.message
+            }, null, 2));
+            return;
+          }
+          
+          console.log(chalk.red("✖ Failed to fetch user information"));
+          console.log(chalk.red("Error:"), userResult.message || userResult.error);
+          
+          if (userResult.error === "HTTP 401" || userResult.message?.includes("unauthorized")) {
+            console.log(chalk.gray("\n💡 Troubleshooting:"));
+            console.log(chalk.gray("  • Your credentials may have expired"));
+            console.log(chalk.gray("  • Run 'lightfast auth login --force' to re-authenticate"));
+            console.log(chalk.gray("  • Check 'lightfast auth status' for more details"));
+          } else if (userResult.error === "NetworkError") {
+            console.log(chalk.gray("\n💡 Troubleshooting:"));
+            console.log(chalk.gray("  • Check your internet connection"));
+            console.log(chalk.gray("  • Verify Lightfast API is accessible"));
+            console.log(chalk.gray("  • Try again in a few moments"));
+          }
+          
+          process.exit(1);
+        }
+        
+        const userData = userResult.data;
+        const maskedApiKey = apiKey ? `${apiKey.slice(0, 6)}****${apiKey.slice(-4)}` : 'Unknown';
+        
+        if (options.json) {
+          console.log(JSON.stringify({
+            authenticated: true,
+            profile: profile,
+            user: {
+              id: userData.userId,
+              email: userData.email,
+            },
+            organization: userData.organization || null,
+            apiKey: maskedApiKey,
+            lastLogin: storedProfile.updatedAt,
+            endpoint: client.getBaseUrl()
+          }, null, 2));
+          return;
+        }
+        
+        // Console output
+        console.log(chalk.green("✔ Successfully Authenticated"));
         console.log("");
-        console.log(chalk.cyan("📊 Account Limits & Usage:"));
-        console.log(chalk.gray("  • Executions: 1,250 / 10,000 monthly"));
-        console.log(chalk.gray("  • Storage: 2.1 GB / 50 GB"));
-        console.log(chalk.gray("  • Team Members: 3 / 10"));
-        console.log(chalk.gray("  • API Requests: 45,230 / 1,000,000"));
+        
+        console.log(chalk.cyan("👤 User Information:"));
+        console.log(chalk.gray(`  Email: ${userData.email || 'Unknown'}`));
+        console.log(chalk.gray(`  User ID: ${userData.userId || 'Unknown'}`));
+        
+        if (userData.organization) {
+          console.log(chalk.gray(`  Organization: ${userData.organization.name} (${userData.organization.id})`));
+        } else if (userData.organizationId) {
+          console.log(chalk.gray(`  Organization ID: ${userData.organizationId}`));
+        } else {
+          console.log(chalk.gray("  Organization: None"));
+        }
+        
         console.log("");
-        console.log(chalk.cyan("🔧 Configuration:"));
-        console.log(chalk.gray("  • Default Region: us-east-1"));
-        console.log(chalk.gray("  • Timeout: 300 seconds"));
-        console.log(chalk.gray("  • Retry Policy: 3 attempts"));
-        console.log(chalk.gray("  • Webhook URL: https://api.example.com/webhooks"));
+        console.log(chalk.cyan("🔑 Authentication Details:"));
+        console.log(chalk.gray(`  Profile: ${profile}`));
+        console.log(chalk.gray(`  API Key: ${maskedApiKey}`));
+        console.log(chalk.gray(`  Endpoint: ${client.getBaseUrl()}`));
+        console.log(chalk.gray(`  Last Login: ${storedProfile.updatedAt ? new Date(storedProfile.updatedAt).toLocaleString() : 'Unknown'}`));
+        
+        if (options.verbose) {
+          console.log("");
+          console.log(chalk.cyan("🔧 Additional Information:"));
+          console.log(chalk.gray(`  Profile Created: ${storedProfile.createdAt ? new Date(storedProfile.createdAt).toLocaleString() : 'Unknown'}`));
+          console.log(chalk.gray(`  Config Path: ${configStore.getConfigPath()}`));
+          
+          const keychainAvailable = await configStore.isKeychainAvailable();
+          console.log(chalk.gray(`  Keychain Available: ${keychainAvailable ? 'Yes' : 'No'}`));
+          
+          const allProfiles = await configStore.listProfiles();
+          const defaultProfile = await configStore.getDefaultProfile();
+          console.log(chalk.gray(`  Available Profiles: ${allProfiles.join(", ")}`));
+          console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
+        }
+        
+        console.log("");
+        console.log(chalk.cyan("📋 Available Actions:"));
+        console.log(chalk.gray(`  • Visit ${getDashboardUrl()} to manage your account`));
+        console.log(chalk.gray("  • Run 'lightfast auth logout' to remove credentials"));
+        console.log(chalk.gray("  • Run 'lightfast auth status --verbose' to check API key validity"));
+        
+      } catch (fetchError: any) {
+        if (options.json) {
+          console.log(JSON.stringify({
+            authenticated: false,
+            profile: profile,
+            error: "FetchError",
+            message: fetchError.message
+          }, null, 2));
+          return;
+        }
+        
+        console.log(chalk.red("✖ Failed to fetch user information"));
+        console.log(chalk.red("Error:"), fetchError.message);
+        
+        if (fetchError.message.includes("Profile") && fetchError.message.includes("not found")) {
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • The stored profile may be corrupted"));
+          console.log(chalk.gray("  • Try 'lightfast auth login --force' to re-authenticate"));
+          console.log(chalk.gray("  • Check 'lightfast auth status' for profile information"));
+        }
+        
+        process.exit(1);
       }
-
-      console.log("");
-      console.log(chalk.cyan("📋 Next Steps:"));
-      console.log(chalk.gray("  • Run 'lightfast auth login' to authenticate"));
-      console.log(chalk.gray("  • Visit https://dashboard.lightfast.ai to manage account"));
-      console.log(chalk.gray("  • Check 'lightfast auth status' for authentication details"));
       
     } catch (error) {
       if (options.json) {

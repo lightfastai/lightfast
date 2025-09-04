@@ -29,7 +29,11 @@ const getQueryClient = () => {
 	}
 };
 
-export const { useTRPC, TRPCProvider } = createTRPCContext<CloudAppRouter>();
+const { TRPCProvider, useTRPC } = createTRPCContext<CloudAppRouter>();
+
+export function useTRPCApi() {
+	return useTRPC();
+}
 
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
 	const queryClient = getQueryClient();

@@ -1,5 +1,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
+import { configStore } from "../../lib/config.js";
+import { LightfastClient } from "../../lib/client.js";
+import { getApiUrl, getDashboardUrl, KEYTAR_SERVICE } from "../../lib/config-constants.js";
 
 interface StatusOptions {
   profile?: string;
@@ -27,60 +30,121 @@ ${chalk.cyan("Status Information:")}
 `)
   .action(async (options: StatusOptions) => {
     try {
+      const profiles = await configStore.listProfiles();
+      const defaultProfile = await configStore.getDefaultProfile();
+      const keychainAvailable = await configStore.isKeychainAvailable();
+      const configPath = configStore.getConfigPath();
+      
+      // Determine which profile to check
+      const targetProfile = options.profile || defaultProfile;
+      
+      // Get profile and API key info
+      const profile = await configStore.getProfile(targetProfile);
+      const apiKey = await configStore.getApiKey(targetProfile);
+      const isAuthenticated = !!(profile && apiKey);
+      
+      // If JSON output is requested
       if (options.json) {
-        // TODO: Implement JSON output
         const statusData = {
-          authenticated: false,
-          activeProfile: options.profile || "default",
-          profiles: ["default"],
-          tokenExpiry: null,
+          authenticated: isAuthenticated,
+          activeProfile: targetProfile,
+          profiles: profiles,
+          defaultProfile: defaultProfile,
+          keychainAvailable: keychainAvailable,
+          configPath: configPath,
           apiEndpoint: "https://api.lightfast.ai",
-          lastLogin: null,
-          implementation: "stub"
+          profile: profile,
+          lastLogin: profile?.updatedAt || null,
         };
         
         console.log(JSON.stringify(statusData, null, 2));
         return;
       }
 
+      // Console output
       console.log(chalk.blue("→ Lightfast Authentication Status"));
       console.log("");
 
       if (options.profile) {
-        console.log(chalk.gray(`📋 Profile: ${options.profile}`));
+        console.log(chalk.gray(`📋 Checking Profile: ${options.profile}`));
       } else {
-        console.log(chalk.gray("📋 Checking all profiles"));
+        console.log(chalk.gray("📋 Checking Default Profile"));
       }
-
-      // TODO: Implement actual status checking
-      console.log(chalk.yellow("⚠ Status checking not yet implemented"));
-      console.log(chalk.gray("  This will check:"));
-      console.log(chalk.gray("  1. Local credential storage"));
-      console.log(chalk.gray("  2. Token validity and expiration"));
-      console.log(chalk.gray("  3. API connectivity"));
       console.log("");
 
-      // Mock status display
-      console.log(chalk.red("❌ Not Authenticated"));
-      console.log(chalk.gray("  Profile: default"));
-      console.log(chalk.gray("  Status: No credentials found"));
-      console.log(chalk.gray("  API Endpoint: https://api.lightfast.ai"));
+      // Authentication status
+      if (isAuthenticated) {
+        console.log(chalk.green("✔ Authenticated"));
+        console.log(chalk.gray(`  Profile: ${targetProfile}`));
+        console.log(chalk.gray(`  User ID: ${profile.userId || 'Unknown'}`));
+        console.log(chalk.gray(`  Organization: ${profile.organizationId || 'None'}`));
+        console.log(chalk.gray(`  Last Updated: ${profile.updatedAt ? new Date(profile.updatedAt).toLocaleString() : 'Unknown'}`));
+        
+        // Try to validate the API key if requested
+        if (options.verbose) {
+          console.log(chalk.gray("  Validating API key..."));
+          
+          try {
+            const client = new LightfastClient({ profileName: targetProfile });
+            const validationResult = await client.whoami();
+            
+            if (validationResult.success) {
+              console.log(chalk.green("  ✔ API key is valid"));
+              console.log(chalk.gray(`  Connected to: ${client.getBaseUrl()}`));
+            } else {
+              console.log(chalk.red("  ✖ API key validation failed"));
+              console.log(chalk.red(`  Error: ${validationResult.message || validationResult.error}`));
+              
+              if (validationResult.error === "HTTP 401") {
+                console.log(chalk.gray("  Your API key may have expired or been revoked"));
+              }
+            }
+          } catch (validationError: any) {
+            console.log(chalk.red("  ✖ Could not validate API key"));
+            console.log(chalk.red(`  Error: ${validationError.message}`));
+          }
+        }
+      } else {
+        console.log(chalk.red("❌ Not Authenticated"));
+        console.log(chalk.gray(`  Profile: ${targetProfile}`));
+        console.log(chalk.gray("  Status: No credentials found"));
+        
+        if (profiles.length > 0) {
+          console.log(chalk.gray(`  Available profiles: ${profiles.join(", ")}`));
+          if (profiles.includes(targetProfile)) {
+            console.log(chalk.gray("  Profile exists but has no stored credentials"));
+          }
+        }
+      }
+      
+      console.log(chalk.gray(`  API Endpoint: https://api.lightfast.ai`));
       
       if (options.verbose) {
         console.log("");
         console.log(chalk.cyan("📊 Detailed Information:"));
-        console.log(chalk.gray("  Credential Store: ~/.lightfast/credentials"));
-        console.log(chalk.gray("  Config File: ~/.lightfast/config"));
-        console.log(chalk.gray("  Available Profiles: default"));
-        console.log(chalk.gray("  Default Profile: default"));
-        console.log(chalk.gray("  Last Check: never"));
+        console.log(chalk.gray(`  Config File: ${configPath}`));
+        console.log(chalk.gray(`  Keychain Available: ${keychainAvailable ? 'Yes' : 'No'}`));
+        console.log(chalk.gray(`  Total Profiles: ${profiles.length}`));
+        console.log(chalk.gray(`  Available Profiles: ${profiles.length > 0 ? profiles.join(", ") : 'None'}`));
+        console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
+        
+        if (!keychainAvailable) {
+          console.log(chalk.yellow("  ⚠ Keychain unavailable - credentials may not be stored securely"));
+        }
       }
 
       console.log("");
-      console.log(chalk.cyan("📋 Next Steps:"));
-      console.log(chalk.gray("  • Run 'lightfast auth login' to authenticate"));
-      console.log(chalk.gray("  • Use 'lightfast auth login --api-key <key>' for API key auth"));
-      console.log(chalk.gray("  • Check documentation at https://docs.lightfast.ai"));
+      if (isAuthenticated) {
+        console.log(chalk.cyan("📋 Available Commands:"));
+        console.log(chalk.gray("  • Run 'lightfast auth whoami' to see user details"));
+        console.log(chalk.gray("  • Run 'lightfast auth logout' to remove credentials"));
+        console.log(chalk.gray(`  • Visit ${getDashboardUrl()} to manage your account`));
+      } else {
+        console.log(chalk.cyan("📋 Next Steps:"));
+        console.log(chalk.gray("  • Run 'lightfast auth login' to authenticate"));
+        console.log(chalk.gray("  • Use 'lightfast auth login --api-key <key>' for API key auth"));
+        console.log(chalk.gray("  • Check documentation at https://docs.lightfast.ai"));
+      }
       
     } catch (error) {
       if (options.json) {

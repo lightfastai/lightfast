@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
+import { confirm } from "@inquirer/prompts";
+import { configStore } from "../../lib/config.js";
 
 interface LogoutOptions {
   profile?: string;
@@ -28,49 +30,129 @@ ${chalk.cyan("Notes:")}
       console.log(chalk.blue("→ Lightfast Logout"));
       
       if (options.all) {
-        console.log(chalk.gray("  Removing credentials from all profiles..."));
+        console.log(chalk.gray("  Checking stored profiles..."));
+        
+        const profiles = await configStore.listProfiles();
+        if (profiles.length === 0) {
+          console.log(chalk.yellow("⚠ No stored profiles found"));
+          console.log(chalk.gray("  Nothing to logout from"));
+          return;
+        }
+        
+        console.log(chalk.gray(`  Found ${profiles.length} profile(s): ${profiles.join(", ")}`));
         
         if (!options.force) {
           console.log(chalk.yellow("\n⚠ This will logout from ALL profiles"));
           console.log(chalk.gray("  You'll need to re-authenticate for each profile"));
-          console.log(chalk.gray("  Use --force to skip this confirmation"));
           
-          // TODO: Implement confirmation prompt
-          console.log(chalk.yellow("⚠ Confirmation prompt not yet implemented"));
-          console.log(chalk.gray("  Proceeding with logout..."));
+          try {
+            const shouldProceed = await confirm({
+              message: "Are you sure you want to logout from all profiles?",
+              default: false,
+            });
+            
+            if (!shouldProceed) {
+              console.log(chalk.gray("  Logout cancelled by user"));
+              return;
+            }
+          } catch (error) {
+            if (error && typeof error === 'object' && 'name' in error && error.name === 'ExitPromptError') {
+              console.log(chalk.gray("\n  Logout cancelled by user"));
+              return;
+            }
+            throw error;
+          }
         }
         
-        // TODO: Implement logout from all profiles
-        console.log(chalk.yellow("⚠ Multi-profile logout not yet implemented"));
-        console.log(chalk.gray("  This will:"));
-        console.log(chalk.gray("  1. List all stored profiles"));
-        console.log(chalk.gray("  2. Remove credentials for each profile"));
-        console.log(chalk.gray("  3. Clear default profile setting"));
+        console.log(chalk.gray("  Removing all credentials..."));
         
-        console.log(chalk.green("✔ Logged out from all profiles"));
+        try {
+          await configStore.clear();
+          console.log(chalk.green(`✔ Logged out from all ${profiles.length} profile(s)`));
+          console.log(chalk.gray("  All stored credentials have been removed"));
+        } catch (clearError: any) {
+          console.error(chalk.red("✖ Failed to clear all profiles"));
+          console.error(chalk.red("Error:"), clearError.message);
+          
+          if (clearError.message.includes("keychain")) {
+            console.log(chalk.gray("\n💡 Note:"));
+            console.log(chalk.gray("  Some credentials may still be in your system keychain"));
+            console.log(chalk.gray("  You may need to remove them manually"));
+          }
+          
+          process.exit(1);
+        }
         
       } else {
         const profile = options.profile || "default";
-        console.log(chalk.gray(`  Removing credentials for profile: ${profile}`));
+        console.log(chalk.gray(`  Checking profile: ${profile}`));
+        
+        // Check if profile exists
+        const existingProfile = await configStore.getProfile(profile);
+        const existingApiKey = await configStore.getApiKey(profile);
+        
+        if (!existingProfile && !existingApiKey) {
+          console.log(chalk.yellow(`⚠ Profile '${profile}' is not authenticated`));
+          console.log(chalk.gray("  Nothing to logout from"));
+          return;
+        }
         
         if (!options.force) {
           console.log(chalk.yellow(`\n⚠ This will logout from profile '${profile}'`));
           console.log(chalk.gray("  You'll need to re-authenticate to use this profile"));
-          console.log(chalk.gray("  Use --force to skip this confirmation"));
           
-          // TODO: Implement confirmation prompt
-          console.log(chalk.yellow("⚠ Confirmation prompt not yet implemented"));
-          console.log(chalk.gray("  Proceeding with logout..."));
+          try {
+            const shouldProceed = await confirm({
+              message: `Are you sure you want to logout from profile '${profile}'?`,
+              default: false,
+            });
+            
+            if (!shouldProceed) {
+              console.log(chalk.gray("  Logout cancelled by user"));
+              return;
+            }
+          } catch (error) {
+            if (error && typeof error === 'object' && 'name' in error && error.name === 'ExitPromptError') {
+              console.log(chalk.gray("\n  Logout cancelled by user"));
+              return;
+            }
+            throw error;
+          }
         }
         
-        // TODO: Implement single profile logout
-        console.log(chalk.yellow("⚠ Profile logout not yet implemented"));
-        console.log(chalk.gray("  This will:"));
-        console.log(chalk.gray("  1. Check if profile exists"));
-        console.log(chalk.gray("  2. Remove stored credentials"));
-        console.log(chalk.gray("  3. Update profile configuration"));
+        console.log(chalk.gray(`  Removing credentials for profile: ${profile}...`));
         
-        console.log(chalk.green(`✔ Logged out from profile: ${profile}`));
+        try {
+          await configStore.removeProfile(profile);
+          console.log(chalk.green(`✔ Logged out from profile: ${profile}`));
+          console.log(chalk.gray("  Stored credentials have been removed"));
+          
+          // Check if this was the last profile
+          const remainingProfiles = await configStore.listProfiles();
+          if (remainingProfiles.length === 0) {
+            console.log(chalk.gray("  No profiles remaining"));
+          } else {
+            const defaultProfile = await configStore.getDefaultProfile();
+            console.log(chalk.gray(`  Default profile is now: ${defaultProfile}`));
+          }
+        } catch (removeError: any) {
+          // Check if the error is because the profile doesn't exist
+          if (removeError.message.includes("does not exist")) {
+            console.log(chalk.yellow(`⚠ Profile '${profile}' was not found`));
+            console.log(chalk.gray("  It may have already been removed"));
+          } else {
+            console.error(chalk.red("✖ Failed to remove profile"));
+            console.error(chalk.red("Error:"), removeError.message);
+            
+            if (removeError.message.includes("keychain")) {
+              console.log(chalk.gray("\n💡 Note:"));
+              console.log(chalk.gray("  Credentials may still be in your system keychain"));
+              console.log(chalk.gray("  You may need to remove them manually"));
+            }
+            
+            process.exit(1);
+          }
+        }
       }
 
       console.log(chalk.cyan("\n📋 Next Steps:"));

@@ -1,14 +1,15 @@
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
+import { CONFIG_DIR, CONFIG_FILE, KEYTAR_SERVICE, DEFAULT_PROFILE, getApiUrl } from './config-constants.js';
 
 // Keytar module - will be loaded dynamically
 let keytar: any = null;
 let keytarError: string | null = null;
 
-const SERVICE_NAME = 'lightfast-cli';
-const CONFIG_DIR = join(homedir(), '.lightfast');
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+const SERVICE_NAME = KEYTAR_SERVICE;
+const CONFIG_DIR_PATH = join(homedir(), CONFIG_DIR);
+const CONFIG_FILE_PATH = join(CONFIG_DIR_PATH, CONFIG_FILE);
 
 export interface Profile {
   name: string;
@@ -63,13 +64,13 @@ export class ConfigStore {
    */
   private async loadConfig(): Promise<void> {
     try {
-      const data = await fs.readFile(CONFIG_FILE, 'utf8');
+      const data = await fs.readFile(CONFIG_FILE_PATH, 'utf8');
       this.config = JSON.parse(data);
     } catch (error: any) {
       if (error.code === 'ENOENT') {
         // Config file doesn't exist, create default
         this.config = {
-          defaultProfile: 'default',
+          defaultProfile: DEFAULT_PROFILE,
           profiles: {}
         };
       } else {
@@ -87,7 +88,7 @@ export class ConfigStore {
     }
 
     try {
-      await fs.writeFile(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
+      await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(this.config, null, 2), 'utf8');
     } catch (error) {
       throw new Error(`Failed to save config: ${error}`);
     }
@@ -117,6 +118,7 @@ export class ConfigStore {
     
     this.config!.profiles[name] = {
       name,
+      endpoint: getApiUrl(), // Default endpoint
       ...existing,
       ...data,
       createdAt: existing?.createdAt || now,
@@ -153,7 +155,7 @@ export class ConfigStore {
     // If this was the default profile, reset to another profile or empty
     if (this.config!.defaultProfile === name) {
       const remainingProfiles = Object.keys(this.config!.profiles);
-      this.config!.defaultProfile = remainingProfiles.length > 0 ? remainingProfiles[0]! : 'default';
+      this.config!.defaultProfile = remainingProfiles.length > 0 ? remainingProfiles[0]! : DEFAULT_PROFILE;
     }
 
     await this.saveConfig();
@@ -245,7 +247,7 @@ export class ConfigStore {
    * Get the config file path for debugging
    */
   getConfigPath(): string {
-    return CONFIG_FILE;
+    return CONFIG_FILE_PATH;
   }
 
   /**
@@ -278,7 +280,7 @@ export class ConfigStore {
 
     // Reset config
     this.config = {
-      defaultProfile: 'default',
+      defaultProfile: DEFAULT_PROFILE,
       profiles: {}
     };
 

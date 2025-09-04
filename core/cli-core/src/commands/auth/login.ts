@@ -1,10 +1,15 @@
 import { Command } from "commander";
 import chalk from "chalk";
+import { password } from "@inquirer/prompts";
+import { configStore } from "../../lib/config.js";
+import { LightfastClient } from "../../lib/client.js";
+import { getDashboardUrl } from "../../lib/config-constants.js";
 
 interface LoginOptions {
   apiKey?: string;
   profile?: string;
   force?: boolean;
+  baseUrl?: string;
 }
 
 export const loginCommand = new Command("login")
@@ -12,12 +17,14 @@ export const loginCommand = new Command("login")
   .option("--api-key <key>", "API key for authentication")
   .option("--profile <name>", "Profile name to use for this authentication", "default")
   .option("-f, --force", "Force re-authentication even if already logged in")
+  .option("--base-url <url>", "Base URL for the Lightfast API (for testing)")
   .addHelpText("after", `
 ${chalk.cyan("Examples:")}
   $ lightfast auth login                     # Interactive login (opens browser)
   $ lightfast auth login --api-key <key>     # Login with API key directly
   $ lightfast auth login --profile work      # Login to 'work' profile
   $ lightfast auth login --force             # Force re-authentication
+  $ lightfast auth login --base-url http://localhost:3000  # Use local API for testing
 
 ${chalk.cyan("Authentication Methods:")}
   1. Interactive: Opens browser for OAuth flow
@@ -26,35 +33,127 @@ ${chalk.cyan("Authentication Methods:")}
 `)
   .action(async (options: LoginOptions) => {
     try {
+      const profile = options.profile || "default";
       console.log(chalk.blue("→ Lightfast Authentication"));
       console.log(chalk.gray("  Starting authentication process...\n"));
 
+      // Check if already authenticated and not forcing re-auth
+      if (!options.force) {
+        const existingProfile = await configStore.getProfile(profile);
+        const existingApiKey = await configStore.getApiKey(profile);
+        
+        if (existingProfile && existingApiKey) {
+          console.log(chalk.yellow(`⚠ Already authenticated to profile '${profile}'`));
+          console.log(chalk.gray("  Use --force to re-authenticate"));
+          console.log(chalk.gray("  Run 'lightfast auth status' to check credentials"));
+          return;
+        }
+      }
+
+      let apiKey: string;
+      
       if (options.apiKey) {
-        console.log(chalk.blue("→ Authenticating with API key"));
-        console.log(chalk.gray(`  Profile: ${options.profile || "default"}`));
-        
-        // TODO: Implement API key authentication
-        console.log(chalk.yellow("⚠ API key authentication not yet implemented"));
-        console.log(chalk.gray("  This will store encrypted credentials locally"));
-        console.log(chalk.gray("  and validate the key with the Lightfast API"));
-        
-        // Simulate success for now
-        console.log(chalk.green("✔ Authentication successful!"));
-        console.log(chalk.gray(`  Credentials saved to profile: ${options.profile || "default"}`));
+        apiKey = options.apiKey;
+        console.log(chalk.blue("→ Authenticating with provided API key"));
       } else {
-        console.log(chalk.blue("→ Starting interactive authentication"));
-        console.log(chalk.gray("  This will open your browser for OAuth flow"));
+        console.log(chalk.blue("→ Enter your API key for authentication"));
+        console.log(chalk.gray(`  You can find your API key at: ${getDashboardUrl('/settings/api-keys')}`));
         
-        // TODO: Implement interactive OAuth flow
-        console.log(chalk.yellow("⚠ Interactive authentication not yet implemented"));
-        console.log(chalk.gray("  This will:"));
-        console.log(chalk.gray("  1. Start local callback server"));
-        console.log(chalk.gray("  2. Open browser to Lightfast OAuth"));
-        console.log(chalk.gray("  3. Handle callback and store tokens"));
+        try {
+          apiKey = await password({
+            message: "API Key:",
+            mask: "*",
+            validate: (input: string) => {
+              if (!input.trim()) {
+                return "API key cannot be empty";
+              }
+              if (!input.startsWith("lf_")) {
+                return "API key must start with 'lf_'";
+              }
+              return true;
+            },
+          });
+        } catch (error) {
+          if (error && typeof error === 'object' && 'name' in error && error.name === 'ExitPromptError') {
+            console.log(chalk.gray("\n  Authentication cancelled by user"));
+            return;
+          }
+          throw error;
+        }
+      }
+
+      console.log(chalk.gray(`  Profile: ${profile}`));
+      console.log(chalk.gray("  Validating API key..."));
+      
+      // Validate the API key by calling the API
+      const client = new LightfastClient({ baseUrl: options.baseUrl });
+      const validationResult = await client.validateApiKey(apiKey);
+      
+      if (!validationResult.success) {
+        console.error(chalk.red("✖ API key validation failed"));
+        console.error(chalk.red("Error:"), validationResult.message || validationResult.error);
         
-        // Simulate success for now
+        if (validationResult.error === "HTTP 401" || validationResult.message?.includes("Invalid")) {
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Double-check your API key is correct"));
+          console.log(chalk.gray("  • Verify the key hasn't expired"));
+          console.log(chalk.gray(`  • Generate a new key at ${getDashboardUrl('/settings/api-keys')}`));
+        } else if (validationResult.error === "NetworkError") {
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Check your internet connection"));
+          console.log(chalk.gray("  • Verify Lightfast API is accessible"));
+          console.log(chalk.gray("  • Try again in a few moments"));
+        }
+        
+        process.exit(1);
+      }
+      
+      const validationData = validationResult.data;
+      console.log(chalk.green("✔ API key is valid!"));
+      console.log(chalk.gray(`  User ID: ${validationData?.userId || 'Unknown'}`));
+      console.log(chalk.gray(`  Key ID: ${validationData?.keyId || 'Unknown'}`));
+      
+      // Store credentials
+      console.log(chalk.gray("  Storing credentials securely..."));
+      
+      try {
+        // Store the API key in keychain
+        await configStore.setApiKey(profile, apiKey);
+        
+        // Store profile information
+        await configStore.setProfile(profile, {
+          userId: validationData?.userId,
+          organizationId: validationData?.organizationId,
+          endpoint: options.baseUrl, // Store custom base URL if provided
+        });
+        
+        // Set as default profile if it's the first one
+        const profiles = await configStore.listProfiles();
+        if (profiles.length === 1) {
+          await configStore.setDefaultProfile(profile);
+        }
+        
         console.log(chalk.green("✔ Authentication successful!"));
-        console.log(chalk.gray(`  Credentials saved to profile: ${options.profile || "default"}`));
+        console.log(chalk.gray(`  Credentials saved to profile: ${profile}`));
+        
+        const keychainAvailable = await configStore.isKeychainAvailable();
+        if (!keychainAvailable) {
+          console.log(chalk.yellow("⚠ Warning: Keychain not available"));
+          console.log(chalk.gray("  Credentials may not be stored securely"));
+        }
+        
+      } catch (storageError: any) {
+        console.error(chalk.red("✖ Failed to store credentials"));
+        console.error(chalk.red("Error:"), storageError.message);
+        
+        if (storageError.message.includes("keychain")) {
+          console.log(chalk.gray("\n💡 Troubleshooting:"));
+          console.log(chalk.gray("  • Your system may not support secure credential storage"));
+          console.log(chalk.gray("  • Try running with elevated permissions if on Linux"));
+          console.log(chalk.gray("  • Check if your keyring is unlocked"));
+        }
+        
+        process.exit(1);
       }
 
       console.log(chalk.cyan("\n📋 Next Steps:"));

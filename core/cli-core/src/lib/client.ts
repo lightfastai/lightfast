@@ -1,4 +1,5 @@
 import { configStore } from './config.js';
+import { getApiUrl, API_ENDPOINTS, DEFAULT_BASE_URL } from './config-constants.js';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -29,7 +30,7 @@ export class LightfastClient {
   private profileName: string;
 
   constructor(options: { baseUrl?: string; profileName?: string } = {}) {
-    this.baseUrl = options.baseUrl || 'https://api.lightfast.ai';
+    this.baseUrl = options.baseUrl || getApiUrl();
     this.profileName = options.profileName || 'default';
   }
 
@@ -108,23 +109,109 @@ export class LightfastClient {
   }
 
   /**
-   * Validate an API key by making a test request
+   * Validate an API key by calling the tRPC validation endpoint
    */
-  async validateApiKey(apiKey: string): Promise<ApiResponse<WhoAmIResponse>> {
-    const tempClient = new LightfastClient({ 
-      baseUrl: this.baseUrl,
-      profileName: this.profileName 
-    });
-    tempClient.apiKey = apiKey;
+  async validateApiKey(apiKey: string): Promise<ApiResponse<{ valid: boolean; userId: string; keyId: string }>> {
+    const url = `${this.baseUrl}${API_ENDPOINTS.VALIDATE_API_KEY}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'lightfast-cli',
+        },
+        body: JSON.stringify({
+          json: {
+            key: apiKey
+          }
+        }),
+      });
 
-    return tempClient.whoami();
+      let data: any;
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `HTTP ${response.status}`,
+          message: data?.error?.message || data?.message || data?.error || data || 'API key validation failed',
+        };
+      }
+
+      // tRPC returns result in a specific format
+      const result = data?.result?.data;
+      if (!result) {
+        return {
+          success: false,
+          error: 'InvalidResponse',
+          message: 'Unexpected response format from API',
+        };
+      }
+
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: 'NetworkError',
+        message: error.message || 'Network request failed',
+      };
+    }
   }
 
   /**
-   * Get information about the current user
+   * Get information about the current user using Clerk session
+   * This uses the standard authentication middleware
    */
   async whoami(): Promise<ApiResponse<WhoAmIResponse>> {
-    return this.request<WhoAmIResponse>('/v1/auth/whoami');
+    // First try the authentication endpoint with API key
+    const url = `${this.baseUrl}/api/user/whoami`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'User-Agent': 'lightfast-cli',
+        },
+      });
+
+      let data: any;
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `HTTP ${response.status}`,
+          message: data?.message || data?.error || data || 'Failed to get user information',
+        };
+      }
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: 'NetworkError',
+        message: error.message || 'Network request failed',
+      };
+    }
   }
 
   /**
