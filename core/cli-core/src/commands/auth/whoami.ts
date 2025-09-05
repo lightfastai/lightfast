@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { configStore } from "../../lib/config.js";
-import { createLightfastCloudClient } from "@lightfastai/cloud-client";
-import { getDashboardUrl, getApiUrl } from "../../lib/config-constants.js";
+import { profileManager } from "../../profiles/profile-manager.js";
+import { createLightfastCloudClient, getCloudUrl, getBaseUrl } from "@lightfastai/cloud-client";
 
 interface WhoamiOptions {
   profile?: string;
@@ -33,8 +32,8 @@ ${chalk.cyan("Information Displayed:")}
       const profile = options.profile || "default";
       
       // Check if authenticated
-      const storedProfile = await configStore.getProfile(profile);
-      const apiKey = await configStore.getApiKey(profile);
+      const storedProfile = await profileManager.getProfile(profile);
+      const apiKey = await profileManager.getApiKey(profile);
       
       if (!storedProfile || !apiKey) {
         if (options.json) {
@@ -69,7 +68,7 @@ ${chalk.cyan("Information Displayed:")}
       }
       
       try {
-        const apiKey = await configStore.getApiKey(profile);
+        const apiKey = await profileManager.getApiKey(profile);
         if (!apiKey) {
           if (options.json) {
             console.log(JSON.stringify({
@@ -86,8 +85,8 @@ ${chalk.cyan("Information Displayed:")}
           process.exit(1);
         }
 
-        const storedProfile = await configStore.getProfile(profile);
-        const baseUrl = storedProfile?.endpoint || getApiUrl();
+        const storedProfile = await profileManager.getProfile(profile);
+        const baseUrl = storedProfile?.endpoint || getBaseUrl();
         const client = createLightfastCloudClient({ baseUrl, apiKey });
         
         const userResult = await client.apiKey.validate.mutate({ key: apiKey });
@@ -148,15 +147,15 @@ ${chalk.cyan("Information Displayed:")}
           console.log("");
           console.log(chalk.cyan("🔧 Additional Information:"));
           console.log(chalk.gray(`  Profile Created: ${storedProfile?.createdAt ? new Date(storedProfile.createdAt).toLocaleString() : 'Unknown'}`));
-          console.log(chalk.gray(`  Config Path: ${configStore.getConfigPath()}`));
+          console.log(chalk.gray(`  Config Path: ${profileManager.getConfigPath()}`));
           
-          const authPath = configStore.getAuthPath();
+          const authPath = profileManager.getAuthPath();
           console.log(chalk.gray(`  Auth File: ${authPath}`));
           console.log(chalk.gray(`  Storage: File-based with chmod 600`));
           
           if (storedProfile) {
-            const allProfiles = await configStore.listProfiles();
-            const defaultProfile = await configStore.getDefaultProfile();
+            const allProfiles = await profileManager.listProfiles();
+            const defaultProfile = await profileManager.getDefaultProfile();
             console.log(chalk.gray(`  Available Profiles: ${allProfiles.join(", ")}`));
             console.log(chalk.gray(`  Default Profile: ${defaultProfile}`));
           }
@@ -164,7 +163,7 @@ ${chalk.cyan("Information Displayed:")}
         
         console.log("");
         console.log(chalk.cyan("📋 Available Actions:"));
-        console.log(chalk.gray(`  • Visit ${getDashboardUrl()} to manage your account`));
+        console.log(chalk.gray(`  • Visit ${getCloudUrl()} to manage your account`));
         console.log(chalk.gray("  • Run 'lightfast auth logout' to remove credentials"));
         console.log(chalk.gray("  • Run 'lightfast auth status --verbose' to check API key validity"));
         

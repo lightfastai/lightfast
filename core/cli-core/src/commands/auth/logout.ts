@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { confirm } from "@inquirer/prompts";
-import { configStore } from "../../lib/config.js";
+import { profileManager } from "../../profiles/profile-manager.js";
 
 interface LogoutOptions {
   profile?: string;
@@ -32,7 +32,7 @@ ${chalk.cyan("Notes:")}
       if (options.all) {
         console.log(chalk.gray("  Checking stored profiles..."));
         
-        const profiles = await configStore.listProfiles();
+        const profiles = await profileManager.listProfiles();
         if (profiles.length === 0) {
           console.log(chalk.yellow("⚠ No stored profiles found"));
           console.log(chalk.gray("  Nothing to logout from"));
@@ -67,7 +67,7 @@ ${chalk.cyan("Notes:")}
         console.log(chalk.gray("  Removing all credentials..."));
         
         try {
-          await configStore.clear();
+          await profileManager.clear();
           console.log(chalk.green(`✔ Logged out from all ${profiles.length} profile(s)`));
           console.log(chalk.gray("  All stored credentials have been removed"));
         } catch (clearError: any) {
@@ -88,8 +88,8 @@ ${chalk.cyan("Notes:")}
         console.log(chalk.gray(`  Checking profile: ${profile}`));
         
         // Check if profile exists
-        const existingProfile = await configStore.getProfile(profile);
-        const existingApiKey = await configStore.getApiKey(profile);
+        const existingProfile = await profileManager.getProfile(profile);
+        const existingApiKey = await profileManager.getApiKey(profile);
         
         if (!existingProfile && !existingApiKey) {
           console.log(chalk.yellow(`⚠ Profile '${profile}' is not authenticated`));
@@ -123,16 +123,16 @@ ${chalk.cyan("Notes:")}
         console.log(chalk.gray(`  Removing credentials for profile: ${profile}...`));
         
         try {
-          await configStore.removeProfile(profile);
+          await profileManager.removeProfile(profile);
           console.log(chalk.green(`✔ Logged out from profile: ${profile}`));
           console.log(chalk.gray("  Stored credentials have been removed"));
           
           // Check if this was the last profile
-          const remainingProfiles = await configStore.listProfiles();
+          const remainingProfiles = await profileManager.listProfiles();
           if (remainingProfiles.length === 0) {
             console.log(chalk.gray("  No profiles remaining"));
           } else {
-            const defaultProfile = await configStore.getDefaultProfile();
+            const defaultProfile = await profileManager.getDefaultProfile();
             console.log(chalk.gray(`  Default profile is now: ${defaultProfile}`));
           }
         } catch (removeError: any) {

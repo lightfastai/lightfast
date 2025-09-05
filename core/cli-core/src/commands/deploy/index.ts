@@ -3,9 +3,8 @@ import chalk from "chalk";
 import { createCompiler, CompilationSpinner } from "@lightfastai/compiler";
 import { resolve } from "path";
 import { existsSync } from "fs";
-import { configStore } from "../../lib/config.js";
-import { createLightfastCloudClient } from "@lightfastai/cloud-client";
-import { getDashboardUrl, getApiUrl } from "../../lib/config-constants.js";
+import { profileManager } from "../../profiles/profile-manager.js";
+import { createLightfastCloudClient, getBaseUrl } from "@lightfastai/cloud-client";
 
 interface DeployOptions {
 	config?: string;
@@ -63,8 +62,8 @@ ${chalk.cyan("Authentication:")}
 			console.log(chalk.blue("→ Validating authentication..."));
 
 			const profileName =
-				options.profile || (await configStore.getDefaultProfile());
-			const profile = await configStore.getProfile(profileName);
+				options.profile || (await profileManager.getDefaultProfile());
+			const profile = await profileManager.getProfile(profileName);
 
 			if (!profile) {
 				console.error(chalk.red("× Authentication required"));
@@ -82,7 +81,7 @@ ${chalk.cyan("Authentication:")}
 				process.exit(1);
 			}
 
-			const apiKey = await configStore.getApiKey(profileName);
+			const apiKey = await profileManager.getApiKey(profileName);
 			if (!apiKey) {
 				console.error(chalk.red("× No API key found"));
 				console.error(
@@ -98,7 +97,7 @@ ${chalk.cyan("Authentication:")}
 
 			// Test API connection
 			console.log(chalk.gray("  Testing API connection..."));
-			const baseUrl = profile.endpoint || getApiUrl();
+			const baseUrl = profile.endpoint || getBaseUrl();
 			const client = createLightfastCloudClient({ baseUrl, apiKey });
 			
 			let whoamiResult;

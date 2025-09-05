@@ -21,10 +21,24 @@ export interface LightfastCloudClientOptions {
 }
 
 /**
+ * Get the base URL from environment variables or use default
+ */
+export function getBaseUrl(): string {
+  return process.env.LIGHTFAST_BASE_URL || 'https://cloud.lightfast.ai';
+}
+
+/**
+ * Build cloud URL for user-facing pages
+ */
+export function getCloudUrl(path: string = ''): string {
+  return `${getBaseUrl()}${path}`;
+}
+
+/**
  * Create a type-safe Lightfast Cloud API client
  */
 export function createLightfastCloudClient(options: LightfastCloudClientOptions = {}) {
-  const baseUrl = options.baseUrl || 'https://cloud.lightfast.ai';
+  const baseUrl = options.baseUrl || getBaseUrl();
   
   return createTRPCProxyClient<CloudAppRouter>({
     links: [

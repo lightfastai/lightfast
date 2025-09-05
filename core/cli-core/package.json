@@ -41,7 +41,8 @@
 		"@lightfastai/compiler": "workspace:*",
 		"@lightfastai/dev-server": "workspace:*",
 		"chalk": "^5.6.0",
-		"commander": "^12.1.0"
+		"commander": "^12.1.0",
+		"conf": "^14.0.0"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

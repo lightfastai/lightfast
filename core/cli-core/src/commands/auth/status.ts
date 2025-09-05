@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { configStore } from "../../lib/config.js";
-import { createLightfastCloudClient } from "@lightfastai/cloud-client";
-import { getApiUrl, getDashboardUrl } from "../../lib/config-constants.js";
+import { profileManager } from "../../profiles/profile-manager.js";
+import { createLightfastCloudClient, getBaseUrl, getCloudUrl } from "@lightfastai/cloud-client";
 
 interface StatusOptions {
   profile?: string;
@@ -30,17 +29,17 @@ ${chalk.cyan("Status Information:")}
 `)
   .action(async (options: StatusOptions) => {
     try {
-      const profiles = await configStore.listProfiles();
-      const defaultProfile = await configStore.getDefaultProfile();
-      const configPath = configStore.getConfigPath();
-      const authPath = configStore.getAuthPath();
+      const profiles = await profileManager.listProfiles();
+      const defaultProfile = await profileManager.getDefaultProfile();
+      const configPath = profileManager.getConfigPath();
+      const authPath = profileManager.getAuthPath();
       
       // Determine which profile to check
       const targetProfile = options.profile || defaultProfile;
       
       // Get profile and API key info
-      const profile = await configStore.getProfile(targetProfile);
-      const apiKey = await configStore.getApiKey(targetProfile);
+      const profile = await profileManager.getProfile(targetProfile);
+      const apiKey = await profileManager.getApiKey(targetProfile);
       const isAuthenticated = !!(profile && apiKey);
       
       // If JSON output is requested
@@ -52,7 +51,7 @@ ${chalk.cyan("Status Information:")}
           defaultProfile: defaultProfile,
           authFile: authPath,
           configPath: configPath,
-          apiEndpoint: "https://api.lightfast.ai",
+          apiEndpoint: getBaseUrl(),
           profile: profile,
           lastLogin: profile?.updatedAt || null,
         };
@@ -84,13 +83,13 @@ ${chalk.cyan("Status Information:")}
           console.log(chalk.gray("  Validating API key..."));
           
           try {
-            const apiKey = await configStore.getApiKey(targetProfile);
+            const apiKey = await profileManager.getApiKey(targetProfile);
             if (!apiKey) {
               console.log(chalk.red("  ✖ No API key found for this profile"));
               return;
             }
 
-            const baseUrl = profile.endpoint || getApiUrl();
+            const baseUrl = profile.endpoint || getBaseUrl();
             const client = createLightfastCloudClient({ baseUrl, apiKey });
             const validationResult = await client.apiKey.validate.mutate({ key: apiKey });
             
@@ -121,7 +120,7 @@ ${chalk.cyan("Status Information:")}
         }
       }
       
-      console.log(chalk.gray(`  API Endpoint: https://api.lightfast.ai`));
+      console.log(chalk.gray(`  API Endpoint: ${getBaseUrl()}`));
       
       if (options.verbose) {
         console.log("");
@@ -140,12 +139,12 @@ ${chalk.cyan("Status Information:")}
         console.log(chalk.cyan("📋 Available Commands:"));
         console.log(chalk.gray("  • Run 'lightfast auth whoami' to see user details"));
         console.log(chalk.gray("  • Run 'lightfast auth logout' to remove credentials"));
-        console.log(chalk.gray(`  • Visit ${getDashboardUrl()} to manage your account`));
+        console.log(chalk.gray(`  • Visit ${getCloudUrl()} to manage your account`));
       } else {
         console.log(chalk.cyan("📋 Next Steps:"));
         console.log(chalk.gray("  • Run 'lightfast auth login' to authenticate"));
         console.log(chalk.gray("  • Use 'lightfast auth login --api-key <key>' for API key auth"));
-        console.log(chalk.gray("  • Check documentation at https://docs.lightfast.ai"));
+        console.log(chalk.gray(`  • Check documentation at ${getCloudUrl('/docs')}`));
       }
       
     } catch (error) {
