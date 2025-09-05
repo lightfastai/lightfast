@@ -1,50 +1,50 @@
 {
-  "name": "@db/cloud",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./schema": "./src/schema/index.ts",
-    "./client": "./src/client.ts",
-    "./env": {
-      "types": "./dist/env.d.ts",
-      "default": "./env.ts"
-    }
-  },
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
-    "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
-    "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
-    "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",
-    "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
-    "db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../apps/cloud/.env.local --"
-  },
-  "dependencies": {
-    "@repo/lib": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.12.0",
-    "@vendor/db": "workspace:*",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "dotenv-cli": "^8.0.0",
-    "drizzle-kit": "^0.31.0",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
-    "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+	"name": "@db/cloud",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/src/index.d.ts",
+			"default": "./src/index.ts"
+		},
+		"./schema": "./src/schema/index.ts",
+		"./client": "./src/client.ts",
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"default": "./env.ts"
+		}
+	},
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc",
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"dev": "tsc",
+		"format": "prettier --check . --ignore-path ../../.gitignore",
+		"lint": "eslint",
+		"db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
+		"db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
+		"db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",
+		"db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
+		"db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
+		"with-env": "dotenv -e ../../apps/cloud/.vercel/.env.development.local --"
+	},
+	"dependencies": {
+		"@repo/lib": "workspace:*",
+		"@t3-oss/env-nextjs": "^0.12.0",
+		"@vendor/db": "workspace:*",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/prettier-config": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"dotenv-cli": "^8.0.0",
+		"drizzle-kit": "^0.31.0",
+		"eslint": "catalog:",
+		"prettier": "catalog:",
+		"typescript": "catalog:"
+	},
+	"prettier": "@repo/prettier-config"
 }

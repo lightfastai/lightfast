@@ -38,10 +38,12 @@
 		"clean": "rm -rf dist .turbo node_modules .output .lightfast .nitro .tanstack"
 	},
 	"dependencies": {
+		"@inquirer/prompts": "^7.8.4",
 		"chalk": "^5.6.0",
 		"chokidar": "^4.0.3",
 		"commander": "^12.1.0",
 		"esbuild": "^0.25.9",
+		"keytar": "^7.9.0",
 		"zod": "^3.25.76"
 	},
 	"peerDependencies": {

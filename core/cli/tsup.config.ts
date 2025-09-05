@@ -18,8 +18,11 @@ export default defineConfig({
     /^\.\.\//, // Bundle relative imports from cli-core
   ],
   // Keep dev-server external (we copy its output separately)
+  // Also keep native modules external
   external: [
-    '@lightfastai/dev-server'
+    '@lightfastai/dev-server',
+    'keytar', // Native module for secure credential storage
+    '@inquirer/prompts' // Has native dependencies
   ],
   async onSuccess() {
     const fs = await import('node:fs');

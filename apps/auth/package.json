@@ -13,12 +13,13 @@
 		"with-env": "dotenv -e ./.vercel/.env.development.local --"
 	},
 	"dependencies": {
-		"@clerk/elements": "catalog:",
-		"@clerk/nextjs": "catalog:",
+		"@clerk/elements": "^0.23.61",
+		"@clerk/nextjs": "^6.31.9",
 		"@hookform/resolvers": "^3.10.0",
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",
 		"@repo/url-utils": "workspace:*",
+		"@repo/vercel-config": "workspace:*",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"@vendor/analytics": "workspace:*",
 		"@vendor/clerk": "workspace:*",

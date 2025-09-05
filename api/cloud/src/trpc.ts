@@ -7,12 +7,45 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 
+import { db } from "@db/cloud/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
-import { db } from "@db/cloud/client";
+
+import { authenticateApiKey } from "./middleware/apiKey";
+
+/**
+ * Session types for different authentication methods
+ */
+export type Session = 
+  | {
+      type: 'api-key';
+      data: {
+        userId: string;
+        apiKeyId: string;
+        organizationId: string;
+        organizationRole?: string;
+      };
+    }
+  | {
+      type: 'clerk';
+      data: Awaited<ReturnType<typeof auth>> & {
+        organizationId?: string;
+        organizationRole?: string;
+      };
+    }
+  | null;
+
+/**
+ * Organization context for multi-tenant operations
+ */
+export type OrganizationContext = {
+  id: string;
+  role: string;
+  permissions?: string[];
+} | null;
 
 /**
  * 1. CONTEXT
@@ -27,22 +60,71 @@ import { db } from "@db/cloud/client";
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}) => {
-  const session = await auth();
-
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   // Get the source header for logging
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  
+  // First, try to authenticate via API key
+  const apiKeyAuth = await authenticateApiKey(opts.headers, db);
+  
+  if (apiKeyAuth) {
+    console.info(`>>> tRPC Request from ${source} by ${apiKeyAuth.userId} (API Key: ${apiKeyAuth.apiKeyId})`);
+    
+    const session: Session = {
+      type: 'api-key',
+      data: {
+        userId: apiKeyAuth.userId,
+        apiKeyId: apiKeyAuth.apiKeyId,
+        organizationId: apiKeyAuth.organizationId,
+        organizationRole: apiKeyAuth.organizationRole,
+      },
+    };
+    
+    const organization: OrganizationContext = apiKeyAuth.organizationId ? {
+      id: apiKeyAuth.organizationId,
+      role: apiKeyAuth.organizationRole || 'member',
+    } : null;
+    
+    return {
+      session,
+      organization,
+      db,
+    };
+  }
+  
+  // Fall back to Clerk session authentication
+  const clerkSession = await auth();
+  
+  const session: Session = clerkSession?.userId
+    ? {
+        type: 'clerk',
+        data: {
+          ...clerkSession,
+          organizationId: clerkSession.orgId,
+          organizationRole: clerkSession.orgRole,
+        } as typeof clerkSession & { 
+          userId: string;
+          organizationId?: string;
+          organizationRole?: string;
+        },
+      }
+    : null;
 
-  if (session?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
+  const organization: OrganizationContext = clerkSession?.orgId ? {
+    id: clerkSession.orgId,
+    role: clerkSession.orgRole || 'member',
+    permissions: clerkSession.orgPermissions,
+  } : null;
+
+  if (session?.data?.userId) {
+    console.info(`>>> tRPC Request from ${source} by ${session.data.userId} (Session Auth)${organization ? ` in org ${organization.id}` : ''}`);
   } else {
     console.info(`>>> tRPC Request from ${source} by unknown`);
   }
 
   return {
     session,
+    organization,
     db,
   };
 };
@@ -59,10 +141,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     ...shape,
     data: {
       ...shape.data,
-      zodError:
-        error.cause instanceof ZodError
-          ? error.cause.flatten()
-          : null,
+      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
 });
@@ -111,7 +190,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
 /**
  * Public (unauthed) procedure
- * 
+ *
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
@@ -120,22 +199,69 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
- * 
+ *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
  * the session is valid and guarantees `ctx.session.userId` is not null.
- * 
+ *
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
+    if (!ctx.session?.data?.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
       ctx: {
-        // infers the `session` as non-nullable
-        session: ctx.session,
+        // After check above, we know session exists and userId is non-null
+        session: ctx.session as typeof ctx.session & { data: { userId: string } },
+        organization: ctx.organization,
+      },
+    });
+  });
+
+/**
+ * Organization-protected procedure
+ *
+ * Requires both authentication and organization membership.
+ * Use this for operations that should be scoped to an organization.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const orgProtectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.data?.userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Authentication required" });
+    }
+    if (!ctx.organization) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Organization membership required" });
+    }
+    return next({
+      ctx: {
+        session: ctx.session as typeof ctx.session & { data: { userId: string } },
+        organization: ctx.organization,
+      },
+    });
+  });
+
+/**
+ * Organization admin procedure
+ *
+ * Requires authentication, organization membership, and admin role.
+ * Use this for administrative operations within an organization.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const orgAdminProcedure = orgProtectedProcedure
+  .use(({ ctx, next }) => {
+    if (!ctx.organization || !['admin', 'org:admin'].includes(ctx.organization.role)) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Organization admin access required" });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        organization: ctx.organization,
       },
     });
   });

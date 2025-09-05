@@ -24,6 +24,7 @@ export const env = createEnv({
    */
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    ARCJET_KEY: z.string().min(32, "Arcjet API key is required for rate limiting and security"),
   },
 
   /**

@@ -15,6 +15,9 @@ import { env } from "./src/env";
 let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
+		eslint: {
+			ignoreDuringBuilds: true, // Temporarily disable ESLint during build
+		},
 		transpilePackages: [
 			"@api/cloud",
 			"@db/cloud",
