@@ -164,9 +164,9 @@ export function CustomOrganizationOnboarding() {
 	// Handle successful organization creation
 	useEffect(() => {
 		if (createState.status === "success" && createState.organizationId) {
-			// If we have the slug from creation, redirect directly
+			// If we have the slug from creation, redirect directly to cloud app
 			if (createState.organizationSlug) {
-				router.push(`/${createState.organizationSlug}/dashboard`);
+				window.location.href = `http://localhost:4103/${createState.organizationSlug}/dashboard`;
 			} else {
 				// Auto-select the newly created organization instead of showing list
 				const formData = new FormData();
@@ -183,7 +183,7 @@ export function CustomOrganizationOnboarding() {
 		if (selectState.status === "success" && selectState.organizationId) {
 			// Use the organizationSlug from the action if available, otherwise fall back to ID
 			const orgSlug = selectState.organizationSlug || selectState.organizationId;
-			router.push(`/${orgSlug}/dashboard`);
+			window.location.href = `http://localhost:4103/${orgSlug}/dashboard`;
 		}
 	}, [selectState, router]);
 

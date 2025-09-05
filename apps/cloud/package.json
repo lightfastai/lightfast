@@ -16,7 +16,7 @@
 		"@api/cloud": "workspace:*",
 		"@arcjet/next": "1.0.0-beta.10",
 		"@browserbasehq/stagehand": "catalog:",
-		"@clerk/nextjs": "catalog:",
+		"@clerk/nextjs": "^6.31.9",
 		"@db/cloud": "workspace:*",
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",

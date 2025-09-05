@@ -1,15 +1,9 @@
 import arcjet, { shield, fixedWindow } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import {
-	getClerkMiddlewareConfig,
-	handleCorsPreflightRequest,
-	applyCorsHeaders,
-} from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
-
-const clerkConfig = getClerkMiddlewareConfig("cloud");
 
 // Shared shield configuration for all endpoints
 const shieldRule = shield({ mode: "LIVE" });
@@ -33,13 +27,13 @@ const ajValidation = arcjet({
 	rules: [
 		shieldRule,
 		fixedWindow({
-			mode: "LIVE", 
+			mode: "LIVE",
 			window: "10m",
 			max: 20, // 20 attempts per 10 minutes
 		}),
 		fixedWindow({
 			mode: "LIVE",
-			window: "10s", 
+			window: "10s",
 			max: 5, // Burst protection: max 5 attempts per 10 seconds
 		}),
 	],
@@ -66,15 +60,13 @@ const isPublicRoute = createRouteMatcher([
 	"/api/trpc/apiKey.whoami", // tRPC endpoint for whoami command
 	"/playground",
 	"/playground/(.*)",
-	"/onboarding", // Organization onboarding flow
-	"/onboarding/(.*)", // Organization creation/selection pages
 	"/settings/api-keys", // Temporarily public for testing
 ]);
 
 // Define routes that require organization membership
 const isOrganizationRoute = createRouteMatcher([
 	"/settings",
-	"/settings/(.*)", 
+	"/settings/(.*)",
 	"/dashboard",
 	"/dashboard/(.*)",
 	"/api-keys",
@@ -94,130 +86,133 @@ const isOrganizationRoute = createRouteMatcher([
 // 	"/api/trpc/apiKey.whoami",
 // ]);
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
-	// Handle CORS preflight requests first
-	const preflightResponse = handleCorsPreflightRequest(req);
-	if (preflightResponse) {
-		return preflightResponse;
-	}
-
-	// In development, bypass auth for org-based routes to prevent redirect loops
-	if (process.env.NODE_ENV === "development") {
-		const pathname = req.nextUrl.pathname;
-		const isOrgRoute = pathname.match(/^\/[^\/]+\/(dashboard|settings)/);
-		if (isOrgRoute) {
-			console.log(`[DEV] Bypassing auth for org route: ${pathname}`);
-			const response = NextResponse.next();
-			return applyCorsHeaders(response, req);
+export default clerkMiddleware(
+	async (auth, req: NextRequest) => {
+		// Handle CORS preflight requests first
+		const preflightResponse = handleCorsPreflightRequest(req);
+		if (preflightResponse) {
+			return preflightResponse;
 		}
-	}
 
-	// Select appropriate Arcjet configuration based on endpoint
-	let aj = ajDefault;
-	if (req.url.includes("/api/trpc/apiKey.validate")) {
-		aj = ajValidation;
-	} else if (req.url.includes("/api/trpc/apiKey.whoami")) {
-		aj = ajWhoami;
-	}
+		// Select appropriate Arcjet configuration based on endpoint
+		let aj = ajDefault;
+		if (req.url.includes("/api/trpc/apiKey.validate")) {
+			aj = ajValidation;
+		} else if (req.url.includes("/api/trpc/apiKey.whoami")) {
+			aj = ajWhoami;
+		}
 
-	// Apply Arcjet protection (rate limiting + shield)
-	// Arcjet automatically handles IP extraction from standard headers
-	const decision = await aj.protect(req);
+		// Apply Arcjet protection (rate limiting + shield)
+		// Arcjet automatically handles IP extraction from standard headers
+		const decision = await aj.protect(req);
 
-	// Block requests that violate rate limits or security rules
-	if (decision.isDenied()) {
-		// Determine which endpoint was hit for better user feedback
-		const isValidationEndpoint = req.url.includes("/api/trpc/apiKey.validate");
-		const isWhoamiEndpoint = req.url.includes("/api/trpc/apiKey.whoami");
-		
-		let specificMessage = "Too many requests. Please try again later.";
-		
-		if (decision.reason.isRateLimit()) {
-			// Rate limit specific messaging
-			if (isValidationEndpoint) {
-				specificMessage = "Too many authentication attempts. Please wait before trying again.";
-			} else if (isWhoamiEndpoint) {
-				specificMessage = "Too many status check requests. Please reduce request frequency.";
-			}
-			
-			return NextResponse.json(
-				{ 
-					error: "Rate limit exceeded",
-					message: specificMessage,
-				}, 
-				{ 
-					status: 429,
-					headers: {
-						"Retry-After": "60", // Default 60 seconds retry
-					}
+		// Block requests that violate rate limits or security rules
+		if (decision.isDenied()) {
+			// Determine which endpoint was hit for better user feedback
+			const isValidationEndpoint = req.url.includes(
+				"/api/trpc/apiKey.validate",
+			);
+			const isWhoamiEndpoint = req.url.includes("/api/trpc/apiKey.whoami");
+
+			let specificMessage = "Too many requests. Please try again later.";
+
+			if (decision.reason.isRateLimit()) {
+				// Rate limit specific messaging
+				if (isValidationEndpoint) {
+					specificMessage =
+						"Too many authentication attempts. Please wait before trying again.";
+				} else if (isWhoamiEndpoint) {
+					specificMessage =
+						"Too many status check requests. Please reduce request frequency.";
 				}
-			);
-		}
 
-		// Shield or other security violations
-		if (decision.reason.isShield()) {
+				return NextResponse.json(
+					{
+						error: "Rate limit exceeded",
+						message: specificMessage,
+					},
+					{
+						status: 429,
+						headers: {
+							"Retry-After": "60", // Default 60 seconds retry
+						},
+					},
+				);
+			}
+
+			// Shield or other security violations
+			if (decision.reason.isShield()) {
+				return NextResponse.json(
+					{
+						error: "Security violation",
+						message: "Request blocked due to suspicious activity.",
+					},
+					{ status: 403 },
+				);
+			}
+
+			// Generic security block
 			return NextResponse.json(
-				{ 
-					error: "Security violation",
-					message: "Request blocked due to suspicious activity.",
-				}, 
-				{ status: 403 }
+				{
+					error: "Request blocked",
+					message: "Request blocked for security reasons.",
+				},
+				{ status: 403 },
 			);
 		}
 
-		// Generic security block
-		return NextResponse.json(
-			{ 
-				error: "Request blocked",
-				message: "Request blocked for security reasons.",
-			}, 
-			{ status: 403 }
-		);
-	}
+		// Handle authentication and organization requirements
+		if (!isPublicRoute(req)) {
+			// First, ensure user is authenticated
+			const { userId, orgId } = await auth.protect();
 
-	// Handle authentication and organization requirements
-	if (!isPublicRoute(req)) {
-		// First, ensure user is authenticated
-		const { userId, sessionId, orgId, sessionClaims } = await auth.protect();
-		
-		// Check if this route requires organization membership
-		if (isOrganizationRoute(req)) {
-			// Log detailed auth information for debugging
-			console.log(`[MIDDLEWARE] User ${userId} accessing org route ${req.nextUrl.pathname}`, {
-				orgId,
-				sessionId,
-				currentTask: sessionClaims?.currentTask,
-				sessionClaims: sessionClaims ? Object.keys(sessionClaims) : null
-			});
+			// Check if this route requires organization membership
+			if (isOrganizationRoute(req)) {
+				// Log detailed auth information for debugging
+				console.log(
+					`[MIDDLEWARE] User ${userId} accessing org route ${req.nextUrl.pathname}`,
+					{ orgId },
+				);
 
-			// Check if user has pending tasks (organization selection)
-			if (sessionClaims?.currentTask) {
-				// User is authenticated but has pending organization task
-				console.log(`[MIDDLEWARE] User ${userId} has pending task: ${String(sessionClaims.currentTask)}, redirecting to onboarding`);
-				
-				// Redirect to onboarding flow to complete organization selection
-				const onboardingUrl = new URL('/onboarding', req.url);
-				return NextResponse.redirect(onboardingUrl);
+				// Let Clerk handle any session tasks automatically via taskUrls configuration
+
+				// Check if user has organization membership
+				if (!orgId) {
+					console.log(
+						`[MIDDLEWARE] User ${userId} attempting to access organization route without org membership, redirecting to select-organization`,
+					);
+
+					// Redirect to organization selection/creation on auth app
+					const selectOrgUrl = new URL("http://localhost:4104/select-organization");
+					return NextResponse.redirect(selectOrgUrl);
+				}
+
+				console.log(
+					`[MIDDLEWARE] User ${userId} successfully accessing organization route with org ${orgId}`,
+				);
 			}
-			
-			// Check if user has organization membership
-			if (!orgId) {
-				console.log(`[MIDDLEWARE] User ${userId} attempting to access organization route without org membership, redirecting to onboarding`);
-				
-				// Redirect to organization selection/creation
-				const onboardingUrl = new URL('/onboarding', req.url);
-				return NextResponse.redirect(onboardingUrl);
-			}
-			
-			console.log(`[MIDDLEWARE] User ${userId} successfully accessing organization route with org ${orgId}`);
 		}
-	}
 
-	const response = NextResponse.next();
+		const response = NextResponse.next();
 
-	// Apply CORS headers to the response
-	return applyCorsHeaders(response, req);
-}, clerkConfig);
+		// Apply CORS headers to the response
+		return applyCorsHeaders(response, req);
+	},
+	{
+		publicRoutes: ["/api/health"],
+		ignoredRoutes: [],
+		// Cloud app configuration - redirects to auth subdomain
+		signInUrl: "http://localhost:4104/sign-in",
+		signUpUrl: "http://localhost:4104/sign-up",
+		signInFallbackRedirectUrl: "/",
+		signUpFallbackRedirectUrl: "/",
+		afterSignOutUrl: "http://localhost:4101", // www app
+		// CRITICAL: Include taskUrls in middleware to prevent /sign-in/tasks fallback
+		taskUrls: {
+			"choose-organization": "http://localhost:4104/select-organization",
+		},
+	},
+);
 
 export const config = {
 	matcher: [
@@ -226,4 +221,3 @@ export const config = {
 		"/(api|trpc)(.*)",
 	],
 };
-

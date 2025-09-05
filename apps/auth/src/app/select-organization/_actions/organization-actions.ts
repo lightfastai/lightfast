@@ -1,8 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { arcjet, shield, detectBot, fixedWindow, request, ARCJET_KEY } from "@vendor/security";
-import { redis } from "@vendor/upstash";
 import { captureException } from "@sentry/nextjs";
 import { auth } from "@clerk/nextjs/server";
 
@@ -45,46 +43,6 @@ const createOrganizationSchema = z.object({
 
 const ORGANIZATION_ACTIONS_KEY = "org:actions:";
 
-// Configure Arcjet protection for organization actions
-const aj = arcjet({
-	key: ARCJET_KEY,
-	// Use IP + user ID for rate limiting characteristics
-	// Allow fallback if IP is not available in server actions
-	characteristics: ["ip.src"],
-	rules: [
-		// Shield protects against common attacks
-		shield({
-			mode: process.env.NODE_ENV === "production" ? "LIVE" : "DRY_RUN",
-		}),
-		// Block automated bots
-		detectBot({
-			mode: "LIVE",
-			allow: [
-				"CATEGORY:SEARCH_ENGINE", // Allow search engines
-				"CATEGORY:MONITOR", // Allow monitoring services
-			],
-		}),
-		// Hourly limit for organization operations
-		fixedWindow({
-			mode: "LIVE",
-			window: "1h",
-			max: 10, // Allow up to 10 org operations per hour
-		}),
-		// Daily limit to prevent abuse
-		fixedWindow({
-			mode: "LIVE",
-			window: "24h",
-			max: 20, // Maximum 20 org operations per day
-		}),
-		// Burst protection
-		fixedWindow({
-			mode: "LIVE", 
-			window: "10s",
-			max: 3, // Max 3 attempts in 10 seconds
-		}),
-	],
-});
-
 /**
  * Create a new organization using Clerk's Backend API
  */
@@ -118,66 +76,6 @@ export async function createOrganizationAction(
 		}
 
 		const { name, slug } = validatedFields.data;
-
-		// Check Arcjet protection
-		try {
-			const req = await request();
-			const decision = await aj.protect(req);
-			
-			// Handle denied requests from Arcjet
-			if (decision.isDenied()) {
-				const reason = decision.reason;
-				
-				if (reason.isRateLimit()) {
-					return {
-						status: "error",
-						error: "Too many organization operations. Please try again later.",
-						isRateLimit: true,
-					};
-				}
-				
-				if (reason.isBot()) {
-					return {
-						status: "error",
-						error: "Automated request detected. Please complete the form manually.",
-					};
-				}
-				
-				if (reason.isShield()) {
-					return {
-						status: "error",
-						error: "Request blocked for security reasons. Please try again.",
-					};
-				}
-				
-				// Generic denial message
-				return {
-					status: "error",
-					error: "Your request could not be processed. Please try again.",
-				};
-			}
-		} catch (arcjetError) {
-			// Log Arcjet errors but don't block the user
-			console.error("Arcjet error in organization action:", arcjetError);
-			captureException(arcjetError, {
-				tags: {
-					action: "createOrganization:arcjet",
-					userId,
-				},
-			});
-			// Continue with request - don't block user if Arcjet fails
-		}
-
-
-		// Track rate limiting in Redis (non-critical)
-		try {
-			const rateLimitKey = `${ORGANIZATION_ACTIONS_KEY}${userId}`;
-			await redis.incr(rateLimitKey);
-			await redis.expire(rateLimitKey, 3600); // 1 hour expiry
-		} catch (redisError) {
-			console.error("Redis rate limit tracking error:", redisError);
-			// Continue - don't block user if Redis is down
-		}
 
 		try {
 			// Create organization using Clerk's Backend API

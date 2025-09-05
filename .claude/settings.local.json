@@ -149,7 +149,8 @@
       "mcp__playwright__browser_fill_form",
       "Bash(PORT=4104 pnpm with-env next dev)",
       "Bash(PORT=4103 pnpm with-env next dev)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(PORT=4103 pnpm dev)"
     ],
     "deny": []
   },

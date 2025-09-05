@@ -10,12 +10,12 @@ import {
 	createOrganizationAction, 
 	listUserOrganizationsAction, 
 	setActiveOrganizationAction,
-} from "~/app/onboarding/_actions/organization-actions";
+} from "~/app/select-organization/_actions/organization-actions";
 import type {
 	OrganizationActionState,
 	OrganizationListState,
 	OrganizationData,
-} from "~/app/onboarding/_actions/organization-actions";
+} from "~/app/select-organization/_actions/organization-actions";
 import { captureException } from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 

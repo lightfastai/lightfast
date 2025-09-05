@@ -8,23 +8,20 @@ export default async function AuthenticatedLayout({
 }) {
 	const { userId, orgId, sessionClaims } = await auth();
 
-	// Temporarily bypass auth for testing API keys functionality
-	if (!userId && process.env.NODE_ENV === "development") {
-		console.log("!  Bypassing authentication for development testing");
-	} else if (!userId) {
+	if (!userId) {
 		redirect("/sign-in");
 	}
 
 	// Check for pending organization tasks
 	if (sessionClaims?.currentTask) {
 		console.log(`User ${userId} has pending task: ${String(sessionClaims.currentTask)}`);
-		redirect("/onboarding");
+		redirect("/select-organization");
 	}
 
 	// Check if user has organization membership for authenticated routes
 	if (!orgId) {
 		console.log(`User ${userId} attempting to access authenticated route without organization`);
-		redirect("/onboarding");
+		redirect("/select-organization");
 	}
 
 	// Fetch organization details to get the slug for redirection

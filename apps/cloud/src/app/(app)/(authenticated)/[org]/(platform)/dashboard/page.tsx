@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   }
 
   if (!orgId) {
-    redirect("/onboarding");
+    redirect("/select-organization");
   }
 
   return <OrganizationDashboard organizationId={orgId} />;

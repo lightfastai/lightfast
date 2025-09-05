@@ -24,14 +24,14 @@ export default async function HomePage() {
 
   // Check if user has pending organization tasks
   if (sessionClaims?.currentTask) {
-    console.log(`[ROOT] User ${userId} has pending task: ${sessionClaims.currentTask}, redirecting to onboarding`);
-    redirect("/onboarding");
+    console.log(`[ROOT] User ${userId} has pending task: ${sessionClaims.currentTask}, redirecting to select-organization`);
+    redirect("/select-organization");
   }
 
   // Check if user has an active organization
   if (!orgId) {
-    console.log(`[ROOT] User ${userId} has no active organization, redirecting to onboarding`);
-    redirect("/onboarding");
+    console.log(`[ROOT] User ${userId} has no active organization, redirecting to select-organization`);
+    redirect("/select-organization");
   }
 
   // User is authenticated and has an organization, fetch org details and redirect to org-based dashboard

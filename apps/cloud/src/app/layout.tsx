@@ -7,7 +7,6 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { getClerkConfig } from "@repo/url-utils";
 import { TRPCReactProvider } from "~/trpc/react";
 import { HydrateClient } from "~/trpc/server";
 
@@ -96,15 +95,17 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const clerkConfig = getClerkConfig("cloud");
-
 	return (
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			{...clerkConfig}
+			signInUrl="http://localhost:4104/sign-in"
+			signUpUrl="http://localhost:4104/sign-up"
+			signInFallbackRedirectUrl="/"
+			signUpFallbackRedirectUrl="/"
+			afterSignOutUrl="http://localhost:4101"
 			waitlistUrl="/"
 			taskUrls={{
-				"select-organization": "/onboarding",
+				"choose-organization": "http://localhost:4104/select-organization",
 			}}
 			appearance={{
 				variables: {
@@ -125,4 +126,3 @@ export default function RootLayout({
 		</ClerkProvider>
 	);
 }
-

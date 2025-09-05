@@ -14,21 +14,6 @@ export default async function OrganizationLayout({
 }: OrganizationLayoutProps) {
 	const { org } = await params;
 
-	// In development, bypass all auth checks to prevent redirect loops
-	if (process.env.NODE_ENV === "development") {
-		console.log(`[DEV] Bypassing auth for org layout: ${org}`);
-		return (
-			<SidebarProvider>
-				<AppSidebar organizationId="dev-org-id" />
-				<SidebarInset>
-					<div className="flex flex-1 flex-col bg-muted/10 border border-border/30 rounded-lg">
-						{children}
-					</div>
-				</SidebarInset>
-			</SidebarProvider>
-		);
-	}
-
 	const { userId, orgId, sessionClaims } = await auth();
 
 	// Check if user is authenticated
@@ -39,13 +24,13 @@ export default async function OrganizationLayout({
 	// Check for pending organization tasks
 	if (sessionClaims?.currentTask) {
 		console.log(`User ${userId} has pending task: ${String(sessionClaims.currentTask)}`);
-		redirect("/onboarding");
+		redirect("/select-organization");
 	}
 
 	// Check if user has organization membership for authenticated routes
 	if (!orgId) {
 		console.log(`User ${userId} attempting to access authenticated route without organization`);
-		redirect("/onboarding");
+		redirect("/select-organization");
 	}
 
 	console.log(`User ${userId} accessing org route '${org}' with org ${orgId}`);

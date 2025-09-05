@@ -24,7 +24,7 @@ export function OrganizationSwitcherComponent() {
       createOrganizationMode="modal"
       afterCreateOrganizationUrl="/dashboard"
       afterSelectOrganizationUrl="/dashboard"
-      afterLeaveOrganizationUrl="/onboarding"
+      afterLeaveOrganizationUrl="/select-organization"
     />
   );
 }
