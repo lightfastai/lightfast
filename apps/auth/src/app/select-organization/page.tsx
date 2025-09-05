@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useOrganizationList, useUser } from "@clerk/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Icons } from "@repo/ui/components/icons";
@@ -14,19 +15,52 @@ import { Icons } from "@repo/ui/components/icons";
 export default function SelectOrganizationPage() {
   const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { createOrganization, setActive, organizationList } = useOrganizationList();
+  const { user } = useUser();
+
+  // Auto-redirect if user already has organizations
+  useEffect(() => {
+    if (organizationList && organizationList.length > 0) {
+      const firstOrg = organizationList[0];
+      if (firstOrg && setActive) {
+        setActive({ organization: firstOrg.id }).then(() => {
+          window.location.href = "http://localhost:4103/dashboard";
+        }).catch((error) => {
+          console.error('Error setting active organization:', error);
+          // Still redirect even if setting active fails
+          window.location.href = "http://localhost:4103/dashboard";
+        });
+      }
+    }
+  }, [organizationList, setActive]);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!orgName.trim()) return;
+    if (!orgName.trim() || !createOrganization) return;
     
     setIsLoading(true);
     
-    // Simulate org creation delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Redirect to cloud app
-    window.location.href = "http://localhost:4103/dashboard";
+    try {
+      // Create organization using Clerk JS SDK
+      const organization = await createOrganization({
+        name: orgName.trim(),
+      });
+
+      // Set the newly created organization as active
+      if (setActive && organization) {
+        await setActive({ organization: organization.id });
+      }
+      
+      // Redirect to cloud app after successful creation
+      window.location.href = "http://localhost:4103/dashboard";
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      // Fallback: redirect even if creation fails
+      window.location.href = "http://localhost:4103/dashboard";
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSkip = () => {
