@@ -4,7 +4,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState, useCallback } from "react";
 
-import { CreateKeyDialog, ApiKeyList } from "~/components/api-keys";
+import { ApiKeyCreation, ApiKeys } from "./_components";
 
 export function ApiKeysPageClient() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -38,11 +38,11 @@ export function ApiKeysPageClient() {
         </Button>
       </div>
 
-      {/* API Key List Component */}
-      <ApiKeyList onCreateKey={handleCreateKey} key={_keyListRefreshTrigger} />
+      {/* API Keys Component */}
+      <ApiKeys onCreateKey={handleCreateKey} key={_keyListRefreshTrigger} />
 
       {/* API Key Creation Dialog */}
-      <CreateKeyDialog
+      <ApiKeyCreation
         open={showCreateDialog}
         onOpenChange={handleDialogClose}
         onKeyCreated={handleKeyCreated}

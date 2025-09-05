@@ -1,6 +1,15 @@
 import { z } from "zod";
+import type { CloudRouterOutputs } from "@api/cloud";
 
-// Expiration options for the dropdown
+// Use tRPC router output types
+export type ApiKey = CloudRouterOutputs["apiKey"]["list"][number];
+export type CreatedApiKey = CloudRouterOutputs["apiKey"]["create"];
+
+// Filter and sort types
+export type FilterStatus = "all" | "active" | "expired" | "revoked";
+export type SortOption = "created" | "lastUsed" | "name";
+
+// Creation form types
 export const EXPIRATION_OPTIONS = [
   { value: "never", label: "Never" },
   { value: "30d", label: "30 days" },
@@ -11,7 +20,6 @@ export const EXPIRATION_OPTIONS = [
 
 export type ExpirationOption = (typeof EXPIRATION_OPTIONS)[number]["value"];
 
-// API Key creation form schema
 export const createApiKeySchema = z.object({
   name: z
     .string()
@@ -29,7 +37,6 @@ export const createApiKeySchema = z.object({
     .string()
     .optional(),
 }).superRefine((data, ctx) => {
-  // Only validate custom date if expiration is "custom"
   if (data.expiration === "custom") {
     if (!data.customExpirationDate) {
       ctx.addIssue({
@@ -43,7 +50,7 @@ export const createApiKeySchema = z.object({
     const selectedDate = new Date(data.customExpirationDate);
     const now = new Date();
     const maxDate = new Date();
-    maxDate.setFullYear(now.getFullYear() + 5); // Max 5 years from now
+    maxDate.setFullYear(now.getFullYear() + 5);
     
     if (isNaN(selectedDate.getTime())) {
       ctx.addIssue({
@@ -76,45 +83,14 @@ export const createApiKeySchema = z.object({
 
 export type CreateApiKeyFormData = z.infer<typeof createApiKeySchema>;
 
-// Helper function to calculate expiration date from option
-export function calculateExpirationDate(
-  option: ExpirationOption,
-  customDate?: string
-): Date | null {
-  const now = new Date();
-  
-  switch (option) {
-    case "never":
-      return null;
-    case "30d":
-      return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    case "90d":
-      return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-    case "1y":
-      return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-    case "custom":
-      return customDate ? new Date(customDate) : null;
-    default:
-      return null;
-  }
-}
-
-// Helper function to format expiration date for display
-export function formatExpirationDate(date: Date | null): string {
-  if (!date) return "Never";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-// Security validation helpers
+// Security constraints
 export const SECURITY_CONSTRAINTS = {
   MIN_NAME_LENGTH: 1,
   MAX_NAME_LENGTH: 100,
   MAX_EXPIRATION_YEARS: 5,
   ALLOWED_NAME_PATTERN: /^[a-zA-Z0-9\s\-_\.]+$/,
 } as const;
+
+// Component state types
+export type DialogStep = "form" | "display";
+export type CopyState = "idle" | "copying" | "copied" | "error";

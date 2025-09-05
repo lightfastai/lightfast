@@ -1,0 +1,1 @@
+DROP TABLE `lightfast_cloud_api_key_audit_log`;

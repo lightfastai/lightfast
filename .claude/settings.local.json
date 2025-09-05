@@ -144,7 +144,8 @@
       "Read(/private/tmp/create-t3-turbo/**)",
       "Bash(git worktree:*)",
       "Bash(vercel:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(LIGHTFAST_API_KEY=env_test_key ./dist/index.js auth whoami)"
     ],
     "deny": []
   },

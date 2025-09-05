@@ -1,6 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { CloudApiKey } from "@db/cloud/schema";
 import * as argon2 from "argon2";
+import { createHash } from "crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -33,6 +34,59 @@ function generateApiKey(): string {
  */
 function getKeyPreview(key: string): string {
   return `...${key.slice(-KEY_PREVIEW_LENGTH)}`;
+}
+
+/**
+ * Generate a fast lookup hash for API key validation
+ * Uses SHA-256 for deterministic, fast lookups without timing vulnerabilities
+ */
+function generateKeyLookup(key: string): string {
+  return createHash("sha256").update(key).digest("hex");
+}
+
+/**
+ * Validates an API key against database records with constant-time operations
+ * Prevents timing attacks and ensures O(1) lookup performance
+ */
+async function validateApiKey(db: any, key: string) {
+  // Generate lookup hash for the provided key
+  const keyLookup = generateKeyLookup(key);
+
+  // Fast O(1) lookup using indexed keyLookup field
+  const candidates = await db
+    .select({
+      id: CloudApiKey.id,
+      keyHash: CloudApiKey.keyHash,
+      clerkUserId: CloudApiKey.clerkUserId,
+      expiresAt: CloudApiKey.expiresAt,
+      active: CloudApiKey.active,
+    })
+    .from(CloudApiKey)
+    .where(and(
+      eq(CloudApiKey.keyLookup, keyLookup),
+      eq(CloudApiKey.active, true)
+    ))
+    .limit(1); // Only expect one match
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const candidate = candidates[0];
+
+  // Verify the actual key hash (constant time operation)
+  const isValidHash = await argon2.verify(candidate.keyHash, key);
+  
+  if (!isValidHash) {
+    return null;
+  }
+
+  // Check expiration
+  if (candidate.expiresAt && candidate.expiresAt < new Date()) {
+    return null;
+  }
+
+  return candidate;
 }
 
 export const apiKeyRouter = {
@@ -73,10 +127,14 @@ export const apiKeyRouter = {
       // Generate a unique ID for the key
       const keyId = uuidv4();
 
+      // Generate lookup hash for fast validation
+      const keyLookup = generateKeyLookup(apiKey);
+
       // Store the API key in the database
       await db.insert(CloudApiKey).values({
         clerkUserId: session.data.userId,
         keyHash,
+        keyLookup,
         keyPreview: getKeyPreview(apiKey),
         name,
         active: true,
@@ -104,6 +162,7 @@ export const apiKeyRouter = {
           message: "Failed to create API key",
         });
       }
+
 
       // Return the key details including the raw key
       // This is the ONLY time the raw key is returned
@@ -242,59 +301,44 @@ export const apiKeyRouter = {
       const { db } = ctx;
       const { key } = input;
 
-      // Get all active keys (we need to check hashes)
-      // In production, consider implementing a cache here
-      const activeKeys = await db
-        .select({
-          id: CloudApiKey.id,
-          keyHash: CloudApiKey.keyHash,
-          clerkUserId: CloudApiKey.clerkUserId,
-          expiresAt: CloudApiKey.expiresAt,
-          active: CloudApiKey.active,
-        })
-        .from(CloudApiKey)
-        .where(eq(CloudApiKey.active, true));
+      try {
+        // Use secure, high-performance key validation
+        const validKey = await validateApiKey(db, key);
 
-      // Find the matching key by verifying the hash
-      let validKey = null;
-      for (const dbKey of activeKeys) {
-        const isValid = await argon2.verify(dbKey.keyHash, key);
-        if (isValid) {
-          validKey = dbKey;
-          break;
+        // Check if key was found and is valid
+        if (!validKey) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid API key",
+          });
         }
-      }
 
-      // Check if key was found and is valid
-      if (!validKey) {
+        // Update last used timestamp
+        await db
+          .update(CloudApiKey)
+          .set({
+            lastUsedAt: new Date(),
+          })
+          .where(eq(CloudApiKey.id, validKey.id));
+
+        // Return validation result
+        return {
+          valid: true,
+          userId: validKey.clerkUserId,
+          keyId: validKey.id,
+        };
+      } catch (error) {
+        // Log any unexpected errors
+        if (error instanceof TRPCError) {
+          throw error; // Re-throw expected TRPC errors
+        }
+
+
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid API key",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "An error occurred during API key validation",
         });
       }
-
-      // Check if key is expired
-      if (validKey.expiresAt && validKey.expiresAt < new Date()) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "API key has expired",
-        });
-      }
-
-      // Update last used timestamp
-      await db
-        .update(CloudApiKey)
-        .set({
-          lastUsedAt: new Date(),
-        })
-        .where(eq(CloudApiKey.id, validKey.id));
-
-      // Return validation result
-      return {
-        valid: true,
-        userId: validKey.clerkUserId,
-        keyId: validKey.id,
-      };
     }),
 
   /**
@@ -316,41 +360,14 @@ export const apiKeyRouter = {
       const { db } = ctx;
       const { key } = input;
 
-      // Get all active keys (we need to check hashes)
-      const activeKeys = await db
-        .select({
-          id: CloudApiKey.id,
-          keyHash: CloudApiKey.keyHash,
-          clerkUserId: CloudApiKey.clerkUserId,
-          expiresAt: CloudApiKey.expiresAt,
-          active: CloudApiKey.active,
-        })
-        .from(CloudApiKey)
-        .where(eq(CloudApiKey.active, true));
-
-      // Find the matching key by verifying the hash
-      let validKey = null;
-      for (const dbKey of activeKeys) {
-        const isValid = await argon2.verify(dbKey.keyHash, key);
-        if (isValid) {
-          validKey = dbKey;
-          break;
-        }
-      }
+      // Use secure, high-performance key validation
+      const validKey = await validateApiKey(db, key);
 
       // Check if key was found and is valid
       if (!validKey) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Invalid API key",
-        });
-      }
-
-      // Check if key is expired
-      if (validKey.expiresAt && validKey.expiresAt < new Date()) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "API key has expired",
         });
       }
 

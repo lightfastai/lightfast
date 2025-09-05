@@ -14,6 +14,7 @@
 	},
 	"dependencies": {
 		"@api/cloud": "workspace:*",
+		"@arcjet/next": "1.0.0-beta.10",
 		"@browserbasehq/stagehand": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/cloud": "workspace:*",

@@ -8,6 +8,27 @@
       "when": 1756990002426,
       "tag": "0000_yellow_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1756999939642,
+      "tag": "0001_melted_gunslinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1757000237241,
+      "tag": "0002_sturdy_apocalypse",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1757042988647,
+      "tag": "0003_light_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

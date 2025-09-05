@@ -42,6 +42,13 @@ export const CloudApiKey = mysqlTable(
     keyHash: varchar("key_hash", { length: 255 }).notNull(),
 
     /**
+     * SHA-256 hash of the API key for fast lookups
+     * Used to quickly identify potential keys without exposing timing info
+     * This enables O(1) key lookup instead of O(n) hash verification
+     */
+    keyLookup: varchar("key_lookup", { length: 64 }).notNull(),
+
+    /**
      * Last 4 characters of the API key for identification
      * Used to help users identify which key is which
      */
@@ -92,12 +99,15 @@ export const CloudApiKey = mysqlTable(
     userIdIdx: index("user_id_idx").on(table.clerkUserId),
     // Index for looking up keys by hash (for validation)
     keyHashIdx: index("key_hash_idx").on(table.keyHash),
+    // Fast lookup index for key validation (O(1) performance)
+    keyLookupIdx: index("key_lookup_idx").on(table.keyLookup),
   }),
 );
 
 // Type exports for API Key
 export type CloudApiKey = typeof CloudApiKey.$inferSelect;
 export type InsertCloudApiKey = typeof CloudApiKey.$inferInsert;
+
 
 // Zod Schema exports for validation
 export const insertCloudApiKeySchema = createInsertSchema(CloudApiKey);
