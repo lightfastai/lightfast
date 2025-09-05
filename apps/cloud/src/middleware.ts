@@ -54,13 +54,14 @@ const ajWhoami = arcjet({
 
 // Define protected routes - everything except public routes should require auth
 const isPublicRoute = createRouteMatcher([
-	"/",
+	"/", // Landing page accessible to all, but middleware handles auth redirect
 	"/api/health",
 	"/api/trpc/apiKey.validate", // tRPC endpoint for API key validation
 	"/api/trpc/apiKey.whoami", // tRPC endpoint for whoami command
 	"/playground",
 	"/playground/(.*)",
 	"/settings/api-keys", // Temporarily public for testing
+	"/org_(.*)", // Clerk's organization-specific URLs
 ]);
 
 // Define routes that require organization membership
@@ -161,7 +162,45 @@ export default clerkMiddleware(
 			);
 		}
 
-		// Handle authentication and organization requirements
+		// Handle root path specially - check auth status without forcing auth
+		if (req.nextUrl.pathname === "/") {
+			const { userId, orgId } = await auth();
+
+			// If user is authenticated, redirect to org dashboard
+			if (userId) {
+				if (orgId) {
+					try {
+						// Fetch organization details to get slug for clean URLs
+						const orgResponse = await fetch(`https://api.clerk.com/v1/organizations/${orgId}`, {
+							headers: {
+								"Authorization": `Bearer ${process.env.CLERK_SECRET_KEY}`,
+								"Content-Type": "application/json",
+							},
+						});
+
+						if (orgResponse.ok) {
+							const orgData = await orgResponse.json() as { slug: string | null };
+							const orgSlug = orgData.slug || orgId;
+							console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard: /${orgSlug}/dashboard`);
+							return NextResponse.redirect(new URL(`/${orgSlug}/dashboard`, req.url));
+						}
+					} catch (error) {
+						console.error("[MIDDLEWARE] Error fetching org details, using orgId as fallback");
+					}
+					// Fallback: redirect using orgId
+					console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard (fallback): /${orgId}/dashboard`);
+					return NextResponse.redirect(new URL(`/${orgId}/dashboard`, req.url));
+				} else {
+					// User has no org, redirect to select-organization
+					console.log(`[MIDDLEWARE] Logged-in user ${userId} with no org accessing root, redirecting to select-organization`);
+					return NextResponse.redirect(new URL("http://localhost:4104/select-organization"));
+				}
+			}
+			// If user is not authenticated, allow them to see the landing page (continue to render)
+			console.log(`[MIDDLEWARE] Unauthenticated user accessing root, allowing landing page`);
+		}
+
+		// Handle authentication and organization requirements for non-root routes
 		if (!isPublicRoute(req)) {
 			// First, ensure user is authenticated
 			const { userId, orgId } = await auth.protect();
@@ -197,21 +236,7 @@ export default clerkMiddleware(
 
 		// Apply CORS headers to the response
 		return applyCorsHeaders(response, req);
-	},
-	{
-		publicRoutes: ["/api/health"],
-		ignoredRoutes: [],
-		// Cloud app configuration - redirects to auth subdomain
-		signInUrl: "http://localhost:4104/sign-in",
-		signUpUrl: "http://localhost:4104/sign-up",
-		signInFallbackRedirectUrl: "/",
-		signUpFallbackRedirectUrl: "/",
-		afterSignOutUrl: "http://localhost:4101", // www app
-		// CRITICAL: Include taskUrls in middleware to prevent /sign-in/tasks fallback
-		taskUrls: {
-			"choose-organization": "http://localhost:4104/select-organization",
-		},
-	},
+	}
 );
 
 export const config = {

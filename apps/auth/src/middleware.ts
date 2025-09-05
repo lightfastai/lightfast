@@ -37,6 +37,7 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in/sso-callback",
 	"/sign-up",
 	"/sign-up/sso-callback",
+	"/select-organization",
 	"/api/health",
 	"/api/validate-org-creation",
 ]);
@@ -103,11 +104,6 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 	// Apply CORS headers to the response
 	return applyCorsHeaders(response, req);
-}, {
-	// CRITICAL: Configure task URLs to prevent Clerk's hosted organization selection UI
-	taskUrls: {
-		"choose-organization": "/select-organization",
-	},
 });
 
 export const config = {

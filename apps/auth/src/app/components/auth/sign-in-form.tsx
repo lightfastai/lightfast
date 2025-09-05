@@ -44,8 +44,8 @@ export function SignInForm({
 	function handlePasswordSuccess() {
 		// Password sign-in is complete, redirect to cloud app
 		setError("");
-		// Redirect to cloud app dashboard after successful authentication
-		window.location.href = "http://localhost:4103/dashboard";
+		// Redirect to cloud app root after successful authentication
+		window.location.href = "http://localhost:4103";
 	}
 
 	return (

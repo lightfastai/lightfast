@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 /**
  * Server-side validation endpoint for organization creation
  * Ensures users can only create one organization (initial onboarding only)
  */
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     // Get authenticated user
     const { userId } = await auth();
@@ -18,9 +19,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Check existing organizations for this user
-    const existingOrgs = await clerkClient().users.getOrganizationMembershipList({ userId });
+    const client = await clerkClient();
+    const existingOrgs = await client.users.getOrganizationMembershipList({ userId });
     
-    if (existingOrgs && existingOrgs.data && existingOrgs.data.length > 0) {
+    if (existingOrgs.data.length > 0) {
       console.log(`🚫 Server-side org creation blocked for user ${userId}: already has ${existingOrgs.data.length} organizations`);
       return NextResponse.json(
         { 

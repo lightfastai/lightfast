@@ -101,6 +101,9 @@ export default function RootLayout({
 			signUpUrl="/sign-up"
 			signInFallbackRedirectUrl="/select-organization"
 			signUpFallbackRedirectUrl="/select-organization"
+			taskUrls={{
+				"choose-organization": "/select-organization",
+			}}
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",

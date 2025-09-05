@@ -22,7 +22,7 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: "http://localhost:4103/dashboard",
+				redirectUrlComplete: "http://localhost:4103",
 			});
 		} catch (err) {
 			// Log the error

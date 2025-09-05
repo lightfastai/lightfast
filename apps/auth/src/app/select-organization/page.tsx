@@ -23,14 +23,14 @@ export default function SelectOrganizationPage() {
   // CRITICAL: This page is ONLY for initial onboarding - NEVER for creating second organizations
   // If user already has organizations, immediately redirect them out
   useEffect(() => {
-    if (userMemberships?.data && userMemberships.data.length > 0) {
+    if (userMemberships.data && userMemberships.data.length > 0) {
       const firstMembership = userMemberships.data[0];
       if (!firstMembership) return; // Type guard
       const firstOrg = firstMembership.organization;
       console.log('⚠️ CRITICAL: User already has organization, this page is ONLY for initial onboarding');
       console.log('🔄 User has existing org:', firstOrg.id, 'redirecting immediately');
       
-      if (firstOrg && setActive) {
+      if (setActive) {
         setActive({ organization: firstOrg.id }).then(() => {
           console.log('✅ Active organization set, redirecting to:', redirectUrlComplete);
           window.location.href = redirectUrlComplete;
@@ -52,7 +52,7 @@ export default function SelectOrganizationPage() {
     if (!orgName.trim() || !createOrganization) return;
 
     // CRITICAL: Double-check that user doesn't already have organizations (client-side)
-    if (userMemberships?.data && userMemberships.data.length > 0) {
+    if (userMemberships.data.length > 0) {
       console.error('🚫 CLIENT-SIDE BLOCKED: Attempted to create second organization');
       console.error('🚫 User already has organizations:', userMemberships.data.map((membership) => membership.organization.id));
       window.location.href = redirectUrlComplete;
@@ -69,7 +69,7 @@ export default function SelectOrganizationPage() {
         headers: { 'Content-Type': 'application/json' }
       });
       
-      const validationResult = await validationResponse.json();
+      const validationResult = await validationResponse.json() as { canCreate: boolean; error?: string; };
       
       if (!validationResponse.ok || !validationResult.canCreate) {
         console.error('🚫 SERVER-SIDE BLOCKED:', validationResult.error);
@@ -94,17 +94,12 @@ export default function SelectOrganizationPage() {
       console.log('✅ Organization created:', organization);
 
       // Set the newly created organization as active and redirect
-      if (setActive && organization) {
-        console.log('🔄 Setting active organization...', organization.id);
-        await setActive({ organization: organization.id });
-        console.log('✅ Active organization set, redirecting to:', redirectUrlComplete);
-        
-        // Redirect to root and let the cloud app handle routing
-        window.location.href = redirectUrlComplete;
-      } else {
-        console.warn('⚠️ Could not set active organization - missing setActive or organization');
-        setIsLoading(false);
-      }
+      console.log('🔄 Setting active organization...', organization.id);
+      await setActive({ organization: organization.id });
+      console.log('✅ Active organization set, redirecting to:', redirectUrlComplete);
+      
+      // Redirect to root and let the cloud app handle routing
+      window.location.href = redirectUrlComplete;
       
     } catch (error) {
       console.error('❌ Error creating organization:', error);
