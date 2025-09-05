@@ -27,10 +27,23 @@ export const CloudDeployment = mysqlTable(
       .$defaultFn(() => uuidv4()),
 
     /**
-     * Reference to the user who deployed this
-     * Links to the Clerk user ID
+     * Reference to the organization that owns this deployment
+     * Links to the Clerk organization ID for multi-tenant isolation
      */
-    clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
+    clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
+
+    /**
+     * Reference to the user who created this deployment
+     * Links to the Clerk user ID for audit trail
+     */
+    createdByUserId: varchar("created_by_user_id", { length: 191 }).notNull(),
+
+    /**
+     * Reference to the user who deployed this (DEPRECATED)
+     * Links to the Clerk user ID
+     * Will be removed after migration to organization-based model
+     */
+    clerkUserId: varchar("clerk_user_id", { length: 191 }),
 
     /**
      * Name of the deployment
@@ -57,9 +70,15 @@ export const CloudDeployment = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    // Index for looking up deployments by user
+    // Index for looking up deployments by organization (primary)
+    orgIdIdx: index("org_id_idx").on(table.clerkOrgId),
+    // Composite index for organization + creation time queries
+    orgCreatedAtIdx: index("org_created_at_idx").on(table.clerkOrgId, table.createdAt),
+    // Index for organization + name queries
+    orgNameIdx: index("org_name_idx").on(table.clerkOrgId, table.name),
+    // DEPRECATED: Index for looking up deployments by user (migration compatibility)
     userIdIdx: index("user_id_idx").on(table.clerkUserId),
-    // Index for time-based queries
+    // DEPRECATED: Index for time-based queries (migration compatibility)
     createdAtIdx: index("created_at_idx").on(table.createdAt),
   }),
 );

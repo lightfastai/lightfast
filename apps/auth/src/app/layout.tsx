@@ -101,6 +101,9 @@ export default function RootLayout({
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			{...clerkConfig}
+			taskUrls={{
+				"choose-organization": "http://localhost:4103/onboarding",
+			}}
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",

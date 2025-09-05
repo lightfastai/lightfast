@@ -145,7 +145,11 @@
       "Bash(git worktree:*)",
       "Bash(vercel:*)",
       "Bash(kill:*)",
-      "Bash(LIGHTFAST_API_KEY=env_test_key ./dist/index.js auth whoami)"
+      "Bash(LIGHTFAST_API_KEY=env_test_key ./dist/index.js auth whoami)",
+      "mcp__playwright__browser_fill_form",
+      "Bash(PORT=4104 pnpm with-env next dev)",
+      "Bash(PORT=4103 pnpm with-env next dev)",
+      "Bash(tree:*)"
     ],
     "deny": []
   },

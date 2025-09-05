@@ -7,6 +7,7 @@ import { LayoutDashboard, Settings, LogOut, Key } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
 import { useTRPC } from "~/trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { OrganizationSwitcherComponent } from "~/components/organization/organization-switcher";
 import {
 	Avatar,
 	AvatarFallback,
@@ -170,7 +171,11 @@ function UserSection() {
 	);
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+	organizationId?: string;
+}
+
+export function AppSidebar({ organizationId }: AppSidebarProps) {
 	const pathname = usePathname();
 
 	return (
@@ -187,6 +192,13 @@ export function AppSidebar() {
 					{/* Sidebar trigger - shows on right when expanded, center when collapsed */}
 					<SidebarTrigger className="-mr-1 group-data-[collapsible=icon]:mr-0" />
 				</div>
+
+				{/* Organization Switcher - only show when expanded and user has org */}
+				{organizationId && (
+					<div className="px-4 pb-3 group-data-[collapsible=icon]:hidden">
+						<OrganizationSwitcherComponent />
+					</div>
+				)}
 			</SidebarHeader>
 
 			<SidebarContent>

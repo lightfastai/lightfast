@@ -25,13 +25,27 @@ export type Session =
       data: {
         userId: string;
         apiKeyId: string;
+        organizationId: string;
+        organizationRole?: string;
       };
     }
   | {
       type: 'clerk';
-      data: Awaited<ReturnType<typeof auth>>;
+      data: Awaited<ReturnType<typeof auth>> & {
+        organizationId?: string;
+        organizationRole?: string;
+      };
     }
   | null;
+
+/**
+ * Organization context for multi-tenant operations
+ */
+export type OrganizationContext = {
+  id: string;
+  role: string;
+  permissions?: string[];
+} | null;
 
 /**
  * 1. CONTEXT
@@ -61,11 +75,19 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
       data: {
         userId: apiKeyAuth.userId,
         apiKeyId: apiKeyAuth.apiKeyId,
+        organizationId: apiKeyAuth.organizationId,
+        organizationRole: apiKeyAuth.organizationRole,
       },
     };
     
+    const organization: OrganizationContext = apiKeyAuth.organizationId ? {
+      id: apiKeyAuth.organizationId,
+      role: apiKeyAuth.organizationRole || 'member',
+    } : null;
+    
     return {
       session,
+      organization,
       db,
     };
   }
@@ -76,18 +98,33 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session: Session = clerkSession?.userId
     ? {
         type: 'clerk',
-        data: clerkSession as typeof clerkSession & { userId: string },
+        data: {
+          ...clerkSession,
+          organizationId: clerkSession.orgId,
+          organizationRole: clerkSession.orgRole,
+        } as typeof clerkSession & { 
+          userId: string;
+          organizationId?: string;
+          organizationRole?: string;
+        },
       }
     : null;
 
+  const organization: OrganizationContext = clerkSession?.orgId ? {
+    id: clerkSession.orgId,
+    role: clerkSession.orgRole || 'member',
+    permissions: clerkSession.orgPermissions,
+  } : null;
+
   if (session?.data?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.data.userId} (Session Auth)`);
+    console.info(`>>> tRPC Request from ${source} by ${session.data.userId} (Session Auth)${organization ? ` in org ${organization.id}` : ''}`);
   } else {
     console.info(`>>> tRPC Request from ${source} by unknown`);
   }
 
   return {
     session,
+    organization,
     db,
   };
 };
@@ -178,6 +215,53 @@ export const protectedProcedure = t.procedure
       ctx: {
         // After check above, we know session exists and userId is non-null
         session: ctx.session as typeof ctx.session & { data: { userId: string } },
+        organization: ctx.organization,
+      },
+    });
+  });
+
+/**
+ * Organization-protected procedure
+ *
+ * Requires both authentication and organization membership.
+ * Use this for operations that should be scoped to an organization.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const orgProtectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.data?.userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Authentication required" });
+    }
+    if (!ctx.organization) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Organization membership required" });
+    }
+    return next({
+      ctx: {
+        session: ctx.session as typeof ctx.session & { data: { userId: string } },
+        organization: ctx.organization,
+      },
+    });
+  });
+
+/**
+ * Organization admin procedure
+ *
+ * Requires authentication, organization membership, and admin role.
+ * Use this for administrative operations within an organization.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const orgAdminProcedure = orgProtectedProcedure
+  .use(({ ctx, next }) => {
+    if (!ctx.organization || !['admin', 'org:admin'].includes(ctx.organization.role)) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Organization admin access required" });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        organization: ctx.organization,
       },
     });
   });

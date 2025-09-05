@@ -20,6 +20,8 @@ const BEARER_PREFIX = "Bearer ";
 export interface ApiKeyAuthContext {
   userId: string;
   apiKeyId: string;
+  organizationId: string;
+  organizationRole?: string;
 }
 
 /**
@@ -89,6 +91,8 @@ export async function validateApiKey(
         id: CloudApiKey.id,
         keyHash: CloudApiKey.keyHash,
         clerkUserId: CloudApiKey.clerkUserId,
+        clerkOrgId: CloudApiKey.clerkOrgId,
+        createdByUserId: CloudApiKey.createdByUserId,
         expiresAt: CloudApiKey.expiresAt,
         active: CloudApiKey.active,
       })
@@ -138,8 +142,10 @@ export async function validateApiKey(
 
     // Return the authentication context
     return {
-      userId: validKey.clerkUserId,
+      userId: validKey.clerkUserId || validKey.createdByUserId, // Fallback during migration
       apiKeyId: validKey.id,
+      organizationId: validKey.clerkOrgId,
+      organizationRole: 'member', // TODO: Fetch actual role from Clerk or database
     };
   } catch (error) {
     console.error("Error validating API key:", error);

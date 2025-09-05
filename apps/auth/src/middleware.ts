@@ -1,45 +1,69 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { getClerkMiddlewareConfig, handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
+import {
+	getClerkMiddlewareConfig,
+	handleCorsPreflightRequest,
+	applyCorsHeaders,
+	getAllAppUrls,
+} from "@repo/url-utils";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 const clerkConfig = getClerkMiddlewareConfig("auth");
+const urls = getAllAppUrls();
 
-// Define public routes for the auth app
+// Define public routes that don't need authentication
 const isPublicRoute = createRouteMatcher([
+	"/",
 	"/sign-in",
 	"/sign-in/sso-callback",
+	"/sign-up",
+	"/sign-up/sso-callback",
 	"/api/health",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware(async (auth, req: NextRequest) => {
 	// Handle CORS preflight requests
 	const preflightResponse = handleCorsPreflightRequest(req);
 	if (preflightResponse) {
 		return preflightResponse;
 	}
-	
-	// Handle authentication protection
+
+	const { userId, sessionClaims } = await auth();
+
+	// Handle authenticated users
+	if (userId) {
+		// Check if user has pending tasks (organization selection)
+		if (sessionClaims?.currentTask) {
+			// User is authenticated but has pending organization task
+			// Redirect directly to cloud app onboarding to complete task
+			const onboardingUrl = new URL('/onboarding', urls.cloud);
+			return NextResponse.redirect(onboardingUrl);
+		}
+
+		// User is fully authenticated with no pending tasks
+		// Redirect from root to cloud app
+		if (req.nextUrl.pathname === "/") {
+			return NextResponse.redirect(new URL(urls.cloud));
+		}
+
+		// Redirect away from auth pages to cloud app
+		if (req.nextUrl.pathname.startsWith("/sign-in") || req.nextUrl.pathname.startsWith("/sign-up")) {
+			return NextResponse.redirect(new URL(urls.cloud));
+		}
+	}
+
+	// Redirect unauthenticated users from root to sign-in
+	if (req.nextUrl.pathname === "/" && !userId) {
+		return NextResponse.redirect(new URL("/sign-in", req.url));
+	}
+
+	// Protect all routes except public ones
 	if (!isPublicRoute(req)) {
 		await auth.protect();
 	}
 
-	const { userId } = await auth();
-	
-	// Create the appropriate response
-	let response: NextResponse;
-	if (userId) {
-		// User is signed in, redirect to cloud app
-		const { getAllAppUrls } = await import("@repo/url-utils");
-		const urls = getAllAppUrls();
-		response = NextResponse.redirect(new URL(urls.cloud));
-	} else if (req.nextUrl.pathname === "/") {
-		// Not signed in and at root, redirect to sign-in
-		response = NextResponse.redirect(new URL("/sign-in", req.url));
-	} else {
-		// Continue with the request
-		response = NextResponse.next();
-	}
-	
+	const response = NextResponse.next();
+
 	// Apply CORS headers to the response
 	return applyCorsHeaders(response, req);
 }, clerkConfig);

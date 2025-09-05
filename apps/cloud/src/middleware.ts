@@ -11,58 +11,47 @@ import { env } from "~/env";
 
 const clerkConfig = getClerkMiddlewareConfig("cloud");
 
+// Shared shield configuration for all endpoints
+const shieldRule = shield({ mode: "LIVE" });
+
 // Arcjet configurations for different endpoints
-// We'll select the appropriate config based on the request path
 const ajDefault = arcjet({
 	key: env.ARCJET_KEY,
 	rules: [
-		shield({
-			mode: "LIVE",
-		}),
-		// General API rate limiting 
+		shieldRule,
 		fixedWindow({
 			mode: "LIVE",
-			characteristics: ["ip"],
 			window: "1m",
 			max: 100, // 100 requests per minute for general API usage
 		}),
 	],
 });
 
-// Strict rate limiting for API key validation
+// Strict rate limiting for API key validation with burst protection
 const ajValidation = arcjet({
 	key: env.ARCJET_KEY,
 	rules: [
-		shield({
-			mode: "LIVE", 
-		}),
-		// Prevent brute force attacks on validation
+		shieldRule,
 		fixedWindow({
-			mode: "LIVE",
-			characteristics: ["ip"],
-			window: "10m", // 10 minute window
+			mode: "LIVE", 
+			window: "10m",
 			max: 20, // 20 attempts per 10 minutes
 		}),
-		// Burst protection
 		fixedWindow({
 			mode: "LIVE",
-			characteristics: ["ip"],
-			window: "10s", // 10 second window  
-			max: 5, // Max 5 attempts per 10 seconds
+			window: "10s", 
+			max: 5, // Burst protection: max 5 attempts per 10 seconds
 		}),
 	],
 });
 
-// More lenient rate limiting for whoami endpoint
+// Lenient rate limiting for whoami endpoint (CLI status checks)
 const ajWhoami = arcjet({
 	key: env.ARCJET_KEY,
 	rules: [
-		shield({
-			mode: "LIVE",
-		}),
+		shieldRule,
 		fixedWindow({
 			mode: "LIVE",
-			characteristics: ["ip"],
 			window: "1m",
 			max: 30, // 30 requests per minute for CLI status checks
 		}),
@@ -77,20 +66,50 @@ const isPublicRoute = createRouteMatcher([
 	"/api/trpc/apiKey.whoami", // tRPC endpoint for whoami command
 	"/playground",
 	"/playground/(.*)",
+	"/onboarding", // Organization onboarding flow
+	"/onboarding/(.*)", // Organization creation/selection pages
 	"/settings/api-keys", // Temporarily public for testing
 ]);
 
-// Define API key validation routes for enhanced security
-const isApiKeyRoute = createRouteMatcher([
-	"/api/trpc/apiKey.validate",
-	"/api/trpc/apiKey.whoami",
+// Define routes that require organization membership
+const isOrganizationRoute = createRouteMatcher([
+	"/settings",
+	"/settings/(.*)", 
+	"/dashboard",
+	"/dashboard/(.*)",
+	"/api-keys",
+	"/deployments",
+	"/deployments/(.*)",
+	"/(.*)/dashboard",
+	"/(.*)/dashboard/(.*)",
+	"/(.*)/settings",
+	"/(.*)/settings/(.*)",
+	"/(.*)/deployments",
+	"/(.*)/deployments/(.*)",
 ]);
+
+// Define API key validation routes for enhanced security
+// const isApiKeyRoute = createRouteMatcher([
+// 	"/api/trpc/apiKey.validate",
+// 	"/api/trpc/apiKey.whoami",
+// ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
 	// Handle CORS preflight requests first
 	const preflightResponse = handleCorsPreflightRequest(req);
 	if (preflightResponse) {
 		return preflightResponse;
+	}
+
+	// In development, bypass auth for org-based routes to prevent redirect loops
+	if (process.env.NODE_ENV === "development") {
+		const pathname = req.nextUrl.pathname;
+		const isOrgRoute = pathname.match(/^\/[^\/]+\/(dashboard|settings)/);
+		if (isOrgRoute) {
+			console.log(`[DEV] Bypassing auth for org route: ${pathname}`);
+			const response = NextResponse.next();
+			return applyCorsHeaders(response, req);
+		}
 	}
 
 	// Select appropriate Arcjet configuration based on endpoint
@@ -102,11 +121,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 	}
 
 	// Apply Arcjet protection (rate limiting + shield)
-	// Extract IP from headers
-	const ip = req.headers.get("x-forwarded-for") || 
-	           req.headers.get("x-real-ip") || 
-	           "unknown";
-	const decision = await aj.protect(req, { ip });
+	// Arcjet automatically handles IP extraction from standard headers
+	const decision = await aj.protect(req);
 
 	// Block requests that violate rate limits or security rules
 	if (decision.isDenied()) {
@@ -115,7 +131,6 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 		const isWhoamiEndpoint = req.url.includes("/api/trpc/apiKey.whoami");
 		
 		let specificMessage = "Too many requests. Please try again later.";
-		let status = 429;
 		
 		if (decision.reason.isRateLimit()) {
 			// Rate limit specific messaging
@@ -160,9 +175,42 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 		);
 	}
 
-	// If it's not a public route, protect it with Clerk
+	// Handle authentication and organization requirements
 	if (!isPublicRoute(req)) {
-		await auth.protect();
+		// First, ensure user is authenticated
+		const { userId, sessionId, orgId, sessionClaims } = await auth.protect();
+		
+		// Check if this route requires organization membership
+		if (isOrganizationRoute(req)) {
+			// Log detailed auth information for debugging
+			console.log(`[MIDDLEWARE] User ${userId} accessing org route ${req.nextUrl.pathname}`, {
+				orgId,
+				sessionId,
+				currentTask: sessionClaims?.currentTask,
+				sessionClaims: sessionClaims ? Object.keys(sessionClaims) : null
+			});
+
+			// Check if user has pending tasks (organization selection)
+			if (sessionClaims?.currentTask) {
+				// User is authenticated but has pending organization task
+				console.log(`[MIDDLEWARE] User ${userId} has pending task: ${String(sessionClaims.currentTask)}, redirecting to onboarding`);
+				
+				// Redirect to onboarding flow to complete organization selection
+				const onboardingUrl = new URL('/onboarding', req.url);
+				return NextResponse.redirect(onboardingUrl);
+			}
+			
+			// Check if user has organization membership
+			if (!orgId) {
+				console.log(`[MIDDLEWARE] User ${userId} attempting to access organization route without org membership, redirecting to onboarding`);
+				
+				// Redirect to organization selection/creation
+				const onboardingUrl = new URL('/onboarding', req.url);
+				return NextResponse.redirect(onboardingUrl);
+			}
+			
+			console.log(`[MIDDLEWARE] User ${userId} successfully accessing organization route with org ${orgId}`);
+		}
 	}
 
 	const response = NextResponse.next();

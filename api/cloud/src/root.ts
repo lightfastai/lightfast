@@ -5,6 +5,7 @@
 
 import { apiKeyRouter } from "./routers/apiKey";
 import { userRouter } from "./routers/auth/user";
+import { organizationRouter } from "./routers/organization";
 import { createCallerFactory, createTRPCRouter } from "./trpc";
 
 /**
@@ -14,6 +15,7 @@ import { createCallerFactory, createTRPCRouter } from "./trpc";
 export const cloudAppRouter = createTRPCRouter({
   apiKey: apiKeyRouter,
   user: userRouter,
+  organization: organizationRouter,
   // Additional routers will be added here
   // deployment: deploymentRouter,
 });

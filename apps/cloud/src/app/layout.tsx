@@ -103,6 +103,9 @@ export default function RootLayout({
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			{...clerkConfig}
 			waitlistUrl="/"
+			taskUrls={{
+				"select-organization": "/onboarding",
+			}}
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",

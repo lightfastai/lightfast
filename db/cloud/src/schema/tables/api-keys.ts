@@ -29,10 +29,23 @@ export const CloudApiKey = mysqlTable(
       .$defaultFn(() => uuidv4()),
 
     /**
-     * Reference to the user who owns this API key
-     * Links to the Clerk user ID for authentication
+     * Reference to the organization that owns this API key
+     * Links to the Clerk organization ID for multi-tenant authentication
      */
-    clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
+    clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
+
+    /**
+     * Reference to the user who created this API key
+     * Links to the Clerk user ID for audit trail
+     */
+    createdByUserId: varchar("created_by_user_id", { length: 191 }).notNull(),
+
+    /**
+     * Reference to the user who owns this API key (DEPRECATED)
+     * Links to the Clerk user ID for authentication
+     * Will be removed after migration to organization-based model
+     */
+    clerkUserId: varchar("clerk_user_id", { length: 191 }),
 
     /**
      * Hashed version of the API key
@@ -95,12 +108,16 @@ export const CloudApiKey = mysqlTable(
       .$onUpdateFn(() => new Date()),
   },
   (table) => ({
-    // Index for looking up keys by user
-    userIdIdx: index("user_id_idx").on(table.clerkUserId),
+    // Index for looking up keys by organization (primary)
+    orgIdIdx: index("org_id_idx").on(table.clerkOrgId),
+    // Composite index for organization + creator queries
+    orgCreatedByIdx: index("org_created_by_idx").on(table.clerkOrgId, table.createdByUserId),
     // Index for looking up keys by hash (for validation)
     keyHashIdx: index("key_hash_idx").on(table.keyHash),
     // Fast lookup index for key validation (O(1) performance)
     keyLookupIdx: index("key_lookup_idx").on(table.keyLookup),
+    // DEPRECATED: Index for looking up keys by user (migration compatibility)
+    userIdIdx: index("user_id_idx").on(table.clerkUserId),
   }),
 );
 

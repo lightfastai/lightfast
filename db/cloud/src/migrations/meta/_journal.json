@@ -29,6 +29,13 @@
       "when": 1757042988647,
       "tag": "0003_light_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1757045997821,
+      "tag": "0004_freezing_violations",
+      "breakpoints": true
     }
   ]
 }

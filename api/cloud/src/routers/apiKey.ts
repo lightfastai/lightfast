@@ -9,6 +9,7 @@ import { z } from "zod";
 import { uuidv4 } from "@repo/lib";
 
 import {
+  orgProtectedProcedure,
   protectedProcedure,
   publicProcedure,
   TRPCError,
@@ -57,7 +58,9 @@ async function validateApiKey(db: any, key: string) {
     .select({
       id: CloudApiKey.id,
       keyHash: CloudApiKey.keyHash,
-      clerkUserId: CloudApiKey.clerkUserId,
+      clerkUserId: CloudApiKey.clerkUserId, // Deprecated, for migration compatibility
+      clerkOrgId: CloudApiKey.clerkOrgId,
+      createdByUserId: CloudApiKey.createdByUserId,
       expiresAt: CloudApiKey.expiresAt,
       active: CloudApiKey.active,
     })
@@ -93,7 +96,7 @@ export const apiKeyRouter = {
   /**
    * Create a new API key for the authenticated user
    */
-  create: protectedProcedure
+  create: orgProtectedProcedure
     .input(
       z.object({
         name: z
@@ -132,7 +135,9 @@ export const apiKeyRouter = {
 
       // Store the API key in the database
       await db.insert(CloudApiKey).values({
-        clerkUserId: session.data.userId,
+        clerkOrgId: ctx.organization.id,
+        createdByUserId: session.data.userId,
+        clerkUserId: session.data.userId, // Deprecated field for migration compatibility
         keyHash,
         keyLookup,
         keyPreview: getKeyPreview(apiKey),
@@ -151,7 +156,7 @@ export const apiKeyRouter = {
           expiresAt: CloudApiKey.expiresAt,
         })
         .from(CloudApiKey)
-        .where(eq(CloudApiKey.clerkUserId, session.data.userId))
+        .where(eq(CloudApiKey.clerkOrgId, ctx.organization.id))
         .orderBy(desc(CloudApiKey.createdAt))
         .limit(1);
 
@@ -176,7 +181,7 @@ export const apiKeyRouter = {
   /**
    * List all API keys for the authenticated user
    */
-  list: protectedProcedure
+  list: orgProtectedProcedure
     .input(
       z.object({
         includeInactive: z.boolean().optional().default(false),
@@ -188,9 +193,9 @@ export const apiKeyRouter = {
 
       // Build the where clause
       const whereClause = includeInactive
-        ? eq(CloudApiKey.clerkUserId, session.data.userId)
+        ? eq(CloudApiKey.clerkOrgId, ctx.organization.id)
         : and(
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkOrgId, ctx.organization.id),
             eq(CloudApiKey.active, true),
           );
 
@@ -219,7 +224,7 @@ export const apiKeyRouter = {
   /**
    * Revoke an API key (soft delete)
    */
-  revoke: protectedProcedure
+  revoke: orgProtectedProcedure
     .input(
       z.object({
         keyId: z.string().min(1, "Key ID is required"),
@@ -229,14 +234,14 @@ export const apiKeyRouter = {
       const { session, db } = ctx;
       const { keyId } = input;
 
-      // Verify the key belongs to the user
+      // Verify the key belongs to the organization
       const [existingKey] = await db
         .select({ id: CloudApiKey.id })
         .from(CloudApiKey)
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkOrgId, ctx.organization.id),
           ),
         )
         .limit(1);
@@ -390,7 +395,7 @@ export const apiKeyRouter = {
    * Delete an API key permanently (hard delete)
    * Only allowed for keys that have been revoked
    */
-  delete: protectedProcedure
+  delete: orgProtectedProcedure
     .input(
       z.object({
         keyId: z.string().min(1, "Key ID is required"),
@@ -400,7 +405,7 @@ export const apiKeyRouter = {
       const { session, db } = ctx;
       const { keyId } = input;
 
-      // Verify the key belongs to the user and is already revoked
+      // Verify the key belongs to the organization and is already revoked
       const [existingKey] = await db
         .select({
           id: CloudApiKey.id,
@@ -411,7 +416,7 @@ export const apiKeyRouter = {
         .where(
           and(
             eq(CloudApiKey.id, keyId),
-            eq(CloudApiKey.clerkUserId, session.data.userId),
+            eq(CloudApiKey.clerkOrgId, ctx.organization.id),
           ),
         )
         .limit(1);

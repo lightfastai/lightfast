@@ -3,11 +3,16 @@ import { getAuthUrls, getClerkSubdomainConfig, type ProjectName } from "@repo/ve
 /**
  * Get Clerk configuration for a specific app in a subdomain setup
  * Handles redirects between subdomains (auth.lightfast.ai, cloud.lightfast.ai, etc.)
+ * Also handles localhost development with cross-port session sharing
  */
 export function getClerkConfig(appName: ProjectName) {
   const authUrls = getAuthUrls();
   const subdomainConfig = getClerkSubdomainConfig(appName);
-
+  
+  // Check if we're in development mode with localhost
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const isLocalhost = authUrls.signIn?.includes("localhost") || authUrls.afterSignIn?.includes("localhost");
+  
   // For auth app, we handle redirects differently
   if (appName === "auth") {
     return {
@@ -27,7 +32,7 @@ export function getClerkConfig(appName: ProjectName) {
     signUpUrl: authUrls.signUp,
     signInFallbackRedirectUrl: "/",
     signUpFallbackRedirectUrl: "/",
-    afterSignOutUrl: authUrls.afterSignOut, // This already points to www (lightfast.ai)
+    afterSignOutUrl: authUrls.afterSignOut,
     ...subdomainConfig,
   };
 }
@@ -41,7 +46,7 @@ export function getClerkMiddlewareConfig(appName: ProjectName) {
   
   if (appName === "auth") {
     return {
-      publicRoutes: ["/sign-in", "/sign-up"],
+      publicRoutes: ["/sign-in", "/sign-in/sso-callback", "/sign-up"],
       ignoredRoutes: ["/api/health"],
       ...config,
     };
