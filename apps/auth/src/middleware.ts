@@ -1,15 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import {
-	getClerkMiddlewareConfig,
 	handleCorsPreflightRequest,
 	applyCorsHeaders,
-	getAllAppUrls,
 } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const clerkConfig = getClerkMiddlewareConfig("auth");
-const urls = getAllAppUrls();
 
 // Define public routes that don't need authentication
 const isPublicRoute = createRouteMatcher([
@@ -18,6 +13,7 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in/sso-callback",
 	"/sign-up",
 	"/sign-up/sso-callback",
+	"/select-organization",
 	"/api/health",
 ]);
 
@@ -28,29 +24,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 		return preflightResponse;
 	}
 
-	const { userId, sessionClaims } = await auth();
+	const { userId } = await auth();
 
-	// Handle authenticated users
+	// Handle fully authenticated users
 	if (userId) {
-		// Check if user has pending tasks (organization selection)
-		if (sessionClaims?.currentTask) {
-			// User is authenticated but has pending organization task
-			// Redirect directly to cloud app onboarding to complete task
-			const onboardingUrl = new URL('/onboarding', urls.cloud);
-			return NextResponse.redirect(onboardingUrl);
-		}
-
-		// User is fully authenticated with no pending tasks
-		// Redirect from root to cloud app
-		if (req.nextUrl.pathname === "/") {
-			return NextResponse.redirect(new URL(urls.cloud));
-		}
-
-		// Redirect away from auth pages to cloud app
-		if (req.nextUrl.pathname.startsWith("/sign-in") || req.nextUrl.pathname.startsWith("/sign-up")) {
-			return NextResponse.redirect(new URL(urls.cloud));
-		}
+		// User is fully authenticated - let them access auth app pages
+		// No automatic redirects to external apps
 	}
+
+	// For all other cases (including pending sessions with tasks),
+	// let Clerk handle routing automatically using taskUrls configuration
 
 	// Redirect unauthenticated users from root to sign-in
 	if (req.nextUrl.pathname === "/" && !userId) {
@@ -66,7 +49,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 	// Apply CORS headers to the response
 	return applyCorsHeaders(response, req);
-}, clerkConfig);
+});
 
 export const config = {
 	matcher: [
