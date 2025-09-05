@@ -7,6 +7,11 @@ When testing the auth app locally, password login is configured with the followi
 - **Email**: `admin@lightfast.ai`
 - **Password**: `ijXFdBJ3U2eMDFnKqngp`
 
+Testing with new fresh accounts:
+
+-- **Email**:`some-email+clerk_test@lightfast.ai`
+-- **Verification Code**: `424242`
+
 ## Development Commands
 
 ```bash

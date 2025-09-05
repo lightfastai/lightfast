@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useOrganizationList, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useOrganizationList } from "@clerk/nextjs";
+import { getAppUrl } from "@repo/vercel-config";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Icons } from "@repo/ui/components/icons";
@@ -10,65 +10,104 @@ import { Icons } from "@repo/ui/components/icons";
 /**
  * Custom Organization Selection Page
  * 
- * Provides a clean, simple organization creation flow that redirects
- * users to the cloud app after completion.
+ * Simple organization creation flow that redirects to the cloud app root after
+ * setting the active organization, letting the cloud app handle proper routing.
  */
 export default function SelectOrganizationPage() {
+  const redirectUrlComplete = getAppUrl("cloud");
   const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { createOrganization, setActive, organizationList } = useOrganizationList();
-  const { user } = useUser();
-  const router = useRouter();
+  const { createOrganization, setActive, userMemberships } = useOrganizationList();
 
-  // Auto-redirect if user already has organizations
+
+  // CRITICAL: This page is ONLY for initial onboarding - NEVER for creating second organizations
+  // If user already has organizations, immediately redirect them out
   useEffect(() => {
-    if (organizationList && organizationList.length > 0) {
-      const firstOrg = organizationList[0];
+    if (userMemberships?.data && userMemberships.data.length > 0) {
+      const firstMembership = userMemberships.data[0];
+      if (!firstMembership) return; // Type guard
+      const firstOrg = firstMembership.organization;
+      console.log('⚠️ CRITICAL: User already has organization, this page is ONLY for initial onboarding');
+      console.log('🔄 User has existing org:', firstOrg.id, 'redirecting immediately');
+      
       if (firstOrg && setActive) {
         setActive({ organization: firstOrg.id }).then(() => {
-          window.location.href = "http://localhost:4103/dashboard";
+          console.log('✅ Active organization set, redirecting to:', redirectUrlComplete);
+          window.location.href = redirectUrlComplete;
         }).catch((error) => {
-          console.error('Error setting active organization:', error);
-          // Still redirect even if setting active fails
-          window.location.href = "http://localhost:4103/dashboard";
+          console.error('❌ Error setting active organization:', error);
+          window.location.href = redirectUrlComplete;
         });
+      } else {
+        // Fallback: redirect even without setting active
+        console.log('⚠️ Fallback redirect for user with existing org');
+        window.location.href = redirectUrlComplete;
       }
     }
-  }, [organizationList, setActive]);
+  }, [userMemberships, setActive, redirectUrlComplete]);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!orgName.trim() || !createOrganization) return;
+
+    // CRITICAL: Double-check that user doesn't already have organizations (client-side)
+    if (userMemberships?.data && userMemberships.data.length > 0) {
+      console.error('🚫 CLIENT-SIDE BLOCKED: Attempted to create second organization');
+      console.error('🚫 User already has organizations:', userMemberships.data.map((membership) => membership.organization.id));
+      window.location.href = redirectUrlComplete;
+      return;
+    }
     
     setIsLoading(true);
-    console.log('Starting organization creation...', { orgName: orgName.trim() });
+    console.log('🚀 Starting organization creation...', { orgName: orgName.trim() });
+
+    // CRITICAL: Server-side validation to prevent race conditions and bypasses
+    try {
+      const validationResponse = await fetch('/api/validate-org-creation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const validationResult = await validationResponse.json();
+      
+      if (!validationResponse.ok || !validationResult.canCreate) {
+        console.error('🚫 SERVER-SIDE BLOCKED:', validationResult.error);
+        window.location.href = redirectUrlComplete;
+        return;
+      }
+      
+      console.log('✅ Server-side validation passed, proceeding with org creation');
+    } catch (error) {
+      console.error('❌ Server validation failed:', error);
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Create organization using Clerk JS SDK
-      console.log('Calling createOrganization...');
+      console.log('📝 Calling createOrganization...');
       const organization = await createOrganization({
         name: orgName.trim(),
       });
       
-      console.log('Organization created:', organization);
+      console.log('✅ Organization created:', organization);
 
-      // Set the newly created organization as active
+      // Set the newly created organization as active and redirect
       if (setActive && organization) {
-        console.log('Setting active organization...', organization.id);
+        console.log('🔄 Setting active organization...', organization.id);
         await setActive({ organization: organization.id });
-        console.log('Active organization set successfully');
+        console.log('✅ Active organization set, redirecting to:', redirectUrlComplete);
+        
+        // Redirect to root and let the cloud app handle routing
+        window.location.href = redirectUrlComplete;
+      } else {
+        console.warn('⚠️ Could not set active organization - missing setActive or organization');
+        setIsLoading(false);
       }
       
-      // Wait a bit for Clerk to fully process the organization change, then redirect
-      console.log('Organization setup complete, redirecting to cloud app...');
-      setTimeout(() => {
-        console.log('Executing redirect now...');
-        window.location.replace("http://localhost:4103/dashboard");
-      }, 1000);
-      
     } catch (error) {
-      console.error('Error creating organization:', error);
+      console.error('❌ Error creating organization:', error);
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
@@ -80,8 +119,9 @@ export default function SelectOrganizationPage() {
   };
 
   const handleSkip = () => {
-    // Skip org creation and go directly to cloud app
-    window.location.href = "http://localhost:4103/dashboard";
+    // Skip org creation and go directly to cloud app root
+    console.log('⏭️ Skipping organization creation, redirecting to:', redirectUrlComplete);
+    window.location.href = redirectUrlComplete;
   };
 
   return (
