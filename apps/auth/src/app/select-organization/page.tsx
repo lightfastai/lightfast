@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useOrganizationList, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Icons } from "@repo/ui/components/icons";
@@ -17,6 +18,7 @@ export default function SelectOrganizationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { createOrganization, setActive, organizationList } = useOrganizationList();
   const { user } = useUser();
+  const router = useRouter();
 
   // Auto-redirect if user already has organizations
   useEffect(() => {
@@ -40,25 +42,39 @@ export default function SelectOrganizationPage() {
     if (!orgName.trim() || !createOrganization) return;
     
     setIsLoading(true);
+    console.log('Starting organization creation...', { orgName: orgName.trim() });
     
     try {
       // Create organization using Clerk JS SDK
+      console.log('Calling createOrganization...');
       const organization = await createOrganization({
         name: orgName.trim(),
       });
+      
+      console.log('Organization created:', organization);
 
       // Set the newly created organization as active
       if (setActive && organization) {
+        console.log('Setting active organization...', organization.id);
         await setActive({ organization: organization.id });
+        console.log('Active organization set successfully');
       }
       
-      // Redirect to cloud app after successful creation
-      window.location.href = "http://localhost:4103/dashboard";
+      // Wait a bit for Clerk to fully process the organization change, then redirect
+      console.log('Organization setup complete, redirecting to cloud app...');
+      setTimeout(() => {
+        console.log('Executing redirect now...');
+        window.location.replace("http://localhost:4103/dashboard");
+      }, 1000);
+      
     } catch (error) {
       console.error('Error creating organization:', error);
-      // Fallback: redirect even if creation fails
-      window.location.href = "http://localhost:4103/dashboard";
-    } finally {
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Don't redirect on error - let user see the error and try again
       setIsLoading(false);
     }
   };
