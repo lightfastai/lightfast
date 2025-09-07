@@ -36,7 +36,6 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-up/sso-callback",
 	"/select-organization",
 	"/api/health",
-	"/api/validate-org-creation",
 ]);
 
 // Define auth routes that authenticated users with orgs should be redirected away from
@@ -45,6 +44,11 @@ const isAuthRoute = createRouteMatcher([
 	"/sign-in",
 	"/sign-up",
 	"/select-organization",
+]);
+
+// Define organization routes that need Clerk organization sync
+const isOrgRoute = createRouteMatcher([
+	"/orgs/(.*)"
 ]);
 
 export default clerkMiddleware(
@@ -56,7 +60,7 @@ export default clerkMiddleware(
 		}
 
 		// For /orgs/:slug routes, let Clerk's organizationSyncOptions handle everything
-		if (req.nextUrl.pathname.startsWith("/orgs/")) {
+		if (isOrgRoute(req)) {
 			console.log(
 				`[AUTH MIDDLEWARE] Organization route detected, letting Clerk handle: ${req.nextUrl.pathname}`,
 			);
