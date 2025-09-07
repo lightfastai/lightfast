@@ -17,7 +17,7 @@
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/react": "catalog:",
 		"@api/chat": "workspace:*",
-		"@clerk/nextjs": "catalog:",
+		"@clerk/nextjs": "^6.31.9",
 		"@db/chat": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@repo/site-config": "workspace:*",

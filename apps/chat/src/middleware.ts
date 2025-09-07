@@ -1,13 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import {
-	getClerkMiddlewareConfig,
 	handleCorsPreflightRequest,
 	applyCorsHeaders,
 } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const clerkConfig = getClerkMiddlewareConfig("chat");
 
 // Define public routes that don't need authentication
 const isPublicRoute = createRouteMatcher([
@@ -48,7 +45,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 	// Apply CORS headers to the response
 	return applyCorsHeaders(response, req);
-}, clerkConfig);
+});
 
 export const config = {
 	matcher: [
