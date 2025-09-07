@@ -7,7 +7,6 @@ import { Toaster } from "@repo/ui/components/ui/sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { getClerkSubdomainConfig } from "@repo/url-utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { ThemeProvider } from "next-themes";
 
@@ -96,12 +95,13 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const clerkConfig = getClerkSubdomainConfig("chat");
-
 	return (
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			{...clerkConfig}
+			signInUrl="/sign-in"
+			signUpUrl="/sign-up"
+			signInFallbackRedirectUrl="/new"
+			signUpFallbackRedirectUrl="/new"
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",
