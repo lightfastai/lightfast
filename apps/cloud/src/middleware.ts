@@ -1,6 +1,6 @@
 import arcjet, { shield, fixedWindow } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders, getAppUrl } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
@@ -66,19 +66,12 @@ const isPublicRoute = createRouteMatcher([
 
 // Define routes that require organization membership
 const isOrganizationRoute = createRouteMatcher([
-	"/settings",
-	"/settings/(.*)",
-	"/dashboard",
-	"/dashboard/(.*)",
-	"/api-keys",
-	"/deployments",
-	"/deployments/(.*)",
-	"/(.*)/dashboard",
-	"/(.*)/dashboard/(.*)",
-	"/(.*)/settings",
-	"/(.*)/settings/(.*)",
-	"/(.*)/deployments",
-	"/(.*)/deployments/(.*)",
+	"/orgs/(.*)/dashboard",
+	"/orgs/(.*)/dashboard/(.*)",
+	"/orgs/(.*)/settings",
+	"/orgs/(.*)/settings/(.*)",
+	"/orgs/(.*)/deployments",
+	"/orgs/(.*)/deployments/(.*)",
 ]);
 
 // Define API key validation routes for enhanced security
@@ -164,7 +157,14 @@ export default clerkMiddleware(
 
 		// Handle root path specially - check auth status without forcing auth
 		if (req.nextUrl.pathname === "/") {
-			const { userId, orgId } = await auth();
+			const authResult = await auth();
+			const { userId, orgId, sessionClaims } = authResult;
+
+			console.log(`[MIDDLEWARE DEBUG] Auth result:`, { 
+				userId: userId ? 'present' : 'null', 
+				orgId: orgId || 'null',
+				sessionClaims: sessionClaims ? Object.keys(sessionClaims) : 'null'
+			});
 
 			// If user is authenticated, redirect to org dashboard
 			if (userId) {
@@ -181,61 +181,43 @@ export default clerkMiddleware(
 						if (orgResponse.ok) {
 							const orgData = await orgResponse.json() as { slug: string | null };
 							const orgSlug = orgData.slug || orgId;
-							console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard: /${orgSlug}/dashboard`);
-							return NextResponse.redirect(new URL(`/${orgSlug}/dashboard`, req.url));
+							console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard: /orgs/${orgSlug}/dashboard`);
+							return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
 						}
 					} catch (error) {
 						console.error("[MIDDLEWARE] Error fetching org details, using orgId as fallback");
 					}
 					// Fallback: redirect using orgId
-					console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard (fallback): /${orgId}/dashboard`);
-					return NextResponse.redirect(new URL(`/${orgId}/dashboard`, req.url));
+					console.log(`[MIDDLEWARE] Redirecting logged-in user ${userId} from root to org dashboard (fallback): /orgs/${orgId}/dashboard`);
+					return NextResponse.redirect(new URL(`/orgs/${orgId}/dashboard`, req.url));
 				} else {
 					// User has no org, redirect to select-organization
 					console.log(`[MIDDLEWARE] Logged-in user ${userId} with no org accessing root, redirecting to select-organization`);
-					return NextResponse.redirect(new URL("http://localhost:4104/select-organization"));
+					return NextResponse.redirect(new URL("/select-organization", getAppUrl("auth")));
 				}
 			}
 			// If user is not authenticated, allow them to see the landing page (continue to render)
 			console.log(`[MIDDLEWARE] Unauthenticated user accessing root, allowing landing page`);
 		}
 
-		// Handle authentication and organization requirements for non-root routes
+		// For non-public routes, let Clerk handle authentication and organization sync
 		if (!isPublicRoute(req)) {
-			// First, ensure user is authenticated
-			const { userId, orgId } = await auth.protect();
-
-			// Check if this route requires organization membership
-			if (isOrganizationRoute(req)) {
-				// Log detailed auth information for debugging
-				console.log(
-					`[MIDDLEWARE] User ${userId} accessing org route ${req.nextUrl.pathname}`,
-					{ orgId },
-				);
-
-				// Let Clerk handle any session tasks automatically via taskUrls configuration
-
-				// Check if user has organization membership
-				if (!orgId) {
-					console.log(
-						`[MIDDLEWARE] User ${userId} attempting to access organization route without org membership, redirecting to select-organization`,
-					);
-
-					// Redirect to organization selection/creation on auth app
-					const selectOrgUrl = new URL("http://localhost:4104/select-organization");
-					return NextResponse.redirect(selectOrgUrl);
-				}
-
-				console.log(
-					`[MIDDLEWARE] User ${userId} successfully accessing organization route with org ${orgId}`,
-				);
-			}
+			await auth.protect();
 		}
 
 		const response = NextResponse.next();
 
 		// Apply CORS headers to the response
 		return applyCorsHeaders(response, req);
+	},
+	{
+		// Organization sync using proper Clerk patterns
+		organizationSyncOptions: {
+			organizationPatterns: [
+				"/orgs/:slug", // Matches organization home page, e.g. /orgs/acmecorp
+				"/orgs/:slug/(.*)", // Matches organization sub-pages, e.g. /orgs/acmecorp/dashboard
+			],
+		}
 	}
 );
 

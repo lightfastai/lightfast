@@ -8,9 +8,10 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
  */
 export async function POST(_req: NextRequest) {
   try {
-    // Get authenticated user
+    // Get authenticated user - allow pending sessions for org creation
     const { userId } = await auth();
     
+    // For pending sessions during org creation, userId should still be available
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized", canCreate: false },

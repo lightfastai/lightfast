@@ -1,8 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import {
-	handleCorsPreflightRequest,
-	applyCorsHeaders,
-} from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { getAppUrl } from "@repo/vercel-config";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -10,20 +7,20 @@ import type { NextRequest } from "next/server";
 // Allowed redirect domains for security
 const ALLOWED_REDIRECT_HOSTS = [
 	"lightfast.ai",
-	"auth.lightfast.ai", 
+	"auth.lightfast.ai",
 	"cloud.lightfast.ai",
-	"localhost"
+	"localhost",
 ];
 
 // Validate redirect URLs to prevent open redirect attacks
 function isValidRedirectUrl(url: string): boolean {
 	if (!url) return false;
-	
+
 	try {
 		const parsed = new URL(url);
-		return ALLOWED_REDIRECT_HOSTS.some(host => 
-			parsed.hostname === host || 
-			parsed.hostname.endsWith(`.${host}`)
+		return ALLOWED_REDIRECT_HOSTS.some(
+			(host) =>
+				parsed.hostname === host || parsed.hostname.endsWith(`.${host}`),
 		);
 	} catch {
 		return false;
@@ -42,69 +39,80 @@ const isPublicRoute = createRouteMatcher([
 	"/api/validate-org-creation",
 ]);
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
-	// Handle CORS preflight requests
-	const preflightResponse = handleCorsPreflightRequest(req);
-	if (preflightResponse) {
-		return preflightResponse;
-	}
+// Define auth routes that authenticated users with orgs should be redirected away from
+const isAuthRoute = createRouteMatcher([
+	"/",
+	"/sign-in",
+	"/sign-up",
+	"/select-organization",
+]);
 
-	const { userId, orgId } = await auth();
-
-	// USE CASE 5: Existing user with org accessing any auth route -> immediate cloud redirect
-	if (userId && orgId) {
-		// Redirect user with existing organization to cloud app
-		return NextResponse.redirect(new URL(getAppUrl("cloud"), req.url));
-	}
-
-	// USE CASE 2 & 4: Handle authenticated users on sign-in page  
-	if (userId && req.nextUrl.pathname === "/sign-in") {
-		const redirectUrl = req.nextUrl.searchParams.get("redirect_url");
-		// Handle authenticated user on sign-in page
-		
-		if (orgId) {
-			// User has organization, redirect to cloud app or validated URL
-			let targetUrl = getAppUrl("cloud");
-			if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
-				targetUrl = redirectUrl;
-			}
-			// Redirect user with organization to target URL
-			return NextResponse.redirect(targetUrl);
-		} else {
-			// User needs to select/create organization
-			// Redirect user without organization to select-organization
-			let orgUrl = "/select-organization";
-			if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
-				orgUrl = `/select-organization?redirect_url=${encodeURIComponent(redirectUrl)}`;
-			}
-			return NextResponse.redirect(new URL(orgUrl, req.url));
+export default clerkMiddleware(
+	async (auth, req: NextRequest) => {
+		// Handle CORS preflight requests
+		const preflightResponse = handleCorsPreflightRequest(req);
+		if (preflightResponse) {
+			return preflightResponse;
 		}
-	}
 
-	// USE CASE 3: Authenticated users without org should only access select-organization
-	if (userId && !orgId && req.nextUrl.pathname !== "/select-organization") {
-		// Redirect authenticated user without organization
-		return NextResponse.redirect(new URL("/select-organization", req.url));
-	}
+		// For /orgs/:slug routes, let Clerk's organizationSyncOptions handle everything
+		if (req.nextUrl.pathname.startsWith("/orgs/")) {
+			console.log(
+				`[AUTH MIDDLEWARE] Organization route detected, letting Clerk handle: ${req.nextUrl.pathname}`,
+			);
+			await auth.protect();
+			const response = NextResponse.next();
+			return applyCorsHeaders(response, req);
+		}
 
-	// Redirect unauthenticated users from root to sign-in
-	if (req.nextUrl.pathname === "/" && !userId) {
-		// Redirect unauthenticated user from root to sign-in
-		return NextResponse.redirect(new URL("/sign-in", req.url));
-	}
+		const authResult = await auth();
+		const { userId, orgId, orgSlug, sessionId, isAuthenticated } = authResult;
 
-	// Protect all routes except public ones
-	if (!isPublicRoute(req)) {
-		// Protecting non-public route
-		await auth.protect();
-	}
+		console.log(`[AUTH MIDDLEWARE] Auth state:`, {
+			isAuthenticated,
+			userId: userId ? "present" : "null",
+			orgId: orgId ? "present" : "null", 
+			orgSlug: orgSlug || "null",
+			sessionId: sessionId ? "present" : "null",
+			pathname: req.nextUrl.pathname,
+		});
 
-	// Allow request to continue
-	const response = NextResponse.next();
+		// Handle authenticated users with organizations - redirect away from auth pages
+		if (isAuthenticated && orgId && orgSlug && isAuthRoute(req)) {
+			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → /orgs/${orgSlug}/dashboard`);
+			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
+		}
 
-	// Apply CORS headers to the response
-	return applyCorsHeaders(response, req);
-});
+		// Handle root route redirects for non-authenticated or users without orgs
+		if (req.nextUrl.pathname === "/") {
+			if (!isAuthenticated && !sessionId) {
+				// Truly signed out - go to sign-in
+				console.log("[AUTH MIDDLEWARE] Redirecting to sign-in (not authenticated)");
+				return NextResponse.redirect(new URL("/sign-in", req.url));
+			} else if (isAuthenticated && !orgId) {
+				// Authenticated but no org - go to org selection (session task)
+				console.log("[AUTH MIDDLEWARE] Redirecting to select-organization (no org)");
+				return NextResponse.redirect(new URL("/select-organization", req.url));
+			}
+			// For users with orgId, redirect handled above
+		}
+
+		// Protect all routes except public ones
+		if (!isPublicRoute(req)) {
+			await auth.protect();
+		}
+
+		// Allow request to continue
+		const response = NextResponse.next();
+		return applyCorsHeaders(response, req);
+	},
+	{
+		// Organization sync for /orgs/:slug routes in auth app
+		organizationSyncOptions: {
+			organizationPatterns: ["/orgs/:slug", "/orgs/:slug/(.*)"],
+		},
+	},
+);
 
 export const config = {
 	matcher: [

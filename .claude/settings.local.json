@@ -150,7 +150,12 @@
       "Bash(PORT=4104 pnpm with-env next dev)",
       "Bash(PORT=4103 pnpm with-env next dev)",
       "Bash(tree:*)",
-      "Bash(PORT=4103 pnpm dev)"
+      "Bash(PORT=4103 pnpm dev)",
+      "mcp__playwright__browser_console_messages",
+      "Bash(PORT=4104 pnpm with-env next dev --port 4104)",
+      "Bash(PORT=4104 pnpm dev)",
+      "Read(//private/tmp/**)",
+      "Read(//tmp/orgs/**)"
     ],
     "deny": []
   },

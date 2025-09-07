@@ -5,14 +5,14 @@ import { AppSidebar } from "~/components/app-sidebar";
 
 interface OrganizationLayoutProps {
 	children: React.ReactNode;
-	params: Promise<{ org: string }>;
+	params: Promise<{ slug: string }>;
 }
 
 export default async function OrganizationLayout({
 	children,
 	params,
 }: OrganizationLayoutProps) {
-	const { org } = await params;
+	const { slug } = await params;
 
 	const { userId, orgId, sessionClaims } = await auth();
 
@@ -33,7 +33,7 @@ export default async function OrganizationLayout({
 		redirect("/select-organization");
 	}
 
-	console.log(`User ${userId} accessing org route '${org}' with org ${orgId}`);
+	console.log(`User ${userId} accessing org route '${slug}' with org ${orgId}`);
 
 	return (
 		<SidebarProvider>
