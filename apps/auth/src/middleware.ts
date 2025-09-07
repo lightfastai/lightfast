@@ -83,8 +83,8 @@ export default clerkMiddleware(
 
 		// Handle authenticated users with organizations - redirect away from auth pages
 		if (isAuthenticated && orgId && orgSlug && isAuthRoute(req)) {
-			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → /orgs/${orgSlug}/dashboard`);
-			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
+			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → cloud app /orgs/${orgSlug}/dashboard`);
+			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, getAppUrl("cloud")));
 		}
 
 		// Handle root route redirects for non-authenticated or users without orgs
