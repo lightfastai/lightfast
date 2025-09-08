@@ -155,7 +155,8 @@
       "Bash(PORT=4104 pnpm with-env next dev --port 4104)",
       "Bash(PORT=4104 pnpm dev)",
       "Read(//private/tmp/**)",
-      "Read(//tmp/orgs/**)"
+      "Read(//tmp/orgs/**)",
+      "Bash(diff:*)"
     ],
     "deny": []
   },

@@ -53,7 +53,7 @@ export function SignUpCodeVerification({
 				await setActive({ session: result.createdSessionId });
 				
 				// Redirect to organization selection for the auth flow
-				window.location.href = "/select-organization?redirect_url=http://localhost:4103/";
+				window.location.href = "/onboarding/choose-organization?redirect_url=http://localhost:4103/";
 			} else {
 				// Log unexpected status for debugging
 				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {

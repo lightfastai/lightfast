@@ -99,10 +99,10 @@ export default function RootLayout({
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			signInUrl="/sign-in"
 			signUpUrl="/sign-up"
-			signInFallbackRedirectUrl="/select-organization"
-			signUpFallbackRedirectUrl="/select-organization"
+			signInFallbackRedirectUrl="/onboarding/choose-organization"
+			signUpFallbackRedirectUrl="/onboarding/choose-organization"
 			taskUrls={{
-				"choose-organization": "/select-organization",
+				"choose-organization": "/onboarding/choose-organization",
 			}}
 			appearance={{
 				variables: {

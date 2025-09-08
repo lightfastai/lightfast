@@ -1,4 +1,4 @@
-import { SignInForm } from "~/app/components/auth/sign-in-form";
+import { SignInForm } from "../_components/sign-in-form";
 import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 
 export default function SignInPage() {
