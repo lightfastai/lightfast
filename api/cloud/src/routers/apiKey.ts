@@ -1,7 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { CloudApiKey } from "@db/cloud/schema";
-import * as argon2 from "argon2";
-import { createHash } from "crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -14,6 +12,12 @@ import {
   publicProcedure,
   TRPCError,
 } from "../trpc";
+
+import {
+  hashApiKey,
+  verifyApiKey,
+  generateKeyLookup,
+} from "../lib/api-key-crypto";
 
 // Constants for key generation
 const API_KEY_PREFIX = "lf_";
@@ -37,13 +41,6 @@ function getKeyPreview(key: string): string {
   return `...${key.slice(-KEY_PREVIEW_LENGTH)}`;
 }
 
-/**
- * Generate a fast lookup hash for API key validation
- * Uses SHA-256 for deterministic, fast lookups without timing vulnerabilities
- */
-function generateKeyLookup(key: string): string {
-  return createHash("sha256").update(key).digest("hex");
-}
 
 /**
  * Validates an API key against database records with constant-time operations
@@ -51,7 +48,7 @@ function generateKeyLookup(key: string): string {
  */
 async function validateApiKey(db: any, key: string) {
   // Generate lookup hash for the provided key
-  const keyLookup = generateKeyLookup(key);
+  const keyLookup = await generateKeyLookup(key);
 
   // Fast O(1) lookup using indexed keyLookup field
   const candidates = await db
@@ -78,7 +75,7 @@ async function validateApiKey(db: any, key: string) {
   const candidate = candidates[0];
 
   // Verify the actual key hash (constant time operation)
-  const isValidHash = await argon2.verify(candidate.keyHash, key);
+  const isValidHash = await verifyApiKey(key, candidate.keyHash);
   
   if (!isValidHash) {
     return null;
@@ -119,8 +116,8 @@ export const apiKeyRouter = {
       // Generate the API key
       const apiKey = generateApiKey();
 
-      // Hash the key for secure storage
-      const keyHash = await argon2.hash(apiKey);
+      // Hash the key for secure storage using Edge-compatible SHA-256
+      const keyHash = await hashApiKey(apiKey);
 
       // Calculate expiry date if specified
       const expiresAt = expiresInDays
@@ -131,7 +128,7 @@ export const apiKeyRouter = {
       const keyId = uuidv4();
 
       // Generate lookup hash for fast validation
-      const keyLookup = generateKeyLookup(apiKey);
+      const keyLookup = await generateKeyLookup(apiKey);
 
       // Store the API key in the database
       await db.insert(CloudApiKey).values({
@@ -326,11 +323,13 @@ export const apiKeyRouter = {
           })
           .where(eq(CloudApiKey.id, validKey.id));
 
-        // Return validation result
+        // Return validation result with organization context
         return {
           valid: true,
-          userId: validKey.clerkUserId,
+          userId: validKey.clerkUserId || validKey.createdByUserId, // Fallback during migration
           keyId: validKey.id,
+          organizationId: validKey.clerkOrgId,
+          createdByUserId: validKey.createdByUserId,
         };
       } catch (error) {
         // Log any unexpected errors
@@ -384,10 +383,12 @@ export const apiKeyRouter = {
         })
         .where(eq(CloudApiKey.id, validKey.id));
 
-      // Return user information
+      // Return user information with organization context
       return {
-        userId: validKey.clerkUserId,
+        userId: validKey.clerkUserId || validKey.createdByUserId, // Fallback during migration
         keyId: validKey.id,
+        organizationId: validKey.clerkOrgId,
+        createdByUserId: validKey.createdByUserId,
       };
     }),
 

@@ -6,13 +6,18 @@
  */
 
 import { CloudApiKey } from "@db/cloud/schema";
-import * as argon2 from "argon2";
 import { and, eq } from "drizzle-orm";
 import type { db as dbType } from "@db/cloud/client";
+
+import {
+  verifyApiKey,
+  generateKeyLookup,
+} from "../lib/api-key-crypto";
 
 // API key constants
 const API_KEY_PREFIX = "lf_";
 const BEARER_PREFIX = "Bearer ";
+
 
 /**
  * Authentication context returned from API key validation
@@ -21,7 +26,8 @@ export interface ApiKeyAuthContext {
   userId: string;
   apiKeyId: string;
   organizationId: string;
-  organizationRole?: string;
+  organizationRole: string;
+  createdByUserId: string;
 }
 
 /**
@@ -61,13 +67,13 @@ export async function extractApiKey(request: Request | Headers): Promise<string 
 }
 
 /**
- * Validate an API key against the database
+ * Validate an API key against the database with high performance
  * 
  * This function:
- * 1. Checks if the key exists and is active
- * 2. Verifies the key hash matches
- * 3. Checks expiration status
- * 4. Updates lastUsedAt timestamp
+ * 1. Uses O(1) keyLookup hash for fast database lookup
+ * 2. Performs constant-time hash verification to prevent timing attacks
+ * 3. Checks expiration status and active flag
+ * 4. Updates lastUsedAt timestamp asynchronously
  * 
  * @param apiKey - The API key to validate
  * @param db - Database connection
@@ -83,45 +89,43 @@ export async function validateApiKey(
       return null;
     }
 
-    // Fetch all active API keys
-    // Note: In production with high volume, consider implementing
-    // a caching layer here to avoid frequent database queries
-    const activeKeys = await db
+    // Generate lookup hash for O(1) database query
+    const keyLookup = await generateKeyLookup(apiKey);
+
+    // Fast O(1) lookup using indexed keyLookup field
+    const candidates = await db
       .select({
         id: CloudApiKey.id,
         keyHash: CloudApiKey.keyHash,
-        clerkUserId: CloudApiKey.clerkUserId,
+        clerkUserId: CloudApiKey.clerkUserId, // Deprecated, for migration compatibility
         clerkOrgId: CloudApiKey.clerkOrgId,
         createdByUserId: CloudApiKey.createdByUserId,
         expiresAt: CloudApiKey.expiresAt,
         active: CloudApiKey.active,
       })
       .from(CloudApiKey)
-      .where(eq(CloudApiKey.active, true));
+      .where(and(
+        eq(CloudApiKey.keyLookup, keyLookup),
+        eq(CloudApiKey.active, true)
+      ))
+      .limit(1); // Only expect one match
 
-    // Find the matching key by verifying the hash
-    let validKey = null;
-    for (const dbKey of activeKeys) {
-      try {
-        const isValid = await argon2.verify(dbKey.keyHash, apiKey);
-        if (isValid) {
-          validKey = dbKey;
-          break;
-        }
-      } catch (verifyError) {
-        // Hash verification failed, continue to next key
-        continue;
-      }
+    if (candidates.length === 0) {
+      return null;
     }
 
-    // Check if key was found
-    if (!validKey) {
+    const candidate = candidates[0]!; // Safe because we checked length above
+
+    // Verify the actual key hash (constant time operation)
+    const isValidHash = await verifyApiKey(apiKey, candidate.keyHash);
+    
+    if (!isValidHash) {
       return null;
     }
 
     // Check if key is expired
-    if (validKey.expiresAt && validKey.expiresAt < new Date()) {
-      console.info(`API key ${validKey.id} has expired`);
+    if (candidate.expiresAt && candidate.expiresAt < new Date()) {
+      console.info(`API key ${candidate.id} has expired`);
       return null;
     }
 
@@ -132,20 +136,21 @@ export async function validateApiKey(
       .set({
         lastUsedAt: new Date(),
       })
-      .where(eq(CloudApiKey.id, validKey.id))
+      .where(eq(CloudApiKey.id, candidate.id))
       .then(() => {
-        console.info(`Updated lastUsedAt for API key ${validKey.id}`);
+        console.info(`Updated lastUsedAt for API key ${candidate.id}`);
       })
       .catch((error) => {
-        console.error(`Failed to update lastUsedAt for API key ${validKey.id}:`, error);
+        console.error(`Failed to update lastUsedAt for API key ${candidate.id}:`, error);
       });
 
-    // Return the authentication context
+    // Return the authentication context with organization information
     return {
-      userId: validKey.clerkUserId || validKey.createdByUserId, // Fallback during migration
-      apiKeyId: validKey.id,
-      organizationId: validKey.clerkOrgId,
-      organizationRole: 'member', // TODO: Fetch actual role from Clerk or database
+      userId: candidate.clerkUserId || candidate.createdByUserId, // Fallback during migration
+      apiKeyId: candidate.id,
+      organizationId: candidate.clerkOrgId,
+      organizationRole: 'member', // TODO: Fetch actual role from Clerk organization API
+      createdByUserId: candidate.createdByUserId,
     };
   } catch (error) {
     console.error("Error validating API key:", error);
