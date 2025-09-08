@@ -26,7 +26,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
 					<div className="space-y-4">
 						{tree.children.map((item, index) => (
 							<div key={item.$id ?? `item-${index}`} className="space-y-2">
-								<div className="text-xs font-semibold px-3 text-muted-foreground tracking-wider">
+								<div className="text-xs font-bold px-3 text-foreground tracking-wider">
 									{item.name}
 								</div>
 								{item.type === "folder" && (
