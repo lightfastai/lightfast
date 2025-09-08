@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { protectedProcedure } from "../../trpc";
-import { currentUser } from "@clerk/nextjs/server";
+import { currentUser, clerkClient } from "@clerk/nextjs/server";
 
 export const userRouter = {
   /**
@@ -19,5 +19,27 @@ export const userRouter = {
         username: user?.username || null,
         imageUrl: user?.imageUrl || null,
       };
+    }),
+
+  /**
+   * Get user's organizations
+   */
+  getUserOrganizations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { userId } = ctx.session.data;
+      
+      // Get organizations where the user is a member
+      const client = await clerkClient();
+      const { data: organizationMemberships } = await client.users.getOrganizationMembershipList({
+        userId,
+      });
+
+      return organizationMemberships.map(membership => ({
+        id: membership.organization.id,
+        name: membership.organization.name,
+        slug: membership.organization.slug,
+        imageUrl: membership.organization.imageUrl,
+        role: membership.role,
+      }));
     }),
 } satisfies TRPCRouterRecord;

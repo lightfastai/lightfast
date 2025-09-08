@@ -30,6 +30,7 @@ export default async function OrganizationLayout({
 
 	// Prefetch user data for instant loading in AppSidebar
 	prefetch(trpc.user.getUser.queryOptions());
+	prefetch(trpc.user.getUserOrganizations.queryOptions());
 
 	return (
 		<>
