@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { createCompiler, CompilationSpinner } from "@lightfastai/compiler";
 import { resolve } from "path";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { profileManager } from "../../profiles/profile-manager.js";
 import { createLightfastCloudClient } from "@lightfastai/cloud-client";
 
@@ -205,11 +205,14 @@ ${chalk.cyan("Authentication:")}
 				spinner.start();
 
 				try {
+					// Read bundle content from file
+					const bundleContent = readFileSync(bundle.filepath, 'utf-8');
+					
 					// Try to create first
 					const result = await client.deploy.create.mutate({
 						apiKey,
 						name: bundle.id,
-						bundleContent: bundle.content,
+						bundleContent,
 						filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
 						contentType: "application/javascript",
 					});
@@ -222,10 +225,13 @@ ${chalk.cyan("Authentication:")}
 					if (createError.data?.code === 'CONFLICT') {
 						// Agent exists, try to update
 						try {
+							// Read bundle content from file
+							const bundleContent = readFileSync(bundle.filepath, 'utf-8');
+							
 							const result = await client.deploy.update.mutate({
 								apiKey,
 								name: bundle.id,
-								bundleContent: bundle.content,
+								bundleContent,
 								filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
 								contentType: "application/javascript",
 							});
