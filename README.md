@@ -27,71 +27,121 @@ Lightfast is a production-ready agent execution platform that provides the infra
 
 ## Architecture
 
-Lightfast is a monorepo containing multiple applications and packages:
+Lightfast is a comprehensive monorepo built with pnpm workspaces and Turborepo, containing CLI tools, applications, and packages:
 
 ### Core (`core/`)
 
+The core contains the complete CLI toolchain and agent framework:
 - **⚡ lightfast** - Core AI agent framework and execution engine
+- **🛠️ cli** - Published CLI package (`@lightfastai/cli`) that bundles everything
+- **🧠 cli-core** - Core CLI logic and commands (dev, compile, clean)
+- **⚙️ compiler** - TypeScript compilation engine with caching and hot reload
+- **🌐 dev-server** - Development server with React UI for agent management
+- **☁️ cloud-client** - Cloud platform client utilities
 
 ### Applications (`apps/`)
 
-- **🌐 www** - Marketing website and landing pages
-- **🔐 auth** - Authentication service and user management  
-- **☁️ cloud** - Main platform application
+Production-ready Next.js applications with modern architecture:
+- **🌐 www** - Marketing website and landing pages (Next.js 15 + App Router)
+- **🔐 auth** - Authentication service and user management
+- **☁️ cloud** - Main platform application for agent orchestration
 - **🎮 playground** - Interactive agent playground and testing environment
 - **🧪 experimental** - Experimental features and prototypes
-- **💬 chat** - AI chat application demo
-- **📚 docs** - Documentation site
+- **💬 chat** - AI chat application demo with Convex real-time backend
+- **📚 docs** - Documentation site with Fumadocs
 
 ### Packages (`packages/`)
 
-- **🎨 ui** - Shared UI component library based on shadcn/ui
+Shared libraries and utilities following the `@repo/*` namespace:
+- **🎨 ui** - Shared UI component library based on shadcn/ui and Radix UI
 - **⚙️ lib** - Shared utilities and helper functions
 - **📧 email** - Email templates and sending utilities
-- **🤖 ai-tools** - AI browser automation and tool utilities
+- **🤖 ai-tools** - AI browser automation and tool utilities with Browserbase
+- **🤖 ai** - AI SDK integrations and utilities
 - **🔧 site-config** - Shared configuration utilities
+- **🔗 url-utils** - URL manipulation and validation utilities
+- **⚙️ vercel-config** - Vercel deployment configurations
 
 ### Vendor (`vendor/`)
 
-Third-party integrations and services:
-- **📊 analytics** - PostHog and Vercel Analytics
-- **🔐 clerk** - Authentication with Clerk
+Third-party service integrations following the `@vendor/*` namespace:
+- **📊 analytics** - PostHog and Vercel Analytics integration
+- **🔐 clerk** - Authentication with Clerk (Next.js + Elements)
+- **🗄️ db** - Database layer with Drizzle ORM and PlanetScale
 - **📧 email** - Email services with Resend
-- **🔍 inngest** - Background job processing
+- **🔍 inngest** - Background job processing and workflows
+- **⚙️ next** - Next.js configuration and utilities
 - **📝 observability** - Sentry and BetterStack monitoring
-- **🛡️ security** - Arcjet rate limiting and security
-- **⚡ upstash** - Redis and rate limiting
+- **🛡️ security** - Arcjet rate limiting and security middleware
+- **📦 storage** - File storage with Vercel Blob
+- **⚡ upstash** - Redis, KV storage, and QStash integration
+
+### Internal (`internal/`)
+
+Development tooling and configurations:
+- **🔍 eslint** - Shared ESLint configurations (`@repo/eslint-config`)
+- **💅 prettier** - Shared Prettier configurations (`@repo/prettier-config`)
+- **📘 typescript** - Shared TypeScript configurations (`@repo/typescript-config`)
+
+### Supporting Directories
+
+Additional directories for project infrastructure:
+- **🔌 api** - API definitions, schemas, and shared API utilities
+- **🗄️ db** - Database migrations, schemas, and database-related scripts
+- **📚 docs** - Additional documentation and guides
+- **🛠️ scripts** - Build scripts, deployment utilities, and automation tools
+- **📁 examples** - Example projects and usage demonstrations
+  - **💬 1-agent-chat** - Simple agent chat implementation
+  - **🤖 nextjs-ai-chatbot** - Advanced AI chatbot with Next.js
+- **🌳 worktrees** - Git worktrees for parallel development branches
 
 ## Tech Stack
 
 | Category | Technology | Purpose |
 |----------|------------|----------|
+| **Runtime** | Node.js 22+ | Runtime environment (enforced minimum) |
+| | pnpm 10.5.2 | Package management (enforced via packageManager) |
 | **Frontend** | Next.js 15 | React framework with App Router |
-| | React 19 | Latest React features and performance |
-| | TypeScript | Type safety and developer experience |
-| | Tailwind CSS v4 | Utility-first styling |
-| | shadcn/ui | High-quality UI components |
-| **Backend** | Node.js 22+ | Runtime environment |
-| | Convex | Real-time database (chat app) |
-| | PostgreSQL | Primary database |
-| | Redis | Caching and rate limiting |
-| **AI/ML** | Anthropic Claude | Claude Sonnet 4 integration |
-| | OpenAI | GPT-4o integration |
-| | Vercel AI SDK | Streaming and AI utilities |
-| **DevOps** | Vercel | Deployment and hosting |
-| | Turborepo | Build system and caching |
-| | pnpm | Package management |
-| **Monitoring** | Sentry | Error tracking |
-| | PostHog | Analytics |
-| | BetterStack | Logging and monitoring |
+| | React 19 | Latest React features and performance improvements |
+| | TypeScript 5.9+ | Strict type safety and developer experience |
+| | Tailwind CSS v4 | Utility-first styling with new engine |
+| | shadcn/ui | High-quality UI components with Radix UI primitives |
+| | Jotai | Atomic state management |
+| | Zustand | Persistent state management |
+| **Backend** | Convex | Real-time database and backend (chat app) |
+| | PostgreSQL | Primary database with PlanetScale |
+| | Drizzle ORM | Type-safe SQL toolkit |
+| | Redis/Upstash | Caching, rate limiting, and queuing |
+| **AI/ML** | Anthropic Claude | Claude Sonnet 4 and Haiku integration |
+| | OpenAI | GPT-4o and GPT-4o-mini integration |
+| | Vercel AI SDK 5.0+ | Streaming, tool calling, and AI utilities |
+| | Browserbase | AI browser automation and web scraping |
+| | Exa | AI-powered web search |
+| **DevOps** | Turborepo 2.5+ | Monorepo build system with intelligent caching |
+| | Vercel | Deployment, hosting, and edge functions |
+| | GitHub Actions | CI/CD pipelines |
+| | ESBuild | Fast TypeScript compilation |
+| **Monitoring** | Sentry | Error tracking and performance monitoring |
+| | PostHog | Product analytics and feature flags |
+| | BetterStack | Logging, monitoring, and alerting |
+| | Vercel Analytics | Web vitals and performance metrics |
+| **Security** | Arcjet | Rate limiting, bot protection, and security |
+| | Clerk | Authentication and user management |
+| | Zod | Runtime type validation |
+| **Background Jobs** | Inngest | Workflow orchestration and background jobs |
+| | QStash | Serverless message queuing |
+| **Development** | Changesets | Version management and release automation |
+| | Prettier | Code formatting |
+| | ESLint | Code linting and quality |
+| | Biome | Fast formatter and linter (additional) |
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Node.js**: >= 22.0.0
-- **pnpm**: 10.5.2 (enforced by packageManager)
-- **Git**: Latest version
+- **Node.js**: >= 22.0.0 (enforced by engines field)
+- **pnpm**: 10.5.2 (enforced by packageManager field)
+- **Git**: Latest version for worktree and submodule support
 
 ### Installation
 
@@ -129,42 +179,52 @@ Third-party integrations and services:
 ## Available Scripts
 
 ### Development
-- `pnpm run dev` - Start main development servers (www, app, auth)
-- `pnpm run dev:www` - Marketing website (localhost:4101)
-- `pnpm run dev:cloud` - Main platform application
-- `pnpm run dev:auth` - Authentication service
-- `pnpm run dev:playground` - Agent playground
-- `pnpm run dev:experimental` - Experimental features
-- `pnpm run dev:chat` - Chat application
-- `pnpm run dev:docs` - Documentation site
+- `pnpm dev` - Start main development servers (www, experimental, docs, cloud, auth, chat, playground)
+- `pnpm dev:www` - Marketing website (port 4101)
+- `pnpm dev:cloud` - Main platform application  
+- `pnpm dev:auth` - Authentication service
+- `pnpm dev:experimental` - Experimental features
+- `pnpm dev:playground` - Agent playground
+- `pnpm dev:chat` - Chat application
+- `pnpm dev:docs` - Documentation site
+- `pnpm dev:email` - Email development server
+- `pnpm dev:cloud+playground` - Run cloud and playground together
+- `pnpm dev:cloud+playground+auth+docs` - Run multiple apps together
 
 ### Building
-- `pnpm run build` - Build all applications
-- `pnpm run build:www` - Build marketing site only
-- `pnpm run build:cloud` - Build cloud app only
-- `pnpm run build:auth` - Build auth service only
-- `pnpm run build:playground` - Build playground only
-- `pnpm run build:experimental` - Build experimental features only
-- `pnpm run build:chat` - Build chat app only
-- `pnpm run build:docs` - Build documentation only
+- `pnpm build` - Build all applications (Turbo orchestrated)
+- `pnpm build:www` - Build marketing site only
+- `pnpm build:cloud` - Build cloud app only  
+- `pnpm build:auth` - Build auth service only
+- `pnpm build:experimental` - Build experimental features only
+- `pnpm build:playground` - Build playground only
+- `pnpm build:chat` - Build chat app only
+- `pnpm build:docs` - Build documentation only
 
 ### Code Quality
-- `pnpm run lint` - Lint all packages
-- `pnpm run lint:fix` - Fix linting issues
-- `pnpm run format` - Check code formatting
-- `pnpm run format:fix` - Fix formatting issues
-- `pnpm run typecheck` - Run TypeScript type checking
-- `pnpm run lint:ws` - Check workspace dependencies
+- `pnpm lint` - Lint all packages with caching
+- `pnpm lint:fix` - Fix linting issues automatically
+- `pnpm format` - Check code formatting (Prettier)
+- `pnpm format:fix` - Fix formatting issues automatically
+- `pnpm typecheck` - Run TypeScript type checking across all packages
+- `pnpm lint:ws` - Check workspace dependencies with Sherif
 
 ### Database
-- `pnpm run db:migrate` - Run database migrations
-- `pnpm run db:migrate:generate` - Generate migration files
-- `pnpm run db:studio` - Open database studio
+- `pnpm db:migrate` - Run database migrations
+- `pnpm db:migrate:generate` - Generate migration files  
+- `pnpm db:studio` - Open Drizzle database studio
 
 ### Utilities
-- `pnpm run clean` - Clean all build artifacts
-- `pnpm run clean:workspaces` - Clean turbo workspaces
-- `pnpm run ui` - Manage UI components
+- `pnpm clean` - Clean all build artifacts and caches
+- `pnpm clean:workspaces` - Clean Turbo workspaces only
+- `pnpm ui` - Manage shadcn/ui components
+- `pnpm brain` - Run evaluation scripts
+- `pnpm vercel:link` - Link monorepo to Vercel
+
+### Release Management
+- `pnpm changeset` - Create a changeset for versioning
+- `pnpm version-packages` - Version packages using changesets
+- `pnpm release` - Publish packages to npm
 
 ## Environment Configuration
 
@@ -207,54 +267,128 @@ Each application may require additional environment variables. Check each app's 
 
 ```
 lightfast/
-├── core/                      # Core framework
-│   └── lightfast/            # AI agent framework and execution engine
-├── apps/                      # Applications
-│   ├── www/                  # Marketing website
-│   ├── cloud/                # Main platform app
-│   ├── auth/                 # Authentication service
-│   ├── playground/           # Interactive playground
-│   ├── experimental/         # Experimental features
-│   ├── chat/                 # Chat application
-│   └── docs/                 # Documentation site
-├── packages/                  # Shared packages
-│   ├── ui/                   # UI component library
-│   ├── lib/                  # Shared utilities
-│   ├── ai-tools/             # AI browser automation tools
-│   ├── email/                # Email utilities
-│   ├── site-config/          # Site configuration
-│   └── url-utils/            # URL utilities
-├── vendor/                    # Third-party integrations
-│   ├── analytics/            # PostHog, Vercel Analytics
-│   ├── auth/                 # Authentication services
-│   ├── email/                # Email services
-│   ├── observability/        # Monitoring and logging
-│   └── security/             # Security services
-├── internal/                  # Internal tooling
-│   ├── eslint/               # ESLint configurations
-│   ├── prettier/             # Prettier configurations
-│   └── typescript/           # TypeScript configurations
-├── scripts/                   # Development scripts
-├── submodules/                # Git submodules
-│   └── chat/                 # Chat application submodule
-└── turbo.json                # Turborepo configuration
+├── core/                      # Core CLI toolchain and agent framework
+│   ├── cli/                  # Published CLI package (@lightfastai/cli)
+│   ├── cli-core/             # Core CLI logic and commands
+│   ├── compiler/             # TypeScript compilation engine
+│   ├── dev-server/           # Development server with React UI
+│   ├── lightfast/            # AI agent framework and execution engine
+│   └── cloud-client/         # Cloud platform client utilities
+├── apps/                      # Next.js applications
+│   ├── www/                  # Marketing website (port 4101)
+│   ├── auth/                 # Authentication service and user management
+│   ├── cloud/                # Main platform application
+│   ├── playground/           # Interactive agent playground
+│   ├── experimental/         # Experimental features and prototypes
+│   ├── chat/                 # AI chat application with Convex
+│   └── docs/                 # Documentation site with Fumadocs
+├── packages/                  # Shared packages (@repo/*)
+│   ├── ui/                   # UI component library (shadcn/ui + Radix)
+│   ├── lib/                  # Shared utilities and helper functions
+│   ├── ai/                   # AI SDK integrations and utilities
+│   ├── ai-tools/             # AI browser automation with Browserbase
+│   ├── email/                # Email templates and utilities
+│   ├── site-config/          # Site configuration utilities
+│   ├── url-utils/            # URL manipulation and validation
+│   └── vercel-config/        # Vercel deployment configurations
+├── vendor/                    # Third-party service integrations (@vendor/*)
+│   ├── analytics/            # PostHog and Vercel Analytics
+│   ├── clerk/                # Authentication with Clerk
+│   ├── db/                   # Database layer (Drizzle + PlanetScale)
+│   ├── email/                # Email services with Resend
+│   ├── inngest/              # Background job processing
+│   ├── next/                 # Next.js configuration and utilities
+│   ├── observability/        # Sentry and BetterStack monitoring
+│   ├── security/             # Arcjet rate limiting and security
+│   ├── storage/              # File storage with Vercel Blob
+│   └── upstash/              # Redis, KV, and QStash integration
+├── internal/                  # Development tooling configurations
+│   ├── eslint/               # ESLint configurations (@repo/eslint-config)
+│   ├── prettier/             # Prettier configurations (@repo/prettier-config)
+│   └── typescript/           # TypeScript configurations (@repo/typescript-config)
+├── api/                       # API definitions and shared utilities
+├── db/                        # Database migrations and schemas
+├── docs/                      # Additional documentation and guides
+├── examples/                  # Example projects and demonstrations
+│   ├── 1-agent-chat/         # Simple agent chat implementation
+│   └── nextjs-ai-chatbot/    # Advanced AI chatbot with Next.js
+├── scripts/                   # Build scripts and automation tools
+├── worktrees/                 # Git worktrees for parallel development
+├── .changeset/                # Changesets configuration for releases
+├── .github/                   # GitHub Actions and CI/CD workflows
+├── .lightfast/                # Lightfast configuration and cache
+├── .turbo/                    # Turborepo cache and metadata
+├── .vercel/                   # Vercel deployment configuration
+├── package.json               # Root workspace configuration
+├── pnpm-workspace.yaml        # pnpm workspace definition
+├── turbo.json                 # Turborepo task configuration
+├── CLAUDE.md                  # Development instructions for Claude
+├── SPEC.md                    # Product specification and vision
+└── README.md                  # This file
 ```
 
 ## Development Workflows
 
 ### Working with the Monorepo
 
-1. **Install dependencies**: `pnpm install` (root installs all workspaces)
-2. **Run specific app**: `pnpm run dev:www` or `pnpm run dev:cloud`
-3. **Build specific app**: `pnpm run build:www`
+1. **Install dependencies**: `pnpm install` (installs all workspace dependencies)
+2. **Run specific app**: `pnpm dev:www` or `pnpm dev:cloud`
+3. **Build specific app**: `pnpm build:www` (uses Turbo filters)
 4. **Add dependency to specific app**: `pnpm add package-name --filter @lightfast/www`
 5. **Run script in specific app**: `pnpm --filter @lightfast/www run script-name`
+
+### Package Naming Conventions
+
+The monorepo uses consistent naming conventions across workspaces:
+
+- **Apps**: `@lightfast/[app-name]` (e.g., `@lightfast/www`, `@lightfast/cloud`)
+- **Packages**: `@repo/[package-name]` (e.g., `@repo/ui`, `@repo/lib`)
+- **Vendor**: `@vendor/[service-name]` (e.g., `@vendor/db`, `@vendor/auth`)
+- **Core**: `@lightfastai/[tool-name]` (e.g., `@lightfastai/cli`, `@lightfastai/compiler`)
+
+### Workspace Dependencies
+
+All workspace dependencies use `workspace:*` protocol for internal packages:
+```json
+{
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@vendor/db": "workspace:*"
+  }
+}
+```
+
+### Catalog Dependencies
+
+The workspace uses pnpm's catalog feature for consistent versioning across packages:
+```yaml
+# pnpm-workspace.yaml
+catalog:
+  '@tanstack/react-query': ^5.80.7
+  'next': ^15.4.0
+  'react': 19.1.0
+  'typescript': ^5.8.2
+  # ... more packages
+```
+
+Packages can reference catalog versions:
+```json
+{
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:react19"
+  }
+}
+```
 
 ### Adding New Components
 
 ```bash
 # Add shadcn/ui component to the UI package
-pnpm run ui add button
+pnpm ui add button
+
+# Generate new React component with Turbo
+pnpm --filter @repo/ui generate:component
 
 # The component will be available across all apps
 ```
@@ -263,10 +397,34 @@ pnpm run ui add button
 
 ```bash
 # Before committing
-pnpm run lint:fix     # Fix linting issues
-pnpm run format:fix   # Fix formatting
-pnpm run typecheck    # Check types
+pnpm lint:fix     # Fix linting issues
+pnpm format:fix   # Fix formatting
+pnpm typecheck    # Check types
 ```
+
+### CLI Development
+
+The `@lightfastai/cli` package provides the main CLI tool for agent development:
+
+```bash
+# Install the CLI (when published)
+npm install -g @lightfastai/cli
+
+# Or use it directly from the monorepo
+cd core/cli
+pnpm build  # Build the complete CLI bundle
+node dist/index.js --help
+
+# CLI commands
+cli dev      # Start development server
+cli compile  # Compile agent configuration
+cli clean    # Clean build artifacts
+```
+
+The CLI includes:
+- **TypeScript compiler** with hot reload and caching
+- **Development server** with React UI for agent management
+- **Agent configuration** compilation and validation
 
 ## Deployment
 
@@ -276,11 +434,11 @@ Each application can be deployed separately to Vercel:
 
 1. **Connect to Vercel**
    ```bash
-   pnpm run vercel:link
+   pnpm vercel:link
    ```
 
 2. **Configure build settings** (in Vercel dashboard or vercel.json):
-   - Build command: `pnpm run build:www` (or specific app)
+   - Build command: `pnpm build:www` (or specific app)
    - Output directory: `apps/www/.next` (or specific app)
    - Root directory: `./` (monorepo root)
 
