@@ -19,6 +19,7 @@ let config: NextConfig = withBetterStack(
 			ignoreDuringBuilds: true, // Temporarily disable ESLint during build
 		},
 		transpilePackages: [
+			"@api/cli",
 			"@api/cloud",
 			"@db/cloud",
 			"@vendor/upstash",

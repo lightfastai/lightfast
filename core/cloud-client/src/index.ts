@@ -2,17 +2,22 @@ import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 import type { CliRouter } from '@api/cli';
 
+
 export interface LightfastCloudClientOptions {
   /**
    * Base URL for the Lightfast Cloud API
-   * @default "https://cloud.lightfast.ai"
    */
-  baseUrl?: string;
+  baseUrl: string;
   
   /**
-   * API key for authentication (optional for public endpoints)
+   * API key for authentication
    */
-  apiKey?: string;
+  apiKey: string;
+
+  /**
+   * API version to use
+   */
+  apiVersion: string;
 
   /**
    * Custom headers to include with requests
@@ -21,29 +26,23 @@ export interface LightfastCloudClientOptions {
 }
 
 /**
- * Get the base URL from environment variables or use default
- */
-export function getBaseUrl(): string {
-  return process.env.LIGHTFAST_BASE_URL || 'https://cloud.lightfast.ai';
-}
-
-/**
  * Build cloud URL for user-facing pages
  */
-export function getCloudUrl(path: string = ''): string {
-  return `${getBaseUrl()}${path}`;
+export function getCloudUrl(baseUrl: string, path: string = ''): string {
+  return `${baseUrl}${path}`;
 }
 
 /**
  * Create a type-safe Lightfast CLI API client
  */
-export function createLightfastCloudClient(options: LightfastCloudClientOptions = {}) {
-  const baseUrl = options.baseUrl || getBaseUrl();
+export function createLightfastCloudClient(options: LightfastCloudClientOptions) {
+  const baseUrl = options.baseUrl;
+  const apiVersion = options.apiVersion;
   
   return createTRPCProxyClient<CliRouter>({
     links: [
       httpBatchLink({
-        url: `${baseUrl}/api/cli/v1`,
+        url: `${baseUrl}/api/cli/${apiVersion}`,
         transformer: superjson,
         headers() {
           const headers: Record<string, string> = {
