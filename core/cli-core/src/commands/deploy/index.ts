@@ -4,7 +4,7 @@ import { createCompiler, CompilationSpinner } from "@lightfastai/compiler";
 import { resolve } from "path";
 import { existsSync } from "fs";
 import { profileManager } from "../../profiles/profile-manager.js";
-import { createLightfastCloudClient, getBaseUrl } from "@lightfastai/cloud-client";
+import { createLightfastCloudClient } from "@lightfastai/cloud-client";
 
 interface DeployOptions {
 	config?: string;
@@ -97,8 +97,9 @@ ${chalk.cyan("Authentication:")}
 
 			// Test API connection
 			console.log(chalk.gray("  Testing API connection..."));
-			const baseUrl = profile.endpoint || getBaseUrl();
-			const client = createLightfastCloudClient({ baseUrl, apiKey });
+			const baseUrl = profile.endpoint;
+			const apiVersion = await profileManager.getApiVersion(profileName);
+			const client = createLightfastCloudClient({ baseUrl, apiKey, apiVersion });
 			
 			let whoamiResult;
 			try {

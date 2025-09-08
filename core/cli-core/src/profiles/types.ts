@@ -1,9 +1,9 @@
 export interface Profile {
   name: string;
-  endpoint?: string;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  endpoint: string;
+  apiVersion: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Config {

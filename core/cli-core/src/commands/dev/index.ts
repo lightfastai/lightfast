@@ -199,7 +199,7 @@ export const devCommand = new Command("dev")
         process.exit(1);
       }
 
-      const devProcess: ChildProcess = spawn(startCommand[0], startCommand.slice(1), {
+      const devProcess: ChildProcess = spawn(startCommand[0]!, startCommand.slice(1), {
         cwd: cliRoot,
         stdio: "pipe",
         shell: true,

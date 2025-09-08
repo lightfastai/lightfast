@@ -2,6 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { password } from "@inquirer/prompts";
 import { profileManager } from "../../profiles/profile-manager.js";
+import { DEFAULT_ENDPOINT, DEFAULT_VERSION } from "../../profiles/constants.js";
 import { createLightfastCloudClient, getCloudUrl } from "@lightfastai/cloud-client";
 
 interface LoginOptions {
@@ -56,7 +57,7 @@ ${chalk.cyan("Authentication Methods:")}
         console.log(chalk.blue("→ Authenticating with provided API key"));
       } else {
         console.log(chalk.blue("→ Enter your API key for authentication"));
-        console.log(chalk.gray(`  You can find your API key at: ${getCloudUrl('/settings/api-keys')}`));
+        console.log(chalk.gray(`  You can find your API key at: ${getCloudUrl(options.baseUrl || DEFAULT_ENDPOINT, '/settings/api-keys')}`));
         
         try {
           apiKey = await password({
@@ -85,7 +86,11 @@ ${chalk.cyan("Authentication Methods:")}
       console.log(chalk.gray("  Validating API key..."));
       
       // Validate the API key using the new cloud client
-      const client = createLightfastCloudClient({ baseUrl: options.baseUrl });
+      const client = createLightfastCloudClient({ 
+        baseUrl: options.baseUrl || DEFAULT_ENDPOINT,
+        apiKey: apiKey,
+        apiVersion: DEFAULT_VERSION
+      });
       
       let validationResult: any;
       try {
@@ -98,7 +103,7 @@ ${chalk.cyan("Authentication Methods:")}
           console.log(chalk.gray("\n💡 Troubleshooting:"));
           console.log(chalk.gray("  • Double-check your API key is correct"));
           console.log(chalk.gray("  • Verify the key hasn't expired"));
-          console.log(chalk.gray(`  • Generate a new key at ${getCloudUrl('/settings/api-keys')}`));
+          console.log(chalk.gray(`  • Generate a new key at ${getCloudUrl(options.baseUrl || DEFAULT_ENDPOINT, '/settings/api-keys')}`));
           process.exit(1);
         }
         
@@ -114,7 +119,7 @@ ${chalk.cyan("Authentication Methods:")}
           console.log(chalk.gray("\n💡 Troubleshooting:"));
           console.log(chalk.gray("  • Double-check your API key is correct"));
           console.log(chalk.gray("  • Verify the key hasn't expired"));
-          console.log(chalk.gray(`  • Generate a new key at ${getCloudUrl('/settings/api-keys')}`));
+          console.log(chalk.gray(`  • Generate a new key at ${getCloudUrl(options.baseUrl || DEFAULT_ENDPOINT, '/settings/api-keys')}`));
         } else if (error.code === 'INTERNAL_SERVER_ERROR') {
           console.error(chalk.red("Error: Server error"));
           console.log(chalk.gray("\n💡 Troubleshooting:"));
@@ -135,14 +140,15 @@ ${chalk.cyan("Authentication Methods:")}
       console.log(chalk.gray("  Storing credentials securely..."));
       
       try {
-        // Store the API key in auth file (Vercel-style)
-        await profileManager.setApiKey(profile, apiKey);
+        // Store the API key in auth file (Vercel-style) with API version
+        await profileManager.setApiKey(profile, apiKey, DEFAULT_VERSION);
         
         // Store profile information
-        await profileManager.setProfile(profile, {
-          userId: validationResult.userId,
-          endpoint: options.baseUrl, // Store custom base URL if provided
-        });
+        if (options.baseUrl) {
+          await profileManager.setProfile(profile, {
+            endpoint: options.baseUrl, // Store custom base URL if provided
+          });
+        }
         
         // Set as default profile if it's the first one
         const profiles = await profileManager.listProfiles();

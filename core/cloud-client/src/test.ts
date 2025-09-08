@@ -20,6 +20,8 @@ async function testValidateEndpoint() {
   // Test with localhost first (development)
   const client = createLightfastCloudClient({
     baseUrl: 'http://localhost:3000', // Assuming cloud app runs on 3000
+    apiKey: testApiKey,
+    apiVersion: 'v1'
   });
 
   try {

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { profileManager } from "../../profiles/profile-manager.js";
-import { createLightfastCloudClient, getCloudUrl, getBaseUrl } from "@lightfastai/cloud-client";
+import { createLightfastCloudClient, getCloudUrl } from "@lightfastai/cloud-client";
 
 interface WhoamiOptions {
   profile?: string;
@@ -86,8 +86,12 @@ ${chalk.cyan("Information Displayed:")}
         }
 
         const storedProfile = await profileManager.getProfile(profile);
-        const baseUrl = storedProfile?.endpoint || getBaseUrl();
-        const client = createLightfastCloudClient({ baseUrl, apiKey });
+        if (!storedProfile) {
+          throw new Error(`Profile '${profile}' not found`);
+        }
+        const baseUrl = storedProfile.endpoint;
+        const apiVersion = await profileManager.getApiVersion(profile);
+        const client = createLightfastCloudClient({ baseUrl, apiKey, apiVersion });
         
         const userResult = await client.apiKey.validate.mutate({ key: apiKey });
         
@@ -163,7 +167,7 @@ ${chalk.cyan("Information Displayed:")}
         
         console.log("");
         console.log(chalk.cyan("📋 Available Actions:"));
-        console.log(chalk.gray(`  • Visit ${getCloudUrl()} to manage your account`));
+        console.log(chalk.gray(`  • Visit ${getCloudUrl(storedProfile.endpoint)} to manage your account`));
         console.log(chalk.gray("  • Run 'lightfast auth logout' to remove credentials"));
         console.log(chalk.gray("  • Run 'lightfast auth status --verbose' to check API key validity"));
         

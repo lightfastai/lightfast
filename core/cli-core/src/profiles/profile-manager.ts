@@ -1,7 +1,7 @@
 import Conf from 'conf';
 import { homedir } from 'os';
 import { join } from 'path';
-import { CONFIG_DIR, CONFIG_FILE, DEFAULT_PROFILE } from './constants.js';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_PROFILE, DEFAULT_ENDPOINT } from './constants.js';
 import type { Profile, Config, AuthData } from './types.js';
 
 const CONFIG_DIR_PATH = join(homedir(), CONFIG_DIR);
@@ -54,6 +54,7 @@ export class ProfileManager {
       ...existingProfile,
       ...profile,
       name,
+      endpoint: profile.endpoint || DEFAULT_ENDPOINT,
       updatedAt: now,
       createdAt: existingProfile?.createdAt || now
     });
@@ -112,13 +113,22 @@ export class ProfileManager {
   /**
    * Store an API key (Vercel-style: in separate auth.json with chmod 600)
    */
-  async setApiKey(profileName: string, apiKey: string): Promise<void> {
+  async setApiKey(profileName: string, apiKey: string, apiVersion?: string): Promise<void> {
     // Store in auth file (like Vercel's ~/.vercel/auth.json)
     this.auth.set(`tokens.${profileName}`, apiKey);
     
-    // Ensure profile exists
+    // Ensure profile exists with required apiVersion
     if (!this.config.has(`profiles.${profileName}`)) {
-      this.config.set(`profiles.${profileName}`, { name: profileName });
+      if (!apiVersion) {
+        throw new Error(`API version is required when creating profile '${profileName}'`);
+      }
+      this.config.set(`profiles.${profileName}`, { 
+        name: profileName, 
+        apiVersion: apiVersion,
+        endpoint: DEFAULT_ENDPOINT,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
     }
   }
 
@@ -133,6 +143,17 @@ export class ProfileManager {
     }
 
     return this.auth.get(`tokens.${profileName}`) || null;
+  }
+
+  /**
+   * Get the API version for a profile
+   */
+  async getApiVersion(profileName: string): Promise<string> {
+    const profile = await this.getProfile(profileName);
+    if (!profile?.apiVersion) {
+      throw new Error(`Profile '${profileName}' does not have an API version configured`);
+    }
+    return profile.apiVersion;
   }
 
   /**
