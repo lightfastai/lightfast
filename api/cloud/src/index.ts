@@ -19,3 +19,6 @@ export type CloudRouterOutputs = inferRouterOutputs<CloudAppRouter>;
 
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";
+
+// Export middleware functions (for CLI API usage)
+export { validateApiKey } from "./middleware/apiKey";

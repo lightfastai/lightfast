@@ -1,6 +1,6 @@
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
-import type { CloudAppRouter } from '@api/cloud';
+import type { CliRouter } from '@api/cli';
 
 export interface LightfastCloudClientOptions {
   /**
@@ -35,19 +35,19 @@ export function getCloudUrl(path: string = ''): string {
 }
 
 /**
- * Create a type-safe Lightfast Cloud API client
+ * Create a type-safe Lightfast CLI API client
  */
 export function createLightfastCloudClient(options: LightfastCloudClientOptions = {}) {
   const baseUrl = options.baseUrl || getBaseUrl();
   
-  return createTRPCProxyClient<CloudAppRouter>({
+  return createTRPCProxyClient<CliRouter>({
     links: [
       httpBatchLink({
-        url: `${baseUrl}/api/trpc`,
+        url: `${baseUrl}/api/cli/v1`,
         transformer: superjson,
         headers() {
           const headers: Record<string, string> = {
-            'User-Agent': 'lightfast-cloud-client',
+            'User-Agent': 'lightfast-cli-client',
             ...options.headers,
           };
           
@@ -77,6 +77,6 @@ export type WhoAmIResponse = {
 };
 
 /**
- * Re-export types from the cloud API for convenience
+ * Re-export types from the CLI API for convenience
  */
-export type { CloudAppRouter } from '@api/cloud';
+export type { CliRouter } from '@api/cli';

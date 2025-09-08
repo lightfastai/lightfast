@@ -14,29 +14,15 @@ import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
 
-import { authenticateApiKey } from "./middleware/apiKey";
-
 /**
- * Session types for different authentication methods
+ * Session type for web authentication (Clerk only)
  */
-export type Session = 
-  | {
-      type: 'api-key';
-      data: {
-        userId: string;
-        apiKeyId: string;
-        organizationId: string;
-        organizationRole?: string;
-      };
-    }
-  | {
-      type: 'clerk';
-      data: Awaited<ReturnType<typeof auth>> & {
-        organizationId?: string;
-        organizationRole?: string;
-      };
-    }
-  | null;
+export type Session = {
+  data: Awaited<ReturnType<typeof auth>> & {
+    organizationId?: string;
+    organizationRole?: string;
+  };
+} | null;
 
 /**
  * Organization context for multi-tenant operations
@@ -62,42 +48,13 @@ export type OrganizationContext = {
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   // Get the source header for logging
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  const source = opts.headers.get("x-trpc-source") ?? "web";
   
-  // First, try to authenticate via API key
-  const apiKeyAuth = await authenticateApiKey(opts.headers, db);
-  
-  if (apiKeyAuth) {
-    console.info(`>>> tRPC Request from ${source} by ${apiKeyAuth.userId} (API Key: ${apiKeyAuth.apiKeyId})`);
-    
-    const session: Session = {
-      type: 'api-key',
-      data: {
-        userId: apiKeyAuth.userId,
-        apiKeyId: apiKeyAuth.apiKeyId,
-        organizationId: apiKeyAuth.organizationId,
-        organizationRole: apiKeyAuth.organizationRole,
-      },
-    };
-    
-    const organization: OrganizationContext = apiKeyAuth.organizationId ? {
-      id: apiKeyAuth.organizationId,
-      role: apiKeyAuth.organizationRole || 'member',
-    } : null;
-    
-    return {
-      session,
-      organization,
-      db,
-    };
-  }
-  
-  // Fall back to Clerk session authentication
+  // Authenticate via Clerk session only (web UI)
   const clerkSession = await auth();
   
   const session: Session = clerkSession?.userId
     ? {
-        type: 'clerk',
         data: {
           ...clerkSession,
           organizationId: clerkSession.orgId,
@@ -117,9 +74,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   } : null;
 
   if (session?.data?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.data.userId} (Session Auth)${organization ? ` in org ${organization.id}` : ''}`);
+    console.info(`>>> Web tRPC Request from ${source} by ${session.data.userId}${organization ? ` in org ${organization.id}` : ''}`);
   } else {
-    console.info(`>>> tRPC Request from ${source} by unknown`);
+    console.info(`>>> Web tRPC Request from ${source} - unauthenticated`);
   }
 
   return {

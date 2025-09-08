@@ -13,6 +13,7 @@
 		"with-env": "dotenv -e ./.vercel/.env.development.local --"
 	},
 	"dependencies": {
+		"@api/cli": "workspace:*",
 		"@api/cloud": "workspace:*",
 		"@arcjet/next": "1.0.0-beta.10",
 		"@browserbasehq/stagehand": "catalog:",

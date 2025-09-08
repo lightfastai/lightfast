@@ -26,7 +26,7 @@ export const OPTIONS = () => {
 
 const handler = async (req: NextRequest) => {
 	const response = await fetchRequestHandler({
-		endpoint: "/api/trpc",
+		endpoint: "/api/web/v1",
 		router: cloudAppRouter,
 		req,
 		createContext: () =>
@@ -34,7 +34,7 @@ const handler = async (req: NextRequest) => {
 				headers: req.headers,
 			}),
 		onError({ error, path }) {
-			console.error(`>>> tRPC Error on '${path}'`, error);
+			console.error(`>>> Web v1 tRPC Error on '${path}'`, error);
 		},
 	});
 
