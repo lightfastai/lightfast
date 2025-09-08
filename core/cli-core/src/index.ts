@@ -3,6 +3,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { compileCommand } from "./commands/compile/index.js";
 import { bundleCommand } from "./commands/bundle/index.js";
+import { buildCommand } from "./commands/build/index.js";
 import { devCommand } from "./commands/dev/index.js";
 import { cleanCommand } from "./commands/clean/index.js";
 //import { deployCommand } from "./commands/deploy/index.js";
@@ -24,6 +25,7 @@ program
 // Register all commands
 program.addCommand(compileCommand);
 program.addCommand(bundleCommand);
+program.addCommand(buildCommand);
 program.addCommand(devCommand);
 program.addCommand(cleanCommand);
 // program.addCommand(deployCommand);
@@ -41,6 +43,9 @@ program.on("--help", () => {
 	);
 	console.log(
 		"  $ lightfast bundle                    # Create deployment bundles",
+	);
+	console.log(
+		"  $ lightfast build                     # Build for production deployment",
 	);
 	console.log(
 		"  $ lightfast deploy                    # Deploy agents to cloud",

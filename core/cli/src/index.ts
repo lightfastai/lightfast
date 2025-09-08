@@ -6,6 +6,7 @@ import { devCommand } from '../../cli-core/src/commands/dev/index.js'
 import { compileCommand } from '../../cli-core/src/commands/compile/index.js'
 import { cleanCommand } from '../../cli-core/src/commands/clean/index.js'
 import { bundleCommand } from '../../cli-core/src/commands/bundle/index.js'
+import { buildCommand } from '../../cli-core/src/commands/build/index.js'
 import { deployCommand } from '../../cli-core/src/commands/deploy/index.js'
 import { authCommand } from '../../cli-core/src/commands/auth/index.js'
 import { getPackageInfo } from '../../cli-core/src/utils/package.js'
@@ -22,6 +23,8 @@ ${chalk.gray('Examples:')}
   $ npx @lightfastai/cli dev --port 3000
   $ npx @lightfastai/cli compile
   $ npx @lightfastai/cli compile --watch
+  $ npx @lightfastai/cli build
+  $ npx @lightfastai/cli build --analyze
   $ npx @lightfastai/cli clean
   $ npx @lightfastai/cli auth login
   $ npx @lightfastai/cli auth status
@@ -37,6 +40,7 @@ program.addCommand(devCommand)
 program.addCommand(compileCommand)
 program.addCommand(cleanCommand)
 program.addCommand(bundleCommand)
+program.addCommand(buildCommand)
 program.addCommand(deployCommand)
 program.addCommand(authCommand)
 
