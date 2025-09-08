@@ -20,6 +20,9 @@
 		"@api/cli": "workspace:*",
 		"@api/cloud": "workspace:*",
 		"@arcjet/next": "1.0.0-beta.10",
+		"@babel/parser": "^7.28.4",
+		"@babel/traverse": "^7.28.4",
+		"@babel/types": "^7.28.4",
 		"@browserbasehq/stagehand": "catalog:",
 		"@clerk/nextjs": "^6.31.9",
 		"@db/cloud": "workspace:*",
@@ -42,6 +45,8 @@
 		"@vendor/upstash": "workspace:*",
 		"@vercel/toolbar": "^0.1.28",
 		"date-fns": "^4.1.0",
+		"isolated-vm": "^6.0.1",
+		"lightfast": "workspace:^",
 		"lucide-react": "catalog:",
 		"nanoid": "catalog:",
 		"next": "catalog:",
@@ -51,6 +56,7 @@
 		"react-hook-form": "^7.61.1",
 		"sonner": "^2.0.6",
 		"superjson": "catalog:",
+		"vm2": "^3.9.19",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
