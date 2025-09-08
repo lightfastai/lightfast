@@ -5,9 +5,8 @@ import type { NextRequest } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
 	"/api/health",
-	"/api/trpc/apiKey.validate",
-	"/api/trpc/apiKey.whoami",
-	"/api/trpc/user.getUser",
+	"/api/cli/v1/apiKey.validate",
+	"/api/cli/v1/apiKey.whoami",
 	"/playground",
 	"/playground/(.*)",
 ]);
