@@ -37,25 +37,6 @@ export const CloudOrgSettings = mysqlTable(
      */
     clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull().unique(),
 
-    /**
-     * Human-readable display name for the organization
-     * Can be different from Clerk organization name
-     */
-    displayName: varchar("display_name", { length: 100 }),
-
-    /**
-     * URL-friendly slug for the organization
-     * Used for organization-scoped URLs and routing
-     */
-    slug: varchar("slug", { length: 50 }).unique(),
-
-    /**
-     * Subscription plan type for the organization
-     * Determines resource limits and available features
-     */
-    planType: mysqlEnum("plan_type", ["free", "pro", "enterprise"])
-      .notNull()
-      .default("free"),
 
     /**
      * Maximum number of API keys the organization can create
@@ -77,25 +58,6 @@ export const CloudOrgSettings = mysqlTable(
       .notNull()
       .default(1000000),
 
-    /**
-     * Flexible JSON configuration for organization-specific settings
-     * Can store feature flags, custom limits, and other configuration
-     */
-    settings: json("settings").$type<{
-      features?: {
-        advancedAnalytics?: boolean;
-        customDomains?: boolean;
-        ssoEnabled?: boolean;
-      };
-      limits?: {
-        maxAgentsPerDeployment?: number;
-        maxParallelExecutions?: number;
-      };
-      billing?: {
-        stripeCustomerId?: string;
-        subscriptionId?: string;
-      };
-    }>(),
 
     /**
      * Timestamp when the organization settings were created
@@ -116,10 +78,6 @@ export const CloudOrgSettings = mysqlTable(
   (table) => ({
     // Primary lookup index by organization ID
     orgIdIdx: index("org_id_idx").on(table.clerkOrgId),
-    // Index for slug-based lookups (for URL routing)
-    slugIdx: index("slug_idx").on(table.slug),
-    // Index for plan-based queries (for billing and feature queries)
-    planTypeIdx: index("plan_type_idx").on(table.planType),
   }),
 );
 
