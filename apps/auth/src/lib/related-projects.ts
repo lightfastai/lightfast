@@ -1,18 +1,14 @@
 import { withRelatedProject } from '@vercel/related-projects';
-import { env } from '../env';
+import { getAppUrl } from '@repo/url-utils';
 
 // Get the playground URL dynamically based on environment
 export const playgroundUrl = withRelatedProject({
   projectName: 'lightfast-playground',
-  defaultHost: env.NODE_ENV === 'development' 
-    ? 'http://localhost:4105' 
-    : 'https://playground.lightfast.ai',
+  defaultHost: getAppUrl('playground'),
 });
 
 // Get the cloud URL dynamically based on environment
 export const cloudUrl = withRelatedProject({
   projectName: 'lightfast-app',
-  defaultHost: env.NODE_ENV === 'development' 
-    ? 'http://localhost:4103' 
-    : 'https://cloud.lightfast.ai',
+  defaultHost: getAppUrl('cloud'),
 });

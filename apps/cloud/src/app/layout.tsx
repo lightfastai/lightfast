@@ -7,6 +7,7 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getAppUrl } from "@repo/url-utils";
 import { TRPCReactProvider } from "~/trpc/react";
 import { HydrateClient } from "~/trpc/server";
 
@@ -98,14 +99,14 @@ export default function RootLayout({
 	return (
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			signInUrl="http://localhost:4104/sign-in"
-			signUpUrl="http://localhost:4104/sign-up"
+			signInUrl={`${getAppUrl("auth")}/sign-in`}
+			signUpUrl={`${getAppUrl("auth")}/sign-up`}
 			signInFallbackRedirectUrl="/"
 			signUpFallbackRedirectUrl="/"
-			afterSignOutUrl="http://localhost:4101"
+			afterSignOutUrl={getAppUrl("www")}
 			waitlistUrl="/"
 			taskUrls={{
-				"choose-organization": "http://localhost:4104/select-organization",
+				"choose-organization": `${getAppUrl("auth")}/select-organization`,
 			}}
 			appearance={{
 				variables: {

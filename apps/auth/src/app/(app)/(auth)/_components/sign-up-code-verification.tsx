@@ -4,6 +4,7 @@ import * as React from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useLogger } from "@vendor/observability/client-log";
+import { getAppUrl } from "@repo/url-utils";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
 import { handleClerkError, handleUnexpectedStatus } from "~/app/lib/clerk/error-handler";
@@ -53,7 +54,7 @@ export function SignUpCodeVerification({
 				await setActive({ session: result.createdSessionId });
 				
 				// Redirect to organization selection for the auth flow
-				window.location.href = "/onboarding/choose-organization?redirect_url=http://localhost:4103/";
+				window.location.href = `/onboarding/choose-organization?redirect_url=${getAppUrl("cloud")}/`;
 			} else {
 				// Log unexpected status for debugging
 				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {

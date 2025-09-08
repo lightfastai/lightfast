@@ -6,6 +6,7 @@ import { useSignIn } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
+import { getAppUrl } from "@repo/url-utils";
 import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 
@@ -22,7 +23,7 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: "http://localhost:4103",
+				redirectUrlComplete: getAppUrl("cloud"),
 			});
 		} catch (err) {
 			// Log the error

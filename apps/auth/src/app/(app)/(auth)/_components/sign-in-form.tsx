@@ -2,6 +2,7 @@
 import * as React from "react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { getAppUrl } from "@repo/url-utils";
 import { SignInEmailInput } from "./sign-in-email-input";
 import { SignInCodeVerification } from "./sign-in-code-verification";
 import { SignInPassword } from "./sign-in-password";
@@ -45,7 +46,7 @@ export function SignInForm({
 		// Password sign-in is complete, redirect to cloud app
 		setError("");
 		// Redirect to cloud app root after successful authentication
-		window.location.href = "http://localhost:4103";
+		window.location.href = getAppUrl("cloud");
 	}
 
 	return (
