@@ -15,7 +15,6 @@ import {
 
 import {
   hashApiKey,
-  verifyApiKey,
   generateKeyLookup,
 } from "../lib/api-key-crypto";
 
@@ -42,52 +41,6 @@ function getKeyPreview(key: string): string {
 }
 
 
-/**
- * Validates an API key against database records with constant-time operations
- * Prevents timing attacks and ensures O(1) lookup performance
- */
-async function validateApiKey(db: any, key: string) {
-  // Generate lookup hash for the provided key
-  const keyLookup = await generateKeyLookup(key);
-
-  // Fast O(1) lookup using indexed keyLookup field
-  const candidates = await db
-    .select({
-      id: CloudApiKey.id,
-      keyHash: CloudApiKey.keyHash,
-      clerkUserId: CloudApiKey.clerkUserId, // Deprecated, for migration compatibility
-      clerkOrgId: CloudApiKey.clerkOrgId,
-      createdByUserId: CloudApiKey.createdByUserId,
-      expiresAt: CloudApiKey.expiresAt,
-      active: CloudApiKey.active,
-    })
-    .from(CloudApiKey)
-    .where(and(
-      eq(CloudApiKey.keyLookup, keyLookup),
-      eq(CloudApiKey.active, true)
-    ))
-    .limit(1); // Only expect one match
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  const candidate = candidates[0];
-
-  // Verify the actual key hash (constant time operation)
-  const isValidHash = await verifyApiKey(key, candidate.keyHash);
-  
-  if (!isValidHash) {
-    return null;
-  }
-
-  // Check expiration
-  if (candidate.expiresAt && candidate.expiresAt < new Date()) {
-    return null;
-  }
-
-  return candidate;
-}
 
 export const apiKeyRouter = {
   /**
