@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { LayoutDashboard, Settings } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
 import {
@@ -30,13 +30,13 @@ interface NavigationSection {
 	items: NavigationItem[];
 }
 
-const navigationSections: NavigationSection[] = [
+const getNavigationSections = (orgSlug: string): NavigationSection[] => [
 	{
 		title: "Platform",
 		items: [
 			{
 				name: "Dashboard",
-				href: "/dashboard",
+				href: `/orgs/${orgSlug}/dashboard`,
 				icon: LayoutDashboard,
 			},
 		],
@@ -46,16 +46,19 @@ const navigationSections: NavigationSection[] = [
 		items: [
 			{
 				name: "Settings",
-				href: "/settings",
+				href: `/orgs/${orgSlug}/settings/api-keys`,
 				icon: Settings,
 			},
 		],
 	},
 ];
 
-
 export function AppSidebar() {
 	const pathname = usePathname();
+	const params = useParams();
+	const orgSlug = params.slug as string;
+
+	const navigationSections = getNavigationSections(orgSlug);
 
 	return (
 		<Sidebar variant="inset" collapsible="icon">
@@ -63,7 +66,7 @@ export function AppSidebar() {
 				<div className="flex items-center justify-between px-4 h-full group-data-[collapsible=icon]:justify-center">
 					{/* Logo only shows when expanded */}
 					<Link
-						href="/dashboard"
+						href={`/orgs/${orgSlug}/dashboard`}
 						className="flex items-center group-data-[collapsible=icon]:hidden"
 					>
 						<Icons.logo className="h-4 w-auto" />
@@ -71,7 +74,6 @@ export function AppSidebar() {
 					{/* Sidebar trigger - shows on right when expanded, center when collapsed */}
 					<SidebarTrigger className="-mr-1 group-data-[collapsible=icon]:mr-0" />
 				</div>
-
 			</SidebarHeader>
 
 			<SidebarContent>
@@ -111,4 +113,3 @@ export function AppSidebar() {
 		</Sidebar>
 	);
 }
-

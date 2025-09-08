@@ -22,13 +22,14 @@ export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
 		// Handle root path redirect logic
 		if (isRootRedirect(req)) {
-			const { userId, orgId } = await auth();
+			const { userId, orgSlug, redirectToSignIn } = await auth();
 
 			if (userId) {
-				if (orgId) {
-					return NextResponse.redirect(new URL(`/orgs/${orgId}/dashboard`, req.url));
+				if (orgSlug) {
+					return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
 				} else {
-					return NextResponse.redirect(new URL("/select-organization", getAppUrl("auth")));
+					// Let redirectToSignIn handle routing to appropriate auth flow
+					return redirectToSignIn();
 				}
 			}
 		}
