@@ -3,6 +3,13 @@ import { resolve } from 'node:path';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import type { TranspileResult } from './transpiler.js';
+import {
+  extractAgentDefinitionsFromCode,
+  extractAgentIds,
+  hasValidAgentDefinitions,
+  type AgentDefinition,
+  type AgentASTMetadata,
+} from './esbuild-ast-utils.js';
 
 export interface AgentMetadata {
   name: string;
@@ -58,75 +65,67 @@ function generateHash(content: string): string {
   return createHash('sha256').update(content).digest('hex').substring(0, 8);
 }
 
+// /**
+//  * Extract agent IDs from compiled code using AST analysis
+//  */
+// function extractAgentIdsAST(compiledCode: string): string[] {
+//   try {
+//     const sourceFile = parseCode(compiledCode, 'compiled-config.js');
+//     const definitions = findAgentDefinitions(sourceFile);
+//     return definitions.map(def => def.id);
+//   } catch (error) {
+//     console.warn('AST-based agent ID extraction failed:', error);
+//     return [];
+//   }
+// }
+
+// /**
+//  * Extract all agent definitions from compiled code using AST analysis
+//  */
+// function extractAgentDefinitionsAST(compiledCode: string): AgentDefinition[] {
+//   try {
+//     const sourceFile = parseCode(compiledCode, 'compiled-config.js');
+//     return findAgentDefinitions(sourceFile);
+//   } catch (error) {
+//     console.warn('AST-based agent definitions extraction failed:', error);
+//     return [];
+//   }
+// }
+
 /**
- * Extracts agent metadata from the transpiled code
- * This is a placeholder - in reality we'd parse the AST or require runtime evaluation
+ * Convert AST metadata to bundler metadata format
+ */
+function convertASTMetadataToBundlerMetadata(astMetadata: AgentASTMetadata): AgentMetadata {
+  return {
+    name: astMetadata.name,
+    description: astMetadata.description || `Agent ${astMetadata.name}`,
+    tools: astMetadata.tools,
+    models: astMetadata.models,
+  };
+}
+
+/**
+ * Extract agent metadata using AST analysis (replaces regex-based approach)
  */
 function extractAgentMetadata(code: string, agentId: string): AgentMetadata {
-  // Extract actual metadata from the agent configuration
-  const tools: string[] = [];
-  const models: string[] = [];
-  
   try {
-    // Find the agent configuration mapping to get the actual variable name
-    const agentsConfigRegex = /agents\s*:\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s;
-    const agentsMatch = code.match(agentsConfigRegex);
+    // Use enhanced AST-based metadata extraction
+    const definitions = extractAgentDefinitionsFromCode(code);
+    const agentDefinition = definitions.find(def => def.id === agentId);
     
-    let agentVarName = `${agentId}Agent`; // Default fallback
-    if (agentsMatch) {
-      const agentMappingRegex = new RegExp(`${agentId}\\s*:\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)`);
-      const mappingMatch = agentsMatch[1].match(agentMappingRegex);
-      if (mappingMatch) {
-        agentVarName = mappingMatch[1];
-      }
-    }
-    
-    // Extract the agent definition
-    const agentDefRegex = new RegExp(
-      `(?:var|const|let)\\s+${agentVarName}\\s*=\\s*createAgent[\\d]*\\s*\\([\\s\\S]*?\\}\\);?`,
-      'gm'
-    );
-    const agentDefMatch = code.match(agentDefRegex);
-    
-    if (agentDefMatch) {
-      const agentDefinition = agentDefMatch[0];
-      
-      // Extract model information
-      const modelMatches = agentDefinition.match(/model:\s*gateway\d*\s*\(\s*['"](.*?)['"]\s*\)/g);
-      if (modelMatches) {
-        modelMatches.forEach(match => {
-          const modelMatch = match.match(/['"](.*?)['"]/);
-          if (modelMatch && !models.includes(modelMatch[1])) {
-            models.push(modelMatch[1]);
-          }
-        });
-      }
-      
-      // Extract tool information
-      const toolsMatch = agentDefinition.match(/tools:\s*\{([^}]+)\}/s);
-      if (toolsMatch) {
-        const toolsContent = toolsMatch[1];
-        // Extract tool keys: toolKey: toolVariable
-        const toolKeyMatches = toolsContent.match(/([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g);
-        if (toolKeyMatches) {
-          toolKeyMatches.forEach(match => {
-            const toolKey = match.replace(':', '').trim();
-            if (!tools.includes(toolKey)) {
-              tools.push(toolKey);
-            }
-          });
-        }
-      }
+    if (agentDefinition) {
+      return convertASTMetadataToBundlerMetadata(agentDefinition.metadata);
     }
   } catch (error) {
-    console.warn(`Failed to extract metadata for agent ${agentId}:`, error);
+    console.warn(`Enhanced AST metadata extraction failed for agent '${agentId}':`, error);
   }
   
+  // Fallback to basic metadata if AST extraction fails
   return {
     name: agentId,
     description: `Agent ${agentId}`,
-    tools,
-    models
+    tools: [],
+    models: []
   };
 }
 
@@ -291,6 +290,22 @@ export class BundleGenerator {
       return [bundle];
     }
 
+    // Check if we can find proper AST definitions for the agents
+    // If not, fall back to main bundle (handles malformed configurations)
+    if (!hasValidAgentDefinitions(transpileResult.code) && agentIds.length > 0) {
+      console.warn('Found agents but no valid createAgent definitions, generating single main bundle');
+      const bundle = await this.generateBundle(transpileResult, 'main', sourcePath);
+      
+      // Write source map if available
+      if (transpileResult.sourcemap) {
+        const mapPath = bundle.filepath + '.map';
+        writeFileSync(mapPath, transpileResult.sourcemap, 'utf-8');
+      }
+      
+      this.updateManifest([bundle]);
+      return [bundle];
+    }
+
     console.log(`Generating ${agentIds.length} agent bundles: ${agentIds.join(', ')}`);
     
     // Generate individual bundles for each agent
@@ -318,19 +333,25 @@ export class BundleGenerator {
   }
 
   /**
-   * Extracts agent IDs from the compiled configuration
-   * Uses static analysis to avoid module resolution issues
+   * Extracts agent IDs from the compiled configuration using AST analysis
    */
   private async extractAgentIds(compiledCode: string): Promise<string[]> {
     try {
-      // First try static regex parsing to avoid module resolution issues
+      // Use enhanced AST-based analysis first (most reliable)
+      const astAgentIds = extractAgentIds(compiledCode);
+      if (astAgentIds.length > 0) {
+        console.log(`Found ${astAgentIds.length} agents via enhanced AST analysis:`, astAgentIds);
+        return astAgentIds;
+      }
+
+      // Fallback to static regex parsing if enhanced AST fails
       const staticAgentIds = this.extractAgentIdsStatic(compiledCode);
       if (staticAgentIds.length > 0) {
-        console.log(`Found ${staticAgentIds.length} agents via static analysis:`, staticAgentIds);
+        console.log(`Found ${staticAgentIds.length} agents via static regex (fallback):`, staticAgentIds);
         return staticAgentIds;
       }
 
-      // Fallback to dynamic evaluation for complex cases
+      // Final fallback to dynamic evaluation for complex cases
       return await this.extractAgentIdsDynamic(compiledCode);
       
     } catch (error) {
@@ -516,24 +537,96 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
 
   /**
    * NEW: Generates minimal agent bundle by individual analysis (Next.js-inspired)
-   * Instead of extracting from mega-bundle, analyzes each agent individually
+   * Uses AST-based analysis for clean, reliable agent extraction
    */
   private async generateMinimalAgentBundle(
     compiledCode: string, 
     agentId: string,
     sourcePath: string
   ): Promise<string> {
-    // 1. Extract the actual variable name for this agent
-    const actualVarName = this.getAgentVariableName(compiledCode, agentId);
+    try {
+      // Use enhanced AST to find agent definition
+      const definitions = extractAgentDefinitionsFromCode(compiledCode);
+      const agentDefinition = definitions.find(def => def.id === agentId);
+      
+      if (!agentDefinition) {
+        throw new Error(`Agent '${agentId}' not found in compiled configuration`);
+      }
+      
+      // Extract only the required code for this specific agent
+      return this.extractAgentSpecificCode(compiledCode, agentId, agentDefinition);
+      
+    } catch (error) {
+      console.warn(`Failed to generate minimal bundle for agent '${agentId}':`, error);
+      // Fallback to full compiled code
+      return compiledCode;
+    }
+  }
+
+  /**
+   * Extract agent-specific code by filtering out other agents
+   */
+  private extractAgentSpecificCode(
+    compiledCode: string,
+    targetAgentId: string, 
+    agentDefinition: AgentDefinition
+  ): string {
+    // Find all agent definitions to filter out others
+    const allDefinitions = extractAgentDefinitionsFromCode(compiledCode);
+    const otherAgentIds = allDefinitions
+      .filter(def => def.id !== targetAgentId)
+      .map(def => def.id);
     
-    // 2. Extract only this agent's definition (clean, no contamination)
-    const agentDefinition = this.extractCleanAgentDefinition(compiledCode, actualVarName);
+    let filteredCode = compiledCode;
     
-    // 3. Analyze what imports this specific agent actually needs
-    const requiredImports = this.analyzeMinimalImports(agentDefinition);
+    // Remove other agent variable declarations
+    for (const otherAgentId of otherAgentIds) {
+      const otherDefinition = allDefinitions.find(def => def.id === otherAgentId);
+      if (otherDefinition) {
+        // Remove the agent variable declaration
+        const agentVarRegex = new RegExp(
+          `(?:const|let|var)\\s+${otherDefinition.variableName}\\s*=\\s*createAgent\\d*\\s*\\([\\s\\S]*?\\}\\s*\\);?\\s*`, 
+          'g'
+        );
+        filteredCode = filteredCode.replace(agentVarRegex, '');
+      }
+    }
     
-    // 4. Generate clean, minimal bundle
-    return this.assembleMinimalBundle(requiredImports, agentDefinition, agentId, actualVarName);
+    // Remove other agents from the agents object, keeping only the target
+    const agentsObjectMatch = filteredCode.match(/agents\s*:\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s);
+    if (agentsObjectMatch) {
+      const agentsContent = agentsObjectMatch[1];
+      const agentsObjectFull = agentsObjectMatch[0];
+      
+      // Find the target agent property in the agents object
+      const targetAgentProperty = this.extractAgentProperty(agentsContent, targetAgentId);
+      
+      if (targetAgentProperty) {
+        // Replace the entire agents object with only the target agent
+        const newAgentsObject = `agents: {\n    ${targetAgentId}: ${targetAgentProperty}\n  }`;
+        filteredCode = filteredCode.replace(agentsObjectFull, newAgentsObject);
+      }
+    }
+    
+    return filteredCode;
+  }
+
+  /**
+   * Extract the property assignment for a specific agent from agents object content
+   */
+  private extractAgentProperty(agentsContent: string, targetAgentId: string): string | null {
+    // Find the property for the target agent
+    const targetPropertyRegex = new RegExp(
+      `(?:^|,)\\s*(?:${targetAgentId}|["']${targetAgentId}["'])\\s*:\\s*([a-zA-Z_$][a-zA-Z0-9_$]*|createAgent\\d*\\s*\\([\\s\\S]*?\\}\\s*\\))`,
+      'm'
+    );
+    
+    const match = agentsContent.match(targetPropertyRegex);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+    
+    return null;
   }
 
   /**
@@ -905,12 +998,25 @@ export function getTargetAgent(config) {
       compilerVersion
     };
 
-    // Create the agent-specific bundle wrapper
+    // Create the agent-specific bundle wrapper with AST-generated markers
     const bundleCode = `// Lightfast Agent Bundle - ${agentId}
 // Generated at: ${bundleMetadata.compiledAt}
 // Hash: ${hash}
+// AST-generated
+
+// Target agent identifier for this bundle
+export const targetAgentId = "${agentId}";
 
 ${code}
+
+// Target agent extraction function
+export function getTargetAgent() {
+  const config = (typeof module !== 'undefined' && module.exports) || {};
+  if (config.agents && config.agents["${agentId}"]) {
+    return config.agents["${agentId}"];
+  }
+  return null;
+}
 
 // Bundle export format for agent: ${agentId}
 export default {
@@ -974,6 +1080,106 @@ export default {
 
     // Write updated manifest
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+  }
+
+  /**
+   * Extract clean agent code from AST definition
+   */
+  private extractAgentCodeFromAST(compiledCode: string, agentDefinition: AgentDefinition): string {
+    // For now, we'll extract the agent code using a simple approach
+    // In the future, we could use more sophisticated AST transformations
+    
+    try {
+      // Find the variable definition in the code
+      const lines = compiledCode.split('\n');
+      let agentCode = '';
+      let inAgentDefinition = false;
+      let braceCount = 0;
+      
+      for (const line of lines) {
+        if (line.includes(`${agentDefinition.variableName} = createAgent`)) {
+          inAgentDefinition = true;
+          agentCode = line;
+          braceCount = (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
+          
+          if (braceCount === 0) {
+            // Single line definition
+            break;
+          }
+          continue;
+        }
+        
+        if (inAgentDefinition) {
+          agentCode += '\n' + line;
+          braceCount += (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
+          
+          if (braceCount <= 0) {
+            break;
+          }
+        }
+      }
+      
+      return agentCode || `// Agent definition for ${agentDefinition.id} not found`;
+      
+    } catch (error) {
+      console.warn(`Failed to extract agent code for ${agentDefinition.id}:`, error);
+      return `// Failed to extract agent code for ${agentDefinition.id}`;
+    }
+  }
+
+  /**
+   * Analyze minimal imports required for agent code using AST
+   */
+  private analyzeMinimalImportsFromAST(compiledCode: string, agentCode: string): string[] {
+    const requiredImports: string[] = [];
+    
+    // Always need createAgent
+    requiredImports.push('import { createAgent } from "lightfast/agent";');
+    
+    // Check if agent uses gateway (with or without numbered suffix)
+    if (agentCode.includes('gateway(') || /gateway\d+\(/.test(agentCode)) {
+      requiredImports.push('import { gateway } from "@ai-sdk/gateway";');
+    }
+    
+    // Check if agent uses tools
+    if (agentCode.includes('createTool(') || /createTool\d+\(/.test(agentCode)) {
+      requiredImports.push('import { createTool } from "lightfast/tool";');
+    }
+    
+    // Check if agent uses zod for schema validation (common with tools)
+    if (agentCode.includes('z.') || /z\d+\./.test(agentCode)) {
+      requiredImports.push('import { z } from "zod";');
+    }
+    
+    return requiredImports;
+  }
+
+  /**
+   * Assemble minimal, clean agent bundle using AST-extracted information
+   */
+  private assembleMinimalBundleFromAST(
+    imports: string[],
+    agentCode: string,
+    agentId: string,
+    actualVarName: string
+  ): string {
+    // Clean the agent code to remove numbered aliases
+    const cleanAgentCode = agentCode
+      .replace(/createAgent\d+/g, 'createAgent')  // createAgent6 → createAgent  
+      .replace(/gateway\d+/g, 'gateway');         // gateway2 → gateway
+
+    return `// Agent-specific bundle for: ${agentId} (AST-generated)
+${imports.join('\n')}
+
+${cleanAgentCode}
+
+// Export the isolated agent configuration
+export const targetAgentId = "${agentId}";
+export function getTargetAgent() {
+  return ${actualVarName};
+}
+
+// Clean minimal bundle - no pollution from other agents (AST-based)`;
   }
 
   /**

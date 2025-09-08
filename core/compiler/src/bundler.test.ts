@@ -54,15 +54,23 @@ describe('BundleGenerator', () => {
   describe('generateBundles', () => {
     const mockTranspileResult: TranspileResult = {
       code: `
+import { createAgent, gateway } from 'lightfast';
+
+const assistantAgent = createAgent({
+  name: 'Assistant Agent',
+  description: 'A helpful AI assistant',
+  model: gateway('gpt-4'),
+  tools: {
+    search: searchTool,
+    calculate: calcTool
+  }
+});
+
 export default {
   name: 'test-config',
   version: '1.0.0',
   agents: {
-    assistant: {
-      name: 'Assistant Agent',
-      tools: ['search', 'calculate'],
-      model: 'gpt-4'
-    }
+    assistant: assistantAgent
   }
 };
       `.trim(),
@@ -75,7 +83,7 @@ export default {
       }
     };
 
-    it('should generate a single bundle for simple config', async () => {
+    it('should generate agent-specific bundles for agents', async () => {
       const sourcePath = join(tempDir, 'lightfast.config.ts');
       
       const bundles = await bundleGenerator.generateBundles(
@@ -86,14 +94,15 @@ export default {
       expect(bundles).toHaveLength(1);
       
       const bundle = bundles[0]!;
-      expect(bundle.id).toBe('main');
-      expect(bundle.filename).toMatch(/^main\.[a-f0-9]{8}\.js$/);
+      expect(bundle.id).toBe('assistant');
+      expect(bundle.filename).toMatch(/^assistant\.[a-f0-9]{8}\.js$/);
       expect(existsSync(bundle.filepath)).toBe(true);
       
       const content = readFileSync(bundle.filepath, 'utf-8');
       expect(content).toContain('Lightfast Agent Bundle');
-      expect(content).toContain('test-config');
+      expect(content).toContain('assistant');
       expect(content).toContain(bundle.hash);
+      expect(content).toContain('AST-generated');
     });
 
     it('should include metadata in bundle', async () => {
@@ -106,11 +115,11 @@ export default {
       
       const bundle = bundles[0]!;
       expect(bundle.metadata).toMatchObject({
-        id: 'main',
+        id: 'assistant',
         hash: expect.any(String),
-        name: 'main',
-        tools: [],
-        models: [],
+        name: 'assistant',
+        tools: expect.arrayContaining(['search', 'calculate']),
+        models: expect.arrayContaining(['gpt-4']),
         compiledAt: expect.any(String),
         compilerVersion: '1.0.0-test'
       });
@@ -151,11 +160,28 @@ export default {
     it('should handle multiple agents in future', async () => {
       const multiAgentResult: TranspileResult = {
         code: `
+import { createAgent } from 'lightfast';
+
+const agent1 = createAgent({
+  name: 'Agent 1',
+  model: 'gpt-4'
+});
+
+const agent2 = createAgent({
+  name: 'Agent 2', 
+  model: 'claude-3'
+});
+
+const agent3 = createAgent({
+  name: 'Agent 3',
+  model: 'gpt-3.5-turbo'
+});
+
 export default {
   agents: {
-    agent1: { name: 'Agent 1' },
-    agent2: { name: 'Agent 2' },
-    agent3: { name: 'Agent 3' }
+    agent1: agent1,
+    agent2: agent2,
+    agent3: agent3
   }
 };
         `.trim(),
@@ -165,14 +191,21 @@ export default {
       
       const sourcePath = join(tempDir, 'lightfast.config.ts');
       
-      // Currently generates single bundle, but structure supports multiple
+      // Now generates individual bundles for each agent
       const bundles = await bundleGenerator.generateBundles(
         multiAgentResult,
         sourcePath
       );
       
-      expect(bundles).toHaveLength(1);
-      expect(bundles[0]!.id).toBe('main');
+      expect(bundles).toHaveLength(3);
+      expect(bundles.map(b => b.id)).toEqual(['agent1', 'agent2', 'agent3']);
+      
+      // Each bundle should have the correct metadata
+      const agent1Bundle = bundles.find(b => b.id === 'agent1');
+      expect(agent1Bundle?.metadata.models).toContain('gpt-4');
+      
+      const agent2Bundle = bundles.find(b => b.id === 'agent2');
+      expect(agent2Bundle?.metadata.models).toContain('claude-3');
     });
 
     it('should include source map reference if available', async () => {
@@ -239,15 +272,15 @@ export default {
       
       const content = readFileSync(bundles[0]!.filepath, 'utf-8');
       
-      // Should contain the original compiled code
-      expect(content).toContain('test-config');
+      // Should contain the agent-specific code
+      expect(content).toContain('assistant');
       expect(content).toContain('Assistant Agent');
+      expect(content).toContain('createAgent');
       
-      // Should be wrapped in bundle format
-      expect(content).toContain('const compiledConfig = (() => {');
-      expect(content).toContain('export default {');
-      expect(content).toContain('// Identity');
-      expect(content).toContain('// Execute function');
+      // Should be wrapped in new bundle format
+      expect(content).toContain('export const targetAgentId');
+      expect(content).toContain('export function getTargetAgent');
+      expect(content).toContain('AST-generated');
     });
 
     it('should include timestamp in metadata', async () => {
@@ -364,7 +397,7 @@ export default {
       });
     });
 
-    it('should sanitize agent IDs for filenames', async () => {
+    it('should handle malformed agent configurations gracefully', async () => {
       const result: TranspileResult = {
         code: `
 export default {
@@ -386,10 +419,10 @@ export default {
         sourcePath
       );
       
-      // Should generate valid filenames
-      bundles.forEach(bundle => {
-        expect(bundle.filename).toMatch(/^[a-zA-Z0-9._-]+$/);
-      });
+      // Should generate fallback main bundle when no createAgent calls found
+      expect(bundles).toHaveLength(1);
+      expect(bundles[0]!.id).toBe('main');
+      expect(bundles[0]!.filename).toMatch(/^[a-zA-Z0-9._-]+$/);
     });
 
     it('should handle missing metafile gracefully', async () => {
