@@ -15,6 +15,20 @@ import { auth } from "@vendor/clerk/server";
 import { db } from "@db/chat/client";
 
 /**
+ * Chat session type - extracted to avoid Clerk type inference issues
+ */
+export interface ChatSession {
+  userId: string | null;
+}
+
+/**
+ * Authenticated chat session type - used in protected procedures
+ */
+export interface AuthenticatedChatSession {
+  userId: string;
+}
+
+/**
  * 1. CONTEXT
  *
  * This section defines the "contexts" that are available in the backend API.
@@ -30,12 +44,17 @@ import { db } from "@db/chat/client";
 export const createTRPCContext = async (opts: {
   headers: Headers;
 }) => {
-  const session = await auth();
+  const clerkSession = await auth();
 
   // Get the source header for logging
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  if (session?.userId) {
+  // Extract only what we need to avoid Clerk type inference issues
+  const session: ChatSession = {
+    userId: clerkSession?.userId ?? null,
+  };
+
+  if (session.userId) {
     console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
   } else {
     console.info(`>>> tRPC Request from ${source} by unknown`);
@@ -132,10 +151,16 @@ export const protectedProcedure = t.procedure
     if (!ctx.session?.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+    
+    // Create authenticated session with non-null userId
+    const authenticatedSession: AuthenticatedChatSession = {
+      userId: ctx.session.userId,
+    };
+    
     return next({
       ctx: {
-        // infers the `session` as non-nullable
-        session: ctx.session,
+        ...ctx,
+        session: authenticatedSession,
       },
     });
   });
