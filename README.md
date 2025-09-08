@@ -235,8 +235,6 @@ lightfast/
 │   ├── prettier/             # Prettier configurations
 │   └── typescript/           # TypeScript configurations
 ├── scripts/                   # Development scripts
-├── submodules/                # Git submodules
-│   └── chat/                 # Chat application submodule
 └── turbo.json                # Turborepo configuration
 ```
 
