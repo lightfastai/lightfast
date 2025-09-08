@@ -4,28 +4,6 @@ import { getAppUrl } from "@repo/vercel-config";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Allowed redirect domains for security
-const ALLOWED_REDIRECT_HOSTS = [
-	"lightfast.ai",
-	"auth.lightfast.ai",
-	"cloud.lightfast.ai",
-	"localhost",
-];
-
-// Validate redirect URLs to prevent open redirect attacks
-function isValidRedirectUrl(url: string): boolean {
-	if (!url) return false;
-
-	try {
-		const parsed = new URL(url);
-		return ALLOWED_REDIRECT_HOSTS.some(
-			(host) =>
-				parsed.hostname === host || parsed.hostname.endsWith(`.${host}`),
-		);
-	} catch {
-		return false;
-	}
-}
 
 // Define public routes that don't need authentication
 const isPublicRoute = createRouteMatcher([
@@ -40,7 +18,6 @@ const isPublicRoute = createRouteMatcher([
 
 // Define auth routes that authenticated users with orgs should be redirected away from
 const isAuthRoute = createRouteMatcher([
-	"/",
 	"/sign-in",
 	"/sign-up",
 	"/select-organization",
@@ -50,6 +27,8 @@ const isAuthRoute = createRouteMatcher([
 const isOrgRoute = createRouteMatcher([
 	"/orgs/(.*)"
 ]);
+
+const isRootRedirect = createRouteMatcher(["/"]);
 
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
@@ -76,7 +55,7 @@ export default clerkMiddleware(
 			isAuthenticated,
 			userId: userId ? "present" : "null",
 			orgId: orgId ? "present" : "null", 
-			orgSlug: orgSlug || "null",
+			orgSlug: orgSlug ?? "null",
 			sessionId: sessionId ? "present" : "null",
 			pathname: req.nextUrl.pathname,
 		});
@@ -87,18 +66,25 @@ export default clerkMiddleware(
 			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, getAppUrl("cloud")));
 		}
 
-		// Handle root route redirects for non-authenticated or users without orgs
-		if (req.nextUrl.pathname === "/") {
-			if (!isAuthenticated && !sessionId) {
-				// Truly signed out - go to sign-in
+		// Handle root path redirect logic
+		if (isRootRedirect(req)) {
+			if (!isAuthenticated) {
+				// Not authenticated - go to sign-in
 				console.log("[AUTH MIDDLEWARE] Redirecting to sign-in (not authenticated)");
 				return NextResponse.redirect(new URL("/sign-in", req.url));
-			} else if (isAuthenticated && !orgId) {
+			}
+			
+			if (!orgId) {
 				// Authenticated but no org - go to org selection (session task)
 				console.log("[AUTH MIDDLEWARE] Redirecting to select-organization (no org)");
 				return NextResponse.redirect(new URL("/select-organization", req.url));
 			}
-			// For users with orgId, redirect handled above
+			
+			if (orgId) {
+				// Authenticated with org - redirect to cloud app
+				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → cloud app /orgs/${orgSlug}/dashboard`);
+				return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, getAppUrl("cloud")));
+			}
 		}
 
 		// Protect all routes except public ones

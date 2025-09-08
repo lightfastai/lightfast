@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
+import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
+import { trpc, HydrateClient, prefetch } from "~/trpc/server";
 
 interface OrganizationLayoutProps {
 	children: React.ReactNode;
@@ -14,35 +16,36 @@ export default async function OrganizationLayout({
 }: OrganizationLayoutProps) {
 	const { slug } = await params;
 
-	const { userId, orgId, sessionClaims } = await auth();
+	// Auth checks are handled by parent (authenticated) layout
+	// This layout validates org access and handles org-specific UI
+	const { userId, orgId, orgSlug } = await auth();
 
-	// Check if user is authenticated
-	if (!userId) {
-		redirect("/sign-in");
-	}
-
-	// Check for pending organization tasks
-	if (sessionClaims?.currentTask) {
-		console.log(`User ${userId} has pending task: ${String(sessionClaims.currentTask)}`);
-		redirect("/select-organization");
-	}
-
-	// Check if user has organization membership for authenticated routes
-	if (!orgId) {
-		console.log(`User ${userId} attempting to access authenticated route without organization`);
-		redirect("/select-organization");
+	// Validate that the slug in URL matches the user's current organization
+	if (slug !== orgSlug) {
+		console.log(`User ${userId} attempted to access org '${slug}' but belongs to org '${orgSlug}'`);
+		notFound();
 	}
 
 	console.log(`User ${userId} accessing org route '${slug}' with org ${orgId}`);
 
+	// Prefetch user data for instant loading in AppSidebar
+	prefetch(trpc.user.getUser.queryOptions());
+
 	return (
-		<SidebarProvider>
-			<AppSidebar organizationId={orgId} />
-			<SidebarInset>
-				<div className="flex flex-1 flex-col bg-muted/10 border border-border/30 rounded-lg">
-					{children}
-				</div>
-			</SidebarInset>
-		</SidebarProvider>
+		<>
+			<SignedOut>
+				<RedirectToTasks />
+			</SignedOut>
+			<HydrateClient>
+				<SidebarProvider>
+					<AppSidebar />
+					<SidebarInset>
+						<div className="flex flex-1 flex-col bg-muted/10 border border-border/30 rounded-lg">
+							{children}
+						</div>
+					</SidebarInset>
+				</SidebarProvider>
+			</HydrateClient>
+		</>
 	);
 }

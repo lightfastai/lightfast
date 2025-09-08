@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
-	"/",
 	"/api/health",
 	"/api/trpc/apiKey.validate",
 	"/api/trpc/apiKey.whoami",
+	"/api/trpc/user.getUser",
 	"/playground",
 	"/playground/(.*)",
 ]);
@@ -16,10 +16,12 @@ const isProtectedRoute = createRouteMatcher([
 	"/orgs/(.*)",
 ]);
 
+const isRootRedirect = createRouteMatcher(["/"]);
+
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
-		// Handle root path - redirect authenticated users to org dashboard
-		if (req.nextUrl.pathname === "/") {
+		// Handle root path redirect logic
+		if (isRootRedirect(req)) {
 			const { userId, orgId } = await auth();
 
 			if (userId) {

@@ -8,7 +8,7 @@ export default function SelectOrganizationPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <TaskChooseOrganization
-          afterSelectOrganizationUrl="http://localhost:4103/orgs/:orgId/dashboard"
+          redirectUrlComplete="http://localhost:4103/orgs/:orgId/dashboard"
           appearance={{
             baseTheme: dark,
             
@@ -210,7 +210,7 @@ export default function SelectOrganizationPage() {
             },
             
             layout: {
-              logoImageUrl: null,
+              logoImageUrl: undefined,
               showOptionalFields: true,
               logoPlacement: 'none'
             }
