@@ -1,5 +1,6 @@
 import { cn } from "@repo/ui/lib/utils";
 import type React from "react";
+import { FeatureList } from "@/src/components/feature-list";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -237,4 +238,7 @@ export const mdxComponents = {
       </td>
     );
   },
+
+  // Custom components
+  FeatureList,
 };
