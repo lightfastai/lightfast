@@ -1,17 +1,61 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { OrganizationDashboard } from "~/components/dashboard/organization-dashboard";
+import { Button } from "@repo/ui/components/ui/button";
+import { Plus, Sparkles, Key } from "lucide-react";
+import Link from "next/link";
+import { GoodAfternoon } from "./_components/good-afternoon";
+import { AgentList } from "./_components/agent-list";
 
 export default async function DashboardPage() {
-  const { userId, orgId } = await auth();
+  const { orgId } = await auth();
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <GoodAfternoon />
 
-  if (!orgId) {
-    redirect("/select-organization");
-  }
+        {/* Action Buttons */}
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-14 px-6 bg-card border-border hover:bg-muted/50 text-foreground"
+            asChild
+          >
+            <Link href="/agents/create">
+              <Plus className="w-5 h-5 mr-3" />
+              Create an agent
+            </Link>
+          </Button>
+          
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-14 px-6 bg-card border-border hover:bg-muted/50 text-foreground"
+            asChild
+          >
+            <Link href="/agents/generate">
+              <Sparkles className="w-5 h-5 mr-3" />
+              Generate an agent
+            </Link>
+          </Button>
+          
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-14 px-6 bg-card border-border hover:bg-muted/50 text-foreground"
+            asChild
+          >
+            <Link href="/settings/api-keys">
+              <Key className="w-5 h-5 mr-3" />
+              Get API Key
+            </Link>
+          </Button>
+        </div>
 
-  return <OrganizationDashboard organizationId={orgId} />;
+        {/* Agents List */}
+        <AgentList />
+      </div>
+    </div>
+  );
 }
