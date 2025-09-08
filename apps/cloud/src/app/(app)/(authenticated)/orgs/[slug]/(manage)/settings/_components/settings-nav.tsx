@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { cn } from "@repo/ui/lib/utils";
 import { Key } from "lucide-react";
 
-const settingsNavItems = [
+const getSettingsNavItems = (orgSlug: string) => [
   {
-    href: "/settings/api-keys",
+    href: `/orgs/${orgSlug}/settings/api-keys`,
     label: "API Keys",
     icon: Key,
     description: "Manage your API keys and tokens"
@@ -16,6 +16,10 @@ const settingsNavItems = [
 
 export function SettingsNav() {
   const pathname = usePathname();
+  const params = useParams();
+  const orgSlug = params.slug as string;
+  
+  const settingsNavItems = getSettingsNavItems(orgSlug);
 
   return (
     <nav className="space-y-1" role="navigation" aria-label="Settings navigation">
