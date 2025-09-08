@@ -1,11 +1,11 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9aea3e15-ed8f-4a73-8454-13af29491ede",
-  "prevId": "3bb0583f-d9ff-437b-84ce-d7cdb1832c5b",
+  "id": "0237db92-b5c9-4e0d-9a5c-54ee738c7b81",
+  "prevId": "60bd7d8d-d8b5-4047-848b-dc6e5cadf8ec",
   "tables": {
-    "lightfast_cloud_agent": {
-      "name": "lightfast_cloud_agent",
+    "lightfast_cloud_agent_registry": {
+      "name": "lightfast_cloud_agent_registry",
       "columns": {
         "id": {
           "name": "id",
@@ -14,16 +14,16 @@
           "notNull": true,
           "autoincrement": false
         },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
+        "clerk_user_id": {
+          "name": "clerk_user_id",
           "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "name": {
           "name": "name",
-          "type": "varchar(100)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -35,11 +35,11 @@
           "notNull": true,
           "autoincrement": false
         },
-        "author_user_id": {
-          "name": "author_user_id",
-          "type": "varchar(191)",
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
@@ -48,7 +48,21 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(CURRENT_TIMESTAMP)"
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -66,12 +80,34 @@
             "name"
           ],
           "isUnique": false
+        },
+        "created_at_idx": {
+          "name": "created_at_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "org_created_at_idx": {
+          "name": "org_created_at_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "user_id_idx": {
+          "name": "user_id_idx",
+          "columns": [
+            "clerk_user_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_cloud_agent_id": {
-          "name": "lightfast_cloud_agent_id",
+        "lightfast_cloud_agent_registry_id": {
+          "name": "lightfast_cloud_agent_registry_id",
           "columns": [
             "id"
           ]
@@ -220,118 +256,6 @@
       "compositePrimaryKeys": {
         "lightfast_cloud_api_key_id": {
           "name": "lightfast_cloud_api_key_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_cloud_deployment": {
-      "name": "lightfast_cloud_deployment",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bundle_url": {
-          "name": "bundle_url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {
-        "org_id_idx": {
-          "name": "org_id_idx",
-          "columns": [
-            "clerk_org_id"
-          ],
-          "isUnique": false
-        },
-        "org_created_at_idx": {
-          "name": "org_created_at_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "org_name_idx": {
-          "name": "org_name_idx",
-          "columns": [
-            "clerk_org_id",
-            "name"
-          ],
-          "isUnique": false
-        },
-        "user_id_idx": {
-          "name": "user_id_idx",
-          "columns": [
-            "clerk_user_id"
-          ],
-          "isUnique": false
-        },
-        "created_at_idx": {
-          "name": "created_at_idx",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_cloud_deployment_id": {
-          "name": "lightfast_cloud_deployment_id",
           "columns": [
             "id"
           ]
