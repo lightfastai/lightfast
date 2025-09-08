@@ -11,12 +11,11 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { uuidv4 } from "@repo/lib";
 
 /**
- * CloudAgent table represents registered agents.
- * 
- * Minimal schema - just tracks agent name, version, and bundle URL.
+ * CloudAgentRegistry table represents registered agents.
+ * Renamed from deployment table to proper agent registry.
  */
-export const CloudAgent = mysqlTable(
-  "lightfast_cloud_agent",
+export const CloudAgentRegistry = mysqlTable(
+  "lightfast_cloud_agent_registry",
   {
     /**
      * Unique identifier for the agent
@@ -27,14 +26,14 @@ export const CloudAgent = mysqlTable(
       .$defaultFn(() => uuidv4()),
 
     /**
-     * Reference to the organization that owns this agent
+     * Reference to the user (nullable for compatibility)
      */
-    clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
+    clerkUserId: varchar("clerk_user_id", { length: 191 }),
 
     /**
-     * Agent name - unique within organization
+     * Agent name
      */
-    name: varchar("name", { length: 100 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
 
     /**
      * URL to the agent bundle in Vercel Blob storage
@@ -42,28 +41,46 @@ export const CloudAgent = mysqlTable(
     bundleUrl: varchar("bundle_url", { length: 500 }).notNull(),
 
     /**
-     * User who created this agent
+     * Additional metadata (JSON field)
      */
-    authorUserId: varchar("author_user_id", { length: 191 }).notNull(),
+    metadata: json("metadata"),
 
     /**
      * Timestamp when created
      */
-    createdAt: datetime("created_at", { mode: "date" })
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: datetime("created_at", { mode: "string" })
+      .default(sql`(CURRENT_TIMESTAMP)`)
       .notNull(),
+
+    /**
+     * Reference to the organization that owns this agent
+     */
+    clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
+
+    /**
+     * User who created this agent
+     */
+    createdByUserId: varchar("created_by_user_id", { length: 191 }).notNull(),
   },
   (table) => ({
-    // Primary indexes
+    // Primary indexes (matching existing table)
     orgIdIdx: index("org_id_idx").on(table.clerkOrgId),
     orgNameIdx: index("org_name_idx").on(table.clerkOrgId, table.name),
+    createdAtIdx: index("created_at_idx").on(table.createdAt),
+    orgCreatedAtIdx: index("org_created_at_idx").on(table.clerkOrgId, table.createdAt),
+    userIdIdx: index("user_id_idx").on(table.clerkUserId),
   }),
 );
 
 // Type exports
-export type CloudAgent = typeof CloudAgent.$inferSelect;
-export type InsertCloudAgent = typeof CloudAgent.$inferInsert;
+export type CloudAgentRegistry = typeof CloudAgentRegistry.$inferSelect;
+export type InsertCloudAgentRegistry = typeof CloudAgentRegistry.$inferInsert;
 
 // Zod Schema exports
-export const insertCloudAgentSchema = createInsertSchema(CloudAgent);
-export const selectCloudAgentSchema = createSelectSchema(CloudAgent);
+export const insertCloudAgentRegistrySchema = createInsertSchema(CloudAgentRegistry);
+export const selectCloudAgentRegistrySchema = createSelectSchema(CloudAgentRegistry);
+
+// Backward compatibility exports (to be removed in future version)
+export const CloudAgent = CloudAgentRegistry;
+export type CloudAgent = CloudAgentRegistry;
+export type InsertCloudAgent = InsertCloudAgentRegistry;

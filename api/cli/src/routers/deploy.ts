@@ -70,7 +70,8 @@ export const deployRouter = {
           clerkOrgId: auth.organizationId,
           name,
           bundleUrl: blob.url,
-          authorUserId: auth.userId,
+          createdByUserId: auth.userId,
+          clerkUserId: auth.userId,
         });
 
         const [newAgent] = await db
@@ -159,7 +160,8 @@ export const deployRouter = {
           .update(CloudAgent)
           .set({
             bundleUrl: blob.url,
-            authorUserId: auth.userId,
+            createdByUserId: auth.userId,
+            clerkUserId: auth.userId,
           })
           .where(eq(CloudAgent.id, existingAgent.id));
 
