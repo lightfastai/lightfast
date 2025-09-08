@@ -3,6 +3,7 @@
  * This is the main router for cloud-specific API endpoints
  */
 
+import { agentRouter } from "./routers/agent";
 import { apiKeyRouter } from "./routers/apiKey";
 import { userRouter } from "./routers/auth/user";
 import { organizationRouter } from "./routers/organization";
@@ -13,6 +14,7 @@ import { createCallerFactory, createTRPCRouter } from "./trpc";
  * Contains all cloud-specific API endpoints
  */
 export const cloudAppRouter = createTRPCRouter({
+  agent: agentRouter,
   apiKey: apiKeyRouter,
   user: userRouter,
   organization: organizationRouter,

@@ -4,6 +4,7 @@
  */
 
 import { apiKeyRouter } from "./routers/auth/apiKey";
+import { deployRouter } from "./routers/deploy";
 import { createCallerFactory, createTRPCRouter } from "./trpc";
 
 /**
@@ -12,9 +13,7 @@ import { createCallerFactory, createTRPCRouter } from "./trpc";
  */
 export const cliRouter = createTRPCRouter({
   apiKey: apiKeyRouter,
-  // Future CLI-specific routes can be added here
-  // deployment: deploymentRouter,
-  // agent: agentRouter,
+  deploy: deployRouter,
 });
 
 // Create server-side caller
