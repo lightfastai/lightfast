@@ -23,6 +23,7 @@
     "@db/cloud": "workspace:*",
     "@repo/lib": "workspace:*",
     "@trpc/server": "catalog:",
+    "@vendor/storage": "workspace:*",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

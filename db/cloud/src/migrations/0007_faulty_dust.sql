@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_cloud_agent` DROP COLUMN `version`;

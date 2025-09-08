@@ -9,9 +9,6 @@ import { createLightfastCloudClient } from "@lightfastai/cloud-client";
 interface DeployOptions {
 	config?: string;
 	profile?: string;
-	name?: string;
-	version?: string;
-	environment?: "development" | "staging" | "production";
 	force?: boolean;
 	verbose?: boolean;
 }
@@ -20,15 +17,6 @@ export const deployCommand = new Command("deploy")
 	.description("Deploy agents to Lightfast cloud")
 	.option("-c, --config <path>", "Path to lightfast.config.ts file")
 	.option("--profile <name>", "Authentication profile to use")
-	.option(
-		"-n, --name <name>",
-		"Deployment name (defaults to package.json name)",
-	)
-	.option(
-		"--version <version>",
-		"Deployment version (defaults to package.json version)",
-	)
-	.option("-e, --environment <env>", "Target environment", "development")
 	.option("-f, --force", "Force deployment even if no changes detected")
 	.option("-v, --verbose", "Show detailed deployment information")
 	.addHelpText(
@@ -37,9 +25,6 @@ export const deployCommand = new Command("deploy")
 ${chalk.cyan("Examples:")}
   $ lightfast deploy                         # Deploy using default profile
   $ lightfast deploy --profile production    # Deploy using production profile
-  $ lightfast deploy --name my-agent         # Deploy with specific name
-  $ lightfast deploy --version 1.2.3        # Deploy with specific version
-  $ lightfast deploy --environment staging   # Deploy to staging environment
 
 ${chalk.cyan("Deployment Process:")}
   1. Validates authentication credentials
@@ -209,27 +194,83 @@ ${chalk.cyan("Authentication:")}
 				});
 			}
 
-			// Step 4: Prepare deployment metadata
-			const deploymentName = options.name || "lightfast-agent"; // TODO: Extract from package.json
-			const deploymentVersion = options.version || "1.0.0"; // TODO: Extract from package.json
-			const environment = options.environment || "development";
-
 			console.log(chalk.blue("\n→ Deploying to Lightfast cloud..."));
-			console.log(chalk.gray(`  Name: ${deploymentName}`));
-			console.log(chalk.gray(`  Version: ${deploymentVersion}`));
-			console.log(chalk.gray(`  Environment: ${environment}`));
+			console.log(chalk.gray(`  Agents found: ${bundleResult.bundles.length}`));
 
-			// Step 5: Deploy (stub implementation since API doesn't exist yet)
-			spinner = new CompilationSpinner("Uploading deployment...");
-			spinner.start();
+			// Step 5: Deploy each agent
+			const deployResults = [];
+			
+			for (const [index, bundle] of bundleResult.bundles.entries()) {
+				spinner = new CompilationSpinner(`Deploying ${bundle.id} (${index + 1}/${bundleResult.bundles.length})...`);
+				spinner.start();
 
-			// TODO: Replace this with actual deployment when API is ready
-			spinner.stop();
-			console.error(chalk.red("× Deployment not implemented yet"));
-			console.error(chalk.gray("  The deployment API is not yet available"));
-			console.error(chalk.gray("  Your bundle has been compiled and is ready at:"));
-			console.error(chalk.gray(`  ${bundleResult.outputDir}`));
-			process.exit(1);
+				try {
+					// Try to create first
+					const result = await client.deploy.create.mutate({
+						apiKey,
+						name: bundle.id,
+						bundleContent: bundle.content,
+						filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
+						contentType: "application/javascript",
+					});
+
+					spinner.stop();
+					console.log(chalk.green(`✅ ${bundle.id} deployed successfully`));
+					deployResults.push({ bundle: bundle.id, status: 'created', result });
+
+				} catch (createError: any) {
+					if (createError.data?.code === 'CONFLICT') {
+						// Agent exists, try to update
+						try {
+							const result = await client.deploy.update.mutate({
+								apiKey,
+								name: bundle.id,
+								bundleContent: bundle.content,
+								filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
+								contentType: "application/javascript",
+							});
+
+							spinner.stop();
+							console.log(chalk.green(`✅ ${bundle.id} updated successfully`));
+							deployResults.push({ bundle: bundle.id, status: 'updated', result });
+
+						} catch (updateError: any) {
+							spinner.stop();
+							console.error(chalk.red(`× Failed to update ${bundle.id}: ${updateError.message}`));
+							deployResults.push({ bundle: bundle.id, status: 'failed', error: updateError.message });
+						}
+					} else {
+						spinner.stop();
+						console.error(chalk.red(`× Failed to deploy ${bundle.id}: ${createError.message}`));
+						deployResults.push({ bundle: bundle.id, status: 'failed', error: createError.message });
+					}
+				}
+			}
+
+			// Summary
+			const successful = deployResults.filter(r => r.status === 'created' || r.status === 'updated');
+			const failed = deployResults.filter(r => r.status === 'failed');
+
+			console.log(chalk.blue("\n→ Deployment Summary"));
+			console.log(chalk.green(`  ✅ ${successful.length} agents deployed successfully`));
+			
+			if (failed.length > 0) {
+				console.log(chalk.red(`  ❌ ${failed.length} agents failed`));
+				failed.forEach(f => {
+					console.log(chalk.red(`    • ${f.bundle}: ${f.error}`));
+				});
+			}
+
+			if (options.verbose && successful.length > 0) {
+				console.log(chalk.gray("\n  Deployed agents:"));
+				successful.forEach(s => {
+					console.log(chalk.gray(`    • ${s.bundle} (${s.status})`));
+				});
+			}
+
+			if (failed.length > 0) {
+				process.exit(1);
+			}
 
 		} catch (error: any) {
 			if (spinner) {

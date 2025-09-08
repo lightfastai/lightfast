@@ -214,6 +214,9 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.4.3(typescript@5.9.2)
+      '@vendor/storage':
+        specifier: workspace:*
+        version: link:../../vendor/storage
       superjson:
         specifier: 'catalog:'
         version: 2.2.1
