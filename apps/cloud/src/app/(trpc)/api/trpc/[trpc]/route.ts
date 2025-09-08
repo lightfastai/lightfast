@@ -3,7 +3,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { cloudAppRouter, createTRPCContext } from "@api/cloud";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 /**
  * Configure basic CORS headers
