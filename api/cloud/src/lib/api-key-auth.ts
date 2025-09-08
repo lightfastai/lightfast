@@ -1,7 +1,7 @@
 /**
- * API Key authentication middleware for Lightfast Cloud
+ * API Key authentication utilities for Lightfast Cloud
  *
- * Handles extraction, validation, and authentication of API keys
+ * Provides functions for extracting, validating, and authenticating API keys
  * for CLI and programmatic access to the platform.
  */
 
