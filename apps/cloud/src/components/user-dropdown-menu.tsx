@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useClerk } from "@clerk/nextjs";
 import { useRouter, usePathname } from "next/navigation";
-import { Settings, LogOut, Key, Building2, Check } from "lucide-react";
+import { LogOut, Check } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -143,28 +143,6 @@ export const UserDropdownMenu = React.memo(function UserDropdownMenu() {
 										))}
 									</>
 								)}
-
-								<DropdownMenuSeparator />
-
-								<DropdownMenuItem asChild>
-									<Link
-										href="/settings"
-										className="flex items-center cursor-pointer"
-									>
-										<Settings className="mr-2 h-4 w-4" />
-										Settings
-									</Link>
-								</DropdownMenuItem>
-
-								<DropdownMenuItem asChild>
-									<Link
-										href="/settings/api-keys"
-										className="flex items-center cursor-pointer"
-									>
-										<Key className="mr-2 h-4 w-4" />
-										API Keys
-									</Link>
-								</DropdownMenuItem>
 
 								<DropdownMenuSeparator />
 
