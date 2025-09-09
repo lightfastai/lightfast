@@ -156,7 +156,8 @@
       "Bash(PORT=4104 pnpm dev)",
       "Read(//private/tmp/**)",
       "Read(//tmp/orgs/**)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Bash(npm run rebuild:*)"
     ],
     "deny": []
   },

@@ -565,12 +565,16 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
 
   /**
    * Extract agent-specific code by filtering out other agents
+   * FIXED: Now properly extracts tool definitions that agents reference
    */
   private extractAgentSpecificCode(
     compiledCode: string,
     targetAgentId: string, 
     agentDefinition: AgentDefinition
   ): string {
+    console.log(`[BUNDLER] Extracting agent-specific code for: ${targetAgentId}`);
+    console.log(`[BUNDLER] Agent uses tools:`, agentDefinition.metadata.tools);
+    
     // Find all agent definitions to filter out others
     const allDefinitions = extractAgentDefinitionsFromCode(compiledCode);
     const otherAgentIds = allDefinitions
@@ -579,7 +583,11 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
     
     let filteredCode = compiledCode;
     
-    // Remove other agent variable declarations
+    // STEP 1: Extract tool definitions that THIS agent actually needs
+    const requiredToolDefinitions = this.extractRequiredToolDefinitions(compiledCode, agentDefinition);
+    console.log(`[BUNDLER] Found ${requiredToolDefinitions.length} required tool definitions`);
+    
+    // STEP 2: Remove other agent variable declarations
     for (const otherAgentId of otherAgentIds) {
       const otherDefinition = allDefinitions.find(def => def.id === otherAgentId);
       if (otherDefinition) {
@@ -592,7 +600,7 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
       }
     }
     
-    // Remove other agents from the agents object, keeping only the target
+    // STEP 3: Remove other agents from the agents object, keeping only the target
     const agentsObjectMatch = filteredCode.match(/agents\s*:\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s);
     if (agentsObjectMatch) {
       const agentsContent = agentsObjectMatch[1];
@@ -607,6 +615,12 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
         filteredCode = filteredCode.replace(agentsObjectFull, newAgentsObject);
       }
     }
+    
+    // STEP 4: Remove unused tool definitions (but keep the ones this agent needs)
+    filteredCode = this.filterUnusedToolDefinitions(filteredCode, requiredToolDefinitions);
+    
+    // STEP 5: Clean up redundant imports and normalize import names
+    filteredCode = this.cleanupImports(filteredCode, targetAgentId, agentDefinition);
     
     return filteredCode;
   }
@@ -627,6 +641,353 @@ const mockModule = { default: {}, createLightfast, createAgent, gateway };
     }
     
     return null;
+  }
+
+  /**
+   * FIXED: Extract tool definitions that are actually referenced by the target agent
+   * This replaces the broken extractReferencedTools method
+   */
+  private extractRequiredToolDefinitions(compiledCode: string, agentDefinition: AgentDefinition): string[] {
+    const toolDefinitions: string[] = [];
+    
+    // If agent doesn't use tools, return empty array
+    if (!agentDefinition.metadata.tools || agentDefinition.metadata.tools.length === 0) {
+      console.log(`[BUNDLER] Agent ${agentDefinition.id} uses no tools`);
+      return [];
+    }
+    
+    console.log(`[BUNDLER] Looking for tool definitions for tools:`, agentDefinition.metadata.tools);
+    
+    // Find the actual agent variable definition to see what tool variables it references
+    const agentVarRegex = new RegExp(
+      `(?:const|let|var)\\s+${agentDefinition.variableName}\\s*=\\s*createAgent\\d*\\s*\\([\\s\\S]*?\\}\\s*\\)`,
+      'g'
+    );
+    
+    const agentDefMatch = compiledCode.match(agentVarRegex);
+    if (!agentDefMatch) {
+      console.warn(`[BUNDLER] Could not find agent definition for ${agentDefinition.variableName}`);
+      return [];
+    }
+    
+    const agentDefinitionCode = agentDefMatch[0];
+    console.log(`[BUNDLER] Found agent definition, extracting tool variable references...`);
+    
+    // Extract tool variable references from the agent definition
+    // Pattern: toolName: toolVariableName
+    const toolRefRegex = /(?:^|[,\s])([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+    const toolVariableNames: string[] = [];
+    let match;
+    
+    while ((match = toolRefRegex.exec(agentDefinitionCode)) !== null) {
+      const toolKey = match[1];
+      const toolVariable = match[2];
+      
+      // Check if this corresponds to a tool name from AST metadata
+      if (agentDefinition.metadata.tools.includes(toolKey)) {
+        console.log(`[BUNDLER] Found tool reference: ${toolKey} -> ${toolVariable}`);
+        toolVariableNames.push(toolVariable);
+      }
+    }
+    
+    // Now find the actual tool definitions for these variables
+    for (const toolVarName of toolVariableNames) {
+      const toolDefinition = this.extractToolDefinition(compiledCode, toolVarName);
+      if (toolDefinition) {
+        console.log(`[BUNDLER] Extracted tool definition for: ${toolVarName}`);
+        toolDefinitions.push(toolDefinition);
+      } else {
+        console.warn(`[BUNDLER] Could not find tool definition for: ${toolVarName}`);
+      }
+    }
+    
+    return toolDefinitions;
+  }
+
+  /**
+   * FIXED: Extract a single tool definition using improved parsing
+   * This replaces the complex and error-prone extractReferencedTools method
+   */
+  private extractToolDefinition(code: string, toolVarName: string): string | null {
+    console.log(`[BUNDLER] Searching for tool definition: ${toolVarName}`);
+    
+    // Find the tool definition - more reliable approach
+    const toolDefStartRegex = new RegExp(
+      `(const|let|var)\\s+${toolVarName}\\s*=\\s*createTool\\d*\\s*\\(`
+    );
+    
+    const startMatch = code.match(toolDefStartRegex);
+    if (!startMatch) {
+      console.log(`[BUNDLER] No tool definition found for: ${toolVarName}`);
+      return null;
+    }
+    
+    const startIndex = code.indexOf(startMatch[0]);
+    
+    // Find the end of the tool definition by counting parentheses
+    let parenCount = 0;
+    let inString = false;
+    let escapeNext = false;
+    let currentQuote = '';
+    let i = startIndex;
+    
+    // Find the opening parenthesis of createTool(
+    while (i < code.length && code[i] !== '(') {
+      i++;
+    }
+    
+    if (i >= code.length) {
+      console.warn(`[BUNDLER] Could not find opening parenthesis for ${toolVarName}`);
+      return null;
+    }
+    
+    parenCount = 1;
+    i++; // Move past the opening (
+    
+    // Count parentheses to find the matching closing one
+    while (i < code.length && parenCount > 0) {
+      const char = code[i];
+      
+      if (escapeNext) {
+        escapeNext = false;
+      } else if (char === '\\' && inString) {
+        escapeNext = true;
+      } else if (!inString && (char === '"' || char === "'" || char === '`')) {
+        inString = true;
+        currentQuote = char;
+      } else if (inString && char === currentQuote) {
+        inString = false;
+        currentQuote = '';
+      } else if (!inString) {
+        if (char === '(') {
+          parenCount++;
+        } else if (char === ')') {
+          parenCount--;
+        }
+      }
+      i++;
+    }
+    
+    // Find the semicolon after the closing parenthesis
+    while (i < code.length && /\s/.test(code[i])) {
+      i++;
+    }
+    if (i < code.length && code[i] === ';') {
+      i++;
+    }
+    
+    const toolDefinition = code.substring(startIndex, i).trim();
+    console.log(`[BUNDLER] Successfully extracted tool definition for ${toolVarName} (${toolDefinition.length} chars)`);
+    
+    return toolDefinition;
+  }
+
+  /**
+   * FIXED: Filter out tool definitions that are not needed by this agent
+   * Keep only the tool definitions that are actually required
+   */
+  private filterUnusedToolDefinitions(code: string, requiredToolDefinitions: string[]): string {
+    if (requiredToolDefinitions.length === 0) {
+      console.log(`[BUNDLER] No tools required, removing all tool definitions`);
+      return this.removeAllToolDefinitions(code);
+    }
+    
+    console.log(`[BUNDLER] Filtering to keep only ${requiredToolDefinitions.length} required tool definitions`);
+    
+    // Remove all tool definitions first
+    let filteredCode = this.removeAllToolDefinitions(code);
+    
+    // Add back the required tool definitions at the top (after imports)
+    const lines = filteredCode.split('\n');
+    const importEndIndex = this.findImportEndIndex(lines);
+    
+    // Insert required tool definitions after imports
+    const beforeImports = lines.slice(0, importEndIndex + 1);
+    const afterImports = lines.slice(importEndIndex + 1);
+    
+    const resultLines = [
+      ...beforeImports,
+      '',
+      '// Required tool definitions',
+      ...requiredToolDefinitions.map(def => def.trim()),
+      '',
+      ...afterImports
+    ];
+    
+    return resultLines.join('\n');
+  }
+  
+  /**
+   * Remove all tool definitions from code
+   */
+  private removeAllToolDefinitions(code: string): string {
+    let result = code;
+    
+    // Remove tool definitions with improved regex
+    const toolDefinitionRegex = /(?:^|\n)(?:const|let|var)\s+\w+(?:Tool|tool)\s*=\s*createTool\d*\s*\([\s\S]*?\);?\s*(?=\n|$)/gm;
+    result = result.replace(toolDefinitionRegex, '');
+    
+    // Clean up extra blank lines
+    result = result.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    return result;
+  }
+  
+  /**
+   * Find the index where imports end in the lines array
+   */
+  private findImportEndIndex(lines: string[]): number {
+    let lastImportIndex = -1;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('import ') && line.includes(' from ')) {
+        lastImportIndex = i;
+      } else if (line.startsWith('//') && (line.includes('Generated by') || line.includes('.ts'))) {
+        // Comment lines are often between imports
+        continue;
+      } else if (line === '' || line.startsWith('//')) {
+        // Empty lines or comments after imports
+        continue;
+      } else if (lastImportIndex >= 0) {
+        // Non-import line found after imports, stop here
+        break;
+      }
+    }
+    
+    return Math.max(lastImportIndex, 2); // Ensure we're past the header comment
+  }
+
+
+  /**
+   * Clean up imports by removing unused ones and normalizing numbered imports
+   */
+  private cleanupImports(
+    filteredCode: string,
+    targetAgentId: string,
+    agentDefinition: AgentDefinition
+  ): string {
+    // Find what imports are actually used by analyzing the remaining code
+    const usedImports = this.analyzeUsedImports(filteredCode, targetAgentId);
+    
+    // Extract all imports and filter to only used ones
+    const lines = filteredCode.split('\n');
+    const cleanedLines: string[] = [];
+    const importMap = new Map<string, string>(); // Maps numbered imports to clean names
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Skip import lines - we'll rebuild them
+      if (trimmedLine.startsWith('import ') && trimmedLine.includes(' from ')) {
+        continue;
+      }
+      
+      // Skip comment lines between imports
+      if (trimmedLine.startsWith('//') && 
+          (trimmedLine.includes('.ts') || trimmedLine.includes('Generated by'))) {
+        continue;
+      }
+      
+      // Add non-import lines
+      cleanedLines.push(line);
+    }
+    
+    // Build clean imports at the top
+    const cleanImports = this.buildCleanImports(usedImports);
+    
+    // Normalize numbered references in the code
+    let cleanedCode = cleanedLines.join('\n');
+    cleanedCode = this.normalizeNumberedReferences(cleanedCode);
+    
+    // Combine clean imports + cleaned code
+    return cleanImports.join('\n') + '\n' + cleanedCode;
+  }
+
+  /**
+   * FIXED: Analyze which imports are actually used in the filtered code
+   * Now properly detects tool-related imports
+   */
+  private analyzeUsedImports(filteredCode: string, targetAgentId: string): Set<string> {
+    const usedImports = new Set<string>();
+    
+    console.log(`[BUNDLER] Analyzing used imports for agent: ${targetAgentId}`);
+    
+    // Always need createLightfast for the main config
+    if (filteredCode.includes('createLightfast')) {
+      usedImports.add('lightfast/client:createLightfast');
+      console.log(`[BUNDLER] Adding import: createLightfast`);
+    }
+    
+    // Check for createAgent usage (with or without numbers)
+    if (/createAgent\d*\s*\(/.test(filteredCode)) {
+      usedImports.add('lightfast/agent:createAgent');
+      console.log(`[BUNDLER] Adding import: createAgent`);
+    }
+    
+    // Check for gateway usage (with or without numbers) 
+    if (/gateway\d*\s*\(/.test(filteredCode)) {
+      usedImports.add('@ai-sdk/gateway:gateway');
+      console.log(`[BUNDLER] Adding import: gateway`);
+    }
+    
+    // FIXED: Check for createTool usage - this is critical for tool definitions
+    if (/createTool\d*\s*\(/.test(filteredCode)) {
+      usedImports.add('lightfast/tool:createTool');
+      console.log(`[BUNDLER] Adding import: createTool`);
+    }
+    
+    // FIXED: Check for zod usage - often needed for tool input schemas
+    if (/\bz\d*\./.test(filteredCode)) {
+      usedImports.add('zod:z');
+      console.log(`[BUNDLER] Adding import: z (zod)`);
+    }
+    
+    console.log(`[BUNDLER] Total imports found:`, usedImports.size);
+    return usedImports;
+  }
+
+  /**
+   * Build clean import statements from used imports
+   */
+  private buildCleanImports(usedImports: Set<string>): string[] {
+    const imports: string[] = [];
+    
+    // Add header comment
+    imports.push('// Generated by Lightfast CLI from lightfast.config.ts');
+    
+    // Group imports by module
+    const modules = new Map<string, string[]>();
+    
+    for (const importSpec of usedImports) {
+      const [modulePath, exportName] = importSpec.split(':');
+      if (!modules.has(modulePath)) {
+        modules.set(modulePath, []);
+      }
+      modules.get(modulePath)!.push(exportName);
+    }
+    
+    // Generate clean import statements
+    for (const [modulePath, exportNames] of modules.entries()) {
+      if (exportNames.length === 1) {
+        imports.push(`import { ${exportNames[0]} } from "${modulePath}";`);
+      } else {
+        imports.push(`import { ${exportNames.join(', ')} } from "${modulePath}";`);
+      }
+    }
+    
+    return imports;
+  }
+
+  /**
+   * Normalize numbered references in code (createAgent6 -> createAgent, gateway2 -> gateway)
+   */
+  private normalizeNumberedReferences(code: string): string {
+    return code
+      .replace(/createAgent\d+/g, 'createAgent')
+      .replace(/gateway\d+/g, 'gateway')  
+      .replace(/createTool\d+/g, 'createTool')
+      .replace(/\bz\d+\./g, 'z.');
   }
 
   /**

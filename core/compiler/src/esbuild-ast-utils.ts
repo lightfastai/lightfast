@@ -121,17 +121,34 @@ function extractAgentMetadataFromCode(code: string, agentId: string, variableNam
     }
   }
   
-  // Extract tools from tools object
-  const toolsMatch = agentDefinition.match(/tools\s*:\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s);
+  // Extract tools from tools object (ignore commented-out tools)
+  const toolsMatch = agentDefinition.match(/(?:^|[^/])tools\s*:\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s);
   if (toolsMatch) {
     const toolsContent = toolsMatch[1];
-    const toolPropertyRegex = /(?:^|,)\s*(?:([a-zA-Z_$][a-zA-Z0-9_$]*)|['"]([^'"]+)['"])\s*:/gm;
-    let toolMatch: RegExpExecArray | null;
     
-    while ((toolMatch = toolPropertyRegex.exec(toolsContent)) !== null) {
-      const toolName = toolMatch[1] || toolMatch[2];
-      if (toolName && !metadata.tools.includes(toolName)) {
-        metadata.tools.push(toolName);
+    // Check if the tools definition is commented out by looking at the preceding context
+    const fullMatch = toolsMatch[0];
+    const toolsIndex = agentDefinition.indexOf(fullMatch);
+    
+    // Find the start of the line containing the tools definition
+    let lineStart = toolsIndex;
+    while (lineStart > 0 && agentDefinition[lineStart - 1] !== '\n') {
+      lineStart--;
+    }
+    
+    // Extract the line content before the tools definition to check for comments
+    const lineBeforeTools = agentDefinition.substring(lineStart, toolsIndex).trim();
+    
+    // Skip if the line starts with // or is within a comment block
+    if (!lineBeforeTools.startsWith('//') && !lineBeforeTools.includes('//')) {
+      const toolPropertyRegex = /(?:^|,)\s*(?:([a-zA-Z_$][a-zA-Z0-9_$]*)|['"]([^'"]+)['"])\s*:/gm;
+      let toolMatch: RegExpExecArray | null;
+      
+      while ((toolMatch = toolPropertyRegex.exec(toolsContent)) !== null) {
+        const toolName = toolMatch[1] || toolMatch[2];
+        if (toolName && !metadata.tools.includes(toolName)) {
+          metadata.tools.push(toolName);
+        }
       }
     }
   }
