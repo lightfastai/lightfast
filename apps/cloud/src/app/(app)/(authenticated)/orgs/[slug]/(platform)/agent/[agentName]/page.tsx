@@ -31,14 +31,13 @@ export default function AgentChatPage() {
 	// Generate session ID on mount
 	useEffect(() => {
 		setSessionId(
-			`chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+			`chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
 		);
 	}, [agentName]); // Reset session when agent changes
 
-
 	// Check if agent exists
 	const currentAgent = agentsQuery.data?.agents?.find(
-		(agent) => agent.name === agentName
+		(agent) => agent.name === agentName,
 	);
 
 	// Show loading state while fetching agents or generating session
@@ -116,7 +115,7 @@ export default function AgentChatPage() {
 			</div>
 
 			{/* Chat Interface - Full height with top padding */}
-			<div className="flex-1 pt-16">
+			<div className="flex-1">
 				<ChatInterface
 					agentId={agentName}
 					sessionId={sessionId}
@@ -127,3 +126,4 @@ export default function AgentChatPage() {
 		</div>
 	);
 }
+
