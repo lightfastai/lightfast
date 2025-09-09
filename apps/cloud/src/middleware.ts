@@ -25,7 +25,7 @@ export default clerkMiddleware(
 
 			if (userId) {
 				if (orgSlug) {
-					return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
+					return NextResponse.redirect(new URL(`/orgs/${orgSlug}/agent`, req.url));
 				} else {
 					// Let redirectToSignIn handle routing to appropriate auth flow
 					return redirectToSignIn();

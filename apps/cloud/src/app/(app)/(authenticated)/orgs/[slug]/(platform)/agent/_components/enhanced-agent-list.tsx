@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { ExternalLink, Copy, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +26,7 @@ const EnhancedAgentList = memo(function EnhancedAgentList() {
   const orgSlug = params.slug as string;
   
   const trpc = useTRPC();
-  const { data: agentsData, isLoading, error } = useQuery({
+  const { data: agentsData } = useSuspenseQuery({
     ...trpc.agent.list.queryOptions(),
   });
 
@@ -64,28 +64,6 @@ const EnhancedAgentList = memo(function EnhancedAgentList() {
     navigator.clipboard.writeText(text);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-10 bg-muted animate-pulse rounded" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-destructive">
-          Error loading agents: {error.message}
-        </p>
-      </div>
-    );
-  }
 
   if (!agentsData?.agents?.length) {
     return (

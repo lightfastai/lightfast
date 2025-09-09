@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
-import { LayoutDashboard, Settings, MessageSquare } from "lucide-react";
+import { Settings, MessageSquare } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
 import {
 	Sidebar,
@@ -35,12 +35,7 @@ const getNavigationSections = (orgSlug: string): NavigationSection[] => [
 		title: "Platform",
 		items: [
 			{
-				name: "Dashboard",
-				href: `/orgs/${orgSlug}/dashboard`,
-				icon: LayoutDashboard,
-			},
-			{
-				name: "Agent",
+				name: "Agents",
 				href: `/orgs/${orgSlug}/agent`,
 				icon: MessageSquare,
 			},
@@ -71,7 +66,7 @@ export function AppSidebar() {
 				<div className="flex items-center justify-between px-4 h-full group-data-[collapsible=icon]:justify-center">
 					{/* Logo only shows when expanded */}
 					<Link
-						href={`/orgs/${orgSlug}/dashboard`}
+						href={`/orgs/${orgSlug}/agent`}
 						className="flex items-center group-data-[collapsible=icon]:hidden"
 					>
 						<Icons.logo className="h-4 w-auto" />
