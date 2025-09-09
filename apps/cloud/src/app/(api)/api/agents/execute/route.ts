@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get the specific agent from the config
-    const targetAgent = agentConfig.config.agents[agentId];
+    const targetAgent = agentConfig.config.agents[agentId as keyof typeof agentConfig.config.agents];
     if (!targetAgent) {
       console.error(`[AGENT-EXEC] Agent '${agentId}' not found in bundle. Available agents:`, Object.keys(agentConfig.config.agents));
       return NextResponse.json({
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
     
-    console.log(`[AGENT-EXEC] Found target agent:`, targetAgent.name);
+    console.log(`[AGENT-EXEC] Found target agent:`, targetAgent.lightfastConfig?.name);
     console.log(`[AGENT-EXEC] Full target agent config:`, JSON.stringify(targetAgent, null, 2));
     
     // Create Redis memory instance using KV pattern from experimental app

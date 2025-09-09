@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, notFound, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, AlertCircle } from "lucide-react";
 import { ChatInterface } from "../_components/chat-interface";
 import { useTRPC } from "~/trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -13,6 +13,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+	Alert,
+	AlertDescription,
+} from "@repo/ui/components/ui/alert";
 
 export default function AgentChatPage() {
 	const params = useParams();
