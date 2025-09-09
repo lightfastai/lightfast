@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "../../core/cli/dist/index.js dev",
     "compile": "../../core/cli/dist/index.js compile",
-    "compile-nodejs": "node test-nodejs-bundling.js"
+    "compile-nodejs": "node test-nodejs-bundling.js",
+    "demo-multi-agent": "node multi-agent-demo.js"
   },
   "dependencies": {
     "@lightfastai/cli": "file:../../core/cli",

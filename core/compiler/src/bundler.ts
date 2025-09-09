@@ -72,6 +72,27 @@ export interface NodeJSBundlerOptions extends BundlerOptions {
   minify?: boolean;
 }
 
+export interface DependencyAnalysis {
+  agentCount: number;
+  agentDependencies: Map<string, string[]>;
+  sharedDependencies: string[];
+  uniqueDependencies: string[];
+  totalDependencies: number;
+  sharedRatio: number;
+}
+
+export interface BundleAnalysis {
+  bundleCount: number;
+  totalSizeMB: number;
+  avgSizeMB: number;
+  maxSizeMB: number;
+  minSizeMB: number;
+  uniqueDependencies: number;
+  duplicatedDependencies: number;
+  duplicationRatio: number;
+  efficiency: number;
+}
+
 /**
  * Generates a content hash for the bundle
  */
@@ -1562,6 +1583,338 @@ export function getTargetAgent() {
    */
   getOutputDir(): string {
     return this.outputDir;
+  }
+
+  /**
+   * Generate optimized multi-agent bundles with intelligent strategies
+   * Analyzes dependency patterns and chooses the best bundling approach
+   */
+  async generateMultiAgentBundles(
+    transpileResult: TranspileResult,
+    options: Partial<NodeJSBundlerOptions> = {}
+  ): Promise<{
+    strategy: 'individual' | 'shared' | 'hybrid';
+    bundles: NodeJSBundleOutput[];
+    sharedDependencies: string[];
+    totalSize: number;
+    analysis: BundleAnalysis;
+  }> {
+    console.log(`[MULTI-AGENT-BUNDLER] Analyzing multi-agent configuration...`);
+    
+    // Extract all agents from the configuration
+    const agentIds = await this.extractAgentIds(transpileResult.code);
+    
+    if (agentIds.length === 0) {
+      throw new Error('No agents found in configuration');
+    }
+
+    if (agentIds.length === 1) {
+      console.log(`[MULTI-AGENT-BUNDLER] Single agent detected, using standard bundling`);
+      const bundle = await this.generateNodeJSBundle(transpileResult, agentIds[0], options);
+      return {
+        strategy: 'individual',
+        bundles: [bundle],
+        sharedDependencies: bundle.dependencies,
+        totalSize: bundle.size,
+        analysis: this.analyzeBundleStrategy([bundle])
+      };
+    }
+
+    console.log(`[MULTI-AGENT-BUNDLER] Found ${agentIds.length} agents: ${agentIds.join(', ')}`);
+    
+    // Analyze dependency patterns across all agents
+    const dependencyAnalysis = await this.analyzeDependencyPatterns(transpileResult.code, agentIds);
+    
+    // Choose optimal bundling strategy
+    const strategy = this.chooseBundlingStrategy(dependencyAnalysis);
+    console.log(`[MULTI-AGENT-BUNDLER] Selected strategy: ${strategy}`);
+    
+    let bundles: NodeJSBundleOutput[];
+    
+    switch (strategy) {
+      case 'individual':
+        bundles = await this.generateIndividualBundles(transpileResult, agentIds, options);
+        break;
+      case 'shared':
+        bundles = await this.generateSharedBundle(transpileResult, agentIds, options);
+        break;
+      case 'hybrid':
+        bundles = await this.generateHybridBundles(transpileResult, agentIds, dependencyAnalysis, options);
+        break;
+    }
+    
+    const totalSize = bundles.reduce((sum, bundle) => sum + bundle.size, 0);
+    const sharedDependencies = this.extractSharedDependencies(bundles);
+    
+    console.log(`[MULTI-AGENT-BUNDLER] Strategy: ${strategy}, Bundles: ${bundles.length}, Total: ${(totalSize / 1024 / 1024).toFixed(2)}MB`);
+    
+    return {
+      strategy,
+      bundles,
+      sharedDependencies,
+      totalSize,
+      analysis: this.analyzeBundleStrategy(bundles)
+    };
+  }
+
+  /**
+   * Analyze dependency patterns across agents to determine optimal bundling
+   */
+  private async analyzeDependencyPatterns(code: string, agentIds: string[]): Promise<DependencyAnalysis> {
+    const agentDependencies = new Map<string, string[]>();
+    
+    // For each agent, determine its dependencies
+    for (const agentId of agentIds) {
+      // This is a simplified analysis - in reality, we'd need to extract
+      // agent-specific code and analyze its imports
+      const dependencies = this.extractPackageDependencies(code);
+      agentDependencies.set(agentId, dependencies);
+    }
+    
+    // Find common dependencies
+    const allDependencies = Array.from(agentDependencies.values()).flat();
+    const dependencyCount = new Map<string, number>();
+    
+    for (const dep of allDependencies) {
+      dependencyCount.set(dep, (dependencyCount.get(dep) || 0) + 1);
+    }
+    
+    const sharedDependencies = Array.from(dependencyCount.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([dep]) => dep);
+    
+    const uniqueDependencies = Array.from(dependencyCount.entries())
+      .filter(([_, count]) => count === 1)
+      .map(([dep]) => dep);
+    
+    return {
+      agentCount: agentIds.length,
+      agentDependencies,
+      sharedDependencies,
+      uniqueDependencies,
+      totalDependencies: dependencyCount.size,
+      sharedRatio: sharedDependencies.length / dependencyCount.size
+    };
+  }
+
+  /**
+   * Choose optimal bundling strategy based on dependency analysis
+   */
+  private chooseBundlingStrategy(analysis: DependencyAnalysis): 'individual' | 'shared' | 'hybrid' {
+    const { agentCount, sharedRatio, sharedDependencies, uniqueDependencies } = analysis;
+    
+    // Individual strategy: Each agent gets its own bundle
+    // Best for: Diverse dependencies, few shared dependencies
+    if (sharedRatio < 0.3 || agentCount <= 2) {
+      return 'individual';
+    }
+    
+    // Shared strategy: All agents in one bundle
+    // Best for: Many shared dependencies, small agent count
+    if (sharedRatio > 0.8 && agentCount <= 5) {
+      return 'shared';
+    }
+    
+    // Hybrid strategy: Shared base + individual extensions
+    // Best for: Mixed dependency patterns, larger agent count
+    return 'hybrid';
+  }
+
+  /**
+   * Generate individual bundles for each agent (current approach)
+   */
+  private async generateIndividualBundles(
+    transpileResult: TranspileResult,
+    agentIds: string[],
+    options: Partial<NodeJSBundlerOptions>
+  ): Promise<NodeJSBundleOutput[]> {
+    console.log(`[MULTI-AGENT-BUNDLER] Generating ${agentIds.length} individual bundles...`);
+    
+    const bundles: NodeJSBundleOutput[] = [];
+    
+    for (const agentId of agentIds) {
+      try {
+        const bundle = await this.generateNodeJSBundle(transpileResult, agentId, options);
+        bundles.push(bundle);
+        console.log(`[MULTI-AGENT-BUNDLER] ✅ ${agentId}: ${(bundle.size / 1024 / 1024).toFixed(2)}MB`);
+      } catch (error) {
+        console.error(`[MULTI-AGENT-BUNDLER] ❌ Failed to bundle ${agentId}:`, error);
+      }
+    }
+    
+    return bundles;
+  }
+
+  /**
+   * Generate single shared bundle containing all agents
+   */
+  private async generateSharedBundle(
+    transpileResult: TranspileResult,
+    agentIds: string[],
+    options: Partial<NodeJSBundlerOptions>
+  ): Promise<NodeJSBundleOutput[]> {
+    console.log(`[MULTI-AGENT-BUNDLER] Generating shared bundle for all agents...`);
+    
+    // Create a mega-bundle with all agents
+    const sharedBundle = await this.generateSharedAgentsBundle(
+      transpileResult,
+      agentIds,
+      options
+    );
+    
+    console.log(`[MULTI-AGENT-BUNDLER] ✅ Shared bundle: ${(sharedBundle.size / 1024 / 1024).toFixed(2)}MB for ${agentIds.length} agents`);
+    
+    return [sharedBundle];
+  }
+
+  /**
+   * Generate hybrid bundles with shared base and individual extensions
+   */
+  private async generateHybridBundles(
+    transpileResult: TranspileResult,
+    agentIds: string[],
+    analysis: DependencyAnalysis,
+    options: Partial<NodeJSBundlerOptions>
+  ): Promise<NodeJSBundleOutput[]> {
+    console.log(`[MULTI-AGENT-BUNDLER] Generating hybrid bundles (${analysis.sharedDependencies.length} shared deps)...`);
+    
+    // For now, fall back to individual bundles
+    // TODO: Implement true hybrid bundling with shared base layer
+    return this.generateIndividualBundles(transpileResult, agentIds, options);
+  }
+
+  /**
+   * Generate a shared bundle containing all agents
+   */
+  private async generateSharedAgentsBundle(
+    transpileResult: TranspileResult,
+    agentIds: string[],
+    options: Partial<NodeJSBundlerOptions>
+  ): Promise<NodeJSBundleOutput> {
+    const bundleId = `multi-agent-${agentIds.length}`;
+    const dependencies = this.extractPackageDependencies(transpileResult.code);
+    
+    // Use the full transpiled code (contains all agents)
+    const bundledCode = await this.createNodeJSBundleWithEsbuild(
+      transpileResult.code,
+      bundleId,
+      {
+        ...options,
+        baseDir: this.baseDir,
+        outputDir: this.outputDir,
+        compilerVersion: this.compilerVersion,
+        runtime: 'nodejs20.x',
+        bundleAllDependencies: options.bundleAllDependencies ?? true,
+        target: options.target ?? 'vercel',
+        minify: options.minify ?? true
+      }
+    );
+
+    const hash = generateHash(bundledCode);
+    
+    // Write shared bundle
+    const bundlesDir = resolve(this.outputDir, 'nodejs-bundles');
+    if (!existsSync(bundlesDir)) {
+      mkdirSync(bundlesDir, { recursive: true });
+    }
+
+    const filename = `${bundleId}.nodejs.${hash}.js`;
+    const filepath = resolve(bundlesDir, filename);
+    writeFileSync(filepath, bundledCode, 'utf-8');
+
+    const bundleSize = Buffer.byteLength(bundledCode, 'utf-8');
+
+    return {
+      id: bundleId,
+      hash,
+      filename,
+      filepath,
+      size: bundleSize,
+      runtime: 'nodejs20.x',
+      dependencies,
+      bundleType: options.minify ? 'production' : 'development',
+      executionMode: 'vercel-function',
+      metadata: {
+        id: bundleId,
+        hash,
+        name: `Multi-Agent Bundle (${agentIds.length} agents)`,
+        description: `Shared bundle containing: ${agentIds.join(', ')}`,
+        tools: [], // Would extract from all agents
+        models: [], // Would extract from all agents
+        compiledAt: new Date().toISOString(),
+        compilerVersion: this.compilerVersion
+      }
+    };
+  }
+
+  /**
+   * Extract shared dependencies across bundles
+   */
+  private extractSharedDependencies(bundles: NodeJSBundleOutput[]): string[] {
+    if (bundles.length <= 1) return bundles[0]?.dependencies || [];
+    
+    const dependencyCounts = new Map<string, number>();
+    
+    for (const bundle of bundles) {
+      for (const dep of bundle.dependencies) {
+        dependencyCounts.set(dep, (dependencyCounts.get(dep) || 0) + 1);
+      }
+    }
+    
+    return Array.from(dependencyCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([dep]) => dep);
+  }
+
+  /**
+   * Analyze bundle strategy effectiveness
+   */
+  private analyzeBundleStrategy(bundles: NodeJSBundleOutput[]): BundleAnalysis {
+    const totalSize = bundles.reduce((sum, b) => sum + b.size, 0);
+    const avgSize = totalSize / bundles.length;
+    const maxSize = Math.max(...bundles.map(b => b.size));
+    const minSize = Math.min(...bundles.map(b => b.size));
+    
+    const allDeps = bundles.flatMap(b => b.dependencies);
+    const uniqueDeps = [...new Set(allDeps)];
+    const duplicatedDeps = uniqueDeps.filter(dep => 
+      allDeps.filter(d => d === dep).length > 1
+    );
+    
+    return {
+      bundleCount: bundles.length,
+      totalSizeMB: +(totalSize / 1024 / 1024).toFixed(2),
+      avgSizeMB: +(avgSize / 1024 / 1024).toFixed(2),
+      maxSizeMB: +(maxSize / 1024 / 1024).toFixed(2),
+      minSizeMB: +(minSize / 1024 / 1024).toFixed(2),
+      uniqueDependencies: uniqueDeps.length,
+      duplicatedDependencies: duplicatedDeps.length,
+      duplicationRatio: duplicatedDeps.length / uniqueDeps.length,
+      efficiency: this.calculateBundleEfficiency(bundles)
+    };
+  }
+
+  /**
+   * Calculate bundle efficiency score (0-1, higher is better)
+   */
+  private calculateBundleEfficiency(bundles: NodeJSBundleOutput[]): number {
+    if (bundles.length === 1) return 1.0; // Single bundle is perfectly efficient
+    
+    const totalSize = bundles.reduce((sum, b) => sum + b.size, 0);
+    const avgSize = totalSize / bundles.length;
+    
+    // Calculate size variance (lower is better)
+    const variance = bundles.reduce((sum, b) => 
+      sum + Math.pow(b.size - avgSize, 2), 0) / bundles.length;
+    const sizeVariance = Math.sqrt(variance) / avgSize;
+    
+    // Calculate dependency duplication (lower is better)
+    const allDeps = bundles.flatMap(b => b.dependencies);
+    const uniqueDeps = [...new Set(allDeps)];
+    const duplicationRatio = 1 - (uniqueDeps.length / allDeps.length);
+    
+    // Efficiency = 1 - (size_variance * 0.3 + duplication_ratio * 0.7)
+    return Math.max(0, 1 - (sizeVariance * 0.3 + duplicationRatio * 0.7));
   }
 
   /**
