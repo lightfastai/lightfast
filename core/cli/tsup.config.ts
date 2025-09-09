@@ -22,7 +22,8 @@ export default defineConfig({
   external: [
     '@lightfastai/dev-server',
     'keytar', // Native module for secure credential storage
-    '@inquirer/prompts' // Has native dependencies
+    '@inquirer/prompts', // Has native dependencies
+    'typescript' // TypeScript Compiler API needs to be external
   ],
   async onSuccess() {
     const fs = await import('node:fs');

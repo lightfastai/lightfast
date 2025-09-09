@@ -44,7 +44,7 @@ export class CacheManager {
     this.baseDir = options.baseDir ?? process.cwd();
     this.cacheDir = options.cacheDir ?? '.lightfast';
     this.cachePath = join(this.baseDir, this.cacheDir);
-    this.outputDir = join(this.cachePath, 'compiled');
+    this.outputDir = join(this.cachePath, 'server');
     
     this.ensureCacheDir();
   }

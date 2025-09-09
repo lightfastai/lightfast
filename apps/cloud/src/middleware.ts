@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 const isPublicRoute = createRouteMatcher([
 	"/api/health",
 	"/api/cli/v1/(.*)",  // Allow all CLI API routes through tRPC
+	"/api/agents/execute",  // Allow agent execution testing
 	"/playground",
 	"/playground/(.*)",
 ]);
@@ -24,7 +25,7 @@ export default clerkMiddleware(
 
 			if (userId) {
 				if (orgSlug) {
-					return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, req.url));
+					return NextResponse.redirect(new URL(`/orgs/${orgSlug}/agent`, req.url));
 				} else {
 					// Let redirectToSignIn handle routing to appropriate auth flow
 					return redirectToSignIn();

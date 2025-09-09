@@ -22,10 +22,15 @@ export const deployRouter = {
         name: z
           .string()
           .min(1, "Name is required")
-          .max(100, "Name must be less than 100 characters"),
-        bundleContent: z.string().min(1, "Bundle content is required"),
-        filename: z.string().min(1, "Filename is required"),
-        contentType: z.string().default("application/javascript"),
+          .max(100, "Name must be less than 100 characters")
+          .regex(/^[a-zA-Z0-9-_]+$/, "Name can only contain letters, numbers, hyphens, and underscores"),
+        bundleContent: z.string()
+          .min(1, "Bundle content is required")
+          .max(10 * 1024 * 1024, "Bundle size cannot exceed 10MB"),
+        filename: z.string()
+          .min(1, "Filename is required")
+          .regex(/^[a-zA-Z0-9-_.]+\.js$/, "Filename must be a valid JavaScript file"),
+        contentType: z.literal("application/javascript"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -114,10 +119,18 @@ export const deployRouter = {
     .input(
       z.object({
         apiKey: z.string(),
-        name: z.string().min(1, "Agent name is required"),
-        bundleContent: z.string().min(1, "Bundle content is required"),
-        filename: z.string().min(1, "Filename is required"),
-        contentType: z.string().default("application/javascript"),
+        name: z
+          .string()
+          .min(1, "Agent name is required")
+          .max(100, "Name must be less than 100 characters")
+          .regex(/^[a-zA-Z0-9-_]+$/, "Name can only contain letters, numbers, hyphens, and underscores"),
+        bundleContent: z.string()
+          .min(1, "Bundle content is required")
+          .max(10 * 1024 * 1024, "Bundle size cannot exceed 10MB"),
+        filename: z.string()
+          .min(1, "Filename is required")
+          .regex(/^[a-zA-Z0-9-_.]+\.js$/, "Filename must be a valid JavaScript file"),
+        contentType: z.literal("application/javascript"),
       }),
     )
     .mutation(async ({ ctx, input }) => {

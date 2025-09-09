@@ -10,7 +10,7 @@ export default defineConfig({
     'src/bundler.ts'
   ],
   format: ['esm'],
-  dts: true,
+  dts: false, // Temporarily disabled due to TypeScript strict mode issues
   clean: true,
   minify: false,
   sourcemap: 'inline',

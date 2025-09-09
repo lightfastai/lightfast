@@ -65,7 +65,7 @@ export const UserDropdownMenu = React.memo(function UserDropdownMenu() {
 	) => {
 		try {
 			await setActive({ organization: organizationId });
-			router.push(`/orgs/${slug}/dashboard`);
+			router.push(`/orgs/${slug}/agent`);
 		} catch (error) {
 			console.error("Failed to switch organization:", error);
 		}

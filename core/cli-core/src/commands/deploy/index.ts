@@ -1,16 +1,20 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { createCompiler, CompilationSpinner } from "@lightfastai/compiler";
-import { resolve } from "path";
+import { resolve, join } from "path";
 import { existsSync, readFileSync } from "fs";
 import { profileManager } from "../../profiles/profile-manager.js";
 import { createLightfastCloudClient } from "@lightfastai/cloud-client";
+import { buildCommand } from "../build/index.js";
 
 interface DeployOptions {
 	config?: string;
 	profile?: string;
 	force?: boolean;
 	verbose?: boolean;
+	build?: boolean;
+	dryRun?: boolean;
+	skipBuild?: boolean;
 }
 
 export const deployCommand = new Command("deploy")
@@ -19,19 +23,25 @@ export const deployCommand = new Command("deploy")
 	.option("--profile <name>", "Authentication profile to use")
 	.option("-f, --force", "Force deployment even if no changes detected")
 	.option("-v, --verbose", "Show detailed deployment information")
+	.option("--build", "Run production build before deploy (default: true)")
+	.option("--skip-build", "Skip build step and use existing bundles")
+	.option("--dry-run", "Validate and preview deployment without uploading")
 	.addHelpText(
 		"after",
 		`
 ${chalk.cyan("Examples:")}
-  $ lightfast deploy                         # Deploy using default profile
+  $ lightfast deploy                         # Build and deploy using default profile
   $ lightfast deploy --profile production    # Deploy using production profile
+  $ lightfast deploy --skip-build           # Deploy existing bundles without rebuilding
+  $ lightfast deploy --dry-run              # Preview deployment without uploading
 
 ${chalk.cyan("Deployment Process:")}
   1. Validates authentication credentials
-  2. Compiles TypeScript configuration
-  3. Generates deployment bundles
-  4. Uploads to Lightfast cloud platform
-  5. Provides deployment URL and status
+  2. Runs production build (unless --skip-build)
+  3. Loads built agent bundles from manifest
+  4. Uploads individual agent bundles to cloud
+  5. Creates agent registry entries
+  6. Provides deployment summary and URLs
 
 ${chalk.cyan("Authentication:")}
   • Use 'lightfast auth login' to authenticate first
@@ -135,127 +145,170 @@ ${chalk.cyan("Authentication:")}
 				process.exit(1);
 			}
 
-			console.log(chalk.gray(`  Config: ${configPath}`));
-			console.log(chalk.gray(`  Project: ${projectRoot}`));
+			if (options.verbose) {
+				console.log(chalk.gray(`  Config: ${configPath}`));
+				console.log(chalk.gray(`  Project: ${projectRoot}`));
+				console.log(chalk.gray(`  Build: ${!options.skipBuild ? 'enabled' : 'skipped'}`));
+				console.log(chalk.gray(`  Dry run: ${options.dryRun ? 'enabled' : 'disabled'}`));
+			}
 
-			// Step 3: Generate deployment bundles
-			spinner = new CompilationSpinner(
-				"Compiling and bundling for deployment...",
-			);
-			spinner.start();
-
-			const compiler = createCompiler({
-				baseDir: projectRoot,
-				generateBundles: false, // We'll generate bundles explicitly
-				useCache: !options.force,
-			});
-
-			// First compile the configuration
-			const compileResult = await compiler.compile({
-				configPath: resolvedConfigPath,
-				force: options.force,
-			});
-
-			if (compileResult.errors.length > 0) {
-				spinner.stop();
-				console.error(chalk.red("× Compilation failed"));
-				compileResult.errors.forEach((error) => {
-					console.error(chalk.red(`  • ${error}`));
-				});
-
-				if (compileResult.warnings.length > 0) {
-					console.error(chalk.yellow("\nWarnings:"));
-					compileResult.warnings.forEach((warning) => {
-						console.error(chalk.yellow(`  • ${warning}`));
-					});
+			// Step 3: Production build (unless skipped)
+			if (!options.skipBuild) {
+				console.log(chalk.blue("\n→ Running production build..."));
+				
+				// Run build command programmatically
+				const buildArgs = [
+					'build',
+					...(options.config ? ['--config', options.config] : []),
+					...(options.force ? ['--force'] : []),
+					...(options.verbose ? ['--verbose'] : []),
+				];
+				
+				try {
+					await buildCommand.parseAsync(buildArgs, { from: 'user' });
+				} catch (buildError: any) {
+					console.error(chalk.red("× Production build failed"));
+					console.error(chalk.gray("  Fix build errors before deploying"));
+					process.exit(1);
 				}
+			} else {
+				console.log(chalk.blue("\n→ Using existing bundles (build skipped)..."));
+			}
+
+			// Step 4: Load built bundles from manifest
+			const manifestPath = join(projectRoot, '.lightfast/dist/manifest.json');
+			if (!existsSync(manifestPath)) {
+				console.error(chalk.red("× No built bundles found"));
+				console.error(chalk.gray("  Run 'lightfast build' first or use --build flag"));
+				console.error(chalk.gray(`  Expected manifest at: ${manifestPath}`));
 				process.exit(1);
 			}
 
-			// Generate deployment bundles
-			const bundleResult = await compiler.generateDeploymentBundles({
-				configPath: resolvedConfigPath,
-				force: options.force,
-			});
+			let manifest;
+			try {
+				const manifestContent = readFileSync(manifestPath, 'utf-8');
+				manifest = JSON.parse(manifestContent);
+			} catch (error) {
+				console.error(chalk.red("× Failed to read bundle manifest"));
+				console.error(chalk.gray(`  Manifest path: ${manifestPath}`));
+				console.error(chalk.gray("  Try rebuilding with 'lightfast build'"));
+				process.exit(1);
+			}
 
-			spinner.stop();
+			if (!manifest.bundles || manifest.bundles.length === 0) {
+				console.error(chalk.red("× No agent bundles found in manifest"));
+				console.error(chalk.gray("  Ensure your lightfast.config.ts defines agents"));
+				process.exit(1);
+			}
 
-			console.log(chalk.green("√ Compilation and bundling completed"));
+			console.log(chalk.green(`√ Found ${manifest.bundles.length} agent bundles`));
 			if (options.verbose) {
-				console.log(
-					chalk.gray(`  Bundles generated: ${bundleResult.bundles.length}`),
-				);
-				bundleResult.bundles.forEach((bundle) => {
-					console.log(
-						chalk.gray(
-							`    - ${bundle.id} (${bundle.hash.substring(0, 8)}...) - ${bundle.size} bytes`,
-						),
-					);
-				});
+				console.log(chalk.gray(`  Manifest version: ${manifest.version}`));
+				console.log(chalk.gray(`  Compiled at: ${manifest.compiledAt}`));
+				console.log(chalk.gray(`  Compiler version: ${manifest.compilerVersion}`));
 			}
 
 			console.log(chalk.blue("\n→ Deploying to Lightfast cloud..."));
-			console.log(chalk.gray(`  Agents found: ${bundleResult.bundles.length}`));
 
-			// Step 5: Deploy each agent
+			// Step 5: Deploy each agent bundle
 			const deployResults = [];
 			
-			for (const [index, bundle] of bundleResult.bundles.entries()) {
-				spinner = new CompilationSpinner(`Deploying ${bundle.id} (${index + 1}/${bundleResult.bundles.length})...`);
+			for (const [index, bundleInfo] of manifest.bundles.entries()) {
+				const bundlePath = join(projectRoot, '.lightfast/dist', bundleInfo.file);
+				
+				if (options.dryRun) {
+					console.log(chalk.cyan(`${index + 1}/${manifest.bundles.length} Would deploy: ${bundleInfo.id}`));
+					console.log(chalk.gray(`   File: ${bundleInfo.file}`));
+					console.log(chalk.gray(`   Size: ${bundleInfo.size} bytes`));
+					console.log(chalk.gray(`   Hash: ${bundleInfo.hash}`));
+					if (bundleInfo.tools?.length > 0) {
+						console.log(chalk.gray(`   Tools: ${bundleInfo.tools.join(', ')}`));
+					}
+					if (bundleInfo.models?.length > 0) {
+						console.log(chalk.gray(`   Models: ${bundleInfo.models.join(', ')}`));
+					}
+					deployResults.push({ bundle: bundleInfo.id, status: 'dry-run', size: bundleInfo.size });
+					continue;
+				}
+
+				if (!existsSync(bundlePath)) {
+					console.error(chalk.red(`× Bundle file not found: ${bundlePath}`));
+					deployResults.push({ bundle: bundleInfo.id, status: 'failed', error: 'Bundle file not found' });
+					continue;
+				}
+
+				spinner = new CompilationSpinner(`Deploying ${bundleInfo.id} (${index + 1}/${manifest.bundles.length})...`);
 				spinner.start();
 
 				try {
 					// Read bundle content from file
-					const bundleContent = readFileSync(bundle.filepath, 'utf-8');
+					const bundleContent = readFileSync(bundlePath, 'utf-8');
 					
 					// Try to create first
 					const result = await client.deploy.create.mutate({
 						apiKey,
-						name: bundle.id,
+						name: bundleInfo.id,
 						bundleContent,
-						filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
+						filename: bundleInfo.file.replace('bundles/', ''),
 						contentType: "application/javascript",
 					});
 
 					spinner.stop();
-					console.log(chalk.green(`✅ ${bundle.id} deployed successfully`));
-					deployResults.push({ bundle: bundle.id, status: 'created', result });
+					console.log(chalk.green(`✅ ${bundleInfo.id} deployed successfully`));
+					deployResults.push({ bundle: bundleInfo.id, status: 'created', result });
 
 				} catch (createError: any) {
 					if (createError.data?.code === 'CONFLICT') {
 						// Agent exists, try to update
 						try {
-							// Read bundle content from file
-							const bundleContent = readFileSync(bundle.filepath, 'utf-8');
-							
 							const result = await client.deploy.update.mutate({
 								apiKey,
-								name: bundle.id,
-								bundleContent,
-								filename: `${bundle.id}-${bundle.hash.substring(0, 8)}.js`,
+								name: bundleInfo.id,
+								bundleContent: readFileSync(bundlePath, 'utf-8'),
+								filename: bundleInfo.file.replace('bundles/', ''),
 								contentType: "application/javascript",
 							});
 
 							spinner.stop();
-							console.log(chalk.green(`✅ ${bundle.id} updated successfully`));
-							deployResults.push({ bundle: bundle.id, status: 'updated', result });
+							console.log(chalk.green(`✅ ${bundleInfo.id} updated successfully`));
+							deployResults.push({ bundle: bundleInfo.id, status: 'updated', result });
 
 						} catch (updateError: any) {
 							spinner.stop();
-							console.error(chalk.red(`× Failed to update ${bundle.id}: ${updateError.message}`));
-							deployResults.push({ bundle: bundle.id, status: 'failed', error: updateError.message });
+							console.error(chalk.red(`× Failed to update ${bundleInfo.id}: ${updateError.message}`));
+							deployResults.push({ bundle: bundleInfo.id, status: 'failed', error: updateError.message });
 						}
 					} else {
 						spinner.stop();
-						console.error(chalk.red(`× Failed to deploy ${bundle.id}: ${createError.message}`));
-						deployResults.push({ bundle: bundle.id, status: 'failed', error: createError.message });
+						console.error(chalk.red(`× Failed to deploy ${bundleInfo.id}: ${createError.message}`));
+						deployResults.push({ bundle: bundleInfo.id, status: 'failed', error: createError.message });
 					}
 				}
 			}
 
-			// Summary
+			// Step 6: Summary
 			const successful = deployResults.filter(r => r.status === 'created' || r.status === 'updated');
 			const failed = deployResults.filter(r => r.status === 'failed');
+			const dryRun = deployResults.filter(r => r.status === 'dry-run');
+
+			if (options.dryRun) {
+				console.log(chalk.blue("\n🔍 Dry Run Summary"));
+				console.log(chalk.cyan(`  📋 ${dryRun.length} agents ready for deployment`));
+				
+				const totalSize = dryRun.reduce((sum, r) => sum + (r.size || 0), 0);
+				console.log(chalk.gray(`  📊 Total bundle size: ${Math.round(totalSize / 1024)} KB`));
+				
+				if (options.verbose) {
+					console.log(chalk.gray("\n  Agents to deploy:"));
+					dryRun.forEach(d => {
+						console.log(chalk.gray(`    • ${d.bundle} (${Math.round((d.size || 0) / 1024)} KB)`));
+					});
+				}
+				
+				console.log(chalk.blue("\n✨ Ready for deployment!"));
+				console.log(chalk.gray("   Run without --dry-run to deploy to cloud"));
+				return;
+			}
 
 			console.log(chalk.blue("\n→ Deployment Summary"));
 			console.log(chalk.green(`  ✅ ${successful.length} agents deployed successfully`));
@@ -272,6 +325,13 @@ ${chalk.cyan("Authentication:")}
 				successful.forEach(s => {
 					console.log(chalk.gray(`    • ${s.bundle} (${s.status})`));
 				});
+			}
+
+			// Step 7: Success next steps
+			if (successful.length > 0 && failed.length === 0) {
+				console.log(chalk.blue("\n🚀 All agents deployed successfully!"));
+				console.log(chalk.gray("   Your agents are now available in the Lightfast cloud"));
+				console.log(chalk.gray("   Visit https://cloud.lightfast.ai to manage and monitor them"));
 			}
 
 			if (failed.length > 0) {

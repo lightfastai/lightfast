@@ -1,0 +1,20 @@
+{
+  "name": "exa-search-agent-example",
+  "version": "1.0.0",
+  "description": "Example Lightfast agent using ExaJS for complex dependency testing",
+  "type": "module",
+  "scripts": {
+    "dev": "../../core/cli/dist/index.js dev",
+    "compile": "../../core/cli/dist/index.js compile",
+    "compile-nodejs": "node test-nodejs-bundling.js",
+    "demo-multi-agent": "node multi-agent-demo.js"
+  },
+  "dependencies": {
+    "@lightfastai/cli": "file:../../core/cli",
+    "@types/node": "^24.3.0",
+    "exa-js": "^1.6.13",
+    "lightfast": "file:../../core/lightfast",
+    "typescript": "^5.9.2",
+    "zod": "^3.25.76"
+  }
+}
