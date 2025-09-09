@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
-import { LayoutDashboard, Settings } from "lucide-react";
+import { LayoutDashboard, Settings, MessageSquare } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
 import {
 	Sidebar,
@@ -38,6 +38,11 @@ const getNavigationSections = (orgSlug: string): NavigationSection[] => [
 				name: "Dashboard",
 				href: `/orgs/${orgSlug}/dashboard`,
 				icon: LayoutDashboard,
+			},
+			{
+				name: "Agent",
+				href: `/orgs/${orgSlug}/agent`,
+				icon: MessageSquare,
 			},
 		],
 	},

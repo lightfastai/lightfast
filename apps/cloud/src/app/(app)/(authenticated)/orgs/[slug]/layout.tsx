@@ -22,7 +22,9 @@ export default async function OrganizationLayout({
 
 	// Validate that the slug in URL matches the user's current organization
 	if (slug !== orgSlug) {
-		console.log(`User ${userId} attempted to access org '${slug}' but belongs to org '${orgSlug}'`);
+		console.log(
+			`User ${userId} attempted to access org '${slug}' but belongs to org '${orgSlug}'`,
+		);
 		notFound();
 	}
 
@@ -41,7 +43,7 @@ export default async function OrganizationLayout({
 				<SidebarProvider>
 					<AppSidebar />
 					<SidebarInset>
-						<div className="flex flex-1 flex-col bg-muted/10 border border-border/30 rounded-lg">
+						<div className="flex flex-1 flex-col bg-muted/10 border border-border/30 rounded-lg overflow-hidden">
 							{children}
 						</div>
 					</SidebarInset>
@@ -50,3 +52,4 @@ export default async function OrganizationLayout({
 		</>
 	);
 }
+

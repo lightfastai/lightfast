@@ -25,7 +25,7 @@ export const maxDuration = 60; // 1 minute timeout
  * {
  *   "agentId": "researcher",
  *   "sessionId": "session-123",
- *   "input": { "query": "test search" }
+ *   "messages": [{ "id": "msg-1", "role": "user", "parts": [{ "type": "text", "text": "test search" }] }]
  * }
  */
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { agentId, sessionId, input } = body;
+    const { agentId, sessionId, messages } = body;
     
     // Validate required parameters
     if (!agentId) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
     
     console.log(`[AGENT-EXEC] Executing agent: ${agentId}, session: ${sessionId} for org: ${organizationId}`);
-    console.log(`[AGENT-EXEC] Input:`, input);
+    console.log(`[AGENT-EXEC] Messages:`, messages);
     
     // Lookup agent in database by name and organization
     const cloudAgent = await db
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
     
-    const agent = cloudAgent[0];
+    const agent = cloudAgent[0]!; // Safe: we already checked cloudAgent.length
     const bundleUrl = agent.bundleUrl;
     
     console.log(`[AGENT-EXEC] Found agent '${agent.name}' (ID: ${agent.id})`);
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       );
       
       // Extract the agent configuration
-      agentConfig = result.default || result || globalContext.module.exports?.default || globalContext.module.exports;
+      agentConfig = (result as any)?.default || result || (globalContext.module.exports as any)?.default || globalContext.module.exports;
       console.log(`[AGENT-EXEC] Agent config extracted:`, agentConfig?.config ? 'Found config' : 'No config found');
       
     } catch (evalError) {
@@ -231,21 +231,15 @@ export async function POST(request: NextRequest) {
     try {
       // The key insight: fetchRequestHandler expects to parse the original HTTP request
       // We need to create a new request with the expected message format
-      // Go back to parts format since it got us past message extraction
-      const messages = [
-        {
-          id: crypto.randomUUID(),
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: input.query || JSON.stringify(input)
-            }
-          ]
-        }
-      ];
+      // Validate messages format
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: "messages array is required and must not be empty"
+        }, { status: 400 });
+      }
       
-      console.log(`[AGENT-EXEC] Forwarding request with UI messages format`);
+      console.log(`[AGENT-EXEC] Forwarding request with ${messages.length} messages`);
       // Extract the actual configuration from the nested structure
       // Import the gateway function to properly construct the model
       const { gateway } = await import("@ai-sdk/gateway");
@@ -289,6 +283,7 @@ export async function POST(request: NextRequest) {
           tools: agentConfig.tools,
         }),
         sessionId,
+        resourceId: sessionId, // Use sessionId as resourceId
         memory,
         req: newRequest, // Pass the new request with proper message format
         enableResume: true,
@@ -392,7 +387,7 @@ export async function GET() {
       })),
       instructions: {
         deploy: "Use 'lightfast deploy' to deploy agents to this organization",
-        execute: "POST /api/agents/execute with {\"agentId\": \"<name>\", \"sessionId\": \"<session>\", \"input\": {...}}"
+        execute: "POST /api/agents/execute with {\"agentId\": \"<name>\", \"sessionId\": \"<session>\", \"messages\": [...]}"
       },
       count: deployedAgents.length
     });
