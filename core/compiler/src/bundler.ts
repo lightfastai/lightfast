@@ -38,6 +38,13 @@ export interface BundleOutput {
   metadata: BundleMetadata;
 }
 
+export interface NodeJSBundleOutput extends BundleOutput {
+  runtime: 'nodejs20.x';
+  dependencies: string[];
+  bundleType: 'production' | 'development';
+  executionMode: 'vercel-function';
+}
+
 export interface BundleManifest {
   version: string;
   compiledAt: string;
@@ -56,6 +63,13 @@ export interface BundlerOptions {
   baseDir: string;
   outputDir?: string;
   compilerVersion?: string;
+}
+
+export interface NodeJSBundlerOptions extends BundlerOptions {
+  runtime: 'nodejs20.x';
+  bundleAllDependencies: boolean;
+  target: 'vercel' | 'aws-lambda' | 'local';
+  minify?: boolean;
 }
 
 /**
@@ -1549,11 +1563,273 @@ export function getTargetAgent() {
   getOutputDir(): string {
     return this.outputDir;
   }
+
+  /**
+   * Generate Node.js runtime bundle with full dependency bundling
+   * This method creates production-ready bundles for Vercel Node.js Functions
+   */
+  async generateNodeJSBundle(
+    transpileResult: TranspileResult,
+    agentId: string,
+    options: Partial<NodeJSBundlerOptions> = {}
+  ): Promise<NodeJSBundleOutput> {
+    if (transpileResult.errors.length > 0) {
+      throw new Error(`Cannot bundle due to transpilation errors: ${transpileResult.errors.join(', ')}`);
+    }
+
+    const nodeJSOptions: NodeJSBundlerOptions = {
+      ...options,
+      baseDir: this.baseDir,
+      outputDir: this.outputDir,
+      compilerVersion: this.compilerVersion,
+      runtime: 'nodejs20.x',
+      bundleAllDependencies: options.bundleAllDependencies ?? true,
+      target: options.target ?? 'vercel',
+      minify: options.minify ?? true
+    };
+
+    console.log(`[BUNDLER] Generating Node.js runtime bundle for: ${agentId}`);
+    console.log(`[BUNDLER] Bundle all dependencies: ${nodeJSOptions.bundleAllDependencies}`);
+    console.log(`[BUNDLER] Target platform: ${nodeJSOptions.target}`);
+
+    // Extract dependencies from the transpiled code
+    const dependencies = this.extractPackageDependencies(transpileResult.code);
+    console.log(`[BUNDLER] Found ${dependencies.length} dependencies:`, dependencies);
+
+    // Generate full Node.js bundle using esbuild
+    const bundledCode = await this.createNodeJSBundleWithEsbuild(
+      transpileResult.code,
+      agentId,
+      nodeJSOptions
+    );
+
+    // Generate hash from bundled code
+    const hash = generateHash(bundledCode);
+
+    // Create metadata
+    const metadata = extractAgentMetadata(transpileResult.code, agentId);
+    
+    // Write bundle file
+    const bundlesDir = resolve(this.outputDir, 'nodejs-bundles');
+    if (!existsSync(bundlesDir)) {
+      mkdirSync(bundlesDir, { recursive: true });
+    }
+
+    const filename = `${agentId}.nodejs.${hash}.js`;
+    const filepath = resolve(bundlesDir, filename);
+    writeFileSync(filepath, bundledCode, 'utf-8');
+
+    const bundleSize = Buffer.byteLength(bundledCode, 'utf-8');
+    const sizeMB = (bundleSize / 1024 / 1024).toFixed(2);
+    console.log(`[BUNDLER] Node.js bundle created: ${filename} (${sizeMB}MB)`);
+
+    return {
+      id: agentId,
+      hash,
+      filename,
+      filepath,
+      size: bundleSize,
+      runtime: 'nodejs20.x',
+      dependencies,
+      bundleType: nodeJSOptions.minify ? 'production' : 'development',
+      executionMode: 'vercel-function',
+      metadata: {
+        id: agentId,
+        hash,
+        name: metadata.name,
+        description: metadata.description,
+        tools: metadata.tools ?? [],
+        models: metadata.models ?? [],
+        compiledAt: new Date().toISOString(),
+        compilerVersion: this.compilerVersion
+      }
+    };
+  }
+
+  /**
+   * Create Node.js bundle using esbuild with full dependency bundling
+   */
+  private async createNodeJSBundleWithEsbuild(
+    code: string,
+    agentId: string,
+    options: NodeJSBundlerOptions
+  ): Promise<string> {
+    const esbuild = await import('esbuild');
+    
+    try {
+      console.log(`[BUNDLER] Running esbuild for Node.js runtime...`);
+      
+      const result = await esbuild.build({
+        stdin: {
+          contents: code,
+          resolveDir: this.baseDir,
+          sourcefile: 'agent.js'
+        },
+        bundle: options.bundleAllDependencies,
+        minify: options.minify,
+        format: 'cjs', // CommonJS for Node.js runtime
+        platform: 'node',
+        target: 'node20',
+        external: options.bundleAllDependencies ? [
+          // Only exclude Node.js built-ins
+          'node:*',
+          'fs', 'path', 'os', 'crypto', 'http', 'https', 'url', 'util',
+          'stream', 'events', 'buffer', 'process', 'child_process'
+        ] : undefined,
+        treeShaking: true,
+        write: false,
+        metafile: true,
+        logLevel: 'warning'
+      });
+
+      if (result.errors.length > 0) {
+        throw new Error(`esbuild errors: ${result.errors.map(e => e.text).join(', ')}`);
+      }
+
+      const bundledCode = result.outputFiles[0].text;
+      
+      // Log bundle analysis
+      if (result.metafile) {
+        const analysis = await esbuild.analyzeMetafile(result.metafile);
+        console.log(`[BUNDLER] Bundle analysis:\n${analysis}`);
+      }
+
+      // Wrap in Vercel Node.js function format
+      return this.wrapInNodeJSRuntimeFormat(bundledCode, agentId, options);
+
+    } catch (error) {
+      console.error(`[BUNDLER] esbuild failed:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Wrap bundled code in Node.js runtime format for Vercel Functions
+   */
+  private wrapInNodeJSRuntimeFormat(
+    bundledCode: string,
+    agentId: string,
+    options: NodeJSBundlerOptions
+  ): string {
+    return `// Lightfast Agent Bundle - Node.js Runtime
+// Agent: ${agentId}
+// Generated: ${new Date().toISOString()}
+// Runtime: ${options.runtime}
+// Target: ${options.target}
+
+${bundledCode}
+
+// Vercel Node.js Function Handler
+async function handler(request, response) {
+  try {
+    const body = request.body || '{}';
+    const { input, context = {} } = typeof body === 'string' ? JSON.parse(body) : body;
+    
+    console.log(\`[AGENT-\${Date.now()}] Executing agent: ${agentId}\`);
+    
+    // Get the exported config (should be available from bundled code)
+    const config = module.exports.default || module.exports;
+    
+    // Find the target agent
+    const agent = config.agents?.["${agentId}"];
+    if (!agent) {
+      throw new Error(\`Agent '${agentId}' not found in configuration\`);
+    }
+    
+    // Execute agent with Node.js runtime context
+    const result = await agent.execute ? 
+      agent.execute(input, {
+        ...context,
+        runtime: 'nodejs',
+        platform: '${options.target}',
+        // Node.js APIs available
+        require,
+        process,
+        Buffer,
+        console
+      }) :
+      agent(input, context);
+    
+    console.log(\`[AGENT-\${Date.now()}] Execution completed successfully\`);
+    
+    response.status(200).json(result);
+    
+  } catch (error) {
+    console.error(\`[AGENT-\${Date.now()}] Execution error:\`, error);
+    response.status(500).json({ 
+      error: 'Agent execution failed',
+      message: error.message,
+      agentId: '${agentId}'
+    });
+  }
+}
+
+// Export for Vercel
+module.exports = handler;
+module.exports.handler = handler;
+
+// Next.js API route compatibility
+module.exports.POST = handler;
+module.exports.GET = handler;
+`;
+  }
+
+  /**
+   * Extract package dependencies from transpiled code
+   */
+  private extractPackageDependencies(code: string): string[] {
+    const dependencies: string[] = [];
+    
+    // Extract from import statements
+    const importRegex = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
+    let match;
+    
+    while ((match = importRegex.exec(code)) !== null) {
+      const packageName = match[1];
+      
+      // Skip relative imports and Node.js built-ins
+      if (!packageName.startsWith('.') && !packageName.startsWith('node:')) {
+        // Extract package name (handle scoped packages)
+        const cleanPackageName = packageName.startsWith('@') 
+          ? packageName.split('/').slice(0, 2).join('/')
+          : packageName.split('/')[0];
+        
+        if (!dependencies.includes(cleanPackageName)) {
+          dependencies.push(cleanPackageName);
+        }
+      }
+    }
+    
+    // Also check for require statements
+    const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+    while ((match = requireRegex.exec(code)) !== null) {
+      const packageName = match[1];
+      
+      if (!packageName.startsWith('.') && !packageName.startsWith('node:')) {
+        const cleanPackageName = packageName.startsWith('@') 
+          ? packageName.split('/').slice(0, 2).join('/')
+          : packageName.split('/')[0];
+        
+        if (!dependencies.includes(cleanPackageName)) {
+          dependencies.push(cleanPackageName);
+        }
+      }
+    }
+    
+    return dependencies;
+  }
 }
 
 /**
  * Creates a bundle generator instance
  */
 export function createBundleGenerator(options: BundlerOptions): BundleGenerator {
+  return new BundleGenerator(options);
+}
+
+/**
+ * Creates a Node.js bundle generator instance with Node.js runtime options
+ */
+export function createNodeJSBundleGenerator(options: NodeJSBundlerOptions): BundleGenerator {
   return new BundleGenerator(options);
 }
