@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 const isPublicRoute = createRouteMatcher([
 	"/api/health",
 	"/api/cli/v1/(.*)",  // Allow all CLI API routes through tRPC
+	"/api/agents/execute",  // Allow agent execution testing
 	"/playground",
 	"/playground/(.*)",
 ]);

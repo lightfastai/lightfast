@@ -1,3 +1,9 @@
 {
-  "relatedProjects": ["prj_Jk254MBh95zdl3bMNR5XvN3Wz8kA"]
+  "relatedProjects": ["prj_Jk254MBh95zdl3bMNR5XvN3Wz8kA"],
+  "functions": {
+    "src/app/(api)/api/agents/execute/**": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 300
+    }
+  }
 }
