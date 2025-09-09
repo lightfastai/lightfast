@@ -32,7 +32,14 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    // Skip authentication for testing
+    // Validate authentication
+    const { userId, orgId: organizationId } = await auth();
+    if (!userId || !organizationId) {
+      return NextResponse.json({
+        success: false,
+        error: "Authentication required"
+      }, { status: 401 });
+    }
 
     const body = await request.json();
     const { agentId, sessionId, input } = body;
@@ -52,12 +59,41 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    console.log(`[AGENT-EXEC] Executing agent: ${agentId}, session: ${sessionId}`);
+    console.log(`[AGENT-EXEC] Executing agent: ${agentId}, session: ${sessionId} for org: ${organizationId}`);
     console.log(`[AGENT-EXEC] Input:`, input);
     
-    // For testing, use the direct bundle URL for codeGenerator
-    const bundleUrl = "https://33bav9epzifxvdo9.public.blob.vercel-storage.com/agents/org_32Pz/codeGenerator/1757398403829.js";
-    console.log(`[AGENT-EXEC] Using test bundle URL: ${bundleUrl}`);
+    // Lookup agent in database by name and organization
+    const cloudAgent = await db
+      .select({
+        id: CloudAgent.id,
+        name: CloudAgent.name,
+        bundleUrl: CloudAgent.bundleUrl,
+        createdAt: CloudAgent.createdAt,
+      })
+      .from(CloudAgent)
+      .where(
+        and(
+          eq(CloudAgent.name, agentId),
+          eq(CloudAgent.clerkOrgId, organizationId)
+        )
+      )
+      .limit(1);
+    
+    if (!cloudAgent.length) {
+      console.warn(`[AGENT-EXEC] Agent '${agentId}' not found for organization '${organizationId}'`);
+      return NextResponse.json({
+        success: false,
+        error: `Agent '${agentId}' not found. Make sure it has been deployed to this organization.`,
+        agentId,
+        executionTime: Date.now() - startTime
+      }, { status: 404 });
+    }
+    
+    const agent = cloudAgent[0];
+    const bundleUrl = agent.bundleUrl;
+    
+    console.log(`[AGENT-EXEC] Found agent '${agent.name}' (ID: ${agent.id})`);
+    console.log(`[AGENT-EXEC] Bundle URL: ${bundleUrl}`);
     
     // Fetch bundle from Vercel Blob storage
     let bundleContent: string;
