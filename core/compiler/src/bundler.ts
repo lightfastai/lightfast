@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import type { TranspileResult } from './transpiler.js';
+import { SimpleBundler, type AgentBundleResult } from './simple-bundler.js';
 import {
   extractAgentDefinitionsFromCode,
   extractAgentIds,
@@ -240,6 +241,29 @@ export class BundleGenerator {
     if (!existsSync(this.outputDir)) {
       mkdirSync(this.outputDir, { recursive: true });
     }
+  }
+
+  /**
+   * Simple agent bundling: one bundle per agent (recommended approach)
+   */
+  async generateSimpleAgentBundles(
+    transpileResult: TranspileResult,
+    options: {
+      target?: 'vercel' | 'aws-lambda' | 'local';
+      minify?: boolean;
+      bundleAllDependencies?: boolean;
+    } = {}
+  ): Promise<AgentBundleResult> {
+    const simpleBundler = new SimpleBundler({
+      baseDir: this.baseDir,
+      outputDir: this.outputDir,
+      compilerVersion: this.compilerVersion,
+      target: options.target || 'vercel',
+      minify: options.minify ?? true,
+      bundleAllDependencies: options.bundleAllDependencies ?? true
+    });
+
+    return simpleBundler.generateAgentBundles(transpileResult, options);
   }
 
   /**

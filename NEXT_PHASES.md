@@ -2,9 +2,10 @@
 
 ## Current Status ✅
 - **Simple one-bundle-per-agent approach** implemented
-- **Node.js runtime bundling** working with complex dependencies (ExaJS ~45MB → 1.02MB)
+- **Node.js runtime bundling** working with complex dependencies (ExaJS ~45MB → 1.18MB)
 - **Basic deployment API** for individual agent bundles
 - **Example working** with exa-search-agent demonstrating real-world usage
+- **Bundle generation confirmed** - researcher.nodejs.20c7460d.js (1.18MB) created successfully
 
 ## Architecture Decision: Bundle Everything 📦
 
@@ -109,13 +110,66 @@ try {
 - [ ] Cost analysis per agent deployment
 - [ ] Auto-scaling recommendations
 
-## Testing Strategy 🧪
+## Immediate Next Steps: Apps/Cloud Testing 🧪
+
+**Phase 0: Validate Bundle Execution (CURRENT PRIORITY)**
+
+**Status:** Bundle generation ✅ confirmed, execution testing ⏳ in progress
+
+**Testing Checklist:**
+- [x] Bundle generation works (researcher.nodejs.20c7460d.js - 1.18MB)
+- [x] Bundle contains all dependencies (ExaJS, lightfast, zod) 
+- [ ] Apps/cloud can load bundle from `.lightfast/dist/nodejs-bundles/`
+- [ ] Bundle execution works via POST `/api/agents/execute/researcher`
+- [ ] ExaJS functionality works in apps/cloud Node.js runtime
+- [ ] Error handling works for bundle failures
+- [ ] Performance benchmarks with 1.18MB bundle
+
+**Implementation Steps:**
+```bash
+# 1. Copy bundle to apps/cloud
+cp examples/exa-search-agent/.lightfast/nodejs-bundles/researcher.nodejs.*.js \
+   apps/cloud/.lightfast/dist/nodejs-bundles/
+
+# 2. Start apps/cloud dev server  
+cd apps/cloud && pnpm dev
+
+# 3. Test bundle loading
+curl -X POST http://localhost:3000/api/agents/execute/researcher \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"query": "AI research papers"}}'
+
+# 4. Verify ExaJS search functionality
+# Should return real search results from Exa API
+```
+
+**Expected Outcomes:**
+- Bundle loads successfully in Node.js runtime
+- ExaJS can perform actual web searches  
+- Response time < 2 seconds for simple queries
+- No memory leaks or module loading issues
+- Proper error messages for invalid inputs
+
+**Blockers to Resolve:**
+- Bundle execution format compatibility with apps/cloud
+- Module loading (ES modules vs CommonJS)
+- Environment variable access for EXA_API_KEY
+- Error handling and timeout management
+
+**Success Criteria:**
+- ✅ Bundle executes successfully in apps/cloud
+- ✅ ExaJS returns real search results
+- ✅ Performance acceptable (<2s response time)
+- ✅ Error handling works properly
+- ✅ Ready for optimization phases
+
+## Long-term Optimization Phases 🚀
 
 **Before any optimization phases:**
-1. **Validate Current Implementation** in apps/cloud
-2. **Test Bundle Execution** with ExaJS example
-3. **Verify Deployment Pipeline** works end-to-end
-4. **Benchmark Performance** with current 1.02MB bundles
+1. **✅ Bundle generation validated**
+2. **⏳ Apps/cloud execution validated** (current focus)
+3. **⏳ End-to-end deployment pipeline tested**
+4. **⏳ Performance benchmarked** with current 1.18MB bundles
 
 **Phase Validation:**
 - Each phase includes automated tests
@@ -162,3 +216,18 @@ try {
 ---
 
 **Current Focus**: Test bundle execution in apps/cloud before implementing optimizations.
+
+---
+
+## Next Actions 🎯
+
+1. **Test bundle execution in apps/cloud** (immediate priority)
+2. **Resolve any module loading/compatibility issues**
+3. **Validate ExaJS functionality end-to-end**
+4. **Performance benchmark the 1.18MB bundle**
+5. **Then proceed with optimization phases**
+
+**Branch Status:**
+- Base: `feat/next-js-inspired-agent-bundling` 
+- Current: `feat/nodejs-runtime-bundling`
+- Ready for: Apps/cloud testing phase

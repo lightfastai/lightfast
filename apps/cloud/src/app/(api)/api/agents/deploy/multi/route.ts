@@ -7,9 +7,9 @@ export const runtime = "nodejs";
 export const maxDuration = 600; // 10 minutes for multi-agent deployment
 
 /**
- * Multi-agent deployment request schema
+ * Agent deployment request schema (simplified - no strategies)
  */
-const MultiAgentDeploymentSchema = z.object({
+const AgentDeploymentSchema = z.object({
   agents: z.array(z.object({
     id: z.string(),
     name: z.string(),
@@ -18,7 +18,6 @@ const MultiAgentDeploymentSchema = z.object({
     dependencies: z.array(z.string()),
     hash: z.string()
   })),
-  strategy: z.enum(['individual', 'shared', 'hybrid']),
   config: z.object({
     runtime: z.literal('nodejs20.x'),
     target: z.enum(['vercel', 'aws-lambda', 'local']),
@@ -27,14 +26,13 @@ const MultiAgentDeploymentSchema = z.object({
 });
 
 /**
- * POST /api/agents/deploy/multi
+ * POST /api/agents/deploy
  * 
- * Deploy multiple agents with optimized bundling strategy.
- * This endpoint handles the deployment of multi-agent configurations
- * from the enhanced bundler with intelligent strategy selection.
+ * Deploy multiple agents - each gets its own bundle and Vercel function.
+ * Simple approach: one agent = one bundle = one function.
  * 
  * Example request:
- * POST /api/agents/deploy/multi
+ * POST /api/agents/deploy
  * {
  *   "agents": [
  *     {
@@ -52,7 +50,6 @@ const MultiAgentDeploymentSchema = z.object({
  *       "hash": "def456"
  *     }
  *   ],
- *   "strategy": "individual",
  *   "config": {
  *     "runtime": "nodejs20.x",
  *     "target": "vercel",
@@ -64,13 +61,13 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    console.log(`[MULTI-AGENT-DEPLOY] Starting multi-agent deployment...`);
+    console.log(`[AGENT-DEPLOY] Starting agent deployment...`);
     
     // Parse and validate request
     const body = await request.json();
-    const deployment = MultiAgentDeploymentSchema.parse(body);
+    const deployment = AgentDeploymentSchema.parse(body);
     
-    console.log(`[MULTI-AGENT-DEPLOY] Deploying ${deployment.agents.length} agents with ${deployment.strategy} strategy`);
+    console.log(`[AGENT-DEPLOY] Deploying ${deployment.agents.length} agents (one bundle each)`);
     
     // Process each agent bundle
     const deploymentResults = [];
@@ -98,8 +95,7 @@ export async function POST(request: NextRequest) {
           hash: agent.hash,
           runtime: deployment.config.runtime,
           size: bundleSize,
-          deployedAt: new Date().toISOString(),
-          strategy: deployment.strategy
+          deployedAt: new Date().toISOString()
         });
         
         deploymentResults.push({
@@ -143,7 +139,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: successCount > 0,
       deployment: {
-        strategy: deployment.strategy,
         runtime: deployment.config.runtime,
         target: deployment.config.target,
         agentCount: deployment.agents.length,
@@ -215,13 +210,12 @@ async function registerAgentDeployment(deployment: {
   runtime: string;
   size: number;
   deployedAt: string;
-  strategy: string;
 }): Promise<void> {
   // In production, this would use Vercel KV or database:
   // import { kv } from '@vercel/kv';
   // await kv.hset(`agents:${deployment.id}`, deployment);
   
-  console.log(`[REGISTRY] Registered agent ${deployment.id} with ${deployment.strategy} strategy`);
+  console.log(`[REGISTRY] Registered agent ${deployment.id}`);
 }
 
 /**
@@ -239,8 +233,7 @@ export async function GET() {
         status: "active",
         runtime: "nodejs20.x",
         sizeMB: 0.65,
-        deployedAt: "2024-01-29T10:00:00Z",
-        strategy: "individual"
+        deployedAt: "2024-01-29T10:00:00Z"
       },
       {
         id: "codeReviewer", 
@@ -248,8 +241,7 @@ export async function GET() {
         status: "active",
         runtime: "nodejs20.x",
         sizeMB: 0.65,
-        deployedAt: "2024-01-29T10:00:05Z", 
-        strategy: "individual"
+        deployedAt: "2024-01-29T10:00:05Z"
       }
     ];
     
@@ -261,15 +253,14 @@ export async function GET() {
         totalAgents: mockDeployments.length,
         activeAgents: mockDeployments.filter(d => d.status === 'active').length,
         totalSizeMB: +totalSizeMB.toFixed(2),
-        runtimes: [...new Set(mockDeployments.map(d => d.runtime))],
-        strategies: [...new Set(mockDeployments.map(d => d.strategy))]
+        runtimes: [...new Set(mockDeployments.map(d => d.runtime))]
       },
-      multiAgentSupport: {
+      agentSupport: {
         maxAgentsPerDeployment: 50,
-        supportedStrategies: ['individual', 'shared', 'hybrid'],
         supportedRuntimes: ['nodejs20.x'],
         maxBundleSize: '250MB',
-        deploymentTimeout: '10 minutes'
+        deploymentTimeout: '10 minutes',
+        approach: 'one-bundle-per-agent'
       }
     });
     
