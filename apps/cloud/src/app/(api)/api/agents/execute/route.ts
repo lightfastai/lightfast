@@ -1,361 +1,371 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { RedisMemory } from "lightfast/memory/adapters/redis";
+import { db } from "@db/cloud/client";
+import { CloudAgent } from "@db/cloud/schema";
+import { eq, and } from "drizzle-orm";
+import { env } from "~/env";
+import type { ModelMessage } from "ai";
+import { convertToCoreMessages } from "ai";
 
-// Specify Node.js runtime for full dependency support
+// Use Node.js runtime for bundle execution  
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5 minutes for complex agents
-
-/**
- * Agent execution request schema
- */
-const ExecutionRequestSchema = z.object({
-  agentId: z.string().min(1, "Agent ID is required"),
-  input: z.any(), // Agent input can be any type
-  context: z.record(z.any()).optional().default({}),
-  bundleHash: z.string().optional(), // Optional: specify bundle version
-});
-
-/**
- * Agent execution response schema
- */
-const ExecutionResponseSchema = z.object({
-  success: z.boolean(),
-  result: z.any().optional(),
-  error: z.string().optional(),
-  executionTime: z.number(),
-  agentId: z.string(),
-  bundleHash: z.string().optional(),
-  runtime: z.literal("nodejs"),
-});
-
-/**
- * Cache for loaded agent bundles to avoid re-loading on every request
- * In production, this could be enhanced with LRU cache or Redis
- */
-const agentBundleCache = new Map<string, {
-  module: any;
-  hash: string;
-  loadedAt: number;
-  size: number;
-}>();
-
-/**
- * Maximum cache size (in terms of number of agents)
- * Prevents memory leaks from loading too many agents
- */
-const MAX_CACHE_SIZE = 100;
-
-/**
- * Cache TTL in milliseconds (1 hour)
- * After this time, bundles will be reloaded to get updates
- */
-const CACHE_TTL = 60 * 60 * 1000;
+export const maxDuration = 60; // 1 minute timeout
 
 /**
  * POST /api/agents/execute
  * 
- * Executes a Lightfast agent that was compiled with Node.js runtime bundling.
- * Supports complex npm dependencies like ExaJS, Stripe, etc.
+ * Agent execution endpoint for compiled bundles.
+ * Based on apps/experimental pattern but adapted for bundle loading.
  * 
- * This endpoint:
- * 1. Validates the execution request
- * 2. Loads the agent bundle from storage (with caching)
- * 3. Executes the agent in Node.js runtime with full API access
- * 4. Returns the execution result
+ * Expected request:
+ * {
+ *   "agentId": "researcher",
+ *   "sessionId": "session-123",
+ *   "input": { "query": "test search" }
+ * }
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    // Parse and validate request body
+    // Skip authentication for testing
+
     const body = await request.json();
-    const executionRequest = ExecutionRequestSchema.parse(body);
+    const { agentId, sessionId, input } = body;
     
-    console.log(`[AGENT-EXEC] Starting execution for agent: ${executionRequest.agentId}`);
-    console.log(`[AGENT-EXEC] Input type: ${typeof executionRequest.input}`);
-    
-    // Load agent bundle (with caching)
-    const agentBundle = await loadAgentBundle(
-      executionRequest.agentId, 
-      executionRequest.bundleHash
-    );
-    
-    if (!agentBundle) {
+    // Validate required parameters
+    if (!agentId) {
       return NextResponse.json({
         success: false,
-        error: `Agent '${executionRequest.agentId}' not found`,
-        executionTime: Date.now() - startTime,
-        agentId: executionRequest.agentId,
-        runtime: "nodejs"
-      } satisfies z.infer<typeof ExecutionResponseSchema>, { status: 404 });
+        error: "agentId is required"
+      }, { status: 400 });
     }
     
-    // Execute the agent bundle
-    // The bundle is a self-contained Node.js module with all dependencies
-    const result = await executeAgentBundle(
-      agentBundle.module,
-      executionRequest.input,
-      {
-        ...executionRequest.context,
-        agentId: executionRequest.agentId,
-        requestId: crypto.randomUUID(),
-        runtime: "nodejs",
-        platform: "vercel",
-        startTime,
-        // Node.js APIs are available to the agent
-        nodeAPIs: {
-          require,
-          process,
-          Buffer,
-          global,
-        }
+    if (!sessionId) {
+      return NextResponse.json({
+        success: false,
+        error: "sessionId is required"
+      }, { status: 400 });
+    }
+    
+    console.log(`[AGENT-EXEC] Executing agent: ${agentId}, session: ${sessionId}`);
+    console.log(`[AGENT-EXEC] Input:`, input);
+    
+    // For testing, use the direct bundle URL for codeGenerator
+    const bundleUrl = "https://33bav9epzifxvdo9.public.blob.vercel-storage.com/agents/org_32Pz/codeGenerator/1757398403829.js";
+    console.log(`[AGENT-EXEC] Using test bundle URL: ${bundleUrl}`);
+    
+    // Fetch bundle from Vercel Blob storage
+    let bundleContent: string;
+    try {
+      console.log(`[AGENT-EXEC] Fetching bundle from: ${bundleUrl}`);
+      const bundleResponse = await fetch(bundleUrl);
+      
+      if (!bundleResponse.ok) {
+        throw new Error(`HTTP ${bundleResponse.status}: ${bundleResponse.statusText}`);
       }
-    );
+      
+      bundleContent = await bundleResponse.text();
+      console.log(`[AGENT-EXEC] Bundle fetched successfully (${bundleContent.length} chars)`);
+      
+    } catch (fetchError) {
+      console.error(`[AGENT-EXEC] Failed to fetch bundle:`, fetchError);
+      return NextResponse.json({
+        success: false,
+        error: `Failed to fetch agent bundle: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
+        agentId,
+        executionTime: Date.now() - startTime
+      }, { status: 500 });
+    }
     
-    const executionTime = Date.now() - startTime;
-    console.log(`[AGENT-EXEC] Completed in ${executionTime}ms for agent: ${executionRequest.agentId}`);
+    // Evaluate bundle to extract agent configuration
+    console.log(`[AGENT-EXEC] Evaluating bundle to extract agent configuration`);
+    let agentConfig;
+    try {
+      // Create a global context for evaluation
+      const globalContext = {
+        exports: {},
+        module: { exports: {} },
+        require: (name: string) => {
+          throw new Error(`Module '${name}' not found in bundle execution context`);
+        },
+        global: {},
+        process: { env: {} },
+        console: console,
+        Buffer: Buffer,
+        setTimeout: setTimeout,
+        clearTimeout: clearTimeout,
+        setInterval: setInterval,
+        clearInterval: clearInterval,
+      };
+      
+      // Convert ES module export to global assignment
+      let modifiedBundle = bundleContent;
+      
+      // Handle default export at end of bundle
+      modifiedBundle = modifiedBundle.replace(/export\s*{\s*([^}]+)\s*}\s*;?\s*$/, (match, exports) => {
+        // Parse exported items
+        const exportItems = exports.split(',').map((item: string) => item.trim());
+        let assignments = '';
+        for (const item of exportItems) {
+          if (item.includes(' as default')) {
+            const [varName] = item.split(' as ');
+            assignments += `globalThis.default = ${varName.trim()};\n`;
+          } else if (item === 'default') {
+            assignments += `globalThis.default = default;\n`;
+          } else {
+            assignments += `globalThis.${item} = ${item};\n`;
+          }
+        }
+        return assignments;
+      });
+      
+      // Handle export default statements
+      modifiedBundle = modifiedBundle.replace(/export\s+default\s+([^;]+);?/g, 'globalThis.default = $1;');
+      
+      // Execute the bundle code with context
+      const fn = new Function(
+        'exports', 'module', 'require', 'global', 'process', 'console', 'Buffer', 
+        'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+        modifiedBundle + '\n; return { default: globalThis.default, ...globalThis };'
+      );
+      
+      const result = fn(
+        globalContext.exports, globalContext.module, globalContext.require,
+        globalContext.global, globalContext.process, globalContext.console,
+        globalContext.Buffer, globalContext.setTimeout, globalContext.clearTimeout,
+        globalContext.setInterval, globalContext.clearInterval
+      );
+      
+      // Extract the agent configuration
+      agentConfig = result.default || result || globalContext.module.exports?.default || globalContext.module.exports;
+      console.log(`[AGENT-EXEC] Agent config extracted:`, agentConfig?.config ? 'Found config' : 'No config found');
+      
+    } catch (evalError) {
+      console.error(`[AGENT-EXEC] Failed to evaluate bundle:`, evalError);
+      return NextResponse.json({
+        success: false,
+        error: `Failed to evaluate agent bundle: ${evalError instanceof Error ? evalError.message : String(evalError)}`,
+        agentId,
+        executionTime: Date.now() - startTime
+      }, { status: 500 });
+    }
     
-    return NextResponse.json({
-      success: true,
-      result,
-      executionTime,
-      agentId: executionRequest.agentId,
-      bundleHash: agentBundle.hash,
-      runtime: "nodejs"
-    } satisfies z.infer<typeof ExecutionResponseSchema>);
+    // Check if we got a valid agent config
+    if (!agentConfig?.config?.agents) {
+      console.error(`[AGENT-EXEC] Invalid agent config:`, agentConfig);
+      return NextResponse.json({
+        success: false,
+        error: "Bundle does not export a valid Lightfast agent configuration",
+        agentId,
+        executionTime: Date.now() - startTime
+      }, { status: 500 });
+    }
+    
+    // Get the specific agent from the config
+    const targetAgent = agentConfig.config.agents[agentId];
+    if (!targetAgent) {
+      console.error(`[AGENT-EXEC] Agent '${agentId}' not found in bundle. Available agents:`, Object.keys(agentConfig.config.agents));
+      return NextResponse.json({
+        success: false,
+        error: `Agent '${agentId}' not found in bundle`,
+        availableAgents: Object.keys(agentConfig.config.agents),
+        agentId,
+        executionTime: Date.now() - startTime
+      }, { status: 404 });
+    }
+    
+    console.log(`[AGENT-EXEC] Found target agent:`, targetAgent.name);
+    console.log(`[AGENT-EXEC] Full target agent config:`, JSON.stringify(targetAgent, null, 2));
+    
+    // Create Redis memory instance using KV pattern from experimental app
+    const memory = new RedisMemory({
+      url: env.KV_REST_API_URL,
+      token: env.KV_REST_API_TOKEN,
+    });
+    console.log(`[AGENT-EXEC] Using KV Redis memory`)
+    
+    console.log(`[AGENT-EXEC] Created memory instance, executing agent with fetchRequestHandler`);
+    
+    // Execute the agent using fetchRequestHandler like the experimental app
+    try {
+      // The key insight: fetchRequestHandler expects to parse the original HTTP request
+      // We need to create a new request with the expected message format
+      // Go back to parts format since it got us past message extraction
+      const messages = [
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          parts: [
+            {
+              type: "text",
+              text: input.query || JSON.stringify(input)
+            }
+          ]
+        }
+      ];
+      
+      console.log(`[AGENT-EXEC] Forwarding request with UI messages format`);
+      // Extract the actual configuration from the nested structure
+      // Import the gateway function to properly construct the model
+      const { gateway } = await import("@ai-sdk/gateway");
+      
+      // Construct the model using the gateway function like the experimental app
+      const modelId = targetAgent.vercelConfig?.model?.modelId || "anthropic/claude-4-sonnet";
+      const constructedModel = gateway(modelId);
+      
+      const agentConfig = {
+        name: targetAgent.lightfastConfig?.name || agentId,
+        system: targetAgent.lightfastConfig?.system,
+        model: constructedModel,
+        tools: targetAgent.lightfastConfig?.tools || {},
+      };
+      
+      console.log(`[AGENT-EXEC] Extracted agent config:`, {
+        name: agentConfig.name,
+        hasSystem: !!agentConfig.system,
+        hasModel: !!agentConfig.model,
+        toolCount: Object.keys(agentConfig.tools).length,
+      });
+      
+      // Create a new request body with the proper format
+      const newRequestBody = { messages };
+      
+      // Create a new Request object with the expected message format
+      const newRequest = new Request(request.url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          // Preserve important headers but don't copy all of them
+        },
+        body: JSON.stringify(newRequestBody),
+      });
+      
+      const response = await fetchRequestHandler({
+        agent: createAgent({
+          name: agentConfig.name,
+          system: agentConfig.system,
+          model: agentConfig.model,
+          tools: agentConfig.tools,
+        }),
+        sessionId,
+        memory,
+        req: newRequest, // Pass the new request with proper message format
+        enableResume: true,
+        generateId: () => crypto.randomUUID(),
+        onError({ error }) {
+          console.error(`[AGENT-EXEC] Agent execution error:`, error);
+        },
+      });
+      
+      console.log(`[AGENT-EXEC] Agent execution completed successfully`);
+      return response;
+      
+    } catch (execError) {
+      console.error(`[AGENT-EXEC] Failed to execute agent:`, execError);
+      return NextResponse.json({
+        success: false,
+        error: `Failed to execute agent: ${execError instanceof Error ? execError.message : String(execError)}`,
+        agentId,
+        sessionId,
+        executionTime: Date.now() - startTime
+      }, { status: 500 });
+    }
     
   } catch (error) {
-    const executionTime = Date.now() - startTime;
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    console.error(`[AGENT-EXEC] Execution failed:`, error);
-    
-    // Handle validation errors
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({
-        success: false,
-        error: `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
-        executionTime,
-        agentId: "unknown",
-        runtime: "nodejs"
-      } satisfies z.infer<typeof ExecutionResponseSchema>, { status: 400 });
-    }
-    
+    console.error(`[AGENT-EXEC] Request failed:`, error);
     return NextResponse.json({
       success: false,
-      error: errorMessage,
-      executionTime,
-      agentId: "unknown",
-      runtime: "nodejs"
-    } satisfies z.infer<typeof ExecutionResponseSchema>, { status: 500 });
+      error: `Request failed: ${error instanceof Error ? error.message : String(error)}`,
+      executionTime: Date.now() - startTime
+    }, { status: 500 });
   }
 }
 
 /**
- * Load agent bundle with caching and cache management
+ * Find bundle file for agent
  */
-async function loadAgentBundle(agentId: string, requestedHash?: string): Promise<{
-  module: any;
-  hash: string;
-  size: number;
-} | null> {
-  const cacheKey = `${agentId}${requestedHash ? `@${requestedHash}` : ''}`;
-  const now = Date.now();
+async function findBundle(agentId: string): Promise<string | null> {
+  const path = require('path');
+  const fs = require('fs').promises;
   
-  // Check cache first
-  const cached = agentBundleCache.get(cacheKey);
-  if (cached && (now - cached.loadedAt) < CACHE_TTL) {
-    console.log(`[AGENT-EXEC] Cache hit for: ${cacheKey}`);
-    return cached;
-  }
+  // Look in expected location
+  const bundleDir = path.join(process.cwd(), '.lightfast', 'dist', 'nodejs-bundles');
   
   try {
-    // In a real implementation, this would load from Vercel Blob Storage
-    // For now, we'll simulate loading from the compiled bundles directory
-    const bundlePath = getBundlePath(agentId, requestedHash);
+    await fs.access(bundleDir);
+    const files = await fs.readdir(bundleDir);
     
-    if (!bundlePath) {
-      console.warn(`[AGENT-EXEC] Bundle not found for: ${agentId}`);
-      return null;
+    // Find bundle for this agent
+    const bundleFile = files.find((f: string) => 
+      f.startsWith(`${agentId}.nodejs.`) && f.endsWith('.js')
+    );
+    
+    if (bundleFile) {
+      return path.join(bundleDir, bundleFile);
     }
-    
-    // Load the Node.js bundle
-    // This is safe because we control the bundle generation
-    console.log(`[AGENT-EXEC] Loading bundle from: ${bundlePath}`);
-    
-    // Clear require cache to ensure fresh load
-    delete require.cache[require.resolve(bundlePath)];
-    
-    const bundleModule = require(bundlePath);
-    const bundleSize = await getBundleSize(bundlePath);
-    
-    // Extract hash from filename or generate one
-    const hash = requestedHash || extractHashFromPath(bundlePath) || generateHash(agentId);
-    
-    const bundleInfo = {
-      module: bundleModule,
-      hash,
-      loadedAt: now,
-      size: bundleSize
-    };
-    
-    // Cache management: remove oldest if cache is full
-    if (agentBundleCache.size >= MAX_CACHE_SIZE) {
-      const oldestKey = Array.from(agentBundleCache.keys())[0];
-      agentBundleCache.delete(oldestKey);
-      console.log(`[AGENT-EXEC] Evicted oldest bundle from cache: ${oldestKey}`);
-    }
-    
-    agentBundleCache.set(cacheKey, bundleInfo);
-    console.log(`[AGENT-EXEC] Loaded and cached bundle: ${cacheKey} (${(bundleSize / 1024 / 1024).toFixed(2)}MB)`);
-    
-    return bundleInfo;
-    
   } catch (error) {
-    console.error(`[AGENT-EXEC] Failed to load bundle for ${agentId}:`, error);
-    return null;
-  }
-}
-
-/**
- * Execute the loaded agent bundle
- */
-async function executeAgentBundle(
-  bundleModule: any, 
-  input: any, 
-  context: Record<string, any>
-): Promise<any> {
-  // The bundle should export a handler function that we can call
-  if (typeof bundleModule === 'function') {
-    // Direct function export
-    return await bundleModule(input, context);
+    console.log(`[AGENT-EXEC] Bundle directory not found: ${bundleDir}`);
   }
   
-  if (bundleModule.handler && typeof bundleModule.handler === 'function') {
-    // Handler function export
-    return await bundleModule.handler(input, context);
-  }
-  
-  if (bundleModule.default && typeof bundleModule.default === 'function') {
-    // Default export function
-    return await bundleModule.default(input, context);
-  }
-  
-  // If it's a Vercel-style handler, simulate the request/response pattern
-  if (bundleModule.POST && typeof bundleModule.POST === 'function') {
-    const mockRequest = {
-      body: JSON.stringify({ input, context }),
-      headers: { 'content-type': 'application/json' },
-      method: 'POST'
-    };
-    
-    const mockResponse = {
-      status: (code: number) => mockResponse,
-      json: (data: any) => ({ statusCode: 200, data })
-    };
-    
-    const result = await bundleModule.POST(mockRequest, mockResponse);
-    return result?.data || result;
-  }
-  
-  throw new Error('Bundle does not export a callable execution function');
-}
-
-/**
- * Get bundle path - in production this would query Vercel Blob Storage
- */
-function getBundlePath(agentId: string, hash?: string): string | null {
-  const fs = require('fs');
-  const path = require('path');
-  
-  // Look in the compiled bundles directory
-  const bundlesDir = path.join(process.cwd(), '.lightfast', 'dist', 'nodejs-bundles');
-  
-  if (!fs.existsSync(bundlesDir)) {
-    console.warn(`[AGENT-EXEC] Bundles directory not found: ${bundlesDir}`);
-    return null;
-  }
-  
-  try {
-    const files = fs.readdirSync(bundlesDir);
-    
-    // Find bundle file for the agent
-    let bundleFile: string | undefined;
-    
-    if (hash) {
-      // Look for specific hash
-      bundleFile = files.find((f: string) => 
-        f.startsWith(`${agentId}.nodejs.${hash}`) && f.endsWith('.js')
-      );
-    } else {
-      // Look for any bundle for this agent (latest)
-      const agentFiles = files.filter((f: string) => 
-        f.startsWith(`${agentId}.nodejs.`) && f.endsWith('.js')
-      );
-      // Sort by modified time and take the newest
-      bundleFile = agentFiles.sort().pop();
-    }
-    
-    if (!bundleFile) {
-      console.warn(`[AGENT-EXEC] No bundle found for agent: ${agentId}`);
-      return null;
-    }
-    
-    return path.join(bundlesDir, bundleFile);
-    
-  } catch (error) {
-    console.error(`[AGENT-EXEC] Error scanning bundles directory:`, error);
-    return null;
-  }
-}
-
-/**
- * Get bundle file size
- */
-async function getBundleSize(bundlePath: string): Promise<number> {
-  const fs = require('fs');
-  const stats = fs.statSync(bundlePath);
-  return stats.size;
-}
-
-/**
- * Extract hash from bundle file path
- */
-function extractHashFromPath(bundlePath: string): string | null {
-  const path = require('path');
-  const filename = path.basename(bundlePath);
-  const match = filename.match(/\.nodejs\.([a-f0-9]{8})\./);
-  return match ? match[1] : null;
-}
-
-/**
- * Generate simple hash for fallback
- */
-function generateHash(input: string): string {
-  return Buffer.from(input).toString('base64').substring(0, 8);
+  return null;
 }
 
 /**
  * GET /api/agents/execute
  * 
- * Returns information about available agents and execution statistics
+ * Show available deployed agents for this organization
  */
 export async function GET() {
-  const cacheStats = Array.from(agentBundleCache.entries()).map(([key, value]) => ({
-    agentKey: key,
-    hash: value.hash,
-    sizeMB: (value.size / 1024 / 1024).toFixed(2),
-    loadedAt: new Date(value.loadedAt).toISOString(),
-    cacheAge: Date.now() - value.loadedAt
-  }));
-  
-  return NextResponse.json({
-    runtime: "nodejs",
-    platform: "vercel",
-    cacheStats,
-    cacheSize: agentBundleCache.size,
-    maxCacheSize: MAX_CACHE_SIZE,
-    cacheTTL: CACHE_TTL
-  });
+  try {
+    // Validate authentication
+    const { userId, orgId: organizationId } = await auth();
+    if (!userId || !organizationId) {
+      return NextResponse.json({
+        success: false,
+        error: "Authentication required"
+      }, { status: 401 });
+    }
+
+    // Query all deployed agents for this organization
+    const deployedAgents = await db
+      .select({
+        id: CloudAgent.id,
+        name: CloudAgent.name,
+        bundleUrl: CloudAgent.bundleUrl,
+        createdAt: CloudAgent.createdAt,
+        createdByUserId: CloudAgent.createdByUserId
+      })
+      .from(CloudAgent)
+      .where(eq(CloudAgent.clerkOrgId, organizationId))
+      .orderBy(CloudAgent.createdAt);
+
+    return NextResponse.json({
+      success: true,
+      organization: organizationId,
+      available: deployedAgents.map(agent => ({
+        agentId: agent.name,
+        id: agent.id,
+        bundleUrl: agent.bundleUrl,
+        createdAt: agent.createdAt,
+        createdBy: agent.createdByUserId
+      })),
+      instructions: {
+        deploy: "Use 'lightfast deploy' to deploy agents to this organization",
+        execute: "POST /api/agents/execute with {\"agentId\": \"<name>\", \"sessionId\": \"<session>\", \"input\": {...}}"
+      },
+      count: deployedAgents.length
+    });
+    
+  } catch (error) {
+    console.error(`[AGENT-EXEC] Failed to list agents:`, error);
+    return NextResponse.json({
+      success: false,
+      error: `Failed to list deployed agents: ${error instanceof Error ? error.message : String(error)}`
+    }, { status: 500 });
+  }
 }
