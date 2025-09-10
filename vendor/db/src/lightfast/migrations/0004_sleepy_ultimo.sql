@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_chat_session` ADD `client_session_id` varchar(191) NOT NULL;

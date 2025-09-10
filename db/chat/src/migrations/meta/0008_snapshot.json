@@ -1,9 +1,78 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "97f06038-6cc5-4fbc-a03b-7f0fcc7dc224",
-  "prevId": "0b8c31d2-24a6-4879-8449-65262c93d7a4",
+  "id": "6e2a67ef-8dec-4a43-b65b-fed16ba9ec05",
+  "prevId": "164c5059-40ca-4c29-8105-f56433b7cc41",
   "tables": {
+    "lightfast_chat_artifact": {
+      "name": "lightfast_chat_artifact",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'code'"
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_user_id": {
+          "name": "clerk_user_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_chat_artifact_id_created_at_pk": {
+          "name": "lightfast_chat_artifact_id_created_at_pk",
+          "columns": [
+            "id",
+            "created_at"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "lightfast_chat_message": {
       "name": "lightfast_chat_message",
       "columns": {
@@ -33,6 +102,13 @@
           "type": "json",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "model_id": {
+          "name": "model_id",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
