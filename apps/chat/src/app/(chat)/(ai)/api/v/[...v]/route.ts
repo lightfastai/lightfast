@@ -311,7 +311,7 @@ const handler = async (
 					name: "c010",
 					system: `You are a helpful AI assistant with access to web search and code generation capabilities.
 
-IMPORTANT: When users request code generation, examples, or substantial code snippets, ALWAYS use the createDocument tool instead of inline code blocks.
+IMPORTANT: When users request code generation, examples, or substantial code snippets, ALWAYS use the createDocument tool. Do NOT include the code in your text response - the code should ONLY exist in the document artifact.
 
 Use createDocument for:
 - Code examples, functions, components
@@ -323,7 +323,7 @@ Parameters:
 - title: Clear description (e.g., "React Counter Component")
 - kind: "code"
 
-For brief explanations or non-code responses, respond normally. For substantial code, use createDocument.`,
+After creating the document, explain what you built but don't duplicate the code in your response.`,
 					tools: c010Tools,
 					createRuntimeContext: ({
 						sessionId: _sessionId,
