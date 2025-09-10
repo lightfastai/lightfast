@@ -15,6 +15,11 @@ import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
+import { useDataStream } from "~/hooks/use-data-stream";
+import { ArtifactViewer, useArtifact } from "~/components/artifacts";
+import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
+import { Button } from "@repo/ui/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -69,6 +74,20 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
+
+	// Data stream for artifact handling
+	const { setDataStream } = useDataStream();
+
+	// Artifact state management
+	const { artifact, metadata, setMetadata, showArtifact, hideArtifact, updateArtifactContent, setArtifact } = useArtifact();
+
+	// Connect streaming data to artifact updates
+	useArtifactStreaming({
+		showArtifact,
+		hideArtifact,
+		updateArtifactContent,
+		setArtifact,
+	});
 
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
@@ -171,6 +190,10 @@ export function ChatInterface({
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
 		},
+		onData: (dataPart) => {
+			// Accumulate streaming data parts for artifact processing
+			setDataStream((ds) => (ds ? [...ds, dataPart] : [dataPart]));
+		},
 	});
 
 	// Auto-resume streaming if requested and there's an incomplete stream
@@ -237,6 +260,31 @@ export function ChatInterface({
 		}
 	};
 
+	// Demo function to show artifact with mock data
+	const showArtifactDemo = () => {
+		showArtifact({
+			documentId: 'demo-artifact',
+			title: 'Interactive Code Demo',
+			kind: 'code',
+			content: `console.log('Hello from Lightfast!');
+
+// This is a demo artifact showing how code
+// can be streamed and displayed alongside chat
+function greet(name) {
+  return \`Hello, \${name}! Welcome to Lightfast.\`;
+}
+
+const message = greet('Developer');
+console.log(message);`,
+			status: 'idle',
+			boundingBox: {
+				top: 100,
+				left: 100,
+				width: 300,
+				height: 200,
+			},
+		});
+	};
 
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
@@ -250,45 +298,36 @@ export function ChatInterface({
 		<AuthPromptSelector />
 	);
 
-	// For new chats (no messages yet), show centered layout
-	if (messages.length === 0) {
-		return (
-			<div className="h-full flex flex-col items-center justify-center bg-background">
-				<div className="w-full max-w-3xl px-4">
-					<div className="px-4 mb-8">
-						<ChatEmptyState
-							prompt={
-								user?.email
-									? `Welcome back, ${user.email}`
-									: "What can I do for you?"
-							}
-						/>
-					</div>
-					<ChatInput
-						onSendMessage={handleSendMessage}
-						placeholder="Ask anything..."
-						disabled={status === "streaming" || status === "submitted"}
-						modelSelector={modelSelector}
+	// Create the main chat content component
+	const chatContent = messages.length === 0 ? (
+		// For new chats (no messages yet), show centered layout
+		<div className="h-full flex flex-col items-center justify-center bg-background">
+			<div className="w-full max-w-3xl px-4">
+				<div className="px-4 mb-8">
+					<ChatEmptyState
+						prompt={
+							user?.email
+								? `Welcome back, ${user.email}`
+								: "What can I do for you?"
+						}
 					/>
-					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
-					<div className="hidden md:block relative mt-4 h-12">
-						<div className="absolute top-0 left-0 right-0 px-4">
-							<PromptSuggestions onSelectPrompt={handleSendMessage} />
-						</div>
+				</div>
+				<ChatInput
+					onSendMessage={handleSendMessage}
+					placeholder="Ask anything..."
+					disabled={status === "streaming" || status === "submitted"}
+					modelSelector={modelSelector}
+				/>
+				{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
+				<div className="hidden md:block relative mt-4 h-12">
+					<div className="absolute top-0 left-0 right-0 px-4">
+						<PromptSuggestions onSelectPrompt={handleSendMessage} />
 					</div>
 				</div>
-
-				{/* Rate limit dialog - shown when anonymous user hits limit */}
-				<RateLimitDialog
-					open={showRateLimitDialog}
-					onOpenChange={setShowRateLimitDialog}
-				/>
 			</div>
-		);
-	}
-
-	// Thread view or chat with existing messages
-	return (
+		</div>
+	) : (
+		// Thread view or chat with existing messages
 		<div className="flex flex-col h-full bg-background">
 			<ChatMessages messages={messages} status={status} />
 			<div className="relative">
@@ -314,6 +353,75 @@ export function ChatInterface({
 					/>
 				</div>
 			</div>
+		</div>
+	);
+
+	// Return the full layout with artifact support
+	return (
+		<div className="flex h-screen w-full overflow-hidden">
+			{/* Chat interface - animates width when artifact is visible */}
+			<motion.div 
+				className="min-w-0 flex-shrink-0"
+				initial={false}
+				animate={{ 
+					width: artifact.isVisible ? "50%" : "100%" 
+				}}
+				transition={{ 
+					type: "spring", 
+					stiffness: 300, 
+					damping: 30,
+					duration: 0.4 
+				}}
+			>
+				{chatContent}
+			</motion.div>
+
+			{/* Artifact panel - slides in from right when visible */}
+			<AnimatePresence>
+				{artifact.isVisible && (
+					<motion.div 
+						className="w-1/2 min-w-0 flex-shrink-0 relative z-50"
+						initial={{ x: "100%", opacity: 0 }}
+						animate={{ 
+							x: 0, 
+							opacity: 1 
+						}}
+						exit={{ 
+							x: "100%", 
+							opacity: 0 
+						}}
+						transition={{ 
+							type: "spring", 
+							stiffness: 300, 
+							damping: 30,
+							duration: 0.4 
+						}}
+					>
+						<ArtifactViewer
+							artifact={artifact}
+							metadata={metadata}
+							setMetadata={setMetadata}
+							onClose={hideArtifact}
+							onSaveContent={(content) => {
+								// For demo purposes, just log the content
+								console.log('Artifact content updated:', content);
+							}}
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{/* Demo button when no artifact is shown */}
+			{!artifact.isVisible && (
+				<div className="fixed bottom-4 right-4">
+					<Button 
+						onClick={showArtifactDemo}
+						className="z-50"
+					>
+						🧪 Show Artifact Demo
+					</Button>
+				</div>
+			)}
 
 			{/* Rate limit dialog - shown when anonymous user hits limit */}
 			<RateLimitDialog

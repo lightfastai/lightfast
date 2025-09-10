@@ -25,7 +25,7 @@ export const createDocument = ({
     execute: async ({ title, kind }) => {
       const id = generateUUID();
 
-      // Stream artifact metadata first
+      // Stream artifact metadata first (with data- prefix per Vercel pattern)
       dataStream.write({
         type: 'data-kind',
         data: kind,

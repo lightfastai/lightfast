@@ -1,10 +1,20 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 import type { InferUITools, UIMessage } from "ai";
 import type { webSearchTool } from "~/ai/tools/web-search";
+import type { createDocumentTool } from "~/ai/tools/create-document-lightfast";
 import type { AppRuntimeContext } from "~/ai/types";
 
-// Custom data types for message parts (empty for now)
-export type LightfastAppChatUICustomDataTypes = Record<string, unknown>;
+// Custom data types for artifact streaming - type definitions without 'data-' prefix
+// But actual streaming always uses 'data-' prefix in type field
+export type LightfastAppChatUICustomDataTypes = {
+	"kind": string;
+	"id": string;
+	"title": string;
+	"clear": null;
+	"finish": null;
+	"codeDelta": string;
+	"usage": any; // For token usage data
+};
 
 // Helper type to extract the tool type from a tool factory function
 // This handles the RuntimeContext injection pattern
@@ -12,9 +22,9 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 
 // Define the tool set type using the helper
 // This matches the structure passed to streamText() in route.ts
-// Define the tool set type using InferUITools helper
 export type LightfastAppChatToolSet = InferUITools<{
 	webSearch: ExtractToolType<typeof webSearchTool>;
+	createDocument: ExtractToolType<typeof createDocumentTool>;
 }>;
 
 // Metadata type for our messages

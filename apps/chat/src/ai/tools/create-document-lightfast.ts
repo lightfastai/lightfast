@@ -24,7 +24,7 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 
 		const id = generateUUID();
 
-		// Stream artifact metadata first (matching the original pattern)
+		// Stream artifact metadata first (matching Vercel's pattern with data- prefix)
 		dataStream.write({
 			type: 'data-kind',
 			data: kind,

@@ -3,17 +3,21 @@
  * Handles CRUD operations for chat artifacts (code, documents, etc.)
  */
 
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../../trpc";
+import { protectedProcedure } from "../../trpc";
+import { db } from "@db/chat/client";
 import { 
   LightfastChatArtifact,
+  LightfastChatSession,
   ARTIFACT_KINDS,
   insertLightfastChatArtifactSchema,
   selectLightfastChatArtifactSchema,
-} from "db/chat/src/schema/tables/artifact";
+} from "@db/chat";
 
-export const artifactRouter = createTRPCRouter({
+export const artifactRouter = {
   /**
    * Create or update an artifact
    */
@@ -31,8 +35,27 @@ export const artifactRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, title, content, kind, sessionId } = input;
 
+      // Verify session ownership
+      const session = await db
+        .select({ id: LightfastChatSession.id })
+        .from(LightfastChatSession)
+        .where(
+          and(
+            eq(LightfastChatSession.id, sessionId),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!session[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Session not found or access denied",
+        });
+      }
+
       // Insert or update artifact
-      const [artifact] = await ctx.db
+      await db
         .insert(LightfastChatArtifact)
         .values({
           id,
@@ -40,7 +63,7 @@ export const artifactRouter = createTRPCRouter({
           content,
           kind,
           sessionId,
-          clerkUserId: ctx.auth.userId,
+          clerkUserId: ctx.session.userId,
         })
         .onDuplicateKeyUpdate({
           set: {
@@ -49,7 +72,21 @@ export const artifactRouter = createTRPCRouter({
           },
         });
 
-      return artifact;
+      // Return the created/updated artifact
+      const [createdArtifact] = await db
+        .select()
+        .from(LightfastChatArtifact)
+        .where(eq(LightfastChatArtifact.id, id))
+        .limit(1);
+
+      if (!createdArtifact) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create artifact",
+        });
+      }
+
+      return createdArtifact;
     }),
 
   /**
@@ -63,13 +100,13 @@ export const artifactRouter = createTRPCRouter({
     )
     .output(selectLightfastChatArtifactSchema.nullable())
     .query(async ({ ctx, input }) => {
-      const artifact = await ctx.db
+      const artifact = await db
         .select()
         .from(LightfastChatArtifact)
         .where(
           and(
             eq(LightfastChatArtifact.id, input.id),
-            eq(LightfastChatArtifact.clerkUserId, ctx.auth.userId)
+            eq(LightfastChatArtifact.clerkUserId, ctx.session.userId)
           )
         )
         .limit(1);
@@ -90,15 +127,29 @@ export const artifactRouter = createTRPCRouter({
     )
     .output(z.array(selectLightfastChatArtifactSchema))
     .query(async ({ ctx, input }) => {
-      const artifacts = await ctx.db
-        .select()
-        .from(LightfastChatArtifact)
+      // Verify session ownership
+      const session = await db
+        .select({ id: LightfastChatSession.id })
+        .from(LightfastChatSession)
         .where(
           and(
-            eq(LightfastChatArtifact.sessionId, input.sessionId),
-            eq(LightfastChatArtifact.clerkUserId, ctx.auth.userId)
+            eq(LightfastChatSession.id, input.sessionId),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
           )
         )
+        .limit(1);
+
+      if (!session[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Session not found or access denied",
+        });
+      }
+
+      const artifacts = await db
+        .select()
+        .from(LightfastChatArtifact)
+        .where(eq(LightfastChatArtifact.sessionId, input.sessionId))
         .orderBy(LightfastChatArtifact.createdAt)
         .limit(input.limit)
         .offset(input.offset);
@@ -117,15 +168,30 @@ export const artifactRouter = createTRPCRouter({
     )
     .output(z.boolean())
     .mutation(async ({ ctx, input }) => {
-      const result = await ctx.db
-        .delete(LightfastChatArtifact)
+      // Verify ownership before deletion
+      const artifact = await db
+        .select({ id: LightfastChatArtifact.id })
+        .from(LightfastChatArtifact)
         .where(
           and(
             eq(LightfastChatArtifact.id, input.id),
-            eq(LightfastChatArtifact.clerkUserId, ctx.auth.userId)
+            eq(LightfastChatArtifact.clerkUserId, ctx.session.userId)
           )
-        );
+        )
+        .limit(1);
 
-      return result.affectedRows > 0;
+      if (!artifact[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Artifact not found or access denied",
+        });
+      }
+
+      // Delete the artifact
+      await db
+        .delete(LightfastChatArtifact)
+        .where(eq(LightfastChatArtifact.id, input.id));
+
+      return true;
     }),
-});
+} satisfies TRPCRouterRecord;
