@@ -1,110 +1,55 @@
-'use client';
+"use client";
 
-import { EditorView } from '@codemirror/view';
-import { EditorState, Transaction } from '@codemirror/state';
-import { python } from '@codemirror/lang-python';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { basicSetup } from 'codemirror';
-import React, { memo, useEffect, useRef } from 'react';
+import {
+	CodeBlock,
+	CodeBlockContent,
+} from "@repo/ui/components/ai-elements/code-block";
+import type { BundledLanguage } from "shiki";
+import { memo } from "react";
 
-type EditorProps = {
-  content: string;
-  onSaveContent: (updatedContent: string, debounce: boolean) => void;
-  status: 'streaming' | 'idle';
-  isCurrentVersion: boolean;
-  currentVersionIndex: number;
-};
+interface EditorProps {
+	content: string;
+	status: "streaming" | "idle";
+	isCurrentVersion: boolean;
+	currentVersionIndex: number;
+}
 
-function PureCodeEditor({ content, onSaveContent, status }: EditorProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<EditorView | null>(null);
+// Helper function to detect language from content or default to typescript
+function detectLanguage(content: string): BundledLanguage {
+	// Simple heuristics to detect language
+	if (content.includes('def ') && content.includes('import ')) return 'python';
+	if (content.includes('function ') || content.includes('const ') || content.includes('let ')) return 'typescript';
+	if (content.includes('package ') && content.includes('func ')) return 'go';
+	if (content.includes('pub fn ') || content.includes('fn main()')) return 'rust';
+	if (content.includes('<html') || content.includes('<!DOCTYPE')) return 'html';
+	if (content.includes('SELECT ') || content.includes('INSERT ')) return 'sql';
+	
+	// Default to typescript for most cases
+	return 'typescript';
+}
 
-  useEffect(() => {
-    if (containerRef.current && !editorRef.current) {
-      const startState = EditorState.create({
-        doc: content,
-        extensions: [basicSetup, python(), oneDark],
-      });
-
-      editorRef.current = new EditorView({
-        state: startState,
-        parent: containerRef.current,
-      });
-    }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
-        editorRef.current = null;
-      }
-    };
-    // NOTE: we only want to run this effect once
-    // eslint-disable-next-line
-  }, []);
-
-  useEffect(() => {
-    if (editorRef.current) {
-      const updateListener = EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          const transaction = update.transactions.find(
-            (tr) => !tr.annotation(Transaction.remote),
-          );
-
-          if (transaction) {
-            const newContent = update.state.doc.toString();
-            onSaveContent(newContent, true);
-          }
-        }
-      });
-
-      const currentSelection = editorRef.current.state.selection;
-
-      const newState = EditorState.create({
-        doc: editorRef.current.state.doc,
-        extensions: [basicSetup, python(), oneDark, updateListener],
-        selection: currentSelection,
-      });
-
-      editorRef.current.setState(newState);
-    }
-  }, [onSaveContent]);
-
-  useEffect(() => {
-    if (editorRef.current && content) {
-      const currentContent = editorRef.current.state.doc.toString();
-
-      if (status === 'streaming' || currentContent !== content) {
-        const transaction = editorRef.current.state.update({
-          changes: {
-            from: 0,
-            to: currentContent.length,
-            insert: content,
-          },
-          annotations: [Transaction.remote.of(true)],
-        });
-
-        editorRef.current.dispatch(transaction);
-      }
-    }
-  }, [content, status]);
-
-  return (
-    <div
-      className="not-prose relative w-full pb-[calc(80dvh)] text-sm"
-      ref={containerRef}
-    />
-  );
+function PureCodeEditor({ content, status }: EditorProps) {
+	const language = detectLanguage(content);
+	
+	return (
+		<div className="not-prose relative w-full h-full overflow-auto">
+			<CodeBlock className="bg-background">
+				<CodeBlockContent code={content} language={language} className="p-4" />
+			</CodeBlock>
+		</div>
+	);
 }
 
 function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
-  if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex)
-    return false;
-  if (prevProps.isCurrentVersion !== nextProps.isCurrentVersion) return false;
-  if (prevProps.status === 'streaming' && nextProps.status === 'streaming')
-    return false;
-  if (prevProps.content !== nextProps.content) return false;
+	if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex)
+		return false;
+	if (prevProps.isCurrentVersion !== nextProps.isCurrentVersion) return false;
+	if (prevProps.status === "streaming" && nextProps.status === "streaming")
+		return false;
+	if (prevProps.content !== nextProps.content) return false;
 
-  return true;
+	return true;
 }
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);
+

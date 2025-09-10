@@ -9,6 +9,7 @@ import {
 } from './icons';
 import { toast } from '@repo/ui/hooks/use-toast';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Metadata {
   // Empty for now - can be extended later for console outputs, etc.
 }
@@ -16,14 +17,14 @@ interface Metadata {
 export const codeArtifact = new Artifact<'code', Metadata>({
   kind: 'code',
   description: 'Useful for code generation and editing.',
-  initialize: async ({ setMetadata }) => {
+  initialize: ({ setMetadata }) => {
     setMetadata({});
   },
   onStreamPart: ({ streamPart, setArtifact }) => {
-    if (streamPart.type === 'data-codeDelta') {
+    if ((streamPart as { type: string }).type === 'data-codeDelta') {
       setArtifact((draftArtifact) => ({
         ...draftArtifact,
-        content: streamPart.data,
+        content: (streamPart as { data: string }).data,
         isVisible:
           draftArtifact.status === 'streaming' &&
           draftArtifact.content.length > 300 &&
@@ -34,7 +35,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       }));
     }
   },
-  content: ({ metadata, setMetadata, ...props }) => {
+  content: ({ metadata: _metadata, setMetadata: _setMetadata, ...props }) => {
     return (
       <div className="px-1">
         <CodeEditor {...props} />
@@ -43,7 +44,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
   },
   actions: [
     {
-      icon: <UndoIcon size={18} />,
+      icon: <UndoIcon className="size-4" />,
       description: 'View Previous version',
       onClick: ({ handleVersionChange }) => {
         handleVersionChange('prev');
@@ -56,7 +57,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       },
     },
     {
-      icon: <RedoIcon size={18} />,
+      icon: <RedoIcon className="size-4" />,
       description: 'View Next version',
       onClick: ({ handleVersionChange }) => {
         handleVersionChange('next');
@@ -69,10 +70,10 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       },
     },
     {
-      icon: <CopyIcon size={18} />,
+      icon: <CopyIcon className="size-4" />,
       description: 'Copy code to clipboard',
       onClick: ({ content }) => {
-        navigator.clipboard.writeText(content);
+        void navigator.clipboard.writeText(content);
         toast({
           title: 'Copied to clipboard!',
           description: 'Code has been copied to your clipboard.',
@@ -82,7 +83,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
   ],
   toolbar: [
     {
-      icon: <MessageIcon />,
+      icon: <MessageIcon className="size-4" />,
       description: 'Add comments',
       onClick: ({ sendMessage }) => {
         sendMessage({
@@ -97,7 +98,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       },
     },
     {
-      icon: <LogsIcon />,
+      icon: <LogsIcon className="size-4" />,
       description: 'Add logs',
       onClick: ({ sendMessage }) => {
         sendMessage({

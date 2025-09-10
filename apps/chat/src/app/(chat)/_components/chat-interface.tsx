@@ -237,6 +237,7 @@ export function ChatInterface({
 		}
 	};
 
+
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
 		<ProviderModelSelector
@@ -298,6 +299,7 @@ export function ChatInterface({
 							<RateLimitIndicator remainingMessages={remainingMessages} />
 						</div>
 					)}
+					
 					<ChatInput
 						onSendMessage={handleSendMessage}
 						placeholder="Continue the conversation..."

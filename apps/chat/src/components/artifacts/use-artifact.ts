@@ -18,6 +18,7 @@ const initialArtifactState: UIArtifact = {
 
 export function useArtifact() {
   const [artifact, setArtifact] = useState<UIArtifact>(initialArtifactState);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
   const [metadata, setMetadata] = useState<any>({});
 
   const showArtifact = useCallback((artifactData: Partial<UIArtifact>) => {
@@ -46,6 +47,7 @@ export function useArtifact() {
   return {
     artifact,
     setArtifact,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     metadata,
     setMetadata,
     showArtifact,

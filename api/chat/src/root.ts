@@ -12,9 +12,9 @@ import { messageRouter } from "./router/chat/message";
  * Primary chat app router - flattened structure
  */
 export const chatAppRouter = createTRPCRouter({
-  user: userRouter,
-  session: sessionRouter,
-  message: messageRouter,
+	user: userRouter,
+	session: sessionRouter,
+	message: messageRouter,
 });
 
 // Export type for use in client

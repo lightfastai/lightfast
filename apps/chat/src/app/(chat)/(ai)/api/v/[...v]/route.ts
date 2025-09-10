@@ -34,9 +34,13 @@ import {
 	checkDecision,
 } from "@vendor/security";
 
-// Create tools object for c010 agent
+// Import artifact tools (Lightfast-compatible)
+import { createDocumentTool } from "~/ai/tools/create-document-lightfast";
+
+// Create complete tools object for c010 agent including artifact tools
 const c010Tools = {
 	webSearch: webSearchTool,
+	createDocument: createDocumentTool,
 };
 
 // Initialize Braintrust logging

@@ -8,3 +8,4 @@ export { artifactDefinitions, type UIArtifact, type ArtifactKind } from './artif
 export type { ArtifactActionContext, ArtifactToolbarContext } from './create-artifact';
 export * from './icons';
 export * from './types';
+

@@ -1,6 +1,9 @@
+import type { UIMessageStreamWriter } from "ai";
+
 export interface AppRuntimeContext {
 	userId?: string;
 	agentId: string;
+	dataStream?: UIMessageStreamWriter; // For artifact streaming support
 }
 
 /**

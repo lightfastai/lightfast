@@ -1,17 +1,16 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type { UIArtifact } from './artifact';
 
-export type ArtifactActionContext<M = any> = {
+export interface ArtifactActionContext<M = unknown> {
   content: string;
   handleVersionChange: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
   currentVersionIndex: number;
   isCurrentVersion: boolean;
-  mode: 'edit' | 'diff';
   metadata: M;
   setMetadata: Dispatch<SetStateAction<M>>;
 };
 
-type ArtifactAction<M = any> = {
+interface ArtifactAction<M = unknown> {
   icon: ReactNode;
   label?: string;
   description: string;
@@ -19,24 +18,22 @@ type ArtifactAction<M = any> = {
   isDisabled?: (context: ArtifactActionContext<M>) => boolean;
 };
 
-export type ArtifactToolbarContext = {
-  sendMessage: (message: { role: string; parts: any[] }) => void;
-};
+export interface ArtifactToolbarContext {
+  sendMessage: (message: { role: string; parts: unknown[] }) => void;
+}
 
-export type ArtifactToolbarItem = {
+export interface ArtifactToolbarItem {
   description: string;
   icon: ReactNode;
   onClick: (context: ArtifactToolbarContext) => void;
 };
 
-interface ArtifactContent<M = any> {
+interface ArtifactContent<M = unknown> {
   title: string;
   content: string;
-  mode: 'edit' | 'diff';
   isCurrentVersion: boolean;
   currentVersionIndex: number;
   status: 'streaming' | 'idle';
-  onSaveContent: (updatedContent: string, debounce: boolean) => void;
   isInline: boolean;
   getDocumentContentById: (index: number) => string;
   isLoading: boolean;
@@ -44,45 +41,45 @@ interface ArtifactContent<M = any> {
   setMetadata: Dispatch<SetStateAction<M>>;
 }
 
-interface InitializeParameters<M = any> {
+interface InitializeParameters<M = unknown> {
   documentId: string;
   setMetadata: Dispatch<SetStateAction<M>>;
 }
 
-type ArtifactConfig<T extends string, M = any> = {
+interface ArtifactConfig<T extends string, M = unknown> {
   kind: T;
   description: string;
   content: React.ComponentType<ArtifactContent<M>>;
-  actions: Array<ArtifactAction<M>>;
+  actions: ArtifactAction<M>[];
   toolbar: ArtifactToolbarItem[];
   initialize?: (parameters: InitializeParameters<M>) => void;
   onStreamPart: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
-    streamPart: any; // DataUIPart type from AI SDK
+    streamPart: unknown; // DataUIPart type from AI SDK
   }) => void;
 };
 
-export class Artifact<T extends string, M = any> {
+export class Artifact<T extends string, M = unknown> {
   readonly kind: T;
   readonly description: string;
   readonly content: React.ComponentType<ArtifactContent<M>>;
-  readonly actions: Array<ArtifactAction<M>>;
+  readonly actions: ArtifactAction<M>[];
   readonly toolbar: ArtifactToolbarItem[];
-  readonly initialize?: (parameters: InitializeParameters) => void;
+  readonly initialize?: (parameters: InitializeParameters<M>) => void;
   readonly onStreamPart: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
-    streamPart: any;
+    streamPart: unknown;
   }) => void;
 
   constructor(config: ArtifactConfig<T, M>) {
     this.kind = config.kind;
     this.description = config.description;
     this.content = config.content;
-    this.actions = config.actions || [];
-    this.toolbar = config.toolbar || [];
-    this.initialize = config.initialize || (async () => ({}));
+    this.actions = config.actions;
+    this.toolbar = config.toolbar;
+    this.initialize = config.initialize;
     this.onStreamPart = config.onStreamPart;
   }
 }

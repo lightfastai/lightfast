@@ -40,11 +40,11 @@ export function CodeEditor() {
 			</div>
 
 			{/* Code Content */}
-			<div className="p-0">
-				<pre className="text-xs leading-4 overflow-x-auto m-0">
+			<div className="p-0 overflow-x-auto">
+				<pre className="text-xs leading-4 m-0 min-w-max">
 					<code className="block p-4 text-xs">
 						{codeSnippet.split("\n").map((line, index) => (
-							<div key={index} className="flex min-h-[16px] text-xs">
+							<div key={index} className="flex min-h-[16px] text-xs whitespace-nowrap">
 								<span className="text-muted-foreground/50 select-none pr-4 text-right w-8 flex-shrink-0 text-xs">
 									{index + 1}
 								</span>
