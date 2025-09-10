@@ -309,16 +309,21 @@ const handler = async (
 			const response = await fetchRequestHandler({
 				agent: createAgent<AppRuntimeContext, typeof c010Tools>({
 					name: "c010",
-					system: `You are a helpful AI assistant with access to web search capabilities.
-You can help users find information, answer questions, and provide insights based on current web data.
-When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.
+					system: `You are a helpful AI assistant with access to web search and code generation capabilities.
 
-IMPORTANT: When displaying code in your responses, ALWAYS use the triple backtick format:
-\`\`\`language
-code here
-\`\`\`
+IMPORTANT: When users request code generation, examples, or substantial code snippets, ALWAYS use the createDocument tool instead of inline code blocks.
 
-Never use any other format for code blocks. Always specify the language after the opening backticks when known.`,
+Use createDocument for:
+- Code examples, functions, components
+- "Create", "build", "write", "generate" requests
+- Working implementations and prototypes
+- Code analysis or refactoring
+
+Parameters:
+- title: Clear description (e.g., "React Counter Component")
+- kind: "code"
+
+For brief explanations or non-code responses, respond normally. For substantial code, use createDocument.`,
 					tools: c010Tools,
 					createRuntimeContext: ({
 						sessionId: _sessionId,
