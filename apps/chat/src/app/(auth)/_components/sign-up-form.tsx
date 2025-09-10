@@ -4,13 +4,14 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { SignUpEmailInput } from "./sign-up-email-input";
 import { SignUpCodeVerification } from "./sign-up-code-verification";
+import { SignUpPassword } from "./sign-up-password";
 import { OAuthSignUp } from "./oauth-sign-up";
 import Link from "next/link";
 import { siteConfig } from "@repo/site-config";
 
 export function SignUpForm() {
 	const [verificationStep, setVerificationStep] = React.useState<
-		"email" | "code"
+		"email" | "code" | "password"
 	>("email");
 	const [emailAddress, setEmailAddress] = React.useState("");
 	const [error, setError] = React.useState("");
@@ -31,10 +32,16 @@ export function SignUpForm() {
 		setError(errorMessage);
 	}
 
+	function handlePasswordSuccess(email: string) {
+		setEmailAddress(email);
+		setVerificationStep("code");
+		setError("");
+	}
+
 	return (
 		<div className="w-full space-y-8">
-			{/* Header - only show on email step */}
-			{verificationStep === "email" && (
+			{/* Header - only show on email and password steps */}
+			{(verificationStep === "email" || verificationStep === "password") && (
 				<div className="text-center">
 					<h1 className="text-3xl font-semibold text-foreground">
 						Sign up for Lightfast
@@ -98,8 +105,66 @@ export function SignUpForm() {
 							</div>
 						</div>
 
+						{/* Password Sign Up Option */}
+						<Button
+							variant="outline"
+							onClick={() => setVerificationStep("password")}
+							className="w-full h-12"
+						>
+							Sign up with Password
+						</Button>
+
+						{/* Separator */}
+						<div className="relative">
+							<div className="absolute inset-0 flex items-center">
+								<Separator className="w-full" />
+							</div>
+							<div className="relative flex justify-center text-xs uppercase">
+								<span className="bg-background px-2 text-muted-foreground">Or</span>
+							</div>
+						</div>
+
 						{/* OAuth Sign Up */}
 						<OAuthSignUp />
+					</>
+				)}
+
+				{!error && verificationStep === "password" && (
+					<>
+						<SignUpPassword
+							onSuccess={handlePasswordSuccess}
+							onError={handleError}
+						/>
+						
+						{/* Legal compliance text for password step */}
+						<p className="text-xs text-center text-muted-foreground">
+							By joining, you agree to our{" "}
+							<Link
+								href={siteConfig.links.terms.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-foreground hover:text-foreground/80 underline"
+							>
+								Terms of Service
+							</Link>{" "}
+							and{" "}
+							<Link
+								href={siteConfig.links.privacy.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-foreground hover:text-foreground/80 underline"
+							>
+								Privacy Policy
+							</Link>
+						</p>
+						
+						<Button
+							variant="ghost"
+							onClick={handleReset}
+							className="w-full h-12 text-muted-foreground hover:text-foreground"
+						>
+							← Back to other options
+						</Button>
 					</>
 				)}
 
@@ -112,8 +177,8 @@ export function SignUpForm() {
 				)}
 			</div>
 
-			{/* Sign In Link - only show on email step */}
-			{verificationStep === "email" && (
+			{/* Sign In Link - only show on email and password steps */}
+			{(verificationStep === "email" || verificationStep === "password") && (
 				<div className="text-center text-sm">
 					<span className="text-muted-foreground">Already have an account? </span>
 					<Button
