@@ -4,7 +4,13 @@ import { cn } from "@repo/ui/lib/utils";
 import type { ComponentProps } from "react";
 import { memo, isValidElement } from "react";
 import { Streamdown } from "streamdown";
-import { CodeBlock, CodeBlockCopyButton } from "./code-block";
+import {
+  CodeBlock,
+  CodeBlockHeader,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+} from "./code-block";
 import type { Components } from "react-markdown";
 import type { BundledLanguage } from "shiki";
 
@@ -57,13 +63,16 @@ const customComponents: Partial<Components> = {
 			<CodeBlock
 				className={cn(
 					"my-4 h-auto rounded-md border border-border",
-					"bg-muted/50 dark:bg-muted/20 p-3",
+					"bg-muted/50 dark:bg-muted/20",
 					className,
 				)}
-				code={code}
-				language={language}
 			>
-				<CodeBlockCopyButton />
+				<CodeBlockHeader language={language}>
+					<CodeBlockActions>
+						<CodeBlockCopyButton />
+					</CodeBlockActions>
+				</CodeBlockHeader>
+				<CodeBlockContent code={code} language={language} className="p-3" />
 			</CodeBlock>
 		);
 	},
@@ -100,42 +109,60 @@ const customComponents: Partial<Components> = {
 	// Heading components with consistent styling
 	h1: ({ children, ...props }) => {
 		return (
-			<h1 className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6 first:mt-0" {...props}>
+			<h1
+				className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6 first:mt-0"
+				{...props}
+			>
 				{children}
 			</h1>
 		);
 	},
 	h2: ({ children, ...props }) => {
 		return (
-			<h2 className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-5" {...props}>
+			<h2
+				className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-5"
+				{...props}
+			>
 				{children}
 			</h2>
 		);
 	},
 	h3: ({ children, ...props }) => {
 		return (
-			<h3 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4" {...props}>
+			<h3
+				className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4"
+				{...props}
+			>
 				{children}
 			</h3>
 		);
 	},
 	h4: ({ children, ...props }) => {
 		return (
-			<h4 className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-3" {...props}>
+			<h4
+				className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-3"
+				{...props}
+			>
 				{children}
 			</h4>
 		);
 	},
 	h5: ({ children, ...props }) => {
 		return (
-			<h5 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
+			<h5
+				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2"
+				{...props}
+			>
 				{children}
 			</h5>
 		);
 	},
 	h6: ({ children, ...props }) => {
 		return (
-			<h6 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
+			<h6
+				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2"
+				{...props}
+			>
 				{children}
 			</h6>
 		);
@@ -143,7 +170,10 @@ const customComponents: Partial<Components> = {
 	// Paragraph with proper spacing
 	p: ({ children, ...props }) => {
 		return (
-			<p className="text-sm leading-7 [&:not(:first-child)]:mt-3 break-words" {...props}>
+			<p
+				className="text-sm leading-7 [&:not(:first-child)]:mt-3 break-words"
+				{...props}
+			>
 				{children}
 			</p>
 		);
@@ -151,14 +181,20 @@ const customComponents: Partial<Components> = {
 	// List components
 	ul: ({ className, children, ...props }) => {
 		return (
-			<ul className={cn("my-3 ml-6 list-disc [&>li]:mt-1", className)} {...props}>
+			<ul
+				className={cn("my-3 ml-6 list-disc [&>li]:mt-1", className)}
+				{...props}
+			>
 				{children}
 			</ul>
 		);
 	},
 	ol: ({ className, children, ...props }) => {
 		return (
-			<ol className={cn("my-3 ml-6 list-decimal [&>li]:mt-1", className)} {...props}>
+			<ol
+				className={cn("my-3 ml-6 list-decimal [&>li]:mt-1", className)}
+				{...props}
+			>
 				{children}
 			</ol>
 		);
