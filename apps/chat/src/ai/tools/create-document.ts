@@ -16,10 +16,14 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 		kind: z.enum(artifactKinds).describe("The type of document to create"),
 	}),
 	execute: async ({ title, kind }, context) => {
-		const { sessionId, dataStream } = context;
+		const { sessionId, messageId, dataStream } = context;
 
 		if (!dataStream) {
 			throw new Error("DataStream not available - artifact streaming not supported in this context");
+		}
+
+		if (!messageId) {
+			throw new Error("MessageId not available - unable to link artifact to message");
 		}
 
 		const id = generateUUID();
@@ -63,6 +67,7 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			id,
 			title,
 			sessionId,
+			messageId,
 			dataStream: dataStream as any, // Type assertion for compatibility
 		});
 

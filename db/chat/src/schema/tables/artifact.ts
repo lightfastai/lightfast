@@ -50,6 +50,11 @@ export const LightfastChatArtifact = mysqlTable(
     sessionId: varchar("session_id", { length: 191 }).notNull(),
     
     /**
+     * Reference to the specific message that generated this artifact
+     */
+    messageId: varchar("message_id", { length: 191 }).notNull(),
+    
+    /**
      * Reference to the user who created this artifact
      */
     clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),

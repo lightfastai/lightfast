@@ -3,6 +3,7 @@ import type { UIMessageStreamWriter } from "ai";
 export interface AppRuntimeContext {
 	userId?: string;
 	agentId: string;
+	messageId?: string; // ID of the current assistant message being generated
 	dataStream?: UIMessageStreamWriter; // For artifact streaming support
 }
 

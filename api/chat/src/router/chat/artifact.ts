@@ -29,11 +29,12 @@ export const artifactRouter = {
         content: z.string(),
         kind: z.enum(ARTIFACT_KINDS),
         sessionId: z.string(),
+        messageId: z.string(),
       })
     )
     .output(selectLightfastChatArtifactSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, title, content, kind, sessionId } = input;
+      const { id, title, content, kind, sessionId, messageId } = input;
 
       // Verify session ownership
       const session = await db
@@ -63,6 +64,7 @@ export const artifactRouter = {
           content,
           kind,
           sessionId,
+          messageId,
           clerkUserId: ctx.session.userId,
         })
         .onDuplicateKeyUpdate({

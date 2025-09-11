@@ -155,6 +155,9 @@ const handler = async (
 		return ApiErrors.agentNotFound(agentId, { requestId });
 	}
 
+	// Simple: generate one messageId and use it everywhere
+	const messageId = uuidv4();
+
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async (): Promise<Response> => {
 		try {
@@ -193,6 +196,7 @@ const handler = async (
 						}): AppRuntimeContext => ({
 							userId,
 							agentId,
+							messageId, // Use the generated messageId
 						}),
 						model: wrapLanguageModel({
 							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
@@ -214,7 +218,7 @@ const handler = async (
 							req.headers.get("x-real-ip") ??
 							undefined,
 					}),
-					generateId: uuidv4,
+					generateId: () => messageId,
 					enableResume: true,
 					onError(event) {
 						const { error, systemContext, requestContext } = event;
@@ -318,6 +322,7 @@ const handler = async (
 					}): AppRuntimeContext => ({
 						userId,
 						agentId,
+						messageId, // Use the generated messageId
 					}),
 					model: wrapLanguageModel({
 						model: gateway(gatewayModelString),
@@ -355,7 +360,7 @@ const handler = async (
 						req.headers.get("x-real-ip") ??
 						undefined,
 				}),
-				generateId: uuidv4,
+				generateId: () => messageId,
 				enableResume: true,
 				onError(event) {
 					const { error, systemContext, requestContext } = event;

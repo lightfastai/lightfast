@@ -19,12 +19,14 @@ export interface SaveDocumentProps {
   kind: ArtifactKind;
   content: string;
   sessionId: string;
+  messageId: string;
 }
 
 export interface CreateDocumentCallbackProps {
   id: string;
   title: string;
   sessionId: string;
+  messageId: string;
   dataStream: UIMessageStreamWriter<LightfastAppChatUIMessage>;
 }
 
@@ -53,6 +55,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
         id: args.id,
         title: args.title,
         sessionId: args.sessionId,
+        messageId: args.messageId,
         dataStream: args.dataStream,
       });
 
@@ -63,6 +66,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
         content: draftContent,
         kind: config.kind,
         sessionId: args.sessionId,
+        messageId: args.messageId,
       });
 
       return;
@@ -82,6 +86,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
         content: draftContent,
         kind: config.kind,
         sessionId: args.sessionId,
+        messageId: args.document.messageId, // Use existing messageId from document
       });
 
       return;
@@ -95,6 +100,7 @@ async function saveDocument({
   kind,
   content,
   sessionId,
+  messageId,
 }: SaveDocumentProps): Promise<void> {
   try {
     const caller = await createCaller();
@@ -104,6 +110,7 @@ async function saveDocument({
       kind,
       content,
       sessionId,
+      messageId,
     });
   } catch (error) {
     console.error('[ArtifactServer] Failed to save document:', {
