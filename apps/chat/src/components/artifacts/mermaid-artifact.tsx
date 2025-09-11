@@ -40,7 +40,7 @@ export const mermaidArtifact = new Artifact<'mermaid', Metadata>({
     
     return (
       <div className="px-1">
-        <div className="border rounded-lg bg-background/50">
+        <div className="border rounded-lg bg-background/50 overflow-hidden">
           <Response>
             {mermaidContent}
           </Response>

@@ -51,7 +51,6 @@
 		"react-dom": "catalog:react19",
 		"react-syntax-highlighter": "^15.6.1",
 		"server-only": "^0.0.1",
-		"streamdown": "^1.2.0",
 		"superjson": "catalog:",
 		"use-debounce": "^10.0.5",
 		"use-stick-to-bottom": "1.1.1",

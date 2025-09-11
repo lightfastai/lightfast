@@ -523,9 +523,6 @@ importers:
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
-      streamdown:
-        specifier: ^1.2.0
-        version: 1.2.0(@types/react@19.1.11)(react@19.1.1)
       superjson:
         specifier: 'catalog:'
         version: 2.2.1
@@ -1669,7 +1666,7 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       drizzle-kit:
-        specifier: ^0.31.0
+        specifier: ^0.31.4
         version: 0.31.4
       eslint:
         specifier: 'catalog:'
@@ -2384,6 +2381,9 @@ importers:
       sonner:
         specifier: ^2.0.6
         version: 2.0.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      streamdown:
+        specifier: ^1.2.0
+        version: 1.2.0(@types/react@19.1.11)(react@19.1.1)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2634,7 +2634,7 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       drizzle-kit:
-        specifier: ^0.31.0
+        specifier: ^0.31.4
         version: 0.31.4
       eslint:
         specifier: 'catalog:'
