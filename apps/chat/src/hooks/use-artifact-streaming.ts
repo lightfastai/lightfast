@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useDataStream } from './use-data-stream';
-import type { UIArtifact, ArtifactKind } from '~/components/artifacts/artifact';
+import type { UIArtifact } from '~/components/artifacts/artifact';
+import type { ArtifactKind } from '@db/chat';
 import { artifactDefinitions } from '~/components/artifacts';
 
 interface UseArtifactStreamingProps {

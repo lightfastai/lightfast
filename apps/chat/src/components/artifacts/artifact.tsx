@@ -8,8 +8,6 @@ export const artifactDefinitions = [
   mermaidArtifact,
 ];
 
-export type { ArtifactKind };
-
 export interface UIArtifact {
   title: string;
   documentId: string;

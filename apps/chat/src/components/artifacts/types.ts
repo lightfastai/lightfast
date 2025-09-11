@@ -3,7 +3,7 @@
  * Based on Vercel AI Chatbot's implementation
  */
 
-export type ArtifactKind = "code";
+import type { ArtifactKind } from '@db/chat';
 
 export interface ArtifactData {
   id: string;
