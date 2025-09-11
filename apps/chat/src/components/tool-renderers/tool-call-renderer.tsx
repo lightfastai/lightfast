@@ -138,21 +138,21 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 	}
 
 	return (
-		<div className="my-4 border border-zinc-700 rounded-lg bg-zinc-900 overflow-hidden flex">
+		<div className="my-4 border rounded-lg bg-card overflow-hidden flex">
 			{/* Left side - Document info */}
 			<div className="flex-1 px-4 py-3">
-				<div className="text-white font-medium text-sm mb-1">
+				<div className="text-foreground font-medium text-sm mb-1">
 					{documentTitle || "Dijkstra's Algorithm Implementation"}
 				</div>
-				<div className="text-zinc-400 text-xs">
+				<div className="text-muted-foreground text-xs">
 					{documentKind || "Code"}
 				</div>
 			</div>
 			
 			{/* Right side - Code preview thumbnail */}
-			<div className="w-32 h-20 bg-zinc-800 border-l border-zinc-700 flex items-center justify-center">
-				<div className="w-6 h-6 bg-zinc-600 rounded opacity-50">
-					<FileCode className="w-4 h-4 text-zinc-400 m-1" />
+			<div className="w-32 h-20 bg-muted border-l flex items-center justify-center">
+				<div className="w-6 h-6 bg-muted-foreground/20 rounded">
+					<FileCode className="w-4 h-4 text-muted-foreground m-1" />
 				</div>
 			</div>
 		</div>
