@@ -1,11 +1,11 @@
 // UI Artifact types and definitions
 import { codeArtifact } from './code-artifact';
-import { mermaidArtifact } from './mermaid-artifact';
+import { diagramArtifact } from './diagram-artifact';
 import type { ArtifactKind } from '@db/chat';
 
 export const artifactDefinitions = [
   codeArtifact,
-  mermaidArtifact,
+  diagramArtifact,
 ];
 
 export interface UIArtifact {

@@ -7,7 +7,7 @@ import { uuidv4 } from "@repo/lib";
 /**
  * Artifact kinds - extensible for different artifact types
  */
-export const ARTIFACT_KINDS = ["code", "mermaid"] as const;
+export const ARTIFACT_KINDS = ["code", "diagram"] as const;
 export type ArtifactKind = typeof ARTIFACT_KINDS[number];
 
 /**

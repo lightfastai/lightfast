@@ -13,7 +13,7 @@ export interface LightfastAppChatUICustomDataTypes {
 	"clear": null;
 	"finish": null;
 	"codeDelta": string;
-	"mermaidDelta": string;
+	"diagramDelta": string;
 	// Index signature to satisfy UIDataTypes constraint
 	[key: string]: unknown;
 }

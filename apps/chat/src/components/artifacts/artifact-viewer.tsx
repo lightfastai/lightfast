@@ -53,11 +53,13 @@ export function ArtifactViewer({
 	// Hook for copy functionality with success state
 	const { copyToClipboard, isCopied } = useCopyToClipboard({
 		showToast: true,
-		toastMessage: "Code copied to clipboard!",
+		toastMessage: "Content copied to clipboard!",
 	});
 
-	// We only support 'code' artifacts for now, so use the first (and only) definition
-	const artifactDefinition = artifactDefinitions[0];
+	// Find the correct artifact definition based on the artifact's kind
+	const artifactDefinition = artifactDefinitions.find(
+		(definition) => definition.kind === artifact.kind
+	);
 
 	if (!artifactDefinition) {
 		return null; // Should never happen, but ensures type safety
@@ -115,7 +117,7 @@ export function ArtifactViewer({
 					{/* Artifact actions */}
 					{artifactDefinition.actions.map((action, index) => {
 						// Special handling for copy action
-						if (action.description === "Copy code to clipboard") {
+						if (action.description.includes("clipboard")) {
 							return (
 								<ArtifactAction
 									key={index}

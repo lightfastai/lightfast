@@ -13,7 +13,6 @@ import {
 } from "./code-block";
 import type { Components } from "react-markdown";
 import type { BundledLanguage } from "shiki";
-import type { MermaidConfig } from "mermaid";
 type ResponseProps = ComponentProps<typeof Streamdown>;
 
 // Custom components following Streamdown's structure exactly
@@ -212,13 +211,6 @@ const customComponents: Partial<Components> = {
 	},
 };
 
-const mermaidConfig: MermaidConfig = {
-	theme: "dark",
-	themeVariables: {
-		primaryColor: "#ff0000",
-		primaryTextColor: "#fff",
-	},
-};
 
 export const Response = memo(
 	({ className, components, ...props }: ResponseProps) => (
@@ -227,7 +219,6 @@ export const Response = memo(
 				"size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
 				className,
 			)}
-			mermaidConfig={mermaidConfig}
 			components={{
 				...customComponents,
 				...components,

@@ -62,7 +62,6 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 
 		// Get the document handler for the specified kind
 		const documentHandler = documentHandlersByArtifactKind.find(
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			(handler) => handler.kind === kind,
 		);
 

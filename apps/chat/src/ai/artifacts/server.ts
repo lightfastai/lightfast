@@ -1,5 +1,5 @@
 import { codeDocumentHandler } from './code/server';
-import { mermaidDocumentHandler } from './mermaid/server';
+import { diagramDocumentHandler } from './diagram/server';
 import type { ArtifactKind } from '@db/chat';
 import type { LightfastChatArtifact } from '@db/chat';
 import type { UIMessageStreamWriter } from 'ai';
@@ -141,5 +141,5 @@ async function saveDocument({
  */
 export const documentHandlersByArtifactKind: DocumentHandler<ArtifactKind>[] = [
   codeDocumentHandler,
-  mermaidDocumentHandler,
+  diagramDocumentHandler,
 ];

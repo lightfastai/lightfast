@@ -8,7 +8,7 @@ interface Metadata {
 }
 
 // Mermaid configuration optimized for dark theme
-const MERMAID_CONFIG = {
+const DIAGRAM_CONFIG = {
 	theme: "dark" as const,
 	themeVariables: {
 		primaryColor: "#3b82f6", // blue-500
@@ -73,7 +73,7 @@ function MermaidDiagram({ content, isStreaming = false }: MermaidDiagramProps) {
 				const mermaid = await import("mermaid");
 
 				// Initialize mermaid with our config
-				mermaid.default.initialize(MERMAID_CONFIG);
+				mermaid.default.initialize(DIAGRAM_CONFIG);
 
 				// Clear previous content
 				if (containerRef.current) {
@@ -121,7 +121,7 @@ function MermaidDiagram({ content, isStreaming = false }: MermaidDiagramProps) {
 		// Debounce rendering during streaming
 		const timeoutId = setTimeout(
 			() => {
-				renderDiagram();
+				void renderDiagram();
 			},
 			isStreaming ? 500 : 100,
 		);
@@ -162,15 +162,15 @@ function MermaidDiagram({ content, isStreaming = false }: MermaidDiagramProps) {
 	);
 }
 
-export const mermaidArtifact = new Artifact<"mermaid", Metadata>({
-	kind: "mermaid",
+export const diagramArtifact = new Artifact<"diagram", Metadata>({
+	kind: "diagram",
 	description:
 		"Useful for creating diagrams, flowcharts, and visual representations.",
 	initialize: ({ setMetadata }) => {
 		setMetadata({});
 	},
 	onStreamPart: ({ streamPart, setArtifact }) => {
-		if ((streamPart as { type: string }).type === "data-mermaidDelta") {
+		if ((streamPart as { type: string }).type === "data-diagramDelta") {
 			setArtifact((draftArtifact) => {
 				const newContent =
 					draftArtifact.content + (streamPart as { data: string }).data;
@@ -193,13 +193,13 @@ export const mermaidArtifact = new Artifact<"mermaid", Metadata>({
 		setMetadata: _setMetadata,
 		content,
 		status,
-		...props
+		..._props
 	}) => {
 		const isStreaming = status === "streaming";
 
 		return (
 			<div className="px-1">
-				<div className="border rounded-lg bg-background/50 overflow-hidden p-4">
+				<div className="rounded-lg bg-background/50 overflow-hidden p-4">
 					<MermaidDiagram content={content} isStreaming={isStreaming} />
 				</div>
 			</div>
@@ -233,4 +233,3 @@ export const mermaidArtifact = new Artifact<"mermaid", Metadata>({
 		},
 	],
 });
-

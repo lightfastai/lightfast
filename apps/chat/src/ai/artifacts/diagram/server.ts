@@ -18,7 +18,7 @@ Guidelines:
 Generate only the Mermaid diagram code. Do not include markdown code blocks or additional explanations.
 `;
 
-const updateDocumentPrompt = (currentContent: string | null, kind: 'mermaid') => `
+const updateDocumentPrompt = (currentContent: string | null, kind: 'diagram') => `
 You are an expert Mermaid diagram editor. Update the existing ${kind} diagram based on the user's description.
 
 Current diagram:
@@ -34,8 +34,8 @@ Guidelines:
 Update the diagram to fulfill the user's request while preserving what works.
 `;
 
-export const mermaidDocumentHandler = createDocumentHandler<'mermaid'>({
-  kind: 'mermaid',
+export const diagramDocumentHandler = createDocumentHandler<'diagram'>({
+  kind: 'diagram',
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = '';
 
@@ -57,7 +57,7 @@ export const mermaidDocumentHandler = createDocumentHandler<'mermaid'>({
 
         if (diagram) {
           dataStream.write({
-            type: 'data-mermaidDelta',
+            type: 'data-diagramDelta',
             data: diagram,
             transient: true,
           });
@@ -74,7 +74,7 @@ export const mermaidDocumentHandler = createDocumentHandler<'mermaid'>({
 
     const { fullStream } = streamObject({
       model: gateway('gpt-4o-mini'),
-      system: updateDocumentPrompt(document.content, 'mermaid'),
+      system: updateDocumentPrompt(document.content, 'diagram'),
       prompt: description,
       schema: z.object({
         diagram: z.string().describe('The updated Mermaid diagram code'),
@@ -90,7 +90,7 @@ export const mermaidDocumentHandler = createDocumentHandler<'mermaid'>({
 
         if (diagram) {
           dataStream.write({
-            type: 'data-mermaidDelta',
+            type: 'data-diagramDelta',
             data: diagram,
             transient: true,
           });

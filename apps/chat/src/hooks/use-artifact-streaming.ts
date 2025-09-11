@@ -98,9 +98,10 @@ export function useArtifactStreaming({
         break;
       }
       
-      case 'data-codeDelta': {
-        console.log('[Artifact] Adding code delta:', latestDataPart.data);
-        const delta = latestDataPart.data;
+      case 'data-codeDelta': 
+      case 'data-diagramDelta': {
+        console.log('[Artifact] Adding code/diagram delta:', latestDataPart.data);
+        const delta = latestDataPart.data as string;
         currentArtifactRef.current.content += delta;
         currentArtifactRef.current.isStreaming = true;
         
