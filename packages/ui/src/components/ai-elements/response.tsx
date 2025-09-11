@@ -13,54 +13,8 @@ import {
 } from "./code-block";
 import type { Components } from "react-markdown";
 import type { BundledLanguage } from "shiki";
-
+import type { MermaidConfig } from "mermaid";
 type ResponseProps = ComponentProps<typeof Streamdown>;
-
-// Configure Mermaid with dark theme optimized for the app
-const configureMermaid = async () => {
-	try {
-		// Dynamic import to avoid SSR issues
-		const mermaid = await import('mermaid');
-		
-		mermaid.default.initialize({
-			theme: 'dark',
-			themeVariables: {
-				primaryColor: '#3b82f6',           // blue-500 
-				primaryTextColor: '#ffffff',       // white
-				primaryBorderColor: '#1e40af',     // blue-800
-				lineColor: '#6b7280',              // gray-500
-				secondaryColor: '#1f2937',         // gray-800
-				tertiaryColor: '#374151',          // gray-700
-				background: '#0f172a',             // slate-900
-				mainBkg: '#1e293b',               // slate-800
-				secondBkg: '#334155',             // slate-700
-				tertiaryTextColor: '#cbd5e1',     // slate-300
-			},
-			flowchart: {
-				useMaxWidth: true,
-				htmlLabels: true,
-				curve: 'basis',
-			},
-			sequence: {
-				useMaxWidth: true,
-				wrap: true,
-				width: 150,
-			},
-			gantt: {
-				useMaxWidth: true,
-			},
-			startOnLoad: true,
-			securityLevel: 'loose',
-		});
-	} catch (error) {
-		console.warn('Failed to configure Mermaid:', error);
-	}
-};
-
-// Initialize Mermaid configuration on module load
-if (typeof window !== 'undefined') {
-	configureMermaid();
-}
 
 // Custom components following Streamdown's structure exactly
 const customComponents: Partial<Components> = {
@@ -258,6 +212,14 @@ const customComponents: Partial<Components> = {
 	},
 };
 
+const mermaidConfig: MermaidConfig = {
+	theme: "dark",
+	themeVariables: {
+		primaryColor: "#ff0000",
+		primaryTextColor: "#fff",
+	},
+};
+
 export const Response = memo(
 	({ className, components, ...props }: ResponseProps) => (
 		<Streamdown
@@ -265,6 +227,7 @@ export const Response = memo(
 				"size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
 				className,
 			)}
+			mermaidConfig={mermaidConfig}
 			components={{
 				...customComponents,
 				...components,

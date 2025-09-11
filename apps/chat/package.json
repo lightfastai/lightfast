@@ -44,6 +44,7 @@
 		"immer": "^10.1.1",
 		"lightfast": "workspace:^",
 		"lucide-react": "catalog:",
+		"mermaid": "^11.11.0",
 		"nanoid": "^5.1.5",
 		"next": "catalog:",
 		"next-themes": "^0.4.6",

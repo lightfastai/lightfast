@@ -502,6 +502,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 0.451.0(react@19.1.1)
+      mermaid:
+        specifier: ^11.11.0
+        version: 11.11.0
       nanoid:
         specifier: ^5.1.5
         version: 5.1.5
