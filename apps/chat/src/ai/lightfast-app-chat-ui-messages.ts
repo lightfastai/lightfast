@@ -26,6 +26,16 @@ export type LightfastAppChatToolSet = InferUITools<{
 	createDocument: ExtractToolType<typeof createDocumentTool>;
 }>;
 
+// Citation source type matching what webSearchTool provides
+export interface CitationSource {
+	id: string;
+	title: string;
+	url: string;
+	domain?: string;
+	description?: string;
+	quote?: string;
+}
+
 // Metadata type for our messages
 export interface LightfastAppChatUIMessageMetadata {
 	createdAt?: string;
@@ -33,6 +43,7 @@ export interface LightfastAppChatUIMessageMetadata {
 	resourceId?: string;
 	status?: "thinking" | "streaming" | "done";
 	modelId?: string; // The AI model used for assistant messages
+	citationSources?: CitationSource[]; // Citation sources from tool results
 }
 
 // Main UIMessage type with our custom generics

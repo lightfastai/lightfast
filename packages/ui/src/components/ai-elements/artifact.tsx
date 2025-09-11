@@ -49,7 +49,7 @@ export const ArtifactClose = ({
 }: ArtifactCloseProps) => (
 	<Button
 		className={cn(
-			"size-8 p-0 text-muted-foreground hover:text-foreground",
+			"h-8 w-8 p-2 rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
 			className,
 		)}
 		size={size}
@@ -57,7 +57,7 @@ export const ArtifactClose = ({
 		variant={variant}
 		{...props}
 	>
-		{children ?? <XIcon className="size-4" />}
+		{children ?? <XIcon />}
 		<span className="sr-only">Close</span>
 	</Button>
 );
@@ -108,7 +108,7 @@ export const ArtifactAction = ({
 	const button = (
 		<Button
 			className={cn(
-				"size-8 p-0 text-muted-foreground hover:text-foreground",
+				"h-8 w-8 p-2 rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
 				className,
 			)}
 			size={size}
@@ -116,7 +116,7 @@ export const ArtifactAction = ({
 			variant={variant}
 			{...props}
 		>
-			{Icon ? <Icon className="size-4" /> : children}
+			{Icon ? <Icon /> : children}
 			<span className="sr-only">{label || tooltip}</span>
 		</Button>
 	);

@@ -5,11 +5,11 @@ import type { ComponentProps } from "react";
 import { memo, isValidElement } from "react";
 import { Streamdown } from "streamdown";
 import {
-  CodeBlock,
-  CodeBlockHeader,
-  CodeBlockActions,
-  CodeBlockContent,
-  CodeBlockCopyButton,
+	CodeBlock,
+	CodeBlockHeader,
+	CodeBlockActions,
+	CodeBlockContent,
+	CodeBlockCopyButton,
 } from "./code-block";
 import type { Components } from "react-markdown";
 import type { BundledLanguage } from "shiki";

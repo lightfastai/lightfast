@@ -369,29 +369,34 @@ export function ToolCallRenderer({
 			typeof firstArg === "string" ? firstArg : JSON.stringify(firstArg);
 
 		return (
-			<div
-				className={cn(
-					"flex items-center gap-2 text-xs text-muted-foreground",
-					className,
-				)}
-			>
-				<Search className="w-3 h-3" />
-				<span>
-					Running {toolName}: {displayText}
-				</span>
+			<div className="my-6 border rounded-lg">
+				<div className="py-3 px-4 hover:bg-muted/50 transition-colors">
+					<div className="flex items-center gap-2 flex-1">
+						<Search className="h-4 w-4 text-muted-foreground" />
+						<div className="text-left flex-1">
+							<div className="font-medium text-xs lowercase text-muted-foreground">
+								{toolName}: {displayText}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
 
 	// Default fallback for unknown tools
 	return (
-		<div
-			className={cn(
-				"flex items-center gap-2 text-xs text-muted-foreground",
-				className,
-			)}
-		>
-			<span>Running: {toolName}</span>
+		<div className="my-6 border rounded-lg">
+			<div className="py-3 px-4 hover:bg-muted/50 transition-colors">
+				<div className="flex items-center gap-2 flex-1">
+					<Search className="h-4 w-4 text-muted-foreground" />
+					<div className="text-left flex-1">
+						<div className="font-medium text-xs lowercase text-muted-foreground">
+							{toolName}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }
