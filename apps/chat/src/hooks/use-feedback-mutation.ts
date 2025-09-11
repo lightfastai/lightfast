@@ -33,7 +33,7 @@ export function useFeedbackMutation() {
 				// Optimistically update the feedback
 				queryClient.setQueryData<Record<string, "upvote" | "downvote">>(
 					trpc.messageFeedback.getBySession.queryOptions({ sessionId }).queryKey,
-					produce(previousFeedback || {}, (draft) => {
+					produce(previousFeedback ?? {}, (draft) => {
 						draft[messageId] = feedbackType;
 					}),
 				);
@@ -78,7 +78,7 @@ export function useFeedbackMutation() {
 				// Optimistically remove the feedback
 				queryClient.setQueryData<Record<string, "upvote" | "downvote">>(
 					trpc.messageFeedback.getBySession.queryOptions({ sessionId }).queryKey,
-					produce(previousFeedback || {}, (draft) => {
+					produce(previousFeedback ?? {}, (draft) => {
 						delete draft[messageId];
 					}),
 				);

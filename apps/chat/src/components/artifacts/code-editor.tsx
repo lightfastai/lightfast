@@ -28,7 +28,7 @@ function detectLanguage(content: string): BundledLanguage {
 	return 'typescript';
 }
 
-function PureCodeEditor({ content, status }: EditorProps) {
+function PureCodeEditor({ content }: EditorProps) {
 	const language = detectLanguage(content);
 	
 	return (

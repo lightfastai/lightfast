@@ -3,7 +3,8 @@ import { createTool } from "lightfast/tool";
 import { z } from "zod";
 import type { AppRuntimeContext } from "~/ai/types";
 import { uuidv4 as generateUUID } from '@repo/lib';
-import { documentHandlersByArtifactKind, artifactKinds } from '../artifacts/server';
+import { documentHandlersByArtifactKind } from '../artifacts/server';
+import { ARTIFACT_KINDS } from '@db/chat';
 
 /**
  * Native Lightfast artifact tool for creating code documents
@@ -13,15 +14,15 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 	description: "Create a document for coding, writing, or content creation activities. This tool will generate the contents of the document based on the title and kind.",
 	inputSchema: z.object({
 		title: z.string().describe("The title of the document (2-4 words maximum, be concise)"),
-		kind: z.enum(artifactKinds).describe("The type of document to create"),
+		kind: z.enum(ARTIFACT_KINDS).describe("The type of document to create"),
 	}),
 	outputSchema: z.object({
 		id: z.string(),
 		title: z.string(),
-		kind: z.enum(artifactKinds),
+		kind: z.enum(ARTIFACT_KINDS),
 		content: z.string(),
 	}),
-	execute: async ({ title, kind }, context) => {
+	execute: async ({ title, kind }: { title: string; kind: typeof ARTIFACT_KINDS[number] }, context: RuntimeContext<AppRuntimeContext>) => {
 		const { sessionId, messageId, dataStream } = context;
 
 		if (!dataStream) {
@@ -59,8 +60,9 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			transient: true,
 		});
 
-		// Find the appropriate document handler
+		// Get the document handler for the specified kind
 		const documentHandler = documentHandlersByArtifactKind.find(
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			(handler) => handler.kind === kind,
 		);
 

@@ -112,7 +112,7 @@ export function ChatInterface({
 			);
 		}
 
-		return response.json();
+		return response.json() as Promise<ArtifactApiResponse>;
 	};
 
 	// Data stream for artifact handling
@@ -257,7 +257,7 @@ export function ChatInterface({
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
-			setDataStream((ds) => (ds ? [...ds, dataPart] : [dataPart]));
+			setDataStream((ds) => [...ds, dataPart]);
 		},
 	});
 

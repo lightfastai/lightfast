@@ -13,6 +13,9 @@ export interface LightfastAppChatUICustomDataTypes {
 	"clear": null;
 	"finish": null;
 	"codeDelta": string;
+	"mermaidDelta": string;
+	// Index signature to satisfy UIDataTypes constraint
+	[key: string]: unknown;
 }
 
 // Helper type to extract the tool type from a tool factory function

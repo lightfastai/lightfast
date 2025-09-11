@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useDataStream } from './use-data-stream';
-import type { UIArtifact } from '~/components/artifacts/artifact';
+import type { UIArtifact, ArtifactKind } from '~/components/artifacts/artifact';
 import { artifactDefinitions } from '~/components/artifacts';
 
 interface UseArtifactStreamingProps {
@@ -11,7 +11,7 @@ interface UseArtifactStreamingProps {
   hideArtifact: () => void;
   updateArtifactContent: (content: string, status: 'streaming' | 'idle') => void;
   setArtifact: Dispatch<SetStateAction<UIArtifact>>;
-  setMetadata: (metadata: Record<string, unknown>) => void;
+  setMetadata: Dispatch<SetStateAction<Record<string, unknown>>>;
 }
 
 /**
@@ -31,7 +31,7 @@ export function useArtifactStreaming({
   const currentArtifactRef = useRef<{
     id?: string;
     title?: string;
-    kind?: string;
+    kind?: ArtifactKind;
     content: string;
     isStreaming: boolean;
   }>({
@@ -49,19 +49,19 @@ export function useArtifactStreaming({
     switch (latestDataPart.type) {
       case 'data-kind': {
         console.log('[Artifact] Setting kind:', latestDataPart.data);
-        currentArtifactRef.current.kind = latestDataPart.data;
+        currentArtifactRef.current.kind = latestDataPart.data as ArtifactKind;
         break;
       }
       
       case 'data-id': {
         console.log('[Artifact] Setting document ID:', latestDataPart.data);
-        currentArtifactRef.current.id = latestDataPart.data;
+        currentArtifactRef.current.id = latestDataPart.data as string;
         break;
       }
       
       case 'data-title': {
         console.log('[Artifact] Setting title:', latestDataPart.data);
-        currentArtifactRef.current.title = latestDataPart.data;
+        currentArtifactRef.current.title = latestDataPart.data as string;
         break;
       }
       

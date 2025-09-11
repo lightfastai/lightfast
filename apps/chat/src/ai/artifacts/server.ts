@@ -1,5 +1,6 @@
 import { codeDocumentHandler } from './code/server';
-import type { ArtifactKind } from '~/components/artifacts/artifact';
+import { mermaidDocumentHandler } from './mermaid/server';
+import type { ArtifactKind } from '@db/chat';
 import type { LightfastChatArtifact } from '@db/chat';
 import type { UIMessageStreamWriter } from 'ai';
 import type { LightfastAppChatUIMessage } from '../lightfast-app-chat-ui-messages';
@@ -8,7 +9,6 @@ import {
   isTRPCClientError, 
   getTRPCErrorCode, 
   getTRPCErrorMessage,
-  isNotFound,
   isForbidden,
   isUnauthorized 
 } from '~/lib/trpc-errors';
@@ -139,8 +139,7 @@ async function saveDocument({
 /*
  * Use this array to define the document handlers for each artifact kind.
  */
-export const documentHandlersByArtifactKind: DocumentHandler[] = [
+export const documentHandlersByArtifactKind: DocumentHandler<ArtifactKind>[] = [
   codeDocumentHandler,
+  mermaidDocumentHandler,
 ];
-
-export const artifactKinds = ['code'] as const;

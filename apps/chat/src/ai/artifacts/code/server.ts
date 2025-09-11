@@ -21,7 +21,7 @@ const updateDocumentPrompt = (currentContent: string | null, kind: 'code') => `
 You are an expert code editor. Update the existing ${kind} based on the user's description.
 
 Current content:
-${currentContent || 'No current content'}
+${currentContent ?? 'No current content'}
 
 Guidelines:
 - Preserve existing functionality unless explicitly asked to change it
@@ -57,7 +57,7 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
         if (code) {
           dataStream.write({
             type: 'data-codeDelta',
-            data: code ?? '',
+            data: code,
             transient: true,
           });
 
@@ -90,7 +90,7 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
         if (code) {
           dataStream.write({
             type: 'data-codeDelta',
-            data: code ?? '',
+            data: code,
             transient: true,
           });
 

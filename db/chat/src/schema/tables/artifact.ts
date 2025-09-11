@@ -5,9 +5,9 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { uuidv4 } from "@repo/lib";
 
 /**
- * Artifact kinds - currently only 'code' but extensible for future types
+ * Artifact kinds - extensible for different artifact types
  */
-export const ARTIFACT_KINDS = ["code"] as const;
+export const ARTIFACT_KINDS = ["code", "mermaid"] as const;
 export type ArtifactKind = typeof ARTIFACT_KINDS[number];
 
 /**
@@ -40,9 +40,9 @@ export const LightfastChatArtifact = mysqlTable(
     content: json("content").$type<string | null>(),
     
     /**
-     * Artifact type - only 'code' for now
+     * Artifact type - supports code, mermaid, and future types
      */
-    kind: varchar("kind", { length: 20, enum: ARTIFACT_KINDS }).notNull().default("code"),
+    kind: varchar("kind", { length: 20, enum: ARTIFACT_KINDS }).notNull(),
     
     /**
      * Reference to the session this artifact belongs to

@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_chat_artifact` MODIFY COLUMN `kind` varchar(20) NOT NULL;

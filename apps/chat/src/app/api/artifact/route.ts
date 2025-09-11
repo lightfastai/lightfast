@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Check authentication - artifacts require user login
     const authResult = await auth();
-    const userId = authResult?.userId;
+    const userId = authResult.userId;
 
     if (!userId) {
       return NextResponse.json(
