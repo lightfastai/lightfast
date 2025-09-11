@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useMemo } from "react";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import { cn } from "@repo/ui/lib/utils";
@@ -128,6 +128,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	message,
 	onArtifactClick,
 	status,
+	isCurrentlyStreaming,
 	feedback,
 	onFeedbackSubmit,
 	onFeedbackRemove,
@@ -135,6 +136,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
 	status: ChatStatus;
+	isCurrentlyStreaming?: boolean;
 	feedback?: Record<string, "upvote" | "downvote">;
 	onFeedbackSubmit?: (
 		messageId: string,
@@ -276,44 +278,47 @@ const AssistantMessage = memo(function AssistantMessage({
 							) : (
 								<div></div>
 							)}
-							<Actions className="">
-								<Action 
-									tooltip="Copy message" 
-									onClick={handleCopyMessage}
-									className={isCopied ? "text-green-600" : ""}
-								>
-									{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-								</Action>
+							{/* Show actions for all messages except currently streaming one */}
+							{!isCurrentlyStreaming && (
+								<Actions className="">
+									<Action 
+										tooltip="Copy message" 
+										onClick={handleCopyMessage}
+										className={isCopied ? "text-green-600" : ""}
+									>
+										{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+									</Action>
 
-								{/* Feedback buttons - only show for assistant messages and when not streaming */}
-								{status !== "submitted" && onFeedbackSubmit && (
-									<>
-										<Action
-											tooltip="Helpful"
-											onClick={() => handleFeedback("upvote")}
-											className={
-												currentFeedback === "upvote"
-													? "text-blue-600 bg-accent/50"
-													: ""
-											}
-										>
-											<ThumbsUp />
-										</Action>
+									{/* Feedback buttons */}
+									{onFeedbackSubmit && (
+										<>
+											<Action
+												tooltip="Helpful"
+												onClick={() => handleFeedback("upvote")}
+												className={
+													currentFeedback === "upvote"
+														? "text-blue-600 bg-accent/50"
+														: ""
+												}
+											>
+												<ThumbsUp />
+											</Action>
 
-										<Action
-											tooltip="Not helpful"
-											onClick={() => handleFeedback("downvote")}
-											className={
-												currentFeedback === "downvote"
-													? "text-red-600 bg-accent/50"
-													: ""
-											}
-										>
-											<ThumbsDown />
-										</Action>
-									</>
-								)}
-							</Actions>
+											<Action
+												tooltip="Not helpful"
+												onClick={() => handleFeedback("downvote")}
+												className={
+													currentFeedback === "downvote"
+														? "text-red-600 bg-accent/50"
+														: ""
+												}
+											>
+												<ThumbsDown />
+											</Action>
+										</>
+									)}
+								</Actions>
+							)}
 						</div>
 					</div>
 				</Message>
@@ -330,13 +335,29 @@ export function ChatMessages({
 	onFeedbackSubmit,
 	onFeedbackRemove,
 }: ChatMessagesProps) {
+	// Memoize the streaming message index calculation - O(n) once per render instead of O(n²)
+	const streamingMessageIndex = useMemo(() => {
+		// No streaming during submitted/ready states
+		if (status === "ready" || status === "submitted") return -1;
+		
+		// Find last assistant message index efficiently
+		for (let i = messages.length - 1; i >= 0; i--) {
+			if (messages[i].role === "assistant") {
+				return i;
+			}
+		}
+		return -1;
+	}, [messages, status]);
+
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
 					{/* Messages container with proper padding */}
-					{messages.map((message) =>
-						message.role === "user" ? (
+					{messages.map((message, index) => {
+						const isCurrentlyStreaming = index === streamingMessageIndex;
+						
+						return message.role === "user" ? (
 							<UserMessage key={message.id} message={message} />
 						) : (
 							<AssistantMessage
@@ -344,12 +365,13 @@ export function ChatMessages({
 								message={message}
 								onArtifactClick={onArtifactClick}
 								status={status}
+								isCurrentlyStreaming={isCurrentlyStreaming}
 								feedback={feedback}
 								onFeedbackSubmit={onFeedbackSubmit}
 								onFeedbackRemove={onFeedbackRemove}
 							/>
-						),
-					)}
+						);
+					})}
 					{/* Show sine wave dots when submitted */}
 					{status === "submitted" && (
 						<div className="py-1 px-4">
