@@ -2,7 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/chat/client";
 import { LightfastChatArtifact } from "@db/chat";
 import { eq, and } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 

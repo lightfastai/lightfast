@@ -1,10 +1,11 @@
 import type { UIMessageStreamWriter } from "ai";
+import type { LightfastAppChatUIMessage } from "./lightfast-app-chat-ui-messages";
 
 export interface AppRuntimeContext {
 	userId?: string;
 	agentId: string;
 	messageId?: string; // ID of the current assistant message being generated
-	dataStream?: UIMessageStreamWriter; // For artifact streaming support
+	dataStream?: UIMessageStreamWriter<LightfastAppChatUIMessage>; // For artifact streaming support
 }
 
 /**

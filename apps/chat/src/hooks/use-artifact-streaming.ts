@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { useDataStream } from './use-data-stream';
 import type { UIArtifact } from '~/components/artifacts/artifact';
 import { artifactDefinitions } from '~/components/artifacts';
@@ -10,7 +11,7 @@ interface UseArtifactStreamingProps {
   hideArtifact: () => void;
   updateArtifactContent: (content: string, status: 'streaming' | 'idle') => void;
   setArtifact: Dispatch<SetStateAction<UIArtifact>>;
-  setMetadata: (metadata: any) => void;
+  setMetadata: (metadata: Record<string, unknown>) => void;
 }
 
 /**
@@ -82,7 +83,7 @@ export function useArtifactStreaming({
           showArtifact({
             documentId: currentArtifactRef.current.id,
             title: currentArtifactRef.current.title,
-            kind: (currentArtifactRef.current.kind as any) || 'code',
+            kind: currentArtifactRef.current.kind ?? 'code',
             content: '',
             status: 'streaming',
           });

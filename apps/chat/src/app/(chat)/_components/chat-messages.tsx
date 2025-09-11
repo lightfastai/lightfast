@@ -27,7 +27,7 @@ import {
 // Inline helper to remove cited sources section from text  
 const cleanCitedSources = (text: string): string => {
 	// Check if text ends with "Cited" - O(1) operation
-	if (text.slice(-5) === "Cited") {
+	if (text.endsWith("Cited")) {
 		// Find where "Cited sources" starts and cut there
 		const citedIndex = text.lastIndexOf("Cited sources");
 		if (citedIndex !== -1) {
@@ -37,9 +37,9 @@ const cleanCitedSources = (text: string): string => {
 	
 	// Also check for numbered citation format that might not end with "Cited"
 	// Look for pattern that suggests citations at the end
-	if (text.match(/\[\d+\]\s+https?:\/\/[^\n]*$/)) {
-		const citationMatch = text.match(/\n\[\d+\]\s+https?:\/\//);
-		if (citationMatch && citationMatch.index !== undefined) {
+	if (/\[\d+\]\s+https?:\/\/[^\n]*$/.exec(text)) {
+		const citationMatch = /\n\[\d+\]\s+https?:\/\//.exec(text);
+		if (citationMatch?.index !== undefined) {
 			return text.substring(0, citationMatch.index).trim();
 		}
 	}

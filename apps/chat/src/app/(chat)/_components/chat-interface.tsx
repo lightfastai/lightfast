@@ -11,9 +11,10 @@ import {
 	PromptInputToolbar,
 	PromptInputTools,
 	PromptInputSubmit,
-	PromptInputButton,
-	type PromptInputMessage,
+	PromptInputButton
+	
 } from "@repo/ui/components/ai-elements/prompt-input";
+import type {PromptInputMessage} from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
@@ -27,6 +28,7 @@ import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
+import type { ArtifactApiResponse } from "~/components/artifacts/types";
 import { useDataStream } from "~/hooks/use-data-stream";
 import { ArtifactViewer, useArtifact } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
@@ -90,7 +92,7 @@ export function ChatInterface({
 	const isAuthenticated = user !== null;
 
 	// Clean artifact fetcher using our new REST API
-	const fetchArtifact = async (artifactId: string) => {
+	const fetchArtifact = async (artifactId: string): Promise<ArtifactApiResponse> => {
 		const response = await fetch(`/api/artifact?id=${artifactId}`);
 
 		if (!response.ok) {
@@ -104,9 +106,9 @@ export function ChatInterface({
 
 			const errorData = await response
 				.json()
-				.catch(() => ({ error: "Unknown error" }));
+				.catch(() => ({ error: "Unknown error" })) as { error?: string };
 			throw new Error(
-				errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+				errorData.error ?? `HTTP ${response.status}: ${response.statusText}`,
 			);
 		}
 
@@ -336,17 +338,12 @@ export function ChatInterface({
 			return;
 		}
 
-		try {
-			// Convert to our existing handleSendMessage format
-			await handleSendMessage(message.text);
-			
-			// Clear the form after successful submission
-			if (formRef?.current) {
-				formRef.current.reset();
-			}
-		} catch (error) {
-			// Let the parent component handle the error
-			throw error;
+		// Convert to our existing handleSendMessage format
+		await handleSendMessage(message.text);
+		
+		// Clear the form after successful submission
+		if (formRef?.current) {
+			formRef.current.reset();
 		}
 	};
 

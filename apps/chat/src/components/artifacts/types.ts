@@ -38,3 +38,15 @@ export interface CodeArtifactProps {
   streamingContent?: string;
   onContentChange?: (content: string) => void;
 }
+
+/**
+ * API response type for GET /api/artifact endpoint
+ * Matches the exact structure returned by the API
+ */
+export interface ArtifactApiResponse {
+  id: string;
+  title: string;
+  content: string;
+  kind: ArtifactKind;
+  createdAt: string | Date;
+}

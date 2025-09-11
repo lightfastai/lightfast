@@ -15,6 +15,12 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 		title: z.string().describe("The title of the document (2-4 words maximum, be concise)"),
 		kind: z.enum(artifactKinds).describe("The type of document to create"),
 	}),
+	outputSchema: z.object({
+		id: z.string(),
+		title: z.string(),
+		kind: z.enum(artifactKinds),
+		content: z.string(),
+	}),
 	execute: async ({ title, kind }, context) => {
 		const { sessionId, messageId, dataStream } = context;
 
@@ -68,7 +74,7 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			title,
 			sessionId,
 			messageId,
-			dataStream: dataStream as any, // Type assertion for compatibility
+			dataStream,
 		});
 
 		// Signal completion

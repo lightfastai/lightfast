@@ -139,7 +139,7 @@ async function saveDocument({
 /*
  * Use this array to define the document handlers for each artifact kind.
  */
-export const documentHandlersByArtifactKind: Array<DocumentHandler> = [
+export const documentHandlersByArtifactKind: DocumentHandler[] = [
   codeDocumentHandler,
 ];
 

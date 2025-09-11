@@ -6,14 +6,14 @@ import type { AppRuntimeContext } from "~/ai/types";
 
 // Custom data types for artifact streaming - type definitions without 'data-' prefix
 // But actual streaming always uses 'data-' prefix in type field
-export type LightfastAppChatUICustomDataTypes = {
+export interface LightfastAppChatUICustomDataTypes {
 	"kind": string;
 	"id": string;
 	"title": string;
 	"clear": null;
 	"finish": null;
 	"codeDelta": string;
-};
+}
 
 // Helper type to extract the tool type from a tool factory function
 // This handles the RuntimeContext injection pattern
