@@ -138,31 +138,22 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 	}
 
 	return (
-		<div className="my-4 border rounded-lg bg-slate-900/50">
-			<div className="flex items-center gap-3 px-4 py-3">
-				{state === "input-available" ? (
-					<Loader2 className="h-4 w-4 animate-spin text-purple-400" />
-				) : (
-					<FileCode className="h-4 w-4 text-purple-400" />
-				)}
-				<div className="flex-1">
-					<div className="font-medium text-sm text-white">
-						{documentTitle || "New Document"}
-					</div>
-					<div className="text-xs text-slate-400 capitalize">
-						{documentKind || "Document"}
-					</div>
+		<div className="my-4 border border-zinc-700 rounded-lg bg-zinc-900 overflow-hidden flex">
+			{/* Left side - Document info */}
+			<div className="flex-1 px-4 py-3">
+				<div className="text-white font-medium text-sm mb-1">
+					{documentTitle || "Dijkstra's Algorithm Implementation"}
 				</div>
-				{state === "input-available" && (
-					<span className="text-xs text-slate-500">
-						Creating...
-					</span>
-				)}
-				{state === "output-available" && (
-					<span className="text-xs text-green-400">
-						Created
-					</span>
-				)}
+				<div className="text-zinc-400 text-xs">
+					{documentKind || "Code"}
+				</div>
+			</div>
+			
+			{/* Right side - Code preview thumbnail */}
+			<div className="w-32 h-20 bg-zinc-800 border-l border-zinc-700 flex items-center justify-center">
+				<div className="w-6 h-6 bg-zinc-600 rounded opacity-50">
+					<FileCode className="w-4 h-4 text-zinc-400 m-1" />
+				</div>
 			</div>
 		</div>
 	);
