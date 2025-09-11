@@ -34,8 +34,8 @@ import {
 	checkDecision,
 } from "@vendor/security";
 
-// Import artifact tools (Lightfast-compatible)
-import { createDocumentTool } from "~/ai/tools/create-document-lightfast";
+// Import artifact tools
+import { createDocumentTool } from "~/ai/tools/create-document";
 
 // Create complete tools object for c010 agent including artifact tools
 const c010Tools = {
