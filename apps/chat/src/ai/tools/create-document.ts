@@ -12,7 +12,7 @@ import { documentHandlersByArtifactKind, artifactKinds } from '../artifacts/serv
 export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>({
 	description: "Create a document for coding, writing, or content creation activities. This tool will generate the contents of the document based on the title and kind.",
 	inputSchema: z.object({
-		title: z.string().describe("The title of the document"),
+		title: z.string().describe("The title of the document (2-4 words maximum, be concise)"),
 		kind: z.enum(artifactKinds).describe("The type of document to create"),
 	}),
 	execute: async ({ title, kind }, context) => {
