@@ -165,7 +165,8 @@
       "Read(//tmp/ai-chatbot/lib/artifacts/**)",
       "Read(//tmp/ai-chatbot/components/**)",
       "Read(//tmp/repos/ai-sdk-sources/components/**)",
-      "Read(//Users/jeevanpillay/Code/@lightfastai/lightfast/node_modules/ai/**)"
+      "Read(//Users/jeevanpillay/Code/@lightfastai/lightfast/node_modules/ai/**)",
+      "WebFetch(domain:app.planetscale.com)"
     ],
     "deny": []
   },

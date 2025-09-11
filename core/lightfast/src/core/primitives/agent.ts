@@ -92,7 +92,7 @@ export interface StreamOptions<
 	resourceId: string;
 	systemContext: SystemContext;
 	requestContext: TRequestContext;
-	dataStream?: UIMessageStreamWriter; // UIMessageStreamWriter for artifact support
+	dataStream?: UIMessageStreamWriter<TMessage>; // UIMessageStreamWriter for artifact support with proper generic
 }
 
 // Combined options for creating an agent
@@ -194,12 +194,12 @@ export class Agent<
 
 		// Merge all context levels: system -> request -> agent -> dataStream
 		// The merged context is what tools actually receive
-		const mergedContext: SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter } = {
+		const mergedContext: SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> } = {
 			...systemContext,
 			...requestContext,
 			...agentContext,
 			...(dataStream && { dataStream }), // Add dataStream if provided
-		} as SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter };
+		} as SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> };
 
 		// Resolve tool factories into actual tools by injecting merged context
 		const resolvedTools: ToolSet = {};
