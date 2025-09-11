@@ -25,6 +25,7 @@ interface ToolCallRendererProps {
 	toolPart: ToolUIPart;
 	toolName: string;
 	className?: string;
+	onArtifactClick?: (artifactId: string) => void;
 }
 
 // Type-safe input/output types for webSearch
@@ -58,11 +59,13 @@ interface CreateDocumentOutput {
 export interface WebSearchToolProps {
 	toolPart: ToolUIPart;
 	error?: Error;
+	onArtifactClick?: (artifactId: string) => void;
 }
 
 export const CreateDocumentTool = memo(function CreateDocumentTool({
 	toolPart,
 	error,
+	onArtifactClick,
 }: WebSearchToolProps) {
 	const metadata = { displayName: "Create Document" };
 
@@ -105,6 +108,7 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 	const output = ("output" in toolPart ? toolPart.output : undefined) as
 		| CreateDocumentOutput
 		| undefined;
+	const artifactId = output?.id;
 
 	// Handle different states
 	if (state === "input-streaming") {
@@ -150,7 +154,14 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 
 	return (
 		<div className="my-6 border rounded-lg overflow-hidden">
-			<div className="flex hover:bg-muted/50 transition-colors cursor-pointer min-h-[4rem]">
+			<div 
+				className="flex hover:bg-muted/50 transition-colors cursor-pointer min-h-[4rem]"
+				onClick={() => {
+					if (artifactId && onArtifactClick) {
+						onArtifactClick(artifactId);
+					}
+				}}
+			>
 				{/* Left side - Document info */}
 				<div className="flex-1 px-4 py-3">
 					{documentTitle && (
@@ -336,6 +347,7 @@ export function ToolCallRenderer({
 	toolPart,
 	toolName,
 	className,
+	onArtifactClick,
 }: ToolCallRendererProps) {
 	// Debug logging to understand tool names
 	console.log("ToolCallRenderer - toolName:", toolName, "toolPart:", toolPart);
@@ -346,7 +358,7 @@ export function ToolCallRenderer({
 	}
 
 	if (toolName === "createDocument") {
-		return <CreateDocumentTool toolPart={toolPart} />;
+		return <CreateDocumentTool toolPart={toolPart} onArtifactClick={onArtifactClick} />;
 	}
 
 	// Basic renderer for other tools

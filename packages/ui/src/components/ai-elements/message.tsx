@@ -33,6 +33,10 @@ const messageContentVariants = cva(
 					"group-[.is-user]:max-w-[80%] group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
 					"group-[.is-assistant]:text-foreground",
 				],
+				chat: [
+					"group-[.is-user]:border group-[.is-user]:border-muted/30 group-[.is-user]:rounded-xl group-[.is-user]:px-4 group-[.is-user]:py-1 group-[.is-user]:bg-transparent group-[.is-user]:dark:bg-input/30 group-[.is-user]:text-foreground",
+					"group-[.is-assistant]:bg-transparent group-[.is-assistant]:text-foreground",
+				],
 			},
 		},
 		defaultVariants: {

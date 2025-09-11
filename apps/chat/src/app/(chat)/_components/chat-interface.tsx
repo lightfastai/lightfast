@@ -75,6 +75,26 @@ export function ChatInterface({
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
 
+	// Clean artifact fetcher using our new REST API
+	const fetchArtifact = async (artifactId: string) => {
+		const response = await fetch(`/api/artifact?id=${artifactId}`);
+		
+		if (!response.ok) {
+			// Handle specific error cases
+			if (response.status === 401) {
+				throw new Error('Authentication required to access artifacts');
+			}
+			if (response.status === 404) {
+				throw new Error('Artifact not found');
+			}
+			
+			const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+			throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+		}
+		
+		return response.json();
+	};
+
 	// Data stream for artifact handling
 	const { setDataStream } = useDataStream();
 
@@ -330,7 +350,38 @@ console.log(message);`,
 	) : (
 		// Thread view or chat with existing messages
 		<div className="flex flex-col h-full bg-background">
-			<ChatMessages messages={messages} status={status} />
+			<ChatMessages 
+				messages={messages} 
+				status={status} 
+				onArtifactClick={async (artifactId) => {
+					try {
+						// Fetch artifact data using clean REST API
+						const artifactData = await fetchArtifact(artifactId);
+						
+						// Show the artifact with the fetched data
+						showArtifact({
+							documentId: artifactData.id,
+							title: artifactData.title,
+							kind: artifactData.kind,
+							content: artifactData.content,
+							status: 'idle',
+							boundingBox: {
+								top: 100,
+								left: 100,
+								width: 300,
+								height: 200,
+							},
+						});
+					} catch (error) {
+						// Clean error handling with user-friendly messages
+						const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+						console.error('Artifact fetch failed:', errorMessage);
+						
+						// Could optionally show toast notification here
+						// toast.error(`Failed to load artifact: ${errorMessage}`);
+					}
+				}}
+			/>
 			<div className="relative">
 				<div className="max-w-3xl mx-auto p-4">
 					{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}

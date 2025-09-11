@@ -163,7 +163,8 @@
       "Read(//tmp/repos/vercel-ai-chatbot/app/(chat)/api/chat/**)",
       "Read(//tmp/ai-chatbot/artifacts/**)",
       "Read(//tmp/ai-chatbot/lib/artifacts/**)",
-      "Read(//tmp/ai-chatbot/components/**)"
+      "Read(//tmp/ai-chatbot/components/**)",
+      "Read(//tmp/repos/ai-sdk-sources/components/**)"
     ],
     "deny": []
   },

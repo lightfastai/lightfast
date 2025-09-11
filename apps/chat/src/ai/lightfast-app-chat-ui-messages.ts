@@ -1,7 +1,7 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 import type { InferUITools, UIMessage } from "ai";
 import type { webSearchTool } from "~/ai/tools/web-search";
-import type { createDocumentTool } from "~/ai/tools/create-document-lightfast";
+import type { createDocumentTool } from "~/ai/tools/create-document";
 import type { AppRuntimeContext } from "~/ai/types";
 
 // Custom data types for artifact streaming - type definitions without 'data-' prefix
@@ -13,7 +13,6 @@ export type LightfastAppChatUICustomDataTypes = {
 	"clear": null;
 	"finish": null;
 	"codeDelta": string;
-	"usage": any; // For token usage data
 };
 
 // Helper type to extract the tool type from a tool factory function

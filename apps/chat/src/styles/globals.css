@@ -46,3 +46,16 @@
 @layer utilities {
 	/* Add any chat-specific utility classes here */
 }
+
+@keyframes sine-wave {
+	0%, 100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-8px);
+	}
+}
+
+.animate-sine-wave {
+	animation: sine-wave 1.5s ease-in-out infinite;
+}
