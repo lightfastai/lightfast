@@ -24,7 +24,9 @@ export function parseCitations(text: string): CitationData {
   // Extract URLs in order
   for (const match of citationMatches) {
     const [, , url] = match;
-    sources.push(url);
+    if (url) {
+      sources.push(url);
+    }
   }
   
   return { sources };
@@ -58,8 +60,8 @@ export function generateSourceTitle(url: string): string {
       for (let i = pathParts.length - 1; i >= 0; i--) {
         const segment = pathParts[i];
         
-        // Skip common non-meaningful segments
-        if (isNonMeaningfulSegment(segment)) {
+        // Skip undefined segments and common non-meaningful segments
+        if (!segment || isNonMeaningfulSegment(segment)) {
           continue;
         }
         
@@ -79,9 +81,9 @@ export function generateSourceTitle(url: string): string {
       // Extract main domain name (remove common TLDs and subdomains)
       const domainParts = domain.split('.');
       if (domainParts.length >= 2) {
-        title = domainParts[domainParts.length - 2]; // Get the main domain name
+        title = domainParts[domainParts.length - 2] || ''; // Get the main domain name
       } else {
-        title = domainParts[0];
+        title = domainParts[0] || '';
       }
     }
     

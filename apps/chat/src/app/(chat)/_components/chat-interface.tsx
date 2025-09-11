@@ -3,10 +3,22 @@
 import dynamic from "next/dynamic";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
-import { ChatInput } from "@repo/ui/components/chat/chat-input";
 import { PromptSuggestions } from "./prompt-suggestions";
+import {
+	PromptInput,
+	PromptInputBody,
+	PromptInputTextarea,
+	PromptInputToolbar,
+	PromptInputTools,
+	PromptInputSubmit,
+	PromptInputButton,
+	type PromptInputMessage,
+} from "@repo/ui/components/ai-elements/prompt-input";
+import type { FormEvent } from "react";
+import { cn } from "@repo/ui/lib/utils";
+import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -18,8 +30,10 @@ import type { ChatRouterOutputs } from "@api/chat";
 import { useDataStream } from "~/hooks/use-data-stream";
 import { ArtifactViewer, useArtifact } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
-import { Button } from "@repo/ui/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "@repo/ui/components/ui/button";
+import { useFeedbackQuery } from "~/hooks/use-feedback-query";
+import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -78,20 +92,24 @@ export function ChatInterface({
 	// Clean artifact fetcher using our new REST API
 	const fetchArtifact = async (artifactId: string) => {
 		const response = await fetch(`/api/artifact?id=${artifactId}`);
-		
+
 		if (!response.ok) {
 			// Handle specific error cases
 			if (response.status === 401) {
-				throw new Error('Authentication required to access artifacts');
+				throw new Error("Authentication required to access artifacts");
 			}
 			if (response.status === 404) {
-				throw new Error('Artifact not found');
+				throw new Error("Artifact not found");
 			}
-			
-			const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-			throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+
+			const errorData = await response
+				.json()
+				.catch(() => ({ error: "Unknown error" }));
+			throw new Error(
+				errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+			);
 		}
-		
+
 		return response.json();
 	};
 
@@ -99,7 +117,15 @@ export function ChatInterface({
 	const { setDataStream } = useDataStream();
 
 	// Artifact state management
-	const { artifact, metadata, setMetadata, showArtifact, hideArtifact, updateArtifactContent, setArtifact } = useArtifact();
+	const {
+		artifact,
+		metadata,
+		setMetadata,
+		showArtifact,
+		hideArtifact,
+		updateArtifactContent,
+		setArtifact,
+	} = useArtifact();
 
 	// Connect streaming data to artifact updates
 	useArtifactStreaming({
@@ -112,6 +138,13 @@ export function ChatInterface({
 
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
+
+	// Form refs for clearing after submission
+	const promptFormRef1 = useRef<HTMLFormElement>(null);
+	const promptFormRef2 = useRef<HTMLFormElement>(null);
+
+	// Web search toggle state
+	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -135,11 +168,20 @@ export function ChatInterface({
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
+	// Fetch feedback for this session
+	const { data: feedback } = useFeedbackQuery({
+		sessionId,
+	});
+
+	// Feedback mutation hooks
+	const feedbackMutation = useFeedbackMutation();
+
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
 	const transport = useChatTransport({
 		sessionId: sessionId,
 		agentId,
+		webSearchEnabled,
 	});
 
 	// Use Vercel's useChat directly with transport
@@ -267,6 +309,7 @@ export function ChatInterface({
 				body: {
 					userMessageId,
 					modelId: selectedModelId,
+					webSearchEnabled,
 				},
 			});
 
@@ -281,12 +324,67 @@ export function ChatInterface({
 		}
 	};
 
+	// Handle prompt input submission - converts PromptInput format to our handleSendMessage
+	const handlePromptSubmit = async (
+		message: PromptInputMessage,
+		event: FormEvent<HTMLFormElement>,
+		formRef?: React.RefObject<HTMLFormElement>,
+	) => {
+		event.preventDefault();
+
+		if (!message.text?.trim()) {
+			return;
+		}
+
+		try {
+			// Convert to our existing handleSendMessage format
+			await handleSendMessage(message.text);
+			
+			// Clear the form after successful submission
+			if (formRef?.current) {
+				formRef.current.reset();
+			}
+		} catch (error) {
+			// Let the parent component handle the error
+			throw error;
+		}
+	};
+
+	// Handle prompt input errors
+	const handlePromptError = (error: {
+		code: "max_files" | "max_file_size" | "accept";
+		message: string;
+	}) => {
+		console.error("Prompt input error:", error);
+		// Could integrate with toast system here if needed
+	};
+
+	// Handle feedback submission
+	const handleFeedbackSubmit = (
+		messageId: string,
+		feedbackType: "upvote" | "downvote",
+	) => {
+		feedbackMutation.submit.mutate({
+			sessionId,
+			messageId,
+			feedbackType,
+		});
+	};
+
+	// Handle feedback removal
+	const handleFeedbackRemove = (messageId: string) => {
+		feedbackMutation.remove.mutate({
+			sessionId,
+			messageId,
+		});
+	};
+
 	// Demo function to show artifact with mock data
 	const showArtifactDemo = () => {
 		showArtifact({
-			documentId: 'demo-artifact',
-			title: 'Interactive Code Demo',
-			kind: 'code',
+			documentId: "demo-artifact",
+			title: "Interactive Code Demo",
+			kind: "code",
 			content: `console.log('Hello from Lightfast!');
 
 // This is a demo artifact showing how code
@@ -297,7 +395,7 @@ function greet(name) {
 
 const message = greet('Developer');
 console.log(message);`,
-			status: 'idle',
+			status: "idle",
 			boundingBox: {
 				top: 100,
 				left: 100,
@@ -320,109 +418,242 @@ console.log(message);`,
 	);
 
 	// Create the main chat content component
-	const chatContent = messages.length === 0 ? (
-		// For new chats (no messages yet), show centered layout
-		<div className="h-full flex flex-col items-center justify-center bg-background">
-			<div className="w-full max-w-3xl px-4">
-				<div className="px-4 mb-8">
-					<ChatEmptyState
-						prompt={
-							user?.email
-								? `Welcome back, ${user.email}`
-								: "What can I do for you?"
-						}
-					/>
-				</div>
-				<ChatInput
-					onSendMessage={handleSendMessage}
-					placeholder="Ask anything..."
-					disabled={status === "streaming" || status === "submitted"}
-					modelSelector={modelSelector}
-				/>
-				{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
-				<div className="hidden md:block relative mt-4 h-12">
-					<div className="absolute top-0 left-0 right-0 px-4">
-						<PromptSuggestions onSelectPrompt={handleSendMessage} />
+	const chatContent =
+		messages.length === 0 ? (
+			// For new chats (no messages yet), show centered layout
+			<div className="h-full flex flex-col items-center justify-center bg-background">
+				<div className="w-full max-w-3xl px-4">
+					<div className="px-4 mb-8">
+						<ChatEmptyState
+							prompt={
+								user?.email
+									? `Welcome back, ${user.email}`
+									: "What can I do for you?"
+							}
+						/>
+					</div>
+					<PromptInput
+						onSubmit={(message, event) => handlePromptSubmit(message, event, promptFormRef1)}
+						onError={handlePromptError}
+						ref={promptFormRef1}
+						className={cn(
+							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
+							"!divide-y-0 !shadow-sm"
+						)}
+					>
+						<PromptInputBody className="flex flex-col">
+							<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
+								<PromptInputTextarea
+									placeholder="Ask anything..."
+									className={cn(
+										"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
+										"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+										"outline-none min-h-0 min-h-[72px]"
+									)}
+									style={{ lineHeight: "24px" }}
+									maxLength={4000}
+								/>
+							</div>
+							<PromptInputToolbar className="flex items-center justify-between p-2 bg-input-bg dark:bg-input-bg transition-[color,box-shadow]">
+								{/* Left side tools */}
+								<div className="flex items-center gap-2">
+									<PromptInputButton
+										variant={webSearchEnabled ? "secondary" : "outline"}
+										onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+										className={cn(
+											webSearchEnabled && "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+										)}
+									>
+										<Globe className="w-4 h-4" />
+										Search
+										{webSearchEnabled && (
+											<X 
+												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer" 
+												onClick={(e) => {
+													e.stopPropagation();
+													setWebSearchEnabled(false);
+												}}
+											/>
+										)}
+									</PromptInputButton>
+								</div>
+								
+								{/* Right side tools */}
+								<PromptInputTools className="flex items-center gap-2">
+									{modelSelector}
+									<PromptInputSubmit
+										status={status}
+										disabled={status === "streaming" || status === "submitted"}
+										size="icon"
+										variant="outline"
+										className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
+									>
+										<ArrowUp className="w-4 h-4" />
+									</PromptInputSubmit>
+								</PromptInputTools>
+							</PromptInputToolbar>
+						</PromptInputBody>
+					</PromptInput>
+					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
+					<div className="hidden md:block relative mt-4 h-12">
+						<div className="absolute top-0 left-0 right-0 px-4">
+							<PromptSuggestions onSelectPrompt={handleSendMessage} />
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	) : (
-		// Thread view or chat with existing messages
-		<div className="flex flex-col h-full bg-background">
-			<ChatMessages 
-				messages={messages} 
-				status={status} 
-				onArtifactClick={async (artifactId) => {
-					try {
-						// Fetch artifact data using clean REST API
-						const artifactData = await fetchArtifact(artifactId);
-						
-						// Show the artifact with the fetched data
-						showArtifact({
-							documentId: artifactData.id,
-							title: artifactData.title,
-							kind: artifactData.kind,
-							content: artifactData.content,
-							status: 'idle',
-							boundingBox: {
-								top: 100,
-								left: 100,
-								width: 300,
-								height: 200,
-							},
-						});
-					} catch (error) {
-						// Clean error handling with user-friendly messages
-						const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-						console.error('Artifact fetch failed:', errorMessage);
-						
-						// Could optionally show toast notification here
-						// toast.error(`Failed to load artifact: ${errorMessage}`);
-					}
-				}}
-			/>
-			<div className="relative">
-				<div className="max-w-3xl mx-auto p-4">
-					{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
-					{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
-						<div className="mb-2 px-4">
-							<RateLimitIndicator remainingMessages={remainingMessages} />
-						</div>
-					)}
-					
-					<ChatInput
-						onSendMessage={handleSendMessage}
-						placeholder="Continue the conversation..."
-						disabled={status === "streaming" || status === "submitted"}
-						withGradient={isAuthenticated}
-						withDescription={
-							messages.length > 0
-								? "Lightfast may make mistakes. Use with discretion."
-								: undefined
+		) : (
+			// Thread view or chat with existing messages
+			<div className="flex flex-col h-full bg-background">
+				<ChatMessages
+					messages={messages}
+					status={status}
+					feedback={feedback}
+					onFeedbackSubmit={handleFeedbackSubmit}
+					onFeedbackRemove={handleFeedbackRemove}
+					onArtifactClick={async (artifactId) => {
+						try {
+							// Fetch artifact data using clean REST API
+							const artifactData = await fetchArtifact(artifactId);
+
+							// Show the artifact with the fetched data
+							showArtifact({
+								documentId: artifactData.id,
+								title: artifactData.title,
+								kind: artifactData.kind,
+								content: artifactData.content,
+								status: "idle",
+								boundingBox: {
+									top: 100,
+									left: 100,
+									width: 300,
+									height: 200,
+								},
+							});
+						} catch (error) {
+							// Clean error handling with user-friendly messages
+							const errorMessage =
+								error instanceof Error
+									? error.message
+									: "Unknown error occurred";
+							console.error("Artifact fetch failed:", errorMessage);
+
+							// Could optionally show toast notification here
+							// toast.error(`Failed to load artifact: ${errorMessage}`);
 						}
-						modelSelector={modelSelector}
-					/>
+					}}
+				/>
+				<div className="relative">
+					<div className="max-w-3xl mx-auto p-4">
+						{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
+						{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
+							<div className="mb-2 px-4">
+								<RateLimitIndicator remainingMessages={remainingMessages} />
+							</div>
+						)}
+
+						<div className="flex-shrink-0">
+							<div className="chat-container relative">
+								{/* Gradient overlay */}
+								{isAuthenticated && (
+									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
+										<div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+									</div>
+								)}
+
+								<PromptInput
+									onSubmit={(message, event) => handlePromptSubmit(message, event, promptFormRef2)}
+									onError={handlePromptError}
+									ref={promptFormRef2}
+									className={cn(
+										"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
+										"!divide-y-0 !shadow-sm"
+									)}
+								>
+									<PromptInputBody className="flex flex-col">
+										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
+											<PromptInputTextarea
+												placeholder="Continue the conversation..."
+												className={cn(
+													"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
+													"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+													"outline-none min-h-0 min-h-[72px]"
+												)}
+												style={{ lineHeight: "24px" }}
+												maxLength={4000}
+											/>
+										</div>
+										<PromptInputToolbar className="flex items-center justify-between p-2 bg-input-bg dark:bg-input-bg transition-[color,box-shadow]">
+											{/* Left side tools */}
+											<div className="flex items-center gap-2">
+												<PromptInputButton
+													variant={webSearchEnabled ? "secondary" : "outline"}
+													onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+													className={cn(
+														webSearchEnabled && "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+													)}
+												>
+													<Globe className="w-4 h-4" />
+													Search
+													{webSearchEnabled && (
+														<X 
+															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer" 
+															onClick={(e) => {
+																e.stopPropagation();
+																setWebSearchEnabled(false);
+															}}
+														/>
+													)}
+												</PromptInputButton>
+											</div>
+											
+											{/* Right side tools */}
+											<PromptInputTools className="flex items-center gap-2">
+												{modelSelector}
+												<PromptInputSubmit
+													status={status}
+													disabled={status === "streaming" || status === "submitted"}
+													size="icon"
+													variant="outline"
+													className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
+												>
+													<ArrowUp className="w-4 h-4" />
+												</PromptInputSubmit>
+											</PromptInputTools>
+										</PromptInputToolbar>
+									</PromptInputBody>
+								</PromptInput>
+							</div>
+
+							{/* Description text */}
+							{messages.length > 0 && (
+								<div className="chat-container">
+									<p className="text-xs text-muted-foreground text-center mt-2">
+										Lightfast may make mistakes. Use with discretion.
+									</p>
+								</div>
+							)}
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-	);
+		);
 
 	// Return the full layout with artifact support
 	return (
 		<div className="flex h-screen w-full overflow-hidden">
 			{/* Chat interface - animates width when artifact is visible */}
-			<motion.div 
+			<motion.div
 				className="min-w-0 flex-shrink-0"
 				initial={false}
-				animate={{ 
-					width: artifact.isVisible ? "50%" : "100%" 
+				animate={{
+					width: artifact.isVisible ? "50%" : "100%",
 				}}
-				transition={{ 
-					type: "spring", 
-					stiffness: 300, 
+				transition={{
+					type: "spring",
+					stiffness: 300,
 					damping: 30,
-					duration: 0.4 
+					duration: 0.4,
 				}}
 			>
 				{chatContent}
@@ -431,22 +662,22 @@ console.log(message);`,
 			{/* Artifact panel - slides in from right when visible */}
 			<AnimatePresence>
 				{artifact.isVisible && (
-					<motion.div 
+					<motion.div
 						className="w-1/2 min-w-0 flex-shrink-0 relative z-50"
 						initial={{ x: "100%", opacity: 0 }}
-						animate={{ 
-							x: 0, 
-							opacity: 1 
+						animate={{
+							x: 0,
+							opacity: 1,
 						}}
-						exit={{ 
-							x: "100%", 
-							opacity: 0 
+						exit={{
+							x: "100%",
+							opacity: 0,
 						}}
-						transition={{ 
-							type: "spring", 
-							stiffness: 300, 
+						transition={{
+							type: "spring",
+							stiffness: 300,
 							damping: 30,
-							duration: 0.4 
+							duration: 0.4,
 						}}
 					>
 						<ArtifactViewer
@@ -456,7 +687,32 @@ console.log(message);`,
 							onClose={hideArtifact}
 							onSaveContent={(content) => {
 								// For demo purposes, just log the content
-								console.log('Artifact content updated:', content);
+								console.log("Artifact content updated:", content);
+							}}
+							sessionId={sessionId}
+							onArtifactSelect={async (artifactId) => {
+								try {
+									// Fetch artifact data using clean REST API
+									const artifactData = await fetchArtifact(artifactId);
+
+									// Show the artifact with the fetched data
+									showArtifact({
+										documentId: artifactData.id,
+										title: artifactData.title,
+										kind: artifactData.kind,
+										content: artifactData.content,
+										status: "idle",
+										boundingBox: {
+											top: 100,
+											left: 100,
+											width: 300,
+											height: 200,
+										},
+									});
+								} catch (error) {
+									console.error("Failed to load artifact:", error);
+									// Could add toast notification here
+								}
 							}}
 						/>
 					</motion.div>
@@ -466,10 +722,7 @@ console.log(message);`,
 			{/* Demo button when no artifact is shown */}
 			{!artifact.isVisible && (
 				<div className="fixed bottom-4 right-4">
-					<Button 
-						onClick={showArtifactDemo}
-						className="z-50"
-					>
+					<Button onClick={showArtifactDemo} className="z-50">
 						🧪 Show Artifact Demo
 					</Button>
 				</div>

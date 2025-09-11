@@ -164,7 +164,8 @@
       "Read(//tmp/ai-chatbot/artifacts/**)",
       "Read(//tmp/ai-chatbot/lib/artifacts/**)",
       "Read(//tmp/ai-chatbot/components/**)",
-      "Read(//tmp/repos/ai-sdk-sources/components/**)"
+      "Read(//tmp/repos/ai-sdk-sources/components/**)",
+      "Read(//Users/jeevanpillay/Code/@lightfastai/lightfast/node_modules/ai/**)"
     ],
     "deny": []
   },

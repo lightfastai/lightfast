@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 
 import { LightfastChatSession } from "./session";
 import { LightfastChatMessage } from "./message";
+import { LightfastChatMessageFeedback } from "./message-feedback";
 import { LightfastChatStream } from "./stream";
 import { LightfastChatArtifact } from "./artifact";
 
@@ -15,11 +16,21 @@ import { LightfastChatArtifact } from "./artifact";
  * Relations are defined in a separate file to avoid circular import issues.
  */
 
-// Session relations - one session can have many messages, streams, and artifacts
+// Session relations - one session can have many messages, streams, artifacts, and feedback
 export const lightfastChatSessionRelations = relations(LightfastChatSession, ({ many }) => ({
   messages: many(LightfastChatMessage),
   streams: many(LightfastChatStream),
   artifacts: many(LightfastChatArtifact),
+  messageFeedback: many(LightfastChatMessageFeedback),
+}));
+
+// Message relations - each message belongs to one session and can have many feedback entries
+export const lightfastChatMessageRelations = relations(LightfastChatMessage, ({ one, many }) => ({
+  session: one(LightfastChatSession, {
+    fields: [LightfastChatMessage.sessionId],
+    references: [LightfastChatSession.id],
+  }),
+  feedback: many(LightfastChatMessageFeedback),
 }));
 
 // Artifact relations - each artifact belongs to one session
@@ -27,5 +38,17 @@ export const lightfastChatArtifactRelations = relations(LightfastChatArtifact, (
   session: one(LightfastChatSession, {
     fields: [LightfastChatArtifact.sessionId],
     references: [LightfastChatSession.id],
+  }),
+}));
+
+// Message feedback relations - each feedback belongs to one session and one message
+export const lightfastChatMessageFeedbackRelations = relations(LightfastChatMessageFeedback, ({ one }) => ({
+  session: one(LightfastChatSession, {
+    fields: [LightfastChatMessageFeedback.sessionId],
+    references: [LightfastChatSession.id],
+  }),
+  message: one(LightfastChatMessage, {
+    fields: [LightfastChatMessageFeedback.messageId],
+    references: [LightfastChatMessage.id],
   }),
 }));

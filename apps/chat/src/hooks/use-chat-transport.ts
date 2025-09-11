@@ -8,6 +8,7 @@ import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messa
 interface UseChatTransportProps {
 	sessionId: string;
 	agentId: string;
+	webSearchEnabled: boolean;
 }
 
 /**
@@ -16,6 +17,7 @@ interface UseChatTransportProps {
 export function useChatTransport({
 	sessionId,
 	agentId,
+	webSearchEnabled,
 }: UseChatTransportProps): ChatTransport<LightfastAppChatUIMessage> {
 	const transport = useMemo(() => {
 		// Use the v API endpoint with agentId and sessionId in the path
@@ -33,6 +35,8 @@ export function useChatTransport({
 						// Send only the latest user message
 						// Server will validate and return 400 if no messages
 						messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
+						// Always include webSearchEnabled state
+						webSearchEnabled,
 						// Include any additional metadata from the body
 						...body,
 					},
@@ -46,7 +50,7 @@ export function useChatTransport({
 				};
 			},
 		});
-	}, [sessionId, agentId]);
+	}, [sessionId, agentId, webSearchEnabled]);
 
 	return transport;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { useDataStream } from './use-data-stream';
 import type { UIArtifact } from '~/components/artifacts/artifact';
 import { artifactDefinitions } from '~/components/artifacts';
@@ -9,7 +9,7 @@ interface UseArtifactStreamingProps {
   showArtifact: (artifactData: Partial<UIArtifact>) => void;
   hideArtifact: () => void;
   updateArtifactContent: (content: string, status: 'streaming' | 'idle') => void;
-  setArtifact: (updater: (prev: UIArtifact) => UIArtifact) => void;
+  setArtifact: Dispatch<SetStateAction<UIArtifact>>;
   setMetadata: (metadata: any) => void;
 }
 

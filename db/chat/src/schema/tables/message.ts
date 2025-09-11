@@ -68,14 +68,6 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
     .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
 });
 
-// Message relations - each message belongs to one session
-export const lightfastChatMessageRelations = relations(LightfastChatMessage, ({ one }) => ({
-  session: one(LightfastChatSession, {
-    fields: [LightfastChatMessage.sessionId],
-    references: [LightfastChatSession.id],
-  }),
-}));
-
 // Type exports for Message
 export type LightfastChatMessage = typeof LightfastChatMessage.$inferSelect;
 export type InsertLightfastChatMessage = typeof LightfastChatMessage.$inferInsert;

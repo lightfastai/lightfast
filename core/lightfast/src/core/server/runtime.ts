@@ -62,9 +62,9 @@ export interface StreamChatOptions<
 	resumeOptions?: ResumeOptions;
 }
 
-export interface ValidatedSession<TSession = unknown> {
+export interface ValidatedSession {
 	exists: boolean;
-	session?: TSession;
+	session?: { resourceId: string };
 }
 
 export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
@@ -78,12 +78,11 @@ export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
 export async function validateSession<
 	TMessage extends UIMessage = UIMessage,
 	TFetchContext = {},
-	TSession = unknown,
 >(
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
-): Promise<Result<ValidatedSession<TSession>, ApiError>> {
+): Promise<Result<ValidatedSession, ApiError>> {
 	try {
 		const existingSession = await memory.getSession(sessionId);
 
@@ -149,7 +148,7 @@ export async function processMessage<
  * Streams a chat response from an agent
  */
 export async function streamChat<
-	TMessage extends UIMessage = UIMessage,
+	TMessage extends UIMessage<unknown, UIDataTypes, UITools> = UIMessage<unknown, UIDataTypes, UITools>,
 	TRequestContext = {},
 	TFetchContext = {},
 	TRuntimeContext = {},
@@ -363,7 +362,9 @@ export async function streamChat<
 				}
 
 				try {
-					await memory.appendMessage({
+					// In AI SDK streaming context, we work with concrete UIMessage types
+					// Cast memory interface to accept the concrete type returned by AI SDK
+					await (memory as Memory<UIMessage<unknown, UIDataTypes, UITools>, TFetchContext>).appendMessage({
 						sessionId: sid,
 						message: finishResult.responseMessage,
 						context,

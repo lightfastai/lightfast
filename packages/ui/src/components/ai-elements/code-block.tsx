@@ -151,8 +151,8 @@ class HighlighterManager {
     });
 
     return [
-      removePreBackground(addPreClass(light)),
-      removePreBackground(addPreClass(dark)),
+      light ? removePreBackground(addPreClass(light)) : '',
+      dark ? removePreBackground(addPreClass(dark)) : '',
     ];
   }
 }
