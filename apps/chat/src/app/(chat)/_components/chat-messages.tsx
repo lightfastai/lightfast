@@ -62,7 +62,8 @@ import {
 } from "@repo/ui/components/ai-elements/message";
 import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
@@ -157,12 +158,18 @@ const AssistantMessage = memo(function AssistantMessage({
 		setSources(parsedCitations.sources);
 	}, [message.parts, status]);
 
+	// Hook for copy functionality with success state
+	const { copyToClipboard, isCopied } = useCopyToClipboard({
+		showToast: true,
+		toastMessage: "Message copied to clipboard!",
+	});
+
 	const handleCopyMessage = () => {
 		const textContent = message.parts
 			.filter(isTextPart)
 			.map((part) => part.text)
 			.join("\n");
-		navigator.clipboard.writeText(textContent);
+		void copyToClipboard(textContent);
 	};
 
 	const handleFeedback = (feedbackType: "upvote" | "downvote") => {
@@ -270,8 +277,12 @@ const AssistantMessage = memo(function AssistantMessage({
 								<div></div>
 							)}
 							<Actions className="">
-								<Action tooltip="Copy message" onClick={handleCopyMessage}>
-									<Copy />
+								<Action 
+									tooltip="Copy message" 
+									onClick={handleCopyMessage}
+									className={isCopied ? "text-green-600" : ""}
+								>
+									{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
 								</Action>
 
 								{/* Feedback buttons - only show for assistant messages and when not streaming */}

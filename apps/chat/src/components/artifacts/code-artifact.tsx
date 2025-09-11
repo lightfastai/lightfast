@@ -2,12 +2,11 @@ import { Artifact } from './create-artifact';
 import { CodeEditor } from './code-editor';
 import {
   CopyIcon,
-  RedoIcon,
-  UndoIcon,
   MessageIcon,
   LogsIcon,
 } from './icons';
-import { toast } from '@repo/ui/hooks/use-toast';
+import { Check } from 'lucide-react';
+import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Metadata {
@@ -47,40 +46,11 @@ export const codeArtifact = new Artifact<'code', Metadata>({
   },
   actions: [
     {
-      icon: <UndoIcon className="size-4" />,
-      description: 'View Previous version',
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange('prev');
-      },
-      isDisabled: ({ currentVersionIndex }) => {
-        if (currentVersionIndex === 0) {
-          return true;
-        }
-        return false;
-      },
-    },
-    {
-      icon: <RedoIcon className="size-4" />,
-      description: 'View Next version',
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange('next');
-      },
-      isDisabled: ({ isCurrentVersion }) => {
-        if (isCurrentVersion) {
-          return true;
-        }
-        return false;
-      },
-    },
-    {
       icon: <CopyIcon className="size-4" />,
       description: 'Copy code to clipboard',
-      onClick: ({ content }) => {
-        void navigator.clipboard.writeText(content);
-        toast({
-          title: 'Copied to clipboard!',
-          description: 'Code has been copied to your clipboard.',
-        });
+      onClick: () => {
+        // This will be handled by the ArtifactViewer component
+        // Left as placeholder for compatibility
       },
     },
   ],
