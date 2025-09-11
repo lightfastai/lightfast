@@ -89,9 +89,18 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 	})();
 
 	// Extract data
-	const input = ("input" in toolPart ? toolPart.input : {}) as CreateDocumentInput;
-	const documentTitle = input.title;
+	const input = (
+		"input" in toolPart ? toolPart.input : {}
+	) as CreateDocumentInput;
+	const rawTitle = input.title;
 	const documentKind = input.kind;
+
+	// Truncate title if more than 4 words
+	const documentTitle = rawTitle ? (
+		rawTitle.split(' ').length > 4 
+			? rawTitle.split(' ').slice(0, 4).join(' ') + '...'
+			: rawTitle
+	) : undefined;
 
 	const output = ("output" in toolPart ? toolPart.output : undefined) as
 		| CreateDocumentOutput
@@ -126,7 +135,9 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 					<AlertDescription>
 						<div className="font-medium">{metadata.displayName} failed</div>
 						{documentTitle && (
-							<p className="text-xs mt-1 opacity-80">Title: "{documentTitle}"</p>
+							<p className="text-xs mt-1 opacity-80">
+								Title: "{documentTitle}"
+							</p>
 						)}
 						<p className="text-xs mt-2">
 							{error?.message ?? "An error occurred while creating document"}
@@ -139,19 +150,23 @@ export const CreateDocumentTool = memo(function CreateDocumentTool({
 
 	return (
 		<div className="my-6 border rounded-lg overflow-hidden">
-			<div className="flex hover:bg-muted/50 transition-colors cursor-pointer">
+			<div className="flex hover:bg-muted/50 transition-colors cursor-pointer min-h-[4rem]">
 				{/* Left side - Document info */}
 				<div className="flex-1 px-4 py-3">
-					<div className="text-foreground font-medium text-sm mb-1">
-						{documentTitle || "Dijkstra's Algorithm Implementation"}
-					</div>
-					<div className="text-muted-foreground text-xs">
-						{documentKind || "Code"}
-					</div>
+					{documentTitle && (
+						<div className="text-foreground font-medium text-sm mb-1">
+							{documentTitle}
+						</div>
+					)}
+					{documentKind && (
+						<div className="text-muted-foreground text-xs capitalize">
+							{documentKind}
+						</div>
+					)}
 				</div>
-				
+
 				{/* Right side - Code preview thumbnail */}
-				<div className="w-32 h-20 bg-muted/30 border-l flex items-center justify-center">
+				<div className="w-32 self-stretch bg-muted/30 border-l flex items-center justify-center">
 					<div className="w-6 h-6 bg-muted-foreground/20 rounded">
 						<FileCode className="w-4 h-4 text-muted-foreground m-1" />
 					</div>
