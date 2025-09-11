@@ -87,6 +87,7 @@ export function ChatInterface({
 		hideArtifact,
 		updateArtifactContent,
 		setArtifact,
+		setMetadata,
 	});
 
 	// State for rate limit dialog

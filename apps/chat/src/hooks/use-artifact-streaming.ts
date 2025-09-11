@@ -3,12 +3,14 @@
 import { useEffect, useRef } from 'react';
 import { useDataStream } from './use-data-stream';
 import type { UIArtifact } from '~/components/artifacts/artifact';
+import { artifactDefinitions } from '~/components/artifacts';
 
 interface UseArtifactStreamingProps {
   showArtifact: (artifactData: Partial<UIArtifact>) => void;
   hideArtifact: () => void;
   updateArtifactContent: (content: string, status: 'streaming' | 'idle') => void;
   setArtifact: (updater: (prev: UIArtifact) => UIArtifact) => void;
+  setMetadata: (metadata: any) => void;
 }
 
 /**
@@ -20,6 +22,7 @@ export function useArtifactStreaming({
   hideArtifact,
   updateArtifactContent,
   setArtifact,
+  setMetadata,
 }: UseArtifactStreamingProps) {
   const { dataStream } = useDataStream();
   
@@ -64,18 +67,30 @@ export function useArtifactStreaming({
       case 'data-clear': {
         console.log('[Artifact] Clearing artifact');
         currentArtifactRef.current = {
+          ...currentArtifactRef.current, // Preserve id, title, kind metadata
           content: '',
           isStreaming: true,
         };
         
         // Show artifact with initial state
         if (currentArtifactRef.current.id && currentArtifactRef.current.title) {
+          console.log('[Artifact] Showing artifact:', {
+            documentId: currentArtifactRef.current.id,
+            title: currentArtifactRef.current.title,
+            kind: currentArtifactRef.current.kind,
+          });
           showArtifact({
             documentId: currentArtifactRef.current.id,
             title: currentArtifactRef.current.title,
             kind: (currentArtifactRef.current.kind as any) || 'code',
             content: '',
             status: 'streaming',
+          });
+        } else {
+          console.log('[Artifact] Cannot show artifact - missing metadata:', {
+            id: currentArtifactRef.current.id,
+            title: currentArtifactRef.current.title,
+            kind: currentArtifactRef.current.kind,
           });
         }
         break;
@@ -108,7 +123,21 @@ export function useArtifactStreaming({
         // Ignore other data types (like data-usage)
         break;
     }
-  }, [dataStream, showArtifact, hideArtifact, updateArtifactContent, setArtifact]);
+
+    // IMPORTANT: Call artifact-specific onStreamPart handlers for each data part
+    // This is what actually makes artifacts visible when enough content is streamed
+    const artifactDefinition = artifactDefinitions.find(
+      (def) => def.kind === currentArtifactRef.current.kind,
+    );
+
+    if (artifactDefinition?.onStreamPart) {
+      artifactDefinition.onStreamPart({
+        streamPart: latestDataPart,
+        setArtifact,
+        setMetadata,
+      });
+    }
+  }, [dataStream, showArtifact, hideArtifact, updateArtifactContent, setArtifact, setMetadata]);
 
   // Reset state when data stream is cleared (new conversation)
   useEffect(() => {

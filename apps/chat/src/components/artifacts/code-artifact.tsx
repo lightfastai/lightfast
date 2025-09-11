@@ -22,17 +22,20 @@ export const codeArtifact = new Artifact<'code', Metadata>({
   },
   onStreamPart: ({ streamPart, setArtifact }) => {
     if ((streamPart as { type: string }).type === 'data-codeDelta') {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: (streamPart as { data: string }).data,
-        isVisible:
-          draftArtifact.status === 'streaming' &&
-          draftArtifact.content.length > 300 &&
-          draftArtifact.content.length < 310
-            ? true
-            : draftArtifact.isVisible,
-        status: 'streaming',
-      }));
+      setArtifact((draftArtifact) => {
+        const newContent = draftArtifact.content + (streamPart as { data: string }).data;
+        return {
+          ...draftArtifact,
+          content: newContent,
+          isVisible:
+            draftArtifact.status === 'streaming' &&
+            newContent.length > 300 &&
+            newContent.length < 310
+              ? true
+              : draftArtifact.isVisible,
+          status: 'streaming',
+        };
+      });
     }
   },
   content: ({ metadata: _metadata, setMetadata: _setMetadata, ...props }) => {

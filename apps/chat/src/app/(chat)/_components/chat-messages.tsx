@@ -16,7 +16,10 @@ import {
 	ConversationContent,
 	ConversationScrollButton,
 } from "@repo/ui/components/ai-elements/conversation";
-import { Message, MessageContent } from "@repo/ui/components/ai-elements/message";
+import {
+	Message,
+	MessageContent,
+} from "@repo/ui/components/ai-elements/message";
 import { Response } from "@repo/ui/components/ai-elements/response";
 
 interface ChatMessagesProps {
@@ -197,7 +200,7 @@ function MessageItem({
 							return (
 								<div
 									key={`${message.id}-part-${index}`}
-									className="w-full px-8"
+									className="w-full px-4"
 								>
 									<ToolCallRenderer
 										toolPart={part as ToolUIPart}
