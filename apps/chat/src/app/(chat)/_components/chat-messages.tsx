@@ -24,11 +24,27 @@ import {
 	InlineCitationSource,
 } from "@repo/ui/components/ai-elements/inline-citation";
 
-// Inline helper to remove cited sources section from text
+// Inline helper to remove cited sources section from text  
 const cleanCitedSources = (text: string): string => {
-	// Remove everything from "Cited sources" to the end
-	const citedSourcesRegex = /(?:^|\n)Cited sources[\s\S]*$/im;
-	return text.replace(citedSourcesRegex, "").trim();
+	// Check if text ends with "Cited" - O(1) operation
+	if (text.slice(-5) === "Cited") {
+		// Find where "Cited sources" starts and cut there
+		const citedIndex = text.lastIndexOf("Cited sources");
+		if (citedIndex !== -1) {
+			return text.substring(0, citedIndex).trim();
+		}
+	}
+	
+	// Also check for numbered citation format that might not end with "Cited"
+	// Look for pattern that suggests citations at the end
+	if (text.match(/\[\d+\]\s+https?:\/\/[^\n]*$/)) {
+		const citationMatch = text.match(/\n\[\d+\]\s+https?:\/\//);
+		if (citationMatch && citationMatch.index !== undefined) {
+			return text.substring(0, citationMatch.index).trim();
+		}
+	}
+	
+	return text;
 };
 import {
 	isReasoningPart,
@@ -46,12 +62,18 @@ import {
 } from "@repo/ui/components/ai-elements/message";
 import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy } from "lucide-react";
+import { Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
 	status: ChatStatus;
 	onArtifactClick?: (artifactId: string) => void;
+	feedback?: Record<string, "upvote" | "downvote">;
+	onFeedbackSubmit?: (
+		messageId: string,
+		feedbackType: "upvote" | "downvote",
+	) => void;
+	onFeedbackRemove?: (messageId: string) => void;
 }
 
 // Memoized reasoning block component
@@ -104,17 +126,26 @@ const UserMessage = memo(function UserMessage({
 const AssistantMessage = memo(function AssistantMessage({
 	message,
 	onArtifactClick,
-	isStreaming,
+	status,
+	feedback,
+	onFeedbackSubmit,
+	onFeedbackRemove,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
-	isStreaming?: boolean;
+	status: ChatStatus;
+	feedback?: Record<string, "upvote" | "downvote">;
+	onFeedbackSubmit?: (
+		messageId: string,
+		feedbackType: "upvote" | "downvote",
+	) => void;
+	onFeedbackRemove?: (messageId: string) => void;
 }) {
 	const [sources, setSources] = useState<string[]>([]);
 
 	// Process citations when streaming is complete
 	useEffect(() => {
-		if (isStreaming) return; // Don't process during streaming
+		if (status !== "ready") return; // Only process when full response is received
 
 		const textContent = message.parts
 			.filter(isTextPart)
@@ -124,7 +155,7 @@ const AssistantMessage = memo(function AssistantMessage({
 		// Parse numbered citations and extract URLs from citation list
 		const parsedCitations = parseCitations(textContent);
 		setSources(parsedCitations.sources);
-	}, [message.parts, isStreaming]);
+	}, [message.parts, status]);
 
 	const handleCopyMessage = () => {
 		const textContent = message.parts
@@ -134,8 +165,24 @@ const AssistantMessage = memo(function AssistantMessage({
 		navigator.clipboard.writeText(textContent);
 	};
 
+	const handleFeedback = (feedbackType: "upvote" | "downvote") => {
+		if (onFeedbackSubmit) {
+			const currentFeedback = feedback?.[message.id];
+			
+			// If clicking the same feedback type, remove it (toggle off)
+			if (currentFeedback === feedbackType) {
+				onFeedbackRemove?.(message.id);
+			} else {
+				// Otherwise, submit the new feedback
+				onFeedbackSubmit(message.id, feedbackType);
+			}
+		}
+	};
+
+	const currentFeedback = feedback?.[message.id];
+
 	return (
-		<div className="py-1 last:pb-8 ">
+		<div className="py-1">
 			<div className="mx-auto max-w-3xl group/message px-4">
 				<Message
 					from="assistant"
@@ -226,6 +273,35 @@ const AssistantMessage = memo(function AssistantMessage({
 								<Action tooltip="Copy message" onClick={handleCopyMessage}>
 									<Copy />
 								</Action>
+
+								{/* Feedback buttons - only show for assistant messages and when not streaming */}
+								{status !== "submitted" && onFeedbackSubmit && (
+									<>
+										<Action
+											tooltip="Helpful"
+											onClick={() => handleFeedback("upvote")}
+											className={
+												currentFeedback === "upvote"
+													? "text-blue-600 bg-accent/50"
+													: ""
+											}
+										>
+											<ThumbsUp />
+										</Action>
+
+										<Action
+											tooltip="Not helpful"
+											onClick={() => handleFeedback("downvote")}
+											className={
+												currentFeedback === "downvote"
+													? "text-red-600 bg-accent/50"
+													: ""
+											}
+										>
+											<ThumbsDown />
+										</Action>
+									</>
+								)}
 							</Actions>
 						</div>
 					</div>
@@ -239,11 +315,14 @@ export function ChatMessages({
 	messages,
 	status,
 	onArtifactClick,
+	feedback,
+	onFeedbackSubmit,
+	onFeedbackRemove,
 }: ChatMessagesProps) {
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
-				<ConversationContent className=" flex flex-col p-0">
+				<ConversationContent className=" flex flex-col p-0 last:pb-12">
 					{/* Messages container with proper padding */}
 					{messages.map((message) =>
 						message.role === "user" ? (
@@ -253,14 +332,17 @@ export function ChatMessages({
 								key={message.id}
 								message={message}
 								onArtifactClick={onArtifactClick}
-								isStreaming={status === "submitted"}
+								status={status}
+								feedback={feedback}
+								onFeedbackSubmit={onFeedbackSubmit}
+								onFeedbackRemove={onFeedbackRemove}
 							/>
 						),
 					)}
 					{/* Show sine wave dots when submitted */}
 					{status === "submitted" && (
 						<div className="py-1 px-4">
-							<div className="mx-auto max-w-3xl px-8">
+							<div className="mx-auto max-w-3xl px-4">
 								<SineWaveDots />
 							</div>
 						</div>
