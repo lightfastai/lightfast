@@ -91,6 +91,19 @@ interface ChatMessagesProps {
 	isAuthenticated: boolean;
 }
 
+// Helper to check if message has meaningful streaming content
+const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
+	return message.parts.some(part => {
+		// Text parts with more than 1 character
+		if (isTextPart(part) && part.text.trim().length > 1) return true;
+		// Any tool parts
+		if (isToolPart(part)) return true;
+		// Reasoning parts with more than 1 character
+		if (isReasoningPart(part) && part.text.trim().length > 1) return true;
+		return false;
+	});
+};
+
 // User messages - simple text display only
 const UserMessage = memo(function UserMessage({
 	message,
@@ -191,13 +204,18 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					<div className="space-y-1 w-full">
-						{/* Show sine wave dots when no parts (like main branch ThinkingMessage) */}
-						{message.parts.length === 0 && (
-							<div className="w-full px-8">
-								<SineWaveDots />
-							</div>
+					{/* Show sine wave only when streaming without meaningful content */}
+					<div
+						className={cn(
+							"w-full px-8 transition-opacity duration-200",
+							isCurrentlyStreaming && !hasMeaningfulContent(message)
+								? "opacity-100"
+								: "opacity-0 pointer-events-none",
 						)}
+					>
+						<SineWaveDots />
+					</div>
+					<div className="space-y-1 w-full">
 						{message.parts.map((part, index) => {
 							// Text part
 							if (isTextPart(part)) {
@@ -258,11 +276,11 @@ const AssistantMessage = memo(function AssistantMessage({
 						})}
 					</div>
 
-					{/* Actions and Citations - always present but hidden when no parts */}
+					{/* Actions and Citations - hidden when streaming without content */}
 					<div
 						className={cn(
 							"w-full px-8 mt-2",
-							message.parts.length === 0
+							!hasMeaningfulContent(message)
 								? "opacity-0 pointer-events-none"
 								: "opacity-100",
 						)}
@@ -365,33 +383,29 @@ export function ChatMessages({
 	onFeedbackRemove,
 	isAuthenticated,
 }: ChatMessagesProps) {
-	// Add a placeholder assistant message when submitted (exactly like main branch)
-	const messagesWithPlaceholder = [...messages];
-	if (
-		status === "submitted" &&
-		messages[messages.length - 1]?.role === "user"
-	) {
-		messagesWithPlaceholder.push({
-			id: "thinking-placeholder",
+	// Create working messages array - add placeholder only when submitted
+	const workingMessages = [...messages];
+	if (status === "submitted" && messages[messages.length - 1]?.role === "user") {
+		workingMessages.push({
+			id: "thinking-placeholder", 
 			role: "assistant",
 			parts: [],
 		});
 	}
 
-	// Simple streaming logic - if streaming, the last message is the streaming one
-	const isStreaming = status === "streaming";
-	const streamingMessageIndex =
-		isStreaming && messagesWithPlaceholder.length > 0
-			? messagesWithPlaceholder.length - 1
-			: -1;
+	// Determine which message should show streaming behavior
+	const lastMessage = workingMessages[workingMessages.length - 1];
+	const shouldShowStreaming = 
+		(status === "submitted" || status === "streaming") && 
+		lastMessage?.role === "assistant";
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
 					{/* Messages container with proper padding */}
-					{messagesWithPlaceholder.map((message, index) => {
-						const isCurrentlyStreaming = index === streamingMessageIndex;
+					{workingMessages.map((message, index) => {
+						const isCurrentlyStreaming = shouldShowStreaming && index === workingMessages.length - 1;
 
 						return message.role === "user" ? (
 							<UserMessage key={message.id} message={message} />
