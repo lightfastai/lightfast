@@ -1,11 +1,19 @@
 "use client";
 
 import type React from "react";
-import { memo } from "react";
+import { memo, isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import type {Components as ReactMarkdownComponents} from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@repo/ui/lib/utils";
+import {
+	CodeBlock,
+	CodeBlockHeader,
+	CodeBlockActions,
+	CodeBlockContent,
+	CodeBlockCopyButton,
+} from "./ai-elements/code-block";
+import type { BundledLanguage } from "shiki";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -24,16 +32,18 @@ interface CodeComponentProps extends MarkdownComponentProps {
  */
 const components: Partial<ReactMarkdownComponents> = {
   // Code components - handles both inline and block code
-  code({ inline, className, children, ...props }: CodeComponentProps) {
+  code({ node, inline, className, children, ...props }: CodeComponentProps & { node?: any }) {
+    const isInline = inline || (node?.position?.start.line === node?.position?.end.line);
+    
     // Inline code styling
-    if (inline) {
+    if (isInline) {
       return (
         <code className={cn("bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono", className)} {...props}>
           {children}
         </code>
       );
     }
-    // Block code without syntax highlighting
+    // Block code without syntax highlighting (handled by pre component)
     return (
       <code className={cn("font-mono text-xs", className)} {...props}>
         {children}
@@ -42,21 +52,45 @@ const components: Partial<ReactMarkdownComponents> = {
   },
 
   // Pre component for code blocks
-  pre({ children, className, ...props }: MarkdownComponentProps) {
+  pre({ node, className, children, ...props }: MarkdownComponentProps & { node?: any }) {
+    let language: BundledLanguage = "javascript";
+
+    if (node?.properties && typeof node.properties.className === "string") {
+      language = node.properties.className.replace(
+        "language-",
+        "",
+      ) as BundledLanguage;
+    }
+
+    // Extract code content from children safely
+    let code = "";
+    if (
+      isValidElement(children) &&
+      children.props &&
+      typeof children.props === "object" &&
+      "children" in children.props &&
+      typeof children.props.children === "string"
+    ) {
+      code = children.props.children;
+    } else if (typeof children === "string") {
+      code = children;
+    }
+
     return (
-      <div className="flex flex-col my-4">
-        <pre
-          className={cn(
-            "relative w-full rounded-md border border-border bg-muted/50 dark:bg-muted/20",
-            "text-foreground p-3 text-xs font-mono leading-relaxed",
-            "overflow-auto",
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </pre>
-      </div>
+      <CodeBlock
+        className={cn(
+          "my-4 h-auto rounded-md border border-border",
+          "bg-muted/50 dark:bg-muted/20",
+          className,
+        )}
+      >
+        <CodeBlockHeader language={language}>
+          <CodeBlockActions>
+            <CodeBlockCopyButton />
+          </CodeBlockActions>
+        </CodeBlockHeader>
+        <CodeBlockContent code={code} language={language} className="p-3" />
+      </CodeBlock>
     );
   },
 

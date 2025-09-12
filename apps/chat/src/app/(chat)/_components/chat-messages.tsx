@@ -72,7 +72,7 @@ import {
 	Message,
 	MessageContent,
 } from "@repo/ui/components/ai-elements/message";
-import { Response } from "@repo/ui/components/ai-elements/response";
+import { Markdown } from "@repo/ui/components/markdown";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
 import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
@@ -84,13 +84,10 @@ const StreamingSineWave = memo(function StreamingSineWave({
 }: { 
 	show: boolean 
 }) {
+	if (!show) return null;
+	
 	return (
-		<div
-			className={cn(
-				"w-full px-8 transition-opacity duration-200",
-				show ? "opacity-100" : "opacity-0 pointer-events-none",
-			)}
-		>
+		<div className="w-full px-8">
 			<SineWaveDots />
 		</div>
 	);
@@ -239,9 +236,9 @@ const AssistantMessage = memo(function AssistantMessage({
 										variant="chat"
 										className="w-full px-8 py-0 [&>*]:my-0"
 									>
-										<Response className="[&>*]:my-0">
+										<Markdown className="[&>*]:my-0">
 											{cleanCitedSources(part.text)}
-										</Response>
+										</Markdown>
 									</MessageContent>
 								);
 							}
