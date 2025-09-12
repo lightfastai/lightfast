@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
+	"/",
 	"/api/health",
 	"/api/cli/v1/(.*)",  // Allow all CLI API routes through tRPC
 	"/playground",
@@ -29,6 +30,9 @@ export default clerkMiddleware(
 					// Let redirectToSignIn handle routing to appropriate auth flow
 					return redirectToSignIn();
 				}
+			} else {
+				// Unauthenticated users should see the landing page
+				return NextResponse.next();
 			}
 		}
 
