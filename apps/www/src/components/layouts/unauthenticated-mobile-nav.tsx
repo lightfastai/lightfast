@@ -96,13 +96,6 @@ export function UnauthenticatedMobileNav() {
 										>
 											Docs
 										</Link>
-										<Link
-											href="/pricing"
-											onClick={() => setOpen(false)}
-											className="block text-2xl font-medium py-1 transition-colors hover:text-muted-foreground"
-										>
-											Pricing
-										</Link>
 									</div>
 								</div>
 

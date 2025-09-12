@@ -119,15 +119,6 @@ export function EnhancedHeader() {
 								</Link>
 							</NavigationMenuItem>
 
-							{/* Pricing */}
-							<NavigationMenuItem>
-								<Link
-									href="/pricing"
-									className={buttonVariants({ variant: "ghost", size: "lg" })}
-								>
-									Pricing
-								</Link>
-							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>
 
