@@ -78,6 +78,24 @@ import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { cn } from "@repo/ui/lib/utils";
 
+// Stable sine wave component that persists during streaming
+const StreamingSineWave = memo(function StreamingSineWave({ 
+	show 
+}: { 
+	show: boolean 
+}) {
+	return (
+		<div
+			className={cn(
+				"w-full px-8 transition-opacity duration-200",
+				show ? "opacity-100" : "opacity-0 pointer-events-none",
+			)}
+		>
+			<SineWaveDots />
+		</div>
+	);
+});
+
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
 	status: ChatStatus;
@@ -204,18 +222,14 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					{/* Show sine wave only when streaming without meaningful content */}
-					<div
-						className={cn(
-							"w-full px-8 transition-opacity duration-200",
-							isCurrentlyStreaming && !hasMeaningfulContent(message)
-								? "opacity-100"
-								: "opacity-0 pointer-events-none",
-						)}
-					>
-						<SineWaveDots />
-					</div>
 					<div className="space-y-1 w-full">
+						{/* Show sine wave only when streaming without meaningful content */}
+						{isCurrentlyStreaming && (
+							<StreamingSineWave 
+								key="stable-sine-wave"
+								show={!hasMeaningfulContent(message)} 
+							/>
+						)}
 						{message.parts.map((part, index) => {
 							// Text part
 							if (isTextPart(part)) {
@@ -383,29 +397,21 @@ export function ChatMessages({
 	onFeedbackRemove,
 	isAuthenticated,
 }: ChatMessagesProps) {
-	// Create working messages array - add placeholder only when submitted
-	const workingMessages = [...messages];
-	if (status === "submitted" && messages[messages.length - 1]?.role === "user") {
-		workingMessages.push({
-			id: "thinking-placeholder", 
-			role: "assistant",
-			parts: [],
-		});
-	}
-
-	// Determine which message should show streaming behavior
-	const lastMessage = workingMessages[workingMessages.length - 1];
-	const shouldShowStreaming = 
-		(status === "submitted" || status === "streaming") && 
-		lastMessage?.role === "assistant";
+	// Check if we need a thinking placeholder
+	const needsPlaceholder = status === "submitted" && messages[messages.length - 1]?.role === "user";
+	
+	// Determine which message should show streaming behavior  
+	const shouldShowStreaming = (status === "submitted" || status === "streaming");
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
-					{/* Messages container with proper padding */}
-					{workingMessages.map((message, index) => {
-						const isCurrentlyStreaming = shouldShowStreaming && index === workingMessages.length - 1;
+					{/* Render existing messages */}
+					{messages.map((message, index) => {
+						const isCurrentlyStreaming = shouldShowStreaming && 
+							index === messages.length - 1 && 
+							message.role === "assistant";
 
 						return message.role === "user" ? (
 							<UserMessage key={message.id} message={message} />
@@ -423,6 +429,21 @@ export function ChatMessages({
 							/>
 						);
 					})}
+					
+					{/* Conditionally render thinking placeholder */}
+					{needsPlaceholder && (
+						<AssistantMessage
+							key="thinking-placeholder"
+							message={{ id: "thinking-placeholder", role: "assistant", parts: [] }}
+							onArtifactClick={onArtifactClick}
+							status={status}
+							isCurrentlyStreaming={shouldShowStreaming}
+							feedback={feedback}
+							onFeedbackSubmit={onFeedbackSubmit}
+							onFeedbackRemove={onFeedbackRemove}
+							isAuthenticated={isAuthenticated}
+						/>
+					)}
 				</ConversationContent>
 				<ConversationScrollButton
 					className="absolute bottom-4 z-[1000] right-4 rounded-full shadow-lg transition-all duration-200"
