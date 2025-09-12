@@ -76,6 +76,7 @@ import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
 import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
@@ -222,10 +223,7 @@ const AssistantMessage = memo(function AssistantMessage({
 								const trimmedText = part.text.replace(/^\n+/, "");
 
 								return (
-									<div
-										key={`${message.id}-part-${index}`}
-										className="w-full px-4"
-									>
+									<div key={`${message.id}-part-${index}`} className="w-full">
 										<Reasoning
 											className="w-full"
 											isStreaming={isReasoningStreaming}
@@ -260,88 +258,98 @@ const AssistantMessage = memo(function AssistantMessage({
 						})}
 					</div>
 
-					{/* Actions and Citations - only show when message has parts */}
-					{message.parts.length > 0 && (
-						<div className="w-full px-8 mt-2">
-							<div className="flex items-center justify-between">
-								{sources.length > 0 ? (
-									<InlineCitationCard>
-										<InlineCitationCardTrigger
-											sources={sources.map((source) => source.url)}
-										/>
-										<InlineCitationCardBody>
-											<InlineCitationCarousel>
-												<InlineCitationCarouselHeader>
-													<InlineCitationCarouselPrev />
-													<InlineCitationCarouselIndex />
-													<InlineCitationCarouselNext />
-												</InlineCitationCarouselHeader>
-												<InlineCitationCarouselContent>
-													{sources.map((source, index) => (
-														<InlineCitationCarouselItem key={index}>
-															<InlineCitationSource
-																title={
-																	source.title ?? generateSourceTitle(source.url)
-																}
-																url={source.url}
-															/>
-														</InlineCitationCarouselItem>
-													))}
-												</InlineCitationCarouselContent>
-											</InlineCitationCarousel>
-										</InlineCitationCardBody>
-									</InlineCitationCard>
-								) : (
-									<div></div>
+					{/* Actions and Citations - always present but hidden when no parts */}
+					<div
+						className={cn(
+							"w-full px-8 mt-2",
+							message.parts.length === 0
+								? "opacity-0 pointer-events-none"
+								: "opacity-100",
+						)}
+					>
+						<div className="flex items-center justify-between">
+							{sources.length > 0 ? (
+								<InlineCitationCard>
+									<InlineCitationCardTrigger
+										sources={sources.map((source) => source.url)}
+									/>
+									<InlineCitationCardBody>
+										<InlineCitationCarousel>
+											<InlineCitationCarouselHeader>
+												<InlineCitationCarouselPrev />
+												<InlineCitationCarouselIndex />
+												<InlineCitationCarouselNext />
+											</InlineCitationCarouselHeader>
+											<InlineCitationCarouselContent>
+												{sources.map((source, index) => (
+													<InlineCitationCarouselItem key={index}>
+														<InlineCitationSource
+															title={
+																source.title ?? generateSourceTitle(source.url)
+															}
+															url={source.url}
+														/>
+													</InlineCitationCarouselItem>
+												))}
+											</InlineCitationCarouselContent>
+										</InlineCitationCarousel>
+									</InlineCitationCardBody>
+								</InlineCitationCard>
+							) : (
+								<div></div>
+							)}
+							{/* Actions - always present but hidden during streaming */}
+							<Actions
+								className={cn(
+									"transition-opacity duration-200",
+									isCurrentlyStreaming
+										? "opacity-0 pointer-events-none"
+										: "opacity-100",
 								)}
-								{/* Show actions for all messages except currently streaming one */}
-								{!isCurrentlyStreaming && (
-									<Actions className="">
+							>
+								<Action
+									tooltip="Copy message"
+									onClick={handleCopyMessage}
+									className={isCopied ? "text-green-600" : ""}
+								>
+									{isCopied ? (
+										<Check className="w-4 h-4" />
+									) : (
+										<Copy className="w-4 h-4" />
+									)}
+								</Action>
+
+								{/* Feedback buttons - only show for authenticated users */}
+								{isAuthenticated && onFeedbackSubmit && (
+									<>
 										<Action
-											tooltip="Copy message"
-											onClick={handleCopyMessage}
-											className={isCopied ? "text-green-600" : ""}
+											tooltip="Helpful"
+											onClick={() => handleFeedback("upvote")}
+											className={
+												currentFeedback === "upvote"
+													? "text-blue-600 bg-accent/50"
+													: ""
+											}
 										>
-											{isCopied ? (
-												<Check className="w-4 h-4" />
-											) : (
-												<Copy className="w-4 h-4" />
-											)}
+											<ThumbsUp />
 										</Action>
 
-										{/* Feedback buttons - only show for authenticated users */}
-										{isAuthenticated && onFeedbackSubmit && (
-											<>
-												<Action
-													tooltip="Helpful"
-													onClick={() => handleFeedback("upvote")}
-													className={
-														currentFeedback === "upvote"
-															? "text-blue-600 bg-accent/50"
-															: ""
-													}
-												>
-													<ThumbsUp />
-												</Action>
-
-												<Action
-													tooltip="Not helpful"
-													onClick={() => handleFeedback("downvote")}
-													className={
-														currentFeedback === "downvote"
-															? "text-red-600 bg-accent/50"
-															: ""
-													}
-												>
-													<ThumbsDown />
-												</Action>
-											</>
-										)}
-									</Actions>
+										<Action
+											tooltip="Not helpful"
+											onClick={() => handleFeedback("downvote")}
+											className={
+												currentFeedback === "downvote"
+													? "text-red-600 bg-accent/50"
+													: ""
+											}
+										>
+											<ThumbsDown />
+										</Action>
+									</>
 								)}
-							</div>
+							</Actions>
 						</div>
-					)}
+					</div>
 				</Message>
 			</div>
 		</div>
@@ -373,7 +381,9 @@ export function ChatMessages({
 	// Simple streaming logic - if streaming, the last message is the streaming one
 	const isStreaming = status === "streaming";
 	const streamingMessageIndex =
-		isStreaming && messagesWithPlaceholder.length > 0 ? messagesWithPlaceholder.length - 1 : -1;
+		isStreaming && messagesWithPlaceholder.length > 0
+			? messagesWithPlaceholder.length - 1
+			: -1;
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
