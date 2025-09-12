@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
+import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { uuidv4 } from "lightfast/v2/utils";
 
 interface UnauthenticatedChatProps {
@@ -27,14 +28,16 @@ export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
 	};
 
 	return (
-		<ChatInterface 
-			key={`${agentId}-${sessionIdRef.current}`}
-			agentId={agentId} 
-			sessionId={sessionIdRef.current} 
-			initialMessages={[]}
-			isNewSession={false} // Unauthenticated sessions are not persisted
-			handleSessionCreation={handleSessionCreation}
-			user={null}
-		/>
+		<DataStreamProvider>
+			<ChatInterface 
+				key={`${agentId}-${sessionIdRef.current}`}
+				agentId={agentId} 
+				sessionId={sessionIdRef.current} 
+				initialMessages={[]}
+				isNewSession={false} // Unauthenticated sessions are not persisted
+				handleSessionCreation={handleSessionCreation}
+				user={null}
+			/>
+		</DataStreamProvider>
 	);
 }

@@ -167,10 +167,10 @@ export function ChatInterface({
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
-	// Fetch feedback for this session (only for authenticated users)
+	// Fetch feedback for this session (only for authenticated users with existing sessions)
 	const { data: feedback } = useFeedbackQuery({
 		sessionId,
-		enabled: isAuthenticated, // Only fetch feedback for authenticated users
+		enabled: isAuthenticated && !isNewSession, // Only fetch feedback for authenticated users with existing sessions
 	});
 
 	// Feedback mutation hooks with authentication-aware handlers
