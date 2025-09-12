@@ -191,13 +191,13 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					{/* Show sine wave dots at top of assistant message when no parts (like main branch ThinkingMessage) */}
-					{message.parts.length === 0 && (
-						<div className="w-full px-8">
-							<SineWaveDots />
-						</div>
-					)}
 					<div className="space-y-1 w-full">
+						{/* Show sine wave dots when no parts (like main branch ThinkingMessage) */}
+						{message.parts.length === 0 && (
+							<div className="w-full px-8">
+								<SineWaveDots />
+							</div>
+						)}
 						{message.parts.map((part, index) => {
 							// Text part
 							if (isTextPart(part)) {
