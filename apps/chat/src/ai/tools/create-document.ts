@@ -1,7 +1,7 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 import { createTool } from "lightfast/tool";
 import { z } from "zod";
-import type { AppRuntimeContext } from "~/ai/types";
+import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { uuidv4 as generateUUID } from '@repo/lib';
 import { documentHandlersByArtifactKind } from '../artifacts/server';
 import { ARTIFACT_KINDS } from '@db/chat';
@@ -23,7 +23,9 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 		content: z.string(),
 	}),
 	execute: async ({ title, kind }: { title: string; kind: typeof ARTIFACT_KINDS[number] }, context: RuntimeContext<AppRuntimeContext>) => {
-		const { sessionId, messageId, dataStream } = context;
+		const { sessionId } = context;
+		const messageId = context.messageId;
+		const dataStream = context.dataStream;
 
 		if (!dataStream) {
 			throw new Error("DataStream not available - artifact streaming not supported in this context");
@@ -74,8 +76,8 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			id,
 			title,
 			sessionId,
-			messageId,
-			dataStream,
+			messageId: messageId, // We've already checked this is not undefined
+			dataStream: dataStream, // We've already checked this is not undefined
 		});
 
 		// Signal completion
