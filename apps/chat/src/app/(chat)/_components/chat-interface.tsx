@@ -19,7 +19,7 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -141,9 +141,6 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-	// Form refs for clearing after submission
-	const promptFormRef1 = useRef<HTMLFormElement>(null);
-	const promptFormRef2 = useRef<HTMLFormElement>(null);
 
 	// Web search toggle state
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
@@ -330,7 +327,6 @@ export function ChatInterface({
 	const handlePromptSubmit = async (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
-		formRef?: React.RefObject<HTMLFormElement>,
 	) => {
 		event.preventDefault();
 
@@ -342,18 +338,23 @@ export function ChatInterface({
 		await handleSendMessage(message.text);
 		
 		// Clear the form after successful submission
-		if (formRef?.current) {
-			formRef.current.reset();
-		}
+		event.currentTarget.reset();
 	};
 
-	// Handle prompt input errors
-	const handlePromptError = (error: {
-		code: "max_files" | "max_file_size" | "accept";
-		message: string;
-	}) => {
-		console.error("Prompt input error:", error);
-		// Could integrate with toast system here if needed
+	// Handle prompt input errors (both file upload errors and React form events)
+	const handlePromptError = (
+		errorOrEvent: 
+			| { code: "max_files" | "max_file_size" | "accept"; message: string }
+			| React.FormEvent<HTMLFormElement>
+	) => {
+		// Check if it's a file upload error (has 'code' property)
+		if ('code' in errorOrEvent) {
+			console.error("Prompt input error:", errorOrEvent);
+			// Could integrate with toast system here if needed
+		} else {
+			// Handle React form events if needed
+			console.error("Form error:", errorOrEvent);
+		}
 	};
 
 	// Handle feedback submission
@@ -430,9 +431,8 @@ console.log(message);`,
 						/>
 					</div>
 					<PromptInput
-						onSubmit={(message, event) => handlePromptSubmit(message, event, promptFormRef1)}
+						onSubmit={handlePromptSubmit}
 						onError={handlePromptError}
-						ref={promptFormRef1}
 						className={cn(
 							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
 							"!divide-y-0 !shadow-sm"
@@ -559,9 +559,8 @@ console.log(message);`,
 								)}
 
 								<PromptInput
-									onSubmit={(message, event) => handlePromptSubmit(message, event, promptFormRef2)}
+									onSubmit={handlePromptSubmit}
 									onError={handlePromptError}
-									ref={promptFormRef2}
 									className={cn(
 										"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
 										"!divide-y-0 !shadow-sm"

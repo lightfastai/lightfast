@@ -339,13 +339,11 @@ export function ChatMessages({
 		// No streaming during submitted/ready states
 		if (status === "ready" || status === "submitted") return -1;
 		
-		// Find last assistant message index efficiently
-		for (let i = messages.length - 1; i >= 0; i--) {
-			if (messages[i].role === "assistant") {
-				return i;
-			}
-		}
-		return -1;
+		// Find last assistant message index using reduceRight for type safety
+		return messages.reduceRight<number>((lastIndex, message, index) => {
+			if (lastIndex !== -1) return lastIndex; // Already found
+			return message.role === "assistant" ? index : -1;
+		}, -1);
 	}, [messages, status]);
 
 	return (

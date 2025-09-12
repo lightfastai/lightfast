@@ -137,7 +137,7 @@ export function useArtifactStreaming({
       artifactDefinition.onStreamPart({
         streamPart: latestDataPart,
         setArtifact,
-        setMetadata,
+        setMetadata: setMetadata as Dispatch<SetStateAction<any>>,
       });
     }
   }, [dataStream, showArtifact, hideArtifact, updateArtifactContent, setArtifact, setMetadata]);
