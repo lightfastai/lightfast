@@ -5,6 +5,7 @@ import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import { DataStreamProvider } from "~/hooks/use-data-stream";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -61,8 +62,10 @@ export function ExistingSessionChat({
 		// Existing sessions don't need creation
 	};
 
+
+
 	return (
-		<>
+		<DataStreamProvider>
 			<ChatInterface
 				key={`${agentId}-${sessionId}`}
 				agentId={agentId}
@@ -116,6 +119,6 @@ export function ExistingSessionChat({
 					});
 				}}
 			/>
-		</>
+		</DataStreamProvider>
 	);
 }

@@ -167,6 +167,6 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true,
 		},
 		accessLevel: "authenticated",
-		streamingDelay: 25,
+		streamingDelay: 50,
 	}),
 } as const;

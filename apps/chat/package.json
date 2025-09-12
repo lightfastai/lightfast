@@ -40,9 +40,11 @@
 		"date-fns": "^4.1.0",
 		"drizzle-orm": "^0.43.1",
 		"exa-js": "catalog:",
+		"framer-motion": "^11.3.19",
 		"immer": "^10.1.1",
 		"lightfast": "workspace:^",
 		"lucide-react": "catalog:",
+		"mermaid": "^11.11.0",
 		"nanoid": "^5.1.5",
 		"next": "catalog:",
 		"next-themes": "^0.4.6",
@@ -50,10 +52,10 @@
 		"react-dom": "catalog:react19",
 		"react-syntax-highlighter": "^15.6.1",
 		"server-only": "^0.0.1",
-		"streamdown": "^1.0.11",
 		"superjson": "catalog:",
 		"use-debounce": "^10.0.5",
 		"use-stick-to-bottom": "1.1.1",
+		"usehooks-ts": "^3.1.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

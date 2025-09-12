@@ -1,31 +1,337 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
-import { Search } from "lucide-react";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import {
+	AlertCircle,
+	ExternalLink,
+	Globe,
+	Loader2,
+	Search,
+	Sparkles,
+	FileCode,
+} from "lucide-react";
+import Link from "next/link";
+import { memo } from "react";
 import { cn } from "@repo/ui/lib/utils";
+import type { CreateDocumentToolUIPart, WebSearchToolUIPart } from "~/ai/lightfast-app-chat-ui-messages";
+
+// Type definitions for web search results based on the tool's return structure
+interface WebSearchResult {
+	title: string;
+	url: string;
+	content: string;
+	contentType: string;
+	score?: number;
+}
 
 interface ToolCallRendererProps {
 	toolPart: ToolUIPart;
 	toolName: string;
 	className?: string;
+	onArtifactClick?: (artifactId: string) => void;
 }
 
-export function ToolCallRenderer({ toolPart, toolName, className }: ToolCallRendererProps) {
-	// For web search tool
-	if (toolName === "webSearch" && 'args' in toolPart) {
-		const args = toolPart.args as { query?: string };
+
+export interface CreateDocumentToolProps {
+	toolPart: CreateDocumentToolUIPart;
+	onArtifactClick?: (artifactId: string) => void;
+}
+
+export const CreateDocumentTool = memo(function CreateDocumentTool({
+	toolPart,
+	onArtifactClick,
+}: CreateDocumentToolProps) {
+	// Extract input data with explicit typing to avoid any inference
+	const input = toolPart.input as { title?: string; kind?: string } | undefined;
+	const rawTitle = input?.title;
+	const documentKind = input?.kind;
+
+	// Truncate title if more than 4 words
+	const documentTitle = rawTitle && rawTitle.split(' ').length > 4 
+		? rawTitle.split(' ').slice(0, 4).join(' ') + '...'
+		: rawTitle;
+
+	// Handle output-error state - this is the only different UI
+	if (toolPart.state === "output-error") {
 		return (
-			<div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
-				<Search className="w-3 h-3" />
-				<span>Searching: {args.query ?? "..."}</span>
+			<div className="my-2">
+				<Alert variant="destructive">
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>
+						<div className="font-medium">Create Document failed</div>
+						{documentTitle && (
+							<p className="text-xs mt-1 opacity-80">
+								Title: "{documentTitle}"
+							</p>
+						)}
+						<p className="text-xs mt-2">
+							{toolPart.errorText || "An error occurred while creating document"}
+						</p>
+					</AlertDescription>
+				</Alert>
+			</div>
+		);
+	}
+
+	// For all other states (input-streaming, input-available, output-available),
+	// show the same document card UI
+	const artifactId = toolPart.state === "output-available" 
+		? (toolPart.output as { id?: string } | undefined)?.id
+		: undefined;
+
+	return (
+		<div className="my-6 border rounded-lg overflow-hidden w-full">
+			<div 
+				className="flex hover:bg-muted/50 transition-colors cursor-pointer min-h-[4rem] w-full"
+				onClick={() => {
+					if (artifactId && onArtifactClick) {
+						onArtifactClick(artifactId);
+					}
+				}}
+			>
+				{/* Left side - Document info */}
+				<div className="flex-1 px-4 py-3">
+					{documentTitle && (
+						<div className="text-foreground font-medium text-sm mb-1">
+							{documentTitle}
+						</div>
+					)}
+					{documentKind && (
+						<div className="text-muted-foreground text-xs capitalize">
+							{documentKind}
+						</div>
+					)}
+				</div>
+
+				{/* Right side - Code preview thumbnail with loading state */}
+				<div className="w-32 self-stretch bg-muted/30 border-l flex items-center justify-center">
+					{toolPart.state === "input-streaming" || toolPart.state === "input-available" ? (
+						<Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+					) : (
+						<div className="w-6 h-6 bg-muted-foreground/20 rounded">
+							<FileCode className="w-4 h-4 text-muted-foreground m-1" />
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+});
+
+export interface WebSearchToolProps {
+	toolPart: WebSearchToolUIPart;
+}
+
+export const WebSearchTool = memo(function WebSearchTool({
+	toolPart,
+}: WebSearchToolProps) {
+	const metadata = { displayName: "Web Search" };
+
+	// Extract input data with explicit typing to avoid any inference
+	const input = toolPart.input as { query?: string } | undefined;
+	const searchQuery = input?.query;
+	
+	// Extract output data if available with explicit typing
+	const output = toolPart.state === "output-available" 
+		? toolPart.output as { results?: WebSearchResult[] } | undefined
+		: undefined;
+	const results = output?.results;
+	const resultCount = results?.length ?? 0;
+
+	const accordionValue = `web-search-${Math.random().toString(36).substr(2, 9)}`;
+
+	// Handle input-streaming state
+	if (toolPart.state === "input-streaming") {
+		return (
+			<div className="my-2 border rounded-lg px-4 py-3 bg-muted/30">
+				<div className="flex items-center gap-2">
+					<Sparkles className="h-4 w-4 animate-pulse text-blue-500" />
+					<div className="text-sm">
+						<div className="font-medium text-muted-foreground">
+							Preparing {metadata.displayName}...
+						</div>
+						{searchQuery && (
+							<p className="text-xs text-muted-foreground/70 mt-1">
+								Query: "{searchQuery}"
+							</p>
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	// Handle input-available state (tool is executing)
+	if (toolPart.state === "input-available") {
+		return (
+			<div className="my-6 border rounded-lg w-full">
+				<Accordion type="single" collapsible className="w-full">
+					<AccordionItem value={accordionValue}>
+						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
+							<div className="flex items-center gap-2 flex-1">
+								<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+								<div className="text-left flex-1">
+									<div className="font-medium text-xs lowercase text-muted-foreground">
+										searching...
+									</div>
+								</div>
+							</div>
+						</AccordionTrigger>
+						<AccordionContent className="px-4">
+							<div className="pt-3">
+								<div className="group flex items-center gap-3 rounded-lg p-2 px-3">
+									<Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+									<span className="text-xs font-medium text-muted-foreground flex-1">
+										Searching for relevant information...
+									</span>
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
+			</div>
+		);
+	}
+
+	// Handle output-error state
+	if (toolPart.state === "output-error") {
+		return (
+			<div className="my-2">
+				<Alert variant="destructive">
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>
+						<div className="font-medium">{metadata.displayName} failed</div>
+						{searchQuery && (
+							<p className="text-xs mt-1 opacity-80">Query: "{searchQuery}"</p>
+						)}
+						<p className="text-xs mt-2">
+							{toolPart.errorText || "An error occurred while searching"}
+						</p>
+					</AlertDescription>
+				</Alert>
+			</div>
+		);
+	}
+
+	// Handle output-available state (tool completed successfully)
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (toolPart.state === "output-available") {
+		return (
+			<div className="my-6 border rounded-lg w-full">
+				<Accordion type="single" collapsible className="w-full">
+					<AccordionItem value={accordionValue}>
+						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
+							<div className="flex items-center gap-2 flex-1">
+								<Globe className="h-4 w-4 text-muted-foreground" />
+								<div className="text-left flex-1">
+									<div className="font-medium text-xs lowercase text-muted-foreground">
+										{searchQuery}
+									</div>
+								</div>
+								<span className="text-xs text-muted-foreground/70">
+									{resultCount} results
+								</span>
+							</div>
+						</AccordionTrigger>
+						<AccordionContent className="px-4">
+							{results && results.length > 0 ? (
+								<div className="pt-3">
+									{results.map((result: WebSearchResult, index: number) => (
+										<div key={`web-search-result-${index}`}>
+											<Link
+												href={result.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="group flex items-center gap-3 hover:bg-muted/50 rounded-sm p-2 px-3"
+											>
+												<h4 className="text-xs font-medium text-foreground flex-1 truncate">
+													{result.title}
+												</h4>
+												<span className="text-xs text-muted-foreground/70 shrink-0">
+													{new URL(result.url).hostname}
+												</span>
+												<ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+											</Link>
+										</div>
+									))}
+								</div>
+							) : (
+								<p className="text-sm text-muted-foreground py-2">
+									No results found.
+								</p>
+							)}
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
+			</div>
+		);
+	}
+
+	// Fallback for unknown state
+	return null;
+});
+
+export function ToolCallRenderer({
+	toolPart,
+	toolName,
+	className,
+	onArtifactClick,
+}: ToolCallRendererProps) {
+	// Enhanced renderers for specific tools with proper typing
+	if (toolName === "webSearch") {
+		return <WebSearchTool toolPart={toolPart as WebSearchToolUIPart} />;
+	}
+
+	if (toolName === "createDocument") {
+		return <CreateDocumentTool 
+			toolPart={toolPart as CreateDocumentToolUIPart} 
+			onArtifactClick={onArtifactClick} 
+		/>;
+	}
+
+	// Basic renderer for other tools
+	if ("input" in toolPart) {
+		const input = toolPart.input as Record<string, unknown>;
+		const firstArg = Object.values(input)[0];
+		const displayText =
+			typeof firstArg === "string" ? firstArg : JSON.stringify(firstArg);
+
+		return (
+			<div className={cn("my-6 border rounded-lg w-full", className)}>
+				<div className="py-3 px-4 hover:bg-muted/50 transition-colors w-full">
+					<div className="flex items-center gap-2 flex-1">
+						<Search className="h-4 w-4 text-muted-foreground" />
+						<div className="text-left flex-1">
+							<div className="font-medium text-xs lowercase text-muted-foreground">
+								{toolName}: {displayText}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
 
 	// Default fallback for unknown tools
 	return (
-		<div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
-			<span>Running: {toolName}</span>
+		<div className={cn("my-6 border rounded-lg w-full", className)}>
+			<div className="py-3 px-4 hover:bg-muted/50 transition-colors w-full">
+				<div className="flex items-center gap-2 flex-1">
+					<Search className="h-4 w-4 text-muted-foreground" />
+					<div className="text-left flex-1">
+						<div className="font-medium text-xs lowercase text-muted-foreground">
+							{toolName}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

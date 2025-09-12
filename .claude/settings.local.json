@@ -156,7 +156,17 @@
       "Bash(PORT=4104 pnpm dev)",
       "Read(//private/tmp/**)",
       "Read(//tmp/orgs/**)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Read(//tmp/repos/vercel-ai-chatbot/components/**)",
+      "Read(//tmp/repos/vercel-ai-chatbot/artifacts/code/**)",
+      "Read(//tmp/repos/vercel-ai-chatbot/lib/artifacts/**)",
+      "Read(//tmp/repos/vercel-ai-chatbot/app/(chat)/api/chat/**)",
+      "Read(//tmp/ai-chatbot/artifacts/**)",
+      "Read(//tmp/ai-chatbot/lib/artifacts/**)",
+      "Read(//tmp/ai-chatbot/components/**)",
+      "Read(//tmp/repos/ai-sdk-sources/components/**)",
+      "Read(//Users/jeevanpillay/Code/@lightfastai/lightfast/node_modules/ai/**)",
+      "WebFetch(domain:app.planetscale.com)"
     ],
     "deny": []
   },

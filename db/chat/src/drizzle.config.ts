@@ -6,6 +6,9 @@ export default defineConfig({
 	out: "./src/migrations",
 	dialect: "mysql",
 	dbCredentials: {
-		url: `mysql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-chat?ssl={"rejectUnauthorized":true}`
+		url: `mysql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-app?sslaccept=strict`
+	},
+	introspect: {
+		casing: "camel",
 	},
 });

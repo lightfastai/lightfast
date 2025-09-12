@@ -6,6 +6,7 @@ import { useSessionId } from "~/hooks/use-session-id";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { DataStreamProvider } from "~/hooks/use-data-stream";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -65,8 +66,10 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		createSession.mutate({ id: sessionId, firstMessage });
 	};
 
+
+
 	return (
-		<>
+		<DataStreamProvider>
 			<ChatInterface
 				agentId={agentId}
 				sessionId={sessionId}
@@ -117,6 +120,6 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 					void queryClient.invalidateQueries({ queryKey: messagesQueryKey });
 				}}
 			/>
-		</>
+		</DataStreamProvider>
 	);
 }

@@ -1,11 +1,11 @@
-import type { UIMessage, UIMessageStreamOptions, ToolSet } from "ai";
-import { streamText } from "ai";
+import type { UIMessage, UIMessageStreamOptions, ToolSet, UIMessageStreamWriter, UIMessagePart, UIDataTypes, UITools } from "ai";
+import { streamText, createUIMessageStream, JsonToSseTransformStream } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import { v4 as uuidv4 } from "uuid";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type { RequestContext, SystemContext } from "./adapters/types";
+import type { RequestContext, SystemContext, RuntimeContext } from "./adapters/types";
 import {
 	NoUserMessageError,
 	SessionForbiddenError,
@@ -46,8 +46,10 @@ export interface StreamChatOptions<
 	TMessage extends UIMessage = UIMessage,
 	TRequestContext = {},
 	TFetchContext = {},
+	TRuntimeContext = {},
+	TTools extends ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > extends LifecycleCallbacks {
-	agent: Agent<any, any>;
+	agent: Agent<TRuntimeContext, TTools>;
 	sessionId: string;
 	message: TMessage;
 	memory: Memory<TMessage, TFetchContext>;
@@ -62,7 +64,7 @@ export interface StreamChatOptions<
 
 export interface ValidatedSession {
 	exists: boolean;
-	session?: any;
+	session?: { resourceId: string };
 }
 
 export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
@@ -146,11 +148,13 @@ export async function processMessage<
  * Streams a chat response from an agent
  */
 export async function streamChat<
-	TMessage extends UIMessage = UIMessage,
+	TMessage extends UIMessage<unknown, UIDataTypes, UITools> = UIMessage<unknown, UIDataTypes, UITools>,
 	TRequestContext = {},
 	TFetchContext = {},
+	TRuntimeContext = {},
+	TTools extends ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 >(
-	options: StreamChatOptions<TMessage, TRequestContext, TFetchContext>,
+	options: StreamChatOptions<TMessage, TRequestContext, TFetchContext, TRuntimeContext, TTools>,
 ): Promise<Result<Response, ApiError>> {
 	const {
 		agent,
@@ -208,34 +212,10 @@ export async function streamChat<
 		messageCount: allMessages.length,
 	});
 
-	// Build stream parameters using the agent's method
-	let streamParams;
-	try {
-		streamParams = agent.buildStreamParams({
-			sessionId,
-			messages: allMessages,
-			memory,
-			resourceId,
-			systemContext,
-			requestContext,
-		});
-	} catch (error) {
-		// Convert agent errors to appropriate API errors
-		return Err(toAgentApiError(error, "buildStreamParams"));
-	}
-
-	// Stream the response using the built parameters
-	let result;
-	const streamId = generateId ? generateId() : uuidv4();
-	try {
-		result = await streamText(streamParams);
-	} catch (error) {
-		// Convert streaming errors to appropriate API errors
-		return Err(toAgentApiError(error, "streamText"));
-	}
-
 	// Use the same sessionId
 	const sid = sessionId;
+	const streamId = generateId ? generateId() : uuidv4();
+	const shouldEnableResume = enableResume || resumeOptions?.enabled;
 
 	// Call onStreamStart lifecycle callback
 	onStreamStart?.({
@@ -247,8 +227,6 @@ export async function streamChat<
 	});
 
 	// Store stream ID for resumption (only if resume is enabled)
-	const shouldEnableResume = enableResume || resumeOptions?.enabled;
-
 	if (shouldEnableResume) {
 		try {
 			await memory.createStream({ sessionId, streamId, context });
@@ -306,13 +284,44 @@ export async function streamChat<
 		}
 	}
 
-	// Create UI message stream response with proper options
-	const streamOptions: UIMessageStreamOptions<TMessage> = {
-		generateMessageId: generateId,
-		sendReasoning: true, // Enable sending reasoning parts to the client
+	// Create UI message stream with artifact support
+	const stream = createUIMessageStream({
+		execute: ({ writer: dataStream }) => {
+			// Build stream parameters with dataStream injection
+			let streamParams;
+			try {
+				streamParams = agent.buildStreamParams({
+					sessionId,
+					messages: allMessages,
+					memory,
+					resourceId,
+					systemContext,
+					requestContext,
+					dataStream, // Pass dataStream for artifact support
+				});
+			} catch (error) {
+				throw toAgentApiError(error, "buildStreamParams");
+			}
+
+			// Start streaming
+			let result;
+			try {
+				result = streamText(streamParams);
+			} catch (error) {
+				throw toAgentApiError(error, "streamText");
+			}
+
+			// Consume the stream and merge with dataStream
+			result.consumeStream();
+			dataStream.merge(
+				result.toUIMessageStream({
+					sendReasoning: true,
+				}),
+			);
+		},
+		generateId: generateId,
 		onFinish: async (finishResult) => {
 			const agentEndTime = Date.now();
-			const agentDuration = agentEndTime - agentStartTime;
 
 			// Call onAgentComplete lifecycle callback
 			onAgentComplete?.({
@@ -343,17 +352,19 @@ export async function streamChat<
 						`[V1 onFinish] Parts count: ${finishResult.responseMessage.parts.length}`,
 					);
 					finishResult.responseMessage.parts.forEach(
-						(part: any, idx: number) => {
+						(part: UIMessagePart<UIDataTypes, UITools>, idx: number) => {
 							console.log(
 								`  Part ${idx}: type=${part.type}`,
-								part.type === "tool-result" ? `state=${part.state}` : "",
+								part.type === "tool-result" ? `state=${(part as any).state}` : "",
 							);
 						},
 					);
 				}
 
 				try {
-					await memory.appendMessage({
+					// In AI SDK streaming context, we work with concrete UIMessage types
+					// Cast memory interface to accept the concrete type returned by AI SDK
+					await (memory as Memory<UIMessage<unknown, UIDataTypes, UITools>, TFetchContext>).appendMessage({
 						sessionId: sid,
 						message: finishResult.responseMessage,
 						context,
@@ -383,33 +394,36 @@ export async function streamChat<
 				}
 			}
 		},
-	};
+	});
 
 	// Return response with optional resume support
 	if (shouldEnableResume) {
 		return Ok(
-			result.toUIMessageStreamResponse<TMessage>({
-				...streamOptions,
-				headers: {
-					"Content-Encoding": "none", // Prevent proxy buffering for streaming
-				},
-				async consumeSseStream({ stream }) {
-					// Send the SSE stream into a resumable stream sink
-					const streamContext = createResumableStreamContext({
-						waitUntil: (promise) => promise,
-					});
-					await streamContext.createNewResumableStream(streamId, () => stream);
-				},
-			}),
+			new Response(
+				stream.pipeThrough(new JsonToSseTransformStream()),
+				{
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+						"Content-Encoding": "none", // Prevent proxy buffering for streaming
+					},
+				}
+			),
 		);
 	} else {
 		return Ok(
-			result.toUIMessageStreamResponse<TMessage>({
-				...streamOptions,
-				headers: {
-					"Content-Encoding": "none", // Prevent proxy buffering for streaming
-				},
-			}),
+			new Response(
+				stream.pipeThrough(new JsonToSseTransformStream()),
+				{
+					headers: {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+						"Content-Encoding": "none", // Prevent proxy buffering for streaming
+					},
+				}
+			),
 		);
 	}
 }

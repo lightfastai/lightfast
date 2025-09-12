@@ -36,7 +36,7 @@ export default function AuthenticatedLayout({
 							<KeyboardShortcuts />
 							<div className="flex h-screen w-full">
 								<AppSidebar />
-								<div className="flex border-l border-muted/30 flex-col w-full relative">
+								<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative">
 									<AuthenticatedHeader />
 									{/* Content area starts from 0vh */}
 									<div className="flex-1 min-h-0 overflow-hidden">

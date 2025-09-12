@@ -34,9 +34,144 @@ import {
 	checkDecision,
 } from "@vendor/security";
 
-// Create tools object for c010 agent
+// Import artifact tools
+import { createDocumentTool } from "~/ai/tools/create-document";
+
+// Complete tools object for c010 agent including artifact tools
 const c010Tools = {
 	webSearch: webSearchTool,
+	createDocument: createDocumentTool,
+};
+
+// Get active tool names based on authentication status and user preferences
+const getActiveToolsForUser = (isAnonymous: boolean, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
+	if (isAnonymous) {
+		// Anonymous users: only web search tool can be active, and only if enabled
+		return webSearchEnabled ? ["webSearch"] : [];
+	} else {
+		// Authenticated users: all tools except webSearch are always active
+		// webSearch is only active if enabled by user
+		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"];
+		if (webSearchEnabled) {
+			activeTools.push("webSearch");
+		}
+		return activeTools;
+	}
+};
+
+// Create conditional system prompts based on authentication status
+const createSystemPromptForUser = (isAnonymous: boolean): string => {
+	const basePrompt = "You are a helpful AI assistant with access to web search capabilities.";
+	
+	if (isAnonymous) {
+		// Anonymous users: no artifact capabilities
+		return `${basePrompt}
+
+You can help users with:
+- Answering questions using web search when needed
+- Providing information and explanations
+- General assistance and conversation
+
+IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.
+
+CODE FORMATTING:
+When providing code snippets in your responses, always use proper markdown code blocks with language specification:
+
+\`\`\`rust
+fn main() {
+    println!("Hello, world!");
+}
+\`\`\`
+
+\`\`\`javascript
+console.log("Hello, world!");
+\`\`\`
+
+\`\`\`python
+print("Hello, world!")
+\`\`\`
+
+Use the appropriate language identifier (rust, javascript, python, typescript, etc.) for syntax highlighting.
+
+CITATION USAGE:
+When referencing external information, use numbered citations in your response and provide structured citation data.
+
+Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
+
+Example response format:
+React 19 introduces server components [1] which work seamlessly with Next.js [2]. This approach simplifies state management [3].
+
+---CITATIONS---
+{
+  "citations": [
+    {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release", "snippet": "Introducing server components for better performance"},
+    {"id": 2, "url": "https://nextjs.org/docs/app-router", "title": "Next.js App Router", "snippet": "Complete guide to the new routing system"},
+    {"id": 3, "url": "https://docs.example.com/state", "title": "State Management Guide"}
+  ]
+}
+
+Rules:
+- Use numbered citations [1], [2], [3] in your response text
+- Always end with ---CITATIONS--- followed by JSON data
+- Include sequential IDs starting from 1
+- Provide URLs and titles (snippets are optional)
+- Only cite facts, statistics, API details, version numbers, quotes
+- Don't cite common knowledge or your own analysis`;
+	} else {
+		// Authenticated users: full capabilities including artifacts
+		return `${basePrompt}
+
+IMPORTANT: When users request code generation, examples, substantial code snippets, or diagrams, ALWAYS use the createDocument tool. Do NOT include the code or diagram syntax in your text response - they should ONLY exist in the document artifact.
+
+Use createDocument for:
+
+CODE ARTIFACTS (kind: code):
+- Code examples, functions, components
+- Create, build, write, generate requests
+- Working implementations and prototypes
+- Code analysis or refactoring
+- Scripts, configuration files
+
+DIAGRAM ARTIFACTS (kind: diagram):
+- Flowcharts and process diagrams
+- System architecture diagrams
+- Database schemas and ER diagrams
+- Sequence diagrams and timelines
+- Organizational charts and mind maps
+- Network diagrams and data flows
+- Any visual representation or diagram
+
+Parameters:
+- title: Clear description (e.g. 'React Counter Component', 'User Authentication Flow')
+- kind: 'code' for code artifacts, 'diagram' for diagrams
+
+After creating the document, explain what you built but don't duplicate the code or diagram syntax in your response.
+
+CITATION USAGE:
+When referencing external information, use numbered citations in your response and provide structured citation data.
+
+Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
+
+Example response format:
+React 19 introduces server components [1] which work seamlessly with Next.js [2]. This approach simplifies state management [3].
+
+---CITATIONS---
+{
+  "citations": [
+    {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release", "snippet": "Introducing server components for better performance"},
+    {"id": 2, "url": "https://nextjs.org/docs/app-router", "title": "Next.js App Router", "snippet": "Complete guide to the new routing system"},
+    {"id": 3, "url": "https://docs.example.com/state", "title": "State Management Guide"}
+  ]
+}
+
+Rules:
+- Use numbered citations [1], [2], [3] in your response text
+- Always end with ---CITATIONS--- followed by JSON data
+- Include sequential IDs starting from 1
+- Provide URLs and titles (snippets are optional)
+- Only cite facts, statistics, API details, version numbers, quotes
+- Don't cite common knowledge or your own analysis`;
+	}
 };
 
 // Initialize Braintrust logging
@@ -151,6 +286,9 @@ const handler = async (
 		return ApiErrors.agentNotFound(agentId, { requestId });
 	}
 
+	// Simple: generate one messageId and use it everywhere
+	const messageId = uuidv4();
+
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async (): Promise<Response> => {
 		try {
@@ -174,21 +312,29 @@ const handler = async (
 					sessionId,
 					agentId,
 					userId,
+					isAnonymous,
 				});
+
+				// Create conditional active tools and system prompt for resume
+				// For resume requests, we don't have request body, so default webSearch to enabled
+				const activeToolsForUser = getActiveToolsForUser(isAnonymous, true);
+				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
 
 				// Just pass a minimal agent configuration for resume
 				// The actual model doesn't matter for resuming an existing stream
 				const response = await fetchRequestHandler({
 					agent: createAgent<AppRuntimeContext, typeof c010Tools>({
 						name: "c010",
-						system: `Stream resume agent`,
+						system: resumeSystemPrompt,
 						tools: c010Tools,
+						activeTools: activeToolsForUser,
 						createRuntimeContext: ({
 							sessionId: _sessionId,
 							resourceId: _resourceId,
 						}): AppRuntimeContext => ({
 							userId,
 							agentId,
+							messageId, // Use the generated messageId
 						}),
 						model: wrapLanguageModel({
 							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
@@ -210,7 +356,7 @@ const handler = async (
 							req.headers.get("x-real-ip") ??
 							undefined,
 					}),
-					generateId: uuidv4,
+					generateId: () => messageId,
 					enableResume: true,
 					onError(event) {
 						const { error, systemContext, requestContext } = event;
@@ -234,17 +380,24 @@ const handler = async (
 				return response;
 			}
 
-			// POST request logic - extract modelId and messages
+			// POST request logic - extract modelId, messages, and webSearchEnabled
 			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
 			let lastUserMessage = "";
+			let webSearchEnabled = false; // Default to false
 
 			try {
 				const requestBody = (await req.clone().json()) as {
 					modelId?: string;
 					messages?: { role: string; parts?: { text?: string }[] }[];
+					webSearchEnabled?: boolean;
 				};
 				if (requestBody.modelId && typeof requestBody.modelId === "string") {
 					selectedModelId = requestBody.modelId as ModelId;
+				}
+
+				// Extract webSearchEnabled preference
+				if (typeof requestBody.webSearchEnabled === "boolean") {
+					webSearchEnabled = requestBody.webSearchEnabled;
 				}
 
 				// Extract last user message for command detection
@@ -301,27 +454,31 @@ const handler = async (
 				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`,
 			);
 
+			// Create conditional active tools and system prompt based on authentication and preferences
+			const activeToolsForUser = getActiveToolsForUser(isAnonymous, webSearchEnabled);
+			const systemPrompt = createSystemPromptForUser(isAnonymous);
+
+			// Log active tools for debugging
+			console.log(`[Chat API] Active tools for ${isAnonymous ? 'anonymous' : 'authenticated'} user:`, {
+				activeTools: activeToolsForUser ?? 'all tools',
+				webSearchEnabled,
+				isAnonymous
+			});
+
 			// Pass everything to fetchRequestHandler with inline agent
 			const response = await fetchRequestHandler({
 				agent: createAgent<AppRuntimeContext, typeof c010Tools>({
 					name: "c010",
-					system: `You are a helpful AI assistant with access to web search capabilities.
-You can help users find information, answer questions, and provide insights based on current web data.
-When searching, be thoughtful about your queries and provide comprehensive, well-sourced answers.
-
-IMPORTANT: When displaying code in your responses, ALWAYS use the triple backtick format:
-\`\`\`language
-code here
-\`\`\`
-
-Never use any other format for code blocks. Always specify the language after the opening backticks when known.`,
+					system: systemPrompt,
 					tools: c010Tools,
+					activeTools: activeToolsForUser,
 					createRuntimeContext: ({
 						sessionId: _sessionId,
 						resourceId: _resourceId,
 					}): AppRuntimeContext => ({
 						userId,
 						agentId,
+						messageId, // Use the generated messageId
 					}),
 					model: wrapLanguageModel({
 						model: gateway(gatewayModelString),
@@ -359,7 +516,7 @@ Never use any other format for code blocks. Always specify the language after th
 						req.headers.get("x-real-ip") ??
 						undefined,
 				}),
-				generateId: uuidv4,
+				generateId: () => messageId,
 				enableResume: true,
 				onError(event) {
 					const { error, systemContext, requestContext } = event;
