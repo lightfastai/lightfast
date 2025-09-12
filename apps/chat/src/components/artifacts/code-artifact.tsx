@@ -6,10 +6,7 @@ import {
   LogsIcon,
 } from './icons';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Metadata {
-  // Empty for now - can be extended later for console outputs, etc.
-}
+type Metadata = Record<string, unknown>;
 
 export const codeArtifact = new Artifact<'code', Metadata>({
   kind: 'code',

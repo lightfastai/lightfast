@@ -2,10 +2,7 @@ import { Artifact } from "./create-artifact";
 import { useState, useEffect, useRef } from "react";
 import { CopyIcon, MessageIcon } from "./icons";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Metadata {
-	// Empty for now - can be extended later for diagram metadata
-}
+type Metadata = Record<string, unknown>;
 
 // Mermaid configuration optimized for dark theme
 const DIAGRAM_CONFIG = {
