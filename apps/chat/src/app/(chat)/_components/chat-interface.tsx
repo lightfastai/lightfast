@@ -11,10 +11,9 @@ import {
 	PromptInputToolbar,
 	PromptInputTools,
 	PromptInputSubmit,
-	PromptInputButton
-	
+	PromptInputButton,
 } from "@repo/ui/components/ai-elements/prompt-input";
-import type {PromptInputMessage} from "@repo/ui/components/ai-elements/prompt-input";
+import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
@@ -33,7 +32,6 @@ import { useDataStream } from "~/hooks/use-data-stream";
 import { ArtifactViewer, useArtifact } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { AnimatePresence, motion } from "framer-motion";
-import { Button } from "@repo/ui/components/ui/button";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 
@@ -92,7 +90,9 @@ export function ChatInterface({
 	const isAuthenticated = user !== null;
 
 	// Clean artifact fetcher using our new REST API
-	const fetchArtifact = async (artifactId: string): Promise<ArtifactApiResponse> => {
+	const fetchArtifact = async (
+		artifactId: string,
+	): Promise<ArtifactApiResponse> => {
 		const response = await fetch(`/api/artifact?id=${artifactId}`);
 
 		if (!response.ok) {
@@ -104,9 +104,9 @@ export function ChatInterface({
 				throw new Error("Artifact not found");
 			}
 
-			const errorData = await response
+			const errorData = (await response
 				.json()
-				.catch(() => ({ error: "Unknown error" })) as { error?: string };
+				.catch(() => ({ error: "Unknown error" }))) as { error?: string };
 			throw new Error(
 				errorData.error ?? `HTTP ${response.status}: ${response.statusText}`,
 			);
@@ -140,7 +140,6 @@ export function ChatInterface({
 
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
-
 
 	// Web search toggle state
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
@@ -338,21 +337,21 @@ export function ChatInterface({
 			return;
 		}
 
+		// Clear the form immediately after preventing default
+		event.currentTarget.reset();
+
 		// Convert to our existing handleSendMessage format
 		await handleSendMessage(message.text);
-		
-		// Clear the form after successful submission
-		event.currentTarget.reset();
 	};
 
 	// Handle prompt input errors (both file upload errors and React form events)
 	const handlePromptError = (
-		errorOrEvent: 
+		errorOrEvent:
 			| { code: "max_files" | "max_file_size" | "accept"; message: string }
-			| React.FormEvent<HTMLFormElement>
+			| React.FormEvent<HTMLFormElement>,
 	) => {
 		// Check if it's a file upload error (has 'code' property)
-		if ('code' in errorOrEvent) {
+		if ("code" in errorOrEvent) {
 			console.error("Prompt input error:", errorOrEvent);
 			// Could integrate with toast system here if needed
 		} else {
@@ -360,8 +359,6 @@ export function ChatInterface({
 			console.error("Form error:", errorOrEvent);
 		}
 	};
-
-
 
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
@@ -395,7 +392,7 @@ export function ChatInterface({
 						onError={handlePromptError}
 						className={cn(
 							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-							"!divide-y-0 !shadow-sm"
+							"!divide-y-0 !shadow-sm",
 						)}
 					>
 						<PromptInputBody className="flex flex-col">
@@ -405,7 +402,7 @@ export function ChatInterface({
 									className={cn(
 										"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
 										"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-										"outline-none min-h-0 min-h-[72px]"
+										"outline-none min-h-0 min-h-[72px]",
 									)}
 									style={{ lineHeight: "24px" }}
 									maxLength={4000}
@@ -418,14 +415,15 @@ export function ChatInterface({
 										variant={webSearchEnabled ? "secondary" : "outline"}
 										onClick={() => setWebSearchEnabled(!webSearchEnabled)}
 										className={cn(
-											webSearchEnabled && "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+											webSearchEnabled &&
+												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
 										)}
 									>
 										<Globe className="w-4 h-4" />
 										Search
 										{webSearchEnabled && (
-											<X 
-												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer" 
+											<X
+												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 												onClick={(e) => {
 													e.stopPropagation();
 													setWebSearchEnabled(false);
@@ -434,7 +432,7 @@ export function ChatInterface({
 										)}
 									</PromptInputButton>
 								</div>
-								
+
 								{/* Right side tools */}
 								<PromptInputTools className="flex items-center gap-2">
 									{modelSelector}
@@ -453,7 +451,7 @@ export function ChatInterface({
 					</PromptInput>
 					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
 					<div className="hidden md:block relative mt-4 h-12">
-						<div className="absolute top-0 left-0 right-0 px-4">
+						<div className="absolute top-0 left-0 right-0">
 							<PromptSuggestions onSelectPrompt={handleSendMessage} />
 						</div>
 					</div>
@@ -524,7 +522,7 @@ export function ChatInterface({
 									onError={handlePromptError}
 									className={cn(
 										"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-										"!divide-y-0 !shadow-sm"
+										"!divide-y-0 !shadow-sm",
 									)}
 								>
 									<PromptInputBody className="flex flex-col">
@@ -534,7 +532,7 @@ export function ChatInterface({
 												className={cn(
 													"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
 													"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-													"outline-none min-h-0 min-h-[72px]"
+													"outline-none min-h-0 min-h-[72px]",
 												)}
 												style={{ lineHeight: "24px" }}
 												maxLength={4000}
@@ -547,14 +545,15 @@ export function ChatInterface({
 													variant={webSearchEnabled ? "secondary" : "outline"}
 													onClick={() => setWebSearchEnabled(!webSearchEnabled)}
 													className={cn(
-														webSearchEnabled && "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+														webSearchEnabled &&
+															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
 													)}
 												>
 													<Globe className="w-4 h-4" />
 													Search
 													{webSearchEnabled && (
-														<X 
-															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer" 
+														<X
+															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 															onClick={(e) => {
 																e.stopPropagation();
 																setWebSearchEnabled(false);
@@ -563,13 +562,15 @@ export function ChatInterface({
 													)}
 												</PromptInputButton>
 											</div>
-											
+
 											{/* Right side tools */}
 											<PromptInputTools className="flex items-center gap-2">
 												{modelSelector}
 												<PromptInputSubmit
 													status={status}
-													disabled={status === "streaming" || status === "submitted"}
+													disabled={
+														status === "streaming" || status === "submitted"
+													}
 													size="icon"
 													variant="outline"
 													className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
@@ -675,7 +676,6 @@ export function ChatInterface({
 					</motion.div>
 				)}
 			</AnimatePresence>
-
 
 			{/* Rate limit dialog - shown when anonymous user hits limit */}
 			<RateLimitDialog

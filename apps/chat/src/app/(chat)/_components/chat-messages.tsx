@@ -5,6 +5,7 @@ import { memo, useState, useEffect, useMemo } from "react";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { CitationSource } from "@repo/ui/lib/citation-parser";
 import {
 	parseCitations,
 	generateSourceTitle,
@@ -25,7 +26,14 @@ import {
 
 // Inline helper to remove cited sources section from text  
 const cleanCitedSources = (text: string): string => {
-	// Check if text ends with "Cited" - O(1) operation
+	// First, check for new JSON citation format
+	const citationDelimiter = '---CITATIONS---';
+	const delimiterIndex = text.indexOf(citationDelimiter);
+	if (delimiterIndex !== -1) {
+		return text.substring(0, delimiterIndex).trim();
+	}
+	
+	// Legacy: Check if text ends with "Cited" - O(1) operation
 	if (text.endsWith("Cited")) {
 		// Find where "Cited sources" starts and cut there
 		const citedIndex = text.lastIndexOf("Cited sources");
@@ -34,7 +42,7 @@ const cleanCitedSources = (text: string): string => {
 		}
 	}
 	
-	// Also check for numbered citation format that might not end with "Cited"
+	// Legacy: Also check for numbered citation format that might not end with "Cited"
 	// Look for pattern that suggests citations at the end
 	if (/\[\d+\]\s+https?:\/\/[^\n]*$/.exec(text)) {
 		const citationMatch = /\n\[\d+\]\s+https?:\/\//.exec(text);
@@ -146,7 +154,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	onFeedbackRemove?: (messageId: string) => void;
 	isAuthenticated: boolean;
 }) {
-	const [sources, setSources] = useState<string[]>([]);
+	const [sources, setSources] = useState<CitationSource[]>([]);
 
 	// Process citations when streaming is complete
 	useEffect(() => {
@@ -199,7 +207,7 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					<div className="space-y-1">
+					<div className="space-y-1 w-full">
 						{message.parts.map((part, index) => {
 							// Text part
 							if (isTextPart(part)) {
@@ -256,7 +264,7 @@ const AssistantMessage = memo(function AssistantMessage({
 						<div className="flex items-center justify-between">
 							{sources.length > 0 ? (
 								<InlineCitationCard>
-									<InlineCitationCardTrigger sources={sources} />
+									<InlineCitationCardTrigger sources={sources.map(source => source.url)} />
 									<InlineCitationCardBody>
 										<InlineCitationCarousel>
 											<InlineCitationCarouselHeader>
@@ -268,8 +276,8 @@ const AssistantMessage = memo(function AssistantMessage({
 												{sources.map((source, index) => (
 													<InlineCitationCarouselItem key={index}>
 														<InlineCitationSource
-															title={generateSourceTitle(source)}
-															url={source}
+															title={source.title ?? generateSourceTitle(source.url)}
+															url={source.url}
 														/>
 													</InlineCitationCarouselItem>
 												))}

@@ -1,31 +1,98 @@
-// Simple citation parser for numbered citations [1], [2], [3]
+// Enhanced citation parser supporting both legacy text format and new JSON format
+
+export interface CitationSource {
+  id: number;
+  url: string;
+  title?: string;  // Optional, will be auto-generated if not provided
+  snippet?: string; // Optional description
+}
 
 export interface CitationData {
-  sources: string[];
+  sources: CitationSource[];
 }
 
 /**
- * Parse text for numbered citations and extract the URLs from the citation list
- * Expected format:
+ * Parse text for citations - supports both new JSON format and legacy text format
  * 
+ * New JSON format (preferred):
+ * ---CITATIONS---
+ * {
+ *   "citations": [
+ *     {"id": 1, "url": "https://example.com", "title": "Title", "snippet": "Description"}
+ *   ]
+ * }
+ * 
+ * Legacy format (backward compatibility):
  * Some text with citations [1] and more text [2].
- * 
- * Cited sources (for easy reference): [1] https://example.com/page1 [2] https://example.com/page2
+ * Cited sources: [1] https://example.com/page1 [2] https://example.com/page2
  */
 export function parseCitations(text: string): CitationData {
   if (!text) return { sources: [] };
 
-  const sources: string[] = [];
+  // First, try to parse new JSON format
+  const jsonCitations = parseJsonCitations(text);
+  if (jsonCitations.sources.length > 0) {
+    return jsonCitations;
+  }
+  
+  // Fall back to legacy text parsing
+  return parseLegacyCitations(text);
+}
+
+/**
+ * Parse new JSON citation format
+ */
+function parseJsonCitations(text: string): CitationData {
+  try {
+    // Look for citation delimiter
+    const citationDelimiter = '---CITATIONS---';
+    const delimiterIndex = text.indexOf(citationDelimiter);
+    
+    if (delimiterIndex === -1) {
+      return { sources: [] };
+    }
+    
+    // Extract JSON block after delimiter
+    const jsonBlock = text.substring(delimiterIndex + citationDelimiter.length).trim();
+    const parsed = JSON.parse(jsonBlock) as { citations: CitationSource[] };
+    
+    if (parsed?.citations && Array.isArray(parsed.citations)) {
+      // Validate and enhance citations
+      const sources = parsed.citations.map(citation => ({
+        id: citation.id,
+        url: citation.url,
+        title: citation.title || generateSourceTitle(citation.url),
+        snippet: citation.snippet
+      }));
+      
+      return { sources };
+    }
+  } catch (e) {
+    // JSON parsing failed, will fall back to legacy parsing
+  }
+  
+  return { sources: [] };
+}
+
+/**
+ * Parse legacy text citation format for backward compatibility
+ */
+function parseLegacyCitations(text: string): CitationData {
+  const sources: CitationSource[] = [];
   
   // Find citation list at the end (lines starting with [number] url)
   const citationListRegex = /\[(\d+)\]\s+(https?:\/\/[^\s]+)/gm;
   const citationMatches = [...text.matchAll(citationListRegex)];
   
-  // Extract URLs in order
+  // Extract URLs in order and create CitationSource objects
   for (const match of citationMatches) {
-    const [, , url] = match;
-    if (url) {
-      sources.push(url);
+    const [, idStr, url] = match;
+    if (url && idStr) {
+      sources.push({
+        id: parseInt(idStr, 10),
+        url,
+        title: generateSourceTitle(url)
+      });
     }
   }
   
