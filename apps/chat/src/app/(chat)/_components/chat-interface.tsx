@@ -467,37 +467,41 @@ export function ChatInterface({
 					onFeedbackSubmit={feedbackMutation.handleSubmit}
 					onFeedbackRemove={feedbackMutation.handleRemove}
 					isAuthenticated={isAuthenticated}
-					onArtifactClick={async (artifactId) => {
-						try {
-							// Fetch artifact data using clean REST API
-							const artifactData = await fetchArtifact(artifactId);
+					onArtifactClick={
+						isAuthenticated
+							? async (artifactId) => {
+									try {
+										// Fetch artifact data using clean REST API
+										const artifactData = await fetchArtifact(artifactId);
 
-							// Show the artifact with the fetched data
-							showArtifact({
-								documentId: artifactData.id,
-								title: artifactData.title,
-								kind: artifactData.kind,
-								content: artifactData.content,
-								status: "idle",
-								boundingBox: {
-									top: 100,
-									left: 100,
-									width: 300,
-									height: 200,
-								},
-							});
-						} catch (error) {
-							// Clean error handling with user-friendly messages
-							const errorMessage =
-								error instanceof Error
-									? error.message
-									: "Unknown error occurred";
-							console.error("Artifact fetch failed:", errorMessage);
+										// Show the artifact with the fetched data
+										showArtifact({
+											documentId: artifactData.id,
+											title: artifactData.title,
+											kind: artifactData.kind,
+											content: artifactData.content,
+											status: "idle",
+											boundingBox: {
+												top: 100,
+												left: 100,
+												width: 300,
+												height: 200,
+											},
+										});
+									} catch (error) {
+										// Clean error handling with user-friendly messages
+										const errorMessage =
+											error instanceof Error
+												? error.message
+												: "Unknown error occurred";
+										console.error("Artifact fetch failed:", errorMessage);
 
-							// Could optionally show toast notification here
-							// toast.error(`Failed to load artifact: ${errorMessage}`);
-						}
-					}}
+										// Could optionally show toast notification here
+										// toast.error(`Failed to load artifact: ${errorMessage}`);
+									}
+								}
+							: undefined // Disable artifact clicking for unauthenticated users
+					}
 				/>
 				<div className="relative">
 					<div className="max-w-3xl mx-auto p-4">
@@ -605,7 +609,7 @@ export function ChatInterface({
 				className="min-w-0 flex-shrink-0"
 				initial={false}
 				animate={{
-					width: artifact.isVisible ? "50%" : "100%",
+					width: isAuthenticated && artifact.isVisible ? "50%" : "100%",
 				}}
 				transition={{
 					type: "spring",
@@ -617,9 +621,9 @@ export function ChatInterface({
 				{chatContent}
 			</motion.div>
 
-			{/* Artifact panel - slides in from right when visible */}
+			{/* Artifact panel - slides in from right when visible (authenticated users only) */}
 			<AnimatePresence>
-				{artifact.isVisible && (
+				{isAuthenticated && artifact.isVisible && (
 					<motion.div
 						className="w-1/2 min-w-0 flex-shrink-0 relative z-50"
 						initial={{ x: "100%", opacity: 0 }}
@@ -648,6 +652,7 @@ export function ChatInterface({
 								console.log("Artifact content updated:", content);
 							}}
 							sessionId={sessionId}
+							isAuthenticated={isAuthenticated}
 							onArtifactSelect={async (artifactId) => {
 								try {
 									// Fetch artifact data using clean REST API
