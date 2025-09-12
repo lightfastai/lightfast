@@ -167,13 +167,17 @@ export function ChatInterface({
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
-	// Fetch feedback for this session
+	// Fetch feedback for this session (only for authenticated users)
 	const { data: feedback } = useFeedbackQuery({
 		sessionId,
+		enabled: isAuthenticated, // Only fetch feedback for authenticated users
 	});
 
-	// Feedback mutation hooks
-	const feedbackMutation = useFeedbackMutation();
+	// Feedback mutation hooks with authentication-aware handlers
+	const feedbackMutation = useFeedbackMutation({
+		sessionId,
+		isAuthenticated,
+	});
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
@@ -357,25 +361,6 @@ export function ChatInterface({
 		}
 	};
 
-	// Handle feedback submission
-	const handleFeedbackSubmit = (
-		messageId: string,
-		feedbackType: "upvote" | "downvote",
-	) => {
-		feedbackMutation.submit.mutate({
-			sessionId,
-			messageId,
-			feedbackType,
-		});
-	};
-
-	// Handle feedback removal
-	const handleFeedbackRemove = (messageId: string) => {
-		feedbackMutation.remove.mutate({
-			sessionId,
-			messageId,
-		});
-	};
 
 	// Demo function to show artifact with mock data
 	const showArtifactDemo = () => {
@@ -506,8 +491,9 @@ console.log(message);`,
 					messages={messages}
 					status={status}
 					feedback={feedback}
-					onFeedbackSubmit={handleFeedbackSubmit}
-					onFeedbackRemove={handleFeedbackRemove}
+					onFeedbackSubmit={feedbackMutation.handleSubmit}
+					onFeedbackRemove={feedbackMutation.handleRemove}
+					isAuthenticated={isAuthenticated}
 					onArtifactClick={async (artifactId) => {
 						try {
 							// Fetch artifact data using clean REST API

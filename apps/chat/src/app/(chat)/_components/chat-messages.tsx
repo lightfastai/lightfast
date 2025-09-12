@@ -74,6 +74,7 @@ interface ChatMessagesProps {
 		feedbackType: "upvote" | "downvote",
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
+	isAuthenticated: boolean;
 }
 
 // Memoized reasoning block component
@@ -131,6 +132,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	feedback,
 	onFeedbackSubmit,
 	onFeedbackRemove,
+	isAuthenticated,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -142,6 +144,7 @@ const AssistantMessage = memo(function AssistantMessage({
 		feedbackType: "upvote" | "downvote",
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
+	isAuthenticated: boolean;
 }) {
 	const [sources, setSources] = useState<string[]>([]);
 
@@ -288,8 +291,8 @@ const AssistantMessage = memo(function AssistantMessage({
 										{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
 									</Action>
 
-									{/* Feedback buttons */}
-									{onFeedbackSubmit && (
+									{/* Feedback buttons - only show for authenticated users */}
+									{isAuthenticated && onFeedbackSubmit && (
 										<>
 											<Action
 												tooltip="Helpful"
@@ -333,6 +336,7 @@ export function ChatMessages({
 	feedback,
 	onFeedbackSubmit,
 	onFeedbackRemove,
+	isAuthenticated,
 }: ChatMessagesProps) {
 	// Memoize the streaming message index calculation - O(n) once per render instead of O(n²)
 	const streamingMessageIndex = useMemo(() => {
@@ -366,6 +370,7 @@ export function ChatMessages({
 								feedback={feedback}
 								onFeedbackSubmit={onFeedbackSubmit}
 								onFeedbackRemove={onFeedbackRemove}
+								isAuthenticated={isAuthenticated}
 							/>
 						);
 					})}

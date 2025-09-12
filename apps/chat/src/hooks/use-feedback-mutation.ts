@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
+import { useCallback } from "react";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
 
@@ -9,11 +10,17 @@ interface SubmitFeedbackInput {
 	feedbackType: "upvote" | "downvote";
 }
 
+interface UseFeedbackMutationProps {
+	sessionId: string;
+	isAuthenticated: boolean;
+}
+
 /**
  * Hook for submitting message feedback with optimistic updates
  * Provides instant UI feedback while the request is processed
+ * Returns no-op handlers for unauthenticated users
  */
-export function useFeedbackMutation() {
+export function useFeedbackMutation({ sessionId, isAuthenticated }: UseFeedbackMutationProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 
@@ -107,8 +114,36 @@ export function useFeedbackMutation() {
 		}),
 	);
 
+	// Create callback handlers that respect authentication
+	const handleSubmit = useCallback(
+		(messageId: string, feedbackType: "upvote" | "downvote") => {
+			if (!isAuthenticated) return;
+			
+			submitMutation.mutate({
+				sessionId,
+				messageId,
+				feedbackType,
+			});
+		},
+		[isAuthenticated, submitMutation, sessionId]
+	);
+
+	const handleRemove = useCallback(
+		(messageId: string) => {
+			if (!isAuthenticated) return;
+			
+			removeMutation.mutate({
+				sessionId,
+				messageId,
+			});
+		},
+		[isAuthenticated, removeMutation, sessionId]
+	);
+
 	return {
 		submit: submitMutation,
 		remove: removeMutation,
+		handleSubmit: isAuthenticated ? handleSubmit : undefined,
+		handleRemove: isAuthenticated ? handleRemove : undefined,
 	};
 }
