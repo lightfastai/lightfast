@@ -167,18 +167,6 @@ export function ChatInterface({
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
-	// Fetch feedback for this session (only for authenticated users with existing sessions)
-	const { data: feedback } = useFeedbackQuery({
-		sessionId,
-		enabled: isAuthenticated && !isNewSession, // Only fetch feedback for authenticated users with existing sessions
-	});
-
-	// Feedback mutation hooks with authentication-aware handlers
-	const feedbackMutation = useFeedbackMutation({
-		sessionId,
-		isAuthenticated,
-	});
-
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
 	const transport = useChatTransport({
@@ -260,6 +248,18 @@ export function ChatInterface({
 			// Accumulate streaming data parts for artifact processing
 			setDataStream((ds) => [...ds, dataPart]);
 		},
+	});
+
+	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
+	const { data: feedback } = useFeedbackQuery({
+		sessionId,
+		enabled: isAuthenticated && !isNewSession && status === "ready", // Only fetch feedback when streaming is complete
+	});
+
+	// Feedback mutation hooks with authentication-aware handlers
+	const feedbackMutation = useFeedbackMutation({
+		sessionId,
+		isAuthenticated,
 	});
 
 	// Auto-resume streaming if requested and there's an incomplete stream
@@ -362,31 +362,6 @@ export function ChatInterface({
 	};
 
 
-	// Demo function to show artifact with mock data
-	const showArtifactDemo = () => {
-		showArtifact({
-			documentId: "demo-artifact",
-			title: "Interactive Code Demo",
-			kind: "code",
-			content: `console.log('Hello from Lightfast!');
-
-// This is a demo artifact showing how code
-// can be streamed and displayed alongside chat
-function greet(name) {
-  return \`Hello, \${name}! Welcome to Lightfast.\`;
-}
-
-const message = greet('Developer');
-console.log(message);`,
-			status: "idle",
-			boundingBox: {
-				top: 100,
-				left: 100,
-				width: 300,
-				height: 200,
-			},
-		});
-	};
 
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
@@ -701,14 +676,6 @@ console.log(message);`,
 				)}
 			</AnimatePresence>
 
-			{/* Demo button when no artifact is shown */}
-			{!artifact.isVisible && (
-				<div className="fixed bottom-4 right-4">
-					<Button onClick={showArtifactDemo} className="z-50">
-						🧪 Show Artifact Demo
-					</Button>
-				</div>
-			)}
 
 			{/* Rate limit dialog - shown when anonymous user hits limit */}
 			<RateLimitDialog
