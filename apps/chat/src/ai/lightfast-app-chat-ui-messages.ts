@@ -1,7 +1,24 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 import type { InferUITools, UIMessage } from "ai";
 import type { webSearchTool } from "~/ai/tools/web-search";
-import type { AppRuntimeContext } from "~/ai/types";
+
+// Runtime context types
+export interface AppRuntimeContext {
+	userId?: string;
+	agentId: string;
+}
+
+/**
+ * Context passed through fetchRequestHandler to memory operations
+ * Allows tracking model usage and other metadata
+ */
+export interface ChatFetchContext {
+	modelId: string;
+	isAnonymous: boolean;
+}
+
+// Agent types
+export type AgentId = "c010";
 
 // Custom data types for message parts (empty for now)
 export type LightfastAppChatUICustomDataTypes = Record<string, unknown>;

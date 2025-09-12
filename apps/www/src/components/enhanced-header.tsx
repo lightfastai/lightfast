@@ -93,7 +93,7 @@ export function EnhancedHeader() {
 											className="h-auto justify-start w-full"
 											asChild
 										>
-											<Link href="/docs/sdk">
+											<Link href="/docs">
 												<div className="text-left w-full">
 													<div className="text-xs font-medium leading-none mb-1">
 														SDK

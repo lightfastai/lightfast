@@ -73,7 +73,7 @@ export function UnauthenticatedMobileNav() {
 											</p>
 										</Link>
 										<Link
-											href="/docs/sdk"
+											href="/docs"
 											onClick={() => setOpen(false)}
 											className="block"
 										>
