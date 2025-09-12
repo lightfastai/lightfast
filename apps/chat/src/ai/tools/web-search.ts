@@ -4,7 +4,7 @@ import { currentSpan, wrapTraced } from "braintrust";
 import Exa from "exa-js";
 import type {RegularSearchOptions, SearchResponse} from "exa-js";
 import { z } from "zod";
-import type { AppRuntimeContext } from "~/ai/types";
+import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { env } from "~/env";
 
 /**

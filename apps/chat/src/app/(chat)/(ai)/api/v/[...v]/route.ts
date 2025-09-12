@@ -15,7 +15,7 @@ import {
 } from "lightfast/v2/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
 import { webSearchTool } from "~/ai/tools/web-search";
-import type { AppRuntimeContext } from "~/ai/types";
+import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { auth } from "@clerk/nextjs/server";
 import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
 import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";

@@ -9,6 +9,7 @@ import type { NextRequest } from "next/server";
 // Define public routes that don't need authentication
 const isPublicRoute = createRouteMatcher([
 	"/",
+	"/pricing",
 	"/api/health",
 	"/api/v/(.*)",
 	"/sign-in",

@@ -73,7 +73,7 @@ export function UnauthenticatedMobileNav() {
 											</p>
 										</Link>
 										<Link
-											href="/docs/sdk"
+											href="/docs"
 											onClick={() => setOpen(false)}
 											className="block"
 										>
@@ -95,13 +95,6 @@ export function UnauthenticatedMobileNav() {
 											className="block text-2xl font-medium py-1 transition-colors hover:text-muted-foreground"
 										>
 											Docs
-										</Link>
-										<Link
-											href="/pricing"
-											onClick={() => setOpen(false)}
-											className="block text-2xl font-medium py-1 transition-colors hover:text-muted-foreground"
-										>
-											Pricing
 										</Link>
 									</div>
 								</div>
