@@ -11,12 +11,7 @@ export const SineWaveDots = memo(function SineWaveDots({
 	className,
 }: SineWaveDotsProps) {
 	return (
-		<div
-			className={cn(
-				"bg-muted border border-muted/30 rounded-full px-3 py-3 inline-flex items-center gap-1",
-				className,
-			)}
-		>
+		<div className={cn("px-3 py-3 inline-flex items-center gap-1", className)}>
 			<div className="flex items-center gap-1.5">
 				{[0, 1, 2].map((index) => (
 					<div
@@ -31,4 +26,3 @@ export const SineWaveDots = memo(function SineWaveDots({
 		</div>
 	);
 });
-

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { memo, useState, useEffect, useMemo } from "react";
+import { memo, useState, useEffect } from "react";
 import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -23,16 +23,21 @@ import {
 	InlineCitationCarouselNext,
 	InlineCitationSource,
 } from "@repo/ui/components/ai-elements/inline-citation";
+import {
+	Reasoning,
+	ReasoningContent,
+	ReasoningTrigger,
+} from "@repo/ui/components/ai-elements/reasoning";
 
-// Inline helper to remove cited sources section from text  
+// Inline helper to remove cited sources section from text
 const cleanCitedSources = (text: string): string => {
 	// First, check for new JSON citation format
-	const citationDelimiter = '---CITATIONS---';
+	const citationDelimiter = "---CITATIONS---";
 	const delimiterIndex = text.indexOf(citationDelimiter);
 	if (delimiterIndex !== -1) {
 		return text.substring(0, delimiterIndex).trim();
 	}
-	
+
 	// Legacy: Check if text ends with "Cited" - O(1) operation
 	if (text.endsWith("Cited")) {
 		// Find where "Cited sources" starts and cut there
@@ -41,7 +46,7 @@ const cleanCitedSources = (text: string): string => {
 			return text.substring(0, citedIndex).trim();
 		}
 	}
-	
+
 	// Legacy: Also check for numbered citation format that might not end with "Cited"
 	// Look for pattern that suggests citations at the end
 	if (/\[\d+\]\s+https?:\/\/[^\n]*$/.exec(text)) {
@@ -50,7 +55,7 @@ const cleanCitedSources = (text: string): string => {
 			return text.substring(0, citationMatch.index).trim();
 		}
 	}
-	
+
 	return text;
 };
 import {
@@ -84,28 +89,6 @@ interface ChatMessagesProps {
 	onFeedbackRemove?: (messageId: string) => void;
 	isAuthenticated: boolean;
 }
-
-// Memoized reasoning block component
-const ReasoningBlock = memo(function ReasoningBlock({
-	text,
-}: {
-	text: string;
-}) {
-	// Remove leading newlines while preserving other whitespace
-	const trimmedText = text.replace(/^\n+/, "");
-
-	return (
-		<div className="border border-muted rounded-lg max-h-[200px] overflow-hidden">
-			<div className="max-h-[200px] overflow-y-auto scrollbar-thin">
-				<div className="p-4">
-					<p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-words">
-						{trimmedText}
-					</p>
-				</div>
-			</div>
-		</div>
-	);
-});
 
 // User messages - simple text display only
 const UserMessage = memo(function UserMessage({
@@ -187,7 +170,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	const handleFeedback = (feedbackType: "upvote" | "downvote") => {
 		if (onFeedbackSubmit) {
 			const currentFeedback = feedback?.[message.id];
-			
+
 			// If clicking the same feedback type, remove it (toggle off)
 			if (currentFeedback === feedbackType) {
 				onFeedbackRemove?.(message.id);
@@ -207,6 +190,12 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
+					{/* Show sine wave dots at top of assistant message when no parts (like main branch ThinkingMessage) */}
+					{message.parts.length === 0 && (
+						<div className="w-full px-8">
+							<SineWaveDots />
+						</div>
+					)}
 					<div className="space-y-1 w-full">
 						{message.parts.map((part, index) => {
 							// Text part
@@ -226,12 +215,24 @@ const AssistantMessage = memo(function AssistantMessage({
 
 							// Reasoning part
 							if (isReasoningPart(part) && part.text.length > 1) {
+								// Determine if this reasoning part is currently streaming
+								const isReasoningStreaming =
+									isCurrentlyStreaming && index === message.parts.length - 1;
+								// Remove leading newlines while preserving other whitespace
+								const trimmedText = part.text.replace(/^\n+/, "");
+
 								return (
 									<div
 										key={`${message.id}-part-${index}`}
-										className="w-full px-8"
+										className="w-full px-4"
 									>
-										<ReasoningBlock text={part.text} />
+										<Reasoning
+											className="w-full"
+											isStreaming={isReasoningStreaming}
+										>
+											<ReasoningTrigger />
+											<ReasoningContent>{trimmedText}</ReasoningContent>
+										</Reasoning>
 									</div>
 								);
 							}
@@ -259,78 +260,88 @@ const AssistantMessage = memo(function AssistantMessage({
 						})}
 					</div>
 
-					{/* Actions and Citations */}
-					<div className="w-full px-8 mt-2">
-						<div className="flex items-center justify-between">
-							{sources.length > 0 ? (
-								<InlineCitationCard>
-									<InlineCitationCardTrigger sources={sources.map(source => source.url)} />
-									<InlineCitationCardBody>
-										<InlineCitationCarousel>
-											<InlineCitationCarouselHeader>
-												<InlineCitationCarouselPrev />
-												<InlineCitationCarouselIndex />
-												<InlineCitationCarouselNext />
-											</InlineCitationCarouselHeader>
-											<InlineCitationCarouselContent>
-												{sources.map((source, index) => (
-													<InlineCitationCarouselItem key={index}>
-														<InlineCitationSource
-															title={source.title ?? generateSourceTitle(source.url)}
-															url={source.url}
-														/>
-													</InlineCitationCarouselItem>
-												))}
-											</InlineCitationCarouselContent>
-										</InlineCitationCarousel>
-									</InlineCitationCardBody>
-								</InlineCitationCard>
-							) : (
-								<div></div>
-							)}
-							{/* Show actions for all messages except currently streaming one */}
-							{!isCurrentlyStreaming && (
-								<Actions className="">
-									<Action 
-										tooltip="Copy message" 
-										onClick={handleCopyMessage}
-										className={isCopied ? "text-green-600" : ""}
-									>
-										{isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-									</Action>
+					{/* Actions and Citations - only show when message has parts */}
+					{message.parts.length > 0 && (
+						<div className="w-full px-8 mt-2">
+							<div className="flex items-center justify-between">
+								{sources.length > 0 ? (
+									<InlineCitationCard>
+										<InlineCitationCardTrigger
+											sources={sources.map((source) => source.url)}
+										/>
+										<InlineCitationCardBody>
+											<InlineCitationCarousel>
+												<InlineCitationCarouselHeader>
+													<InlineCitationCarouselPrev />
+													<InlineCitationCarouselIndex />
+													<InlineCitationCarouselNext />
+												</InlineCitationCarouselHeader>
+												<InlineCitationCarouselContent>
+													{sources.map((source, index) => (
+														<InlineCitationCarouselItem key={index}>
+															<InlineCitationSource
+																title={
+																	source.title ?? generateSourceTitle(source.url)
+																}
+																url={source.url}
+															/>
+														</InlineCitationCarouselItem>
+													))}
+												</InlineCitationCarouselContent>
+											</InlineCitationCarousel>
+										</InlineCitationCardBody>
+									</InlineCitationCard>
+								) : (
+									<div></div>
+								)}
+								{/* Show actions for all messages except currently streaming one */}
+								{!isCurrentlyStreaming && (
+									<Actions className="">
+										<Action
+											tooltip="Copy message"
+											onClick={handleCopyMessage}
+											className={isCopied ? "text-green-600" : ""}
+										>
+											{isCopied ? (
+												<Check className="w-4 h-4" />
+											) : (
+												<Copy className="w-4 h-4" />
+											)}
+										</Action>
 
-									{/* Feedback buttons - only show for authenticated users */}
-									{isAuthenticated && onFeedbackSubmit && (
-										<>
-											<Action
-												tooltip="Helpful"
-												onClick={() => handleFeedback("upvote")}
-												className={
-													currentFeedback === "upvote"
-														? "text-blue-600 bg-accent/50"
-														: ""
-												}
-											>
-												<ThumbsUp />
-											</Action>
+										{/* Feedback buttons - only show for authenticated users */}
+										{isAuthenticated && onFeedbackSubmit && (
+											<>
+												<Action
+													tooltip="Helpful"
+													onClick={() => handleFeedback("upvote")}
+													className={
+														currentFeedback === "upvote"
+															? "text-blue-600 bg-accent/50"
+															: ""
+													}
+												>
+													<ThumbsUp />
+												</Action>
 
-											<Action
-												tooltip="Not helpful"
-												onClick={() => handleFeedback("downvote")}
-												className={
-													currentFeedback === "downvote"
-														? "text-red-600 bg-accent/50"
-														: ""
-												}
-											>
-												<ThumbsDown />
-											</Action>
-										</>
-									)}
-								</Actions>
-							)}
+												<Action
+													tooltip="Not helpful"
+													onClick={() => handleFeedback("downvote")}
+													className={
+														currentFeedback === "downvote"
+															? "text-red-600 bg-accent/50"
+															: ""
+													}
+												>
+													<ThumbsDown />
+												</Action>
+											</>
+										)}
+									</Actions>
+								)}
+							</div>
 						</div>
-					</div>
+					)}
 				</Message>
 			</div>
 		</div>
@@ -346,26 +357,32 @@ export function ChatMessages({
 	onFeedbackRemove,
 	isAuthenticated,
 }: ChatMessagesProps) {
-	// Memoize the streaming message index calculation - O(n) once per render instead of O(n²)
-	const streamingMessageIndex = useMemo(() => {
-		// No streaming during submitted/ready states
-		if (status === "ready" || status === "submitted") return -1;
-		
-		// Find last assistant message index using reduceRight for type safety
-		return messages.reduceRight<number>((lastIndex, message, index) => {
-			if (lastIndex !== -1) return lastIndex; // Already found
-			return message.role === "assistant" ? index : -1;
-		}, -1);
-	}, [messages, status]);
+	// Add a placeholder assistant message when submitted (exactly like main branch)
+	const messagesWithPlaceholder = [...messages];
+	if (
+		status === "submitted" &&
+		messages[messages.length - 1]?.role === "user"
+	) {
+		messagesWithPlaceholder.push({
+			id: "thinking-placeholder",
+			role: "assistant",
+			parts: [],
+		});
+	}
+
+	// Simple streaming logic - if streaming, the last message is the streaming one
+	const isStreaming = status === "streaming";
+	const streamingMessageIndex =
+		isStreaming && messagesWithPlaceholder.length > 0 ? messagesWithPlaceholder.length - 1 : -1;
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
 					{/* Messages container with proper padding */}
-					{messages.map((message, index) => {
+					{messagesWithPlaceholder.map((message, index) => {
 						const isCurrentlyStreaming = index === streamingMessageIndex;
-						
+
 						return message.role === "user" ? (
 							<UserMessage key={message.id} message={message} />
 						) : (
@@ -382,17 +399,9 @@ export function ChatMessages({
 							/>
 						);
 					})}
-					{/* Show sine wave dots when submitted */}
-					{status === "submitted" && (
-						<div className="py-1 px-4">
-							<div className="mx-auto max-w-3xl px-4">
-								<SineWaveDots />
-							</div>
-						</div>
-					)}
 				</ConversationContent>
 				<ConversationScrollButton
-					className="absolute bottom-4 right-4 rounded-full shadow-lg transition-all duration-200"
+					className="absolute bottom-4 z-[1000] right-4 rounded-full shadow-lg transition-all duration-200"
 					variant="secondary"
 					size="icon"
 				/>
