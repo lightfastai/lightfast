@@ -5,8 +5,8 @@ import {
 	getModelConfig,
 	getVisibleModels,
 	getProviderDisplayName,
-} from "~/lib/ai/providers";
-import type { ModelId } from "~/lib/ai/providers";
+} from "~/ai/providers";
+import type { ModelId } from "~/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {

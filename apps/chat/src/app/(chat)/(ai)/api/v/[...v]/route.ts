@@ -2,12 +2,12 @@ import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
-import type { ModelId } from "~/lib/ai/providers";
+import type { ModelId } from "~/ai/providers";
 import {
 	getModelConfig,
 	getModelStreamingDelay,
 	MODELS,
-} from "~/lib/ai/providers";
+} from "~/ai/providers";
 import { BraintrustMiddleware, initLogger, traced } from "braintrust";
 import {
 	getBraintrustConfig,

@@ -16,7 +16,7 @@ import {
 	getDefaultModelForUser,
 	getModelConfig,
 	PROVIDER_ICONS,
-} from "~/lib/ai/providers";
+} from "~/ai/providers";
 
 interface AuthPromptSelectorProps {
 	className?: string;
