@@ -7,7 +7,7 @@ import {
   LightfastChatUsage,
   insertLightfastChatUsageSchema
 } from "@db/chat";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 // Helper function to get usage by period (shared logic)
 async function getUsageByPeriod(userId: string, period: string) {
@@ -64,6 +64,7 @@ export const usageRouter = {
 
   /**
    * Increment non-premium message usage
+   * Uses atomic upsert within transaction to prevent race conditions
    */
   incrementNonPremium: protectedProcedure
     .input(
@@ -75,43 +76,50 @@ export const usageRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.userId;
       
-      // Check if usage record exists
-      const existingUsage = await db
-        .select()
-        .from(LightfastChatUsage)
-        .where(
-          and(
-            eq(LightfastChatUsage.clerkUserId, userId),
-            eq(LightfastChatUsage.period, input.period)
-          )
-        )
-        .limit(1);
-
-      if (existingUsage[0]) {
-        // Update existing record
-        await db
-          .update(LightfastChatUsage)
-          .set({ 
-            nonPremiumMessages: existingUsage[0].nonPremiumMessages + input.count 
-          })
-          .where(eq(LightfastChatUsage.id, existingUsage[0].id));
-
-        return { success: true, created: false };
-      } else {
-        // Create new record
-        await db.insert(LightfastChatUsage).values({
-          clerkUserId: userId,
-          period: input.period,
-          nonPremiumMessages: input.count,
-          premiumMessages: 0,
-        });
-
-        return { success: true, created: true };
-      }
+      // Use transaction for atomic upsert to prevent race conditions
+      return await db.transaction(async (tx) => {
+        try {
+          // Attempt to insert new record
+          await tx.insert(LightfastChatUsage).values({
+            clerkUserId: userId,
+            period: input.period,
+            nonPremiumMessages: input.count,
+            premiumMessages: 0,
+          });
+          
+          return { success: true, created: true };
+        } catch (error) {
+          // If insert fails due to unique constraint (record exists),
+          // update the existing record atomically
+          if (error instanceof Error && 
+              (error.message.includes('Duplicate entry') || 
+               error.message.includes('unique constraint'))) {
+            
+            // Use UPDATE with WHERE clause for atomic increment
+            const result = await tx
+              .update(LightfastChatUsage)
+              .set({
+                nonPremiumMessages: sql`${LightfastChatUsage.nonPremiumMessages} + ${input.count}`
+              })
+              .where(
+                and(
+                  eq(LightfastChatUsage.clerkUserId, userId),
+                  eq(LightfastChatUsage.period, input.period)
+                )
+              );
+            
+            return { success: true, created: false };
+          }
+          
+          // Re-throw unexpected errors
+          throw error;
+        }
+      });
     }),
 
   /**
    * Increment premium message usage
+   * Uses atomic upsert within transaction to prevent race conditions
    */
   incrementPremium: protectedProcedure
     .input(
@@ -123,39 +131,45 @@ export const usageRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.userId;
       
-      // Check if usage record exists
-      const existingUsage = await db
-        .select()
-        .from(LightfastChatUsage)
-        .where(
-          and(
-            eq(LightfastChatUsage.clerkUserId, userId),
-            eq(LightfastChatUsage.period, input.period)
-          )
-        )
-        .limit(1);
-
-      if (existingUsage[0]) {
-        // Update existing record
-        await db
-          .update(LightfastChatUsage)
-          .set({ 
-            premiumMessages: existingUsage[0].premiumMessages + input.count 
-          })
-          .where(eq(LightfastChatUsage.id, existingUsage[0].id));
-
-        return { success: true, created: false };
-      } else {
-        // Create new record
-        await db.insert(LightfastChatUsage).values({
-          clerkUserId: userId,
-          period: input.period,
-          nonPremiumMessages: 0,
-          premiumMessages: input.count,
-        });
-
-        return { success: true, created: true };
-      }
+      // Use transaction for atomic upsert to prevent race conditions
+      return await db.transaction(async (tx) => {
+        try {
+          // Attempt to insert new record
+          await tx.insert(LightfastChatUsage).values({
+            clerkUserId: userId,
+            period: input.period,
+            nonPremiumMessages: 0,
+            premiumMessages: input.count,
+          });
+          
+          return { success: true, created: true };
+        } catch (error) {
+          // If insert fails due to unique constraint (record exists),
+          // update the existing record atomically
+          if (error instanceof Error && 
+              (error.message.includes('Duplicate entry') || 
+               error.message.includes('unique constraint'))) {
+            
+            // Use UPDATE with WHERE clause for atomic increment
+            const result = await tx
+              .update(LightfastChatUsage)
+              .set({
+                premiumMessages: sql`${LightfastChatUsage.premiumMessages} + ${input.count}`
+              })
+              .where(
+                and(
+                  eq(LightfastChatUsage.clerkUserId, userId),
+                  eq(LightfastChatUsage.period, input.period)
+                )
+              );
+            
+            return { success: true, created: false };
+          }
+          
+          // Re-throw unexpected errors
+          throw error;
+        }
+      });
     }),
 
   /**
