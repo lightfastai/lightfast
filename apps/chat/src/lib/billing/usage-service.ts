@@ -1,31 +1,11 @@
 import { createCaller } from "~/trpc/server";
-import { ACTIVE_MODELS } from "../ai/providers/models/active";
+import { getMessageType } from "./message-utils";
 import { MessageType } from "./types";
 
 /**
  * Server-side usage tracking service using TRPC
  * This replaces the direct database usage functions
  */
-
-/**
- * Determines if a model is premium based on schema-defined billing tier
- */
-export function isModelPremium(modelId: string): boolean {
-	if (!(modelId in ACTIVE_MODELS)) return true; // Unknown models default to premium
-	
-	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
-	return model.billingTier === "premium";
-}
-
-/**
- * Get message type based on model's billing tier
- */
-export function getMessageType(modelId: string): MessageType {
-	if (!(modelId in ACTIVE_MODELS)) return MessageType.PREMIUM; // Unknown models default to premium
-
-	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
-	return model.billingTier === "premium" ? MessageType.PREMIUM : MessageType.NON_PREMIUM;
-}
 
 /**
  * Get current period string (YYYY-MM)

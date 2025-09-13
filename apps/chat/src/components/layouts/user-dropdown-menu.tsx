@@ -12,10 +12,12 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 	DropdownMenuSeparator,
+	DropdownMenuLabel,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { Settings, CreditCard } from "lucide-react";
+import { Settings, CreditCard, Crown, MessageCircle } from "lucide-react";
 import { SettingsDialog } from "~/components/settings/settings-dialog";
 import { useRouter } from "next/navigation";
+import { useUsageLimits } from "~/hooks/use-usage-limits";
 
 interface UserDropdownMenuProps {
 	className?: string;
@@ -32,6 +34,9 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 		...trpc.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
+
+	// Get usage limits and plan information
+	const { usageSummary, capabilities, isAuthenticated, isLoaded } = useUsageLimits();
 
 	const handleSignOut = async () => {
 		await signOut(); // Will use afterSignOutUrl from Clerk config
@@ -83,18 +88,83 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 						</Avatar>
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
+				<DropdownMenuContent align="end" className="w-64">
 					<div className="px-2 py-1.5">
 						<p className="text-xs text-muted-foreground">
 							{user.email ?? user.username ?? "User"}
 						</p>
+						<p className="text-xs font-medium text-foreground mt-1">
+							{capabilities.planName} Plan
+						</p>
 					</div>
+					
+					{/* Usage Section */}
+					{isAuthenticated && isLoaded && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuLabel className="text-2xs text-muted-foreground">Usage</DropdownMenuLabel>
+							<div className="px-2 pb-2 space-y-2">
+								{usageSummary ? (
+									<>
+										{/* Standard Messages */}
+										<div className="flex items-center justify-between text-xs">
+											<div className="flex items-center gap-1.5">
+												<MessageCircle className="w-3 h-3" />
+												<span>Standard</span>
+											</div>
+											<div className="text-right">
+												<span className="font-medium">{usageSummary.nonPremiumUsed}</span>
+												<span className="text-muted-foreground"> / {usageSummary.nonPremiumLimit}</span>
+											</div>
+										</div>
+										
+										{/* Premium Messages - ALWAYS show for motivation/awareness */}
+										<div className="flex items-center justify-between text-xs">
+											<div className="flex items-center gap-1.5">
+												<Crown className="w-3 h-3 text-amber-500" />
+												<span>Premium</span>
+											</div>
+											<div className="text-right">
+												{capabilities.canUsePremiumModels ? (
+													<>
+														<span className="font-medium">{usageSummary.premiumUsed}</span>
+														<span className="text-muted-foreground"> / {usageSummary.premiumLimit}</span>
+													</>
+												) : (
+													<button 
+														onClick={handleUpgrade}
+														className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+													>
+														Upgrade to unlock
+													</button>
+												)}
+											</div>
+										</div>
+										
+										{/* Low usage warning */}
+										{(usageSummary.nonPremiumRemaining <= 10 || 
+										  (capabilities.canUsePremiumModels && usageSummary.premiumRemaining <= 5)) && (
+											<div className="text-xs text-orange-600 dark:text-orange-400">
+												⚠️ Running low on messages
+											</div>
+										)}
+									</>
+								) : (
+									<div className="text-xs text-muted-foreground">
+										Loading usage data...
+									</div>
+								)}
+							</div>
+						</>
+					)}
+					
+					<DropdownMenuSeparator />
 					<DropdownMenuItem 
 						onClick={handleUpgrade}
 						className="cursor-pointer"
 					>
 						<CreditCard className="mr-2 h-3 w-3" />
-						Upgrade Plan
+						{capabilities.isPlusUser ? "Manage Plan" : "Upgrade Plan"}
 					</DropdownMenuItem>
 					<DropdownMenuItem 
 						onClick={() => setSettingsOpen(true)} 

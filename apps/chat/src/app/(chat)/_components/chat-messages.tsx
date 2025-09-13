@@ -103,7 +103,7 @@ interface ChatMessagesProps {
 		feedbackType: "upvote" | "downvote",
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
-	isAuthenticated: boolean;
+	_isAuthenticated: boolean;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -152,7 +152,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	feedback,
 	onFeedbackSubmit,
 	onFeedbackRemove,
-	isAuthenticated,
+	_isAuthenticated,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -164,7 +164,7 @@ const AssistantMessage = memo(function AssistantMessage({
 		feedbackType: "upvote" | "downvote",
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
-	isAuthenticated: boolean;
+	_isAuthenticated: boolean;
 }) {
 	const [sources, setSources] = useState<CitationSource[]>([]);
 
@@ -349,7 +349,7 @@ const AssistantMessage = memo(function AssistantMessage({
 								</Action>
 
 								{/* Feedback buttons - only show for authenticated users */}
-								{isAuthenticated && onFeedbackSubmit && (
+								{_isAuthenticated && onFeedbackSubmit && (
 									<>
 										<Action
 											tooltip="Helpful"
@@ -392,7 +392,7 @@ export function ChatMessages({
 	feedback,
 	onFeedbackSubmit,
 	onFeedbackRemove,
-	isAuthenticated,
+	_isAuthenticated,
 }: ChatMessagesProps) {
 	// Check if we need a thinking placeholder
 	const needsPlaceholder = status === "submitted" && messages[messages.length - 1]?.role === "user";
@@ -422,7 +422,7 @@ export function ChatMessages({
 								feedback={feedback}
 								onFeedbackSubmit={onFeedbackSubmit}
 								onFeedbackRemove={onFeedbackRemove}
-								isAuthenticated={isAuthenticated}
+								_isAuthenticated={_isAuthenticated}
 							/>
 						);
 					})}
@@ -438,7 +438,7 @@ export function ChatMessages({
 							feedback={feedback}
 							onFeedbackSubmit={onFeedbackSubmit}
 							onFeedbackRemove={onFeedbackRemove}
-							isAuthenticated={isAuthenticated}
+							_isAuthenticated={_isAuthenticated}
 						/>
 					)}
 				</ConversationContent>

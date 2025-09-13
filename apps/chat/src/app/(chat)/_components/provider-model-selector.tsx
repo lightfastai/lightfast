@@ -23,15 +23,16 @@ import {
 	PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
 import { cn } from "@repo/ui/lib/utils";
-import { ChevronDown, Lock } from "lucide-react";
+import { ChevronDown, Lock, Crown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useModelFiltering } from "~/hooks/use-user-plan";
 
 interface ProviderModelSelectorProps {
 	value: ModelId;
 	onValueChange: (value: ModelId) => void;
 	disabled?: boolean;
 	className?: string;
-	isAuthenticated?: boolean;
+	_isAuthenticated?: boolean;
 }
 
 const featureBadges = {
@@ -58,24 +59,36 @@ export function ProviderModelSelector({
 	onValueChange,
 	disabled,
 	className,
-	isAuthenticated = false,
+	_isAuthenticated = false,
 }: ProviderModelSelectorProps) {
 	const [open, setOpen] = useState(false);
 	const [hoveredModel, setHoveredModel] = useState<ModelId | null>(null);
 
-	// Get all visible models with accessibility info
+	// Use our new plan-based model filtering hook
+	const { isModelAccessible, getModelRestrictionReason } = useModelFiltering();
+
+	// Get all visible models with accessibility and restriction info
 	const allModels = useMemo(() => {
-		return getVisibleModels().map((model) => ({
-			id: model.id as ModelId,
-			provider: model.provider,
-			iconProvider: model.iconProvider,
-			displayName: model.displayName,
-			description: model.description,
-			features: model.features,
-			accessLevel: model.accessLevel,
-			isAccessible: isAuthenticated || model.accessLevel === "anonymous",
-		}));
-	}, [isAuthenticated]);
+		return getVisibleModels().map((model) => {
+			const isAccessible = isModelAccessible(model.id, model.accessLevel, model.billingTier);
+			const restrictionReason = getModelRestrictionReason(model.id, model.accessLevel, model.billingTier);
+			
+			return {
+				id: model.id as ModelId,
+				provider: model.provider,
+				iconProvider: model.iconProvider,
+				displayName: model.displayName,
+				description: model.description,
+				features: model.features,
+				accessLevel: model.accessLevel,
+				billingTier: model.billingTier,
+				isAccessible,
+				restrictionReason,
+				isPremium: model.billingTier === "premium",
+				requiresAuth: model.accessLevel === "authenticated",
+			};
+		});
+	}, [isModelAccessible, getModelRestrictionReason]);
 
 	// Sort models with selected one first
 	const sortedModels = useMemo(() => {
@@ -182,7 +195,7 @@ export function ProviderModelSelector({
 										className={cn(
 											"flex items-center gap-3 px-2.5 py-2 text-xs rounded-none",
 											model.id === value && "bg-accent text-accent-foreground",
-											!model.isAccessible && "opacity-50 cursor-not-allowed",
+											!model.isAccessible && "opacity-60 cursor-not-allowed",
 											model.isAccessible && "cursor-pointer",
 										)}
 									>
@@ -197,9 +210,15 @@ export function ProviderModelSelector({
 											{model.displayName}
 										</span>
 										<div className="ml-auto flex items-center gap-2">
+											{/* Show premium indicator */}
+											{model.isPremium && (
+												<Crown className="w-3 h-3 text-amber-500" />
+											)}
+											{/* Show lock for inaccessible models */}
 											{!model.isAccessible && (
 												<Lock className="w-3 h-3 text-muted-foreground" />
 											)}
+											{/* Show selected indicator */}
 											{model.id === value && (
 												<span className="text-xs text-muted-foreground">
 													Selected
@@ -283,8 +302,22 @@ export function ProviderModelSelector({
 									{!detailModel.isAccessible && (
 										<div className="pt-2 border-t">
 											<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-												<Lock className="w-3 h-3" />
-												<span>Sign in required</span>
+												{detailModel.isPremium ? (
+													<Crown className="w-3 h-3 text-amber-500" />
+												) : (
+													<Lock className="w-3 h-3" />
+												)}
+												<span>{detailModel.restrictionReason}</span>
+											</div>
+										</div>
+									)}
+
+									{/* Show premium indicator even for accessible premium models */}
+									{detailModel.isAccessible && detailModel.isPremium && (
+										<div className="pt-2 border-t">
+											<div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+												<Crown className="w-3 h-3" />
+												<span>Premium model</span>
 											</div>
 										</div>
 									)}
