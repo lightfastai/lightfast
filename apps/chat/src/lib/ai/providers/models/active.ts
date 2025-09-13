@@ -67,7 +67,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: false,
 		},
 		accessLevel: "authenticated",
-		billingTier: "premium", // $2.25 total cost
+		billingTier: "non_premium", // $2.25 total cost
 		streamingDelay: 40,
 	}),
 	"openai/gpt-5": ModelConfigSchema.parse({
@@ -109,7 +109,7 @@ export const ACTIVE_MODELS = {
 			pdfSupport: true, // Supports multimodal document processing
 		},
 		accessLevel: "authenticated",
-		billingTier: "premium", // $2.80 total cost
+		billingTier: "non_premium", // $2.80 total cost
 		streamingDelay: 40,
 	}),
 	"google/gemini-2.5-pro": ModelConfigSchema.parse({

@@ -55,7 +55,6 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	// Get user initials for fallback
 	// Note: user is guaranteed to exist with useSuspenseQuery
 	const getInitials = () => {
-
 		// Check if user has firstName and lastName
 		if (user.firstName && user.lastName) {
 			return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
@@ -103,12 +102,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 							{capabilities.planName} Plan
 						</p>
 					</div>
-					
+
 					{/* Usage Section */}
 					{isAuthenticated && isLoaded && (
 						<>
 							<DropdownMenuSeparator />
-							<DropdownMenuLabel className="text-2xs text-muted-foreground">Usage</DropdownMenuLabel>
+							<DropdownMenuLabel className="text-2xs text-muted-foreground">
+								Usage
+							</DropdownMenuLabel>
 							<div className="px-2 pb-2 space-y-2">
 								{usageSummary ? (
 									<>
@@ -119,11 +120,16 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 												<span>Standard</span>
 											</div>
 											<div className="text-right">
-												<span className="font-medium">{usageSummary.nonPremiumUsed}</span>
-												<span className="text-muted-foreground"> / {usageSummary.nonPremiumLimit}</span>
+												<span className="font-medium">
+													{usageSummary.nonPremiumUsed}
+												</span>
+												<span className="text-muted-foreground">
+													{" "}
+													/ {usageSummary.nonPremiumLimit}
+												</span>
 											</div>
 										</div>
-										
+
 										{/* Premium Messages - ALWAYS show for motivation/awareness */}
 										<div className="flex items-center justify-between text-xs">
 											<div className="flex items-center gap-1.5">
@@ -133,11 +139,16 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 											<div className="text-right">
 												{capabilities.canUsePremiumModels ? (
 													<>
-														<span className="font-medium">{usageSummary.premiumUsed}</span>
-														<span className="text-muted-foreground"> / {usageSummary.premiumLimit}</span>
+														<span className="font-medium">
+															{usageSummary.premiumUsed}
+														</span>
+														<span className="text-muted-foreground">
+															{" "}
+															/ {usageSummary.premiumLimit}
+														</span>
 													</>
 												) : (
-													<button 
+													<button
 														onClick={handleUpgrade}
 														className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
 													>
@@ -146,14 +157,6 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 												)}
 											</div>
 										</div>
-										
-										{/* Low usage warning */}
-										{(usageSummary.nonPremiumRemaining <= 10 || 
-										  (capabilities.canUsePremiumModels && usageSummary.premiumRemaining <= 5)) && (
-											<div className="text-xs text-orange-600 dark:text-orange-400">
-												⚠️ Running low on messages
-											</div>
-										)}
 									</>
 								) : (
 									<div className="text-xs text-muted-foreground">
@@ -163,17 +166,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 							</div>
 						</>
 					)}
-					
+
 					<DropdownMenuSeparator />
-					<DropdownMenuItem 
-						onClick={handleUpgrade}
-						className="cursor-pointer"
-					>
+					<DropdownMenuItem onClick={handleUpgrade} className="cursor-pointer">
 						<CreditCard className="mr-2 h-3 w-3" />
 						{capabilities.isPlusUser ? "Manage Plan" : "Upgrade Plan"}
 					</DropdownMenuItem>
-					<DropdownMenuItem 
-						onClick={() => setSettingsOpen(true)} 
+					<DropdownMenuItem
+						onClick={() => setSettingsOpen(true)}
 						className="cursor-pointer"
 					>
 						<Settings className="mr-2 h-3 w-3" />
@@ -187,11 +187,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 			</DropdownMenu>
 
 			{/* Settings Dialog - controlled by state */}
-			<SettingsDialog 
-				open={settingsOpen} 
-				onOpenChange={setSettingsOpen} 
-			/>
+			<SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 		</>
 	);
 }
-

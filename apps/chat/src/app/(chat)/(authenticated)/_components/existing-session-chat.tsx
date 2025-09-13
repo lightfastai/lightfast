@@ -8,6 +8,7 @@ import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messa
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "~/lib/billing/types";
+import { produce } from "immer";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -113,7 +114,7 @@ export function ExistingSessionChat({
 						];
 					});
 
-					// Optimistically update usage limits
+					// Optimistically update usage limits using immer
 					queryClient.setQueryData(
 						usageQueryOptions.queryKey,
 						(oldUsageData) => {
@@ -122,45 +123,23 @@ export function ExistingSessionChat({
 							const messageType = getMessageType(selectedModelId);
 							const isPremium = messageType === MessageType.PREMIUM;
 
-							// Create updated usage data
-							const updatedUsage = {
-								...oldUsageData,
-								usage: {
-									...oldUsageData.usage,
-									nonPremiumMessages: isPremium
-										? oldUsageData.usage.nonPremiumMessages
-										: (oldUsageData.usage.nonPremiumMessages || 0) + 1,
-									premiumMessages: isPremium
-										? (oldUsageData.usage.premiumMessages || 0) + 1
-										: oldUsageData.usage.premiumMessages,
-								},
-								remainingQuota: {
-									nonPremiumMessages: isPremium
-										? oldUsageData.remainingQuota.nonPremiumMessages
-										: Math.max(
-												0,
-												oldUsageData.remainingQuota.nonPremiumMessages - 1,
-											),
-									premiumMessages: isPremium
-										? Math.max(
-												0,
-												oldUsageData.remainingQuota.premiumMessages - 1,
-											)
-										: oldUsageData.remainingQuota.premiumMessages,
-								},
-							};
-
-							console.log(
-								`[Optimistic Update] Updated usage for ${isPremium ? "premium" : "non-premium"} message:`,
-								{
-									model: selectedModelId,
-									remainingNonPremium:
-										updatedUsage.remainingQuota.nonPremiumMessages,
-									remainingPremium: updatedUsage.remainingQuota.premiumMessages,
-								},
-							);
-
-							return updatedUsage;
+							// Use immer for clean immutable updates
+							return produce(oldUsageData, (draft) => {
+								// Update usage counts
+								if (isPremium) {
+									draft.usage.premiumMessages = (draft.usage.premiumMessages || 0) + 1;
+									draft.remainingQuota.premiumMessages = Math.max(
+										0,
+										draft.remainingQuota.premiumMessages - 1,
+									);
+								} else {
+									draft.usage.nonPremiumMessages = (draft.usage.nonPremiumMessages || 0) + 1;
+									draft.remainingQuota.nonPremiumMessages = Math.max(
+										0,
+										draft.remainingQuota.nonPremiumMessages - 1,
+									);
+								}
+							});
 						},
 					);
 				}}

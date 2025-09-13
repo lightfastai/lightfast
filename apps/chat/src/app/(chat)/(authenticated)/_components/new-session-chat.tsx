@@ -5,8 +5,11 @@ import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
+import { produce } from "immer";
+import { getMessageType } from "~/lib/billing/message-utils";
+import { MessageType } from "~/lib/billing/types";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -27,14 +30,28 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Use the hook to manage session ID generation and navigation state
 	const { sessionId, isNewSession } = useSessionId();
 
-	// Get user info
+	// Get user info and usage data
 	const trpc = useTRPC();
-	const { data: user, isLoading: isUserLoading } = useQuery({
-		...trpc.user.getUser.queryOptions(),
-		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
+	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
+	
+	const [{ data: user, isLoading: isUserLoading }, { data: usageLimits, isLoading: isUsageLoading }] =
+		useQueries({
+			queries: [
+				{
+					...trpc.user.getUser.queryOptions(),
+					staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+					refetchOnMount: false, // Prevent blocking navigation
+					refetchOnWindowFocus: false, // Don't refetch on window focus
+				},
+				{
+					...usageQueryOptions,
+					staleTime: 60 * 1000, // Consider usage data fresh for 1 minute
+					gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+					refetchOnMount: false, // Don't refetch on mount to prevent blocking
+					refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+				},
+			],
+		});
 
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
@@ -50,9 +67,14 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		sessionId,
 	}).queryKey;
 
-	// Handle loading state
-	if (isUserLoading || !user) {
+	// Handle loading states
+	if (isUserLoading || isUsageLoading) {
 		return null; // Let parent handle loading state
+	}
+
+	// Handle missing data
+	if (!user || !usageLimits) {
+		return null; // Let parent handle error state
 	}
 
 	// Handle session creation when the first message is sent
@@ -82,6 +104,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
+				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache
 					queryClient.setQueryData(messagesQueryKey, (oldData) => {
@@ -100,6 +123,35 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							},
 						];
 					});
+
+					// Optimistically update usage limits using immer
+					queryClient.setQueryData(
+						usageQueryOptions.queryKey,
+						(oldUsageData) => {
+							if (!oldUsageData) return oldUsageData;
+
+							const messageType = getMessageType(selectedModelId);
+							const isPremium = messageType === MessageType.PREMIUM;
+
+							// Use immer for clean immutable updates
+							return produce(oldUsageData, (draft) => {
+								// Update usage counts
+								if (isPremium) {
+									draft.usage.premiumMessages = (draft.usage.premiumMessages || 0) + 1;
+									draft.remainingQuota.premiumMessages = Math.max(
+										0,
+										draft.remainingQuota.premiumMessages - 1,
+									);
+								} else {
+									draft.usage.nonPremiumMessages = (draft.usage.nonPremiumMessages || 0) + 1;
+									draft.remainingQuota.nonPremiumMessages = Math.max(
+										0,
+										draft.remainingQuota.nonPremiumMessages - 1,
+									);
+								}
+							});
+						},
+					);
 				}}
 				onNewAssistantMessage={(assistantMessage) => {
 					// Optimistically append the assistant message to the cache
@@ -120,9 +172,14 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 						];
 					});
 
-					// Also trigger a background refetch to ensure data consistency
-					// This will update with the actual database data once it's persisted
+					// Trigger background refetch to sync with database
+					// This ensures eventual consistency with the persisted data
 					void queryClient.invalidateQueries({ queryKey: messagesQueryKey });
+
+					// Also refetch usage data to sync with server-side tracking
+					void queryClient.invalidateQueries({
+						queryKey: usageQueryOptions.queryKey,
+					});
 				}}
 			/>
 		</DataStreamProvider>
