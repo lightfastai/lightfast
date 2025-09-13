@@ -33,6 +33,11 @@ import {
 	tokenBucket,
 	checkDecision,
 } from "@vendor/security";
+import { 
+	requireMessageAccess,
+	trackMessageSent,
+	UsageLimitExceededError
+} from "~/lib/billing/usage-service";
 
 // Import artifact tools
 import { createDocumentTool } from "~/ai/tools/create-document";
@@ -44,15 +49,17 @@ const c010Tools = {
 };
 
 // Get active tool names based on authentication status and user preferences
-const getActiveToolsForUser = (isAnonymous: boolean, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
+const getActiveToolsForUser = async (isAnonymous: boolean, webSearchEnabled: boolean): Promise<(keyof typeof c010Tools)[] | undefined> => {
 	if (isAnonymous) {
 		// Anonymous users: only web search tool can be active, and only if enabled
 		return webSearchEnabled ? ["webSearch"] : [];
 	} else {
 		// Authenticated users: all tools except webSearch are always active
-		// webSearch is only active if enabled by user
+		// webSearch is only active if enabled by user AND they have access
 		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"];
 		if (webSearchEnabled) {
+			// TODO: Add proper web search billing check
+			// For now, allow all authenticated users to use web search
 			activeTools.push("webSearch");
 		}
 		return activeTools;
@@ -317,7 +324,7 @@ const handler = async (
 
 				// Create conditional active tools and system prompt for resume
 				// For resume requests, we don't have request body, so default webSearch to enabled
-				const activeToolsForUser = getActiveToolsForUser(isAnonymous, true);
+				const activeToolsForUser = await getActiveToolsForUser(isAnonymous, true);
 				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
 
 				// Just pass a minimal agent configuration for resume
@@ -445,6 +452,64 @@ const handler = async (
 				});
 			}
 
+			// For authenticated users, check billing-based model access and message limits
+			if (!isAnonymous) {
+				try {
+					// TODO: Add proper model billing check based on user subscription
+					// For now, allow all authenticated users to use all models
+					
+					// TODO: Add proper web search billing check
+					// For now, allow all authenticated users to use web search
+					
+					// Check message usage limits using TRPC
+					await requireMessageAccess(selectedModelId);
+					
+					console.log(`[Billing] User ${authenticatedUserId} passed all billing checks for model: ${selectedModelId}`, {
+						webSearchEnabled,
+						modelId: selectedModelId
+					});
+
+				} catch (error) {
+					if (error instanceof UsageLimitExceededError) {
+						console.warn(
+							`[Billing] Usage limit exceeded for user ${authenticatedUserId}:`,
+							error.details
+						);
+						return new Response(
+							JSON.stringify({
+								error: "Usage limit exceeded",
+								message: error.message,
+								code: error.code,
+								details: error.details
+							}),
+							{
+								status: 402, // Payment Required
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+					} else {
+						console.error(
+							`[Billing] Unexpected error checking billing for user ${authenticatedUserId}:`,
+							error
+						);
+						return new Response(
+							JSON.stringify({
+								error: "Internal server error",
+								message: "Failed to check billing access",
+								code: "INTERNAL_ERROR"
+							}),
+							{
+								status: 500, // Internal Server Error
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+				}
+			}
+
 			// For Vercel AI Gateway, use the model name directly
 			// Gateway handles provider routing automatically
 			const gatewayModelString = modelConfig.name;
@@ -455,7 +520,7 @@ const handler = async (
 			);
 
 			// Create conditional active tools and system prompt based on authentication and preferences
-			const activeToolsForUser = getActiveToolsForUser(isAnonymous, webSearchEnabled);
+			const activeToolsForUser = await getActiveToolsForUser(isAnonymous, webSearchEnabled);
 			const systemPrompt = createSystemPromptForUser(isAnonymous);
 
 			// Log active tools for debugging
@@ -594,6 +659,19 @@ const handler = async (
 						sessionId: systemContext.sessionId,
 						userId: systemContext.resourceId,
 					});
+
+					// Track message usage for authenticated users
+					if (!isAnonymous) {
+						trackMessageSent(selectedModelId)
+							.then(() => {
+								console.log(`[Billing] Usage tracked for user ${authenticatedUserId}:`, {
+									modelId: selectedModelId
+								});
+							})
+							.catch((error) => {
+								console.error(`[Billing] Failed to track usage for user ${authenticatedUserId}:`, error);
+							});
+					}
 
 					// Here you could track agent completion metrics
 					// metrics.counter('agent_completions', 1, { agent: agentName });
