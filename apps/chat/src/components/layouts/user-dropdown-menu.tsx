@@ -13,8 +13,9 @@ import {
 	DropdownMenuTrigger,
 	DropdownMenuSeparator,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { Settings, Gamepad2 } from "lucide-react";
+import { Settings, CreditCard } from "lucide-react";
 import { SettingsDialog } from "~/components/settings/settings-dialog";
+import { useRouter } from "next/navigation";
 
 interface UserDropdownMenuProps {
 	className?: string;
@@ -22,6 +23,7 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const { signOut } = useClerk();
+	const router = useRouter();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
 	// Get user info from tRPC - using suspense for instant loading
@@ -33,6 +35,10 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 
 	const handleSignOut = async () => {
 		await signOut(); // Will use afterSignOutUrl from Clerk config
+	};
+
+	const handleUpgrade = () => {
+		router.push("/upgrade");
 	};
 
 	// Get user initials for fallback
@@ -84,9 +90,10 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 						</p>
 					</div>
 					<DropdownMenuItem 
-						disabled
+						onClick={handleUpgrade}
+						className="cursor-pointer"
 					>
-						<Gamepad2 className="mr-2 h-3 w-3" />
+						<CreditCard className="mr-2 h-3 w-3" />
 						Upgrade Plan
 					</DropdownMenuItem>
 					<DropdownMenuItem 
