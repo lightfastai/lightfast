@@ -1,12 +1,11 @@
 import { createCaller } from "~/trpc/server";
 import { ACTIVE_MODELS } from "../ai/providers/models/active";
+import { MessageType } from "./types";
 
 /**
  * Server-side usage tracking service using TRPC
  * This replaces the direct database usage functions
  */
-
-export type MessageType = "nonPremium" | "premium";
 
 /**
  * Determines if a model is premium based on schema-defined billing tier
@@ -23,9 +22,9 @@ export function isModelPremium(modelId: string): boolean {
  */
 export function getMessageType(modelId: string): MessageType {
 	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
-	if (!model) return "premium"; // Unknown models default to premium
+	if (!model) return MessageType.PREMIUM; // Unknown models default to premium
 
-	return model.billingTier;
+	return model.billingTier === "premium" ? MessageType.PREMIUM : MessageType.NON_PREMIUM;
 }
 
 /**

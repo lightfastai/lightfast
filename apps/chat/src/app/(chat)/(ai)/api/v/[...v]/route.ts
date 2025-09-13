@@ -507,6 +507,7 @@ const handler = async (
 								},
 							}
 						);
+					}
 				}
 			}
 

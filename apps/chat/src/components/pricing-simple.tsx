@@ -1,6 +1,6 @@
 import { ArrowUpRight, Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { getAllPlanPricing } from "~/lib/billing";
+import { getAllPlanPricing } from "~/lib/billing/pricing";
 
 export function PricingSimple() {
 	const pricingPlans = getAllPlanPricing();
