@@ -32,7 +32,7 @@ interface ArtifactViewerProps {
 	onSaveContent?: (content: string, debounce: boolean) => void;
 	sessionId: string;
 	onArtifactSelect?: (artifactId: string) => void;
-	isAuthenticated?: boolean; // Add authentication status
+	_isAuthenticated?: boolean; // Add authentication status
 }
 
 export function ArtifactViewer({
@@ -43,14 +43,14 @@ export function ArtifactViewer({
 	onSaveContent: _onSaveContent,
 	sessionId,
 	onArtifactSelect,
-	isAuthenticated = true, // Default to true for backward compatibility
+	_isAuthenticated = true, // Default to true for backward compatibility
 }: ArtifactViewerProps) {
 	const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
 
 	// Query artifacts for the current session (disabled for unauthenticated users)
 	const { data: sessionArtifacts = [], isLoading: isLoadingArtifacts } = useArtifactsQuery({
 		sessionId,
-		enabled: isAuthenticated, // Only query artifacts for authenticated users
+		enabled: _isAuthenticated, // Only query artifacts for authenticated users
 	});
 
 	// Hook for copy functionality with success state
@@ -82,7 +82,7 @@ export function ArtifactViewer({
 			<ArtifactHeader>
 				<div className="flex items-center gap-2">
 					{/* Artifacts list dropdown - only show for authenticated users */}
-					{isAuthenticated && (
+					{_isAuthenticated && (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<ArtifactAction

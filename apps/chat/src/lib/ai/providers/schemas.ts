@@ -47,6 +47,13 @@ export const ModelAccessLevelSchema = z.enum([
 ]);
 export type ModelAccessLevel = z.infer<typeof ModelAccessLevelSchema>;
 
+// Billing tier schema
+export const BillingTierSchema = z.enum([
+	"non_premium",     // Counts against non-premium message limit
+	"premium",         // Counts against premium message limit
+]);
+export type BillingTier = z.infer<typeof BillingTierSchema>;
+
 // Model configuration schema
 export const ModelConfigSchema = z.object({
 	id: z.string(),
@@ -64,6 +71,7 @@ export const ModelConfigSchema = z.object({
 	thinkingConfig: ThinkingConfigSchema.optional(),
 	active: z.boolean().default(true),
 	accessLevel: ModelAccessLevelSchema.default("authenticated"),
+	billingTier: BillingTierSchema,
 	streamingDelay: z
 		.number()
 		.optional()

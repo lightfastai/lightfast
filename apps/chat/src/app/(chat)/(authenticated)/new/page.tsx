@@ -6,6 +6,7 @@ import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
 export default function NewChatPage() {
 	const agentId = "c010";
 	
+	
 	// Wrap in HydrateClient to enable instant hydration of prefetched data
 	// User data is already prefetched in the authenticated layout
 	// Session ID is generated client-side in NewSessionChat

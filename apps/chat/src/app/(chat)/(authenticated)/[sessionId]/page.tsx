@@ -13,7 +13,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	const { sessionId } = await params;
 	const agentId = "c010"; // Default agent ID
 
-	// Prefetch the messages here in the page
+	// Prefetch the messages and usage limits here in the page
 	// Pages re-execute on navigation, ensuring fresh data
 	prefetch(trpc.message.list.queryOptions({ sessionId }));
 
