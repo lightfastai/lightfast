@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
@@ -35,8 +35,8 @@ export function ExistingSessionChat({
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 
 	// Batch all queries together for better performance
-	const [{ data: user }, { data: messages }, { data: usageLimits }] =
-		useSuspenseQueries({
+	const [{ data: user, isLoading: isUserLoading }, { data: messages, isLoading: isMessagesLoading }, { data: usageLimits, isLoading: isUsageLoading }] =
+		useQueries({
 			queries: [
 				{
 					...trpc.user.getUser.queryOptions(),
@@ -60,6 +60,16 @@ export function ExistingSessionChat({
 				},
 			],
 		});
+
+	// Handle loading states
+	if (isUserLoading || isMessagesLoading || isUsageLoading) {
+		return null; // Let parent handle loading state
+	}
+
+	// Handle missing data
+	if (!user || !messages || !usageLimits) {
+		return null; // Let parent handle error state
+	}
 
 	// Convert database messages to UI format
 	const initialMessages: LightfastAppChatUIMessage[] = messages.map((msg) => ({

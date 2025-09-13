@@ -5,7 +5,7 @@ import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 
 interface NewSessionChatProps {
@@ -27,9 +27,9 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Use the hook to manage session ID generation and navigation state
 	const { sessionId, isNewSession } = useSessionId();
 
-	// Get user info - using suspense for instant loading
+	// Get user info
 	const trpc = useTRPC();
-	const { data: user } = useSuspenseQuery({
+	const { data: user, isLoading: isUserLoading } = useQuery({
 		...trpc.user.getUser.queryOptions(),
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 		refetchOnMount: false, // Prevent blocking navigation
@@ -49,6 +49,11 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	const messagesQueryKey = trpc.message.list.queryOptions({
 		sessionId,
 	}).queryKey;
+
+	// Handle loading state
+	if (isUserLoading || !user) {
+		return null; // Let parent handle loading state
+	}
 
 	// Handle session creation when the first message is sent
 	const handleSessionCreation = (firstMessage: string) => {

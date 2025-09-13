@@ -18,13 +18,12 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
-import { useFeatureRestrictions } from "~/hooks/use-user-plan";
-import { useUsageLimits } from "~/hooks/use-usage-limits";
+import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -45,6 +44,11 @@ const ProviderModelSelector = dynamic(
 		),
 	{ ssr: false },
 );
+
+// Import ProcessedModel type for model processing
+import type { ProcessedModel } from "./provider-model-selector";
+import { getVisibleModels } from "~/lib/ai/providers";
+import type { ModelId } from "~/lib/ai/providers";
 
 const AuthPromptSelector = dynamic(
 	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
@@ -95,12 +99,25 @@ export function ChatInterface({
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
 
-	// Get feature restrictions based on user's plan
-	const featureRestrictions = useFeatureRestrictions();
-
-	// Get usage limits for authenticated users
-	// Use external data if provided (for optimized batched queries), otherwise fetch internally
-	const usageLimits = useUsageLimits(externalUsageLimits);
+	// Get unified billing context
+	const billingContext = useBillingContext({ externalUsageData: externalUsageLimits });
+	
+	// Process models with accessibility information for the model selector
+	const processedModels = useMemo((): ProcessedModel[] => {
+		return getVisibleModels().map((model) => {
+			const isAccessible = billingContext.models.isAccessible(model.id, model.accessLevel, model.billingTier);
+			const restrictionReason = billingContext.models.getRestrictionReason(model.id, model.accessLevel, model.billingTier);
+			
+			return {
+				...model,
+				id: model.id as ModelId,
+				isAccessible,
+				restrictionReason,
+				isPremium: model.billingTier === "premium",
+				requiresAuth: model.accessLevel === "authenticated",
+			};
+		});
+	}, [billingContext.models]);
 
 	// Clean artifact fetcher using our new REST API
 	const fetchArtifact = async (
@@ -180,7 +197,7 @@ export function ChatInterface({
 		useModelSelection(isAuthenticated);
 
 	// Check if current model can be used (for UI state)
-	const canUseCurrentModel = usageLimits.isLoaded ? usageLimits.canUseModel(selectedModelId) : { allowed: true };
+	const canUseCurrentModel = billingContext.isLoaded ? billingContext.usage.canUseModel(selectedModelId) : { allowed: true };
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
@@ -301,8 +318,8 @@ export function ChatInterface({
 		}
 
 		// For authenticated users, check usage limits based on selected model
-		if (isAuthenticated && usageLimits.isLoaded) {
-			const usageCheck = usageLimits.canUseModel(selectedModelId);
+		if (isAuthenticated && billingContext.isLoaded) {
+			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
 			if (!usageCheck.allowed) {
 				// TODO: Show usage limit exceeded dialog/toast
 				console.error("Usage limit exceeded:", usageCheck.reason);
@@ -392,6 +409,7 @@ export function ChatInterface({
 		<ProviderModelSelector
 			value={selectedModelId}
 			onValueChange={handleModelChange}
+			models={processedModels}
 			disabled={false} // Allow model selection even during streaming
 			_isAuthenticated={isAuthenticated}
 		/>
@@ -441,22 +459,22 @@ export function ChatInterface({
 									<PromptInputButton
 										variant={webSearchEnabled ? "secondary" : "outline"}
 										onClick={() => {
-											if (featureRestrictions.webSearch.enabled) {
+											if (billingContext.features.webSearch.enabled) {
 												setWebSearchEnabled(!webSearchEnabled);
 											}
 										}}
-										disabled={!featureRestrictions.webSearch.enabled}
-										title={featureRestrictions.webSearch.disabledReason ?? undefined}
+										disabled={!billingContext.features.webSearch.enabled}
+										title={billingContext.features.webSearch.disabledReason ?? undefined}
 										className={cn(
 											webSearchEnabled &&
 												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-											!featureRestrictions.webSearch.enabled &&
+											!billingContext.features.webSearch.enabled &&
 												"opacity-60 cursor-not-allowed",
 										)}
 									>
 										<Globe className="w-4 h-4" />
 										Search
-										{webSearchEnabled && featureRestrictions.webSearch.enabled && (
+										{webSearchEnabled && billingContext.features.webSearch.enabled && (
 											<X
 												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 												onClick={(e) => {
@@ -593,22 +611,22 @@ export function ChatInterface({
 												<PromptInputButton
 													variant={webSearchEnabled ? "secondary" : "outline"}
 													onClick={() => {
-														if (featureRestrictions.webSearch.enabled) {
+														if (billingContext.features.webSearch.enabled) {
 															setWebSearchEnabled(!webSearchEnabled);
 														}
 													}}
-													disabled={!featureRestrictions.webSearch.enabled}
-													title={featureRestrictions.webSearch.disabledReason ?? undefined}
+													disabled={!billingContext.features.webSearch.enabled}
+													title={billingContext.features.webSearch.disabledReason ?? undefined}
 													className={cn(
 														webSearchEnabled &&
 															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-														!featureRestrictions.webSearch.enabled &&
+														!billingContext.features.webSearch.enabled &&
 															"opacity-60 cursor-not-allowed",
 													)}
 												>
 													<Globe className="w-4 h-4" />
 													Search
-													{webSearchEnabled && featureRestrictions.webSearch.enabled && (
+													{webSearchEnabled && billingContext.features.webSearch.enabled && (
 														<X
 															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 															onClick={(e) => {

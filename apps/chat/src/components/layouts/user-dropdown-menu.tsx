@@ -17,7 +17,7 @@ import {
 import { Settings, CreditCard, Crown, MessageCircle } from "lucide-react";
 import { SettingsDialog } from "~/components/settings/settings-dialog";
 import { useRouter } from "next/navigation";
-import { useUsageLimits } from "~/hooks/use-usage-limits";
+import { useBillingContext } from "~/hooks/use-billing-context";
 
 interface UserDropdownMenuProps {
 	className?: string;
@@ -35,8 +35,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 		staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 	});
 
-	// Get usage limits and plan information
-	const { usageSummary, capabilities, isAuthenticated, isLoaded } = useUsageLimits();
+	// Get billing context with usage and plan information
+	const billingContext = useBillingContext();
+	const { usageSummary, capabilities, isAuthenticated, isLoaded } = {
+		usageSummary: billingContext.usage.summary,
+		capabilities: billingContext.plan.capabilities,
+		isAuthenticated: billingContext.plan.isAuthenticated,
+		isLoaded: billingContext.isLoaded,
+	};
 
 	const handleSignOut = async () => {
 		await signOut(); // Will use afterSignOutUrl from Clerk config

@@ -3,10 +3,9 @@
 import {
 	PROVIDER_ICONS,
 	getModelConfig,
-	getVisibleModels,
 	getProviderDisplayName,
 } from "~/lib/ai/providers";
-import type { ModelId } from "~/lib/ai/providers";
+import type { ModelId, ModelConfig } from "~/lib/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -25,11 +24,19 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronDown, Lock, Crown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useModelFiltering } from "~/hooks/use-user-plan";
+// Extended model config with accessibility information
+export interface ProcessedModel extends ModelConfig {
+	id: ModelId;
+	isAccessible: boolean;
+	restrictionReason: string | null;
+	isPremium: boolean;
+	requiresAuth: boolean;
+}
 
 interface ProviderModelSelectorProps {
 	value: ModelId;
 	onValueChange: (value: ModelId) => void;
+	models: ProcessedModel[];
 	disabled?: boolean;
 	className?: string;
 	_isAuthenticated?: boolean;
@@ -57,6 +64,7 @@ const featureBadges = {
 export function ProviderModelSelector({
 	value,
 	onValueChange,
+	models,
 	disabled,
 	className,
 	_isAuthenticated = false,
@@ -64,46 +72,22 @@ export function ProviderModelSelector({
 	const [open, setOpen] = useState(false);
 	const [hoveredModel, setHoveredModel] = useState<ModelId | null>(null);
 
-	// Use our new plan-based model filtering hook
-	const { isModelAccessible, getModelRestrictionReason } = useModelFiltering();
-
-	// Get all visible models with accessibility and restriction info
-	const allModels = useMemo(() => {
-		return getVisibleModels().map((model) => {
-			const isAccessible = isModelAccessible(model.id, model.accessLevel, model.billingTier);
-			const restrictionReason = getModelRestrictionReason(model.id, model.accessLevel, model.billingTier);
-			
-			return {
-				id: model.id as ModelId,
-				provider: model.provider,
-				iconProvider: model.iconProvider,
-				displayName: model.displayName,
-				description: model.description,
-				features: model.features,
-				accessLevel: model.accessLevel,
-				billingTier: model.billingTier,
-				isAccessible,
-				restrictionReason,
-				isPremium: model.billingTier === "premium",
-				requiresAuth: model.accessLevel === "authenticated",
-			};
-		});
-	}, [isModelAccessible, getModelRestrictionReason]);
+	// Use the models provided as props (already processed with accessibility info)
 
 	// Sort models with selected one first
 	const sortedModels = useMemo(() => {
-		return [...allModels].sort((a, b) => {
+		return [...models].sort((a, b) => {
 			if (a.id === value) return -1;
 			if (b.id === value) return 1;
 			return 0;
 		});
-	}, [allModels, value]);
+	}, [models, value]);
 
 	// Get the model to show details for (hovered or selected)
 	const detailModel = useMemo(() => {
 		const modelId = hoveredModel ?? value;
-		return allModels.find((m) => m.id === modelId) ?? null;
-	}, [hoveredModel, value, allModels]);
+		return models.find((m) => m.id === modelId) ?? null;
+	}, [hoveredModel, value, models]);
 
 	// Reset hover when opening
 	useEffect(() => {
@@ -115,14 +99,14 @@ export function ProviderModelSelector({
 	const handleSelect = useCallback(
 		(modelId: string) => {
 			// Check if model is accessible
-			const model = allModels.find((m) => m.id === modelId);
+			const model = models.find((m) => m.id === modelId);
 			if (!model?.isAccessible) {
 				return; // Don't select inaccessible models
 			}
 			onValueChange(modelId as ModelId);
 			setOpen(false);
 		},
-		[onValueChange, allModels],
+		[onValueChange, models],
 	);
 
 	// Global keyboard shortcut for Cmd/Ctrl + .
