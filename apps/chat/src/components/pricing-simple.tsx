@@ -7,7 +7,7 @@ export function PricingSimple() {
 
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-			{pricingPlans.map((plan, index) => (
+			{pricingPlans.map((plan, _index) => (
 				<div
 					key={plan.plan}
 					className="flex flex-col border border-border/50 rounded-sm p-6 h-full"

@@ -15,8 +15,8 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import {
 	getAllPlanPricing,
 	getPricingForInterval,
-	type PlanPricing,
 } from "~/lib/billing/pricing";
+import type { PlanPricing } from "~/lib/billing/pricing";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";

@@ -49,7 +49,7 @@ const c010Tools = {
 };
 
 // Get active tool names based on authentication status and user preferences
-const getActiveToolsForUser = async (isAnonymous: boolean, webSearchEnabled: boolean): Promise<(keyof typeof c010Tools)[] | undefined> => {
+const getActiveToolsForUser = (isAnonymous: boolean, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
 	if (isAnonymous) {
 		// Anonymous users: only web search tool can be active, and only if enabled
 		return webSearchEnabled ? ["webSearch"] : [];
@@ -324,7 +324,7 @@ const handler = async (
 
 				// Create conditional active tools and system prompt for resume
 				// For resume requests, we don't have request body, so default webSearch to enabled
-				const activeToolsForUser = await getActiveToolsForUser(isAnonymous, true);
+				const activeToolsForUser = getActiveToolsForUser(isAnonymous, true);
 				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
 
 				// Just pass a minimal agent configuration for resume
@@ -521,7 +521,7 @@ const handler = async (
 			);
 
 			// Create conditional active tools and system prompt based on authentication and preferences
-			const activeToolsForUser = await getActiveToolsForUser(isAnonymous, webSearchEnabled);
+			const activeToolsForUser = getActiveToolsForUser(isAnonymous, webSearchEnabled);
 			const systemPrompt = createSystemPromptForUser(isAnonymous);
 
 			// Log active tools for debugging

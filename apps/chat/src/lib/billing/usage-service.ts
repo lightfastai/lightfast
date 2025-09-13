@@ -11,9 +11,9 @@ import { MessageType } from "./types";
  * Determines if a model is premium based on schema-defined billing tier
  */
 export function isModelPremium(modelId: string): boolean {
+	if (!(modelId in ACTIVE_MODELS)) return true; // Unknown models default to premium
+	
 	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
-	if (!model) return true; // Unknown models default to premium
-
 	return model.billingTier === "premium";
 }
 
@@ -21,9 +21,9 @@ export function isModelPremium(modelId: string): boolean {
  * Get message type based on model's billing tier
  */
 export function getMessageType(modelId: string): MessageType {
-	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
-	if (!model) return MessageType.PREMIUM; // Unknown models default to premium
+	if (!(modelId in ACTIVE_MODELS)) return MessageType.PREMIUM; // Unknown models default to premium
 
+	const model = ACTIVE_MODELS[modelId as keyof typeof ACTIVE_MODELS];
 	return model.billingTier === "premium" ? MessageType.PREMIUM : MessageType.NON_PREMIUM;
 }
 
@@ -52,20 +52,20 @@ export async function canSendMessage(modelId: string): Promise<{
 		const limitsCheck = await caller.usage.checkLimits({});
 
 		const exceeded =
-			messageType === "premium"
+			messageType === MessageType.PREMIUM
 				? limitsCheck.exceeded.premiumMessages
 				: limitsCheck.exceeded.nonPremiumMessages;
 
 		if (exceeded) {
 			const remaining =
-				messageType === "premium"
+				messageType === MessageType.PREMIUM
 					? limitsCheck.remainingQuota.premiumMessages
 					: limitsCheck.remainingQuota.nonPremiumMessages;
 
 			return {
 				allowed: false,
 				reason:
-					messageType === "premium"
+					messageType === MessageType.PREMIUM
 						? "Premium message limit exceeded for this month"
 						: "Monthly message limit exceeded",
 				remainingMessages: remaining,
@@ -73,7 +73,7 @@ export async function canSendMessage(modelId: string): Promise<{
 		}
 
 		const remaining =
-			messageType === "premium"
+			messageType === MessageType.PREMIUM
 				? limitsCheck.remainingQuota.premiumMessages
 				: limitsCheck.remainingQuota.nonPremiumMessages;
 
@@ -101,7 +101,7 @@ export async function trackMessageSent(modelId: string): Promise<void> {
 		const messageType = getMessageType(modelId);
 		const period = getCurrentPeriod();
 
-		if (messageType === "premium") {
+		if (messageType === MessageType.PREMIUM) {
 			await caller.usage.incrementPremium({
 				period,
 				count: 1,
@@ -148,11 +148,11 @@ export async function requireMessageAccess(modelId: string): Promise<void> {
 
 	if (!result.allowed) {
 		throw new UsageLimitExceededError(
-			result.reason || "Message limit exceeded",
+			result.reason ?? "Message limit exceeded",
 			{
 				modelId,
 				messageType: getMessageType(modelId),
-				remainingMessages: result.remainingMessages || 0,
+				remainingMessages: result.remainingMessages ?? 0,
 			},
 		);
 	}
