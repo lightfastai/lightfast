@@ -31,8 +31,8 @@ export function ExistingSessionChat({
 		sessionId,
 	});
 
-	// Batch both queries together for better performance
-	const [{ data: user }, { data: messages }] = useSuspenseQueries({
+	// Batch all queries together for better performance
+	const [{ data: user }, { data: messages }, { data: sessionData }] = useSuspenseQueries({
 		queries: [
 			{
 				...trpc.user.getUser.queryOptions(),
@@ -45,6 +45,13 @@ export function ExistingSessionChat({
 				staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
 				gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
 				refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
+			},
+			{
+				...trpc.session.getActiveStream.queryOptions({ sessionId }),
+				staleTime: 1000, // Fresh for 1 second (activeStreamId changes frequently)
+				gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+				refetchOnWindowFocus: false, // Don't refetch on focus
 				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
 		],
@@ -74,6 +81,7 @@ export function ExistingSessionChat({
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
+				resume={sessionData.activeStreamId !== null}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache
 					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {

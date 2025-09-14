@@ -11,7 +11,8 @@ export class InMemoryMemory<
 {
 	private sessions = new Map<string, { resourceId: string }>();
 	private messages = new Map<string, TMessage[]>();
-	private streams = new Map<string, string[]>();
+	private streams = new Map<string, string[]>(); // Legacy stream lists
+	private activeStreams = new Map<string, string>(); // Active stream IDs
 
 	appendMessage({
 		sessionId,
@@ -60,12 +61,28 @@ export class InMemoryMemory<
 		streamId: string;
 		context?: TContext;
 	}): Promise<void> {
+		// Set as active stream (new pattern)
+		this.activeStreams.set(sessionId, streamId);
+		
+		// Legacy: Also maintain stream list for backward compatibility
 		const existing = this.streams.get(sessionId) ?? [];
-		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100)); // Keep last 100
+		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100));
 		return Promise.resolve();
 	}
 
 	getSessionStreams(sessionId: string): Promise<string[]> {
-		return Promise.resolve(this.streams.get(sessionId) ?? []);
+		// Legacy method - prefer getActiveStream() for new code
+		const activeStreamId = this.activeStreams.get(sessionId);
+		return Promise.resolve(activeStreamId ? [activeStreamId] : []);
+	}
+
+	getActiveStream(sessionId: string): Promise<string | null> {
+		const streamId = this.activeStreams.get(sessionId);
+		return Promise.resolve(streamId || null);
+	}
+
+	clearActiveStream(sessionId: string): Promise<void> {
+		this.activeStreams.delete(sessionId);
+		return Promise.resolve();
 	}
 }

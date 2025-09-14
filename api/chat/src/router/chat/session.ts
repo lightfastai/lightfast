@@ -325,5 +325,121 @@ export const sessionRouter = {
 
 			return { success: true };
 		}),
+
+	/**
+	 * Set active stream ID for resumable streams
+	 * Used by the AI runtime to track streaming sessions
+	 */
+	setActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+				streamId: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Verify ownership first
+			const session = await db
+				.select({ id: LightfastChatSession.id })
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			// Set the active stream ID
+			await db
+				.update(LightfastChatSession)
+				.set({ activeStreamId: input.streamId })
+				.where(eq(LightfastChatSession.id, input.sessionId));
+
+			return { success: true };
+		}),
+
+	/**
+	 * Get active stream ID for resumable streams
+	 * Returns null if no active stream exists
+	 */
+	getActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			// Verify ownership and get active stream ID
+			const session = await db
+				.select({ 
+					id: LightfastChatSession.id,
+					activeStreamId: LightfastChatSession.activeStreamId,
+				})
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			return {
+				activeStreamId: session[0].activeStreamId,
+			};
+		}),
+
+	/**
+	 * Clear active stream ID (called when streaming completes)
+	 */
+	clearActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Verify ownership first
+			const session = await db
+				.select({ id: LightfastChatSession.id })
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			// Clear the active stream ID
+			await db
+				.update(LightfastChatSession)
+				.set({ activeStreamId: null })
+				.where(eq(LightfastChatSession.id, input.sessionId));
+
+			return { success: true };
+		}),
 } satisfies TRPCRouterRecord;
 

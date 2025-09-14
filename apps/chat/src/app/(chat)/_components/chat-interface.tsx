@@ -68,6 +68,7 @@ interface ChatInterfaceProps {
 	isNewSession: boolean;
 	handleSessionCreation: (firstMessage: string) => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
+	resume?: boolean; // Whether to resume an interrupted stream
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 }
@@ -79,6 +80,7 @@ export function ChatInterface({
 	isNewSession,
 	handleSessionCreation,
 	user,
+	resume = false,
 	onNewUserMessage,
 	onNewAssistantMessage,
 }: ChatInterfaceProps) {
@@ -179,12 +181,12 @@ export function ChatInterface({
 		messages,
 		sendMessage: vercelSendMessage,
 		status,
-		resumeStream,
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
-		experimental_throttle: 45,
+		//		experimental_throttle: ,
 		messages: initialMessages,
+		resume,
 		onError: (error) => {
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
@@ -261,16 +263,7 @@ export function ChatInterface({
 		isAuthenticated,
 	});
 
-	// Auto-resume streaming if requested and there's an incomplete stream
-	React.useEffect(() => {
-		if (
-			initialMessages.length > 0 &&
-			initialMessages[initialMessages.length - 1]?.role === "user"
-		) {
-			void resumeStream();
-		}
-		// We want to disable the exhaustive deps rule here because we only want to run this effect once
-	}, []);
+	// AI SDK will handle resume automatically when resume={true} is passed to useChat
 
 	const handleSendMessage = async (message: string) => {
 		if (!message.trim() || status === "streaming" || status === "submitted") {

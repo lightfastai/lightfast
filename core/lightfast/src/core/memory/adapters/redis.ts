@@ -31,6 +31,7 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = Reco
 	private readonly KEYS = {
 		sessionMetadata: (sessionId: string) => `session:${sessionId}:metadata`,
 		sessionMessages: (sessionId: string) => `session:${sessionId}:messages`,
+		sessionActiveStream: (sessionId: string) => `session:${sessionId}:active_stream`,
 		sessionStreams: (sessionId: string) => `session:${sessionId}:streams`,
 		stream: (streamId: string) => `stream:${streamId}`,
 	} as const;
@@ -138,32 +139,30 @@ export class RedisMemory<TMessage extends UIMessage = UIMessage, TContext = Reco
 		streamId: string;
 		context?: TContext;
 	}): Promise<void> {
-		// Store stream data
-		const streamData: StreamData = {
-			id: streamId,
-			sessionId,
-			createdAt: new Date().toISOString(),
-		};
-
+		// Set as active stream for this session (new pattern)
 		await this.redis.setex(
-			this.KEYS.stream(streamId),
+			this.KEYS.sessionActiveStream(sessionId),
 			this.TTL.STREAM,
-			JSON.stringify(streamData),
+			streamId,
 		);
 
-		// Add to session's stream list
+		// Legacy: Also maintain stream list for backward compatibility
 		await this.redis.lpush(this.KEYS.sessionStreams(sessionId), streamId);
-
-		// Keep only the latest 100 streams per session
 		await this.redis.ltrim(this.KEYS.sessionStreams(sessionId), 0, 99);
 	}
 
 	async getSessionStreams(sessionId: string): Promise<string[]> {
-		const streamIds = await this.redis.lrange(
-			this.KEYS.sessionStreams(sessionId),
-			0,
-			-1,
-		);
-		return streamIds ?? [];
+		// Legacy method - prefer getActiveStream() for new code
+		const activeStreamId = await this.getActiveStream(sessionId);
+		return activeStreamId ? [activeStreamId] : [];
+	}
+
+	async getActiveStream(sessionId: string): Promise<string | null> {
+		const streamId = await this.redis.get(this.KEYS.sessionActiveStream(sessionId));
+		return typeof streamId === 'string' ? streamId : null;
+	}
+
+	async clearActiveStream(sessionId: string): Promise<void> {
+		await this.redis.del(this.KEYS.sessionActiveStream(sessionId));
 	}
 }

@@ -77,6 +77,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
+				resume={false} // New sessions never have active streams to resume
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache
 					queryClient.setQueryData(messagesQueryKey, (oldData) => {

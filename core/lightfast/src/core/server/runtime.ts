@@ -60,6 +60,7 @@ export interface StreamChatOptions<
 	generateId?: () => string;
 	enableResume?: boolean;
 	resumeOptions?: ResumeOptions;
+	abortSignal?: AbortSignal;
 }
 
 export interface ValidatedSession {
@@ -168,6 +169,7 @@ export async function streamChat<
 		generateId,
 		enableResume,
 		resumeOptions,
+		abortSignal,
 		onError,
 		onStreamStart,
 		onStreamComplete,
@@ -226,100 +228,48 @@ export async function streamChat<
 		messageCount: allMessages.length,
 	});
 
-	// Store stream ID for resumption (only if resume is enabled)
-	if (shouldEnableResume) {
-		try {
-			await memory.createStream({ sessionId, streamId, context });
-		} catch (error) {
-			const apiError = toMemoryApiError(error, "createStream");
-
-			// Check guard: failOnStreamError FIRST (highest priority)
-			if (resumeOptions?.failOnStreamError) {
-				// Fail fast mode: log and return error immediately
-				console.warn(
-					`[Fail Fast] Stream creation failed, stopping operation for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
-				);
-				return Err(apiError);
-			}
-
-			// Check guard: silentStreamFailure
-			if (resumeOptions?.silentStreamFailure) {
-				// Silent mode: only log, don't call onError
-				console.warn(
-					`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
-				);
-			} else {
-				// Normal mode: log and propagate via onError
-				console.warn(
-					`Failed to create stream ${streamId} for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
-				);
-
-				// Propagate stream creation failure to route for monitoring
-				onError?.({
-					systemContext,
-					requestContext: requestContext as RequestContext | undefined,
-					error: apiError,
-				});
-			}
-
-			// Default: Continue streaming despite error
-		}
+	// Build stream parameters with dataStream injection
+	let streamParams;
+	try {
+		streamParams = agent.buildStreamParams({
+			sessionId,
+			messages: allMessages,
+			memory,
+			resourceId,
+			systemContext,
+			requestContext,
+		});
+	} catch (error) {
+		return Err(toAgentApiError(error, "buildStreamParams"));
 	}
 
-	// Create UI message stream with artifact support
-	const stream = createUIMessageStream({
-		execute: ({ writer: dataStream }) => {
-			// Build stream parameters with dataStream injection
-			let streamParams;
-			try {
-				streamParams = agent.buildStreamParams({
-					sessionId,
-					messages: allMessages,
-					memory,
-					resourceId,
-					systemContext,
-					requestContext,
-					dataStream, // Pass dataStream for artifact support
-				});
-			} catch (error) {
-				throw toAgentApiError(error, "buildStreamParams");
-			}
+	// Start streaming
+	let result;
+	try {
+		// IMPORTANT: AbortSignal is incompatible with resume functionality
+		// When resume is enabled, we disable abort to prevent breaking stream resumption
+		// Page refresh/navigation with abort would make streams unresumable
+		const useAbortSignal = !shouldEnableResume && abortSignal;
+		
+		result = streamText({
+			...streamParams,
+			...(useAbortSignal && { abortSignal }),
+		});
+	} catch (error) {
+		return Err(toAgentApiError(error, "streamText"));
+	}
 
-			// Start streaming
-			let result;
-			try {
-				result = streamText(streamParams);
-			} catch (error) {
-				throw toAgentApiError(error, "streamText");
-			}
-
-			// Consume the stream and merge with dataStream
-			result.consumeStream();
-			dataStream.merge(
-				result.toUIMessageStream({
-					sendReasoning: true,
-				}),
-			);
+	// Use AI SDK v5 pattern with resumable streams
+	const response = result.toUIMessageStreamResponse({
+		generateMessageId: generateId,
+		sendReasoning: true,
+		originalMessages: allMessages,
+		headers: {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache",
+			"Connection": "keep-alive",
+			"Content-Encoding": "none", // Prevent proxy buffering for streaming
 		},
-		generateId: generateId,
 		onFinish: async (finishResult) => {
 			const agentEndTime = Date.now();
 
@@ -393,39 +343,69 @@ export async function streamChat<
 					// but we propagate the error via callback for route handling
 				}
 			}
+
+			// Clear active stream ID when streaming completes
+			if (shouldEnableResume && memory.clearActiveStream) {
+				try {
+					await memory.clearActiveStream(sessionId);
+					console.log(`[Stream Complete] Cleared active stream ID for session ${sessionId}`);
+				} catch (error) {
+					console.warn(`[Stream Complete] Failed to clear active stream ID for session ${sessionId}:`, error);
+					// Don't throw - this is cleanup, not critical
+				}
+			}
 		},
+		// Create resumable stream if resume is enabled
+		...(shouldEnableResume && {
+			async consumeSseStream({ stream }) {
+				try {
+					// RACE CONDITION PREVENTION: Clear any existing activeStreamId first
+					// This prevents resuming outdated streams when starting new ones
+					if (memory.clearActiveStream) {
+						try {
+							await memory.clearActiveStream(sessionId);
+							console.log(`[Stream Start] Cleared previous active stream ID for session ${sessionId}`);
+						} catch (error) {
+							console.warn(`[Stream Start] Failed to clear previous active stream ID for session ${sessionId}:`, error);
+							// Don't fail stream creation for this cleanup operation
+						}
+					}
+					
+					const streamContext = createResumableStreamContext({
+						waitUntil: (promise) => promise,
+					});
+					
+					// Create the resumable stream with our streamId
+					await streamContext.createNewResumableStream(streamId, () => stream);
+					
+					// Store the active stream ID in memory
+					await memory.createStream({ sessionId, streamId, context });
+					
+					console.log(`[Stream Created] Created resumable stream ${streamId} for session ${sessionId}`);
+				} catch (error) {
+					const apiError = toMemoryApiError(error, "createStream");
+					
+					// Handle stream creation failure based on options
+					if (resumeOptions?.failOnStreamError) {
+						console.error(`[Fail Fast] Stream creation failed for session ${sessionId}:`, error);
+						throw error;
+					} else if (resumeOptions?.silentStreamFailure) {
+						console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, error);
+					} else {
+						console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, error);
+						onError?.({
+							systemContext,
+							requestContext: requestContext as RequestContext | undefined,
+							error: apiError,
+						});
+					}
+				}
+			}
+		}),
 	});
 
-	// Return response with optional resume support
-	if (shouldEnableResume) {
-		return Ok(
-			new Response(
-				stream.pipeThrough(new JsonToSseTransformStream()),
-				{
-					headers: {
-						"Content-Type": "text/event-stream",
-						"Cache-Control": "no-cache",
-						"Connection": "keep-alive",
-						"Content-Encoding": "none", // Prevent proxy buffering for streaming
-					},
-				}
-			),
-		);
-	} else {
-		return Ok(
-			new Response(
-				stream.pipeThrough(new JsonToSseTransformStream()),
-				{
-					headers: {
-						"Content-Type": "text/event-stream",
-						"Cache-Control": "no-cache",
-						"Connection": "keep-alive",
-						"Content-Encoding": "none", // Prevent proxy buffering for streaming
-					},
-				}
-			),
-		);
-	}
+	// Return the AI SDK response directly (already includes proper headers and streaming)
+	return Ok(response);
 }
 
 /**
@@ -438,7 +418,7 @@ export async function resumeStream<
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
-): Promise<Result<ReadableStream | null, ApiError>> {
+): Promise<Result<Response | null, ApiError>> {
 	try {
 		// Check authentication and ownership
 		const session = await memory.getSession(sessionId);
@@ -447,14 +427,19 @@ export async function resumeStream<
 			return Err(new SessionNotFoundError());
 		}
 
-		// Get session streams
-		const streamIds = await memory.getSessionStreams(sessionId);
-		console.log("[Resume Stream]", streamIds);
-		if (!streamIds.length) {
-			return Ok(null);
+		// Get active stream ID (new pattern) or fallback to session streams (old pattern)
+		let recentStreamId: string | null = null;
+		
+		if (memory.getActiveStream) {
+			// New pattern: get single active stream ID
+			recentStreamId = await memory.getActiveStream(sessionId);
+			console.log("[Resume Stream] Active stream ID:", recentStreamId);
+		} else {
+			// Fallback to old pattern: get stream list and take first
+			const streamIds = await memory.getSessionStreams(sessionId);
+			console.log("[Resume Stream] Stream IDs (legacy):", streamIds);
+			recentStreamId = streamIds.length > 0 ? (streamIds[0] ?? null) : null;
 		}
-
-		const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
 
 		if (!recentStreamId) {
 			return Ok(null);
@@ -467,7 +452,20 @@ export async function resumeStream<
 
 		const resumedStream =
 			await streamContext.resumeExistingStream(recentStreamId);
-		return Ok(resumedStream ?? null);
+		
+		if (!resumedStream) {
+			return Ok(null);
+		}
+
+		// Return the stream as a proper Response with headers
+		return Ok(new Response(resumedStream, {
+			headers: {
+				"Content-Type": "text/event-stream",
+				"Cache-Control": "no-cache",
+				"Connection": "keep-alive",
+				"Content-Encoding": "none",
+			},
+		}));
 	} catch (error) {
 		console.error("[Resume Stream]", error);
 		// Convert memory errors to appropriate API errors

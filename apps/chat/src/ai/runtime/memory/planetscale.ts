@@ -195,8 +195,8 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	}
 
 	/**
-	 * Create a stream ID for a session
-	 * This is used to track active streaming sessions for resume functionality
+	 * Set active stream ID for a session
+	 * This is used to track the currently active streaming session for resume functionality
 	 */
 	async createStream({
 		sessionId,
@@ -209,12 +209,12 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	}): Promise<void> {
 		try {
 			const caller = await createCaller();
-			await caller.message.createStream({
+			await caller.session.setActiveStream({
 				sessionId,
 				streamId,
 			});
 		} catch (error) {
-			console.error('[PlanetScaleMemory] Failed to create stream:', {
+			console.error('[PlanetScaleMemory] Failed to set active stream:', {
 				sessionId,
 				streamId,
 				error: isTRPCClientError(error) ? {
@@ -234,24 +234,25 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 			}
 			
 			// For other errors, log but don't throw to avoid breaking the stream
-			console.warn(`Stream creation failed but continuing: ${getTRPCErrorMessage(error)}`);
+			console.warn(`Failed to set active stream ${streamId} for session ${sessionId}: ${getTRPCErrorMessage(error)}`);
 		}
 	}
 
 	/**
-	 * Get all stream IDs for a session, ordered by creation time (newest first)
-	 * Returns the most recent streams for resume functionality
+	 * Get active stream ID for a session
+	 * Returns array with single active stream ID for resume functionality, or empty array if none
 	 */
 	async getSessionStreams(sessionId: string): Promise<string[]> {
 		try {
 			const caller = await createCaller();
-			const streamIds = await caller.message.getStreams({
+			const result = await caller.session.getActiveStream({
 				sessionId,
 			});
 
-			return streamIds;
+			// Return array with active stream ID, or empty array if none
+			return result.activeStreamId ? [result.activeStreamId] : [];
 		} catch (error) {
-			console.error('[PlanetScaleMemory] Failed to get stream IDs:', {
+			console.error('[PlanetScaleMemory] Failed to get active stream ID:', {
 				sessionId,
 				error: isTRPCClientError(error) ? {
 					code: getTRPCErrorCode(error),
@@ -271,8 +272,77 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 			
 			// For other errors, return empty array to be graceful
 			// but log the error for debugging
-			console.warn(`Failed to get stream IDs for session ${sessionId}, returning empty array: ${getTRPCErrorMessage(error)}`);
+			console.warn(`Failed to get active stream for session ${sessionId}, returning empty array: ${getTRPCErrorMessage(error)}`);
 			return [];
+		}
+	}
+
+	/**
+	 * Get active stream ID for a session
+	 * Returns the currently active stream for resume functionality
+	 */
+	async getActiveStream(sessionId: string): Promise<string | null> {
+		try {
+			const caller = await createCaller();
+			const result = await caller.session.getActiveStream({
+				sessionId,
+			});
+
+			return result.activeStreamId;
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to get active stream ID:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			// For read operations, return null for NOT_FOUND (session doesn't exist)
+			if (isNotFound(error)) {
+				console.warn(`Session ${sessionId} not found, returning null active stream`);
+				return null;
+			}
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			// For other errors, return null to be graceful
+			console.warn(`Failed to get active stream for session ${sessionId}, returning null: ${getTRPCErrorMessage(error)}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Clear active stream ID for a session
+	 * Called when streaming completes to clean up the active stream reference
+	 */
+	async clearActiveStream(sessionId: string): Promise<void> {
+		try {
+			const caller = await createCaller();
+			await caller.session.clearActiveStream({
+				sessionId,
+			});
+		} catch (error) {
+			console.error('[PlanetScaleMemory] Failed to clear active stream:', {
+				sessionId,
+				error: isTRPCClientError(error) ? {
+					code: getTRPCErrorCode(error),
+					message: getTRPCErrorMessage(error)
+				} : error
+			});
+			
+			if (isUnauthorized(error)) {
+				throw new Error('Unauthorized: User session expired or invalid');
+			}
+			
+			if (isNotFound(error) || isForbidden(error)) {
+				throw new Error(`Session ${sessionId} not found or access denied`);
+			}
+			
+			// For cleanup errors, just log but don't throw
+			console.warn(`Failed to clear active stream for session ${sessionId}: ${getTRPCErrorMessage(error)}`);
 		}
 	}
 }

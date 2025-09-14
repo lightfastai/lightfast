@@ -149,6 +149,7 @@ export async function fetchRequestHandler<
 				generateId,
 				enableResume,
 				resumeOptions,
+				abortSignal: req.signal,
 				onError,
 				onStreamStart,
 				onStreamComplete,
@@ -171,20 +172,20 @@ export async function fetchRequestHandler<
 				throw result.error;
 			}
 
-			// Handle null stream (no stream to resume)
+			// Handle null response (no stream to resume)
+			// Return 204 No Content as per AI SDK specification
 			if (!result.value) {
-				throw new GenericBadRequestError("No active stream to resume");
+				return new Response(null, { 
+					status: 204,
+					statusText: "No Content",
+					headers: {
+						"Cache-Control": "no-cache",
+					}
+				});
 			}
 
-			// Return the stream as a proper Response
-			return new Response(result.value, {
-				headers: {
-					"Content-Type": "text/event-stream",
-					"Cache-Control": "no-cache",
-					"Connection": "keep-alive",
-					"Content-Encoding": "none",
-				},
-			});
+			// Return the response directly (already has proper headers)
+			return result.value;
 		}
 
 		// This should not happen due to earlier check
