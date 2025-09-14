@@ -68,7 +68,7 @@ export function getDefaultModelForUser(isAuthenticated: boolean): ModelId {
 }
 
 // Default model ID
-export const DEFAULT_MODEL_ID: ModelId = "openai/gpt-5-nano";
+export const DEFAULT_MODEL_ID: ModelId = "google/gemini-2.5-flash";
 
 // Display name utility
 export function getModelDisplayName(modelId: string): string {
