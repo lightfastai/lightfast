@@ -60,6 +60,7 @@ export interface StreamChatOptions<
 	generateId?: () => string;
 	enableResume?: boolean;
 	resumeOptions?: ResumeOptions;
+	abortSignal?: AbortSignal;
 }
 
 export interface ValidatedSession {
@@ -168,6 +169,7 @@ export async function streamChat<
 		generateId,
 		enableResume,
 		resumeOptions,
+		abortSignal,
 		onError,
 		onStreamStart,
 		onStreamComplete,
@@ -244,7 +246,15 @@ export async function streamChat<
 	// Start streaming
 	let result;
 	try {
-		result = streamText(streamParams);
+		// IMPORTANT: AbortSignal is incompatible with resume functionality
+		// When resume is enabled, we disable abort to prevent breaking stream resumption
+		// Page refresh/navigation with abort would make streams unresumable
+		const useAbortSignal = !shouldEnableResume && abortSignal;
+		
+		result = streamText({
+			...streamParams,
+			...(useAbortSignal && { abortSignal }),
+		});
 	} catch (error) {
 		return Err(toAgentApiError(error, "streamText"));
 	}
@@ -349,6 +359,18 @@ export async function streamChat<
 		...(shouldEnableResume && {
 			async consumeSseStream({ stream }) {
 				try {
+					// RACE CONDITION PREVENTION: Clear any existing activeStreamId first
+					// This prevents resuming outdated streams when starting new ones
+					if (memory.clearActiveStream) {
+						try {
+							await memory.clearActiveStream(sessionId);
+							console.log(`[Stream Start] Cleared previous active stream ID for session ${sessionId}`);
+						} catch (error) {
+							console.warn(`[Stream Start] Failed to clear previous active stream ID for session ${sessionId}:`, error);
+							// Don't fail stream creation for this cleanup operation
+						}
+					}
+					
 					const streamContext = createResumableStreamContext({
 						waitUntil: (promise) => promise,
 					});
