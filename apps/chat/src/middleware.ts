@@ -1,21 +1,14 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import {
-	handleCorsPreflightRequest,
-	applyCorsHeaders,
-} from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Define public routes that don't need authentication
-const isPublicRoute = createRouteMatcher([
-	"/",
-	"/pricing",
-	"/api/health",
-	"/api/v/(.*)",
-	"/sign-in",
-	"/sign-in/sso-callback",
-	"/sign-up",
-	"/sign-up/sso-callback",
+// Define protected routes that require authentication
+const isProtectedRoute = createRouteMatcher([
+	"/new",
+	"/new/(.*)",
+	// Dynamic session ID routes (any path that's not public/auth)
+	"/((?!sign-in|sign-up|api|robots.txt|sitemap|pricing$|$).*)",
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -33,12 +26,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 	}
 
 	// Redirect authenticated users away from auth pages
-	if (userId && (req.nextUrl.pathname.startsWith("/sign-in") || req.nextUrl.pathname.startsWith("/sign-up"))) {
+	if (
+		userId &&
+		(req.nextUrl.pathname.startsWith("/sign-in") ||
+			req.nextUrl.pathname.startsWith("/sign-up"))
+	) {
 		return NextResponse.redirect(new URL("/new", req.url));
 	}
 
-	// Protect all routes except public ones
-	if (!isPublicRoute(req)) {
+	// Protect routes that require authentication
+	if (isProtectedRoute(req)) {
 		await auth.protect();
 	}
 
@@ -55,4 +52,3 @@ export const config = {
 		"/(api|trpc)(.*)",
 	],
 };
-

@@ -1,5 +1,9 @@
 # Chat App Development Guide
 
+## ⚠️ IMPORTANT: Authentication Routes
+
+When adding new authenticated routes, **MUST** update `isProtectedRoute` in `src/middleware.ts`. Failure to do this will leave routes unprotected.
+
 ## Local Testing
 
 When testing the chat app locally, password login is configured with the following test credentials:
