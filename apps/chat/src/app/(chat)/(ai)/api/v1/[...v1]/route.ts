@@ -1,0 +1,647 @@
+import { gateway } from "@ai-sdk/gateway";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
+import type { ModelId } from "~/ai/providers";
+import {
+	getModelConfig,
+	getModelStreamingDelay,
+	MODELS,
+} from "~/ai/providers";
+import { BraintrustMiddleware, initLogger, traced } from "braintrust";
+import {
+	getBraintrustConfig,
+	isOtelEnabled,
+} from "lightfast/v2/braintrust-env";
+import { uuidv4 } from "lightfast/v2/utils";
+import { webSearchTool } from "~/ai/tools/web-search";
+import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
+import { auth } from "@clerk/nextjs/server";
+import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
+import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";
+import { env } from "~/env";
+import {
+	isTestErrorCommand,
+	handleTestErrorCommand,
+} from "~/lib/errors/test-commands";
+import { ApiErrors } from "~/lib/errors/api-error-builder";
+import {
+	arcjet,
+	shield,
+	detectBot,
+	slidingWindow,
+	tokenBucket,
+	checkDecision,
+} from "@vendor/security";
+
+// Import artifact tools
+import { createDocumentTool } from "~/ai/tools/create-document";
+
+// Complete tools object for c010 agent including artifact tools
+const c010Tools = {
+	webSearch: webSearchTool,
+	createDocument: createDocumentTool,
+};
+
+// Get active tool names based on authentication status and user preferences
+const getActiveToolsForUser = (isAnonymous: boolean, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
+	if (isAnonymous) {
+		// Anonymous users: only web search tool can be active, and only if enabled
+		return webSearchEnabled ? ["webSearch"] : [];
+	} else {
+		// Authenticated users: all tools except webSearch are always active
+		// webSearch is only active if enabled by user
+		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"];
+		if (webSearchEnabled) {
+			activeTools.push("webSearch");
+		}
+		return activeTools;
+	}
+};
+
+// Create conditional system prompts based on authentication status
+const createSystemPromptForUser = (isAnonymous: boolean): string => {
+	const basePrompt = "You are a helpful AI assistant with access to web search capabilities.";
+	
+	if (isAnonymous) {
+		// Anonymous users: no artifact capabilities
+		return `${basePrompt}
+
+You can help users with:
+- Answering questions using web search when needed
+- Providing information and explanations
+- General assistance and conversation
+
+IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.
+
+CODE FORMATTING:
+When providing code snippets in your responses, always use proper markdown code blocks with language specification:
+
+\`\`\`rust
+fn main() {
+    println!("Hello, world!");
+}
+\`\`\`
+
+\`\`\`javascript
+console.log("Hello, world!");
+\`\`\`
+
+\`\`\`python
+print("Hello, world!")
+\`\`\`
+
+Use the appropriate language identifier (rust, javascript, python, typescript, etc.) for syntax highlighting.
+
+CITATION USAGE:
+When referencing external information, use numbered citations in your response and provide structured citation data.
+
+Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
+
+Example response format:
+React 19 introduces server components [1] which work seamlessly with Next.js [2]. This approach simplifies state management [3].
+
+---CITATIONS---
+{
+  "citations": [
+    {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release", "snippet": "Introducing server components for better performance"},
+    {"id": 2, "url": "https://nextjs.org/docs/app-router", "title": "Next.js App Router", "snippet": "Complete guide to the new routing system"},
+    {"id": 3, "url": "https://docs.example.com/state", "title": "State Management Guide"}
+  ]
+}
+
+Rules:
+- Use numbered citations [1], [2], [3] in your response text
+- Always end with ---CITATIONS--- followed by JSON data
+- Include sequential IDs starting from 1
+- Provide URLs and titles (snippets are optional)
+- Only cite facts, statistics, API details, version numbers, quotes
+- Don't cite common knowledge or your own analysis`;
+	} else {
+		// Authenticated users: full capabilities including artifacts
+		return `${basePrompt}
+
+IMPORTANT: When users request code generation, examples, substantial code snippets, or diagrams, ALWAYS use the createDocument tool. Do NOT include the code or diagram syntax in your text response - they should ONLY exist in the document artifact.
+
+Use createDocument for:
+
+CODE ARTIFACTS (kind: code):
+- Code examples, functions, components
+- Create, build, write, generate requests
+- Working implementations and prototypes
+- Code analysis or refactoring
+- Scripts, configuration files
+
+DIAGRAM ARTIFACTS (kind: diagram):
+- Flowcharts and process diagrams
+- System architecture diagrams
+- Database schemas and ER diagrams
+- Sequence diagrams and timelines
+- Organizational charts and mind maps
+- Network diagrams and data flows
+- Any visual representation or diagram
+
+Parameters:
+- title: Clear description (e.g. 'React Counter Component', 'User Authentication Flow')
+- kind: 'code' for code artifacts, 'diagram' for diagrams
+
+After creating the document, explain what you built but don't duplicate the code or diagram syntax in your response.
+
+CITATION USAGE:
+When referencing external information, use numbered citations in your response and provide structured citation data.
+
+Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
+
+Example response format:
+React 19 introduces server components [1] which work seamlessly with Next.js [2]. This approach simplifies state management [3].
+
+---CITATIONS---
+{
+  "citations": [
+    {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release", "snippet": "Introducing server components for better performance"},
+    {"id": 2, "url": "https://nextjs.org/docs/app-router", "title": "Next.js App Router", "snippet": "Complete guide to the new routing system"},
+    {"id": 3, "url": "https://docs.example.com/state", "title": "State Management Guide"}
+  ]
+}
+
+Rules:
+- Use numbered citations [1], [2], [3] in your response text
+- Always end with ---CITATIONS--- followed by JSON data
+- Include sequential IDs starting from 1
+- Provide URLs and titles (snippets are optional)
+- Only cite facts, statistics, API details, version numbers, quotes
+- Don't cite common knowledge or your own analysis`;
+	}
+};
+
+// Initialize Braintrust logging
+const braintrustConfig = getBraintrustConfig();
+initLogger({
+	apiKey: braintrustConfig.apiKey,
+	projectName: braintrustConfig.projectName || "chat-app",
+});
+
+// Create Arcjet instance for anonymous users only
+// Strict limit: 10 messages per day
+const anonymousArcjet = arcjet({
+	key: env.ARCJET_KEY,
+	characteristics: ["ip.src"], // Rate limit by IP for anonymous
+	rules: [
+		// Shield protects against common attacks
+		shield({ mode: "LIVE" }),
+		// Block all bots for anonymous users (disabled in dev for testing)
+		detectBot({
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			allow: [],
+		}),
+		// Fixed window: 10 requests per day (86400 seconds)
+		slidingWindow({
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			max: 10,
+			interval: 86400, // 24 hours in seconds
+		}),
+		// Token bucket: Very limited for anonymous
+		tokenBucket({
+			mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+			refillRate: 1,
+			interval: 8640, // 1 token every 2.4 hours (10 per day)
+			capacity: 10, // Allow up to 10 messages in burst (full daily limit)
+		}),
+	],
+});
+
+// Handler function that handles auth and calls fetchRequestHandler
+const handler = async (
+	req: Request,
+	{ params }: { params: Promise<{ v1: string[] }> },
+) => {
+	// Await the params
+	const { v1 } = await params;
+
+	// Extract agentId and sessionId
+	const [agentId, sessionId] = v1;
+
+	// Server determines authentication status - no client control
+	let authenticatedUserId: string | null;
+	const requestId = uuidv4();
+
+	try {
+		const authResult = await auth();
+		authenticatedUserId = authResult.userId;
+	} catch (error) {
+		console.error(`[API] Authentication check failed:`, error);
+		return ApiErrors.authenticationUnavailable({ requestId });
+	}
+
+	// Server decides if this is anonymous based on actual auth state
+	const isAnonymous = !authenticatedUserId;
+
+	// Apply rate limiting for anonymous users
+	if (isAnonymous) {
+		const decision = await anonymousArcjet.protect(req, { requested: 1 });
+
+		if (decision.isDenied()) {
+			const check = checkDecision(decision);
+			console.warn(`[Security] Anonymous request denied:`, {
+				sessionId,
+				ip: decision.ip,
+				reason: check,
+			});
+
+			// Create appropriate error response based on denial reason
+			if (check.isRateLimit) {
+				return ApiErrors.rateLimitExceeded({ requestId, isAnonymous: true });
+			}
+
+			if (check.isBot) {
+				return ApiErrors.botDetected({ requestId, isAnonymous: true });
+			}
+
+			if (check.isShield) {
+				return ApiErrors.securityBlocked({ requestId, isAnonymous: true });
+			}
+
+			// Generic denial
+			return ApiErrors.securityBlocked({ requestId, isAnonymous: true });
+		}
+	}
+
+	// Set userId based on authentication status
+	let userId: string;
+	if (isAnonymous) {
+		// For anonymous users, use a special prefix to avoid collision
+		userId = `anon_${sessionId}`;
+	} else {
+		// eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
+		userId = authenticatedUserId as string; // We know it's not null since isAnonymous is false
+	}
+
+	// Validate params
+	if (!agentId || !sessionId) {
+		return ApiErrors.invalidPath({ requestId });
+	}
+
+	// Validate agent exists
+	if (agentId !== "c010") {
+		return ApiErrors.agentNotFound(agentId, { requestId });
+	}
+
+	// Simple: generate one messageId and use it everywhere
+	const messageId = uuidv4();
+
+	// Define the handler function that will be used for both GET and POST
+	const executeHandler = async (): Promise<Response> => {
+		try {
+			// Create memory instance based on authentication status (needed for both GET and POST)
+			let memory;
+			try {
+				memory = isAnonymous
+					? new AnonymousRedisMemory({
+							url: env.KV_REST_API_URL,
+							token: env.KV_REST_API_TOKEN,
+						})
+					: new PlanetScaleMemory();
+			} catch (error) {
+				console.error(`[API] Failed to create memory instance:`, error);
+				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
+			}
+
+			// For GET requests (resume), skip all the model/message logic
+			if (req.method === "GET") {
+				console.log("[Chat API] GET request for stream resume", {
+					sessionId,
+					agentId,
+					userId,
+					isAnonymous,
+				});
+
+				// Create conditional active tools and system prompt for resume
+				// For resume requests, we don't have request body, so default webSearch to enabled
+				const activeToolsForUser = getActiveToolsForUser(isAnonymous, true);
+				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
+
+				// Just pass a minimal agent configuration for resume
+				// The actual model doesn't matter for resuming an existing stream
+				const response = await fetchRequestHandler({
+					agent: createAgent<AppRuntimeContext, typeof c010Tools>({
+						name: "c010",
+						system: resumeSystemPrompt,
+						tools: c010Tools,
+						activeTools: activeToolsForUser,
+						createRuntimeContext: ({
+							sessionId: _sessionId,
+							resourceId: _resourceId,
+						}): AppRuntimeContext => ({
+							userId,
+							agentId,
+							messageId, // Use the generated messageId
+						}),
+						model: wrapLanguageModel({
+							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
+							middleware: BraintrustMiddleware({ debug: true }),
+						}),
+					}),
+					sessionId,
+					memory,
+					req,
+					resourceId: userId,
+					context: {
+						modelId: "unknown", // Model is not relevant for resume
+						isAnonymous,
+					},
+					createRequestContext: (req) => ({
+						userAgent: req.headers.get("user-agent") ?? undefined,
+						ipAddress:
+							req.headers.get("x-forwarded-for") ??
+							req.headers.get("x-real-ip") ??
+							undefined,
+					}),
+					generateId: () => messageId,
+					enableResume: true,
+					onError(event) {
+						const { error, systemContext, requestContext } = event;
+						console.error(
+							`[API Error - Resume] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
+							{
+								error: error.message,
+								statusCode: error.statusCode,
+								errorCode: error.errorCode,
+								stack: error.stack,
+								sessionId: systemContext.sessionId,
+								userId: systemContext.resourceId,
+								method: req.method,
+								url: req.url,
+								requestContext,
+							},
+						);
+					},
+				});
+
+				return response;
+			}
+
+			// POST request logic - extract modelId, messages, and webSearchEnabled
+			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
+			let lastUserMessage = "";
+			let webSearchEnabled = false; // Default to false
+
+			try {
+				const requestBody = (await req.clone().json()) as {
+					modelId?: string;
+					messages?: { role: string; parts?: { text?: string }[] }[];
+					webSearchEnabled?: boolean;
+				};
+				if (requestBody.modelId && typeof requestBody.modelId === "string") {
+					selectedModelId = requestBody.modelId as ModelId;
+				}
+
+				// Extract webSearchEnabled preference
+				if (typeof requestBody.webSearchEnabled === "boolean") {
+					webSearchEnabled = requestBody.webSearchEnabled;
+				}
+
+				// Extract last user message for command detection
+				if (requestBody.messages && Array.isArray(requestBody.messages)) {
+					const lastMessage =
+						requestBody.messages[requestBody.messages.length - 1];
+					if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
+						lastUserMessage = lastMessage.parts[0].text;
+					}
+				}
+			} catch (error) {
+				// If parsing fails, use default model
+				console.warn("Failed to parse request body:", error);
+			}
+
+			// Development-only: Check for test error commands
+			if (isTestErrorCommand(lastUserMessage)) {
+				const testResponse = handleTestErrorCommand(lastUserMessage);
+				if (testResponse) {
+					return testResponse;
+				}
+			}
+
+			// Validate model exists before getting configuration
+			if (!(selectedModelId in MODELS)) {
+				console.warn(`[API] Invalid model requested: ${selectedModelId}`);
+				return ApiErrors.invalidModel(selectedModelId, {
+					requestId,
+					isAnonymous,
+				});
+			}
+
+			// Get model configuration
+			const modelConfig = getModelConfig(selectedModelId);
+			const streamingDelay = getModelStreamingDelay(selectedModelId);
+
+			// Validate model access based on authentication status
+			if (isAnonymous && modelConfig.accessLevel === "authenticated") {
+				console.warn(
+					`[Security] Anonymous user attempted to use authenticated model: ${selectedModelId}`,
+				);
+				return ApiErrors.modelAccessDenied(selectedModelId, {
+					requestId,
+					isAnonymous: true,
+				});
+			}
+
+			// For Vercel AI Gateway, use the model name directly
+			// Gateway handles provider routing automatically
+			const gatewayModelString = modelConfig.name;
+
+			// Log model selection for debugging
+			console.log(
+				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`,
+			);
+
+			// Create conditional active tools and system prompt based on authentication and preferences
+			const activeToolsForUser = getActiveToolsForUser(isAnonymous, webSearchEnabled);
+			const systemPrompt = createSystemPromptForUser(isAnonymous);
+
+			// Log active tools for debugging
+			console.log(`[Chat API] Active tools for ${isAnonymous ? 'anonymous' : 'authenticated'} user:`, {
+				activeTools: activeToolsForUser ?? 'all tools',
+				webSearchEnabled,
+				isAnonymous
+			});
+
+			// Pass everything to fetchRequestHandler with inline agent
+			const response = await fetchRequestHandler({
+				agent: createAgent<AppRuntimeContext, typeof c010Tools>({
+					name: "c010",
+					system: systemPrompt,
+					tools: c010Tools,
+					activeTools: activeToolsForUser,
+					createRuntimeContext: ({
+						sessionId: _sessionId,
+						resourceId: _resourceId,
+					}): AppRuntimeContext => ({
+						userId,
+						agentId,
+						messageId, // Use the generated messageId
+					}),
+					model: wrapLanguageModel({
+						model: gateway(gatewayModelString),
+						middleware: BraintrustMiddleware({ debug: true }),
+					}),
+					experimental_transform: smoothStream({
+						delayInMs: streamingDelay,
+						chunking: "word",
+					}),
+					stopWhen: stepCountIs(10),
+					experimental_telemetry: {
+						isEnabled: isOtelEnabled(),
+						metadata: {
+							agentId,
+							agentName: "c010",
+							sessionId,
+							userId,
+							modelId: selectedModelId,
+							modelProvider: modelConfig.provider,
+						},
+					},
+				}),
+				sessionId,
+				memory,
+				req,
+				resourceId: userId,
+				context: {
+					modelId: selectedModelId,
+					isAnonymous,
+				},
+				createRequestContext: (req) => ({
+					userAgent: req.headers.get("user-agent") ?? undefined,
+					ipAddress:
+						req.headers.get("x-forwarded-for") ??
+						req.headers.get("x-real-ip") ??
+						undefined,
+				}),
+				generateId: () => messageId,
+				enableResume: true,
+				onError(event) {
+					const { error, systemContext, requestContext } = event;
+					console.error(
+						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
+						{
+							error: error.message,
+							statusCode: error.statusCode,
+							errorCode: error.errorCode,
+							stack: error.stack,
+							agentId,
+							sessionId: systemContext.sessionId,
+							userId: systemContext.resourceId,
+							method: req.method,
+							url: req.url,
+							requestContext,
+						},
+					);
+
+					// Handle specific error types
+					if (error.errorCode === "MEMORY_ERROR") {
+						console.error(
+							`[Memory Error] Failed for user ${systemContext.resourceId}`,
+							{
+								sessionId: systemContext.sessionId,
+								agentId,
+								errorType: error.errorCode,
+								errorMessage: error.message,
+							},
+						);
+
+						// Memory failures could trigger:
+						// - Immediate retry mechanism
+						// - User notification via WebSocket
+						// - Priority alerts to monitoring system
+						// - Fallback to read-only mode for this session
+					}
+				},
+				onStreamStart(event) {
+					const { streamId, agentName, messageCount, systemContext } = event;
+					console.log(`[Stream Started] ${agentName}`, {
+						streamId,
+						sessionId: systemContext.sessionId,
+						agentName,
+						messageCount,
+						userId: systemContext.resourceId,
+					});
+				},
+				onStreamComplete(event) {
+					const { streamId, agentName, systemContext } = event;
+					console.log(`[Stream Completed] ${agentName}`, {
+						streamId,
+						sessionId: systemContext.sessionId,
+						agentName,
+						userId: systemContext.resourceId,
+					});
+
+					// Here you could send analytics data to external systems
+					// analytics.track('agent_stream_complete', { ... });
+				},
+				onAgentStart(event) {
+					const { agentName, messageCount, systemContext } = event;
+					console.log(`[Agent Started] ${agentName}`, {
+						agentName,
+						sessionId: systemContext.sessionId,
+						messageCount,
+						userId: systemContext.resourceId,
+					});
+				},
+				onAgentComplete(event) {
+					const { agentName, systemContext } = event;
+
+					console.log(`[Agent Completed] ${agentName}`, {
+						agentName,
+						sessionId: systemContext.sessionId,
+						userId: systemContext.resourceId,
+					});
+
+					// Here you could track agent completion metrics
+					// metrics.counter('agent_completions', 1, { agent: agentName });
+				},
+			});
+
+			return response;
+		} catch (error) {
+			// Defensive catch - fetchRequestHandler should handle all errors,
+			// but this provides a final safety net
+			console.error(`[API Route Error] Unhandled error in route handler:`, {
+				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+				agentId,
+				sessionId,
+				userId,
+				method: req.method,
+				url: req.url,
+			});
+
+			// Return a generic 500 error
+			return ApiErrors.internalError(
+				error instanceof Error ? error : new Error(String(error)),
+				{ requestId, agentId, sessionId, userId, isAnonymous },
+			);
+		}
+	};
+
+	// Only wrap with traced for POST requests
+	if (req.method === "POST") {
+		try {
+			return traced(executeHandler, {
+				type: "function",
+				name: `POST /api/v1/${agentId}/${sessionId}`,
+			});
+		} catch (error) {
+			// If traced wrapper fails, fall back to direct execution
+			console.warn(
+				`[API Route] Traced wrapper failed, falling back to direct execution:`,
+				error,
+			);
+			return executeHandler();
+		}
+	}
+
+	// GET requests run without traced wrapper
+	return executeHandler();
+};
+
+// Export the handler for both GET and POST
+export { handler as GET, handler as POST };

@@ -39,6 +39,7 @@
 		"braintrust": "catalog:",
 		"date-fns": "^4.1.0",
 		"drizzle-orm": "^0.43.1",
+		"effect": "^3.17.13",
 		"exa-js": "catalog:",
 		"framer-motion": "^11.3.19",
 		"immer": "^10.1.1",

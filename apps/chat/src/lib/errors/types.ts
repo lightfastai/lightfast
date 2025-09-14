@@ -26,6 +26,12 @@ export enum ChatErrorType {
   SERVER_ERROR = "SERVER_ERROR",
   SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
   
+  // Policy System (NEW)
+  QUOTA_EXCEEDED = "QUOTA_EXCEEDED",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
+  PROFILE_ERROR = "PROFILE_ERROR",
+  MEMORY_ERROR = "MEMORY_ERROR",
+  
   // Unknown
   UNKNOWN = "UNKNOWN",
 }
@@ -84,5 +90,9 @@ export const ERROR_STATUS_CODES: Record<ChatErrorType, number> = {
   [ChatErrorType.INVALID_REQUEST]: 400,
   [ChatErrorType.SERVER_ERROR]: 500,
   [ChatErrorType.SERVICE_UNAVAILABLE]: 503,
+  [ChatErrorType.QUOTA_EXCEEDED]: 429,
+  [ChatErrorType.PERMISSION_DENIED]: 403,
+  [ChatErrorType.PROFILE_ERROR]: 500,
+  [ChatErrorType.MEMORY_ERROR]: 503,
   [ChatErrorType.UNKNOWN]: 500,
 };

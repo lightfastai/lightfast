@@ -116,6 +116,23 @@ export const ApiErrors = {
       { ...options, agentId }
     ),
   
+  // Policy System Errors (NEW)
+  quotaExceeded: (options?: ErrorBuilderOptions) =>
+    createErrorResponse(
+      ChatErrorType.QUOTA_EXCEEDED,
+      "Quota exceeded",
+      "You've exceeded your usage quota. Please try again later or upgrade your plan.",
+      options
+    ),
+  
+  permissionDenied: (options?: ErrorBuilderOptions) =>
+    createErrorResponse(
+      ChatErrorType.PERMISSION_DENIED,
+      "Permission denied",
+      "You don't have permission to perform this action.",
+      options
+    ),
+  
   // Generic Server Error
   internalError: (error?: Error, options?: ErrorBuilderOptions) =>
     createErrorResponse(
