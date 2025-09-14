@@ -1,9 +1,9 @@
-import { Effect, pipe } from "effect";
+import { Effect } from "effect";
 import { arcjet, shield, detectBot, slidingWindow, tokenBucket, checkDecision } from "@vendor/security";
 import { env } from "~/env";
 import { 
   Guard, 
-  RequestService, 
+  type RequestService, 
   ValidationError,
   AuthError,
   RateLimitError, 
@@ -77,8 +77,8 @@ export class AuthGuard extends Guard<RouteContext, AuthContext, AuthError> {
         return {
           ...resource,
           type: "auth_user" as const,
-          authenticatedUserId: authenticatedUserId!,
-          userId: authenticatedUserId!,
+          authenticatedUserId: authenticatedUserId as string,
+          userId: authenticatedUserId as string,
         };
       }
     });
@@ -108,7 +108,10 @@ const extractPreferencesFromRequest = (request: Request): Effect.Effect<ToolPref
  * ProfileGuard - Creates complete user profile (REPLACES scattered logic)
  */
 export class ProfileGuard extends Guard<AuthContext, UserProfileContext, ProfileError> {
-  constructor(private requestService: RequestService) {
+  constructor(
+    private requestService: RequestService, 
+    private policies: Record<string, (auth: any, prefs: ToolPreferences) => UserProfile>
+  ) {
     super();
   }
 
@@ -121,7 +124,12 @@ export class ProfileGuard extends Guard<AuthContext, UserProfileContext, Profile
         : { webSearchEnabled: false, createDocumentEnabled: false };
       
       // Create complete user profile using policies
-      const profile = ProfileUtils.fromAuthContext(resource, requestPrefs);
+      const policy = self.policies[resource.type];
+      if (!policy) {
+        return yield* _(Effect.fail(new ProfileError(`No policy found for user type: ${resource.type}`)));
+      }
+      
+      const profile = policy(resource, requestPrefs);
       
       return {
         ...resource,

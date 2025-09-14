@@ -15,13 +15,13 @@ import {
 } from "./allocators";
 import { ChatExecutor } from "./executors";
 import { ApiErrors } from "~/lib/errors/api-error-builder";
-import { userProfilePolicies } from "./definitions";
 import { 
   isTestErrorCommand,
   handleTestErrorCommand 
 } from "~/lib/errors/test-commands";
+import type { UserProfile, ToolPreferences } from "./types";
 
-export const createPolicyHandler = (policies: typeof userProfilePolicies) => {
+export const createPolicyHandler = (policies: Record<string, (auth: any, prefs: ToolPreferences) => UserProfile>) => {
   const program = (params: { params: Promise<{ v2: string[] }> }, request: Request) =>
     Effect.gen(function* (_) {
       const requestService = RequestService.of({ request, method: request.method });
@@ -31,13 +31,13 @@ export const createPolicyHandler = (policies: typeof userProfilePolicies) => {
       const authContext = yield* _(new AuthGuard().check(routeContext));
       
       // NEW: Policy-driven profile creation  
-      const profileContext = yield* _(new ProfileGuard(requestService).check(authContext));
+      const profileContext = yield* _(new ProfileGuard(requestService, policies).check(authContext));
       
       // Development-only: Check for test error commands
       if (request.method === "POST") {
         try {
           const body = yield* _(Effect.promise(() => request.clone().json()));
-          const lastMessage = body.messages?.[body.messages.length - 1]?.parts?.[0]?.text || "";
+          const lastMessage = body.messages?.[body.messages.length - 1]?.parts?.[0]?.text ?? "";
           
           if (isTestErrorCommand(lastMessage)) {
             const testResponse = handleTestErrorCommand(lastMessage);
@@ -78,7 +78,7 @@ export const createPolicyHandler = (policies: typeof userProfilePolicies) => {
         RateLimitError: (error) => Effect.succeed(ApiErrors.rateLimitExceeded({ error: error.message })),
         QuotaError: (error) => Effect.succeed(ApiErrors.quotaExceeded({ error: error.message })),
         ModelAccessError: (error) => Effect.succeed(ApiErrors.modelAccessDenied(
-          error.message.split(" ")[1] || "unknown", 
+          error.message.split(" ")[1] ?? "unknown", 
           { error: error.message }
         )),
         ProfileError: (error) => Effect.succeed(ApiErrors.internalError(error)),

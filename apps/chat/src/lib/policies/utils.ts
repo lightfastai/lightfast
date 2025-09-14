@@ -1,13 +1,17 @@
-import { userProfilePolicies, type AuthContext } from "./definitions";
+import type { AuthContext } from "./definitions";
 import type { UserProfile, ToolContext, Tool, ToolPreferences, PermissionConfig } from "./types";
 
 export const ProfileUtils = {
   /**
    * Create complete user profile from auth context
+   * NOTE: userProfilePolicies now defined directly in v2 route
    * REPLACES: getActiveToolsForUser, createSystemPromptForUser, rate limit checks
    */
-  fromAuthContext: (auth: AuthContext, prefs: ToolPreferences): UserProfile => {
-    const policy = userProfilePolicies[auth.type];
+  fromAuthContext: (auth: AuthContext, prefs: ToolPreferences, policies: Record<string, (auth: any, prefs: ToolPreferences) => UserProfile>): UserProfile => {
+    const policy = policies[auth.type];
+    if (!policy) {
+      throw new Error(`No policy found for user type: ${auth.type}`);
+    }
     return policy(auth as any, prefs);
   },
 
@@ -78,7 +82,7 @@ IMPORTANT: When users request code generation, examples, substantial code snippe
   },
 
   // Create Arcjet configuration from policy (simple, tightly-coupled)
-  createArcjetConfig: (profile: UserProfile): any => {
+  createArcjetConfig: (profile: UserProfile): unknown => {
     const { requests, window, burst } = profile.rateLimit;
     
     const windowMap = { "1m": 60, "1h": 3600, "1d": 86400, "1w": 604800 };
