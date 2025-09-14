@@ -46,6 +46,13 @@ export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
   pinned: boolean("pinned").default(false).notNull(),
   
   /**
+   * Active stream ID for resumable streams
+   * Tracks the currently streaming response for this session
+   * Null when no active stream exists
+   */
+  activeStreamId: varchar("active_stream_id", { length: 191 }),
+  
+  /**
    * Timestamp when the session was created
    */
   createdAt: datetime("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),

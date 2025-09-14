@@ -183,7 +183,7 @@ export function ChatInterface({
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
-		experimental_throttle: 45,
+		//		experimental_throttle: ,
 		messages: initialMessages,
 		onError: (error) => {
 			// Extract the chat error information
