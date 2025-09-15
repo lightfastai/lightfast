@@ -10,29 +10,50 @@ import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 import { createBaseUrl } from "~/lib/base-url";
+import { StructuredData } from "~/components/structured-data";
 
 export const metadata: Metadata = {
 	title: {
-		default: siteConfig.name,
-		template: `%s - ${siteConfig.name}`,
+		default: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
+		template: `%s | Lightfast - AI Agent Infrastructure`,
 	},
 	metadataBase: new URL(siteConfig.url),
-	description: siteConfig.description,
+	description: "The infrastructure layer for the agent economy. Build production-ready AI agents with cloud-native execution engine. Advanced orchestration, resource scheduling, and enterprise-grade security. Deploy in minutes, not days.",
 	keywords: [
-		"Lightfast",
-		"AI agents",
-		"AI automation",
-		"autonomous agents",
-		"agent framework",
-		"AI orchestration",
-		"AI infrastructure",
-		"developer tools",
-		"AI development platform",
-		"agent execution engine",
-		"cloud-native AI",
-		"AI workflow automation",
+		// Core positioning
+		"AI agent platform",
+		"cloud-native agent execution", 
+		"agent infrastructure",
+		"production AI agents",
+		"enterprise AI platform",
+		
+		// vs Competitors 
+		"Langchain alternative",
+		"CrewAI alternative", 
+		"better than Trigger.dev for AI",
+		"AI agent orchestration platform",
+		
+		// Technical features
 		"state machine orchestration",
+		"resource scheduling AI",
+		"human-in-the-loop AI",
 		"AI agent deployment",
+		"agent execution engine",
+		"AI workflow automation",
+		
+		// Developer focused
+		"developer AI platform",
+		"AI infrastructure tools",
+		"scalable AI agents",
+		"AI agent development",
+		"agent framework",
+		"AI development platform",
+		
+		// Business value
+		"enterprise AI infrastructure",
+		"production-ready AI",
+		"AI agent economy",
+		"agent deployment platform",
 	],
 	authors: [
 		{
@@ -41,28 +62,47 @@ export const metadata: Metadata = {
 		},
 	],
 	creator: siteConfig.name,
+	publisher: siteConfig.name,
+	category: "Technology",
+	classification: "AI Infrastructure Platform",
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			"max-video-preview": -1,
+			"max-image-preview": "large",
+			"max-snippet": -1,
+		},
+	},
+	verification: {
+		google: "PLACEHOLDER_VERIFICATION_CODE", // Replace with actual Google Search Console verification code
+	},
 	openGraph: {
 		type: "website",
 		locale: "en_US",
 		url: siteConfig.url,
-		title: siteConfig.name,
-		description: siteConfig.description,
+		title: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
+		description: "The infrastructure layer for the agent economy. Deploy production-ready AI agents with advanced orchestration, resource scheduling, and enterprise security.",
 		siteName: siteConfig.name,
 		images: [
 			{
 				url: siteConfig.ogImage,
 				width: 1200,
 				height: 630,
-				alt: siteConfig.name,
+				alt: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
+				type: "image/jpeg",
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: siteConfig.name,
-		description: siteConfig.description,
+		site: "@lightfastai",
+		creator: "@lightfastai",
+		title: "Lightfast - Cloud-Native Agent Execution Engine for Production AI", 
+		description: "The infrastructure layer for the agent economy. Deploy production-ready AI agents with advanced orchestration and enterprise security.",
 		images: [siteConfig.ogImage],
-		creator: siteConfig.links.twitter.href,
 	},
 	icons: {
 		icon: "/favicon.ico",
@@ -72,25 +112,37 @@ export const metadata: Metadata = {
 			{
 				rel: "icon",
 				url: "/favicon-32x32.png",
+				sizes: "32x32",
 			},
 			{
 				rel: "icon",
 				url: "/android-chrome-192x192.png",
+				sizes: "192x192",
 			},
 			{
 				rel: "icon",
 				url: "/android-chrome-512x512.png",
+				sizes: "512x512",
 			},
 		],
 	},
-	applicationName: siteConfig.name,
+	manifest: "/manifest.json",
+	applicationName: "Lightfast AI Agent Platform",
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: "default",
-		title: siteConfig.name,
+		title: "Lightfast",
+		startupImage: "/apple-touch-icon.png",
 	},
 	formatDetection: {
 		telephone: false,
+	},
+	alternates: {
+		canonical: siteConfig.url,
+	},
+	other: {
+		"mobile-web-app-capable": "yes",
+		"apple-mobile-web-app-status-bar-style": "black-translucent",
 	},
 };
 
@@ -105,7 +157,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<head />
+			<head>
+				<StructuredData type="Organization" />
+				<StructuredData type="WebSite" />
+				<StructuredData type="SoftwareApplication" />
+			</head>
 			<body className={cn("min-h-screen", fonts)}>
 				<PostHogProvider baseUrl={createBaseUrl()}>
 					{children}
