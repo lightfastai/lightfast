@@ -229,7 +229,7 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 										<Button variant="secondary" className="w-full" disabled>
 											Your current plan
 										</Button>
-									) : canUpgrade ? (
+									) : canUpgrade && !isFree ? (
 										<ClerkLoaded>
 											<SignedIn>
 												<CheckoutButton
