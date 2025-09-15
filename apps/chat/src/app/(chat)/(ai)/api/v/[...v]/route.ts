@@ -34,6 +34,16 @@ import {
 	checkDecision,
 } from "@vendor/security";
 import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
+import { 
+	requireMessageAccess,
+	trackMessageSent,
+	UsageLimitExceededError
+} from "~/lib/billing/usage-service";
+import { 
+	ClerkPlanKey, 
+	BILLING_LIMITS, 
+	hasClerkPlan
+} from "~/lib/billing/types";
 
 // Import artifact tools
 import { createDocumentTool } from "~/ai/tools/create-document";
@@ -44,18 +54,39 @@ const c010Tools = {
 	createDocument: createDocumentTool,
 };
 
-// Get active tool names based on authentication status and user preferences
-const getActiveToolsForUser = (isAnonymous: boolean, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
+/**
+ * Get user's billing plan from Clerk authentication
+ */
+const getUserPlan = async (): Promise<ClerkPlanKey> => {
+	try {
+		const { has } = await auth();
+		const hasPlusPlan = hasClerkPlan(has, ClerkPlanKey.PLUS_TIER);
+		return hasPlusPlan ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
+	} catch (error) {
+		console.warn('[Billing] Failed to get user plan, defaulting to FREE_TIER:', error);
+		return ClerkPlanKey.FREE_TIER;
+	}
+};
+
+// Get active tool names based on authentication status, user plan, and user preferences
+const getActiveToolsForUser = (isAnonymous: boolean, userPlan: ClerkPlanKey, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
 	if (isAnonymous) {
 		// Anonymous users: only web search tool can be active, and only if enabled
 		return webSearchEnabled ? ["webSearch"] : [];
 	} else {
-		// Authenticated users: all tools except webSearch are always active
-		// webSearch is only active if enabled by user
-		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"];
+		// Authenticated users: tools based on plan and preferences
+		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"]; // All authenticated users get artifacts
+		
 		if (webSearchEnabled) {
-			activeTools.push("webSearch");
+			// Check if user's plan allows web search
+			const planLimits = BILLING_LIMITS[userPlan];
+			if (planLimits.hasWebSearch) {
+				activeTools.push("webSearch");
+			}
+			// If user doesn't have web search access, silently don't add the tool
+			// The client should already prevent this, but this is server-side enforcement
 		}
+		
 		return activeTools;
 	}
 };
@@ -211,7 +242,9 @@ const handler = async (
 
 				// Create conditional active tools and system prompt for resume
 				// For resume requests, we don't have request body, so default webSearch to enabled
-				const activeToolsForUser = getActiveToolsForUser(isAnonymous, true);
+				// Get user plan for authenticated users (needed for tool access)
+				const resumeUserPlan = isAnonymous ? ClerkPlanKey.FREE_TIER : await getUserPlan();
+				const activeToolsForUser = getActiveToolsForUser(isAnonymous, resumeUserPlan, true);
 				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
 
 				// Just pass a minimal agent configuration for resume
@@ -383,6 +416,109 @@ const handler = async (
 				});
 			}
 
+			// For authenticated users, check billing-based model access and message limits
+			let userPlan: ClerkPlanKey = ClerkPlanKey.FREE_TIER; // Default for anonymous users
+			if (!isAnonymous) {
+				try {
+					// Get user's billing plan
+					userPlan = await getUserPlan();
+					const planLimits = BILLING_LIMITS[userPlan];
+					
+					// Check model access based on user's plan
+					if (!planLimits.allowedModels.length || planLimits.allowedModels.includes(selectedModelId)) {
+						// User has access - either all models allowed (empty array) or specific model is in allowed list
+						console.log(`[Billing] Model access granted for ${userPlan} user: ${selectedModelId}`);
+					} else {
+						// User doesn't have access to this model
+						console.warn(`[Billing] Model access denied for ${userPlan} user: ${selectedModelId}`, {
+							allowedModels: planLimits.allowedModels
+						});
+						return new Response(
+							JSON.stringify({
+								error: "Model not allowed",
+								message: `Model ${selectedModelId} requires upgrade to Plus plan`,
+								code: "MODEL_NOT_ALLOWED",
+								details: { modelId: selectedModelId, userPlan, allowedModels: planLimits.allowedModels }
+							}),
+							{
+								status: 403, // Forbidden
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+					}
+					
+					// Check web search access based on user's plan
+					if (webSearchEnabled && !planLimits.hasWebSearch) {
+						console.warn(`[Billing] Web search access denied for ${userPlan} user`);
+						return new Response(
+							JSON.stringify({
+								error: "Feature not allowed",
+								message: "Web search requires upgrade to Plus plan",
+								code: "FEATURE_NOT_ALLOWED",
+								details: { feature: "webSearch", userPlan }
+							}),
+							{
+								status: 403, // Forbidden
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+					}
+					
+					// Check message usage limits using TRPC
+					await requireMessageAccess(selectedModelId);
+					
+					console.log(`[Billing] User ${authenticatedUserId} (${userPlan}) passed all billing checks for model: ${selectedModelId}`, {
+						webSearchEnabled,
+						modelId: selectedModelId,
+						hasWebSearchAccess: planLimits.hasWebSearch
+					});
+
+				} catch (error) {
+					if (error instanceof UsageLimitExceededError) {
+						console.warn(
+							`[Billing] Usage limit exceeded for user ${authenticatedUserId}:`,
+							error.details
+						);
+						return new Response(
+							JSON.stringify({
+								error: "Usage limit exceeded",
+								message: error.message,
+								code: error.code,
+								details: error.details
+							}),
+							{
+								status: 402, // Payment Required
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+					} else {
+						console.error(
+							`[Billing] Unexpected error checking billing for user ${authenticatedUserId}:`,
+							error
+						);
+						return new Response(
+							JSON.stringify({
+								error: "Internal server error",
+								message: "Failed to check billing access",
+								code: "INTERNAL_ERROR"
+							}),
+							{
+								status: 500, // Internal Server Error
+								headers: {
+									"Content-Type": "application/json",
+								},
+							}
+						);
+					}
+				}
+			}
+
 			// For Vercel AI Gateway, use the model name directly
 			// Gateway handles provider routing automatically
 			const gatewayModelString = modelConfig.name;
@@ -393,14 +529,15 @@ const handler = async (
 			);
 
 			// Create conditional active tools and system prompt based on authentication and preferences
-			const activeToolsForUser = getActiveToolsForUser(isAnonymous, webSearchEnabled);
+			const activeToolsForUser = getActiveToolsForUser(isAnonymous, userPlan, webSearchEnabled);
 			const systemPrompt = createSystemPromptForUser(isAnonymous);
 
 			// Log active tools for debugging
 			console.log(`[Chat API] Active tools for ${isAnonymous ? 'anonymous' : 'authenticated'} user:`, {
 				activeTools: activeToolsForUser ?? 'all tools',
 				webSearchEnabled,
-				isAnonymous
+				isAnonymous,
+				userPlan: isAnonymous ? 'N/A' : userPlan
 			});
 
 			// Pass everything to fetchRequestHandler with inline agent
@@ -565,6 +702,19 @@ const handler = async (
 						sessionId: systemContext.sessionId,
 						userId: systemContext.resourceId,
 					});
+
+					// Track message usage for authenticated users
+					if (!isAnonymous) {
+						trackMessageSent(selectedModelId)
+							.then(() => {
+								console.log(`[Billing] Usage tracked for user ${authenticatedUserId}:`, {
+									modelId: selectedModelId
+								});
+							})
+							.catch((error) => {
+								console.error(`[Billing] Failed to track usage for user ${authenticatedUserId}:`, error);
+							});
+					}
 
 					// Here you could track agent completion metrics
 					// metrics.counter('agent_completions', 1, { agent: agentName });

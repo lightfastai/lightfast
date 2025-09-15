@@ -1,11 +1,14 @@
 "use client";
 
-import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
+import { getMessageType } from "~/lib/billing/message-utils";
+import { MessageType } from "~/lib/billing/types";
+import { produce } from "immer";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -26,12 +29,13 @@ export function ExistingSessionChat({
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
 
-	// Get messages query options for cache updates
+	// Get query options for cache updates
 	const messagesQueryOptions = trpc.message.list.queryOptions({
 		sessionId,
 	});
+	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 
-	// Batch all queries together for better performance
+	// Batch core queries together with suspense for better performance
 	const [{ data: user }, { data: messages }, { data: sessionData }] = useSuspenseQueries({
 		queries: [
 			{
@@ -57,6 +61,24 @@ export function ExistingSessionChat({
 		],
 	});
 
+	// Separate query for usage limits (non-blocking)
+	const [{ data: usageLimits, isLoading: isUsageLoading }] = useQueries({
+		queries: [
+			{
+				...usageQueryOptions,
+				staleTime: 60 * 1000, // Consider usage data fresh for 1 minute (we update optimistically)
+				gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+				refetchOnMount: false, // Don't refetch on mount to prevent blocking
+				refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+			},
+		],
+	});
+
+	// Handle loading states for usage
+	if (isUsageLoading || !usageLimits) {
+		return null; // Let parent handle loading state
+	}
+
 	// Convert database messages to UI format
 	const initialMessages: LightfastAppChatUIMessage[] = messages.map((msg) => ({
 		id: msg.id,
@@ -69,8 +91,6 @@ export function ExistingSessionChat({
 		// Existing sessions don't need creation
 	};
 
-
-
 	return (
 		<DataStreamProvider>
 			<ChatInterface
@@ -82,6 +102,7 @@ export function ExistingSessionChat({
 				handleSessionCreation={handleSessionCreation}
 				user={user}
 				resume={sessionData.activeStreamId !== null}
+				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache
 					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
@@ -100,6 +121,35 @@ export function ExistingSessionChat({
 							},
 						];
 					});
+
+					// Optimistically update usage limits using immer
+					queryClient.setQueryData(
+						usageQueryOptions.queryKey,
+						(oldUsageData) => {
+							if (!oldUsageData) return oldUsageData;
+
+							const messageType = getMessageType(selectedModelId);
+							const isPremium = messageType === MessageType.PREMIUM;
+
+							// Use immer for clean immutable updates
+							return produce(oldUsageData, (draft) => {
+								// Update usage counts
+								if (isPremium) {
+									draft.usage.premiumMessages = (draft.usage.premiumMessages || 0) + 1;
+									draft.remainingQuota.premiumMessages = Math.max(
+										0,
+										draft.remainingQuota.premiumMessages - 1,
+									);
+								} else {
+									draft.usage.nonPremiumMessages = (draft.usage.nonPremiumMessages || 0) + 1;
+									draft.remainingQuota.nonPremiumMessages = Math.max(
+										0,
+										draft.remainingQuota.nonPremiumMessages - 1,
+									);
+								}
+							});
+						},
+					);
 				}}
 				onNewAssistantMessage={(assistantMessage) => {
 					// Optimistically append the assistant message to the cache
@@ -120,10 +170,15 @@ export function ExistingSessionChat({
 						];
 					});
 
-					// Trigger a background refetch to sync with database
+					// Trigger background refetch to sync with database
 					// This ensures eventual consistency with the persisted data
 					void queryClient.invalidateQueries({
 						queryKey: messagesQueryOptions.queryKey,
+					});
+
+					// Also refetch usage data to sync with server-side tracking
+					void queryClient.invalidateQueries({
+						queryKey: usageQueryOptions.queryKey,
 					});
 				}}
 			/>

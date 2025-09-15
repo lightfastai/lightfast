@@ -18,11 +18,12 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
+import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -44,6 +45,11 @@ const ProviderModelSelector = dynamic(
 	{ ssr: false },
 );
 
+// Import ProcessedModel type for model processing
+import type { ProcessedModel } from "./provider-model-selector";
+import { getVisibleModels } from "~/lib/ai/providers";
+import type { ModelId } from "~/lib/ai/providers";
+
 const AuthPromptSelector = dynamic(
 	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
 	{ ssr: false },
@@ -59,7 +65,9 @@ const RateLimitDialog = dynamic(
 	{ ssr: false },
 );
 
+
 type UserInfo = ChatRouterOutputs["user"]["getUser"];
+type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -71,6 +79,7 @@ interface ChatInterfaceProps {
 	resume?: boolean; // Whether to resume an interrupted stream
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
+	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
 
 export function ChatInterface({
@@ -83,6 +92,7 @@ export function ChatInterface({
 	resume = false,
 	onNewUserMessage,
 	onNewAssistantMessage,
+	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// ALL errors now go to error boundary - no inline error state needed
 
@@ -90,6 +100,26 @@ export function ChatInterface({
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
+
+	// Get unified billing context
+	const billingContext = useBillingContext({ externalUsageData: externalUsageLimits });
+	
+	// Process models with accessibility information for the model selector
+	const processedModels = useMemo((): ProcessedModel[] => {
+		return getVisibleModels().map((model) => {
+			const isAccessible = billingContext.models.isAccessible(model.id, model.accessLevel, model.billingTier);
+			const restrictionReason = billingContext.models.getRestrictionReason(model.id, model.accessLevel, model.billingTier);
+			
+			return {
+				...model,
+				id: model.id as ModelId,
+				isAccessible,
+				restrictionReason,
+				isPremium: model.billingTier === "premium",
+				requiresAuth: model.accessLevel === "authenticated",
+			};
+		});
+	}, [billingContext.models]);
 
 	// Clean artifact fetcher using our new REST API
 	const fetchArtifact = async (
@@ -167,6 +197,9 @@ export function ChatInterface({
 	// Model selection with persistence
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
+
+	// Check if current model can be used (for UI state)
+	const canUseCurrentModel = billingContext.isLoaded ? billingContext.usage.canUseModel(selectedModelId) : { allowed: true };
 
 	// Create transport for AI SDK v5
 	// Uses sessionId directly as the primary key
@@ -270,11 +303,22 @@ export function ChatInterface({
 			return;
 		}
 
-		// For unauthenticated users, check if they've reached the limit
+		// For unauthenticated users, check anonymous message limit
 		if (!isAuthenticated && hasReachedLimit) {
 			// Show the sign-in dialog instead of throwing error
 			setShowRateLimitDialog(true);
 			return;
+		}
+
+		// For authenticated users, check usage limits based on selected model
+		if (isAuthenticated && billingContext.isLoaded) {
+			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
+			if (!usageCheck.allowed) {
+				// TODO: Show usage limit exceeded dialog/toast
+				console.error("Usage limit exceeded:", usageCheck.reason);
+				// For now, just return - we could show a toast or modal here
+				return;
+			}
 		}
 
 		try {
@@ -358,8 +402,9 @@ export function ChatInterface({
 		<ProviderModelSelector
 			value={selectedModelId}
 			onValueChange={handleModelChange}
+			models={processedModels}
 			disabled={false} // Allow model selection even during streaming
-			isAuthenticated={isAuthenticated}
+			_isAuthenticated={isAuthenticated}
 		/>
 	) : (
 		<AuthPromptSelector />
@@ -406,15 +451,23 @@ export function ChatInterface({
 								<div className="flex items-center gap-2">
 									<PromptInputButton
 										variant={webSearchEnabled ? "secondary" : "outline"}
-										onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+										onClick={() => {
+											if (billingContext.features.webSearch.enabled) {
+												setWebSearchEnabled(!webSearchEnabled);
+											}
+										}}
+										disabled={!billingContext.features.webSearch.enabled}
+										title={billingContext.features.webSearch.disabledReason ?? undefined}
 										className={cn(
 											webSearchEnabled &&
 												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
+											!billingContext.features.webSearch.enabled &&
+												"opacity-60 cursor-not-allowed",
 										)}
 									>
 										<Globe className="w-4 h-4" />
 										Search
-										{webSearchEnabled && (
+										{webSearchEnabled && billingContext.features.webSearch.enabled && (
 											<X
 												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 												onClick={(e) => {
@@ -431,7 +484,17 @@ export function ChatInterface({
 									{modelSelector}
 									<PromptInputSubmit
 										status={status}
-										disabled={status === "streaming" || status === "submitted"}
+										disabled={
+											status === "streaming" || 
+											status === "submitted" || 
+											(!isAuthenticated && hasReachedLimit) ||
+											(isAuthenticated && !canUseCurrentModel.allowed)
+										}
+										title={
+											!canUseCurrentModel.allowed && isAuthenticated 
+												? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+												: undefined
+										}
 										size="icon"
 										variant="outline"
 										className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
@@ -459,7 +522,7 @@ export function ChatInterface({
 					feedback={feedback}
 					onFeedbackSubmit={feedbackMutation.handleSubmit}
 					onFeedbackRemove={feedbackMutation.handleRemove}
-					isAuthenticated={isAuthenticated}
+					_isAuthenticated={isAuthenticated}
 					onArtifactClick={
 						isAuthenticated
 							? async (artifactId) => {
@@ -540,15 +603,23 @@ export function ChatInterface({
 											<div className="flex items-center gap-2">
 												<PromptInputButton
 													variant={webSearchEnabled ? "secondary" : "outline"}
-													onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+													onClick={() => {
+														if (billingContext.features.webSearch.enabled) {
+															setWebSearchEnabled(!webSearchEnabled);
+														}
+													}}
+													disabled={!billingContext.features.webSearch.enabled}
+													title={billingContext.features.webSearch.disabledReason ?? undefined}
 													className={cn(
 														webSearchEnabled &&
 															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
+														!billingContext.features.webSearch.enabled &&
+															"opacity-60 cursor-not-allowed",
 													)}
 												>
 													<Globe className="w-4 h-4" />
 													Search
-													{webSearchEnabled && (
+													{webSearchEnabled && billingContext.features.webSearch.enabled && (
 														<X
 															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
 															onClick={(e) => {
@@ -566,7 +637,15 @@ export function ChatInterface({
 												<PromptInputSubmit
 													status={status}
 													disabled={
-														status === "streaming" || status === "submitted"
+														status === "streaming" || 
+														status === "submitted" || 
+														(!isAuthenticated && hasReachedLimit) ||
+														(isAuthenticated && !canUseCurrentModel.allowed)
+													}
+													title={
+														!canUseCurrentModel.allowed && isAuthenticated 
+															? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+															: undefined
 													}
 													size="icon"
 													variant="outline"
@@ -645,7 +724,7 @@ export function ChatInterface({
 								console.log("Artifact content updated:", content);
 							}}
 							sessionId={sessionId}
-							isAuthenticated={isAuthenticated}
+							_isAuthenticated={isAuthenticated}
 							onArtifactSelect={async (artifactId) => {
 								try {
 									// Fetch artifact data using clean REST API
