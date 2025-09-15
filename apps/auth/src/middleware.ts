@@ -14,6 +14,8 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-up/sso-callback",
 	"/onboarding/choose-organization",
 	"/api/health",
+	"/robots.txt",
+	"/sitemap.xml",
 ]);
 
 // Define auth routes that authenticated users with orgs should be redirected away from

@@ -9,6 +9,8 @@ const isPublicRoute = createRouteMatcher([
 	"/api/cli/v1/(.*)",  // Allow all CLI API routes through tRPC
 	"/playground",
 	"/playground/(.*)",
+	"/robots.txt",
+	"/sitemap.xml",
 ]);
 
 const isProtectedRoute = createRouteMatcher([
