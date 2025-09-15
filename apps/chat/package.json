@@ -10,7 +10,9 @@
 		"lint": "eslint",
 		"start": "pnpm with-env next start -p 4106",
 		"typecheck": "tsc --noEmit",
-		"with-env": "dotenv -e ./.vercel/.env.development.local --"
+		"with-env": "dotenv -e ./.vercel/.env.development.local --",
+		"eval": "pnpm with-env npx braintrust eval ./src/eval/citation-format.eval.ts",
+		"eval:all": "pnpm with-env npx braintrust eval ./src/eval/"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "catalog:",
@@ -36,6 +38,7 @@
 		"@vendor/security": "workspace:*",
 		"@vercel/toolbar": "^0.1.28",
 		"ai": "catalog:",
+		"autoevals": "^0.0.103",
 		"braintrust": "catalog:",
 		"date-fns": "^4.1.0",
 		"drizzle-orm": "^0.43.1",
