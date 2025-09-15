@@ -320,11 +320,11 @@ const handler = async (
 						modelId: "unknown", // Model is not relevant for resume
 						isAnonymous,
 					},
-					createRequestContext: (req) => ({
-						userAgent: req.headers.get("user-agent") ?? undefined,
+					createRequestContext: (requestArg) => ({
+						userAgent: requestArg.headers.get("user-agent") ?? undefined,
 						ipAddress:
-							req.headers.get("x-forwarded-for") ??
-							req.headers.get("x-real-ip") ??
+							requestArg.headers.get("x-forwarded-for") ??
+							requestArg.headers.get("x-real-ip") ??
 							undefined,
 					}),
 					generateId: () => messageId,
@@ -332,11 +332,11 @@ const handler = async (
 					onError(event) {
 						const { error, systemContext, requestContext } = event;
 						console.error(
-							`[API Error - Resume] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
+							`[API Error - Resume] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.statusCode}`,
 							{
-								error: error.message,
+								error: error.message || JSON.stringify(error),
 								statusCode: error.statusCode,
-								errorCode: error.errorCode,
+								errorCode: error.statusCode,
 								stack: error.stack,
 								sessionId: systemContext.sessionId,
 								userId: systemContext.resourceId,
@@ -617,11 +617,11 @@ const handler = async (
 					modelId: selectedModelId,
 					isAnonymous,
 				},
-				createRequestContext: (req) => ({
-					userAgent: req.headers.get("user-agent") ?? undefined,
+				createRequestContext: (requestArg) => ({
+					userAgent: requestArg.headers.get("user-agent") ?? undefined,
 					ipAddress:
-						req.headers.get("x-forwarded-for") ??
-						req.headers.get("x-real-ip") ??
+						requestArg.headers.get("x-forwarded-for") ??
+						requestArg.headers.get("x-real-ip") ??
 						undefined,
 				}),
 				generateId: () => messageId,
@@ -629,11 +629,11 @@ const handler = async (
 				onError(event) {
 					const { error, systemContext, requestContext } = event;
 					console.error(
-						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.errorCode}`,
+						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.statusCode}`,
 						{
-							error: error.message,
+							error: error.message || JSON.stringify(error),
 							statusCode: error.statusCode,
-							errorCode: error.errorCode,
+							errorCode: error.statusCode,
 							stack: error.stack,
 							agentId,
 							sessionId: systemContext.sessionId,
@@ -645,14 +645,14 @@ const handler = async (
 					);
 
 					// Handle specific error types
-					if (error.errorCode === "MEMORY_ERROR") {
+					if (error.statusCode === 500) {
 						console.error(
 							`[Memory Error] Failed for user ${systemContext.resourceId}`,
 							{
 								sessionId: systemContext.sessionId,
 								agentId,
-								errorType: error.errorCode,
-								errorMessage: error.message,
+								errorType: error.statusCode,
+								errorMessage: error.message || JSON.stringify(error),
 							},
 						);
 
@@ -662,37 +662,6 @@ const handler = async (
 						// - Priority alerts to monitoring system
 						// - Fallback to read-only mode for this session
 					}
-				},
-				onStreamStart(event) {
-					const { streamId, agentName, messageCount, systemContext } = event;
-					console.log(`[Stream Started] ${agentName}`, {
-						streamId,
-						sessionId: systemContext.sessionId,
-						agentName,
-						messageCount,
-						userId: systemContext.resourceId,
-					});
-				},
-				onStreamComplete(event) {
-					const { streamId, agentName, systemContext } = event;
-					console.log(`[Stream Completed] ${agentName}`, {
-						streamId,
-						sessionId: systemContext.sessionId,
-						agentName,
-						userId: systemContext.resourceId,
-					});
-
-					// Here you could send analytics data to external systems
-					// analytics.track('agent_stream_complete', { ... });
-				},
-				onAgentStart(event) {
-					const { agentName, messageCount, systemContext } = event;
-					console.log(`[Agent Started] ${agentName}`, {
-						agentName,
-						sessionId: systemContext.sessionId,
-						messageCount,
-						userId: systemContext.resourceId,
-					});
 				},
 				onAgentComplete(event) {
 					const { agentName, systemContext } = event;
