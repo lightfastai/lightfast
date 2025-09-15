@@ -11,7 +11,8 @@
 		"start": "pnpm with-env next start -p 4106",
 		"typecheck": "tsc --noEmit",
 		"with-env": "dotenv -e ./.vercel/.env.development.local --",
-		"eval": "pnpm with-env npx braintrust eval ./src/eval/citation-format.eval.ts",
+		"eval:citations": "pnpm with-env npx braintrust eval ./src/eval/citation-format.eval.ts",
+		"eval:concise": "pnpm with-env npx braintrust eval ./src/eval/concise-format.eval.ts",
 		"eval:all": "pnpm with-env npx braintrust eval ./src/eval/"
 	},
 	"dependencies": {

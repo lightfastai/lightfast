@@ -1,10 +1,10 @@
 /**
- * Braintrust evaluation for citation format compliance across all AI models
+ * Braintrust evaluation for response conciseness compliance across all AI models
  *
- * Tests all active models directly (no API dependency) for:
- * 1. Citation format compliance using existing citation parser
- * 2. Response quality and completeness
- * 3. Model-specific citation generation patterns
+ * Tests all active models for anonymous user length constraints:
+ * 1. Response length compliance (200-800 chars ideal)
+ * 2. Information density scoring
+ * 3. Progressive penalty system for verbose responses
  */
 
 import { Eval, type EvalCase, type EvalScorerArgs, initLogger } from "braintrust";
@@ -15,11 +15,10 @@ import { ACTIVE_MODELS } from "../ai/providers/models/active";
 import type { ModelId } from "../ai/providers";
 import { buildCitationTestPrompt, buildGeneralTestPrompt } from "../ai/prompts/builders/system-prompt-builder";
 import { getBraintrustConfig } from "lightfast/v2/braintrust-env";
-import { scoreCitationFormat, scoreCitationCompleteness } from "../ai/prompts/scorers/citation-scorer";
+import { scoreAnonymousConciseness } from "../ai/prompts/scorers/concise-scorer";
 
 // Extract model IDs from the centralized model definitions (only active models)
 const ACTIVE_MODEL_IDS = Object.keys(ACTIVE_MODELS) as ModelId[];
-
 
 // Test model directly using AI SDK with production-identical prompts
 async function testModelDirect(
@@ -44,13 +43,13 @@ async function testModelDirect(
 			prompt,
 			experimental_telemetry: {
 				isEnabled: true,
-				functionId: "citation-format-evaluation",
+				functionId: "concise-format-evaluation",
 				metadata: {
 					context: "experiment",
-					experimentType: "citation-format-validation",
+					experimentType: "concise-format-validation",
 					modelId: modelId,
 					expectsCitations: expectsCitations,
-					evaluationName: "Citation Format Validation - All Models",
+					evaluationName: "Concise Format Validation - All Models",
 				},
 			},
 		});
@@ -67,27 +66,27 @@ type TestInput = { prompt: string; modelId: ModelId; expectsCitations: boolean }
 type TestExpected = { expectsCitations: boolean; modelId: ModelId };
 type TestOutput = string;
 
-// Test prompts to evaluate with each model
+// Test prompts focusing on different response lengths
 const TEST_PROMPTS = [
 	{
-		prompt: "What are the latest features in React 19? Please provide sources.",
-		expectsCitations: true,
-		description: "Technical question requiring citations"
-	},
-	{
-		prompt: "What are the performance benefits of React Server Components? Include references.", 
-		expectsCitations: true,
-		description: "Performance question requiring citations"
-	},
-	{
-		prompt: "Explain how JavaScript closures work with a simple example.",
+		prompt: "What are closures in JavaScript?",
 		expectsCitations: false,
-		description: "General knowledge question without citations"
+		description: "Basic concept explanation - should be concise"
 	},
 	{
-		prompt: "What is the difference between let and var in JavaScript?",
+		prompt: "Explain the differences between let, var, and const in JavaScript with examples.",
 		expectsCitations: false,
-		description: "Basic programming concepts without citations"
+		description: "Detailed comparison - test length management"
+	},
+	{
+		prompt: "What are the latest React 19 features? Please provide sources.",
+		expectsCitations: true,
+		description: "Technical question with citations - length + metadata"
+	},
+	{
+		prompt: "How does React Server Components improve performance? Include references and detailed explanations.",
+		expectsCitations: true,
+		description: "Complex technical topic - test verbose response handling"
 	}
 ];
 
@@ -122,7 +121,7 @@ initLogger({
 });
 
 // Main evaluation
-Eval("Citation Format Validation - All Models", {
+Eval("Concise Format Validation - All Models", {
 	data: TEST_DATA,
 
 	task: async (input: TestInput): Promise<TestOutput> => {
@@ -138,46 +137,39 @@ Eval("Citation Format Validation - All Models", {
 	},
 
 	scores: [
-		// Citation format compliance using dedicated scorer
+		// Primary conciseness scoring for anonymous users
 		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
-			const expectsCitations = args.input.expectsCitations;
+			console.log(`Scoring conciseness for ${modelId}, length: ${args.output?.length}`);
 			
-			console.log(`Scoring citation format for ${modelId}, expects: ${expectsCitations}`);
-
 			if (typeof args.output !== "string") return 0;
 			if (args.output.includes("ERROR:")) return 0;
-
-			const citationResult = scoreCitationFormat(args.output, expectsCitations);
-			console.log(`Citation validation result for ${modelId}:`, {
-				score: citationResult.score,
-				citationCount: citationResult.citationCount,
-				issues: citationResult.issues
+			
+			const conciseResult = scoreAnonymousConciseness(args.output);
+			console.log(`Conciseness result for ${modelId}:`, {
+				combinedScore: conciseResult.combinedScore,
+				lengthPenalty: conciseResult.conciseScore.lengthPenalty,
+				reasonCode: conciseResult.conciseScore.reasonCode,
+				actualLength: conciseResult.conciseScore.actualLength,
+				recommendedAction: conciseResult.recommendedAction
 			});
 			
-			return citationResult.score;
+			return conciseResult.combinedScore;
 		},
 
-		// Citation completeness scoring
+		// Information density scoring
 		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
-			const expectsCitations = args.input.expectsCitations;
-			
-			console.log(`Scoring citation completeness for ${modelId}`);
+			console.log(`Scoring information density for ${modelId}`);
 			
 			if (typeof args.output !== "string") return 0;
 			if (args.output.includes("ERROR:")) return 0;
 			
-			// Only score completeness for responses that should have citations
-			if (!expectsCitations) return 1;
-			
-			const completenessScore = scoreCitationCompleteness(args.output);
-			console.log(`Citation completeness score for ${modelId}: ${completenessScore}`);
-			
-			return completenessScore;
+			const conciseResult = scoreAnonymousConciseness(args.output);
+			return conciseResult.densityScore;
 		},
 
-		// Response quality and completeness
+		// Response quality check
 		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
 			console.log(`Scoring response quality for ${modelId}, length: ${args.output?.length}`);
@@ -205,4 +197,3 @@ Eval("Citation Format Validation - All Models", {
 		}
 	],
 });
-
