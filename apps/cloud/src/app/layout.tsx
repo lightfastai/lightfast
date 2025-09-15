@@ -10,23 +10,44 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { getAppUrl } from "@repo/url-utils";
 import { TRPCReactProvider } from "~/trpc/react";
 import { HydrateClient } from "~/trpc/server";
+import { StructuredData } from "~/components/structured-data";
 
 export const metadata: Metadata = {
 	title: {
-		default: siteConfig.name,
-		template: `%s - ${siteConfig.name}`,
+		default: "Lightfast Cloud - Enterprise Agent Execution Platform",
+		template: `%s | Lightfast Cloud - Enterprise AI Infrastructure`,
 	},
 	metadataBase: new URL(siteConfig.url),
-	description: siteConfig.description,
+	description: "Enterprise-grade cloud platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring for mission-critical agent workloads.",
 	keywords: [
 		"Lightfast Cloud",
-		"AI cloud platform",
-		"agent deployment",
-		"cloud infrastructure",
-		"serverless AI",
-		"managed AI agents",
-		"scalable AI platform",
-		"cloud-native agents",
+		"enterprise AI platform",
+		"agent deployment platform",
+		"cloud agent infrastructure", 
+		"production AI agents",
+		"agent orchestration platform",
+		"enterprise agent platform",
+		"AI agent cloud platform",
+		"scalable agent deployment",
+		"managed AI infrastructure",
+		"serverless agent platform",
+		"cloud-native AI agents",
+		"enterprise AI infrastructure",
+		"agent execution engine",
+		"AI platform for enterprise",
+		"production agent deployment",
+		"enterprise agent orchestration",
+		"cloud agent management",
+		"AI infrastructure platform",
+		"agent platform as a service",
+		"Vercel for AI agents alternative",
+		"AWS Lambda for AI agents alternative", 
+		"Google Cloud Run for AI alternative",
+		"better than Kubernetes for AI",
+		"Render alternative for AI agents",
+		"Railway alternative for AI agents",
+		"agent deployment service",
+		"AI workload platform"
 	],
 	authors: [
 		{
@@ -38,24 +59,25 @@ export const metadata: Metadata = {
 	openGraph: {
 		type: "website",
 		locale: "en_US",
-		url: siteConfig.url,
-		title: siteConfig.name,
-		description: siteConfig.description,
-		siteName: siteConfig.name,
+		url: `${siteConfig.url}/cloud`,
+		title: "Lightfast Cloud - Enterprise Agent Execution Platform",
+		description: "Enterprise-grade cloud platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring for mission-critical agent workloads.",
+		siteName: "Lightfast Cloud",
 		images: [
 			{
-				url: siteConfig.ogImage,
+				url: `${siteConfig.ogImage}`,
 				width: 1200,
 				height: 630,
-				alt: siteConfig.name,
+				alt: "Lightfast Cloud - Enterprise Agent Execution Platform",
 			},
 		],
 	},
 	twitter: {
-		card: "summary_large_image",
-		title: siteConfig.name,
-		description: siteConfig.description,
+		card: "summary_large_image", 
+		title: "Lightfast Cloud - Enterprise Agent Execution Platform",
+		description: "Enterprise-grade cloud platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring.",
 		images: [siteConfig.ogImage],
+		creator: "@lightfastai",
 	},
 	icons: {
 		icon: "/favicon.ico",
@@ -76,15 +98,32 @@ export const metadata: Metadata = {
 			},
 		],
 	},
-	applicationName: siteConfig.name,
+	applicationName: "Lightfast Cloud",
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: "default",
-		title: siteConfig.name,
+		title: "Lightfast Cloud",
 	},
 	formatDetection: {
 		telephone: false,
 	},
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			"max-video-preview": -1,
+			"max-image-preview": "large",
+			"max-snippet": -1,
+		},
+	},
+	verification: {
+		google: "lightfast-cloud-enterprise-platform",
+	},
+	category: "Technology",
+	classification: "Enterprise AI Infrastructure Platform",
+	referrer: "origin-when-cross-origin",
 };
 
 export const viewport: Viewport = {
@@ -118,7 +157,9 @@ export default function RootLayout({
 			}}
 		>
 			<html lang="en" suppressHydrationWarning>
-				<head />
+				<head>
+					<StructuredData type="SoftwareApplication" />
+				</head>
 				<body className={cn("bg-background dark min-h-screen", fonts)}>
 					<TRPCReactProvider>{children}</TRPCReactProvider>
 					<Toaster />

@@ -1,4 +1,33 @@
+import type { Metadata } from "next";
+
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
+
+export const metadata: Metadata = {
+  title: "Lightfast Cloud - Enterprise Agent Execution Platform | Join Waitlist",
+  description: "Join the waitlist for Lightfast Cloud - the enterprise-grade platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring for mission-critical workloads.",
+  keywords: [
+    "Lightfast Cloud waitlist",
+    "enterprise AI platform",
+    "agent deployment platform", 
+    "production AI agents",
+    "enterprise agent orchestration",
+    "AI infrastructure platform",
+    "cloud agent platform",
+    "early access AI platform"
+  ],
+  openGraph: {
+    title: "Join Lightfast Cloud Waitlist - Enterprise Agent Platform",
+    description: "Get early access to the enterprise-grade platform for deploying AI agents in production.",
+    url: "https://cloud.lightfast.ai",
+  },
+  twitter: {
+    title: "Join Lightfast Cloud Waitlist - Enterprise Agent Platform", 
+    description: "Get early access to the enterprise-grade platform for deploying AI agents in production.",
+  },
+  alternates: {
+    canonical: "https://cloud.lightfast.ai",
+  },
+};
 
 export default function HomePage() {
 	return (
