@@ -35,7 +35,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
 	let prompt = basePrompt;
 
 	if (isAnonymous) {
-		// Anonymous users: no artifact capabilities
+		// Anonymous users: no artifact capabilities + length constraints
 		prompt += `
 
 You can help users with:
@@ -43,7 +43,16 @@ You can help users with:
 - Providing information and explanations
 - General assistance and conversation
 
-IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.`;
+IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.
+
+LENGTH GUIDELINES:
+Keep responses concise and focused. Aim for 200-800 characters for optimal user experience. Prioritize:
+- Essential information first
+- Clear, direct answers
+- Relevant examples when helpful
+- Quality over quantity
+
+Avoid unnecessary elaboration, redundant explanations, or overly verbose responses.`;
 
 		// Add code formatting section for anonymous users
 		if (includeCodeFormatting) {

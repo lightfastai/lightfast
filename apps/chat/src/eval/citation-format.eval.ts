@@ -16,6 +16,7 @@ import { ACTIVE_MODELS } from "../ai/providers/models/active";
 import type { ModelId } from "../ai/providers";
 import { buildCitationTestPrompt, buildGeneralTestPrompt } from "../ai/prompts/builders/system-prompt-builder";
 import { getBraintrustConfig } from "lightfast/v2/braintrust-env";
+import { scoreAnonymousConciseness } from "../ai/prompts/scorers/concise-scorer";
 
 // Extract model IDs from the centralized model definitions (only active models)
 const ACTIVE_MODEL_IDS = Object.keys(ACTIVE_MODELS) as ModelId[];
@@ -221,6 +222,26 @@ Eval("Citation Format Validation - All Models", {
 			const hasValidFormat = !args.output.includes("ERROR");
 			
 			return hasContent && hasValidFormat ? 1 : 0;
+		},
+
+		// Anonymous user conciseness scoring
+		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
+			const modelId = args.input.modelId;
+			console.log(`Scoring conciseness for ${modelId}, length: ${args.output?.length}`);
+			
+			if (typeof args.output !== "string") return 0;
+			if (args.output.includes("ERROR:")) return 0;
+			
+			const conciseResult = scoreAnonymousConciseness(args.output);
+			console.log(`Conciseness result for ${modelId}:`, {
+				combinedScore: conciseResult.combinedScore,
+				lengthPenalty: conciseResult.conciseScore.lengthPenalty,
+				reasonCode: conciseResult.conciseScore.reasonCode,
+				actualLength: conciseResult.conciseScore.actualLength,
+				recommendedAction: conciseResult.recommendedAction
+			});
+			
+			return conciseResult.combinedScore;
 		}
 	],
 });
