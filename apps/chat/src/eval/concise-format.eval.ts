@@ -121,7 +121,7 @@ initLogger({
 });
 
 // Main evaluation
-Eval("Concise Format Validation - All Models", {
+Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
 	data: TEST_DATA,
 
 	task: async (input: TestInput): Promise<TestOutput> => {

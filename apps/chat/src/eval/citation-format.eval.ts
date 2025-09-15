@@ -122,7 +122,7 @@ initLogger({
 });
 
 // Main evaluation
-Eval("Citation Format Validation - All Models", {
+Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
 	data: TEST_DATA,
 
 	task: async (input: TestInput): Promise<TestOutput> => {

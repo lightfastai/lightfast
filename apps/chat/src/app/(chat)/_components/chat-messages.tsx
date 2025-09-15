@@ -6,10 +6,7 @@ import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
-import {
-	parseCitations,
-	generateSourceTitle,
-} from "@repo/ui/lib/citation-parser";
+import { parseResponseMetadata } from "~/ai/prompts/parsers/metadata-parser";
 import {
 	InlineCitationCard,
 	InlineCitationCardTrigger,
@@ -29,9 +26,16 @@ import {
 	ReasoningTrigger,
 } from "@repo/ui/components/ai-elements/reasoning";
 
-// Inline helper to remove cited sources section from text
-const cleanCitedSources = (text: string): string => {
-	// First, check for new JSON citation format
+// Inline helper to remove metadata sections from text
+const cleanMetadataSections = (text: string): string => {
+	// Check for new ---METADATA--- format
+	const metadataDelimiter = "---METADATA---";
+	const metadataIndex = text.indexOf(metadataDelimiter);
+	if (metadataIndex !== -1) {
+		return text.substring(0, metadataIndex).trim();
+	}
+
+	// Check for legacy ---CITATIONS--- format
 	const citationDelimiter = "---CITATIONS---";
 	const delimiterIndex = text.indexOf(citationDelimiter);
 	if (delimiterIndex !== -1) {
@@ -168,7 +172,7 @@ const AssistantMessage = memo(function AssistantMessage({
 }) {
 	const [sources, setSources] = useState<CitationSource[]>([]);
 
-	// Process citations when streaming is complete
+	// Process metadata when streaming is complete
 	useEffect(() => {
 		if (status !== "ready") return; // Only process when full response is received
 
@@ -177,9 +181,9 @@ const AssistantMessage = memo(function AssistantMessage({
 			.map((part) => part.text)
 			.join("\n");
 
-		// Parse numbered citations and extract URLs from citation list
-		const parsedCitations = parseCitations(textContent);
-		setSources(parsedCitations.sources);
+		// Parse metadata using new extensible parser
+		const parsedMetadata = parseResponseMetadata(textContent);
+		setSources(parsedMetadata.citations);
 	}, [message.parts, status]);
 
 	// Hook for copy functionality with success state
@@ -237,7 +241,7 @@ const AssistantMessage = memo(function AssistantMessage({
 										className="w-full px-8 py-0 [&>*]:my-0"
 									>
 										<Markdown className="[&>*]:my-0">
-											{cleanCitedSources(part.text)}
+											{cleanMetadataSections(part.text)}
 										</Markdown>
 									</MessageContent>
 								);
@@ -313,9 +317,7 @@ const AssistantMessage = memo(function AssistantMessage({
 												{sources.map((source, index) => (
 													<InlineCitationCarouselItem key={index}>
 														<InlineCitationSource
-															title={
-																source.title ?? generateSourceTitle(source.url)
-															}
+															title={source.title ?? `Source ${index + 1}`}
 															url={source.url}
 														/>
 													</InlineCitationCarouselItem>
