@@ -31,21 +31,25 @@ export enum ClerkPlanKey {
   PLUS_TIER = 'plus_tier',
 }
 
-/**
- * Clerk plan IDs used for CheckoutButton component
- */
-export enum ClerkPlanId {
-  FREE = 'cplan_free',
-  PLUS = 'cplan_32cweGLPsMKmT3b5PKCcpMJq0gt',
-}
+import { env } from "~/env";
 
 /**
- * Mapping from plan keys to Clerk plan IDs (used for CheckoutButton)
+ * Runtime function to get Clerk plan IDs based on environment
  */
-export const CLERK_PLAN_IDS: Record<ClerkPlanKey, ClerkPlanId> = {
-  [ClerkPlanKey.FREE_TIER]: ClerkPlanId.FREE,
-  [ClerkPlanKey.PLUS_TIER]: ClerkPlanId.PLUS,
-} as const;
+export function getClerkPlanId(planKey: ClerkPlanKey): string {
+  const isProduction = env.NEXT_PUBLIC_VERCEL_ENV === 'production';
+
+  switch (planKey) {
+    case ClerkPlanKey.FREE_TIER:
+      return 'cplan_free';
+    case ClerkPlanKey.PLUS_TIER:
+      return isProduction 
+        ? 'cplan_32azs7rjM8dS6ygaIs0LnclF91f' 
+        : 'cplan_32cweGLPsMKmT3b5PKCcpMJq0gt';
+    default:
+      throw new Error(`Unknown plan key: ${planKey}`);
+  }
+}
 
 export interface UserUsage {
   userId: string;
@@ -130,12 +134,6 @@ export class FeatureNotAllowedError extends Error implements BillingError {
   }
 }
 
-/**
- * Utility function to get Clerk plan ID from plan key (for CheckoutButton)
- */
-export function getClerkPlanId(planKey: ClerkPlanKey): ClerkPlanId {
-  return CLERK_PLAN_IDS[planKey];
-}
 
 /**
  * Type-safe helper to check if user has a specific plan using auth().has()
