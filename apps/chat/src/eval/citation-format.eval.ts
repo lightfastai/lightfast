@@ -148,7 +148,13 @@ const TEST_DATA: EvalCase<TestInput, TestExpected, { model: string; prompt_type:
 
 for (const testPrompt of TEST_PROMPTS) {
 	for (const modelId of ACTIVE_MODELS) {
+		// Create descriptive name for easy identification in Braintrust UI
+		const modelDisplayName = modelId.split('/')[1] || modelId; // e.g., "claude-4-sonnet" from "anthropic/claude-4-sonnet"
+		const citationType = testPrompt.expectsCitations ? "Citations" : "No Citations";
+		const name = `${modelDisplayName} - ${citationType} - ${testPrompt.description}`;
+		
 		TEST_DATA.push({
+			name,
 			input: {
 				prompt: testPrompt.prompt,
 				modelId,
