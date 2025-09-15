@@ -138,7 +138,8 @@
       "Bash(PORT=4104 pnpm with-env next dev --port 4104)",
       "Bash(PORT=4104 pnpm dev)",
       "Bash(diff:*)",
-      "WebFetch(domain:app.planetscale.com)"
+      "WebFetch(domain:app.planetscale.com)",
+      "WebFetch(domain:platform.openai.com)"
     ],
     "deny": []
   },
