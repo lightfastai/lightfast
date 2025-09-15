@@ -13,7 +13,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
   name: "Lightfast",
   url: "https://lightfast.ai",
   ogImage: "https://lightfast.ai/og.jpg",
-  description: "Lightfast is a integration layer for AI design workflows",
+  description: "Build production-ready AI agents with cloud-native execution engine. State-machine orchestration, resource scheduling, and infinitely scalable agent deployment.",
   links: {
     twitter: {
       title: "Twitter",

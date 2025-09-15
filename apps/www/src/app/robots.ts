@@ -37,7 +37,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [
         "/api/", // Protect API routes
-        "/legal/", // Protect legal pages from being indexed directly
+        "/_next/", // Protect Next.js internal files
       ],
     },
     sitemap: `${createBaseUrl()}/sitemap.xml`,
