@@ -1,7 +1,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
-import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
+import { smoothStream, stepCountIs, wrapLanguageModel, generateObject, NoSuchToolError } from "ai";
 import type { ModelId } from "~/ai/providers";
 import {
 	getModelConfig,
@@ -66,6 +66,7 @@ const createSystemPromptForUser = (isAnonymous: boolean): string => {
 		? buildAnonymousSystemPrompt(true) 
 		: buildAuthenticatedSystemPrompt(true);
 };
+
 
 // Initialize Braintrust logging
 const braintrustConfig = getBraintrustConfig();
@@ -233,6 +234,34 @@ const handler = async (
 							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
 							middleware: BraintrustMiddleware({ debug: true }),
 						}),
+						experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
+							// Don't attempt to fix invalid tool names
+							if (NoSuchToolError.isInstance(error)) {
+								return null;
+							}
+
+							const tool = tools[toolCall.toolName];
+							if (!tool) return null;
+
+							try {
+								const result = await generateObject({
+									model: gateway('google/gemini-2.5-flash'),
+									schema: tool.inputSchema,
+									prompt: [
+										`The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
+										JSON.stringify(toolCall.input),
+										`The tool accepts the following schema:`,
+										JSON.stringify(inputSchema(toolCall)),
+										'Please fix the inputs to match the schema exactly. Preserve the original intent while ensuring all parameters are valid.',
+									].join('\n'),
+								});
+
+								console.log(`[Tool Repair] Successfully repaired: ${toolCall.toolName}`);
+								return { ...toolCall, input: JSON.stringify(result.object) };
+							} catch {
+								return null;
+							}
+						},
 						experimental_telemetry: {
 							isEnabled: isOtelEnabled(),
 							functionId: "chat-resume",
@@ -398,6 +427,34 @@ const handler = async (
 						chunking: "word",
 					}),
 					stopWhen: stepCountIs(10),
+					experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
+						// Don't attempt to fix invalid tool names
+						if (NoSuchToolError.isInstance(error)) {
+							return null;
+						}
+
+						const tool = tools[toolCall.toolName];
+						if (!tool) return null;
+
+						try {
+							const result = await generateObject({
+								model: gateway('google/gemini-2.5-flash'),
+								schema: tool.inputSchema,
+								prompt: [
+									`The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
+									JSON.stringify(toolCall.input),
+									`The tool accepts the following schema:`,
+									JSON.stringify(inputSchema(toolCall)),
+									'Please fix the inputs to match the schema exactly. Preserve the original intent while ensuring all parameters are valid.',
+								].join('\n'),
+							});
+
+							console.log(`[Tool Repair] Successfully repaired: ${toolCall.toolName}`);
+							return { ...toolCall, input: JSON.stringify(result.object) };
+						} catch {
+							return null;
+						}
+					},
 					experimental_telemetry: {
 						isEnabled: isOtelEnabled(),
 						functionId: "chat-inference",

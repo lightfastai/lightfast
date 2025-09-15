@@ -139,7 +139,8 @@
       "Bash(PORT=4104 pnpm dev)",
       "Bash(diff:*)",
       "WebFetch(domain:app.planetscale.com)",
-      "WebFetch(domain:platform.openai.com)"
+      "WebFetch(domain:platform.openai.com)",
+      "Bash(pnpm eval:tool-calls:*)"
     ],
     "deny": []
   },

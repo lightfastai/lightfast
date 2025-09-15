@@ -2,7 +2,7 @@ import baseConfig from "@repo/eslint-config/base";
 
 export default [
   {
-    ignores: [".next/**"],
+    ignores: [".next/**", "src/eval/**"],
   },
   ...baseConfig,
 ];
