@@ -7,7 +7,8 @@
  * 3. Model-specific citation generation patterns
  */
 
-import { Eval, type EvalCase, type EvalScorerArgs, initLogger } from "braintrust";
+import { Eval, initLogger } from "braintrust";
+import type { EvalCase, EvalScorerArgs } from "braintrust";
 import { gateway } from "@ai-sdk/gateway";
 import { generateText, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
@@ -58,13 +59,13 @@ async function testModelDirect(
 		return result.text;
 	} catch (error) {
 		console.error("Model Error:", error);
-		return `ERROR: ${error}`;
+		return `ERROR: ${String(error)}`;
 	}
 }
 
 // Define types for our evaluation
-type TestInput = { prompt: string; modelId: ModelId; expectsCitations: boolean };
-type TestExpected = { expectsCitations: boolean; modelId: ModelId };
+interface TestInput { prompt: string; modelId: ModelId; expectsCitations: boolean }
+interface TestExpected { expectsCitations: boolean; modelId: ModelId }
 type TestOutput = string;
 
 // Test prompts to evaluate with each model
@@ -122,7 +123,7 @@ initLogger({
 });
 
 // Main evaluation
-Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
+void Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
 	data: TEST_DATA,
 
 	task: async (input: TestInput): Promise<TestOutput> => {
@@ -180,7 +181,7 @@ Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
 		// Response quality and completeness
 		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
-			console.log(`Scoring response quality for ${modelId}, length: ${args.output?.length}`);
+			console.log(`Scoring response quality for ${modelId}, length: ${args.output.length}`);
 			
 			if (typeof args.output !== "string") return 0;
 			if (args.output.includes("ERROR:")) return 0;
@@ -191,7 +192,7 @@ Eval(braintrustConfig.projectName || "lightfast-chat-evaluation", {
 
 		// Model functionality check
 		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
-			const modelId = args.input.modelId;
+			const _modelId = args.input.modelId;
 			
 			if (args.output.includes("ERROR:")) {
 				return 0; // Model failed to respond

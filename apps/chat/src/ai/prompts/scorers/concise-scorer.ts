@@ -149,8 +149,8 @@ export function scoreInformationDensity(output: string): number {
 	// Simple heuristics for information density
 	const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
 	const words = output.split(/\s+/).filter(w => w.length > 0);
-	const technicalTerms = (output.match(/\b[A-Z][a-z]*[A-Z]\w*\b|\b\w+\(\)\b|\b\d+\.\d+\b/g) || []).length;
-	const citations = (output.match(/\[\d+\]/g) || []).length;
+	const technicalTerms = (output.match(/\b[A-Z][a-z]*[A-Z]\w*\b|\b\w+\(\)\b|\b\d+\.\d+\b/g) ?? []).length;
+	const citations = (output.match(/\[\d+\]/g) ?? []).length;
 	
 	// Information density factors
 	const averageWordsPerSentence = words.length / Math.max(1, sentences.length);

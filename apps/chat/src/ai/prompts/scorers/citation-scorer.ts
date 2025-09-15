@@ -78,7 +78,7 @@ export function scoreCitationFormat(output: string, expectsCitations: boolean): 
 	}
 
 	// Check in-text citations match sources
-	const inTextCitations = (output.match(/\[(\d+)\]/g) || [])
+	const inTextCitations = (output.match(/\[(\d+)\]/g) ?? [])
 		.map(m => parseInt(m.slice(1, -1)))
 		.filter(id => !isNaN(id));
 		

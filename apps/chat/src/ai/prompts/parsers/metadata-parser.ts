@@ -4,7 +4,7 @@
  * Supports the new ---METADATA--- format while maintaining backward compatibility
  */
 
-import type { ResponseMetadata, CitationMetadata } from "../metadata";
+import type { ResponseMetadata } from "../metadata";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
 
 export interface ParsedMetadata {
@@ -76,7 +76,7 @@ function parseMetadataFormat(text: string): ParsedMetadata {
 		}
 
 		return result;
-	} catch (e) {
+	} catch {
 		// JSON parsing failed, return empty result
 		return { citations: [] };
 	}
@@ -96,17 +96,17 @@ function parseLegacyCitationsFormat(text: string): CitationSource[] {
 		
 		// Extract JSON block after delimiter
 		const jsonBlock = text.substring(delimiterIndex + citationDelimiter.length).trim();
-		const parsed = JSON.parse(jsonBlock) as { citations: CitationSource[] };
+		const parsed = JSON.parse(jsonBlock) as { citations: CitationSource[] | undefined };
 		
-		if (parsed?.citations && Array.isArray(parsed.citations)) {
+		if (parsed.citations && Array.isArray(parsed.citations)) {
 			return parsed.citations.map(citation => ({
 				id: citation.id,
 				url: citation.url,
-				title: citation.title || generateSourceTitle(citation.url),
+				title: citation.title ?? generateSourceTitle(citation.url),
 				snippet: citation.snippet
 			}));
 		}
-	} catch (e) {
+	} catch {
 		// JSON parsing failed
 	}
 	
@@ -194,15 +194,15 @@ function generateSourceTitle(url: string): string {
 			// Extract main domain name (remove common TLDs and subdomains)
 			const domainParts = domain.split('.');
 			if (domainParts.length >= 2) {
-				title = domainParts[domainParts.length - 2] || ''; // Get the main domain name
+				title = domainParts[domainParts.length - 2] ?? ''; // Get the main domain name
 			} else {
-				title = domainParts[0] || '';
+				title = domainParts[0] ?? '';
 			}
 		}
 		
 		return titleCase(title);
 		
-	} catch (e) {
+	} catch {
 		return 'External Source';
 	}
 }

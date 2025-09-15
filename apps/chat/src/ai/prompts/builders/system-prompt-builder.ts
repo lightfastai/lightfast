@@ -74,7 +74,7 @@ Avoid unnecessary elaboration, redundant explanations, or overly verbose respons
 /**
  * Build system prompt for anonymous users (matches route.ts exactly)
  */
-export function buildAnonymousSystemPrompt(includeCitations: boolean = true): string {
+export function buildAnonymousSystemPrompt(includeCitations = true): string {
 	return buildSystemPrompt({
 		isAnonymous: true,
 		includeCitations,
@@ -85,7 +85,7 @@ export function buildAnonymousSystemPrompt(includeCitations: boolean = true): st
 /**
  * Build system prompt for authenticated users (matches route.ts exactly)
  */
-export function buildAuthenticatedSystemPrompt(includeCitations: boolean = true): string {
+export function buildAuthenticatedSystemPrompt(includeCitations = true): string {
 	return buildSystemPrompt({
 		isAnonymous: false,
 		includeCitations,

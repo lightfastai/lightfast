@@ -5,12 +5,12 @@
  */
 
 export interface CitationMetadata {
-	citations: Array<{
+	citations: {
 		id: number;
 		url: string;
 		title: string;
 		snippet?: string;
-	}>;
+	}[];
 }
 
 export interface ConfidenceMetadata {
@@ -21,11 +21,11 @@ export interface ConfidenceMetadata {
 }
 
 export interface FactCheckMetadata {
-	fact_checks: Array<{
+	fact_checks: {
 		claim: string;
 		verified: boolean;
 		source?: string;
-	}>;
+	}[];
 }
 
 // Extensible metadata container
@@ -34,8 +34,9 @@ export interface ResponseMetadata extends
 	Partial<ConfidenceMetadata>, 
 	Partial<FactCheckMetadata> {
 	// Additional metadata types can be added here
-	[key: string]: any;
 }
+
+export type AdditionalMetadata = Record<string, unknown>;
 
 /**
  * Metadata format instructions for prompts
