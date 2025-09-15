@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";

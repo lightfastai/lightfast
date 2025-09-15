@@ -1,4 +1,4 @@
-import { ACTIVE_MODELS } from "~/lib/ai/providers/models/active";
+import { ACTIVE_MODELS } from "~/ai/providers/models/active";
 import { MessageType } from "./types";
 
 /**

@@ -47,8 +47,8 @@ const ProviderModelSelector = dynamic(
 
 // Import ProcessedModel type for model processing
 import type { ProcessedModel } from "./provider-model-selector";
-import { getVisibleModels } from "~/lib/ai/providers";
-import type { ModelId } from "~/lib/ai/providers";
+import { getVisibleModels } from "~/ai/providers";
+import type { ModelId } from "~/ai/providers";
 
 const AuthPromptSelector = dynamic(
 	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
