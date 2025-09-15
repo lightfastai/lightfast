@@ -242,9 +242,7 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 													}}
 												>
 													<Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-														{isFree
-															? `Get ${plan.name}`
-															: `Downgrade to ${plan.name}`}
+														{`Downgrade to ${plan.name}`}
 													</Button>
 												</CheckoutButton>
 											</SignedIn>

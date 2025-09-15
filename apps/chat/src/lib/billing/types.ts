@@ -47,7 +47,7 @@ export function getClerkPlanId(planKey: ClerkPlanKey): string {
         ? 'cplan_32azs7rjM8dS6ygaIs0LnclF91f' 
         : 'cplan_32cweGLPsMKmT3b5PKCcpMJq0gt';
     default:
-      throw new Error(`Unknown plan key: ${planKey}`);
+      throw new Error(`Unknown plan key: ${String(planKey)}`);
   }
 }
 
