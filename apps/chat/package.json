@@ -13,7 +13,10 @@
 		"with-env": "dotenv -e ./.vercel/.env.development.local --",
 		"eval:citations": "pnpm with-env npx braintrust eval ./src/eval/citation-format.eval.ts",
 		"eval:concise": "pnpm with-env npx braintrust eval ./src/eval/concise-format.eval.ts",
-		"eval:all": "pnpm with-env npx braintrust eval ./src/eval/"
+		"eval:tool-calls": "pnpm with-env npx braintrust eval ./src/eval/tool-calls.eval.ts",
+		"eval:tool-repair": "pnpm with-env npx braintrust eval ./src/eval/tool-call-repair.eval.ts",
+		"eval:all": "pnpm with-env npx braintrust eval ./src/eval/",
+		"eval:tools": "pnpm with-env npx braintrust eval ./src/eval/tool-calls.eval.ts ./src/eval/tool-call-repair.eval.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "catalog:",

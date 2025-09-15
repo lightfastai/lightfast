@@ -1,7 +1,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
-import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
+import { smoothStream, stepCountIs, wrapLanguageModel, generateObject, NoSuchToolError } from "ai";
 import type { ModelId } from "~/ai/providers";
 import {
 	getModelConfig,
@@ -65,6 +65,64 @@ const createSystemPromptForUser = (isAnonymous: boolean): string => {
 	return isAnonymous 
 		? buildAnonymousSystemPrompt(true) 
 		: buildAuthenticatedSystemPrompt(true);
+};
+
+// Tool call repair function using google/gemini-2.5-flash
+const repairToolCall = async ({
+	toolCall,
+	tools,
+	inputSchema,
+	error,
+}: {
+	toolCall: any;
+	tools: any;
+	inputSchema: (toolCall: any) => any;
+	error: Error;
+}) => {
+	console.log(`[Tool Repair] Attempting to repair tool call: ${toolCall.toolName}`, {
+		error: error.message,
+		originalInput: toolCall.input,
+	});
+
+	// Don't attempt to fix invalid tool names
+	if (NoSuchToolError.isInstance(error)) {
+		console.log(`[Tool Repair] Invalid tool name, cannot repair: ${toolCall.toolName}`);
+		return null;
+	}
+
+	const tool = tools[toolCall.toolName as keyof typeof tools];
+	if (!tool) {
+		console.log(`[Tool Repair] Tool not found: ${toolCall.toolName}`);
+		return null;
+	}
+
+	try {
+		// Use google/gemini-2.5-flash for repair - cheap and fast
+		const { object: repairedArgs } = await generateObject({
+			model: gateway('google/gemini-2.5-flash'),
+			schema: tool.inputSchema,
+			prompt: [
+				`The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
+				JSON.stringify(toolCall.input),
+				`The tool accepts the following schema:`,
+				JSON.stringify(inputSchema(toolCall)),
+				'Please fix the inputs to match the schema exactly. Preserve the original intent while ensuring all parameters are valid.',
+			].join('\n'),
+		});
+
+		console.log(`[Tool Repair] Successfully repaired tool call: ${toolCall.toolName}`, {
+			originalInput: toolCall.input,
+			repairedArgs,
+		});
+
+		return { ...toolCall, input: JSON.stringify(repairedArgs) };
+	} catch (repairError) {
+		console.error(`[Tool Repair] Failed to repair tool call: ${toolCall.toolName}`, {
+			repairError: repairError instanceof Error ? repairError.message : String(repairError),
+			originalError: error.message,
+		});
+		return null;
+	}
 };
 
 // Initialize Braintrust logging
@@ -233,6 +291,7 @@ const handler = async (
 							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
 							middleware: BraintrustMiddleware({ debug: true }),
 						}),
+						experimental_repairToolCall: repairToolCall,
 						experimental_telemetry: {
 							isEnabled: isOtelEnabled(),
 							functionId: "chat-resume",
@@ -398,6 +457,7 @@ const handler = async (
 						chunking: "word",
 					}),
 					stopWhen: stepCountIs(10),
+					experimental_repairToolCall: repairToolCall,
 					experimental_telemetry: {
 						isEnabled: isOtelEnabled(),
 						functionId: "chat-inference",
