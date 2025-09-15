@@ -7,28 +7,29 @@
  * 3. Model-specific citation generation patterns
  */
 
-import { Eval, type EvalCase, type EvalScorerArgs } from "braintrust";
+import { Eval, type EvalCase, type EvalScorerArgs, initLogger } from "braintrust";
 import { gateway } from "@ai-sdk/gateway";
 import { generateText, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
-import { parseCitations, hasCitations } from "@repo/ui/lib/citation-parser";
+import { parseResponseMetadata, hasResponseMetadata } from "../ai/prompts/parsers/metadata-parser";
 import { ACTIVE_MODELS } from "../ai/providers/models/active";
 import type { ModelId } from "../ai/providers";
 import { buildCitationTestPrompt, buildGeneralTestPrompt } from "../ai/prompts/builders/system-prompt-builder";
+import { getBraintrustConfig } from "lightfast/v2/braintrust-env";
 
 // Extract model IDs from the centralized model definitions (only active models)
 const ACTIVE_MODEL_IDS = Object.keys(ACTIVE_MODELS) as ModelId[];
 
-// Citation format validator using existing citation parser
+// Citation format validator using new extensible metadata parser
 function validateCitationFormat(output: string): number {
-	const citationData = parseCitations(output);
+	const metadata = parseResponseMetadata(output);
 	
-	if (citationData.sources.length === 0) {
+	if (metadata.citations.length === 0) {
 		return 0;
 	}
 	
 	// Check if citations are properly structured
-	const hasValidSources = citationData.sources.every(source => 
+	const hasValidSources = metadata.citations.every(source => 
 		typeof source.id === 'number' && 
 		typeof source.url === 'string' && 
 		source.url.startsWith('http') &&
@@ -40,7 +41,7 @@ function validateCitationFormat(output: string): number {
 	}
 	
 	// Check sequential IDs starting from 1
-	const ids = citationData.sources.map(s => s.id).sort((a, b) => a - b);
+	const ids = metadata.citations.map(s => s.id).sort((a, b) => a - b);
 	const expectedIds = Array.from({ length: ids.length }, (_, i) => i + 1);
 	const hasSequentialIds = JSON.stringify(ids) === JSON.stringify(expectedIds);
 	
@@ -50,7 +51,7 @@ function validateCitationFormat(output: string): number {
 		.filter(id => !isNaN(id));
 		
 	const allReferencedCited = inTextCitations.every(id =>
-		citationData.sources.some(source => source.id === id)
+		metadata.citations.some(source => source.id === id)
 	);
 	
 	return hasSequentialIds && allReferencedCited ? 1 : 0.7;
@@ -77,6 +78,17 @@ async function testModelDirect(
 			}),
 			system: systemPrompt,
 			prompt,
+			experimental_telemetry: {
+				isEnabled: true,
+				functionId: "citation-format-evaluation",
+				metadata: {
+					context: "experiment",
+					experimentType: "citation-format-validation",
+					modelId: modelId,
+					expectsCitations: expectsCitations,
+					evaluationName: "Citation Format Validation - All Models",
+				},
+			},
 		});
 
 		return result.text;
@@ -138,6 +150,13 @@ for (const testPrompt of TEST_PROMPTS) {
 	}
 }
 
+// Initialize Braintrust logging with configured project name
+const braintrustConfig = getBraintrustConfig();
+initLogger({
+	apiKey: braintrustConfig.apiKey,
+	projectName: braintrustConfig.projectName || "lightfast-chat-evaluation",
+});
+
 // Main evaluation
 Eval("Citation Format Validation - All Models", {
 	data: TEST_DATA,
@@ -168,9 +187,9 @@ Eval("Citation Format Validation - All Models", {
 				return score;
 			} else {
 				// If no citations expected, check that none are present
-				const hasCitationsInOutput = hasCitations(args.output) || args.output.includes("---CITATIONS---");
-				const score = hasCitationsInOutput ? 0 : 1;
-				console.log(`No citations expected, found citations: ${hasCitationsInOutput}, score: ${score}`);
+				const hasMetadataInOutput = hasResponseMetadata(args.output);
+				const score = hasMetadataInOutput ? 0 : 1;
+				console.log(`No citations expected, found metadata: ${hasMetadataInOutput}, score: ${score}`);
 				return score;
 			}
 		},

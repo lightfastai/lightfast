@@ -7,12 +7,12 @@
 export const CITATION_FORMAT_SECTION = `CITATION USAGE:
 When referencing external information, use numbered citations in your response and provide structured citation data.
 
-Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
+Format: Use [1], [2], [3] etc. in your text, then end your complete response with metadata.
 
 Example response format:
 React 19 introduces server components [1] which work seamlessly with Next.js [2]. This approach simplifies state management [3].
 
----CITATIONS---
+---METADATA---
 {
   "citations": [
     {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release", "snippet": "Introducing server components for better performance"},
@@ -23,7 +23,7 @@ React 19 introduces server components [1] which work seamlessly with Next.js [2]
 
 Rules:
 - Use numbered citations [1], [2], [3] in your response text
-- Always end with ---CITATIONS--- followed by JSON data
+- Always end with ---METADATA--- followed by JSON data
 - Include sequential IDs starting from 1
 - Provide URLs and titles (snippets are optional)
 - Only cite facts, statistics, API details, version numbers, quotes
