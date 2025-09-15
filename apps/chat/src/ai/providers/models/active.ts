@@ -104,7 +104,7 @@ export const ACTIVE_MODELS = {
 			thinking: true, // Gemini 2.5 Flash has thinking capabilities
 			pdfSupport: true, // Supports multimodal document processing
 		},
-		accessLevel: "authenticated",
+		accessLevel: "anonymous",
 		streamingDelay: 40,
 	}),
 	"google/gemini-2.5-pro": ModelConfigSchema.parse({

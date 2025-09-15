@@ -53,11 +53,11 @@ export function getModelsForUser(isAuthenticated: boolean): ModelConfig[] {
 
 // Get the default model for a user based on authentication
 export function getDefaultModelForUser(isAuthenticated: boolean): ModelId {
-	// For anonymous users, use gpt-5-nano if available
+	// For anonymous users, use gemini-2.5-flash if available
 	if (!isAuthenticated) {
 		const anonymousModels = getModelsForUser(false);
-		const gpt5Nano = anonymousModels.find(m => m.id === "openai/gpt-5-nano");
-		if (gpt5Nano) return "openai/gpt-5-nano";
+		const gemini25Flash = anonymousModels.find(m => m.id === "google/gemini-2.5-flash");
+		if (gemini25Flash) return "google/gemini-2.5-flash";
 		// Fallback to first available anonymous model
 		const firstAnonymousModel = anonymousModels[0];
 		if (firstAnonymousModel) return firstAnonymousModel.id as ModelId;
