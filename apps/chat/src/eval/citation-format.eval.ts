@@ -144,7 +144,7 @@ const TEST_PROMPTS = [
 ];
 
 // Generate test data: each prompt × each model = comprehensive evaluation
-const TEST_DATA: EvalCase<TestInput, TestExpected, void>[] = [];
+const TEST_DATA: EvalCase<TestInput, TestExpected, { model: string; prompt_type: string }>[] = [];
 
 for (const testPrompt of TEST_PROMPTS) {
 	for (const modelId of ACTIVE_MODELS) {
@@ -157,6 +157,10 @@ for (const testPrompt of TEST_PROMPTS) {
 			expected: {
 				expectsCitations: testPrompt.expectsCitations,
 				modelId
+			},
+			metadata: {
+				model: modelId,
+				prompt_type: testPrompt.description
 			}
 		});
 	}
@@ -180,7 +184,7 @@ Eval("Citation Format Validation - All Models", {
 
 	scores: [
 		// Citation format compliance
-		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected>) => {
+		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
 			const expectsCitations = args.input.expectsCitations;
 			
@@ -200,7 +204,7 @@ Eval("Citation Format Validation - All Models", {
 		},
 
 		// Response quality and completeness
-		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected>) => {
+		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			const modelId = args.input.modelId;
 			console.log(`Scoring response quality for ${modelId}, length: ${args.output?.length}`);
 			
@@ -212,7 +216,7 @@ Eval("Citation Format Validation - All Models", {
 		},
 
 		// Model-specific scoring (for analytics)
-		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected>) => {
+		(args: EvalScorerArgs<TestInput, TestOutput, TestExpected, { model: string; prompt_type: string }>) => {
 			// This creates per-model metrics in Braintrust
 			const modelId = args.input.modelId;
 			const expectsCitations = args.input.expectsCitations;
