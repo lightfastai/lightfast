@@ -9,23 +9,15 @@
 
 import { Eval, type EvalCase, type EvalScorerArgs } from "braintrust";
 import { gateway } from "@ai-sdk/gateway";
-import { generateText } from "ai";
+import { generateText, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware } from "braintrust";
 import { parseCitations, hasCitations } from "@repo/ui/lib/citation-parser";
+import { ACTIVE_MODELS } from "../ai/providers/models/active";
+import type { ModelId } from "../ai/providers";
+import { buildCitationTestPrompt, buildGeneralTestPrompt } from "../ai/prompts/builders/system-prompt-builder";
 
-// All active models to test
-const ACTIVE_MODELS = [
-	"anthropic/claude-4-sonnet",
-	"openai/gpt-5-nano", 
-	"openai/gpt-5-mini",
-	"openai/gpt-5",
-	"google/gemini-2.5-flash",
-	"google/gemini-2.5-pro",
-	"openai/gpt-oss-120b",
-	"moonshotai/kimi-k2"
-] as const;
-
-type ModelId = typeof ACTIVE_MODELS[number];
+// Extract model IDs from the centralized model definitions (only active models)
+const ACTIVE_MODEL_IDS = Object.keys(ACTIVE_MODELS) as ModelId[];
 
 // Citation format validator using existing citation parser
 function validateCitationFormat(output: string): number {
@@ -64,33 +56,7 @@ function validateCitationFormat(output: string): number {
 	return hasSequentialIds && allReferencedCited ? 1 : 0.7;
 }
 
-// System prompt for citation testing (simplified from route.ts)
-const CITATION_SYSTEM_PROMPT = `You are a helpful AI assistant.
-
-When referencing external information, use numbered citations in your response and provide structured citation data.
-
-Format: Use [1], [2], [3] etc. in your text, then end your complete response with citation data.
-
-Example response format:
-React 19 introduces server components [1] which work seamlessly with Next.js [2].
-
----CITATIONS---
-{
-  "citations": [
-    {"id": 1, "url": "https://react.dev/blog/react-19", "title": "React 19 Release"},
-    {"id": 2, "url": "https://nextjs.org/docs/app-router", "title": "Next.js App Router"}
-  ]
-}
-
-Rules:
-- Use numbered citations [1], [2], [3] in your response text
-- Always end with ---CITATIONS--- followed by JSON data
-- Include sequential IDs starting from 1
-- Provide URLs and titles (snippets are optional)
-- Only cite facts, statistics, API details, version numbers, quotes
-- Don't cite common knowledge or your own analysis`;
-
-// Test model directly using AI SDK
+// Test model directly using AI SDK with production-identical prompts
 async function testModelDirect(
 	prompt: string,
 	modelId: ModelId,
@@ -98,13 +64,19 @@ async function testModelDirect(
 ): Promise<string> {
 	try {
 		console.log("testModelDirect called with:", { prompt, modelId, expectsCitations });
+		
+		// Use production-identical system prompts via prompt builder
+		const systemPrompt = expectsCitations 
+			? buildCitationTestPrompt()
+			: buildGeneralTestPrompt();
+			
 		const result = await generateText({
-			model: gateway(modelId),
-			system: expectsCitations
-				? CITATION_SYSTEM_PROMPT
-				: "You are a helpful AI assistant.",
+			model: wrapLanguageModel({
+				model: gateway(modelId),
+				middleware: BraintrustMiddleware({ debug: true }),
+			}),
+			system: systemPrompt,
 			prompt,
-			middleware: [BraintrustMiddleware({ debug: true })]
 		});
 
 		return result.text;
@@ -147,12 +119,8 @@ const TEST_PROMPTS = [
 const TEST_DATA: EvalCase<TestInput, TestExpected, { model: string; prompt_type: string }>[] = [];
 
 for (const testPrompt of TEST_PROMPTS) {
-	for (const modelId of ACTIVE_MODELS) {
-		// Use full model name for clean identification in Braintrust UI
-		const name = modelId;
-		
+	for (const modelId of ACTIVE_MODEL_IDS) {
 		TEST_DATA.push({
-			name,
 			input: {
 				prompt: testPrompt.prompt,
 				modelId,
