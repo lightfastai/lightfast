@@ -1,10 +1,10 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useSubscription } from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	Card,
@@ -20,9 +20,9 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { toast } from "@repo/ui/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
+import { ClerkPlanKey } from "~/lib/billing/types";
 import { useTRPC } from "~/trpc/react";
+import { useSubscriptionState } from "~/hooks/use-subscription-state";
 
 interface CancellationSectionProps {
 	currentPlan: ClerkPlanKey;
@@ -30,9 +30,11 @@ interface CancellationSectionProps {
 
 export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	const {
-		data: subscription,
-		revalidate,
-	} = useSubscription();
+		hasActiveSubscription,
+		isCanceled,
+		billingInterval,
+		paidSubscriptionItems,
+	} = useSubscriptionState();
 	const trpc = useTRPC();
 	const router = useRouter();
 
@@ -40,22 +42,6 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	if (currentPlan === ClerkPlanKey.FREE_TIER) {
 		return null;
 	}
-
-	// Filter out free tier subscription items - only work with paid plans
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item?.plan?.id !== freeTierPlanId && item?.plan?.name !== "free-tier"
-	) ?? [];
-
-	// Get subscription data (only from paid subscription items)
-	const hasActiveSubscription = subscription?.status === "active" && paidSubscriptionItems.length > 0;
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-
-	const billingInterval: BillingInterval =
-		paidSubscriptionItems.length > 0 && 
-		paidSubscriptionItems[0]?.planPeriod === "annual"
-			? "annual"
-			: "month";
 
 	// Cancel subscription mutation
 	const cancelSubscriptionMutation = useMutation(
@@ -66,18 +52,17 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 					description:
 						"Your subscription has been cancelled successfully. You'll continue to have access until the end of your billing period.",
 				});
-				// Revalidate subscription data
-				void revalidate();
+				// TODO: Add revalidation logic if needed
 				// Redirect to cancellation confirmation page with plan context
 				router.push(
 					`/billing/cancelled?plan=${currentPlan}&period=${billingInterval}`,
 				);
 			},
-			onError: (error) => {
+			onError: (error: unknown) => {
 				toast({
 					title: "Error",
 					description:
-						error.message || "Failed to cancel subscription. Please try again.",
+						(error instanceof Error ? error.message : null) || "Failed to cancel subscription. Please try again.",
 					variant: "destructive",
 				});
 			},

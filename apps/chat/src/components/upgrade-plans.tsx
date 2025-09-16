@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,12 +17,12 @@ import {
 	getPricingForInterval,
 } from "~/lib/billing/pricing";
 import type { PlanPricing } from "~/lib/billing/pricing";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
+import { ClerkPlanKey } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
-import { useSubscription } from "@clerk/nextjs/experimental";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSubscriptionState } from "~/hooks/use-subscription-state";
 
 interface UpgradePlansProps {
 	currentPlan: ClerkPlanKey;
@@ -38,14 +37,7 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 	const [billingInterval, setBillingInterval] =
 		useState<BillingInterval>("month");
 	const router = useRouter();
-	const { data: subscription } = useSubscription();
-
-	// Check if current plan is cancelled
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
-	) ?? [];
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+	const { isCanceled } = useSubscriptionState();
 
 	// If user has cancelled their subscription, treat them as if they don't have the plan
 	const isCurrentPlan = plan.plan === currentPlan && !isCanceled;
@@ -151,14 +143,7 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 
 export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 	const router = useRouter();
-	const { data: subscription } = useSubscription();
-
-	// Check if current plan is cancelled
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
-	) ?? [];
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+	const { isCanceled } = useSubscriptionState();
 
 	// Only get Free and Plus plans
 	const allPlans = getAllPlanPricing();

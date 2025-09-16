@@ -4,11 +4,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSubscription } from "@clerk/nextjs/experimental";
 import { Crown, CreditCard, Calendar } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
+import { ClerkPlanKey } from "~/lib/billing/types";
 import { getPlanPricing } from "~/lib/billing/pricing";
+import { useSubscriptionState } from "~/hooks/use-subscription-state";
 
 interface PlanHeaderSectionProps {
 	currentPlan: ClerkPlanKey;
@@ -16,10 +16,12 @@ interface PlanHeaderSectionProps {
 
 export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 	const {
-		data: subscription,
+		hasActiveSubscription,
+		isCanceled,
+		nextBillingDate,
 		isLoading,
 		error,
-	} = useSubscription();
+	} = useSubscriptionState();
 
 	const currentPlanPricing = getPlanPricing(currentPlan);
 
@@ -46,18 +48,6 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 			</div>
 		);
 	}
-
-	// Filter out free tier subscription items - only work with paid plans
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item?.plan?.id !== freeTierPlanId && item?.plan?.name !== "free-tier"
-	) ?? [];
-
-	// Get subscription data (only from paid subscription items)
-	const hasActiveSubscription = subscription?.status === "active" && paidSubscriptionItems.length > 0;
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-	const nextBillingDate = subscription?.nextPayment?.date;
-	// Note: currentPeriodEnd property not available in current Clerk type definition
 
 	// Generate subtitle based on plan
 	const getSubtitle = () => {

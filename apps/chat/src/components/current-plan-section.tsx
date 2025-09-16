@@ -2,14 +2,10 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import * as React from "react";
 import Link from "next/link";
-import {
-	useSubscription,
-} from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	Card,
@@ -23,9 +19,9 @@ import {
 	Calendar,
 	TrendingUp,
 } from "lucide-react";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
+import { ClerkPlanKey } from "~/lib/billing/types";
 import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
+import { useSubscriptionState } from "~/hooks/use-subscription-state";
 
 interface CurrentPlanSectionProps {
 	currentPlan: ClerkPlanKey;
@@ -33,13 +29,14 @@ interface CurrentPlanSectionProps {
 
 export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 	const {
-		data: subscription,
+		hasActiveSubscription,
+		isCanceled,
+		nextBillingDate,
+		billingInterval,
 		isLoading,
 		error,
-		revalidate,
-	} = useSubscription();
+	} = useSubscriptionState();
 	const currentPlanPricing = getPlanPricing(currentPlan);
-
 
 	// Handle loading and error states
 	if (isLoading) {
@@ -56,28 +53,10 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 					<p className="text-muted-foreground">
 						{String(error?.message || "An error occurred")}
 					</p>
-					<Button onClick={revalidate}>Retry</Button>
 				</CardContent>
 			</Card>
 		);
 	}
-
-	// Filter out free tier subscription items - only work with paid plans
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item?.plan?.id !== freeTierPlanId && item?.plan?.name !== "free-tier"
-	) ?? [];
-
-	// Get subscription data (only from paid subscription items)
-	const hasActiveSubscription = subscription?.status === "active" && paidSubscriptionItems.length > 0;
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-	const nextBillingDate = subscription?.nextPayment?.date;
-
-	const billingInterval: BillingInterval =
-		paidSubscriptionItems.length > 0 && 
-		paidSubscriptionItems[0]?.planPeriod === "annual"
-			? "annual"
-			: "month";
 
 
 	return (

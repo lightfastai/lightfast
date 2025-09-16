@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import * as React from "react";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
 import {
@@ -8,7 +7,6 @@ import {
 	PaymentElementProvider,
 	PaymentElement,
 	usePaymentElement,
-	useSubscription,
 } from "@clerk/nextjs/experimental";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
@@ -24,6 +22,7 @@ import { ArrowLeft, CreditCard, Shield, Zap } from "lucide-react";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPricingForInterval, getCheckoutFeatures } from "~/lib/billing/pricing";
+import { useSubscriptionState } from "~/hooks/use-subscription-state";
 
 interface CheckoutPlanProps {
 	currentPlan: ClerkPlanKey;
@@ -406,7 +405,7 @@ function SubscriptionCheck({
 	planKey: ClerkPlanKey; 
 	currentPlan: ClerkPlanKey; 
 }) {
-	const { data: subscription, isLoading } = useSubscription();
+	const { isCanceled, isLoading } = useSubscriptionState();
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	
@@ -425,15 +424,6 @@ function SubscriptionCheck({
 			</div>
 		);
 	}
-
-	// Filter out free tier subscription items
-	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
-		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
-	) ?? [];
-
-	// Check if subscription is cancelled
-	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
 
 	// If user has cancelled their subscription, allow them to proceed to checkout
 	if (isCanceled) {
