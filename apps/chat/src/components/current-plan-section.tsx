@@ -30,8 +30,6 @@ import {
 	CreditCard,
 	Calendar,
 	TrendingUp,
-	ArrowRight,
-	XCircle,
 } from "lucide-react";
 import { toast } from "@repo/ui/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -51,11 +49,6 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 		error,
 		revalidate,
 	} = useSubscription();
-	const {
-		data: paymentAttempts,
-		isLoading: attemptsLoading,
-		error: attemptsError,
-	} = usePaymentAttempts();
 	const currentPlanPricing = getPlanPricing(currentPlan);
 	const trpc = useTRPC();
 	const router = useRouter();
@@ -88,11 +81,11 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 	);
 
 	// Handle loading and error states
-	if (isLoading || attemptsLoading) {
+	if (isLoading) {
 		return <CurrentPlanSectionSkeleton />;
 	}
 
-	if (error || attemptsError) {
+	if (error) {
 		return (
 			<Card>
 				<CardHeader>
@@ -100,7 +93,7 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
 					<p className="text-muted-foreground">
-						{String(error?.message || attemptsError?.message || "An error occurred")}
+						{String(error?.message || "An error occurred")}
 					</p>
 					<Button onClick={revalidate}>Retry</Button>
 				</CardContent>
@@ -124,14 +117,6 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 		paidSubscriptionItems[0]?.planPeriod === "annual"
 			? "annual"
 			: "month";
-
-	// Sort payment attempts by date (most recent first)
-	const sortedAttempts = paymentAttempts?.length 
-		? [...paymentAttempts].sort(
-				(a, b) =>
-					new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-			)
-		: [];
 
 	// Handle subscription cancellation
 	const handleCancelSubscription = () => {
@@ -157,155 +142,99 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 	};
 
 	return (
-		<div className="space-y-6">
-			{/* Current Plan Overview */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<CreditCard className="w-5 h-5" />
-						Current Plan
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="flex items-start justify-between">
-						<div>
-							<div className="flex items-center gap-3 mb-2">
-								<h3 className="text-xl font-semibold text-foreground">
-									{currentPlanPricing.name} Plan
-								</h3>
-								{currentPlan === ClerkPlanKey.PLUS_TIER && (
-									<Badge variant={isCanceled ? "secondary" : "default"}>
-										{isCanceled ? "Canceled" : "Active"}
-									</Badge>
-								)}
+		<Card>
+			<CardHeader>
+				<CardTitle className="flex items-center gap-2">
+					<CreditCard className="w-5 h-5" />
+					Current Plan
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="flex items-start justify-between">
+					<div>
+						<div className="flex items-center gap-3 mb-2">
+							<h3 className="text-xl font-semibold text-foreground">
+								{currentPlanPricing.name} Plan
+							</h3>
+							{currentPlan === ClerkPlanKey.PLUS_TIER && (
+								<Badge variant={isCanceled ? "secondary" : "default"}>
+									{isCanceled ? "Canceled" : "Active"}
+								</Badge>
+							)}
+						</div>
+						<p className="text-muted-foreground mb-3">
+							{currentPlanPricing.description}
+						</p>
+
+						{hasActiveSubscription && nextBillingDate && (
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<Calendar className="w-4 h-4" />
+								<span>
+									Next billing: {nextBillingDate.toLocaleDateString()}(
+									{billingInterval === "annual" ? "Annual" : "Monthly"})
+								</span>
 							</div>
-							<p className="text-muted-foreground mb-3">
-								{currentPlanPricing.description}
-							</p>
-
-							{hasActiveSubscription && nextBillingDate && (
-								<div className="flex items-center gap-2 text-sm text-muted-foreground">
-									<Calendar className="w-4 h-4" />
-									<span>
-										Next billing: {nextBillingDate.toLocaleDateString()}(
-										{billingInterval === "annual" ? "Annual" : "Monthly"})
-									</span>
-								</div>
-							)}
-						</div>
-
-						<div className="text-right">
-							{currentPlan === ClerkPlanKey.FREE_TIER ? (
-								<div className="text-2xl font-bold text-foreground">Free</div>
-							) : (
-								<div>
-									<div className="text-2xl font-bold text-foreground">
-										${getPricingForInterval(currentPlan, billingInterval).price}
-									</div>
-									<div className="text-sm text-muted-foreground">
-										{billingInterval === "annual"
-											? "/month (billed annually)"
-											: "/month"}
-									</div>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Action Buttons */}
-					<div className="flex gap-3 pt-4 border-t">
-						{currentPlan === ClerkPlanKey.FREE_TIER ? (
-							<Button asChild className="flex items-center gap-2">
-								<Link href="/billing/upgrade">
-									<TrendingUp className="w-4 h-4" />
-									Upgrade to Plus
-								</Link>
-							</Button>
-						) : (
-							hasActiveSubscription && (
-								<>
-									<TooltipProvider>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<Button
-													variant="destructive"
-													disabled={
-														cancelSubscriptionMutation.isPending || isCanceled
-													}
-													onClick={handleCancelSubscription}
-												>
-													{cancelSubscriptionMutation.isPending
-														? "Cancelling..."
-														: "Cancel Subscription"}
-												</Button>
-											</TooltipTrigger>
-											{isCanceled && (
-												<TooltipContent>
-													<p>Your plan has already been cancelled</p>
-												</TooltipContent>
-											)}
-										</Tooltip>
-									</TooltipProvider>
-								</>
-							)
 						)}
 					</div>
-				</CardContent>
-			</Card>
 
-			{/* Failed Payments Alert - only show if there are failed payments */}
-			{sortedAttempts.some((attempt) => attempt.status === "failed") && (
-				<Card className="border-red-500/40 bg-red-50/50 dark:bg-red-950/20">
-					<CardHeader>
-						<CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2">
-							<XCircle className="w-5 h-5" />
-							Failed Payments
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<p className="text-sm text-red-700 dark:text-red-300 mb-4">
-							Some of your recent payments failed. This might affect your
-							service access.
-						</p>
-						<Button
-							asChild
-							variant="outline"
-							className="border-red-500/40 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950"
-						>
-							<Link href="/billing">Update Payment Method</Link>
-						</Button>
-					</CardContent>
-				</Card>
-			)}
-
-			{/* Upgrade Prompt for Free Users */}
-			{currentPlan === ClerkPlanKey.FREE_TIER && (
-				<Card className="border-green-500/40 bg-green-50/50 dark:bg-green-950/20">
-					<CardContent className="p-6">
-						<div className="flex items-start gap-4">
-							<div className="flex-1">
-								<h3 className="font-semibold text-foreground mb-2">
-									Ready to unlock more?
-								</h3>
-								<p className="text-sm text-muted-foreground mb-4">
-									Upgrade to Plus for premium AI models, web search, and 100
-									premium messages per month.
-								</p>
-								<Button
-									asChild
-									className="bg-green-600 hover:bg-green-700 text-white"
-								>
-									<Link href="/billing/upgrade">
-										Upgrade to Plus
-										<ArrowRight className="w-4 h-4 ml-2" />
-									</Link>
-								</Button>
+					<div className="text-right">
+						{currentPlan === ClerkPlanKey.FREE_TIER ? (
+							<div className="text-2xl font-bold text-foreground">Free</div>
+						) : (
+							<div>
+								<div className="text-2xl font-bold text-foreground">
+									${getPricingForInterval(currentPlan, billingInterval).price}
+								</div>
+								<div className="text-sm text-muted-foreground">
+									{billingInterval === "annual"
+										? "/month (billed annually)"
+										: "/month"}
+								</div>
 							</div>
-						</div>
-					</CardContent>
-				</Card>
-			)}
-		</div>
+						)}
+					</div>
+				</div>
+
+				{/* Action Buttons */}
+				<div className="flex gap-3 pt-4 border-t">
+					{currentPlan === ClerkPlanKey.FREE_TIER ? (
+						<Button asChild className="flex items-center gap-2">
+							<Link href="/billing/upgrade">
+								<TrendingUp className="w-4 h-4" />
+								Upgrade to Plus
+							</Link>
+						</Button>
+					) : (
+						hasActiveSubscription && (
+							<>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="destructive"
+												disabled={
+													cancelSubscriptionMutation.isPending || isCanceled
+												}
+												onClick={handleCancelSubscription}
+											>
+												{cancelSubscriptionMutation.isPending
+													? "Cancelling..."
+													: "Cancel Subscription"}
+											</Button>
+										</TooltipTrigger>
+										{isCanceled && (
+											<TooltipContent>
+												<p>Your plan has already been cancelled</p>
+											</TooltipContent>
+										)}
+									</Tooltip>
+								</TooltipProvider>
+							</>
+						)
+					)}
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
 

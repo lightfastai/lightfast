@@ -4,6 +4,8 @@ import * as React from "react";
 import type { ClerkPlanKey } from "~/lib/billing/types";
 import { CurrentPlanSection } from "./current-plan-section";
 import { PaymentHistorySection } from "./payment-history-section";
+import { FailedPaymentsAlert } from "./failed-payments-alert";
+import { UpgradePrompt } from "./upgrade-prompt";
 
 interface BillingManagementProps {
 	currentPlan: ClerkPlanKey;
@@ -23,8 +25,10 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 					</p>
 				</div>
 
-				<div className="grid gap-6">
+				<div className="space-y-6">
 					<CurrentPlanSection currentPlan={currentPlan} />
+					<FailedPaymentsAlert />
+					<UpgradePrompt currentPlan={currentPlan} />
 					<PaymentHistorySection />
 				</div>
 			</div>
