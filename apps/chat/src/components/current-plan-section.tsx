@@ -7,7 +7,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
 	useSubscription,
 	usePaymentAttempts,
@@ -21,18 +20,10 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import {
 	CreditCard,
 	Calendar,
 	TrendingUp,
 } from "lucide-react";
-import { toast } from "@repo/ui/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
@@ -50,35 +41,7 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 		revalidate,
 	} = useSubscription();
 	const currentPlanPricing = getPlanPricing(currentPlan);
-	const trpc = useTRPC();
-	const router = useRouter();
 
-	// Cancel subscription mutation
-	const cancelSubscriptionMutation = useMutation(
-		trpc.billing.cancelSubscriptionItem.mutationOptions({
-			onSuccess: () => {
-				toast({
-					title: "Subscription Cancelled",
-					description:
-						"Your subscription has been cancelled successfully. You'll continue to have access until the end of your billing period.",
-				});
-				// Revalidate subscription data
-				void revalidate();
-				// Redirect to cancellation confirmation page with plan context
-				router.push(
-					`/billing/cancelled?plan=${currentPlan}&period=${billingInterval}`,
-				);
-			},
-			onError: (error) => {
-				toast({
-					title: "Error",
-					description:
-						error.message || "Failed to cancel subscription. Please try again.",
-					variant: "destructive",
-				});
-			},
-		}),
-	);
 
 	// Handle loading and error states
 	if (isLoading) {
@@ -118,28 +81,6 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 			? "annual"
 			: "month";
 
-	// Handle subscription cancellation
-	const handleCancelSubscription = () => {
-		if (!paidSubscriptionItems[0]?.id) {
-			toast({
-				title: "Error",
-				description: "No active paid subscription found to cancel.",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		const confirmed = confirm(
-			"Are you sure you want to cancel your subscription? You'll continue to have access until the end of your current billing period.",
-		);
-
-		if (confirmed) {
-			cancelSubscriptionMutation.mutate({
-				subscriptionItemId: paidSubscriptionItems[0].id,
-				endNow: false, // Cancel at end of billing period
-			});
-		}
-	};
 
 	return (
 		<Card>
@@ -206,30 +147,9 @@ export function CurrentPlanSection({ currentPlan }: CurrentPlanSectionProps) {
 						</Button>
 					) : (
 						hasActiveSubscription && (
-							<>
-								<TooltipProvider>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button
-												variant="destructive"
-												disabled={
-													cancelSubscriptionMutation.isPending || isCanceled
-												}
-												onClick={handleCancelSubscription}
-											>
-												{cancelSubscriptionMutation.isPending
-													? "Cancelling..."
-													: "Cancel Subscription"}
-											</Button>
-										</TooltipTrigger>
-										{isCanceled && (
-											<TooltipContent>
-												<p>Your plan has already been cancelled</p>
-											</TooltipContent>
-										)}
-									</Tooltip>
-								</TooltipProvider>
-							</>
+							<Button variant="outline" disabled>
+								Manage Subscription
+							</Button>
 						)
 					)}
 				</div>
