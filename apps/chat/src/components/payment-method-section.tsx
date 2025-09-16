@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import * as React from "react";
 import { usePaymentMethods } from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
@@ -46,7 +46,7 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
 					<p className="text-muted-foreground">
-						{String(error?.message || "Failed to load payment methods")}
+						{String(error?.message ?? "Failed to load payment methods")}
 					</p>
 				</CardContent>
 			</Card>
@@ -55,18 +55,6 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 
 	// Get the primary payment method (usually the first one)
 	const primaryPaymentMethod = paymentMethods?.[0];
-
-	// Format card brand
-	const formatCardBrand = (brand: string | undefined): string => {
-		if (!brand) return "Card";
-		return brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase();
-	};
-
-	// Format last 4 digits
-	const formatLast4 = (last4: string | undefined): string => {
-		if (!last4) return "••••";
-		return `•••• ${last4}`;
-	};
 
 	return (
 		<Card>
@@ -83,7 +71,7 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 						<div>
 							{primaryPaymentMethod ? (
 								<span className="text-foreground">
-									{formatCardBrand(primaryPaymentMethod.brand)} {formatLast4(primaryPaymentMethod.last4)}
+									Payment method on file
 								</span>
 							) : (
 								<span className="text-muted-foreground">

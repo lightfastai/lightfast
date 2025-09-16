@@ -9,7 +9,6 @@ import * as React from "react";
 import Link from "next/link";
 import {
 	useSubscription,
-	usePaymentAttempts,
 } from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -27,7 +26,6 @@ import {
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
-import { useTRPC } from "~/trpc/react";
 
 interface CurrentPlanSectionProps {
 	currentPlan: ClerkPlanKey;

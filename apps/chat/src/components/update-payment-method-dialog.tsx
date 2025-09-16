@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ClerkLoaded } from "@clerk/nextjs";
-import { PaymentElementProvider } from "@clerk/nextjs/experimental";
 import {
 	Dialog,
 	DialogContent,
@@ -39,17 +37,13 @@ export function UpdatePaymentMethodDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				{trigger || children || defaultTrigger}
+				{trigger ?? children ?? defaultTrigger}
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>Update Payment Method</DialogTitle>
 				</DialogHeader>
-				<ClerkLoaded>
-					<PaymentElementProvider for="user">
-						<AddPaymentMethodForm onSuccess={handleSuccess} />
-					</PaymentElementProvider>
-				</ClerkLoaded>
+				<AddPaymentMethodForm onSuccess={handleSuccess} />
 			</DialogContent>
 		</Dialog>
 	);

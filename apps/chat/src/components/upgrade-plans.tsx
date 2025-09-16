@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -17,9 +18,10 @@ import {
 	getPricingForInterval,
 } from "~/lib/billing/pricing";
 import type { PlanPricing } from "~/lib/billing/pricing";
-import { ClerkPlanKey } from "~/lib/billing/types";
+import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
+import { useSubscription } from "@clerk/nextjs/experimental";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -36,8 +38,17 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 	const [billingInterval, setBillingInterval] =
 		useState<BillingInterval>("month");
 	const router = useRouter();
+	const { data: subscription } = useSubscription();
 
-	const isCurrentPlan = plan.plan === currentPlan;
+	// Check if current plan is cancelled
+	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
+	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
+		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
+	) ?? [];
+	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+
+	// If user has cancelled their subscription, treat them as if they don't have the plan
+	const isCurrentPlan = plan.plan === currentPlan && !isCanceled;
 	const canUpgrade = !isCurrentPlan;
 	const pricing = getPricingForInterval(plan.plan, billingInterval);
 
@@ -124,7 +135,9 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 									router.push(`/billing/checkout?${params.toString()}`);
 								}}
 							>
-								{currentPlan === ClerkPlanKey.FREE_TIER
+								{isCanceled && plan.plan === currentPlan
+									? `Renew ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`
+									: currentPlan === ClerkPlanKey.FREE_TIER
 									? `Upgrade to ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`
 									: `Get ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`}
 							</Button>
@@ -138,6 +151,14 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 
 export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 	const router = useRouter();
+	const { data: subscription } = useSubscription();
+
+	// Check if current plan is cancelled
+	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
+	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
+		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
+	) ?? [];
+	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
 
 	// Only get Free and Plus plans
 	const allPlans = getAllPlanPricing();
@@ -170,7 +191,8 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 					{pricingPlans.map((plan) => {
 						const isPlus = plan.plan === ClerkPlanKey.PLUS_TIER;
 						const isFree = plan.plan === ClerkPlanKey.FREE_TIER;
-						const isCurrentPlan = plan.plan === currentPlan;
+						// If user has cancelled their subscription, treat them as if they don't have the plan
+						const isCurrentPlan = plan.plan === currentPlan && !isCanceled;
 						const canUpgrade = !isCurrentPlan;
 
 						// Render Plus card with billing toggle
@@ -241,7 +263,9 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 														router.push(`/billing/checkout?${params.toString()}`);
 													}}
 												>
-													{`Downgrade to ${plan.name}`}
+													{isCanceled && plan.plan === currentPlan
+														? `Renew ${plan.name}`
+														: `Downgrade to ${plan.name}`}
 												</Button>
 											</SignedIn>
 										</ClerkLoaded>

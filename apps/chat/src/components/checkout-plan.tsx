@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import * as React from "react";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
 import {
@@ -7,6 +8,7 @@ import {
 	PaymentElementProvider,
 	PaymentElement,
 	usePaymentElement,
+	useSubscription,
 } from "@clerk/nextjs/experimental";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
@@ -69,27 +71,9 @@ export function CheckoutPlan({ currentPlan }: CheckoutPlanProps) {
 
 	const planKey = planKeyParam as ClerkPlanKey;
 
-	// Check if user already has this plan or a higher plan
+	// Check if user already has this plan - but allow cancelled users to proceed
 	if (currentPlan === planKey) {
-		return (
-			<div className="min-h-screen bg-background flex items-center justify-center p-4">
-				<Card className="w-full max-w-md">
-					<CardHeader>
-						<CardTitle className="text-center">Already Subscribed</CardTitle>
-					</CardHeader>
-					<CardContent className="text-center space-y-4">
-						<p className="text-muted-foreground">
-							You already have the{" "}
-							{planKey === ClerkPlanKey.PLUS_TIER ? "Plus" : "Free"} plan.
-						</p>
-						<Button onClick={() => router.push("/billing/upgrade")} variant="outline">
-							<ArrowLeft className="w-4 h-4 mr-2" />
-							Back to Plans
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		);
+		return <SubscriptionCheck planKey={planKey} currentPlan={currentPlan} />;
 	}
 
 	const planId = getClerkPlanId(planKey);
@@ -412,6 +396,82 @@ function CheckoutSummary({
 				</div>
 			</CardContent>
 		</Card>
+	);
+}
+
+function SubscriptionCheck({ 
+	planKey, 
+	currentPlan: _currentPlan 
+}: { 
+	planKey: ClerkPlanKey; 
+	currentPlan: ClerkPlanKey; 
+}) {
+	const { data: subscription, isLoading } = useSubscription();
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	
+	// Show loading while checking subscription status
+	if (isLoading) {
+		return (
+			<div className="min-h-screen bg-background flex items-center justify-center p-4">
+				<Card className="w-full max-w-md">
+					<CardHeader>
+						<CardTitle className="text-center">Loading...</CardTitle>
+					</CardHeader>
+					<CardContent className="text-center">
+						<div className="w-6 h-6 mx-auto animate-spin rounded-full border-2 border-current border-t-transparent" />
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
+	// Filter out free tier subscription items
+	const freeTierPlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
+	const paidSubscriptionItems = subscription?.subscriptionItems?.filter(
+		(item) => item.plan?.id !== freeTierPlanId && item.plan?.name !== "free-tier"
+	) ?? [];
+
+	// Check if subscription is cancelled
+	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+
+	// If user has cancelled their subscription, allow them to proceed to checkout
+	if (isCanceled) {
+		const period = searchParams.get("period") ?? "month";
+		const planId = getClerkPlanId(planKey);
+		
+		return (
+			<div className="min-h-screen bg-background">
+				<CheckoutProvider for="user" planId={planId} planPeriod={period as BillingInterval}>
+					<ClerkLoaded>
+						<SignedIn>
+							<CustomCheckout planKey={planKey} period={period as BillingInterval} />
+						</SignedIn>
+					</ClerkLoaded>
+				</CheckoutProvider>
+			</div>
+		);
+	}
+
+	// If subscription is active and not cancelled, show "Already Subscribed" message
+	return (
+		<div className="min-h-screen bg-background flex items-center justify-center p-4">
+			<Card className="w-full max-w-md">
+				<CardHeader>
+					<CardTitle className="text-center">Already Subscribed</CardTitle>
+				</CardHeader>
+				<CardContent className="text-center space-y-4">
+					<p className="text-muted-foreground">
+						You already have the{" "}
+						{planKey === ClerkPlanKey.PLUS_TIER ? "Plus" : "Free"} plan.
+					</p>
+					<Button onClick={() => router.push("/billing/upgrade")} variant="outline">
+						<ArrowLeft className="w-4 h-4 mr-2" />
+						Back to Plans
+					</Button>
+				</CardContent>
+			</Card>
+		</div>
 	);
 }
 

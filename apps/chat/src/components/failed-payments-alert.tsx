@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { usePaymentAttempts } from "@clerk/nextjs/experimental";
 import {
 	Card,
@@ -11,10 +11,10 @@ import { Button } from "@repo/ui/components/ui/button";
 import { XCircle } from "lucide-react";
 import { UpdatePaymentMethodDialog } from "./update-payment-method-dialog";
 
-interface PaymentAttempt {
+interface _PaymentAttempt {
 	status: string;
 	updatedAt: string;
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 export function FailedPaymentsAlert() {

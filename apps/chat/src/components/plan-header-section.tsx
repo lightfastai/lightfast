@@ -1,15 +1,13 @@
 "use client";
-
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import * as React from "react";
+import Link from "next/link";
 import { useSubscription } from "@clerk/nextjs/experimental";
-import { Crown, CreditCard } from "lucide-react";
+import { Crown, CreditCard, Calendar } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
 import { getPlanPricing } from "~/lib/billing/pricing";
 
 interface PlanHeaderSectionProps {
@@ -42,7 +40,7 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 						Unable to load plan
 					</h2>
 					<p className="text-sm text-muted-foreground">
-						Failed to retrieve subscription information
+						{error instanceof Error ? error.message : "Failed to retrieve subscription information"}
 					</p>
 				</div>
 			</div>
@@ -57,13 +55,9 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 
 	// Get subscription data (only from paid subscription items)
 	const hasActiveSubscription = subscription?.status === "active" && paidSubscriptionItems.length > 0;
+	const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
 	const nextBillingDate = subscription?.nextPayment?.date;
-
-	const billingInterval: BillingInterval =
-		paidSubscriptionItems.length > 0 && 
-		paidSubscriptionItems[0]?.planPeriod === "annual"
-			? "annual"
-			: "month";
+	// Note: currentPeriodEnd property not available in current Clerk type definition
 
 	// Generate subtitle based on plan
 	const getSubtitle = () => {
@@ -72,6 +66,9 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 		}
 		
 		if (currentPlan === ClerkPlanKey.PLUS_TIER) {
+			if (isCanceled) {
+				return "Your plan has been cancelled";
+			}
 			return "20x more usage than Pro";
 		}
 		
@@ -80,7 +77,24 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 
 	// Generate renewal info
 	const getRenewalInfo = () => {
-		if (currentPlan === ClerkPlanKey.FREE_TIER || !hasActiveSubscription || !nextBillingDate) {
+		if (currentPlan === ClerkPlanKey.FREE_TIER) {
+			return null;
+		}
+
+		if (isCanceled) {
+			// Use next billing date if available
+			if (nextBillingDate && nextBillingDate instanceof Date) {
+				const formattedDate = nextBillingDate.toLocaleDateString('en-US', {
+					month: 'short',
+					day: 'numeric',
+					year: 'numeric'
+				});
+				return `Your plan expires on ${formattedDate}`;
+			}
+			return "Your plan has been cancelled";
+		}
+
+		if (!hasActiveSubscription || !nextBillingDate || !(nextBillingDate instanceof Date)) {
 			return null;
 		}
 
@@ -118,12 +132,24 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 				<p className="text-sm text-muted-foreground">
 					{getSubtitle()}
 				</p>
-				{renewalInfo && (
-					<p className="text-xs text-muted-foreground mt-1">
+				{renewalInfo && !isCanceled && (
+					<p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+						<Calendar className="w-3 h-3" />
 						{renewalInfo}
 					</p>
 				)}
 			</div>
+
+			{/* Right side content for cancelled subscriptions */}
+			{isCanceled && currentPlan === ClerkPlanKey.PLUS_TIER && (
+				<div className="flex-shrink-0">
+					<Button asChild variant="default" size="sm">
+						<Link href="/billing/upgrade">
+							Upgrade Plan
+						</Link>
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }

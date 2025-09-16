@@ -15,7 +15,7 @@ import {
 	DropdownMenuLabel,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Settings, CreditCard, Crown, MessageCircle } from "lucide-react";
-import { SettingsDialog } from "~/components/settings-dialog";
+import { SettingsDialog } from "../settings-dialog";
 import Link from "next/link";
 import { useBillingContext } from "~/hooks/use-billing-context";
 

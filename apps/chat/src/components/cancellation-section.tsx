@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import * as React from "react";
@@ -110,7 +108,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	};
 
 	// Don't render if there's no active subscription or if already canceled
-	if (!hasActiveSubscription) {
+	if (!hasActiveSubscription || isCanceled) {
 		return null;
 	}
 

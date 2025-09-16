@@ -19,7 +19,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@repo/ui/components/ui/table";
-import { CheckCircle, History, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { History, XCircle, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 
 export function PaymentHistorySection() {
@@ -107,7 +107,7 @@ export function PaymentHistorySection() {
 		}).format(amount / 100); // Stripe amounts are in cents
 	};
 
-	const isInvoiceOverdue = (attempt: any) => {
+	const isInvoiceOverdue = (attempt: { status: string; updatedAt: Date }) => {
 		// You can implement your overdue logic here
 		// For now, we'll simulate some overdue invoices based on status
 		return attempt.status.toLowerCase() === "failed" || 
