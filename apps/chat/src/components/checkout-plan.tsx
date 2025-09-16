@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { ArrowLeft, CreditCard, Shield, Zap } from "lucide-react";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
-import { getPricingForInterval } from "~/lib/billing/pricing";
+import { getPricingForInterval, getCheckoutFeatures } from "~/lib/billing/pricing";
 
 interface CheckoutPlanProps {
 	currentPlan: ClerkPlanKey;
@@ -387,34 +387,11 @@ function CheckoutSummary({
 				<div className="border-t pt-4">
 					<h4 className="font-medium text-foreground mb-3">What's included:</h4>
 					<div className="space-y-2">
-						{planKey === ClerkPlanKey.PLUS_TIER ? (
-							<>
-								<div className="text-sm text-muted-foreground">
-									✓ 1,000 basic messages/month
-								</div>
-								<div className="text-sm text-muted-foreground">
-									✓ 100 premium messages/month
-								</div>
-								<div className="text-sm text-muted-foreground">
-									✓ Web search capability
-								</div>
-								<div className="text-sm text-muted-foreground">
-									✓ Access to all AI models
-								</div>
-								<div className="text-sm text-muted-foreground">
-									✓ Priority support
-								</div>
-							</>
-						) : (
-							<>
-								<div className="text-sm text-muted-foreground">
-									✓ 1,000 basic messages/month
-								</div>
-								<div className="text-sm text-muted-foreground">
-									✓ Access to basic AI model
-								</div>
-							</>
-						)}
+						{getCheckoutFeatures(planKey).map((feature, index) => (
+							<div key={index} className="text-sm text-muted-foreground">
+								{feature}
+							</div>
+						))}
 					</div>
 				</div>
 

@@ -189,6 +189,33 @@ export function comparePlans(
 }
 
 /**
+ * Get checkout-optimized feature list for display in checkout/upgrade components
+ */
+export function getCheckoutFeatures(planKey: ClerkPlanKey): string[] {
+	const planConfig = BILLING_LIMITS[planKey];
+	const planPricing = getPlanPricing(planKey);
+	
+	switch (planKey) {
+		case ClerkPlanKey.FREE_TIER:
+			return [
+				`✓ ${planConfig.nonPremiumMessagesPerMonth.toLocaleString()} basic messages/month`,
+				"✓ Access to basic AI model",
+			];
+		case ClerkPlanKey.PLUS_TIER:
+			return [
+				"✓ Everything in Free",
+				`✓ ${planConfig.nonPremiumMessagesPerMonth.toLocaleString()} basic + ${planConfig.premiumMessagesPerMonth} premium messages/month`,
+				"✓ Web search capability",
+				"✓ Access to all AI models",
+				"✓ Priority support",
+			];
+		default:
+			// Fallback to pricing config features with checkmarks
+			return planPricing.features.map(feature => feature.startsWith("✓") ? feature : `✓ ${feature}`);
+	}
+}
+
+/**
  * Promotional pricing (for future use)
  */
 export interface PromotionalPricing {

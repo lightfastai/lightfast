@@ -16,11 +16,7 @@ import { ClerkPlanKey, BILLING_LIMITS } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
 
-interface BillingSuccessProps {
-	currentPlan: ClerkPlanKey;
-}
-
-export function BillingSuccess({ currentPlan }: BillingSuccessProps) {
+export function BillingSuccess() {
 	const searchParams = useSearchParams();
 	
 	// Get plan details from URL params (similar to checkout)
@@ -28,11 +24,11 @@ export function BillingSuccess({ currentPlan }: BillingSuccessProps) {
 	const periodParam = searchParams.get("period");
 	const period: BillingInterval = periodParam ? (periodParam as BillingInterval) : "month";
 	
-	// Validate plan key or fallback to current plan
+	// Validate plan key or fallback to PLUS_TIER (most common success case)
 	const planKey = planKeyParam && 
 		(Object.values(ClerkPlanKey) as string[]).includes(planKeyParam) 
 		? (planKeyParam as ClerkPlanKey) 
-		: currentPlan;
+		: ClerkPlanKey.PLUS_TIER;
 
 	const planConfig = BILLING_LIMITS[planKey];
 	const planPricing = getPlanPricing(planKey);

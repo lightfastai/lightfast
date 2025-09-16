@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,8 +10,24 @@ import {
 	RotateCcw,
 	MessageCircle,
 } from "lucide-react";
+import { ClerkPlanKey } from "~/lib/billing/types";
+import { getPlanPricing } from "~/lib/billing/pricing";
 
 export function BillingCancelled() {
+	const searchParams = useSearchParams();
+	
+	// Get plan details from URL params (similar to billing-success)
+	const planKeyParam = searchParams.get("plan");
+	
+	// Validate plan key or fallback to Plus (most likely for cancellation)
+	const planKey = planKeyParam && 
+		(Object.values(ClerkPlanKey) as string[]).includes(planKeyParam) 
+		? (planKeyParam as ClerkPlanKey) 
+		: ClerkPlanKey.PLUS_TIER;
+
+	const planPricing = getPlanPricing(planKey);
+	const isPlusUser = planKey === ClerkPlanKey.PLUS_TIER;
+	
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="flex items-center justify-center pt-16 pb-8">
@@ -22,7 +39,7 @@ export function BillingCancelled() {
 						Subscription Cancelled
 					</h1>
 					<p className="text-sm max-w-xs text-muted-foreground mx-auto">
-						Your Plus subscription has been cancelled successfully
+						Your {planPricing.name} subscription has been cancelled successfully
 					</p>
 				</div>
 			</div>
@@ -38,9 +55,18 @@ export function BillingCancelled() {
 									Access Period
 								</p>
 								<p className="text-sm text-muted-foreground">
-									You'll keep your Plus features until your current billing
-									period ends. After that, you'll be automatically moved to the
-									Free plan.
+									{isPlusUser ? (
+										<>
+											You'll keep your Plus features until your current billing
+											period ends. After that, you'll be automatically moved to the
+											Free plan.
+										</>
+									) : (
+										<>
+											Your subscription cancellation has been processed. You will retain
+											your current plan features until the end of your billing period.
+										</>
+									)}
 								</p>
 								<p className="text-sm text-muted-foreground mt-2">
 									<strong>Note:</strong> The exact end date will be shown in
@@ -68,7 +94,7 @@ export function BillingCancelled() {
 										<div className="text-left">
 											<div className="font-medium">Reactivate subscription</div>
 											<div className="text-sm opacity-90">
-												Resume your Plus plan anytime
+												Resume your {planPricing.name} plan anytime
 											</div>
 										</div>
 									</div>
@@ -87,7 +113,10 @@ export function BillingCancelled() {
 										<div className="text-left">
 											<div className="font-medium">Continue chatting</div>
 											<div className="text-sm text-muted-foreground">
-												Use your remaining Plus features
+												{isPlusUser 
+													? "Use your remaining Plus features"
+													: `Use your remaining ${planPricing.name} features`
+												}
 											</div>
 										</div>
 									</div>

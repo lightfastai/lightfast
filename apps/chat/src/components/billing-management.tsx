@@ -6,6 +6,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSubscription, usePaymentAttempts } from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -15,6 +16,12 @@ import {
 	CardTitle,
 } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import {
 	Table,
 	TableBody,
@@ -34,11 +41,11 @@ import {
 	Clock,
 } from "lucide-react";
 import { toast } from "@repo/ui/hooks/use-toast";
-import { useTRPC } from "~/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { ClerkPlanKey } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
+import { useTRPC } from "~/trpc/react";
 
 interface BillingManagementProps {
 	currentPlan: ClerkPlanKey;
@@ -54,41 +61,32 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 	} = useSubscription();
 	const { data: paymentAttempts, isLoading: attemptsLoading, error: attemptsError, revalidate: revalidateAttempts } = usePaymentAttempts();
 	const currentPlanPricing = getPlanPricing(currentPlan);
+	const trpc = useTRPC();
+	const router = useRouter();
 
 	// Cancel subscription mutation
-	const cancelSubscriptionMutation = useMutation({
-		mutationFn: async (params: { subscriptionItemId: string; endNow: boolean }) => {
-			const response = await fetch("/api/trpc/billing.cancelSubscriptionItem", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ json: params }),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json() as { error?: { message?: string } };
-				throw new Error(errorData.error?.message ?? "Failed to cancel subscription");
-			}
-
-			return response.json() as Promise<{ success: boolean; subscriptionItem: unknown }>;
-		},
-		onSuccess: () => {
-			toast({
-				title: "Subscription Cancelled",
-				description: "Your subscription has been cancelled successfully. You'll continue to have access until the end of your billing period.",
-			});
-			// Revalidate subscription data
-			revalidate();
-		},
-		onError: (error: Error) => {
-			toast({
-				title: "Error",
-				description: error.message || "Failed to cancel subscription. Please try again.",
-				variant: "destructive",
-			});
-		},
-	});
+	const cancelSubscriptionMutation = useMutation(
+		trpc.billing.cancelSubscriptionItem.mutationOptions({
+			onSuccess: () => {
+				toast({
+					title: "Subscription Cancelled",
+					description: "Your subscription has been cancelled successfully. You'll continue to have access until the end of your billing period.",
+				});
+				// Revalidate subscription data
+				void revalidate();
+				// Redirect to cancellation confirmation page
+				// Redirect to cancellation confirmation page with plan context
+				router.push(`/billing/cancelled?plan=${currentPlan}&period=${billingInterval}`);
+			},
+			onError: (error) => {
+				toast({
+					title: "Error",
+					description: error.message || "Failed to cancel subscription. Please try again.",
+					variant: "destructive",
+				});
+			},
+		})
+	);
 
 
 	// Handle loading and error states
@@ -119,6 +117,7 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 
 	// Get subscription data
 	const hasActiveSubscription = subscription?.status === "active";
+	const isCanceled = subscription?.subscriptionItems?.[0]?.canceledAt != null;
 	const nextBillingDate = subscription?.nextPayment?.date;
 	const billingInterval: BillingInterval =
 		subscription && subscription.subscriptionItems && subscription.subscriptionItems[0]?.planPeriod === "annual" ? "annual" : "month";
@@ -129,7 +128,7 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 	) : [];
 
 	// Handle subscription cancellation
-	const handleCancelSubscription = async () => {
+	const handleCancelSubscription = () => {
 		if (!subscription?.subscriptionItems?.[0]?.id) {
 			toast({
 				title: "Error",
@@ -228,8 +227,8 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 											{currentPlanPricing.name} Plan
 										</h3>
 										{currentPlan === ClerkPlanKey.PLUS_TIER && (
-											<Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-												Active
+											<Badge variant={isCanceled ? "secondary" : "default"}>
+												{isCanceled ? "Canceled" : "Active"}
 											</Badge>
 										)}
 									</div>
@@ -283,13 +282,24 @@ export function BillingManagement({ currentPlan }: BillingManagementProps) {
 									</Button>
 								) : (
 									<>
-										<Button
-											variant="destructive"
-											disabled={cancelSubscriptionMutation.isPending}
-											onClick={handleCancelSubscription}
-										>
-											{cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
-										</Button>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Button
+														variant="destructive"
+														disabled={cancelSubscriptionMutation.isPending || isCanceled}
+														onClick={handleCancelSubscription}
+													>
+														{cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
+													</Button>
+												</TooltipTrigger>
+												{isCanceled && (
+													<TooltipContent>
+														<p>Your plan has already been cancelled</p>
+													</TooltipContent>
+												)}
+											</Tooltip>
+										</TooltipProvider>
 									</>
 								)}
 							</div>
