@@ -10,9 +10,9 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Settings, CreditCard } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import { GeneralTab } from "./tabs/general-tab";
-import { AccountTab } from "./tabs/account-tab";
-import { BillingTab } from "./tabs/billing-tab";
+import { GeneralTab } from "./general-tab";
+import { AccountTab } from "./account-tab";
+import { BillingTab } from "./billing-tab";
 
 export type SettingsTab = "general" | "account" | "billing";
 
