@@ -2,9 +2,9 @@
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
-type BackDestination = "home" | "plans" | "back";
+type BackDestination = "home" | "plans" | "new" | "upgrade" | "back";
 
 interface LayoutBackButtonProps {
 	className?: string;
@@ -13,16 +13,38 @@ interface LayoutBackButtonProps {
 
 export function LayoutBackButton({
 	className,
-	destination = "back",
+	destination,
 }: LayoutBackButtonProps) {
 	const router = useRouter();
+	const pathname = usePathname();
+
+	// Auto-determine destination if not provided
+	const getDestination = (): BackDestination => {
+		if (destination) return destination;
+		
+		if (pathname.includes("/upgrade")) {
+			return "new";
+		}
+		if (pathname.includes("/checkout")) {
+			return "upgrade";
+		}
+		return "back";
+	};
+
+	const finalDestination = getDestination();
 
 	const handleBack = () => {
-		switch (destination) {
+		switch (finalDestination) {
 			case "home":
 				router.push("/");
 				break;
 			case "plans":
+				router.push("/upgrade");
+				break;
+			case "new":
+				router.push("/new");
+				break;
+			case "upgrade":
 				router.push("/upgrade");
 				break;
 			case "back":
@@ -33,10 +55,14 @@ export function LayoutBackButton({
 	};
 
 	const getButtonText = () => {
-		switch (destination) {
+		switch (finalDestination) {
 			case "home":
 				return "Back to Home";
 			case "plans":
+				return "Back to Plans";
+			case "new":
+				return "Back to Chat";
+			case "upgrade":
 				return "Back to Plans";
 			case "back":
 			default:

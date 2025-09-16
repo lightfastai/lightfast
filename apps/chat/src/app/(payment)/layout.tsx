@@ -24,7 +24,7 @@ export default function PaymentLayout({
 		<div className="h-screen flex flex-col">
 			{/* Header with back button */}
 			<div className="absolute top-6 left-6 z-10">
-				<LayoutBackButton destination="plans" />
+				<LayoutBackButton />
 			</div>
 			
 			{/* Main content */}
