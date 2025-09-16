@@ -16,7 +16,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Settings, CreditCard, Crown, MessageCircle } from "lucide-react";
 import { SettingsDialog } from "~/components/settings/settings-dialog";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useBillingContext } from "~/hooks/use-billing-context";
 
 interface UserDropdownMenuProps {
@@ -25,7 +25,6 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const { signOut } = useClerk();
-	const router = useRouter();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
 	// Get user info from tRPC - using suspense for instant loading
@@ -48,9 +47,6 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 		await signOut(); // Will use afterSignOutUrl from Clerk config
 	};
 
-	const handleUpgrade = () => {
-		router.push("/upgrade");
-	};
 
 	// Get user initials for fallback
 	// Note: user is guaranteed to exist with useSuspenseQuery
@@ -148,12 +144,12 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 														</span>
 													</>
 												) : (
-													<button
-														onClick={handleUpgrade}
+													<Link
+														href="/billing/upgrade"
 														className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
 													>
 														Upgrade to unlock
-													</button>
+													</Link>
 												)}
 											</div>
 										</div>
@@ -168,9 +164,11 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 					)}
 
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={handleUpgrade} className="cursor-pointer">
-						<CreditCard className="mr-2 h-3 w-3" />
-						{capabilities.isPlusUser ? "Manage Plan" : "Upgrade Plan"}
+					<DropdownMenuItem asChild>
+						<Link href="/billing" className="cursor-pointer">
+							<CreditCard className="mr-2 h-3 w-3" />
+							{capabilities.isPlusUser ? "Manage Plan" : "Upgrade Plan"}
+						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={() => setSettingsOpen(true)}

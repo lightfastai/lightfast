@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/gateway": "catalog:",
+		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",

@@ -121,7 +121,7 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 										plan: plan.plan,
 										period: billingInterval
 									});
-									router.push(`/checkout?${params.toString()}`);
+									router.push(`/billing/checkout?${params.toString()}`);
 								}}
 							>
 								{currentPlan === ClerkPlanKey.FREE_TIER
@@ -238,7 +238,7 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 															plan: plan.plan,
 															period: "month"
 														});
-														router.push(`/checkout?${params.toString()}`);
+														router.push(`/billing/checkout?${params.toString()}`);
 													}}
 												>
 													{`Downgrade to ${plan.name}`}

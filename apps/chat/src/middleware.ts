@@ -7,6 +7,9 @@ import type { NextRequest } from "next/server";
 const isProtectedRoute = createRouteMatcher([
 	"/new",
 	"/new/(.*)",
+	// Billing routes explicitly protected
+	"/billing",
+	"/billing/(.*)",
 	// Dynamic session ID routes (any path that's not public/auth)
 	"/((?!sign-in|sign-up|api|robots.txt|sitemap|pricing$|$).*)",
 ]);
