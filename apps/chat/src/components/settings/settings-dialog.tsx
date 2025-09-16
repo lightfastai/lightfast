@@ -8,12 +8,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import { Settings } from "lucide-react";
+import { Settings, CreditCard } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { GeneralTab } from "./tabs/general-tab";
 import { AccountTab } from "./tabs/account-tab";
+import { BillingTab } from "./tabs/billing-tab";
 
-export type SettingsTab = "general" | "account";
+export type SettingsTab = "general" | "account" | "billing";
 
 interface SettingsDialogProps {
 	children?: React.ReactNode;
@@ -53,6 +54,11 @@ export function SettingsDialog({ open: controlledOpen, onOpenChange }: SettingsD
 					/>
 				</svg>
 			),
+		},
+		{
+			id: "billing",
+			label: "Billing",
+			icon: <CreditCard className="h-4 w-4" />,
 		},
 	];
 
@@ -95,12 +101,15 @@ export function SettingsDialog({ open: controlledOpen, onOpenChange }: SettingsD
 										"Customize your app experience and preferences"}
 									{activeTab === "account" &&
 										"Manage your account information and settings"}
+									{activeTab === "billing" &&
+										"Manage your subscription and billing information"}
 								</DialogDescription>
 							</DialogHeader>
 
 							<div className="space-y-6">
 								{activeTab === "general" && <GeneralTab />}
 								{activeTab === "account" && <AccountTab />}
+								{activeTab === "billing" && <BillingTab />}
 							</div>
 						</div>
 					</div>
