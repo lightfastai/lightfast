@@ -17,10 +17,9 @@ import {
 	getPricingForInterval,
 } from "~/lib/billing/pricing";
 import type { PlanPricing } from "~/lib/billing/pricing";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
+import { ClerkPlanKey } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
-import { CheckoutButton } from "@clerk/nextjs/experimental";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -115,20 +114,20 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 				) : canUpgrade ? (
 					<ClerkLoaded>
 						<SignedIn>
-							<CheckoutButton
-								planId={getClerkPlanId(plan.plan)}
-								planPeriod={billingInterval}
-								for="user"
-								onSubscriptionComplete={() => {
-									router.back();
+							<Button 
+								className="w-full bg-green-600 hover:bg-green-700 text-white"
+								onClick={() => {
+									const params = new URLSearchParams({
+										plan: plan.plan,
+										period: billingInterval
+									});
+									router.push(`/checkout?${params.toString()}`);
 								}}
 							>
-								<Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-									{currentPlan === ClerkPlanKey.FREE_TIER
-										? `Upgrade to ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`
-										: `Get ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`}
-								</Button>
-							</CheckoutButton>
+								{currentPlan === ClerkPlanKey.FREE_TIER
+									? `Upgrade to ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`
+									: `Get ${plan.name}${billingInterval === "annual" ? " Annual" : ""}`}
+							</Button>
 						</SignedIn>
 					</ClerkLoaded>
 				) : null}
@@ -232,19 +231,18 @@ export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 									) : canUpgrade && !isFree ? (
 										<ClerkLoaded>
 											<SignedIn>
-												<CheckoutButton
-													planId={getClerkPlanId(plan.plan)}
-													planPeriod="month"
-													for="user"
-													onSubscriptionComplete={() => {
-														// Go back to where user came from
-														router.back();
+												<Button 
+													className="w-full bg-green-600 hover:bg-green-700 text-white"
+													onClick={() => {
+														const params = new URLSearchParams({
+															plan: plan.plan,
+															period: "month"
+														});
+														router.push(`/checkout?${params.toString()}`);
 													}}
 												>
-													<Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-														{`Downgrade to ${plan.name}`}
-													</Button>
-												</CheckoutButton>
+													{`Downgrade to ${plan.name}`}
+												</Button>
 											</SignedIn>
 										</ClerkLoaded>
 									) : null}
