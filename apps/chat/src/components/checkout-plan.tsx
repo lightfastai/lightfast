@@ -57,7 +57,7 @@ export function CheckoutPlan({ currentPlan }: CheckoutPlanProps) {
 							Received: {planKeyParam ?? "null"} | Expected:{" "}
 							{Object.values(ClerkPlanKey).join(", ")}
 						</p>
-						<Button onClick={() => router.push("/upgrade")} variant="outline">
+						<Button onClick={() => router.push("/billing/upgrade")} variant="outline">
 							<ArrowLeft className="w-4 h-4 mr-2" />
 							Back to Plans
 						</Button>
@@ -82,7 +82,7 @@ export function CheckoutPlan({ currentPlan }: CheckoutPlanProps) {
 							You already have the{" "}
 							{planKey === ClerkPlanKey.PLUS_TIER ? "Plus" : "Free"} plan.
 						</p>
-						<Button onClick={() => router.push("/upgrade")} variant="outline">
+						<Button onClick={() => router.push("/billing/upgrade")} variant="outline">
 							<ArrowLeft className="w-4 h-4 mr-2" />
 							Back to Plans
 						</Button>
@@ -237,8 +237,20 @@ function PaymentSection() {
 			// Confirm checkout with payment method
 			await confirm(data);
 
-			// Complete checkout and redirect to success page
-			finalize({ navigate: () => router.push("/upgrade?success=true") });
+			// Complete checkout and redirect to new success page
+			finalize({ 
+				navigate: () => {
+					const params = new URLSearchParams(window.location.search);
+					const plan = params.get("plan");
+					const period = params.get("period");
+					
+					const successParams = new URLSearchParams();
+					if (plan) successParams.set("plan", plan);
+					if (period) successParams.set("period", period);
+					
+					router.push(`/billing/success?${successParams.toString()}`);
+				}
+			});
 		} catch (error) {
 			console.error("Payment failed:", error);
 		} finally {

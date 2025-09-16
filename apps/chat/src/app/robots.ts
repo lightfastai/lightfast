@@ -16,7 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/new",
           "/sign-in",
           "/sign-up", 
-          "/upgrade",
+          "/billing/upgrade",
           "/api/",
           "/*sessionId*",
           "/sso-callback",

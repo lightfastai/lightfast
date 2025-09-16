@@ -22,10 +22,10 @@ export function LayoutBackButton({
 	const getDestination = (): BackDestination => {
 		if (destination) return destination;
 		
-		if (pathname.includes("/upgrade")) {
+		if (pathname.includes("/billing/upgrade")) {
 			return "new";
 		}
-		if (pathname.includes("/checkout")) {
+		if (pathname.includes("/billing/checkout")) {
 			return "upgrade";
 		}
 		return "back";
@@ -39,13 +39,13 @@ export function LayoutBackButton({
 				router.push("/");
 				break;
 			case "plans":
-				router.push("/upgrade");
+				router.push("/billing/upgrade");
 				break;
 			case "new":
 				router.push("/new");
 				break;
 			case "upgrade":
-				router.push("/upgrade");
+				router.push("/billing/upgrade");
 				break;
 			case "back":
 			default:

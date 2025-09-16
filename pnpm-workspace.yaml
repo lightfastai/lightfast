@@ -37,7 +37,7 @@ catalog:
   '@t3-oss/env-core': ^0.12.0
   resumable-stream: ^2.0.0
   '@clerk/elements': ^0.23.48
-  '@clerk/nextjs': ^6.28.1
+  '@clerk/nextjs': ^6.32.0
   '@clerk/themes': ^2.4.4
   zustand: ^5.0.7
 catalogs:
