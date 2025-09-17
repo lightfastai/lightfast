@@ -36,13 +36,13 @@ import {
 import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
 import { 
 	UsageLimitExceededError
-} from "~/lib/billing/usage-service";
+} from "~/services/usage.service";
 import {
 	reserveQuota,
 	confirmQuotaUsage,
 	releaseQuotaReservation,
 	QuotaReservationError
-} from "~/lib/billing/quota-reservation";
+} from "~/services/quota-reservation.service";
 import { 
 	ClerkPlanKey, 
 	BILLING_LIMITS, 

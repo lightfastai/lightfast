@@ -11,7 +11,7 @@ import {
   getTRPCErrorMessage,
   isForbidden,
   isUnauthorized 
-} from '~/lib/trpc-errors';
+} from '~/services/trpc-errors.service';
 
 export interface SaveDocumentProps {
   id: string;

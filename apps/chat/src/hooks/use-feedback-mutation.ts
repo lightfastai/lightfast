@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useCallback } from "react";
 import { useTRPC } from "~/trpc/react";
-import { showTRPCErrorToast } from "~/lib/trpc-errors";
+import { showTRPCErrorToast } from "~/services/trpc-errors.service";
 
 interface SubmitFeedbackInput {
 	sessionId: string;

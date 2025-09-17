@@ -4,7 +4,7 @@ import {
   isRateLimitError, 
   isAccountLockedError,
   formatLockoutTime
-} from "./error-handling";
+} from "~/app/lib/clerk/error-handling";
 
 export interface ClerkErrorContext {
   component: string;

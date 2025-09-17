@@ -26,9 +26,9 @@ export function AppSidebar() {
 				collapsible="icon"
 				className="w-64 max-w-64 p-0 border-r border-border/50 group/sidebar"
 			>
-				<SidebarHeader className="p-0">
+				<SidebarHeader className="p-0 space-y-1">
 					{/* Trigger button group - aligned to top */}
-					<SidebarGroup className="px-4 py-3">
+					<SidebarGroup>
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SidebarMenuItem>
@@ -39,7 +39,7 @@ export function AppSidebar() {
 					</SidebarGroup>
 
 					{/* New chat and actions group */}
-					<SidebarGroup className="px-4 pb-8">
+					<SidebarGroup>
 						<SidebarGroupContent>
 							<SidebarMenu className="space-y-1">
 								<SidebarMenuItem>

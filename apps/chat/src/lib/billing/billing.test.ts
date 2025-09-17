@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { getCurrentPeriod } from "./usage-service";
+import { getCurrentPeriod } from "~/services/usage.service";
 import { GRACE_PERIOD_DAYS } from "./types";
 
 /**
@@ -236,7 +236,7 @@ describe("Billing Performance", () => {
     
     // Generate 1000 periods
     for (let i = 0; i < 1000; i++) {
-      getCurrentPeriod();
+      void getCurrentPeriod();
     }
     
     const end = Date.now();

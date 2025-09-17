@@ -9,7 +9,7 @@ import {
   isNotFound,
   isForbidden,
   isUnauthorized 
-} from "~/lib/trpc-errors";
+} from "~/services/trpc-errors.service";
 
 /**
  * PlanetScale implementation of Memory interface using tRPC for all database operations

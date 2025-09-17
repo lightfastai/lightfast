@@ -6,7 +6,7 @@ import { captureException } from "@sentry/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
 import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
 import { LightfastErrorPage } from "@repo/ui/components/lightfast-error-page";
-import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
+import { ChatErrorHandler } from "~/services/chat-error-handler.service";
 
 interface UnauthenticatedChatErrorProps {
 	error: Error & { digest?: string };

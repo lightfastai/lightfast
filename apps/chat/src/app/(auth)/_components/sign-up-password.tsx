@@ -15,7 +15,7 @@ import {
 	FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Icons } from "@repo/ui/components/icons";
-import { handleClerkError } from "~/app/lib/clerk/error-handler";
+import { handleClerkError } from "~/services/clerk-error-handler.service";
 import { useLogger } from "@vendor/observability/client-log";
 
 const passwordSchema = z.object({

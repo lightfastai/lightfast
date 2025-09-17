@@ -3,11 +3,9 @@
 import { useSidebar } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
 
 export function SidebarHoverExpand() {
 	const { state, setOpen } = useSidebar();
-	const [isHovered, setIsHovered] = useState(false);
 
 	if (state === "expanded") return null;
 
@@ -15,8 +13,6 @@ export function SidebarHoverExpand() {
 		<button
 			type="button"
 			className="absolute left-0 right-0 bottom-0 top-0 group/expand cursor-pointer z-10 bg-transparent border-none"
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
 			onClick={() => setOpen(true)}
 			aria-label="Expand sidebar"
 		>
@@ -27,7 +23,7 @@ export function SidebarHoverExpand() {
 					"flex items-center justify-center",
 					"bg-sidebar-accent text-sidebar-accent-foreground",
 					"transition-opacity duration-200",
-					isHovered ? "opacity-100" : "opacity-0",
+					"opacity-0 group-hover/expand:opacity-100",
 				)}
 			>
 				<ChevronRight className="w-4 h-4" />

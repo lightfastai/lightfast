@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useTRPC } from "~/trpc/react";
-import { showTRPCErrorToast } from "~/lib/trpc-errors";
+import { showTRPCErrorToast } from "~/services/trpc-errors.service";
 import { ITEMS_PER_PAGE } from "~/components/sidebar/types";
 
 export function useInfiniteSessions() {

@@ -6,7 +6,7 @@ import { useSignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { handleClerkError } from "~/app/lib/clerk/error-handler";
+import { handleClerkError } from "~/services/clerk-error-handler.service";
 import { useLogger } from "@vendor/observability/client-log";
 
 export function OAuthSignUp() {
