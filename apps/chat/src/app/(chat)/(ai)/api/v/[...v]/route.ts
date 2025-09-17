@@ -39,6 +39,12 @@ import {
 	trackMessageSent,
 	UsageLimitExceededError
 } from "~/lib/billing/usage-service";
+import {
+	reserveQuota,
+	confirmQuotaUsage,
+	releaseQuotaReservation,
+	QuotaReservationError
+} from "~/lib/billing/quota-reservation";
 import { 
 	ClerkPlanKey, 
 	BILLING_LIMITS, 
@@ -216,6 +222,8 @@ const handler = async (
 
 	// Define the handler function that will be used for both GET and POST
 	const executeHandler = async (): Promise<Response> => {
+		// Quota reservation tracking for proper cleanup on errors
+		let quotaReservation: { reservationId: string } | null = null;
 		try {
 			// Create memory instance based on authentication status (needed for both GET and POST)
 			let memory;
@@ -468,8 +476,15 @@ const handler = async (
 						);
 					}
 					
-					// Check message usage limits using TRPC
-					await requireMessageAccess(selectedModelId);
+					// Reserve quota atomically (replaces separate check + track pattern)
+					if (!authenticatedUserId) {
+						throw new Error("User ID required for quota reservation");
+					}
+					quotaReservation = await reserveQuota(
+						authenticatedUserId,
+						selectedModelId,
+						messageId
+					);
 					
 					console.log(`[Billing] User ${authenticatedUserId} (${userPlan}) passed all billing checks for model: ${selectedModelId}`, {
 						webSearchEnabled,
@@ -478,10 +493,10 @@ const handler = async (
 					});
 
 				} catch (error) {
-					if (error instanceof UsageLimitExceededError) {
+					if (error instanceof UsageLimitExceededError || error instanceof QuotaReservationError) {
 						console.warn(
 							`[Billing] Usage limit exceeded for user ${authenticatedUserId}:`,
-							error.details
+							error instanceof QuotaReservationError ? error.details : error.details
 						);
 						return new Response(
 							JSON.stringify({
@@ -644,6 +659,22 @@ const handler = async (
 						},
 					);
 
+					// Release quota reservation if message processing fails
+					if (!isAnonymous && quotaReservation) {
+						const reservationId = quotaReservation.reservationId;
+						releaseQuotaReservation(reservationId)
+							.then(() => {
+								console.log(`[Billing] Quota reservation released due to error for user ${authenticatedUserId}:`, {
+									reservationId,
+									errorCode: error.statusCode
+								});
+							})
+							.catch((releaseError) => {
+								console.error(`[Billing] Failed to release quota reservation for user ${authenticatedUserId}:`, releaseError);
+								// This leaves reserved quota stuck - cleanup job will handle it
+							});
+					}
+
 					// Handle specific error types
 					if (error.statusCode === 500) {
 						console.error(
@@ -672,16 +703,20 @@ const handler = async (
 						userId: systemContext.resourceId,
 					});
 
-					// Track message usage for authenticated users
-					if (!isAnonymous) {
-						trackMessageSent(selectedModelId)
+					// Confirm quota usage for authenticated users (replaces fire-and-forget tracking)
+					if (!isAnonymous && quotaReservation) {
+						const reservationId = quotaReservation.reservationId;
+						confirmQuotaUsage(reservationId)
 							.then(() => {
-								console.log(`[Billing] Usage tracked for user ${authenticatedUserId}:`, {
-									modelId: selectedModelId
+								console.log(`[Billing] Usage confirmed for user ${authenticatedUserId}:`, {
+									modelId: selectedModelId,
+									reservationId
 								});
 							})
 							.catch((error) => {
-								console.error(`[Billing] Failed to track usage for user ${authenticatedUserId}:`, error);
+								console.error(`[Billing] Failed to confirm usage for user ${authenticatedUserId}:`, error);
+								// This is critical - user got value but usage not recorded
+								// TODO: Add to retry queue or alert system
 							});
 					}
 

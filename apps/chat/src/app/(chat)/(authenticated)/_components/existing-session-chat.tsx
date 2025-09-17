@@ -112,7 +112,8 @@ export function ExistingSessionChat({
 						];
 					});
 
-					// Optimistically update usage limits using immer
+					// Optimistically update usage for immediate UI feedback (prevents spam clicking)
+					// Server-side reservation system provides authoritative validation
 					queryClient.setQueryData(
 						usageQueryOptions.queryKey,
 						(oldUsageData) => {
@@ -121,17 +122,14 @@ export function ExistingSessionChat({
 							const messageType = getMessageType(selectedModelId);
 							const isPremium = messageType === MessageType.PREMIUM;
 
-							// Use immer for clean immutable updates
+							// Optimistic decrement to prevent spam clicking
 							return produce(oldUsageData, (draft) => {
-								// Update usage counts
 								if (isPremium) {
-									draft.usage.premiumMessages = (draft.usage.premiumMessages || 0) + 1;
 									draft.remainingQuota.premiumMessages = Math.max(
 										0,
 										draft.remainingQuota.premiumMessages - 1,
 									);
 								} else {
-									draft.usage.nonPremiumMessages = (draft.usage.nonPremiumMessages || 0) + 1;
 									draft.remainingQuota.nonPremiumMessages = Math.max(
 										0,
 										draft.remainingQuota.nonPremiumMessages - 1,
@@ -140,6 +138,28 @@ export function ExistingSessionChat({
 							});
 						},
 					);
+				}}
+				onQuotaError={(modelId) => {
+					// Rollback optimistic quota update when server rejects
+					queryClient.setQueryData(
+						usageQueryOptions.queryKey,
+						(oldUsageData) => {
+							if (!oldUsageData) return oldUsageData;
+
+							const messageType = getMessageType(modelId);
+							const isPremium = messageType === MessageType.PREMIUM;
+
+							// Rollback: increment quota back
+							return produce(oldUsageData, (draft) => {
+								if (isPremium) {
+									draft.remainingQuota.premiumMessages += 1;
+								} else {
+									draft.remainingQuota.nonPremiumMessages += 1;
+								}
+							});
+						},
+					);
+					console.log('[ExistingSessionChat] Rolled back optimistic quota update for model:', modelId);
 				}}
 				onNewAssistantMessage={(assistantMessage) => {
 					// Optimistically append the assistant message to the cache

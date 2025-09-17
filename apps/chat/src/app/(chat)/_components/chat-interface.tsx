@@ -79,6 +79,7 @@ interface ChatInterfaceProps {
 	resume?: boolean; // Whether to resume an interrupted stream
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
+	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
 
@@ -92,6 +93,7 @@ export function ChatInterface({
 	resume = false,
 	onNewUserMessage,
 	onNewAssistantMessage,
+	onQuotaError,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// ALL errors now go to error boundary - no inline error state needed
@@ -223,6 +225,14 @@ export function ChatInterface({
 		onError: (error) => {
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
+
+			// Handle quota errors with optimistic update rollback
+			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
+				console.warn('[ChatInterface] Quota exceeded, triggering rollback');
+				onQuotaError?.(selectedModelId);
+				// Don't throw to error boundary for quota errors - user can try different model
+				return;
+			}
 
 			// Define which errors are critical and should use error boundary
 			// These are errors that prevent the chat from functioning
