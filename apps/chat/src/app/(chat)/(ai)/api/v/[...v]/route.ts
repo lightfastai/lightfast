@@ -35,8 +35,6 @@ import {
 } from "@vendor/security";
 import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
 import { 
-	requireMessageAccess,
-	trackMessageSent,
 	UsageLimitExceededError
 } from "~/lib/billing/usage-service";
 import {
