@@ -49,10 +49,10 @@ let config: NextConfig = withBetterStack(
 			 * @see https://nextjs.org/docs/app/api-reference/config/next-config-js/staleTimes
 			 * @see https://nextjs.org/blog/next-15#client-router-cache-no-longer-caches-page-components-by-default
 			 */
-			staleTimes: {
-				dynamic: 30, // Cache dynamic pages for 30 seconds (same as Next.js 14 default)
-				static: 180, // Cache static pages for 3 minutes
-			},
+			// staleTimes: {
+			// dynamic: 30, // Cache dynamic pages for 30 seconds (same as Next.js 14 default)
+			//static: 180, // Cache static pages for 3 minutes
+			//},
 		},
 	}),
 );
