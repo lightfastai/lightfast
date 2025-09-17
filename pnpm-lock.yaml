@@ -174,6 +174,12 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@3.25.76)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.1.0)
       react:
         specifier: ^19.1.1
         version: 19.1.1
@@ -490,6 +496,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.1.0)
       drizzle-orm:
         specifier: ^0.43.1
         version: 0.43.1(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.4)(@vercel/postgres@0.10.0)(postgres@3.4.7)
@@ -1691,13 +1700,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@3.25.76)
+        version: 1.0.15(zod@4.0.16)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@3.25.76)
+        version: 5.0.15(zod@4.0.16)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -9948,6 +9957,11 @@ packages:
   date-fns-jalali@4.1.0-0:
     resolution: {integrity: sha512-hTIP/z+t+qKwBDcmmsnmjWTduxCg+5KfdqWQvb2X/8C9+knYY6epN/pfxdDuyVlSVeFz0sM5eEfwIUQ70U4ckg==}
 
+  date-fns-tz@3.2.0:
+    resolution: {integrity: sha512-sg8HqoTEulcbbbVXeg84u5UnlsQa8GS5QXMqjjYIhS4abEVVKIUwe0/l/UhrZdKaL/W5eWZNlbTeEIiOXTcsBQ==}
+    peerDependencies:
+      date-fns: ^3.0.0 || ^4.0.0
+
   date-fns@4.1.0:
     resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
@@ -15972,11 +15986,23 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
+      zod: 4.0.16
+
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       zod: 3.25.76
+
+  '@ai-sdk/gateway@1.0.7(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
+      zod: 4.0.16
 
   '@ai-sdk/google-vertex@2.2.27(zod@3.25.76)':
     dependencies:
@@ -16070,12 +16096,27 @@ snapshots:
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
 
+  '@ai-sdk/provider-utils@3.0.3(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@standard-schema/spec': 1.0.0
+      eventsource-parser: 3.0.5
+      zod: 4.0.16
+      zod-to-json-schema: 3.24.6(zod@4.0.16)
+
   '@ai-sdk/provider-utils@3.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
+
+  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@standard-schema/spec': 1.0.0
+      eventsource-parser: 3.0.5
+      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:
@@ -22848,6 +22889,14 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
+  ai@5.0.15(zod@4.0.16):
+    dependencies:
+      '@ai-sdk/gateway': 1.0.7(zod@4.0.16)
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
+      '@opentelemetry/api': 1.9.0
+      zod: 4.0.16
+
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
       ajv: 8.17.1
@@ -24031,6 +24080,10 @@ snapshots:
       is-data-view: 1.0.2
 
   date-fns-jalali@4.1.0-0: {}
+
+  date-fns-tz@3.2.0(date-fns@4.1.0):
+    dependencies:
+      date-fns: 4.1.0
 
   date-fns@4.1.0: {}
 
@@ -31300,6 +31353,10 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
+
+  zod-to-json-schema@3.24.6(zod@4.0.16):
+    dependencies:
+      zod: 4.0.16
 
   zod-validation-error@3.5.3(zod@3.25.76):
     dependencies:

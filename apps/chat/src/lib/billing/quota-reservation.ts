@@ -1,6 +1,7 @@
 import { createCaller } from "~/trpc/server";
 import { getMessageType } from "./message-utils";
 import { MessageType } from "./types";
+import { getCurrentPeriod } from "./usage-service";
 
 /**
  * Quota Reservation System
@@ -46,11 +47,12 @@ export class QuotaReservationError extends Error {
 export async function reserveQuota(
 	userId: string,
 	modelId: string,
-	messageId: string // For idempotency
+	messageId: string, // For idempotency
+	timezone?: string
 ): Promise<QuotaReservation> {
 	const caller = await createCaller();
 	const messageType = getMessageType(modelId);
-	const period = getCurrentPeriod();
+	const period = getCurrentPeriod(timezone);
 	
 	try {
 		// Atomic operation: check quota AND reserve it in one database transaction
@@ -145,13 +147,6 @@ export async function releaseQuotaReservation(reservationId: string): Promise<vo
 	}
 }
 
-/**
- * Get current period string (YYYY-MM)
- */
-function getCurrentPeriod(): string {
-	const now = new Date();
-	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
 
 /**
  * Cleanup expired reservations (background job)

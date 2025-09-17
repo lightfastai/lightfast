@@ -1,35 +1,46 @@
 import { createCaller } from "~/trpc/server";
 import { getMessageType } from "./message-utils";
 import { MessageType } from "./types";
+import { toZonedTime, format } from "date-fns-tz";
 
 /**
- * Server-side usage tracking service using TRPC
- * This replaces the direct database usage functions
+ * Enhanced server-side usage tracking service
+ * Uses TRPC with timezone-aware period calculation
  */
 
 /**
- * Get current period string (YYYY-MM)
+ * Get current period string with timezone support
+ * Now properly implements timezone-aware period calculation
  */
-export function getCurrentPeriod(): string {
-	const now = new Date();
-	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+export function getCurrentPeriod(timezone = 'UTC'): string {
+  const now = toZonedTime(new Date(), timezone);
+  return format(now, 'yyyy-MM');
 }
 
 /**
  * Check if user can send a message with specific model
- * Uses TRPC for all database operations
+ * Enhanced with subscription status and grace period logic via TRPC
  */
-export async function canSendMessage(modelId: string): Promise<{
+export async function canSendMessage(
+	modelId: string,
+	timezone?: string
+): Promise<{
 	allowed: boolean;
 	reason?: string;
 	remainingMessages?: number;
+	gracePeriod?: {
+		active: boolean;
+		daysRemaining?: number;
+	};
 }> {
 	try {
 		const caller = await createCaller();
 		const messageType = getMessageType(modelId);
 
-		// Check usage limits
-		const limitsCheck = await caller.usage.checkLimits({});
+		// Check usage limits via enhanced TRPC endpoint
+		const limitsCheck = await caller.usage.checkLimits({
+			timezone: timezone ?? 'UTC',
+		});
 
 		const exceeded =
 			messageType === MessageType.PREMIUM
@@ -42,13 +53,20 @@ export async function canSendMessage(modelId: string): Promise<{
 					? limitsCheck.remainingQuota.premiumMessages
 					: limitsCheck.remainingQuota.nonPremiumMessages;
 
+			let reason = messageType === MessageType.PREMIUM
+				? "Premium message limit exceeded for this billing period"
+				: "Message limit exceeded for this billing period";
+
+			// Add grace period context if applicable
+			if (limitsCheck.gracePeriod.active) {
+				reason += ` (Grace period: ${limitsCheck.gracePeriod.daysRemaining} days remaining)`;
+			}
+
 			return {
 				allowed: false,
-				reason:
-					messageType === MessageType.PREMIUM
-						? "Premium message limit exceeded for this month"
-						: "Monthly message limit exceeded",
+				reason,
 				remainingMessages: remaining,
+				gracePeriod: limitsCheck.gracePeriod,
 			};
 		}
 
@@ -60,6 +78,7 @@ export async function canSendMessage(modelId: string): Promise<{
 		return {
 			allowed: true,
 			remainingMessages: remaining,
+			gracePeriod: limitsCheck.gracePeriod,
 		};
 	} catch (error) {
 		console.error("Error checking message limit:", error);
@@ -73,13 +92,16 @@ export async function canSendMessage(modelId: string): Promise<{
 
 /**
  * Track a message being sent (increment usage counters)
- * Uses TRPC for database operations
+ * Uses timezone-aware period calculation
  */
-export async function trackMessageSent(modelId: string): Promise<void> {
+export async function trackMessageSent(
+	modelId: string,
+	timezone?: string
+): Promise<void> {
 	try {
 		const caller = await createCaller();
 		const messageType = getMessageType(modelId);
-		const period = getCurrentPeriod();
+		const period = getCurrentPeriod(timezone ?? 'UTC');
 
 		if (messageType === MessageType.PREMIUM) {
 			await caller.usage.incrementPremium({
@@ -93,7 +115,7 @@ export async function trackMessageSent(modelId: string): Promise<void> {
 			});
 		}
 
-		console.log(`[Usage] Tracked ${messageType} message for model: ${modelId}`);
+		console.log(`[Usage] Tracked ${messageType} message for model: ${modelId} in period: ${period}`);
 	} catch (error) {
 		console.error("Error tracking message usage:", error);
 		// Don't throw here to avoid breaking the chat flow
