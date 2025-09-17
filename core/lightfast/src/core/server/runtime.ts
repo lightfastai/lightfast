@@ -265,13 +265,14 @@ export async function streamChat<
 		return Err(toAgentApiError(error, "streamText"));
 	}
 
-	const serializeApiErrorForClient = (
-		error: ApiError,
-		phase: "persistence" | "resume" | "stream",
-	): string => {
-		const status = error.statusCode ?? 500;
-		return JSON.stringify({
-			type: mapStatusCodeToChatErrorType(status),
+const serializeApiErrorForClient = (
+	error: ApiError,
+	phase: "persistence" | "resume" | "stream",
+	extraMetadata: Record<string, unknown> = {},
+): string => {
+	const status = error.statusCode ?? 500;
+	return JSON.stringify({
+		type: mapStatusCodeToChatErrorType(status),
 			error: error.message,
 			message:
 				phase === "persistence"
@@ -285,10 +286,11 @@ export async function streamChat<
 				errorCode: error.errorCode,
 				phase,
 				sessionId,
-				streamId,
-			},
-		});
-	};
+			streamId,
+			...extraMetadata,
+		},
+	});
+};
 
 	let persistenceErrorPayload: string | null = null;
 	let resumeErrorPayload: string | null = null;
@@ -355,7 +357,10 @@ export async function streamChat<
 						},
 					);
 
-					persistenceErrorPayload = serializeApiErrorForClient(apiError, "persistence");
+					const persistedMessageId = finishResult.responseMessage?.id;
+					persistenceErrorPayload = serializeApiErrorForClient(apiError, "persistence", {
+						...(persistedMessageId ? { messageId: persistedMessageId } : {}),
+					});
 					onError?.({
 						systemContext,
 						requestContext: requestContext as RequestContext | undefined,
@@ -458,15 +463,15 @@ export async function streamChat<
 
 		if (resumeOptions?.silentStreamFailure) {
 			console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, error);
-			} else {
-				console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, error);
-				onError?.({
-					systemContext,
-					requestContext: requestContext as RequestContext | undefined,
-					error: apiError,
-				});
-				resumeErrorPayload = serializeApiErrorForClient(apiError, "resume");
-			}
+		} else {
+			console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, error);
+			onError?.({
+				systemContext,
+				requestContext: requestContext as RequestContext | undefined,
+				error: apiError,
+			});
+			resumeErrorPayload = serializeApiErrorForClient(apiError, "resume");
+		}
 		}
 	};
 

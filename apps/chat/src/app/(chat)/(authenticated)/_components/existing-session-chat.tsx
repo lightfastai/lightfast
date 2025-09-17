@@ -192,6 +192,13 @@ export function ExistingSessionChat({
 						queryKey: usageQueryOptions.queryKey,
 					});
 				}}
+				onAssistantStreamError={({ messageId }) => {
+					if (!messageId) return;
+					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
+						if (!oldData) return oldData;
+						return oldData.filter((msg) => msg.id !== messageId);
+					});
+				}}
 			/>
 		</DataStreamProvider>
 	);

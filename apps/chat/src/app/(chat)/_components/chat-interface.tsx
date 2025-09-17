@@ -87,6 +87,7 @@ interface ChatInterfaceProps {
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
+	onAssistantStreamError?: (info: { messageId?: string; phase?: string }) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
 
@@ -101,6 +102,7 @@ export function ChatInterface({
 	onNewUserMessage,
 	onNewAssistantMessage,
 	onQuotaError,
+	onAssistantStreamError,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
@@ -247,6 +249,18 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					metadata: chatError.metadata,
 				});
 				setDataStream([]);
+				const phase =
+					typeof chatError.metadata?.phase === "string"
+						? chatError.metadata.phase
+						: undefined;
+				const failedMessageId =
+					typeof chatError.metadata?.messageId === "string"
+						? chatError.metadata.messageId
+						: undefined;
+				onAssistantStreamError?.({
+					messageId: failedMessageId,
+					phase,
+				});
 				setStreamingError(chatError);
 				return;
 			}
