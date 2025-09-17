@@ -248,6 +248,7 @@ export function ChatInterface({
 				ChatErrorType.BOT_DETECTION,
 				ChatErrorType.SECURITY_BLOCKED,
 				ChatErrorType.MODEL_ACCESS_DENIED,
+				ChatErrorType.SERVER_ERROR,
 				// Rate limit is only critical for anonymous users
 				...(isAuthenticated ? [] : [ChatErrorType.RATE_LIMIT]),
 			];
