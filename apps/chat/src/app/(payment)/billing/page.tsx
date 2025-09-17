@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { BillingManagement } from "~/components/billing-management";
 import { auth } from "@clerk/nextjs/server";
 import { ClerkPlanKey, hasClerkPlan } from "~/lib/billing/types";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { BillingContentSkeleton } from "~/components/billing-content-skeleton";
 
 export default async function BillingPage() {
 	const { has } = await auth();
@@ -11,5 +14,29 @@ export default async function BillingPage() {
 	// Determine current plan (defaults to free if no active subscription)
 	const currentPlan: ClerkPlanKey = hasPlusPlan ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
 
-	return <BillingManagement currentPlan={currentPlan} />;
+	// Prefetch billing data on the server for instant loading
+	prefetch(trpc.billing.getSubscription.queryOptions());
+
+	return (
+		<div className="min-h-screen bg-background">
+			<div className="container mx-auto px-4 py-8 max-w-4xl">
+				{/* Static Header - renders immediately */}
+				<div className="mb-8">
+					<h1 className="text-3xl font-bold text-foreground mb-2">
+						Billing & Subscription
+					</h1>
+					<p className="text-muted-foreground">
+						Manage your subscription, usage, and billing preferences
+					</p>
+				</div>
+
+				{/* Dynamic Content - shows loading skeleton */}
+				<HydrateClient>
+					<Suspense fallback={<BillingContentSkeleton />}>
+						<BillingManagement currentPlan={currentPlan} />
+					</Suspense>
+				</HydrateClient>
+			</div>
+		</div>
+	);
 }

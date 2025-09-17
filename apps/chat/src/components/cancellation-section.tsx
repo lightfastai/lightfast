@@ -2,6 +2,9 @@
 
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -22,20 +25,29 @@ import { toast } from "@repo/ui/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { ClerkPlanKey } from "~/lib/billing/types";
 import { useTRPC } from "~/trpc/react";
-import { useSubscriptionState } from "~/hooks/use-subscription-state";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface CancellationSectionProps {
 	currentPlan: ClerkPlanKey;
 }
 
 export function CancellationSection({ currentPlan }: CancellationSectionProps) {
-	const {
-		hasActiveSubscription,
-		isCanceled,
-		billingInterval,
-		paidSubscriptionItems,
-	} = useSubscriptionState();
 	const trpc = useTRPC();
+	
+	const { data: subscriptionData } = useSuspenseQuery({
+		...trpc.billing.getSubscription.queryOptions(),
+		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
+		refetchOnMount: false, // Prevent blocking navigation
+		refetchOnWindowFocus: false, // Don't refetch on window focus
+	});
+	
+	// Extract subscription state from query data
+	const {
+		hasActiveSubscription = false,
+		isCanceled = false,
+		billingInterval = "month" as const,
+		paidSubscriptionItems = [],
+	} = subscriptionData;
 	const router = useRouter();
 
 	// Only show for paid plans
@@ -71,7 +83,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 	// Handle subscription cancellation
 	const handleCancelSubscription = () => {
-		if (!paidSubscriptionItems[0]?.id) {
+		if (!paidSubscriptionItems?.[0]?.id) {
 			toast({
 				title: "Error",
 				description: "No active paid subscription found to cancel.",
@@ -86,7 +98,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 		if (confirmed) {
 			cancelSubscriptionMutation.mutate({
-				subscriptionItemId: paidSubscriptionItems[0].id,
+				subscriptionItemId: paidSubscriptionItems[0]!.id,
 				endNow: false, // Cancel at end of billing period
 			});
 		}

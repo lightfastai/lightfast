@@ -22,7 +22,8 @@ import { ArrowLeft, CreditCard, Shield, Zap } from "lucide-react";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPricingForInterval, getCheckoutFeatures } from "~/lib/billing/pricing";
-import { useSubscriptionState } from "~/hooks/use-subscription-state";
+import { useTRPC } from "~/trpc/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface CheckoutPlanProps {
 	currentPlan: ClerkPlanKey;
@@ -405,26 +406,19 @@ function SubscriptionCheck({
 	planKey: ClerkPlanKey; 
 	currentPlan: ClerkPlanKey; 
 }) {
-	const { isCanceled, isLoading } = useSubscriptionState();
+	const trpc = useTRPC();
+	
+	const { data: subscriptionData } = useSuspenseQuery({
+		...trpc.billing.getSubscription.queryOptions(),
+		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
+		refetchOnMount: false, // Prevent blocking navigation
+		refetchOnWindowFocus: false, // Don't refetch on window focus
+	});
+	
+	const { isCanceled = false } = subscriptionData;
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	
-	// Show loading while checking subscription status
-	if (isLoading) {
-		return (
-			<div className="min-h-screen bg-background flex items-center justify-center p-4">
-				<Card className="w-full max-w-md">
-					<CardHeader>
-						<CardTitle className="text-center">Loading...</CardTitle>
-					</CardHeader>
-					<CardContent className="text-center">
-						<div className="w-6 h-6 mx-auto animate-spin rounded-full border-2 border-current border-t-transparent" />
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
 	// If user has cancelled their subscription, allow them to proceed to checkout
 	if (isCanceled) {
 		const period = searchParams.get("period") ?? "month";
