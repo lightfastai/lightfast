@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/react";
 import { useUserPlan } from "./use-user-plan";
 import { getMessageType } from "~/lib/billing/message-utils";
@@ -31,15 +31,9 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	const { userPlan, planLimits, isAuthenticated, isLoaded, userId } = useUserPlan();
 	const trpc = useTRPC();
 	
-	// Fetch current usage limits (only when no external data provided)
-	const shouldFetch = isAuthenticated && isLoaded && !externalUsageData;
-	const { 
-		data: fetchedUsageLimits, 
-		isLoading: isUsageLoading,
-		error: usageError 
-	} = useQuery({
+	// Fetch current usage limits (always fetch, but external data takes precedence)
+	const { data: fetchedUsageLimits } = useSuspenseQuery({
 		...trpc.usage.checkLimits.queryOptions({}),
-		enabled: shouldFetch,
 		refetchInterval: 30000, // Keep usage current
 		staleTime: 10000, // Fresh for 10 seconds
 		retry: (failureCount, error) => {
@@ -56,7 +50,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	
 	// Calculate remaining messages for each type
 	const remainingMessages = useMemo(() => {
-		if (!usageLimits || !isAuthenticated) {
+		if (!isAuthenticated) {
 			return {
 				nonPremium: planLimits.nonPremiumMessagesPerMonth,
 				premium: planLimits.premiumMessagesPerMonth,
@@ -71,7 +65,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	
 	// Check if user has exceeded limits
 	const hasExceededLimits = useMemo(() => {
-		if (!usageLimits || !isAuthenticated) {
+		if (!isAuthenticated) {
 			return {
 				nonPremium: false,
 				premium: false,
@@ -86,7 +80,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	
 	// Get usage summary for display
 	const usageSummary = useMemo(() => {
-		if (!isAuthenticated || !usageLimits) {
+		if (!isAuthenticated) {
 			return null;
 		}
 		
@@ -217,19 +211,8 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		 * Check if user can use a specific model (considers usage limits)
 		 */
 		canUseModel: (modelId: string) => {
-			if (!isAuthenticated) {
+				if (!isAuthenticated) {
 				// For anonymous users, delegate to anonymous limit system
-				return { allowed: true, reason: null };
-			}
-			
-			if (isUsageLoading && !externalUsageData) {
-				// Optimistically allow while loading
-				return { allowed: true, reason: null };
-			}
-			
-			if (usageError) {
-				// Log error but optimistically allow
-				console.warn('[Billing Context] Error fetching usage data, allowing optimistically:', usageError);
 				return { allowed: true, reason: null };
 			}
 			
@@ -265,7 +248,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		summary: usageSummary,
 		remainingMessages,
 		hasExceededLimits,
-	}), [isAuthenticated, isUsageLoading, externalUsageData, usageError, hasExceededLimits, remainingMessages, usageSummary]);
+	}), [isAuthenticated, externalUsageData, hasExceededLimits, remainingMessages, usageSummary]);
 	
 	// PLAN INFORMATION DOMAIN
 	const plan = useMemo(() => ({
@@ -286,9 +269,9 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		plan,
 		
 		// Loading states
-		isLoaded: isLoaded && (!isAuthenticated || !isUsageLoading || !!externalUsageData),
-		isLoading: isUsageLoading && !externalUsageData,
-		error: usageError,
+		isLoaded: isLoaded,
+		isLoading: false, // No loading state with suspense
+		error: null, // No error state with suspense
 	};
 }
 

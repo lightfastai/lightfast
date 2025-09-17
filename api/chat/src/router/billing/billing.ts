@@ -21,12 +21,19 @@ export const billingRouter = {
         // This handles all nested objects and class instances automatically
         const subscriptionData = subscription ? JSON.parse(JSON.stringify(subscription)) : null;
 
-        // Filter out free tier subscription items - only work with paid plans
+        // Separate free tier and paid subscription items instead of filtering completely
         const freeTierPlanIds = ["cplan_free", "free-tier"];
-        const paidSubscriptionItems = subscriptionData?.subscriptionItems?.filter(
+        const allSubscriptionItems = subscriptionData?.subscriptionItems ?? [];
+        
+        const paidSubscriptionItems = allSubscriptionItems.filter(
           (item: any) => !freeTierPlanIds.includes(item?.plan?.id ?? "") && 
                         !freeTierPlanIds.includes(item?.plan?.name ?? "")
-        ) ?? [];
+        );
+        
+        const freeTierSubscriptionItems = allSubscriptionItems.filter(
+          (item: any) => freeTierPlanIds.includes(item?.plan?.id ?? "") || 
+                        freeTierPlanIds.includes(item?.plan?.name ?? "")
+        );
 
         // Compute derived state (matching useSubscriptionState logic)
         const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
@@ -42,6 +49,8 @@ export const billingRouter = {
           // Raw data (now plain objects)
           subscription: subscriptionData,
           paidSubscriptionItems,
+          freeTierSubscriptionItems,
+          allSubscriptionItems,
           
           // Computed state
           isCanceled,
@@ -59,6 +68,8 @@ export const billingRouter = {
             return {
               subscription: null,
               paidSubscriptionItems: [],
+              freeTierSubscriptionItems: [],
+              allSubscriptionItems: [],
               isCanceled: false,
               hasActiveSubscription: false,
               nextBillingDate: null,

@@ -2,7 +2,7 @@
 
 import type { ChatStatus, ToolUIPart } from "ai";
 import { memo, useState, useEffect } from "react";
-import { ToolCallRenderer } from "~/components/tool-renderers/tool-call-renderer";
+import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";

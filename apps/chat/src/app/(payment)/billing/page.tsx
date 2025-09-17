@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { BillingManagement } from "~/components/billing-management";
 import { auth } from "@clerk/nextjs/server";
 import { ClerkPlanKey, hasClerkPlan } from "~/lib/billing/types";
@@ -14,8 +15,13 @@ export default async function BillingPage() {
 	// Check current user's subscription plan using type-safe helper
 	const hasPlusPlan = hasClerkPlan(has, ClerkPlanKey.PLUS_TIER);
 
-	// Determine current plan (defaults to free if no active subscription)
-	const currentPlan: ClerkPlanKey = hasPlusPlan ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
+	// Redirect free users to upgrade page
+	if (!hasPlusPlan) {
+		redirect("/upgrade");
+	}
+
+	// User has plus plan, proceed with billing management
+	const currentPlan: ClerkPlanKey = ClerkPlanKey.PLUS_TIER;
 
 	// Prefetch billing data on the server for instant loading
 	prefetch(trpc.billing.getSubscription.queryOptions());
