@@ -19,3 +19,6 @@ export type ChatRouterOutputs = inferRouterOutputs<ChatAppRouter>;
 
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";
+
+// Export billing utilities
+export { calculateBillingPeriod } from "./router/chat/usage";

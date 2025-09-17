@@ -45,6 +45,7 @@
 		"autoevals": "^0.0.103",
 		"braintrust": "catalog:",
 		"date-fns": "^4.1.0",
+		"date-fns-tz": "^3.2.0",
 		"drizzle-orm": "^0.43.1",
 		"exa-js": "catalog:",
 		"framer-motion": "^11.3.19",

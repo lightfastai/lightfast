@@ -10,6 +10,136 @@ import {
   RESERVATION_STATUS
 } from "@db/chat";
 import { eq, and, sql, lt } from "drizzle-orm";
+import { toZonedTime, format } from "date-fns-tz";
+import { differenceInDays } from "date-fns";
+import { isWithinInterval } from "date-fns";
+import { clerkClient } from "@clerk/nextjs/server";
+import type { CommerceSubscription, CommerceSubscriptionItem } from "@clerk/backend";
+
+// Shared period calculation function for consistent billing logic across the system
+export async function calculateBillingPeriod(userId: string, timezone: string = 'UTC'): Promise<string> {
+  const subscriptionData = await getUserSubscriptionData(userId);
+  const { subscription, hasActiveSubscription } = subscriptionData;
+
+  if (!subscription || !hasActiveSubscription) {
+    // Free users: use calendar month in user timezone
+    const now = toZonedTime(new Date(), timezone);
+    return format(now, 'yyyy-MM');
+  } else {
+    // Paid users: use actual billing anniversary periods based on subscription cycles
+    const activePaidItem = subscription.subscriptionItems?.find(item => 
+      !['cplan_free', 'free-tier'].includes(item?.plan?.id ?? "") &&
+      !['cplan_free', 'free-tier'].includes(item?.plan?.name ?? "")
+    );
+    
+    if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
+      const now = toZonedTime(new Date(), timezone);
+      const periodStart = toZonedTime(new Date(activePaidItem.periodStart), timezone);
+      const periodEnd = toZonedTime(new Date(activePaidItem.periodEnd), timezone);
+      
+      // Check if we're within the current subscription period
+      if (isWithinInterval(now, { start: periodStart, end: periodEnd })) {
+        // Use billing anniversary date as period identifier (YYYY-MM-DD format)
+        // This ensures quotas reset on billing anniversary, not calendar month
+        const billingPeriodId = format(periodStart, 'yyyy-MM-dd');
+        
+        console.log(`[Billing] User ${userId} in billing period ${billingPeriodId} (${activePaidItem.planPeriod} plan)`);
+        return billingPeriodId;
+      }
+    }
+    
+    // Fallback to calendar month if subscription data is incomplete
+    const now = toZonedTime(new Date(), timezone);
+    return format(now, 'yyyy-MM');
+  }
+}
+
+// Shared subscription data interface
+interface SubscriptionData {
+  subscription: CommerceSubscription | null;
+  planKey: 'free' | 'plus';
+  hasActiveSubscription: boolean;
+  billingInterval: 'month' | 'annual';
+  error?: string; // Track if there was an error fetching subscription
+}
+
+// Shared function to get user subscription data from Clerk
+async function getUserSubscriptionData(userId: string): Promise<SubscriptionData> {
+  let subscription: CommerceSubscription | null = null;
+  let billingInterval: 'month' | 'annual' = 'month';
+  let hasActiveSubscription = false;
+  let planKey: 'free' | 'plus' = 'free';
+  
+  try {
+    const client = await clerkClient();
+    const billingData = await client.billing.getUserBillingSubscription(userId);
+    
+    if (billingData) {
+      subscription = billingData;
+      
+      // Extract billing interval from subscription items with validation
+      // Match exact logic from billing.ts router
+      let paidItems: CommerceSubscriptionItem[] = [];
+      try {
+        const freeTierPlanIds = ["cplan_free", "free-tier"];
+        const allSubscriptionItems = billingData.subscriptionItems ?? [];
+        
+        paidItems = allSubscriptionItems.filter((item: CommerceSubscriptionItem) => 
+          !freeTierPlanIds.includes(item?.plan?.id ?? "") && 
+          !freeTierPlanIds.includes(item?.plan?.name ?? "")
+        );
+        
+        if (paidItems.length > 0) {
+          planKey = 'plus';
+          // Extract billing interval following billing.ts pattern
+          billingInterval = paidItems[0]?.planPeriod === "annual" ? "annual" : "month";
+          
+          console.log(`[Billing] User ${userId} has plus plan with ${paidItems.length} paid items`);
+        } else {
+          console.log(`[Billing] User ${userId} has free plan`);
+        }
+      } catch (itemError) {
+        console.error('Error parsing subscription items:', itemError, { userId });
+        // Default to free tier if subscription items can't be parsed
+        planKey = 'free';
+        paidItems = [];
+      }
+      
+      // Enhanced active subscription detection matching billing.ts exactly:
+      // status === "active" AND paidSubscriptionItems.length > 0
+      if (typeof billingData.status === 'string') {
+        hasActiveSubscription = billingData.status === 'active' && paidItems.length > 0;
+      } else {
+        console.warn(`Unexpected subscription status format: ${typeof billingData.status}`, { userId, status: billingData.status });
+        hasActiveSubscription = false;
+      }
+    } else {
+      console.log(`[Billing] No billing data found for user ${userId}, defaulting to free tier`);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Billing] Failed to fetch subscription for user ${userId}:`, errorMessage, error);
+    
+    // For production: might want to differentiate between network errors vs auth errors
+    // Network errors: retry or allow with free tier
+    // Auth errors: might need to block or alert
+    
+    return {
+      subscription: null,
+      planKey: 'free',
+      hasActiveSubscription: false,
+      billingInterval: 'month',
+      error: `Clerk API error: ${errorMessage}`,
+    };
+  }
+  
+  return {
+    subscription,
+    planKey,
+    hasActiveSubscription,
+    billingInterval,
+  };
+}
 
 // Helper function to get usage by period (shared logic)
 async function getUsageByPeriod(userId: string, period: string) {
@@ -112,7 +242,7 @@ export const usageRouter = {
   getByPeriod: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -137,7 +267,7 @@ export const usageRouter = {
   incrementNonPremium: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
         count: z.number().positive().default(1),
       })
     )
@@ -192,7 +322,7 @@ export const usageRouter = {
   incrementPremium: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
         count: z.number().positive().default(1),
       })
     )
@@ -242,50 +372,74 @@ export const usageRouter = {
 
   /**
    * Check if user has exceeded usage limits
+   * Enhanced with real subscription data and grace period logic
    */
   checkLimits: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format").optional(),
+        period: z.string().optional(), // Flexible format: YYYY-MM or YYYY-MM-DD
+        timezone: z.string().default('UTC'), // User timezone for period calculation
       })
     )
     .query(async ({ ctx, input }) => {
-      const period = input.period || (() => {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      })();
-
+      // Get subscription data using shared function
+      const { subscription, planKey, hasActiveSubscription, billingInterval } = await getUserSubscriptionData(ctx.session.userId);
+      
+      // Calculate billing period using shared function for consistency
+      const period = input.period || await calculateBillingPeriod(ctx.session.userId, input.timezone);
+      
       const usage = await getUsageByPeriod(ctx.session.userId, period);
 
-      // Define limits based on user plan
-      // These could come from user subscription data in the future
+      // Define limits based on actual plan
       const limits = {
-        free: {
-          nonPremiumMessages: 1000,
-          premiumMessages: 0,
-        },
-        plus: {
-          nonPremiumMessages: 1000,
-          premiumMessages: 100,
-        },
+        free: { nonPremiumMessages: 1000, premiumMessages: 0 },
+        plus: { nonPremiumMessages: 1000, premiumMessages: 100 },
       };
-
-      // For now, assume all users are on free plan
-      // In the future, fetch actual user plan from subscription data
-      const userPlan = 'free';
-      const planLimits = limits[userPlan];
+      
+      const planLimits = limits[planKey as keyof typeof limits] || limits.free;
+      
+      // Enhanced grace period logic with real date calculation
+      const inGracePeriod = subscription?.status === 'past_due';
+      let graceDaysRemaining = 0;
+      
+      if (inGracePeriod && subscription?.pastDueAt) {
+        // Calculate days since payment failure using pastDueAt timestamp
+        const failureDate = toZonedTime(new Date(subscription.pastDueAt), input.timezone);
+        const now = toZonedTime(new Date(), input.timezone);
+        const daysSinceFailure = differenceInDays(now, failureDate);
+        
+        // 7-day grace period
+        graceDaysRemaining = Math.max(0, 7 - daysSinceFailure);
+      }
+      
+      // Apply grace period restrictions
+      const effectiveLimits = inGracePeriod 
+        ? { ...planLimits, premiumMessages: 0 } // Restrict premium in grace period
+        : planLimits;
 
       return {
         period,
         usage,
-        limits: planLimits,
+        limits: effectiveLimits,
         exceeded: {
-          nonPremiumMessages: usage.nonPremiumMessages > planLimits.nonPremiumMessages,
-          premiumMessages: usage.premiumMessages > planLimits.premiumMessages,
+          nonPremiumMessages: usage.nonPremiumMessages >= effectiveLimits.nonPremiumMessages,
+          premiumMessages: usage.premiumMessages >= effectiveLimits.premiumMessages,
         },
         remainingQuota: {
-          nonPremiumMessages: Math.max(0, planLimits.nonPremiumMessages - usage.nonPremiumMessages),
-          premiumMessages: Math.max(0, planLimits.premiumMessages - usage.premiumMessages),
+          nonPremiumMessages: Math.max(0, effectiveLimits.nonPremiumMessages - usage.nonPremiumMessages),
+          premiumMessages: Math.max(0, effectiveLimits.premiumMessages - usage.premiumMessages),
+        },
+        // Enhanced information
+        subscription: {
+          planKey,
+          status: subscription?.status,
+          hasActiveSubscription,
+          billingInterval,
+        },
+        gracePeriod: {
+          active: inGracePeriod,
+          daysRemaining: graceDaysRemaining,
+          originalLimits: inGracePeriod ? planLimits : undefined,
         },
       };
     }),
@@ -328,7 +482,7 @@ export const usageRouter = {
         modelId: z.string(),
         messageId: z.string(), // For idempotency
         messageType: z.enum(['premium', 'standard']),
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -370,12 +524,14 @@ export const usageRouter = {
             )
           );
 
-        // Define limits (should come from user subscription in future)
+        // Get real user subscription data for quota limits
+        const { planKey: userPlan } = await getUserSubscriptionData(input.userId);
+        
+        // Define limits based on actual subscription
         const limits = {
           free: { nonPremiumMessages: 1000, premiumMessages: 0 },
           plus: { nonPremiumMessages: 1000, premiumMessages: 100 },
         };
-        const userPlan = 'free'; // TODO: Get actual user plan
         const planLimits = limits[userPlan];
 
         // Calculate effective usage including active reservations

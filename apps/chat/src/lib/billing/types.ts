@@ -55,11 +55,12 @@ export function getClerkPlanId(planKey: ClerkPlanKey): string {
 
 export interface UserUsage {
   userId: string;
-  period: string; // YYYY-MM format
+  period: string; // YYYY-MM format for monthly, YYYY-MM-DD for anniversary billing
   nonPremiumMessages: number;
   premiumMessages: number;
   lastUpdated: Date;
 }
+
 
 export interface BillingLimits {
   plan: ClerkPlanKey;
@@ -168,3 +169,8 @@ export class FeatureNotAllowedError extends Error implements BillingError {
 export function hasClerkPlan(hasFunction: (params: { plan: string }) => boolean, planKey: ClerkPlanKey): boolean {
   return hasFunction({ plan: planKey });
 }
+
+/**
+ * Grace period configuration for payment failures
+ */
+export const GRACE_PERIOD_DAYS = 7; // 7 days grace period for past_due subscriptions
