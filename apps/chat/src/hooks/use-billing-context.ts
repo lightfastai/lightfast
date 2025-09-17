@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/react";
 import { useUserPlan } from "./use-user-plan";
 import { getMessageType } from "~/lib/billing/message-utils";
@@ -31,9 +31,11 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	const { userPlan, planLimits, isAuthenticated, isLoaded, userId } = useUserPlan();
 	const trpc = useTRPC();
 	
-	// Fetch current usage limits (always fetch, but external data takes precedence)
-	const { data: fetchedUsageLimits } = useSuspenseQuery({
+	// Fetch current usage limits - use regular query for SSR compatibility
+	// When external data is provided, this query is effectively bypassed
+	const { data: fetchedUsageLimits, isLoading: isUsageLoading } = useQuery({
 		...trpc.usage.checkLimits.queryOptions({}),
+		enabled: isAuthenticated && !externalUsageData, // Only fetch when needed
 		refetchInterval: 30000, // Keep usage current
 		staleTime: 10000, // Fresh for 10 seconds
 		retry: (failureCount, error) => {
@@ -46,7 +48,16 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	});
 	
 	// Use external data if provided, otherwise use fetched data
-	const usageLimits = externalUsageData ?? fetchedUsageLimits;
+	// Provide fallback for SSR/loading states
+	const usageLimits = externalUsageData ?? fetchedUsageLimits ?? {
+		usage: { nonPremiumMessages: 0, premiumMessages: 0 },
+		remainingQuota: { 
+			nonPremiumMessages: planLimits.nonPremiumMessagesPerMonth, 
+			premiumMessages: planLimits.premiumMessagesPerMonth 
+		},
+		exceeded: { nonPremiumMessages: false, premiumMessages: false },
+		period: new Date().toISOString().slice(0, 7) // YYYY-MM format
+	};
 	
 	// Calculate remaining messages for each type
 	const remainingMessages = useMemo(() => {
@@ -216,6 +227,11 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 				return { allowed: true, reason: null };
 			}
 			
+			if (isUsageLoading && !externalUsageData) {
+				// Optimistically allow while loading
+				return { allowed: true, reason: null };
+			}
+			
 			const messageType = getMessageType(modelId);
 			
 			if (messageType === MessageType.PREMIUM) {
@@ -248,7 +264,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		summary: usageSummary,
 		remainingMessages,
 		hasExceededLimits,
-	}), [isAuthenticated, externalUsageData, hasExceededLimits, remainingMessages, usageSummary]);
+	}), [isAuthenticated, isUsageLoading, externalUsageData, hasExceededLimits, remainingMessages, usageSummary]);
 	
 	// PLAN INFORMATION DOMAIN
 	const plan = useMemo(() => ({
@@ -269,9 +285,9 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		plan,
 		
 		// Loading states
-		isLoaded: isLoaded,
-		isLoading: false, // No loading state with suspense
-		error: null, // No error state with suspense
+		isLoaded: isLoaded && (!isAuthenticated || !isUsageLoading || !!externalUsageData),
+		isLoading: isUsageLoading && !externalUsageData,
+		error: null, // Handle errors gracefully
 	};
 }
 
