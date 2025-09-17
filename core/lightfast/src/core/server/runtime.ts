@@ -265,7 +265,6 @@ export async function streamChat<
 		return Err(toAgentApiError(error, "streamText"));
 	}
 
-	const serializedErrorChunks: string[] = [];
 	const serializeApiErrorForClient = (
 		error: ApiError,
 		phase: "persistence" | "resume" | "stream",
@@ -385,13 +384,12 @@ export async function streamChat<
 			) {
 				return payload;
 			}
-			onError?.({
-				systemContext,
-				requestContext: requestContext as RequestContext | undefined,
-				error: apiError,
-			});
-			serializedErrorChunks.push(payload);
-			return payload;
+		onError?.({
+			systemContext,
+			requestContext: requestContext as RequestContext | undefined,
+			error: apiError,
+		});
+		return payload;
 		},
 	});
 
@@ -404,7 +402,6 @@ export async function streamChat<
 				const payloads = [
 					persistenceErrorPayload,
 					resumeErrorPayload,
-					...serializedErrorChunks,
 				].filter((value): value is string => Boolean(value));
 				const seen = new Set<string>();
 				for (const payload of payloads) {

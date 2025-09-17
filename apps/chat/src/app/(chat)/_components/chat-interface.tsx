@@ -16,7 +16,7 @@ import {
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
-import { ArrowUp, Globe, X } from "lucide-react";
+import { AlertCircle, ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import React, { useState, useMemo } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
@@ -26,6 +26,7 @@ import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
+import type { ChatError } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
@@ -39,6 +40,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
+import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/ui/alert";
+import { Button } from "@repo/ui/components/ui/button";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -102,7 +105,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
 	const { sessionId, resume, hasActiveStream } = useSessionState(session, fallbackSessionId);
-	// ALL errors now go to error boundary - no inline error state needed
+	// Most errors escalate to the boundary; streaming/storage issues are handled inline
 
 	// Hook for handling ALL errors via error boundaries
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
@@ -181,8 +184,11 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-	// Web search toggle state
-	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+// Web search toggle state
+const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+
+// Streaming/storage error surfaced from backend without hard-crashing the UI
+const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 
 
 	// Anonymous message limit tracking (only for unauthenticated users)
@@ -233,6 +239,18 @@ export function ChatInterface({
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
 
+			if (chatError.type === ChatErrorType.SERVER_ERROR) {
+				console.error("[Streaming Error] Backend reported server failure:", {
+					statusCode: chatError.statusCode,
+					message: chatError.message,
+					details: chatError.details,
+					metadata: chatError.metadata,
+				});
+				setDataStream([]);
+				setStreamingError(chatError);
+				return;
+			}
+
 			// Handle quota errors with optimistic update rollback
 			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
 				console.warn('[ChatInterface] Quota exceeded, triggering rollback');
@@ -248,7 +266,6 @@ export function ChatInterface({
 				ChatErrorType.BOT_DETECTION,
 				ChatErrorType.SECURITY_BLOCKED,
 				ChatErrorType.MODEL_ACCESS_DENIED,
-				ChatErrorType.SERVER_ERROR,
 				// Rate limit is only critical for anonymous users
 				...(isAuthenticated ? [] : [ChatErrorType.RATE_LIMIT]),
 			];
@@ -306,6 +323,68 @@ export function ChatInterface({
 		enabled: isAuthenticated && !isNewSession && status === "ready", // Only fetch feedback when streaming is complete
 	});
 
+	const streamingErrorBanner = streamingError
+		? (() => {
+			const phase =
+				typeof streamingError.metadata?.phase === "string"
+					? streamingError.metadata.phase
+					: undefined;
+			const errorCode =
+				typeof streamingError.metadata?.errorCode === "string"
+					? streamingError.metadata.errorCode
+					: undefined;
+
+			let title = "We couldn't finish that response";
+				let message = streamingError.message;
+			if (phase === "persistence") {
+				title = "Response not saved";
+				message =
+					"We streamed a reply but failed to store it. Copy anything important before refreshing.";
+			} else if (phase === "resume") {
+				title = "Resume temporarily unavailable";
+				message =
+					"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
+			}
+
+			const detail = streamingError.details;
+
+			return (
+				<div className="mb-4">
+					<Alert variant="destructive" className="flex items-start gap-3">
+						<AlertCircle className="h-4 w-4 mt-1 text-destructive-foreground" />
+						<div className="flex-1 space-y-2">
+							<AlertTitle className="text-sm font-semibold">
+								{title}
+							</AlertTitle>
+							<AlertDescription className="text-sm leading-relaxed">
+								{message}
+							</AlertDescription>
+							{detail && (
+								<p className="text-xs text-destructive-foreground/80">
+									{detail}
+								</p>
+							)}
+							{errorCode && (
+								<p className="text-[11px] uppercase tracking-wide text-destructive-foreground/60">
+									Error code: {errorCode}
+								</p>
+							)}
+						</div>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-6 w-6 mt-1 text-destructive-foreground"
+							onClick={() => setStreamingError(null)}
+							aria-label="Dismiss chat error"
+						>
+							<X className="h-4 w-4" />
+						</Button>
+					</Alert>
+				</div>
+			);
+		})()
+		: null;
+
 	// Feedback mutation hooks with authentication-aware handlers
 	const feedbackMutation = useFeedbackMutation({
 		sessionId,
@@ -318,6 +397,8 @@ export function ChatInterface({
 		if (!message.trim() || status === "streaming" || status === "submitted") {
 			return;
 		}
+
+		setStreamingError(null);
 
 		// For unauthenticated users, check anonymous message limit
 		if (!isAuthenticated && hasReachedLimit) {
@@ -436,6 +517,7 @@ export function ChatInterface({
 			// For truly new chats (no messages yet), show centered layout
 			<div className="h-full flex flex-col items-center justify-center bg-background">
 				<div className="w-full max-w-3xl px-7">
+					{streamingErrorBanner}
 					<div className="mb-8">
 						<ChatEmptyState
 							prompt={
@@ -536,6 +618,7 @@ export function ChatInterface({
 		) : (
 			// Thread view or chat with existing messages, OR existing session with no messages
 			<div className="flex flex-col h-full bg-background">
+				{streamingErrorBanner}
 				<ChatMessages
 					messages={messages}
 					status={status}
