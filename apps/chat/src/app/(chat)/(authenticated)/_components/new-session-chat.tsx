@@ -96,6 +96,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 				handleSessionCreation={handleSessionCreation}
 				user={user}
 				resume={false} // New sessions never have active streams to resume
+				hasActiveStream={false} // New sessions never have active streams initially
 				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache

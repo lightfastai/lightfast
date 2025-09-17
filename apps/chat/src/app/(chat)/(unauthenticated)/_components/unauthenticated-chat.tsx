@@ -38,6 +38,7 @@ export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
 				handleSessionCreation={handleSessionCreation}
 				user={null}
 				resume={false} // Unauthenticated sessions don't persist streams
+				hasActiveStream={false} // Unauthenticated sessions don't have active streams
 			/>
 		</DataStreamProvider>
 	);

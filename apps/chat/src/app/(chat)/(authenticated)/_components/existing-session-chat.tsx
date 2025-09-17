@@ -92,6 +92,7 @@ export function ExistingSessionChat({
 				handleSessionCreation={handleSessionCreation}
 				user={user}
 				resume={sessionData.activeStreamId !== null}
+				hasActiveStream={sessionData.activeStreamId !== null}
 				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache

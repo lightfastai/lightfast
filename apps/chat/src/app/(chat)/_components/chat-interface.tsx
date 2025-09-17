@@ -77,6 +77,7 @@ interface ChatInterfaceProps {
 	handleSessionCreation: (firstMessage: string) => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
 	resume?: boolean; // Whether to resume an interrupted stream
+	hasActiveStream?: boolean; // Whether there's an active stream (for determining when to show thinking placeholder vs "No message content")
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
@@ -91,6 +92,7 @@ export function ChatInterface({
 	handleSessionCreation,
 	user,
 	resume = false,
+	hasActiveStream = false,
 	onNewUserMessage,
 	onNewAssistantMessage,
 	onQuotaError,
@@ -177,6 +179,7 @@ export function ChatInterface({
 
 	// Web search toggle state
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -279,8 +282,6 @@ export function ChatInterface({
 					details: chatError.details,
 				});
 
-				// Could show a toast or inline message here
-				// For now, just log and let the user retry
 			}
 		},
 		onFinish: (event) => {
@@ -421,12 +422,16 @@ export function ChatInterface({
 	);
 
 	// Create the main chat content component
+	// Determine the appropriate UI state:
+	// 1. New session with no messages -> centered empty state
+	// 2. Existing session with no messages -> conversation layout with empty state message
+	// 3. Session with messages -> normal conversation layout
 	const chatContent =
-		messages.length === 0 ? (
-			// For new chats (no messages yet), show centered layout
+		messages.length === 0 && isNewSession ? (
+			// For truly new chats (no messages yet), show centered layout
 			<div className="h-full flex flex-col items-center justify-center bg-background">
-				<div className="w-full max-w-3xl px-4">
-					<div className="px-4 mb-8">
+				<div className="w-full max-w-3xl px-7">
+					<div className="mb-8">
 						<ChatEmptyState
 							prompt={
 								user?.email
@@ -524,7 +529,7 @@ export function ChatInterface({
 				</div>
 			</div>
 		) : (
-			// Thread view or chat with existing messages
+			// Thread view or chat with existing messages, OR existing session with no messages
 			<div className="flex flex-col h-full bg-background">
 				<ChatMessages
 					messages={messages}
@@ -533,6 +538,8 @@ export function ChatInterface({
 					onFeedbackSubmit={feedbackMutation.handleSubmit}
 					onFeedbackRemove={feedbackMutation.handleRemove}
 					_isAuthenticated={isAuthenticated}
+					isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
+					hasActiveStream={hasActiveStream}
 					onArtifactClick={
 						isAuthenticated
 							? async (artifactId) => {
@@ -570,10 +577,10 @@ export function ChatInterface({
 					}
 				/>
 				<div className="relative">
-					<div className="max-w-3xl mx-auto p-4">
+					<div className="max-w-3xl mx-auto px-7">
 						{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
 						{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
-							<div className="mb-2 px-4">
+							<div className="mb-2">
 								<RateLimitIndicator remainingMessages={remainingMessages} />
 							</div>
 						)}
@@ -598,7 +605,11 @@ export function ChatInterface({
 									<PromptInputBody className="flex flex-col">
 										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 											<PromptInputTextarea
-												placeholder="Continue the conversation..."
+												placeholder={
+													messages.length === 0 
+														? "Ask anything..." 
+														: "Continue the conversation..."
+												}
 												className={cn(
 													"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
 													"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",

@@ -1,12 +1,15 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useMemo } from "react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
-import { parseResponseMetadata, cleanTextFromMetadata } from "~/ai/prompts/parsers/metadata-parser";
+import {
+	parseResponseMetadata,
+	cleanTextFromMetadata,
+} from "~/ai/prompts/parsers/metadata-parser";
 import {
 	InlineCitationCard,
 	InlineCitationCardTrigger,
@@ -55,7 +58,7 @@ const StreamingSineWave = memo(function StreamingSineWave({
 	if (!show) return null;
 
 	return (
-		<div className="w-full px-8">
+		<div className="w-full">
 			<SineWaveDots />
 		</div>
 	);
@@ -72,6 +75,8 @@ interface ChatMessagesProps {
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
 	_isAuthenticated: boolean;
+	isExistingSessionWithNoMessages?: boolean;
+	hasActiveStream?: boolean;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -100,7 +105,7 @@ const UserMessage = memo(function UserMessage({
 
 	return (
 		<div className="py-1">
-			<div className="mx-auto max-w-3xl px-8">
+			<div className="mx-auto max-w-3xl px-7">
 				<Message from="user" className="justify-end">
 					<MessageContent variant="chat">
 						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
@@ -182,7 +187,7 @@ const AssistantMessage = memo(function AssistantMessage({
 
 	return (
 		<div className="py-1">
-			<div className="mx-auto max-w-3xl group/message px-4">
+			<div className="mx-auto max-w-3xl px-14">
 				<Message
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
@@ -202,7 +207,7 @@ const AssistantMessage = memo(function AssistantMessage({
 									<MessageContent
 										key={`${message.id}-part-${index}`}
 										variant="chat"
-										className="w-full px-8 py-0 [&>*]:my-0"
+										className="w-full py-0 [&>*]:my-0"
 									>
 										<Markdown className="[&>*]:my-0">
 											{cleanTextFromMetadata(part.text)}
@@ -220,10 +225,7 @@ const AssistantMessage = memo(function AssistantMessage({
 								const trimmedText = part.text.replace(/^\n+/, "");
 
 								return (
-									<div
-										key={`${message.id}-part-${index}`}
-										className="w-full px-2"
-									>
+									<div key={`${message.id}-part-${index}`} className="w-full">
 										<Reasoning
 											className="w-full"
 											isStreaming={isReasoningStreaming}
@@ -240,10 +242,7 @@ const AssistantMessage = memo(function AssistantMessage({
 								const toolName = part.type.replace("tool-", "");
 
 								return (
-									<div
-										key={`${message.id}-part-${index}`}
-										className="w-full px-4"
-									>
+									<div key={`${message.id}-part-${index}`} className="w-full">
 										<ToolCallRenderer
 											toolPart={part as ToolUIPart}
 											toolName={toolName}
@@ -261,7 +260,7 @@ const AssistantMessage = memo(function AssistantMessage({
 					{/* Actions and Citations - hidden when streaming without content */}
 					<div
 						className={cn(
-							"w-full px-8 mt-2",
+							"w-full mt-2",
 							!hasMeaningfulContent(message)
 								? "opacity-0 pointer-events-none"
 								: "opacity-100",
@@ -362,10 +361,53 @@ export function ChatMessages({
 	onFeedbackSubmit,
 	onFeedbackRemove,
 	_isAuthenticated,
+	isExistingSessionWithNoMessages = false,
+	hasActiveStream = false,
 }: ChatMessagesProps) {
+	// Process messages to ensure every user message has a corresponding assistant message
+	const processedMessages = useMemo(() => {
+		const result: LightfastAppChatUIMessage[] = [];
+
+		for (let i = 0; i < messages.length; i++) {
+			const currentMessage = messages[i];
+			const nextMessage = messages[i + 1];
+
+			// Skip if current message doesn't exist
+			if (!currentMessage) continue;
+
+			// Add the current message
+			result.push(currentMessage);
+
+			// If current message is from user and next message is NOT from assistant (or doesn't exist)
+			if (currentMessage.role === "user" && nextMessage?.role !== "assistant") {
+				// Don't inject "No message content" if this is the last message and there's an active stream
+				const isLastMessageWithActiveStream =
+					i === messages.length - 1 && hasActiveStream;
+
+				if (!isLastMessageWithActiveStream) {
+					result.push({
+						id: `no-content-${currentMessage.id}`,
+						role: "assistant",
+						parts: [
+							{
+								type: "text",
+								text: "_No message content_",
+							},
+						],
+					});
+				}
+			}
+		}
+
+		return result;
+	}, [messages.length, hasActiveStream]);
+
 	// Check if we need a thinking placeholder
+	// Show it only when there's an active stream and the last message is from user
 	const needsPlaceholder =
-		status === "submitted" && messages[messages.length - 1]?.role === "user";
+		hasActiveStream &&
+		messages.length > 0 &&
+		messages[messages.length - 1]?.role === "user";
 
 	// Determine which message should show streaming behavior
 	const shouldShowStreaming = status === "submitted" || status === "streaming";
@@ -374,11 +416,27 @@ export function ChatMessages({
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
+					{/* Show empty state message for existing sessions with no messages */}
+					{isExistingSessionWithNoMessages && (
+						<div className="py-8">
+							<div className="mx-auto max-w-3xl px-7">
+								<div className="text-center text-muted-foreground">
+									<p className="text-sm mb-2">
+										This conversation has no messages yet.
+									</p>
+									<p className="text-xs">
+										Start typing below to begin the conversation.
+									</p>
+								</div>
+							</div>
+						</div>
+					)}
+
 					{/* Render existing messages */}
-					{messages.map((message, index) => {
+					{processedMessages.map((message, index) => {
 						const isCurrentlyStreaming =
 							shouldShowStreaming &&
-							index === messages.length - 1 &&
+							index === processedMessages.length - 1 &&
 							message.role === "assistant";
 
 						return message.role === "user" ? (

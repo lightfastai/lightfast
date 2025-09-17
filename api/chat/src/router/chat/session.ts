@@ -441,5 +441,39 @@ export const sessionRouter = {
 
 			return { success: true };
 		}),
+
+	/**
+	 * Cleanup old active stream IDs (admin/cron job endpoint)
+	 * Clears activeStreamId for sessions older than the specified age
+	 */
+	cleanupOldActiveStreams: protectedProcedure
+		.input(
+			z.object({
+				olderThanMinutes: z.number().min(1).default(5),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			// Calculate the cutoff timestamp
+			const cutoffTime = new Date(Date.now() - input.olderThanMinutes * 60 * 1000);
+
+			// Update sessions with non-null activeStreamId that are older than cutoff
+			const result = await db
+				.update(LightfastChatSession)
+				.set({ activeStreamId: null })
+				.where(
+					and(
+						sql`${LightfastChatSession.activeStreamId} IS NOT NULL`,
+						lt(LightfastChatSession.updatedAt, cutoffTime),
+					),
+				);
+
+			console.log(`[StreamCleanup] Cleared ${result.rowsAffected || 0} old active streams older than ${input.olderThanMinutes} minutes`);
+
+			return { 
+				success: true, 
+				clearedCount: result.rowsAffected || 0,
+				cutoffTime: cutoffTime.toISOString(),
+			};
+		}),
 } satisfies TRPCRouterRecord;
 
