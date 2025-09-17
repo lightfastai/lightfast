@@ -463,7 +463,7 @@ export const sessionRouter = {
 				.where(
 					and(
 						sql`${LightfastChatSession.activeStreamId} IS NOT NULL`,
-						lt(LightfastChatSession.updatedAt, cutoffTime),
+						lt(LightfastChatSession.updatedAt, cutoffTime.toISOString()),
 					),
 				);
 
