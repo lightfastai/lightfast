@@ -11,7 +11,10 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 - **Fixes shipped**:
   - `core/lightfast/src/core/server/runtime.ts`: wraps persistence errors, emits SSE `error` parts with metadata, keeps the stream alive.
   - `apps/chat/.../chat-interface.tsx`: intercepts the payload, clears artifact stream state, rolls back optimistic assistant messages, and renders a banner instead of escalating to the global error boundary.
-- **Still to consider**: retry/backoff in runtime and gating optimistic cache updates on confirmed persistence.
+- **Still to consider**:
+  - Retry/backoff in runtime and gate optimistic cache updates on confirmed persistence.
+  - Flag the affected assistant message in the stream so the client can offer a one-click resend.
+  - Detect and clean up partially created sessions/messages left by the failed write path.
 
 ### M2. Resume registration feedback
 - **Problem**: `memory.createStream` failures were silent; resume requests later returned 204 with no explanation.
