@@ -23,9 +23,9 @@ export function GeneralTab() {
 		return (
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<span className="text-sm font-medium">Theme</span>
+					<span className="text-xs font-medium">Theme</span>
 					<Select disabled>
-						<SelectTrigger className="w-32">
+						<SelectTrigger className="w-24 h-8 text-xs">
 							<SelectValue placeholder="Loading..." />
 						</SelectTrigger>
 					</Select>
@@ -37,9 +37,9 @@ export function GeneralTab() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<span className="text-sm font-medium">Theme</span>
+				<span className="text-xs font-medium">Theme</span>
 				<Select value={theme} onValueChange={setTheme}>
-					<SelectTrigger className="w-32">
+					<SelectTrigger className="w-24 h-8 text-xs">
 						<SelectValue placeholder="Select theme" />
 					</SelectTrigger>
 					<SelectContent>

@@ -19,17 +19,11 @@ export function BillingTab() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<div>
-					<h3 className="text-sm font-medium">Subscription</h3>
-					<p className="text-sm text-muted-foreground">
-						{isSubscribed 
-							? "Manage your subscription and billing settings" 
-							: "Upgrade to unlock premium features"
-						}
-					</p>
+					<h3 className="text-xs font-medium">Subscription</h3>
 				</div>
-				<Button asChild variant="outline" size="sm">
+				<Button asChild variant="outline" className="h-8 text-xs px-3">
 					<Link href={href} className="flex items-center gap-2">
-						<CreditCard className="h-4 w-4" />
+						<CreditCard className="h-3 w-3" />
 						{buttonText}
 					</Link>
 				</Button>

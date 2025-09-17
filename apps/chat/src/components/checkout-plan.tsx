@@ -22,8 +22,7 @@ import { ArrowLeft, CreditCard, Shield, Zap } from "lucide-react";
 import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
 import type { BillingInterval } from "~/lib/billing/types";
 import { getPricingForInterval, getCheckoutFeatures } from "~/lib/billing/pricing";
-import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useBillingData } from "~/hooks/use-billing-data";
 
 interface CheckoutPlanProps {
 	currentPlan: ClerkPlanKey;
@@ -406,16 +405,7 @@ function SubscriptionCheck({
 	planKey: ClerkPlanKey; 
 	currentPlan: ClerkPlanKey; 
 }) {
-	const trpc = useTRPC();
-	
-	const { data: subscriptionData } = useSuspenseQuery({
-		...trpc.billing.getSubscription.queryOptions(),
-		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
-	
-	const { isCanceled = false } = subscriptionData;
+	const { isCanceled } = useBillingData();
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	

@@ -5,7 +5,7 @@ import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { produce } from "immer";
 import { getMessageType } from "~/lib/billing/message-utils";
@@ -33,25 +33,27 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Get user info and usage data
 	const trpc = useTRPC();
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
-	
-	const [{ data: user, isLoading: isUserLoading }, { data: usageLimits, isLoading: isUsageLoading }] =
-		useQueries({
-			queries: [
-				{
-					...trpc.user.getUser.queryOptions(),
-					staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
-					refetchOnMount: false, // Prevent blocking navigation
-					refetchOnWindowFocus: false, // Don't refetch on window focus
-				},
-				{
-					...usageQueryOptions,
-					staleTime: 60 * 1000, // Consider usage data fresh for 1 minute
-					gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-					refetchOnMount: false, // Don't refetch on mount to prevent blocking
-					refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
-				},
-			],
-		});
+
+	const [
+		{ data: user },
+		{ data: usageLimits },
+	] = useSuspenseQueries({
+		queries: [
+			{
+				...trpc.user.getUser.queryOptions(),
+				staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+				refetchOnMount: false, // Prevent blocking navigation
+				refetchOnWindowFocus: false, // Don't refetch on window focus
+			},
+			{
+				...usageQueryOptions,
+				staleTime: 60 * 1000, // Consider usage data fresh for 1 minute
+				gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+				refetchOnMount: false, // Don't refetch on mount to prevent blocking
+				refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
+			},
+		],
+	});
 
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
@@ -67,15 +69,6 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		sessionId,
 	}).queryKey;
 
-	// Handle loading states
-	if (isUserLoading || isUsageLoading) {
-		return null; // Let parent handle loading state
-	}
-
-	// Handle missing data
-	if (!user || !usageLimits) {
-		return null; // Let parent handle error state
-	}
 
 	// Handle session creation when the first message is sent
 	const handleSessionCreation = (firstMessage: string) => {
@@ -93,8 +86,6 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		createSession.mutate({ id: sessionId, firstMessage });
 	};
 
-
-
 	return (
 		<DataStreamProvider>
 			<ChatInterface
@@ -111,7 +102,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 					queryClient.setQueryData(messagesQueryKey, (oldData) => {
 						const currentMessages = oldData ?? [];
 						// Check if message with this ID already exists
-						if (currentMessages.some(msg => msg.id === userMessage.id)) {
+						if (currentMessages.some((msg) => msg.id === userMessage.id)) {
 							return currentMessages;
 						}
 						return [
@@ -138,13 +129,15 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							return produce(oldUsageData, (draft) => {
 								// Update usage counts
 								if (isPremium) {
-									draft.usage.premiumMessages = (draft.usage.premiumMessages || 0) + 1;
+									draft.usage.premiumMessages =
+										(draft.usage.premiumMessages || 0) + 1;
 									draft.remainingQuota.premiumMessages = Math.max(
 										0,
 										draft.remainingQuota.premiumMessages - 1,
 									);
 								} else {
-									draft.usage.nonPremiumMessages = (draft.usage.nonPremiumMessages || 0) + 1;
+									draft.usage.nonPremiumMessages =
+										(draft.usage.nonPremiumMessages || 0) + 1;
 									draft.remainingQuota.nonPremiumMessages = Math.max(
 										0,
 										draft.remainingQuota.nonPremiumMessages - 1,
@@ -159,7 +152,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 					queryClient.setQueryData(messagesQueryKey, (oldData) => {
 						const currentMessages = oldData ?? [];
 						// Check if message with this ID already exists
-						if (currentMessages.some(msg => msg.id === assistantMessage.id)) {
+						if (currentMessages.some((msg) => msg.id === assistantMessage.id)) {
 							return currentMessages;
 						}
 						return [

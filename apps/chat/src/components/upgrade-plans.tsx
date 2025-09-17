@@ -22,8 +22,7 @@ import type { BillingInterval } from "~/lib/billing/types";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useBillingData } from "~/hooks/use-billing-data";
 
 interface UpgradePlansProps {
 	currentPlan: ClerkPlanKey;
@@ -38,16 +37,8 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 	const [billingInterval, setBillingInterval] =
 		useState<BillingInterval>("month");
 	const router = useRouter();
-	const trpc = useTRPC();
 	
-	const { data: subscriptionData } = useSuspenseQuery({
-		...trpc.billing.getSubscription.queryOptions(),
-		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
-	
-	const { isCanceled = false } = subscriptionData;
+	const { isCanceled } = useBillingData();
 
 	// If user has cancelled their subscription, treat them as if they don't have the plan
 	const isCurrentPlan = plan.plan === currentPlan && !isCanceled;
@@ -153,16 +144,8 @@ function PlusCard({ plan, currentPlan }: PlusCardProps) {
 
 export function UpgradePlans({ currentPlan }: UpgradePlansProps) {
 	const router = useRouter();
-	const trpc = useTRPC();
 	
-	const { data: subscriptionData } = useSuspenseQuery({
-		...trpc.billing.getSubscription.queryOptions(),
-		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
-	
-	const { isCanceled = false } = subscriptionData;
+	const { isCanceled } = useBillingData();
 
 	// Only get Free and Plus plans
 	const allPlans = getAllPlanPricing();

@@ -2,6 +2,9 @@ import { CheckoutPlan } from "~/components/checkout-plan";
 import { auth } from "@clerk/nextjs/server";
 import { ClerkPlanKey, hasClerkPlan } from "~/lib/billing/types";
 
+// Force dynamic rendering due to auth usage
+export const dynamic = 'force-dynamic';
+
 export default async function CheckoutPage() {
 	const { has } = await auth();
 

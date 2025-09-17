@@ -5,6 +5,9 @@ import { ClerkPlanKey, hasClerkPlan } from "~/lib/billing/types";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { BillingContentSkeleton } from "~/components/billing-content-skeleton";
 
+// Force dynamic rendering due to auth usage
+export const dynamic = 'force-dynamic';
+
 export default async function BillingPage() {
 	const { has } = await auth();
 

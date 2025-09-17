@@ -13,8 +13,8 @@ export function AccountTab() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<span className="text-sm font-medium">Email</span>
-				<span className="text-sm text-muted-foreground">{user.email ?? "Not set"}</span>
+				<span className="text-xs font-medium">Email</span>
+				<span className="text-xs text-muted-foreground">{user.email ?? "Not set"}</span>
 			</div>
 		</div>
 	);

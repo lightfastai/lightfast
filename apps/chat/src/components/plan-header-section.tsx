@@ -7,26 +7,14 @@ import { Crown, CreditCard, Calendar } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { ClerkPlanKey } from "~/lib/billing/types";
 import { getPlanPricing } from "~/lib/billing/pricing";
-import { useTRPC } from "~/trpc/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useBillingData } from "~/hooks/use-billing-data";
 
 interface PlanHeaderSectionProps {
 	currentPlan: ClerkPlanKey;
 }
 
 export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
-	const trpc = useTRPC();
-
-	// Use tRPC suspense query - loading and error states are handled by Suspense boundary
-	const { data: subscriptionData } = useSuspenseQuery({
-		...trpc.billing.getSubscription.queryOptions(),
-		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-		refetchOnMount: false, // Prevent blocking navigation
-		refetchOnWindowFocus: false, // Don't refetch on window focus
-	});
-
-	const { hasActiveSubscription, isCanceled, nextBillingDate } =
-		subscriptionData;
+	const { hasActiveSubscription, isCanceled, nextBillingDate } = useBillingData();
 
 	const currentPlanPricing = getPlanPricing(currentPlan);
 

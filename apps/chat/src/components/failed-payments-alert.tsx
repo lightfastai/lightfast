@@ -1,6 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-import { usePaymentAttempts } from "@clerk/nextjs/experimental";
 import {
 	Card,
 	CardContent,
@@ -10,34 +8,18 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { XCircle } from "lucide-react";
 import { UpdatePaymentMethodDialog } from "./update-payment-method-dialog";
-
-interface _PaymentAttempt {
-	status: string;
-	updatedAt: string;
-	[key: string]: unknown;
-}
+import { useBillingData } from "~/hooks/use-billing-data";
 
 export function FailedPaymentsAlert() {
-	const {
-		data: paymentAttempts,
-		isLoading: attemptsLoading,
-		error: attemptsError,
-	} = usePaymentAttempts();
+	const { failedPayments, paymentsLoading, paymentsError } = useBillingData();
 
 	// Don't render if still loading or there's an error
-	if (attemptsLoading || attemptsError) {
+	if (paymentsLoading || paymentsError) {
 		return null;
 	}
-	// Sort payment attempts by date (most recent first)
-	const sortedAttempts = paymentAttempts?.length 
-		? [...paymentAttempts].sort(
-				(a, b) =>
-					new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-			)
-		: [];
 
 	// Only show if there are failed payments
-	if (!sortedAttempts.some((attempt) => attempt.status === "failed")) {
+	if (failedPayments.length === 0) {
 		return null;
 	}
 

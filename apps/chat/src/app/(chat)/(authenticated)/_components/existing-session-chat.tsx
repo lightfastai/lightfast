@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueries, useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "~/trpc/react";
@@ -35,8 +35,8 @@ export function ExistingSessionChat({
 	});
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 
-	// Batch core queries together with suspense for better performance
-	const [{ data: user }, { data: messages }, { data: sessionData }] = useSuspenseQueries({
+	// Batch all queries together with suspense for better performance
+	const [{ data: user }, { data: messages }, { data: sessionData }, { data: usageLimits }] = useSuspenseQueries({
 		queries: [
 			{
 				...trpc.user.getUser.queryOptions(),
@@ -58,12 +58,6 @@ export function ExistingSessionChat({
 				refetchOnWindowFocus: false, // Don't refetch on focus
 				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
-		],
-	});
-
-	// Separate query for usage limits (non-blocking)
-	const [{ data: usageLimits, isLoading: isUsageLoading }] = useQueries({
-		queries: [
 			{
 				...usageQueryOptions,
 				staleTime: 60 * 1000, // Consider usage data fresh for 1 minute (we update optimistically)
@@ -74,10 +68,6 @@ export function ExistingSessionChat({
 		],
 	});
 
-	// Handle loading states for usage
-	if (isUsageLoading || !usageLimits) {
-		return null; // Let parent handle loading state
-	}
 
 	// Convert database messages to UI format
 	const initialMessages: LightfastAppChatUIMessage[] = messages.map((msg) => ({
