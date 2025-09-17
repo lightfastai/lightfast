@@ -2,26 +2,25 @@
 
 This document captures the current risks identified in the `c010` chat route, the shared streaming runtime, and the chat UI.
 
-## 1. Assistant persistence failures are silent
-- Location: `core/lightfast/src/core/server/runtime.ts` (`streamChat` `onFinish` handler) and route `onError` hook.
-- When `memory.appendMessage` fails, the stream has already flushed to the client. We log and call `onError`, but the HTTP status remains 200.
-- The client classifies the response as a success; on refresh, the assistant message disappears because it never hit the DB.
-- Mitigation ideas:
-  - Emit a terminal SSE control part (e.g., `data-error`) so the client can mark the run failed.
-  - Flip the response into an HTTP error when persistence fails (buffer until success), or retry writes.
+## 1. Assistant persistence failures are silent ✅ mitigated (phase 1)
+- Changes shipped in `core/lightfast/src/core/server/runtime.ts` now catch `appendMessage` errors, log them, and send a structured SSE `error` part to the client while keeping the stream alive.
+- `apps/chat/src/app/(chat)/_components/chat-interface.tsx` listens for that `SERVER_ERROR` payload and shows an inline banner rather than silently succeeding.
+- Still to do:
+  - Retry/backoff on the server before giving up.
+  - Preserve optimistic assistant message only when persistence confirms success.
 
-## 2. Resume bookkeeping can break without user feedback
-- Location: `streamChat` `consumeSseStream` block (`memory.createStream`).
-- If the resumable stream registration throws, we swallow unless `failOnStreamError` is opted in. The stream keeps flowing, but future `/GET` resume calls return 204.
-- UI receives no signal; refresh results in an empty conversation.
-- Mitigation ideas:
-  - Fail fast when resumable registration fails, or send an explicit resume-error event that the transport surfaces to the UI.
+## 2. Resume bookkeeping can break without user feedback ✅ mitigated (phase 1)
+- Runtime now catches `memory.createStream` failures, clears the active stream, and ships a `resume`-scoped SSE `error` chunk so the UI warns the user that resume is unavailable.
+- Inline banner informs the user; we avoid throwing to the boundary.
+- Still to do:
+  - Consider retry/backoff or queue-based resume registration.
+  - Ensure `hasActiveStream` is reset in session state when resume fails.
 
-## 3. Memory errors lose semantic error typing
-- Synchronous message/session errors become `MessageOperationError` / `SessionCreationError` via `toMemoryApiError` and are serialized by `fetchRequestHandler` without the `type` metadata expected by `ChatErrorHandler`.
-- The client treats them as “non-critical” and just logs, rather than showing the appropriate banner or rolling back optimistic UI state.
-- Mitigation ideas:
-  - Map memory errors to the structured `ApiErrors` helpers or otherwise include `type` in the serialized JSON.
+## 3. Memory errors lose semantic error typing ✅ mitigated (phase 1)
+- `core/lightfast/src/core/server/adapters/fetch.ts` now maps all errors to a typed payload (ChatErrorType + user-facing message) before returning.
+- Client parser receives structured metadata, so classification works even when streaming never starts.
+- Still to do:
+  - Align JSON schema with `ApiErrors` helpers to avoid duplicating logic.
 
 ## 4. Artifact streaming can get stuck
 - `useChatTransport` keeps appending SSE parts to the shared data stream, and `useArtifactStreaming` waits for a `data-finish` control part to flip `status` to `idle`.
@@ -36,6 +35,15 @@ This document captures the current risks identified in the `c010` chat route, th
 - If release fails, quota remains locked even though the user saw the streamed answer.
 - Mitigation ideas:
   - Surface a warning SSE control part when release fails, or add a retry/backoff loop with monitoring so we can detect stuck reservations.
+
+---
+
+## Next Steps (ordered)
+1. **Artifact/stream cleanup**: reset `setDataStream([])` on new POST and add a timeout fallback to avoid stuck artifacts when no `data-finish` arrives.
+2. **Optimistic updates**: rollback assistant messages in the transcript when persistence fails instead of leaving ghost entries.
+3. **Resume state sanity**: ensure `hasActiveStream` and related flags clear when resume registration fails; consider retry/backoff.
+4. **Quota release observability**: surface SSE warning or retry loop so users understand when reservations stick.
+5. **Telemetry** (later): emit counters for persistence/resume failures to monitor regression.
 
 ---
 These issues should inform both runtime hardening (stronger guardrails, retries, richer SSE control channel) and client UX (handling mid-stream failure states).
