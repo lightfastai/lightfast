@@ -17,7 +17,7 @@ export default async function BillingPage() {
 
 	// Redirect free users to upgrade page
 	if (!hasPlusPlan) {
-		redirect("/upgrade");
+		redirect("/billing/upgrade");
 	}
 
 	// User has plus plan, proceed with billing management
