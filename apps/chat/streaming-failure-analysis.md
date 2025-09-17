@@ -40,7 +40,7 @@ This document captures the current risks identified in the `c010` chat route, th
 
 ## Next Steps (ordered)
 1. **Artifact/stream cleanup**: reset `setDataStream([])` on new POST and add a timeout fallback to avoid stuck artifacts when no `data-finish` arrives.
-2. **Optimistic updates**: rollback assistant messages in the transcript when persistence fails instead of leaving ghost entries.
+2. **Optimistic updates** ✅ _done_: chat UI rolls back the optimistic assistant message when the backend reports a persistence failure and also clears the shared data stream.
 3. **Resume state sanity**: ensure `hasActiveStream` and related flags clear when resume registration fails; consider retry/backoff.
 4. **Quota release observability**: surface SSE warning or retry loop so users understand when reservations stick.
 5. **Telemetry** (later): emit counters for persistence/resume failures to monitor regression.
