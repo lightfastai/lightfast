@@ -86,14 +86,11 @@ const getAnonymousAllowedModels = (): ModelId[] => {
 
 /**
  * Get models available to authenticated users (PLUS_TIER)
- * Plus users can access both anonymous and authenticated models
+ * Plus users can access all visible models
  */
 const getPlusAllowedModels = (): ModelId[] => {
+  // Plus users can access all visible models regardless of access level
   return getVisibleModels()
-    .filter(model => 
-      model.accessLevel === "anonymous" || 
-      model.accessLevel === "authenticated"
-    )
     .map(model => model.id as ModelId);
 };
 
