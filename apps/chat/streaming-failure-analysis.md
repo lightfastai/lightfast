@@ -47,3 +47,10 @@ This document captures the current risks identified in the `c010` chat route, th
 
 ---
 These issues should inform both runtime hardening (stronger guardrails, retries, richer SSE control channel) and client UX (handling mid-stream failure states).
+
+## Additional Memory Failure Edge Cases
+- **Partial session creation**: if `memory.createSession` succeeds but a subsequent `appendMessage` fails, the session exists without the initiating message. We should detect and clean up orphaned sessions or re-attempt the write.
+- **Stream ID leakage**: repeated `createStream` failures may leave stale entries in Redis/DB; consider TTLs or periodic cleanup to avoid resume pointing to dead streams.
+- **Inconsistent model metadata**: persistence failure might prevent modelId/tool results from being stored. Client refresh would show a reply without metadata; decide whether to redact or mark such messages.
+- **Message ID collisions**: optimistic message IDs generated client-side could collide if retries reuse the same IDs; ensure server rejects duplicates cleanly or clients regenerate IDs on retry.
+- **Memory adapter divergence**: Redis (anon) and PlanetScale (auth) adapters differ in guarantees. Verify both surface failures uniformly so the SSE error channel produces consistent metadata.
