@@ -83,13 +83,13 @@ import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { cn } from "@repo/ui/lib/utils";
 
 // Stable sine wave component that persists during streaming
-const StreamingSineWave = memo(function StreamingSineWave({ 
-	show 
-}: { 
-	show: boolean 
+const StreamingSineWave = memo(function StreamingSineWave({
+	show,
+}: {
+	show: boolean;
 }) {
 	if (!show) return null;
-	
+
 	return (
 		<div className="w-full px-8">
 			<SineWaveDots />
@@ -112,7 +112,7 @@ interface ChatMessagesProps {
 
 // Helper to check if message has meaningful streaming content
 const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
-	return message.parts.some(part => {
+	return message.parts.some((part) => {
 		// Text parts with more than 1 character
 		if (isTextPart(part) && part.text.trim().length > 1) return true;
 		// Any tool parts
@@ -226,9 +226,9 @@ const AssistantMessage = memo(function AssistantMessage({
 					<div className="space-y-1 w-full">
 						{/* Show sine wave only when streaming without meaningful content */}
 						{isCurrentlyStreaming && (
-							<StreamingSineWave 
+							<StreamingSineWave
 								key="stable-sine-wave"
-								show={!hasMeaningfulContent(message)} 
+								show={!hasMeaningfulContent(message)}
 							/>
 						)}
 						{message.parts.map((part, index) => {
@@ -256,7 +256,10 @@ const AssistantMessage = memo(function AssistantMessage({
 								const trimmedText = part.text.replace(/^\n+/, "");
 
 								return (
-									<div key={`${message.id}-part-${index}`} className="w-full">
+									<div
+										key={`${message.id}-part-${index}`}
+										className="w-full px-2"
+									>
 										<Reasoning
 											className="w-full"
 											isStreaming={isReasoningStreaming}
@@ -397,10 +400,11 @@ export function ChatMessages({
 	_isAuthenticated,
 }: ChatMessagesProps) {
 	// Check if we need a thinking placeholder
-	const needsPlaceholder = status === "submitted" && messages[messages.length - 1]?.role === "user";
-	
-	// Determine which message should show streaming behavior  
-	const shouldShowStreaming = (status === "submitted" || status === "streaming");
+	const needsPlaceholder =
+		status === "submitted" && messages[messages.length - 1]?.role === "user";
+
+	// Determine which message should show streaming behavior
+	const shouldShowStreaming = status === "submitted" || status === "streaming";
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
@@ -408,8 +412,9 @@ export function ChatMessages({
 				<ConversationContent className=" flex flex-col p-0 last:pb-12">
 					{/* Render existing messages */}
 					{messages.map((message, index) => {
-						const isCurrentlyStreaming = shouldShowStreaming && 
-							index === messages.length - 1 && 
+						const isCurrentlyStreaming =
+							shouldShowStreaming &&
+							index === messages.length - 1 &&
 							message.role === "assistant";
 
 						return message.role === "user" ? (
@@ -428,12 +433,16 @@ export function ChatMessages({
 							/>
 						);
 					})}
-					
+
 					{/* Conditionally render thinking placeholder */}
 					{needsPlaceholder && (
 						<AssistantMessage
 							key="thinking-placeholder"
-							message={{ id: "thinking-placeholder", role: "assistant", parts: [] }}
+							message={{
+								id: "thinking-placeholder",
+								role: "assistant",
+								parts: [],
+							}}
 							onArtifactClick={onArtifactClick}
 							status={status}
 							isCurrentlyStreaming={shouldShowStreaming}
