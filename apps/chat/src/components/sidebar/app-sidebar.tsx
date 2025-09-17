@@ -24,7 +24,7 @@ export function AppSidebar() {
 			<Sidebar
 				variant="inset"
 				collapsible="icon"
-				className="w-64 max-w-64 p-0 border-r border-border/50 group/sidebar"
+				className="p-0 border-r border-border/50 group/sidebar"
 			>
 				<SidebarHeader className="p-0 space-y-1">
 					{/* Trigger button group - aligned to top */}

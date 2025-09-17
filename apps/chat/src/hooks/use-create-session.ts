@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
-import { showTRPCErrorToast } from "~/services/trpc-errors.service";
+import { showTRPCErrorToast } from "~/lib/trpc-errors";
 import type { ChatRouterOutputs } from "@api/chat";
 import { DEFAULT_SESSION_TITLE } from "@db/chat";
 

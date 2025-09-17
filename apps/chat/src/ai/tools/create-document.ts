@@ -3,7 +3,8 @@ import { createTool } from "lightfast/tool";
 import { z } from "zod";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { uuidv4 as generateUUID } from '@repo/lib';
-import { documentHandlersByArtifactKind } from '../artifacts/server';
+import { createDocumentHandlersByArtifactKind } from '~/ai/artifacts/server';
+import { saveDocument } from '~/services/artifacts.service';
 import { ARTIFACT_KINDS } from '@db/chat';
 
 /**
@@ -62,6 +63,9 @@ export const createDocumentTool = createTool<RuntimeContext<AppRuntimeContext>>(
 			transient: true,
 		});
 
+		// Get the document handlers with service integration
+		const documentHandlersByArtifactKind = createDocumentHandlersByArtifactKind(saveDocument);
+		
 		// Get the document handler for the specified kind
 		const documentHandler = documentHandlersByArtifactKind.find(
 			(handler) => handler.kind === kind,

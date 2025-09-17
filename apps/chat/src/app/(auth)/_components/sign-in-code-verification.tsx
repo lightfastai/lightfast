@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
-import { handleClerkError, handleUnexpectedStatus } from "~/services/clerk-error-handler.service";
+import { handleClerkError, handleUnexpectedStatus } from "~/app/lib/clerk/error-handler";
 
 interface SignInCodeVerificationProps {
 	email: string;

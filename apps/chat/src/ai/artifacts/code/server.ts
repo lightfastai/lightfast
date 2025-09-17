@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { streamObject } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
-import { createDocumentHandler } from '../server';
+import type { CreateDocumentCallbackProps, UpdateDocumentCallbackProps } from '../server';
 
 const codePrompt = `
 You are an expert code generator. Generate clean, well-documented, and functional code based on the user's request.
@@ -33,9 +33,9 @@ Guidelines:
 Update the code to fulfill the user's request while preserving what works.
 `;
 
-export const codeDocumentHandler = createDocumentHandler<'code'>({
-  kind: 'code',
-  onCreateDocument: async ({ title, dataStream }) => {
+export const codeDocumentHandler = {
+  kind: 'code' as const,
+  onCreateDocument: async ({ title, dataStream }: CreateDocumentCallbackProps): Promise<string> => {
     let draftContent = '';
 
     const { fullStream } = streamObject({
@@ -68,7 +68,7 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({ document, description, dataStream }: UpdateDocumentCallbackProps): Promise<string> => {
     let draftContent = '';
 
     const { fullStream } = streamObject({
@@ -101,4 +101,4 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
 
     return draftContent;
   },
-});
+};

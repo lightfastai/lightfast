@@ -1,17 +1,9 @@
-import { codeDocumentHandler } from './code/server';
-import { diagramDocumentHandler } from './diagram/server';
 import type { ArtifactKind } from '@db/chat';
 import type { LightfastChatArtifact } from '@db/chat';
 import type { UIMessageStreamWriter } from 'ai';
-import type { LightfastAppChatUIMessage } from '../lightfast-app-chat-ui-messages';
-import { createCaller } from '~/trpc/server';
-import { 
-  isTRPCClientError, 
-  getTRPCErrorCode, 
-  getTRPCErrorMessage,
-  isForbidden,
-  isUnauthorized 
-} from '~/services/trpc-errors.service';
+import type { LightfastAppChatUIMessage } from '~/ai/lightfast-app-chat-ui-messages';
+import { codeDocumentHandler } from './code/server';
+import { diagramDocumentHandler } from './diagram/server';
 
 export interface SaveDocumentProps {
   id: string;
@@ -37,21 +29,26 @@ export interface UpdateDocumentCallbackProps {
   dataStream: UIMessageStreamWriter<LightfastAppChatUIMessage>;
 }
 
+export interface BaseDocumentHandler<T = ArtifactKind> {
+  kind: T;
+  onCreateDocument: (args: CreateDocumentCallbackProps) => Promise<string>;
+  onUpdateDocument: (args: UpdateDocumentCallbackProps) => Promise<string>;
+}
+
 export interface DocumentHandler<T = ArtifactKind> {
   kind: T;
   onCreateDocument: (args: CreateDocumentCallbackProps) => Promise<void>;
   onUpdateDocument: (args: UpdateDocumentCallbackProps) => Promise<void>;
 }
 
-export function createDocumentHandler<T extends ArtifactKind>(config: {
-  kind: T;
-  onCreateDocument: (params: CreateDocumentCallbackProps) => Promise<string>;
-  onUpdateDocument: (params: UpdateDocumentCallbackProps) => Promise<string>;
-}): DocumentHandler<T> {
+export function createDocumentHandler<T extends ArtifactKind>(
+  baseHandler: BaseDocumentHandler<T>,
+  saveDocument: (props: SaveDocumentProps) => Promise<void>
+): DocumentHandler<T> {
   return {
-    kind: config.kind,
+    kind: baseHandler.kind,
     onCreateDocument: async (args: CreateDocumentCallbackProps) => {
-      const draftContent = await config.onCreateDocument({
+      const draftContent = await baseHandler.onCreateDocument({
         id: args.id,
         title: args.title,
         sessionId: args.sessionId,
@@ -59,12 +56,12 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
         dataStream: args.dataStream,
       });
 
-      // Save document via tRPC
+      // Save document via service
       await saveDocument({
         id: args.id,
         title: args.title,
         content: draftContent,
-        kind: config.kind,
+        kind: baseHandler.kind,
         sessionId: args.sessionId,
         messageId: args.messageId,
       });
@@ -72,19 +69,19 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
       return;
     },
     onUpdateDocument: async (args: UpdateDocumentCallbackProps) => {
-      const draftContent = await config.onUpdateDocument({
+      const draftContent = await baseHandler.onUpdateDocument({
         document: args.document,
         description: args.description,
         sessionId: args.sessionId,
         dataStream: args.dataStream,
       });
 
-      // Update document via tRPC
+      // Update document via service
       await saveDocument({
         id: args.document.id,
         title: args.document.title,
         content: draftContent,
-        kind: config.kind,
+        kind: baseHandler.kind,
         sessionId: args.sessionId,
         messageId: args.document.messageId, // Use existing messageId from document
       });
@@ -94,52 +91,15 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
   };
 }
 
-async function saveDocument({
-  id,
-  title,
-  kind,
-  content,
-  sessionId,
-  messageId,
-}: SaveDocumentProps): Promise<void> {
-  try {
-    const caller = await createCaller();
-    await caller.artifact.create({
-      id,
-      title,
-      kind,
-      content,
-      sessionId,
-      messageId,
-    });
-  } catch (error) {
-    console.error('[ArtifactServer] Failed to save document:', {
-      id,
-      title,
-      kind,
-      sessionId,
-      error: isTRPCClientError(error) ? {
-        code: getTRPCErrorCode(error),
-        message: getTRPCErrorMessage(error)
-      } : error
-    });
-    
-    // Re-throw with descriptive error messages
-    if (isUnauthorized(error)) {
-      throw new Error('Unauthorized: User session expired or invalid');
-    }
-    if (isForbidden(error)) {
-      throw new Error(`Session ${sessionId} access denied`);
-    }
-    
-    throw new Error(`Failed to save artifact: ${getTRPCErrorMessage(error)}`);
-  }
-}
-
 /*
- * Use this array to define the document handlers for each artifact kind.
+ * Create document handlers with service integration
+ * This function should be called with the saveDocument function from the service layer
  */
-export const documentHandlersByArtifactKind: DocumentHandler<ArtifactKind>[] = [
-  codeDocumentHandler,
-  diagramDocumentHandler,
-];
+export function createDocumentHandlersByArtifactKind(
+  saveDocument: (props: SaveDocumentProps) => Promise<void>
+): DocumentHandler<ArtifactKind>[] {
+  return [
+    createDocumentHandler(codeDocumentHandler, saveDocument),
+    createDocumentHandler(diagramDocumentHandler, saveDocument),
+  ];
+}

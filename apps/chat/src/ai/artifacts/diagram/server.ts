@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { streamObject } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
-import { createDocumentHandler } from '../server';
+import type { CreateDocumentCallbackProps, UpdateDocumentCallbackProps } from '../server';
 
 const mermaidPrompt = `
 You are an expert Mermaid diagram generator. Create clear, well-structured Mermaid diagrams based on the user's request.
@@ -34,9 +34,9 @@ Guidelines:
 Update the diagram to fulfill the user's request while preserving what works.
 `;
 
-export const diagramDocumentHandler = createDocumentHandler<'diagram'>({
-  kind: 'diagram',
-  onCreateDocument: async ({ title, dataStream }) => {
+export const diagramDocumentHandler = {
+  kind: 'diagram' as const,
+  onCreateDocument: async ({ title, dataStream }: CreateDocumentCallbackProps): Promise<string> => {
     let draftContent = '';
 
     const { fullStream } = streamObject({
@@ -69,7 +69,7 @@ export const diagramDocumentHandler = createDocumentHandler<'diagram'>({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({ document, description, dataStream }: UpdateDocumentCallbackProps): Promise<string> => {
     let draftContent = '';
 
     const { fullStream } = streamObject({
@@ -102,4 +102,4 @@ export const diagramDocumentHandler = createDocumentHandler<'diagram'>({
 
     return draftContent;
   },
-});
+};

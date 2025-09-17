@@ -1,10 +1,7 @@
 "use client";
 
-import type {
-	QueryClient} from "@tanstack/react-query";
-import {
-	QueryClientProvider,
-} from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import {
 	createTRPCClient,
@@ -49,6 +46,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 						return {
 							"x-trpc-source": "client",
 						};
+					},
+					fetch(url, options) {
+						return fetch(url, {
+							...options,
+							credentials: "include", // Include cookies for authentication
+						} as RequestInit);
 					},
 				}),
 			],

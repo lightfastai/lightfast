@@ -21,6 +21,9 @@ export default async function AuthenticatedLayout({
 	// Prefetch user data for instant loading
 	prefetch(trpc.user.getUser.queryOptions());
 
+	// Prefetch usage limits for billing context
+	prefetch(trpc.usage.checkLimits.queryOptions({}));
+
 	// Prefetch pinned sessions for sidebar
 	prefetch(trpc.session.listPinned.queryOptions());
 

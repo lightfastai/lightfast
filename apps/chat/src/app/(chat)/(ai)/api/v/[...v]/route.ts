@@ -17,8 +17,7 @@ import { uuidv4 } from "lightfast/v2/utils";
 import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { auth } from "@clerk/nextjs/server";
-import { PlanetScaleMemory } from "~/ai/runtime/memory/planetscale";
-import { AnonymousRedisMemory } from "~/ai/runtime/memory/redis";
+import { createPlanetScaleMemory, AnonymousRedisMemory } from "~/ai/runtime/memory";
 import { env } from "~/env";
 import {
 	isTestErrorCommand,
@@ -231,7 +230,7 @@ const handler = async (
 							url: env.KV_REST_API_URL,
 							token: env.KV_REST_API_TOKEN,
 						})
-					: new PlanetScaleMemory();
+					: createPlanetScaleMemory();
 			} catch (error) {
 				console.error(`[API] Failed to create memory instance:`, error);
 				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
