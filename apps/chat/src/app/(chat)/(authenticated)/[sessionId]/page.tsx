@@ -13,9 +13,10 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	const { sessionId } = await params;
 	const agentId = "c010"; // Default agent ID
 
-	// Prefetch the messages and usage limits here in the page
+	// Prefetch all the data needed by ExistingSessionChat
 	// Pages re-execute on navigation, ensuring fresh data
 	prefetch(trpc.message.list.queryOptions({ sessionId }));
+	prefetch(trpc.session.getMetadata.queryOptions({ sessionId }));
 
 	return (
 		<HydrateClient>

@@ -29,12 +29,16 @@ import { ChatErrorType } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
+
+// Session type from API - use getMetadata which includes activeStreamId
+type Session = ChatRouterOutputs["session"]["getMetadata"];
 import { useDataStream } from "~/hooks/use-data-stream";
 import { ArtifactViewer, useArtifact } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
+import { useSessionState } from "~/hooks/use-session-state";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -71,13 +75,12 @@ type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 
 interface ChatInterfaceProps {
 	agentId: string;
-	sessionId: string;
+	session?: Session; // Optional - undefined for unauthenticated users
+	fallbackSessionId?: string; // Used when session is undefined (unauthenticated/new sessions)
 	initialMessages: LightfastAppChatUIMessage[];
 	isNewSession: boolean;
 	handleSessionCreation: (firstMessage: string) => void; // Required - pass no-op function for scenarios where session creation isn't needed
 	user: UserInfo | null; // null for unauthenticated users
-	resume?: boolean; // Whether to resume an interrupted stream
-	hasActiveStream?: boolean; // Whether there's an active stream (for determining when to show thinking placeholder vs "No message content")
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
@@ -86,18 +89,19 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({
 	agentId,
-	sessionId,
+	session,
+	fallbackSessionId,
 	initialMessages,
 	isNewSession,
 	handleSessionCreation,
 	user,
-	resume = false,
-	hasActiveStream = false,
 	onNewUserMessage,
 	onNewAssistantMessage,
 	onQuotaError,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
+	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
+	const { sessionId, resume, hasActiveStream } = useSessionState(session, fallbackSessionId);
 	// ALL errors now go to error boundary - no inline error state needed
 
 	// Hook for handling ALL errors via error boundaries
@@ -207,9 +211,9 @@ export function ChatInterface({
 	const canUseCurrentModel = billingContext.isLoaded ? billingContext.usage.canUseModel(selectedModelId) : { allowed: true };
 
 	// Create transport for AI SDK v5
-	// Uses sessionId directly as the primary key
+	// Uses session ID directly as the primary key
 	const transport = useChatTransport({
-		sessionId: sessionId,
+		sessionId,
 		agentId,
 		webSearchEnabled,
 	});
@@ -222,9 +226,9 @@ export function ChatInterface({
 	} = useChat<LightfastAppChatUIMessage>({
 		id: `${agentId}-${sessionId}`,
 		transport,
-		//		experimental_throttle: ,
 		messages: initialMessages,
 		resume,
+		//		experimental_throttle: ,
 		onError: (error) => {
 			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);

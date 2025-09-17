@@ -137,13 +137,14 @@ export const sessionRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Get the session metadata only
+			// Get the session metadata including activeStreamId
 			const session = await db
 				.select({
 					id: LightfastChatSession.id,
 					clerkUserId: LightfastChatSession.clerkUserId,
 					title: LightfastChatSession.title,
 					pinned: LightfastChatSession.pinned,
+					activeStreamId: LightfastChatSession.activeStreamId,
 					createdAt: LightfastChatSession.createdAt,
 					updatedAt: LightfastChatSession.updatedAt,
 				})

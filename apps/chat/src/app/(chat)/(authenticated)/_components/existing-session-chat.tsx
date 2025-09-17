@@ -36,7 +36,7 @@ export function ExistingSessionChat({
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 
 	// Batch all queries together with suspense for better performance
-	const [{ data: user }, { data: messages }, { data: sessionData }, { data: usageLimits }] = useSuspenseQueries({
+	const [{ data: user }, { data: messages }, { data: session }, { data: usageLimits }] = useSuspenseQueries({
 		queries: [
 			{
 				...trpc.user.getUser.queryOptions(),
@@ -52,9 +52,9 @@ export function ExistingSessionChat({
 				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
 			{
-				...trpc.session.getActiveStream.queryOptions({ sessionId }),
-				staleTime: 1000, // Fresh for 1 second (activeStreamId changes frequently)
-				gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+				...trpc.session.getMetadata.queryOptions({ sessionId }),
+				staleTime: 30 * 1000, // Consider session metadata fresh for 30 seconds
+				gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
 				refetchOnWindowFocus: false, // Don't refetch on focus
 				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
@@ -76,6 +76,8 @@ export function ExistingSessionChat({
 		parts: msg.parts,
 	})) as LightfastAppChatUIMessage[];
 
+	// Session already includes activeStreamId now
+
 	// No-op for existing sessions - session already exists
 	const handleSessionCreation = (_firstMessage: string) => {
 		// Existing sessions don't need creation
@@ -86,13 +88,11 @@ export function ExistingSessionChat({
 			<ChatInterface
 				key={`${agentId}-${sessionId}`}
 				agentId={agentId}
-				sessionId={sessionId}
+				session={session}
 				initialMessages={initialMessages}
 				isNewSession={false}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				resume={sessionData.activeStreamId !== null}
-				hasActiveStream={sessionData.activeStreamId !== null}
 				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache

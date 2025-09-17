@@ -32,13 +32,11 @@ export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
 			<ChatInterface 
 				key={`${agentId}-${sessionIdRef.current}`}
 				agentId={agentId} 
-				sessionId={sessionIdRef.current} 
+				fallbackSessionId={sessionIdRef.current}
 				initialMessages={[]}
 				isNewSession={false} // Unauthenticated sessions are not persisted
 				handleSessionCreation={handleSessionCreation}
 				user={null}
-				resume={false} // Unauthenticated sessions don't persist streams
-				hasActiveStream={false} // Unauthenticated sessions don't have active streams
 			/>
 		</DataStreamProvider>
 	);

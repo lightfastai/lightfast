@@ -90,13 +90,11 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		<DataStreamProvider>
 			<ChatInterface
 				agentId={agentId}
-				sessionId={sessionId}
+				fallbackSessionId={sessionId}
 				initialMessages={[]}
 				isNewSession={isNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
-				resume={false} // New sessions never have active streams to resume
-				hasActiveStream={false} // New sessions never have active streams initially
 				usageLimits={usageLimits}
 				onNewUserMessage={(userMessage) => {
 					// Optimistically append the user message to the cache
