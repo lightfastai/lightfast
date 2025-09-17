@@ -385,6 +385,18 @@ export async function streamChat<
 				} catch (error) {
 					const apiError = toMemoryApiError(error, "createStream");
 					
+					// CRITICAL: Clear activeStreamId when stream creation fails
+					// This prevents the session from getting stuck in "streaming" state
+					if (memory.clearActiveStream) {
+						try {
+							await memory.clearActiveStream(sessionId);
+							console.log(`[Stream Cleanup] Cleared activeStreamId for session ${sessionId} due to stream creation failure`);
+						} catch (clearError) {
+							console.error(`[Stream Cleanup] CRITICAL: Failed to clear activeStreamId for session ${sessionId} after stream creation failure:`, clearError);
+							// This is critical - session will be stuck until cron cleanup runs
+						}
+					}
+					
 					// Handle stream creation failure based on options
 					if (resumeOptions?.failOnStreamError) {
 						console.error(`[Fail Fast] Stream creation failed for session ${sessionId}:`, error);
