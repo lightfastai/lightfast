@@ -1,11 +1,12 @@
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
-import { smoothStream, stepCountIs, wrapLanguageModel, generateObject, NoSuchToolError } from "ai";
+import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import type { ModelId } from "~/ai/providers";
 import {
 	getModelConfig,
 	getModelStreamingDelay,
+	getDefaultModelForUser,
 	MODELS,
 } from "~/ai/providers";
 import { BraintrustMiddleware, initLogger, traced } from "braintrust";
@@ -14,7 +15,6 @@ import {
 	isOtelEnabled,
 } from "lightfast/v2/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
-import { webSearchTool } from "~/ai/tools/web-search";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { auth } from "@clerk/nextjs/server";
 import { createPlanetScaleMemory, AnonymousRedisMemory } from "~/ai/runtime/memory";
@@ -32,74 +32,23 @@ import {
 	tokenBucket,
 	checkDecision,
 } from "@vendor/security";
-import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
 import { 
 	UsageLimitExceededError
 } from "~/services/usage.service";
 import {
 	reserveQuota,
-	confirmQuotaUsage,
 	releaseQuotaReservation,
 	QuotaReservationError
 } from "~/services/quota-reservation.service";
 import { 
 	ClerkPlanKey, 
-	BILLING_LIMITS, 
-	hasClerkPlan
+	BILLING_LIMITS
 } from "~/lib/billing/types";
 
-// Import artifact tools
-import { createDocumentTool } from "~/ai/tools/create-document";
+// Import shared utilities
+import { c010Tools } from "./_lib/tools";
+import { getUserPlan, getActiveToolsForUser, createSystemPromptForUser } from "./_lib/user-utils";
 
-// Complete tools object for c010 agent including artifact tools
-const c010Tools = {
-	webSearch: webSearchTool,
-	createDocument: createDocumentTool,
-};
-
-/**
- * Get user's billing plan from Clerk authentication
- */
-const getUserPlan = async (): Promise<ClerkPlanKey> => {
-	try {
-		const { has } = await auth();
-		const hasPlusPlan = hasClerkPlan(has, ClerkPlanKey.PLUS_TIER);
-		return hasPlusPlan ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
-	} catch (error) {
-		console.warn('[Billing] Failed to get user plan, defaulting to FREE_TIER:', error);
-		return ClerkPlanKey.FREE_TIER;
-	}
-};
-
-// Get active tool names based on authentication status, user plan, and user preferences
-const getActiveToolsForUser = (isAnonymous: boolean, userPlan: ClerkPlanKey, webSearchEnabled: boolean): (keyof typeof c010Tools)[] | undefined => {
-	if (isAnonymous) {
-		// Anonymous users: only web search tool can be active, and only if enabled
-		return webSearchEnabled ? ["webSearch"] : [];
-	} else {
-		// Authenticated users: tools based on plan and preferences
-		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"]; // All authenticated users get artifacts
-		
-		if (webSearchEnabled) {
-			// Check if user's plan allows web search
-			const planLimits = BILLING_LIMITS[userPlan];
-			if (planLimits.hasWebSearch) {
-				activeTools.push("webSearch");
-			}
-			// If user doesn't have web search access, silently don't add the tool
-			// The client should already prevent this, but this is server-side enforcement
-		}
-		
-		return activeTools;
-	}
-};
-
-// Create conditional system prompts based on authentication status using centralized builders
-const createSystemPromptForUser = (isAnonymous: boolean): string => {
-	return isAnonymous 
-		? buildAnonymousSystemPrompt(true) 
-		: buildAuthenticatedSystemPrompt(true);
-};
 
 
 // Initialize Braintrust logging
@@ -236,161 +185,53 @@ const handler = async (
 				return ApiErrors.memoryInitFailed({ requestId, isAnonymous });
 			}
 
-			// For GET requests (resume), skip all the model/message logic
-			if (req.method === "GET") {
-				console.log("[Chat API] GET request for stream resume", {
-					sessionId,
-					agentId,
-					userId,
-					isAnonymous,
-				});
+			// Extract request parameters - defaults for GET (resume) requests
+			const isResume = req.method === "GET";
+			console.log(`[Chat API] ${isResume ? 'GET request for stream resume' : 'POST request for new message'}`, {
+				sessionId,
+				agentId,
+				userId,
+				isAnonymous,
+			});
 
-				// Create conditional active tools and system prompt for resume
-				// For resume requests, we don't have request body, so default webSearch to enabled
-				// Get user plan for authenticated users (needed for tool access)
-				const resumeUserPlan = isAnonymous ? ClerkPlanKey.FREE_TIER : await getUserPlan();
-				const activeToolsForUser = getActiveToolsForUser(isAnonymous, resumeUserPlan, true);
-				const resumeSystemPrompt = createSystemPromptForUser(isAnonymous);
-
-				// Just pass a minimal agent configuration for resume
-				// The actual model doesn't matter for resuming an existing stream
-				const response = await fetchRequestHandler({
-					agent: createAgent<AppRuntimeContext, typeof c010Tools>({
-						name: "c010",
-						system: resumeSystemPrompt,
-						tools: c010Tools,
-						activeTools: activeToolsForUser,
-						createRuntimeContext: ({
-							sessionId: _sessionId,
-							resourceId: _resourceId,
-						}): AppRuntimeContext => ({
-							userId,
-							agentId,
-							messageId, // Use the generated messageId
-						}),
-						model: wrapLanguageModel({
-							model: gateway("gpt-4o-mini"), // Use a minimal model for resume
-							middleware: BraintrustMiddleware({ debug: true }),
-						}),
-						experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
-							// Don't attempt to fix invalid tool names
-							if (NoSuchToolError.isInstance(error)) {
-								return null;
-							}
-
-							const tool = tools[toolCall.toolName];
-							if (!tool) return null;
-
-							try {
-								const result = await generateObject({
-									model: gateway('google/gemini-2.5-flash'),
-									schema: tool.inputSchema,
-									prompt: [
-										`The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
-										JSON.stringify(toolCall.input),
-										`The tool accepts the following schema:`,
-										JSON.stringify(inputSchema(toolCall)),
-										'Please fix the inputs to match the schema exactly. Preserve the original intent while ensuring all parameters are valid.',
-									].join('\n'),
-								});
-
-								console.log(`[Tool Repair] Successfully repaired: ${toolCall.toolName}`);
-								return { ...toolCall, input: JSON.stringify(result.object) };
-							} catch {
-								return null;
-							}
-						},
-						experimental_telemetry: {
-							isEnabled: isOtelEnabled(),
-							functionId: "chat-resume",
-							metadata: {
-								context: "production",
-								inferenceType: "chat-resume",
-								agentId,
-								agentName: "c010",
-								sessionId,
-								userId,
-								modelId: "gpt-4o-mini",
-								modelProvider: "gateway",
-								isAnonymous,
-								resumeOperation: true,
-							},
-						},
-					}),
-					sessionId,
-					memory,
-					req,
-					resourceId: userId,
-					context: {
-						modelId: "unknown", // Model is not relevant for resume
-						isAnonymous,
-					},
-					createRequestContext: (requestArg) => ({
-						userAgent: requestArg.headers.get("user-agent") ?? undefined,
-						ipAddress:
-							requestArg.headers.get("x-forwarded-for") ??
-							requestArg.headers.get("x-real-ip") ??
-							undefined,
-					}),
-					generateId: () => messageId,
-					enableResume: true,
-					onError(event) {
-						const { error, systemContext, requestContext } = event;
-						console.error(
-							`[API Error - Resume] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.statusCode}`,
-							{
-								error: error.message || JSON.stringify(error),
-								statusCode: error.statusCode,
-								errorCode: error.statusCode,
-								stack: error.stack,
-								sessionId: systemContext.sessionId,
-								userId: systemContext.resourceId,
-								method: req.method,
-								url: req.url,
-								requestContext,
-							},
-						);
-					},
-				});
-
-				return response;
-			}
-
-			// POST request logic - extract modelId, messages, and webSearchEnabled
-			let selectedModelId: ModelId = "google/gemini-2.5-flash"; // Default model
+			// Request parsing and defaults
+			let selectedModelId: ModelId = isResume ? getDefaultModelForUser(!isAnonymous) : "google/gemini-2.5-flash";
 			let lastUserMessage = "";
-			let webSearchEnabled = false; // Default to false
+			let webSearchEnabled = isResume ? true : false; // Default webSearch enabled for resume
 
-			try {
-				const requestBody = (await req.clone().json()) as {
-					modelId?: string;
-					messages?: { role: string; parts?: { text?: string }[] }[];
-					webSearchEnabled?: boolean;
-				};
-				if (requestBody.modelId && typeof requestBody.modelId === "string") {
-					selectedModelId = requestBody.modelId as ModelId;
-				}
-
-				// Extract webSearchEnabled preference
-				if (typeof requestBody.webSearchEnabled === "boolean") {
-					webSearchEnabled = requestBody.webSearchEnabled;
-				}
-
-				// Extract last user message for command detection
-				if (requestBody.messages && Array.isArray(requestBody.messages)) {
-					const lastMessage =
-						requestBody.messages[requestBody.messages.length - 1];
-					if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
-						lastUserMessage = lastMessage.parts[0].text;
+			// Only parse request body for POST requests
+			if (!isResume) {
+				try {
+					const requestBody = (await req.clone().json()) as {
+						modelId?: string;
+						messages?: { role: string; parts?: { text?: string }[] }[];
+						webSearchEnabled?: boolean;
+					};
+					if (requestBody.modelId && typeof requestBody.modelId === "string") {
+						selectedModelId = requestBody.modelId as ModelId;
 					}
+
+					// Extract webSearchEnabled preference
+					if (typeof requestBody.webSearchEnabled === "boolean") {
+						webSearchEnabled = requestBody.webSearchEnabled;
+					}
+
+					// Extract last user message for command detection
+					if (requestBody.messages && Array.isArray(requestBody.messages)) {
+						const lastMessage =
+							requestBody.messages[requestBody.messages.length - 1];
+						if (lastMessage?.role === "user" && lastMessage.parts?.[0]?.text) {
+							lastUserMessage = lastMessage.parts[0].text;
+						}
+					}
+				} catch (error) {
+					// If parsing fails, use default model
+					console.warn("Failed to parse request body:", error);
 				}
-			} catch (error) {
-				// If parsing fails, use default model
-				console.warn("Failed to parse request body:", error);
 			}
 
-			// Development-only: Check for test error commands
-			if (isTestErrorCommand(lastUserMessage)) {
+			// Development-only: Check for test error commands (POST only)
+			if (!isResume && isTestErrorCommand(lastUserMessage)) {
 				const testResponse = handleTestErrorCommand(lastUserMessage);
 				if (testResponse) {
 					return testResponse;
@@ -429,12 +270,8 @@ const handler = async (
 					userPlan = await getUserPlan();
 					const planLimits = BILLING_LIMITS[userPlan];
 					
-					// Check model access based on user's plan
-					if (planLimits.allowedModels.includes(selectedModelId)) {
-						// User has access - model is in their allowed list
-						console.log(`[Billing] Model access granted for ${userPlan} user: ${selectedModelId}`);
-					} else {
-						// User doesn't have access to this model
+					// Check model access based on user's plan (skip for resume requests)
+					if (!isResume && !planLimits.allowedModels.includes(selectedModelId)) {
 						console.warn(`[Billing] Model access denied for ${userPlan} user: ${selectedModelId}`, {
 							allowedModels: planLimits.allowedModels
 						});
@@ -454,8 +291,8 @@ const handler = async (
 						);
 					}
 					
-					// Check web search access based on user's plan
-					if (webSearchEnabled && !planLimits.hasWebSearch) {
+					// Check web search access based on user's plan (skip for resume requests)
+					if (!isResume && webSearchEnabled && !planLimits.hasWebSearch) {
 						console.warn(`[Billing] Web search access denied for ${userPlan} user`);
 						return new Response(
 							JSON.stringify({
@@ -473,20 +310,23 @@ const handler = async (
 						);
 					}
 					
-					// Reserve quota atomically (replaces separate check + track pattern)
-					if (!authenticatedUserId) {
-						throw new Error("User ID required for quota reservation");
+					// Reserve quota atomically (POST requests only)
+					if (!isResume) {
+						if (!authenticatedUserId) {
+							throw new Error("User ID required for quota reservation");
+						}
+						quotaReservation = await reserveQuota(
+							authenticatedUserId,
+							selectedModelId,
+							messageId
+						);
 					}
-					quotaReservation = await reserveQuota(
-						authenticatedUserId,
-						selectedModelId,
-						messageId
-					);
 					
-					console.log(`[Billing] User ${authenticatedUserId} (${userPlan}) passed all billing checks for model: ${selectedModelId}`, {
+					console.log(`[Billing] User ${authenticatedUserId} (${userPlan}) passed billing checks for model: ${selectedModelId}`, {
 						webSearchEnabled,
 						modelId: selectedModelId,
-						hasWebSearchAccess: planLimits.hasWebSearch
+						hasWebSearchAccess: planLimits.hasWebSearch,
+						isResume
 					});
 
 				} catch (error) {
@@ -537,7 +377,7 @@ const handler = async (
 
 			// Log model selection for debugging
 			console.log(
-				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms)`,
+				`[Chat API] Using model: ${selectedModelId} -> ${gatewayModelString} (delay: ${streamingDelay}ms, isResume: ${isResume})`,
 			);
 
 			// Create conditional active tools and system prompt based on authentication and preferences
@@ -549,78 +389,58 @@ const handler = async (
 				activeTools: activeToolsForUser ?? 'all tools',
 				webSearchEnabled,
 				isAnonymous,
-				userPlan: isAnonymous ? 'N/A' : userPlan
+				userPlan: isAnonymous ? 'N/A' : userPlan,
+				isResume
 			});
 
-			// Pass everything to fetchRequestHandler with inline agent
-			const response = await fetchRequestHandler({
-				agent: createAgent<AppRuntimeContext, typeof c010Tools>({
-					name: "c010",
-					system: systemPrompt,
-					tools: c010Tools,
-					activeTools: activeToolsForUser,
-					createRuntimeContext: ({
-						sessionId: _sessionId,
-						resourceId: _resourceId,
-					}): AppRuntimeContext => ({
-						userId,
+			// Create agent configuration - unified for both GET and POST
+			const agentConfig: Parameters<typeof createAgent<AppRuntimeContext, typeof c010Tools>>[0] = {
+				name: "c010",
+				system: systemPrompt,
+				tools: c010Tools,
+				activeTools: activeToolsForUser,
+				createRuntimeContext: ({ sessionId: _sessionId, resourceId: _resourceId }): AppRuntimeContext => ({
+					userId,
+					agentId,
+					messageId,
+				}),
+				model: wrapLanguageModel({
+					model: gateway(gatewayModelString),
+					middleware: BraintrustMiddleware({ debug: true }),
+				}),
+				experimental_telemetry: {
+					isEnabled: isOtelEnabled(),
+					functionId: isResume ? "chat-resume" : "chat-inference",
+					metadata: {
+						context: "production",
+						inferenceType: isResume ? "chat-resume" : "chat-conversation",
 						agentId,
-						messageId, // Use the generated messageId
-					}),
-					model: wrapLanguageModel({
-						model: gateway(gatewayModelString),
-						middleware: BraintrustMiddleware({ debug: true }),
-					}),
+						agentName: "c010",
+						sessionId,
+						userId,
+						modelId: selectedModelId,
+						modelProvider: modelConfig.provider,
+						isAnonymous,
+						webSearchEnabled,
+						...(isResume && { resumeOperation: true }),
+					},
+				},
+			};
+
+			// Add POST-specific features for non-resume requests
+			if (!isResume) {
+				Object.assign(agentConfig, {
 					experimental_transform: smoothStream({
 						delayInMs: streamingDelay,
 						chunking: "word",
 					}),
 					stopWhen: stepCountIs(10),
-					experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
-						// Don't attempt to fix invalid tool names
-						if (NoSuchToolError.isInstance(error)) {
-							return null;
-						}
+				});
+			}
 
-						const tool = tools[toolCall.toolName];
-						if (!tool) return null;
-
-						try {
-							const result = await generateObject({
-								model: gateway('google/gemini-2.5-flash'),
-								schema: tool.inputSchema,
-								prompt: [
-									`The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
-									JSON.stringify(toolCall.input),
-									`The tool accepts the following schema:`,
-									JSON.stringify(inputSchema(toolCall)),
-									'Please fix the inputs to match the schema exactly. Preserve the original intent while ensuring all parameters are valid.',
-								].join('\n'),
-							});
-
-							console.log(`[Tool Repair] Successfully repaired: ${toolCall.toolName}`);
-							return { ...toolCall, input: JSON.stringify(result.object) };
-						} catch {
-							return null;
-						}
-					},
-					experimental_telemetry: {
-						isEnabled: isOtelEnabled(),
-						functionId: "chat-inference",
-						metadata: {
-							context: "production",
-							inferenceType: "chat-conversation",
-							agentId,
-							agentName: "c010",
-							sessionId,
-							userId,
-							modelId: selectedModelId,
-							modelProvider: modelConfig.provider,
-							isAnonymous,
-							webSearchEnabled,
-						},
-					},
-				}),
+			// Single unified fetchRequestHandler call
+			const response = await fetchRequestHandler({
+				agent: createAgent<AppRuntimeContext, typeof c010Tools>(agentConfig),
 				sessionId,
 				memory,
 				req,
@@ -640,8 +460,9 @@ const handler = async (
 				enableResume: true,
 				onError(event) {
 					const { error, systemContext, requestContext } = event;
+					const logPrefix = isResume ? '[API Error - Resume]' : '[API Error]';
 					console.error(
-						`[API Error] Agent: ${agentId}, Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.statusCode}`,
+						`${logPrefix} Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${error.statusCode}`,
 						{
 							error: error.message || JSON.stringify(error),
 							statusCode: error.statusCode,
@@ -653,11 +474,12 @@ const handler = async (
 							method: req.method,
 							url: req.url,
 							requestContext,
+							isResume,
 						},
 					);
 
-					// Release quota reservation if message processing fails
-					if (!isAnonymous && quotaReservation) {
+					// Release quota reservation if message processing fails (POST only)
+					if (!isResume && !isAnonymous && quotaReservation) {
 						const reservationId = quotaReservation.reservationId;
 						releaseQuotaReservation(reservationId)
 							.then(() => {
@@ -681,44 +503,10 @@ const handler = async (
 								agentId,
 								errorType: error.statusCode,
 								errorMessage: error.message || JSON.stringify(error),
+								isResume,
 							},
 						);
-
-						// Memory failures could trigger:
-						// - Immediate retry mechanism
-						// - User notification via WebSocket
-						// - Priority alerts to monitoring system
-						// - Fallback to read-only mode for this session
 					}
-				},
-				onAgentComplete(event) {
-					const { agentName, systemContext } = event;
-
-					console.log(`[Agent Completed] ${agentName}`, {
-						agentName,
-						sessionId: systemContext.sessionId,
-						userId: systemContext.resourceId,
-					});
-
-					// Confirm quota usage for authenticated users (replaces fire-and-forget tracking)
-					if (!isAnonymous && quotaReservation) {
-						const reservationId = quotaReservation.reservationId;
-						confirmQuotaUsage(reservationId)
-							.then(() => {
-								console.log(`[Billing] Usage confirmed for user ${authenticatedUserId}:`, {
-									modelId: selectedModelId,
-									reservationId
-								});
-							})
-							.catch((error) => {
-								console.error(`[Billing] Failed to confirm usage for user ${authenticatedUserId}:`, error);
-								// This is critical - user got value but usage not recorded
-								// TODO: Add to retry queue or alert system
-							});
-					}
-
-					// Here you could track agent completion metrics
-					// metrics.counter('agent_completions', 1, { agent: agentName });
 				},
 			});
 
