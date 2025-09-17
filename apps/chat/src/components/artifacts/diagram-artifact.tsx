@@ -168,21 +168,24 @@ export const diagramArtifact = new Artifact<"diagram", Metadata>({
 	},
 	onStreamPart: ({ streamPart, setArtifact }) => {
 		if ((streamPart as { type: string }).type === "data-diagramDelta") {
-			setArtifact((draftArtifact) => {
-				const newContent =
-					draftArtifact.content + (streamPart as { data: string }).data;
-				return {
-					...draftArtifact,
-					content: newContent,
-					isVisible:
-						draftArtifact.status === "streaming" &&
-						newContent.length > 50 &&
-						newContent.length < 60
-							? true
-							: draftArtifact.isVisible,
-					status: "streaming",
-				};
-			});
+			const nextContent = (streamPart as { data?: string }).data;
+
+			if (typeof nextContent !== "string") {
+				return;
+			}
+
+			setArtifact((draftArtifact) => ({
+				...draftArtifact,
+				content: nextContent,
+				isVisible: ((
+					draftArtifact.status === "streaming" &&
+					draftArtifact.content.length > 50 &&
+					draftArtifact.content.length < 60
+				) || (!draftArtifact.isVisible && nextContent.length >= 50))
+					? true
+					: draftArtifact.isVisible,
+				status: "streaming",
+			}));
 		}
 	},
 	content: ({

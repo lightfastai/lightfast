@@ -16,20 +16,24 @@ export const codeArtifact = new Artifact<'code', Metadata>({
   },
   onStreamPart: ({ streamPart, setArtifact }) => {
     if ((streamPart as { type: string }).type === 'data-codeDelta') {
-      setArtifact((draftArtifact) => {
-        const newContent = draftArtifact.content + (streamPart as { data: string }).data;
-        return {
-          ...draftArtifact,
-          content: newContent,
-          isVisible:
-            draftArtifact.status === 'streaming' &&
-            newContent.length > 300 &&
-            newContent.length < 310
-              ? true
-              : draftArtifact.isVisible,
-          status: 'streaming',
-        };
-      });
+      const nextContent = (streamPart as { data?: string }).data;
+
+      if (typeof nextContent !== 'string') {
+        return;
+      }
+
+      setArtifact((draftArtifact) => ({
+        ...draftArtifact,
+        content: nextContent,
+        isVisible: ((
+          draftArtifact.status === 'streaming' &&
+          draftArtifact.content.length > 300 &&
+          draftArtifact.content.length < 310
+        ) || (!draftArtifact.isVisible && nextContent.length >= 300))
+          ? true
+          : draftArtifact.isVisible,
+        status: 'streaming',
+      }));
     }
   },
   content: ({ metadata: _metadata, setMetadata: _setMetadata, ...props }) => {

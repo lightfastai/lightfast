@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { UIArtifact } from './artifact';
 
-const initialArtifactState: UIArtifact = {
+export const initialArtifactData: UIArtifact = {
   title: '',
   documentId: 'init',
   kind: 'code',
@@ -16,40 +17,75 @@ const initialArtifactState: UIArtifact = {
   },
 };
 
-export function useArtifact() {
-  const [artifact, setArtifact] = useState<UIArtifact>(initialArtifactState);
-  const [metadata, setMetadata] = useState<Record<string, unknown>>({});
+export interface UseArtifactResult {
+  artifact: UIArtifact;
+  setArtifact: Dispatch<SetStateAction<UIArtifact>>;
+  metadata: Record<string, unknown>;
+  setMetadata: Dispatch<SetStateAction<Record<string, unknown>>>;
+  showArtifact: (artifactData: Partial<UIArtifact>) => void;
+  hideArtifact: () => void;
+}
 
-  const showArtifact = useCallback((artifactData: Partial<UIArtifact>) => {
-    setArtifact(prev => ({
-      ...prev,
-      ...artifactData,
-      isVisible: true,
-    }));
-  }, []);
+export function useArtifact(): UseArtifactResult {
+  const [artifact, setArtifactState] = useState<UIArtifact>(initialArtifactData);
+  const [metadata, setMetadataState] = useState<Record<string, unknown>>({});
+
+  const setArtifact = useCallback(
+    (updater: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)) => {
+      setArtifactState((current) => {
+        if (typeof updater === 'function') {
+          return (updater as (currentArtifact: UIArtifact) => UIArtifact)(current);
+        }
+
+        return updater;
+      });
+    },
+    [],
+  );
+
+  const setMetadata = useCallback(
+    (updater: SetStateAction<Record<string, unknown>>) => {
+      setMetadataState((current) => {
+        if (typeof updater === 'function') {
+          return (updater as (value: Record<string, unknown>) => Record<string, unknown>)(
+            current,
+          );
+        }
+
+        return updater;
+      });
+    },
+    [],
+  );
+
+  const showArtifact = useCallback(
+    (artifactData: Partial<UIArtifact>) => {
+      setArtifact((current) => ({
+        ...current,
+        ...artifactData,
+        isVisible: true,
+      }));
+    },
+    [setArtifact],
+  );
 
   const hideArtifact = useCallback(() => {
-    setArtifact(prev => ({
-      ...prev,
+    setArtifact((current) => ({
+      ...current,
       isVisible: false,
+      status: 'idle',
     }));
-  }, []);
+    setMetadata(() => ({}));
+  }, [setArtifact, setMetadata]);
 
-  const updateArtifactContent = useCallback((content: string, status: 'streaming' | 'idle' = 'idle') => {
-    setArtifact(prev => ({
-      ...prev,
-      content,
-      status,
-    }));
-  }, []);
-
-  return {
+  const api: UseArtifactResult = {
     artifact,
     setArtifact,
     metadata,
     setMetadata,
     showArtifact,
     hideArtifact,
-    updateArtifactContent,
   };
+
+  return api;
 }

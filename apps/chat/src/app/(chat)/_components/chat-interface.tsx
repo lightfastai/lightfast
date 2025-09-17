@@ -34,6 +34,7 @@ import type { ArtifactApiResponse } from "~/components/artifacts/types";
 type Session = ChatRouterOutputs["session"]["getMetadata"];
 import { useDataStream } from "~/hooks/use-data-stream";
 import { ArtifactViewer, useArtifact } from "~/components/artifacts";
+import type { UseArtifactResult } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
@@ -165,15 +166,12 @@ export function ChatInterface({
 		setMetadata,
 		showArtifact,
 		hideArtifact,
-		updateArtifactContent,
 		setArtifact,
-	} = useArtifact();
+	}: UseArtifactResult = useArtifact();
 
 	// Connect streaming data to artifact updates
 	useArtifactStreaming({
-		showArtifact,
-		hideArtifact,
-		updateArtifactContent,
+		artifact,
 		setArtifact,
 		setMetadata,
 	});

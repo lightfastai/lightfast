@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { UIArtifact } from "./artifact";
 import { artifactDefinitions } from "./artifact";
 import {
@@ -24,10 +25,8 @@ import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 
 interface ArtifactViewerProps {
 	artifact: UIArtifact;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	setMetadata: (metadata: any) => void;
+	metadata: Record<string, unknown>;
+	setMetadata: Dispatch<SetStateAction<Record<string, unknown>>>;
 	onClose: () => void;
 	onSaveContent?: (content: string, debounce: boolean) => void;
 	sessionId: string;
@@ -145,7 +144,6 @@ export function ArtifactViewer({
 										handleVersionChange,
 										currentVersionIndex,
 										isCurrentVersion,
-										// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 										metadata,
 										setMetadata,
 									})
@@ -155,7 +153,6 @@ export function ArtifactViewer({
 									handleVersionChange,
 									currentVersionIndex,
 									isCurrentVersion,
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 									metadata,
 									setMetadata,
 								})}
@@ -181,7 +178,6 @@ export function ArtifactViewer({
 					isCurrentVersion={isCurrentVersion}
 					getDocumentContentById={() => artifact.content}
 					isLoading={false}
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					metadata={metadata}
 					setMetadata={setMetadata}
 				/>
