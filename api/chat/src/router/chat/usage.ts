@@ -16,6 +16,44 @@ import { isWithinInterval } from "date-fns";
 import { clerkClient } from "@clerk/nextjs/server";
 import type { CommerceSubscription, CommerceSubscriptionItem } from "@clerk/backend";
 
+// Shared period calculation function for consistent billing logic across the system
+export async function calculateBillingPeriod(userId: string, timezone: string = 'UTC'): Promise<string> {
+  const subscriptionData = await getUserSubscriptionData(userId);
+  const { subscription, hasActiveSubscription } = subscriptionData;
+
+  if (!subscription || !hasActiveSubscription) {
+    // Free users: use calendar month in user timezone
+    const now = toZonedTime(new Date(), timezone);
+    return format(now, 'yyyy-MM');
+  } else {
+    // Paid users: use actual billing anniversary periods based on subscription cycles
+    const activePaidItem = subscription.subscriptionItems?.find(item => 
+      !['cplan_free', 'free-tier'].includes(item?.plan?.id ?? "") &&
+      !['cplan_free', 'free-tier'].includes(item?.plan?.name ?? "")
+    );
+    
+    if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
+      const now = toZonedTime(new Date(), timezone);
+      const periodStart = toZonedTime(new Date(activePaidItem.periodStart), timezone);
+      const periodEnd = toZonedTime(new Date(activePaidItem.periodEnd), timezone);
+      
+      // Check if we're within the current subscription period
+      if (isWithinInterval(now, { start: periodStart, end: periodEnd })) {
+        // Use billing anniversary date as period identifier (YYYY-MM-DD format)
+        // This ensures quotas reset on billing anniversary, not calendar month
+        const billingPeriodId = format(periodStart, 'yyyy-MM-dd');
+        
+        console.log(`[Billing] User ${userId} in billing period ${billingPeriodId} (${activePaidItem.planPeriod} plan)`);
+        return billingPeriodId;
+      }
+    }
+    
+    // Fallback to calendar month if subscription data is incomplete
+    const now = toZonedTime(new Date(), timezone);
+    return format(now, 'yyyy-MM');
+  }
+}
+
 // Shared subscription data interface
 interface SubscriptionData {
   subscription: CommerceSubscription | null;
@@ -204,7 +242,7 @@ export const usageRouter = {
   getByPeriod: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -229,7 +267,7 @@ export const usageRouter = {
   incrementNonPremium: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
         count: z.number().positive().default(1),
       })
     )
@@ -284,7 +322,7 @@ export const usageRouter = {
   incrementPremium: protectedProcedure
     .input(
       z.object({
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
         count: z.number().positive().default(1),
       })
     )
@@ -347,37 +385,8 @@ export const usageRouter = {
       // Get subscription data using shared function
       const { subscription, planKey, hasActiveSubscription, billingInterval } = await getUserSubscriptionData(ctx.session.userId);
       
-      // Calculate billing period based on timezone and subscription
-      const period = input.period || (() => {
-        if (!subscription || !hasActiveSubscription) {
-          // Free users: use calendar month in user timezone
-          const now = toZonedTime(new Date(), input.timezone);
-          return format(now, 'yyyy-MM');
-        } else {
-          // Paid users: use subscription billing period from subscription items
-          const activePaidItem = subscription.subscriptionItems?.find(item => 
-            !['cplan_free', 'free-tier'].includes(item?.plan?.id ?? "") &&
-            !['cplan_free', 'free-tier'].includes(item?.plan?.name ?? "")
-          );
-          
-          if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
-            const now = toZonedTime(new Date(), input.timezone);
-            const periodStart = toZonedTime(new Date(activePaidItem.periodStart), input.timezone);
-            const periodEnd = toZonedTime(new Date(activePaidItem.periodEnd), input.timezone);
-            
-            // Check if we're within the current subscription period
-            if (isWithinInterval(now, { start: periodStart, end: periodEnd })) {
-              // For now, always use monthly format (YYYY-MM) since interval detection is simplified
-              // Future enhancement: detect annual plans and use YYYY-MM-DD format
-              return format(periodStart, 'yyyy-MM');
-            }
-          }
-          
-          // Fallback to calendar month if subscription data is incomplete
-          const now = toZonedTime(new Date(), input.timezone);
-          return format(now, 'yyyy-MM');
-        }
-      })();
+      // Calculate billing period using shared function for consistency
+      const period = input.period || await calculateBillingPeriod(ctx.session.userId, input.timezone);
       
       const usage = await getUsageByPeriod(ctx.session.userId, period);
 
@@ -473,7 +482,7 @@ export const usageRouter = {
         modelId: z.string(),
         messageId: z.string(), // For idempotency
         messageType: z.enum(['premium', 'standard']),
-        period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be in YYYY-MM format"),
+        period: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "Period must be in YYYY-MM or YYYY-MM-DD format"),
       })
     )
     .mutation(async ({ ctx, input }) => {

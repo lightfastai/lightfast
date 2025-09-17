@@ -2,6 +2,7 @@ import { createCaller } from "~/trpc/server";
 import { getMessageType } from "./message-utils";
 import { MessageType } from "./types";
 import { toZonedTime, format } from "date-fns-tz";
+import { calculateBillingPeriod } from "@api/chat";
 
 /**
  * Enhanced server-side usage tracking service
@@ -10,11 +11,18 @@ import { toZonedTime, format } from "date-fns-tz";
 
 /**
  * Get current period string with timezone support
- * Now properly implements timezone-aware period calculation
+ * Now supports both calendar months (free users) and billing anniversaries (paid users)
  */
-export function getCurrentPeriod(timezone = 'UTC'): string {
-  const now = toZonedTime(new Date(), timezone);
-  return format(now, 'yyyy-MM');
+export async function getCurrentPeriod(timezone = 'UTC', userId?: string): Promise<string> {
+  if (userId) {
+    // Use subscription-aware billing period calculation
+    const period: string = await calculateBillingPeriod(userId, timezone);
+    return period;
+  } else {
+    // Fallback to calendar month (for backward compatibility)
+    const now = toZonedTime(new Date(), timezone);
+    return format(now, 'yyyy-MM');
+  }
 }
 
 /**
@@ -92,16 +100,17 @@ export async function canSendMessage(
 
 /**
  * Track a message being sent (increment usage counters)
- * Uses timezone-aware period calculation
+ * Uses subscription-aware billing period calculation
  */
 export async function trackMessageSent(
+	userId: string,
 	modelId: string,
 	timezone?: string
 ): Promise<void> {
 	try {
 		const caller = await createCaller();
 		const messageType = getMessageType(modelId);
-		const period = getCurrentPeriod(timezone ?? 'UTC');
+		const period = await getCurrentPeriod(timezone ?? 'UTC', userId);
 
 		if (messageType === MessageType.PREMIUM) {
 			await caller.usage.incrementPremium({

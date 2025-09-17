@@ -52,7 +52,7 @@ export async function reserveQuota(
 ): Promise<QuotaReservation> {
 	const caller = await createCaller();
 	const messageType = getMessageType(modelId);
-	const period = getCurrentPeriod(timezone);
+	const period = await getCurrentPeriod(timezone, userId);
 	
 	try {
 		// Atomic operation: check quota AND reserve it in one database transaction
