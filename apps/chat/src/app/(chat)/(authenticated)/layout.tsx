@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { trpc, HydrateClient, prefetch } from "~/trpc/server";
 import type React from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
@@ -14,14 +15,18 @@ interface AuthenticatedLayoutProps {
 }
 
 // Shared layout for all authenticated pages (new, [sessionId])
-export default function AuthenticatedLayout({
+export default async function AuthenticatedLayout({
 	children,
 }: AuthenticatedLayoutProps) {
 	// Prefetch user data for instant loading
 	prefetch(trpc.user.getUser.queryOptions());
-	
+
 	// Prefetch pinned sessions for sidebar
 	prefetch(trpc.session.listPinned.queryOptions());
+
+	// Get sidebar state from cookies
+	const cookieStore = await cookies();
+	const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
 	// Note: We don't prefetch infinite sessions here because:
 	// 1. prefetchInfiniteQuery can't be used in RSC (serialization issues)
@@ -32,23 +37,24 @@ export default function AuthenticatedLayout({
 		<TRPCReactProvider>
 			<HydrateClient>
 				<TooltipProvider>
-						<SidebarProvider defaultOpen={true}>
-							<KeyboardShortcuts />
-							<div className="flex h-screen w-full">
-								<AppSidebar />
-								<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative">
-									<AuthenticatedHeader />
-									{/* Content area starts from 0vh */}
-									<div className="flex-1 min-h-0 overflow-hidden">
-										<Suspense fallback={<ChatLoadingSkeleton />}>
-											{children}
-										</Suspense>
-									</div>
+					<SidebarProvider defaultOpen={!isCollapsed}>
+						<KeyboardShortcuts />
+						<div className="flex h-screen w-full">
+							<AppSidebar />
+							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative">
+								<AuthenticatedHeader />
+								{/* Content area starts from 0vh */}
+								<div className="flex-1 min-h-0 overflow-hidden">
+									<Suspense fallback={<ChatLoadingSkeleton />}>
+										{children}
+									</Suspense>
 								</div>
 							</div>
-						</SidebarProvider>
+						</div>
+					</SidebarProvider>
 				</TooltipProvider>
 			</HydrateClient>
 		</TRPCReactProvider>
 	);
 }
+
