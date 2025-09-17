@@ -251,3 +251,42 @@ function titleCase(str: string): string {
 		txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
 	);
 }
+
+/**
+ * Remove metadata sections from text - utility for displaying clean content
+ */
+export function cleanTextFromMetadata(text: string): string {
+	// Check for new ---METADATA--- format
+	const metadataDelimiter = "---METADATA---";
+	const metadataIndex = text.indexOf(metadataDelimiter);
+	if (metadataIndex !== -1) {
+		return text.substring(0, metadataIndex).trim();
+	}
+
+	// Check for legacy ---CITATIONS--- format
+	const citationDelimiter = "---CITATIONS---";
+	const delimiterIndex = text.indexOf(citationDelimiter);
+	if (delimiterIndex !== -1) {
+		return text.substring(0, delimiterIndex).trim();
+	}
+
+	// Legacy: Check if text ends with "Cited" - O(1) operation
+	if (text.endsWith("Cited")) {
+		// Find where "Cited sources" starts and cut there
+		const citedIndex = text.lastIndexOf("Cited sources");
+		if (citedIndex !== -1) {
+			return text.substring(0, citedIndex).trim();
+		}
+	}
+
+	// Legacy: Also check for numbered citation format that might not end with "Cited"
+	// Look for pattern that suggests citations at the end
+	if (/\[\d+\]\s+https?:\/\/[^\n]*$/.exec(text)) {
+		const citationMatch = /\n\[\d+\]\s+https?:\/\//.exec(text);
+		if (citationMatch?.index !== undefined) {
+			return text.substring(0, citationMatch.index).trim();
+		}
+	}
+
+	return text;
+}
