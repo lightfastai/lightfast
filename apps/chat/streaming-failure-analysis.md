@@ -1,77 +1,86 @@
-# Streaming & Persistence Failure Modes
+# Streaming Reliability & Persistence – Working Notes
 
-This document captures the current risks identified in the `c010` chat route, the shared streaming runtime, and the chat UI.
-
-## 1. Assistant persistence failures are silent ✅ mitigated (phase 1)
-- Changes shipped in `core/lightfast/src/core/server/runtime.ts` now catch `appendMessage` errors, log them, and send a structured SSE `error` part to the client while keeping the stream alive.
-- `apps/chat/src/app/(chat)/_components/chat-interface.tsx` listens for that `SERVER_ERROR` payload and shows an inline banner rather than silently succeeding.
-- Still to do:
-  - Retry/backoff on the server before giving up.
-  - Preserve optimistic assistant message only when persistence confirms success.
-
-## 2. Resume bookkeeping can break without user feedback ✅ mitigated (phase 1)
-- Runtime now catches `memory.createStream` failures, clears the active stream, and ships a `resume`-scoped SSE `error` chunk so the UI warns the user that resume is unavailable.
-- Inline banner informs the user; we avoid throwing to the boundary.
-- Still to do:
-  - Consider retry/backoff or queue-based resume registration.
-  - Ensure `hasActiveStream` is reset in session state when resume fails.
-
-## 3. Memory errors lose semantic error typing ✅ mitigated (phase 1)
-- `core/lightfast/src/core/server/adapters/fetch.ts` now maps all errors to a typed payload (ChatErrorType + user-facing message) before returning.
-- Client parser receives structured metadata, so classification works even when streaming never starts.
-- Still to do:
-  - Align JSON schema with `ApiErrors` helpers to avoid duplicating logic.
-
-## 4. Artifact streaming can get stuck
-- `useChatTransport` keeps appending SSE parts to the shared data stream, and `useArtifactStreaming` waits for a `data-finish` control part to flip `status` to `idle`.
-- If the stream drops mid-flight, we never clear `currentArtifactRef` or hide the artifact.
-- Users see a permanently “streaming” artifact with stale content.
-- Mitigation ideas:
-  - Reset `setDataStream([])` when a new POST begins.
-  - Add timeout-based cleanup if no `data-finish` arrives within N seconds.
-
-## 5. Quota release failures are invisible
-- Route error hook asynchronously calls `releaseQuotaReservation`, logging failures but providing no client-facing signal.
-- If release fails, quota remains locked even though the user saw the streamed answer.
-- Mitigation ideas:
-  - Surface a warning SSE control part when release fails, or add a retry/backoff loop with monitoring so we can detect stuck reservations.
+## Overview
+This document tracks reliability risks in the chat streaming stack (Next.js route + Lightfast runtime) and the status of mitigation work. It is organized by the user-visible failure mode, associated backend mechanics, and outstanding tasks.
 
 ---
 
-## Next Steps (ordered)
-1. **Artifact/stream cleanup**: reset `setDataStream([])` on new POST and add a timeout fallback to avoid stuck artifacts when no `data-finish` arrives.
-2. **Optimistic updates** ✅ _done_: chat UI rolls back the optimistic assistant message when the backend reports a persistence failure and also clears the shared data stream.
-3. **Resume state sanity**: ensure `hasActiveStream` and related flags clear when resume registration fails; consider retry/backoff.
-4. **Quota release observability**: surface SSE warning or retry loop so users understand when reservations stick.
-5. **Telemetry** (later): emit counters for persistence/resume failures to monitor regression.
+## Completed Mitigations
+### M1. Assistant persistence surfaced to the UI
+- **Problem**: `appendMessage` failures previously returned 200, so users saw a reply that vanished on refresh.
+- **Fixes shipped**:
+  - `core/lightfast/src/core/server/runtime.ts`: wraps persistence errors, emits SSE `error` parts with metadata, keeps the stream alive.
+  - `apps/chat/.../chat-interface.tsx`: intercepts the payload, clears artifact stream state, rolls back optimistic assistant messages, and renders a banner instead of escalating to the global error boundary.
+- **Still to consider**: retry/backoff in runtime and gating optimistic cache updates on confirmed persistence.
+
+### M2. Resume registration feedback
+- **Problem**: `memory.createStream` failures were silent; resume requests later returned 204 with no explanation.
+- **Fixes shipped**:
+  - Runtime broadcasts an SSE `error` chunk with `phase: "resume"` metadata and clears the active stream.
+  - Chat interface shows an inline warning rather than throwing to the boundary.
+- **Pending**: reset client `hasActiveStream` flag (next task) and evaluate retry/backoff path.
+
+### M3. Structured sync errors
+- **Problem**: Synchronous route errors were emitted as raw strings, so the client misclassified them.
+- **Fixes shipped**:
+  - `fetchRequestHandler` serializes `ApiError` objects into `ChatErrorType` payloads (status + user text).
+
+### M4. Optimistic assistant rollback
+- **Problem**: Optimistic assistant messages lingered when persistence failed.
+- **Fixes shipped**:
+  - Runtime includes the assistant `messageId` in persistence-error metadata.
+  - Session-specific chat components remove the optimistic message from TanStack cache on error callbacks.
 
 ---
-These issues should inform both runtime hardening (stronger guardrails, retries, richer SSE control channel) and client UX (handling mid-stream failure states).
 
-## Additional Memory Failure Edge Cases
-- **Partial session creation**: if `memory.createSession` succeeds but a subsequent `appendMessage` fails, the session exists without the initiating message. We should detect and clean up orphaned sessions or re-attempt the write.
-- **Stream ID leakage**: repeated `createStream` failures may leave stale entries in Redis/DB; consider TTLs or periodic cleanup to avoid resume pointing to dead streams.
-- **Inconsistent model metadata**: persistence failure might prevent modelId/tool results from being stored. Client refresh would show a reply without metadata; decide whether to redact or mark such messages.
-- **Message ID collisions**: optimistic message IDs generated client-side could collide if retries reuse the same IDs; ensure server rejects duplicates cleanly or clients regenerate IDs on retry.
-- **Memory adapter divergence**: Redis (anon) and PlanetScale (auth) adapters differ in guarantees. Verify both surface failures uniformly so the SSE error channel produces consistent metadata.
+## Open Issues & Planned Work
+1. **Resume state sanity** *(next up)*
+   - Ensure `useSessionState` clears `hasActiveStream` when the runtime reports a resume failure.
+   - Confirm backend clears `activeStreamId` before starting a new POST regardless of later failures.
+2. **Artifact/data stream cleanup**
+   - Reset `setDataStream([])` when a new POST starts and add a timeout fallback when no `data-finish` arrives.
+3. **Quota reservation visibility**
+   - Surface SSE warnings and add retries/reconciliation for `releaseQuotaReservation` failures.
+4. **Telemetry & monitoring**
+   - Track counts for persistence failures, resume failures, quota release issues, and provider aborts.
 
-## Backend Architecture – Additional Scenarios to Address
-- **Session lifecycle invariants**
-  - Ensure `getSession`, `createSession`, and `appendMessage` are idempotent under retried requests (e.g., client resends after network drop).
-  - Detect when a session exists for a different `resourceId` and surface a distinct permission error before any write is attempted.
+---
 
-- **Streaming pipeline resilience**
-  - `streamText` may emit `abort` chunks when the provider cancels; treat as recoverable and surface a user-facing notice via SSE so the client can offer a retry.
-  - Guard against duplicate `onFinish` executions (provider bug or double flush) by making the persistence branch idempotent based on message ID.
+## Additional Backend Scenarios (Needs Design)
+### Session lifecycle invariants
+- Make `createSession`/`appendMessage` idempotent for retried requests.
+- Reject early when an existing session belongs to a different `resourceId`.
 
-- **Resume bookkeeping**
-  - On every new POST, clear previous `activeStreamId` even if `createStream` later fails; otherwise resume requests may resurrect stale streams.
-  - Distinguish “no active stream” (204) from “resume failed” (structured error) so monitoring can track how often resume setup breaks.
+### Streaming pipeline resilience
+- Handle provider `abort` chunks by emitting user-facing SSE signals (retry prompt, etc.).
+- Guard against duplicate `onFinish` execution by making persistence idempotent per message ID.
 
-- **Quota reservation flow**
-  - If a streaming request ends without calling `releaseQuotaReservation` (process crash, timeout), ensure a background reconciliation job frees old reservations.
-  - Emit structured SSE warning when release fails so the client warns users that limits may appear stricter until cleanup runs.
+### Resume bookkeeping
+- Clear previous `activeStreamId` on every POST before attempting `createStream`.
+- Differentiate “no active stream” (204) from “resume setup failed” (explicit error) for observability.
 
-- **Tool/Artifact integration**
-  - Tool invocations (web search, artifact creation) should be included in the transactional boundary—if persistence fails, their side effects may need rollback or compensating action.
-  - For anonymous Redis memory, enforce TTL refresh on every write to avoid mid-conversation eviction that would break resume/pagination.
+### Quota reservation flow
+- Add background jobs to release stale reservations after crashes/timeouts.
+- Expose SSE warnings so users know limits might appear stricter until cleanup.
+
+### Tool & artifact integration
+- Ensure tool side effects are rolled back or compensated if persistence fails.
+- For anonymous Redis memory, refresh TTL on every write to avoid mid-conversation eviction.
+
+### Miscellaneous edge cases
+- Partial session creation with no first message → detect and clean up or retry.
+- Stream ID leakage after repeated failures → ensure TTL/cleanup.
+- Model metadata drift when persistence fails → decide on server-side redaction/flagging.
+- Message ID collisions on retry → enforce uniqueness or regenerate IDs.
+- Align adapter behavior between Redis and PlanetScale so error semantics stay consistent.
+
+---
+
+## Summary Queue (High → Low)
+1. Resume state accuracy in client + backend 🔜
+2. Artifact/data-stream cleanup & timeout handling
+3. Quota reservation observability & retries
+4. Telemetry for streaming/persistence failure classes
+5. Longer-term architecture items listed above
+
+This list will evolve as we land fixes; update the “Completed Mitigations” section with links/notes once each task ships.
