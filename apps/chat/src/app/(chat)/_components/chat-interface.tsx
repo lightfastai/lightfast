@@ -35,7 +35,6 @@ import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
-import { invalidateRouterCache } from "../(authenticated)/actions";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -278,13 +277,6 @@ export function ChatInterface({
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
-
-			// For new sessions, the router cache needs to be invalidated so
-			// navigation to the previous page triggers SSR correctly
-			if (isNewSession) {
-				// Fire and forget - don't await to maintain void return type
-				invalidateRouterCache().catch(console.error);
-			}
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing

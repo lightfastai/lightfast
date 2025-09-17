@@ -78,7 +78,7 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		}
 
 		// Update the URL immediately for instant feedback
-		window.history.pushState({}, "", `/${sessionId}`);
+		window.history.replaceState({}, "", `/${sessionId}`);
 
 		// Create the session optimistically (fire-and-forget)
 		// The backend will also create it if needed (upsert behavior)
