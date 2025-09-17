@@ -54,3 +54,24 @@ These issues should inform both runtime hardening (stronger guardrails, retries,
 - **Inconsistent model metadata**: persistence failure might prevent modelId/tool results from being stored. Client refresh would show a reply without metadata; decide whether to redact or mark such messages.
 - **Message ID collisions**: optimistic message IDs generated client-side could collide if retries reuse the same IDs; ensure server rejects duplicates cleanly or clients regenerate IDs on retry.
 - **Memory adapter divergence**: Redis (anon) and PlanetScale (auth) adapters differ in guarantees. Verify both surface failures uniformly so the SSE error channel produces consistent metadata.
+
+## Backend Architecture – Additional Scenarios to Address
+- **Session lifecycle invariants**
+  - Ensure `getSession`, `createSession`, and `appendMessage` are idempotent under retried requests (e.g., client resends after network drop).
+  - Detect when a session exists for a different `resourceId` and surface a distinct permission error before any write is attempted.
+
+- **Streaming pipeline resilience**
+  - `streamText` may emit `abort` chunks when the provider cancels; treat as recoverable and surface a user-facing notice via SSE so the client can offer a retry.
+  - Guard against duplicate `onFinish` executions (provider bug or double flush) by making the persistence branch idempotent based on message ID.
+
+- **Resume bookkeeping**
+  - On every new POST, clear previous `activeStreamId` even if `createStream` later fails; otherwise resume requests may resurrect stale streams.
+  - Distinguish “no active stream” (204) from “resume failed” (structured error) so monitoring can track how often resume setup breaks.
+
+- **Quota reservation flow**
+  - If a streaming request ends without calling `releaseQuotaReservation` (process crash, timeout), ensure a background reconciliation job frees old reservations.
+  - Emit structured SSE warning when release fails so the client warns users that limits may appear stricter until cleanup runs.
+
+- **Tool/Artifact integration**
+  - Tool invocations (web search, artifact creation) should be included in the transactional boundary—if persistence fails, their side effects may need rollback or compensating action.
+  - For anonymous Redis memory, enforce TTL refresh on every write to avoid mid-conversation eviction that would break resume/pagination.
