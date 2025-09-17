@@ -358,7 +358,7 @@ const handler = async (
 			}
 
 			// POST request logic - extract modelId, messages, and webSearchEnabled
-			let selectedModelId: ModelId = "openai/gpt-5-nano"; // Default model
+			let selectedModelId: ModelId = "google/gemini-2.5-flash"; // Default model
 			let lastUserMessage = "";
 			let webSearchEnabled = false; // Default to false
 

@@ -53,7 +53,7 @@ export function getModelsForUser(isAuthenticated: boolean): ModelConfig[] {
 
 // Get the default model for a user based on authentication
 export function getDefaultModelForUser(isAuthenticated: boolean): ModelId {
-	// For anonymous users, use gemini-2.5-flash if available
+	// For anonymous users, use gemini-2.5-flash
 	if (!isAuthenticated) {
 		const anonymousModels = getModelsForUser(false);
 		const gemini25Flash = anonymousModels.find(m => m.id === "google/gemini-2.5-flash");

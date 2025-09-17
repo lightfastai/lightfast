@@ -73,7 +73,7 @@ export const BILLING_LIMITS: Record<ClerkPlanKey, BillingLimits> = {
     nonPremiumMessagesPerMonth: 1000,
     premiumMessagesPerMonth: 0,
     hasWebSearch: false,
-    allowedModels: ['openai/gpt-5-nano'], // Only default model
+    allowedModels: ['google/gemini-2.5-flash'], // Only default model
   },
   [ClerkPlanKey.PLUS_TIER]: {
     plan: ClerkPlanKey.PLUS_TIER,

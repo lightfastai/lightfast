@@ -108,7 +108,7 @@ export const ACTIVE_MODELS = {
 			thinking: true, // Gemini 2.5 Flash has thinking capabilities
 			pdfSupport: true, // Supports multimodal document processing
 		},
-		accessLevel: "authenticated",
+		accessLevel: "anonymous",
 		billingTier: "non_premium", // $2.80 total cost
 		streamingDelay: 40,
 	}),
