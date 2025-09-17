@@ -4,7 +4,7 @@ import { SidebarMenuButton } from "@repo/ui/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
-import { useSessionPrefetch } from "~/hooks/use-session-prefetch";
+import { useScrollAwarePrefetch } from "~/hooks/use-scroll-aware-prefetch";
 import { useEffect } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -31,10 +31,10 @@ export function ActiveMenuItem({
 		(sessionId === "new" && (pathname === "/new" || pathname === "/")) ||
 		(sessionId !== "new" && pathname.includes(sessionId));
 
-	// Set up prefetching for non-"new" sessions
-	const { handleHover, handleHoverEnd, cleanup } = useSessionPrefetch({
+	// Set up scroll-aware prefetching for non-"new" sessions
+	const { handleHover, handleHoverEnd, cleanup } = useScrollAwarePrefetch({
 		sessionId,
-		debounceMs: 300, // 300ms debounce to avoid excessive prefetching
+		containerSelector: '[data-sidebar]', // Target the sidebar container for scroll detection
 	});
 
 	// Cleanup timer on unmount
