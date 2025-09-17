@@ -37,7 +37,7 @@ export function useUserPlan() {
 		canUseWebSearch: planLimits.hasWebSearch,
 		
 		// Model access
-		canUseAllModels: planLimits.allowedModels.length === 0, // Empty array means all models allowed
+		canUseAllModels: userPlan === ClerkPlanKey.PLUS_TIER, // Plus users can use all available models
 		allowedModels: planLimits.allowedModels,
 		
 		// Message limits

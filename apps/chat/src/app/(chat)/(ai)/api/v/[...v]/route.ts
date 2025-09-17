@@ -431,8 +431,8 @@ const handler = async (
 					const planLimits = BILLING_LIMITS[userPlan];
 					
 					// Check model access based on user's plan
-					if (!planLimits.allowedModels.length || planLimits.allowedModels.includes(selectedModelId)) {
-						// User has access - either all models allowed (empty array) or specific model is in allowed list
+					if (planLimits.allowedModels.includes(selectedModelId)) {
+						// User has access - model is in their allowed list
 						console.log(`[Billing] Model access granted for ${userPlan} user: ${selectedModelId}`);
 					} else {
 						// User doesn't have access to this model

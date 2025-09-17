@@ -1,6 +1,8 @@
 /**
  * Billing Types and Constants
  */
+import { getVisibleModels } from "~/ai/providers";
+import type { ModelId } from "~/ai/providers";
 
 /**
  * Message types for usage tracking
@@ -67,20 +69,48 @@ export interface BillingLimits {
   allowedModels: string[];
 }
 
+/**
+ * Helper functions to derive allowed models from model definitions
+ * This replaces hardcoded model lists with computed derivations
+ */
+
+/**
+ * Get models available to anonymous users (FREE_TIER)
+ * Anonymous users can only access models with accessLevel: "anonymous"
+ */
+const getAnonymousAllowedModels = (): ModelId[] => {
+  return getVisibleModels()
+    .filter(model => model.accessLevel === "anonymous")
+    .map(model => model.id as ModelId);
+};
+
+/**
+ * Get models available to authenticated users (PLUS_TIER)
+ * Plus users can access both anonymous and authenticated models
+ */
+const getPlusAllowedModels = (): ModelId[] => {
+  return getVisibleModels()
+    .filter(model => 
+      model.accessLevel === "anonymous" || 
+      model.accessLevel === "authenticated"
+    )
+    .map(model => model.id as ModelId);
+};
+
 export const BILLING_LIMITS: Record<ClerkPlanKey, BillingLimits> = {
   [ClerkPlanKey.FREE_TIER]: {
     plan: ClerkPlanKey.FREE_TIER,
     nonPremiumMessagesPerMonth: 1000,
     premiumMessagesPerMonth: 0,
     hasWebSearch: false,
-    allowedModels: ['google/gemini-2.5-flash'], // Only default model
+    allowedModels: getAnonymousAllowedModels(), // Derived from model definitions
   },
   [ClerkPlanKey.PLUS_TIER]: {
     plan: ClerkPlanKey.PLUS_TIER,
     nonPremiumMessagesPerMonth: 1000,
     premiumMessagesPerMonth: 100,
     hasWebSearch: true,
-    allowedModels: [], // Empty means all models allowed
+    allowedModels: getPlusAllowedModels(), // Derived from model definitions  
   },
 } as const;
 

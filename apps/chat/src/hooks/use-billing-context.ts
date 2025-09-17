@@ -116,7 +116,7 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		canUseWebSearch: planLimits.hasWebSearch,
 		
 		// Model access
-		canUseAllModels: planLimits.allowedModels.length === 0,
+		canUseAllModels: userPlan === ClerkPlanKey.PLUS_TIER,
 		allowedModels: planLimits.allowedModels,
 		
 		// Message limits
