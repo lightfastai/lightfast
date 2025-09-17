@@ -140,7 +140,9 @@
       "Bash(diff:*)",
       "WebFetch(domain:app.planetscale.com)",
       "WebFetch(domain:platform.openai.com)",
-      "Bash(pnpm eval:tool-calls:*)"
+      "Bash(pnpm eval:tool-calls:*)",
+      "Bash(pnpm --filter @lightfast/chat lint)",
+      "Bash(pnpm --filter @api/chat build)"
     ],
     "deny": []
   },

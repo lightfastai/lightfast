@@ -13,10 +13,12 @@ import { eq, and, sql, lt } from "drizzle-orm";
 import { toZonedTime, format } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
 import { isWithinInterval } from "date-fns";
+import { clerkClient } from "@clerk/nextjs/server";
+import type { CommerceSubscription, CommerceSubscriptionItem } from "@clerk/backend";
 
 // Shared subscription data interface
 interface SubscriptionData {
-  subscription: any;
+  subscription: CommerceSubscription | null;
   planKey: 'free' | 'plus';
   hasActiveSubscription: boolean;
   billingInterval: 'month' | 'annual';
@@ -25,9 +27,7 @@ interface SubscriptionData {
 
 // Shared function to get user subscription data from Clerk
 async function getUserSubscriptionData(userId: string): Promise<SubscriptionData> {
-  const { clerkClient } = await import("@clerk/nextjs/server");
-  
-  let subscription: any = null;
+  let subscription: CommerceSubscription | null = null;
   let billingInterval: 'month' | 'annual' = 'month';
   let hasActiveSubscription = false;
   let planKey: 'free' | 'plus' = 'free';
@@ -41,12 +41,12 @@ async function getUserSubscriptionData(userId: string): Promise<SubscriptionData
       
       // Extract billing interval from subscription items with validation
       // Match exact logic from billing.ts router
-      let paidItems: any[] = [];
+      let paidItems: CommerceSubscriptionItem[] = [];
       try {
         const freeTierPlanIds = ["cplan_free", "free-tier"];
         const allSubscriptionItems = billingData.subscriptionItems ?? [];
         
-        paidItems = allSubscriptionItems.filter((item: any) => 
+        paidItems = allSubscriptionItems.filter((item: CommerceSubscriptionItem) => 
           !freeTierPlanIds.includes(item?.plan?.id ?? "") && 
           !freeTierPlanIds.includes(item?.plan?.name ?? "")
         );
@@ -354,11 +354,16 @@ export const usageRouter = {
           const now = toZonedTime(new Date(), input.timezone);
           return format(now, 'yyyy-MM');
         } else {
-          // Paid users: use subscription billing period
-          if (subscription.currentPeriodStart && subscription.currentPeriodEnd) {
+          // Paid users: use subscription billing period from subscription items
+          const activePaidItem = subscription.subscriptionItems?.find(item => 
+            !['cplan_free', 'free-tier'].includes(item?.plan?.id ?? "") &&
+            !['cplan_free', 'free-tier'].includes(item?.plan?.name ?? "")
+          );
+          
+          if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
             const now = toZonedTime(new Date(), input.timezone);
-            const periodStart = toZonedTime(new Date(subscription.currentPeriodStart), input.timezone);
-            const periodEnd = toZonedTime(new Date(subscription.currentPeriodEnd), input.timezone);
+            const periodStart = toZonedTime(new Date(activePaidItem.periodStart), input.timezone);
+            const periodEnd = toZonedTime(new Date(activePaidItem.periodEnd), input.timezone);
             
             // Check if we're within the current subscription period
             if (isWithinInterval(now, { start: periodStart, end: periodEnd })) {
@@ -388,9 +393,9 @@ export const usageRouter = {
       const inGracePeriod = subscription?.status === 'past_due';
       let graceDaysRemaining = 0;
       
-      if (inGracePeriod && subscription?.currentPeriodEnd) {
-        // Calculate days since payment failure (period end)
-        const failureDate = toZonedTime(new Date(subscription.currentPeriodEnd), input.timezone);
+      if (inGracePeriod && subscription?.pastDueAt) {
+        // Calculate days since payment failure using pastDueAt timestamp
+        const failureDate = toZonedTime(new Date(subscription.pastDueAt), input.timezone);
         const now = toZonedTime(new Date(), input.timezone);
         const daysSinceFailure = differenceInDays(now, failureDate);
         
