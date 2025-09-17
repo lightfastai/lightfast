@@ -14,6 +14,95 @@ import { toZonedTime, format } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
 import { isWithinInterval } from "date-fns";
 
+// Shared subscription data interface
+interface SubscriptionData {
+  subscription: any;
+  planKey: 'free' | 'plus';
+  hasActiveSubscription: boolean;
+  billingInterval: 'month' | 'annual';
+  error?: string; // Track if there was an error fetching subscription
+}
+
+// Shared function to get user subscription data from Clerk
+async function getUserSubscriptionData(userId: string): Promise<SubscriptionData> {
+  const { clerkClient } = await import("@clerk/nextjs/server");
+  
+  let subscription: any = null;
+  let billingInterval: 'month' | 'annual' = 'month';
+  let hasActiveSubscription = false;
+  let planKey: 'free' | 'plus' = 'free';
+  
+  try {
+    const client = await clerkClient();
+    const billingData = await client.billing.getUserBillingSubscription(userId);
+    
+    if (billingData) {
+      subscription = billingData;
+      
+      // Extract billing interval from subscription items with validation
+      // Match exact logic from billing.ts router
+      let paidItems: any[] = [];
+      try {
+        const freeTierPlanIds = ["cplan_free", "free-tier"];
+        const allSubscriptionItems = billingData.subscriptionItems ?? [];
+        
+        paidItems = allSubscriptionItems.filter((item: any) => 
+          !freeTierPlanIds.includes(item?.plan?.id ?? "") && 
+          !freeTierPlanIds.includes(item?.plan?.name ?? "")
+        );
+        
+        if (paidItems.length > 0) {
+          planKey = 'plus';
+          // Extract billing interval following billing.ts pattern
+          billingInterval = paidItems[0]?.planPeriod === "annual" ? "annual" : "month";
+          
+          console.log(`[Billing] User ${userId} has plus plan with ${paidItems.length} paid items`);
+        } else {
+          console.log(`[Billing] User ${userId} has free plan`);
+        }
+      } catch (itemError) {
+        console.error('Error parsing subscription items:', itemError, { userId });
+        // Default to free tier if subscription items can't be parsed
+        planKey = 'free';
+        paidItems = [];
+      }
+      
+      // Enhanced active subscription detection matching billing.ts exactly:
+      // status === "active" AND paidSubscriptionItems.length > 0
+      if (typeof billingData.status === 'string') {
+        hasActiveSubscription = billingData.status === 'active' && paidItems.length > 0;
+      } else {
+        console.warn(`Unexpected subscription status format: ${typeof billingData.status}`, { userId, status: billingData.status });
+        hasActiveSubscription = false;
+      }
+    } else {
+      console.log(`[Billing] No billing data found for user ${userId}, defaulting to free tier`);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Billing] Failed to fetch subscription for user ${userId}:`, errorMessage, error);
+    
+    // For production: might want to differentiate between network errors vs auth errors
+    // Network errors: retry or allow with free tier
+    // Auth errors: might need to block or alert
+    
+    return {
+      subscription: null,
+      planKey: 'free',
+      hasActiveSubscription: false,
+      billingInterval: 'month',
+      error: `Clerk API error: ${errorMessage}`,
+    };
+  }
+  
+  return {
+    subscription,
+    planKey,
+    hasActiveSubscription,
+    billingInterval,
+  };
+}
+
 // Helper function to get usage by period (shared logic)
 async function getUsageByPeriod(userId: string, period: string) {
   const usage = await db
@@ -255,40 +344,8 @@ export const usageRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      // Get subscription data directly from Clerk using existing billing router pattern
-      const { clerkClient } = await import("@clerk/nextjs/server");
-      
-      let subscription: any = null;
-      let billingInterval: 'month' | 'annual' = 'month';
-      let hasActiveSubscription = false;
-      let planKey = 'free';
-      
-      try {
-        const client = await clerkClient();
-        const billingData = await client.billing.getUserBillingSubscription(ctx.session.userId);
-        
-        if (billingData) {
-          subscription = billingData;
-          
-          // Enhanced active subscription detection
-          hasActiveSubscription = ['active', 'trialing'].includes(billingData.status);
-          
-          // Extract billing interval from subscription items
-          const paidItems = billingData.subscriptionItems?.filter((item: any) => 
-            item?.plan?.id && !['cplan_free', 'free-tier'].includes(item.plan.id)
-          ) || [];
-          
-          if (paidItems.length > 0) {
-            planKey = 'plus';
-            // Note: Clerk's plan structure doesn't directly expose interval
-            // Default to 'month' for now, can be enhanced based on plan name/metadata
-            billingInterval = 'month';
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch subscription:', error);
-        // Continue with free tier defaults
-      }
+      // Get subscription data using shared function
+      const { subscription, planKey, hasActiveSubscription, billingInterval } = await getUserSubscriptionData(ctx.session.userId);
       
       // Calculate billing period based on timezone and subscription
       const period = input.period || (() => {
@@ -453,12 +510,14 @@ export const usageRouter = {
             )
           );
 
-        // Define limits (should come from user subscription in future)
+        // Get real user subscription data for quota limits
+        const { planKey: userPlan } = await getUserSubscriptionData(input.userId);
+        
+        // Define limits based on actual subscription
         const limits = {
           free: { nonPremiumMessages: 1000, premiumMessages: 0 },
           plus: { nonPremiumMessages: 1000, premiumMessages: 100 },
         };
-        const userPlan = 'free'; // TODO: Get actual user plan
         const planLimits = limits[userPlan];
 
         // Calculate effective usage including active reservations
