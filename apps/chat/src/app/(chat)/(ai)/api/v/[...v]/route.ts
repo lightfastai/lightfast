@@ -7,7 +7,7 @@ import * as Sentry from "@sentry/nextjs";
 import {
 	getBraintrustConfig,
 	isOtelEnabled,
-} from "lightfast/v2/braintrust-env";
+} from "@repo/ai/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { auth } from "@clerk/nextjs/server";

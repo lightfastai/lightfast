@@ -18,7 +18,7 @@ import { z } from "zod";
 import { ACTIVE_MODELS } from "../ai/providers/models/active";
 import type { ModelId } from "../ai/providers";
 import { buildAuthenticatedSystemPrompt } from "../ai/prompts/builders/system-prompt-builder";
-import { getBraintrustConfig } from "lightfast/v2/braintrust-env";
+import { getBraintrustConfig } from "@repo/ai/braintrust-env";
 
 // Extract model IDs from the centralized model definitions (only active models)
 const ACTIVE_MODEL_IDS = Object.keys(ACTIVE_MODELS) as ModelId[];
