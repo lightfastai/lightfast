@@ -37,8 +37,8 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 ---
 
 ## Open Issues & Planned Work
-1. **Artifact/data stream cleanup**
-   - Reset `setDataStream([])` when a new POST starts and add a timeout fallback when no `data-finish` arrives.
+1. **Artifact/data stream cleanup** *(deferred)*
+   - Rejected for now; revisit if artifact streaming regressions resurface.
 2. **Quota reservation visibility**
    - Surface SSE warnings and add retries/reconciliation for `releaseQuotaReservation` failures.
 3. **Telemetry & monitoring**
