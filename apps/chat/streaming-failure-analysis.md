@@ -20,8 +20,8 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 - **Problem**: `memory.createStream` failures were silent; resume requests later returned 204 with no explanation.
 - **Fixes shipped**:
   - Runtime broadcasts an SSE `error` chunk with `phase: "resume"` metadata and clears the active stream.
-  - Chat interface shows an inline warning rather than throwing to the boundary.
-- **Pending**: reset client `hasActiveStream` flag (next task) and evaluate retry/backoff path.
+  - Chat interface shows an inline warning rather than throwing to the boundary and now clears local `hasActiveStream` state plus session cache on failure.
+- **Pending**: evaluate retry/backoff path and verify backend always wipes `activeStreamId` before new POST.
 
 ### M3. Structured sync errors
 - **Problem**: Synchronous route errors were emitted as raw strings, so the client misclassified them.
