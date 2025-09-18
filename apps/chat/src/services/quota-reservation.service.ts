@@ -40,6 +40,15 @@ export class QuotaReservationError extends Error {
 	}
 }
 
+export class QuotaReleaseError extends Error {
+	public readonly code = "QUOTA_RELEASE_ERROR";
+
+	constructor(message: string, public readonly reservationId: string, public readonly attempts: number, public readonly lastError?: unknown) {
+		super(message);
+		this.name = "QuotaReleaseError";
+	}
+}
+
 /**
  * Reserve quota atomically - prevents race conditions
  * Returns reservation ID that must be confirmed or released
@@ -132,19 +141,35 @@ export async function confirmQuotaUsage(reservationId: string): Promise<void> {
  * Call this when message processing fails
  */
 export async function releaseQuotaReservation(reservationId: string): Promise<void> {
-	try {
-		const caller = await createCaller();
-		await caller.usage.releaseReservation({
-			reservationId,
-		});
-		
-		console.log(`[QuotaReservation] Released reservation: ${reservationId}`);
-		
-	} catch (error) {
-		console.error(`[QuotaReservation] Failed to release reservation ${reservationId}:`, error);
-		// This leaves reserved quota stuck - need cleanup job
-		// TODO: Add to cleanup queue
+	const caller = await createCaller();
+	const maxAttempts = 3;
+	let attempt = 0;
+	let lastError: unknown;
+
+	while (attempt < maxAttempts) {
+		try {
+			await caller.usage.releaseReservation({ reservationId });
+			console.log(`[QuotaReservation] Released reservation: ${reservationId}`);
+			return;
+		} catch (error) {
+			attempt += 1;
+			lastError = error;
+			console.error(
+				`[QuotaReservation] Failed to release reservation ${reservationId} (attempt ${attempt}/${maxAttempts}):`,
+				error,
+			);
+			if (attempt < maxAttempts) {
+				await new Promise((resolve) => setTimeout(resolve, attempt * 200));
+			}
+		}
 	}
+
+	throw new QuotaReleaseError(
+		`Failed to release reservation after ${maxAttempts} attempts`,
+		reservationId,
+		maxAttempts,
+		lastError,
+	);
 }
 
 

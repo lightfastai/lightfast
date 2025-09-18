@@ -6,7 +6,6 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import {
 	AlertCircle,
 	ExternalLink,
@@ -15,8 +14,11 @@ import {
 	Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { WebSearchToolUIPart } from "~/ai/lightfast-app-chat-ui-messages";
+import { formatToolErrorPayload } from "./tool-error-utils";
+
+const DEFAULT_ERROR_MESSAGE = "We couldn't complete the web search. Please try again.";
 
 // Type definitions for web search results based on the tool's return structure
 interface WebSearchResult {
@@ -102,22 +104,43 @@ export const WebSearchTool = memo(function WebSearchTool({
 		);
 	}
 
+	const { formattedError, isStructured } = useMemo(
+		() => formatToolErrorPayload(toolPart.errorText, DEFAULT_ERROR_MESSAGE),
+		[toolPart.errorText],
+	);
+
 	// Handle output-error state
 	if (toolPart.state === "output-error") {
 		return (
-			<div className="my-2">
-				<Alert variant="destructive">
-					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>
-						<div className="font-medium">{metadata.displayName} failed</div>
-						{searchQuery && (
-							<p className="text-xs mt-1 opacity-80">Query: "{searchQuery}"</p>
-						)}
-						<p className="text-xs mt-2">
-							{toolPart.errorText || "An error occurred while searching"}
-						</p>
-					</AlertDescription>
-				</Alert>
+			<div className="my-6 border rounded-lg w-full">
+				<Accordion type="single" collapsible className="w-full">
+					<AccordionItem value={accordionValue}>
+						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
+							<div className="flex items-center gap-2 flex-1">
+								<AlertCircle className="h-4 w-4 text-destructive" />
+								<div className="text-left flex-1">
+									<div className="font-medium text-sm text-destructive">{metadata.displayName} failed</div>
+									{searchQuery && (
+										<div className="text-xs text-muted-foreground/70 mt-1">
+											Query: "{searchQuery}"
+										</div>
+									)}
+								</div>
+							</div>
+						</AccordionTrigger>
+						<AccordionContent className="px-4">
+							<div className="pt-3 pb-4">
+								{isStructured ? (
+									<pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground">
+										{formattedError}
+									</pre>
+								) : (
+									<p className="text-xs text-muted-foreground">{formattedError}</p>
+								)}
+							</div>
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
 			</div>
 		);
 	}
