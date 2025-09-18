@@ -896,7 +896,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 							<div className="chat-container relative px-1.5 md:px-3 lg:px-5 xl:px-8">
 								{/* Gradient overlay */}
 								{isAuthenticated && (
-									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
+									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none z-10">
 										<div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 									</div>
 								)}

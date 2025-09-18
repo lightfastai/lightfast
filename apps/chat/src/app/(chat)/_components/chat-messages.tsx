@@ -934,7 +934,7 @@ export function ChatMessages({
 					})}
 				</ConversationContent>
 				<ConversationScrollButton
-					className="absolute bottom-4 z-[1000] right-4 rounded-full shadow-lg transition-all duration-200"
+					className="absolute bottom-4 z-20 right-4 rounded-full shadow-lg transition-all duration-200"
 					variant="secondary"
 					size="icon"
 				/>
