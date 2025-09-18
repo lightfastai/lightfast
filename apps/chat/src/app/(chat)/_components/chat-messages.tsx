@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { Fragment, memo, useMemo } from "react";
+import { Fragment, memo, useMemo, useRef, useEffect } from "react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -43,11 +43,18 @@ import {
 	Message,
 	MessageContent,
 } from "@repo/ui/components/ai-elements/message";
-import { Markdown } from "@repo/ui/components/markdown";
+import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy, ThumbsUp, ThumbsDown, Check, AlertCircle, X } from "lucide-react";
+import {
+	Copy,
+	ThumbsUp,
+	ThumbsDown,
+	Check,
+	AlertCircle,
+	X,
+} from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
-import { useTypewriterStream } from "~/hooks/use-typewriter-stream";
+import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatInlineError } from "./chat-inline-error";
 import { ChatErrorType } from "~/lib/errors/types";
@@ -94,21 +101,33 @@ const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
 	});
 };
 
-const TYPEWRITER_SPEED_MS = 5;
-
-const StreamingMarkdown = memo(function StreamingMarkdown({
+const StreamingResponse = memo(function StreamingResponse({
 	text,
 	animate,
 	className,
-	speedMs = TYPEWRITER_SPEED_MS,
 }: {
 	text: string;
 	animate: boolean;
 	className?: string;
-	speedMs?: number;
 }) {
-	const displayText = useTypewriterStream(text, animate, { speedMs });
-	return <Markdown className={className}>{displayText}</Markdown>;
+	const contentRef = useRef("");
+	const { stream, addPart } = useStream();
+
+	useEffect(() => {
+		if (!text || !animate) return;
+
+		if (contentRef.current !== text) {
+			const delta = text.slice(contentRef.current.length);
+			if (delta) {
+				addPart(delta);
+			}
+			contentRef.current = text;
+		}
+	}, [text, animate, addPart]);
+
+	if (!animate) return <Response className={className}>{text}</Response>;
+
+	return <Response className={className}>{stream || text}</Response>;
 });
 
 const getRecordString = (record: unknown, key: string): string | undefined => {
@@ -120,20 +139,13 @@ const getRecordString = (record: unknown, key: string): string | undefined => {
 const AssistantTextPart = memo(function AssistantTextPart({
 	cleanedText,
 	shouldAnimate,
-	speedMs,
 }: {
 	cleanedText: string;
 	shouldAnimate: boolean;
-	speedMs: number;
 }) {
 	return (
-		<MessageContent variant="chat" className="w-full py-0 [&>*]:my-0">
-			<StreamingMarkdown
-				className="[&>*]:my-0"
-				text={cleanedText}
-				animate={shouldAnimate}
-				speedMs={speedMs}
-			/>
+		<MessageContent variant="chat" className="w-full py-0">
+			<StreamingResponse text={cleanedText} animate={shouldAnimate} />
 		</MessageContent>
 	);
 });
@@ -235,7 +247,9 @@ const InlineErrorCard = memo(function InlineErrorCard({
 			<AlertCircle className="mt-1 h-4 w-4 shrink-0" />
 			<div className="flex-1 space-y-2">
 				<p className="font-semibold leading-5">{title}</p>
-				<p className="leading-relaxed text-destructive-foreground/90">{message}</p>
+				<p className="leading-relaxed text-destructive-foreground/90">
+					{message}
+				</p>
 				{detail && (
 					<p className="text-xs text-destructive-foreground/80">{detail}</p>
 				)}
@@ -266,26 +280,26 @@ type AssistantTurn =
 			assistant: LightfastAppChatUIMessage;
 			isStreaming: boolean;
 			hasMeaningfulContent: boolean;
-		inlineError?: ChatInlineError;
+			inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "pending";
 			user: LightfastAppChatUIMessage;
-		inlineError?: ChatInlineError;
+			inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "ghost";
 			user: LightfastAppChatUIMessage;
 			assistant: LightfastAppChatUIMessage;
 			reason: "no-reply" | "empty-response";
-		inlineError?: ChatInlineError;
+			inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "system";
 			assistant: LightfastAppChatUIMessage;
 			isStreaming: boolean;
 			hasMeaningfulContent: boolean;
-		inlineError?: ChatInlineError;
+			inlineError?: ChatInlineError;
 	  };
 
 const createGhostAssistantMessage = (
@@ -604,7 +618,8 @@ const AssistantMessage = memo(function AssistantMessage({
 	const noMessageContent = message.parts.length === 0;
 	const shouldHideActions =
 		hideActions ||
-		(Boolean(inlineError) && (noMessageContent || inlineError?.severity === "fatal"));
+		(Boolean(inlineError) &&
+			(noMessageContent || inlineError?.severity === "fatal"));
 
 	return (
 		<div className="py-1">
@@ -632,32 +647,31 @@ const AssistantMessage = memo(function AssistantMessage({
 						>
 							{message.parts.map((part, index) => {
 								if (isTextPart(part)) {
-								const cleanedText = cleanTextFromMetadata(part.text);
-								const shouldAnimate = Boolean(
-									isCurrentlyStreaming && index === message.parts.length - 1,
-								);
-								return (
-									<AssistantTextPart
-										key={`${message.id}-text-${index}`}
-										cleanedText={cleanedText}
-										shouldAnimate={shouldAnimate}
-										speedMs={TYPEWRITER_SPEED_MS}
-									/>
-								);
-							}
+									const cleanedText = cleanTextFromMetadata(part.text);
+									const shouldAnimate = Boolean(
+										isCurrentlyStreaming && index === message.parts.length - 1,
+									);
+									return (
+										<AssistantTextPart
+											key={`${message.id}-text-${index}`}
+											cleanedText={cleanedText}
+											shouldAnimate={shouldAnimate}
+										/>
+									);
+								}
 
-							if (isReasoningPart(part) && part.text.length > 1) {
-								const isReasoningStreaming = Boolean(
-									isCurrentlyStreaming && index === message.parts.length - 1,
-								);
-								const trimmedText = part.text.replace(/^\n+/, "");
-								return (
-									<AssistantReasoningPart
-										key={`${message.id}-reasoning-${index}`}
-										reasoningText={trimmedText}
-										isStreaming={isReasoningStreaming}
-									/>
-								);
+								if (isReasoningPart(part) && part.text.length > 1) {
+									const isReasoningStreaming = Boolean(
+										isCurrentlyStreaming && index === message.parts.length - 1,
+									);
+									const trimmedText = part.text.replace(/^\n+/, "");
+									return (
+										<AssistantReasoningPart
+											key={`${message.id}-reasoning-${index}`}
+											reasoningText={trimmedText}
+											isStreaming={isReasoningStreaming}
+										/>
+									);
 								}
 
 								// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
@@ -725,7 +739,7 @@ const AssistantMessage = memo(function AssistantMessage({
 												</InlineCitationCarouselContent>
 											</InlineCitationCarousel>
 										</InlineCitationCardBody>
-								</InlineCitationCard>
+									</InlineCitationCard>
 								) : (
 									<div></div>
 								)}
