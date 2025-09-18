@@ -34,7 +34,7 @@ export function UnauthenticatedChat({ agentId }: UnauthenticatedChatProps) {
 				agentId={agentId} 
 				fallbackSessionId={sessionIdRef.current}
 				initialMessages={[]}
-				isNewSession={false} // Unauthenticated sessions are not persisted
+				isNewSession={true} // Treat anonymous chats as fresh sessions for empty-state UI
 				handleSessionCreation={handleSessionCreation}
 				user={null}
 			/>
