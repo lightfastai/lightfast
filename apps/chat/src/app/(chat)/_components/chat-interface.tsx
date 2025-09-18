@@ -16,9 +16,15 @@ import {
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
-import { AlertCircle, ArrowUp, Globe, X } from "lucide-react";
+import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, {
+	useState,
+	useMemo,
+	useEffect,
+	useRef,
+	useCallback,
+} from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -40,8 +46,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
-import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/ui/alert";
-import { Button } from "@repo/ui/components/ui/button";
+import type { ChatInlineError } from "./chat-inline-error";
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -72,7 +77,6 @@ const RateLimitDialog = dynamic(
 	{ ssr: false },
 );
 
-
 type UserInfo = ChatRouterOutputs["user"]["getUser"];
 type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 
@@ -87,7 +91,10 @@ interface ChatInterfaceProps {
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
-	onAssistantStreamError?: (info: { messageId?: string; phase?: string }) => void;
+	onAssistantStreamError?: (info: {
+		messageId?: string;
+		phase?: string;
+	}) => void;
 	onResumeStateChange?: (hasActiveStream: boolean) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
@@ -108,13 +115,13 @@ export function ChatInterface({
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
-const {
-	sessionId,
-	resume,
-	hasActiveStream,
-	setHasActiveStream,
-	disableResume,
-} = useSessionState(session, fallbackSessionId);
+	const {
+		sessionId,
+		resume,
+		hasActiveStream,
+		setHasActiveStream,
+		disableResume,
+	} = useSessionState(session, fallbackSessionId);
 	// Most errors escalate to the boundary; streaming/storage issues are handled inline
 
 	// Hook for handling ALL errors via error boundaries
@@ -123,14 +130,94 @@ const {
 	const isAuthenticated = user !== null;
 
 	// Get unified billing context
-	const billingContext = useBillingContext({ externalUsageData: externalUsageLimits });
-	
+	const billingContext = useBillingContext({
+		externalUsageData: externalUsageLimits,
+	});
+
+	// Streaming/storage errors surfaced inline in the conversation
+	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
+
+	const addInlineError = useCallback(
+		(error: ChatError) => {
+			const metadata: Record<string, unknown> = error.metadata ?? {};
+
+			const getStringMetadata = (key: string): string | undefined => {
+				const value = metadata[key];
+				return typeof value === "string" ? value : undefined;
+			};
+
+			const relatedAssistantMessageId = getStringMetadata("messageId");
+			const relatedUserMessageId = getStringMetadata("userMessageId");
+			const phase = getStringMetadata("phase");
+			const errorCode = getStringMetadata("errorCode");
+
+			setInlineErrors((current) => {
+				const entry: ChatInlineError = {
+					id: crypto.randomUUID(),
+					error,
+					relatedAssistantMessageId,
+					relatedUserMessageId,
+					phase,
+					errorCode,
+				};
+
+				const deduped = current.filter((existing) => {
+					if (
+						entry.relatedAssistantMessageId &&
+						existing.relatedAssistantMessageId ===
+							entry.relatedAssistantMessageId
+					) {
+						return false;
+					}
+					if (
+						entry.relatedUserMessageId &&
+						existing.relatedUserMessageId === entry.relatedUserMessageId &&
+						!entry.relatedAssistantMessageId &&
+						!existing.relatedAssistantMessageId
+					) {
+						return false;
+					}
+					if (
+						!entry.relatedAssistantMessageId &&
+						!entry.relatedUserMessageId &&
+						!existing.relatedAssistantMessageId &&
+						!existing.relatedUserMessageId &&
+						existing.error.type === entry.error.type
+					) {
+						return false;
+					}
+					return true;
+				});
+
+				return [...deduped, entry];
+			});
+		},
+		[setInlineErrors],
+	);
+
+	const dismissInlineError = useCallback(
+		(errorId: string) => {
+			setInlineErrors((current) =>
+				current.filter((entry) => entry.id !== errorId),
+			);
+		},
+		[setInlineErrors],
+	);
+
 	// Process models with accessibility information for the model selector
 	const processedModels = useMemo((): ProcessedModel[] => {
 		return getVisibleModels().map((model) => {
-			const isAccessible = billingContext.models.isAccessible(model.id, model.accessLevel, model.billingTier);
-			const restrictionReason = billingContext.models.getRestrictionReason(model.id, model.accessLevel, model.billingTier);
-			
+			const isAccessible = billingContext.models.isAccessible(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+			const restrictionReason = billingContext.models.getRestrictionReason(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+
 			return {
 				...model,
 				id: model.id as ModelId,
@@ -197,10 +284,6 @@ const {
 // Web search toggle state
 const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
-// Streaming/storage error surfaced from backend without hard-crashing the UI
-const [streamingError, setStreamingError] = useState<ChatError | null>(null);
-
-
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
 		messageCount,
@@ -224,7 +307,9 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 		useModelSelection(isAuthenticated);
 
 	// Check if current model can be used (for UI state)
-	const canUseCurrentModel = billingContext.isLoaded ? billingContext.usage.canUseModel(selectedModelId) : { allowed: true };
+	const canUseCurrentModel = billingContext.isLoaded
+		? billingContext.usage.canUseModel(selectedModelId)
+		: { allowed: true };
 
 	// Create transport for AI SDK v5
 	// Uses session ID directly as the primary key
@@ -271,13 +356,13 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					messageId: failedMessageId,
 					phase,
 				});
-				setStreamingError(chatError);
+				addInlineError(chatError);
 				return;
 			}
 
 			// Handle quota errors with optimistic update rollback
 			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
-				console.warn('[ChatInterface] Quota exceeded, triggering rollback');
+				console.warn("[ChatInterface] Quota exceeded, triggering rollback");
 				onQuotaError?.(selectedModelId);
 				// Don't throw to error boundary for quota errors - user can try different model
 				return;
@@ -328,6 +413,7 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					details: chatError.details,
 				});
 
+				addInlineError(chatError);
 			}
 		},
 		onFinish: (event) => {
@@ -363,68 +449,6 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 		enabled: isAuthenticated && !isNewSession && status === "ready", // Only fetch feedback when streaming is complete
 	});
 
-	const streamingErrorBanner = streamingError
-		? (() => {
-			const phase =
-				typeof streamingError.metadata?.phase === "string"
-					? streamingError.metadata.phase
-					: undefined;
-			const errorCode =
-				typeof streamingError.metadata?.errorCode === "string"
-					? streamingError.metadata.errorCode
-					: undefined;
-
-			let title = "We couldn't finish that response";
-				let message = streamingError.message;
-			if (phase === "persistence") {
-				title = "Response not saved";
-				message =
-					"We streamed a reply but failed to store it. Copy anything important before refreshing.";
-			} else if (phase === "resume") {
-				title = "Resume temporarily unavailable";
-				message =
-					"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
-			}
-
-			const detail = streamingError.details;
-
-			return (
-				<div className="mb-4">
-					<Alert variant="destructive" className="flex items-start gap-3">
-						<AlertCircle className="h-4 w-4 mt-1 text-destructive-foreground" />
-						<div className="flex-1 space-y-2">
-							<AlertTitle className="text-sm font-semibold">
-								{title}
-							</AlertTitle>
-							<AlertDescription className="text-sm leading-relaxed">
-								{message}
-							</AlertDescription>
-							{detail && (
-								<p className="text-xs text-destructive-foreground/80">
-									{detail}
-								</p>
-							)}
-							{errorCode && (
-								<p className="text-[11px] uppercase tracking-wide text-destructive-foreground/60">
-									Error code: {errorCode}
-								</p>
-							)}
-						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-6 w-6 mt-1 text-destructive-foreground"
-							onClick={() => setStreamingError(null)}
-							aria-label="Dismiss chat error"
-						>
-							<X className="h-4 w-4" />
-						</Button>
-					</Alert>
-				</div>
-			);
-		})()
-		: null;
-
 	// Feedback mutation hooks with authentication-aware handlers
 	const feedbackMutation = useFeedbackMutation({
 		sessionId,
@@ -438,11 +462,16 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 			return;
 		}
 
-		setStreamingError(null);
-
 		// For unauthenticated users, check anonymous message limit
 		if (!isAuthenticated && hasReachedLimit) {
-			// Show the sign-in dialog instead of throwing error
+			addInlineError({
+				type: ChatErrorType.RATE_LIMIT,
+				message:
+					"You've hit the anonymous message limit. Sign in to keep chatting.",
+				retryable: false,
+				details: undefined,
+				metadata: { isAnonymous: true },
+			});
 			setShowRateLimitDialog(true);
 			return;
 		}
@@ -451,9 +480,15 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 		if (isAuthenticated && billingContext.isLoaded) {
 			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
 			if (!usageCheck.allowed) {
-				// TODO: Show usage limit exceeded dialog/toast
-				console.error("Usage limit exceeded:", usageCheck.reason);
-				// For now, just return - we could show a toast or modal here
+				addInlineError({
+					type: ChatErrorType.USAGE_LIMIT_EXCEEDED,
+					message:
+						usageCheck.reason ??
+						"You've reached your current usage limit for this model.",
+					retryable: false,
+					details: undefined,
+					metadata: { modelId: selectedModelId },
+				});
 				return;
 			}
 		}
@@ -557,7 +592,6 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 			// For truly new chats (no messages yet), show centered layout
 			<div className="h-full flex flex-col items-center justify-center bg-background">
 				<div className="w-full max-w-3xl px-7">
-					{streamingErrorBanner}
 					<div className="mb-8">
 						<ChatEmptyState
 							prompt={
@@ -599,7 +633,10 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 											}
 										}}
 										disabled={!billingContext.features.webSearch.enabled}
-										title={billingContext.features.webSearch.disabledReason ?? undefined}
+										title={
+											billingContext.features.webSearch.disabledReason ??
+											undefined
+										}
 										className={cn(
 											webSearchEnabled &&
 												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -609,15 +646,16 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 									>
 										<Globe className="w-4 h-4" />
 										Search
-										{webSearchEnabled && billingContext.features.webSearch.enabled && (
-											<X
-												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-												onClick={(e) => {
-													e.stopPropagation();
-													setWebSearchEnabled(false);
-												}}
-											/>
-										)}
+										{webSearchEnabled &&
+											billingContext.features.webSearch.enabled && (
+												<X
+													className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
+													onClick={(e) => {
+														e.stopPropagation();
+														setWebSearchEnabled(false);
+													}}
+												/>
+											)}
 									</PromptInputButton>
 								</div>
 
@@ -627,14 +665,16 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 									<PromptInputSubmit
 										status={status}
 										disabled={
-											status === "streaming" || 
-											status === "submitted" || 
+											status === "streaming" ||
+											status === "submitted" ||
 											(!isAuthenticated && hasReachedLimit) ||
 											(isAuthenticated && !canUseCurrentModel.allowed)
 										}
 										title={
-											!canUseCurrentModel.allowed && isAuthenticated 
-												? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+											!canUseCurrentModel.allowed && isAuthenticated
+												? "reason" in canUseCurrentModel
+													? (canUseCurrentModel.reason ?? undefined)
+													: undefined
 												: undefined
 										}
 										size="icon"
@@ -658,7 +698,6 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 		) : (
 			// Thread view or chat with existing messages, OR existing session with no messages
 			<div className="flex flex-col h-full bg-background">
-				{streamingErrorBanner}
 				<ChatMessages
 					messages={messages}
 					status={status}
@@ -666,7 +705,9 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					onFeedbackSubmit={feedbackMutation.handleSubmit}
 					onFeedbackRemove={feedbackMutation.handleRemove}
 					_isAuthenticated={isAuthenticated}
-					isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
+					isExistingSessionWithNoMessages={
+						messages.length === 0 && !isNewSession
+					}
 					hasActiveStream={hasActiveStream}
 					onArtifactClick={
 						isAuthenticated
@@ -703,6 +744,8 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 								}
 							: undefined // Disable artifact clicking for unauthenticated users
 					}
+					inlineErrors={inlineErrors}
+					onInlineErrorDismiss={dismissInlineError}
 				/>
 				<div className="relative">
 					<div className="max-w-3xl mx-auto px-7">
@@ -734,8 +777,8 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 											<PromptInputTextarea
 												placeholder={
-													messages.length === 0 
-														? "Ask anything..." 
+													messages.length === 0
+														? "Ask anything..."
 														: "Continue the conversation..."
 												}
 												className={cn(
@@ -758,7 +801,10 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 														}
 													}}
 													disabled={!billingContext.features.webSearch.enabled}
-													title={billingContext.features.webSearch.disabledReason ?? undefined}
+													title={
+														billingContext.features.webSearch.disabledReason ??
+														undefined
+													}
 													className={cn(
 														webSearchEnabled &&
 															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -768,15 +814,16 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 												>
 													<Globe className="w-4 h-4" />
 													Search
-													{webSearchEnabled && billingContext.features.webSearch.enabled && (
-														<X
-															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-															onClick={(e) => {
-																e.stopPropagation();
-																setWebSearchEnabled(false);
-															}}
-														/>
-													)}
+													{webSearchEnabled &&
+														billingContext.features.webSearch.enabled && (
+															<X
+																className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	setWebSearchEnabled(false);
+																}}
+															/>
+														)}
 												</PromptInputButton>
 											</div>
 
@@ -786,14 +833,16 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 												<PromptInputSubmit
 													status={status}
 													disabled={
-														status === "streaming" || 
-														status === "submitted" || 
+														status === "streaming" ||
+														status === "submitted" ||
 														(!isAuthenticated && hasReachedLimit) ||
 														(isAuthenticated && !canUseCurrentModel.allowed)
 													}
 													title={
-														!canUseCurrentModel.allowed && isAuthenticated 
-															? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+														!canUseCurrentModel.allowed && isAuthenticated
+															? "reason" in canUseCurrentModel
+																? (canUseCurrentModel.reason ?? undefined)
+																: undefined
 															: undefined
 													}
 													size="icon"

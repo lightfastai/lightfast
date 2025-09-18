@@ -45,10 +45,12 @@ import {
 } from "@repo/ui/components/ai-elements/message";
 import { Markdown } from "@repo/ui/components/markdown";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { Copy, ThumbsUp, ThumbsDown, Check, AlertCircle, X } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useTypewriterStream } from "~/hooks/use-typewriter-stream";
 import { cn } from "@repo/ui/lib/utils";
+import type { ChatInlineError } from "./chat-inline-error";
+import { ChatErrorType } from "~/lib/errors/types";
 
 // Stable sine wave component that persists during streaming
 const StreamingSineWave = memo(function StreamingSineWave({
@@ -78,6 +80,8 @@ interface ChatMessagesProps {
 	_isAuthenticated: boolean;
 	isExistingSessionWithNoMessages?: boolean;
 	hasActiveStream?: boolean;
+	inlineErrors?: ChatInlineError[];
+	onInlineErrorDismiss?: (errorId: string) => void;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -145,6 +149,103 @@ const AssistantReasoningPart = memo(function AssistantReasoningPart({
 	);
 });
 
+const getInlineErrorCopy = (
+	inlineError: ChatInlineError,
+): { title: string; message: string } => {
+	const { error, phase } = inlineError;
+	const defaultMessage = error.message;
+	let title = "Something went wrong";
+	let message = defaultMessage;
+
+	if (error.type === ChatErrorType.SERVER_ERROR) {
+		title = "We couldn't finish that response";
+		if (phase === "persistence") {
+			title = "Response not saved";
+			message =
+				"We streamed a reply but failed to store it. Copy anything important before refreshing.";
+		} else if (phase === "resume") {
+			title = "Resume temporarily unavailable";
+			message =
+				"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
+		}
+		return { title, message };
+	}
+
+	switch (error.type) {
+		case ChatErrorType.RATE_LIMIT:
+			title = "We're a bit busy";
+			break;
+		case ChatErrorType.USAGE_LIMIT_EXCEEDED:
+			title = "Usage limit reached";
+			break;
+		case ChatErrorType.AUTHENTICATION:
+			title = "Sign in to continue";
+			break;
+		case ChatErrorType.MODEL_ACCESS_DENIED:
+			title = "Model not available";
+			break;
+		case ChatErrorType.MODEL_UNAVAILABLE:
+			title = "Model unavailable";
+			break;
+		case ChatErrorType.SERVICE_UNAVAILABLE:
+			title = "Service unavailable";
+			break;
+		case ChatErrorType.SECURITY_BLOCKED:
+		case ChatErrorType.BOT_DETECTION:
+			title = "Request blocked";
+			break;
+		case ChatErrorType.NETWORK:
+		case ChatErrorType.TIMEOUT:
+			title = "Connection issue";
+			break;
+		case ChatErrorType.INVALID_REQUEST:
+			title = "Invalid request";
+			break;
+	}
+
+	return { title, message };
+};
+
+const InlineErrorCard = memo(function InlineErrorCard({
+	inlineError,
+	onDismiss,
+}: {
+	inlineError: ChatInlineError;
+	onDismiss?: (errorId: string) => void;
+}) {
+	const { errorCode } = inlineError;
+	const detail = inlineError.error.details;
+	const { title, message } = getInlineErrorCopy(inlineError);
+
+	return (
+		<div className="relative flex w-full items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
+			<AlertCircle className="mt-1 h-4 w-4 shrink-0" />
+			<div className="flex-1 space-y-2">
+				<p className="font-semibold leading-5">{title}</p>
+				<p className="leading-relaxed text-destructive-foreground/90">{message}</p>
+				{detail && (
+					<p className="text-xs text-destructive-foreground/80">{detail}</p>
+				)}
+				{errorCode && (
+					<p className="text-[11px] uppercase tracking-wide text-destructive-foreground/60">
+						Error code: {errorCode}
+					</p>
+				)}
+			</div>
+			{onDismiss && (
+				<button
+					type="button"
+					className="absolute top-3 right-3 rounded-full p-1 text-destructive-foreground transition hover:bg-destructive/20"
+					onClick={() => onDismiss(inlineError.id)}
+					aria-label="Dismiss chat error"
+				>
+					<X className="h-4 w-4" />
+				</button>
+			)}
+		</div>
+	);
+});
+
 type AssistantTurn =
 	| {
 			kind: "answer";
@@ -152,22 +253,26 @@ type AssistantTurn =
 			assistant: LightfastAppChatUIMessage;
 			isStreaming: boolean;
 			hasMeaningfulContent: boolean;
+		inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "pending";
 			user: LightfastAppChatUIMessage;
+		inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "ghost";
 			user: LightfastAppChatUIMessage;
 			assistant: LightfastAppChatUIMessage;
 			reason: "no-reply" | "empty-response";
+		inlineError?: ChatInlineError;
 	  }
 	| {
 			kind: "system";
 			assistant: LightfastAppChatUIMessage;
 			isStreaming: boolean;
 			hasMeaningfulContent: boolean;
+		inlineError?: ChatInlineError;
 	  };
 
 const createGhostAssistantMessage = (
@@ -196,8 +301,9 @@ const buildAssistantTurns = (
 	messages: LightfastAppChatUIMessage[],
 	status: ChatStatus,
 	hasActiveStream: boolean,
+	inlineErrors: ChatInlineError[] = [],
 ): AssistantTurn[] => {
-	const turns: AssistantTurn[] = [];
+	const baseTurns: AssistantTurn[] = [];
 	let pendingUser: LightfastAppChatUIMessage | null = null;
 	const hasStreamingStatus = status === "submitted" || status === "streaming";
 
@@ -219,7 +325,7 @@ const buildAssistantTurns = (
 	for (const message of messages) {
 		if (message.role === "user") {
 			if (pendingUser) {
-				turns.push({
+				baseTurns.push({
 					kind: "ghost",
 					user: pendingUser,
 					assistant: createGhostAssistantMessage(pendingUser, "no-reply"),
@@ -238,7 +344,7 @@ const buildAssistantTurns = (
 
 			if (pendingUser) {
 				if (!meaningfulContent && !isStreaming) {
-					turns.push({
+					baseTurns.push({
 						kind: "ghost",
 						user: pendingUser,
 						assistant: createGhostAssistantMessage(
@@ -251,7 +357,7 @@ const buildAssistantTurns = (
 					continue;
 				}
 
-				turns.push({
+				baseTurns.push({
 					kind: "answer",
 					user: pendingUser,
 					assistant: message,
@@ -262,7 +368,7 @@ const buildAssistantTurns = (
 				continue;
 			}
 
-			turns.push({
+			baseTurns.push({
 				kind: "system",
 				assistant: message,
 				isStreaming,
@@ -271,8 +377,7 @@ const buildAssistantTurns = (
 			continue;
 		}
 
-		// Preserve any non-user/assistant messages as system entries.
-		turns.push({
+		baseTurns.push({
 			kind: "system",
 			assistant: message,
 			isStreaming: false,
@@ -282,12 +387,12 @@ const buildAssistantTurns = (
 
 	if (pendingUser) {
 		if (hasStreamingStatus || hasActiveStream) {
-			turns.push({
+			baseTurns.push({
 				kind: "pending",
 				user: pendingUser,
 			});
 		} else {
-			turns.push({
+			baseTurns.push({
 				kind: "ghost",
 				user: pendingUser,
 				assistant: createGhostAssistantMessage(pendingUser, "no-reply"),
@@ -296,7 +401,92 @@ const buildAssistantTurns = (
 		}
 	}
 
-	return turns;
+	if (inlineErrors.length === 0) {
+		return baseTurns;
+	}
+
+	const assistantErrorMap = new Map<string, ChatInlineError>();
+	const userErrorMap = new Map<string, ChatInlineError>();
+	const unattachedErrors: ChatInlineError[] = [];
+
+	for (const inlineError of inlineErrors) {
+		if (inlineError.relatedAssistantMessageId) {
+			assistantErrorMap.set(inlineError.relatedAssistantMessageId, inlineError);
+			continue;
+		}
+		if (inlineError.relatedUserMessageId) {
+			userErrorMap.set(inlineError.relatedUserMessageId, inlineError);
+			continue;
+		}
+		unattachedErrors.push(inlineError);
+	}
+
+	const pickAssistantError = (messageId?: string) => {
+		if (!messageId) return undefined;
+		const error = assistantErrorMap.get(messageId);
+		if (error) {
+			assistantErrorMap.delete(messageId);
+		}
+		return error;
+	};
+
+	const pickUserError = (messageId?: string) => {
+		if (!messageId) return undefined;
+		const error = userErrorMap.get(messageId);
+		if (error) {
+			userErrorMap.delete(messageId);
+		}
+		return error;
+	};
+
+	const enrichedTurns: AssistantTurn[] = baseTurns.map((turn) => {
+		switch (turn.kind) {
+			case "answer": {
+				const inlineError =
+					pickAssistantError(turn.assistant.id) ?? pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "ghost": {
+				const inlineError =
+					pickAssistantError(turn.assistant.id) ?? pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "pending": {
+				const inlineError = pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "system": {
+				const inlineError = pickAssistantError(turn.assistant.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			default:
+				return turn;
+		}
+	});
+
+	const remainingErrors = [
+		...assistantErrorMap.values(),
+		...userErrorMap.values(),
+		...unattachedErrors,
+	];
+
+	if (remainingErrors.length === 0) {
+		return enrichedTurns;
+	}
+
+	const looseTurns: AssistantTurn[] = remainingErrors.map((error) => ({
+		kind: "system",
+		assistant: {
+			id: `inline-error-${error.id}`,
+			role: "assistant",
+			parts: [],
+		},
+		isStreaming: false,
+		hasMeaningfulContent: false,
+		inlineError: error,
+	}));
+
+	return [...enrichedTurns, ...looseTurns];
 };
 
 // User messages - simple text display only
@@ -335,6 +525,8 @@ const AssistantMessage = memo(function AssistantMessage({
 	_isAuthenticated,
 	hideActions = false,
 	meaningfulContentOverride,
+	inlineError,
+	onInlineErrorDismiss,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -349,6 +541,8 @@ const AssistantMessage = memo(function AssistantMessage({
 	_isAuthenticated: boolean;
 	hideActions?: boolean;
 	meaningfulContentOverride?: boolean;
+	inlineError?: ChatInlineError;
+	onInlineErrorDismiss?: (errorId: string) => void;
 }) {
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
@@ -392,7 +586,10 @@ const AssistantMessage = memo(function AssistantMessage({
 	const currentFeedback = feedback?.[message.id];
 	const meaningfulContent =
 		meaningfulContentOverride ?? hasMeaningfulContent(message);
-	const showStreamingWave = Boolean(isCurrentlyStreaming && !meaningfulContent);
+	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
+	const showStreamingWave = Boolean(isCurrentlyStreaming && !hasDisplayContent);
+	const noMessageContent = message.parts.length === 0;
+	const shouldHideActions = hideActions || (inlineError && noMessageContent);
 
 	return (
 		<div className="py-1">
@@ -420,9 +617,10 @@ const AssistantMessage = memo(function AssistantMessage({
 						>
 							{message.parts.map((part, index) => {
 								if (isTextPart(part)) {
-									const cleanedText = cleanTextFromMetadata(part.text);
-									const shouldAnimate =
-										isCurrentlyStreaming && index === message.parts.length - 1;
+								const cleanedText = cleanTextFromMetadata(part.text);
+								const shouldAnimate = Boolean(
+									isCurrentlyStreaming && index === message.parts.length - 1,
+								);
 								return (
 									<AssistantTextPart
 										key={`${message.id}-text-${index}`}
@@ -434,8 +632,9 @@ const AssistantMessage = memo(function AssistantMessage({
 							}
 
 							if (isReasoningPart(part) && part.text.length > 1) {
-								const isReasoningStreaming =
-									isCurrentlyStreaming && index === message.parts.length - 1;
+								const isReasoningStreaming = Boolean(
+									isCurrentlyStreaming && index === message.parts.length - 1,
+								);
 								const trimmedText = part.text.replace(/^\n+/, "");
 								return (
 									<AssistantReasoningPart
@@ -464,15 +663,24 @@ const AssistantMessage = memo(function AssistantMessage({
 								// Unknown part type
 								return null;
 							})}
+
+							{inlineError && (
+								<div className="mt-3">
+									<InlineErrorCard
+										inlineError={inlineError}
+										onDismiss={onInlineErrorDismiss}
+									/>
+								</div>
+							)}
 						</div>
 					</div>
 
 					{/* Actions and Citations - hidden when streaming without content */}
-					{!hideActions && (
+					{!shouldHideActions && (
 						<div
 							className={cn(
 								"w-full mt-2",
-								!meaningfulContent
+								!hasDisplayContent
 									? "opacity-0 pointer-events-none"
 									: "opacity-100",
 							)}
@@ -502,7 +710,7 @@ const AssistantMessage = memo(function AssistantMessage({
 												</InlineCitationCarouselContent>
 											</InlineCitationCarousel>
 										</InlineCitationCardBody>
-									</InlineCitationCard>
+								</InlineCitationCard>
 								) : (
 									<div></div>
 								)}
@@ -575,10 +783,12 @@ export function ChatMessages({
 	_isAuthenticated,
 	isExistingSessionWithNoMessages = false,
 	hasActiveStream = false,
+	inlineErrors = [],
+	onInlineErrorDismiss,
 }: ChatMessagesProps) {
 	const turns = useMemo(
-		() => buildAssistantTurns(messages, status, hasActiveStream),
-		[messages, hasActiveStream, status],
+		() => buildAssistantTurns(messages, status, hasActiveStream, inlineErrors),
+		[messages, hasActiveStream, status, inlineErrors],
 	);
 
 	const streamingStatus = status === "submitted" || status === "streaming";
@@ -620,6 +830,8 @@ export function ChatMessages({
 											onFeedbackRemove={onFeedbackRemove}
 											_isAuthenticated={_isAuthenticated}
 											meaningfulContentOverride={turn.hasMeaningfulContent}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
 										/>
 									</Fragment>
 								);
@@ -640,7 +852,10 @@ export function ChatMessages({
 											onFeedbackSubmit={onFeedbackSubmit}
 											onFeedbackRemove={onFeedbackRemove}
 											_isAuthenticated={_isAuthenticated}
+											hideActions
 											meaningfulContentOverride={false}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
 										/>
 									</Fragment>
 								);
@@ -660,6 +875,8 @@ export function ChatMessages({
 											_isAuthenticated={_isAuthenticated}
 											hideActions
 											meaningfulContentOverride={false}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
 										/>
 									</Fragment>
 								);
@@ -677,6 +894,8 @@ export function ChatMessages({
 										onFeedbackRemove={onFeedbackRemove}
 										_isAuthenticated={_isAuthenticated}
 										meaningfulContentOverride={turn.hasMeaningfulContent}
+										inlineError={turn.inlineError}
+										onInlineErrorDismiss={onInlineErrorDismiss}
 									/>
 								);
 							}
