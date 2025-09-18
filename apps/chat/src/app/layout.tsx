@@ -152,10 +152,6 @@ export default function RootLayout({
 		>
 			<html lang="en" suppressHydrationWarning>
 				<head>
-					<script
-						crossOrigin="anonymous"
-						src="//unpkg.com/react-scan/dist/auto.global.js"
-					/>
 					<StructuredData type="Organization" />
 					<StructuredData type="WebApplication" />
 				</head>
