@@ -146,6 +146,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 												) : (
 													<Link
 														href="/billing/upgrade"
+														prefetch={true}
 														className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
 													>
 														Upgrade to unlock
@@ -165,7 +166,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 
 					<DropdownMenuSeparator />
 					<DropdownMenuItem asChild>
-						<Link href="/billing" className="cursor-pointer">
+						<Link href="/billing" prefetch={true} className="cursor-pointer">
 							<CreditCard className="mr-2 h-3 w-3" />
 							{capabilities.isPlusUser ? "Manage Plan" : "Upgrade Plan"}
 						</Link>
