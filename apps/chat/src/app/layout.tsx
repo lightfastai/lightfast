@@ -17,13 +17,14 @@ export const metadata: Metadata = {
 		template: `%s | Lightfast Chat - Open-Source AI Chat`,
 	},
 	metadataBase: new URL("https://chat.lightfast.ai"),
-	description: "Open-source, model agnostic AI chat interface. Connect to any AI model (GPT, Claude, Gemini, Llama) through one unified interface. Free and self-hostable.",
+	description:
+		"Open-source, model agnostic AI chat interface. Connect to any AI model (GPT, Claude, Gemini, Llama) through one unified interface. Free and self-hostable.",
 	keywords: [
 		"open source AI chat",
 		"model agnostic AI",
 		"multi-model AI interface",
 		"AI chat interface",
-		"GPT chat interface", 
+		"GPT chat interface",
 		"Claude chat interface",
 		"Gemini chat interface",
 		"Llama chat interface",
@@ -62,7 +63,8 @@ export const metadata: Metadata = {
 		locale: "en_US",
 		url: "https://chat.lightfast.ai",
 		title: "Lightfast Chat - Open-Source Model Agnostic AI Chat Interface",
-		description: "Open-source AI chat interface that works with any model. Connect to GPT, Claude, Gemini, Llama and more through one unified interface.",
+		description:
+			"Open-source AI chat interface that works with any model. Connect to GPT, Claude, Gemini, Llama and more through one unified interface.",
 		siteName: "Lightfast Chat",
 		images: [
 			{
@@ -79,7 +81,8 @@ export const metadata: Metadata = {
 		site: "@lightfastai",
 		creator: "@lightfastai",
 		title: "Lightfast Chat - Open-Source Model Agnostic AI Chat Interface",
-		description: "Open-source AI chat interface that works with any model. Connect to GPT, Claude, Gemini, Llama and more.",
+		description:
+			"Open-source AI chat interface that works with any model. Connect to GPT, Claude, Gemini, Llama and more.",
 		images: [siteConfig.ogImage],
 	},
 	icons: {
@@ -149,6 +152,10 @@ export default function RootLayout({
 		>
 			<html lang="en" suppressHydrationWarning>
 				<head>
+					<script
+						crossOrigin="anonymous"
+						src="//unpkg.com/react-scan/dist/auto.global.js"
+					/>
 					<StructuredData type="Organization" />
 					<StructuredData type="WebApplication" />
 				</head>
