@@ -13,13 +13,13 @@ import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
 import type { RequestContext, SystemContext, RuntimeContext } from "./adapters/types";
 import {
+	ApiError,
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
 	toAgentApiError,
 	toMemoryApiError,
 } from "./errors";
-import type { ApiError } from "./errors";
 import {
 	LightfastErrorCategory,
 	LightfastErrorSeverity,
@@ -301,6 +301,7 @@ const serializeErrorForClient = (
 
 	let persistenceErrorPayload: string | null = null;
 	let resumeErrorPayload: string | null = null;
+	let resumeSetupPromise: Promise<void> | null = null;
 
 	const uiStream = result.toUIMessageStream({
 		generateMessageId: generateId,
@@ -479,13 +480,13 @@ const serializeErrorForClient = (
 
 		if (resumeOptions?.failOnStreamError) {
 			console.error(`[Fail Fast] Stream creation failed for session ${sessionId}:`, error);
-			throw error;
+			throw apiError;
 		}
 
 		if (resumeOptions?.silentStreamFailure) {
-			console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, error);
+			console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, apiError.toJSON());
 		} else {
-			console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, error);
+			console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, apiError.toJSON());
 			onError?.({
 				systemContext,
 				requestContext: requestContext as RequestContext | undefined,
@@ -512,8 +513,26 @@ const serializeErrorForClient = (
 			"Connection": "keep-alive",
 			"Content-Encoding": "none",
 		},
-		...(shouldEnableResume && { consumeSseStream: consumeResumableStream }),
+		...(shouldEnableResume && {
+			consumeSseStream: ({ stream }) => {
+				const promise = consumeResumableStream({ stream });
+				resumeSetupPromise = promise;
+				return promise;
+			},
+		}),
 	});
+
+	if (shouldEnableResume && resumeOptions?.failOnStreamError) {
+		if (resumeSetupPromise) {
+			try {
+				await resumeSetupPromise;
+			} catch (error) {
+				const normalizedError =
+					error instanceof ApiError ? error : toMemoryApiError(error, "createStream");
+				return Err(normalizedError);
+			}
+		}
+	}
 
 	return Ok(response);
 }

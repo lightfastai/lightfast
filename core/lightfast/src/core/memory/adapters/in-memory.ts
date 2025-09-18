@@ -71,7 +71,14 @@ export class InMemoryMemory<
 	}
 
 	getSessionStreams(sessionId: string): Promise<string[]> {
-		// Legacy method - prefer getActiveStream() for new code
+		// Legacy method - prefer getActiveStream() for new code.
+		// Keep returning the cached stream list for backward compatibility.
+		const legacyStreams = this.streams.get(sessionId);
+		if (legacyStreams && legacyStreams.length > 0) {
+			return Promise.resolve([...legacyStreams]);
+		}
+
+		// Fallback for adapters that only track the active stream.
 		const activeStreamId = this.activeStreams.get(sessionId);
 		return Promise.resolve(activeStreamId ? [activeStreamId] : []);
 	}

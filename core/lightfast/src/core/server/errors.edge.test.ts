@@ -512,10 +512,13 @@ describe("Error Handling - Critical Edge Cases", () => {
 				expect(result.statusCode).toBeLessThan(600);
 				expect(result.errorCode).toBeDefined();
 				expect(typeof result.errorCode).toBe("string");
-				expect(result.toJSON()).toEqual({
+				expect(result.toJSON()).toMatchObject({
 					error: result.message,
 					code: result.errorCode,
 					statusCode: result.statusCode,
+					source: expect.any(String),
+					category: expect.any(String),
+					severity: expect.any(String),
 				});
 			});
 		});

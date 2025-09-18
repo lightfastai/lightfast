@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UIMessage } from "ai";
-import { streamText } from "ai";
+import { streamText, createUIMessageStreamResponse } from "ai";
 import { createUserMessage, createAssistantMessage } from "../test-utils/message-helpers";
 import {
 	NoUserMessageError,
@@ -19,8 +19,37 @@ import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
 import type { Memory } from "../memory";
 
-// Mock the AI SDK
-vi.mock("ai");
+// Mock the pieces of the AI SDK we interact with
+vi.mock("ai", async () => {
+	const actual = await vi.importActual<typeof import("ai")>("ai");
+	return {
+		...actual,
+		streamText: vi.fn(),
+		createUIMessageStreamResponse: vi.fn(actual.createUIMessageStreamResponse),
+	};
+});
+
+const mockCreateNewResumableStream = vi.fn(async (_streamId: string, getStream: () => ReadableStream<string>) => {
+	const stream = getStream();
+	if (stream && typeof (stream as any).getReader === "function") {
+		await stream.getReader().read().catch(() => undefined);
+	}
+});
+
+const mockResumeExistingStream = vi.fn().mockResolvedValue(new ReadableStream());
+
+vi.mock("resumable-stream", () => ({
+	createResumableStreamContext: vi.fn(() => ({
+		createNewResumableStream: mockCreateNewResumableStream,
+		resumeExistingStream: mockResumeExistingStream,
+	})),
+}));
+
+beforeEach(() => {
+	mockCreateNewResumableStream.mockClear();
+	mockResumeExistingStream.mockClear();
+});
+
 
 // Mock dependencies
 const mockMemory = {
@@ -206,6 +235,10 @@ function createAsyncIterableStream<T>(generator: AsyncGenerator<T>): ReadableStr
 	return stream as ReadableStream<T> & AsyncIterable<T>;
 }
 
+async function flushAsyncOperations() {
+	await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("streamChat", () => {
 		const validUserMessage = createUserMessage("msg1", "Hello");
 
@@ -260,7 +293,6 @@ describe("streamChat", () => {
 			responseMetadata: Promise.resolve({}),
 			
 			// Response conversion methods
-			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			pipeDataStreamToResponse: vi.fn(),
 			pipeTextStreamToResponse: vi.fn(),
 			toDataStream: vi.fn(),
@@ -271,7 +303,13 @@ describe("streamChat", () => {
 			toAIStreamResponse: vi.fn(),
 			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
 			consumeStream: vi.fn().mockResolvedValue(undefined),
-			toUIMessageStream: vi.fn(),
+			toUIMessageStream: vi
+				.fn()
+				.mockImplementation(() =>
+					createAsyncIterableStream((async function* () {
+						yield { type: "response", id: "chunk-1" } as const;
+					})()),
+				),
 			pipeUIMessageStreamToResponse: vi.fn(),
 			
 			// Additional properties
@@ -292,7 +330,7 @@ describe("streamChat", () => {
 				messages: [createUserMessage("msg1", "Hello")],
 			});
 			// Mock streamText to return the stream result
-			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
+			vi.mocked(streamText).mockReturnValue(mockStreamResult);
 		});
 
 		it("should execute successful streaming flow with all callbacks", async () => {
@@ -394,10 +432,17 @@ describe("streamChat", () => {
 
 			expect(result.ok).toBe(true); // Stream still succeeds even with potential memory errors
 			
-			// Verify that the onFinish callback is properly configured with onError
-			expect(mockStreamResult.toUIMessageStreamResponse).toHaveBeenCalledWith(
+			// Verify that the UI stream is built with our callbacks and response factory
+			expect(mockStreamResult.toUIMessageStream).toHaveBeenCalledWith(
 				expect.objectContaining({
 					onFinish: expect.any(Function),
+					onError: expect.any(Function),
+				}),
+			);
+			expect(createUIMessageStreamResponse).toHaveBeenCalledWith(
+				expect.objectContaining({
+					stream: expect.any(Object),
+					headers: expect.objectContaining({ "Content-Type": "text/event-stream" }),
 				}),
 			);
 		});
@@ -419,12 +464,14 @@ describe("streamChat", () => {
 				enableResume: true, // Enable resume so createStream is called
 			});
 
+			await flushAsyncOperations();
+
 			expect(result.ok).toBe(true); // Should still succeed
 			expect(consoleSpy).toHaveBeenCalledWith(
 				expect.stringContaining("Failed to create stream"),
 				expect.objectContaining({
-					error: expect.stringContaining("Stream creation failed"),
-					errorCode: expect.any(String),
+					error: expect.stringContaining("Stream createStream failed"),
+					code: expect.any(String),
 					statusCode: expect.any(Number),
 				}),
 			);
@@ -445,25 +492,21 @@ describe("streamChat", () => {
 			});
 
 			expect(result.ok).toBe(true);
-			expect(mockStreamResult.toUIMessageStreamResponse).toHaveBeenCalledWith(
+			expect(mockStreamResult.toUIMessageStream).toHaveBeenCalledWith(
 				expect.objectContaining({
-					headers: { "Content-Encoding": "none" },
+					sendReasoning: true,
+				}),
+			);
+			expect(createUIMessageStreamResponse).toHaveBeenCalledWith(
+				expect.objectContaining({
 					consumeSseStream: expect.any(Function),
+					headers: expect.objectContaining({ "Content-Encoding": "none" }),
 				}),
 			);
 		});
 	});
 
 	describe("resumeStream", () => {
-		beforeEach(() => {
-			// Mock resumable stream context
-			vi.doMock("resumable-stream", () => ({
-				createResumableStreamContext: vi.fn().mockReturnValue({
-					resumeExistingStream: vi.fn(),
-				}),
-			}));
-		});
-
 		it("should return null for non-existent session", async () => {
 			mockMemory.getSession = vi.fn().mockResolvedValue(null);
 
@@ -543,7 +586,9 @@ describe("streamChat", () => {
 				model: {},
 				messages: [createUserMessage("msg1", "Hello")],
 			});
-			vi.mocked(streamText).mockRejectedValue(streamingError);
+			vi.mocked(streamText).mockImplementation(() => {
+				throw streamingError;
+			});
 
 			const result = await streamChat({
 				agent: mockAgent,
@@ -617,7 +662,6 @@ describe("streamChat", () => {
 			responseMetadata: Promise.resolve({}),
 			
 			// Response conversion methods
-			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			pipeDataStreamToResponse: vi.fn(),
 			pipeTextStreamToResponse: vi.fn(),
 			toDataStream: vi.fn(),
@@ -628,7 +672,13 @@ describe("streamChat", () => {
 			toAIStreamResponse: vi.fn(),
 			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
 			consumeStream: vi.fn().mockResolvedValue(undefined),
-			toUIMessageStream: vi.fn(),
+			toUIMessageStream: vi
+				.fn()
+				.mockImplementation(() =>
+					createAsyncIterableStream((async function* () {
+						yield { type: "response", id: "chunk-guard" } as const;
+					})()),
+				),
 			pipeUIMessageStreamToResponse: vi.fn(),
 			
 			// Additional properties
@@ -646,7 +696,7 @@ describe("streamChat", () => {
 				model: {},
 				messages: [createUserMessage("msg1", "Hello")],
 			});
-			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
+			vi.mocked(streamText).mockReturnValue(mockStreamResult);
 		});
 
 		it("should silently handle stream failures with silentStreamFailure guard", async () => {
@@ -668,6 +718,8 @@ describe("streamChat", () => {
 				},
 				onError,
 			});
+
+			await flushAsyncOperations();
 
 			expect(result.ok).toBe(true);
 			expect(onError).not.toHaveBeenCalled(); // Silent mode - no onError
@@ -737,6 +789,8 @@ describe("streamChat", () => {
 				enableResume: true,
 			});
 
+			await flushAsyncOperations();
+
 			expect(result.ok).toBe(true);
 			expect(mockMemory.createStream).toHaveBeenCalled();
 		});
@@ -761,6 +815,8 @@ describe("streamChat", () => {
 				},
 				onError,
 			});
+
+			await flushAsyncOperations();
 
 			expect(result.ok).toBe(true);
 			expect(onError).not.toHaveBeenCalled(); // Silent mode
@@ -827,7 +883,6 @@ describe("streamChat", () => {
 			responseMetadata: Promise.resolve({}),
 			
 			// Response conversion methods
-			toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream")),
 			pipeDataStreamToResponse: vi.fn(),
 			pipeTextStreamToResponse: vi.fn(),
 			toDataStream: vi.fn(),
@@ -838,7 +893,13 @@ describe("streamChat", () => {
 			toAIStreamResponse: vi.fn(),
 			experimental_partialOutputStream: createAsyncIterableStream((async function* () { yield {}; })()),
 			consumeStream: vi.fn().mockResolvedValue(undefined),
-			toUIMessageStream: vi.fn(),
+			toUIMessageStream: vi
+				.fn()
+				.mockImplementation(() =>
+					createAsyncIterableStream((async function* () {
+						yield { type: "response", id: "chunk-memory" } as const;
+					})()),
+				),
 			pipeUIMessageStreamToResponse: vi.fn(),
 			
 			// Additional properties
@@ -856,7 +917,7 @@ describe("streamChat", () => {
 				model: {},
 				messages: [createUserMessage("msg1", "Hello")],
 			});
-			vi.mocked(streamText).mockResolvedValue(mockStreamResult);
+			vi.mocked(streamText).mockReturnValue(mockStreamResult);
 		});
 
 		it("should handle createStream failures with warning criticality", async () => {
@@ -878,6 +939,8 @@ describe("streamChat", () => {
 				enableResume: true, // Enable resume so createStream is called
 				onError,
 			});
+
+			await flushAsyncOperations();
 
 			expect(result.ok).toBe(true); // Stream still succeeds
 			expect(onError).toHaveBeenCalledWith({
@@ -959,6 +1022,8 @@ describe("streamChat", () => {
 				onError,
 			});
 
+			await flushAsyncOperations();
+
 			expect(result.ok).toBe(true); // Stream still works
 			expect(onError).toHaveBeenCalledWith({
 				systemContext,
@@ -983,6 +1048,8 @@ describe("streamChat", () => {
 				enableResume: true, // Enable resume so createStream is called
 				onError,
 			});
+
+			await flushAsyncOperations();
 
 			const errorCall = onError.mock.calls[0];
 			expect(errorCall).toBeDefined();
