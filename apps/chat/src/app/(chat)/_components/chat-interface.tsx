@@ -48,6 +48,12 @@ import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
 import type { ChatInlineError } from "./chat-inline-error";
 
+const getMetadataString = (metadata: unknown, key: string): string | undefined => {
+	if (!metadata || typeof metadata !== "object") return undefined;
+	const value = (metadata as Record<string, unknown>)[key];
+	return typeof value === "string" ? value : undefined;
+};
+
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
 	() =>
@@ -93,7 +99,7 @@ interface ChatInterfaceProps {
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
 	onAssistantStreamError?: (info: {
 		messageId?: string;
-		phase?: string;
+		category?: string;
 	}) => void;
 	onResumeStateChange?: (hasActiveStream: boolean) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
@@ -148,8 +154,10 @@ export function ChatInterface({
 
 			const relatedAssistantMessageId = getStringMetadata("messageId");
 			const relatedUserMessageId = getStringMetadata("userMessageId");
-			const phase = getStringMetadata("phase");
-			const errorCode = getStringMetadata("errorCode");
+			const errorCode = error.errorCode ?? getStringMetadata("errorCode");
+			const category = error.category ?? getStringMetadata("category");
+			const severity = error.severity ?? getStringMetadata("severity");
+			const source = error.source ?? getStringMetadata("source");
 
 			setInlineErrors((current) => {
 				const entry: ChatInlineError = {
@@ -157,7 +165,9 @@ export function ChatInterface({
 					error,
 					relatedAssistantMessageId,
 					relatedUserMessageId,
-					phase,
+					category,
+					severity,
+					source,
 					errorCode,
 				};
 
@@ -182,7 +192,8 @@ export function ChatInterface({
 						!entry.relatedUserMessageId &&
 						!existing.relatedAssistantMessageId &&
 						!existing.relatedUserMessageId &&
-						existing.error.type === entry.error.type
+						existing.error.type === entry.error.type &&
+						(existing.category ?? null) === (entry.category ?? null)
 					) {
 						return false;
 					}
@@ -331,45 +342,55 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		resume,
 		//		experimental_throttle: ,
 		onError: (error) => {
-			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
+			const metadata = chatError.metadata;
+			const category =
+				chatError.category ?? getMetadataString(metadata, "category");
+			const severity =
+				chatError.severity ?? getMetadataString(metadata, "severity");
+			const source = chatError.source ?? getMetadataString(metadata, "source");
+				const failedMessageId = getMetadataString(metadata, "messageId");
 
-			if (chatError.type === ChatErrorType.SERVER_ERROR) {
-				console.error("[Streaming Error] Backend reported server failure:", {
+			const inlineStreamCategories = new Set([
+				"stream",
+				"persistence",
+				"resume",
+			]);
+			const isStreamingRelated =
+				category !== undefined && inlineStreamCategories.has(category);
+
+			if (isStreamingRelated) {
+				console.error("[Streaming Error] Inline-stream failure detected:", {
+					category,
+					severity,
+					source,
 					statusCode: chatError.statusCode,
 					message: chatError.message,
 					details: chatError.details,
-					metadata: chatError.metadata,
+					metadata,
 				});
 				setDataStream([]);
 				disableResume();
 				onResumeStateChange?.(false);
-				const phase =
-					typeof chatError.metadata?.phase === "string"
-						? chatError.metadata.phase
-						: undefined;
-				const failedMessageId =
-					typeof chatError.metadata?.messageId === "string"
-						? chatError.metadata.messageId
-						: undefined;
 				onAssistantStreamError?.({
 					messageId: failedMessageId,
-					phase,
+					category,
 				});
 				addInlineError(chatError);
 				return;
 			}
 
-			// Handle quota errors with optimistic update rollback
 			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
-				console.warn("[ChatInterface] Quota exceeded, triggering rollback");
+				console.warn("[ChatInterface] Quota exceeded, triggering rollback", {
+					statusCode: chatError.statusCode,
+					category,
+					severity,
+				});
 				onQuotaError?.(selectedModelId);
-				// Don't throw to error boundary for quota errors - user can try different model
+				addInlineError(chatError);
 				return;
 			}
 
-			// Define which errors are critical and should use error boundary
-			// These are errors that prevent the chat from functioning
 			const CRITICAL_ERROR_TYPES = [
 				ChatErrorType.AUTHENTICATION,
 				ChatErrorType.BOT_DETECTION,
@@ -379,10 +400,11 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 				...(isAuthenticated ? [] : [ChatErrorType.RATE_LIMIT]),
 			];
 
-			// Check if this is a critical error
-			if (CRITICAL_ERROR_TYPES.includes(chatError.type)) {
-				// Create an error with our extracted information
-				// This ensures the error boundary gets the right status code
+			const fatalBySeverity = severity === "fatal";
+			const fatalBySource = source === "guard";
+			const fatalByType = CRITICAL_ERROR_TYPES.includes(chatError.type);
+
+			if (fatalBySeverity || fatalBySource || fatalByType) {
 				interface EnhancedError extends Error {
 					statusCode?: number;
 					type?: ChatErrorType;
@@ -398,23 +420,25 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 				console.error("[Critical Error] Throwing to error boundary:", {
 					type: chatError.type,
 					statusCode: chatError.statusCode,
+					severity,
+					source,
 					message: chatError.message,
 				});
 
-				// Throw to error boundary with our extracted information
 				throwToErrorBoundary(errorForBoundary);
-			} else {
-				// Non-critical errors (streaming, network, temporary server issues)
-				// Log but don't crash the UI
-				console.error("[Streaming Error] Non-critical error occurred:", {
-					type: chatError.type,
-					statusCode: chatError.statusCode,
-					message: chatError.message,
-					details: chatError.details,
-				});
-
-				addInlineError(chatError);
 			}
+
+			console.error("[Chat Error] Non-fatal error captured inline", {
+				type: chatError.type,
+				statusCode: chatError.statusCode,
+				severity,
+				source,
+				category,
+				message: chatError.message,
+				details: chatError.details,
+			});
+
+			addInlineError(chatError);
 		},
 		onFinish: (event) => {
 			// Pass the assistant message to the callback

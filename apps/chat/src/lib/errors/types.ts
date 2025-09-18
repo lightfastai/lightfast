@@ -38,6 +38,10 @@ export interface ApiErrorResponse {
   error: string;         // Technical error message
   message: string;       // User-facing message
   statusCode: number;    // HTTP status code
+  errorCode?: string;
+  source?: string;
+  category?: string;
+  severity?: string;
   metadata?: {
     requestId?: string;
     timestamp?: number;
@@ -55,6 +59,10 @@ export interface ChatError {
   details?: string;
   retryable: false; // Always false - all errors go to error boundary
   statusCode?: number;
+  errorCode?: string;
+  source?: string;
+  category?: string;
+  severity?: string;
   metadata?: Record<string, unknown>;
 }
 

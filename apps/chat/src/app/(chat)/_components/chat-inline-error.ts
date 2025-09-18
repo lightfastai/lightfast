@@ -5,6 +5,8 @@ export interface ChatInlineError {
 	error: ChatError;
 	relatedAssistantMessageId?: string;
 	relatedUserMessageId?: string;
-	phase?: string;
+	category?: string;
+	severity?: string;
+	source?: string;
 	errorCode?: string;
 }

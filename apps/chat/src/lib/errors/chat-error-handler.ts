@@ -59,6 +59,10 @@ export class ChatErrorHandler {
         details: apiError.error,
         retryable: false, // All errors go to error boundary, no retry
         statusCode: apiError.statusCode,
+        errorCode: apiError.errorCode,
+        source: apiError.source,
+        category: apiError.category,
+        severity: apiError.severity,
         metadata: apiError.metadata,
       };
     }
@@ -80,6 +84,10 @@ export class ChatErrorHandler {
           details: enhancedError.details ?? enhancedError.message,
           retryable: false,
           statusCode: enhancedError.statusCode,
+          errorCode: (enhancedError as unknown as { errorCode?: string }).errorCode,
+          source: (enhancedError as unknown as { source?: string }).source,
+          category: (enhancedError as unknown as { category?: string }).category,
+          severity: (enhancedError as unknown as { severity?: string }).severity,
           metadata: enhancedError.metadata,
         };
       }

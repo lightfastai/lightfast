@@ -111,6 +111,12 @@ const StreamingMarkdown = memo(function StreamingMarkdown({
 	return <Markdown className={className}>{displayText}</Markdown>;
 });
 
+const getRecordString = (record: unknown, key: string): string | undefined => {
+	if (!record || typeof record !== "object") return undefined;
+	const value = (record as Record<string, unknown>)[key];
+	return typeof value === "string" ? value : undefined;
+};
+
 const AssistantTextPart = memo(function AssistantTextPart({
 	cleanedText,
 	shouldAnimate,
@@ -152,22 +158,29 @@ const AssistantReasoningPart = memo(function AssistantReasoningPart({
 const getInlineErrorCopy = (
 	inlineError: ChatInlineError,
 ): { title: string; message: string } => {
-	const { error, phase } = inlineError;
+	const { error } = inlineError;
+	const metadataCategory = getRecordString(error.metadata, "category");
+	const category = inlineError.category ?? error.category ?? metadataCategory;
 	const defaultMessage = error.message;
 	let title = "Something went wrong";
 	let message = defaultMessage;
 
-	if (error.type === ChatErrorType.SERVER_ERROR) {
+	if (category === "persistence") {
+		title = "Response not saved";
+		message =
+			"We streamed a reply but failed to store it. Copy anything important before refreshing.";
+		return { title, message };
+	}
+
+	if (category === "resume") {
+		title = "Resume temporarily unavailable";
+		message =
+			"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
+		return { title, message };
+	}
+
+	if (category === "stream" && error.type === ChatErrorType.SERVER_ERROR) {
 		title = "We couldn't finish that response";
-		if (phase === "persistence") {
-			title = "Response not saved";
-			message =
-				"We streamed a reply but failed to store it. Copy anything important before refreshing.";
-		} else if (phase === "resume") {
-			title = "Resume temporarily unavailable";
-			message =
-				"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
-		}
 		return { title, message };
 	}
 
@@ -589,7 +602,9 @@ const AssistantMessage = memo(function AssistantMessage({
 	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
 	const showStreamingWave = Boolean(isCurrentlyStreaming && !hasDisplayContent);
 	const noMessageContent = message.parts.length === 0;
-	const shouldHideActions = hideActions || (inlineError && noMessageContent);
+	const shouldHideActions =
+		hideActions ||
+		(Boolean(inlineError) && (noMessageContent || inlineError?.severity === "fatal"));
 
 	return (
 		<div className="py-1">

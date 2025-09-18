@@ -20,6 +20,11 @@ import {
 	toMemoryApiError,
 } from "./errors";
 import type { ApiError } from "./errors";
+import {
+	LightfastErrorCategory,
+	LightfastErrorSeverity,
+	LightfastErrorSource,
+} from "./error-classification";
 import { Err, Ok } from "./result";
 import type { Result } from "./result";
 import type {
@@ -265,30 +270,32 @@ export async function streamChat<
 		return Err(toAgentApiError(error, "streamText"));
 	}
 
-const serializeApiErrorForClient = (
+const serializeErrorForClient = (
 	error: ApiError,
-	phase: "persistence" | "resume" | "stream",
-	extraMetadata: Record<string, unknown> = {},
+	overrides: {
+		message?: string;
+		category?: LightfastErrorCategory;
+		severity?: LightfastErrorSeverity;
+		source?: LightfastErrorSource;
+		type?: string;
+		metadata?: Record<string, unknown>;
+	} = {},
 ): string => {
 	const status = error.statusCode ?? 500;
 	return JSON.stringify({
-		type: mapStatusCodeToChatErrorType(status),
+		type: overrides.type ?? mapStatusCodeToChatErrorType(status),
 			error: error.message,
-			message:
-				phase === "persistence"
-					? "We couldn't save this response. Refreshing may lose it."
-				: phase === "resume"
-				? "We couldn't enable stream resume for this session."
-				: "The model encountered an unexpected error.",
+			message: overrides.message ?? error.message,
 			statusCode: status,
+			errorCode: error.errorCode,
+			source: overrides.source ?? error.source,
+			category: overrides.category ?? error.category,
+			severity: overrides.severity ?? error.severity,
 			metadata: {
 				timestamp: Date.now(),
-				errorCode: error.errorCode,
-				phase,
-				sessionId,
-			streamId,
-			...extraMetadata,
-		},
+				...error.metadata,
+				...overrides.metadata,
+			},
 	});
 };
 
@@ -358,8 +365,15 @@ const serializeApiErrorForClient = (
 					);
 
 					const persistedMessageId = finishResult.responseMessage?.id;
-					persistenceErrorPayload = serializeApiErrorForClient(apiError, "persistence", {
-						...(persistedMessageId ? { messageId: persistedMessageId } : {}),
+					persistenceErrorPayload = serializeErrorForClient(apiError, {
+						message: "We couldn't save this response. Refreshing may lose it.",
+						category: LightfastErrorCategory.Persistence,
+						severity: LightfastErrorSeverity.Recoverable,
+						metadata: {
+							sessionId,
+							streamId,
+							...(persistedMessageId ? { messageId: persistedMessageId } : {}),
+						},
 					});
 					onError?.({
 						systemContext,
@@ -382,7 +396,14 @@ const serializeApiErrorForClient = (
 		},
 		onError: (error) => {
 			const apiError = toAgentApiError(error, "streamText");
-			const payload = serializeApiErrorForClient(apiError, "stream");
+			const payload = serializeErrorForClient(apiError, {
+				category: LightfastErrorCategory.Stream,
+				severity: LightfastErrorSeverity.Recoverable,
+				metadata: {
+					sessionId,
+					streamId,
+				},
+			});
 			if (
 				(persistenceErrorPayload && error instanceof Error && error.message === persistenceErrorPayload) ||
 				(resumeErrorPayload && error instanceof Error && error.message === resumeErrorPayload)
@@ -470,7 +491,15 @@ const serializeApiErrorForClient = (
 				requestContext: requestContext as RequestContext | undefined,
 				error: apiError,
 			});
-			resumeErrorPayload = serializeApiErrorForClient(apiError, "resume");
+			resumeErrorPayload = serializeErrorForClient(apiError, {
+				message: "We couldn't enable stream resume for this session.",
+				category: LightfastErrorCategory.Resume,
+				severity: LightfastErrorSeverity.Recoverable,
+				metadata: {
+					sessionId,
+					streamId,
+				},
+			});
 		}
 		}
 	};
