@@ -87,3 +87,33 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 5. Longer-term architecture items listed above
 
 This list will evolve as we land fixes; update the “Completed Mitigations” section with links/notes once each task ships.
+
+---
+
+## Streaming-Focused Production Readiness Checklist (Future Work)
+Once the current queue is resolved, additional streaming-specific hardening to reach production maturity:
+
+- **Broader hardening**
+  - Make message/session writes idempotent across retries and multi-region failover.
+  - Guarantee transactional behavior for tool/artifact side-effects alongside streaming replies.
+  - Add background reconciliation for partially persisted streams and orphaned sessions.
+
+- **Availability planning**
+  - Design circuit breakers/fallbacks when providers, queues, or memory stores degrade.
+  - Test degradation scenarios (provider outages, slow storage, partial data center failures) via chaos drills.
+  - Ensure graceful handling of deploy restarts / node crashes mid-stream.
+
+- **Streaming-centric security & compliance**
+  - Validate/seal all SSE payloads to prevent injection/tampering.
+  - Enforce audit logs for stream start/stop, resume attempts, and tool invocations.
+  - Harden rate limits/abuse detection specifically for long-lived streaming connections.
+
+- **Observability & operations**
+  - Define SLIs/SLOs for stream start latency, persistence success rate, and resume success rate.
+  - Instrument end-to-end tracing across streaming lifecycle (session creation → persistence).
+  - Provide runbooks for streaming-specific incidents (e.g., provider outage, storage saturation).
+
+- **User experience safeguards**
+  - Offer auto-resend/“save draft” flows when streams terminate unexpectedly.
+  - Surface proactive degradation banners (e.g., “streaming degraded – responses may pause”).
+  - Allow users to download raw streamed output when persistence is uncertain.
