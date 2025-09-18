@@ -21,13 +21,17 @@ interface UseArtifactStreamingProps {
  */
 export function useArtifactStreaming({
   showArtifact,
-  hideArtifact,
+  hideArtifact: _hideArtifact,
   updateArtifactContent,
   setArtifact,
   setMetadata,
 }: UseArtifactStreamingProps) {
   const { dataStream } = useDataStream();
   
+  // Track how many data parts we've already handled so new ones are
+  // processed sequentially (matching the Vercel AI Chatbot flow).
+  const lastProcessedIndexRef = useRef(0);
+
   // Track current streaming artifact state
   const currentArtifactRef = useRef<{
     id?: string;
@@ -43,108 +47,121 @@ export function useArtifactStreaming({
   useEffect(() => {
     if (!dataStream.length) return;
 
-    // Process only the latest data part
-    const latestDataPart = dataStream[dataStream.length - 1];
-    if (!latestDataPart) return;
-    
-    switch (latestDataPart.type) {
-      case 'data-kind': {
-        console.log('[Artifact] Setting kind:', latestDataPart.data);
-        currentArtifactRef.current.kind = latestDataPart.data as ArtifactKind;
-        break;
-      }
-      
-      case 'data-id': {
-        console.log('[Artifact] Setting document ID:', latestDataPart.data);
-        currentArtifactRef.current.id = latestDataPart.data as string;
-        break;
-      }
-      
-      case 'data-title': {
-        console.log('[Artifact] Setting title:', latestDataPart.data);
-        currentArtifactRef.current.title = latestDataPart.data as string;
-        break;
-      }
-      
-      case 'data-clear': {
-        console.log('[Artifact] Clearing artifact');
-        currentArtifactRef.current = {
-          ...currentArtifactRef.current, // Preserve id, title, kind metadata
-          content: '',
-          isStreaming: true,
-        };
-        
-        // Show artifact with initial state
-        if (currentArtifactRef.current.id && currentArtifactRef.current.title) {
-          console.log('[Artifact] Showing artifact:', {
-            documentId: currentArtifactRef.current.id,
-            title: currentArtifactRef.current.title,
-            kind: currentArtifactRef.current.kind,
-          });
-          showArtifact({
-            documentId: currentArtifactRef.current.id,
-            title: currentArtifactRef.current.title,
-            kind: currentArtifactRef.current.kind ?? 'code',
-            content: '',
-            status: 'streaming',
-          });
-        } else {
-          console.log('[Artifact] Cannot show artifact - missing metadata:', {
-            id: currentArtifactRef.current.id,
-            title: currentArtifactRef.current.title,
-            kind: currentArtifactRef.current.kind,
-          });
+    const startIndex = lastProcessedIndexRef.current;
+    if (startIndex >= dataStream.length) return;
+
+    const newStreamParts = dataStream.slice(startIndex);
+    lastProcessedIndexRef.current = dataStream.length;
+
+    newStreamParts.forEach((latestDataPart) => {
+      let streamPartForArtifact = latestDataPart;
+      let shouldUpdateContent = false;
+      let nextStatus: 'streaming' | 'idle' = currentArtifactRef.current.isStreaming ? 'streaming' : 'idle';
+
+      switch (latestDataPart.type) {
+        case 'data-kind': {
+          currentArtifactRef.current.kind = latestDataPart.data as ArtifactKind;
+          break;
         }
-        break;
-      }
-      
-      case 'data-codeDelta': 
-      case 'data-diagramDelta': {
-        console.log('[Artifact] Adding code/diagram delta:', latestDataPart.data);
-        const delta = latestDataPart.data as string;
-        currentArtifactRef.current.content += delta;
-        currentArtifactRef.current.isStreaming = true;
-        
-        // Update content with streaming status
-        updateArtifactContent(currentArtifactRef.current.content, 'streaming');
-        break;
-      }
-      
-      case 'data-finish': {
-        console.log('[Artifact] Streaming finished');
-        currentArtifactRef.current.isStreaming = false;
-        
-        // Mark streaming as complete
-        setArtifact(prev => ({
-          ...prev,
-          status: 'idle',
-        }));
-        break;
-      }
-      
-      default:
-        // Ignore other data types (like data-usage)
-        break;
-    }
 
-    // IMPORTANT: Call artifact-specific onStreamPart handlers for each data part
-    // This is what actually makes artifacts visible when enough content is streamed
-    const artifactDefinition = artifactDefinitions.find(
-      (def) => def.kind === currentArtifactRef.current.kind,
-    );
+        case 'data-id': {
+          currentArtifactRef.current.id = latestDataPart.data as string;
+          break;
+        }
 
-    if (artifactDefinition?.onStreamPart) {
-      artifactDefinition.onStreamPart({
-        streamPart: latestDataPart,
-        setArtifact,
-        setMetadata,
-      });
-    }
-  }, [dataStream, showArtifact, hideArtifact, updateArtifactContent, setArtifact, setMetadata]);
+        case 'data-title': {
+          currentArtifactRef.current.title = latestDataPart.data as string;
+          break;
+        }
+
+        case 'data-clear': {
+          currentArtifactRef.current = {
+            ...currentArtifactRef.current, // Preserve id, title, kind metadata
+            content: '',
+            isStreaming: true,
+          };
+
+          // Show artifact with initial state
+          if (currentArtifactRef.current.id && currentArtifactRef.current.title) {
+            showArtifact({
+              documentId: currentArtifactRef.current.id,
+              title: currentArtifactRef.current.title,
+              kind: currentArtifactRef.current.kind ?? 'code',
+              content: '',
+              status: 'streaming',
+            });
+
+            const artifactDefinition = artifactDefinitions.find(
+              (definition) => definition.kind === currentArtifactRef.current.kind,
+            );
+
+            artifactDefinition?.initialize?.({
+              documentId: currentArtifactRef.current.id,
+              setMetadata,
+            });
+          }
+          break;
+        }
+
+        case 'data-codeDelta':
+        case 'data-diagramDelta': {
+          const incomingContent = latestDataPart.data as string;
+          const previousContent = currentArtifactRef.current.content;
+
+          let delta = incomingContent;
+          if (incomingContent.startsWith(previousContent)) {
+            delta = incomingContent.slice(previousContent.length);
+            currentArtifactRef.current.content = previousContent + delta;
+          } else {
+            currentArtifactRef.current.content = previousContent + incomingContent;
+          }
+
+          streamPartForArtifact = {
+            ...latestDataPart,
+            data: delta,
+          } as typeof latestDataPart;
+          currentArtifactRef.current.isStreaming = true;
+          shouldUpdateContent = true;
+          nextStatus = 'streaming';
+          break;
+        }
+
+        case 'data-finish': {
+          currentArtifactRef.current.isStreaming = false;
+          shouldUpdateContent = true;
+          nextStatus = 'idle';
+          break;
+        }
+
+        default:
+          // Ignore other data types (like data-usage)
+          break;
+      }
+
+      // IMPORTANT: Call artifact-specific onStreamPart handlers for each data part
+      // This is what actually makes artifacts visible when enough content is streamed
+      const artifactDefinition = artifactDefinitions.find(
+        (def) => def.kind === currentArtifactRef.current.kind,
+      );
+
+      if (artifactDefinition?.onStreamPart) {
+        artifactDefinition.onStreamPart({
+          streamPart: streamPartForArtifact,
+          setArtifact,
+          setMetadata,
+        });
+      }
+
+      if (shouldUpdateContent) {
+        updateArtifactContent(currentArtifactRef.current.content, nextStatus);
+      }
+    });
+  }, [dataStream, showArtifact, updateArtifactContent, setArtifact, setMetadata]);
 
   // Reset state when data stream is cleared (new conversation)
   useEffect(() => {
     if (dataStream.length === 0) {
+      lastProcessedIndexRef.current = 0;
       currentArtifactRef.current = {
         content: '',
         isStreaming: false,

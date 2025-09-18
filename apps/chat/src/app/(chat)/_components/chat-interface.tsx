@@ -19,13 +19,14 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, {
+import {
 	useState,
 	useMemo,
 	useEffect,
 	useRef,
 	useCallback,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -37,6 +38,13 @@ import type { ChatError } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
+import { useTRPC } from "~/trpc/react";
+import {
+	isNotFound,
+	isTRPCClientError,
+	isUnauthorized,
+	getTRPCErrorMessage,
+} from "~/lib/trpc-errors";
 
 // Session type from API - use getMetadata which includes activeStreamId
 type Session = ChatRouterOutputs["session"]["getMetadata"];
@@ -133,6 +141,8 @@ export function ChatInterface({
 
 	// Hook for handling ALL errors via error boundaries
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	// Derive authentication status from user presence
 	const isAuthenticated = user !== null;
 
@@ -241,31 +251,47 @@ export function ChatInterface({
 		});
 	}, [billingContext.models]);
 
-	// Clean artifact fetcher using our new REST API
-	const fetchArtifact = async (
-		artifactId: string,
-	): Promise<ArtifactApiResponse> => {
-		const response = await fetch(`/api/artifact?id=${artifactId}`);
+	// Fetch artifacts through the tRPC API so we reuse authentication and caching
+	const fetchArtifact = useCallback(
+		async (artifactId: string): Promise<ArtifactApiResponse> => {
+			try {
+				const artifact = await queryClient.fetchQuery({
+					...trpc.artifact.get.queryOptions({ id: artifactId }),
+				});
 
-		if (!response.ok) {
-			// Handle specific error cases
-			if (response.status === 401) {
-				throw new Error("Authentication required to access artifacts");
+				if (!artifact) {
+					throw new Error("Artifact not found");
+				}
+
+				let content = "";
+				if (typeof artifact.content === "string") {
+					content = artifact.content;
+				}
+
+				return {
+					id: artifact.id,
+					title: artifact.title,
+					content,
+					kind: artifact.kind,
+					createdAt: artifact.createdAt,
+				};
+			} catch (error) {
+				if (isUnauthorized(error)) {
+					throw new Error("Authentication required to access artifacts");
+				}
+				if (isNotFound(error)) {
+					throw new Error("Artifact not found");
+				}
+				if (isTRPCClientError(error)) {
+					throw new Error(getTRPCErrorMessage(error));
+				}
+				throw error instanceof Error
+					? error
+					: new Error("Failed to load artifact");
 			}
-			if (response.status === 404) {
-				throw new Error("Artifact not found");
-			}
-
-			const errorData = (await response
-				.json()
-				.catch(() => ({ error: "Unknown error" }))) as { error?: string };
-			throw new Error(
-				errorData.error ?? `HTTP ${response.status}: ${response.statusText}`,
-			);
-		}
-
-		return response.json() as Promise<ArtifactApiResponse>;
-	};
+		},
+		[queryClient, trpc],
+	);
 
 	// Data stream for artifact handling
 	const { setDataStream } = useDataStream();
@@ -293,8 +319,8 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-// Web search toggle state
-const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+	// Web search toggle state
+	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -306,7 +332,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 	} = useAnonymousMessageLimit();
 
 	// Preload dialog image when user is close to limit (3 messages left)
-	React.useEffect(() => {
+	useEffect(() => {
 		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0) {
 			// Preload the image using Next.js Image preloader
 			const img = new Image();
@@ -693,7 +719,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 	const handlePromptError = (
 		errorOrEvent:
 			| { code: "max_files" | "max_file_size" | "accept"; message: string }
-			| React.FormEvent<HTMLFormElement>,
+			| FormEvent<HTMLFormElement>,
 	) => {
 		// Check if it's a file upload error (has 'code' property)
 		if ("code" in errorOrEvent) {
@@ -1051,12 +1077,8 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 						<ArtifactViewer
 							artifact={artifact}
 							metadata={metadata}
-							setMetadata={setMetadata}
-							onClose={hideArtifact}
-							onSaveContent={(content) => {
-								// For demo purposes, just log the content
-								console.log("Artifact content updated:", content);
-							}}
+								setMetadata={setMetadata}
+								onClose={hideArtifact}
 							sessionId={sessionId}
 							_isAuthenticated={isAuthenticated}
 							onArtifactSelect={async (artifactId) => {
