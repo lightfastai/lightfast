@@ -1009,10 +1009,10 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Return the full layout with artifact support
 	return (
-		<div className="flex h-screen w-full overflow-hidden">
+		<div className="flex h-full min-h-0 w-full overflow-hidden">
 			{/* Chat interface - animates width when artifact is visible */}
 			<motion.div
-				className="min-w-0 flex-shrink-0"
+				className="min-w-0 flex-shrink-0 h-full min-h-0"
 				initial={false}
 				animate={{
 					width: isAuthenticated && artifact.isVisible ? "50%" : "100%",
@@ -1029,9 +1029,9 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 			{/* Artifact panel - slides in from right when visible (authenticated users only) */}
 			<AnimatePresence>
-				{isAuthenticated && artifact.isVisible && (
-					<motion.div
-						className="w-1/2 min-w-0 flex-shrink-0 relative z-50"
+			{isAuthenticated && artifact.isVisible && (
+				<motion.div
+					className="w-1/2 min-w-0 flex-shrink-0 relative z-50 h-full"
 						initial={{ x: "100%", opacity: 0 }}
 						animate={{
 							x: 0,
