@@ -108,24 +108,16 @@ const StreamingMarkdown = memo(function StreamingMarkdown({
 });
 
 const AssistantTextPart = memo(function AssistantTextPart({
-	messageId,
-	index,
 	cleanedText,
 	shouldAnimate,
 	speedMs,
 }: {
-	messageId: string;
-	index: number;
 	cleanedText: string;
 	shouldAnimate: boolean;
 	speedMs: number;
 }) {
 	return (
-		<MessageContent
-			key={`${messageId}-part-${index}`}
-			variant="chat"
-			className="w-full py-0 [&>*]:my-0"
-		>
+		<MessageContent variant="chat" className="w-full py-0 [&>*]:my-0">
 			<StreamingMarkdown
 				className="[&>*]:my-0"
 				text={cleanedText}
@@ -137,18 +129,14 @@ const AssistantTextPart = memo(function AssistantTextPart({
 });
 
 const AssistantReasoningPart = memo(function AssistantReasoningPart({
-	messageId,
-	index,
 	reasoningText,
 	isStreaming,
 }: {
-	messageId: string;
-	index: number;
 	reasoningText: string;
 	isStreaming: boolean;
 }) {
 	return (
-		<div key={`${messageId}-part-${index}`} className="w-full">
+		<div className="w-full">
 			<Reasoning className="w-full" isStreaming={isStreaming}>
 				<ReasoningTrigger />
 				<ReasoningContent>{reasoningText}</ReasoningContent>
@@ -435,29 +423,27 @@ const AssistantMessage = memo(function AssistantMessage({
 									const cleanedText = cleanTextFromMetadata(part.text);
 									const shouldAnimate =
 										isCurrentlyStreaming && index === message.parts.length - 1;
-									return (
-										<AssistantTextPart
-											messageId={message.id}
-											index={index}
-											cleanedText={cleanedText}
-											shouldAnimate={shouldAnimate}
-											speedMs={TYPEWRITER_SPEED_MS}
-										/>
-									);
-								}
+								return (
+									<AssistantTextPart
+										key={`${message.id}-text-${index}`}
+										cleanedText={cleanedText}
+										shouldAnimate={shouldAnimate}
+										speedMs={TYPEWRITER_SPEED_MS}
+									/>
+								);
+							}
 
-								if (isReasoningPart(part) && part.text.length > 1) {
-									const isReasoningStreaming =
-										isCurrentlyStreaming && index === message.parts.length - 1;
-									const trimmedText = part.text.replace(/^\n+/, "");
-									return (
-										<AssistantReasoningPart
-											messageId={message.id}
-											index={index}
-											reasoningText={trimmedText}
-											isStreaming={isReasoningStreaming}
-										/>
-									);
+							if (isReasoningPart(part) && part.text.length > 1) {
+								const isReasoningStreaming =
+									isCurrentlyStreaming && index === message.parts.length - 1;
+								const trimmedText = part.text.replace(/^\n+/, "");
+								return (
+									<AssistantReasoningPart
+										key={`${message.id}-reasoning-${index}`}
+										reasoningText={trimmedText}
+										isStreaming={isReasoningStreaming}
+									/>
+								);
 								}
 
 								// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
