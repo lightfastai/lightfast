@@ -37,14 +37,11 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 ---
 
 ## Open Issues & Planned Work
-1. **Resume state sanity** *(next up)*
-   - Ensure `useSessionState` clears `hasActiveStream` when the runtime reports a resume failure.
-   - Confirm backend clears `activeStreamId` before starting a new POST regardless of later failures.
-2. **Artifact/data stream cleanup**
+1. **Artifact/data stream cleanup**
    - Reset `setDataStream([])` when a new POST starts and add a timeout fallback when no `data-finish` arrives.
-3. **Quota reservation visibility**
+2. **Quota reservation visibility**
    - Surface SSE warnings and add retries/reconciliation for `releaseQuotaReservation` failures.
-4. **Telemetry & monitoring**
+3. **Telemetry & monitoring**
    - Track counts for persistence failures, resume failures, quota release issues, and provider aborts.
 
 ---
@@ -80,11 +77,10 @@ This document tracks reliability risks in the chat streaming stack (Next.js rout
 ---
 
 ## Summary Queue (High → Low)
-1. Resume state accuracy in client + backend 🔜
-2. Artifact/data-stream cleanup & timeout handling
-3. Quota reservation observability & retries
-4. Telemetry for streaming/persistence failure classes
-5. Longer-term architecture items listed above
+1. Artifact/data-stream cleanup & timeout handling 🔜
+2. Quota reservation observability & retries
+3. Telemetry for streaming/persistence failure classes
+4. Longer-term architecture items listed above
 
 This list will evolve as we land fixes; update the “Completed Mitigations” section with links/notes once each task ships.
 
