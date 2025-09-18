@@ -4,9 +4,9 @@ import type { ChatRouterOutputs } from "@api/chat";
 type Session = ChatRouterOutputs["session"]["getMetadata"];
 
 /**
- * Manages session identifiers and whether a resumable stream is currently active.
- * The hook keeps `hasActiveStream` in local state so the UI can react to runtime
- * signals (e.g., persistence/resume failures) without waiting for a server refetch.
+ * Manages session identifiers and stream state.
+ * - `resume` reflects whether the server reported an active stream when the page loaded.
+ * - `hasActiveStream` tracks the optimistic client view (used for UI treatment).
  */
 export function useSessionState(session?: Session, fallbackSessionId?: string) {
 	const sessionId = useMemo(
@@ -14,18 +14,27 @@ export function useSessionState(session?: Session, fallbackSessionId?: string) {
 		[session?.id, fallbackSessionId],
 	);
 
-	const initialHasActiveStream = Boolean(session?.activeStreamId);
-	const [hasActiveStream, setHasActiveStream] = useState(initialHasActiveStream);
+	const initialActive = Boolean(session?.activeStreamId);
+	const [hasActiveStream, setHasActiveStream] = useState(initialActive);
+	const [resumeEnabled, setResumeEnabled] = useState(initialActive);
 
-	// Sync local state when the server-provided session metadata changes (e.g., refetch).
+	// Sync from server metadata when it changes (e.g., refetch after resume cleanup).
 	useEffect(() => {
-		setHasActiveStream(Boolean(session?.activeStreamId));
+		const active = Boolean(session?.activeStreamId);
+		setHasActiveStream(active);
+		setResumeEnabled(active);
 	}, [session?.activeStreamId]);
+
+	const disableResume = () => {
+		setResumeEnabled(false);
+		setHasActiveStream(false);
+	};
 
 	return {
 		sessionId,
-		resume: hasActiveStream,
+		resume: resumeEnabled,
 		hasActiveStream,
 		setHasActiveStream,
+		disableResume,
 	};
 }

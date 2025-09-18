@@ -108,12 +108,13 @@ export function ChatInterface({
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
-	const {
-		sessionId,
-		resume,
-		hasActiveStream,
-		setHasActiveStream,
-	} = useSessionState(session, fallbackSessionId);
+const {
+	sessionId,
+	resume,
+	hasActiveStream,
+	setHasActiveStream,
+	disableResume,
+} = useSessionState(session, fallbackSessionId);
 	// Most errors escalate to the boundary; streaming/storage issues are handled inline
 
 	// Hook for handling ALL errors via error boundaries
@@ -256,7 +257,7 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					metadata: chatError.metadata,
 				});
 				setDataStream([]);
-				setHasActiveStream(false);
+				disableResume();
 				onResumeStateChange?.(false);
 				const phase =
 					typeof chatError.metadata?.phase === "string"
@@ -333,7 +334,7 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
-			setHasActiveStream(false);
+			disableResume();
 			onResumeStateChange?.(false);
 		},
 		onData: (dataPart) => {
@@ -350,12 +351,11 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 			onResumeStateChange?.(true);
 		}
 		if (status !== "streaming" && previousStatus === "streaming") {
-			// Ensure we clear local state when leaving streaming unexpectedly.
-			setHasActiveStream(false);
+			disableResume();
 			onResumeStateChange?.(false);
 		}
 		previousStatusRef.current = status;
-	}, [status, setHasActiveStream, onResumeStateChange]);
+	}, [status, setHasActiveStream, onResumeStateChange, disableResume]);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
 	const { data: feedback } = useFeedbackQuery({
