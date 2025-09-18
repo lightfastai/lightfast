@@ -34,6 +34,7 @@ export function ExistingSessionChat({
 		sessionId,
 	});
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
+	const sessionQueryOptions = trpc.session.getMetadata.queryOptions({ sessionId });
 
 	// Batch all queries together with suspense for better performance
 	const [{ data: user }, { data: messages }, { data: session }, { data: usageLimits }] = useSuspenseQueries({
@@ -52,7 +53,7 @@ export function ExistingSessionChat({
 				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
 			{
-				...trpc.session.getMetadata.queryOptions({ sessionId }),
+				...sessionQueryOptions,
 				staleTime: 30 * 1000, // Consider session metadata fresh for 30 seconds
 				gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
 				refetchOnWindowFocus: false, // Don't refetch on focus
@@ -197,6 +198,16 @@ export function ExistingSessionChat({
 					queryClient.setQueryData(messagesQueryOptions.queryKey, (oldData) => {
 						if (!oldData) return oldData;
 						return oldData.filter((msg) => msg.id !== messageId);
+					});
+				}}
+				onResumeStateChange={(active) => {
+					if (active) {
+						return;
+					}
+					queryClient.setQueryData(sessionQueryOptions.queryKey, (oldSession) => {
+						if (!oldSession) return oldSession;
+						if (oldSession.activeStreamId == null) return oldSession;
+						return { ...oldSession, activeStreamId: null };
 					});
 				}}
 			/>

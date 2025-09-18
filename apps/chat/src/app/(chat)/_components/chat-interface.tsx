@@ -18,7 +18,7 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { AlertCircle, ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -88,6 +88,7 @@ interface ChatInterfaceProps {
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
 	onAssistantStreamError?: (info: { messageId?: string; phase?: string }) => void;
+	onResumeStateChange?: (hasActiveStream: boolean) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
 
@@ -103,10 +104,16 @@ export function ChatInterface({
 	onNewAssistantMessage,
 	onQuotaError,
 	onAssistantStreamError,
+	onResumeStateChange,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
-	const { sessionId, resume, hasActiveStream } = useSessionState(session, fallbackSessionId);
+	const {
+		sessionId,
+		resume,
+		hasActiveStream,
+		setHasActiveStream,
+	} = useSessionState(session, fallbackSessionId);
 	// Most errors escalate to the boundary; streaming/storage issues are handled inline
 
 	// Hook for handling ALL errors via error boundaries
@@ -249,6 +256,8 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 					metadata: chatError.metadata,
 				});
 				setDataStream([]);
+				setHasActiveStream(false);
+				onResumeStateChange?.(false);
 				const phase =
 					typeof chatError.metadata?.phase === "string"
 						? chatError.metadata.phase
@@ -324,12 +333,29 @@ const [streamingError, setStreamingError] = useState<ChatError | null>(null);
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
+			setHasActiveStream(false);
+			onResumeStateChange?.(false);
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
 			setDataStream((ds) => [...ds, dataPart]);
 		},
 	});
+
+	const previousStatusRef = useRef(status);
+	useEffect(() => {
+		const previousStatus = previousStatusRef.current;
+		if (status === "streaming" && previousStatus !== "streaming") {
+			setHasActiveStream(true);
+			onResumeStateChange?.(true);
+		}
+		if (status !== "streaming" && previousStatus === "streaming") {
+			// Ensure we clear local state when leaving streaming unexpectedly.
+			setHasActiveStream(false);
+			onResumeStateChange?.(false);
+		}
+		previousStatusRef.current = status;
+	}, [status, setHasActiveStream, onResumeStateChange]);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
 	const { data: feedback } = useFeedbackQuery({

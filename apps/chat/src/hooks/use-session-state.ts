@@ -1,28 +1,31 @@
+import { useEffect, useMemo, useState } from "react";
 import type { ChatRouterOutputs } from "@api/chat";
 
-// Session type from API - use getMetadata which includes activeStreamId
 type Session = ChatRouterOutputs["session"]["getMetadata"];
 
 /**
- * Hook to manage session-related state for ChatInterface
- * Handles both authenticated (with session) and unauthenticated (without session) cases
+ * Manages session identifiers and whether a resumable stream is currently active.
+ * The hook keeps `hasActiveStream` in local state so the UI can react to runtime
+ * signals (e.g., persistence/resume failures) without waiting for a server refetch.
  */
-export function useSessionState(
-	session?: Session, 
-	fallbackSessionId?: string
-) {
-	// Use session ID if available, otherwise fallback, otherwise generate one
-	const sessionId = session?.id ?? fallbackSessionId ?? crypto.randomUUID();
-	
-	// Derive resume and hasActiveStream from session.activeStreamId
-	// For unauthenticated users (no session), these are always false
-	const activeStreamId = session?.activeStreamId;
-	const resume = activeStreamId !== null && activeStreamId !== undefined;
-	const hasActiveStream = activeStreamId !== null && activeStreamId !== undefined;
-	
+export function useSessionState(session?: Session, fallbackSessionId?: string) {
+	const sessionId = useMemo(
+		() => session?.id ?? fallbackSessionId ?? crypto.randomUUID(),
+		[session?.id, fallbackSessionId],
+	);
+
+	const initialHasActiveStream = Boolean(session?.activeStreamId);
+	const [hasActiveStream, setHasActiveStream] = useState(initialHasActiveStream);
+
+	// Sync local state when the server-provided session metadata changes (e.g., refetch).
+	useEffect(() => {
+		setHasActiveStream(Boolean(session?.activeStreamId));
+	}, [session?.activeStreamId]);
+
 	return {
 		sessionId,
-		resume,
+		resume: hasActiveStream,
 		hasActiveStream,
+		setHasActiveStream,
 	};
 }
