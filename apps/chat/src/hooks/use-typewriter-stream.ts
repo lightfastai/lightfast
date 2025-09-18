@@ -17,7 +17,9 @@ export function useTypewriterStream(
 ): string {
 	const speedMs = options.speedMs ?? DEFAULT_TYPEWRITER_SPEED_MS;
 	const [stream, setStream] = useState(text);
-	const frameRef = useRef<ReturnType<typeof requestAnimationFrame>>();
+	const frameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(
+		null,
+	);
 	const lastTimeRef = useRef(0);
 	const indexRef = useRef(text.length);
 	const previousTextRef = useRef(text);
@@ -26,9 +28,9 @@ export function useTypewriterStream(
 	// Cancel any pending animation frame on unmount.
 	useEffect(() => {
 		return () => {
-			if (frameRef.current !== undefined) {
+			if (frameRef.current !== null) {
 				cancelAnimationFrame(frameRef.current);
-				frameRef.current = undefined;
+				frameRef.current = null;
 			}
 			isAnimatingRef.current = false;
 		};
@@ -39,9 +41,9 @@ export function useTypewriterStream(
 		previousTextRef.current = text;
 
 		if (!animate) {
-			if (frameRef.current !== undefined) {
+			if (frameRef.current !== null) {
 				cancelAnimationFrame(frameRef.current);
-				frameRef.current = undefined;
+				frameRef.current = null;
 			}
 			isAnimatingRef.current = false;
 			indexRef.current = text.length;
@@ -51,9 +53,9 @@ export function useTypewriterStream(
 		}
 
 		if (text.length === 0) {
-			if (frameRef.current !== undefined) {
+			if (frameRef.current !== null) {
 				cancelAnimationFrame(frameRef.current);
-				frameRef.current = undefined;
+				frameRef.current = null;
 			}
 			isAnimatingRef.current = false;
 			indexRef.current = 0;
@@ -98,9 +100,9 @@ export function useTypewriterStream(
 		}
 
 		return () => {
-			if (frameRef.current !== undefined) {
+			if (frameRef.current !== null) {
 				cancelAnimationFrame(frameRef.current);
-				frameRef.current = undefined;
+				frameRef.current = null;
 			}
 			isAnimatingRef.current = false;
 		};
