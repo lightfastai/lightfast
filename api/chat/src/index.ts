@@ -22,3 +22,18 @@ export { createCallerFactory } from "./trpc";
 
 // Export billing utilities
 export { calculateBillingPeriod } from "./router/chat/usage";
+
+// Export shared billing types
+export {
+	MessageType,
+	ClerkPlanKey,
+	BILLING_LIMITS,
+	BillingErrorCode,
+	UsageLimitExceededError,
+	ModelNotAllowedError,
+	FeatureNotAllowedError,
+	GRACE_PERIOD_DAYS,
+	getClerkPlanId,
+	hasClerkPlan,
+} from "./lib/billing/types";
+export type { BillingPlanLimits, BillingInterval, BillingError } from "./lib/billing/types";

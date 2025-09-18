@@ -125,20 +125,28 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							const messageType = getMessageType(selectedModelId);
 							const isPremium = messageType === MessageType.PREMIUM;
 
-							// Optimistic decrement to prevent spam clicking
-							return produce(oldUsageData, (draft) => {
-								if (isPremium) {
-									draft.remainingQuota.premiumMessages = Math.max(
-										0,
-										draft.remainingQuota.premiumMessages - 1,
-									);
-								} else {
-									draft.remainingQuota.nonPremiumMessages = Math.max(
-										0,
-										draft.remainingQuota.nonPremiumMessages - 1,
-									);
-								}
-							});
+							// Optimistic decrement to prevent spam clicking and keep billing view in sync
+				return produce(oldUsageData, (draft) => {
+					if (isPremium) {
+						draft.remainingQuota.premiumMessages = Math.max(
+							0,
+							draft.remainingQuota.premiumMessages - 1,
+						);
+						draft.usage.premiumMessages += 1;
+						const premiumLimit = draft.limits.premiumMessages;
+						draft.exceeded.premiumMessages =
+							draft.usage.premiumMessages >= premiumLimit;
+					} else {
+						draft.remainingQuota.nonPremiumMessages = Math.max(
+							0,
+							draft.remainingQuota.nonPremiumMessages - 1,
+						);
+						draft.usage.nonPremiumMessages += 1;
+						const standardLimit = draft.limits.nonPremiumMessages;
+						draft.exceeded.nonPremiumMessages =
+							draft.usage.nonPremiumMessages >= standardLimit;
+					}
+				});
 						},
 					);
 				}}
@@ -153,13 +161,27 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							const isPremium = messageType === MessageType.PREMIUM;
 
 							// Rollback: increment quota back
-							return produce(oldUsageData, (draft) => {
-								if (isPremium) {
-									draft.remainingQuota.premiumMessages += 1;
-								} else {
-									draft.remainingQuota.nonPremiumMessages += 1;
-								}
-							});
+				return produce(oldUsageData, (draft) => {
+					if (isPremium) {
+						draft.remainingQuota.premiumMessages += 1;
+						draft.usage.premiumMessages = Math.max(
+							0,
+							draft.usage.premiumMessages - 1,
+						);
+						const premiumLimit = draft.limits.premiumMessages;
+						draft.exceeded.premiumMessages =
+							draft.usage.premiumMessages >= premiumLimit;
+					} else {
+						draft.remainingQuota.nonPremiumMessages += 1;
+						draft.usage.nonPremiumMessages = Math.max(
+							0,
+							draft.usage.nonPremiumMessages - 1,
+						);
+						const standardLimit = draft.limits.nonPremiumMessages;
+						draft.exceeded.nonPremiumMessages =
+							draft.usage.nonPremiumMessages >= standardLimit;
+					}
+				});
 						},
 					);
 					console.log('[NewSessionChat] Rolled back optimistic quota update for model:', modelId);

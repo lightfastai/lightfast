@@ -124,18 +124,26 @@ export function ExistingSessionChat({
 							const messageType = getMessageType(selectedModelId);
 							const isPremium = messageType === MessageType.PREMIUM;
 
-							// Optimistic decrement to prevent spam clicking
+							// Optimistic decrement to prevent spam clicking and keep billing view in sync
 							return produce(oldUsageData, (draft) => {
 								if (isPremium) {
 									draft.remainingQuota.premiumMessages = Math.max(
 										0,
 										draft.remainingQuota.premiumMessages - 1,
 									);
+									draft.usage.premiumMessages += 1;
+									const premiumLimit = draft.limits.premiumMessages;
+									draft.exceeded.premiumMessages =
+										draft.usage.premiumMessages >= premiumLimit;
 								} else {
 									draft.remainingQuota.nonPremiumMessages = Math.max(
 										0,
 										draft.remainingQuota.nonPremiumMessages - 1,
 									);
+									draft.usage.nonPremiumMessages += 1;
+									const standardLimit = draft.limits.nonPremiumMessages;
+									draft.exceeded.nonPremiumMessages =
+										draft.usage.nonPremiumMessages >= standardLimit;
 								}
 							});
 						},
@@ -155,8 +163,22 @@ export function ExistingSessionChat({
 							return produce(oldUsageData, (draft) => {
 								if (isPremium) {
 									draft.remainingQuota.premiumMessages += 1;
+									draft.usage.premiumMessages = Math.max(
+										0,
+										draft.usage.premiumMessages - 1,
+									);
+									const premiumLimit = draft.limits.premiumMessages;
+									draft.exceeded.premiumMessages =
+										draft.usage.premiumMessages >= premiumLimit;
 								} else {
 									draft.remainingQuota.nonPremiumMessages += 1;
+									draft.usage.nonPremiumMessages = Math.max(
+										0,
+										draft.usage.nonPremiumMessages - 1,
+									);
+									const standardLimit = draft.limits.nonPremiumMessages;
+									draft.exceeded.nonPremiumMessages =
+										draft.usage.nonPremiumMessages >= standardLimit;
 								}
 							});
 						},

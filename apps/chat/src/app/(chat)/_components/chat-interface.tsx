@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import * as Sentry from "@sentry/nextjs";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { PromptSuggestions } from "./prompt-suggestions";
@@ -317,6 +318,15 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
+	const metricsTags = useMemo(
+		() => ({
+			agentId,
+			modelId: selectedModelId,
+			authenticated: isAuthenticated ? "true" : "false",
+		}),
+		[agentId, selectedModelId, isAuthenticated],
+	);
+
 	// Check if current model can be used (for UI state)
 	const canUseCurrentModel = billingContext.isLoaded
 		? billingContext.usage.canUseModel(selectedModelId)
@@ -351,6 +361,20 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			const source = chatError.source ?? getMetadataString(metadata, "source");
 				const failedMessageId = getMetadataString(metadata, "messageId");
 
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				level: severity === "fatal" ? "error" : "warning",
+				message: "Chat interface error",
+				data: {
+					agentId,
+					sessionId,
+					category,
+					severity,
+					source,
+					errorCode: chatError.errorCode,
+				},
+			});
+
 			const inlineStreamCategories = new Set([
 				"stream",
 				"persistence",
@@ -359,7 +383,14 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			const isStreamingRelated =
 				category !== undefined && inlineStreamCategories.has(category);
 
-			if (isStreamingRelated) {
+			if (isStreamingRelated && category) {
+				Sentry.captureMessage("chat.ui.error.streaming", {
+					level: "error",
+					extra: {
+						...metricsTags,
+						category,
+					},
+				});
 				console.error("[Streaming Error] Inline-stream failure detected:", {
 					category,
 					severity,
@@ -404,7 +435,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			const fatalBySource = source === "guard";
 			const fatalByType = CRITICAL_ERROR_TYPES.includes(chatError.type);
 
-			if (fatalBySeverity || fatalBySource || fatalByType) {
+				if (fatalBySeverity || fatalBySource || fatalByType) {
 				interface EnhancedError extends Error {
 					statusCode?: number;
 					type?: ChatErrorType;
@@ -425,8 +456,11 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 					message: chatError.message,
 				});
 
-				throwToErrorBoundary(errorForBoundary);
-			}
+					Sentry.captureMessage("Chat interface fatal error", {
+						level: "error",
+					});
+					throwToErrorBoundary(errorForBoundary);
+				}
 
 			console.error("[Chat Error] Non-fatal error captured inline", {
 				type: chatError.type,
@@ -454,18 +488,63 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 	});
 
 	const previousStatusRef = useRef(status);
+	const streamStartedAtRef = useRef<number | null>(null);
 	useEffect(() => {
 		const previousStatus = previousStatusRef.current;
 		if (status === "streaming" && previousStatus !== "streaming") {
+			if (typeof performance !== "undefined") {
+				streamStartedAtRef.current = performance.now();
+			}
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "stream_started",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+				},
+			});
 			setHasActiveStream(true);
 			onResumeStateChange?.(true);
 		}
 		if (status !== "streaming" && previousStatus === "streaming") {
+			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
+				const duration = performance.now() - streamStartedAtRef.current;
+				Sentry.addBreadcrumb({
+					category: "chat-ui",
+					message: "stream_duration",
+					data: {
+						...metricsTags,
+						duration,
+						finalStatus: status,
+					},
+				});
+			}
+			streamStartedAtRef.current = null;
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "stream_completed",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+					finalStatus: status,
+				},
+			});
 			disableResume();
 			onResumeStateChange?.(false);
 		}
 		previousStatusRef.current = status;
-	}, [status, setHasActiveStream, onResumeStateChange, disableResume]);
+	}, [
+		status,
+		setHasActiveStream,
+		onResumeStateChange,
+		disableResume,
+		metricsTags,
+		agentId,
+		sessionId,
+		selectedModelId,
+	]);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
 	const { data: feedback } = useFeedbackQuery({
@@ -517,6 +596,19 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			}
 		}
 
+		Sentry.addBreadcrumb({
+			category: "chat-ui",
+			message: "send_message",
+			data: {
+				agentId,
+				sessionId,
+				modelId: selectedModelId,
+				length: message.length,
+				webSearchEnabled,
+			},
+		});
+		// Additional context stored as breadcrumb via send_message entry
+
 		try {
 			// Call handleSessionCreation when this is the first message in a new session
 			// Only call when this is truly the first message (no existing messages)
@@ -548,6 +640,17 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 				},
 			});
 
+			// Success breadcrumb already recorded above
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "send_message_success",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+				},
+			});
+
 			// Increment count for anonymous users after successful send
 			if (!isAuthenticated) {
 				incrementCount();
@@ -555,6 +658,15 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		} catch (error) {
 			// Log and throw to error boundary
 			ChatErrorHandler.handleError(error);
+			Sentry.captureException(error, {
+				contexts: {
+					"chat-ui": {
+						agentId,
+						sessionId,
+						modelId: selectedModelId,
+					},
+				},
+			});
 			throwToErrorBoundary(error);
 		}
 	};
