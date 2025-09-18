@@ -52,10 +52,10 @@ export const LightfastChatQuotaReservation = mysqlTable(
     messageType: varchar("message_type", { length: 10 }).notNull(),
     
     /**
-     * Billing period in YYYY-MM format
-     * Example: "2025-01", "2025-02"
+     * Billing period identifier in YYYY-MM or YYYY-MM-DD format
+     * Example: "2025-01" for calendar month, "2025-01-15" for billing anniversaries
      */
-    period: varchar("period", { length: 7 }).notNull(),
+    period: varchar("period", { length: 10 }).notNull(),
     
     /**
      * Reservation status

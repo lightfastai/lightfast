@@ -30,11 +30,11 @@ export const LightfastChatUsage = mysqlTable(
     clerkUserId: varchar("clerk_user_id", { length: 191 }).notNull(),
     
     /**
-     * Usage period in YYYY-MM format
-     * Example: "2025-01", "2025-02"
-     * Allows for monthly billing cycles
+     * Usage period identifier in YYYY-MM or YYYY-MM-DD format
+     * Example: "2025-01" for calendar month, "2025-01-15" for billing anniversaries
+     * Allows alignment with either calendar or subscription billing cycles
      */
-    period: varchar("period", { length: 7 }).notNull(),
+    period: varchar("period", { length: 10 }).notNull(),
     
     /**
      * Count of non-premium messages used in this period
