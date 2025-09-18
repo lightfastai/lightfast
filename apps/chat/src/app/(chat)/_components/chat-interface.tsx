@@ -727,7 +727,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		messages.length === 0 && isNewSession ? (
 			// For truly new chats (no messages yet), show centered layout
 			<div className="h-full flex flex-col items-center justify-center bg-background">
-				<div className="w-full max-w-3xl px-7">
+				<div className="w-full max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
 					<div className="mb-8">
 						<ChatEmptyState
 							prompt={
@@ -884,7 +884,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 					onInlineErrorDismiss={dismissInlineError}
 				/>
 				<div className="relative">
-					<div className="max-w-3xl mx-auto px-7">
+					<div className="max-w-3xl mx-auto px-1.5 md:px-3 lg:px-6 xl:px-10">
 						{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
 						{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
 							<div className="mb-2">
@@ -893,7 +893,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 						)}
 
 						<div className="flex-shrink-0">
-							<div className="chat-container relative">
+							<div className="chat-container relative px-1.5 md:px-3 lg:px-5 xl:px-8">
 								{/* Gradient overlay */}
 								{isAuthenticated && (
 									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
@@ -995,7 +995,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 							{/* Description text */}
 							{messages.length > 0 && (
-								<div className="chat-container">
+								<div className="chat-container px-1.5 md:px-3 lg:px-5 xl:px-8">
 									<p className="text-xs text-muted-foreground text-center mt-2">
 										Lightfast may make mistakes. Use with discretion.
 									</p>

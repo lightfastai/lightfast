@@ -1,204 +1,175 @@
 "use client";
 
 import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import {
-	AlertCircle,
-	ExternalLink,
-	Globe,
-	Loader2,
-	Sparkles,
+  Tool,
+  ToolHeader,
+  ToolHeaderMain,
+  ToolIcon,
+  ToolTitle,
+} from "@repo/ui/components/ai-elements/tool";
+import {
+  AlertCircle,
+  ExternalLink,
+  Globe,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import type { WebSearchToolUIPart } from "~/ai/lightfast-app-chat-ui-messages";
 import { formatToolErrorPayload } from "./tool-error-utils";
 
 const DEFAULT_ERROR_MESSAGE = "We couldn't complete the web search. Please try again.";
 
-// Type definitions for web search results based on the tool's return structure
 interface WebSearchResult {
-	title: string;
-	url: string;
-	content: string;
-	contentType: string;
-	score?: number;
+  title: string;
+  url: string;
+  content: string;
+  contentType: string;
+  score?: number;
 }
 
+const toHostname = (url: string): string => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+};
+
 export interface WebSearchToolProps {
-	toolPart: WebSearchToolUIPart;
+  toolPart: WebSearchToolUIPart;
 }
 
 export const WebSearchTool = memo(function WebSearchTool({
-	toolPart,
+  toolPart,
 }: WebSearchToolProps) {
-	const metadata = { displayName: "Web Search" };
+  const metadata = { displayName: "Web Search" };
 
-	// Extract input data with explicit typing to avoid any inference
-	const input = toolPart.input as { query?: string } | undefined;
-	const searchQuery = input?.query;
-	
-	// Extract output data if available with explicit typing
-	const output = toolPart.state === "output-available" 
-		? toolPart.output as { results?: WebSearchResult[] } | undefined
-		: undefined;
-	const results = output?.results;
-	const resultCount = results?.length ?? 0;
+  const input = toolPart.input as { query?: string } | undefined;
+  const searchQuery = input?.query;
 
-	const accordionValue = `web-search-${Math.random().toString(36).substr(2, 9)}`;
+  switch (toolPart.state) {
+    case "input-streaming":
+    case "input-available": {
+      const isPreparing = toolPart.state === "input-streaming";
+      const icon = isPreparing ? (
+        <Sparkles className="h-4 w-4 animate-pulse text-blue-500" />
+      ) : (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      );
 
-	// Handle input-streaming state
-	if (toolPart.state === "input-streaming") {
-		return (
-			<div className="my-2 border rounded-lg px-4 py-3 bg-muted/30">
-				<div className="flex items-center gap-2">
-					<Sparkles className="h-4 w-4 animate-pulse text-blue-500" />
-					<div className="text-sm">
-						<div className="font-medium text-muted-foreground">
-							Preparing {metadata.displayName}...
-						</div>
-						{searchQuery && (
-							<p className="text-xs text-muted-foreground/70 mt-1">
-								Query: "{searchQuery}"
-							</p>
-						)}
-					</div>
-				</div>
-			</div>
-		);
-	}
+      const labelPrefix = isPreparing ? "Preparing Web Search" : "Web Search running";
+      const label = searchQuery ? `${labelPrefix}: "${searchQuery}"` : `${labelPrefix}...`;
 
-	// Handle input-available state (tool is executing)
-	if (toolPart.state === "input-available") {
-		return (
-			<div className="my-6 border rounded-lg w-full">
-				<Accordion type="single" collapsible className="w-full">
-					<AccordionItem value={accordionValue}>
-						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
-							<div className="flex items-center gap-2 flex-1">
-								<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-								<div className="text-left flex-1">
-									<div className="font-medium text-xs lowercase text-muted-foreground">
-										searching...
-									</div>
-								</div>
-							</div>
-						</AccordionTrigger>
-						<AccordionContent className="px-4">
-							<div className="pt-3">
-								<div className="group flex items-center gap-3 rounded-lg p-2 px-3">
-									<Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
-									<span className="text-xs font-medium text-muted-foreground flex-1">
-										Searching for relevant information...
-									</span>
-								</div>
-							</div>
-						</AccordionContent>
-					</AccordionItem>
-				</Accordion>
-			</div>
-		);
-	}
+      return (
+        <Tool className="my-6">
+          <ToolHeader>
+            <ToolIcon>{icon}</ToolIcon>
+            <ToolHeaderMain>
+              <ToolTitle className="text-sm">{label}</ToolTitle>
+            </ToolHeaderMain>
+          </ToolHeader>
+        </Tool>
+      );
+    }
+    case "output-error": {
+      const { formattedError, isStructured } = formatToolErrorPayload(
+        toolPart.errorText,
+        DEFAULT_ERROR_MESSAGE,
+      );
 
-	const { formattedError, isStructured } = useMemo(
-		() => formatToolErrorPayload(toolPart.errorText, DEFAULT_ERROR_MESSAGE),
-		[toolPart.errorText],
-	);
+      return (
+        <div className="my-6 border rounded-lg w-full">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="web-search-error">
+              <AccordionTrigger className="items-center px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+                <div className="flex flex-1 items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-medium text-destructive">
+                      {metadata.displayName} failed
+                    </div>
+                    {searchQuery ? (
+                      <p className="mt-1 text-xs text-muted-foreground/70">Query: "{searchQuery}"</p>
+                    ) : null}
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4">
+                <div className="pb-4 pt-3">
+                  {isStructured ? (
+                    <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground">
+                      {formattedError}
+                    </pre>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{formattedError}</p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      );
+    }
+    case "output-available": {
+      const output = toolPart.output as { results?: WebSearchResult[] } | undefined;
+      const results = output?.results;
+      const resultCount = results?.length ?? 0;
 
-	// Handle output-error state
-	if (toolPart.state === "output-error") {
-		return (
-			<div className="my-6 border rounded-lg w-full">
-				<Accordion type="single" collapsible className="w-full">
-					<AccordionItem value={accordionValue}>
-						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
-							<div className="flex items-center gap-2 flex-1">
-								<AlertCircle className="h-4 w-4 text-destructive" />
-								<div className="text-left flex-1">
-									<div className="font-medium text-sm text-destructive">{metadata.displayName} failed</div>
-									{searchQuery && (
-										<div className="text-xs text-muted-foreground/70 mt-1">
-											Query: "{searchQuery}"
-										</div>
-									)}
-								</div>
-							</div>
-						</AccordionTrigger>
-						<AccordionContent className="px-4">
-							<div className="pt-3 pb-4">
-								{isStructured ? (
-									<pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground">
-										{formattedError}
-									</pre>
-								) : (
-									<p className="text-xs text-muted-foreground">{formattedError}</p>
-								)}
-							</div>
-						</AccordionContent>
-					</AccordionItem>
-				</Accordion>
-			</div>
-		);
-	}
-
-	// Handle output-available state (tool completed successfully)
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-	if (toolPart.state === "output-available") {
-		return (
-			<div className="my-6 border rounded-lg w-full">
-				<Accordion type="single" collapsible className="w-full">
-					<AccordionItem value={accordionValue}>
-						<AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
-							<div className="flex items-center gap-2 flex-1">
-								<Globe className="h-4 w-4 text-muted-foreground" />
-								<div className="text-left flex-1">
-									<div className="font-medium text-xs lowercase text-muted-foreground">
-										{searchQuery}
-									</div>
-								</div>
-								<span className="text-xs text-muted-foreground/70">
-									{resultCount} results
-								</span>
-							</div>
-						</AccordionTrigger>
-						<AccordionContent className="px-4">
-							{results && results.length > 0 ? (
-								<div className="pt-3">
-									{results.map((result: WebSearchResult, index: number) => (
-										<div key={`web-search-result-${index}`}>
-											<Link
-												href={result.url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="group flex items-center gap-3 hover:bg-muted/50 rounded-sm p-2 px-3"
-											>
-												<h4 className="text-xs font-medium text-foreground flex-1 truncate">
-													{result.title}
-												</h4>
-												<span className="text-xs text-muted-foreground/70 shrink-0">
-													{new URL(result.url).hostname}
-												</span>
-												<ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-											</Link>
-										</div>
-									))}
-								</div>
-							) : (
-								<p className="text-sm text-muted-foreground py-2">
-									No results found.
-								</p>
-							)}
-						</AccordionContent>
-					</AccordionItem>
-				</Accordion>
-			</div>
-		);
-	}
-
-	// Fallback for unknown state
-	return null;
+      return (
+        <div className="my-6 border rounded-lg w-full">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="web-search-results">
+              <AccordionTrigger className="items-center px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+                <div className="flex flex-1 items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 text-left">
+                    <div className="text-xs font-medium lowercase text-muted-foreground">
+                      {searchQuery ?? metadata.displayName}
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground/70">{resultCount} results</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4">
+                {results && results.length > 0 ? (
+                  <div className="pt-3">
+                    {results.map((result, index) => (
+                      <div key={`web-search-result-${index}`}>
+                        <Link
+                          href={result.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-muted/50"
+                        >
+                          <h4 className="flex-1 truncate text-xs font-medium text-foreground">
+                            {result.title}
+                          </h4>
+                          <span className="shrink-0 text-xs text-muted-foreground/70">
+                            {toHostname(result.url)}
+                          </span>
+                          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-2 text-sm text-muted-foreground">No results found.</p>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      );
+    }
+    default:
+      return null;
+  }
 });

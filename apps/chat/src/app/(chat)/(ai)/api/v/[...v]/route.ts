@@ -4,10 +4,7 @@ import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, initLogger, traced } from "braintrust";
 import * as Sentry from "@sentry/nextjs";
-import {
-	getBraintrustConfig,
-	isOtelEnabled,
-} from "@repo/ai/braintrust-env";
+import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { auth } from "@clerk/nextjs/server";
@@ -25,6 +22,8 @@ import {
 import { runGuards } from "./_lib/policy-engine";
 import { chatGuards } from "./_lib/route-policies";
 import type { ChatRouteResources } from "./_lib/route-policies";
+
+// export const runtime = "edge";
 
 // Initialize Braintrust logging
 const braintrustConfig = getBraintrustConfig();
@@ -98,7 +97,10 @@ const handler = async (
 				level: "warning",
 				extra: { method: req.method },
 			});
-			return applyTelemetryHeaders(ApiErrors.invalidPath({ requestId }), telemetry);
+			return applyTelemetryHeaders(
+				ApiErrors.invalidPath({ requestId }),
+				telemetry,
+			);
 		}
 
 		let authenticatedUserId: string | null = null;
@@ -227,11 +229,17 @@ const handler = async (
 				sessionId,
 				userId,
 			};
-			console.error(`[API Route] Missing resources after policy evaluation`, diagnostic);
-			Sentry.captureMessage("Chat route missing resources after guard evaluation", {
-				level: "error",
-				contexts: { diagnostic },
-			});
+			console.error(
+				`[API Route] Missing resources after policy evaluation`,
+				diagnostic,
+			);
+			Sentry.captureMessage(
+				"Chat route missing resources after guard evaluation",
+				{
+					level: "error",
+					contexts: { diagnostic },
+				},
+			);
 			return applyTelemetryHeaders(
 				ApiErrors.internalError(new Error("Missing runtime dependencies"), {
 					requestId,
@@ -382,7 +390,8 @@ const handler = async (
 									? "[API Error - Resume]"
 									: "[API Error]";
 
-								const statusCode = (error as { statusCode?: number }).statusCode;
+								const statusCode = (error as { statusCode?: number })
+									.statusCode;
 
 								console.error(
 									`${logPrefix} Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}, Code: ${statusCode}`,
@@ -429,8 +438,8 @@ const handler = async (
 									!authState.isAnonymous &&
 									billing.quotaReservation
 								) {
-								const reservationId = billing.quotaReservation.reservationId;
-								void Sentry.startSpan(
+									const reservationId = billing.quotaReservation.reservationId;
+									void Sentry.startSpan(
 										{
 											name: "billing.releaseQuotaReservation",
 											op: "billing.release",
@@ -446,7 +455,10 @@ const handler = async (
 													category: "billing",
 													level: "info",
 													message: "quota_release_success",
-													data: { reservationId, userId: authState.clerkUserId },
+													data: {
+														reservationId,
+														userId: authState.clerkUserId,
+													},
 												});
 											} catch (releaseError) {
 												console.error(
@@ -462,10 +474,16 @@ const handler = async (
 														},
 													},
 												});
-												Sentry.captureMessage("chat.billing.quota.release_failed", {
-													level: "error",
-													extra: { reservationId, userId: authState.clerkUserId },
-												});
+												Sentry.captureMessage(
+													"chat.billing.quota.release_failed",
+													{
+														level: "error",
+														extra: {
+															reservationId,
+															userId: authState.clerkUserId,
+														},
+													},
+												);
 											}
 										},
 									);

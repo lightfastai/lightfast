@@ -113,7 +113,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		return (
 			<div className={`flex-shrink-0 ${className}`}>
-				<div className="chat-container relative">
+				<div className="chat-container relative px-4 md:px-6 lg:px-8">
 					{/* Gradient overlay */}
 					{withGradient && (
 						<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none">
@@ -172,7 +172,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 				{/* Description text */}
 				{withDescription && (
-					<div className="chat-container">
+					<div className="chat-container px-4 md:px-6 lg:px-8">
 						<p className="text-xs text-muted-foreground text-center mt-2">
 							{withDescription}
 						</p>

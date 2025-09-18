@@ -6,6 +6,7 @@ import {
 	config as vendorConfig,
 	withBetterStack,
 	withSentry,
+	withAnalyzer,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
 
@@ -67,6 +68,11 @@ let config: NextConfig = withBetterStack(
 // Apply Sentry configuration in Vercel environment
 if (env.VERCEL) {
 	config = withSentry(config);
+}
+
+// Enable bundle analysis when requested
+if (process.env.ANALYZE === "true") {
+	config = withAnalyzer(config);
 }
 
 export default config;

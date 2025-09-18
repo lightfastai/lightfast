@@ -529,7 +529,7 @@ const UserMessage = memo(function UserMessage({
 
 	return (
 		<div className="py-1">
-			<div className="mx-auto max-w-3xl px-14">
+			<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
 				<Message from="user" className="justify-end">
 					<MessageContent variant="chat">
 						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
@@ -623,7 +623,7 @@ const AssistantMessage = memo(function AssistantMessage({
 
 	return (
 		<div className="py-1">
-			<div className="mx-auto max-w-3xl px-14">
+			<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
 				<Message
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
@@ -829,7 +829,7 @@ export function ChatMessages({
 					{/* Show empty state message for existing sessions with no messages */}
 					{isExistingSessionWithNoMessages && (
 						<div className="py-8">
-							<div className="mx-auto max-w-3xl px-7">
+							<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
 								<div className="text-center text-muted-foreground">
 									<p className="text-sm mb-2">
 										This conversation has no messages yet.
