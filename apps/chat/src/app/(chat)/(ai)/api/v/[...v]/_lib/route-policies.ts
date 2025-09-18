@@ -1,0 +1,405 @@
+import { allow, deny } from "./policy-engine";
+import type { Guard } from "./policy-engine";
+import { ApiErrors } from "~/lib/errors/api-error-builder";
+import {
+  MODELS,
+  getModelConfig,
+  getModelStreamingDelay,
+} from "~/ai/providers";
+import type { ModelId } from "~/ai/providers";
+import {
+  arcjet,
+  shield,
+  detectBot,
+  slidingWindow,
+  tokenBucket,
+  checkDecision,
+} from "@vendor/security";
+import { env } from "~/env";
+import { createPlanetScaleMemory, AnonymousRedisMemory } from "~/ai/runtime/memory";
+import { isTestErrorCommand, handleTestErrorCommand } from "~/lib/errors/test-commands";
+import {
+  reserveQuota,
+  QuotaReservationError,
+} from "~/services/quota-reservation.service";
+import { UsageLimitExceededError } from "~/services/usage.service";
+import {
+  ClerkPlanKey,
+  BILLING_LIMITS,
+} from "~/lib/billing/types";
+import { getUserPlan } from "./user-utils";
+
+type PlanLimits = (typeof BILLING_LIMITS)[keyof typeof BILLING_LIMITS];
+
+export interface ChatRouteResources extends Record<string, unknown> {
+  requestId: string;
+  agentId: string;
+  sessionId: string;
+  runtime: {
+    messageId: string;
+  };
+  auth: {
+    clerkUserId: string | null;
+    userId: string;
+    isAnonymous: boolean;
+  };
+  request: {
+    method: string;
+    isResume: boolean;
+    webSearchEnabled: boolean;
+    lastUserMessage: string;
+  };
+  model: {
+    id: ModelId;
+    config?: ReturnType<typeof getModelConfig>;
+    streamingDelay?: number;
+    gatewayModelName?: string;
+  };
+  memory?: ReturnType<typeof createPlanetScaleMemory> | AnonymousRedisMemory;
+  billing?: {
+    plan: ClerkPlanKey;
+    limits: PlanLimits;
+    quotaReservation?: { reservationId: string } | null;
+  };
+}
+
+export type ChatGuard = Guard<ChatRouteResources>;
+
+// Create Arcjet instance for anonymous users only (shared)
+const anonymousArcjet = arcjet({
+  key: env.ARCJET_KEY,
+  characteristics: ["ip.src"],
+  rules: [
+    shield({ mode: "LIVE" }),
+    detectBot({
+      mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+      allow: [],
+    }),
+    slidingWindow({
+      mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+      max: 10,
+      interval: 86400,
+    }),
+    tokenBucket({
+      mode: env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE",
+      refillRate: 1,
+      interval: 8640,
+      capacity: 10,
+    }),
+  ],
+});
+
+export const ensureAgentGuard: ChatGuard = ({ resources }) => {
+  if (resources.agentId !== "c010") {
+    return deny(ApiErrors.agentNotFound(resources.agentId, { requestId: resources.requestId }));
+  }
+
+  return allow();
+};
+
+export const anonymousRateLimitGuard: ChatGuard = async ({ request, resources }) => {
+  if (!resources.auth.isAnonymous) {
+    return allow();
+  }
+
+  const decision = await anonymousArcjet.protect(request, { requested: 1 });
+
+  if (!decision.isDenied()) {
+    return allow();
+  }
+
+  const check = checkDecision(decision);
+  console.warn(`[Security] Anonymous request denied:`, {
+    sessionId: resources.sessionId,
+    ip: decision.ip,
+    reason: check,
+  });
+
+  if (check.isRateLimit) {
+    return deny(ApiErrors.rateLimitExceeded({
+      requestId: resources.requestId,
+      isAnonymous: true,
+    }));
+  }
+
+  if (check.isBot) {
+    return deny(ApiErrors.botDetected({
+      requestId: resources.requestId,
+      isAnonymous: true,
+    }));
+  }
+
+  return deny(ApiErrors.securityBlocked({
+    requestId: resources.requestId,
+    isAnonymous: true,
+  }));
+};
+
+export const memoryGuard: ChatGuard = ({ resources }) => {
+  try {
+    const memory = resources.auth.isAnonymous
+      ? new AnonymousRedisMemory({
+          url: env.KV_REST_API_URL,
+          token: env.KV_REST_API_TOKEN,
+        })
+      : createPlanetScaleMemory();
+
+    resources.memory = memory;
+    return allow();
+  } catch (error) {
+    console.error(`[API] Failed to create memory instance:`, error);
+    return deny(
+      ApiErrors.memoryInitFailed({
+        requestId: resources.requestId,
+        isAnonymous: resources.auth.isAnonymous,
+      }),
+    );
+  }
+};
+
+export const parseRequestGuard: ChatGuard = async ({ request, resources }) => {
+  if (resources.request.isResume) {
+    return allow();
+  }
+
+  try {
+    const body = (await request.clone().json()) as {
+      modelId?: string;
+      webSearchEnabled?: boolean;
+      messages?: { role: string; parts?: { text?: string }[] }[];
+    };
+
+    if (typeof body.modelId === "string") {
+      resources.model.id = body.modelId as ModelId;
+    }
+
+    if (typeof body.webSearchEnabled === "boolean") {
+      resources.request.webSearchEnabled = body.webSearchEnabled;
+    }
+
+    if (Array.isArray(body.messages) && body.messages.length > 0) {
+      const lastMessage = body.messages[body.messages.length - 1];
+      const candidate = lastMessage?.parts?.[0]?.text;
+      if (lastMessage?.role === "user" && typeof candidate === "string") {
+        resources.request.lastUserMessage = candidate;
+      }
+    }
+  } catch (error) {
+    console.warn(`[Chat API] Failed to parse request body:`, error);
+  }
+
+  return allow();
+};
+
+export const testCommandGuard: ChatGuard = ({ resources }) => {
+  if (resources.request.isResume) {
+    return allow();
+  }
+
+  const lastMessage = resources.request.lastUserMessage;
+  if (lastMessage && isTestErrorCommand(lastMessage)) {
+    const response = handleTestErrorCommand(lastMessage);
+    if (response) {
+      return deny(response);
+    }
+  }
+
+  return allow();
+};
+
+export const validateModelGuard: ChatGuard = ({ resources }) => {
+  const selectedModelId = resources.model.id;
+  if (!(selectedModelId in MODELS)) {
+    console.warn(`[API] Invalid model requested: ${selectedModelId}`);
+    return deny(
+      ApiErrors.invalidModel(selectedModelId, {
+        requestId: resources.requestId,
+        isAnonymous: resources.auth.isAnonymous,
+      }),
+    );
+  }
+
+  const config = getModelConfig(selectedModelId);
+  resources.model.config = config;
+  resources.model.streamingDelay = getModelStreamingDelay(selectedModelId);
+  resources.model.gatewayModelName = config.name;
+
+  return allow();
+};
+
+export const enforceModelAccessGuard: ChatGuard = ({ resources }) => {
+  if (
+    resources.auth.isAnonymous &&
+    resources.model.config?.accessLevel === "authenticated"
+  ) {
+    console.warn(
+      `[Security] Anonymous user attempted to use authenticated model: ${resources.model.id}`,
+    );
+    return deny(
+      ApiErrors.modelAccessDenied(resources.model.id, {
+        requestId: resources.requestId,
+        isAnonymous: true,
+      }),
+    );
+  }
+
+  return allow();
+};
+
+export const billingGuard: ChatGuard = async ({ resources }) => {
+  if (resources.auth.isAnonymous) {
+    resources.billing = {
+      plan: ClerkPlanKey.FREE_TIER,
+      limits: BILLING_LIMITS[ClerkPlanKey.FREE_TIER],
+      quotaReservation: null,
+    };
+    return allow();
+  }
+
+  try {
+    const userPlan = await getUserPlan();
+    const limits = BILLING_LIMITS[userPlan];
+
+    if (!resources.request.isResume) {
+      if (!limits.allowedModels.includes(resources.model.id)) {
+        console.warn(
+          `[Billing] Model access denied for ${userPlan} user: ${resources.model.id}`,
+          {
+            allowedModels: limits.allowedModels,
+          },
+        );
+
+        return deny(
+          new Response(
+            JSON.stringify({
+              error: "Model not allowed",
+              message: `Model ${resources.model.id} requires upgrade to Plus plan`,
+              code: "MODEL_NOT_ALLOWED",
+              details: {
+                modelId: resources.model.id,
+                userPlan,
+                allowedModels: limits.allowedModels,
+              },
+            }),
+            {
+              status: 403,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          ),
+        );
+      }
+
+      if (resources.request.webSearchEnabled && !limits.hasWebSearch) {
+        console.warn(`[Billing] Web search access denied for ${userPlan} user`);
+        return deny(
+          new Response(
+            JSON.stringify({
+              error: "Feature not allowed",
+              message: "Web search requires upgrade to Plus plan",
+              code: "FEATURE_NOT_ALLOWED",
+              details: { feature: "webSearch", userPlan },
+            }),
+            {
+              status: 403,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          ),
+        );
+      }
+
+      if (!resources.auth.clerkUserId) {
+        throw new Error("User ID required for quota reservation");
+      }
+
+      const quotaReservation = await reserveQuota(
+        resources.auth.clerkUserId,
+        resources.model.id,
+        resources.runtime.messageId,
+      );
+
+      resources.billing = {
+        plan: userPlan,
+        limits,
+        quotaReservation,
+      };
+    } else {
+      resources.billing = {
+        plan: userPlan,
+        limits,
+        quotaReservation: null,
+      };
+    }
+
+    console.log(
+      `[Billing] User ${resources.auth.clerkUserId} (${resources.billing.plan}) passed billing checks for model: ${resources.model.id}`,
+      {
+        webSearchEnabled: resources.request.webSearchEnabled,
+        modelId: resources.model.id,
+        hasWebSearchAccess: limits.hasWebSearch,
+        isResume: resources.request.isResume,
+      },
+    );
+
+    return allow();
+  } catch (error) {
+    if (error instanceof UsageLimitExceededError || error instanceof QuotaReservationError) {
+      console.warn(
+        `[Billing] Usage limit exceeded for user ${resources.auth.clerkUserId}:`,
+        error instanceof QuotaReservationError ? error.details : error.details,
+      );
+
+      return deny(
+        new Response(
+          JSON.stringify({
+            error: "Usage limit exceeded",
+            message: error.message,
+            code: error.code,
+            details: error.details,
+          }),
+          {
+            status: 402,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        ),
+      );
+    }
+
+    console.error(
+      `[Billing] Unexpected error checking billing for user ${resources.auth.clerkUserId}:`,
+      error,
+    );
+
+    return deny(
+      new Response(
+        JSON.stringify({
+          error: "Internal server error",
+          message: "Failed to check billing access",
+          code: "INTERNAL_ERROR",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+  }
+};
+
+export const chatGuards: ChatGuard[] = [
+  ensureAgentGuard,
+  anonymousRateLimitGuard,
+  memoryGuard,
+  parseRequestGuard,
+  testCommandGuard,
+  validateModelGuard,
+  enforceModelAccessGuard,
+  billingGuard,
+];

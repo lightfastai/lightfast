@@ -109,7 +109,7 @@ const customComponents: Partial<Components> = {
 	h1: ({ children, ...props }) => {
 		return (
 			<h1
-				className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6 first:mt-0"
+				className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6"
 				{...props}
 			>
 				{children}
@@ -119,7 +119,7 @@ const customComponents: Partial<Components> = {
 	h2: ({ children, ...props }) => {
 		return (
 			<h2
-				className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-5"
+				className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-6"
 				{...props}
 			>
 				{children}
@@ -129,7 +129,7 @@ const customComponents: Partial<Components> = {
 	h3: ({ children, ...props }) => {
 		return (
 			<h3
-				className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4"
+				className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-5"
 				{...props}
 			>
 				{children}
@@ -139,7 +139,7 @@ const customComponents: Partial<Components> = {
 	h4: ({ children, ...props }) => {
 		return (
 			<h4
-				className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-3"
+				className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-4"
 				{...props}
 			>
 				{children}
@@ -149,7 +149,7 @@ const customComponents: Partial<Components> = {
 	h5: ({ children, ...props }) => {
 		return (
 			<h5
-				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2"
+				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-3"
 				{...props}
 			>
 				{children}
@@ -159,7 +159,7 @@ const customComponents: Partial<Components> = {
 	h6: ({ children, ...props }) => {
 		return (
 			<h6
-				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2"
+				className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-3"
 				{...props}
 			>
 				{children}

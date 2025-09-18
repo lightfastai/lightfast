@@ -10,6 +10,7 @@
     "./anthropic-env": "./src/env/anthropic-env.ts",
     "./browserbase-env": "./src/env/browserbase-env.ts",
     "./openrouter-env": "./src/env/openrouter-env.ts",
+    "./braintrust-env": "./src/env/braintrust-env.ts",
     "./google-env": "./src/env/google-env.ts",
     "./schema": {
       "types": "./dist/src/schema/index.d.ts",
@@ -40,6 +41,7 @@
     "@fal-ai/client": "^1.2.0",
     "@fal-ai/server-proxy": "^1.1.1",
     "@openrouter/ai-sdk-provider": "^0.4.5",
+    "@t3-oss/env-core": "^0.12.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "ai": "5.0.15",
     "autoevals": "^0.0.103",

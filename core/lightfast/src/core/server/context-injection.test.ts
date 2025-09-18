@@ -10,10 +10,11 @@ import type { SystemContext, RequestContext, RuntimeContext } from "./adapters/t
 
 // Mock the AI SDK's streamText
 vi.mock("ai", async () => {
-	const actual = await vi.importActual("ai");
+	const actual = await vi.importActual<typeof import("ai")>("ai");
 	return {
 		...actual,
 		streamText: vi.fn(),
+		createUIMessageStreamResponse: vi.fn(() => new Response()),
 		convertToModelMessages: vi.fn().mockReturnValue([]),
 	};
 });
@@ -83,14 +84,15 @@ describe("Context Injection from Request to Tools", () => {
 				params.tools.captureTool.execute({ action: "test-action" });
 			}
 
-			// Return a mock stream result
+			// Return a mock stream result compatible with runtime.ts expectations
 			return {
-				textStream: {
-					[Symbol.asyncIterator]: async function* () {
-						yield "Test response";
-					},
-				},
-				toUIMessageStreamResponse: () => new Response(),
+				toUIMessageStream: () =>
+					new ReadableStream({
+						start(controller) {
+							controller.enqueue({ type: "response", id: "chunk" });
+							controller.close();
+						},
+					}),
 			};
 		});
 
@@ -167,8 +169,13 @@ describe("Context Injection from Request to Tools", () => {
 				params.tools.mergeTestTool.execute({ test: "value" });
 			}
 			return {
-				textStream: { [Symbol.asyncIterator]: async function* () { yield ""; } },
-				toUIMessageStreamResponse: () => new Response(),
+				toUIMessageStream: () =>
+					new ReadableStream({
+						start(controller) {
+							controller.enqueue({ type: "response", id: "chunk" });
+							controller.close();
+						},
+					}),
 			};
 		});
 
@@ -245,14 +252,19 @@ describe("Context Injection from Request to Tools", () => {
 
 		// Mock streamText
 		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation(async (params: any) => {
+		(streamText as any).mockImplementation((params: any) => {
 			if (params.tools?.dynamicTool) {
 				// Execute the tool to capture the execution context
-				await params.tools.dynamicTool.execute({ input: "test" });
+				params.tools.dynamicTool.execute({ input: "test" });
 			}
 			return {
-				textStream: { [Symbol.asyncIterator]: async function* () { yield ""; } },
-				toUIMessageStreamResponse: () => new Response(),
+				toUIMessageStream: () =>
+					new ReadableStream({
+						start(controller) {
+							controller.enqueue({ type: "response", id: "chunk" });
+							controller.close();
+						},
+					}),
 			};
 		});
 
@@ -308,8 +320,13 @@ describe("Context Injection from Request to Tools", () => {
 				params.tools.testTool.execute({ value: "test" });
 			}
 			return {
-				textStream: { [Symbol.asyncIterator]: async function* () { yield ""; } },
-				toUIMessageStreamResponse: () => new Response(),
+				toUIMessageStream: () =>
+					new ReadableStream({
+						start(controller) {
+							controller.enqueue({ type: "response", id: "chunk" });
+							controller.close();
+						},
+					}),
 			};
 		});
 
@@ -379,8 +396,13 @@ describe("Context Injection from Request to Tools", () => {
 				}
 			}
 			return {
-				textStream: { [Symbol.asyncIterator]: async function* () { yield ""; } },
-				toUIMessageStreamResponse: () => new Response(),
+				toUIMessageStream: () =>
+					new ReadableStream({
+						start(controller) {
+							controller.enqueue({ type: "response", id: "chunk" });
+							controller.close();
+						},
+					}),
 			};
 		});
 

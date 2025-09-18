@@ -25,6 +25,7 @@
 		"@api/chat": "workspace:*",
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
+		"@repo/ai": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",

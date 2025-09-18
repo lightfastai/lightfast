@@ -11,6 +11,10 @@
 		"./inngest": {
 			"types": "./dist/inngest/index.d.ts",
 			"default": "./src/inngest/index.ts"
+		},
+		"./lib/billing/types": {
+			"types": "./dist/lib/billing/types.d.ts",
+			"default": "./src/lib/billing/types.ts"
 		}
 	},
 	"license": "MIT",
@@ -26,6 +30,7 @@
 		"@ai-sdk/gateway": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
+		"@repo/lib": "workspace:^",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",

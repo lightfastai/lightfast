@@ -15,6 +15,7 @@ let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
 		transpilePackages: [
+			"@repo/ai",
 			"@api/chat",
 			"@repo/ui",
 			"@repo/site-config",
@@ -24,6 +25,12 @@ let config: NextConfig = withBetterStack(
 			"@vendor/next",
 			"@db/chat",
 			"lightfast",
+			"@repo/lib",
+			"@vendor/analytics",
+			"@vendor/inngest",
+			"@vendor/security",
+			"@repo/eslint-config",
+			"@repo/typescript-config",
 		],
 		experimental: {
 			optimizeCss: true,

@@ -1,5 +1,11 @@
-import type { UIMessage, UIMessageStreamOptions, ToolSet, UIMessageStreamWriter, UIMessagePart, UIDataTypes, UITools } from "ai";
-import { streamText, createUIMessageStream, JsonToSseTransformStream } from "ai";
+import type {
+	UIMessage,
+	ToolSet,
+	UIMessagePart,
+	UIDataTypes,
+	UITools,
+} from "ai";
+import { streamText, createUIMessageStreamResponse } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import { v4 as uuidv4 } from "uuid";
 import type { Memory } from "../memory";
@@ -7,13 +13,18 @@ import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
 import type { RequestContext, SystemContext, RuntimeContext } from "./adapters/types";
 import {
+	ApiError,
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
 	toAgentApiError,
 	toMemoryApiError,
 } from "./errors";
-import type { ApiError } from "./errors";
+import {
+	LightfastErrorCategory,
+	LightfastErrorSeverity,
+	LightfastErrorSource,
+} from "./error-classification";
 import { Err, Ok } from "./result";
 import type { Result } from "./result";
 import type {
@@ -259,19 +270,44 @@ export async function streamChat<
 		return Err(toAgentApiError(error, "streamText"));
 	}
 
-	// Use AI SDK v5 pattern with resumable streams
-	const response = result.toUIMessageStreamResponse({
+const serializeErrorForClient = (
+	error: ApiError,
+	overrides: {
+		message?: string;
+		category?: LightfastErrorCategory;
+		severity?: LightfastErrorSeverity;
+		source?: LightfastErrorSource;
+		type?: string;
+		metadata?: Record<string, unknown>;
+	} = {},
+): string => {
+	const status = error.statusCode ?? 500;
+	return JSON.stringify({
+		type: overrides.type ?? mapStatusCodeToChatErrorType(status),
+			error: error.message,
+			message: overrides.message ?? error.message,
+			statusCode: status,
+			errorCode: error.errorCode,
+			source: overrides.source ?? error.source,
+			category: overrides.category ?? error.category,
+			severity: overrides.severity ?? error.severity,
+			metadata: {
+				timestamp: Date.now(),
+				...error.metadata,
+				...overrides.metadata,
+			},
+	});
+};
+
+	let persistenceErrorPayload: string | null = null;
+	let resumeErrorPayload: string | null = null;
+	let resumeSetupPromise: Promise<void> | null = null;
+
+	const uiStream = result.toUIMessageStream({
 		generateMessageId: generateId,
 		sendReasoning: true,
 		originalMessages: allMessages,
-		headers: {
-			"Content-Type": "text/event-stream",
-			"Cache-Control": "no-cache",
-			"Connection": "keep-alive",
-			"Content-Encoding": "none", // Prevent proxy buffering for streaming
-		},
 		onFinish: async (finishResult) => {
-			const agentEndTime = Date.now();
 
 			// Call onAgentComplete lifecycle callback
 			onAgentComplete?.({
@@ -312,15 +348,12 @@ export async function streamChat<
 				}
 
 				try {
-					// In AI SDK streaming context, we work with concrete UIMessage types
-					// Cast memory interface to accept the concrete type returned by AI SDK
 					await (memory as Memory<UIMessage<unknown, UIDataTypes, UITools>, TFetchContext>).appendMessage({
 						sessionId: sid,
 						message: finishResult.responseMessage,
 						context,
 					});
 				} catch (error) {
-					// Convert to proper API error for consistent error handling
 					const apiError = toMemoryApiError(error, "appendMessage");
 					console.error(
 						`Failed to save assistant message to memory for session ${sid}:`,
@@ -332,15 +365,22 @@ export async function streamChat<
 						},
 					);
 
-					// Call onError callback to propagate memory failure to route
+					const persistedMessageId = finishResult.responseMessage?.id;
+					persistenceErrorPayload = serializeErrorForClient(apiError, {
+						message: "We couldn't save this response. Refreshing may lose it.",
+						category: LightfastErrorCategory.Persistence,
+						severity: LightfastErrorSeverity.Recoverable,
+						metadata: {
+							sessionId,
+							streamId,
+							...(persistedMessageId ? { messageId: persistedMessageId } : {}),
+						},
+					});
 					onError?.({
 						systemContext,
 						requestContext: requestContext as RequestContext | undefined,
 						error: apiError,
 					});
-
-					// Note: We don't throw here as the response has already been streamed to the client
-					// but we propagate the error via callback for route handling
 				}
 			}
 
@@ -355,68 +395,145 @@ export async function streamChat<
 				}
 			}
 		},
-		// Create resumable stream if resume is enabled
-		...(shouldEnableResume && {
-			async consumeSseStream({ stream }) {
+		onError: (error) => {
+			const apiError = toAgentApiError(error, "streamText");
+			const payload = serializeErrorForClient(apiError, {
+				category: LightfastErrorCategory.Stream,
+				severity: LightfastErrorSeverity.Recoverable,
+				metadata: {
+					sessionId,
+					streamId,
+				},
+			});
+			if (
+				(persistenceErrorPayload && error instanceof Error && error.message === persistenceErrorPayload) ||
+				(resumeErrorPayload && error instanceof Error && error.message === resumeErrorPayload)
+			) {
+				return payload;
+			}
+		onError?.({
+			systemContext,
+			requestContext: requestContext as RequestContext | undefined,
+			error: apiError,
+		});
+		return payload;
+		},
+	});
+
+	const streamWithErrors = uiStream.pipeThrough(
+		new TransformStream({
+			transform(chunk, controller) {
+				controller.enqueue(chunk);
+			},
+			flush(controller) {
+				const payloads = [
+					persistenceErrorPayload,
+					resumeErrorPayload,
+				].filter((value): value is string => Boolean(value));
+				const seen = new Set<string>();
+				for (const payload of payloads) {
+					if (seen.has(payload)) {
+						continue;
+					}
+					seen.add(payload);
+					controller.enqueue({ type: "error", errorText: payload });
+				}
+			},
+		}),
+	);
+
+	const consumeResumableStream = async ({ stream }: { stream: ReadableStream<string> }) => {
+		try {
+			const clearActive = memory.clearActiveStream?.bind(memory);
+			if (clearActive) {
 				try {
-					// RACE CONDITION PREVENTION: Clear any existing activeStreamId first
-					// This prevents resuming outdated streams when starting new ones
-					if (memory.clearActiveStream) {
-						try {
-							await memory.clearActiveStream(sessionId);
-							console.log(`[Stream Start] Cleared previous active stream ID for session ${sessionId}`);
-						} catch (error) {
-							console.warn(`[Stream Start] Failed to clear previous active stream ID for session ${sessionId}:`, error);
-							// Don't fail stream creation for this cleanup operation
-						}
-					}
-					
-					const streamContext = createResumableStreamContext({
-						waitUntil: (promise) => promise,
-					});
-					
-					// Create the resumable stream with our streamId
-					await streamContext.createNewResumableStream(streamId, () => stream);
-					
-					// Store the active stream ID in memory
-					await memory.createStream({ sessionId, streamId, context });
-					
-					console.log(`[Stream Created] Created resumable stream ${streamId} for session ${sessionId}`);
+					await clearActive(sessionId);
+					console.log(`[Stream Start] Cleared previous active stream ID for session ${sessionId}`);
 				} catch (error) {
-					const apiError = toMemoryApiError(error, "createStream");
-					
-					// CRITICAL: Clear activeStreamId when stream creation fails
-					// This prevents the session from getting stuck in "streaming" state
-					if (memory.clearActiveStream) {
-						try {
-							await memory.clearActiveStream(sessionId);
-							console.log(`[Stream Cleanup] Cleared activeStreamId for session ${sessionId} due to stream creation failure`);
-						} catch (clearError) {
-							console.error(`[Stream Cleanup] CRITICAL: Failed to clear activeStreamId for session ${sessionId} after stream creation failure:`, clearError);
-							// This is critical - session will be stuck until cron cleanup runs
-						}
-					}
-					
-					// Handle stream creation failure based on options
-					if (resumeOptions?.failOnStreamError) {
-						console.error(`[Fail Fast] Stream creation failed for session ${sessionId}:`, error);
-						throw error;
-					} else if (resumeOptions?.silentStreamFailure) {
-						console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, error);
-					} else {
-						console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, error);
-						onError?.({
-							systemContext,
-							requestContext: requestContext as RequestContext | undefined,
-							error: apiError,
-						});
-					}
+					console.warn(`[Stream Start] Failed to clear previous active stream ID for session ${sessionId}:`, error);
 				}
 			}
+
+			const streamContext = createResumableStreamContext({
+				waitUntil: (promise) => promise,
+			});
+
+			await streamContext.createNewResumableStream(streamId, () => stream);
+			await memory.createStream({ sessionId, streamId, context });
+
+			console.log(`[Stream Created] Created resumable stream ${streamId} for session ${sessionId}`);
+		} catch (error: unknown) {
+			const apiError = toMemoryApiError(error, "createStream");
+
+			const clearActive = memory.clearActiveStream?.bind(memory);
+			if (clearActive) {
+				try {
+					await clearActive(sessionId);
+					console.log(`[Stream Cleanup] Cleared activeStreamId for session ${sessionId} due to stream creation failure`);
+				} catch (clearError) {
+					console.error(
+						`[Stream Cleanup] CRITICAL: Failed to clear activeStreamId for session ${sessionId} after stream creation failure:`,
+						clearError,
+					);
+				}
+			}
+
+		if (resumeOptions?.failOnStreamError) {
+			console.error(`[Fail Fast] Stream creation failed for session ${sessionId}:`, error);
+			throw apiError;
+		}
+
+		if (resumeOptions?.silentStreamFailure) {
+			console.warn(`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`, apiError.toJSON());
+		} else {
+			console.warn(`Failed to create stream ${streamId} for session ${sessionId}:`, apiError.toJSON());
+			onError?.({
+				systemContext,
+				requestContext: requestContext as RequestContext | undefined,
+				error: apiError,
+			});
+			resumeErrorPayload = serializeErrorForClient(apiError, {
+				message: "We couldn't enable stream resume for this session.",
+				category: LightfastErrorCategory.Resume,
+				severity: LightfastErrorSeverity.Recoverable,
+				metadata: {
+					sessionId,
+					streamId,
+				},
+			});
+		}
+		}
+	};
+
+	const response = createUIMessageStreamResponse({
+		stream: streamWithErrors,
+		headers: {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache",
+			"Connection": "keep-alive",
+			"Content-Encoding": "none",
+		},
+		...(shouldEnableResume && {
+			consumeSseStream: ({ stream }) => {
+				const promise = consumeResumableStream({ stream });
+				resumeSetupPromise = promise;
+				return promise;
+			},
 		}),
 	});
 
-	// Return the AI SDK response directly (already includes proper headers and streaming)
+	if (shouldEnableResume && resumeOptions?.failOnStreamError) {
+		if (resumeSetupPromise) {
+			try {
+				await resumeSetupPromise;
+			} catch (error) {
+				const normalizedError =
+					error instanceof ApiError ? error : toMemoryApiError(error, "createStream");
+				return Err(normalizedError);
+			}
+		}
+	}
+
 	return Ok(response);
 }
 
@@ -483,4 +600,26 @@ export async function resumeStream<
 		// Convert memory errors to appropriate API errors
 		return Err(toMemoryApiError(error, "resumeStream"));
 	}
+}
+
+function mapStatusCodeToChatErrorType(status: number): string {
+	if (status === 401) {
+		return "AUTHENTICATION";
+	}
+	if (status === 403) {
+		return "SECURITY_BLOCKED";
+	}
+	if (status === 404) {
+		return "INVALID_REQUEST";
+	}
+	if (status === 429) {
+		return "RATE_LIMIT";
+	}
+	if (status >= 500 && status < 600) {
+		return "SERVER_ERROR";
+	}
+	if (status >= 400 && status < 500) {
+		return "INVALID_REQUEST";
+	}
+	return "SERVER_ERROR";
 }

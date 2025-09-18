@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { memo, useState, useEffect, useMemo } from "react";
+import { Fragment, memo, useMemo, useRef, useEffect } from "react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -43,11 +43,21 @@ import {
 	Message,
 	MessageContent,
 } from "@repo/ui/components/ai-elements/message";
-import { Markdown } from "@repo/ui/components/markdown";
+import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import {
+	Copy,
+	ThumbsUp,
+	ThumbsDown,
+	Check,
+	AlertCircle,
+	X,
+} from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
+import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
+import type { ChatInlineError } from "./chat-inline-error";
+import { ChatErrorType } from "~/lib/errors/types";
 
 // Stable sine wave component that persists during streaming
 const StreamingSineWave = memo(function StreamingSineWave({
@@ -77,19 +87,433 @@ interface ChatMessagesProps {
 	_isAuthenticated: boolean;
 	isExistingSessionWithNoMessages?: boolean;
 	hasActiveStream?: boolean;
+	inlineErrors?: ChatInlineError[];
+	onInlineErrorDismiss?: (errorId: string) => void;
 }
 
 // Helper to check if message has meaningful streaming content
 const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
 	return message.parts.some((part) => {
-		// Text parts with more than 1 character
 		if (isTextPart(part) && part.text.trim().length > 1) return true;
-		// Any tool parts
 		if (isToolPart(part)) return true;
-		// Reasoning parts with more than 1 character
 		if (isReasoningPart(part) && part.text.trim().length > 1) return true;
 		return false;
 	});
+};
+
+const StreamingResponse = memo(function StreamingResponse({
+	text,
+	animate,
+	className,
+}: {
+	text: string;
+	animate: boolean;
+	className?: string;
+}) {
+	const contentRef = useRef("");
+	const { stream, addPart } = useStream();
+
+	useEffect(() => {
+		if (!text || !animate) return;
+
+		if (contentRef.current !== text) {
+			const delta = text.slice(contentRef.current.length);
+			if (delta) {
+				addPart(delta);
+			}
+			contentRef.current = text;
+		}
+	}, [text, animate, addPart]);
+
+	if (!animate) return <Response className={className}>{text}</Response>;
+
+	return <Response className={className}>{stream || text}</Response>;
+});
+
+const getRecordString = (record: unknown, key: string): string | undefined => {
+	if (!record || typeof record !== "object") return undefined;
+	const value = (record as Record<string, unknown>)[key];
+	return typeof value === "string" ? value : undefined;
+};
+
+const AssistantTextPart = memo(function AssistantTextPart({
+	cleanedText,
+	shouldAnimate,
+}: {
+	cleanedText: string;
+	shouldAnimate: boolean;
+}) {
+	return (
+		<MessageContent variant="chat" className="w-full py-0">
+			<StreamingResponse text={cleanedText} animate={shouldAnimate} />
+		</MessageContent>
+	);
+});
+
+const AssistantReasoningPart = memo(function AssistantReasoningPart({
+	reasoningText,
+	isStreaming,
+}: {
+	reasoningText: string;
+	isStreaming: boolean;
+}) {
+	return (
+		<div className="w-full">
+			<Reasoning className="w-full" isStreaming={isStreaming}>
+				<ReasoningTrigger />
+				<ReasoningContent>{reasoningText}</ReasoningContent>
+			</Reasoning>
+		</div>
+	);
+});
+
+const getInlineErrorCopy = (
+	inlineError: ChatInlineError,
+): { title: string; message: string } => {
+	const { error } = inlineError;
+	const metadataCategory = getRecordString(error.metadata, "category");
+	const category = inlineError.category ?? error.category ?? metadataCategory;
+	const defaultMessage = error.message;
+	let title = "Something went wrong";
+	let message = defaultMessage;
+
+	if (category === "persistence") {
+		title = "Response not saved";
+		message =
+			"We streamed a reply but failed to store it. Copy anything important before refreshing.";
+		return { title, message };
+	}
+
+	if (category === "resume") {
+		title = "Resume temporarily unavailable";
+		message =
+			"We couldn't keep this response resumable. Refreshing may interrupt the live stream.";
+		return { title, message };
+	}
+
+	if (category === "stream" && error.type === ChatErrorType.SERVER_ERROR) {
+		title = "We couldn't finish that response";
+		return { title, message };
+	}
+
+	switch (error.type) {
+		case ChatErrorType.RATE_LIMIT:
+			title = "We're a bit busy";
+			break;
+		case ChatErrorType.USAGE_LIMIT_EXCEEDED:
+			title = "Usage limit reached";
+			break;
+		case ChatErrorType.AUTHENTICATION:
+			title = "Sign in to continue";
+			break;
+		case ChatErrorType.MODEL_ACCESS_DENIED:
+			title = "Model not available";
+			break;
+		case ChatErrorType.MODEL_UNAVAILABLE:
+			title = "Model unavailable";
+			break;
+		case ChatErrorType.SERVICE_UNAVAILABLE:
+			title = "Service unavailable";
+			break;
+		case ChatErrorType.SECURITY_BLOCKED:
+		case ChatErrorType.BOT_DETECTION:
+			title = "Request blocked";
+			break;
+		case ChatErrorType.NETWORK:
+		case ChatErrorType.TIMEOUT:
+			title = "Connection issue";
+			break;
+		case ChatErrorType.INVALID_REQUEST:
+			title = "Invalid request";
+			break;
+	}
+
+	return { title, message };
+};
+
+const InlineErrorCard = memo(function InlineErrorCard({
+	inlineError,
+	onDismiss,
+}: {
+	inlineError: ChatInlineError;
+	onDismiss?: (errorId: string) => void;
+}) {
+	const { errorCode } = inlineError;
+	const detail = inlineError.error.details;
+	const { title, message } = getInlineErrorCopy(inlineError);
+
+	return (
+		<div className="relative flex w-full items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
+			<AlertCircle className="mt-1 h-4 w-4 shrink-0" />
+			<div className="flex-1 space-y-2">
+				<p className="font-semibold leading-5">{title}</p>
+				<p className="leading-relaxed text-destructive-foreground/90">
+					{message}
+				</p>
+				{detail && (
+					<p className="text-xs text-destructive-foreground/80">{detail}</p>
+				)}
+				{errorCode && (
+					<p className="text-[11px] uppercase tracking-wide text-destructive-foreground/60">
+						Error code: {errorCode}
+					</p>
+				)}
+			</div>
+			{onDismiss && (
+				<button
+					type="button"
+					className="absolute top-3 right-3 rounded-full p-1 text-destructive-foreground transition hover:bg-destructive/20"
+					onClick={() => onDismiss(inlineError.id)}
+					aria-label="Dismiss chat error"
+				>
+					<X className="h-4 w-4" />
+				</button>
+			)}
+		</div>
+	);
+});
+
+type AssistantTurn =
+	| {
+			kind: "answer";
+			user: LightfastAppChatUIMessage;
+			assistant: LightfastAppChatUIMessage;
+			isStreaming: boolean;
+			hasMeaningfulContent: boolean;
+			inlineError?: ChatInlineError;
+	  }
+	| {
+			kind: "pending";
+			user: LightfastAppChatUIMessage;
+			inlineError?: ChatInlineError;
+	  }
+	| {
+			kind: "ghost";
+			user: LightfastAppChatUIMessage;
+			assistant: LightfastAppChatUIMessage;
+			reason: "no-reply" | "empty-response";
+			inlineError?: ChatInlineError;
+	  }
+	| {
+			kind: "system";
+			assistant: LightfastAppChatUIMessage;
+			isStreaming: boolean;
+			hasMeaningfulContent: boolean;
+			inlineError?: ChatInlineError;
+	  };
+
+const createGhostAssistantMessage = (
+	userMessage: LightfastAppChatUIMessage,
+	reason: "no-reply" | "empty-response",
+): LightfastAppChatUIMessage => ({
+	id: `ghost-${reason}-${userMessage.id}`,
+	role: "assistant",
+	parts: [
+		{
+			type: "text",
+			text: "_No message content_",
+		},
+	],
+});
+
+const createPendingAssistantMessage = (
+	userMessage: LightfastAppChatUIMessage,
+): LightfastAppChatUIMessage => ({
+	id: `pending-${userMessage.id}`,
+	role: "assistant",
+	parts: [],
+});
+
+const buildAssistantTurns = (
+	messages: LightfastAppChatUIMessage[],
+	status: ChatStatus,
+	hasActiveStream: boolean,
+	inlineErrors: ChatInlineError[] = [],
+): AssistantTurn[] => {
+	const baseTurns: AssistantTurn[] = [];
+	let pendingUser: LightfastAppChatUIMessage | null = null;
+	const hasStreamingStatus = status === "submitted" || status === "streaming";
+
+	let lastAssistantId: string | null = null;
+	for (let index = messages.length - 1; index >= 0; index--) {
+		const candidate = messages[index];
+		if (candidate?.role === "assistant") {
+			lastAssistantId = candidate.id;
+			break;
+		}
+	}
+
+	const lastMessage = messages[messages.length - 1];
+	const streamingAssistantId =
+		(hasStreamingStatus || hasActiveStream) && lastMessage?.role === "assistant"
+			? lastAssistantId
+			: null;
+
+	for (const message of messages) {
+		if (message.role === "user") {
+			if (pendingUser) {
+				baseTurns.push({
+					kind: "ghost",
+					user: pendingUser,
+					assistant: createGhostAssistantMessage(pendingUser, "no-reply"),
+					reason: "no-reply",
+				});
+			}
+			pendingUser = message;
+			continue;
+		}
+
+		if (message.role === "assistant") {
+			const isStreaming =
+				streamingAssistantId === message.id &&
+				(hasStreamingStatus || hasActiveStream);
+			const meaningfulContent = hasMeaningfulContent(message);
+
+			if (pendingUser) {
+				if (!meaningfulContent && !isStreaming) {
+					baseTurns.push({
+						kind: "ghost",
+						user: pendingUser,
+						assistant: createGhostAssistantMessage(
+							pendingUser,
+							"empty-response",
+						),
+						reason: "empty-response",
+					});
+					pendingUser = null;
+					continue;
+				}
+
+				baseTurns.push({
+					kind: "answer",
+					user: pendingUser,
+					assistant: message,
+					isStreaming,
+					hasMeaningfulContent: meaningfulContent,
+				});
+				pendingUser = null;
+				continue;
+			}
+
+			baseTurns.push({
+				kind: "system",
+				assistant: message,
+				isStreaming,
+				hasMeaningfulContent: meaningfulContent,
+			});
+			continue;
+		}
+
+		baseTurns.push({
+			kind: "system",
+			assistant: message,
+			isStreaming: false,
+			hasMeaningfulContent: hasMeaningfulContent(message),
+		});
+	}
+
+	if (pendingUser) {
+		if (hasStreamingStatus || hasActiveStream) {
+			baseTurns.push({
+				kind: "pending",
+				user: pendingUser,
+			});
+		} else {
+			baseTurns.push({
+				kind: "ghost",
+				user: pendingUser,
+				assistant: createGhostAssistantMessage(pendingUser, "no-reply"),
+				reason: "no-reply",
+			});
+		}
+	}
+
+	if (inlineErrors.length === 0) {
+		return baseTurns;
+	}
+
+	const assistantErrorMap = new Map<string, ChatInlineError>();
+	const userErrorMap = new Map<string, ChatInlineError>();
+	const unattachedErrors: ChatInlineError[] = [];
+
+	for (const inlineError of inlineErrors) {
+		if (inlineError.relatedAssistantMessageId) {
+			assistantErrorMap.set(inlineError.relatedAssistantMessageId, inlineError);
+			continue;
+		}
+		if (inlineError.relatedUserMessageId) {
+			userErrorMap.set(inlineError.relatedUserMessageId, inlineError);
+			continue;
+		}
+		unattachedErrors.push(inlineError);
+	}
+
+	const pickAssistantError = (messageId?: string) => {
+		if (!messageId) return undefined;
+		const error = assistantErrorMap.get(messageId);
+		if (error) {
+			assistantErrorMap.delete(messageId);
+		}
+		return error;
+	};
+
+	const pickUserError = (messageId?: string) => {
+		if (!messageId) return undefined;
+		const error = userErrorMap.get(messageId);
+		if (error) {
+			userErrorMap.delete(messageId);
+		}
+		return error;
+	};
+
+	const enrichedTurns: AssistantTurn[] = baseTurns.map((turn) => {
+		switch (turn.kind) {
+			case "answer": {
+				const inlineError =
+					pickAssistantError(turn.assistant.id) ?? pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "ghost": {
+				const inlineError =
+					pickAssistantError(turn.assistant.id) ?? pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "pending": {
+				const inlineError = pickUserError(turn.user.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			case "system": {
+				const inlineError = pickAssistantError(turn.assistant.id);
+				return inlineError ? { ...turn, inlineError } : turn;
+			}
+			default:
+				return turn;
+		}
+	});
+
+	const remainingErrors = [
+		...assistantErrorMap.values(),
+		...userErrorMap.values(),
+		...unattachedErrors,
+	];
+
+	if (remainingErrors.length === 0) {
+		return enrichedTurns;
+	}
+
+	const looseTurns: AssistantTurn[] = remainingErrors.map((error) => ({
+		kind: "system",
+		assistant: {
+			id: `inline-error-${error.id}`,
+			role: "assistant",
+			parts: [],
+		},
+		isStreaming: false,
+		hasMeaningfulContent: false,
+		inlineError: error,
+	}));
+
+	return [...enrichedTurns, ...looseTurns];
 };
 
 // User messages - simple text display only
@@ -105,7 +529,7 @@ const UserMessage = memo(function UserMessage({
 
 	return (
 		<div className="py-1">
-			<div className="mx-auto max-w-3xl px-7">
+			<div className="mx-auto max-w-3xl px-14">
 				<Message from="user" className="justify-end">
 					<MessageContent variant="chat">
 						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
@@ -126,6 +550,10 @@ const AssistantMessage = memo(function AssistantMessage({
 	onFeedbackSubmit,
 	onFeedbackRemove,
 	_isAuthenticated,
+	hideActions = false,
+	meaningfulContentOverride,
+	inlineError,
+	onInlineErrorDismiss,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -138,21 +566,20 @@ const AssistantMessage = memo(function AssistantMessage({
 	) => void;
 	onFeedbackRemove?: (messageId: string) => void;
 	_isAuthenticated: boolean;
+	hideActions?: boolean;
+	meaningfulContentOverride?: boolean;
+	inlineError?: ChatInlineError;
+	onInlineErrorDismiss?: (errorId: string) => void;
 }) {
-	const [sources, setSources] = useState<CitationSource[]>([]);
-
-	// Process metadata when streaming is complete
-	useEffect(() => {
-		if (status !== "ready") return; // Only process when full response is received
-
+	const sources = useMemo<CitationSource[]>(() => {
+		if (status !== "ready") {
+			return [];
+		}
 		const textContent = message.parts
 			.filter(isTextPart)
 			.map((part) => part.text)
 			.join("\n");
-
-		// Parse metadata using new extensible parser
-		const parsedMetadata = parseResponseMetadata(textContent);
-		setSources(parsedMetadata.citations);
+		return parseResponseMetadata(textContent).citations;
 	}, [message.parts, status]);
 
 	// Hook for copy functionality with success state
@@ -184,6 +611,15 @@ const AssistantMessage = memo(function AssistantMessage({
 	};
 
 	const currentFeedback = feedback?.[message.id];
+	const meaningfulContent =
+		meaningfulContentOverride ?? hasMeaningfulContent(message);
+	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
+	const showStreamingWave = Boolean(isCurrentlyStreaming && !hasDisplayContent);
+	const noMessageContent = message.parts.length === 0;
+	const shouldHideActions =
+		hideActions ||
+		(Boolean(inlineError) &&
+			(noMessageContent || inlineError?.severity === "fatal"));
 
 	return (
 		<div className="py-1">
@@ -192,161 +628,174 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					<div className="space-y-1 w-full">
-						{/* Show sine wave only when streaming without meaningful content */}
-						{isCurrentlyStreaming && (
-							<StreamingSineWave
-								key="stable-sine-wave"
-								show={!hasMeaningfulContent(message)}
-							/>
-						)}
-						{message.parts.map((part, index) => {
-							// Text part
-							if (isTextPart(part)) {
-								return (
-									<MessageContent
-										key={`${message.id}-part-${index}`}
-										variant="chat"
-										className="w-full py-0 [&>*]:my-0"
-									>
-										<Markdown className="[&>*]:my-0">
-											{cleanTextFromMetadata(part.text)}
-										</Markdown>
-									</MessageContent>
-								);
-							}
-
-							// Reasoning part
-							if (isReasoningPart(part) && part.text.length > 1) {
-								// Determine if this reasoning part is currently streaming
-								const isReasoningStreaming =
-									isCurrentlyStreaming && index === message.parts.length - 1;
-								// Remove leading newlines while preserving other whitespace
-								const trimmedText = part.text.replace(/^\n+/, "");
-
-								return (
-									<div key={`${message.id}-part-${index}`} className="w-full">
-										<Reasoning
-											className="w-full"
-											isStreaming={isReasoningStreaming}
-										>
-											<ReasoningTrigger />
-											<ReasoningContent>{trimmedText}</ReasoningContent>
-										</Reasoning>
-									</div>
-								);
-							}
-
-							// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
-							if (isToolPart(part)) {
-								const toolName = part.type.replace("tool-", "");
-
-								return (
-									<div key={`${message.id}-part-${index}`} className="w-full">
-										<ToolCallRenderer
-											toolPart={part as ToolUIPart}
-											toolName={toolName}
-											onArtifactClick={onArtifactClick}
+					<div className="relative w-full">
+						<div
+							className={cn(
+								"absolute inset-0 flex items-start transition-opacity duration-150",
+								showStreamingWave
+									? "opacity-100"
+									: "opacity-0 pointer-events-none",
+							)}
+						>
+							<StreamingSineWave key="stable-sine-wave" show />
+						</div>
+						<div
+							className={cn(
+								"space-y-1 w-full transition-opacity duration-150",
+								showStreamingWave ? "opacity-90" : "opacity-100",
+							)}
+						>
+							{message.parts.map((part, index) => {
+								if (isTextPart(part)) {
+									const cleanedText = cleanTextFromMetadata(part.text);
+									const shouldAnimate = Boolean(
+										isCurrentlyStreaming && index === message.parts.length - 1,
+									);
+									return (
+										<AssistantTextPart
+											key={`${message.id}-text-${index}`}
+											cleanedText={cleanedText}
+											shouldAnimate={shouldAnimate}
 										/>
-									</div>
-								);
-							}
+									);
+								}
 
-							// Unknown part type
-							return null;
-						})}
+								if (isReasoningPart(part) && part.text.length > 1) {
+									const isReasoningStreaming = Boolean(
+										isCurrentlyStreaming && index === message.parts.length - 1,
+									);
+									const trimmedText = part.text.replace(/^\n+/, "");
+									return (
+										<AssistantReasoningPart
+											key={`${message.id}-reasoning-${index}`}
+											reasoningText={trimmedText}
+											isStreaming={isReasoningStreaming}
+										/>
+									);
+								}
+
+								// Tool part (e.g., "tool-webSearch", "tool-fileWrite")
+								if (isToolPart(part)) {
+									const toolName = part.type.replace("tool-", "");
+
+									return (
+										<div key={`${message.id}-part-${index}`} className="w-full">
+											<ToolCallRenderer
+												toolPart={part as ToolUIPart}
+												toolName={toolName}
+												onArtifactClick={onArtifactClick}
+											/>
+										</div>
+									);
+								}
+
+								// Unknown part type
+								return null;
+							})}
+
+							{inlineError && (
+								<div className="mt-3">
+									<InlineErrorCard
+										inlineError={inlineError}
+										onDismiss={onInlineErrorDismiss}
+									/>
+								</div>
+							)}
+						</div>
 					</div>
 
 					{/* Actions and Citations - hidden when streaming without content */}
-					<div
-						className={cn(
-							"w-full mt-2",
-							!hasMeaningfulContent(message)
-								? "opacity-0 pointer-events-none"
-								: "opacity-100",
-						)}
-					>
-						<div className="flex items-center justify-between">
-							{sources.length > 0 ? (
-								<InlineCitationCard>
-									<InlineCitationCardTrigger
-										sources={sources.map((source) => source.url)}
-									/>
-									<InlineCitationCardBody>
-										<InlineCitationCarousel>
-											<InlineCitationCarouselHeader>
-												<InlineCitationCarouselPrev />
-												<InlineCitationCarouselIndex />
-												<InlineCitationCarouselNext />
-											</InlineCitationCarouselHeader>
-											<InlineCitationCarouselContent>
-												{sources.map((source, index) => (
-													<InlineCitationCarouselItem key={index}>
-														<InlineCitationSource
-															title={source.title ?? `Source ${index + 1}`}
-															url={source.url}
-														/>
-													</InlineCitationCarouselItem>
-												))}
-											</InlineCitationCarouselContent>
-										</InlineCitationCarousel>
-									</InlineCitationCardBody>
-								</InlineCitationCard>
-							) : (
-								<div></div>
+					{!shouldHideActions && (
+						<div
+							className={cn(
+								"w-full mt-2",
+								!hasDisplayContent
+									? "opacity-0 pointer-events-none"
+									: "opacity-100",
 							)}
-							{/* Actions - always present but hidden during streaming */}
-							<Actions
-								className={cn(
-									"transition-opacity duration-200",
-									isCurrentlyStreaming
-										? "opacity-0 pointer-events-none"
-										: "opacity-100",
+						>
+							<div className="flex items-center justify-between">
+								{sources.length > 0 ? (
+									<InlineCitationCard>
+										<InlineCitationCardTrigger
+											sources={sources.map((source) => source.url)}
+										/>
+										<InlineCitationCardBody>
+											<InlineCitationCarousel>
+												<InlineCitationCarouselHeader>
+													<InlineCitationCarouselPrev />
+													<InlineCitationCarouselIndex />
+													<InlineCitationCarouselNext />
+												</InlineCitationCarouselHeader>
+												<InlineCitationCarouselContent>
+													{sources.map((source, index) => (
+														<InlineCitationCarouselItem key={index}>
+															<InlineCitationSource
+																title={source.title ?? `Source ${index + 1}`}
+																url={source.url}
+															/>
+														</InlineCitationCarouselItem>
+													))}
+												</InlineCitationCarouselContent>
+											</InlineCitationCarousel>
+										</InlineCitationCardBody>
+									</InlineCitationCard>
+								) : (
+									<div></div>
 								)}
-							>
-								<Action
-									tooltip="Copy message"
-									onClick={handleCopyMessage}
-									className={isCopied ? "text-green-600" : ""}
-								>
-									{isCopied ? (
-										<Check className="w-4 h-4" />
-									) : (
-										<Copy className="w-4 h-4" />
+								{/* Actions - always present but hidden during streaming */}
+								<Actions
+									className={cn(
+										"transition-opacity duration-200",
+										isCurrentlyStreaming
+											? "opacity-0 pointer-events-none"
+											: "opacity-100",
 									)}
-								</Action>
+								>
+									<Action
+										tooltip="Copy message"
+										onClick={handleCopyMessage}
+										className={isCopied ? "text-green-600" : ""}
+									>
+										{isCopied ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<Copy className="w-4 h-4" />
+										)}
+									</Action>
 
-								{/* Feedback buttons - only show for authenticated users */}
-								{_isAuthenticated && onFeedbackSubmit && (
-									<>
-										<Action
-											tooltip="Helpful"
-											onClick={() => handleFeedback("upvote")}
-											className={
-												currentFeedback === "upvote"
-													? "text-blue-600 bg-accent/50"
-													: ""
-											}
-										>
-											<ThumbsUp />
-										</Action>
+									{/* Feedback buttons - only show for authenticated users */}
+									{_isAuthenticated && onFeedbackSubmit && (
+										<>
+											<Action
+												tooltip="Helpful"
+												onClick={() => handleFeedback("upvote")}
+												className={
+													currentFeedback === "upvote"
+														? "text-blue-600 bg-accent/50"
+														: ""
+												}
+											>
+												<ThumbsUp />
+											</Action>
 
-										<Action
-											tooltip="Not helpful"
-											onClick={() => handleFeedback("downvote")}
-											className={
-												currentFeedback === "downvote"
-													? "text-red-600 bg-accent/50"
-													: ""
-											}
-										>
-											<ThumbsDown />
-										</Action>
-									</>
-								)}
-							</Actions>
+											<Action
+												tooltip="Not helpful"
+												onClick={() => handleFeedback("downvote")}
+												className={
+													currentFeedback === "downvote"
+														? "text-red-600 bg-accent/50"
+														: ""
+												}
+											>
+												<ThumbsDown />
+											</Action>
+										</>
+									)}
+								</Actions>
+							</div>
 						</div>
-					</div>
+					)}
 				</Message>
 			</div>
 		</div>
@@ -363,54 +812,15 @@ export function ChatMessages({
 	_isAuthenticated,
 	isExistingSessionWithNoMessages = false,
 	hasActiveStream = false,
+	inlineErrors = [],
+	onInlineErrorDismiss,
 }: ChatMessagesProps) {
-	// Process messages to ensure every user message has a corresponding assistant message
-	const processedMessages = useMemo(() => {
-		const result: LightfastAppChatUIMessage[] = [];
+	const turns = useMemo(
+		() => buildAssistantTurns(messages, status, hasActiveStream, inlineErrors),
+		[messages, hasActiveStream, status, inlineErrors],
+	);
 
-		for (let i = 0; i < messages.length; i++) {
-			const currentMessage = messages[i];
-			const nextMessage = messages[i + 1];
-
-			// Skip if current message doesn't exist
-			if (!currentMessage) continue;
-
-			// Add the current message
-			result.push(currentMessage);
-
-			// If current message is from user and next message is NOT from assistant (or doesn't exist)
-			if (currentMessage.role === "user" && nextMessage?.role !== "assistant") {
-				// Don't inject "No message content" if this is the last message and there's an active stream
-				const isLastMessageWithActiveStream =
-					i === messages.length - 1 && hasActiveStream;
-
-				if (!isLastMessageWithActiveStream) {
-					result.push({
-						id: `no-content-${currentMessage.id}`,
-						role: "assistant",
-						parts: [
-							{
-								type: "text",
-								text: "_No message content_",
-							},
-						],
-					});
-				}
-			}
-		}
-
-		return result;
-	}, [messages.length, hasActiveStream]);
-
-	// Check if we need a thinking placeholder
-	// Show it only when there's an active stream and the last message is from user
-	const needsPlaceholder =
-		hasActiveStream &&
-		messages.length > 0 &&
-		messages[messages.length - 1]?.role === "user";
-
-	// Determine which message should show streaming behavior
-	const shouldShowStreaming = status === "submitted" || status === "streaming";
+	const streamingStatus = status === "submitted" || status === "streaming";
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
@@ -432,48 +842,96 @@ export function ChatMessages({
 						</div>
 					)}
 
-					{/* Render existing messages */}
-					{processedMessages.map((message, index) => {
-						const isCurrentlyStreaming =
-							shouldShowStreaming &&
-							index === processedMessages.length - 1 &&
-							message.role === "assistant";
-
-						return message.role === "user" ? (
-							<UserMessage key={message.id} message={message} />
-						) : (
-							<AssistantMessage
-								key={message.id}
-								message={message}
-								onArtifactClick={onArtifactClick}
-								status={status}
-								isCurrentlyStreaming={isCurrentlyStreaming}
-								feedback={feedback}
-								onFeedbackSubmit={onFeedbackSubmit}
-								onFeedbackRemove={onFeedbackRemove}
-								_isAuthenticated={_isAuthenticated}
-							/>
-						);
+					{/* Render combined user/assistant turns */}
+					{turns.map((turn) => {
+						switch (turn.kind) {
+							case "answer": {
+								return (
+									<Fragment key={`${turn.user.id}-${turn.assistant.id}`}>
+										<UserMessage message={turn.user} />
+										<AssistantMessage
+											message={turn.assistant}
+											onArtifactClick={onArtifactClick}
+											status={status}
+											isCurrentlyStreaming={turn.isStreaming && streamingStatus}
+											feedback={feedback}
+											onFeedbackSubmit={onFeedbackSubmit}
+											onFeedbackRemove={onFeedbackRemove}
+											_isAuthenticated={_isAuthenticated}
+											meaningfulContentOverride={turn.hasMeaningfulContent}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
+										/>
+									</Fragment>
+								);
+							}
+							case "pending": {
+								const pendingAssistant = createPendingAssistantMessage(
+									turn.user,
+								);
+								return (
+									<Fragment key={`${turn.user.id}-pending`}>
+										<UserMessage message={turn.user} />
+										<AssistantMessage
+											message={pendingAssistant}
+											onArtifactClick={onArtifactClick}
+											status={status}
+											isCurrentlyStreaming={streamingStatus || hasActiveStream}
+											feedback={feedback}
+											onFeedbackSubmit={onFeedbackSubmit}
+											onFeedbackRemove={onFeedbackRemove}
+											_isAuthenticated={_isAuthenticated}
+											hideActions
+											meaningfulContentOverride={false}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
+										/>
+									</Fragment>
+								);
+							}
+							case "ghost": {
+								return (
+									<Fragment key={`${turn.user.id}-${turn.assistant.id}-ghost`}>
+										<UserMessage message={turn.user} />
+										<AssistantMessage
+											message={turn.assistant}
+											onArtifactClick={onArtifactClick}
+											status={status}
+											isCurrentlyStreaming={false}
+											feedback={feedback}
+											onFeedbackSubmit={onFeedbackSubmit}
+											onFeedbackRemove={onFeedbackRemove}
+											_isAuthenticated={_isAuthenticated}
+											hideActions
+											meaningfulContentOverride={false}
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
+										/>
+									</Fragment>
+								);
+							}
+							case "system": {
+								return (
+									<AssistantMessage
+										key={turn.assistant.id}
+										message={turn.assistant}
+										onArtifactClick={onArtifactClick}
+										status={status}
+										isCurrentlyStreaming={turn.isStreaming && streamingStatus}
+										feedback={feedback}
+										onFeedbackSubmit={onFeedbackSubmit}
+										onFeedbackRemove={onFeedbackRemove}
+										_isAuthenticated={_isAuthenticated}
+										meaningfulContentOverride={turn.hasMeaningfulContent}
+										inlineError={turn.inlineError}
+										onInlineErrorDismiss={onInlineErrorDismiss}
+									/>
+								);
+							}
+							default:
+								return null;
+						}
 					})}
-
-					{/* Conditionally render thinking placeholder */}
-					{needsPlaceholder && (
-						<AssistantMessage
-							key="thinking-placeholder"
-							message={{
-								id: "thinking-placeholder",
-								role: "assistant",
-								parts: [],
-							}}
-							onArtifactClick={onArtifactClick}
-							status={status}
-							isCurrentlyStreaming={shouldShowStreaming}
-							feedback={feedback}
-							onFeedbackSubmit={onFeedbackSubmit}
-							onFeedbackRemove={onFeedbackRemove}
-							_isAuthenticated={_isAuthenticated}
-						/>
-					)}
 				</ConversationContent>
 				<ConversationScrollButton
 					className="absolute bottom-4 z-[1000] right-4 rounded-full shadow-lg transition-all duration-200"

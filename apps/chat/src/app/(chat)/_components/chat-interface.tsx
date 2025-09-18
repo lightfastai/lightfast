@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import * as Sentry from "@sentry/nextjs";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { PromptSuggestions } from "./prompt-suggestions";
@@ -18,7 +19,13 @@ import type { FormEvent } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import React, { useState, useMemo } from "react";
+import React, {
+	useState,
+	useMemo,
+	useEffect,
+	useRef,
+	useCallback,
+} from "react";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -26,6 +33,7 @@ import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
+import type { ChatError } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
@@ -39,6 +47,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
+import type { ChatInlineError } from "./chat-inline-error";
+
+const getMetadataString = (metadata: unknown, key: string): string | undefined => {
+	if (!metadata || typeof metadata !== "object") return undefined;
+	const value = (metadata as Record<string, unknown>)[key];
+	return typeof value === "string" ? value : undefined;
+};
 
 // Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
@@ -69,7 +84,6 @@ const RateLimitDialog = dynamic(
 	{ ssr: false },
 );
 
-
 type UserInfo = ChatRouterOutputs["user"]["getUser"];
 type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 
@@ -84,6 +98,11 @@ interface ChatInterfaceProps {
 	onNewUserMessage?: (userMessage: LightfastAppChatUIMessage) => void; // Optional callback when user sends a message
 	onNewAssistantMessage?: (assistantMessage: LightfastAppChatUIMessage) => void; // Optional callback when AI finishes responding
 	onQuotaError?: (modelId: string) => void; // Callback when quota exceeded - allows rollback of optimistic updates
+	onAssistantStreamError?: (info: {
+		messageId?: string;
+		category?: string;
+	}) => void;
+	onResumeStateChange?: (hasActiveStream: boolean) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 }
 
@@ -98,11 +117,19 @@ export function ChatInterface({
 	onNewUserMessage,
 	onNewAssistantMessage,
 	onQuotaError,
+	onAssistantStreamError,
+	onResumeStateChange,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
-	const { sessionId, resume, hasActiveStream } = useSessionState(session, fallbackSessionId);
-	// ALL errors now go to error boundary - no inline error state needed
+	const {
+		sessionId,
+		resume,
+		hasActiveStream,
+		setHasActiveStream,
+		disableResume,
+	} = useSessionState(session, fallbackSessionId);
+	// Most errors escalate to the boundary; streaming/storage issues are handled inline
 
 	// Hook for handling ALL errors via error boundaries
 	const { throwToErrorBoundary } = useErrorBoundaryHandler();
@@ -110,14 +137,99 @@ export function ChatInterface({
 	const isAuthenticated = user !== null;
 
 	// Get unified billing context
-	const billingContext = useBillingContext({ externalUsageData: externalUsageLimits });
-	
+	const billingContext = useBillingContext({
+		externalUsageData: externalUsageLimits,
+	});
+
+	// Streaming/storage errors surfaced inline in the conversation
+	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
+
+	const addInlineError = useCallback(
+		(error: ChatError) => {
+			const metadata: Record<string, unknown> = error.metadata ?? {};
+
+			const getStringMetadata = (key: string): string | undefined => {
+				const value = metadata[key];
+				return typeof value === "string" ? value : undefined;
+			};
+
+			const relatedAssistantMessageId = getStringMetadata("messageId");
+			const relatedUserMessageId = getStringMetadata("userMessageId");
+			const errorCode = error.errorCode ?? getStringMetadata("errorCode");
+			const category = error.category ?? getStringMetadata("category");
+			const severity = error.severity ?? getStringMetadata("severity");
+			const source = error.source ?? getStringMetadata("source");
+
+			setInlineErrors((current) => {
+				const entry: ChatInlineError = {
+					id: crypto.randomUUID(),
+					error,
+					relatedAssistantMessageId,
+					relatedUserMessageId,
+					category,
+					severity,
+					source,
+					errorCode,
+				};
+
+				const deduped = current.filter((existing) => {
+					if (
+						entry.relatedAssistantMessageId &&
+						existing.relatedAssistantMessageId ===
+							entry.relatedAssistantMessageId
+					) {
+						return false;
+					}
+					if (
+						entry.relatedUserMessageId &&
+						existing.relatedUserMessageId === entry.relatedUserMessageId &&
+						!entry.relatedAssistantMessageId &&
+						!existing.relatedAssistantMessageId
+					) {
+						return false;
+					}
+					if (
+						!entry.relatedAssistantMessageId &&
+						!entry.relatedUserMessageId &&
+						!existing.relatedAssistantMessageId &&
+						!existing.relatedUserMessageId &&
+						existing.error.type === entry.error.type &&
+						(existing.category ?? null) === (entry.category ?? null)
+					) {
+						return false;
+					}
+					return true;
+				});
+
+				return [...deduped, entry];
+			});
+		},
+		[setInlineErrors],
+	);
+
+	const dismissInlineError = useCallback(
+		(errorId: string) => {
+			setInlineErrors((current) =>
+				current.filter((entry) => entry.id !== errorId),
+			);
+		},
+		[setInlineErrors],
+	);
+
 	// Process models with accessibility information for the model selector
 	const processedModels = useMemo((): ProcessedModel[] => {
 		return getVisibleModels().map((model) => {
-			const isAccessible = billingContext.models.isAccessible(model.id, model.accessLevel, model.billingTier);
-			const restrictionReason = billingContext.models.getRestrictionReason(model.id, model.accessLevel, model.billingTier);
-			
+			const isAccessible = billingContext.models.isAccessible(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+			const restrictionReason = billingContext.models.getRestrictionReason(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+
 			return {
 				...model,
 				id: model.id as ModelId,
@@ -181,9 +293,8 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-	// Web search toggle state
-	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-
+// Web search toggle state
+const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
 	const {
@@ -207,8 +318,19 @@ export function ChatInterface({
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
 
+	const metricsTags = useMemo(
+		() => ({
+			agentId,
+			modelId: selectedModelId,
+			authenticated: isAuthenticated ? "true" : "false",
+		}),
+		[agentId, selectedModelId, isAuthenticated],
+	);
+
 	// Check if current model can be used (for UI state)
-	const canUseCurrentModel = billingContext.isLoaded ? billingContext.usage.canUseModel(selectedModelId) : { allowed: true };
+	const canUseCurrentModel = billingContext.isLoaded
+		? billingContext.usage.canUseModel(selectedModelId)
+		: { allowed: true };
 
 	// Create transport for AI SDK v5
 	// Uses session ID directly as the primary key
@@ -230,19 +352,76 @@ export function ChatInterface({
 		resume,
 		//		experimental_throttle: ,
 		onError: (error) => {
-			// Extract the chat error information
 			const chatError = ChatErrorHandler.handleError(error);
+			const metadata = chatError.metadata;
+			const category =
+				chatError.category ?? getMetadataString(metadata, "category");
+			const severity =
+				chatError.severity ?? getMetadataString(metadata, "severity");
+			const source = chatError.source ?? getMetadataString(metadata, "source");
+				const failedMessageId = getMetadataString(metadata, "messageId");
 
-			// Handle quota errors with optimistic update rollback
-			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
-				console.warn('[ChatInterface] Quota exceeded, triggering rollback');
-				onQuotaError?.(selectedModelId);
-				// Don't throw to error boundary for quota errors - user can try different model
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				level: severity === "fatal" ? "error" : "warning",
+				message: "Chat interface error",
+				data: {
+					agentId,
+					sessionId,
+					category,
+					severity,
+					source,
+					errorCode: chatError.errorCode,
+				},
+			});
+
+			const inlineStreamCategories = new Set([
+				"stream",
+				"persistence",
+				"resume",
+			]);
+			const isStreamingRelated =
+				category !== undefined && inlineStreamCategories.has(category);
+
+			if (isStreamingRelated && category) {
+				Sentry.captureMessage("chat.ui.error.streaming", {
+					level: "error",
+					extra: {
+						...metricsTags,
+						category,
+					},
+				});
+				console.error("[Streaming Error] Inline-stream failure detected:", {
+					category,
+					severity,
+					source,
+					statusCode: chatError.statusCode,
+					message: chatError.message,
+					details: chatError.details,
+					metadata,
+				});
+				setDataStream([]);
+				disableResume();
+				onResumeStateChange?.(false);
+				onAssistantStreamError?.({
+					messageId: failedMessageId,
+					category,
+				});
+				addInlineError(chatError);
 				return;
 			}
 
-			// Define which errors are critical and should use error boundary
-			// These are errors that prevent the chat from functioning
+			if (chatError.type === ChatErrorType.USAGE_LIMIT_EXCEEDED) {
+				console.warn("[ChatInterface] Quota exceeded, triggering rollback", {
+					statusCode: chatError.statusCode,
+					category,
+					severity,
+				});
+				onQuotaError?.(selectedModelId);
+				addInlineError(chatError);
+				return;
+			}
+
 			const CRITICAL_ERROR_TYPES = [
 				ChatErrorType.AUTHENTICATION,
 				ChatErrorType.BOT_DETECTION,
@@ -252,10 +431,11 @@ export function ChatInterface({
 				...(isAuthenticated ? [] : [ChatErrorType.RATE_LIMIT]),
 			];
 
-			// Check if this is a critical error
-			if (CRITICAL_ERROR_TYPES.includes(chatError.type)) {
-				// Create an error with our extracted information
-				// This ensures the error boundary gets the right status code
+			const fatalBySeverity = severity === "fatal";
+			const fatalBySource = source === "guard";
+			const fatalByType = CRITICAL_ERROR_TYPES.includes(chatError.type);
+
+				if (fatalBySeverity || fatalBySource || fatalByType) {
 				interface EnhancedError extends Error {
 					statusCode?: number;
 					type?: ChatErrorType;
@@ -271,33 +451,100 @@ export function ChatInterface({
 				console.error("[Critical Error] Throwing to error boundary:", {
 					type: chatError.type,
 					statusCode: chatError.statusCode,
+					severity,
+					source,
 					message: chatError.message,
 				});
 
-				// Throw to error boundary with our extracted information
-				throwToErrorBoundary(errorForBoundary);
-			} else {
-				// Non-critical errors (streaming, network, temporary server issues)
-				// Log but don't crash the UI
-				console.error("[Streaming Error] Non-critical error occurred:", {
-					type: chatError.type,
-					statusCode: chatError.statusCode,
-					message: chatError.message,
-					details: chatError.details,
-				});
+					Sentry.captureMessage("Chat interface fatal error", {
+						level: "error",
+					});
+					throwToErrorBoundary(errorForBoundary);
+				}
 
-			}
+			console.error("[Chat Error] Non-fatal error captured inline", {
+				type: chatError.type,
+				statusCode: chatError.statusCode,
+				severity,
+				source,
+				category,
+				message: chatError.message,
+				details: chatError.details,
+			});
+
+			addInlineError(chatError);
 		},
 		onFinish: (event) => {
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
+			disableResume();
+			onResumeStateChange?.(false);
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
 			setDataStream((ds) => [...ds, dataPart]);
 		},
 	});
+
+	const previousStatusRef = useRef(status);
+	const streamStartedAtRef = useRef<number | null>(null);
+	useEffect(() => {
+		const previousStatus = previousStatusRef.current;
+		if (status === "streaming" && previousStatus !== "streaming") {
+			if (typeof performance !== "undefined") {
+				streamStartedAtRef.current = performance.now();
+			}
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "stream_started",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+				},
+			});
+			setHasActiveStream(true);
+			onResumeStateChange?.(true);
+		}
+		if (status !== "streaming" && previousStatus === "streaming") {
+			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
+				const duration = performance.now() - streamStartedAtRef.current;
+				Sentry.addBreadcrumb({
+					category: "chat-ui",
+					message: "stream_duration",
+					data: {
+						...metricsTags,
+						duration,
+						finalStatus: status,
+					},
+				});
+			}
+			streamStartedAtRef.current = null;
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "stream_completed",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+					finalStatus: status,
+				},
+			});
+			disableResume();
+			onResumeStateChange?.(false);
+		}
+		previousStatusRef.current = status;
+	}, [
+		status,
+		setHasActiveStream,
+		onResumeStateChange,
+		disableResume,
+		metricsTags,
+		agentId,
+		sessionId,
+		selectedModelId,
+	]);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
 	const { data: feedback } = useFeedbackQuery({
@@ -320,7 +567,14 @@ export function ChatInterface({
 
 		// For unauthenticated users, check anonymous message limit
 		if (!isAuthenticated && hasReachedLimit) {
-			// Show the sign-in dialog instead of throwing error
+			addInlineError({
+				type: ChatErrorType.RATE_LIMIT,
+				message:
+					"You've hit the anonymous message limit. Sign in to keep chatting.",
+				retryable: false,
+				details: undefined,
+				metadata: { isAnonymous: true },
+			});
 			setShowRateLimitDialog(true);
 			return;
 		}
@@ -329,12 +583,31 @@ export function ChatInterface({
 		if (isAuthenticated && billingContext.isLoaded) {
 			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
 			if (!usageCheck.allowed) {
-				// TODO: Show usage limit exceeded dialog/toast
-				console.error("Usage limit exceeded:", usageCheck.reason);
-				// For now, just return - we could show a toast or modal here
+				addInlineError({
+					type: ChatErrorType.USAGE_LIMIT_EXCEEDED,
+					message:
+						usageCheck.reason ??
+						"You've reached your current usage limit for this model.",
+					retryable: false,
+					details: undefined,
+					metadata: { modelId: selectedModelId },
+				});
 				return;
 			}
 		}
+
+		Sentry.addBreadcrumb({
+			category: "chat-ui",
+			message: "send_message",
+			data: {
+				agentId,
+				sessionId,
+				modelId: selectedModelId,
+				length: message.length,
+				webSearchEnabled,
+			},
+		});
+		// Additional context stored as breadcrumb via send_message entry
 
 		try {
 			// Call handleSessionCreation when this is the first message in a new session
@@ -367,6 +640,17 @@ export function ChatInterface({
 				},
 			});
 
+			// Success breadcrumb already recorded above
+			Sentry.addBreadcrumb({
+				category: "chat-ui",
+				message: "send_message_success",
+				data: {
+					agentId,
+					sessionId,
+					modelId: selectedModelId,
+				},
+			});
+
 			// Increment count for anonymous users after successful send
 			if (!isAuthenticated) {
 				incrementCount();
@@ -374,6 +658,15 @@ export function ChatInterface({
 		} catch (error) {
 			// Log and throw to error boundary
 			ChatErrorHandler.handleError(error);
+			Sentry.captureException(error, {
+				contexts: {
+					"chat-ui": {
+						agentId,
+						sessionId,
+						modelId: selectedModelId,
+					},
+				},
+			});
 			throwToErrorBoundary(error);
 		}
 	};
@@ -476,7 +769,10 @@ export function ChatInterface({
 											}
 										}}
 										disabled={!billingContext.features.webSearch.enabled}
-										title={billingContext.features.webSearch.disabledReason ?? undefined}
+										title={
+											billingContext.features.webSearch.disabledReason ??
+											undefined
+										}
 										className={cn(
 											webSearchEnabled &&
 												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -486,15 +782,16 @@ export function ChatInterface({
 									>
 										<Globe className="w-4 h-4" />
 										Search
-										{webSearchEnabled && billingContext.features.webSearch.enabled && (
-											<X
-												className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-												onClick={(e) => {
-													e.stopPropagation();
-													setWebSearchEnabled(false);
-												}}
-											/>
-										)}
+										{webSearchEnabled &&
+											billingContext.features.webSearch.enabled && (
+												<X
+													className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
+													onClick={(e) => {
+														e.stopPropagation();
+														setWebSearchEnabled(false);
+													}}
+												/>
+											)}
 									</PromptInputButton>
 								</div>
 
@@ -504,14 +801,16 @@ export function ChatInterface({
 									<PromptInputSubmit
 										status={status}
 										disabled={
-											status === "streaming" || 
-											status === "submitted" || 
+											status === "streaming" ||
+											status === "submitted" ||
 											(!isAuthenticated && hasReachedLimit) ||
 											(isAuthenticated && !canUseCurrentModel.allowed)
 										}
 										title={
-											!canUseCurrentModel.allowed && isAuthenticated 
-												? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+											!canUseCurrentModel.allowed && isAuthenticated
+												? "reason" in canUseCurrentModel
+													? (canUseCurrentModel.reason ?? undefined)
+													: undefined
 												: undefined
 										}
 										size="icon"
@@ -542,7 +841,9 @@ export function ChatInterface({
 					onFeedbackSubmit={feedbackMutation.handleSubmit}
 					onFeedbackRemove={feedbackMutation.handleRemove}
 					_isAuthenticated={isAuthenticated}
-					isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
+					isExistingSessionWithNoMessages={
+						messages.length === 0 && !isNewSession
+					}
 					hasActiveStream={hasActiveStream}
 					onArtifactClick={
 						isAuthenticated
@@ -579,6 +880,8 @@ export function ChatInterface({
 								}
 							: undefined // Disable artifact clicking for unauthenticated users
 					}
+					inlineErrors={inlineErrors}
+					onInlineErrorDismiss={dismissInlineError}
 				/>
 				<div className="relative">
 					<div className="max-w-3xl mx-auto px-7">
@@ -610,8 +913,8 @@ export function ChatInterface({
 										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
 											<PromptInputTextarea
 												placeholder={
-													messages.length === 0 
-														? "Ask anything..." 
+													messages.length === 0
+														? "Ask anything..."
 														: "Continue the conversation..."
 												}
 												className={cn(
@@ -634,7 +937,10 @@ export function ChatInterface({
 														}
 													}}
 													disabled={!billingContext.features.webSearch.enabled}
-													title={billingContext.features.webSearch.disabledReason ?? undefined}
+													title={
+														billingContext.features.webSearch.disabledReason ??
+														undefined
+													}
 													className={cn(
 														webSearchEnabled &&
 															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -644,15 +950,16 @@ export function ChatInterface({
 												>
 													<Globe className="w-4 h-4" />
 													Search
-													{webSearchEnabled && billingContext.features.webSearch.enabled && (
-														<X
-															className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-															onClick={(e) => {
-																e.stopPropagation();
-																setWebSearchEnabled(false);
-															}}
-														/>
-													)}
+													{webSearchEnabled &&
+														billingContext.features.webSearch.enabled && (
+															<X
+																className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	setWebSearchEnabled(false);
+																}}
+															/>
+														)}
 												</PromptInputButton>
 											</div>
 
@@ -662,14 +969,16 @@ export function ChatInterface({
 												<PromptInputSubmit
 													status={status}
 													disabled={
-														status === "streaming" || 
-														status === "submitted" || 
+														status === "streaming" ||
+														status === "submitted" ||
 														(!isAuthenticated && hasReachedLimit) ||
 														(isAuthenticated && !canUseCurrentModel.allowed)
 													}
 													title={
-														!canUseCurrentModel.allowed && isAuthenticated 
-															? ('reason' in canUseCurrentModel ? canUseCurrentModel.reason ?? undefined : undefined)
+														!canUseCurrentModel.allowed && isAuthenticated
+															? "reason" in canUseCurrentModel
+																? (canUseCurrentModel.reason ?? undefined)
+																: undefined
 															: undefined
 													}
 													size="icon"

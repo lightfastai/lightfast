@@ -1,28 +1,40 @@
+import { useEffect, useMemo, useState } from "react";
 import type { ChatRouterOutputs } from "@api/chat";
 
-// Session type from API - use getMetadata which includes activeStreamId
 type Session = ChatRouterOutputs["session"]["getMetadata"];
 
 /**
- * Hook to manage session-related state for ChatInterface
- * Handles both authenticated (with session) and unauthenticated (without session) cases
+ * Manages session identifiers and stream state.
+ * - `resume` reflects whether the server reported an active stream when the page loaded.
+ * - `hasActiveStream` tracks the optimistic client view (used for UI treatment).
  */
-export function useSessionState(
-	session?: Session, 
-	fallbackSessionId?: string
-) {
-	// Use session ID if available, otherwise fallback, otherwise generate one
-	const sessionId = session?.id ?? fallbackSessionId ?? crypto.randomUUID();
-	
-	// Derive resume and hasActiveStream from session.activeStreamId
-	// For unauthenticated users (no session), these are always false
-	const activeStreamId = session?.activeStreamId;
-	const resume = activeStreamId !== null && activeStreamId !== undefined;
-	const hasActiveStream = activeStreamId !== null && activeStreamId !== undefined;
-	
+export function useSessionState(session?: Session, fallbackSessionId?: string) {
+	const sessionId = useMemo(
+		() => session?.id ?? fallbackSessionId ?? crypto.randomUUID(),
+		[session?.id, fallbackSessionId],
+	);
+
+	const initialActive = Boolean(session?.activeStreamId);
+	const [hasActiveStream, setHasActiveStream] = useState(initialActive);
+	const [resumeEnabled, setResumeEnabled] = useState(initialActive);
+
+	// Sync from server metadata when it changes (e.g., refetch after resume cleanup).
+	useEffect(() => {
+		const active = Boolean(session?.activeStreamId);
+		setHasActiveStream(active);
+		setResumeEnabled(active);
+	}, [session?.activeStreamId]);
+
+	const disableResume = () => {
+		setResumeEnabled(false);
+		setHasActiveStream(false);
+	};
+
 	return {
 		sessionId,
-		resume,
+		resume: resumeEnabled,
 		hasActiveStream,
+		setHasActiveStream,
+		disableResume,
 	};
 }

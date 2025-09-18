@@ -17,7 +17,7 @@ import { BraintrustMiddleware } from "braintrust";
 import { ACTIVE_MODELS } from "../ai/providers/models/active";
 import type { ModelId } from "../ai/providers";
 import { buildAuthenticatedSystemPrompt } from "../ai/prompts/builders/system-prompt-builder";
-import { getBraintrustConfig } from "lightfast/v2/braintrust-env";
+import { getBraintrustConfig } from "@repo/ai/braintrust-env";
 import { evalTools } from "./tools/eval-tools";
 
 // Extract model IDs from the centralized model definitions (only active models)
