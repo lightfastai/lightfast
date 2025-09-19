@@ -9,13 +9,21 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
-import { 
-  LightfastChatArtifact,
-  LightfastChatSession,
-  ARTIFACT_KINDS,
-  insertLightfastChatArtifactSchema,
-  selectLightfastChatArtifactSchema,
+import {
+	LightfastChatArtifact,
+	LightfastChatSession,
+	ARTIFACT_KINDS,
+	insertLightfastChatArtifactSchema,
+	selectLightfastChatArtifactSchema,
 } from "@db/chat";
+
+const artifactViewerSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	content: z.string().nullable(),
+	kind: z.enum(ARTIFACT_KINDS),
+	createdAt: z.union([z.string(), z.date()]),
+});
 
 export const artifactRouter = {
   /**
@@ -93,6 +101,7 @@ export const artifactRouter = {
 
   /**
    * Get an artifact by ID
+   * Returns only the fields needed by the chat UI
    */
   get: protectedProcedure
     .input(
@@ -100,9 +109,9 @@ export const artifactRouter = {
         id: z.string(),
       })
     )
-    .output(selectLightfastChatArtifactSchema.nullable())
+    .output(artifactViewerSchema.nullable())
     .query(async ({ ctx, input }) => {
-      const artifact = await db
+      const records = await db
         .select()
         .from(LightfastChatArtifact)
         .where(
@@ -113,7 +122,19 @@ export const artifactRouter = {
         )
         .limit(1);
 
-      return artifact[0] || null;
+      const artifact = records[0];
+
+      if (!artifact) {
+        return null;
+      }
+
+      return {
+        id: artifact.id,
+        title: artifact.title,
+        content: artifact.content,
+        kind: artifact.kind,
+        createdAt: artifact.createdAt,
+      };
     }),
 
   /**
