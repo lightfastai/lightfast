@@ -42,6 +42,12 @@ export const LightfastChatSession = mysqlTable("lightfast_chat_session", {
 	pinned: boolean("pinned").default(false).notNull(),
 
 	/**
+	 * Flag indicating whether this session is a temporary chat
+	 * Temporary chats are hidden from the sidebar/share flows
+	 */
+	isTemporary: boolean("is_temporary").default(false).notNull(),
+
+	/**
 	 * Active stream ID for resumable streams
 	 * Tracks the currently streaming response for this session
 	 * Null when no active stream exists

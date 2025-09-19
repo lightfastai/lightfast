@@ -37,6 +37,7 @@ export const shareRouter = {
         .select({
           id: LightfastChatSession.id,
           title: LightfastChatSession.title,
+          isTemporary: LightfastChatSession.isTemporary,
         })
         .from(LightfastChatSession)
         .where(
@@ -51,6 +52,13 @@ export const shareRouter = {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Session not found or access denied",
+        });
+      }
+
+      if (session[0].isTemporary) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Temporary chats cannot be shared",
         });
       }
 
@@ -126,6 +134,7 @@ export const shareRouter = {
           id: LightfastChatSession.id,
           title: LightfastChatSession.title,
           updatedAt: LightfastChatSession.updatedAt,
+          isTemporary: LightfastChatSession.isTemporary,
         })
         .from(LightfastChatSession)
         .where(eq(LightfastChatSession.id, share.sessionId))
@@ -133,7 +142,7 @@ export const shareRouter = {
 
       const session = sessionRecords[0];
 
-      if (!session) {
+      if (!session || session.isTemporary) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Session not available",

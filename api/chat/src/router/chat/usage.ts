@@ -86,7 +86,7 @@ interface SubscriptionData {
 }
 
 // Shared function to get user subscription data from Clerk
-async function getUserSubscriptionData(
+export async function getUserSubscriptionData(
 	userId: string,
 ): Promise<SubscriptionData> {
 	let subscription: CommerceSubscription | null = null;

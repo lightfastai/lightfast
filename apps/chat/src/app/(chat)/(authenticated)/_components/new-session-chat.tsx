@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
@@ -13,6 +14,7 @@ import { produce } from "immer";
 
 interface NewSessionChatProps {
 	agentId: string;
+	mode?: "permanent" | "temporary";
 }
 
 /**
@@ -26,18 +28,20 @@ interface NewSessionChatProps {
  * 4. Proper navigation ensures page component executes and data is prefetched
  * 5. If user hits back button to /new, a new ID is generated
  */
-export function NewSessionChat({ agentId }: NewSessionChatProps) {
+export function NewSessionChat({
+	agentId,
+	mode = "permanent",
+}: NewSessionChatProps) {
 	// Use the hook to manage session ID generation and navigation state
 	const { sessionId, isNewSession } = useSessionId();
+	const isTemporaryChat = mode === "temporary";
+	const [hasTemporarySessionStarted, setHasTemporarySessionStarted] = useState(false);
 
 	// Get user info and usage data
 	const trpc = useTRPC();
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 
-	const [
-		{ data: user },
-		{ data: usageLimits },
-	] = useSuspenseQueries({
+	const [{ data: user }, { data: usageLimits }] = useSuspenseQueries({
 		queries: [
 			{
 				...trpc.user.getUser.queryOptions(),
@@ -58,6 +62,13 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
 
+	const effectiveIsNewSession =
+		isTemporaryChat ? !hasTemporarySessionStarted : isNewSession;
+
+	useEffect(() => {
+		setHasTemporarySessionStarted(false);
+	}, [isTemporaryChat, sessionId]);
+
 	// Hook for creating sessions optimistically
 	const createSession = useCreateSession();
 
@@ -69,30 +80,38 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 		sessionId,
 	}).queryKey;
 
-
 	// Handle session creation when the first message is sent
 	const handleSessionCreation = (firstMessage: string) => {
-		if (!isNewSession) {
+		if (!effectiveIsNewSession) {
 			// Already transitioned to /{sessionId}, no need to create
 			return;
 		}
 
-		// Update the URL immediately for instant feedback
-		window.history.replaceState({}, "", `/${sessionId}`);
+		if (isTemporaryChat) {
+			setHasTemporarySessionStarted(true);
+		} else {
+			// Update the URL immediately for instant feedback
+			window.history.replaceState({}, "", `/${sessionId}`);
+		}
 
 		// Create the session optimistically (fire-and-forget)
 		// The backend will also create it if needed (upsert behavior)
 		// This ensures instant UI updates without blocking message sending
-		createSession.mutate({ id: sessionId, firstMessage });
+		createSession.mutate({
+			id: sessionId,
+			firstMessage,
+			isTemporary: isTemporaryChat,
+		});
 	};
 
 	return (
-		<DataStreamProvider>
+		<DataStreamProvider key={`${mode}-${sessionId}`}>
 			<ChatInterface
+				key={`${mode}-${sessionId}`}
 				agentId={agentId}
 				fallbackSessionId={sessionId}
 				initialMessages={[]}
-				isNewSession={isNewSession}
+				isNewSession={effectiveIsNewSession}
 				handleSessionCreation={handleSessionCreation}
 				user={user}
 				usageLimits={usageLimits}
@@ -126,27 +145,27 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							const isPremium = messageType === MessageType.PREMIUM;
 
 							// Optimistic decrement to prevent spam clicking and keep billing view in sync
-				return produce(oldUsageData, (draft) => {
-					if (isPremium) {
-						draft.remainingQuota.premiumMessages = Math.max(
-							0,
-							draft.remainingQuota.premiumMessages - 1,
-						);
-						draft.usage.premiumMessages += 1;
-						const premiumLimit = draft.limits.premiumMessages;
-						draft.exceeded.premiumMessages =
-							draft.usage.premiumMessages >= premiumLimit;
-					} else {
-						draft.remainingQuota.nonPremiumMessages = Math.max(
-							0,
-							draft.remainingQuota.nonPremiumMessages - 1,
-						);
-						draft.usage.nonPremiumMessages += 1;
-						const standardLimit = draft.limits.nonPremiumMessages;
-						draft.exceeded.nonPremiumMessages =
-							draft.usage.nonPremiumMessages >= standardLimit;
-					}
-				});
+							return produce(oldUsageData, (draft) => {
+								if (isPremium) {
+									draft.remainingQuota.premiumMessages = Math.max(
+										0,
+										draft.remainingQuota.premiumMessages - 1,
+									);
+									draft.usage.premiumMessages += 1;
+									const premiumLimit = draft.limits.premiumMessages;
+									draft.exceeded.premiumMessages =
+										draft.usage.premiumMessages >= premiumLimit;
+								} else {
+									draft.remainingQuota.nonPremiumMessages = Math.max(
+										0,
+										draft.remainingQuota.nonPremiumMessages - 1,
+									);
+									draft.usage.nonPremiumMessages += 1;
+									const standardLimit = draft.limits.nonPremiumMessages;
+									draft.exceeded.nonPremiumMessages =
+										draft.usage.nonPremiumMessages >= standardLimit;
+								}
+							});
 						},
 					);
 				}}
@@ -161,30 +180,33 @@ export function NewSessionChat({ agentId }: NewSessionChatProps) {
 							const isPremium = messageType === MessageType.PREMIUM;
 
 							// Rollback: increment quota back
-				return produce(oldUsageData, (draft) => {
-					if (isPremium) {
-						draft.remainingQuota.premiumMessages += 1;
-						draft.usage.premiumMessages = Math.max(
-							0,
-							draft.usage.premiumMessages - 1,
-						);
-						const premiumLimit = draft.limits.premiumMessages;
-						draft.exceeded.premiumMessages =
-							draft.usage.premiumMessages >= premiumLimit;
-					} else {
-						draft.remainingQuota.nonPremiumMessages += 1;
-						draft.usage.nonPremiumMessages = Math.max(
-							0,
-							draft.usage.nonPremiumMessages - 1,
-						);
-						const standardLimit = draft.limits.nonPremiumMessages;
-						draft.exceeded.nonPremiumMessages =
-							draft.usage.nonPremiumMessages >= standardLimit;
-					}
-				});
+							return produce(oldUsageData, (draft) => {
+								if (isPremium) {
+									draft.remainingQuota.premiumMessages += 1;
+									draft.usage.premiumMessages = Math.max(
+										0,
+										draft.usage.premiumMessages - 1,
+									);
+									const premiumLimit = draft.limits.premiumMessages;
+									draft.exceeded.premiumMessages =
+										draft.usage.premiumMessages >= premiumLimit;
+								} else {
+									draft.remainingQuota.nonPremiumMessages += 1;
+									draft.usage.nonPremiumMessages = Math.max(
+										0,
+										draft.usage.nonPremiumMessages - 1,
+									);
+									const standardLimit = draft.limits.nonPremiumMessages;
+									draft.exceeded.nonPremiumMessages =
+										draft.usage.nonPremiumMessages >= standardLimit;
+								}
+							});
 						},
 					);
-					console.log('[NewSessionChat] Rolled back optimistic quota update for model:', modelId);
+					console.log(
+						"[NewSessionChat] Rolled back optimistic quota update for model:",
+						modelId,
+					);
 				}}
 				onNewAssistantMessage={(assistantMessage) => {
 					// Optimistically append the assistant message to the cache

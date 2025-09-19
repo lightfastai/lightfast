@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -25,6 +27,7 @@ export function ExistingSessionChat({
 }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
+	const router = useRouter();
 
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
@@ -68,6 +71,16 @@ export function ExistingSessionChat({
 			},
 		],
 	});
+
+	useEffect(() => {
+		if (session.isTemporary) {
+			router.replace("/new");
+		}
+	}, [router, session.isTemporary]);
+
+	if (session.isTemporary) {
+		return null;
+	}
 
 
 	// Convert database messages to UI format

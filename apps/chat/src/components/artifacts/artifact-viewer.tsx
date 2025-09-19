@@ -78,7 +78,7 @@ export function ArtifactViewer({
 	const isCurrentVersion = true; // For now, always current version
 
 	return (
-		<Artifact className="h-full w-full border-l border-zinc-200 dark:border-zinc-700">
+		<Artifact className="h-full w-full border-l border-zinc-200 dark:border-zinc-700 relative z-20">
 			<ArtifactHeader>
 				<div className="flex items-center gap-2">
 					{/* Artifacts list dropdown - only show for authenticated users */}

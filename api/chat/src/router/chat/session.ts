@@ -7,6 +7,8 @@ import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
 import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
 import { inngest } from "../../inngest/client/client";
+import { ClerkPlanKey } from "../../lib/billing/types";
+import { getUserSubscriptionData } from "./usage";
 
 export const sessionRouter = {
 	/**
@@ -22,6 +24,7 @@ export const sessionRouter = {
 		.query(async ({ ctx, input }) => {
 			const whereConditions = [
 				eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+				eq(LightfastChatSession.isTemporary, false),
 			];
 
 			// If cursor is provided, get sessions older than the cursor
@@ -73,6 +76,7 @@ export const sessionRouter = {
 				and(
 					eq(LightfastChatSession.clerkUserId, ctx.session.userId),
 					eq(LightfastChatSession.pinned, true),
+					eq(LightfastChatSession.isTemporary, false),
 				),
 			)
 			.orderBy(desc(LightfastChatSession.updatedAt));
@@ -107,6 +111,7 @@ export const sessionRouter = {
 					and(
 						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
 						like(LightfastChatSession.title, searchTerm),
+						eq(LightfastChatSession.isTemporary, false),
 					),
 				)
 				.orderBy(
@@ -142,6 +147,7 @@ export const sessionRouter = {
 					title: LightfastChatSession.title,
 					pinned: LightfastChatSession.pinned,
 					activeStreamId: LightfastChatSession.activeStreamId,
+					isTemporary: LightfastChatSession.isTemporary,
 					createdAt: LightfastChatSession.createdAt,
 					updatedAt: LightfastChatSession.updatedAt,
 				})
@@ -170,9 +176,27 @@ export const sessionRouter = {
 			z.object({
 				id: z.string().uuid("Session ID must be a valid UUID v4"),
 				firstMessage: z.string().min(1).optional(), // Optional for internal calls, but should be provided from UI
+				isTemporary: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const isTemporary = input.isTemporary ?? false;
+
+			if (isTemporary) {
+				const { planKey, hasActiveSubscription } =
+					await getUserSubscriptionData(ctx.session.userId);
+
+				if (
+					planKey !== ClerkPlanKey.PLUS_TIER ||
+					!hasActiveSubscription
+				) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Temporary chats require an active Plus subscription",
+					});
+				}
+			}
+
 			try {
 				// Try to create the session
 				await db
@@ -180,6 +204,7 @@ export const sessionRouter = {
 					.values({
 						id: input.id, // Use client-provided ID directly
 						clerkUserId: ctx.session.userId,
+						isTemporary,
 					})
 					.execute();
 
@@ -261,7 +286,10 @@ export const sessionRouter = {
 		.mutation(async ({ ctx, input }) => {
 			// Verify ownership
 			const session = await db
-				.select({ id: LightfastChatSession.id })
+				.select({
+					id: LightfastChatSession.id,
+					isTemporary: LightfastChatSession.isTemporary,
+				})
 				.from(LightfastChatSession)
 				.where(
 					and(
@@ -275,6 +303,13 @@ export const sessionRouter = {
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "Session not found",
+				});
+			}
+
+			if (session[0].isTemporary) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Temporary chats cannot be pinned",
 				});
 			}
 
