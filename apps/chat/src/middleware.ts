@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -34,10 +33,7 @@ export default clerkMiddleware(
 			await auth.protect();
 		}
 
-		const response = NextResponse.next();
-
-		// Apply CORS headers to the response
-		return applyCorsHeaders(response, req);
+		return NextResponse.next();
 	},
 	{
 		signInUrl: "/sign-in",
