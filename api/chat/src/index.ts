@@ -16,7 +16,6 @@ import type { ChatAppRouter } from "./root";
 export type ChatRouterInputs = inferRouterInputs<ChatAppRouter>;
 export type ChatRouterOutputs = inferRouterOutputs<ChatAppRouter>;
 
-
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";
 
@@ -24,6 +23,7 @@ export { createCallerFactory } from "./trpc";
 export { calculateBillingPeriod } from "./router/chat/usage";
 
 // Export shared billing types
+// TODO: Move to own package @types/chat
 export {
 	MessageType,
 	ClerkPlanKey,
@@ -36,4 +36,8 @@ export {
 	getClerkPlanId,
 	hasClerkPlan,
 } from "./lib/billing/types";
-export type { BillingPlanLimits, BillingInterval, BillingError } from "./lib/billing/types";
+export type {
+	BillingPlanLimits,
+	BillingInterval,
+	BillingError,
+} from "./lib/billing/types";
