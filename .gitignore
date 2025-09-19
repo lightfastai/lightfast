@@ -134,3 +134,7 @@ worktrees/
 
 # Playwright
 .playwright-mcp
+
+# Pnpm store
+.pnpm-store/
+
