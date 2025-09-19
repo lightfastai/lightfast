@@ -53,9 +53,8 @@ import {
 // Session type from API - use getMetadata which includes activeStreamId
 type Session = ChatRouterOutputs["session"]["getMetadata"];
 import { useDataStream } from "~/hooks/use-data-stream";
-import { ArtifactViewer, useArtifact } from "~/components/artifacts";
+import { useArtifact } from "~/components/artifacts";
 import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
-import { AnimatePresence, motion } from "framer-motion";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
@@ -93,6 +92,11 @@ const RateLimitIndicator = dynamic(
 
 const RateLimitDialog = dynamic(
 	() => import("./rate-limit-dialog").then((mod) => mod.RateLimitDialog),
+	{ ssr: false },
+);
+
+const ArtifactPane = dynamic(
+	() => import("./artifact-pane").then((mod) => mod.ArtifactPane),
 	{ ssr: false },
 );
 
@@ -1040,79 +1044,27 @@ export function ChatInterface({
 	// Return the full layout with artifact support
 	return (
 		<div className="flex h-full min-h-0 w-full overflow-hidden">
-			{/* Chat interface - animates width when artifact is visible */}
-			<motion.div
-				className="min-w-0 flex-shrink-0 h-full min-h-0"
-				initial={false}
-				animate={{
+			{/* Chat interface area */}
+			<div
+				className="min-w-0 flex-shrink-0 h-full min-h-0 transition-[width] duration-300 ease-out"
+				style={{
 					width: isAuthenticated && artifact.isVisible ? "50%" : "100%",
-				}}
-				transition={{
-					type: "spring",
-					stiffness: 300,
-					damping: 30,
-					duration: 0.4,
 				}}
 			>
 				{chatContent}
-			</motion.div>
+			</div>
 
-			{/* Artifact panel - slides in from right when visible (authenticated users only) */}
-			<AnimatePresence>
-			{isAuthenticated && artifact.isVisible && (
-				<motion.div
-					className="w-1/2 min-w-0 flex-shrink-0 relative z-50 h-full"
-						initial={{ x: "100%", opacity: 0 }}
-						animate={{
-							x: 0,
-							opacity: 1,
-						}}
-						exit={{
-							x: "100%",
-							opacity: 0,
-						}}
-						transition={{
-							type: "spring",
-							stiffness: 300,
-							damping: 30,
-							duration: 0.4,
-						}}
-					>
-						<ArtifactViewer
-							artifact={artifact}
-							metadata={metadata}
-								setMetadata={setMetadata}
-								onClose={hideArtifact}
-							sessionId={sessionId}
-							_isAuthenticated={isAuthenticated}
-							onArtifactSelect={async (artifactId) => {
-								try {
-									// Fetch artifact data using clean REST API
-									const artifactData = await fetchArtifact(artifactId);
-
-									// Show the artifact with the fetched data
-									showArtifact({
-										documentId: artifactData.id,
-										title: artifactData.title,
-										kind: artifactData.kind,
-										content: artifactData.content,
-										status: "idle",
-										boundingBox: {
-											top: 100,
-											left: 100,
-											width: 300,
-											height: 200,
-										},
-									});
-								} catch (error) {
-									console.error("Failed to load artifact:", error);
-									// Could add toast notification here
-								}
-							}}
-						/>
-					</motion.div>
-				)}
-			</AnimatePresence>
+			{/* Artifact panel - rendered on demand for authenticated users */}
+			<ArtifactPane
+				artifact={artifact}
+				metadata={metadata}
+				setMetadata={setMetadata}
+				hideArtifact={hideArtifact}
+				showArtifact={showArtifact}
+				fetchArtifact={fetchArtifact}
+				sessionId={sessionId}
+				isAuthenticated={isAuthenticated}
+			/>
 
 			{/* Rate limit dialog - shown when anonymous user hits limit */}
 			<RateLimitDialog
