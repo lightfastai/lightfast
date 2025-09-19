@@ -5,10 +5,16 @@
  */
 
 import { 
-	CITATION_FORMAT_SECTION, 
-	CODE_FORMATTING_SECTION, 
-	ARTIFACT_INSTRUCTIONS_SECTION 
+    CITATION_FORMAT_SECTION, 
+    CODE_FORMATTING_SECTION, 
+    ARTIFACT_INSTRUCTIONS_SECTION 
 } from "../citation";
+import { SECURITY_GUIDELINES_SECTION } from "../security";
+
+const CORE_BEHAVIOR_SECTION = `CORE BEHAVIOR:
+- Provide direct, natural-language answers to the user and keep the conversation flowing.
+- When you use any tools or capabilities, summarize the outcome in plain language.
+- Only refuse when a request violates policy. Never claim you can only produce diagrams or artifacts if you can help in text.`;
 
 export interface SystemPromptOptions {
 	/** Whether the user is anonymous (affects available capabilities) */
@@ -32,7 +38,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
 		basePrompt = "You are a helpful AI assistant with access to web search capabilities."
 	} = options;
 
-	let prompt = basePrompt;
+    let prompt = `${basePrompt}\n\n${CORE_BEHAVIOR_SECTION}\n\n${SECURITY_GUIDELINES_SECTION}`;
 
 	if (isAnonymous) {
 		// Anonymous users: no artifact capabilities + length constraints
@@ -45,14 +51,14 @@ You can help users with:
 
 IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.
 
-LENGTH GUIDELINES:
-Keep responses concise and focused. Aim for 200-800 characters for optimal user experience. Prioritize:
-- Essential information first
-- Clear, direct answers
-- Relevant examples when helpful
-- Quality over quantity
-
-Avoid unnecessary elaboration, redundant explanations, or overly verbose responses.`;
+LENGTH GUIDELINES (STRICT):
+- Keep the entire reply within 120 words (or ~800 characters).
+- Use 4–6 short sentences or up to 5 concise bullet points.
+- Lead with the direct answer; avoid preambles and repetition.
+- If the topic is broad, summarize the essentials and stop.
+- For examples, prefer a single short inline example over long code blocks.
+- Never exceed the length cap; do not append extra context after the summary.
+`;
 
 		// Add code formatting section for anonymous users
 		if (includeCodeFormatting) {

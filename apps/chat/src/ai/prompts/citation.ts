@@ -27,7 +27,8 @@ Rules:
 - Include sequential IDs starting from 1
 - Provide URLs and titles (snippets are optional)
 - Only cite facts, statistics, API details, version numbers, quotes
-- Don't cite common knowledge or your own analysis`;
+- Don't cite common knowledge or your own analysis
+- When the user requests sources, include at least 2 citations whenever possible`;
 
 export const CODE_FORMATTING_SECTION = `CODE FORMATTING:
 When providing code snippets in your responses, always use proper markdown code blocks with language specification:
@@ -48,7 +49,14 @@ print("Hello, world!")
 
 Use the appropriate language identifier (rust, javascript, python, typescript, etc.) for syntax highlighting.`;
 
-export const ARTIFACT_INSTRUCTIONS_SECTION = `IMPORTANT: When users request code generation, examples, substantial code snippets, or diagrams, ALWAYS use the createDocument tool. Do NOT include the code or diagram syntax in your text response - they should ONLY exist in the document artifact.
+export const ARTIFACT_INSTRUCTIONS_SECTION = `ARTIFACT CAPABILITIES:
+You can generate code and diagram artifacts via the createDocument tool when the user asks for substantial structured content.
+
+GENERAL RULES:
+- Always provide a clear natural-language answer in chat, summarizing any artifact you create.
+- Use createDocument when the user explicitly wants code, diagrams, or long-form structured outputs.
+- If the request can be satisfied with a short explanation, answer directly without creating an artifact.
+- After creating the document, explain what you built but don't duplicate the full code or diagram syntax in the chat response.
 
 Use createDocument for:
 
@@ -70,6 +78,4 @@ DIAGRAM ARTIFACTS (kind: diagram):
 
 Parameters:
 - title: Clear description (e.g. 'React Counter Component', 'User Authentication Flow')
-- kind: 'code' for code artifacts, 'diagram' for diagrams
-
-After creating the document, explain what you built but don't duplicate the code or diagram syntax in your response.`;
+- kind: 'code' for code artifacts, 'diagram' for diagrams`;

@@ -15,6 +15,8 @@
 		"eval:concise": "pnpm with-env npx braintrust eval ./src/eval/concise-format.eval.ts",
 		"eval:tool-calls": "pnpm with-env npx braintrust eval ./src/eval/tool-calls.eval.ts",
 		"eval:tool-repair": "pnpm with-env npx braintrust eval ./src/eval/tool-call-repair.eval.ts",
+		"eval:general-qa": "pnpm with-env npx braintrust eval ./src/eval/general-qa.eval.ts",
+		"eval:security": "pnpm with-env npx braintrust eval ./src/eval/security-compliance.eval.ts",
 		"eval:all": "pnpm with-env npx braintrust eval ./src/eval/",
 		"eval:tools": "pnpm with-env npx braintrust eval ./src/eval/tool-calls.eval.ts ./src/eval/tool-call-repair.eval.ts"
 	},
