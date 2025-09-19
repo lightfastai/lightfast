@@ -25,6 +25,8 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 		[onPinToggle, session.id],
 	);
 
+	const shouldShowSkeleton = !session.title || session.title === "New Session";
+
 	return (
 		<SidebarMenuItem>
 			<ActiveMenuItem
@@ -32,25 +34,20 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 				href={`/${session.id}`}
 				prefetch={true}
 			>
-				{!session.title || session.title === "New Session" ? (
-					<div className="relative h-4 w-full flex-1 overflow-hidden rounded">
+				{shouldShowSkeleton ? (
+					<div className="relative h-4 w-full min-w-0 flex-1 overflow-hidden rounded">
 						<div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
 						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
 					</div>
 				) : (
-					<span 
-						className="font-medium text-xs block truncate" 
-						style={{ 
-							maxWidth: "180px",
-							overflow: "hidden",
-							textOverflow: "ellipsis",
-							whiteSpace: "nowrap"
-						}}
+					<span
+						className="font-medium text-xs block truncate"
+						title={session.title}
 					>
 						{session.title}
 					</span>
 				)}
-			</ActiveMenuItem>
+				</ActiveMenuItem>
 			<SidebarMenuAction
 				showOnHover
 				onClick={handlePinClick}
@@ -69,4 +66,3 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 		</SidebarMenuItem>
 	);
 }
-

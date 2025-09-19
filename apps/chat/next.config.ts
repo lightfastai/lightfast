@@ -15,6 +15,11 @@ import { env } from "./src/env";
 let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
+		compiler: {
+			// swcMinify: true,
+			removeConsole:
+				env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+		},
 		transpilePackages: [
 			"@repo/ai",
 			"@api/chat",
@@ -33,9 +38,22 @@ let config: NextConfig = withBetterStack(
 			"@repo/eslint-config",
 			"@repo/typescript-config",
 		],
+		modularizeImports: {
+			"lucide-react": {
+				transform: "lucide-react/dist/esm/icons/{{member}}",
+			},
+		},
 		experimental: {
 			optimizeCss: true,
-			optimizePackageImports: ["@repo/ui", "lucide-react"],
+			optimizePackageImports: [
+				"@repo/ui",
+				"lucide-react",
+				"streamdown",
+				"@radix-ui/react-accordion",
+				"@radix-ui/react-avatar",
+				"@radix-ui/react-collapsible",
+				"@radix-ui/react-popover",
+			],
 			/**
 			 * Router Cache Configuration (staleTimes)
 			 *

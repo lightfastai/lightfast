@@ -2,6 +2,7 @@
 
 import type { ChatStatus, ToolUIPart } from "ai";
 import { Fragment, memo, useMemo, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
 import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
@@ -43,7 +44,6 @@ import {
 	Message,
 	MessageContent,
 } from "@repo/ui/components/ai-elements/message";
-import { Response } from "@repo/ui/components/ai-elements/response";
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
 import {
 	Copy,
@@ -58,6 +58,21 @@ import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatInlineError } from "./chat-inline-error";
 import { ChatErrorType } from "~/lib/errors/types";
+
+const ResponsePlaceholder = () => (
+	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />
+);
+
+const Response = dynamic(
+	() =>
+		import("@repo/ui/components/ai-elements/response").then(
+			(mod) => mod.Response,
+		),
+	{
+		loading: ResponsePlaceholder,
+		ssr: false,
+	},
+);
 
 // Stable sine wave component that persists during streaming
 const StreamingSineWave = memo(function StreamingSineWave({
