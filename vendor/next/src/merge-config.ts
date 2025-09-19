@@ -1,304 +1,160 @@
 import { NextConfig } from "next";
 
 type DeepPartial<T> = T extends object
-	? {
-			[P in keyof T]?: DeepPartial<T[P]>;
-		}
-	: T;
+  ? { [P in keyof T]?: DeepPartial<T[P]> }
+  : T;
 
-/**
- * Deep merges Next.js configurations, properly handling arrays and functions
- *
- * @param baseConfig - The base configuration (typically vendorConfig)
- * @param customConfig - The custom configuration to merge
- * @returns Merged configuration
- */
-export function mergeNextConfig(
-	baseConfig: NextConfig,
-	customConfig: DeepPartial<NextConfig>,
-): NextConfig {
-	const merged: NextConfig = { ...baseConfig };
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  );
+}
 
-	// Handle rewrites
-	if (customConfig.rewrites) {
-		const baseRewrites = baseConfig.rewrites;
-		const customRewrites = customConfig.rewrites;
+function isPrimitive(value: unknown): value is string | number | boolean | null | undefined {
+  return (
+    value === null ||
+    value === undefined ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  );
+}
 
-		merged.rewrites = async () => {
-			const base =
-				typeof baseRewrites === "function"
-					? await baseRewrites()
-					: baseRewrites || [];
-			const custom =
-				typeof customRewrites === "function"
-					? await customRewrites()
-					: customRewrites || [];
+function mergeArrays<T>(a: T[] | undefined, b: T[] | undefined): T[] | undefined {
+  const left = Array.isArray(a) ? a : [];
+  const right = Array.isArray(b) ? b : [];
+  if (!left.length && !right.length) return left;
+  // De-duplicate only primitive arrays; object arrays are concatenated
+  if ((left[0] !== undefined && isPrimitive(left[0])) || (right[0] !== undefined && isPrimitive(right[0]))) {
+    const set = new Set<any>();
+    for (const v of [...left, ...right]) set.add(v as any);
+    return Array.from(set) as T[];
+  }
+  return [...left, ...right] as T[];
+}
 
-			// Handle both array and object formats
-			if (Array.isArray(base) && Array.isArray(custom)) {
-				return [...base, ...custom];
-			}
+function deepMerge<T>(base: T, custom: any): T {
+  if (custom === undefined) return base;
 
-			// Handle object format with beforeFiles, afterFiles, fallback
-			if (!Array.isArray(base) && !Array.isArray(custom)) {
-				return {
-					beforeFiles: [
-						...(base.beforeFiles || []),
-						...(custom.beforeFiles || []),
-					],
-					afterFiles: [
-						...(base.afterFiles || []),
-						...(custom.afterFiles || []),
-					],
-					fallback: [...(base.fallback || []), ...(custom.fallback || [])],
-				};
-			}
+  // Arrays: concat (with primitive de-dup)
+  if (Array.isArray(base) || Array.isArray(custom)) {
+    return mergeArrays(base as any, custom as any) as any as T;
+  }
 
-			// Mixed formats - convert to array
-			const baseArray = Array.isArray(base)
-				? base
-				: [
-						...(base.beforeFiles || []),
-						...(base.afterFiles || []),
-						...(base.fallback || []),
-					];
-			const customArray = Array.isArray(custom)
-				? custom
-				: [
-						...(custom.beforeFiles || []),
-						...(custom.afterFiles || []),
-						...(custom.fallback || []),
-					];
+  // Objects: recursive merge
+  if (isPlainObject(base) && isPlainObject(custom)) {
+    const result: Record<string, any> = { ...(base as any) };
+    const keys = new Set<string>([...Object.keys(base as any), ...Object.keys(custom)]);
+    for (const key of keys) {
+      const bVal = (base as any)[key];
+      const cVal = (custom as any)[key];
+      if (Array.isArray(bVal) || Array.isArray(cVal)) {
+        result[key] = mergeArrays(bVal, cVal);
+      } else if (isPlainObject(bVal) || isPlainObject(cVal)) {
+        result[key] = deepMerge(bVal ?? {}, cVal ?? {});
+      } else {
+        result[key] = cVal === undefined ? bVal : cVal;
+      }
+    }
+    return result as T;
+  }
 
-			return [...baseArray, ...customArray];
-		};
-	}
+  // Primitive/function: prefer custom when provided
+  return (custom as T) ?? base;
+}
 
-	// Handle redirects
-	if (customConfig.redirects) {
-		const baseRedirects = baseConfig.redirects;
-		const customRedirects = customConfig.redirects;
-
-		merged.redirects = async () => {
-			const base =
-				typeof baseRedirects === "function"
-					? await baseRedirects()
-					: baseRedirects || [];
-			const custom =
-				typeof customRedirects === "function"
-					? await customRedirects()
-					: customRedirects || [];
-
-			return [...base, ...custom];
-		};
-	}
-
-	// Handle headers
-	if (customConfig.headers) {
-		const baseHeaders = baseConfig.headers;
-		const customHeaders = customConfig.headers;
-
-		merged.headers = async () => {
-			const base =
-				typeof baseHeaders === "function"
-					? await baseHeaders()
-					: baseHeaders || [];
-			const custom =
-				typeof customHeaders === "function"
-					? await customHeaders()
-					: customHeaders || [];
-
-			return [...base, ...custom];
-		};
-	}
-
-	// Handle images
-	if (customConfig.images) {
-		merged.images = {
-			...baseConfig.images,
-			...customConfig.images,
-		} as any; // Type assertion needed due to NextConfig image type complexity
-		
-		// Merge remotePatterns array
-		if (customConfig.images.remotePatterns && merged.images) {
-			merged.images.remotePatterns = [
-				...(baseConfig.images?.remotePatterns || []),
-				...(customConfig.images.remotePatterns || []),
-			].filter(Boolean) as any;
-		}
-		
-		// Merge domains array
-		if (customConfig.images.domains && merged.images) {
-			merged.images.domains = [
-				...(baseConfig.images?.domains || []),
-				...(customConfig.images.domains || []),
-			].filter(Boolean) as string[];
-		}
-		
-		// Merge loader config
-		if (customConfig.images.loader && merged.images) {
-			merged.images.loader = customConfig.images.loader;
-		}
-	}
-
-	// Handle experimental
-	if (customConfig.experimental) {
-		// Simple merge without deep spread to avoid type complexity
-		merged.experimental = Object.assign(
-			{},
-			baseConfig.experimental,
-			customConfig.experimental
-		) as any;
-		
-		// Merge optimizePackageImports array
-		if (customConfig.experimental.optimizePackageImports && merged.experimental) {
-			merged.experimental.optimizePackageImports = [
-				...(baseConfig.experimental?.optimizePackageImports || []),
-				...(customConfig.experimental.optimizePackageImports || []),
-			].filter(Boolean) as string[];
-		}
-		
-		// Merge serverActions.allowedOrigins
-		if (customConfig.experimental.serverActions?.allowedOrigins && merged.experimental) {
-			merged.experimental.serverActions = {
-				...baseConfig.experimental?.serverActions,
-				...customConfig.experimental.serverActions,
-				allowedOrigins: [
-					...(baseConfig.experimental?.serverActions?.allowedOrigins || []),
-					...(customConfig.experimental.serverActions.allowedOrigins || []),
-				].filter(Boolean) as string[],
-			};
-		}
-	}
-
-	// Handle transpilePackages
-	if (customConfig.transpilePackages) {
-		merged.transpilePackages = [
-			...(baseConfig.transpilePackages || []),
-			...(customConfig.transpilePackages || []),
-		].filter(Boolean) as string[];
-	}
-
-	// Handle env
-	if (customConfig.env) {
-		merged.env = {
-			...baseConfig.env,
-			...customConfig.env,
-		};
-	}
-
-	// Handle webpack
-	if (customConfig.webpack) {
-		const baseWebpack = baseConfig.webpack;
-		const customWebpack = customConfig.webpack;
-
-		merged.webpack = (config, options) => {
-			let resultConfig = config;
-
-			if (baseWebpack) {
-				resultConfig = baseWebpack(resultConfig, options);
-			}
-
-			if (customWebpack && typeof customWebpack === 'function') {
-				resultConfig = customWebpack(resultConfig, options);
-			}
-
-			return resultConfig;
-		};
-	}
-
-	// Copy over simple properties
-	const simpleProps: (keyof NextConfig)[] = [
-		"reactStrictMode",
-		"basePath",
-		"assetPrefix",
-		"poweredByHeader",
-		"compress",
-		"devIndicators",
-		"generateEtags",
-		"distDir",
-		"generateBuildId",
-		"cleanDistDir",
-		"pageExtensions",
-		"trailingSlash",
-		"skipTrailingSlashRedirect",
-		"skipMiddlewareUrlNormalize",
-		"productionBrowserSourceMaps",
-		"optimizeFonts",
-		"swcMinify",
-		"output",
-		"staticPageGenerationTimeout",
-		"crossOrigin",
-		"serverRuntimeConfig",
-		"publicRuntimeConfig",
-		"outputFileTracing",
-	];
-
-	for (const prop of simpleProps) {
-		if (customConfig[prop] !== undefined) {
-			(merged as any)[prop] = customConfig[prop];
-		}
-	}
-
-	// Handle typescript config
-	if (customConfig.typescript) {
-		merged.typescript = {
-			...baseConfig.typescript,
-			...customConfig.typescript,
-		};
-	}
-
-	// Handle eslint config
-	if (customConfig.eslint) {
-		merged.eslint = {
-			...baseConfig.eslint,
-			...customConfig.eslint,
-		} as any;
-
-		// Merge dirs array
-		if (customConfig.eslint.dirs && merged.eslint) {
-			merged.eslint.dirs = [
-				...(baseConfig.eslint?.dirs || []),
-				...(customConfig.eslint.dirs || []),
-			].filter(Boolean) as string[];
-		}
-	}
-
-	// Handle i18n
-	if (customConfig.i18n) {
-		merged.i18n = {
-			...baseConfig.i18n,
-			...customConfig.i18n,
-		} as any;
-
-		// Merge locales array
-		if (customConfig.i18n.locales && merged.i18n) {
-			merged.i18n.locales = customConfig.i18n.locales as any;
-		}
-
-		// Merge domains array
-		if (customConfig.i18n.domains && merged.i18n) {
-			merged.i18n.domains = [
-				...(baseConfig.i18n?.domains || []),
-				...(customConfig.i18n.domains || []),
-			].filter(Boolean) as any;
-		}
-	}
-
-	return merged;
+async function resolveMaybeAsync<T>(value: T | (() => Promise<T>) | undefined): Promise<T | undefined> {
+  if (!value) return undefined;
+  if (typeof value === "function") return await (value as any)();
+  return value as any;
 }
 
 /**
- * Creates a Next.js configuration by merging vendor config with custom config
- *
- * @param customConfig - The custom configuration
- * @param baseConfig - The base configuration (defaults to vendorConfig)
- * @returns Merged configuration
+ * Deep merges Next.js configurations, ensuring all fields are merged.
+ * - Objects are deep-merged
+ * - Arrays are concatenated (primitive arrays de-duplicated)
+ * - Functions are composed where appropriate (webpack/rewrites/redirects/headers)
  */
-export function createNextConfig(
-	customConfig: DeepPartial<NextConfig>,
-	baseConfig?: NextConfig,
+export function mergeNextConfig(
+  baseConfig: NextConfig,
+  customConfig: DeepPartial<NextConfig>,
 ): NextConfig {
-	const vendorConfig = baseConfig || require("./next-config-builder").config;
-	return mergeNextConfig(vendorConfig, customConfig);
+  // First, deep-merge everything generically
+  const merged = deepMerge(baseConfig as any, customConfig as any) as NextConfig;
+
+  // Special handling for rewrites (array or object form)
+  if (baseConfig.rewrites || customConfig.rewrites) {
+    const baseRewrites = baseConfig.rewrites;
+    const customRewrites = customConfig.rewrites;
+    merged.rewrites = async () => {
+      const base = await resolveMaybeAsync<any>(baseRewrites as any);
+      const custom = await resolveMaybeAsync<any>(customRewrites as any);
+
+      const b = base ?? [] as any;
+      const c = custom ?? [] as any;
+
+      // both arrays
+      if (Array.isArray(b) && Array.isArray(c)) {
+        return [...b, ...c];
+      }
+      // both objects with beforeFiles/afterFiles/fallback
+      if (!Array.isArray(b) && !Array.isArray(c)) {
+        return {
+          beforeFiles: mergeArrays(b.beforeFiles || [], c.beforeFiles || []) || [],
+          afterFiles: mergeArrays(b.afterFiles || [], c.afterFiles || []) || [],
+          fallback: mergeArrays(b.fallback || [], c.fallback || []) || [],
+        } as any;
+      }
+      // mixed: flatten to arrays
+      const bArr = Array.isArray(b) ? b : [ ...(b.beforeFiles || []), ...(b.afterFiles || []), ...(b.fallback || []) ];
+      const cArr = Array.isArray(c) ? c : [ ...(c.beforeFiles || []), ...(c.afterFiles || []), ...(c.fallback || []) ];
+      return [...bArr, ...cArr];
+    };
+  }
+
+  // redirects
+  if (baseConfig.redirects || customConfig.redirects) {
+    const baseRedirects = baseConfig.redirects;
+    const customRedirects = customConfig.redirects;
+    merged.redirects = async () => {
+      const base = (await resolveMaybeAsync(baseRedirects as any)) || [];
+      const custom = (await resolveMaybeAsync(customRedirects as any)) || [];
+      return [...base, ...custom];
+    };
+  }
+
+  // headers
+  if (baseConfig.headers || customConfig.headers) {
+    const baseHeaders = baseConfig.headers;
+    const customHeaders = customConfig.headers;
+    merged.headers = async () => {
+      const base = (await resolveMaybeAsync(baseHeaders as any)) || [];
+      const custom = (await resolveMaybeAsync(customHeaders as any)) || [];
+      return [...base, ...custom];
+    };
+  }
+
+  // webpack pipeline: run base then custom
+  if (baseConfig.webpack || customConfig.webpack) {
+    const baseWebpack = baseConfig.webpack;
+    const customWebpack = customConfig.webpack as any;
+    merged.webpack = (config, options) => {
+      let result = config;
+      if (typeof baseWebpack === "function") result = baseWebpack(result, options);
+      if (typeof customWebpack === "function") result = customWebpack(result, options);
+      return result;
+    };
+  }
+
+  return merged;
+}
+
+export function createNextConfig(
+  customConfig: DeepPartial<NextConfig>,
+  baseConfig?: NextConfig,
+): NextConfig {
+  const vendorConfig = baseConfig || require("./next-config-builder").config;
+  return mergeNextConfig(vendorConfig, customConfig);
 }
