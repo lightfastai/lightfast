@@ -3,21 +3,19 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
-import { sentryEnv } from "@vendor/observability/sentry-env";
 import { braintrustEnv } from "@repo/ai/braintrust-env";
 import { env as dbEnv } from "@db/chat/env";
 import { env as securityEnv } from "@vendor/security/env";
-import { env as inngestEnv } from "@vendor/inngest/env";
+import { env as chatApiEnv } from "@api/chat/env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
-    sentryEnv,
+    chatApiEnv,
     braintrustEnv,
     dbEnv,
     securityEnv,
-    inngestEnv,
   ],
   shared: {
     NODE_ENV: z

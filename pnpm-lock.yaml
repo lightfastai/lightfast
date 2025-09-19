@@ -177,6 +177,9 @@ importers:
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@3.25.76)
@@ -1712,13 +1715,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@4.0.16)
+        version: 1.0.15(zod@3.25.76)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@4.0.16)
+        version: 5.0.15(zod@3.25.76)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -2724,6 +2727,9 @@ importers:
       '@inngest/agent-kit':
         specifier: ^0.7.3
         version: 0.7.3(fastify@4.29.1)(h3@1.15.4)(hono@4.9.4)(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.2)
+      '@inngest/middleware-sentry':
+        specifier: ^0.1.2
+        version: 0.1.2(@sentry/core@10.12.0)(@sentry/types@10.12.0)(inngest@3.40.1(express@4.21.2)(fastify@4.29.1)(h3@1.15.4)(hono@4.9.4)(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.2))
       inngest:
         specifier: ^3.35.1
         version: 3.40.1(express@4.21.2)(fastify@4.29.1)(h3@1.15.4)(hono@4.9.4)(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.2)
@@ -4839,6 +4845,13 @@ packages:
 
   '@inngest/ai@0.1.5':
     resolution: {integrity: sha512-Nj+Ee/O3EYmPIw+2eGryRh+b2TcqaZyL52RaO1/Cz707R/HrJVVDx8uRQo93gSeN4lMlaOluNrdleyM5M5wcQA==}
+
+  '@inngest/middleware-sentry@0.1.2':
+    resolution: {integrity: sha512-HwqxVFWBvg6Ld7evSKlBDEMJvolhgb/MaTq9lMmoD8oCO1aJBei0MfXNCJGZAtz5v/AFkhYYAiTvXehcFumanA==}
+    peerDependencies:
+      '@sentry/core': '>=8.0.0'
+      '@sentry/types': '>=8.0.0'
+      inngest: '>=3.0.0'
 
   '@inquirer/checkbox@4.2.2':
     resolution: {integrity: sha512-E+KExNurKcUJJdxmjglTl141EwxWyAHplvsYJQgSwXf8qiNWkTxTuCCqmhFEmbIXd4zLaGMfQFJ6WrZ7fSeV3g==}
@@ -7950,6 +7963,10 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       react: ^19.1.1
+
+  '@sentry/types@10.12.0':
+    resolution: {integrity: sha512-sKGj3l3V8ZKISh2Tu88bHfnm5ztkRtSLdmpZ6TmCeJdSM9pV+RRd6CMJ0RnSEXmYHselPNUod521t2NQFd4W1w==}
+    engines: {node: '>=18'}
 
   '@sentry/vercel-edge@10.12.0':
     resolution: {integrity: sha512-6ev9CaYETqozb/ilB4lM6uqyomRVlSSgXaSqAHjsnbRfSQsmc1mh7CMmvi50ZBhtmo5q2f00BN7b/Nb7rug0eA==}
@@ -16343,23 +16360,11 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
-      zod: 4.0.16
-
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       zod: 3.25.76
-
-  '@ai-sdk/gateway@1.0.7(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
-      zod: 4.0.16
 
   '@ai-sdk/google-vertex@2.2.27(zod@3.25.76)':
     dependencies:
@@ -16453,27 +16458,12 @@ snapshots:
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
 
-  '@ai-sdk/provider-utils@3.0.3(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.0.16
-      zod-to-json-schema: 3.24.6(zod@4.0.16)
-
   '@ai-sdk/provider-utils@3.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:
@@ -18089,6 +18079,12 @@ snapshots:
     dependencies:
       '@types/node': 22.17.2
       typescript: 5.9.2
+
+  '@inngest/middleware-sentry@0.1.2(@sentry/core@10.12.0)(@sentry/types@10.12.0)(inngest@3.40.1(express@4.21.2)(fastify@4.29.1)(h3@1.15.4)(hono@4.9.4)(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.2))':
+    dependencies:
+      '@sentry/core': 10.12.0
+      '@sentry/types': 10.12.0
+      inngest: 3.40.1(express@4.21.2)(fastify@4.29.1)(h3@1.15.4)(hono@4.9.4)(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.2)
 
   '@inquirer/checkbox@4.2.2(@types/node@24.3.0)':
     dependencies:
@@ -21685,6 +21681,10 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.1.1
 
+  '@sentry/types@10.12.0':
+    dependencies:
+      '@sentry/core': 10.12.0
+
   '@sentry/vercel-edge@10.12.0':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -23570,14 +23570,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
-
-  ai@5.0.15(zod@4.0.16):
-    dependencies:
-      '@ai-sdk/gateway': 1.0.7(zod@4.0.16)
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
-      '@opentelemetry/api': 1.9.0
-      zod: 4.0.16
 
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
@@ -32065,10 +32057,6 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.24.6(zod@4.0.16):
-    dependencies:
-      zod: 4.0.16
 
   zod-validation-error@3.5.3(zod@3.25.76):
     dependencies:
