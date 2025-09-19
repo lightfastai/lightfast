@@ -1,8 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import {
-	handleCorsPreflightRequest,
-	applyCorsHeaders,
-} from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -20,12 +17,6 @@ const requiresAuth = (req: NextRequest) =>
 
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
-		// Handle CORS preflight requests
-		const preflightResponse = handleCorsPreflightRequest(req);
-		if (preflightResponse) {
-			return preflightResponse;
-		}
-
 		const { userId } = await auth();
 
 		// Handle redirects for authenticated users only
