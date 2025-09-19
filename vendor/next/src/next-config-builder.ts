@@ -46,16 +46,21 @@ export const config: NextConfig = withVercelToolbar()({
   },
 
   async headers() {
+    const securityHeaders = createSecureHeaders({
+      // HSTS Preload: https://hstspreload.org/
+      forceHTTPSRedirect: [
+        true,
+        { maxAge: 63_072_000, includeSubDomains: true, preload: true },
+      ],
+    });
+
     return [
       {
         source: "/(.*)",
-        headers: createSecureHeaders({
-          // HSTS Preload: https://hstspreload.org/
-          forceHTTPSRedirect: [
-            true,
-            { maxAge: 63_072_000, includeSubDomains: true, preload: true },
-          ],
-        }),
+        headers: [
+          ...securityHeaders,
+          { key: "Document-Policy", value: "js-profiling" },
+        ],
       },
     ];
   },

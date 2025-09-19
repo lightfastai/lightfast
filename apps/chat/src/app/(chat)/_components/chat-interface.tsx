@@ -1,7 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import * as Sentry from "@sentry/nextjs";
+import {
+	addBreadcrumb,
+	captureException,
+	captureMessage,
+} from "@sentry/nextjs";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatMessages } from "./chat-messages";
 import { PromptSuggestions } from "./prompt-suggestions";
@@ -361,7 +365,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			const source = chatError.source ?? getMetadataString(metadata, "source");
 				const failedMessageId = getMetadataString(metadata, "messageId");
 
-			Sentry.addBreadcrumb({
+			addBreadcrumb({
 				category: "chat-ui",
 				level: severity === "fatal" ? "error" : "warning",
 				message: "Chat interface error",
@@ -384,7 +388,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 				category !== undefined && inlineStreamCategories.has(category);
 
 			if (isStreamingRelated && category) {
-				Sentry.captureMessage("chat.ui.error.streaming", {
+				captureMessage("chat.ui.error.streaming", {
 					level: "error",
 					extra: {
 						...metricsTags,
@@ -456,7 +460,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 					message: chatError.message,
 				});
 
-					Sentry.captureMessage("Chat interface fatal error", {
+					captureMessage("Chat interface fatal error", {
 						level: "error",
 					});
 					throwToErrorBoundary(errorForBoundary);
@@ -495,7 +499,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			if (typeof performance !== "undefined") {
 				streamStartedAtRef.current = performance.now();
 			}
-			Sentry.addBreadcrumb({
+			addBreadcrumb({
 				category: "chat-ui",
 				message: "stream_started",
 				data: {
@@ -510,7 +514,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		if (status !== "streaming" && previousStatus === "streaming") {
 			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
 				const duration = performance.now() - streamStartedAtRef.current;
-				Sentry.addBreadcrumb({
+				addBreadcrumb({
 					category: "chat-ui",
 					message: "stream_duration",
 					data: {
@@ -521,7 +525,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 				});
 			}
 			streamStartedAtRef.current = null;
-			Sentry.addBreadcrumb({
+			addBreadcrumb({
 				category: "chat-ui",
 				message: "stream_completed",
 				data: {
@@ -596,7 +600,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			}
 		}
 
-		Sentry.addBreadcrumb({
+		addBreadcrumb({
 			category: "chat-ui",
 			message: "send_message",
 			data: {
@@ -641,7 +645,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 			});
 
 			// Success breadcrumb already recorded above
-			Sentry.addBreadcrumb({
+			addBreadcrumb({
 				category: "chat-ui",
 				message: "send_message_success",
 				data: {
@@ -658,7 +662,7 @@ const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 		} catch (error) {
 			// Log and throw to error boundary
 			ChatErrorHandler.handleError(error);
-			Sentry.captureException(error, {
+			captureException(error, {
 				contexts: {
 					"chat-ui": {
 						agentId,

@@ -1,8 +1,15 @@
-import * as Sentry from "@sentry/nextjs";
+import {
+  browserProfilingIntegration,
+  browserTracingIntegration,
+  captureRouterTransitionStart,
+  init as initSentry,
+  replayIntegration,
+} from "@sentry/nextjs";
+import { consoleLoggingIntegration } from "@sentry/core";
 
 import { env } from "~/env";
 
-Sentry.init({
+initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
   environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
 
@@ -12,6 +19,10 @@ Sentry.init({
 
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1.0,
+  // Enable CPU profiling for sampled transactions
+  profilesSampleRate: 1.0,
+  // Forward console.* calls as log events
+  enableLogs: true,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
@@ -26,8 +37,10 @@ Sentry.init({
 
   // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
-    Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration({
+    consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+    browserTracingIntegration(),
+    browserProfilingIntegration(),
+    replayIntegration({
       // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
@@ -35,4 +48,4 @@ Sentry.init({
   ],
 });
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = captureRouterTransitionStart;

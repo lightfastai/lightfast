@@ -7,6 +7,7 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 
+import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -86,6 +87,14 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   }),
 });
 
+const sentryMiddleware = t.middleware(
+  trpcMiddleware({
+    attachRpcInput: true,
+  }),
+);
+
+export const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
+
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
@@ -135,7 +144,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -145,7 +154,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * 
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure
+export const protectedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (!ctx.session?.userId) {

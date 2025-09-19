@@ -31,6 +31,7 @@
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
 		"@repo/lib": "workspace:^",
+		"@sentry/core": "10.12.0",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",

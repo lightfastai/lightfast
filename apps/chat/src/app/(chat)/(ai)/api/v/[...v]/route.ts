@@ -3,7 +3,14 @@ import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, initLogger, traced } from "braintrust";
-import * as Sentry from "@sentry/nextjs";
+import {
+	addBreadcrumb,
+	captureException,
+	captureMessage,
+	startSpan,
+	withScope,
+	wrapRouteHandlerWithSentry,
+} from "@sentry/nextjs";
 import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
 import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
@@ -58,7 +65,7 @@ const handler = async (
 	req: Request,
 	{ params }: { params: Promise<{ v?: string[] }> },
 ) =>
-	Sentry.withScope(async (scope) => {
+	withScope(async (scope) => {
 		scope.setTag("ai.route", "chat-ai-v");
 		scope.setTag("http.method", req.method);
 		scope.setContext("request", {
@@ -93,7 +100,7 @@ const handler = async (
 		);
 
 		if (!agentId || !sessionId) {
-			Sentry.captureMessage("chat.api.invalid_path", {
+			captureMessage("chat.api.invalid_path", {
 				level: "warning",
 				extra: { method: req.method },
 			});
@@ -105,7 +112,7 @@ const handler = async (
 
 		let authenticatedUserId: string | null = null;
 		try {
-			const authResult = await Sentry.startSpan(
+			const authResult = await startSpan(
 				{
 					name: "clerk.auth",
 					op: "auth",
@@ -118,7 +125,7 @@ const handler = async (
 			);
 			authenticatedUserId = authResult.userId;
 		} catch (error) {
-			Sentry.captureException(error, {
+			captureException(error, {
 				contexts: {
 					auth: { stage: "verify", agentId, sessionId },
 				},
@@ -166,7 +173,7 @@ const handler = async (
 			},
 		};
 
-		const guardResponse = await Sentry.startSpan(
+		const guardResponse = await startSpan(
 			{
 				name: "chat.guards",
 				op: "policy.evaluate",
@@ -180,7 +187,7 @@ const handler = async (
 		);
 
 		if (guardResponse) {
-			Sentry.addBreadcrumb({
+			addBreadcrumb({
 				category: "guard",
 				level: "warning",
 				message: "Chat guard denied request",
@@ -191,7 +198,7 @@ const handler = async (
 					requestId,
 				},
 			});
-			Sentry.captureMessage("chat.api.guard_denied", {
+			captureMessage("chat.api.guard_denied", {
 				level: "warning",
 				extra: {
 					agentId,
@@ -233,7 +240,7 @@ const handler = async (
 				`[API Route] Missing resources after policy evaluation`,
 				diagnostic,
 			);
-			Sentry.captureMessage(
+			captureMessage(
 				"Chat route missing resources after guard evaluation",
 				{
 					level: "error",
@@ -306,7 +313,7 @@ const handler = async (
 
 		const executeHandler = async (): Promise<Response> => {
 			try {
-				const response = await Sentry.startSpan(
+				const response = await startSpan(
 					{
 						name: "chat.fetchRequestHandler",
 						op: "ai.stream",
@@ -410,7 +417,7 @@ const handler = async (
 									},
 								);
 
-								Sentry.withScope((errorScope) => {
+								withScope((errorScope) => {
 									errorScope.setLevel("error");
 									errorScope.setTag("ai.agent_id", agentId);
 									errorScope.setTag("ai.session_id", systemContext.sessionId);
@@ -420,10 +427,10 @@ const handler = async (
 										url: req.url,
 										requestContext,
 									});
-									Sentry.captureException(error);
+									captureException(error);
 								});
 
-								Sentry.captureMessage("chat.api.handler_error", {
+								captureMessage("chat.api.handler_error", {
 									level: "error",
 									extra: {
 										agentId,
@@ -439,7 +446,7 @@ const handler = async (
 									billing.quotaReservation
 								) {
 									const reservationId = billing.quotaReservation.reservationId;
-									void Sentry.startSpan(
+									void startSpan(
 										{
 											name: "billing.releaseQuotaReservation",
 											op: "billing.release",
@@ -451,7 +458,7 @@ const handler = async (
 										async () => {
 											try {
 												await releaseQuotaReservation(reservationId);
-												Sentry.addBreadcrumb({
+												addBreadcrumb({
 													category: "billing",
 													level: "info",
 													message: "quota_release_success",
@@ -465,7 +472,7 @@ const handler = async (
 													`[Billing] Failed to release quota reservation for user ${authState.clerkUserId}:`,
 													releaseError,
 												);
-												Sentry.captureException(releaseError, {
+												captureException(releaseError, {
 													contexts: {
 														billing: {
 															reservationId,
@@ -474,7 +481,7 @@ const handler = async (
 														},
 													},
 												});
-												Sentry.captureMessage(
+												captureMessage(
 													"chat.billing.quota.release_failed",
 													{
 														level: "error",
@@ -505,7 +512,7 @@ const handler = async (
 						}),
 				);
 
-				Sentry.addBreadcrumb({
+				addBreadcrumb({
 					category: "chat",
 					level: "info",
 					message: "stream_success",
@@ -523,7 +530,7 @@ const handler = async (
 					billing.quotaReservation
 				) {
 					const reservationId = billing.quotaReservation.reservationId;
-					void Sentry.startSpan(
+					void startSpan(
 						{
 							name: "billing.confirmQuotaReservation",
 							op: "billing.confirm",
@@ -535,7 +542,7 @@ const handler = async (
 						async () => {
 							try {
 								await confirmQuotaUsage(reservationId);
-								Sentry.addBreadcrumb({
+								addBreadcrumb({
 									category: "billing",
 									level: "info",
 									message: "quota_confirmed",
@@ -546,7 +553,7 @@ const handler = async (
 									`[Billing] Failed to confirm quota reservation ${reservationId} for user ${authState.clerkUserId}:`,
 									error,
 								);
-								Sentry.captureException(error, {
+								captureException(error, {
 									contexts: {
 										billing: {
 											reservationId,
@@ -555,7 +562,7 @@ const handler = async (
 										},
 									},
 								});
-								Sentry.captureMessage("chat.billing.quota.confirm_failed", {
+								captureMessage("chat.billing.quota.confirm_failed", {
 									level: "error",
 									extra: { reservationId, userId: authState.clerkUserId },
 								});
@@ -576,7 +583,7 @@ const handler = async (
 					url: req.url,
 				});
 
-				Sentry.captureException(error, {
+				captureException(error, {
 					contexts: {
 						route: {
 							agentId,
@@ -586,7 +593,7 @@ const handler = async (
 						},
 					},
 				});
-				Sentry.captureMessage("chat.api.stream.failure", {
+				captureMessage("chat.api.stream.failure", {
 					level: "error",
 					extra: { agentId, sessionId, stage: "execute" },
 				});
@@ -618,7 +625,7 @@ const handler = async (
 					`[API Route] Traced wrapper failed, falling back to direct execution:`,
 					error,
 				);
-				Sentry.captureException(error, {
+				captureException(error, {
 					contexts: {
 						wrapper: { phase: "wrap", agentId, sessionId },
 					},
@@ -632,12 +639,12 @@ const handler = async (
 
 const parameterizedRoute = "/api/v/[...v]";
 
-const GET = Sentry.wrapRouteHandlerWithSentry(handler, {
+const GET = wrapRouteHandlerWithSentry(handler, {
 	method: "GET",
 	parameterizedRoute,
 });
 
-const POST = Sentry.wrapRouteHandlerWithSentry(handler, {
+const POST = wrapRouteHandlerWithSentry(handler, {
 	method: "POST",
 	parameterizedRoute,
 });
