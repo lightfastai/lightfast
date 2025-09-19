@@ -11,6 +11,7 @@ import { messageFeedbackRouter } from "./router/chat/message-feedback";
 import { artifactRouter } from "./router/chat/artifact";
 import { usageRouter } from "./router/chat/usage";
 import { billingRouter } from "./router/billing/billing";
+import { shareRouter } from "./router/chat/share";
 
 /**
  * Primary chat app router - flattened structure
@@ -23,6 +24,7 @@ export const chatAppRouter = createTRPCRouter({
 	artifact: artifactRouter,
 	usage: usageRouter,
 	billing: billingRouter,
+	share: shareRouter,
 });
 
 // Export type for use in client

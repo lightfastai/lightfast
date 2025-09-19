@@ -5,4 +5,5 @@ export * from "./tables/stream";
 export * from "./tables/artifact";
 export * from "./tables/usage";
 export * from "./tables/quota-reservations";
+export * from "./tables/session-share";
 export * from "./tables/relations";
