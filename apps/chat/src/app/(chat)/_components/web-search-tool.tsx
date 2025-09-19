@@ -157,7 +157,7 @@ export const WebSearchTool = memo(function WebSearchTool({
 													rel="noopener noreferrer"
 													className="group flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-muted/50"
 												>
-													<h4 className="flex-1 truncate text-xs font-medium text-foreground">
+													<h4 className="flex-1 truncate text-xs font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
 														{result.title}
 													</h4>
 													<span className="shrink-0 text-xs text-muted-foreground/70">
