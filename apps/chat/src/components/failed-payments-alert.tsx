@@ -11,7 +11,16 @@ import { UpdatePaymentMethodDialog } from "./update-payment-method-dialog";
 import { useBillingData } from "~/hooks/use-billing-data";
 
 export function FailedPaymentsAlert() {
-	const { failedPayments, paymentsLoading, paymentsError } = useBillingData();
+	const {
+		failedPayments,
+		paymentsLoading,
+		paymentsError,
+		revalidatePayments,
+	} = useBillingData();
+
+	const handlePaymentUpdateSuccess = async () => {
+		await revalidatePayments();
+	};
 
 	// Don't render if still loading or there's an error
 	if (paymentsLoading || paymentsError) {
@@ -36,7 +45,7 @@ export function FailedPaymentsAlert() {
 					Some of your recent payments failed. This might affect your
 					service access.
 				</p>
-				<UpdatePaymentMethodDialog>
+				<UpdatePaymentMethodDialog onSuccess={handlePaymentUpdateSuccess}>
 					<Button
 						variant="outline"
 						className="border-red-500/40 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950"

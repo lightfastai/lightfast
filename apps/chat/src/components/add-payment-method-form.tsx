@@ -9,7 +9,7 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { toast } from "@repo/ui/hooks/use-toast";
 
 interface AddPaymentMethodFormProps {
-	onSuccess?: () => void;
+	onSuccess?: () => void | Promise<void>;
 }
 
 function AddPaymentMethodFormContent({ onSuccess }: AddPaymentMethodFormProps) {
@@ -44,7 +44,7 @@ function AddPaymentMethodFormContent({ onSuccess }: AddPaymentMethodFormProps) {
 				description: "Your payment method has been added successfully.",
 			});
 
-			onSuccess?.();
+			await onSuccess?.();
 		} catch (err: unknown) {
 			toast({
 				title: "Error",

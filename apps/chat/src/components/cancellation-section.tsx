@@ -33,7 +33,13 @@ interface CancellationSectionProps {
 
 export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	const trpc = useTRPC();
-	const { subscription, hasActiveSubscription, isCanceled } = useBillingData();
+	const {
+		subscription,
+		hasActiveSubscription,
+		isCanceled,
+		refreshSubscription,
+		revalidatePayments,
+	} = useBillingData();
 	
 	// Extract subscription state from query data
 	const {
@@ -51,6 +57,8 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	const cancelSubscriptionMutation = useMutation(
 		trpc.billing.cancelSubscriptionItem.mutationOptions({
 			onSuccess: () => {
+				void refreshSubscription();
+				void revalidatePayments();
 				toast({
 					title: "Subscription Cancelled",
 					description:

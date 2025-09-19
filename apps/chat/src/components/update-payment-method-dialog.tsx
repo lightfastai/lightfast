@@ -15,16 +15,22 @@ import { AddPaymentMethodForm } from "./add-payment-method-form";
 interface UpdatePaymentMethodDialogProps {
 	trigger?: React.ReactNode;
 	children?: React.ReactNode;
+	onSuccess?: () => void | Promise<void>;
 }
 
 export function UpdatePaymentMethodDialog({
 	trigger,
 	children,
+	onSuccess,
 }: UpdatePaymentMethodDialogProps) {
 	const [open, setOpen] = useState(false);
 
-	const handleSuccess = () => {
-		setOpen(false);
+	const handleSuccess = async () => {
+		try {
+			await onSuccess?.();
+		} finally {
+			setOpen(false);
+		}
 	};
 
 	const defaultTrigger = (

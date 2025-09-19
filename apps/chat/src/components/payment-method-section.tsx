@@ -11,6 +11,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { CreditCard } from "lucide-react";
 import { ClerkPlanKey } from "~/lib/billing/types";
+import { useBillingData } from "~/hooks/use-billing-data";
 import { UpdatePaymentMethodDialog } from "./update-payment-method-dialog";
 
 interface PaymentMethodSectionProps {
@@ -22,7 +23,16 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 		data: paymentMethods,
 		isLoading,
 		error,
+		revalidate: revalidatePaymentMethods,
 	} = usePaymentMethods();
+	const { revalidatePayments } = useBillingData();
+
+	const handlePaymentMethodSuccess = React.useCallback(async () => {
+		await Promise.allSettled([
+			revalidatePaymentMethods(),
+			revalidatePayments(),
+		]);
+	}, [revalidatePaymentMethods, revalidatePayments]);
 
 	// Only show for paid plans
 	if (currentPlan === ClerkPlanKey.FREE_TIER) {
@@ -81,6 +91,7 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 						</div>
 					</div>
 					<UpdatePaymentMethodDialog
+						onSuccess={handlePaymentMethodSuccess}
 						trigger={
 							<Button variant="outline" size="sm">
 								{primaryPaymentMethod ? "Update" : "Add"}

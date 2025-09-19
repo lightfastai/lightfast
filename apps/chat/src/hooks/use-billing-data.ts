@@ -9,7 +9,7 @@ export function useBillingData() {
 	const trpc = useTRPC();
 
 	// Get subscription data from TRPC
-	const { data: subscriptionData } = useSuspenseQuery({
+	const { data: subscriptionData, refetch: refetchSubscription } = useSuspenseQuery({
 		...trpc.billing.getSubscription.queryOptions(),
 		staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
 		refetchOnMount: false, // Prevent blocking navigation
@@ -21,6 +21,7 @@ export function useBillingData() {
 		data: paymentAttempts,
 		isLoading: paymentsLoading,
 		error: paymentsError,
+		revalidate: revalidatePaymentAttempts,
 	} = usePaymentAttempts();
 
 	// Sort payment attempts by date (most recent first)
@@ -43,12 +44,16 @@ export function useBillingData() {
 	return {
 		// Subscription data
 		subscription: subscriptionData,
+		refreshSubscription: () =>
+			refetchSubscription().catch(() => undefined),
 		
 		// Payment data
 		payments: sortedPayments,
 		failedPayments,
 		paymentsLoading,
 		paymentsError,
+		revalidatePayments: () =>
+			revalidatePaymentAttempts().catch(() => undefined),
 		
 		// Convenience flags
 		hasActiveSubscription: subscriptionData.hasActiveSubscription,
