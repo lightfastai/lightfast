@@ -48,6 +48,7 @@
 	/* Add any chat-specific utility classes here */
 }
 
+
 @keyframes sine-wave {
 	0%, 100% {
 		transform: translateY(0);
