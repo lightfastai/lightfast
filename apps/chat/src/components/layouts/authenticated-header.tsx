@@ -1,6 +1,7 @@
 import { AuthenticatedMobileNav } from "./authenticated-mobile-nav";
 import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
 import { UserDropdownMenu } from "./user-dropdown-menu";
+import { ShareSessionButton } from "./share-session-button";
 
 export function AuthenticatedHeader() {
 	return (
@@ -21,7 +22,10 @@ export function AuthenticatedHeader() {
 			{/* Desktop header - absolute positioning */}
 			{/* Desktop Right side only - left side actions moved to sidebar */}
 			<header className="hidden lg:flex absolute top-0 right-0 h-14 items-center pr-4 z-10">
-				<UserDropdownMenu />
+				<div className="flex items-center gap-2">
+					<ShareSessionButton />
+					<UserDropdownMenu />
+				</div>
 			</header>
 		</>
 	);
