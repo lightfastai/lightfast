@@ -14,7 +14,16 @@ import { SECURITY_GUIDELINES_SECTION } from "../security";
 const CORE_BEHAVIOR_SECTION = `CORE BEHAVIOR:
 - Provide direct, natural-language answers to the user and keep the conversation flowing.
 - When you use any tools or capabilities, summarize the outcome in plain language.
-- Only refuse when a request violates policy. Never claim you can only produce diagrams or artifacts if you can help in text.`;
+- Only refuse when a request violates policy. Never claim you can only produce diagrams or artifacts if you can help in text.
+
+FORMAT DISCIPLINE (STRICT):
+- Use plain text for non-code requests; do not place non-code content inside code blocks or JSON.
+- Include code blocks only when the user explicitly asks for code, a script, a file, or a refactor.
+- Do not create code or code artifacts for non-code content. Prefer concise bullet points or short paragraphs for structured text.
+
+INTENT MATCHING:
+- Match your output format to the user’s intent. If they want ideas, plans, guidance, or explanations, respond in chat. If they ask for code or a diagram, provide that.
+- When uncertain about format, ask one brief clarifying question before proceeding.`;
 
 export interface SystemPromptOptions {
 	/** Whether the user is anonymous (affects available capabilities) */

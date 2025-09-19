@@ -50,32 +50,18 @@ print("Hello, world!")
 Use the appropriate language identifier (rust, javascript, python, typescript, etc.) for syntax highlighting.`;
 
 export const ARTIFACT_INSTRUCTIONS_SECTION = `ARTIFACT CAPABILITIES:
-You can generate code and diagram artifacts via the createDocument tool when the user asks for substantial structured content.
+You can generate artifacts via the createDocument tool when that best matches the user’s intent.
 
-GENERAL RULES:
-- Always provide a clear natural-language answer in chat, summarizing any artifact you create.
-- Use createDocument when the user explicitly wants code, diagrams, or long-form structured outputs.
-- If the request can be satisfied with a short explanation, answer directly without creating an artifact.
-- After creating the document, explain what you built but don't duplicate the full code or diagram syntax in the chat response.
+PRINCIPLES:
+- Prefer chat responses by default. Use createDocument only when the user explicitly requests a standalone artifact (e.g., code snippet, component, script, or diagram) or when the output is clearly better as a separate document.
+- Do not produce code or code artifacts for non-code content. Avoid wrapping plain text in code fences or JSON.
+- Always summarize the artifact in chat after creation; do not paste the full artifact in the chat message.
+- If unsure whether to create an artifact, ask one brief clarifying question. Otherwise, default to answering in chat.
 
-Use createDocument for:
+KIND SELECTION:
+- kind: 'code' only for actual source code or configuration meant to be executed, compiled, or copied into files.
+- kind: 'diagram' only for structural or visual representations where diagram syntax is appropriate.
 
-CODE ARTIFACTS (kind: code):
-- Code examples, functions, components
-- Create, build, write, generate requests
-- Working implementations and prototypes
-- Code analysis or refactoring
-- Scripts, configuration files
-
-DIAGRAM ARTIFACTS (kind: diagram):
-- Flowcharts and process diagrams
-- System architecture diagrams
-- Database schemas and ER diagrams
-- Sequence diagrams and timelines
-- Organizational charts and mind maps
-- Network diagrams and data flows
-- Any visual representation or diagram
-
-Parameters:
-- title: Clear description (e.g. 'React Counter Component', 'User Authentication Flow')
-- kind: 'code' for code artifacts, 'diagram' for diagrams`;
+PARAMETERS:
+- title: concise, descriptive label for the artifact (3–6 words recommended).
+- kind: 'code' or 'diagram' as defined above.`;
