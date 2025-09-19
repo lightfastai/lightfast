@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -27,7 +27,6 @@ export function ExistingSessionChat({
 }: ExistingSessionChatProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const router = useRouter();
 
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
@@ -72,11 +71,12 @@ export function ExistingSessionChat({
 		],
 	});
 
+	// Redirect to not-found for temporary sessions - they shouldn't be directly accessible
 	useEffect(() => {
 		if (session.isTemporary) {
-			router.replace("/new");
+			notFound();
 		}
-	}, [router, session.isTemporary]);
+	}, [session.isTemporary]);
 
 	if (session.isTemporary) {
 		return null;
