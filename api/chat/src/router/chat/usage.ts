@@ -17,6 +17,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { uuidv4 } from "@repo/lib";
 import { BILLING_LIMITS, ClerkPlanKey } from "../../lib/billing/types";
 import type { BillingInterval } from "../../lib/billing/types";
+import { formatMySqlDateTime } from "../../lib/datetime";
 import type {
 	CommerceSubscription,
 	CommerceSubscriptionItem,
@@ -815,6 +816,8 @@ export const usageRouter = {
 		)
 		.mutation(async ({ ctx, input }) => {
 			return await db.transaction(async (tx) => {
+				const expiredBeforeDate = new Date(input.expiredBefore);
+				const expiredBefore = formatMySqlDateTime(expiredBeforeDate);
 				// Find expired reservations
 				const expiredReservations = await tx
 					.select()
@@ -825,7 +828,7 @@ export const usageRouter = {
 								LightfastChatQuotaReservation.status,
 								RESERVATION_STATUS.RESERVED,
 							),
-							lt(LightfastChatQuotaReservation.createdAt, input.expiredBefore),
+						lt(LightfastChatQuotaReservation.createdAt, expiredBefore),
 						),
 					);
 
@@ -847,7 +850,7 @@ export const usageRouter = {
 								LightfastChatQuotaReservation.status,
 								RESERVATION_STATUS.RESERVED,
 							),
-							lt(LightfastChatQuotaReservation.createdAt, input.expiredBefore),
+							lt(LightfastChatQuotaReservation.createdAt, expiredBefore),
 						),
 					);
 

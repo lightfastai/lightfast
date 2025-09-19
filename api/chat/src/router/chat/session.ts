@@ -6,6 +6,7 @@ import { db } from "@db/chat/client";
 import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
 import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
+import { formatMySqlDateTime } from "../../lib/datetime";
 import { inngest } from "../../inngest/client/client";
 import { ClerkPlanKey } from "../../lib/billing/types";
 import { getUserSubscriptionData } from "./usage";
@@ -489,16 +490,18 @@ export const sessionRouter = {
 			// Calculate the cutoff timestamp
 			const cutoffTime = new Date(Date.now() - input.olderThanMinutes * 60 * 1000);
 
-			// Update sessions with non-null activeStreamId that are older than cutoff
-			const result = await db
-				.update(LightfastChatSession)
-				.set({ activeStreamId: null })
-				.where(
-					and(
-						sql`${LightfastChatSession.activeStreamId} IS NOT NULL`,
-						lt(LightfastChatSession.updatedAt, cutoffTime.toISOString()),
-					),
-				);
+				const cutoffTimeSql = formatMySqlDateTime(cutoffTime);
+
+				// Update sessions with non-null activeStreamId that are older than cutoff
+				const result = await db
+					.update(LightfastChatSession)
+					.set({ activeStreamId: null })
+					.where(
+						and(
+							sql`${LightfastChatSession.activeStreamId} IS NOT NULL`,
+						lt(LightfastChatSession.updatedAt, cutoffTimeSql),
+						),
+					);
 
 			console.log(`[StreamCleanup] Cleared ${result.rowsAffected || 0} old active streams older than ${input.olderThanMinutes} minutes`);
 
