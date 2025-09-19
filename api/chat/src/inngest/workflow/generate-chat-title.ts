@@ -1,10 +1,7 @@
 import { inngest } from "../client/client";
 import { db } from "@db/chat/client";
-import {
-	LightfastChatSession,
-	LightfastChatMessage,
-	DEFAULT_SESSION_TITLE,
-} from "@db/chat";
+import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 import { eq } from "drizzle-orm";
 import { gateway } from "@ai-sdk/gateway";
 import { generateText } from "ai";
@@ -136,4 +133,3 @@ Examples of good titles:
 		};
 	},
 );
-

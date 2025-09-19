@@ -4,7 +4,7 @@ import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
 import type { ChatRouterOutputs } from "@api/chat";
-import { DEFAULT_SESSION_TITLE } from "@db/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 
 type Session = ChatRouterOutputs["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
@@ -148,4 +148,3 @@ export function useCreateSession() {
 		}),
 	);
 }
-

@@ -3,11 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
-import {
-	LightfastChatSession,
-	LightfastChatMessage,
-	DEFAULT_SESSION_TITLE,
-} from "@db/chat";
+import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
 import { inngest } from "../../inngest/client/client";
 
@@ -477,4 +474,3 @@ export const sessionRouter = {
 			};
 		}),
 } satisfies TRPCRouterRecord;
-

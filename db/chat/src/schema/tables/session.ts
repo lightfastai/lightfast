@@ -1,11 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-
-/**
- * Default values for session fields
- */
-export const DEFAULT_SESSION_TITLE = "New Session";
+import { DEFAULT_SESSION_TITLE } from "../../constants";
 
 /**
  * LightfastChatSession table represents a chat experience in the Lightfast Chat application.
@@ -82,4 +78,3 @@ export const selectLightfastChatSessionSchema =
 
 // Session relations - one session can have many messages and streams
 // Note: Import declarations will be added dynamically by consumers to avoid circular imports
-

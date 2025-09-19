@@ -9,6 +9,7 @@
       "default": "./src/index.ts"
     },
     "./schema": "./src/schema/index.ts",
+    "./constants": "./src/constants.ts",
     "./client": "./src/client.ts",
     "./env": {
       "types": "./dist/env.d.ts",
