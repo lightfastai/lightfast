@@ -8,7 +8,7 @@ const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 const isNewChatRoute = createRouteMatcher(["/new", "/new/(.*)"]);
 const isBillingRoute = createRouteMatcher(["/billing", "/billing/(.*)"]);
 const isSessionScopedRoute = createRouteMatcher([
-	"/((?!sign-in|sign-up|api|robots.txt|sitemap|pricing$|$).*)",
+	"/((?!sign-in|sign-up|api|robots.txt|sitemap|pricing$|share|$).*)",
 ]);
 
 const requiresAuth = (req: NextRequest) =>
