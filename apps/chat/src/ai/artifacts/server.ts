@@ -1,7 +1,7 @@
 import type { ArtifactKind } from '@db/chat';
 import type { LightfastChatArtifact } from '@db/chat';
 import type { UIMessageStreamWriter } from 'ai';
-import type { LightfastAppChatUIMessage } from '~/ai/lightfast-app-chat-ui-messages';
+import type { LightfastAppChatUIMessage } from '@repo/chat-core/types';
 import { codeDocumentHandler } from './code/server';
 import { diagramDocumentHandler } from './diagram/server';
 

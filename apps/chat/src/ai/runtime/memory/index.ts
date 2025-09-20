@@ -1,7 +1,7 @@
 import { PlanetScaleMemory } from './planetscale';
-import { MessagesService } from '~/services/messages.service';
-import { SessionsService } from '~/services/sessions.service';
-import { StreamsService } from '~/services/streams.service';
+import { MessagesService } from '@repo/chat-services/messages';
+import { SessionsService } from '@repo/chat-services/sessions';
+import { StreamsService } from '@repo/chat-services/streams';
 
 /**
  * Factory function to create a PlanetScale memory instance with service dependencies

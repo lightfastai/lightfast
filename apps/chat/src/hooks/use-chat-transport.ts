@@ -3,7 +3,7 @@
 import type { ChatTransport } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMemo } from "react";
-import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { LightfastAppChatUIMessage } from "@repo/chat-core/types";
 
 interface UseChatTransportProps {
 	sessionId: string;

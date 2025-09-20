@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
-import type { WebSearchToolUIPart } from "~/ai/lightfast-app-chat-ui-messages";
+import type { WebSearchToolUIPart } from "@repo/chat-core/types";
 import { formatToolErrorPayload } from "./tool-error-utils";
 
 const DEFAULT_ERROR_MESSAGE =

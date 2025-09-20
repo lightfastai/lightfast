@@ -1,10 +1,10 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 import { createTool } from "lightfast/tool";
 import { z } from "zod";
-import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
+import type { AppRuntimeContext } from "@repo/chat-core/types";
 import { uuidv4 as generateUUID } from '@repo/lib';
 import { createDocumentHandlersByArtifactKind } from '~/ai/artifacts/server';
-import { saveDocument } from '~/services/artifacts.service';
+import { saveDocument } from '@repo/chat-services/artifacts';
 import { ARTIFACT_KINDS } from '@db/chat';
 
 /**

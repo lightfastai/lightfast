@@ -6,7 +6,7 @@ import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "@repo/chat-trpc/react";
-import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { LightfastAppChatUIMessage } from "@repo/chat-core/types";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "~/lib/billing/types";
