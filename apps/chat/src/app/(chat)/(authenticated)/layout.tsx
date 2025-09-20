@@ -7,6 +7,7 @@ import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { CloseTemporaryButton } from "~/components/layouts/close-temporary-button";
+import { TemporaryModeWrapper } from "~/components/layouts/temporary-mode-wrapper";
 import { TRPCReactProvider } from "~/trpc/react";
 import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
 import { KeyboardShortcuts } from "~/components/keyboard-shortcuts";
@@ -43,16 +44,18 @@ export default async function AuthenticatedLayout({
 				<TooltipProvider>
 					<SidebarProvider defaultOpen={!isCollapsed}>
 						<KeyboardShortcuts />
-						<div className="flex h-screen w-full tmp-shell">
-							<div className="tmp-title">Temporary Chat</div>
-							<CloseTemporaryButton className="tmp-close" />
+						<TemporaryModeWrapper>
+							<div className="hidden group-data-[temp=true]:block absolute top-2 left-3 text-[12px] leading-4 font-semibold text-slate-900">
+								Temporary Chat
+							</div>
+							<CloseTemporaryButton className="hidden group-data-[temp=true]:inline-flex absolute top-2 right-3 h-7 w-7 items-center justify-center rounded-md text-slate-900 hover:bg-slate-900/5" />
 
-							<div className="tmp-hide-when-temp">
+							<div className="group-data-[temp=true]:hidden">
 								<AppSidebar />
 							</div>
 
-							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative tmp-main">
-								<div className="tmp-hide-when-temp">
+							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative group-data-[temp=true]:rounded-xl group-data-[temp=true]:border group-data-[temp=true]:border-border/30 group-data-[temp=true]:overflow-hidden">
+								<div className="group-data-[temp=true]:hidden">
 									<AuthenticatedHeader />
 								</div>
 								{/* Content area starts from 0vh */}
@@ -62,7 +65,7 @@ export default async function AuthenticatedLayout({
 									</Suspense>
 								</div>
 							</div>
-						</div>
+						</TemporaryModeWrapper>
 					</SidebarProvider>
 				</TooltipProvider>
 			</HydrateClient>
