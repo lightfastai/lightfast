@@ -153,16 +153,16 @@ const StreamingResponse = memo(function StreamingResponse({
 		}
 	}, [text, animate, isAnimating, addPart]);
 
-	const shouldDisplayStream = animate || isAnimating;
-	const displayText = shouldDisplayStream ? stream || text : text;
-	const effectiveAnimating = Boolean(animate || isAnimating);
+    const shouldDisplayStream = animate || isAnimating;
+    const displayText = shouldDisplayStream ? stream || text : text;
 
-	useEffect(() => {
-		if (!onAnimationChange) return;
-		if (lastReportedRef.current === effectiveAnimating) return;
-		lastReportedRef.current = effectiveAnimating;
-		onAnimationChange(effectiveAnimating);
-	}, [effectiveAnimating, onAnimationChange]);
+    // Report only the hook animation state upstream to avoid feedback loops.
+    useEffect(() => {
+        if (!onAnimationChange) return;
+        if (lastReportedRef.current === isAnimating) return;
+        lastReportedRef.current = isAnimating;
+        onAnimationChange(isAnimating);
+    }, [isAnimating, onAnimationChange]);
 
 	useEffect(() => {
 		return () => {
