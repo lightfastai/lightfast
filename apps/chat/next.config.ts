@@ -26,7 +26,7 @@ let config: NextConfig = withBetterStack(
 			"@repo/ui",
 			"@repo/site-config",
 			"@repo/url-utils",
-			"@repo/chat-core",
+			"@repo/chat-ai",
 			"@repo/chat-trpc",
 			"@repo/chat-services",
 			"@vendor/clerk",

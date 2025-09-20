@@ -7,7 +7,7 @@ import { AlertTriangle, MessageSquare } from "lucide-react";
 import type { ChatRouterOutputs } from "@api/chat";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { ChatMessages } from "../../_components/chat-messages";
-import type { LightfastAppChatUIMessage } from "@repo/chat-core/types";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai/types";
 import type { ChatStatus } from "ai";
 import { Button } from "@repo/ui/components/ui/button";
 

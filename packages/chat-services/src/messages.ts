@@ -1,7 +1,7 @@
 import type {
   LightfastAppChatUIMessage,
   LightfastAppChatUIMessagePart,
-} from "@repo/chat-core/types";
+} from "@repo/chat-ai/types";
 import { createCaller } from "@repo/chat-trpc/server";
 import {
   getTRPCErrorCode,

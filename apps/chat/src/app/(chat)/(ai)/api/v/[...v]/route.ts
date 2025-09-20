@@ -13,7 +13,7 @@ import {
 } from "@sentry/nextjs";
 import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";
 import { uuidv4 } from "lightfast/v2/utils";
-import type { AppRuntimeContext } from "@repo/chat-core/types";
+import type { AppRuntimeContext } from "@repo/chat-ai/types";
 import { auth } from "@clerk/nextjs/server";
 import { ApiErrors } from "~/lib/errors/api-error-builder";
 import {

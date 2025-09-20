@@ -1,5 +1,5 @@
 {
-  "name": "@repo/chat-core",
+  "name": "@repo/chat-ai",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,12 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./src/types.ts"
+    },
+    "./create-document": {
+      "default": "./src/create-document.ts"
+    },
+    "./web-search": {
+      "default": "./src/web-search.ts"
     }
   },
   "license": "MIT",
@@ -19,13 +25,20 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/chat-ai-tools": "workspace:*",
-    "ai": "catalog:"
+    "@db/chat": "workspace:*",
+    "@repo/chat-services": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "ai": "catalog:",
+    "braintrust": "catalog:",
+    "exa-js": "catalog:",
+    "lightfast": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

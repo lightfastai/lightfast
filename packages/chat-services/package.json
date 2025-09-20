@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@api/chat": "workspace:*",
-    "@repo/chat-core": "workspace:*",
+    "@repo/chat-ai": "workspace:*",
     "@repo/chat-trpc": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
