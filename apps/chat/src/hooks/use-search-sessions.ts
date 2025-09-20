@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { useState, useCallback, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
 

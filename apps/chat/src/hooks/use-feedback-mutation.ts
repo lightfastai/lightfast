@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useCallback } from "react";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
 
 interface SubmitFeedbackInput {

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { trpc, HydrateClient, prefetch } from "~/trpc/server";
+import { trpc, HydrateClient, prefetch } from "@repo/chat-trpc/server";
 import type React from "react";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
@@ -8,7 +8,7 @@ import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
 import { CloseTemporaryButton } from "~/components/layouts/close-temporary-button";
 import { TemporaryModeWrapper } from "~/components/layouts/temporary-mode-wrapper";
-import { TRPCReactProvider } from "~/trpc/react";
+import { TRPCReactProvider } from "@repo/chat-trpc/react";
 import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
 import { KeyboardShortcuts } from "~/components/keyboard-shortcuts";
 

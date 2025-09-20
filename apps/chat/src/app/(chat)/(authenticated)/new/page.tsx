@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { NewSessionChat } from "../_components/new-session-chat";
-import { HydrateClient } from "~/trpc/server";
+import { HydrateClient } from "@repo/chat-trpc/server";
 
 interface NewChatPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;

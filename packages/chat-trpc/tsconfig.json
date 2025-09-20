@@ -1,0 +1,28 @@
+{
+  "extends": "@repo/typescript-config/internal-package.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "react"
+    ],
+    "lib": ["DOM", "ES2020"],
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "rootDir": "src",
+    "outDir": "dist",
+    "target": "ES2020",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": false
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

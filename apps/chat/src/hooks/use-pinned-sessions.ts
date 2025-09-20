@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 
 export function usePinnedSessions() {
   const trpc = useTRPC();

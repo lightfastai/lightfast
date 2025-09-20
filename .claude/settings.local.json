@@ -142,7 +142,8 @@
       "WebFetch(domain:platform.openai.com)",
       "Bash(pnpm eval:tool-calls:*)",
       "Bash(pnpm --filter @lightfast/chat lint)",
-      "Bash(pnpm --filter @api/chat build)"
+      "Bash(pnpm --filter @api/chat build)",
+      "Bash(gh pr view:*)"
     ],
     "deny": []
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function AccountTab() {

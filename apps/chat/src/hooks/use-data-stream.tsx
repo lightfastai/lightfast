@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import type { DataUIPart } from 'ai';
-import type { LightfastAppChatUICustomDataTypes } from '~/ai/lightfast-app-chat-ui-messages';
+import type { LightfastAppChatUICustomDataTypes } from '@repo/chat-ai-types';
 
 interface DataStreamContextValue {
   dataStream: DataUIPart<LightfastAppChatUICustomDataTypes>[];

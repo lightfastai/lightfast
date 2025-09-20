@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
 
-import { createCaller } from "~/trpc/server";
+import { createCaller } from "@repo/chat-trpc/server";
 import { SharedSessionView } from "../_components/shared-session-view";
 
 interface SharePageProps {
