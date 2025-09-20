@@ -1,9 +1,11 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
-    "tsBuildInfoFile": ".cache/tsbuildinfo.json",
-    "rootDir": "./src",
-    "outDir": "./dist"
+    "types": ["node"],
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "rootDir": "src",
+    "outDir": "dist"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
