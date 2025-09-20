@@ -2,6 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const TYPEWRITER_SPEED = 5; // 👇 milliseconds per character
 
+// Tiny typewriter-style streaming hook.
+// Notes and potential enhancements:
+// - Starts animating from the beginning of the accumulated `parts` buffer.
+//   This avoids flashing the full text but can introduce a very brief blank
+//   state before the first frame paints.
+// - If you need to avoid that gap when enabling animation mid-stream, you can
+//   extend this hook to expose a "seed/prime" API to set `streamIndexRef` to an
+//   initial value (e.g., to the current length) or expose a `hasRenderedChar`
+//   boolean so the UI can keep a loading affordance (like a sine wave) visible
+//   until the first character is actually painted.
 export const useStream = () => {
 	// 👇 internal buffer of chunks as they arrive from the server
 	const [parts, setParts] = useState<string[]>([]);

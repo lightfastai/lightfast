@@ -154,7 +154,14 @@ const StreamingResponse = memo(function StreamingResponse({
 	}, [text, animate, isAnimating, addPart]);
 
     const shouldDisplayStream = animate || isAnimating;
-    const displayText = shouldDisplayStream ? stream || text : text;
+    // NOTE:
+    //  - We intentionally do NOT fall back to `text` while animating to avoid a
+    //    brief flash of the full accumulated content before the typewriter effect starts.
+    //  - This can create a very short empty state before the first frame paints.
+    //    If you want to mask that gap visually, keep the sine wave visible until the
+    //    first streamed character is rendered (e.g., expose `hasRenderedChar` from
+    //    the streaming hook and use that instead of raw `isAnimating`).
+    const displayText = shouldDisplayStream ? stream : text;
 
     // Report only the hook animation state upstream to avoid feedback loops.
     useEffect(() => {
@@ -685,6 +692,12 @@ const AssistantMessage = memo(function AssistantMessage({
 	const currentFeedback = feedback?.[message.id];
 	const meaningfulContent =
 		meaningfulContentOverride ?? hasMeaningfulContent(message);
+	// NOTE: `hasDisplayContent` is based on message content, not what is currently
+	// painted by the typewriter. During the first animation frames, the text part
+	// may still be visually empty while `meaningfulContent` is already true. If you
+	// prefer to keep the streaming sine wave visible until the first character is
+	// actually rendered, consider driving this with a `hasRenderedChar` flag from
+	// the streaming hook (instead of `meaningfulContent`).
 	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
 	const animationStreaming = Boolean(isCurrentlyStreaming);
 	const animationHook = Boolean(isStreamAnimating);
