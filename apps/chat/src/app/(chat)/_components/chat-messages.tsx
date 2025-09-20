@@ -219,7 +219,6 @@ const AssistantTextPart = memo(function AssistantTextPart({
 			<StreamingResponse
 				text={cleanedText}
 				animate={shouldAnimate}
-				className={shouldAnimate ? "lf-stream-text" : undefined}
 				onAnimationChange={handleAnimationChange}
 			/>
 		</MessageContent>
@@ -703,9 +702,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	const animationStreaming = Boolean(isCurrentlyStreaming);
 	const animationHook = Boolean(isStreamAnimating);
 	const isAnimationActive = animationStreaming || animationHook;
-	// Keep the overlay visible whenever streaming is active; fade it out via CSS
-	// once the streaming text actually renders a character.
-	const showStreamingWave = isAnimationActive;
+	const showStreamingWave = isAnimationActive && !hasDisplayContent;
 	const noMessageContent = message.parts.length === 0;
 	const shouldHideActions =
 		hideActions ||
@@ -719,12 +716,10 @@ const AssistantMessage = memo(function AssistantMessage({
 					from="assistant"
 					className="flex-col items-start [&>div]:max-w-full"
 				>
-					<div className="relative w-full group/stream">
+					<div className="relative w-full">
 						<div
 							className={cn(
 								"absolute inset-0 flex items-start transition-opacity duration-150",
-								// Fade away once any `.lf-stream-text` inside this message has content
-								"group-has-[.lf-stream-text:not(:empty)]/stream:opacity-0 group-has-[.lf-stream-text:not(:empty)]/stream:pointer-events-none",
 								showStreamingWave
 									? "opacity-100"
 									: "opacity-0 pointer-events-none",
