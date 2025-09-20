@@ -161,6 +161,8 @@ export function ChatInterface({
 
 	// Streaming/storage errors surfaced inline in the conversation
 	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
+	const [hasStreamAnimation, setHasStreamAnimation] = useState(false);
+	const [pendingDisable, setPendingDisable] = useState(false);
 
 	const addInlineError = useCallback(
 		(error: ChatError) => {
@@ -436,6 +438,7 @@ export function ChatInterface({
 				});
 				setDataStream([]);
 				disableResume();
+				setPendingDisable(false);
 				onResumeStateChange?.(false);
 				onAssistantStreamError?.({
 					messageId: failedMessageId,
@@ -512,8 +515,11 @@ export function ChatInterface({
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
-			disableResume();
-			onResumeStateChange?.(false);
+			if (!hasStreamAnimation) {
+				setPendingDisable(false);
+				disableResume();
+				onResumeStateChange?.(false);
+			}
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
@@ -540,6 +546,7 @@ export function ChatInterface({
 			});
 			setHasActiveStream(true);
 			onResumeStateChange?.(true);
+			setPendingDisable(false);
 		}
 		if (status !== "streaming" && previousStatus === "streaming") {
 			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
@@ -565,8 +572,7 @@ export function ChatInterface({
 					finalStatus: status,
 				},
 			});
-			disableResume();
-			onResumeStateChange?.(false);
+			setPendingDisable(true);
 		}
 		previousStatusRef.current = status;
 	}, [
@@ -579,6 +585,42 @@ export function ChatInterface({
 		sessionId,
 		selectedModelId,
 	]);
+
+	useEffect(() => {
+		if (!pendingDisable) {
+			return;
+		}
+		if (status === "streaming" || status === "submitted") {
+			return;
+		}
+		if (hasStreamAnimation) {
+			return;
+		}
+		setPendingDisable(false);
+		disableResume();
+		onResumeStateChange?.(false);
+	}, [
+		pendingDisable,
+		status,
+		hasStreamAnimation,
+		disableResume,
+		onResumeStateChange,
+	]);
+
+	const handleStreamAnimationChange = useCallback(
+		(isAnimating: boolean) => {
+			setHasStreamAnimation(isAnimating);
+			if (isAnimating) {
+				setHasActiveStream(true);
+				onResumeStateChange?.(true);
+				return;
+			}
+
+			setHasActiveStream(false);
+			onResumeStateChange?.(false);
+		},
+		[setHasActiveStream, onResumeStateChange],
+	);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
 	const { data: feedback } = useFeedbackQuery({
@@ -595,7 +637,12 @@ export function ChatInterface({
 	// AI SDK will handle resume automatically when resume={true} is passed to useChat
 
 	const handleSendMessage = async (message: string) => {
-		if (!message.trim() || status === "streaming" || status === "submitted") {
+		if (
+			!message.trim() ||
+			status === "streaming" ||
+			status === "submitted" ||
+			hasStreamAnimation
+		) {
 			return;
 		}
 
@@ -837,6 +884,7 @@ export function ChatInterface({
 										disabled={
 											status === "streaming" ||
 											status === "submitted" ||
+											hasStreamAnimation ||
 											(!isAuthenticated && hasReachedLimit) ||
 											(isAuthenticated && !canUseCurrentModel.allowed)
 										}
@@ -879,6 +927,7 @@ export function ChatInterface({
 						messages.length === 0 && !isNewSession
 					}
 					hasActiveStream={hasActiveStream}
+					onStreamAnimationChange={handleStreamAnimationChange}
 					onArtifactClick={
 						isAuthenticated
 							? async (artifactId) => {
@@ -1005,6 +1054,7 @@ export function ChatInterface({
 													disabled={
 														status === "streaming" ||
 														status === "submitted" ||
+														hasStreamAnimation ||
 														(!isAuthenticated && hasReachedLimit) ||
 														(isAuthenticated && !canUseCurrentModel.allowed)
 													}
