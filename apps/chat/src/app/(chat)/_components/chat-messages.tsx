@@ -794,53 +794,57 @@ const AssistantMessage = memo(function AssistantMessage({
 						</div>
 					</div>
 
-					{/* Actions and Citations - hidden when streaming without content */}
-					{!shouldHideActions && (
-						<div
-							className={cn(
-								"w-full mt-2",
-								!hasDisplayContent
-									? "opacity-0 pointer-events-none"
-									: "opacity-100",
+					{/* Actions and Citations - always reserve space to avoid layout shift */}
+					<div
+						className={cn(
+							"w-full mt-2",
+							!hasDisplayContent
+								? "opacity-0 pointer-events-none"
+								: "opacity-100",
+						)}
+					>
+						<div className="flex items-center justify-between min-h-[2rem]">
+							{sources.length > 0 ? (
+								<InlineCitationCard>
+									<InlineCitationCardTrigger
+										sources={sources.map((source) => source.url)}
+									/>
+									<InlineCitationCardBody>
+										<InlineCitationCarousel>
+											<InlineCitationCarouselHeader>
+												<InlineCitationCarouselPrev />
+												<InlineCitationCarouselIndex />
+												<InlineCitationCarouselNext />
+											</InlineCitationCarouselHeader>
+											<InlineCitationCarouselContent>
+												{sources.map((source, index) => (
+													<InlineCitationCarouselItem key={index}>
+														<InlineCitationSource
+															title={source.title ?? `Source ${index + 1}`}
+															url={source.url}
+														/>
+													</InlineCitationCarouselItem>
+												))}
+											</InlineCitationCarouselContent>
+										</InlineCitationCarousel>
+									</InlineCitationCardBody>
+								</InlineCitationCard>
+							) : (
+								<div />
 							)}
-						>
-							<div className="flex items-center justify-between">
-								{sources.length > 0 ? (
-									<InlineCitationCard>
-										<InlineCitationCardTrigger
-											sources={sources.map((source) => source.url)}
-										/>
-										<InlineCitationCardBody>
-											<InlineCitationCarousel>
-												<InlineCitationCarouselHeader>
-													<InlineCitationCarouselPrev />
-													<InlineCitationCarouselIndex />
-													<InlineCitationCarouselNext />
-												</InlineCitationCarouselHeader>
-												<InlineCitationCarouselContent>
-													{sources.map((source, index) => (
-														<InlineCitationCarouselItem key={index}>
-															<InlineCitationSource
-																title={source.title ?? `Source ${index + 1}`}
-																url={source.url}
-															/>
-														</InlineCitationCarouselItem>
-													))}
-												</InlineCitationCarouselContent>
-											</InlineCitationCarousel>
-										</InlineCitationCardBody>
-									</InlineCitationCard>
-								) : (
-									<div></div>
-								)}
-								{/* Actions - always present but hidden during streaming */}
+
+							{/* Right side: Actions or reserved space */}
+							{shouldHideActions ? (
+								// Reserve the actions row height even when actions are hidden
+								<div className="h-8" />
+							) : (
 								<Actions
-										className={cn(
-											"transition-opacity duration-200",
-											isAnimationActive
-												? "opacity-0 pointer-events-none"
-												: "opacity-100",
-										)}
+									className={cn(
+										"transition-opacity duration-200",
+										isAnimationActive
+											? "opacity-0 pointer-events-none"
+											: "opacity-100",
+									)}
 								>
 									<Action
 										tooltip="Copy message"
@@ -883,9 +887,9 @@ const AssistantMessage = memo(function AssistantMessage({
 										</>
 									)}
 								</Actions>
-							</div>
+							)}
 						</div>
-					)}
+					</div>
 				</Message>
 			</div>
 		</div>
@@ -978,7 +982,7 @@ export function ChatMessages({
 									turn.assistant.id,
 								);
 								return (
-									<Fragment key={`${turn.user.id}-${turn.assistant.id}`}>
+									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
 										<AssistantMessage
 											message={turn.assistant}
@@ -1006,7 +1010,7 @@ export function ChatMessages({
 									pendingAssistant.id,
 								);
 								return (
-									<Fragment key={`${turn.user.id}-pending`}>
+									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
 										<AssistantMessage
 											message={pendingAssistant}
@@ -1032,7 +1036,7 @@ export function ChatMessages({
 									turn.assistant.id,
 								);
 								return (
-									<Fragment key={`${turn.user.id}-${turn.assistant.id}-ghost`}>
+									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
 										<AssistantMessage
 											message={turn.assistant}
