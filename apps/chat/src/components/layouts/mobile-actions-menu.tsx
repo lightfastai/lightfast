@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@repo/ui/components/ui/button";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
@@ -23,7 +23,6 @@ import {
 	CreditCard,
 	Crown,
 	MessageCircle,
-	Timer,
 } from "lucide-react";
 import { SettingsDialog } from "../settings-dialog";
 import Link from "next/link";
@@ -60,8 +59,7 @@ function extractSessionId(pathname: string): string | null {
 export function MobileActionsMenu() {
 	const { signOut } = useClerk();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const pathname = usePathname();
-	const router = useRouter();
+    const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const trpc = useTRPC();
 
@@ -69,7 +67,7 @@ export function MobileActionsMenu() {
 	const mode = searchParams.get("mode");
 	const temporary = searchParams.get("temporary");
 	const isTemporaryRoute = mode === "temporary" || temporary === "1";
-	const isOnNewPage = pathname === "/new";
+    // const _isOnNewPage = pathname === "/new"; // reserved for future use
 
 	// Get user info from tRPC - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({
@@ -100,14 +98,7 @@ export function MobileActionsMenu() {
 		await signOut(); // Will use afterSignOutUrl from Clerk config
 	};
 
-	const handleToggleTemporaryChat = () => {
-		router.replace(isTemporaryRoute ? "/new" : "/new?mode=temporary");
-	};
-
-	const canStartTemporaryChat = billingContext.plan.isPlusUser && isOnNewPage;
-	const toggleTooltip = isTemporaryRoute
-		? "Disable temporary chat"
-		: "Start temporary chat";
+  // Temporary chat toggle is now handled by the standalone TemporarySessionButton.
 
 	const handleShare = async () => {
 		if (!sessionId || shareMutation.isPending) {
@@ -172,14 +163,7 @@ export function MobileActionsMenu() {
 
 	return (
 		<>
-			{canStartTemporaryChat ? (
-				<TemporarySessionButton
-					active={isTemporaryRoute}
-					onToggle={handleToggleTemporaryChat}
-					tooltip={toggleTooltip}
-					className="mr-1"
-				/>
-			) : null}
+			<TemporarySessionButton className="mr-1" />
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="icon">
@@ -284,23 +268,7 @@ export function MobileActionsMenu() {
 						</>
 					)}
 
-					{canStartTemporaryChat && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								onSelect={(event) => {
-									event.preventDefault();
-									handleToggleTemporaryChat();
-							}}
-								className="cursor-pointer"
-							>
-								<Timer className="mr-2 h-3 w-3" />
-								<span className="text-xs">
-									{isTemporaryRoute ? "Disable temporary chat" : "Start temporary chat"}
-								</span>
-							</DropdownMenuItem>
-						</>
-					)}
+  {/* Temporary chat toggle menu item removed; use the button next to the menu instead */}
 
 					<DropdownMenuSeparator />
 					<DropdownMenuItem asChild>

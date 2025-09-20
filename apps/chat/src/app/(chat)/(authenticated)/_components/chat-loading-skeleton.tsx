@@ -2,7 +2,7 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export function ChatLoadingSkeleton() {
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-full bg-background">
 			{/* Messages area skeleton - matches ChatMessages container exactly */}
 			<div className="flex-1 relative min-h-0 overflow-hidden">
 				<div className="absolute inset-0 overflow-y-auto">
@@ -48,4 +48,3 @@ export function ChatLoadingSkeleton() {
 		</div>
 	);
 }
-
