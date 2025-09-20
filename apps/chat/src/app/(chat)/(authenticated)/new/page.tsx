@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { NewSessionChat } from "../_components/new-session-chat";
 import { HydrateClient } from "~/trpc/server";
 import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
+import { TemporaryModeSentinel } from "~/components/layouts/temporary-mode-sentinel";
 
 interface NewChatPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -22,13 +23,16 @@ export default async function NewChatPage({ searchParams }: NewChatPageProps) {
 	// User data is already prefetched in the authenticated layout
 	// Session ID is generated client-side in NewSessionChat
 	return (
-		<HydrateClient>
-			<Suspense fallback={<ChatLoadingSkeleton />}>
-				<NewSessionChat
-					agentId={agentId}
-					mode={isTemporary ? "temporary" : "permanent"}
-				/>
-			</Suspense>
-		</HydrateClient>
+		<>
+			<TemporaryModeSentinel searchParams={searchParams} />
+			<HydrateClient>
+				<Suspense fallback={<ChatLoadingSkeleton />}>
+					<NewSessionChat
+						agentId={agentId}
+						mode={isTemporary ? "temporary" : "permanent"}
+					/>
+				</Suspense>
+			</HydrateClient>
+		</>
 	);
 }

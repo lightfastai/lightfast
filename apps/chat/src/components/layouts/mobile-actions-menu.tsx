@@ -23,7 +23,6 @@ import {
 	CreditCard,
 	Crown,
 	MessageCircle,
-	Timer,
 } from "lucide-react";
 import { SettingsDialog } from "../settings-dialog";
 import Link from "next/link";
@@ -100,14 +99,7 @@ export function MobileActionsMenu() {
 		await signOut(); // Will use afterSignOutUrl from Clerk config
 	};
 
-	const handleToggleTemporaryChat = () => {
-		router.replace(isTemporaryRoute ? "/new" : "/new?mode=temporary");
-	};
-
-	const canStartTemporaryChat = billingContext.plan.isPlusUser && isOnNewPage;
-	const toggleTooltip = isTemporaryRoute
-		? "Disable temporary chat"
-		: "Start temporary chat";
+  // Temporary chat toggle is now handled by the standalone TemporarySessionButton.
 
 	const handleShare = async () => {
 		if (!sessionId || shareMutation.isPending) {
@@ -172,14 +164,7 @@ export function MobileActionsMenu() {
 
 	return (
 		<>
-			{canStartTemporaryChat ? (
-				<TemporarySessionButton
-					active={isTemporaryRoute}
-					onToggle={handleToggleTemporaryChat}
-					tooltip={toggleTooltip}
-					className="mr-1"
-				/>
-			) : null}
+			<TemporarySessionButton className="mr-1" />
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="icon">
@@ -284,23 +269,7 @@ export function MobileActionsMenu() {
 						</>
 					)}
 
-					{canStartTemporaryChat && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								onSelect={(event) => {
-									event.preventDefault();
-									handleToggleTemporaryChat();
-							}}
-								className="cursor-pointer"
-							>
-								<Timer className="mr-2 h-3 w-3" />
-								<span className="text-xs">
-									{isTemporaryRoute ? "Disable temporary chat" : "Start temporary chat"}
-								</span>
-							</DropdownMenuItem>
-						</>
-					)}
+  {/* Temporary chat toggle menu item removed; use the button next to the menu instead */}
 
 					<DropdownMenuSeparator />
 					<DropdownMenuItem asChild>

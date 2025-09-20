@@ -38,11 +38,6 @@ let config: NextConfig = withBetterStack(
 			"@repo/eslint-config",
 			"@repo/typescript-config",
 		],
-		modularizeImports: {
-			"lucide-react": {
-				transform: "lucide-react/dist/esm/icons/{{member}}",
-			},
-		},
 		experimental: {
 			optimizeCss: true,
 			optimizePackageImports: [

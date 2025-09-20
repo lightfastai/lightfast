@@ -6,6 +6,7 @@ import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { AuthenticatedHeader } from "~/components/layouts/authenticated-header";
+import { CloseTemporaryButton } from "~/components/layouts/close-temporary-button";
 import { TRPCReactProvider } from "~/trpc/react";
 import { ChatLoadingSkeleton } from "./_components/chat-loading-skeleton";
 import { KeyboardShortcuts } from "~/components/keyboard-shortcuts";
@@ -42,10 +43,18 @@ export default async function AuthenticatedLayout({
 				<TooltipProvider>
 					<SidebarProvider defaultOpen={!isCollapsed}>
 						<KeyboardShortcuts />
-						<div className="flex h-screen w-full">
-							<AppSidebar />
-							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative">
-								<AuthenticatedHeader />
+						<div className="flex h-screen w-full tmp-shell">
+							<div className="tmp-title">Temporary Chat</div>
+							<CloseTemporaryButton className="tmp-close" />
+
+							<div className="tmp-hide-when-temp">
+								<AppSidebar />
+							</div>
+
+							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative tmp-main">
+								<div className="tmp-hide-when-temp">
+									<AuthenticatedHeader />
+								</div>
 								{/* Content area starts from 0vh */}
 								<div className="flex-1 min-h-0 overflow-hidden">
 									<Suspense fallback={<ChatLoadingSkeleton />}>
@@ -60,4 +69,3 @@ export default async function AuthenticatedLayout({
 		</TRPCReactProvider>
 	);
 }
-
