@@ -616,14 +616,10 @@ export function ChatInterface({
 				return;
 			}
 
-			if (status === "streaming" || status === "submitted") {
-				return;
-			}
-
 			setHasActiveStream(false);
 			onResumeStateChange?.(false);
 		},
-		[status, setHasActiveStream, onResumeStateChange],
+		[setHasActiveStream, onResumeStateChange],
 	);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
