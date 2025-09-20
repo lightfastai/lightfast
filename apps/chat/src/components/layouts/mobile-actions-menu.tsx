@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@repo/ui/components/ui/button";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
@@ -59,8 +59,7 @@ function extractSessionId(pathname: string): string | null {
 export function MobileActionsMenu() {
 	const { signOut } = useClerk();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const pathname = usePathname();
-	const router = useRouter();
+    const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const trpc = useTRPC();
 
@@ -68,7 +67,7 @@ export function MobileActionsMenu() {
 	const mode = searchParams.get("mode");
 	const temporary = searchParams.get("temporary");
 	const isTemporaryRoute = mode === "temporary" || temporary === "1";
-	const isOnNewPage = pathname === "/new";
+    // const _isOnNewPage = pathname === "/new"; // reserved for future use
 
 	// Get user info from tRPC - using suspense for instant loading
 	const { data: user } = useSuspenseQuery({

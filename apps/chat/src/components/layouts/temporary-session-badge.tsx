@@ -40,16 +40,11 @@ export function TemporarySessionButton({ className }: TemporarySessionButtonProp
     <Button
       type="button"
       variant="ghost"
+      size="icon"
       aria-pressed={isTemporary}
       aria-label={ariaLabel}
       onClick={handleToggle}
-      className={cn(
-        "h-8 w-8 px-0 py-0 flex items-center justify-center",
-        isTemporary
-          ? "border border-blue-500/70 text-blue-600 hover:bg-blue-500/10 dark:text-blue-200 dark:border-blue-400"
-          : "hover:bg-muted",
-        className,
-      )}
+      className={cn(className)}
     >
       <Timer className="h-4 w-4" aria-hidden="true" />
     </Button>

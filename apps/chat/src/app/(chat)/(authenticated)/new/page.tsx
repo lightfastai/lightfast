@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { NewSessionChat } from "../_components/new-session-chat";
 import { HydrateClient } from "~/trpc/server";
-import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
 
 interface NewChatPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,7 +23,7 @@ export default async function NewChatPage({ searchParams }: NewChatPageProps) {
 	return (
 		<>
 			<HydrateClient>
-				<Suspense fallback={<ChatLoadingSkeleton />}>
+				<Suspense fallback={<div className="bg-background h-full" />}>
 					<NewSessionChat
 						agentId={agentId}
 						mode={isTemporary ? "temporary" : "permanent"}

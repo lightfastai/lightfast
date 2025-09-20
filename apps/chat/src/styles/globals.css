@@ -39,18 +39,19 @@
 	--sidebar-accent-foreground: oklch(0.8853 0 0);
 	--sidebar-border: oklch(0.329 0 0);
 	--sidebar-ring: oklch(0.7058 0 0);
-	--user-message-bg: oklch(0.20 0 0);
+	--user-message-bg: oklch(0.2 0 0);
 }
-
 
 /* Additional custom styles specific to the chat app */
 @layer utilities {
 	/* Add any chat-specific utility classes here */
 }
 
+/* (No animation; transitions removed by request) */
 
 @keyframes sine-wave {
-	0%, 100% {
+	0%,
+	100% {
 		transform: translateY(0);
 	}
 	50% {
@@ -61,7 +62,3 @@
 .animate-sine-wave {
 	animation: sine-wave 1.5s ease-in-out infinite;
 }
-
-/* Temporary chat mode: styling only; structural hide handled by tmp-hide-when-temp wrappers */
-
-/* Temporary chat mode styles have been moved to component-level Tailwind classes. */

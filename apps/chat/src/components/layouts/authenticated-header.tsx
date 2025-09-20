@@ -1,6 +1,4 @@
 "use client";
-
-import { useSearchParams } from "next/navigation";
 import { SidebarTrigger } from "@repo/ui/components/ui/sidebar";
 import { AuthenticatedMobileNav } from "./authenticated-mobile-nav";
 import { UserDropdownMenu } from "./user-dropdown-menu";
@@ -9,10 +7,6 @@ import { ShareSessionButton } from "./share-session-button";
 import { TemporarySessionButton } from "./temporary-session-badge";
 
 export function AuthenticatedHeader() {
-	const searchParams = useSearchParams();
-	const mode = searchParams.get("mode");
-	const temporary = searchParams.get("temporary");
-	const isTemporary = mode === "temporary" || temporary === "1";
 
 	return (
 		<>

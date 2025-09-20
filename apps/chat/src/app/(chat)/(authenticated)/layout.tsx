@@ -45,16 +45,21 @@ export default async function AuthenticatedLayout({
 					<SidebarProvider defaultOpen={!isCollapsed}>
 						<KeyboardShortcuts />
 						<TemporaryModeWrapper>
-							<div className="hidden group-data-[temp=true]:block absolute top-2 left-3 text-[12px] leading-4 font-semibold text-slate-900">
-								Temporary Chat
+							{/* Temporary header bar (same size as app header) */}
+							<div className="hidden group-data-[temp=true]:flex absolute inset-x-0 top-0 h-14 z-10 items-center justify-between px-2 pr-4">
+								<div className="pl-2 text-sm font-bold font-semibold text-black">
+									Temporary
+								</div>
+								<CloseTemporaryButton />
 							</div>
-							<CloseTemporaryButton className="hidden group-data-[temp=true]:inline-flex absolute top-2 right-3 h-7 w-7 items-center justify-center rounded-md text-slate-900 hover:bg-slate-900/5" />
 
+							{/* Sidebar cluster - hidden in temp */}
 							<div className="group-data-[temp=true]:hidden">
 								<AppSidebar />
 							</div>
 
-							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative group-data-[temp=true]:rounded-xl group-data-[temp=true]:border group-data-[temp=true]:border-border/30 group-data-[temp=true]:overflow-hidden">
+							{/* Main column - rounded/bordered in temp; position stays static, wrapper padding creates inset */}
+							<div className="flex border-l border-muted/30 flex-col flex-1 min-w-0 relative group-data-[temp=true]:rounded-xl group-data-[temp=true]:border group-data-[temp=true]:border-border/30 group-data-[temp=true]:overflow-hidden group-data-[temp=true]:border-l-0">
 								<div className="group-data-[temp=true]:hidden">
 									<AuthenticatedHeader />
 								</div>
