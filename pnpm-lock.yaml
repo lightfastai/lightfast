@@ -745,6 +745,8 @@ importers:
         specifier: 'catalog:'
         version: 5.9.2
 
+  apps/desktop: {}
+
   apps/docs:
     dependencies:
       '@repo/ui':
