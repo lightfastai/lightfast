@@ -4,9 +4,33 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+    "./artifacts": {
+      "types": "./dist/artifacts.d.ts",
+      "default": "./src/artifacts.ts"
+    },
+    "./messages": {
+      "types": "./dist/messages.d.ts",
+      "default": "./src/messages.ts"
+    },
+    "./sessions": {
+      "types": "./dist/sessions.d.ts",
+      "default": "./src/sessions.ts"
+    },
+    "./streams": {
+      "types": "./dist/streams.d.ts",
+      "default": "./src/streams.ts"
+    },
+    "./usage": {
+      "types": "./dist/usage.d.ts",
+      "default": "./src/usage.ts"
+    },
+    "./quota-reservation": {
+      "types": "./dist/quota-reservation.d.ts",
+      "default": "./src/quota-reservation.ts"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "default": "./src/errors.ts"
     }
   },
   "scripts": {

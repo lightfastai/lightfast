@@ -1,5 +1,5 @@
 import type { UIMessage, UIMessageStreamWriter } from "ai";
-import type { LightfastAppChatToolSet } from "@repo/chat-ai-tools";
+import type { LightfastAppChatToolSet } from "@repo/chat-ai-tools/tools";
 
 export type LightfastChatStatus =
   | "idle"
@@ -43,7 +43,7 @@ export type {
   LightfastAppChatToolSet,
   LightfastAppChatToolName,
   LightfastAppChatToolInput
-} from "@repo/chat-ai-tools";
+} from "@repo/chat-ai-tools/tools";
 
 export type LightfastAppChatUIMessage = UIMessage<
   LightfastAppChatUIMessageMetadata,
@@ -57,7 +57,7 @@ export type LightfastAppChatUIMessagePart = LightfastAppChatUIMessage["parts"][n
 export type { 
   CreateDocumentToolUIPart,
   WebSearchToolUIPart 
-} from "@repo/chat-ai-tools";
+} from "@repo/chat-ai-tools/tools";
 
 export interface ChatFetchContext {
   modelId: string;
