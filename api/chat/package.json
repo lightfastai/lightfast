@@ -11,6 +11,14 @@
 		"./inngest": {
 			"types": "./dist/inngest/index.d.ts",
 			"default": "./src/inngest/index.ts"
+		},
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"default": "./src/env.ts"
+		},
+		"./lib/billing/types": {
+			"types": "./dist/lib/billing/types.d.ts",
+			"default": "./src/lib/billing/types.ts"
 		}
 	},
 	"license": "MIT",
@@ -24,14 +32,20 @@
 	},
 	"dependencies": {
 		"@ai-sdk/gateway": "catalog:",
+		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
+		"@repo/lib": "workspace:^",
+		"@sentry/core": "10.12.0",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/inngest": "workspace:*",
+		"@vendor/observability": "workspace:*",
 		"ai": "catalog:",
+		"date-fns": "^4.1.0",
+		"date-fns-tz": "^3.2.0",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"zod": "catalog:"
@@ -46,4 +60,3 @@
 	},
 	"prettier": "@repo/prettier-config"
 }
-

@@ -5,7 +5,7 @@ export const env = createEnv({
   shared: {},
   server: {
     DATABASE_HOST: z.string().min(1),
-    DATABASE_USERNAME: z.string().min(1), 
+    DATABASE_USERNAME: z.string().min(1),
     DATABASE_PASSWORD: z.string().min(1),
   },
   client: {},

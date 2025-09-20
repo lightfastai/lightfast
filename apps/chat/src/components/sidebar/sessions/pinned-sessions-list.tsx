@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { usePinnedSessions } from "~/hooks/sidebar/use-pinned-sessions";
-import { usePinSession } from "~/hooks/sidebar/use-pin-session";
+import { usePinnedSessions } from "~/hooks/use-pinned-sessions";
+import { usePinSession } from "~/hooks/use-pin-session";
 import { PinnedSessions } from "./pinned-sessions";
 
 interface PinnedSessionsListProps {

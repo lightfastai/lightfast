@@ -28,7 +28,15 @@ export interface Memory<TMessage extends UIMessage = UIMessage, TContext = {}> {
 		streamId: string;
 		context?: TContext;
 	}): Promise<void>;
+	
+	/**
+	 * @deprecated Use getActiveStream() instead for the new activeStreamId pattern
+	 */
 	getSessionStreams(sessionId: string): Promise<string[]>;
+	
+	// Active stream management (new pattern for resumable streams)
+	getActiveStream?(sessionId: string): Promise<string | null>;
+	clearActiveStream?(sessionId: string): Promise<void>;
 }
 
 // Re-export adapters

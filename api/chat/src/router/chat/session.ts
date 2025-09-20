@@ -2,14 +2,14 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
-import {
-	db,
-	LightfastChatSession,
-	LightfastChatMessage,
-	DEFAULT_SESSION_TITLE,
-} from "@db/chat";
+import { db } from "@db/chat/client";
+import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
+import { formatMySqlDateTime } from "../../lib/datetime";
 import { inngest } from "../../inngest/client/client";
+import { ClerkPlanKey } from "../../lib/billing/types";
+import { getUserSubscriptionData } from "./usage";
 
 export const sessionRouter = {
 	/**
@@ -25,6 +25,7 @@ export const sessionRouter = {
 		.query(async ({ ctx, input }) => {
 			const whereConditions = [
 				eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+				eq(LightfastChatSession.isTemporary, false),
 			];
 
 			// If cursor is provided, get sessions older than the cursor
@@ -76,6 +77,7 @@ export const sessionRouter = {
 				and(
 					eq(LightfastChatSession.clerkUserId, ctx.session.userId),
 					eq(LightfastChatSession.pinned, true),
+					eq(LightfastChatSession.isTemporary, false),
 				),
 			)
 			.orderBy(desc(LightfastChatSession.updatedAt));
@@ -110,6 +112,7 @@ export const sessionRouter = {
 					and(
 						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
 						like(LightfastChatSession.title, searchTerm),
+						eq(LightfastChatSession.isTemporary, false),
 					),
 				)
 				.orderBy(
@@ -137,13 +140,15 @@ export const sessionRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Get the session metadata only
+			// Get the session metadata including activeStreamId
 			const session = await db
 				.select({
 					id: LightfastChatSession.id,
 					clerkUserId: LightfastChatSession.clerkUserId,
 					title: LightfastChatSession.title,
 					pinned: LightfastChatSession.pinned,
+					activeStreamId: LightfastChatSession.activeStreamId,
+					isTemporary: LightfastChatSession.isTemporary,
 					createdAt: LightfastChatSession.createdAt,
 					updatedAt: LightfastChatSession.updatedAt,
 				})
@@ -172,9 +177,27 @@ export const sessionRouter = {
 			z.object({
 				id: z.string().uuid("Session ID must be a valid UUID v4"),
 				firstMessage: z.string().min(1).optional(), // Optional for internal calls, but should be provided from UI
+				isTemporary: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const isTemporary = input.isTemporary ?? false;
+
+			if (isTemporary) {
+				const { planKey, hasActiveSubscription } =
+					await getUserSubscriptionData(ctx.session.userId);
+
+				if (
+					planKey !== ClerkPlanKey.PLUS_TIER ||
+					!hasActiveSubscription
+				) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Temporary chats require an active Plus subscription",
+					});
+				}
+			}
+
 			try {
 				// Try to create the session
 				await db
@@ -182,6 +205,7 @@ export const sessionRouter = {
 					.values({
 						id: input.id, // Use client-provided ID directly
 						clerkUserId: ctx.session.userId,
+						isTemporary,
 					})
 					.execute();
 
@@ -263,7 +287,10 @@ export const sessionRouter = {
 		.mutation(async ({ ctx, input }) => {
 			// Verify ownership
 			const session = await db
-				.select({ id: LightfastChatSession.id })
+				.select({
+					id: LightfastChatSession.id,
+					isTemporary: LightfastChatSession.isTemporary,
+				})
 				.from(LightfastChatSession)
 				.where(
 					and(
@@ -277,6 +304,13 @@ export const sessionRouter = {
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "Session not found",
+				});
+			}
+
+			if (session[0].isTemporary) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Temporary chats cannot be pinned",
 				});
 			}
 
@@ -325,5 +359,156 @@ export const sessionRouter = {
 
 			return { success: true };
 		}),
-} satisfies TRPCRouterRecord;
 
+	/**
+	 * Set active stream ID for resumable streams
+	 * Used by the AI runtime to track streaming sessions
+	 */
+	setActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+				streamId: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Verify ownership first
+			const session = await db
+				.select({ id: LightfastChatSession.id })
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			// Set the active stream ID
+			await db
+				.update(LightfastChatSession)
+				.set({ activeStreamId: input.streamId })
+				.where(eq(LightfastChatSession.id, input.sessionId));
+
+			return { success: true };
+		}),
+
+	/**
+	 * Get active stream ID for resumable streams
+	 * Returns null if no active stream exists
+	 */
+	getActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			// Verify ownership and get active stream ID
+			const session = await db
+				.select({ 
+					id: LightfastChatSession.id,
+					activeStreamId: LightfastChatSession.activeStreamId,
+				})
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			return {
+				activeStreamId: session[0].activeStreamId,
+			};
+		}),
+
+	/**
+	 * Clear active stream ID (called when streaming completes)
+	 */
+	clearActiveStream: protectedProcedure
+		.input(
+			z.object({
+				sessionId: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Verify ownership first
+			const session = await db
+				.select({ id: LightfastChatSession.id })
+				.from(LightfastChatSession)
+				.where(
+					and(
+						eq(LightfastChatSession.id, input.sessionId),
+						eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+					),
+				)
+				.limit(1);
+
+			if (!session[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Session not found",
+				});
+			}
+
+			// Clear the active stream ID
+			await db
+				.update(LightfastChatSession)
+				.set({ activeStreamId: null })
+				.where(eq(LightfastChatSession.id, input.sessionId));
+
+			return { success: true };
+		}),
+
+	/**
+	 * Cleanup old active stream IDs (admin/cron job endpoint)
+	 * Clears activeStreamId for sessions older than the specified age
+	 */
+	cleanupOldActiveStreams: protectedProcedure
+		.input(
+			z.object({
+				olderThanMinutes: z.number().min(1).default(5),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			// Calculate the cutoff timestamp
+			const cutoffTime = new Date(Date.now() - input.olderThanMinutes * 60 * 1000);
+
+				const cutoffTimeSql = formatMySqlDateTime(cutoffTime);
+
+				// Update sessions with non-null activeStreamId that are older than cutoff
+				const result = await db
+					.update(LightfastChatSession)
+					.set({ activeStreamId: null })
+					.where(
+						and(
+							sql`${LightfastChatSession.activeStreamId} IS NOT NULL`,
+						lt(LightfastChatSession.updatedAt, cutoffTimeSql),
+						),
+					);
+
+			console.log(`[StreamCleanup] Cleared ${result.rowsAffected || 0} old active streams older than ${input.olderThanMinutes} minutes`);
+
+			return { 
+				success: true, 
+				clearedCount: result.rowsAffected || 0,
+				cutoffTime: cutoffTime.toISOString(),
+			};
+		}),
+} satisfies TRPCRouterRecord;

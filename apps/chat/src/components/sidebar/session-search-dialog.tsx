@@ -11,12 +11,12 @@ import {
 	CommandList,
 } from "@repo/ui/components/ui/command";
 import { Icons } from "@repo/ui/components/icons";
-import { useSearchSessions } from "~/hooks/sidebar/use-search-sessions";
+import { useSearchSessions } from "~/hooks/use-search-sessions";
 import { formatDistanceToNow } from "date-fns";
 import { MessageCircle } from "lucide-react";
 import { groupByDate, DATE_GROUP_ORDER } from "~/lib/date";
 import type { DateGroup } from "~/lib/date";
-import { usePinnedSessions } from "~/hooks/sidebar/use-pinned-sessions";
+import { usePinnedSessions } from "~/hooks/use-pinned-sessions";
 
 interface SessionSearchDialogProps {
 	open: boolean;

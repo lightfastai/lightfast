@@ -9,6 +9,7 @@
       "default": "./src/index.ts"
     },
     "./schema": "./src/schema/index.ts",
+    "./constants": "./src/constants.ts",
     "./client": "./src/client.ts",
     "./env": {
       "types": "./dist/env.d.ts",
@@ -28,7 +29,7 @@
     "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
     "db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../apps/chat/.env.local --"
+    "with-env": "dotenv -e ../../apps/chat/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
@@ -43,7 +44,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "dotenv-cli": "^8.0.0",
-    "drizzle-kit": "^0.31.0",
+    "drizzle-kit": "^0.31.4",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

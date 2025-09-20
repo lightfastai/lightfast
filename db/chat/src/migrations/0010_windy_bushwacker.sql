@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_chat_artifact` ADD `message_id` varchar(191) NOT NULL;

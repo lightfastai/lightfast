@@ -41,7 +41,7 @@ export default function HomePage() {
 								authentication, observability, error handling, and deployment
 								out of the box. Build agents with simple APIs while we manage
 								the infrastructure complexity, so you can ship to production in
-								minutes, not weeks." — Jeevan Pillay
+								minutes, not weeks."
 							</p>
 						</div>
 					</div>

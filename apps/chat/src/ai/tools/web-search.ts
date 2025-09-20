@@ -4,7 +4,7 @@ import { currentSpan, wrapTraced } from "braintrust";
 import Exa from "exa-js";
 import type {RegularSearchOptions, SearchResponse} from "exa-js";
 import { z } from "zod";
-import type { AppRuntimeContext } from "~/ai/types";
+import type { AppRuntimeContext } from "~/ai/lightfast-app-chat-ui-messages";
 import { env } from "~/env";
 
 /**
@@ -143,8 +143,19 @@ const executeWebSearch = wrapTraced(
 				};
 			});
 
+			// Create citation sources from results for easy AI access
+			const citationSources = results.map((result, index) => ({
+				id: `src-${index + 1}`,
+				title: result.title,
+				url: result.url,
+				domain: new URL(result.url).hostname,
+				description: result.content.slice(0, 200) + (result.content.length > 200 ? '...' : ''),
+				quote: contentType === "highlights" ? result.content : undefined,
+			}));
+
 			return {
 				results,
+				citationSources,
 				query,
 				autopromptString: response.autopromptString,
 				tokensEstimate: Math.ceil(totalCharacters / 4),

@@ -4,6 +4,7 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import { createSecureHeaders } from "next-secure-headers";
+import webpack from "webpack";
 
 import { env } from "../env";
 
@@ -46,16 +47,21 @@ export const config: NextConfig = withVercelToolbar()({
   },
 
   async headers() {
+    const securityHeaders = createSecureHeaders({
+      // HSTS Preload: https://hstspreload.org/
+      forceHTTPSRedirect: [
+        true,
+        { maxAge: 63_072_000, includeSubDomains: true, preload: true },
+      ],
+    });
+
     return [
       {
         source: "/(.*)",
-        headers: createSecureHeaders({
-          // HSTS Preload: https://hstspreload.org/
-          forceHTTPSRedirect: [
-            true,
-            { maxAge: 63_072_000, includeSubDomains: true, preload: true },
-          ],
-        }),
+        headers: [
+          ...securityHeaders,
+          { key: "Document-Policy", value: "js-profiling" },
+        ],
       },
     ];
   },
@@ -66,6 +72,13 @@ export const config: NextConfig = withVercelToolbar()({
     }
 
     config.ignoreWarnings = [{ module: otelRegex }];
+
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new webpack.DefinePlugin({
+        __SENTRY_DEBUG__: false,
+      }),
+    );
 
     return config;
   },
@@ -105,6 +118,10 @@ export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
+
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
 
   /*
    * Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)

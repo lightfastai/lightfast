@@ -5,6 +5,7 @@ import { Shield, Cpu, Workflow, Users, Zap, Code } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	CodeBlock,
+	CodeBlockContent,
 	// CodeBlockCopyButton,
 } from "@repo/ui/components/ai-elements/code-block";
 
@@ -353,11 +354,12 @@ export function PlatformSection() {
 								))}
 							</div>
 							<div className="flex-1 overflow-y-auto p-4">
-								<CodeBlock
-									code={activeFeature.code}
-									language="typescript"
-									forceTheme="github-dark"
-								/>
+								<CodeBlock>
+									<CodeBlockContent
+										code={activeFeature.code}
+										language="typescript"
+									/>
+								</CodeBlock>
 							</div>
 						</div>
 					</div>
@@ -402,11 +404,12 @@ export function PlatformSection() {
 								</span>
 							</div>
 							<div className="flex-1 overflow-y-auto p-4">
-								<CodeBlock
-									code={activeFeature.code}
-									language="typescript"
-									forceTheme="github-dark"
-								/>
+								<CodeBlock>
+									<CodeBlockContent
+										code={activeFeature.code}
+										language="typescript"
+									/>
+								</CodeBlock>
 							</div>
 						</div>
 					</div>

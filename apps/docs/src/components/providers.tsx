@@ -19,7 +19,7 @@ export function Providers({ children }: ProvidersProps) {
 				enabled: true,
 				SearchDialog,
 				options: {
-					api: "/docs/api/search", // Full path needed for multizone
+					api: "/docs/api/search", // Full path needed for multizone with basePath
 				},
 				hotKey: [
 					{

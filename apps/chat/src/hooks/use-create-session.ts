@@ -3,15 +3,16 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useTRPC } from "~/trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
-import type { RouterOutputs } from "@api/chat";
-import { DEFAULT_SESSION_TITLE } from "@db/chat";
+import type { ChatRouterOutputs } from "@api/chat";
+import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
 
-type Session = RouterOutputs["session"]["list"][number];
+type Session = ChatRouterOutputs["session"]["list"][number];
 type SessionsInfiniteData = InfiniteData<Session[]>;
 
 interface CreateSessionInput {
 	id: string;
 	firstMessage?: string; // Optional for internal calls, required from UI
+	isTemporary?: boolean;
 }
 
 /**
@@ -24,7 +25,11 @@ export function useCreateSession() {
 
 	return useMutation(
 		trpc.session.create.mutationOptions({
-			onMutate: async ({ id, firstMessage }: CreateSessionInput) => {
+			onMutate: async ({ id, firstMessage, isTemporary }: CreateSessionInput) => {
+				if (isTemporary) {
+					return { id, firstMessage, isTemporary };
+				}
+
 				// Cancel any outgoing refetches for session list queries
 				await queryClient.cancelQueries({
 					queryKey: [["session", "list"]],
@@ -97,7 +102,7 @@ export function useCreateSession() {
 				showTRPCErrorToast(err, "Failed to create session");
 
 				// Rollback all queries on error
-				if (context?.previousDataMap) {
+				if (context?.previousDataMap && context.previousDataMap.size > 0) {
 					context.previousDataMap.forEach((data, keyString) => {
 						const queryKey = JSON.parse(keyString) as readonly unknown[];
 						queryClient.setQueryData<SessionsInfiniteData>(queryKey, data);
@@ -111,6 +116,10 @@ export function useCreateSession() {
 			},
 
 			onSettled: (_data, _error, variables) => {
+				if (variables.isTemporary) {
+					return;
+				}
+
 				// Invalidate all session list queries to ensure consistency
 				void queryClient.invalidateQueries({
 					queryKey: [["session", "list"]],
@@ -148,4 +157,3 @@ export function useCreateSession() {
 		}),
 	);
 }
-

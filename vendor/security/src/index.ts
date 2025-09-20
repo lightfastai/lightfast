@@ -1,9 +1,4 @@
 import arcjet, {
-  
-  
-  
-  
-  
   detectBot,
   request,
   shield,
@@ -11,7 +6,8 @@ import arcjet, {
   slidingWindow,
   fixedWindow,
   protectSignup,
-  sensitiveInfo
+  sensitiveInfo,
+  validateEmail
 } from "@arcjet/next";
 import type {ArcjetBotCategory, ArcjetWellKnownBot, ArcjetMode, ArcjetDecision, ArcjetReason} from "@arcjet/next";
 import { env } from "../env";
@@ -27,6 +23,7 @@ export {
   shield,
   tokenBucket,
   slidingWindow,
+  validateEmail,
   request,
   type ArcjetBotCategory,
   type ArcjetWellKnownBot,

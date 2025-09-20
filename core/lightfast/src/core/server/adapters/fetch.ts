@@ -17,9 +17,49 @@ import type { LifecycleCallbacks } from "../lifecycle";
 /**
  * Helper to convert ApiError to Response
  */
-function errorToResponse(error: ApiError): Response {
-	return Response.json(error.toJSON(), {
-		status: error.statusCode,
+function mapStatusCodeToChatErrorType(status: number): string {
+	if (status === 401) return "AUTHENTICATION";
+	if (status === 403) return "SECURITY_BLOCKED";
+	if (status === 404) return "INVALID_REQUEST";
+	if (status === 429) return "RATE_LIMIT";
+	if (status >= 500 && status < 600) return "SERVER_ERROR";
+	if (status >= 400 && status < 500) return "INVALID_REQUEST";
+	return "SERVER_ERROR";
+}
+
+function defaultUserMessageForType(type: string): string {
+	switch (type) {
+		case "AUTHENTICATION":
+			return "Please sign in to continue.";
+		case "SECURITY_BLOCKED":
+			return "Access denied. Please try again later.";
+		case "RATE_LIMIT":
+			return "You're sending messages too quickly. Please slow down.";
+		case "INVALID_REQUEST":
+			return "The request could not be processed. Please check and try again.";
+		case "SERVER_ERROR":
+		default:
+			return "An unexpected error occurred. Please try again.";
+	}
+}
+
+function errorToResponse(error: ApiError, metadata?: Record<string, unknown>): Response {
+	const status = error.statusCode ?? 500;
+	const type = mapStatusCodeToChatErrorType(status);
+	const payload = {
+		type,
+		error: error.message,
+		message: defaultUserMessageForType(type),
+		statusCode: status,
+		metadata: {
+			timestamp: Date.now(),
+			errorCode: error.errorCode,
+			...metadata,
+		},
+	};
+
+	return new Response(JSON.stringify(payload), {
+		status,
 		headers: { "Content-Type": "application/json" },
 	});
 }
@@ -149,6 +189,7 @@ export async function fetchRequestHandler<
 				generateId,
 				enableResume,
 				resumeOptions,
+				abortSignal: req.signal,
 				onError,
 				onStreamStart,
 				onStreamComplete,
@@ -171,36 +212,33 @@ export async function fetchRequestHandler<
 				throw result.error;
 			}
 
-			// Handle null stream (no stream to resume)
+			// Handle null response (no stream to resume)
+			// Return 204 No Content as per AI SDK specification
 			if (!result.value) {
-				throw new GenericBadRequestError("No active stream to resume");
+				return new Response(null, { 
+					status: 204,
+					statusText: "No Content",
+					headers: {
+						"Cache-Control": "no-cache",
+					}
+				});
 			}
 
-			// Return the stream as a proper Response
-			return new Response(result.value, {
-				headers: {
-					"Content-Type": "text/event-stream",
-					"Cache-Control": "no-cache",
-					"Connection": "keep-alive",
-					"Content-Encoding": "none",
-				},
-			});
+			// Return the response directly (already has proper headers)
+			return result.value;
 		}
 
 		// This should not happen due to earlier check
 		throw new MethodNotAllowedError(req.method, ["GET", "POST"]);
 	} catch (error) {
-		// Convert to ApiError if needed
 		const apiError = toApiError(error);
 
-		// Call error handler if provided
-		onError?.({ 
+		onError?.({
 			systemContext: { sessionId, resourceId },
 			requestContext: createRequestContext?.(req),
 			error: apiError,
 		});
 
-		// Return error response
-		return errorToResponse(apiError);
+		return errorToResponse(apiError, { sessionId, resourceId });
 	}
 }

@@ -2,6 +2,8 @@ import { getPage, getPages } from "@/src/lib/source";
 import { mdxComponents } from "@/mdx-components";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
+import { DocsLayout } from "@/src/components/docs-layout";
 
 export default async function Page({
 	params,
@@ -15,12 +17,25 @@ export default async function Page({
 		return notFound();
 	}
 
+	// Show custom landing page for the get-started/overview page
+	if (
+		resolvedParams.slug &&
+		resolvedParams.slug.length === 2 &&
+		resolvedParams.slug[0] === "get-started" &&
+		resolvedParams.slug[1] === "overview"
+	) {
+		return <DeveloperPlatformLanding />;
+	}
+
 	const MDX = page.data.body;
+	const toc = page.data.toc;
 
 	return (
-		<article className="max-w-none">
-			<MDX components={mdxComponents} />
-		</article>
+		<DocsLayout toc={toc}>
+			<article className="max-w-none">
+				<MDX components={mdxComponents} />
+			</article>
+		</DocsLayout>
 	);
 }
 

@@ -1,8 +1,12 @@
-import * as Sentry from "@sentry/nextjs";
+import {
+  captureRouterTransitionStart,
+  init as initSentry,
+  replayIntegration,
+} from "@sentry/nextjs";
 
 import { env } from "~/env";
 
-Sentry.init({
+initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
   environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
 
@@ -26,7 +30,7 @@ Sentry.init({
 
   // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
-    Sentry.replayIntegration({
+    replayIntegration({
       // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
@@ -34,4 +38,4 @@ Sentry.init({
   ],
 });
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = captureRouterTransitionStart;

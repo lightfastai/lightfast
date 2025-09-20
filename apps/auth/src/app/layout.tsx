@@ -7,7 +7,6 @@ import { siteConfig } from "@repo/site-config";
 import { Toaster } from "sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { getClerkConfig } from "@repo/url-utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 
 export const metadata: Metadata = {
@@ -90,8 +89,6 @@ export const viewport: Viewport = {
 	themeColor: "#09090b",
 };
 
-const clerkConfig = getClerkConfig("auth");
-
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -100,7 +97,13 @@ export default function RootLayout({
 	return (
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			{...clerkConfig}
+			signInUrl="/sign-in"
+			signUpUrl="/sign-up"
+			signInFallbackRedirectUrl="/onboarding/choose-organization"
+			signUpFallbackRedirectUrl="/onboarding/choose-organization"
+			taskUrls={{
+				"choose-organization": "/onboarding/choose-organization",
+			}}
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",

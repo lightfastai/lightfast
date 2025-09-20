@@ -1,19 +1,34 @@
-import type { UIMessage, UIMessageStreamOptions, ToolSet } from "ai";
-import { streamText } from "ai";
+import type {
+	UIMessage,
+	ToolSet,
+	UIMessagePart,
+	UIDataTypes,
+	UITools,
+} from "ai";
+import { streamText, createUIMessageStream, createUIMessageStreamResponse } from "ai";
 import { createResumableStreamContext } from "resumable-stream";
 import { v4 as uuidv4 } from "uuid";
 import type { Memory } from "../memory";
 import type { Agent } from "../primitives/agent";
 import type { ToolFactorySet } from "../primitives/tool";
-import type { RequestContext, SystemContext } from "./adapters/types";
+import type {
+	RequestContext,
+	SystemContext,
+	RuntimeContext,
+} from "./adapters/types";
 import {
+	ApiError,
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
 	toAgentApiError,
 	toMemoryApiError,
 } from "./errors";
-import type { ApiError } from "./errors";
+import {
+	LightfastErrorCategory,
+	LightfastErrorSeverity,
+	LightfastErrorSource,
+} from "./error-classification";
 import { Err, Ok } from "./result";
 import type { Result } from "./result";
 import type {
@@ -46,8 +61,12 @@ export interface StreamChatOptions<
 	TMessage extends UIMessage = UIMessage,
 	TRequestContext = {},
 	TFetchContext = {},
+	TRuntimeContext = {},
+	TTools extends ToolFactorySet<
+		RuntimeContext<TRuntimeContext>
+	> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > extends LifecycleCallbacks {
-	agent: Agent<any, any>;
+	agent: Agent<TRuntimeContext, TTools>;
 	sessionId: string;
 	message: TMessage;
 	memory: Memory<TMessage, TFetchContext>;
@@ -58,11 +77,12 @@ export interface StreamChatOptions<
 	generateId?: () => string;
 	enableResume?: boolean;
 	resumeOptions?: ResumeOptions;
+	abortSignal?: AbortSignal;
 }
 
 export interface ValidatedSession {
 	exists: boolean;
-	session?: any;
+	session?: { resourceId: string };
 }
 
 export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
@@ -146,11 +166,25 @@ export async function processMessage<
  * Streams a chat response from an agent
  */
 export async function streamChat<
-	TMessage extends UIMessage = UIMessage,
+	TMessage extends UIMessage<unknown, UIDataTypes, UITools> = UIMessage<
+		unknown,
+		UIDataTypes,
+		UITools
+	>,
 	TRequestContext = {},
 	TFetchContext = {},
+	TRuntimeContext = {},
+	TTools extends ToolFactorySet<
+		RuntimeContext<TRuntimeContext>
+	> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 >(
-	options: StreamChatOptions<TMessage, TRequestContext, TFetchContext>,
+	options: StreamChatOptions<
+		TMessage,
+		TRequestContext,
+		TFetchContext,
+		TRuntimeContext,
+		TTools
+	>,
 ): Promise<Result<Response, ApiError>> {
 	const {
 		agent,
@@ -164,6 +198,7 @@ export async function streamChat<
 		generateId,
 		enableResume,
 		resumeOptions,
+		abortSignal,
 		onError,
 		onStreamStart,
 		onStreamComplete,
@@ -208,34 +243,10 @@ export async function streamChat<
 		messageCount: allMessages.length,
 	});
 
-	// Build stream parameters using the agent's method
-	let streamParams;
-	try {
-		streamParams = agent.buildStreamParams({
-			sessionId,
-			messages: allMessages,
-			memory,
-			resourceId,
-			systemContext,
-			requestContext,
-		});
-	} catch (error) {
-		// Convert agent errors to appropriate API errors
-		return Err(toAgentApiError(error, "buildStreamParams"));
-	}
-
-	// Stream the response using the built parameters
-	let result;
-	const streamId = generateId ? generateId() : uuidv4();
-	try {
-		result = await streamText(streamParams);
-	} catch (error) {
-		// Convert streaming errors to appropriate API errors
-		return Err(toAgentApiError(error, "streamText"));
-	}
-
 	// Use the same sessionId
 	const sid = sessionId;
+	const streamId = generateId ? generateId() : uuidv4();
+	const shouldEnableResume = enableResume || resumeOptions?.enabled;
 
 	// Call onStreamStart lifecycle callback
 	onStreamStart?.({
@@ -246,172 +257,367 @@ export async function streamChat<
 		messageCount: allMessages.length,
 	});
 
-	// Store stream ID for resumption (only if resume is enabled)
-	const shouldEnableResume = enableResume || resumeOptions?.enabled;
+	const serializeErrorForClient = (
+		error: ApiError,
+		overrides: {
+			message?: string;
+			category?: LightfastErrorCategory;
+			severity?: LightfastErrorSeverity;
+			source?: LightfastErrorSource;
+			type?: string;
+			metadata?: Record<string, unknown>;
+		} = {},
+	): string => {
+		const status = error.statusCode ?? 500;
+		return JSON.stringify({
+			type: overrides.type ?? mapStatusCodeToChatErrorType(status),
+			error: error.message,
+			message: overrides.message ?? error.message,
+			statusCode: status,
+			errorCode: error.errorCode,
+			source: overrides.source ?? error.source,
+			category: overrides.category ?? error.category,
+			severity: overrides.severity ?? error.severity,
+			metadata: {
+				timestamp: Date.now(),
+				...error.metadata,
+				...overrides.metadata,
+			},
+		});
+	};
 
-	if (shouldEnableResume) {
-		try {
-			await memory.createStream({ sessionId, streamId, context });
-		} catch (error) {
-			const apiError = toMemoryApiError(error, "createStream");
+	let persistenceErrorPayload: string | null = null;
+	let resumeErrorPayload: string | null = null;
+	let resumeSetupPromise: Promise<void> | null = null;
+	let initializationError: ApiError | null = null;
 
-			// Check guard: failOnStreamError FIRST (highest priority)
-			if (resumeOptions?.failOnStreamError) {
-				// Fail fast mode: log and return error immediately
-				console.warn(
-					`[Fail Fast] Stream creation failed, stopping operation for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
-				);
-				return Err(apiError);
+	const streamErrorToPayload = (error: unknown, emitLifecycleEvent: boolean): string => {
+		const apiError = toAgentApiError(error, "streamText");
+		const payload = serializeErrorForClient(apiError, {
+			category: LightfastErrorCategory.Stream,
+			severity: LightfastErrorSeverity.Recoverable,
+			metadata: {
+				sessionId,
+				streamId,
+			},
+		});
+
+		if (
+			(persistenceErrorPayload &&
+				error instanceof Error &&
+				error.message === persistenceErrorPayload) ||
+			(resumeErrorPayload &&
+				error instanceof Error &&
+				error.message === resumeErrorPayload)
+		) {
+			return payload;
+		}
+
+		if (emitLifecycleEvent) {
+			onError?.({
+				systemContext,
+				requestContext: requestContext as RequestContext | undefined,
+				error: apiError,
+			});
+		}
+
+		return payload;
+	};
+
+	const handleStreamError = (error: unknown) => streamErrorToPayload(error, true);
+	const writerStreamError = (error: unknown) => streamErrorToPayload(error, false);
+
+	const baseStream = createUIMessageStream<
+		UIMessage<unknown, UIDataTypes, UITools>
+	>({
+		execute: ({ writer }) => {
+			let streamParams;
+			try {
+				streamParams = agent.buildStreamParams({
+					sessionId,
+					messages: allMessages,
+					memory,
+					resourceId,
+					systemContext,
+					requestContext,
+					dataStream: writer,
+				});
+			} catch (error) {
+				initializationError = toAgentApiError(error, "buildStreamParams");
+				throw initializationError;
 			}
 
-			// Check guard: silentStreamFailure
+			// IMPORTANT: AbortSignal is incompatible with resume functionality
+			// When resume is enabled, we disable abort to prevent breaking stream resumption
+			// Page refresh/navigation with abort would make streams unresumable
+			const useAbortSignal = !shouldEnableResume && abortSignal;
+
+			let streamResult;
+			try {
+				streamResult = streamText({
+					...streamParams,
+					...(useAbortSignal && { abortSignal }),
+				});
+			} catch (error) {
+				initializationError = toAgentApiError(error, "streamText");
+				throw initializationError;
+			}
+
+			writer.merge(
+				streamResult.toUIMessageStream({
+					generateMessageId: generateId,
+					sendReasoning: true,
+					originalMessages: allMessages,
+						onFinish: async (finishResult) => {
+							// Call onAgentComplete lifecycle callback
+							onAgentComplete?.({
+								systemContext,
+								requestContext: requestContext as RequestContext | undefined,
+								agentName,
+							});
+
+							// Call onStreamComplete lifecycle callback
+							onStreamComplete?.({
+								systemContext,
+								requestContext: requestContext as RequestContext | undefined,
+								streamId,
+								agentName,
+							});
+
+							// Save the assistant's response to memory
+							if (
+								finishResult.responseMessage &&
+								finishResult.responseMessage.role === "assistant"
+							) {
+								console.log(
+									`\n[V1 onFinish] responseMessage:`,
+									JSON.stringify(finishResult.responseMessage, null, 2),
+								);
+								if (finishResult.responseMessage.parts) {
+									console.log(
+										`[V1 onFinish] Parts count: ${finishResult.responseMessage.parts.length}`,
+									);
+									finishResult.responseMessage.parts.forEach(
+										(part: UIMessagePart<UIDataTypes, UITools>, idx: number) => {
+											console.log(
+												`  Part ${idx}: type=${part.type}`,
+												part.type === "tool-result"
+													? `state=${(part as any).state}`
+													: "",
+											);
+										},
+									);
+								}
+
+								try {
+									await (
+										memory as Memory<
+											UIMessage<unknown, UIDataTypes, UITools>,
+											TFetchContext
+										>
+									).appendMessage({
+										sessionId: sid,
+										message: finishResult.responseMessage,
+										context,
+									});
+								} catch (error) {
+									const apiError = toMemoryApiError(error, "appendMessage");
+									console.error(
+										`Failed to save assistant message to memory for session ${sid}:`,
+										{
+											error: apiError.message,
+											statusCode: apiError.statusCode,
+											errorCode: apiError.errorCode,
+											originalError: error,
+										},
+									);
+
+									const persistedMessageId = finishResult.responseMessage?.id;
+									persistenceErrorPayload = serializeErrorForClient(apiError, {
+										message: "We couldn't save this response. Refreshing may lose it.",
+										category: LightfastErrorCategory.Persistence,
+										severity: LightfastErrorSeverity.Recoverable,
+										metadata: {
+											sessionId,
+											streamId,
+											...(persistedMessageId ? { messageId: persistedMessageId } : {}),
+										},
+									});
+									onError?.({
+										systemContext,
+										requestContext: requestContext as RequestContext | undefined,
+										error: apiError,
+									});
+								}
+							}
+
+							// Clear active stream ID when streaming completes
+							if (shouldEnableResume && memory.clearActiveStream) {
+								try {
+									await memory.clearActiveStream(sessionId);
+									console.log(
+										`[Stream Complete] Cleared active stream ID for session ${sessionId}`,
+									);
+								} catch (error) {
+									console.warn(
+										`[Stream Complete] Failed to clear active stream ID for session ${sessionId}:`,
+										error,
+									);
+									// Don't throw - this is cleanup, not critical
+								}
+							}
+						},
+					onError: handleStreamError,
+				}),
+			);
+		},
+		onError: writerStreamError,
+		originalMessages: allMessages,
+		generateId,
+	});
+
+	if (initializationError) {
+		return Err(initializationError);
+	}
+
+	const streamWithErrors = baseStream.pipeThrough(
+		new TransformStream({
+			transform(chunk, controller) {
+				controller.enqueue(chunk);
+			},
+			flush(controller) {
+				const payloads = [persistenceErrorPayload, resumeErrorPayload].filter(
+					(value): value is string => Boolean(value),
+				);
+				const seen = new Set<string>();
+				for (const payload of payloads) {
+					if (seen.has(payload)) {
+						continue;
+					}
+					seen.add(payload);
+					controller.enqueue({ type: "error", errorText: payload });
+				}
+			},
+		}),
+	);
+
+	const consumeResumableStream = async ({
+		stream,
+	}: {
+		stream: ReadableStream<string>;
+	}) => {
+		try {
+			const clearActive = memory.clearActiveStream?.bind(memory);
+			if (clearActive) {
+				try {
+					await clearActive(sessionId);
+					console.log(
+						`[Stream Start] Cleared previous active stream ID for session ${sessionId}`,
+					);
+				} catch (error) {
+					console.warn(
+						`[Stream Start] Failed to clear previous active stream ID for session ${sessionId}:`,
+						error,
+					);
+				}
+			}
+
+			const streamContext = createResumableStreamContext({
+				waitUntil: (promise) => promise,
+			});
+
+			await streamContext.createNewResumableStream(streamId, () => stream);
+			await memory.createStream({ sessionId, streamId, context });
+
+			console.log(
+				`[Stream Created] Created resumable stream ${streamId} for session ${sessionId}`,
+			);
+		} catch (error: unknown) {
+			const apiError = toMemoryApiError(error, "createStream");
+
+			const clearActive = memory.clearActiveStream?.bind(memory);
+			if (clearActive) {
+				try {
+					await clearActive(sessionId);
+					console.log(
+						`[Stream Cleanup] Cleared activeStreamId for session ${sessionId} due to stream creation failure`,
+					);
+				} catch (clearError) {
+					console.error(
+						`[Stream Cleanup] CRITICAL: Failed to clear activeStreamId for session ${sessionId} after stream creation failure:`,
+						clearError,
+					);
+				}
+			}
+
+			if (resumeOptions?.failOnStreamError) {
+				console.error(
+					`[Fail Fast] Stream creation failed for session ${sessionId}:`,
+					error,
+				);
+				throw apiError;
+			}
+
 			if (resumeOptions?.silentStreamFailure) {
-				// Silent mode: only log, don't call onError
 				console.warn(
 					`[Silent Mode] Failed to create stream ${streamId} for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
+					apiError.toJSON(),
 				);
 			} else {
-				// Normal mode: log and propagate via onError
 				console.warn(
 					`Failed to create stream ${streamId} for session ${sessionId}:`,
-					{
-						error: apiError.message,
-						statusCode: apiError.statusCode,
-						errorCode: apiError.errorCode,
-						originalError: error,
-					},
+					apiError.toJSON(),
 				);
-
-				// Propagate stream creation failure to route for monitoring
 				onError?.({
 					systemContext,
 					requestContext: requestContext as RequestContext | undefined,
 					error: apiError,
 				});
+				resumeErrorPayload = serializeErrorForClient(apiError, {
+					message: "We couldn't enable stream resume for this session.",
+					category: LightfastErrorCategory.Resume,
+					severity: LightfastErrorSeverity.Recoverable,
+					metadata: {
+						sessionId,
+						streamId,
+					},
+				});
 			}
+		}
+	};
 
-			// Default: Continue streaming despite error
+	const response = createUIMessageStreamResponse({
+		stream: streamWithErrors,
+		headers: {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache",
+			Connection: "keep-alive",
+			"Content-Encoding": "none",
+		},
+		...(shouldEnableResume && {
+			consumeSseStream: ({ stream }) => {
+				const promise = consumeResumableStream({ stream });
+				resumeSetupPromise = promise;
+				return promise;
+			},
+		}),
+	});
+
+	if (shouldEnableResume && resumeOptions?.failOnStreamError) {
+		if (resumeSetupPromise) {
+			try {
+				await resumeSetupPromise;
+			} catch (error) {
+				const normalizedError =
+					error instanceof ApiError
+						? error
+						: toMemoryApiError(error, "createStream");
+				return Err(normalizedError);
+			}
 		}
 	}
 
-	// Create UI message stream response with proper options
-	const streamOptions: UIMessageStreamOptions<TMessage> = {
-		generateMessageId: generateId,
-		sendReasoning: true, // Enable sending reasoning parts to the client
-		onFinish: async (finishResult) => {
-			const agentEndTime = Date.now();
-			const agentDuration = agentEndTime - agentStartTime;
-
-			// Call onAgentComplete lifecycle callback
-			onAgentComplete?.({
-				systemContext,
-				requestContext: requestContext as RequestContext | undefined,
-				agentName,
-			});
-
-			// Call onStreamComplete lifecycle callback
-			onStreamComplete?.({
-				systemContext,
-				requestContext: requestContext as RequestContext | undefined,
-				streamId,
-				agentName,
-			});
-
-			// Save the assistant's response to memory
-			if (
-				finishResult.responseMessage &&
-				finishResult.responseMessage.role === "assistant"
-			) {
-				console.log(
-					`\n[V1 onFinish] responseMessage:`,
-					JSON.stringify(finishResult.responseMessage, null, 2),
-				);
-				if (finishResult.responseMessage.parts) {
-					console.log(
-						`[V1 onFinish] Parts count: ${finishResult.responseMessage.parts.length}`,
-					);
-					finishResult.responseMessage.parts.forEach(
-						(part: any, idx: number) => {
-							console.log(
-								`  Part ${idx}: type=${part.type}`,
-								part.type === "tool-result" ? `state=${part.state}` : "",
-							);
-						},
-					);
-				}
-
-				try {
-					await memory.appendMessage({
-						sessionId: sid,
-						message: finishResult.responseMessage,
-						context,
-					});
-				} catch (error) {
-					// Convert to proper API error for consistent error handling
-					const apiError = toMemoryApiError(error, "appendMessage");
-					console.error(
-						`Failed to save assistant message to memory for session ${sid}:`,
-						{
-							error: apiError.message,
-							statusCode: apiError.statusCode,
-							errorCode: apiError.errorCode,
-							originalError: error,
-						},
-					);
-
-					// Call onError callback to propagate memory failure to route
-					onError?.({
-						systemContext,
-						requestContext: requestContext as RequestContext | undefined,
-						error: apiError,
-					});
-
-					// Note: We don't throw here as the response has already been streamed to the client
-					// but we propagate the error via callback for route handling
-				}
-			}
-		},
-	};
-
-	// Return response with optional resume support
-	if (shouldEnableResume) {
-		return Ok(
-			result.toUIMessageStreamResponse<TMessage>({
-				...streamOptions,
-				headers: {
-					"Content-Encoding": "none", // Prevent proxy buffering for streaming
-				},
-				async consumeSseStream({ stream }) {
-					// Send the SSE stream into a resumable stream sink
-					const streamContext = createResumableStreamContext({
-						waitUntil: (promise) => promise,
-					});
-					await streamContext.createNewResumableStream(streamId, () => stream);
-				},
-			}),
-		);
-	} else {
-		return Ok(
-			result.toUIMessageStreamResponse<TMessage>({
-				...streamOptions,
-				headers: {
-					"Content-Encoding": "none", // Prevent proxy buffering for streaming
-				},
-			}),
-		);
-	}
+	return Ok(response);
 }
 
 /**
@@ -424,7 +630,7 @@ export async function resumeStream<
 	memory: Memory<TMessage, TFetchContext>,
 	sessionId: string,
 	resourceId: string,
-): Promise<Result<ReadableStream | null, ApiError>> {
+): Promise<Result<Response | null, ApiError>> {
 	try {
 		// Check authentication and ownership
 		const session = await memory.getSession(sessionId);
@@ -433,14 +639,19 @@ export async function resumeStream<
 			return Err(new SessionNotFoundError());
 		}
 
-		// Get session streams
-		const streamIds = await memory.getSessionStreams(sessionId);
-		console.log("[Resume Stream]", streamIds);
-		if (!streamIds.length) {
-			return Ok(null);
-		}
+		// Get active stream ID (new pattern) or fallback to session streams (old pattern)
+		let recentStreamId: string | null = null;
 
-		const recentStreamId = streamIds[0]; // Redis LPUSH puts newest first
+		if (memory.getActiveStream) {
+			// New pattern: get single active stream ID
+			recentStreamId = await memory.getActiveStream(sessionId);
+			console.log("[Resume Stream] Active stream ID:", recentStreamId);
+		} else {
+			// Fallback to old pattern: get stream list and take first
+			const streamIds = await memory.getSessionStreams(sessionId);
+			console.log("[Resume Stream] Stream IDs (legacy):", streamIds);
+			recentStreamId = streamIds.length > 0 ? (streamIds[0] ?? null) : null;
+		}
 
 		if (!recentStreamId) {
 			return Ok(null);
@@ -453,10 +664,47 @@ export async function resumeStream<
 
 		const resumedStream =
 			await streamContext.resumeExistingStream(recentStreamId);
-		return Ok(resumedStream ?? null);
+
+		if (!resumedStream) {
+			return Ok(null);
+		}
+
+		// Return the stream as a proper Response with headers
+		return Ok(
+			new Response(resumedStream, {
+				headers: {
+					"Content-Type": "text/event-stream",
+					"Cache-Control": "no-cache",
+					Connection: "keep-alive",
+					"Content-Encoding": "none",
+				},
+			}),
+		);
 	} catch (error) {
 		console.error("[Resume Stream]", error);
 		// Convert memory errors to appropriate API errors
 		return Err(toMemoryApiError(error, "resumeStream"));
 	}
+}
+
+function mapStatusCodeToChatErrorType(status: number): string {
+	if (status === 401) {
+		return "AUTHENTICATION";
+	}
+	if (status === 403) {
+		return "SECURITY_BLOCKED";
+	}
+	if (status === 404) {
+		return "INVALID_REQUEST";
+	}
+	if (status === 429) {
+		return "RATE_LIMIT";
+	}
+	if (status >= 500 && status < 600) {
+		return "SERVER_ERROR";
+	}
+	if (status >= 400 && status < 500) {
+		return "INVALID_REQUEST";
+	}
+	return "SERVER_ERROR";
 }

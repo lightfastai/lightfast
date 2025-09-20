@@ -6,6 +6,7 @@ import {
 	config as vendorConfig,
 	withBetterStack,
 	withSentry,
+	withAnalyzer,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
 
@@ -14,7 +15,13 @@ import { env } from "./src/env";
 let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		reactStrictMode: true,
+		compiler: {
+			// swcMinify: true,
+			removeConsole:
+				env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+		},
 		transpilePackages: [
+			"@repo/ai",
 			"@api/chat",
 			"@repo/ui",
 			"@repo/site-config",
@@ -24,11 +31,49 @@ let config: NextConfig = withBetterStack(
 			"@vendor/next",
 			"@db/chat",
 			"lightfast",
+			"@repo/lib",
+			"@vendor/analytics",
+			"@vendor/inngest",
+			"@vendor/security",
+			"@repo/eslint-config",
+			"@repo/typescript-config",
 		],
 		experimental: {
 			optimizeCss: true,
-			optimizePackageImports: ["@repo/ui", "lucide-react"],
+			optimizePackageImports: [
+				"@repo/ui",
+				"@repo/ai",
+				"@api/chat",
+				"@repo/lib",
+				"@vendor/clerk",
+				"@vendor/observability",
+				"@vendor/analytics",
+				"lucide-react",
+				"streamdown",
+				"@radix-ui/react-accordion",
+				"@radix-ui/react-avatar",
+				"@radix-ui/react-collapsible",
+				"@radix-ui/react-popover",
+				"@radix-ui/react-dialog",
+				"@radix-ui/react-dropdown-menu",
+				"@radix-ui/react-select",
+				"@radix-ui/react-tabs",
+				"@radix-ui/react-tooltip",
+				"@radix-ui/react-scroll-area",
+				"react-hook-form",
+				"zod",
+				"date-fns",
+				"class-variance-authority",
+				"clsx",
+				"tailwind-merge",
+			],
+
 			/**
+			 * Static Generation Configuration
+			 * Controls retry behavior for failed static generation
+			 */
+			staticGenerationRetryCount: 3,
+			staticGenerationMaxConcurrency: 8 /**
 			 * Router Cache Configuration (staleTimes)
 			 *
 			 * CRITICAL: This fixes the blocking navigation issue in Next.js 15.
@@ -48,11 +93,27 @@ let config: NextConfig = withBetterStack(
 			 *
 			 * @see https://nextjs.org/docs/app/api-reference/config/next-config-js/staleTimes
 			 * @see https://nextjs.org/blog/next-15#client-router-cache-no-longer-caches-page-components-by-default
-			 */
+			 */,
 			staleTimes: {
 				dynamic: 30, // Cache dynamic pages for 30 seconds (same as Next.js 14 default)
 				static: 180, // Cache static pages for 3 minutes
 			},
+		},
+
+		turbopack: {
+			resolveAlias: {
+				// Optimize commonly used imports
+				"~/*": "./src/*",
+			},
+			resolveExtensions: [
+				".mdx",
+				".tsx",
+				".ts",
+				".jsx",
+				".js",
+				".mjs",
+				".json",
+			],
 		},
 	}),
 );
@@ -60,6 +121,11 @@ let config: NextConfig = withBetterStack(
 // Apply Sentry configuration in Vercel environment
 if (env.VERCEL) {
 	config = withSentry(config);
+}
+
+// Enable bundle analysis when requested
+if (process.env.ANALYZE === "true") {
+	config = withAnalyzer(config);
 }
 
 export default config;

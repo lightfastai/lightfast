@@ -128,3 +128,13 @@ storybook-static
 # Lightfast CLI
 .lightfast/
 .tanstack/
+
+# Git worktrees
+worktrees/
+
+# Playwright
+.playwright-mcp
+
+# Pnpm store
+.pnpm-store/
+

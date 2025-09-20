@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import { useInfiniteSessions } from "~/hooks/sidebar/use-infinite-sessions";
-import { usePinSession } from "~/hooks/sidebar/use-pin-session";
-import { useInfiniteScroll } from "~/hooks/sidebar/use-infinite-scroll";
+import { useInfiniteSessions } from "~/hooks/use-infinite-sessions";
+import { usePinSession } from "~/hooks/use-pin-session";
+import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { flattenPages } from "../utils/session-helpers";
 import { SessionsLoadingSkeleton } from "../components/session-skeleton";
 import { GroupedSessions } from "./grouped-sessions";

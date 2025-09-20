@@ -8,6 +8,7 @@ export const VERCEL_PROJECT_IDS = {
   cloud: process.env.VERCEL_PROJECT_ID_CLOUD || "prj_n3D3MPJlt9DX9OSAVpJYXFb1pGBc",
   chat: process.env.VERCEL_PROJECT_ID_CHAT || "prj_PLACEHOLDER_CHAT",
   docs: process.env.VERCEL_PROJECT_ID_DOCS || "prj_PLACEHOLDER_DOCS",
+  playground: process.env.VERCEL_PROJECT_ID_PLAYGROUND || "prj_PLACEHOLDER_PLAYGROUND",
 } as const;
 
 export type ProjectName = keyof typeof VERCEL_PROJECT_IDS;

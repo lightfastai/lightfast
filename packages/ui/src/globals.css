@@ -163,7 +163,7 @@
 	}
 	
 	.chat-container {
-		@apply max-w-3xl mx-auto px-4;
+		@apply max-w-3xl mx-auto;
 	}
 	
 	/* Custom text-2xs utility */

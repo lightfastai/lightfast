@@ -8,8 +8,37 @@ interface ErrorBuilderOptions {
   requestId?: string;
   modelId?: string;
   isAnonymous?: boolean;
+  category?: string;
+  severity?: string;
+  source?: string;
+  errorCode?: string;
   [key: string]: unknown;
 }
+
+const CATEGORY_BY_TYPE: Partial<Record<ChatErrorType, string>> = {
+  [ChatErrorType.RATE_LIMIT]: "rate-limit",
+  [ChatErrorType.BOT_DETECTION]: "security",
+  [ChatErrorType.SECURITY_BLOCKED]: "security",
+  [ChatErrorType.AUTHENTICATION]: "authentication",
+  [ChatErrorType.MODEL_ACCESS_DENIED]: "authorization",
+  [ChatErrorType.USAGE_LIMIT_EXCEEDED]: "rate-limit",
+  [ChatErrorType.MODEL_UNAVAILABLE]: "model",
+  [ChatErrorType.INVALID_MODEL]: "model",
+  [ChatErrorType.INVALID_REQUEST]: "request",
+  [ChatErrorType.SERVICE_UNAVAILABLE]: "infrastructure",
+  [ChatErrorType.SERVER_ERROR]: "internal",
+  [ChatErrorType.UNKNOWN]: "unknown",
+};
+
+const SEVERITY_BY_TYPE: Partial<Record<ChatErrorType, string>> = {
+  [ChatErrorType.RATE_LIMIT]: "transient",
+  [ChatErrorType.USAGE_LIMIT_EXCEEDED]: "recoverable",
+  [ChatErrorType.MODEL_ACCESS_DENIED]: "fatal",
+  [ChatErrorType.AUTHENTICATION]: "fatal",
+  [ChatErrorType.SECURITY_BLOCKED]: "fatal",
+  [ChatErrorType.BOT_DETECTION]: "fatal",
+  [ChatErrorType.INVALID_REQUEST]: "recoverable",
+};
 
 // Create a standardized error response
 export function createErrorResponse(
@@ -25,11 +54,22 @@ export function createErrorResponse(
     error,
     message,
     statusCode,
+    errorCode: options?.errorCode,
+    source: options?.source ?? "guard",
+    category: options?.category ?? CATEGORY_BY_TYPE[type] ?? "unknown",
+    severity: options?.severity ?? SEVERITY_BY_TYPE[type] ?? "recoverable",
     metadata: {
       timestamp: Date.now(),
       ...options,
     },
   };
+
+  if (errorResponse.metadata) {
+    delete (errorResponse.metadata as Record<string, unknown>).category;
+    delete (errorResponse.metadata as Record<string, unknown>).severity;
+    delete (errorResponse.metadata as Record<string, unknown>).source;
+    delete (errorResponse.metadata as Record<string, unknown>).errorCode;
+  }
   
   return Response.json(errorResponse, { status: statusCode });
 }

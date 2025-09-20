@@ -14,6 +14,7 @@ export enum ChatErrorType {
   // Authentication & Authorization
   AUTHENTICATION = "AUTHENTICATION",
   MODEL_ACCESS_DENIED = "MODEL_ACCESS_DENIED",
+  USAGE_LIMIT_EXCEEDED = "USAGE_LIMIT_EXCEEDED",
   
   // Model & API Issues
   MODEL_UNAVAILABLE = "MODEL_UNAVAILABLE",
@@ -37,6 +38,10 @@ export interface ApiErrorResponse {
   error: string;         // Technical error message
   message: string;       // User-facing message
   statusCode: number;    // HTTP status code
+  errorCode?: string;
+  source?: string;
+  category?: string;
+  severity?: string;
   metadata?: {
     requestId?: string;
     timestamp?: number;
@@ -54,6 +59,10 @@ export interface ChatError {
   details?: string;
   retryable: false; // Always false - all errors go to error boundary
   statusCode?: number;
+  errorCode?: string;
+  source?: string;
+  category?: string;
+  severity?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -79,6 +88,7 @@ export const ERROR_STATUS_CODES: Record<ChatErrorType, number> = {
   [ChatErrorType.SECURITY_BLOCKED]: 403,
   [ChatErrorType.AUTHENTICATION]: 401,
   [ChatErrorType.MODEL_ACCESS_DENIED]: 403,
+  [ChatErrorType.USAGE_LIMIT_EXCEEDED]: 403,
   [ChatErrorType.MODEL_UNAVAILABLE]: 503,
   [ChatErrorType.INVALID_MODEL]: 400,
   [ChatErrorType.INVALID_REQUEST]: 400,

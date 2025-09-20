@@ -1,320 +1,514 @@
-# @lightfastai/cli
+# Lightfast
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![npm version](https://img.shields.io/npm/v/@lightfastai/cli.svg)](https://www.npmjs.com/package/@lightfastai/cli)
+[![License: FSL-1.1-Apache-2.0](https://img.shields.io/badge/License-FSL--1.1--Apache--2.0-blue.svg)](LICENSE.md)
+[![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
+[![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/issues)
 
-The official command-line interface for the Lightfast agent execution engine. A single, self-contained package that bundles everything needed to develop, test, and manage AI agents.
+A cloud-native agent execution engine that abstracts infrastructure complexity, enabling developers to focus on building AI agent applications.
+
+🌐 **Website**: [lightfast.ai](https://lightfast.ai)  
+📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)  
+🎮 **Playground**: [playground.lightfast.ai](https://playground.lightfast.ai)  
+💬 **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)  
 
 ## About
 
-The Lightfast CLI provides a complete development environment for building AI agents. It's published as a single npm package that includes:
+Lightfast is a production-ready agent execution platform that provides the infrastructure layer for the agent economy. We abstract away the complexity of orchestrating AI agents, managing resources, and scaling applications so you can focus on building amazing AI experiences.
 
-- 🎯 **All-in-One Package**: Bundled CLI, compiler, and dev server in one installation
-- 🎨 **Web UI**: Beautiful interface powered by TanStack Start and React 19
-- ⚡ **Hot Reload**: Live updates for configuration changes
-- 📦 **Zero Config**: Works out of the box with sensible defaults
-- 🔨 **TypeScript Support**: Full compilation and type checking built-in
+### Why Lightfast?
 
-## Installation
+- ⚡ **Vercel-like DX**: Deploy agents in minutes, not days
+- 🔧 **State-Machine Engine**: Orchestrate complex workflows with proper resource management
+- 🛡️ **Security Layer**: Built-in guards, validation, and runtime constraints
+- 🏗️ **Resource Scheduling**: Intelligently manage Linux sandboxes, browser sessions, API quotas
+- 🔄 **Advanced Capabilities**: Human-in-the-loop, pause/resume, ambient agents, infinitely long execution
+- 📦 **Simple APIs**: Hide complexity while maintaining flexibility
+
+## Architecture
+
+Lightfast is a comprehensive monorepo built with pnpm workspaces and Turborepo, containing CLI tools, applications, and packages:
+
+### Core (`core/`)
+
+The core contains the complete CLI toolchain and agent framework:
+- **⚡ lightfast** - Core AI agent framework and execution engine
+- **🛠️ cli** - Published CLI package (`@lightfastai/cli`) that bundles everything
+- **🧠 cli-core** - Core CLI logic and commands (dev, compile, clean)
+- **⚙️ compiler** - TypeScript compilation engine with caching and hot reload
+- **🌐 dev-server** - Development server with React UI for agent management
+- **☁️ cloud-client** - Cloud platform client utilities
+
+### Applications (`apps/`)
+
+Production-ready Next.js applications with modern architecture:
+- **🌐 www** - Marketing website and landing pages (Next.js 15 + App Router)
+- **🔐 auth** - Authentication service and user management
+- **☁️ cloud** - Main platform application for agent orchestration
+- **🎮 playground** - Interactive agent playground and testing environment
+- **🧪 experimental** - Experimental features and prototypes
+- **💬 chat** - AI chat application demo with Convex real-time backend
+- **📚 docs** - Documentation site with Fumadocs
+
+### Packages (`packages/`)
+
+Shared libraries and utilities following the `@repo/*` namespace:
+- **🎨 ui** - Shared UI component library based on shadcn/ui and Radix UI
+- **⚙️ lib** - Shared utilities and helper functions
+- **📧 email** - Email templates and sending utilities
+- **🤖 ai-tools** - AI browser automation and tool utilities with Browserbase
+- **🤖 ai** - AI SDK integrations and utilities
+- **🔧 site-config** - Shared configuration utilities
+- **🔗 url-utils** - URL manipulation and validation utilities
+- **⚙️ vercel-config** - Vercel deployment configurations
+
+### Vendor (`vendor/`)
+
+Third-party service integrations following the `@vendor/*` namespace:
+- **📊 analytics** - PostHog and Vercel Analytics integration
+- **🔐 clerk** - Authentication with Clerk (Next.js + Elements)
+- **🗄️ db** - Database layer with Drizzle ORM and PlanetScale
+- **📧 email** - Email services with Resend
+- **🔍 inngest** - Background job processing and workflows
+- **⚙️ next** - Next.js configuration and utilities
+- **📝 observability** - Sentry and BetterStack monitoring
+- **🛡️ security** - Arcjet rate limiting and security middleware
+- **📦 storage** - File storage with Vercel Blob
+- **⚡ upstash** - Redis, KV storage, and QStash integration
+
+### Internal (`internal/`)
+
+Development tooling and configurations:
+- **🔍 eslint** - Shared ESLint configurations (`@repo/eslint-config`)
+- **💅 prettier** - Shared Prettier configurations (`@repo/prettier-config`)
+- **📘 typescript** - Shared TypeScript configurations (`@repo/typescript-config`)
+
+### Supporting Directories
+
+Additional directories for project infrastructure:
+- **🔌 api** - API definitions, schemas, and shared API utilities
+- **🗄️ db** - Database migrations, schemas, and database-related scripts
+- **📚 docs** - Additional documentation and guides
+- **🛠️ scripts** - Build scripts, deployment utilities, and automation tools
+- **📁 examples** - Example projects and usage demonstrations
+  - **💬 1-agent-chat** - Simple agent chat implementation
+  - **🤖 nextjs-ai-chatbot** - Advanced AI chatbot with Next.js
+- **🌳 worktrees** - Git worktrees for parallel development branches
+
+## Tech Stack
+
+| Category | Technology | Purpose |
+|----------|------------|----------|
+| **Runtime** | Node.js 22+ | Runtime environment (enforced minimum) |
+| | pnpm 10.5.2 | Package management (enforced via packageManager) |
+| **Frontend** | Next.js 15 | React framework with App Router |
+| | React 19 | Latest React features and performance improvements |
+| | TypeScript 5.9+ | Strict type safety and developer experience |
+| | Tailwind CSS v4 | Utility-first styling with new engine |
+| | shadcn/ui | High-quality UI components with Radix UI primitives |
+| | Jotai | Atomic state management |
+| | Zustand | Persistent state management |
+| **Backend** | Convex | Real-time database and backend (chat app) |
+| | PostgreSQL | Primary database with PlanetScale |
+| | Drizzle ORM | Type-safe SQL toolkit |
+| | Redis/Upstash | Caching, rate limiting, and queuing |
+| **AI/ML** | Anthropic Claude | Claude Sonnet 4 and Haiku integration |
+| | OpenAI | GPT-4o and GPT-4o-mini integration |
+| | Vercel AI SDK 5.0+ | Streaming, tool calling, and AI utilities |
+| | Browserbase | AI browser automation and web scraping |
+| | Exa | AI-powered web search |
+| **DevOps** | Turborepo 2.5+ | Monorepo build system with intelligent caching |
+| | Vercel | Deployment, hosting, and edge functions |
+| | GitHub Actions | CI/CD pipelines |
+| | ESBuild | Fast TypeScript compilation |
+| **Monitoring** | Sentry | Error tracking and performance monitoring |
+| | PostHog | Product analytics and feature flags |
+| | BetterStack | Logging, monitoring, and alerting |
+| | Vercel Analytics | Web vitals and performance metrics |
+| **Security** | Arcjet | Rate limiting, bot protection, and security |
+| | Clerk | Authentication and user management |
+| | Zod | Runtime type validation |
+| **Background Jobs** | Inngest | Workflow orchestration and background jobs |
+| | QStash | Serverless message queuing |
+| **Development** | Changesets | Version management and release automation |
+| | Prettier | Code formatting |
+| | ESLint | Code linting and quality |
+| | Biome | Fast formatter and linter (additional) |
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js**: >= 22.0.0 (enforced by engines field)
+- **pnpm**: 10.5.2 (enforced by packageManager field)
+- **Git**: Latest version for worktree and submodule support
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/lightfastai/lightfast.git
+   cd lightfast
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   # Copy environment files for each app you want to run
+   cp apps/www/.env.example apps/www/.env.local
+   cp apps/cloud/.env.example apps/cloud/.env.local
+   # Edit .env.local files with your configuration
+   ```
+
+4. **Start development**
+   ```bash
+   # Start all main apps
+   pnpm run dev
+   
+   # Or start specific apps
+   pnpm run dev:www      # Marketing site (port 4101)
+   pnpm run dev:cloud    # Main cloud app
+   pnpm run dev:playground # Playground
+   pnpm run dev:docs     # Documentation
+   ```
+
+## Available Scripts
+
+### Development
+- `pnpm dev` - Start main development servers (www, experimental, docs, cloud, auth, chat, playground)
+- `pnpm dev:www` - Marketing website (port 4101)
+- `pnpm dev:cloud` - Main platform application  
+- `pnpm dev:auth` - Authentication service
+- `pnpm dev:experimental` - Experimental features
+- `pnpm dev:playground` - Agent playground
+- `pnpm dev:chat` - Chat application
+- `pnpm dev:docs` - Documentation site
+- `pnpm dev:email` - Email development server
+- `pnpm dev:cloud+playground` - Run cloud and playground together
+- `pnpm dev:cloud+playground+auth+docs` - Run multiple apps together
+
+### Building
+- `pnpm build` - Build all applications (Turbo orchestrated)
+- `pnpm build:www` - Build marketing site only
+- `pnpm build:cloud` - Build cloud app only  
+- `pnpm build:auth` - Build auth service only
+- `pnpm build:experimental` - Build experimental features only
+- `pnpm build:playground` - Build playground only
+- `pnpm build:chat` - Build chat app only
+- `pnpm build:docs` - Build documentation only
+
+### Code Quality
+- `pnpm lint` - Lint all packages with caching
+- `pnpm lint:fix` - Fix linting issues automatically
+- `pnpm format` - Check code formatting (Prettier)
+- `pnpm format:fix` - Fix formatting issues automatically
+- `pnpm typecheck` - Run TypeScript type checking across all packages
+- `pnpm lint:ws` - Check workspace dependencies with Sherif
+
+### Database
+- `pnpm db:migrate` - Run database migrations
+- `pnpm db:migrate:generate` - Generate migration files  
+- `pnpm db:studio` - Open Drizzle database studio
+
+### Utilities
+- `pnpm clean` - Clean all build artifacts and caches
+- `pnpm clean:workspaces` - Clean Turbo workspaces only
+- `pnpm ui` - Manage shadcn/ui components
+- `pnpm brain` - Run evaluation scripts
+- `pnpm vercel:link` - Link monorepo to Vercel
+
+### Release Management
+- `pnpm changeset` - Create a changeset for versioning
+- `pnpm version-packages` - Version packages using changesets
+- `pnpm release` - Publish packages to npm
+
+## Environment Configuration
+
+Each application uses `@t3-oss/env-nextjs` for type-safe environment variable validation. Environment configurations are defined in each app's `src/env.ts` file.
+
+### Common Environment Variables
 
 ```bash
-# Install globally
-npm install -g @lightfastai/cli
+# Node Environment
+NODE_ENV=development
 
-# Or use directly with npx (recommended)
-npx @lightfastai/cli dev
+# Vercel (automatically set in Vercel deployments)
+VERCEL_ENV=development  # development | preview | production
 
-# Or with pnpm
-pnpm add -g @lightfastai/cli
+# Database (if using database features)
+DATABASE_URL=your-database-url
+
+# Authentication (if using auth features)
+CLERK_SECRET_KEY=your-clerk-secret
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
+
+# Observability
+SENTRY_DSN=your-sentry-dsn
+NEXT_PUBLIC_POSTHOG_KEY=your-posthog-key
+BETTERSTACK_SOURCE_TOKEN=your-betterstack-token
+
+# Security
+ARCJET_KEY=your-arcjet-key
 ```
 
-## Quick Start
+### App-Specific Configuration
 
-```bash
-# Start development server
-npx @lightfastai/cli dev
+Each application may require additional environment variables. Check each app's README for specific requirements:
+- `apps/www/README.md` - Marketing site configuration
+- `apps/cloud/README.md` - Main cloud app configuration  
+- `apps/playground/README.md` - Playground configuration
+- `apps/chat/README.md` - Chat app configuration
 
-# Start on custom port
-npx @lightfastai/cli dev --port 3001
+## Project Structure
 
-# Compile TypeScript configuration
-npx @lightfastai/cli compile
-
-# Clean build artifacts
-npx @lightfastai/cli clean
+```
+lightfast/
+├── core/                      # Core CLI toolchain and agent framework
+│   ├── cli/                  # Published CLI package (@lightfastai/cli)
+│   ├── cli-core/             # Core CLI logic and commands
+│   ├── compiler/             # TypeScript compilation engine
+│   ├── dev-server/           # Development server with React UI
+│   ├── lightfast/            # AI agent framework and execution engine
+│   └── cloud-client/         # Cloud platform client utilities
+├── apps/                      # Next.js applications
+│   ├── www/                  # Marketing website (port 4101)
+│   ├── auth/                 # Authentication service and user management
+│   ├── cloud/                # Main platform application
+│   ├── playground/           # Interactive agent playground
+│   ├── experimental/         # Experimental features and prototypes
+│   ├── chat/                 # AI chat application with Convex
+│   └── docs/                 # Documentation site with Fumadocs
+├── packages/                  # Shared packages (@repo/*)
+│   ├── ui/                   # UI component library (shadcn/ui + Radix)
+│   ├── lib/                  # Shared utilities and helper functions
+│   ├── ai/                   # AI SDK integrations and utilities
+│   ├── ai-tools/             # AI browser automation with Browserbase
+│   ├── email/                # Email templates and utilities
+│   ├── site-config/          # Site configuration utilities
+│   ├── url-utils/            # URL manipulation and validation
+│   └── vercel-config/        # Vercel deployment configurations
+├── vendor/                    # Third-party service integrations (@vendor/*)
+│   ├── analytics/            # PostHog and Vercel Analytics
+│   ├── clerk/                # Authentication with Clerk
+│   ├── db/                   # Database layer (Drizzle + PlanetScale)
+│   ├── email/                # Email services with Resend
+│   ├── inngest/              # Background job processing
+│   ├── next/                 # Next.js configuration and utilities
+│   ├── observability/        # Sentry and BetterStack monitoring
+│   ├── security/             # Arcjet rate limiting and security
+│   ├── storage/              # File storage with Vercel Blob
+│   └── upstash/              # Redis, KV, and QStash integration
+├── internal/                  # Development tooling configurations
+│   ├── eslint/               # ESLint configurations (@repo/eslint-config)
+│   ├── prettier/             # Prettier configurations (@repo/prettier-config)
+│   └── typescript/           # TypeScript configurations (@repo/typescript-config)
+├── api/                       # API definitions and shared utilities
+├── db/                        # Database migrations and schemas
+├── docs/                      # Additional documentation and guides
+├── examples/                  # Example projects and demonstrations
+│   ├── 1-agent-chat/         # Simple agent chat implementation
+│   └── nextjs-ai-chatbot/    # Advanced AI chatbot with Next.js
+├── scripts/                   # Build scripts and automation tools
+├── worktrees/                 # Git worktrees for parallel development
+├── .changeset/                # Changesets configuration for releases
+├── .github/                   # GitHub Actions and CI/CD workflows
+├── .lightfast/                # Lightfast configuration and cache
+├── .turbo/                    # Turborepo cache and metadata
+├── .vercel/                   # Vercel deployment configuration
+├── package.json               # Root workspace configuration
+├── pnpm-workspace.yaml        # pnpm workspace definition
+├── turbo.json                 # Turborepo task configuration
+├── CLAUDE.md                  # Development instructions for Claude
+├── SPEC.md                    # Product specification and vision
+└── README.md                  # This file
 ```
 
-## Commands
+## Development Workflows
 
-### `dev`
-Start the Lightfast development server with hot-reload for configuration changes.
+### Working with the Monorepo
 
-**Options:**
-- `-p, --port <port>` - Port to run server on (default: 3000)
-- `-h, --host <host>` - Host to bind to (default: localhost)
-- `--no-watch` - Disable file watching for config changes
-- `--no-compile` - Skip TypeScript compilation
+1. **Install dependencies**: `pnpm install` (installs all workspace dependencies)
+2. **Run specific app**: `pnpm dev:www` or `pnpm dev:cloud`
+3. **Build specific app**: `pnpm build:www` (uses Turbo filters)
+4. **Add dependency to specific app**: `pnpm add package-name --filter @lightfast/www`
+5. **Run script in specific app**: `pnpm --filter @lightfast/www run script-name`
 
-**Examples:**
-```bash
-# Default settings
-npx @lightfastai/cli dev
+### Package Naming Conventions
 
-# Custom port
-npx @lightfastai/cli dev --port 8080
+The monorepo uses consistent naming conventions across workspaces:
 
-# Network accessible
-npx @lightfastai/cli dev --host 0.0.0.0
-```
+- **Apps**: `@lightfast/[app-name]` (e.g., `@lightfast/www`, `@lightfast/cloud`)
+- **Packages**: `@repo/[package-name]` (e.g., `@repo/ui`, `@repo/lib`)
+- **Vendor**: `@vendor/[service-name]` (e.g., `@vendor/db`, `@vendor/auth`)
+- **Core**: `@lightfastai/[tool-name]` (e.g., `@lightfastai/cli`, `@lightfastai/compiler`)
 
-### `compile`
-Compile TypeScript configuration files to JavaScript.
+### Workspace Dependencies
 
-**Options:**
-- `-w, --watch` - Watch mode for continuous compilation
-- `-c, --config <path>` - Path to config file (default: lightfast.config.ts)
-- `-o, --output <path>` - Output directory (default: .lightfast)
-
-**Examples:**
-```bash
-# One-time compilation
-npx @lightfastai/cli compile
-
-# Watch mode
-npx @lightfastai/cli compile --watch
-
-# Custom config path
-npx @lightfastai/cli compile --config src/agents.config.ts
-```
-
-### `bundle`
-Generate deployment bundles for cloud execution (on-demand).
-
-**Options:**
-- `-c, --config <path>` - Path to lightfast.config.ts file
-- `-o, --output <dir>` - Output directory for bundles (default: .lightfast/dist)
-- `-f, --force` - Force regeneration even if cache is valid
-
-**Examples:**
-```bash
-# Generate deployment bundles
-npx @lightfastai/cli bundle
-
-# Force regeneration
-npx @lightfastai/cli bundle --force
-
-# Custom config path
-npx @lightfastai/cli bundle --config src/agents.config.ts
-```
-
-### `clean`
-Remove build artifacts and caches.
-
-**Options:**
-- `-c, --cache` - Clean cache only
-- `-b, --build` - Clean build output only
-- `-a, --all` - Clean everything
-
-**Examples:**
-```bash
-# Clean everything
-npx @lightfastai/cli clean
-
-# Clean cache only
-npx @lightfastai/cli clean --cache
-```
-
-## Project Configuration
-
-Create a `lightfast.config.ts` file in your project root:
-
-```typescript
-import { createLightfast } from 'lightfast'
-import { createAgent } from 'lightfast/agent'
-
-const myAgent = createAgent({
-  name: 'my-agent',
-  system: 'You are a helpful assistant',
-  model: 'claude-3-5-sonnet'
-})
-
-export default createLightfast({
-  agents: { myAgent },
-  metadata: {
-    name: 'My Lightfast Project',
-    version: '1.0.0'
-  }
-})
-```
-
-### Package.json Scripts
-
-Add to your project's `package.json`:
-
+All workspace dependencies use `workspace:*` protocol for internal packages:
 ```json
 {
-  "scripts": {
-    "dev": "cli dev",
-    "compile": "cli compile",
-    "clean": "cli clean"
-  },
   "dependencies": {
-    "@lightfastai/cli": "^0.2.1",
-    "lightfast": "^0.1.0"
+    "@repo/ui": "workspace:*",
+    "@vendor/db": "workspace:*"
   }
 }
 ```
 
-## Architecture
+### Catalog Dependencies
 
-The CLI is distributed as a single npm package containing:
-
-### Package Structure
-```
-@lightfastai/cli/
-├── dist/
-│   ├── index.js              # Bundled CLI (54KB)
-│   ├── index.d.ts            # TypeScript definitions
-│   └── dev-server-output/    # Pre-built UI assets
-│       ├── public/           # Client assets
-│       └── server/           # Server rendering
-└── package.json              # Runtime dependencies
+The workspace uses pnpm's catalog feature for consistent versioning across packages:
+```yaml
+# pnpm-workspace.yaml
+catalog:
+  '@tanstack/react-query': ^5.80.7
+  'next': ^15.4.0
+  'react': 19.1.0
+  'typescript': ^5.8.2
+  # ... more packages
 ```
 
-### What's Included
-- **Bundled JavaScript** (54KB): All CLI logic, compiler, and core functionality
-- **Pre-built Dev Server**: Production-ready React UI
-- **Minimal Dependencies**: Only essential runtime packages (commander, chalk, etc.)
+Packages can reference catalog versions:
+```json
+{
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:react19"
+  }
+}
+```
 
-Total installed size: ~1MB
-
-## Development
-
-### Prerequisites
-- Node.js >= 18
-- pnpm 10.5.2 (for development)
-- Lightfast runtime must be built (see Building from Source)
-
-### Building from Source
+### Adding New Components
 
 ```bash
-# Clone repository
-git clone https://github.com/lightfastai/lightfast.git
-cd lightfast
+# Add shadcn/ui component to the UI package
+pnpm ui add button
 
-# Install all workspace dependencies
-pnpm install
+# Generate new React component with Turbo
+pnpm --filter @repo/ui generate:component
 
-# Build the CLI and its dependencies
+# The component will be available across all apps
+```
+
+### Code Quality Workflow
+
+```bash
+# Before committing
+pnpm lint:fix     # Fix linting issues
+pnpm format:fix   # Fix formatting
+pnpm typecheck    # Check types
+```
+
+### CLI Development
+
+The `@lightfastai/cli` package provides the main CLI tool for agent development:
+
+```bash
+# Install the CLI (when published)
+npm install -g @lightfastai/cli
+
+# Or use it directly from the monorepo
 cd core/cli
-pnpm build
-# This runs:
-# 1. Build @lightfastai/compiler
-# 2. Build @lightfastai/cli-core
-# 3. Build @lightfastai/dev-server
-# 4. Bundle everything into CLI
-
-# Build the runtime (required for examples)
-cd ../lightfast
-pnpm build
-
-# Quick rebuild (if deps already built)
-cd ../cli
-pnpm build:quick
-
-# Development mode
-pnpm dev
-```
-
-### Testing Locally
-
-```bash
-# After building
+pnpm build  # Build the complete CLI bundle
 node dist/index.js --help
 
-# Test with example project
-cd ../../examples/1-agent-chat
-node ../../core/cli/dist/index.js dev
-
-# Or link globally
-pnpm link --global
-cli dev
+# CLI commands
+cli dev      # Start development server
+cli compile  # Compile agent configuration
+cli clean    # Clean build artifacts
 ```
 
-### Build Pipeline
+The CLI includes:
+- **TypeScript compiler** with hot reload and caching
+- **Development server** with React UI for agent management
+- **Agent configuration** compilation and validation
 
-The build process (`scripts/build-all.js`) ensures proper build order:
+## Deployment
 
-1. **Clean**: Remove all previous builds
-2. **Compiler**: Build TypeScript compiler package
-3. **CLI-Core**: Build core CLI logic
-4. **Dev-Server**: Build React UI with Vite
-5. **Bundle**: Package everything into dist/
+### Vercel Deployment
 
-### Publishing
+Each application can be deployed separately to Vercel:
 
-Only the CLI package is published to npm:
+1. **Connect to Vercel**
+   ```bash
+   pnpm vercel:link
+   ```
 
-```bash
-# Build everything
-pnpm build
+2. **Configure build settings** (in Vercel dashboard or vercel.json):
+   - Build command: `pnpm build:www` (or specific app)
+   - Output directory: `apps/www/.next` (or specific app)
+   - Root directory: `./` (monorepo root)
 
-# Check package contents
-npm pack --dry-run
+3. **Set environment variables** in Vercel dashboard
 
-# Publish with changeset
-pnpm changeset
-pnpm changeset version
-pnpm changeset publish
-```
+4. **Deploy**
+   ```bash
+   vercel --prod
+   ```
 
-## Troubleshooting
+### Environment-Specific Deployments
 
-### Common Issues
+- **Development**: Local development servers
+- **Preview**: Vercel preview deployments (pull requests)
+- **Production**: Vercel production deployments (main branch)
 
-**Dev server not starting**
-```bash
-# Rebuild all dependencies
-pnpm build
-```
+## API Documentation
 
-**Module not found errors**
-```bash
-# Force reinstall and rebuild
-pnpm install --force
-pnpm build
-```
+Lightfast provides several APIs for agent execution and management:
 
-**Permission denied**
-```bash
-chmod +x dist/index.js
-```
+- **Agent API**: Create, manage, and execute agents
+- **Workflow API**: Orchestrate complex multi-step workflows  
+- **Resource API**: Manage sandboxes, browser sessions, and quotas
+- **Webhook API**: Handle real-time events and notifications
 
-### Debug Mode
+Full API documentation is available at [lightfast.ai/docs/api](https://lightfast.ai/docs/api).
 
-Run with debug output:
-```bash
-DEBUG=1 npx @lightfastai/cli dev
-```
+## Contributing
 
-## Requirements
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-- **Node.js**: >= 18.0.0
-- **OS**: macOS, Linux, or Windows
-- **Memory**: 512MB minimum
-- **Disk**: 100MB for installation
+### Development Setup
 
-## Support
+1. Fork and clone the repository
+2. Install dependencies: `pnpm install`
+3. Set up environment variables for the apps you're working on
+4. Create a feature branch: `git checkout -b feature/amazing-feature`
+5. Make your changes and test thoroughly
+6. Run code quality checks: `pnpm run lint && pnpm run typecheck`
+7. Submit a pull request
 
+### Code Style
+
+- **ESLint**: Configured with `@repo/eslint-config`
+- **Prettier**: Configured with `@repo/prettier-config`
+- **TypeScript**: Strict mode enabled across all packages
+- **Conventional Commits**: Use conventional commit messages
+
+## Community
+
+- **Website**: [lightfast.ai](https://lightfast.ai)
 - **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
-- **GitHub Issues**: [github.com/lightfastai/lightfast/issues](https://github.com/lightfastai/lightfast/issues)
-- **Discord**: [discord.gg/lightfast](https://discord.gg/lightfast)
+- **GitHub**: [github.com/lightfastai/lightfast](https://github.com/lightfastai/lightfast)
+- **Discord**: [Join our community](https://discord.gg/YqPDfcar2C)
+- **Twitter**: [@lightfastai](https://x.com/lightfastai)
 
 ## License
 
-MIT © Lightfast
+This project is licensed under the [Functional Source License v1.1 with Apache 2.0 Future License](LICENSE.md).
+
+**TL;DR**: You can use this software for any purpose except creating a competing commercial product. After 2 years, it becomes Apache 2.0 licensed.
+
+## Support
+
+If you find this project helpful, please consider:
+- ⭐ Starring the repository
+- 🐛 Reporting bugs and issues
+- 💡 Suggesting new features
+- 🤝 Contributing code or documentation
 
 ---
 
-**Part of the [Lightfast](https://github.com/lightfastai/lightfast) ecosystem**
+**Built with ❤️ by the Lightfast team**

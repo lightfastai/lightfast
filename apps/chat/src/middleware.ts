@@ -1,47 +1,45 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import {
-	getClerkMiddlewareConfig,
-	handleCorsPreflightRequest,
-	applyCorsHeaders,
-} from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const clerkConfig = getClerkMiddlewareConfig("chat");
-
-// Define routes that need protection
-// Note: /new and /[sessionId] are NOT here because they're already in (authenticated) route group
-// "/" is public, "/api/health" is public, "/api/v/*" is public
-const isProtectedRoute = createRouteMatcher([
-	// Add any routes that need protection here
-	// Currently empty since all our routes are either public or already protected
+// Create matchers so auth checks stay readable
+const isRootRoute = createRouteMatcher(["/"]);
+const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+const isNewChatRoute = createRouteMatcher(["/new", "/new/(.*)"]);
+const isBillingRoute = createRouteMatcher(["/billing", "/billing/(.*)"]);
+const isSessionScopedRoute = createRouteMatcher([
+	"/((?!sign-in|sign-up|api|robots.txt|sitemap|pricing$|share|$).*)",
 ]);
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
-	// Handle CORS preflight requests
-	const preflightResponse = handleCorsPreflightRequest(req);
-	if (preflightResponse) {
-		return preflightResponse;
-	}
+const requiresAuth = (req: NextRequest) =>
+	isNewChatRoute(req) || isBillingRoute(req) || isSessionScopedRoute(req);
 
-	// Only get auth state when needed for redirects
-	if (req.nextUrl.pathname === "/") {
+export default clerkMiddleware(
+	async (auth, req: NextRequest) => {
 		const { userId } = await auth();
-		if (userId) {
+
+		// Handle redirects for authenticated users only
+		if (isRootRoute(req) && userId) {
 			return NextResponse.redirect(new URL("/new", req.url));
 		}
-	}
 
-	// Only protect routes that explicitly need protection
-	if (isProtectedRoute(req)) {
-		await auth.protect();
-	}
+		// Redirect authenticated users away from auth pages
+		if (userId && isAuthRoute(req)) {
+			return NextResponse.redirect(new URL("/new", req.url));
+		}
 
-	const response = NextResponse.next();
+		// Protect routes that require authentication
+		if (requiresAuth(req)) {
+			await auth.protect();
+		}
 
-	// Apply CORS headers to the response
-	return applyCorsHeaders(response, req);
-}, clerkConfig);
+		return NextResponse.next();
+	},
+	{
+		signInUrl: "/sign-in",
+		signUpUrl: "/sign-up",
+	},
+);
 
 export const config = {
 	matcher: [
@@ -50,4 +48,3 @@ export const config = {
 		"/(api|trpc)(.*)",
 	],
 };
-

@@ -1,36 +1,31 @@
-import type { RuntimeContext } from "lightfast/server/adapters/types";
-import type { InferUITools, UIMessage } from "ai";
-import type { webSearchTool } from "~/ai/tools/web-search";
-import type { AppRuntimeContext } from "~/ai/types";
+// Re-export types from separate files for cleaner architecture
+export type { AppRuntimeContext } from "./types/app-runtime-context";
+export type { LightfastAppChatToolSet } from "./types/tool-set";
+export type {
+	LightfastAppChatUIMessage,
+	LightfastAppChatUIMessagePart,
+	LightfastAppChatUICustomDataTypes,
+	LightfastAppChatUIMessageMetadata,
+	LightfastAppChatToolName,
+	LightfastAppChatToolInput,
+	CreateDocumentToolUIPart,
+	WebSearchToolUIPart,
+} from "./types/ui-message-types";
 
-// Custom data types for message parts (empty for now)
-export type LightfastAppChatUICustomDataTypes = Record<string, unknown>;
-
-// Helper type to extract the tool type from a tool factory function
-// This handles the RuntimeContext injection pattern
-type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>) => infer R ? R : never;
-
-// Define the tool set type using the helper
-// This matches the structure passed to streamText() in route.ts
-// Define the tool set type using InferUITools helper
-export type LightfastAppChatToolSet = InferUITools<{
-	webSearch: ExtractToolType<typeof webSearchTool>;
-}>;
-
-// Metadata type for our messages
-export interface LightfastAppChatUIMessageMetadata {
-	createdAt?: string;
-	sessionId?: string;
-	resourceId?: string;
-	status?: "thinking" | "streaming" | "done";
-	modelId?: string; // The AI model used for assistant messages
+/**
+ * Context passed through fetchRequestHandler to memory operations
+ * Allows tracking model usage and other metadata
+ */
+export interface ChatFetchContext {
+	modelId: string;
+	isAnonymous: boolean;
 }
 
-// Main UIMessage type with our custom generics
-export type LightfastAppChatUIMessage = UIMessage<LightfastAppChatUIMessageMetadata, LightfastAppChatUICustomDataTypes, LightfastAppChatToolSet>;
+// Agent types
+export type AgentId = "c010";
 
-// Helper type for message parts
-export type LightfastAppChatUIMessagePart = LightfastAppChatUIMessage["parts"][number];
+// Type guards for message parts - re-import the types for local use
+import type { LightfastAppChatUIMessagePart } from "./types/ui-message-types";
 
 // Type guards for specific part types
 export function isTextPart(part: LightfastAppChatUIMessagePart): part is Extract<LightfastAppChatUIMessagePart, { type: "text" }> {
@@ -46,9 +41,3 @@ export function isReasoningPart(
 export function isToolPart(part: LightfastAppChatUIMessagePart): boolean {
 	return typeof part.type === "string" && part.type.startsWith("tool-");
 }
-
-// Utility type to extract tool names
-export type LightfastAppChatToolName = keyof LightfastAppChatToolSet;
-
-// Utility type to get input for a specific tool
-export type LightfastAppChatToolInput<T extends LightfastAppChatToolName> = LightfastAppChatToolSet[T]["input"];

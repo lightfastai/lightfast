@@ -15,9 +15,9 @@ export function DocsHeader() {
 		<header className="h-14 flex items-center justify-between app-container bg-background">
 			{/* Left side - Logo */}
 			<div className="flex items-center">
-				<Button variant="outline" size="xs" asChild>
+				<Button variant="ghost" size="lg" asChild>
 					<Link href={appUrls.www}>
-						<Icons.logoShort className="h-4 w-4" />
+						<Icons.logo className="size-22 text-foreground" />
 					</Link>
 				</Button>
 			</div>
@@ -26,44 +26,44 @@ export function DocsHeader() {
 			<div className="flex items-center gap-2">
 				{/* Mobile menu button */}
 				<MobileNav tree={pageTree} />
-				
+
 				{/* Desktop navigation */}
 				<div className="flex items-center max-lg:hidden">
-				{/* Navigation Links */}
-				<nav className="flex items-center gap-2">
-					<Button variant="ghost" size="sm" asChild>
-						<Link href="/get-started/overview">Docs</Link>
+					{/* Navigation Links */}
+					<nav className="flex items-center gap-2">
+						<Button variant="ghost" size="sm" asChild>
+							<Link href="/get-started/overview">Docs</Link>
+						</Button>
+					</nav>
+
+					<div className="flex h-4 items-center px-4">
+						<Separator orientation="vertical" />
+					</div>
+
+					<SearchTrigger />
+
+					<div className="flex h-4 items-center px-4">
+						<Separator orientation="vertical" />
+					</div>
+					<Button variant="outline" size="sm" asChild>
+						<Link href={authUrls.signIn}>Login</Link>
 					</Button>
-				</nav>
-
-				<div className="flex h-4 items-center px-4">
-					<Separator orientation="vertical" />
-				</div>
-
-				<SearchTrigger />
-
-				<div className="flex h-4 items-center px-4">
-					<Separator orientation="vertical" />
-				</div>
-				<Button variant="outline" size="sm" asChild>
-					<Link href={authUrls.signIn}>Login</Link>
-				</Button>
-				<Button size="sm" className="ml-2" asChild>
-					<Link href={authUrls.signUp}>Sign up</Link>
-				</Button>
-				<div className="flex h-4 items-center px-4">
-					<Separator orientation="vertical" />
-				</div>
-				<Button variant="ghost" size="xs" asChild>
-					<Link
-						href="https://github.com/lightfastai/lightfast"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Icons.gitHub className="h-4 w-4" />
-						<span className="sr-only">GitHub</span>
-					</Link>
-				</Button>
+					<Button size="sm" className="ml-2" asChild>
+						<Link href={authUrls.signUp}>Sign up</Link>
+					</Button>
+					<div className="flex h-4 items-center px-4">
+						<Separator orientation="vertical" />
+					</div>
+					<Button variant="ghost" size="xs" asChild>
+						<Link
+							href="https://github.com/lightfastai/lightfast"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Icons.gitHub className="h-4 w-4" />
+							<span className="sr-only">GitHub</span>
+						</Link>
+					</Button>
 				</div>
 			</div>
 		</header>

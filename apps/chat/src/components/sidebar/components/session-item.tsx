@@ -25,32 +25,34 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 		[onPinToggle, session.id],
 	);
 
+	const shouldShowSkeleton = !session.title || session.title === "New Session";
+
 	return (
 		<SidebarMenuItem>
 			<ActiveMenuItem
 				sessionId={session.id}
 				href={`/${session.id}`}
 				prefetch={true}
+				className="min-w-0 pr-8"
 			>
-				{!session.title || session.title === "New Session" ? (
-					<div className="relative h-4 w-full flex-1 overflow-hidden rounded">
-						<div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
-						<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
-					</div>
-				) : (
-					<span 
-						className="font-medium text-xs block truncate" 
-						style={{ 
-							maxWidth: "180px",
-							overflow: "hidden",
-							textOverflow: "ellipsis",
-							whiteSpace: "nowrap"
-						}}
-					>
-						{session.title}
-					</span>
-				)}
-			</ActiveMenuItem>
+				<div className="grid w-full min-w-0 grid-cols-[1fr_auto] items-center gap-1 overflow-hidden">
+					{shouldShowSkeleton ? (
+						<div className="relative h-4 w-full min-w-0 overflow-hidden rounded">
+							<div className="absolute inset-0 bg-gradient-to-r from-muted/50 via-muted to-muted/50 animate-shimmer" />
+							<div className="absolute inset-0 bg-muted/20 backdrop-blur-[2px]" />
+						</div>
+					) : (
+						<span
+							className="font-medium text-xs block truncate min-w-0"
+							title={session.title}
+						>
+							{session.title}
+						</span>
+					)}
+					{/* spacer to reserve space for the absolute SidebarMenuAction */}
+					<div className="w-5 h-5 shrink-0" aria-hidden="true" />
+				</div>
+				</ActiveMenuItem>
 			<SidebarMenuAction
 				showOnHover
 				onClick={handlePinClick}
@@ -69,4 +71,3 @@ export function SessionItem({ session, onPinToggle }: SessionItemProps) {
 		</SidebarMenuItem>
 	);
 }
-

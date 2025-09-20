@@ -39,10 +39,13 @@ describe("Error Handling - Critical Edge Cases", () => {
 			const unauthorizedError = new UnauthorizedError("Token expired");
 			const json = unauthorizedError.toJSON();
 
-			expect(json).toEqual({
+			expect(json).toMatchObject({
 				error: "Token expired",
 				code: "UNAUTHORIZED",
 				statusCode: 401,
+				source: "lightfast-core",
+				category: "authentication",
+				severity: "fatal",
 			});
 		});
 
@@ -58,8 +61,13 @@ describe("Error Handling - Critical Edge Cases", () => {
 			expect(internalError.message).toBe("Service unavailable");
 
 			const json = internalError.toJSON();
-			expect(json.statusCode).toBe(500);
-			expect(json.code).toBe("INTERNAL_SERVER_ERROR");
+			expect(json).toMatchObject({
+				statusCode: 500,
+				code: "INTERNAL_SERVER_ERROR",
+				source: "lightfast-core",
+				category: "unknown",
+				severity: "fatal",
+			});
 		});
 
 		it("should handle AgentStreamError with cause chain", () => {
@@ -75,9 +83,14 @@ describe("Error Handling - Critical Edge Cases", () => {
 			expect(streamError instanceof ApiError).toBe(true);
 
 			const json = streamError.toJSON();
-			expect(json.statusCode).toBe(500);
-			expect(json.code).toBe("AGENT_STREAM_ERROR");
-			expect(json.error).toBe("Agent streaming failed: Model configuration invalid");
+			expect(json).toMatchObject({
+				statusCode: 500,
+				code: "AGENT_STREAM_ERROR",
+				error: "Agent streaming failed: Model configuration invalid",
+				source: "lightfast-core",
+				category: "stream",
+				severity: "recoverable",
+			});
 		});
 	});
 
@@ -499,10 +512,13 @@ describe("Error Handling - Critical Edge Cases", () => {
 				expect(result.statusCode).toBeLessThan(600);
 				expect(result.errorCode).toBeDefined();
 				expect(typeof result.errorCode).toBe("string");
-				expect(result.toJSON()).toEqual({
+				expect(result.toJSON()).toMatchObject({
 					error: result.message,
 					code: result.errorCode,
 					statusCode: result.statusCode,
+					source: expect.any(String),
+					category: expect.any(String),
+					severity: expect.any(String),
 				});
 			});
 		});

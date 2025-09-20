@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { getDefaultModelForUser } from "~/lib/ai/providers";
-import type { ModelId } from "~/lib/ai/providers";
+import { getDefaultModelForUser } from "~/ai/providers";
+import type { ModelId } from "~/ai/providers";
 
 /**
  * Hook for managing AI model selection with sessionStorage persistence.

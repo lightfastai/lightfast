@@ -1,3 +1,8 @@
+// Export router types for client usage
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+
+import type { CloudAppRouter } from "./root";
+
 /**
  * Cloud API exports
  */
@@ -7,15 +12,13 @@ export { cloudAppRouter } from "./root";
 export type { CloudAppRouter } from "./root";
 
 // Export context creation
-export { createCloudContext } from "./context";
-export type { CloudContext } from "./context";
-
-// Export router types for client usage
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { CloudAppRouter } from "./root";
+export { createTRPCContext } from "./trpc";
 
 export type CloudRouterInputs = inferRouterInputs<CloudAppRouter>;
 export type CloudRouterOutputs = inferRouterOutputs<CloudAppRouter>;
 
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";
+
+// Export API key authentication utilities (for CLI API usage)
+export { validateApiKey } from "./lib/api-key-auth";

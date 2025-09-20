@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Generates the robots.txt configuration for the application.
- * This app disallows all crawling to prevent search engine indexing.
+ * Generates the robots.txt configuration for Lightfast Auth.
+ * Allows minimal indexing of public auth pages while protecting sensitive routes.
  *
  * @returns {MetadataRoute.Robots} Next.js compatible robots.txt configuration
  */
@@ -10,7 +10,17 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      disallow: ["/"],
+      allow: ["/sign-in"], // Allow indexing of public auth pages (sign-up is dev-only)
+      disallow: [
+        "/api/", // Protect API routes
+        "/_next/", // Protect Next.js internal files  
+        "/onboarding/", // Protect onboarding flow
+        "/sso-callback/", // Protect SSO callbacks
+        "/choose-organization/", // Protect org selection
+        "/sign-up/", // Protect dev-only sign-up page
+        "/**/error", // Don't index error pages
+      ],
     },
+    sitemap: "https://auth.lightfast.ai/sitemap.xml",
   };
 }
