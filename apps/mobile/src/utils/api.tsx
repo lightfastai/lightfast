@@ -1,8 +1,9 @@
-import type { ChatAppRouter } from "@api/chat";
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
+
+import type { ChatAppRouter } from "@api/chat";
 
 import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
@@ -10,7 +11,7 @@ import { getBaseUrl } from "./base-url";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // ...
+      // add shared query defaults here if needed
     },
   },
 });
@@ -30,13 +31,13 @@ export const trpc = createTRPCOptionsProxy<ChatAppRouter>({
       httpBatchLink({
         transformer: superjson,
         url: `${getBaseUrl()}/api/trpc`,
-        headers() {
+        async headers() {
           const headers = new Map<string, string>();
           headers.set("x-trpc-source", "expo-react");
 
-          const cookies = authClient.getCookie();
-          if (cookies) {
-            headers.set("Cookie", cookies);
+          const token = await authClient.getToken();
+          if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
           }
           return headers;
         },

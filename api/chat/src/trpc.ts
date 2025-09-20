@@ -12,7 +12,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { auth } from "@vendor/clerk/server";
+import { auth, verifyToken } from "@vendor/clerk/server";
 import { db } from "@db/chat/client";
 
 /**
@@ -54,6 +54,34 @@ export const createTRPCContext = async (opts: {
   const session: ChatSession = {
     userId: clerkSession?.userId ?? null,
   };
+
+  if (!session.userId) {
+    const authorization = opts.headers.get("authorization") ?? "";
+    const token = authorization.replace(/^Bearer\s+/i, "").trim();
+
+    if (token.length > 0) {
+      try {
+        const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+        if (!clerkSecretKey) {
+          console.warn("Missing CLERK_SECRET_KEY env var; cannot verify token.");
+        } else {
+          const verification = await verifyToken(token, {
+            secretKey: clerkSecretKey,
+          });
+
+          if ("data" in verification && verification.data) {
+            const payload = verification.data as { sub?: string };
+            if (payload.sub) {
+              session.userId = payload.sub;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn("Failed to verify Clerk token", error);
+      }
+    }
+  }
 
   if (session.userId) {
     console.info(`>>> tRPC Request from ${source} by ${session.userId}`);

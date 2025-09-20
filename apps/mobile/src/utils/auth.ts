@@ -1,18 +1,14 @@
-import { expoClient } from "@better-auth/expo/client";
-import { createAuthClient } from "better-auth/react";
-import * as SecureStore from "expo-secure-store";
+import { getClerkInstance } from "@clerk/clerk-expo";
 
-import { getBaseUrl } from "./base-url";
-
-console.log("getBaseUrl", getBaseUrl());
-
-export const authClient = createAuthClient({
-  baseURL: getBaseUrl(),
-  plugins: [
-    expoClient({
-      scheme: "expo",
-      storagePrefix: "expo",
-      storage: SecureStore,
-    }),
-  ],
-});
+export const authClient = {
+  async getToken() {
+    try {
+      const clerk = getClerkInstance();
+      const token = await clerk.session?.getToken();
+      return token ?? undefined;
+    } catch (error) {
+      console.warn("Failed to retrieve Clerk session token", error);
+      return undefined;
+    }
+  },
+};
