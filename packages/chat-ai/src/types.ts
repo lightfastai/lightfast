@@ -3,6 +3,12 @@ import type { RuntimeContext } from "lightfast/server/adapters/types";
 import type { webSearchTool } from "./web-search";
 import type { createDocumentTool } from "./create-document";
 
+/**
+ * Artifact kinds - extensible for different artifact types
+ */
+export const ARTIFACT_KINDS = ["code", "diagram"] as const;
+export type ArtifactKind = typeof ARTIFACT_KINDS[number];
+
 export type LightfastChatStatus =
   | "idle"
   | "preparing"

@@ -1,14 +1,9 @@
 import { sql } from "drizzle-orm";
 import { datetime, json, mysqlTable, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { ARTIFACT_KINDS, type ArtifactKind } from "@repo/chat-ai/types";
 
 import { uuidv4 } from "@repo/lib";
-
-/**
- * Artifact kinds - extensible for different artifact types
- */
-export const ARTIFACT_KINDS = ["code", "diagram"] as const;
-export type ArtifactKind = typeof ARTIFACT_KINDS[number];
 
 /**
  * LightfastChatArtifact table - matches Vercel AI Chatbot's Document table structure
@@ -67,6 +62,10 @@ export const LightfastChatArtifact = mysqlTable(
 // Type exports for Artifact
 export type LightfastChatArtifact = typeof LightfastChatArtifact.$inferSelect;
 export type InsertLightfastChatArtifact = typeof LightfastChatArtifact.$inferInsert;
+
+// Re-export ARTIFACT_KINDS and ArtifactKind for convenience
+export { ARTIFACT_KINDS };
+export type { ArtifactKind };
 
 // Zod Schema exports for Artifact validation
 export const insertLightfastChatArtifactSchema = createInsertSchema(LightfastChatArtifact);

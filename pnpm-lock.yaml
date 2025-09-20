@@ -2150,12 +2150,6 @@ importers:
 
   packages/chat-ai:
     dependencies:
-      '@db/chat':
-        specifier: workspace:*
-        version: link:../../db/chat
-      '@repo/chat-services':
-        specifier: workspace:*
-        version: link:../chat-services
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib

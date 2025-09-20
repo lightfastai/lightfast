@@ -1,23 +1,37 @@
 import type { RuntimeContext } from "lightfast/server/adapters/types";
+import type { UIMessage, UIMessageStreamWriter } from "ai";
 import { createTool } from "lightfast/tool";
 import { z } from "zod";
-import type { AppRuntimeContext } from "./types";
+import type { AppRuntimeContext, ArtifactKind } from "./types";
+import { ARTIFACT_KINDS } from "./types";
 import { uuidv4 as generateUUID } from '@repo/lib';
-import { saveDocument } from '@repo/chat-services/artifacts';
-import { ARTIFACT_KINDS } from '@db/chat';
 
-// Import artifact handlers - these need to be passed as dependencies
+// Define proper types for dependencies
+export interface SaveDocumentFunction {
+  (input: {
+    id: string;
+    sessionId: string;
+    kind: ArtifactKind;
+    title: string;
+    content: string;
+    messageId: string;
+  }): Promise<void>;
+}
+
+export interface DocumentHandler {
+  kind: string;
+  onCreateDocument: (props: {
+    id: string;
+    title: string;
+    sessionId: string;
+    messageId: string;
+    dataStream: UIMessageStreamWriter<UIMessage>;
+  }) => Promise<void>;
+}
+
 export interface CreateDocumentDependencies {
-  createDocumentHandlersByArtifactKind: (saveDocument: any) => Array<{
-    kind: string;
-    onCreateDocument: (props: {
-      id: string;
-      title: string;
-      sessionId: string;
-      messageId: string;
-      dataStream: any;
-    }) => Promise<void>;
-  }>;
+  saveDocument: SaveDocumentFunction;
+  createDocumentHandlersByArtifactKind: (saveDocument: SaveDocumentFunction) => DocumentHandler[];
 }
 
 /**
@@ -78,7 +92,7 @@ export function createDocumentTool(deps: CreateDocumentDependencies) {
       });
 
       // Get the document handlers with service integration
-      const documentHandlersByArtifactKind = deps.createDocumentHandlersByArtifactKind(saveDocument);
+      const documentHandlersByArtifactKind = deps.createDocumentHandlersByArtifactKind(deps.saveDocument);
       
       // Get the document handler for the specified kind
       const documentHandler = documentHandlersByArtifactKind.find(

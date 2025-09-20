@@ -4,6 +4,7 @@ import type { AppRuntimeContext } from "@repo/chat-ai/types";
 import { webSearchTool } from "@repo/chat-ai/web-search";
 import { createDocumentTool } from "@repo/chat-ai/create-document";
 import { createDocumentHandlersByArtifactKind } from '~/ai/artifacts/server';
+import { saveDocument } from "@repo/chat-services/artifacts";
 import { env } from "~/env";
 
 // Helper type to extract the tool type from a tool factory function
@@ -12,7 +13,7 @@ type ExtractToolType<T> = T extends (context: RuntimeContext<AppRuntimeContext>)
 // Complete tools object for c010 agent including artifact tools
 export const c010Tools = {
 	webSearch: webSearchTool({ exaApiKey: env.EXA_API_KEY }),
-	createDocument: createDocumentTool({ createDocumentHandlersByArtifactKind }),
+	createDocument: createDocumentTool({ saveDocument, createDocumentHandlersByArtifactKind }),
 };
 
 // Define the actual tool set type using type inference
