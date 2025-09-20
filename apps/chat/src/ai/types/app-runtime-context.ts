@@ -1,1 +1,1 @@
-export type { AppRuntimeContext } from "@repo/chat-core";
+export type { AppRuntimeContext } from "@repo/chat-core/types";

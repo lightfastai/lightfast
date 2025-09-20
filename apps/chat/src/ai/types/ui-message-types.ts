@@ -7,4 +7,4 @@ export type {
   LightfastAppChatToolInput,
   CreateDocumentToolUIPart,
   WebSearchToolUIPart,
-} from "@repo/chat-core";
+} from "@repo/chat-core/types";

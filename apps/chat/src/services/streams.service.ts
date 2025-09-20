@@ -1,1 +1,1 @@
-export { StreamsService } from "@repo/chat-services";
+export { StreamsService } from "@repo/chat-services/streams";

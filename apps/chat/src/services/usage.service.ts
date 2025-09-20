@@ -4,8 +4,8 @@ import {
   trackMessageSent as baseTrackMessageSent,
   UsageLimitExceededError,
   requireMessageAccess as baseRequireMessageAccess,
-} from "@repo/chat-services";
-import type { CanSendMessageResult } from "@repo/chat-services";
+} from "@repo/chat-services/usage";
+import type { CanSendMessageResult } from "@repo/chat-services/usage";
 import type { MessageType } from "~/lib/billing/types";
 import { getMessageType } from "~/lib/billing/message-utils";
 

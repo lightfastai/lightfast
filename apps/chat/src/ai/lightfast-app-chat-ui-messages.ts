@@ -12,6 +12,6 @@ export type {
 	ChatFetchContext,
 	AgentId,
 	LightfastChatStatus,
-} from "@repo/chat-core";
+} from "@repo/chat-core/types";
 
-export { isTextPart, isReasoningPart, isToolPart } from "@repo/chat-core";
+export { isTextPart, isReasoningPart, isToolPart } from "@repo/chat-core/types";

@@ -1,1 +1,1 @@
-export { saveDocument } from "@repo/chat-services";
+export { saveDocument } from "@repo/chat-services/artifacts";

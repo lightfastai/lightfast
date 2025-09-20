@@ -5,8 +5,8 @@ import {
   cleanupExpiredReservations,
   QuotaReservationError,
   QuotaReleaseError,
-} from "@repo/chat-services";
-import type { QuotaReservation } from "@repo/chat-services";
+} from "@repo/chat-services/quota-reservation";
+import type { QuotaReservation } from "@repo/chat-services/quota-reservation";
 import { getMessageType } from "~/lib/billing/message-utils";
 import type { MessageType } from "~/lib/billing/types";
 

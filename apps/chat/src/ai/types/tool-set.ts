@@ -1,1 +1,1 @@
-export type { LightfastAppChatToolSet } from "@repo/chat-core";
+export type { LightfastAppChatToolSet } from "@repo/chat-core/types";
