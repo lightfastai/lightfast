@@ -1,6 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import { datetime, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai/types";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { uuidv4 } from "@repo/lib";

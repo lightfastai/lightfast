@@ -15,7 +15,7 @@ import {
 } from "@repo/ui/components/ai-elements/tool";
 import { AlertCircle, FileCode, Loader2 } from "lucide-react";
 import { memo } from "react";
-import type { CreateDocumentToolUIPart } from "@repo/chat-ai/types";
+import type { CreateDocumentToolUIPart } from "@repo/chat-ai-types";
 import { formatToolErrorPayload } from "./tool-error-utils";
 
 export interface CreateDocumentToolProps {

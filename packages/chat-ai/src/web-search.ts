@@ -1,44 +1,44 @@
-import type { RuntimeContext } from "lightfast/server/adapters/types";
-import { createTool } from "lightfast/tool";
+import type { RegularSearchOptions, SearchResponse } from "exa-js";
 import { currentSpan, wrapTraced } from "braintrust";
 import Exa from "exa-js";
-import type {RegularSearchOptions, SearchResponse} from "exa-js";
+import { createTool } from "lightfast/tool";
 import { z } from "zod";
-import type { AppRuntimeContext } from "./types";
 
-export interface WebSearchDependencies {
-  exaApiKey: string;
-}
+import type {
+  LightfastRuntimeContext,
+  WebSearchToolInput,
+  WebSearchToolOutput,
+} from "@repo/chat-ai-types";
+import { WEB_SEARCH_CONTENT_TYPES } from "@repo/chat-ai-types";
 
 /**
  * Wrapped web search execution function with Braintrust tracing
  */
-function createExecuteWebSearch(deps: WebSearchDependencies) {
+function createExecuteWebSearch() {
   return wrapTraced(
     async function executeWebSearch(
       {
         query,
-        useAutoprompt,
-        numResults,
-        contentType,
-        maxCharacters,
+        useAutoprompt = true,
+        numResults = 5,
+        contentType = "highlights",
+        maxCharacters = 2000,
         summaryQuery,
         includeDomains,
         excludeDomains,
-      }: {
-        query: string;
-        useAutoprompt: boolean;
-        numResults: number;
-        contentType: "highlights" | "summary" | "text";
-        maxCharacters: number;
-        summaryQuery?: string;
-        includeDomains?: string[];
-        excludeDomains?: string[];
-      },
-      context: RuntimeContext<AppRuntimeContext>,
-    ) {
+      }: WebSearchToolInput,
+      context: LightfastRuntimeContext,
+    ): Promise<WebSearchToolOutput> {
       try {
-        const exa = new Exa(deps.exaApiKey);
+        const exaApiKey = context.tools?.webSearch?.exaApiKey;
+
+        if (!exaApiKey) {
+          throw new Error(
+            "Web search tool runtime configuration is missing the Exa API key.",
+          );
+        }
+
+        const exa = new Exa(exaApiKey);
 
         // Log initial search metadata
         currentSpan().log({
@@ -124,38 +124,43 @@ function createExecuteWebSearch(deps: WebSearchDependencies) {
 
         // Calculate estimated tokens (rough estimate: 1 token ≈ 4 characters)
         let totalCharacters = 0;
-        const results = response.results.map((result) => {
-          let content = "";
+        const results: WebSearchToolOutput["results"] = response.results.map(
+          (result) => {
+            let content = "";
 
-          // Extract content based on what was returned - now properly typed
-          if (contentType === "highlights" && "highlights" in result) {
-            content = result.highlights.join(" ... ");
-          } else if (contentType === "summary" && "summary" in result) {
-            content = result.summary;
-          } else if ("text" in result) {
-            content = result.text;
-          }
+            // Extract content based on what was returned - now properly typed
+            if (contentType === "highlights" && "highlights" in result) {
+              content = result.highlights.join(" ... ");
+            } else if (contentType === "summary" && "summary" in result) {
+              content = result.summary;
+            } else if ("text" in result) {
+              content = result.text;
+            }
 
-          totalCharacters += content.length;
+            totalCharacters += content.length;
 
-          return {
-            title: result.title ?? "Untitled",
-            url: result.url,
-            content,
-            contentType,
-            score: result.score ?? undefined,
-          };
-        });
+            return {
+              title: result.title ?? "Untitled",
+              url: result.url,
+              content,
+              contentType,
+              score: result.score ?? undefined,
+            };
+          },
+        );
 
         // Create citation sources from results for easy AI access
-        const citationSources = results.map((result, index) => ({
-          id: `src-${index + 1}`,
-          title: result.title,
-          url: result.url,
-          domain: new URL(result.url).hostname,
-          description: result.content.slice(0, 200) + (result.content.length > 200 ? '...' : ''),
-          quote: contentType === "highlights" ? result.content : undefined,
-        }));
+        const citationSources: WebSearchToolOutput["citationSources"] =
+          results.map((result, index) => ({
+            id: `src-${index + 1}`,
+            title: result.title,
+            url: result.url,
+            domain: new URL(result.url).hostname,
+            description:
+              result.content.slice(0, 200) +
+              (result.content.length > 200 ? "..." : ""),
+            quote: contentType === "highlights" ? result.content : undefined,
+          }));
 
         return {
           results,
@@ -172,7 +177,10 @@ function createExecuteWebSearch(deps: WebSearchDependencies) {
           metadata: {
             error: {
               message: error instanceof Error ? error.message : "Unknown error",
-              type: error instanceof Error ? error.constructor.name : "UnknownError",
+              type:
+                error instanceof Error
+                  ? error.constructor.name
+                  : "UnknownError",
               query,
             },
           },
@@ -181,21 +189,31 @@ function createExecuteWebSearch(deps: WebSearchDependencies) {
         // Handle specific error types with user-friendly messages
         if (error instanceof Error) {
           if (error.message.includes("API key")) {
-            throw new Error("Search service is temporarily unavailable. Please try again later.");
+            throw new Error(
+              "Search service is temporarily unavailable. Please try again later.",
+            );
           }
           if (error.message.includes("rate limit")) {
-            throw new Error("Search rate limit exceeded. Please wait a moment and try again.");
+            throw new Error(
+              "Search rate limit exceeded. Please wait a moment and try again.",
+            );
           }
           if (error.message.includes("timeout")) {
-            throw new Error("Search request timed out. Please try a simpler query.");
+            throw new Error(
+              "Search request timed out. Please try a simpler query.",
+            );
           }
           if (error.message.includes("network")) {
-            throw new Error("Network error occurred during search. Please check your connection.");
+            throw new Error(
+              "Network error occurred during search. Please check your connection.",
+            );
           }
           throw new Error(`Search failed: ${error.message}`);
         }
 
-        throw new Error("An unexpected error occurred during web search. Please try again.");
+        throw new Error(
+          "An unexpected error occurred during web search. Please try again.",
+        );
       }
     },
     { type: "tool", name: "webSearch" },
@@ -203,32 +221,85 @@ function createExecuteWebSearch(deps: WebSearchDependencies) {
 }
 
 /**
- * Create web search tool with injected dependencies
+ * Create web search tool with runtime-configured dependencies.
  */
-export function webSearchTool(deps: WebSearchDependencies) {
-  return createTool<RuntimeContext<AppRuntimeContext>>({
-    description: "Advanced web search with optimized content retrieval using Exa",
-    inputSchema: z.object({
-      query: z.string().describe("The search query"),
-      useAutoprompt: z.boolean().default(true).describe("Whether to enhance the query automatically"),
-      numResults: z.number().min(1).max(10).default(5).describe("Number of results to return"),
-      contentType: z
-        .enum(["highlights", "summary", "text"])
-        .default("highlights")
-        .describe("Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)"),
-      maxCharacters: z
-        .number()
-        .min(100)
-        .max(5000)
-        .default(2000)
-        .describe("Maximum characters per result when using text content type"),
-      summaryQuery: z
-        .string()
-        .optional()
-        .describe("Custom query for generating summaries (only used with summary content type)"),
-      includeDomains: z.array(z.string()).optional().describe("Domains to include in search results"),
-      excludeDomains: z.array(z.string()).optional().describe("Domains to exclude from search results"),
+const inputSchema: z.ZodType<WebSearchToolInput> = z
+  .object({
+    query: z.string().describe("The search query"),
+    useAutoprompt: z
+      .boolean()
+      .default(true)
+      .describe("Whether to enhance the query automatically"),
+    numResults: z
+      .number()
+      .min(1)
+      .max(10)
+      .default(5)
+      .describe("Number of results to return"),
+    contentType: z
+      .enum(WEB_SEARCH_CONTENT_TYPES)
+      .default("highlights")
+      .describe(
+        "Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)",
+      ),
+    maxCharacters: z
+      .number()
+      .min(100)
+      .max(5000)
+      .default(2000)
+      .describe("Maximum characters per result when using text content type"),
+    summaryQuery: z
+      .string()
+      .optional()
+      .describe(
+        "Custom query for generating summaries (only used with summary content type)",
+      ),
+    includeDomains: z
+      .array(z.string())
+      .optional()
+      .describe("Domains to include in search results"),
+    excludeDomains: z
+      .array(z.string())
+      .optional()
+      .describe("Domains to exclude from search results"),
+  })
+  .strict();
+
+const outputSchema: z.ZodType<WebSearchToolOutput> = z.object({
+  results: z.array(
+    z.object({
+      title: z.string(),
+      url: z.string(),
+      content: z.string(),
+      contentType: z.enum(WEB_SEARCH_CONTENT_TYPES),
+      score: z.number().optional(),
     }),
-    execute: createExecuteWebSearch(deps),
+  ),
+  citationSources: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      url: z.string(),
+      domain: z.string(),
+      description: z.string(),
+      quote: z.string().optional(),
+    }),
+  ),
+  query: z.string(),
+  autopromptString: z.string().optional(),
+  tokensEstimate: z.number(),
+});
+
+export function webSearchTool() {
+  return createTool<
+    LightfastRuntimeContext,
+    typeof inputSchema,
+    typeof outputSchema
+  >({
+    description:
+      "Advanced web search with optimized content retrieval using Exa",
+    inputSchema,
+    outputSchema,
+    execute: createExecuteWebSearch(),
   });
 }

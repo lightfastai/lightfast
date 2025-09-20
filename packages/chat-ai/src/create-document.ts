@@ -1,99 +1,102 @@
-import type { RuntimeContext } from "lightfast/server/adapters/types";
-import type { UIMessage, UIMessageStreamWriter } from "ai";
 import { createTool } from "lightfast/tool";
 import { z } from "zod";
-import type { AppRuntimeContext, ArtifactKind } from "./types";
-import { ARTIFACT_KINDS } from "./types";
-import { uuidv4 as generateUUID } from '@repo/lib';
 
-// Define proper types for dependencies
-export interface SaveDocumentFunction {
-  (input: {
-    id: string;
-    sessionId: string;
-    kind: ArtifactKind;
-    title: string;
-    content: string;
-    messageId: string;
-  }): Promise<void>;
-}
+import type {
+  CreateDocumentToolInput,
+  CreateDocumentToolOutput,
+  CreateDocumentToolRuntimeConfig,
+  LightfastRuntimeContext,
+} from "@repo/chat-ai-types";
+import { ARTIFACT_KINDS } from "@repo/chat-ai-types";
+import { uuidv4 as generateUUID } from "@repo/lib";
 
-export interface DocumentHandler {
-  kind: string;
-  onCreateDocument: (props: {
-    id: string;
-    title: string;
-    sessionId: string;
-    messageId: string;
-    dataStream: UIMessageStreamWriter<UIMessage>;
-  }) => Promise<void>;
-}
+const inputSchema: z.ZodType<CreateDocumentToolInput> = z.object({
+  title: z
+    .string()
+    .describe("The title of the document (2-4 words maximum, be concise)"),
+  kind: z.enum(ARTIFACT_KINDS).describe("The type of document to create"),
+});
 
-export interface CreateDocumentDependencies {
-  saveDocument: SaveDocumentFunction;
-  createDocumentHandlersByArtifactKind: (saveDocument: SaveDocumentFunction) => DocumentHandler[];
-}
+const outputSchema: z.ZodType<CreateDocumentToolOutput> = z.object({
+  id: z.string(),
+  title: z.string(),
+  kind: z.enum(ARTIFACT_KINDS),
+  content: z.string(),
+});
 
 /**
  * Native Lightfast artifact tool for creating code documents
  * Uses the existing artifact system but integrates with Lightfast's createTool pattern
  */
-export function createDocumentTool(deps: CreateDocumentDependencies) {
-  return createTool<RuntimeContext<AppRuntimeContext>>({
-    description: "Create a document for coding, writing, or content creation activities. This tool will generate the contents of the document based on the title and kind.",
-    inputSchema: z.object({
-      title: z.string().describe("The title of the document (2-4 words maximum, be concise)"),
-      kind: z.enum(ARTIFACT_KINDS).describe("The type of document to create"),
-    }),
-    outputSchema: z.object({
-      id: z.string(),
-      title: z.string(),
-      kind: z.enum(ARTIFACT_KINDS),
-      content: z.string(),
-    }),
-    execute: async ({ title, kind }: { title: string; kind: typeof ARTIFACT_KINDS[number] }, context: RuntimeContext<AppRuntimeContext>) => {
+export function createDocumentTool() {
+  return createTool<
+    LightfastRuntimeContext,
+    typeof inputSchema,
+    typeof outputSchema
+  >({
+    description:
+      "Create a document for coding, writing, or content creation activities. This tool will generate the contents of the document based on the title and kind.",
+    inputSchema,
+    outputSchema,
+    execute: async (
+      { title, kind }: CreateDocumentToolInput,
+      context: LightfastRuntimeContext,
+    ): Promise<CreateDocumentToolOutput> => {
       const { sessionId } = context;
       const messageId = context.messageId;
       const dataStream = context.dataStream;
 
       if (!dataStream) {
-        throw new Error("DataStream not available - artifact streaming not supported in this context");
+        throw new Error(
+          "DataStream not available - artifact streaming not supported in this context",
+        );
       }
 
       if (!messageId) {
-        throw new Error("MessageId not available - unable to link artifact to message");
+        throw new Error(
+          "MessageId not available - unable to link artifact to message",
+        );
+      }
+
+      const runtimeConfig: CreateDocumentToolRuntimeConfig | undefined =
+        context.tools?.createDocument;
+
+      if (!runtimeConfig?.handlers?.length) {
+        throw new Error(
+          "Create document tool runtime configuration is missing handlers.",
+        );
       }
 
       const id = generateUUID();
 
       // Stream artifact metadata first (matching Vercel's pattern with data- prefix)
       dataStream.write({
-        type: 'data-kind',
+        type: "data-kind",
         data: kind,
         transient: true,
       });
 
       dataStream.write({
-        type: 'data-id',
+        type: "data-id",
         data: id,
         transient: true,
       });
 
       dataStream.write({
-        type: 'data-title',
+        type: "data-title",
         data: title,
         transient: true,
       });
 
       dataStream.write({
-        type: 'data-clear',
+        type: "data-clear",
         data: null,
         transient: true,
       });
 
       // Get the document handlers with service integration
-      const documentHandlersByArtifactKind = deps.createDocumentHandlersByArtifactKind(deps.saveDocument);
-      
+      const documentHandlersByArtifactKind = runtimeConfig.handlers;
+
       // Get the document handler for the specified kind
       const documentHandler = documentHandlersByArtifactKind.find(
         (handler) => handler.kind === kind,
@@ -113,17 +116,17 @@ export function createDocumentTool(deps: CreateDocumentDependencies) {
       });
 
       // Signal completion
-      dataStream.write({ 
-        type: 'data-finish', 
-        data: null, 
-        transient: true 
+      dataStream.write({
+        type: "data-finish",
+        data: null,
+        transient: true,
       });
 
       return {
         id,
         title,
         kind,
-        content: 'A document was created and is now visible to the user.',
+        content: "A document was created and is now visible to the user.",
       };
     },
   });

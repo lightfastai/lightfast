@@ -1,7 +1,7 @@
 import type { Memory } from "lightfast/memory";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai/types";
-import type { ChatFetchContext } from "@repo/chat-ai/types";
-import type { LightfastAppChatUIMessagePart } from "@repo/chat-ai/types";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type { ChatFetchContext } from "@repo/chat-ai-types";
+import type { LightfastAppChatUIMessagePart } from "@repo/chat-ai-types";
 
 /**
  * PlanetScale implementation of Memory interface using service layer for database operations
