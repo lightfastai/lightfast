@@ -21,7 +21,7 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { getAppUrl } from "@repo/url-utils";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { SettingsDialog } from "../settings-dialog";
 

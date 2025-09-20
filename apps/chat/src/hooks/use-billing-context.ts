@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { useUserPlan } from "./use-user-plan";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType, ClerkPlanKey } from "~/lib/billing/types";

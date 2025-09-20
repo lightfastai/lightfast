@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { showTRPCErrorToast } from "~/lib/trpc-errors";
 import { ITEMS_PER_PAGE } from "~/components/sidebar/types";
 
