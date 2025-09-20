@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
+    "@repo/chat-core": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/db": "workspace:*",

@@ -1,6 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import { datetime, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
-import type { UIMessage } from "ai";
+import type { LightfastAppChatUIMessage } from "@repo/chat-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { uuidv4 } from "@repo/lib";
@@ -37,14 +37,14 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
    * The role of the message sender
    * Can be 'system', 'user', or 'assistant' as defined by Vercel AI SDK
    */
-  role: varchar("role", { length: 20 }).$type<UIMessage["role"]>().notNull(),
+  role: varchar("role", { length: 20 }).$type<LightfastAppChatUIMessage["role"]>().notNull(),
   
   /**
    * Message parts containing the actual content
-   * Uses Vercel AI SDK's UIMessage type for proper type safety
-   * Supports various content types (text, images, function calls, tool responses, etc.)
+   * Uses Lightfast's specialized UIMessage type for proper type safety
+   * Supports Lightfast-specific content types (text, images, tool calls, custom data, etc.)
    */
-  parts: json("parts").$type<UIMessage["parts"]>().notNull(),
+  parts: json("parts").$type<LightfastAppChatUIMessage["parts"]>().notNull(),
   
   /**
    * The AI model used to generate this message (for assistant messages)

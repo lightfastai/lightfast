@@ -1639,6 +1639,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/chat-core':
+        specifier: workspace:*
+        version: link:../../packages/chat-core
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
