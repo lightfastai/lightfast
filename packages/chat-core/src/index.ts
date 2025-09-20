@@ -1,4 +1,5 @@
-import type { ToolUIPart, UIMessage, UIMessageStreamWriter, UITool, UITools } from "ai";
+import type { UIMessage, UIMessageStreamWriter } from "ai";
+import type { LightfastAppChatToolSet } from "@repo/chat-ai-tools";
 
 export type LightfastChatStatus =
   | "idle"
@@ -36,34 +37,13 @@ export interface LightfastAppChatUIMessageMetadata {
   modelId?: string;
 }
 
-export interface LightfastAppChatToolDefinition<Input = unknown, Output = unknown>
-  extends UITool {
-  input: Input;
-  output: Output;
-}
-
-export interface LightfastAppChatToolSet extends UITools {
-  webSearch: LightfastAppChatToolDefinition<{
-    query: string;
-    useAutoprompt?: boolean;
-    numResults?: number;
-    contentType?: "highlights" | "summary" | "text";
-    summaryQuery?: string;
-    includeDomains?: string[];
-    excludeDomains?: string[];
-    maxCharacters?: number;
-  }>;
-  createDocument: LightfastAppChatToolDefinition<{
-    title?: string;
-    kind?: string;
-    body?: string;
-  }, { id?: string }>;
-}
-
-export type LightfastAppChatToolName = keyof LightfastAppChatToolSet & string;
-
-export type LightfastAppChatToolInput<T extends LightfastAppChatToolName> =
-  LightfastAppChatToolSet[T]["input"];
+// Re-export from chat-ai-tools for convenience
+export type { 
+  LightfastAppChatToolDefinition,
+  LightfastAppChatToolSet,
+  LightfastAppChatToolName,
+  LightfastAppChatToolInput
+} from "@repo/chat-ai-tools";
 
 export type LightfastAppChatUIMessage = UIMessage<
   LightfastAppChatUIMessageMetadata,
@@ -73,9 +53,11 @@ export type LightfastAppChatUIMessage = UIMessage<
 
 export type LightfastAppChatUIMessagePart = LightfastAppChatUIMessage["parts"][number];
 
-export type CreateDocumentToolUIPart = ToolUIPart & { type: "tool-createDocument" };
-
-export type WebSearchToolUIPart = ToolUIPart & { type: "tool-webSearch" };
+// Re-export tool UI parts from chat-ai-tools
+export type { 
+  CreateDocumentToolUIPart,
+  WebSearchToolUIPart 
+} from "@repo/chat-ai-tools";
 
 export interface ChatFetchContext {
   modelId: string;

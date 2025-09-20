@@ -2145,8 +2145,39 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
+  packages/chat-ai-tools:
+    dependencies:
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@4.0.16)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
   packages/chat-core:
     dependencies:
+      '@repo/chat-ai-tools':
+        specifier: workspace:*
+        version: link:../chat-ai-tools
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@4.0.16)
