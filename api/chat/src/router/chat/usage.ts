@@ -574,7 +574,6 @@ export const usageRouter = {
 	reserveQuota: protectedProcedure
 		.input(
 			z.object({
-				userId: z.string(),
 				modelId: z.string(),
 				messageId: z.string(), // For idempotency
 				messageType: z.enum(["premium", "standard"]),
@@ -587,6 +586,7 @@ export const usageRouter = {
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.userId;
 			return await db.transaction(async (tx) => {
 				// Check if reservation already exists for this message (idempotency)
 				const existingReservation = await tx
@@ -608,7 +608,7 @@ export const usageRouter = {
 				}
 
 				// Get current usage and calculate limits
-				const usage = await getUsageByPeriod(input.userId, input.period);
+				const usage = await getUsageByPeriod(userId, input.period);
 
 				// Count active reservations
 				const activeReservations = await tx
@@ -619,7 +619,7 @@ export const usageRouter = {
 					.from(LightfastChatQuotaReservation)
 					.where(
 						and(
-							eq(LightfastChatQuotaReservation.clerkUserId, input.userId),
+							eq(LightfastChatQuotaReservation.clerkUserId, userId),
 							eq(LightfastChatQuotaReservation.period, input.period),
 							eq(
 								LightfastChatQuotaReservation.status,
@@ -633,7 +633,7 @@ export const usageRouter = {
 					planKey: userPlan,
 					hasActiveSubscription,
 					subscription,
-				} = await getUserSubscriptionData(input.userId);
+				} = await getUserSubscriptionData(userId);
 				const inGracePeriod = subscription?.status === "past_due";
 				const normalizedPlanKey =
 					userPlan === ClerkPlanKey.PLUS_TIER &&
@@ -684,7 +684,7 @@ export const usageRouter = {
 
 				await tx.insert(LightfastChatQuotaReservation).values({
 					id: reservationId,
-					clerkUserId: input.userId,
+					clerkUserId: userId,
 					messageId: input.messageId,
 					modelId: input.modelId,
 					messageType: input.messageType,
