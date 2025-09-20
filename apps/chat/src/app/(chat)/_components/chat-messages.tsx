@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart } from "ai";
-import { Fragment, memo, useMemo, useRef, useEffect } from "react";
+import { Fragment, memo, useMemo, useRef, useEffect, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
@@ -104,6 +104,7 @@ interface ChatMessagesProps {
 	hasActiveStream?: boolean;
 	inlineErrors?: ChatInlineError[];
 	onInlineErrorDismiss?: (errorId: string) => void;
+	onStreamAnimationChange?: (hasActiveAnimation: boolean) => void;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -120,16 +121,28 @@ const StreamingResponse = memo(function StreamingResponse({
 	text,
 	animate,
 	className,
+	onAnimationChange,
 }: {
 	text: string;
 	animate: boolean;
 	className?: string;
+	onAnimationChange?: (isAnimating: boolean) => void;
 }) {
 	const contentRef = useRef("");
-	const { stream, addPart } = useStream();
+	const { stream, addPart, isAnimating } = useStream();
+	const lastReportedRef = useRef<boolean | null>(null);
 
 	useEffect(() => {
-		if (!text || !animate) return;
+		if (!text) {
+			contentRef.current = text;
+			return;
+		}
+
+		const shouldAccumulate = animate || isAnimating;
+		if (!shouldAccumulate) {
+			contentRef.current = text;
+			return;
+		}
 
 		if (contentRef.current !== text) {
 			const delta = text.slice(contentRef.current.length);
@@ -138,11 +151,30 @@ const StreamingResponse = memo(function StreamingResponse({
 			}
 			contentRef.current = text;
 		}
-	}, [text, animate, addPart]);
+	}, [text, animate, isAnimating, addPart]);
 
-	if (!animate) return <Response className={className}>{text}</Response>;
+	const shouldDisplayStream = animate || isAnimating;
+	const displayText = shouldDisplayStream ? stream || text : text;
+	const effectiveAnimating = Boolean(animate || isAnimating);
 
-	return <Response className={className}>{stream || text}</Response>;
+	useEffect(() => {
+		if (!onAnimationChange) return;
+		if (lastReportedRef.current === effectiveAnimating) return;
+		lastReportedRef.current = effectiveAnimating;
+		onAnimationChange(effectiveAnimating);
+	}, [effectiveAnimating, onAnimationChange]);
+
+	useEffect(() => {
+		return () => {
+			if (!onAnimationChange) return;
+			if (lastReportedRef.current) {
+				onAnimationChange(false);
+				lastReportedRef.current = false;
+			}
+		};
+	}, [onAnimationChange]);
+
+	return <Response className={className}>{displayText}</Response>;
 });
 
 const getRecordString = (record: unknown, key: string): string | undefined => {
@@ -152,15 +184,36 @@ const getRecordString = (record: unknown, key: string): string | undefined => {
 };
 
 const AssistantTextPart = memo(function AssistantTextPart({
+	messageId,
 	cleanedText,
 	shouldAnimate,
+	onAnimationStateChange,
 }: {
+	messageId: string;
 	cleanedText: string;
 	shouldAnimate: boolean;
+	onAnimationStateChange?: (messageId: string, isAnimating: boolean) => void;
 }) {
+	const handleAnimationChange = useCallback(
+		(isAnimating: boolean) => {
+			onAnimationStateChange?.(messageId, isAnimating);
+		},
+		[messageId, onAnimationStateChange],
+	);
+
+	useEffect(() => {
+		return () => {
+			onAnimationStateChange?.(messageId, false);
+		};
+	}, [messageId, onAnimationStateChange]);
+
 	return (
 		<MessageContent variant="chat" className="w-full py-0">
-			<StreamingResponse text={cleanedText} animate={shouldAnimate} />
+			<StreamingResponse
+				text={cleanedText}
+				animate={shouldAnimate}
+				onAnimationChange={handleAnimationChange}
+			/>
 		</MessageContent>
 	);
 });
@@ -569,6 +622,8 @@ const AssistantMessage = memo(function AssistantMessage({
 	meaningfulContentOverride,
 	inlineError,
 	onInlineErrorDismiss,
+	onStreamAnimationChange,
+	isStreamAnimating = false,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -585,6 +640,8 @@ const AssistantMessage = memo(function AssistantMessage({
 	meaningfulContentOverride?: boolean;
 	inlineError?: ChatInlineError;
 	onInlineErrorDismiss?: (errorId: string) => void;
+	onStreamAnimationChange?: (messageId: string, isAnimating: boolean) => void;
+	isStreamAnimating?: boolean;
 }) {
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
@@ -629,7 +686,10 @@ const AssistantMessage = memo(function AssistantMessage({
 	const meaningfulContent =
 		meaningfulContentOverride ?? hasMeaningfulContent(message);
 	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
-	const showStreamingWave = Boolean(isCurrentlyStreaming && !hasDisplayContent);
+	const animationStreaming = Boolean(isCurrentlyStreaming);
+	const animationHook = Boolean(isStreamAnimating);
+	const isAnimationActive = animationStreaming || animationHook;
+	const showStreamingWave = isAnimationActive && !hasDisplayContent;
 	const noMessageContent = message.parts.length === 0;
 	const shouldHideActions =
 		hideActions ||
@@ -664,20 +724,22 @@ const AssistantMessage = memo(function AssistantMessage({
 								if (isTextPart(part)) {
 									const cleanedText = cleanTextFromMetadata(part.text);
 									const shouldAnimate = Boolean(
-										isCurrentlyStreaming && index === message.parts.length - 1,
+										isAnimationActive && index === message.parts.length - 1,
 									);
 									return (
 										<AssistantTextPart
 											key={`${message.id}-text-${index}`}
+											messageId={message.id}
 											cleanedText={cleanedText}
 											shouldAnimate={shouldAnimate}
+											onAnimationStateChange={onStreamAnimationChange}
 										/>
 									);
 								}
 
 								if (isReasoningPart(part) && part.text.length > 1) {
 									const isReasoningStreaming = Boolean(
-										isCurrentlyStreaming && index === message.parts.length - 1,
+										isAnimationActive && index === message.parts.length - 1,
 									);
 									const trimmedText = part.text.replace(/^\n+/, "");
 									return (
@@ -760,12 +822,12 @@ const AssistantMessage = memo(function AssistantMessage({
 								)}
 								{/* Actions - always present but hidden during streaming */}
 								<Actions
-									className={cn(
-										"transition-opacity duration-200",
-										isCurrentlyStreaming
-											? "opacity-0 pointer-events-none"
-											: "opacity-100",
-									)}
+										className={cn(
+											"transition-opacity duration-200",
+											isAnimationActive
+												? "opacity-0 pointer-events-none"
+												: "opacity-100",
+										)}
 								>
 									<Action
 										tooltip="Copy message"
@@ -829,7 +891,45 @@ export function ChatMessages({
 	hasActiveStream = false,
 	inlineErrors = [],
 	onInlineErrorDismiss,
+	onStreamAnimationChange,
 }: ChatMessagesProps) {
+	const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(
+		() => new Set(),
+	);
+	const animatingMessagesRef = useRef(animatingMessageIds);
+
+	useEffect(() => {
+		animatingMessagesRef.current = animatingMessageIds;
+	}, [animatingMessageIds]);
+
+	const reportAnimationChange = useCallback(
+		(messageId: string, isAnimating: boolean) => {
+			setAnimatingMessageIds((current) => {
+				const hasEntry = current.has(messageId);
+				if (hasEntry === isAnimating) {
+					return current;
+				}
+				const next = new Set(current);
+				if (isAnimating) {
+					next.add(messageId);
+				} else {
+					next.delete(messageId);
+				}
+				onStreamAnimationChange?.(next.size > 0);
+				return next;
+			});
+		},
+		[onStreamAnimationChange],
+	);
+
+	useEffect(() => {
+		return () => {
+			if (animatingMessagesRef.current.size > 0) {
+				onStreamAnimationChange?.(false);
+			}
+		};
+	}, [onStreamAnimationChange]);
+
 	const turns = useMemo(
 		() => buildAssistantTurns(messages, status, hasActiveStream, inlineErrors),
 		[messages, hasActiveStream, status, inlineErrors],
@@ -861,6 +961,9 @@ export function ChatMessages({
 					{turns.map((turn) => {
 						switch (turn.kind) {
 							case "answer": {
+								const assistantAnimating = animatingMessageIds.has(
+									turn.assistant.id,
+								);
 								return (
 									<Fragment key={`${turn.user.id}-${turn.assistant.id}`}>
 										<UserMessage message={turn.user} />
@@ -876,6 +979,8 @@ export function ChatMessages({
 											meaningfulContentOverride={turn.hasMeaningfulContent}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
+											isStreamAnimating={assistantAnimating}
+											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
 								);
@@ -883,6 +988,9 @@ export function ChatMessages({
 							case "pending": {
 								const pendingAssistant = createPendingAssistantMessage(
 									turn.user,
+								);
+								const assistantAnimating = animatingMessageIds.has(
+									pendingAssistant.id,
 								);
 								return (
 									<Fragment key={`${turn.user.id}-pending`}>
@@ -900,11 +1008,16 @@ export function ChatMessages({
 											meaningfulContentOverride={false}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
+											isStreamAnimating={assistantAnimating}
+											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
 								);
 							}
 							case "ghost": {
+								const assistantAnimating = animatingMessageIds.has(
+									turn.assistant.id,
+								);
 								return (
 									<Fragment key={`${turn.user.id}-${turn.assistant.id}-ghost`}>
 										<UserMessage message={turn.user} />
@@ -921,11 +1034,16 @@ export function ChatMessages({
 											meaningfulContentOverride={false}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
+											isStreamAnimating={assistantAnimating}
+											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
 								);
 							}
 							case "system": {
+								const assistantAnimating = animatingMessageIds.has(
+									turn.assistant.id,
+								);
 								return (
 									<AssistantMessage
 										key={turn.assistant.id}
@@ -940,6 +1058,8 @@ export function ChatMessages({
 										meaningfulContentOverride={turn.hasMeaningfulContent}
 										inlineError={turn.inlineError}
 										onInlineErrorDismiss={onInlineErrorDismiss}
+										isStreamAnimating={assistantAnimating}
+										onStreamAnimationChange={reportAnimationChange}
 									/>
 								);
 							}
