@@ -1,35 +1,29 @@
-import type {
-  LightfastAppChatUIMessage,
-  LightfastAppChatUIMessagePart,
-} from "@repo/chat-ai-types";
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+
+import type { ChatAppRouter } from "@api/chat";
+
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 
 import { ChatApiError, ChatApiService } from "./base-service";
 
+type AppendInput = inferRouterInputs<ChatAppRouter>["message"]["append"];
+type ListInput = inferRouterInputs<ChatAppRouter>["message"]["list"];
+type RawListOutput = inferRouterOutputs<ChatAppRouter>["message"]["list"];
+
+export type MessagesAppendInput = AppendInput;
+export type MessagesListInput = ListInput;
+export type MessagesListOutput = LightfastAppChatUIMessage[];
+
 export class MessagesService extends ChatApiService {
-  async append({
-    sessionId,
-    message,
-  }: {
-    sessionId: string;
-    message: {
-      id: string;
-      role: string;
-      parts: LightfastAppChatUIMessagePart[];
-      modelId: string | null;
-    };
-  }): Promise<void> {
+  async append(input: AppendInput): Promise<void> {
     await this.call(
       "messages.append",
-      (caller) =>
-        caller.message.append({
-          sessionId,
-          message,
-        }),
+      (caller) => caller.message.append(input),
       {
         fallbackMessage: "Failed to append message",
         details: {
-          sessionId,
-          messageId: message.id,
+          sessionId: input.sessionId,
+          messageId: input.message.id,
         },
         recover: (error) => {
           switch (error.code) {
@@ -38,15 +32,15 @@ export class MessagesService extends ChatApiService {
                 code: "UNAUTHORIZED",
                 message: "Unauthorized: User session expired or invalid",
                 cause: error,
-                details: { sessionId },
+                details: { sessionId: input.sessionId },
               });
             case "FORBIDDEN":
             case "NOT_FOUND":
               throw new ChatApiError({
                 code: error.code,
-                message: `Session ${sessionId} not found or access denied`,
+                message: `Session ${input.sessionId} not found or access denied`,
                 cause: error,
-                details: { sessionId },
+                details: { sessionId: input.sessionId },
               });
             default:
               throw error;
@@ -56,16 +50,13 @@ export class MessagesService extends ChatApiService {
     );
   }
 
-  async list(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
-    const messages = await this.call<LightfastAppChatUIMessage[]>(
+  async list(input: ListInput): Promise<MessagesListOutput> {
+    const messages = await this.call<RawListOutput>(
       "messages.list",
-      async (caller) =>
-        (await caller.message.list({
-          sessionId,
-        })) as LightfastAppChatUIMessage[],
+      (caller) => caller.message.list(input),
       {
         fallbackMessage: "Failed to fetch session messages",
-        details: { sessionId },
+        details: { sessionId: input.sessionId },
         suppressCodes: ["NOT_FOUND"],
         recover: (error) => {
           if (error.code === "NOT_FOUND") {
@@ -77,7 +68,7 @@ export class MessagesService extends ChatApiService {
               code: "UNAUTHORIZED",
               message: "Unauthorized: User session expired or invalid",
               cause: error,
-              details: { sessionId },
+              details: { sessionId: input.sessionId },
             });
           }
 
@@ -86,6 +77,6 @@ export class MessagesService extends ChatApiService {
       },
     );
 
-    return messages as LightfastAppChatUIMessage[];
+    return messages as unknown as MessagesListOutput;
   }
 }
