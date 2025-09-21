@@ -28,10 +28,7 @@ export default function RootLayout() {
           */}
 				<Stack
 					screenOptions={{
-						headerStyle: {
-							backgroundColor: "#1a1a1a", // HSL(0 0% 13%) - card color
-						},
-						headerTintColor: "#e3e3e3", // HSL(0 0% 89%) - foreground color
+						headerShown: false,
 						contentStyle: {
 							backgroundColor: "#1a1a1a", // HSL(0 0% 10%) - background color
 						},

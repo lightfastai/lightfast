@@ -294,7 +294,6 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Stack.Screen options={{ title: "Sign in" }} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, padding: 24 }}
