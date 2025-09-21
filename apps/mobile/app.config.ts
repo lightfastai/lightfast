@@ -7,8 +7,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: "lightfast-chat",
   version: "0.1.0",
   orientation: "portrait",
-  icon: "./assets/icon-light.png",
-  userInterfaceStyle: "automatic",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "dark",
   updates: {
     fallbackToCacheTimeout: 0,
   },
@@ -17,16 +17,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier: "com.lightfast.chat",
     supportsTablet: true,
-    icon: {
-      light: "./assets/icon-light.png",
-      dark: "./assets/icon-dark.png",
-    },
+    icon: "./assets/icon.png",
   },
   android: {
     package: "com.lightfast.chat",
     adaptiveIcon: {
-      foregroundImage: "./assets/icon-light.png",
-      backgroundColor: "#1F104A",
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#1a1a1a",
     },
     edgeToEdgeEnabled: true,
   },
@@ -46,12 +43,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
-        backgroundColor: "#E4E4E7",
-        image: "./assets/icon-light.png",
-        dark: {
-          backgroundColor: "#18181B",
-          image: "./assets/icon-dark.png",
-        },
+        backgroundColor: "#1a1a1a",
+        image: "./assets/icon.png",
       },
     ],
   ],
