@@ -31,6 +31,7 @@
     "@repo/chat-ai": "workspace:*",
     "@repo/chat-ai-types": "workspace:*",
     "@repo/chat-api-services": "workspace:*",
+    "@repo/chat-billing": "workspace:*",
     "@repo/chat-trpc": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/site-config": "workspace:*",

@@ -153,6 +153,9 @@ importers:
       '@db/chat':
         specifier: workspace:*
         version: link:../../db/chat
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../../packages/chat-billing
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
@@ -457,6 +460,9 @@ importers:
       '@repo/chat-api-services':
         specifier: workspace:*
         version: link:../../packages/chat-api-services
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../../packages/chat-billing
       '@repo/chat-trpc':
         specifier: workspace:*
         version: link:../../packages/chat-trpc
@@ -1730,13 +1736,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@4.0.16)
+        version: 1.0.15(zod@3.25.76)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@4.0.16)
+        version: 5.0.15(zod@3.25.76)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -2236,6 +2242,9 @@ importers:
       '@repo/chat-ai-types':
         specifier: workspace:*
         version: link:../chat-ai-types
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../chat-billing
       '@repo/chat-trpc':
         specifier: workspace:*
         version: link:../chat-trpc
@@ -2271,23 +2280,14 @@ importers:
         specifier: 'catalog:'
         version: 5.9.2
 
-  packages/chat-services:
+  packages/chat-billing:
     dependencies:
-      '@api/chat':
-        specifier: workspace:*
-        version: link:../../api/chat
-      '@repo/chat-ai-types':
-        specifier: workspace:*
-        version: link:../chat-ai-types
-      '@repo/chat-trpc':
-        specifier: workspace:*
-        version: link:../chat-trpc
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.4.3(typescript@5.9.2)
+      '@clerk/backend':
+        specifier: ^2.14.0
+        version: 2.14.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.1.0)
@@ -16584,12 +16584,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
-      zod: 4.0.16
-
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -16708,13 +16702,6 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:

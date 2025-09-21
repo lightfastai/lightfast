@@ -1,4 +1,4 @@
-import { MessageType } from "@api/chat/lib/billing/types";
+import { MessageType } from "@repo/chat-billing";
 
 import { createCaller } from "@repo/chat-trpc/server";
 

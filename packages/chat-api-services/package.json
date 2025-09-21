@@ -46,6 +46,7 @@
   "dependencies": {
     "@api/chat": "workspace:*",
     "@repo/chat-ai-types": "workspace:*",
+    "@repo/chat-billing": "workspace:*",
     "@repo/chat-trpc": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",

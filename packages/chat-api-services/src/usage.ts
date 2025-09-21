@@ -1,5 +1,5 @@
 import { calculateBillingPeriod } from "@api/chat";
-import { MessageType } from "@api/chat/lib/billing/types";
+import { MessageType } from "@repo/chat-billing";
 import { format, toZonedTime } from "date-fns-tz";
 
 import { createCaller } from "@repo/chat-trpc/server";
