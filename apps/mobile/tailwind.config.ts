@@ -3,64 +3,64 @@ import type { Config } from "tailwindcss";
 import nativewind from "nativewind/preset";
 
 const config = {
-  content: ["./src/**/*.{ts,tsx}"],
-  presets: [nativewind],
-  theme: {
-    extend: {
-      colors: {
-        background: "oklch(0.2178 0 0)",
-        foreground: "oklch(0.8853 0 0)",
-        card: {
-          DEFAULT: "oklch(0.2435 0 0)",
-          foreground: "oklch(0.8853 0 0)",
-        },
-        popover: {
-          DEFAULT: "oklch(0.2178 0 0)",
-          foreground: "oklch(0.8853 0 0)",
-        },
-        primary: {
-          DEFAULT: "oklch(0.7058 0 0)",
-          foreground: "oklch(0.2178 0 0)",
-        },
-        secondary: {
-          DEFAULT: "oklch(0.3092 0 0)",
-          foreground: "oklch(0.8853 0 0)",
-        },
-        muted: {
-          DEFAULT: "oklch(0.285 0 0)",
-          foreground: "oklch(0.5999 0 0)",
-        },
-        accent: {
-          DEFAULT: "oklch(0.26 0 0)",
-          foreground: "oklch(0.8853 0 0)",
-        },
-        destructive: {
-          DEFAULT: "oklch(0.6591 0.153 22.1703)",
-          foreground: "oklch(1 0 0)",
-        },
-        border: "oklch(0.329 0 0)",
-        input: "oklch(0.3092 0 0)",
-        "input-bg": "oklch(0.24 0 0)",
-        ring: "oklch(0.7058 0 0)",
-        "chart-1": "oklch(0.7058 0 0)",
-        "chart-2": "oklch(0.6714 0.0339 206.3482)",
-        "chart-3": "oklch(0.5452 0 0)",
-        "chart-4": "oklch(0.4604 0 0)",
-        "chart-5": "oklch(0.3715 0 0)",
-        sidebar: {
-          DEFAULT: "oklch(0.2178 0 0)",
-          foreground: "oklch(0.8853 0 0)",
-          primary: "oklch(0.7058 0 0)",
-          "primary-foreground": "oklch(0.2178 0 0)",
-          accent: "oklch(0.26 0 0)",
-          "accent-foreground": "oklch(0.8853 0 0)",
-          border: "oklch(0.329 0 0)",
-          ring: "oklch(0.7058 0 0)",
-        },
-        "user-message-bg": "oklch(0.2 0 0)",
-      },
-    },
-  },
+	content: ["./src/**/*.{ts,tsx}"],
+	presets: [nativewind],
+	theme: {
+		extend: {
+			colors: {
+				background: "hsl(var(--background))",
+				foreground: "hsl(var(--foreground))",
+				card: {
+					DEFAULT: "hsl(var(--card))",
+					foreground: "hsl(var(--card-foreground))",
+				},
+				popover: {
+					DEFAULT: "hsl(var(--popover))",
+					foreground: "hsl(var(--popover-foreground))",
+				},
+				primary: {
+					DEFAULT: "hsl(var(--primary))",
+					foreground: "hsl(var(--primary-foreground))",
+				},
+				secondary: {
+					DEFAULT: "hsl(var(--secondary))",
+					foreground: "hsl(var(--secondary-foreground))",
+				},
+				muted: {
+					DEFAULT: "hsl(var(--muted))",
+					foreground: "hsl(var(--muted-foreground))",
+				},
+				accent: {
+					DEFAULT: "hsl(var(--accent))",
+					foreground: "hsl(var(--accent-foreground))",
+				},
+				destructive: {
+					DEFAULT: "hsl(var(--destructive))",
+					foreground: "hsl(var(--destructive-foreground))",
+				},
+				border: "hsl(var(--border))",
+				input: "hsl(var(--input))",
+				"input-bg": "hsl(var(--input-bg))",
+				ring: "hsl(var(--ring))",
+				"chart-1": "hsl(var(--chart-1))",
+				"chart-2": "hsl(var(--chart-2))",
+				"chart-3": "hsl(var(--chart-3))",
+				"chart-4": "hsl(var(--chart-4))",
+				"chart-5": "hsl(var(--chart-5))",
+				sidebar: {
+					DEFAULT: "hsl(var(--sidebar))",
+					foreground: "hsl(var(--sidebar-foreground))",
+					primary: "hsl(var(--sidebar-primary))",
+					"primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+					accent: "hsl(var(--sidebar-accent))",
+					"accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+					border: "hsl(var(--sidebar-border))",
+					ring: "hsl(var(--sidebar-ring))",
+				},
+				"user-message-bg": "hsl(var(--user-message-bg))",
+			},
+		},
+	},
 } satisfies Config;
 
 export default config;

@@ -27,7 +27,7 @@ export const Input = forwardRef<TextInput, InputProps>(
       className,
       size = "default",
       invalid = false,
-      placeholderTextColor = "#6b7280",
+      placeholderTextColor = "hsl(0 0% 60%)",
       ...rest
     },
     ref,

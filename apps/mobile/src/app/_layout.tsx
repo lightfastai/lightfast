@@ -11,34 +11,34 @@ import { queryClient } from "~/utils/api";
 // This is the main layout of the app
 // It wraps your pages with the providers they need
 export default function RootLayout() {
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+	const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-  if (!publishableKey) {
-    throw new Error(
-      "Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY env variable for Clerk.",
-    );
-  }
+	if (!publishableKey) {
+		throw new Error(
+			"Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY env variable for Clerk.",
+		);
+	}
 
-  return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
-      <QueryClientProvider client={queryClient}>
-        {/*
+	return (
+		<ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+			<QueryClientProvider client={queryClient}>
+				{/*
             The Stack component displays the current page.
             It also allows you to configure your screens 
           */}
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: "#202020",
-            },
-            headerTintColor: "#d9d9d9",
-            contentStyle: {
-              backgroundColor: "#1a1a1a",
-            },
-          }}
-        />
-        <StatusBar />
-      </QueryClientProvider>
-    </ClerkProvider>
-  );
+				<Stack
+					screenOptions={{
+						headerStyle: {
+							backgroundColor: "#1a1a1a", // HSL(0 0% 13%) - card color
+						},
+						headerTintColor: "#e3e3e3", // HSL(0 0% 89%) - foreground color
+						contentStyle: {
+							backgroundColor: "#1a1a1a", // HSL(0 0% 10%) - background color
+						},
+					}}
+				/>
+				<StatusBar />
+			</QueryClientProvider>
+		</ClerkProvider>
+	);
 }

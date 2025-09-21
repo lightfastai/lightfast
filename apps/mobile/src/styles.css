@@ -3,44 +3,60 @@
 @tailwind utilities;
 
 :root {
+  --background: 0 0% 10%; /* Much darker background matching chat app */
+  --foreground: 0 0% 89%;
+  --card: 0 0% 13%; /* Slightly lighter than background */
+  --card-foreground: 0 0% 89%;
+  --popover: 0 0% 10%; /* Match background for consistency */
+  --popover-foreground: 0 0% 89%;
+  --primary: 0 0% 71%;
+  --primary-foreground: 0 0% 22%;
+  --secondary: 0 0% 31%;
+  --secondary-foreground: 0 0% 89%;
+  --muted: 0 0% 29%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 26%; /* Consistent accent color matching sidebar */
+  --accent-foreground: 0 0% 89%;
+  --destructive: 22 65% 66%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 33%;
+  --input: 0 0% 31%;
+  --input-bg: 0 0% 24%; /* Very subtle, slightly lighter than background */
+  --ring: 0 0% 71%;
+  --chart-1: 0 0% 71%;
+  --chart-2: 206 34% 67%;
+  --chart-3: 0 0% 55%;
+  --chart-4: 0 0% 46%;
+  --chart-5: 0 0% 37%;
+  --sidebar: 0 0% 22%; /* Same as background */
+  --sidebar-foreground: 0 0% 89%;
+  --sidebar-primary: 0 0% 71%;
+  --sidebar-primary-foreground: 0 0% 22%;
+  --sidebar-accent: 0 0% 26%; /* Subtle accent, same as input-bg */
+  --sidebar-accent-foreground: 0 0% 89%;
+  --sidebar-border: 0 0% 33%;
+  --sidebar-ring: 0 0% 71%;
+  --user-message-bg: 0 0% 20%;
   --radius: 0.625rem;
-  --background: oklch(0.2178 0 0);
-  --foreground: oklch(0.8853 0 0);
-  --card: oklch(0.2435 0 0);
-  --card-foreground: oklch(0.8853 0 0);
-  --popover: oklch(0.2178 0 0);
-  --popover-foreground: oklch(0.8853 0 0);
-  --primary: oklch(0.7058 0 0);
-  --primary-foreground: oklch(0.2178 0 0);
-  --secondary: oklch(0.3092 0 0);
-  --secondary-foreground: oklch(0.8853 0 0);
-  --muted: oklch(0.285 0 0);
-  --muted-foreground: oklch(0.5999 0 0);
-  --accent: oklch(0.26 0 0);
-  --accent-foreground: oklch(0.8853 0 0);
-  --destructive: oklch(0.6591 0.153 22.1703);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.329 0 0);
-  --input: oklch(0.3092 0 0);
-  --input-bg: oklch(0.24 0 0);
-  --ring: oklch(0.7058 0 0);
-  --chart-1: oklch(0.7058 0 0);
-  --chart-2: oklch(0.6714 0.0339 206.3482);
-  --chart-3: oklch(0.5452 0 0);
-  --chart-4: oklch(0.4604 0 0);
-  --chart-5: oklch(0.3715 0 0);
-  --sidebar: oklch(0.2178 0 0);
-  --sidebar-foreground: oklch(0.8853 0 0);
-  --sidebar-primary: oklch(0.7058 0 0);
-  --sidebar-primary-foreground: oklch(0.2178 0 0);
-  --sidebar-accent: oklch(0.26 0 0);
-  --sidebar-accent-foreground: oklch(0.8853 0 0);
-  --sidebar-border: oklch(0.329 0 0);
-  --sidebar-ring: oklch(0.7058 0 0);
-  --user-message-bg: oklch(0.2 0 0);
 }
 
-body {
-  background-color: var(--background);
-  color: var(--foreground);
+/* Additional custom styles specific to the mobile app */
+@layer utilities {
+	/* Add any mobile-specific utility classes here */
+}
+
+/* (No animation; transitions removed by request) */
+
+@keyframes sine-wave {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-8px);
+	}
+}
+
+.animate-sine-wave {
+	animation: sine-wave 1.5s ease-in-out infinite;
 }
