@@ -16,7 +16,7 @@ import { uuidv4 } from "lightfast/v2/utils";
 
 import type { AppRuntimeContext } from "@repo/chat-ai-types";
 import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";
-import { saveDocument } from "@repo/chat-services/artifacts";
+import { saveDocument } from "@repo/chat-api-services/artifacts";
 
 import type { ChatRouteResources } from "./_lib/route-policies";
 import { createDocumentHandlersByArtifactKind } from "~/ai/artifacts/server";

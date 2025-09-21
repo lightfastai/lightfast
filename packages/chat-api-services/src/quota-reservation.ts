@@ -1,5 +1,7 @@
-import { createCaller } from "@repo/chat-trpc/server";
 import { MessageType } from "@api/chat/lib/billing/types";
+
+import { createCaller } from "@repo/chat-trpc/server";
+
 import { getCurrentPeriod } from "./usage";
 
 export interface QuotaReservation {
@@ -89,15 +91,12 @@ export async function reserveQuota({
       }
 
       if (error.message.includes("Message already processed")) {
-        throw new QuotaReservationError(
-          "Message already processed",
-          {
-            userId,
-            messageType,
-            modelId,
-            remainingQuota: 0,
-          },
-        );
+        throw new QuotaReservationError("Message already processed", {
+          userId,
+          messageType,
+          modelId,
+          remainingQuota: 0,
+        });
       }
     }
 
@@ -119,7 +118,9 @@ export async function confirmQuotaUsage(reservationId: string): Promise<void> {
   }
 }
 
-export async function releaseQuotaReservation(reservationId: string): Promise<void> {
+export async function releaseQuotaReservation(
+  reservationId: string,
+): Promise<void> {
   const caller = await createCaller();
   const maxAttempts = 3;
   let attempt = 0;
@@ -159,6 +160,9 @@ export async function cleanupExpiredReservations(): Promise<void> {
       expiredBefore: expiredBefore.toISOString(),
     });
   } catch (error) {
-    console.error("[QuotaReservation] Failed to cleanup expired reservations:", error);
+    console.error(
+      "[QuotaReservation] Failed to cleanup expired reservations:",
+      error,
+    );
   }
 }

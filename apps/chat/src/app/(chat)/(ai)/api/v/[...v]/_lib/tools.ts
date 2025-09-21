@@ -7,7 +7,7 @@ import { createDocumentTool } from "@repo/chat-ai/create-document";
 import { webSearchTool } from "@repo/chat-ai/web-search";
 
 // Helper type to extract the tool type from a tool factory function
-type ExtractToolType<T> = T extends (...args: any[]) => (
+type ExtractToolType<T> = T extends (...args: unknown[]) => (
   context: RuntimeContext<AppRuntimeContext>,
 ) => infer R
   ? R

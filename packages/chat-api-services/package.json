@@ -1,5 +1,5 @@
 {
-  "name": "@repo/chat-services",
+  "name": "@repo/chat-api-services",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -31,6 +31,10 @@
     "./errors": {
       "types": "./dist/errors.d.ts",
       "default": "./src/errors.ts"
+    },
+    "./base-service": {
+      "types": "./dist/base-service.d.ts",
+      "default": "./src/base-service.ts"
     }
   },
   "scripts": {
