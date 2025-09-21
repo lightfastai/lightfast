@@ -2,8 +2,6 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
 import type { ChatAppRouter } from "@api/chat";
 
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
-
 import { ChatApiError, ChatApiService } from "./base-service";
 
 type AppendInput = inferRouterInputs<ChatAppRouter>["message"]["append"];
@@ -12,7 +10,7 @@ type RawListOutput = inferRouterOutputs<ChatAppRouter>["message"]["list"];
 
 export type MessagesAppendInput = AppendInput;
 export type MessagesListInput = ListInput;
-export type MessagesListOutput = LightfastAppChatUIMessage[];
+export type MessagesListOutput = RawListOutput;
 
 export class MessagesService extends ChatApiService {
   async append(input: AppendInput): Promise<void> {
@@ -77,6 +75,6 @@ export class MessagesService extends ChatApiService {
       },
     );
 
-    return messages as unknown as MessagesListOutput;
+    return messages;
   }
 }

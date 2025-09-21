@@ -4,6 +4,7 @@ import type { ChatFetchContext } from "@repo/chat-ai-types";
 import type {
 	MessagesAppendInput,
 	MessagesListInput,
+	MessagesListOutput,
 } from "@repo/chat-api-services/messages";
 
 /**
@@ -14,7 +15,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	constructor(
 		private messagesService: {
 			append: (input: MessagesAppendInput) => Promise<void>;
-			list: (input: MessagesListInput) => Promise<LightfastAppChatUIMessage[]>;
+			list: (input: MessagesListInput) => Promise<MessagesListOutput>;
 		},
 		private sessionsService: {
 			create: (data: { id: string }) => Promise<void>;
@@ -60,7 +61,12 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	 * Get all messages for a session, ordered by creation time
 	 */
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
-		return await this.messagesService.list({ sessionId });
+		const messages = await this.messagesService.list({ sessionId });
+
+		return messages.map((message) => ({
+			...message,
+			parts: message.parts as LightfastAppChatUIMessage["parts"],
+		})) as LightfastAppChatUIMessage[];
 	}
 
 	/**
