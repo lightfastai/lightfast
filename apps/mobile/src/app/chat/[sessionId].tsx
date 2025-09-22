@@ -1,28 +1,14 @@
-import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { Button } from "~/components/ui/buttons";
 import { AppIcons } from "~/components/ui/app-icons";
 import { trpc } from "~/utils/api";
 import { randomUUID } from "~/utils/uuid";
-import { LegendList } from "@legendapp/list";
-
-function textFromParts(parts: unknown): string {
-  try {
-    if (Array.isArray(parts)) {
-      const texts = parts
-        .map((p) => (p && typeof p === "object" && (p as any).type === "text" ? (p as any).text : null))
-        .filter((t): t is string => typeof t === "string");
-      if (texts.length > 0) return texts.join(" ");
-    }
-    return JSON.stringify(parts);
-  } catch {
-    return "";
-  }
-}
+import { ChatMessages } from "./_components/chat-messages";
+import type { ChatMessageItem } from "./_components/chat-messages";
+import { PromptInput } from "./_components/prompt-input";
 
 export default function ChatDetailPage() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
@@ -56,13 +42,32 @@ export default function ChatDetailPage() {
 
   const session = sessionQuery.data;
   const messages = messagesQuery.data ?? [];
+  const appendMessage = useMutation({
+    ...trpc.message.append.mutationOptions(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: trpc.message.list.queryOptions({ sessionId: sessionIdStr }).queryKey });
+    },
+  });
+
+  const handleSend = (trimmed: string) => {
+    const id = randomUUID();
+    appendMessage.mutate({
+      sessionId: sessionIdStr,
+      message: {
+        id,
+        role: "user",
+        parts: [{ type: "text", text: trimmed } as any],
+        modelId: "user-input",
+      },
+    });
+  };
 
   const loading = sessionQuery.fetchStatus === "fetching" && !session;
 
   return (
-    <SafeAreaView className="bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <Stack.Screen options={{ title: "Chat" }} />
-      <View className="h-full bg-background">
+      <View className="flex-1 bg-background">
         {/* Header */}
         <View className="relative flex-row items-center justify-between px-4 py-2">
           <Pressable accessibilityRole="button" onPress={() => router.back()} className="p-1">
@@ -96,45 +101,24 @@ export default function ChatDetailPage() {
             </View>
           ) : null}
         </View>
-
-        {/* Body */}
-        {loading ? (
-          <View className="mt-8 items-center">
-            <ActivityIndicator color="#808080" />
-          </View>
-        ) : (
-          <View className="h-full px-4 pb-6">
-            {messages.length === 0 ? (
-              <View className="mt-6 rounded-lg border border-dashed border-muted/40 bg-muted/40 p-4">
-                <Text className="text-lg font-semibold text-foreground">No messages</Text>
-                <Text className="mt-2 text-muted-foreground">Start a new chat from the menu.</Text>
+        {/* Body + Input with keyboard avoidance */}
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: "padding", android: undefined })}
+          className="flex-1"
+        >
+          <View className="flex-1">
+            {loading ? (
+              <View className="mt-8 items-center">
+                <ActivityIndicator color="#808080" />
               </View>
             ) : (
-              <LegendList
-                data={messages}
-                estimatedItemSize={64}
-                ItemSeparatorComponent={() => <View className="h-2" />}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => {
-                  const isUser = item.role === "user";
-                  const content = textFromParts(item.parts);
-                  return (
-                    <View
-                      className={
-                        isUser
-                          ? "self-end max-w-[85%] rounded-lg border border-border bg-secondary px-3 py-2"
-                          : "self-start max-w-[85%] rounded-lg border border-border bg-card px-3 py-2"
-                      }
-                    >
-                      <Text className="mb-1 text-[11px] text-muted-foreground">{isUser ? "You" : "Assistant"}</Text>
-                      <Text className="text-foreground">{content}</Text>
-                    </View>
-                  );
-                }}
-              />
+              <View className="flex-1 px-4 pt-3 pb-0">
+                <ChatMessages messages={messages as ChatMessageItem[]} />
+              </View>
             )}
+            <PromptInput onSend={handleSend} disabled={appendMessage.isPending} />
           </View>
-        )}
+        </KeyboardAvoidingView>
       </View>
     </SafeAreaView>
   );
