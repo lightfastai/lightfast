@@ -100,11 +100,12 @@ export function useChatTransport({
       api: apiEndpoint,
       headers: {
         "Content-Type": "application/json",
+        "Accept": "text/plain, application/json, application/octet-stream",
       },
       fetch: authorizedFetch,
       prepareSendMessagesRequest: ({ body, headers, messages, api }) => ({
         api,
-        headers: headersToRecord(headers),
+        headers,
         body: {
           messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
           webSearchEnabled,
@@ -113,7 +114,7 @@ export function useChatTransport({
       }),
       prepareReconnectToStreamRequest: ({ api, headers }) => ({
         api,
-        headers: headersToRecord(headers),
+        headers,
       }),
     });
   }, [sessionId, agentId, webSearchEnabled]);

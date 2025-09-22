@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View, KeyboardAvoidingView, Platform } from "react-native";
+import { Pressable, Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +12,6 @@ import { trpc } from "~/utils/api";
 import { randomUUID } from "~/utils/uuid";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { ChatMessages } from "./_components/chat-messages";
-import type { ChatMessageItem } from "./_components/chat-messages";
 import { PromptInput } from "./_components/prompt-input";
 
 const DEFAULT_AGENT_ID: AgentId = "c010";
@@ -72,7 +71,7 @@ export default function ChatDetailPage() {
   });
 
   const {
-    messages: chatMessages,
+    messages,
     sendMessage,
     status,
     error: chatError,
@@ -89,16 +88,6 @@ export default function ChatDetailPage() {
       });
     },
   });
-
-  const renderedMessages = useMemo<ChatMessageItem[]>(
-    () =>
-      chatMessages.map((msg) => ({
-        id: msg.id,
-        role: (msg.role as ChatMessageItem["role"]) ?? "assistant",
-        parts: msg.parts,
-      })),
-    [chatMessages],
-  );
 
   const handleSend = async (input: string) => {
     const trimmed = input.trim();
@@ -124,9 +113,6 @@ export default function ChatDetailPage() {
     });
   };
 
-  const loading =
-    (sessionQuery.fetchStatus === "fetching" && !session) ||
-    (messagesQuery.fetchStatus === "fetching" && !messagesQuery.data);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -171,20 +157,14 @@ export default function ChatDetailPage() {
           className="flex-1"
         >
           <View className="flex-1">
-            {loading ? (
-              <View className="mt-8 items-center">
-                <ActivityIndicator color="#808080" />
-              </View>
-            ) : (
-              <View className="flex-1 px-4 pt-3 pb-0">
-                <ChatMessages messages={renderedMessages} />
-                {chatError ? (
-                  <View className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2">
-                    <Text className="text-sm text-destructive">{chatError.message}</Text>
-                  </View>
-                ) : null}
-              </View>
-            )}
+            <View className="flex-1 px-4 pt-3 pb-0">
+              <ChatMessages messages={messages} />
+              {chatError ? (
+                <View className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2">
+                  <Text className="text-sm text-destructive">{chatError.message}</Text>
+                </View>
+              ) : null}
+            </View>
             <PromptInput
               onSend={handleSend}
               disabled={status === "streaming" || status === "submitted"}

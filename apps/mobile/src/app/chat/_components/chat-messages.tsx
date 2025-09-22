@@ -1,27 +1,22 @@
 import { Text, View } from "react-native";
 import { LegendList } from "@legendapp/list";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import { isTextPart } from "@repo/chat-ai-types";
 
-function textFromParts(parts: unknown): string {
+function textFromParts(parts: LightfastAppChatUIMessage["parts"]): string {
   try {
-    if (Array.isArray(parts)) {
-      const texts = parts
-        .map((p) => (p && typeof p === "object" && (p as any).type === "text" ? (p as any).text : null))
-        .filter((t): t is string => typeof t === "string");
-      if (texts.length > 0) return texts.join(" ");
-    }
-    return JSON.stringify(parts);
+    const texts = parts
+      .filter(isTextPart)
+      .map((p) => p.text)
+      .filter((t): t is string => typeof t === "string");
+    if (texts.length > 0) return texts.join(" ");
+    return "";
   } catch {
     return "";
   }
 }
 
-export interface ChatMessageItem {
-  id: string;
-  role: "user" | "assistant" | "system";
-  parts: unknown;
-}
-
-export function ChatMessages({ messages }: { messages: ChatMessageItem[] }) {
+export function ChatMessages({ messages }: { messages: LightfastAppChatUIMessage[] }) {
   if (!messages || messages.length === 0) {
     return (
       <View className="mt-6 rounded-lg border border-dashed border-muted/40 bg-muted/40 p-4">
@@ -37,7 +32,9 @@ export function ChatMessages({ messages }: { messages: ChatMessageItem[] }) {
       estimatedItemSize={64}
       ItemSeparatorComponent={() => <View className="h-4" />}
       keyExtractor={(item) => item.id}
-      style={{ flex: 1 }}
+      style={{ flex: 1, minHeight: 0 }}
+      contentContainerStyle={{ paddingBottom: 16 }}
+      showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         const isUser = item.role === "user";
         const content = textFromParts(item.parts);
