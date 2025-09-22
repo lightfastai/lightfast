@@ -144,7 +144,7 @@ function SessionsList({ search }: { search: string }) {
 					return (
 						<Pressable
 							className="p-2"
-							onPress={() => router.push(`/chat/${item.id}`)}
+	onPress={() => router.push(`/chat/${item.id}`)}
 						>
 							<Text className="text-lg font-semibold text-foreground">
 								{sessionTitle}
@@ -172,7 +172,7 @@ export default function HomePage() {
 			void queryClient.invalidateQueries({
 				queryKey: trpc.session.list.queryOptions({ limit: LIMIT }).queryKey,
 			});
-			router.push(`/chat/${res.id}`);
+		router.push(`/chat/${res.id}`);
 		},
 	});
 

@@ -25,23 +25,23 @@ function textFromParts(parts: unknown): string {
 }
 
 export default function ChatDetailPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const sessionId = id as string;
+  const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const sessionIdStr = sessionId as string;
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const sessionQuery = useQuery({
-    ...trpc.session.getMetadata.queryOptions({ sessionId }),
+    ...trpc.session.getMetadata.queryOptions({ sessionId: sessionIdStr }),
   });
 
   const messagesQuery = useQuery({
-    ...trpc.message.list.queryOptions({ sessionId }),
+    ...trpc.message.list.queryOptions({ sessionId: sessionIdStr }),
   });
 
   const setPinned = useMutation({
     ...trpc.session.setPinned.mutationOptions(),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: trpc.session.getMetadata.queryOptions({ sessionId }).queryKey });
+      void queryClient.invalidateQueries({ queryKey: trpc.session.getMetadata.queryOptions({ sessionId: sessionIdStr }).queryKey });
       void queryClient.invalidateQueries({ queryKey: trpc.session.list.queryOptions({ limit: 20 }).queryKey });
     },
   });
@@ -79,7 +79,7 @@ export default function ChatDetailPage() {
                 onPress={() => {
                   setMenuOpen(false);
                   if (!session) return;
-                  setPinned.mutate({ sessionId, pinned: !session.pinned });
+                  setPinned.mutate({ sessionId: sessionIdStr, pinned: !session.pinned });
                 }}
               >
                 <Text className="text-foreground">Pin</Text>
