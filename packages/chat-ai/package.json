@@ -5,10 +5,25 @@
   "type": "module",
   "exports": {
     "./create-document": {
-      "default": "./src/create-document.ts"
+      "default": "./src/document/create-document.ts"
+    },
+    "./document/create-document": {
+      "default": "./src/document/create-document.ts"
     },
     "./web-search": {
-      "default": "./src/web-search.ts"
+      "default": "./src/web-search/index.ts"
+    },
+    "./web-search/run-exa-search": {
+      "default": "./src/web-search/run-exa-search.ts"
+    },
+    "./web-search/exa-env": {
+      "default": "./src/web-search/exa-env.ts"
+    },
+    "./code-interpreter": {
+      "default": "./src/code-interpreter/index.ts"
+    },
+    "./code-interpreter/run-vercel-sandbox": {
+      "default": "./src/code-interpreter/run-vercel-sandbox.ts"
     }
   },
   "license": "MIT",
@@ -27,7 +42,9 @@
     "braintrust": "catalog:",
     "exa-js": "catalog:",
     "lightfast": "workspace:*",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@t3-oss/env-core": "catalog:",
+    "@vercel/sandbox": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

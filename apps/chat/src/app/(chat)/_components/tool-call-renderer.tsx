@@ -9,9 +9,14 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { AlertCircle, Search } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import type { CreateDocumentToolUIPart, WebSearchToolUIPart } from "@repo/chat-ai-types";
+import type {
+	CodeInterpreterToolUIPart,
+	CreateDocumentToolUIPart,
+	WebSearchToolUIPart,
+} from "@repo/chat-ai-types";
 import { CreateDocumentTool } from "./create-document-tool";
 import { WebSearchTool } from "./web-search-tool";
+import { CodeInterpreterTool } from "./code-interpreter-tool";
 import { formatToolErrorPayload } from "./tool-error-utils";
 
 interface ToolCallRendererProps {
@@ -37,6 +42,14 @@ export function ToolCallRenderer({
 			toolPart={toolPart as CreateDocumentToolUIPart} 
 			onArtifactClick={onArtifactClick} 
 		/>;
+	}
+
+	if (toolName === "codeInterpreter") {
+		return (
+			<CodeInterpreterTool
+				toolPart={toolPart as CodeInterpreterToolUIPart}
+			/>
+		);
 	}
 
 	if (

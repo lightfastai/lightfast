@@ -26,6 +26,10 @@ export const getActiveToolsForUser = (isAnonymous: boolean, userPlan: ClerkPlanK
 		// Authenticated users: tools based on plan and preferences
 		const activeTools: (keyof typeof c010Tools)[] = ["createDocument"]; // All authenticated users get artifacts
 		
+		if (userPlan === ClerkPlanKey.PLUS_TIER) {
+			activeTools.push("codeInterpreter");
+		}
+		
 		if (webSearchEnabled) {
 			// Check if user's plan allows web search
 			const planLimits = BILLING_LIMITS[userPlan];
@@ -41,12 +45,17 @@ export const getActiveToolsForUser = (isAnonymous: boolean, userPlan: ClerkPlanK
 };
 
 // Create conditional system prompts based on authentication status using centralized builders
-export const createSystemPromptForUser = (isAnonymous: boolean, webSearchEnabled: boolean): string => {
-    // Use the generic builder to thread webSearchEnabled without changing eval call sites elsewhere
-    return buildSystemPrompt({
-        isAnonymous,
-        includeCitations: true,
-        includeCodeFormatting: !isAnonymous ? false : true,
-        webSearchEnabled,
-    });
+export const createSystemPromptForUser = (
+	isAnonymous: boolean,
+	webSearchEnabled: boolean,
+	codeInterpreterEnabled: boolean,
+): string => {
+	// Use the generic builder to thread capability flags without changing eval call sites elsewhere
+	return buildSystemPrompt({
+		isAnonymous,
+		includeCitations: true,
+		includeCodeFormatting: !isAnonymous ? false : true,
+		webSearchEnabled,
+		codeInterpreterEnabled,
+	});
 };

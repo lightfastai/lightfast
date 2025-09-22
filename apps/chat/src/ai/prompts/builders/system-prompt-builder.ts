@@ -34,6 +34,8 @@ export interface SystemPromptOptions {
 	includeCodeFormatting?: boolean;
 	/** Whether web search is actually enabled for this request */
 	webSearchEnabled?: boolean;
+	/** Whether sandbox code execution is enabled for this request */
+	codeInterpreterEnabled?: boolean;
 	/** Custom base prompt to override default */
 	basePrompt?: string;
 }
@@ -47,17 +49,30 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
 		includeCitations,
 		includeCodeFormatting = true,
 		webSearchEnabled = false,
+		codeInterpreterEnabled = false,
 		basePrompt = "You are a helpful AI assistant."
 	} = options;
 
     let prompt = `${basePrompt}\n\n${CORE_BEHAVIOR_SECTION}\n\n${SECURITY_GUIDELINES_SECTION}`;
 
-    // Explicitly communicate web-search availability to avoid model hallucinating capabilities
+    const capabilityLines: string[] = [];
+
     if (webSearchEnabled) {
-        prompt += `\n\nCAPABILITIES:\n- You may use web search when needed to verify current facts or fetch recent information.\n- Prefer your internal knowledge first; only search when the user asks for current events, pricing, or when confidence is low.`;
+        capabilityLines.push("- You may use web search when needed to verify current facts or fetch recent information.");
+        capabilityLines.push("- Prefer your internal knowledge first; only search when the user asks for current events, pricing, or when confidence is low.");
     } else {
-        prompt += `\n\nCAPABILITIES:\n- Do not claim you can browse the web or use external search tools.\n- Answer from your internal knowledge and context only.`;
+        capabilityLines.push("- Do not claim you can browse the web or use external search tools.");
+        capabilityLines.push("- Answer from your internal knowledge and context only.");
     }
+
+    if (!isAnonymous && codeInterpreterEnabled) {
+        capabilityLines.push("- You can call the runCode tool to generate short Python scripts, execute them in a Vercel Sandbox, and summarize the results.");
+        capabilityLines.push("- Keep sandbox executions lightweight and terminate them promptly after use.");
+    } else {
+        capabilityLines.push("- Do not claim you can execute arbitrary code or spawn external sandboxes.");
+    }
+
+    prompt += `\n\nCAPABILITIES:\n${capabilityLines.join("\n")}`;
 
 	if (isAnonymous) {
 		// Anonymous users: no artifact capabilities + length constraints

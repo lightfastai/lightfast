@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { braintrustEnv } from "@repo/ai/braintrust-env";
+import { exaEnv } from "@repo/chat-ai/web-search/exa-env";
 import { env as dbEnv } from "@db/chat/env";
 import { env as securityEnv } from "@vendor/security/env";
 import { env as chatApiEnv } from "@api/chat/env";
@@ -14,6 +15,7 @@ export const env = createEnv({
     clerkEnvBase,
     chatApiEnv,
     braintrustEnv,
+    exaEnv,
     dbEnv,
     securityEnv,
   ],

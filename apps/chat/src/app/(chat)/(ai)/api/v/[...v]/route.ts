@@ -277,9 +277,13 @@ const handler = async (
       billing.plan,
       requestState.webSearchEnabled,
     );
+    const codeInterpreterEnabled =
+      !authState.isAnonymous &&
+      Boolean(activeToolsForUser?.includes("codeInterpreter"));
     const systemPrompt = createSystemPromptForUser(
       authState.isAnonymous,
       requestState.webSearchEnabled,
+      codeInterpreterEnabled,
     );
 
     console.log(
@@ -307,11 +311,17 @@ const handler = async (
       {
         activeTools: activeToolsForUser ?? "all tools",
         webSearchEnabled: requestState.webSearchEnabled,
+        codeInterpreterEnabled,
         isAnonymous: authState.isAnonymous,
         userPlan: billing.plan,
         isResume: requestState.isResume,
       },
     );
+
+    const agentModel = wrapLanguageModel({
+      model: gateway(gatewayModelName),
+      middleware: BraintrustMiddleware({ debug: true }),
+    });
 
     scope.setContext("chat.request", {
       agentId,
@@ -355,12 +365,14 @@ const handler = async (
                       handlers: createDocumentHandlers,
                     },
                     webSearch: webSearchToolRuntime,
+                    codeInterpreter: {
+                      model: agentModel,
+                      defaultRuntime: "python3.13",
+                      timeoutMs: 300000,
+                    },
                   },
                 }),
-                model: wrapLanguageModel({
-                  model: gateway(gatewayModelName),
-                  middleware: BraintrustMiddleware({ debug: true }),
-                }),
+                model: agentModel,
                 experimental_telemetry: {
                   isEnabled: isOtelEnabled(),
                   functionId: requestState.isResume
