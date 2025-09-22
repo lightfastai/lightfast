@@ -11,6 +11,10 @@
     "./pretty-project-name": {
       "types": "./dist/pretty-project-name.d.ts",
       "default": "./src/pretty-project-name.ts"
+    },
+    "./datetime": {
+      "types": "./dist/datetime/index.d.ts",
+      "default": "./src/datetime/index.ts"
     }
   },
   "license": "MIT",

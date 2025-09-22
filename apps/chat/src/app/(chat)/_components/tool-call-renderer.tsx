@@ -9,7 +9,7 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { AlertCircle, Search } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import type { CreateDocumentToolUIPart, WebSearchToolUIPart } from "~/ai/lightfast-app-chat-ui-messages";
+import type { CreateDocumentToolUIPart, WebSearchToolUIPart } from "@repo/chat-ai-types";
 import { CreateDocumentTool } from "./create-document-tool";
 import { WebSearchTool } from "./web-search-tool";
 import { formatToolErrorPayload } from "./tool-error-utils";

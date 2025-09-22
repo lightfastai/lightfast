@@ -12,176 +12,29 @@ import {
 import { eq, and, sql, lt } from "drizzle-orm";
 import { toZonedTime, format } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
-import { isWithinInterval } from "date-fns";
 import { clerkClient } from "@clerk/nextjs/server";
 import { uuidv4 } from "@repo/lib";
-import { BILLING_LIMITS, ClerkPlanKey } from "../../lib/billing/types";
-import type { BillingInterval } from "../../lib/billing/types";
-import { formatMySqlDateTime } from "../../lib/datetime";
-import type {
-	CommerceSubscription,
-	CommerceSubscriptionItem,
-} from "@clerk/backend";
+import {
+	BILLING_LIMITS,
+	ClerkPlanKey,
+	calculateBillingPeriodForUser,
+	fetchSubscriptionData,
+	GRACE_PERIOD_DAYS,
+} from "@repo/chat-billing";
+import { formatMySqlDateTime } from "@repo/lib/datetime";
 
 type ChatDbTransaction = Parameters<
 	Parameters<(typeof db)["transaction"]>[0]
 >[0];
 
-// Shared period calculation function for consistent billing logic across the system
-export async function calculateBillingPeriod(
-	userId: string,
-	timezone: string = "UTC",
-): Promise<string> {
-	const subscriptionData = await getUserSubscriptionData(userId);
-	const { subscription, hasActiveSubscription } = subscriptionData;
-
-	if (!subscription || !hasActiveSubscription) {
-		// Free users: use calendar month in user timezone
-		const now = toZonedTime(new Date(), timezone);
-		return format(now, "yyyy-MM");
-	} else {
-		// Paid users: use actual billing anniversary periods based on subscription cycles
-		const activePaidItem = subscription.subscriptionItems?.find(
-			(item) =>
-				!["cplan_free", "free-tier"].includes(item?.plan?.id ?? "") &&
-				!["cplan_free", "free-tier"].includes(item?.plan?.name ?? ""),
-		);
-
-		if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
-			const now = toZonedTime(new Date(), timezone);
-			const periodStart = toZonedTime(
-				new Date(activePaidItem.periodStart),
-				timezone,
-			);
-			const periodEnd = toZonedTime(
-				new Date(activePaidItem.periodEnd),
-				timezone,
-			);
-
-			// Check if we're within the current subscription period
-			if (isWithinInterval(now, { start: periodStart, end: periodEnd })) {
-				// Use billing anniversary date as period identifier (YYYY-MM-DD format)
-				// This ensures quotas reset on billing anniversary, not calendar month
-				const billingPeriodId = format(periodStart, "yyyy-MM-dd");
-
-				console.log(
-					`[Billing] User ${userId} in billing period ${billingPeriodId} (${activePaidItem.planPeriod} plan)`,
-				);
-				return billingPeriodId;
-			}
-		}
-
-		// Fallback to calendar month if subscription data is incomplete
-		const now = toZonedTime(new Date(), timezone);
-		return format(now, "yyyy-MM");
-	}
-}
-
-// Shared subscription data interface
-interface SubscriptionData {
-	subscription: CommerceSubscription | null;
-	planKey: ClerkPlanKey;
-	hasActiveSubscription: boolean;
-	billingInterval: BillingInterval;
-	error?: string; // Track if there was an error fetching subscription
-}
-
-// Shared function to get user subscription data from Clerk
-export async function getUserSubscriptionData(
-	userId: string,
-): Promise<SubscriptionData> {
-	let subscription: CommerceSubscription | null = null;
-	let billingInterval: BillingInterval = "month";
-	let hasActiveSubscription = false;
-	let planKey: ClerkPlanKey = ClerkPlanKey.FREE_TIER;
-
-	try {
-		const client = await clerkClient();
-		const billingData = await client.billing.getUserBillingSubscription(userId);
-
-		if (billingData) {
-			subscription = billingData;
-
-			// Extract billing interval from subscription items with validation
-			// Match exact logic from billing.ts router
-			let paidItems: CommerceSubscriptionItem[] = [];
-			try {
-				const freeTierPlanIds = ["cplan_free", "free-tier"];
-				const allSubscriptionItems = billingData.subscriptionItems ?? [];
-
-				paidItems = allSubscriptionItems.filter(
-					(item: CommerceSubscriptionItem) =>
-						!freeTierPlanIds.includes(item?.plan?.id ?? "") &&
-						!freeTierPlanIds.includes(item?.plan?.name ?? ""),
-				);
-
-				if (paidItems.length > 0) {
-					planKey = ClerkPlanKey.PLUS_TIER;
-					// Extract billing interval following billing.ts pattern
-					billingInterval =
-						paidItems[0]?.planPeriod === "annual" ? "annual" : "month";
-
-					console.log(
-						`[Billing] User ${userId} has plus plan with ${paidItems.length} paid items`,
-					);
-				} else {
-					console.log(`[Billing] User ${userId} has free plan`);
-				}
-			} catch (itemError) {
-				console.error("Error parsing subscription items:", itemError, {
-					userId,
-				});
-				// Default to free tier if subscription items can't be parsed
-				planKey = ClerkPlanKey.FREE_TIER;
-				paidItems = [];
-			}
-
-			// Enhanced active subscription detection matching billing.ts exactly:
-			// status === "active" AND paidSubscriptionItems.length > 0
-			if (typeof billingData.status === "string") {
-				hasActiveSubscription =
-					billingData.status === "active" && paidItems.length > 0;
-			} else {
-				console.warn(
-					`Unexpected subscription status format: ${typeof billingData.status}`,
-					{ userId, status: billingData.status },
-				);
-				hasActiveSubscription = false;
-			}
-		} else {
-			console.log(
-				`[Billing] No billing data found for user ${userId}, defaulting to free tier`,
-			);
-		}
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error";
-		console.error(
-			`[Billing] Failed to fetch subscription for user ${userId}:`,
-			errorMessage,
-			error,
-		);
-
-		// For production: might want to differentiate between network errors vs auth errors
-		// Network errors: retry or allow with free tier
-		// Auth errors: might need to block or alert
-
-		return {
-			subscription: null,
-			planKey: ClerkPlanKey.FREE_TIER,
-			hasActiveSubscription: false,
-			billingInterval: "month",
-			error: `Clerk API error: ${errorMessage}`,
-		};
-	}
-
-	return {
-		subscription,
-		planKey,
-		hasActiveSubscription,
-		billingInterval,
-	};
-}
+const billingLogger = {
+	info: (message: string, metadata?: Record<string, unknown>) =>
+		console.log(message, metadata ?? {}),
+	warn: (message: string, metadata?: Record<string, unknown>) =>
+		console.warn(message, metadata ?? {}),
+	error: (message: string, metadata?: Record<string, unknown>) =>
+		console.error(message, metadata ?? {}),
+};
 
 function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
 	const planConfig =
@@ -191,6 +44,32 @@ function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
 		nonPremiumMessages: planConfig.nonPremiumMessagesPerMonth,
 		premiumMessages: planConfig.premiumMessagesPerMonth,
 	};
+}
+
+// Shared period calculation function for consistent billing logic across the system
+export async function calculateBillingPeriod(
+	userId: string,
+	timezone: string = "UTC",
+): Promise<string> {
+	const client = await clerkClient();
+	return calculateBillingPeriodForUser({
+		userId,
+		timezone,
+		fetcher: {
+			getUserBillingSubscription: (id: string) =>
+				client.billing.getUserBillingSubscription(id),
+		},
+		logger: billingLogger,
+	});
+}
+
+// Shared function to get user subscription data from Clerk
+export async function getUserSubscriptionData(userId: string) {
+	const client = await clerkClient();
+	return fetchSubscriptionData(userId, {
+		getUserBillingSubscription: (id: string) =>
+			client.billing.getUserBillingSubscription(id),
+	}, { logger: billingLogger });
 }
 
 // Helper function to get usage by period (shared logic)
@@ -475,21 +354,21 @@ export const usageRouter = {
 
 			// Define limits based on actual plan
 			// Enhanced grace period logic with real date calculation
-			const inGracePeriod = subscription?.status === "past_due";
-			let graceDaysRemaining = 0;
+		const inGracePeriod = subscription?.status === "past_due";
+		let graceDaysRemaining = 0;
 
-			if (inGracePeriod && subscription?.pastDueAt) {
-				// Calculate days since payment failure using pastDueAt timestamp
-				const failureDate = toZonedTime(
-					new Date(subscription.pastDueAt),
-					input.timezone,
-				);
-				const now = toZonedTime(new Date(), input.timezone);
-				const daysSinceFailure = differenceInDays(now, failureDate);
+		if (inGracePeriod && subscription?.pastDueAt) {
+			// Calculate days since payment failure using pastDueAt timestamp
+			const failureDate = toZonedTime(
+				new Date(subscription.pastDueAt),
+				input.timezone,
+			);
+			const now = toZonedTime(new Date(), input.timezone);
+			const daysSinceFailure = differenceInDays(now, failureDate);
 
-				// 7-day grace period
-				graceDaysRemaining = Math.max(0, 7 - daysSinceFailure);
-			}
+			// 7-day grace period
+			graceDaysRemaining = Math.max(0, GRACE_PERIOD_DAYS - daysSinceFailure);
+		}
 
 			const normalizedPlanKey =
 				planKey === ClerkPlanKey.PLUS_TIER &&

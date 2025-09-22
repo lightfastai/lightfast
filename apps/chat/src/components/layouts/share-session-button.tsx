@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/
 import { Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 
 const SESSION_ID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

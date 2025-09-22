@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/chat-trpc/server";
 import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
 import { ExistingSessionChat } from "../_components/existing-session-chat";
 

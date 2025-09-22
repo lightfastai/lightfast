@@ -1,7 +1,11 @@
 import type { Memory } from "lightfast/memory";
-import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
-import type { ChatFetchContext } from "~/ai/lightfast-app-chat-ui-messages";
-import type { LightfastAppChatUIMessagePart } from "~/ai/types/ui-message-types";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type { ChatFetchContext } from "@repo/chat-ai-types";
+import type {
+	MessagesAppendInput,
+	MessagesListInput,
+	MessagesListOutput,
+} from "@repo/chat-api-services/messages";
 
 /**
  * PlanetScale implementation of Memory interface using service layer for database operations
@@ -10,16 +14,8 @@ import type { LightfastAppChatUIMessagePart } from "~/ai/types/ui-message-types"
 export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, ChatFetchContext> {
 	constructor(
 		private messagesService: {
-			append: (data: {
-				sessionId: string;
-				message: {
-					id: string;
-					role: string;
-					parts: LightfastAppChatUIMessagePart[];
-					modelId: string | null;
-				};
-			}) => Promise<void>;
-			list: (sessionId: string) => Promise<LightfastAppChatUIMessage[]>;
+			append: (input: MessagesAppendInput) => Promise<void>;
+			list: (input: MessagesListInput) => Promise<MessagesListOutput>;
 		},
 		private sessionsService: {
 			create: (data: { id: string }) => Promise<void>;
@@ -65,7 +61,12 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	 * Get all messages for a session, ordered by creation time
 	 */
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
-		return await this.messagesService.list(sessionId);
+		const messages = await this.messagesService.list({ sessionId });
+
+		return messages.map((message) => ({
+			...message,
+			parts: message.parts as LightfastAppChatUIMessage["parts"],
+		})) as LightfastAppChatUIMessage[];
 	}
 
 	/**

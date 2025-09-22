@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type React from "react";
 import { LayoutBackButton } from "~/components/layout-back-button";
-import { TRPCReactProvider } from "~/trpc/react";
+import { TRPCReactProvider } from "@repo/chat-trpc/react";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 
 export const metadata: Metadata = {

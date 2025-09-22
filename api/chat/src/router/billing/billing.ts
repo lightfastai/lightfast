@@ -3,6 +3,16 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { clerkClient } from "@clerk/nextjs/server";
+import { deriveSubscriptionData } from "@repo/chat-billing";
+
+const billingLogger = {
+	info: (message: string, metadata?: Record<string, unknown>) =>
+		console.log(message, metadata ?? {}),
+	warn: (message: string, metadata?: Record<string, unknown>) =>
+		console.warn(message, metadata ?? {}),
+	error: (message: string, metadata?: Record<string, unknown>) =>
+		console.error(message, metadata ?? {}),
+};
 
 export const billingRouter = {
   /**
@@ -16,34 +26,31 @@ export const billingRouter = {
         
         // Get the subscription data from Clerk
         const subscription = await client.billing.getUserBillingSubscription(ctx.session.userId);
+        const derived = deriveSubscriptionData({
+          userId: ctx.session.userId,
+          subscription,
+          options: { logger: billingLogger },
+        });
 
-        // Convert Clerk class instances to plain objects using JSON serialization
-        // This handles all nested objects and class instances automatically
         const subscriptionData = subscription ? JSON.parse(JSON.stringify(subscription)) : null;
-
-        // Separate free tier and paid subscription items instead of filtering completely
-        const freeTierPlanIds = ["cplan_free", "free-tier"];
         const allSubscriptionItems = subscriptionData?.subscriptionItems ?? [];
-        
+
+        const freeTierPlanIds = ["cplan_free", "free-tier"];
         const paidSubscriptionItems = allSubscriptionItems.filter(
-          (item: any) => !freeTierPlanIds.includes(item?.plan?.id ?? "") && 
-                        !freeTierPlanIds.includes(item?.plan?.name ?? "")
-        );
-        
-        const freeTierSubscriptionItems = allSubscriptionItems.filter(
-          (item: any) => freeTierPlanIds.includes(item?.plan?.id ?? "") || 
-                        freeTierPlanIds.includes(item?.plan?.name ?? "")
+          (item: any) =>
+            !freeTierPlanIds.includes(item?.plan?.id ?? "") &&
+            !freeTierPlanIds.includes(item?.plan?.name ?? ""),
         );
 
-        // Compute derived state (matching useSubscriptionState logic)
+        const freeTierSubscriptionItems = allSubscriptionItems.filter(
+          (item: any) =>
+            freeTierPlanIds.includes(item?.plan?.id ?? "") ||
+            freeTierPlanIds.includes(item?.plan?.name ?? ""),
+        );
+
         const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-        const hasActiveSubscription = subscriptionData?.status === "active" && paidSubscriptionItems.length > 0;
         const nextBillingDate = subscriptionData?.nextPayment?.date;
-        
-        // Get billing interval from subscription
-        const billingInterval = paidSubscriptionItems.length > 0 && paidSubscriptionItems[0]?.planPeriod === "annual"
-          ? "annual" as const
-          : "month" as const;
+        const billingInterval = derived.billingInterval;
 
         return {
           // Raw data (now plain objects)
@@ -54,7 +61,7 @@ export const billingRouter = {
           
           // Computed state
           isCanceled,
-          hasActiveSubscription,
+          hasActiveSubscription: derived.hasActiveSubscription,
           nextBillingDate: nextBillingDate ? new Date(nextBillingDate).toISOString() : null,
           billingInterval,
         };

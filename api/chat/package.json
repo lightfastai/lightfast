@@ -15,10 +15,6 @@
 		"./env": {
 			"types": "./dist/env.d.ts",
 			"default": "./src/env.ts"
-		},
-		"./lib/billing/types": {
-			"types": "./dist/lib/billing/types.d.ts",
-			"default": "./src/lib/billing/types.ts"
 		}
 	},
 	"license": "MIT",
@@ -34,6 +30,7 @@
 		"@ai-sdk/gateway": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
+		"@repo/chat-billing": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@sentry/core": "10.12.0",
 		"@tanstack/react-query": "catalog:",

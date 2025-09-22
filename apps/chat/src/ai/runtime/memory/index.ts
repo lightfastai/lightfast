@@ -1,7 +1,8 @@
-import { PlanetScaleMemory } from './planetscale';
-import { MessagesService } from '~/services/messages.service';
-import { SessionsService } from '~/services/sessions.service';
-import { StreamsService } from '~/services/streams.service';
+import { MessagesService } from "@repo/chat-api-services/messages";
+import { SessionsService } from "@repo/chat-api-services/sessions";
+import { StreamsService } from "@repo/chat-api-services/streams";
+
+import { PlanetScaleMemory } from "./planetscale";
 
 /**
  * Factory function to create a PlanetScale memory instance with service dependencies
@@ -14,9 +15,9 @@ export function createPlanetScaleMemory(): PlanetScaleMemory {
   return new PlanetScaleMemory(
     messagesService,
     sessionsService,
-    streamsService
+    streamsService,
   );
 }
 
-export { PlanetScaleMemory } from './planetscale';
-export { AnonymousRedisMemory } from './redis';
+export { PlanetScaleMemory } from "./planetscale";
+export { AnonymousRedisMemory } from "./redis";

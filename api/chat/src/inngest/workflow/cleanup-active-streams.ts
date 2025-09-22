@@ -2,7 +2,7 @@ import { inngest } from "../client/client";
 import { db } from "@db/chat/client";
 import { LightfastChatSession } from "@db/chat";
 import { and, sql, lt } from "drizzle-orm";
-import { formatMySqlDateTime } from "../../lib/datetime";
+import { formatMySqlDateTime } from "@repo/lib/datetime";
 
 export const cleanupActiveStreams = inngest.createFunction(
 	{

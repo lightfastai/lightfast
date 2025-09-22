@@ -39,10 +39,10 @@ import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
 import type { ChatError } from "~/lib/errors/types";
-import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import {
 	isNotFound,
 	isTRPCClientError,

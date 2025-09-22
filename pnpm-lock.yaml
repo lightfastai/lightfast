@@ -153,6 +153,9 @@ importers:
       '@db/chat':
         specifier: workspace:*
         version: link:../../db/chat
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../../packages/chat-billing
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
@@ -448,6 +451,21 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/chat-ai':
+        specifier: workspace:*
+        version: link:../../packages/chat-ai
+      '@repo/chat-ai-types':
+        specifier: workspace:*
+        version: link:../../packages/chat-ai-types
+      '@repo/chat-api-services':
+        specifier: workspace:*
+        version: link:../../packages/chat-api-services
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../../packages/chat-billing
+      '@repo/chat-trpc':
+        specifier: workspace:*
+        version: link:../../packages/chat-trpc
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
@@ -744,8 +762,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
-
-  apps/desktop: {}
 
   apps/docs:
     dependencies:
@@ -1632,6 +1648,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/chat-ai-types':
+        specifier: workspace:*
+        version: link:../../packages/chat-ai-types
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -2136,6 +2155,212 @@ importers:
         version: 3.6.2
       typescript:
         specifier: ^5.9.2
+        version: 5.9.2
+
+  packages/chat-ai:
+    dependencies:
+      '@repo/chat-ai-types':
+        specifier: workspace:*
+        version: link:../chat-ai-types
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../lib
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@3.25.76)
+      braintrust:
+        specifier: 'catalog:'
+        version: 0.2.6(zod@3.25.76)
+      exa-js:
+        specifier: 'catalog:'
+        version: 1.8.26(ws@8.18.3(bufferutil@4.0.9))
+      lightfast:
+        specifier: workspace:*
+        version: link:../../core/lightfast
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/chat-ai-types:
+    dependencies:
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@4.0.16)
+      lightfast:
+        specifier: workspace:*
+        version: link:../../core/lightfast
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/chat-api-services:
+    dependencies:
+      '@api/chat':
+        specifier: workspace:*
+        version: link:../../api/chat
+      '@repo/chat-ai-types':
+        specifier: workspace:*
+        version: link:../chat-ai-types
+      '@repo/chat-billing':
+        specifier: workspace:*
+        version: link:../chat-billing
+      '@repo/chat-trpc':
+        specifier: workspace:*
+        version: link:../chat-trpc
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.4.3(typescript@5.9.2)
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.1.0)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/chat-billing:
+    dependencies:
+      '@clerk/backend':
+        specifier: ^2.14.0
+        version: 2.14.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.1.0)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/chat-trpc:
+    dependencies:
+      '@api/chat':
+        specifier: workspace:*
+        version: link:../../api/chat
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.84.1(react@19.1.1)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.4.3(@tanstack/react-query@5.84.1(react@19.1.1))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
+      next:
+        specifier: 'catalog:'
+        version: 15.4.5(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react:
+        specifier: ^19.1.1
+        version: 19.1.1
+      superjson:
+        specifier: 'catalog:'
+        version: 2.2.1
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      '@types/react':
+        specifier: ^19.1.11
+        version: 19.1.11
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
         version: 5.9.2
 
   packages/email:
@@ -8762,9 +8987,6 @@ packages:
 
   '@types/node@24.3.0':
     resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
-
-  '@types/node@24.3.1':
-    resolution: {integrity: sha512-3vXmQDXy+woz+gnrTvuvNrPzekOi+Ds0ReMxw0LzBiK3a+1k0kQn9f2NWk+lgD4rJehFUmYy2gMhJ2ZI+7YP9g==}
 
   '@types/node@24.5.2':
     resolution: {integrity: sha512-FYxk1I7wPv3K2XBaoyH2cTnocQEu8AOZ60hPbsyukMPLv5/5qr7V1i8PLHdl6Zf87I+xZXFvPCXYjiTFq+YSDQ==}
@@ -16368,6 +16590,12 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/gateway@1.0.7(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
+      zod: 4.0.16
+
   '@ai-sdk/google-vertex@2.2.27(zod@3.25.76)':
     dependencies:
       '@ai-sdk/anthropic': 1.2.12(zod@3.25.76)
@@ -16459,6 +16687,14 @@ snapshots:
       eventsource-parser: 3.0.5
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
+
+  '@ai-sdk/provider-utils@3.0.3(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@standard-schema/spec': 1.0.0
+      eventsource-parser: 3.0.5
+      zod: 4.0.16
+      zod-to-json-schema: 3.24.6(zod@4.0.16)
 
   '@ai-sdk/provider-utils@3.0.7(zod@3.25.76)':
     dependencies:
@@ -22495,7 +22731,7 @@ snapshots:
 
   '@types/bunyan@1.8.11':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/chai@5.2.2':
     dependencies:
@@ -22507,7 +22743,7 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/d3-array@3.2.1': {}
 
@@ -22663,7 +22899,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/hast@2.3.10':
     dependencies:
@@ -22694,7 +22930,7 @@ snapshots:
 
   '@types/memcached@2.2.10':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/micromatch@4.0.9':
     dependencies:
@@ -22708,7 +22944,7 @@ snapshots:
 
   '@types/mysql@2.15.26':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/mysql@2.15.27':
     dependencies:
@@ -22716,7 +22952,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
       form-data: 4.0.4
 
   '@types/node@12.20.55': {}
@@ -22737,10 +22973,6 @@ snapshots:
     dependencies:
       undici-types: 7.10.0
 
-  '@types/node@24.3.1':
-    dependencies:
-      undici-types: 7.10.0
-
   '@types/node@24.5.2':
     dependencies:
       undici-types: 7.12.0
@@ -22749,7 +22981,7 @@ snapshots:
 
   '@types/oracledb@6.5.2':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/pg-pool@2.0.6':
     dependencies:
@@ -22764,7 +22996,7 @@ snapshots:
 
   '@types/pg@8.15.4':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
@@ -22776,7 +23008,7 @@ snapshots:
 
   '@types/pg@8.6.1':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
@@ -22802,7 +23034,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -22819,7 +23051,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.38.0(@typescript-eslint/parser@8.38.0(eslint@9.32.0(jiti@2.5.1))(typescript@5.9.2))(eslint@9.32.0(jiti@2.5.1))(typescript@5.9.2)':
@@ -23572,6 +23804,14 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
+
+  ai@5.0.15(zod@4.0.16):
+    dependencies:
+      '@ai-sdk/gateway': 1.0.7(zod@4.0.16)
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.3(zod@4.0.16)
+      '@opentelemetry/api': 1.9.0
+      zod: 4.0.16
 
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
@@ -25095,7 +25335,7 @@ snapshots:
   engine.io@6.6.4(bufferutil@4.0.9):
     dependencies:
       '@types/cors': 2.8.19
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.7.2
@@ -29347,7 +29587,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 24.3.1
+      '@types/node': 24.5.2
       long: 5.3.2
 
   proxy-addr@2.0.7:
@@ -32059,6 +32299,10 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
+
+  zod-to-json-schema@3.24.6(zod@4.0.16):
+    dependencies:
+      zod: 4.0.16
 
   zod-validation-error@3.5.3(zod@3.25.76):
     dependencies:
