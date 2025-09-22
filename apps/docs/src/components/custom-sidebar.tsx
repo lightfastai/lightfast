@@ -26,7 +26,7 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
 					<div className="space-y-4">
 						{tree.children.map((item, index) => (
 							<div key={item.$id ?? `item-${index}`} className="space-y-2">
-								<div className="text-xs font-bold px-3 text-foreground tracking-wider">
+								<div className="text-xs text-muted-foreground px-3">
 									{item.name}
 								</div>
 								{item.type === "folder" && (
@@ -37,18 +37,19 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
 											const isActive = page.url === pathname;
 
 											return (
-												<Button
-													key={page.url}
-													variant={isActive ? "secondary" : "ghost"}
-													size="sm"
-													className={cn(
-														"w-full justify-start text-xs",
-														isActive && "font-medium",
-													)}
-													asChild
-												>
-													<Link href={page.url}>{page.name}</Link>
-												</Button>
+												<div key={page.url} className="flex">
+													<Button
+														variant={isActive ? "secondary" : "ghost"}
+														size="sm"
+														className={cn(
+															"justify-start text-xs",
+															isActive && "font-medium",
+														)}
+														asChild
+													>
+														<Link href={page.url}>{page.name}</Link>
+													</Button>
+												</div>
 											);
 										})}
 									</div>

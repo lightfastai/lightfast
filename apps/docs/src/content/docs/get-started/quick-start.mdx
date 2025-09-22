@@ -1,422 +1,303 @@
 ---
 title: Quick Start
-description: Build your first AI agent with Lightfast Core
+description: Install Lightfast and scaffold an agent with one web tool
 ---
 
 # Quick Start
 
-This guide will walk you through creating your first AI agent with Lightfast Core. We'll build a simple assistant that can search the web and maintain conversation history.
+This guide shows the fastest path to a working agent using the same primitives as our chat app route. You’ll install the package, add one web tool, and expose a typed route with the fetch adapter.
 
-## Step 1: Create Your First Agent
+## Prerequisites
 
-Let's start by creating a basic agent without any tools:
+- Node 18+
+- TypeScript project
+- Next.js 14+ using the App Router (`app/` directory)
 
-```typescript
-// src/agents/assistant.ts
-import { createAgent } from "lightfast/agent";
-import { gateway } from "@ai-sdk/gateway";
+## What You’ll Build
 
-export const assistantAgent = createAgent({
-  name: "assistant",
-  system: `You are a helpful AI assistant. You provide clear, 
-    concise, and accurate responses to user questions.`,
-  model: gateway("openai/gpt-5-nano"),
-  tools: {},
-  createRuntimeContext: ({ sessionId, resourceId }) => ({
-    sessionId,
-    userId: resourceId,
-  }),
-});
+- A minimal agent that can call a single web tool.
+- A Next.js API route that streams responses with `fetchRequestHandler`.
+- Optional resumable streams and persisted memory.
+
+## Concepts You’ll Touch
+
+- Agent: Orchestrates the model, tools, and system prompt.
+- Tool: A typed function (Zod schema) the model can call.
+- Model: Selected via `@ai-sdk/gateway` (e.g., Anthropic, OpenAI).
+- Memory: Stores conversation state by `sessionId` (in‑memory or Redis).
+- Request handler: `fetchRequestHandler` that accepts AI SDK `messages` and streams a response.
+
+## Flow
+
+- Client → POST `/api/chat/[sessionId]` with `messages`
+- Handler → runs agent (model + tools) and streams back
+- Memory → saves state by `sessionId` and `resourceId`
+- GET → resumes active stream or returns 204 if none
+
+## Install
+
+Use your preferred package manager (Node 18+):
+
+```bash
+pnpm add lightfast @ai-sdk/gateway zod
+# optional (persisted memory)
+pnpm add @upstash/redis
+# optional (React hooks for UI)
+pnpm add @ai-sdk/react
 ```
 
-## Step 2: Add a Tool
+## 1) Define a Single Web Tool
 
-Now let's add a web search tool to make our agent more capable:
+Why: Tools give your agent grounded capabilities. We keep one minimal HTTP tool so you see the end‑to‑end flow without extra complexity.
 
-```typescript
+```ts
 // src/tools/web-search.ts
 import { createTool } from "lightfast/tool";
 import { z } from "zod";
 
-export const webSearchTool = createTool({
-  description: "Search the web for current information",
+// Minimal web search tool (mock implementation)
+export const webSearch = createTool({
+  description: "Search the web and return brief results",
   inputSchema: z.object({
-    query: z.string().describe("The search query"),
-    limit: z.number().optional().default(5).describe("Maximum results"),
+    query: z.string().describe("Search query"),
+    limit: z.number().int().min(1).max(5).default(3),
   }),
-  execute: async ({ query, limit }, context) => {
-    // In a real implementation, you'd call a search API
-    console.log(`User ${context.userId} searching for: ${query}`);
-    
-    // Mock search results
+  async execute({ query, limit }) {
+    // Replace with your search provider if desired
+    // For Quick Start, return mock results deterministically
     return {
-      results: [
-        {
-          title: "Example Result",
-          url: "https://example.com",
-          snippet: "This is a mock search result for: " + query,
-        },
-      ],
+      query,
+      results: Array.from({ length: limit }).map((_, i) => ({
+        title: `Result ${i + 1} for: ${query}`,
+        url: `https://example.com/search?q=${encodeURIComponent(query)}#${i + 1}`,
+        content: `Snippet ${i + 1} about ${query}.`,
+      })),
     };
   },
 });
 ```
 
-Update your agent to use the tool:
+## 2) Create an Agent
 
-```typescript
+Why: The agent ties your tool, system prompt, and model together. The `createRuntimeContext` is typed and passed to every tool call, so you can add user/tenant IDs, quotas, or feature flags.
+
+```ts
 // src/agents/assistant.ts
 import { createAgent } from "lightfast/agent";
 import { gateway } from "@ai-sdk/gateway";
-import { webSearchTool } from "../tools/web-search";
+import { webSearch } from "../tools/web-search";
 
-export const assistantAgent = createAgent({
+// Optional: define runtime context passed to tools
+interface AppRuntimeContext {
+  userId: string;
+  agentId: string;
+}
+
+export const assistant = createAgent<AppRuntimeContext, { webSearch: typeof webSearch }>({
   name: "assistant",
-  system: `You are a helpful AI assistant with web search capabilities.
-    When users ask about current events or need up-to-date information,
-    use the web search tool to find relevant information.`,
-  model: gateway("openai/gpt-5-nano"),
-  tools: {
-    webSearch: webSearchTool,
-  },
-  createRuntimeContext: ({ sessionId, resourceId }) => ({
-    sessionId,
+  system: "You are a helpful AI assistant. Use tools when helpful.",
+  tools: { webSearch },
+  model: gateway("anthropic/claude-3-haiku"),
+  createRuntimeContext: ({ resourceId }) => ({
     userId: resourceId,
+    agentId: "assistant",
   }),
 });
+
+Choosing a model:
+- Use any model exposed by your AI Gateway (e.g., `openai/gpt-4o-mini`, `anthropic/claude-3-5-sonnet`).
+- Configure provider auth per your gateway setup (e.g., `AI_GATEWAY_API_KEY`).
+- Start small for local dev; switch to larger models later.
 ```
 
-## Step 3: Create an API Route
+## 3) Add a Route with fetchRequestHandler
 
-Set up an API route to handle agent requests:
+This mirrors our chat app’s server shape: POST to stream responses, GET to resume (optional).
 
-```typescript
-// app/api/chat/route.ts (Next.js App Router)
-import { fetchRequestHandler } from "lightfast/agent/handlers";
-import { RedisMemory } from "lightfast/agent/memory/adapters/redis";
-import { assistantAgent } from "@/agents/assistant";
+```ts
+// app/api/chat/[sessionId]/route.ts (Next.js App Router)
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { InMemoryMemory } from "lightfast/memory/adapters/in-memory";
+import { assistant } from "@/agents/assistant";
 
-// Initialize memory adapter
-const memory = new RedisMemory({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
+// Start with in-memory storage for development
+const memory = new InMemoryMemory();
 
-export async function POST(
+// One handler supports both POST (stream) and GET (resume)
+async function handler(
   req: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  // In production, get this from your auth provider
-  const userId = "user-123";
-  
+  const userId = "user-123"; // replace with your auth user id
   return fetchRequestHandler({
-    agent: assistantAgent,
-    sessionId: params.sessionId || "default-session",
-    memory,
-    req,
-    resourceId: userId,
-  });
-}
-
-export async function GET(
-  req: Request,
-  { params }: { params: { sessionId: string } }
-) {
-  // GET requests resume the stream if supported
-  const userId = "user-123";
-  
-  return fetchRequestHandler({
-    agent: assistantAgent,
-    sessionId: params.sessionId || "default-session",
-    memory,
-    req,
-    resourceId: userId,
-    enableResume: true,
-  });
-}
-```
-
-## Step 4: Create a Chat Interface
-
-Build a simple chat interface using the Vercel AI SDK React hooks:
-
-```tsx
-// app/chat/page.tsx
-"use client";
-
-import { useChat } from "ai/react";
-
-export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = 
-    useChat({
-      api: "/api/chat",
-    });
-
-  return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4">
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`p-4 rounded-lg ${
-              message.role === "user" 
-                ? "bg-blue-100 ml-auto max-w-xs" 
-                : "bg-gray-100 mr-auto max-w-md"
-            }`}
-          >
-            <p className="text-sm font-semibold mb-1">
-              {message.role === "user" ? "You" : "Assistant"}
-            </p>
-            <p>{message.content}</p>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="bg-gray-100 p-4 rounded-lg mr-auto max-w-md">
-            <p className="text-sm">Assistant is typing...</p>
-          </div>
-        )}
-      </div>
-      
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          value={input}
-          onChange={handleInputChange}
-          placeholder="Type your message..."
-          className="flex-1 p-2 border rounded-lg"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg 
-            disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
-    </div>
-  );
-}
-```
-
-## Step 5: Add Memory Persistence
-
-The agent automatically persists conversation history. Let's explore how to work with memory:
-
-```typescript
-// src/lib/chat-utils.ts
-import { RedisMemory } from "lightfast/agent/memory/adapters/redis";
-
-const memory = new RedisMemory({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
-
-// Get conversation history
-export async function getChatHistory(sessionId: string) {
-  return await memory.getMessages(sessionId);
-}
-
-// Clear conversation
-export async function clearChat(sessionId: string) {
-  // Implementation depends on your memory adapter
-  // You might need to extend the base Memory interface
-}
-
-// Get all user sessions
-export async function getUserSessions(userId: string) {
-  // This would require additional implementation
-  // based on your specific needs
-}
-```
-
-## Step 6: Add Advanced Features
-
-### Streaming Transformations
-
-Add smooth streaming for better UX:
-
-```typescript
-import { smoothStream } from "ai";
-
-export const assistantAgent = createAgent({
-  // ... other config
-  experimental_transform: smoothStream({
-    delayInMs: 25,
-    chunking: "word",
-  }),
-});
-```
-
-### Rate Limiting
-
-Protect your API with rate limiting:
-
-```typescript
-// app/api/chat/route.ts
-import { arcjet, shield, slidingWindow } from "@vendor/security";
-
-const aj = arcjet({
-  key: process.env.ARCJET_KEY!,
-  rules: [
-    shield({ mode: "LIVE" }),
-    slidingWindow({ 
-      mode: "LIVE", 
-      max: 100, 
-      interval: 3600 // 100 requests per hour
-    }),
-  ],
-});
-
-export async function POST(req: Request) {
-  // Check rate limit
-  const decision = await aj.protect(req);
-  if (decision.isDenied()) {
-    return Response.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
-  }
-  
-  // Continue with handler...
-}
-```
-
-### Error Handling
-
-Add comprehensive error handling:
-
-```typescript
-export async function POST(req: Request) {
-  try {
-    return await fetchRequestHandler({
-      agent: assistantAgent,
-      sessionId: "session-123",
-      memory,
-      req,
-      resourceId: "user-123",
-      onError: ({ error }) => {
-        console.error("Agent error:", error);
-        // Send to error tracking service
-      },
-    });
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return Response.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-```
-
-## Step 7: Deploy to Production
-
-### Environment Variables
-
-Set up your production environment variables:
-
-```bash
-# .env.production
-OPENAI_API_KEY=sk-...
-KV_REST_API_URL=https://...upstash.io
-KV_REST_API_TOKEN=...
-ARCJET_KEY=...
-```
-
-### Deploy to Vercel
-
-```bash
-# Install Vercel CLI
-pnpm i -g vercel
-
-# Deploy
-vercel --prod
-```
-
-## Complete Example
-
-Here's a complete, production-ready example combining everything:
-
-```typescript
-// app/api/agents/[agentId]/sessions/[sessionId]/route.ts
-import { auth } from "@clerk/nextjs/server";
-import { fetchRequestHandler } from "lightfast/agent/handlers";
-import { RedisMemory } from "lightfast/agent/memory/adapters/redis";
-import { createAgent } from "lightfast/agent";
-import { gateway } from "@ai-sdk/gateway";
-import { smoothStream } from "ai";
-import { webSearchTool } from "@/tools/web-search";
-
-// Create agent with all features
-const agent = createAgent({
-  name: "assistant",
-  system: `You are a helpful AI assistant with web search capabilities.`,
-  model: gateway("anthropic/claude-4-sonnet"),
-  tools: {
-    webSearch: webSearchTool,
-  },
-  createRuntimeContext: ({ sessionId, resourceId }) => ({
-    sessionId,
-    userId: resourceId,
-    timestamp: new Date().toISOString(),
-  }),
-  experimental_transform: smoothStream({
-    delayInMs: 25,
-    chunking: "word",
-  }),
-  onFinish: (result) => {
-    console.log("Conversation finished:", {
-      usage: result.usage,
-      finishReason: result.finishReason,
-    });
-  },
-});
-
-const memory = new RedisMemory({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
-
-export async function POST(
-  req: Request,
-  { params }: { params: { agentId: string; sessionId: string } }
-) {
-  // Authenticate user
-  const { userId } = await auth();
-  if (!userId) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Validate agent
-  if (params.agentId !== "assistant") {
-    return Response.json({ error: "Agent not found" }, { status: 404 });
-  }
-
-  return fetchRequestHandler({
-    agent,
+    agent: assistant,
     sessionId: params.sessionId,
     memory,
     req,
     resourceId: userId,
     enableResume: true,
-    createRequestContext: (req) => ({
-      userAgent: req.headers.get("user-agent") || undefined,
-      ipAddress: req.headers.get("x-forwarded-for") || undefined,
+    createRequestContext: (request) => ({
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
     }),
-    onError: ({ error }) => {
-      console.error(`Error in session ${params.sessionId}:`, error);
-    },
   });
+}
+
+export { handler as POST, handler as GET };
+
+Notes:
+- Single handler supports both methods; the adapter routes POST vs GET internally.
+- `sessionId` groups messages in memory. Use a stable value per chat.
+- `resourceId` identifies the actor (usually your authenticated user ID). It’s also used as the owner of the session in memory.
+- `createRequestContext` is optional metadata (IP, UA) you can attach for logging/limits.
+- GET returns 204 if there’s nothing to resume.
+```
+
+### 3b) Client (Optional)
+
+Minimal chat UI using AI SDK v5 transport + React hook (mirrors our chat app pattern of sending only the last user message and supporting GET resume):
+
+```tsx
+// app/chat/[sessionId]/page.tsx
+"use client";
+import { useMemo, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+
+export default function ChatPage({ params }: { params: { sessionId: string } }) {
+  const [input, setInput] = useState("");
+  const transport = useMemo(() => (
+    new DefaultChatTransport({
+      api: `/api/chat/${params.sessionId}`,
+      headers: { "Content-Type": "application/json" },
+      prepareSendMessagesRequest: ({ api, headers, messages, body }) => ({
+        api,
+        headers,
+        body: {
+          // send only the newest user message; server loads history from memory
+          messages: messages.length ? [messages[messages.length - 1]] : [],
+          ...body,
+        },
+      }),
+      prepareReconnectToStreamRequest: ({ api, headers }) => ({ api, headers }),
+    })
+  ), [params.sessionId]);
+
+  const { messages, sendMessage, status } = useChat({
+    id: `chat-${params.sessionId}`,
+    transport,
+    resume: true,
+  });
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || status === "streaming") return;
+    await sendMessage(input);
+    setInput("");
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="p-4 space-y-4">
+      <div className="space-y-2">
+        {messages.map(m => (
+          <div key={m.id}><strong>{m.role}:</strong> {m.content}</div>
+        ))}
+        {status === "streaming" && <div>Typing…</div>}
+      </div>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        className="border p-2 w-full"
+        disabled={status === "streaming"}
+      />
+    </form>
+  );
 }
 ```
 
-## What's Next?
+## 4) Test It
 
-Congratulations! You've built your first AI agent with Lightfast Core. Here's what to explore next:
+Send a message body compatible with the AI SDK shape:
 
-- **[Core Concepts](/core-concepts/agents)** - Deep dive into how agents work
-- **[Building Tools](/agent-development/tool-factories)** - Create more sophisticated tools
-- **[Memory Adapters](/memory-state/memory-adapters)** - Learn about different storage options
-- **[Advanced Features](/advanced-features/caching)** - Optimize with caching and more
-- **[Production Guide](/integration-examples/deployment)** - Best practices for production
+```bash
+curl -X POST http://localhost:3000/api/chat/demo \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      { "id": "1", "role": "user", "content": "Use the webSearch tool to find the latest on TypeScript 5.x features" }
+    ]
+  }'
+```
+
+Test GET resume (returns 204 when nothing is in flight):
+
+```bash
+curl -i http://localhost:3000/api/chat/demo
+# 204 No Content = no active stream to resume
+```
+
+You should receive a streaming response. Switch to Redis to persist history:
+
+```ts
+// swap in-memory with Redis for persistence
+import { RedisMemory } from "lightfast/memory/adapters/redis";
+const memory = new RedisMemory({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
+```
+
+When To Switch To Redis
+- Production or multiple instances
+- Need resumable streams across restarts
+- Shared history beyond a single server process
+
+### Message Format Details
+
+`fetchRequestHandler` expects an AI SDK `messages` array. Minimal shape:
+
+```json
+[
+  { "id": "1", "role": "user", "content": "Hello" }
+]
+```
+
+Tips:
+- Only the last user message is used as the new input on POST; prior messages are persisted in memory.
+- You don’t need to include prior assistant messages; the handler loads them from memory.
+- For GET resume: no body is required. The handler looks up the last active stream for the session.
+
+### Auth, Sessions, and Memory
+
+- Always derive `resourceId` from your auth provider server‑side (e.g., Clerk, Auth.js).
+- Use `InMemoryMemory` for local dev only; it resets on process restart and is not shareable across instances.
+- Use `RedisMemory` for production: enables resumable streams across instances and persistent history.
+
+### Environment Variables
+
+- AI Gateway key: `AI_GATEWAY_API_KEY` (or provider‑specific keys per your gateway)
+- Redis (Upstash): `KV_REST_API_URL`, `KV_REST_API_TOKEN` (for `RedisMemory`)
+
+Example `.env.local`:
+
+```bash
+AI_GATEWAY_API_KEY=your-gateway-key
+# Example model used above assumes Anthropic is enabled via your gateway
+# Otherwise choose a model you’ve enabled, e.g. openai/gpt-4o-mini
+KV_REST_API_URL=https://your-upstash-url.upstash.io
+KV_REST_API_TOKEN=your-upstash-token
+```
+
+### Common Pitfalls
+
+- 400 “no messages”: Your POST body must include `messages` with at least one user message.
+- 405 “method not allowed”: Only `GET` and `POST` are supported.
+- 204 on GET: No active stream to resume; this is expected when nothing is in flight.
+- CORS: For Next.js App Router, call from same origin. If calling cross‑origin, configure CORS on your server.
+
+## What’s Next
+
+- Core concepts: `core-concepts/agents`
+- Tool patterns: `agent-development/tool-factories`
+- Handlers and streaming: `core-concepts/handlers`
+- Memory adapters: `memory-state/memory-adapters`

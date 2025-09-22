@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { LoginDropdown } from "./login-dropdown";
 import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
 import { SearchTrigger } from "./search-trigger";
 import { MobileNav } from "./mobile-nav";
@@ -10,6 +11,9 @@ import { pageTree } from "../lib/source";
 export function DocsHeader() {
 	const authUrls = getAuthUrls();
 	const appUrls = getAllAppUrls();
+
+	const chatSignInUrl = `${authUrls.signIn}?redirect_url=${encodeURIComponent(appUrls.chat)}`;
+	const cloudSignInUrl = `${authUrls.signIn}?redirect_url=${encodeURIComponent(appUrls.cloud)}`;
 
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
@@ -45,12 +49,7 @@ export function DocsHeader() {
 					<div className="flex h-4 items-center px-4">
 						<Separator orientation="vertical" />
 					</div>
-					<Button variant="outline" size="sm" asChild>
-						<Link href={authUrls.signIn}>Login</Link>
-					</Button>
-					<Button size="sm" className="ml-2" asChild>
-						<Link href={authUrls.signUp}>Sign up</Link>
-					</Button>
+					<LoginDropdown chatUrl={chatSignInUrl} cloudUrl={cloudSignInUrl} />
 					<div className="flex h-4 items-center px-4">
 						<Separator orientation="vertical" />
 					</div>
