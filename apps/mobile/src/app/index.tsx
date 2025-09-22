@@ -1,52 +1,94 @@
-import { useCallback } from "react";
-import {
-	ActivityIndicator,
-	Pressable,
-	Text,
-	TouchableOpacity,
-	View,
-} from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/clerk-expo";
 import { LegendList } from "@legendapp/list";
-import { useQuery } from "@tanstack/react-query";
-import { Redirect, Stack } from "expo-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Redirect, Stack, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { SignOutButton } from "~/components/sign-out-button";
+import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/buttons";
 import { trpc } from "~/utils/api";
+import { randomUUID } from "~/utils/uuid";
+import { AppIcons } from "~/components/ui/app-icons";
 
 const LIMIT = 20;
 
-function formatUpdatedAt(updatedAt: Date | string) {
+function formatDateOnly(createdAt: Date | string) {
 	try {
 		const value =
-			typeof updatedAt === "string" ? new Date(updatedAt) : updatedAt;
+			typeof createdAt === "string" ? new Date(createdAt) : createdAt;
 		if (Number.isNaN(value.getTime())) return "";
-		return value.toLocaleString();
+		const months = [
+			"Jan",
+			"Feb",
+			"Mar",
+			"Apr",
+			"May",
+			"Jun",
+			"Jul",
+			"Aug",
+			"Sept",
+			"Oct",
+			"Nov",
+			"Dec",
+		];
+		return `${value.getDate()} ${months[value.getMonth()]} ${value.getFullYear()}`;
 	} catch (error) {
-		console.warn("Failed to format updatedAt", error);
+		console.warn("Failed to format createdAt", error);
 		return "";
 	}
 }
 
-function SessionsList() {
+function SessionsList({ search }: { search: string }) {
 	const { isSignedIn } = useAuth();
 
-	const query = useQuery({
-		...trpc.session.list.queryOptions({
-			limit: LIMIT,
-		}),
-		enabled: isSignedIn,
+	const listQuery = useQuery({
+		...trpc.session.list.queryOptions({ limit: LIMIT }),
+		enabled: isSignedIn && search.trim().length === 0,
 	});
 
-	const { data: sessions = [] } = query;
+	const searchQuery = useQuery({
+		...trpc.session.search.queryOptions({ query: search.trim(), limit: LIMIT }),
+		enabled: isSignedIn && search.trim().length > 0,
+	});
+
+	const {
+		data: sessions = [],
+		fetchStatus,
+		error,
+	} = useMemo(() => {
+		return search.trim().length > 0
+			? {
+					data: searchQuery.data ?? [],
+					fetchStatus: searchQuery.fetchStatus,
+					error: searchQuery.error as unknown as Error | null,
+				}
+			: {
+					data: listQuery.data ?? [],
+					fetchStatus: listQuery.fetchStatus,
+					error: listQuery.error as unknown as Error | null,
+				};
+	}, [
+		search,
+		listQuery.data,
+		listQuery.fetchStatus,
+		listQuery.error,
+		searchQuery.data,
+		searchQuery.fetchStatus,
+		searchQuery.error,
+	]);
 
 	const handleRefetch = useCallback(() => {
-		void query.refetch();
-	}, [query]);
+		if (search.trim().length > 0) {
+			void searchQuery.refetch();
+		} else {
+			void listQuery.refetch();
+		}
+	}, [listQuery, searchQuery, search]);
 
-	if (query.fetchStatus === "fetching" && sessions.length === 0) {
+	if (fetchStatus === "fetching" && sessions.length === 0) {
 		return (
 			<View className="mt-8 flex flex-row items-center justify-center">
 				<ActivityIndicator color="#808080" />
@@ -55,21 +97,18 @@ function SessionsList() {
 		);
 	}
 
-	if (query.error) {
+	if (error) {
 		return (
 			<View className="mt-6 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
 				<Text className="text-lg font-semibold text-destructive">
 					Unable to load sessions
 				</Text>
 				<Text className="mt-2 text-muted-foreground">
-					{query.error.message}
+					{(error as Error).message}
 				</Text>
-				<TouchableOpacity
-					className="mt-4 items-center rounded-md bg-primary px-3 py-2"
-					onPress={handleRefetch}
-				>
-					<Text className="text-foreground">Try again</Text>
-				</TouchableOpacity>
+				<Button className="mt-4" onPress={handleRefetch}>
+					<Button.Text>Try again</Button.Text>
+				</Button>
 			</View>
 		);
 	}
@@ -88,40 +127,59 @@ function SessionsList() {
 	}
 
 	return (
-		<LegendList
-			data={sessions}
-			estimatedItemSize={72}
-			ItemSeparatorComponent={() => <View className="h-2" />}
-			keyExtractor={(item) => item.id}
-			renderItem={({ item }) => {
-				const sessionTitle =
-					item.title && item.title.trim().length > 0
-						? item.title
-						: "Untitled conversation";
+		<View className="flex-1 gap-3">
+			<LegendList
+				data={sessions}
+				estimatedItemSize={72}
+				ItemSeparatorComponent={() => <View className="h-1" />}
+				style={{ flex: 1 }}
+				contentContainerStyle={{ paddingBottom: 16 }}
+				keyExtractor={(item) => item.id}
+				renderItem={({ item }) => {
+					const sessionTitle =
+						item.title && item.title.trim().length > 0
+							? item.title
+							: "Untitled conversation";
 
-				return (
-					<Pressable className="rounded-lg border border-border bg-card p-4">
-						<Text className="text-lg font-semibold text-foreground">
-							{sessionTitle}
-						</Text>
-						<Text className="mt-1 text-sm text-muted-foreground">
-							Updated {formatUpdatedAt(item.updatedAt)}
-						</Text>
-					</Pressable>
-				);
-			}}
-		/>
+					return (
+						<Pressable
+							className="p-2"
+							onPress={() => router.push(`/chat/${item.id}`)}
+						>
+							<Text className="text-lg font-semibold text-foreground">
+								{sessionTitle}
+							</Text>
+							<Text className="mt-1 text-sm text-muted-foreground">
+								{formatDateOnly(item.createdAt)}
+							</Text>
+						</Pressable>
+					);
+				}}
+			/>
+		</View>
 	);
 }
 
 export default function HomePage() {
 	const { isLoaded, isSignedIn } = useAuth();
-	const { user } = useUser();
+	const queryClient = useQueryClient();
+	const [search, setSearch] = useState("");
+
+	const createSession = useMutation({
+		...trpc.session.create.mutationOptions(),
+		onSuccess: (res) => {
+			// Optimistically refresh the list
+			void queryClient.invalidateQueries({
+				queryKey: trpc.session.list.queryOptions({ limit: LIMIT }).queryKey,
+			});
+			router.push(`/chat/${res.id}`);
+		},
+	});
 
 	if (!isLoaded) {
 		return (
 			<SafeAreaView className="bg-background">
-				<Stack.Screen options={{ title: "Chat" }} />
+				<Stack.Screen options={{ title: "Chats" }} />
 				<View className="h-full w-full items-center justify-center bg-background">
 					<ActivityIndicator color="#808080" />
 				</View>
@@ -134,19 +192,36 @@ export default function HomePage() {
 	}
 
 	return (
-		<SafeAreaView className="bg-background">
-			<Stack.Screen options={{ title: "Chat" }} />
-			<View className="gap-6 bg-background p-4">
-				<View className="items-center gap-2">
-					<Text className="text-5xl font-bold text-foreground">
-						Lightfast <Text className="text-primary">Chat</Text>
-					</Text>
-					<Text className="text-center text-sm text-muted-foreground">
-						{user?.emailAddresses[0]?.emailAddress ?? ""}
-					</Text>
-					<SignOutButton className="mt-2 w-full rounded-md bg-accent px-4 py-3" />
+		<SafeAreaView className="bg-background flex-1">
+			<Stack.Screen options={{ title: "Chats" }} />
+			<View className="flex-1 gap-4 bg-background p-4">
+				{/* Header */}
+				<View className="mb-1 w-full flex-row items-center justify-between">
+					<Text className="text-2xl font-bold text-foreground">Chats</Text>
+					<Pressable
+						accessibilityRole="button"
+						onPress={() => {
+							const id = randomUUID();
+							createSession.mutate({ id });
+						}}
+						className="p-1"
+					>
+						<AppIcons.MessageCirclePlus color="#fff" />
+					</Pressable>
 				</View>
-				<SessionsList />
+
+				{/* Search bar with leading icon (center aligned) */}
+				<View className="h-12 flex-row items-center rounded-md border border-input bg-background px-3">
+					<AppIcons.Search color="hsl(0 0% 60%)" />
+					<Input
+						placeholder="Search Chat"
+						value={search}
+						onChangeText={setSearch}
+						className="h-12 flex-1 border-0 bg-transparent px-0 pl-2 rounded-none"
+					/>
+				</View>
+
+				<SessionsList search={search} />
 			</View>
 		</SafeAreaView>
 	);
