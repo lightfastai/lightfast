@@ -23,7 +23,7 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { toast } from "@repo/ui/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { ClerkPlanKey } from "~/lib/billing/types";
+import { ClerkPlanKey } from "@repo/chat-billing";
 import { useTRPC } from "@repo/chat-trpc/react";
 import { useBillingData } from "~/hooks/use-billing-data";
 

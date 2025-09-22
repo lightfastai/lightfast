@@ -9,7 +9,7 @@ import { useTRPC } from "@repo/chat-trpc/react";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
-import { MessageType } from "~/lib/billing/types";
+import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
 
 interface ExistingSessionChatProps {

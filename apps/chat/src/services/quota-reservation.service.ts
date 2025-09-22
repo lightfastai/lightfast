@@ -8,7 +8,7 @@ import {
   releaseQuotaReservation,
 } from "@repo/chat-api-services/quota-reservation";
 
-import type { MessageType } from "~/lib/billing/types";
+import type { MessageType } from "@repo/chat-billing";
 import { getMessageType } from "~/lib/billing/message-utils";
 
 function resolveMessageType(modelId: string): MessageType {

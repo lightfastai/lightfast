@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./pricing": {
+      "types": "./dist/pricing.d.ts",
+      "default": "./src/pricing.ts"
     }
   },
   "license": "MIT",

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ClerkPlanKey } from "~/lib/billing/types";
+import { ClerkPlanKey } from "@repo/chat-billing";
 import { PlanHeaderSection } from "./plan-header-section";
 import { PaymentMethodSection } from "./payment-method-section";
 import { PaymentHistorySection } from "./payment-history-section";

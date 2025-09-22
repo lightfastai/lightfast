@@ -10,7 +10,7 @@ import {
 	CardTitle,
 } from "@repo/ui/components/ui/card";
 import { CreditCard } from "lucide-react";
-import { ClerkPlanKey } from "~/lib/billing/types";
+import { ClerkPlanKey } from "@repo/chat-billing";
 import { useBillingData } from "~/hooks/use-billing-data";
 import { UpdatePaymentMethodDialog } from "./update-payment-method-dialog";
 

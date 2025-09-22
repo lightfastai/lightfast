@@ -7,7 +7,7 @@ import {
   UsageLimitExceededError,
 } from "@repo/chat-api-services/usage";
 
-import type { MessageType } from "~/lib/billing/types";
+import type { MessageType } from "@repo/chat-billing";
 import { getMessageType } from "~/lib/billing/message-utils";
 
 export { getCurrentPeriod, UsageLimitExceededError };
