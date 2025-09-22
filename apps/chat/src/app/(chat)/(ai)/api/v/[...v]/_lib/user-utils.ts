@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { ClerkPlanKey, BILLING_LIMITS, hasClerkPlan } from "~/lib/billing/types";
-import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt, buildSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
+import { buildSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
 import type { c010Tools } from "./tools";
 
 /**
