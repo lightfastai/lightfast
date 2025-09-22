@@ -19,9 +19,9 @@ const products = [
 ];
 
 export function DeveloperPlatformLanding() {
-	return (
-		<div className="container mx-auto px-4 py-16">
-			<div className="max-w-6xl mx-auto">
+    return (
+        <div className="mx-auto max-w-4xl px-4 py-16">
+            <div className="mx-auto">
 				{/* Header */}
 				<div className="text-left">
 					<h1 className="text-3xl font-semibold tracking-tight mb-6">
@@ -30,7 +30,7 @@ export function DeveloperPlatformLanding() {
 				</div>
 
 				{/* Main Content Grid */}
-				<div className="grid bg-muted/20 rounded-xl p-6 -mx-6 lg:grid-cols-2 gap-12 items-start mb-20">
+                <div className="grid bg-muted/20 rounded-xl p-6 lg:grid-cols-2 gap-12 items-start mb-20">
 					{/* Left Column - Description */}
 					<div>
 						<h2 className="text-sm font-semibold mb-6">Developer quickstart</h2>
@@ -87,4 +87,3 @@ export function DeveloperPlatformLanding() {
 		</div>
 	);
 }
-
