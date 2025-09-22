@@ -32,6 +32,8 @@ export interface SystemPromptOptions {
 	includeCitations: boolean;
 	/** Whether to include code formatting instructions */
 	includeCodeFormatting?: boolean;
+	/** Whether web search is actually enabled for this request */
+	webSearchEnabled?: boolean;
 	/** Custom base prompt to override default */
 	basePrompt?: string;
 }
@@ -44,21 +46,28 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
 		isAnonymous,
 		includeCitations,
 		includeCodeFormatting = true,
-		basePrompt = "You are a helpful AI assistant with access to web search capabilities."
+		webSearchEnabled = false,
+		basePrompt = "You are a helpful AI assistant."
 	} = options;
 
     let prompt = `${basePrompt}\n\n${CORE_BEHAVIOR_SECTION}\n\n${SECURITY_GUIDELINES_SECTION}`;
+
+    // Explicitly communicate web-search availability to avoid model hallucinating capabilities
+    if (webSearchEnabled) {
+        prompt += `\n\nCAPABILITIES:\n- You may use web search when needed to verify current facts or fetch recent information.\n- Prefer your internal knowledge first; only search when the user asks for current events, pricing, or when confidence is low.`;
+    } else {
+        prompt += `\n\nCAPABILITIES:\n- Do not claim you can browse the web or use external search tools.\n- Answer from your internal knowledge and context only.`;
+    }
 
 	if (isAnonymous) {
 		// Anonymous users: no artifact capabilities + length constraints
 		prompt += `
 
 You can help users with:
-- Answering questions using web search when needed
 - Providing information and explanations
 - General assistance and conversation
 
-IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses and using web search when additional information is needed.
+IMPORTANT: You do not have the ability to create code artifacts, diagrams, or documents. Focus on providing helpful text-based responses. ${webSearchEnabled ? "You may use web search when appropriate." : "Do not use or mention web search."}
 
 LENGTH GUIDELINES (STRICT):
 - Keep the entire reply within 120 words (or ~800 characters).

@@ -277,7 +277,10 @@ const handler = async (
       billing.plan,
       requestState.webSearchEnabled,
     );
-    const systemPrompt = createSystemPromptForUser(authState.isAnonymous);
+    const systemPrompt = createSystemPromptForUser(
+      authState.isAnonymous,
+      requestState.webSearchEnabled,
+    );
 
     console.log(
       `[Chat API] ${

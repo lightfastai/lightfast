@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { ClerkPlanKey, BILLING_LIMITS, hasClerkPlan } from "~/lib/billing/types";
-import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
+import { buildAnonymousSystemPrompt, buildAuthenticatedSystemPrompt, buildSystemPrompt } from "~/ai/prompts/builders/system-prompt-builder";
 import type { c010Tools } from "./tools";
 
 /**
@@ -41,8 +41,12 @@ export const getActiveToolsForUser = (isAnonymous: boolean, userPlan: ClerkPlanK
 };
 
 // Create conditional system prompts based on authentication status using centralized builders
-export const createSystemPromptForUser = (isAnonymous: boolean): string => {
-	return isAnonymous 
-		? buildAnonymousSystemPrompt(true) 
-		: buildAuthenticatedSystemPrompt(true);
+export const createSystemPromptForUser = (isAnonymous: boolean, webSearchEnabled: boolean): string => {
+    // Use the generic builder to thread webSearchEnabled without changing eval call sites elsewhere
+    return buildSystemPrompt({
+        isAnonymous,
+        includeCitations: true,
+        includeCodeFormatting: !isAnonymous ? false : true,
+        webSearchEnabled,
+    });
 };
