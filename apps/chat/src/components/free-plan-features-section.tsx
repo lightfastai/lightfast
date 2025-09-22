@@ -7,7 +7,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
 import { Check, Zap } from "lucide-react";
-import { ClerkPlanKey } from "~/lib/billing/types";
+import { ClerkPlanKey } from "@repo/chat-billing";
 
 interface FreePlanFeaturesSectionProps {
 	currentPlan: ClerkPlanKey;

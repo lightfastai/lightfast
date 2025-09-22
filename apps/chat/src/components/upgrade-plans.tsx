@@ -15,10 +15,10 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import {
 	getAllPlanPricing,
 	getPricingForInterval,
-} from "~/lib/billing/pricing";
-import type { PlanPricing } from "~/lib/billing/pricing";
-import { ClerkPlanKey } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
+} from "@repo/chat-billing/pricing";
+import type { PlanPricing } from "@repo/chat-billing/pricing";
+import { ClerkPlanKey } from "@repo/chat-billing";
+import type { BillingInterval } from "@repo/chat-billing";
 import { SignedIn, ClerkLoaded } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

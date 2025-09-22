@@ -6,7 +6,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@repo/ui/components/ui/button";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { useClerk } from "@clerk/nextjs";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

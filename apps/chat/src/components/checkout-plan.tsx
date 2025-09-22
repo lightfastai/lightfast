@@ -19,9 +19,9 @@ import {
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { ArrowLeft, CreditCard, Shield, Zap } from "lucide-react";
-import { ClerkPlanKey, getClerkPlanId } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
-import { getPricingForInterval, getCheckoutFeatures } from "~/lib/billing/pricing";
+import { ClerkPlanKey, getClerkPlanId } from "@repo/chat-billing";
+import type { BillingInterval } from "@repo/chat-billing";
+import { getPricingForInterval, getCheckoutFeatures } from "@repo/chat-billing/pricing";
 import { useBillingData } from "~/hooks/use-billing-data";
 
 interface CheckoutPlanProps {
@@ -448,4 +448,3 @@ function SubscriptionCheck({
 		</div>
 	);
 }
-

@@ -12,9 +12,9 @@ import {
 	Settings,
 	MessageCircle
 } from "lucide-react";
-import { ClerkPlanKey, BILLING_LIMITS } from "~/lib/billing/types";
-import type { BillingInterval } from "~/lib/billing/types";
-import { getPlanPricing, getPricingForInterval } from "~/lib/billing/pricing";
+import { ClerkPlanKey, BILLING_LIMITS } from "@repo/chat-billing";
+import type { BillingInterval } from "@repo/chat-billing";
+import { getPlanPricing, getPricingForInterval } from "@repo/chat-billing/pricing";
 
 export function BillingSuccess() {
 	const searchParams = useSearchParams();

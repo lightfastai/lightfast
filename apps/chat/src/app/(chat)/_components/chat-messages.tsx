@@ -5,7 +5,7 @@ import { Fragment, memo, useMemo, useRef, useEffect, useCallback, useState } fro
 import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
-import type { LightfastAppChatUIMessage } from "~/ai/lightfast-app-chat-ui-messages";
+import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
 import {
 	parseResponseMetadata,
@@ -34,7 +34,7 @@ import {
 	isReasoningPart,
 	isTextPart,
 	isToolPart,
-} from "~/ai/lightfast-app-chat-ui-messages";
+} from "@repo/chat-ai-types";
 import {
 	Conversation,
 	ConversationContent,

@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { BillingManagement } from "~/components/billing-management";
 import { auth } from "@clerk/nextjs/server";
-import { ClerkPlanKey, hasClerkPlan } from "~/lib/billing/types";
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { ClerkPlanKey, hasClerkPlan } from "@repo/chat-billing";
+import { HydrateClient, prefetch, trpc } from "@repo/chat-trpc/server";
 import { BillingContentSkeleton } from "~/components/billing-content-skeleton";
 
 // Force dynamic rendering due to auth usage

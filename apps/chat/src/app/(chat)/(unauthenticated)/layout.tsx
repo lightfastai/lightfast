@@ -1,7 +1,7 @@
 import { UnauthenticatedHeader } from "~/components/layouts/unauthenticated-header";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
-import { TRPCReactProvider } from "~/trpc/react";
-import { HydrateClient } from "~/trpc/server";
+import { TRPCReactProvider } from "@repo/chat-trpc/react";
+import { HydrateClient } from "@repo/chat-trpc/server";
 
 interface UnauthenticatedLayoutProps {
   children: React.ReactNode;

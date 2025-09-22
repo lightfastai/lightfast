@@ -5,8 +5,8 @@ import * as React from "react";
 import Link from "next/link";
 import { Crown, CreditCard, Calendar } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { ClerkPlanKey } from "~/lib/billing/types";
-import { getPlanPricing } from "~/lib/billing/pricing";
+import { ClerkPlanKey } from "@repo/chat-billing";
+import { getPlanPricing } from "@repo/chat-billing/pricing";
 import { useBillingData } from "~/hooks/use-billing-data";
 
 interface PlanHeaderSectionProps {

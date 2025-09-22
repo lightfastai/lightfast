@@ -1,0 +1,10 @@
+{
+  "extends": "../../internal/typescript/internal-package.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}

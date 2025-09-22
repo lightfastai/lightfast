@@ -9,12 +9,12 @@ import {
 	GRACE_PERIOD_DAYS,
 	getClerkPlanId,
 	hasClerkPlan,
-} from "@api/chat/lib/billing/types";
+} from "@repo/chat-billing";
 import type {
 	BillingInterval,
 	BillingPlanLimits,
 	BillingError,
-} from "@api/chat/lib/billing/types";
+} from "@repo/chat-billing";
 import { getVisibleModels } from "~/ai/providers";
 import type { ModelId } from "~/ai/providers";
 

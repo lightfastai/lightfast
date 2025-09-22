@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { usePaymentAttempts } from "@clerk/nextjs/experimental";
-import { useTRPC } from "~/trpc/react";
+import { useTRPC } from "@repo/chat-trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function useBillingData() {

@@ -10,8 +10,8 @@ import {
 	RotateCcw,
 	MessageCircle,
 } from "lucide-react";
-import { ClerkPlanKey } from "~/lib/billing/types";
-import { getPlanPricing } from "~/lib/billing/pricing";
+import { ClerkPlanKey } from "@repo/chat-billing";
+import { getPlanPricing } from "@repo/chat-billing/pricing";
 
 export function BillingCancelled() {
 	const searchParams = useSearchParams();
@@ -161,4 +161,3 @@ export function BillingCancelled() {
 		</div>
 	);
 }
-

@@ -1,7 +1,3 @@
-/**
- * Shared billing types and constants used by both the chat API and web app.
- */
-
 export enum MessageType {
   NON_PREMIUM = "non_premium",
   PREMIUM = "premium",
@@ -16,7 +12,12 @@ export enum ClerkPlanKey {
 
 export type DeploymentStage = "development" | "preview" | "production";
 
-const CLERK_PLAN_IDS: Record<ClerkPlanKey, { production: string; nonProduction: string }> = {
+type PlanMapping = {
+  production: string;
+  nonProduction: string;
+};
+
+const CLERK_PLAN_IDS: Record<ClerkPlanKey, PlanMapping> = {
   [ClerkPlanKey.FREE_TIER]: {
     production: "cplan_free",
     nonProduction: "cplan_free",
@@ -49,6 +50,7 @@ export function getClerkPlanId(
 ): string {
   const stage = resolveDeploymentStage(options?.environment);
   const mapping = CLERK_PLAN_IDS[planKey];
+
   if (!mapping) {
     throw new Error(`Unknown plan key: ${String(planKey)}`);
   }
@@ -78,6 +80,12 @@ export const BILLING_LIMITS: Record<ClerkPlanKey, BillingPlanLimits> = {
   },
 } as const;
 
+export function getMessageLimitsForPlan(
+  planKey: ClerkPlanKey,
+): BillingPlanLimits {
+  return BILLING_LIMITS[planKey] ?? BILLING_LIMITS[ClerkPlanKey.FREE_TIER];
+}
+
 export enum BillingErrorCode {
   USAGE_LIMIT_EXCEEDED = "USAGE_LIMIT_EXCEEDED",
   MODEL_NOT_ALLOWED = "MODEL_NOT_ALLOWED",
@@ -89,7 +97,10 @@ export interface BillingError extends Error {
   details?: Record<string, unknown>;
 }
 
-export class UsageLimitExceededError extends Error implements BillingError {
+export class UsageLimitExceededError
+  extends Error
+  implements BillingError
+{
   code = BillingErrorCode.USAGE_LIMIT_EXCEEDED as const;
 
   constructor(message: string, public details?: Record<string, unknown>) {
