@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -10,7 +10,7 @@ import {
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { LegendList } from "@legendapp/list";
 import { useQuery } from "@tanstack/react-query";
-import { Stack, useRouter } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SignOutButton } from "~/components/sign-out-button";
@@ -115,15 +115,8 @@ function SessionsList() {
 }
 
 export default function HomePage() {
-	const router = useRouter();
 	const { isLoaded, isSignedIn } = useAuth();
 	const { user } = useUser();
-
-	useEffect(() => {
-		if (isLoaded && !isSignedIn) {
-			void router.replace("/(auth)/sign-in");
-		}
-	}, [isLoaded, isSignedIn, router]);
 
 	if (!isLoaded) {
 		return (
@@ -137,7 +130,7 @@ export default function HomePage() {
 	}
 
 	if (!isSignedIn) {
-		return null;
+		return <Redirect href="/(auth)/sign-in" />;
 	}
 
 	return (

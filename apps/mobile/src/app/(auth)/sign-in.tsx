@@ -1,41 +1,49 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { ComponentType } from "react";
 import {
   Alert,
+  ActivityIndicator,
   Linking,
   SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 import { Button, ButtonText } from "~/components/ui/buttons";
 import { Input } from "~/components/ui/input";
+import { GithubIcon, GoogleIcon, LogoIcon } from "~/components/ui/icons";
+import type { SvgProps } from "react-native-svg";
 
-const TERMS_URL = "https://lightfast.ai/terms";
-const PRIVACY_URL = "https://lightfast.ai/privacy";
+const TERMS_URL = "https://lightfast.ai/legal/terms";
+const PRIVACY_URL = "https://lightfast.ai/legal/privacy";
 
 const EMAIL_PLACEHOLDER = "name@company.com";
 const CODE_PLACEHOLDER = "Enter the 6-digit code";
-const PASSWORD_PLACEHOLDER = "Your password";
-
 const enum Step {
   Email = "email",
   Code = "code",
-  Password = "password",
 }
 
 type OAuthProvider = "google" | "github";
 
+interface MinimalOAuthStatus {
+  createdSessionId?: string | null;
+  status?: string | null;
+}
+
 interface MinimalOAuthResult {
   createdSessionId?: string | null;
   existingSessionId?: string | null;
-  signIn?: { createdSessionId?: string | null } | null;
-  signUp?: { createdSessionId?: string | null } | null;
+  signIn?: MinimalOAuthStatus | null;
+  signUp?: MinimalOAuthStatus | null;
   setActive?: (params: { session: string }) => Promise<void>;
+  authSessionResult?: { type?: string | null } | null;
 }
 
 interface ClerkErrorPayload {
@@ -62,24 +70,31 @@ export default function SignInScreen() {
   const { startOAuthFlow: startGithubOAuth } = useOAuth({
     strategy: "oauth_github",
   });
+  const { height } = useWindowDimensions();
 
   const [step, setStep] = useState<Step>(Step.Email);
   const [emailAddress, setEmailAddress] = useState("");
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
 
+  // Center the form vertically within available space below the logo
+
   const resetState = () => {
     setStep(Step.Email);
     setFormError(null);
     setEmailAddress("");
-    setIdentifier("");
-    setPassword("");
     setCode("");
   };
+
+  // Auto-submit when 6 digits are entered (align with web auth UI)
+  useEffect(() => {
+    if (step === Step.Code && code.length === 6 && !submitting) {
+      void handleCodeSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, code, submitting]);
 
   const handleOAuth = useCallback(
     (provider: OAuthProvider) =>
@@ -89,7 +104,17 @@ export default function SignInScreen() {
 
         try {
           setOauthLoading(provider);
-          const result = (await starter()) as MinimalOAuthResult;
+          const result = (await starter()) as MinimalOAuthResult | null;
+
+          if (!result) {
+            return;
+          }
+
+          // If the user cancelled/dismissed the provider sheet, bail quietly
+          const authType = result.authSessionResult?.type;
+          if (authType && authType !== "success") {
+            return;
+          }
 
           let sessionId: string | null = null;
           if (
@@ -123,10 +148,9 @@ export default function SignInScreen() {
             console.warn("OAuth flow returned a session without setActive");
           }
 
-          Alert.alert(
-            "Check your email",
-            "Complete the verification steps to finish signing in.",
-          );
+          // If we reach here without a session, either the user canceled
+          // or the provider flow didn't complete. Avoid noisy alerts.
+          // Users can try again or use another method.
         } catch (err: unknown) {
           console.error("OAuth sign-in failed", err);
           Alert.alert("Unable to sign in", "Please try again.");
@@ -156,7 +180,7 @@ export default function SignInScreen() {
 
       if (!emailFactor?.emailAddressId) {
         setFormError(
-          "This email cannot receive a verification code. Try signing in with your password instead.",
+          "This email cannot receive a verification code right now. Please try again later.",
         );
         return;
       }
@@ -207,37 +231,6 @@ export default function SignInScreen() {
     }
   };
 
-  const handlePasswordSubmit = async () => {
-    if (!isLoaded) return;
-    if (!identifier || !password) {
-      setFormError("Enter both your email (or username) and password.");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setFormError(null);
-
-      const result = await signIn.create({
-        identifier,
-        password,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/");
-        return;
-      }
-
-      setFormError("Sign in incomplete. Try another method.");
-    } catch (err) {
-      const message = extractClerkError(err);
-      setFormError(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleResendCode = async () => {
     if (!isLoaded) return;
 
@@ -264,19 +257,22 @@ export default function SignInScreen() {
   const renderOAuthButton = (
     provider: OAuthProvider,
     label: string,
-    badge: string,
+    IconComponent: ComponentType<SvgProps>,
   ) => (
     <Button
       key={provider}
-      variant="inverse"
-      className="gap-3"
+      variant="outline"
+      className="flex-row items-center gap-3"
       onPress={handleOAuth(provider)}
       disabled={oauthLoading !== null}
     >
       <View className="h-6 w-6 items-center justify-center rounded-full bg-background">
-        <Text className="text-xs font-semibold text-primary">{badge}</Text>
+        <IconComponent
+          width={16}
+          height={16}
+        />
       </View>
-      <ButtonText variant="inverse" className="text-base">
+      <ButtonText variant="outline" className="text-base">
         {oauthLoading === provider
           ? `Contacting ${provider === "google" ? "Google" : "GitHub"}…`
           : label}
@@ -290,8 +286,6 @@ export default function SignInScreen() {
     });
   };
 
-  const showHeader = step === Step.Email || step === Step.Password;
-
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
@@ -300,45 +294,36 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View className="flex-1 justify-between gap-10">
-          <View className="items-center gap-6 pt-12">
-            {showHeader ? (
-              <View className="items-center gap-2">
-                <Text className="text-3xl font-semibold text-primary">Lightfast</Text>
-                <Text className="text-center text-2xl font-semibold text-foreground">
-                  Do your best work with Lightfast
-                </Text>
-                <Text className="text-center text-sm text-muted-foreground">
-                  Continue with your favourite provider or sign in with email.
-                </Text>
-              </View>
-            ) : (
-              <View className="items-center gap-2">
-                <Text className="text-2xl font-semibold text-foreground">
-                  Enter the code we sent to {emailAddress}
-                </Text>
-                <Text className="text-sm text-muted-foreground">
-                  Check your inbox (and spam) for a 6-digit code.
-                </Text>
-              </View>
-            )}
+          <View className="flex-1 pt-2">
+            <View className="items-center">
+              <LogoIcon
+                color="hsl(0, 0%, 71%)"
+                width={120}
+                height={16}
+              />
+            </View>
 
-            {formError ? (
-              <View className="w-full gap-4">
-                <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-                  <Text className="text-sm text-destructive-foreground">
-                    {formError}
-                  </Text>
+            <View className="flex-1 w-full justify-center">
+              {formError && step === Step.Email ? (
+                <View className="w-full gap-4">
+                  <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                    <Text className="text-sm text-destructive-foreground">
+                      {formError}
+                    </Text>
+                  </View>
+                  <Button variant="outline" onPress={resetState}>
+                    <ButtonText variant="outline">Try again</ButtonText>
+                  </Button>
                 </View>
-                <Button variant="outline" onPress={resetState}>
-                  <ButtonText variant="outline">Try again</ButtonText>
-                </Button>
-              </View>
-            ) : null}
+              ) : null}
 
-            {!formError && step === Step.Email ? (
-              <View className="w-full gap-4">
-                <View className="gap-2">
-                  <Text className="text-sm font-medium text-foreground">Email</Text>
+              {!formError && step === Step.Email ? (
+                <View className="w-full gap-5">
+                  <View className="items-center">
+                    <Text className="text-center text-2xl font-semibold text-foreground">
+                      Log in to Lightfast
+                    </Text>
+                  </View>
                   <Input
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -348,147 +333,127 @@ export default function SignInScreen() {
                     onChangeText={setEmailAddress}
                     textContentType="emailAddress"
                     returnKeyType="next"
+                    className="bg-background"
                   />
+
+                  <Button
+                    onPress={handleEmailSubmit}
+                    disabled={submitting}
+                  >
+                    <ButtonText className="text-base">
+                      {submitting ? "Sending code…" : "Continue with Email"}
+                    </ButtonText>
+                  </Button>
+
+                  <View className="flex-row items-center gap-4">
+                    <View className="h-px flex-1 bg-border" />
+                    <Text className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Or
+                    </Text>
+                    <View className="h-px flex-1 bg-border" />
+                  </View>
+
+                  <View className="gap-3">
+                    {renderOAuthButton("google", "Continue with Google", GoogleIcon)}
+                    {renderOAuthButton("github", "Continue with GitHub", GithubIcon)}
+                  </View>
+
+                  <View className="pt-4">
+                    <Text className="text-center text-sm text-muted-foreground">
+                      By continuing, you agree to the Lightfast{' '}
+                      <Text
+                        className="underline text-primary"
+                        onPress={() => openLink(TERMS_URL)}
+                      >
+                        Terms of Service
+                      </Text>
+                      {' '}and{' '}
+                      <Text
+                        className="underline text-primary"
+                        onPress={() => openLink(PRIVACY_URL)}
+                      >
+                        Privacy Policy
+                      </Text>
+                      .
+                    </Text>
+                  </View>
                 </View>
+              ) : null}
+              {step === Step.Code ? (
+                <View className="w-full gap-4">
+                  <View className="items-center gap-2">
+                    <Text className="text-center text-2xl font-semibold text-foreground">
+                      Verification
+                    </Text>
+                    <Text className="text-center text-sm text-muted-foreground">
+                      We sent a verification code to <Text className="font-medium">{emailAddress}</Text>
+                    </Text>
+                  </View>
+                  <View className="gap-2">
+                    <Text className="text-sm font-medium text-foreground">
+                      Verification code
+                    </Text>
+                    <Input
+                      autoCapitalize="none"
+                      keyboardType="number-pad"
+                      placeholder={CODE_PLACEHOLDER}
+                      value={code}
+                      onChangeText={setCode}
+                      className="tracking-[0.3em] text-center"
+                      textContentType="oneTimeCode"
+                      returnKeyType="done"
+                      maxLength={6}
+                      invalid={!!formError}
+                    />
+                  </View>
 
-                <Button
-                  onPress={handleEmailSubmit}
-                  disabled={submitting}
-                >
-                  <ButtonText className="text-base">
-                    {submitting ? "Sending code…" : "Continue with Email"}
-                  </ButtonText>
-                </Button>
+                  {/* Inline error (matches web auth inline error behavior) */}
+                  {formError ? (
+                    <Text className="text-sm text-destructive-foreground">
+                      {formError}
+                    </Text>
+                  ) : null}
 
-                <Button
-                  variant="outline"
-                  onPress={() => {
-                    setFormError(null);
-                    setIdentifier(emailAddress);
-                    setStep(Step.Password);
-                  }}
-                >
-                  <ButtonText variant="outline" className="text-base">
-                    Sign in with Password
-                  </ButtonText>
-                </Button>
+                  {/* Verifying indicator */}
+                  {submitting ? (
+                    <View className="flex-row items-center justify-center gap-2">
+                      <ActivityIndicator size="small" />
+                      <Text className="text-sm text-muted-foreground">Verifying…</Text>
+                    </View>
+                  ) : null}
 
-                <View className="flex-row items-center gap-4">
-                  <View className="h-px flex-1 bg-border" />
-                  <Text className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Or
-                  </Text>
-                  <View className="h-px flex-1 bg-border" />
+                  {/* Back link-style button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => {
+                      setFormError(null);
+                      setCode("");
+                      setStep(Step.Email);
+                    }}
+                    disabled={submitting}
+                  >
+                    <ButtonText variant="ghost" size="sm" className="text-primary">
+                      ← Back
+                    </ButtonText>
+                  </Button>
+
+                  {/* Resend link-style with helper text */}
+                  <View className="flex-row justify-center items-center gap-1">
+                    <Text className="text-sm text-muted-foreground">Didn't receive your code?</Text>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onPress={handleResendCode}
+                      disabled={submitting}
+                      fullWidth={false}
+                      className="px-0"
+                    >
+                      <ButtonText variant="ghost" size="sm" className="text-primary">Resend</ButtonText>
+                    </Button>
+                  </View>
                 </View>
-
-                <View className="gap-3">
-                  {renderOAuthButton("google", "Continue with Google", "G")}
-                  {renderOAuthButton("github", "Continue with GitHub", "GH")}
-                </View>
-              </View>
-            ) : null}
-
-            {!formError && step === Step.Password ? (
-              <View className="w-full gap-4">
-                <View className="gap-2">
-                  <Text className="text-sm font-medium text-foreground">
-                    Email or username
-                  </Text>
-                  <Input
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    placeholder={EMAIL_PLACEHOLDER}
-                    value={identifier}
-                    onChangeText={setIdentifier}
-                    textContentType="username"
-                    returnKeyType="next"
-                  />
-                </View>
-                <View className="gap-2">
-                  <Text className="text-sm font-medium text-foreground">Password</Text>
-                  <Input
-                    placeholder={PASSWORD_PLACEHOLDER}
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    textContentType="password"
-                    returnKeyType="done"
-                  />
-                </View>
-
-                <Button onPress={handlePasswordSubmit} disabled={submitting}>
-                  <ButtonText className="text-base">
-                    {submitting ? "Signing in…" : "Sign in"}
-                  </ButtonText>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onPress={() => {
-                    setFormError(null);
-                    setPassword("");
-                    setStep(Step.Email);
-                  }}
-                >
-                  <ButtonText variant="outline">← Back to other options</ButtonText>
-                </Button>
-              </View>
-            ) : null}
-
-            {!formError && step === Step.Code ? (
-              <View className="w-full gap-4">
-                <View className="gap-2">
-                  <Text className="text-sm font-medium text-foreground">
-                    Verification code
-                  </Text>
-                  <Input
-                    autoCapitalize="none"
-                    keyboardType="number-pad"
-                    placeholder={CODE_PLACEHOLDER}
-                    value={code}
-                    onChangeText={setCode}
-                    className="tracking-[0.3em] text-center"
-                    textContentType="oneTimeCode"
-                    returnKeyType="done"
-                    maxLength={6}
-                  />
-                </View>
-
-                <Button onPress={handleCodeSubmit} disabled={submitting}>
-                  <ButtonText className="text-base">
-                    {submitting ? "Verifying…" : "Verify and continue"}
-                  </ButtonText>
-                </Button>
-
-                <Button variant="outline" onPress={handleResendCode}>
-                  <ButtonText variant="outline">Resend code</ButtonText>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onPress={() => {
-                    setFormError(null);
-                    setCode("");
-                    setStep(Step.Email);
-                  }}
-                >
-                  <ButtonText variant="outline">← Back to other options</ButtonText>
-                </Button>
-              </View>
-            ) : null}
-          </View>
-
-          <View className="gap-4 pb-10">
-            <Text className="text-center text-xs text-muted-foreground">
-              By continuing, you agree to the Lightfast Terms of Service and Privacy Policy.
-            </Text>
-            <View className="flex-row items-center justify-center gap-4">
-              <TouchableOpacity onPress={() => openLink(TERMS_URL)}>
-                <Text className="text-xs text-primary">Terms</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openLink(PRIVACY_URL)}>
-                <Text className="text-xs text-primary">Privacy</Text>
-              </TouchableOpacity>
+              ) : null}
             </View>
           </View>
         </View>

@@ -9,7 +9,7 @@ function cn(...classes: ClassValue[]) {
 }
 
 const BASE_CLASS =
-  "w-full rounded-md border border-input bg-input-bg px-4 py-3 text-base text-foreground";
+  "w-full rounded-md border border-input bg-background px-4 py-3 text-base text-foreground";
 const SIZE_CLASSNAMES = {
   default: "h-12",
   sm: "h-10 text-sm",
