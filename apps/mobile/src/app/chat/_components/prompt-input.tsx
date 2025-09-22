@@ -2,16 +2,32 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export function PromptInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
+interface PromptInputProps {
+  onSend: (text: string) => void | Promise<void>;
+  disabled?: boolean;
+  webSearchEnabled: boolean;
+  onToggleWebSearch: () => void;
+}
+
+export function PromptInput({
+  onSend,
+  disabled,
+  webSearchEnabled,
+  onToggleWebSearch,
+}: PromptInputProps) {
   const [input, setInput] = useState("");
-  const [searchEnabled, setSearchEnabled] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleSend = () => {
     if (disabled) return;
     const trimmed = input.trim();
     if (!trimmed) return;
-    onSend(trimmed);
+    const result = onSend(trimmed);
+    if (result instanceof Promise) {
+      void result.catch((error) => {
+        console.error("[PromptInput] send failed", error);
+      });
+    }
     setInput("");
   };
 
@@ -38,20 +54,20 @@ export function PromptInput({ onSend, disabled }: { onSend: (text: string) => vo
       {/* Toolbar actions */}
       <View
         className="flex-row items-center gap-3 px-4"
-        style={{ paddingBottom: (insets.bottom ?? 0) + 8, paddingTop: 4 }}
+        style={{ paddingBottom: insets.bottom + 8, paddingTop: 4 }}
       >
         <Pressable
           accessibilityRole="button"
-          onPress={() => setSearchEnabled((prev) => !prev)}
+          onPress={onToggleWebSearch}
           className={
-            searchEnabled
+            webSearchEnabled
               ? "rounded-full bg-primary px-4 py-2"
               : "rounded-full border border-border/60 px-4 py-2"
           }
         >
           <Text
             className={
-              searchEnabled ? "text-primary-foreground text-sm" : "text-muted-foreground text-sm"
+              webSearchEnabled ? "text-primary-foreground text-sm" : "text-muted-foreground text-sm"
             }
           >
             Search
