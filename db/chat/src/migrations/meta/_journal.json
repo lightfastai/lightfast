@@ -134,6 +134,13 @@
       "when": 1758282953174,
       "tag": "0018_hasty_temp_chats",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1758962026283,
+      "tag": "0019_easy_longshot",
+      "breakpoints": true
     }
   ]
 }

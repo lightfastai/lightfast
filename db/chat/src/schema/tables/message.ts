@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { datetime, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+import { datetime, index, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -66,7 +66,14 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull()
     .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
-});
+},
+  (table) => ({
+    sessionIdCreatedAtIdx: index("session_id_created_at_idx").on(
+      table.sessionId,
+      table.createdAt
+    ),
+  })
+);
 
 // Type exports for Message
 export type LightfastChatMessage = typeof LightfastChatMessage.$inferSelect;
