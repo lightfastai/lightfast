@@ -15,9 +15,13 @@
 		"build:playground": "turbo run build -F @lightfast/playground",
 		"build:chat": "turbo run build -F @lightfast/chat",
 		"build:docs": "turbo run build -F @lightfast/docs",
+		"build:mobile": "turbo run typecheck -F @lightfast/mobile",
 		"clean": "git clean -xdf node_modules .turbo .internal",
 		"clean:workspaces": "turbo run clean",
-		"dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/experimental --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth --filter=@lightfast/chat --filter=@lightfast/playground",
+		"db:migrate": "turbo -F @vendor/db migrate",
+		"db:migrate:generate": "turbo -F @vendor/db lightfast:migrate:generate",
+		"db:studio": "turbo -F @vendor/db lightfast:studio",
+		"dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/experimental --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth --filter=@lightfast/chat --filter=@lightfast/playground --filter=@lightfast/mobile",
 		"dev:www": "turbo watch dev -F @lightfast/www --continue",
 		"dev:cloud": "turbo watch dev -F @lightfast/cloud --continue",
 		"dev:auth": "turbo watch dev -F @lightfast/auth --continue",
@@ -26,6 +30,7 @@
 		"dev:chat": "turbo watch dev -F @lightfast/chat --continue",
 		"dev:docs": "turbo watch dev -F @lightfast/docs --continue",
 		"dev:cloud+playground": "turbo run dev --parallel --filter=@lightfast/playground --filter=@lightfast/cloud",
+		"dev:chat+mobile": "turbo run dev --parallel --filter=@lightfast/mobile --filter=@lightfast/chat",
 		"dev:cloud+playground+auth+docs": "turbo run dev --parallel --filter=@lightfast/playground --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth",
 		"dev:email": "turbo run dev:email -F @lightfast/www",
 		"brain": "turbo run eval",
@@ -33,7 +38,8 @@
 		"format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
 		"lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
 		"lint:fix": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
-		"lint:ws": "pnpm dlx sherif@latest",
+		"lint:ws": "pnpm dlx sherif@latest -p @lightfast/mobile -p apps/mobile",
+		"lint:ws:fix": "pnpm dlx sherif@latest --fix -p @lightfast/mobile -p apps/mobile",
 		"postinstall": "pnpm lint:ws",
 		"typecheck": "turbo run typecheck",
 		"ui": "pnpm --filter @repo/ui ui",
@@ -56,10 +62,10 @@
 	"prettier": "@repo/prettier-config",
 	"pnpm": {
 		"overrides": {
-			"react": "^19.1.1",
-			"react-dom": "^19.1.1",
-			"@types/react": "^19.1.11",
-			"@types/react-dom": "^19.1.8"
+			"react": "19.0.0",
+			"react-dom": "19.0.0",
+			"@types/react": "19.0.13",
+			"@types/react-dom": "19.0.5"
 		}
 	}
 }
