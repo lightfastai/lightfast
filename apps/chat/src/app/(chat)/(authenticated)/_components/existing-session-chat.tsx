@@ -16,6 +16,13 @@ import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
 import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
+import { Button } from "@repo/ui/components/ui/button";
+import { captureException } from "@sentry/nextjs";
+import {
+	getTRPCErrorMessage,
+	isNotFound,
+	isUnauthorized,
+} from "~/lib/trpc-errors";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -78,16 +85,48 @@ export function ExistingSessionChat({
 		gcTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
+		retry: 2,
 	});
 
 	if (isMessagesError) {
-		throw messagesError instanceof Error
-			? messagesError
-			: new Error(
-				typeof messagesError === "string"
-					? messagesError
-					: "Failed to load session messages",
-				);
+		if (isNotFound(messagesError)) {
+			notFound();
+		}
+
+		if (isUnauthorized(messagesError)) {
+			// Session expired or user lost access – surface graceful state.
+			return (
+				<div className="flex h-full items-center justify-center p-6">
+					<div className="max-w-sm text-center text-sm text-muted-foreground">
+						You no longer have access to this chat.
+					</div>
+				</div>
+			);
+		}
+
+		captureException(messagesError, {
+			tags: { component: "ExistingSessionChat", query: "message.list" },
+			extra: { sessionId },
+		});
+
+		const retry = () => {
+			void queryClient.invalidateQueries({
+				queryKey: messagesQueryOptions.queryKey,
+			});
+		};
+
+		return (
+			<div className="flex h-full items-center justify-center p-6">
+				<div className="flex max-w-sm flex-col items-center gap-3 text-center">
+					<p className="text-sm text-muted-foreground">
+						{getTRPCErrorMessage(messagesError)}
+					</p>
+					<Button size="sm" variant="outline" onClick={retry}>
+						Retry loading chat
+					</Button>
+				</div>
+			</div>
+		);
 	}
 
 	const messages = messagesData ?? [];
