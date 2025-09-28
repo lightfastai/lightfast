@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { notFound } from "next/navigation";
-import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
+import {
+	useQuery,
+	useQueryClient,
+	useSuspenseQueries,
+} from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
 import { useTRPC } from "@repo/chat-trpc/react";
@@ -11,6 +15,7 @@ import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
+import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -19,7 +24,7 @@ interface ExistingSessionChatProps {
 
 /**
  * Client component that loads existing session data and renders the chat interface.
- * With prefetched data from the server, this should render instantly.
+ * React Query handles fetching; cached conversations render instantly after the first load.
  */
 export function ExistingSessionChat({
 	sessionId,
@@ -32,27 +37,18 @@ export function ExistingSessionChat({
 	const { selectedModelId } = useModelSelection(true);
 
 	// Get query options for cache updates
-	const messagesQueryOptions = trpc.message.list.queryOptions({
-		sessionId,
-	});
+	const messagesQueryOptions = trpc.message.list.queryOptions({ sessionId });
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 	const sessionQueryOptions = trpc.session.getMetadata.queryOptions({ sessionId });
 
-	// Batch all queries together with suspense for better performance
-	const [{ data: user }, { data: messages }, { data: session }, { data: usageLimits }] = useSuspenseQueries({
+	// Batch lightweight queries together with suspense for instant hydration.
+	const [{ data: user }, { data: session }, { data: usageLimits }] = useSuspenseQueries({
 		queries: [
 			{
 				...trpc.user.getUser.queryOptions(),
 				staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
 				refetchOnMount: false, // Prevent blocking navigation
 				refetchOnWindowFocus: false, // Don't refetch on window focus
-			},
-			{
-				...messagesQueryOptions,
-				staleTime: 30 * 1000, // Consider data fresh for 30 seconds (we update via callbacks)
-				gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes for better navigation
-				refetchOnWindowFocus: false, // Don't refetch on focus since we update optimistically
-				refetchOnMount: false, // Don't refetch on mount to prevent blocking navigation
 			},
 			{
 				...sessionQueryOptions,
@@ -71,6 +67,35 @@ export function ExistingSessionChat({
 		],
 	});
 
+	const {
+		data: messagesData,
+		isPending: isMessagesPending,
+		isError: isMessagesError,
+		error: messagesError,
+	} = useQuery({
+		...messagesQueryOptions,
+		staleTime: 30 * 1000,
+		gcTime: 30 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
+	if (isMessagesError) {
+		throw messagesError instanceof Error
+			? messagesError
+			: new Error(
+				typeof messagesError === "string"
+					? messagesError
+					: "Failed to load session messages",
+				);
+	}
+
+	const messages = messagesData ?? [];
+
+	if (isMessagesPending && messages.length === 0) {
+		return <ChatLoadingSkeleton />;
+	}
+
 	// Redirect to not-found for temporary sessions - they shouldn't be directly accessible
 	useEffect(() => {
 		if (session.isTemporary) {
@@ -84,11 +109,15 @@ export function ExistingSessionChat({
 
 
 	// Convert database messages to UI format
-	const initialMessages: LightfastAppChatUIMessage[] = messages.map((msg) => ({
-		id: msg.id,
-		role: msg.role,
-		parts: msg.parts,
-	})) as LightfastAppChatUIMessage[];
+	const initialMessages = useMemo<LightfastAppChatUIMessage[]>(
+		() =>
+			messages.map((msg) => ({
+				id: msg.id,
+				role: msg.role,
+				parts: msg.parts,
+			})) as LightfastAppChatUIMessage[],
+		[messages],
+	);
 
 	// Session already includes activeStreamId now
 

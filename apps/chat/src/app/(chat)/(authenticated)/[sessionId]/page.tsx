@@ -13,9 +13,8 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	const { sessionId } = await params;
 	const agentId = "c010"; // Default agent ID
 
-	// Prefetch all the data needed by ExistingSessionChat
-	// Pages re-execute on navigation, ensuring fresh data
-	prefetch(trpc.message.list.queryOptions({ sessionId }));
+	// Prefetch lightweight session metadata only. Messages are fetched on the client to
+	// keep navigation responsive when conversations are large.
 	prefetch(trpc.session.getMetadata.queryOptions({ sessionId }));
 
 	return (
