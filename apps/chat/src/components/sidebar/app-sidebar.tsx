@@ -16,16 +16,18 @@ import { SidebarTriggerButton } from "./sidebar-trigger-button";
 import { NewChatButton } from "./new-chat-button";
 import { SearchButton } from "./search-button";
 import { ScrollAreaWithBorder } from "./scroll-area-with-border";
+import { SidebarNavigationProvider } from "./sidebar-navigation-context";
 
 // Main server component - renders static parts with reactive sessions list
 export function AppSidebar() {
 	return (
 		<TooltipProvider>
-			<Sidebar
-				variant="inset"
-				collapsible="icon"
-				className="p-0 border-r border-border/50 group/sidebar"
-			>
+			<SidebarNavigationProvider>
+				<Sidebar
+					variant="inset"
+					collapsible="icon"
+					className="p-0 border-r border-border/50 group/sidebar"
+				>
 				<SidebarHeader className="p-0 space-y-1">
 					{/* Trigger button group - aligned to top */}
 					<SidebarGroup>
@@ -73,7 +75,8 @@ export function AppSidebar() {
 				<div className="flex-1 relative group-data-[collapsible=icon]:block hidden">
 					<SidebarHoverExpand />
 				</div>
-			</Sidebar>
+				</Sidebar>
+			</SidebarNavigationProvider>
 		</TooltipProvider>
 	);
 }
