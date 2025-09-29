@@ -33,16 +33,16 @@ import {
   MESSAGE_PAGE_SIZE,
   MESSAGE_PAGE_STALE_TIME,
 } from "~/lib/messages/loading";
-import type {
-  MessageCursor,
-  MessagePage,
-} from "~/lib/messages/types";
+import type { ChatRouterOutputs } from "@api/chat";
 import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
 
 interface ExistingSessionChatProps {
   sessionId: string;
   agentId: string;
 }
+
+type MessagePage = ChatRouterOutputs["message"]["listInfinite"];
+type MessageCursor = NonNullable<MessagePage["nextCursor"]>;
 
 type MessagesInfiniteData = InfiniteData<MessagePage, MessageCursor | null>;
 

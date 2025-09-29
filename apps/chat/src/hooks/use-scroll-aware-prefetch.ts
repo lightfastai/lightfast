@@ -8,12 +8,15 @@ import {
   MESSAGE_PAGE_SIZE,
   MESSAGE_PAGE_STALE_TIME,
 } from "~/lib/messages/loading";
-import type { MessageCursor, MessagePage } from "~/lib/messages/types";
+import type { ChatRouterOutputs } from "@api/chat";
 
 interface UseScrollAwarePrefetchProps {
   sessionId: string;
   containerSelector?: string;
 }
+
+type MessagePage = ChatRouterOutputs["message"]["listInfinite"];
+type MessageCursor = NonNullable<MessagePage["nextCursor"]>;
 
 /**
  * Hook that provides scroll-aware hover prefetching.
@@ -76,10 +79,22 @@ export function useScrollAwarePrefetch({
     
     try {
       // Check if data is already fresh
-      const listInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions({
-        sessionId,
-        limit: MESSAGE_PAGE_SIZE,
-      });
+      const listInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions(
+        {
+          sessionId,
+          limit: MESSAGE_PAGE_SIZE,
+        },
+        {
+          initialCursor: null as MessageCursor | null,
+          getNextPageParam: (lastPage: Pick<MessagePage, "nextCursor">) =>
+            lastPage.nextCursor,
+          staleTime: MESSAGE_PAGE_STALE_TIME,
+          gcTime: MESSAGE_PAGE_GC_TIME,
+          refetchOnWindowFocus: false,
+          refetchOnMount: false,
+          retry: 2,
+        },
+      );
 
       const cachedData = queryClient.getQueryData(listInfiniteOptions.queryKey);
       const queryState = queryClient.getQueryState(listInfiniteOptions.queryKey);
@@ -89,14 +104,7 @@ export function useScrollAwarePrefetch({
         return;
       }
 
-      await queryClient.prefetchInfiniteQuery({
-        ...listInfiniteOptions,
-        initialPageParam: null as MessageCursor | null,
-        getNextPageParam: (lastPage: Pick<MessagePage, "nextCursor">) =>
-          lastPage.nextCursor,
-        staleTime: MESSAGE_PAGE_STALE_TIME,
-        gcTime: MESSAGE_PAGE_GC_TIME,
-      });
+      await queryClient.prefetchInfiniteQuery(listInfiniteOptions);
     } catch {
       // Silent failure
     } finally {
