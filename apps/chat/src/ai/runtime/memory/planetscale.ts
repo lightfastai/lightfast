@@ -63,10 +63,10 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 	async getMessages(sessionId: string): Promise<LightfastAppChatUIMessage[]> {
 		const messages = await this.messagesService.list({ sessionId });
 
-		return messages.map((message) => ({
+		return messages.map((message): LightfastAppChatUIMessage => ({
 			...message,
-			parts: message.parts as LightfastAppChatUIMessage["parts"],
-		})) as LightfastAppChatUIMessage[];
+			parts: message.parts,
+		}));
 	}
 
 	/**
