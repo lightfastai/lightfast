@@ -109,6 +109,53 @@ export const messageRouter = {
       }));
     }),
 
+  /**
+   * Get the most recent messages for faster initial rendering
+   */
+  listHead: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        limit: z.number().min(1).max(200).default(40),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      // Verify session ownership
+      const session = await db
+        .select({ id: LightfastChatSession.id })
+        .from(LightfastChatSession)
+        .where(
+          and(
+            eq(LightfastChatSession.id, input.sessionId),
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!session[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Session not found or access denied",
+        });
+      }
+
+      const messages = await db
+        .select()
+        .from(LightfastChatMessage)
+        .where(eq(LightfastChatMessage.sessionId, input.sessionId))
+        .orderBy(desc(LightfastChatMessage.createdAt))
+        .limit(input.limit);
+
+      return messages
+        .reverse()
+        .map((msg) => ({
+          id: msg.id,
+          role: msg.role,
+          parts: msg.parts,
+          modelId: msg.modelId,
+        }));
+    }),
+
 
   /**
    * Create a stream ID for a session

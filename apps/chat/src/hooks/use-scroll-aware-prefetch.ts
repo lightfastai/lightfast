@@ -3,6 +3,11 @@
 import { useCallback, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/chat-trpc/react";
+import {
+  MESSAGE_HEAD_GC_TIME,
+  MESSAGE_HEAD_LIMIT,
+  MESSAGE_HEAD_STALE_TIME,
+} from "~/lib/messages/loading";
 
 interface UseScrollAwarePrefetchProps {
   sessionId: string;
@@ -70,17 +75,36 @@ export function useScrollAwarePrefetch({
     
     try {
       // Check if data is already fresh
-      const queryKey = trpc.message.list.queryOptions({ sessionId }).queryKey;
-      const cachedData = queryClient.getQueryData(queryKey);
-      const queryState = queryClient.getQueryState(queryKey);
-      
+      const listQueryOptions = trpc.message.list.queryOptions({ sessionId });
+      const headQueryOptions = trpc.message.listHead.queryOptions({
+        sessionId,
+        limit: MESSAGE_HEAD_LIMIT,
+      });
+
+      const cachedData = queryClient.getQueryData(listQueryOptions.queryKey);
+      const queryState = queryClient.getQueryState(listQueryOptions.queryKey);
+
       // Skip prefetch if data exists and is still fresh (within staleTime)
       if (cachedData && queryState && Date.now() - queryState.dataUpdatedAt < 30 * 1000) {
         return;
       }
 
       await queryClient.prefetchQuery({
-        ...trpc.message.list.queryOptions({ sessionId }),
+        ...headQueryOptions,
+        staleTime: MESSAGE_HEAD_STALE_TIME,
+        gcTime: MESSAGE_HEAD_GC_TIME,
+      });
+
+      const headCached = queryClient.getQueryData(headQueryOptions.queryKey);
+      if (headCached !== undefined) {
+        const existingMessages = queryClient.getQueryData(listQueryOptions.queryKey);
+        if (existingMessages === undefined) {
+          queryClient.setQueryData(listQueryOptions.queryKey, headCached);
+        }
+      }
+
+      void queryClient.prefetchQuery({
+        ...listQueryOptions,
         staleTime: 30 * 1000,
         gcTime: 30 * 60 * 1000,
       });

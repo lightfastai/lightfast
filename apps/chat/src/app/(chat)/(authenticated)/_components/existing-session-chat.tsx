@@ -7,6 +7,7 @@ import {
 	useQuery,
 	useQueryClient,
 	useSuspenseQueries,
+	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useModelSelection } from "~/hooks/use-model-selection";
@@ -16,7 +17,6 @@ import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
-import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
 import { Button } from "@repo/ui/components/ui/button";
 import { captureException } from "@sentry/nextjs";
 import {
@@ -24,6 +24,11 @@ import {
 	isNotFound,
 	isUnauthorized,
 } from "~/lib/trpc-errors";
+import {
+	MESSAGE_HEAD_GC_TIME,
+	MESSAGE_HEAD_LIMIT,
+	MESSAGE_HEAD_STALE_TIME,
+} from "~/lib/messages/loading";
 
 interface ExistingSessionChatProps {
 	sessionId: string;
@@ -46,6 +51,10 @@ export function ExistingSessionChat({
 
 	// Get query options for cache updates
 	const messagesQueryOptions = trpc.message.list.queryOptions({ sessionId });
+	const messageHeadQueryOptions = trpc.message.listHead.queryOptions({
+		sessionId,
+		limit: MESSAGE_HEAD_LIMIT,
+	});
 	const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
 	const sessionQueryOptions = trpc.session.getMetadata.queryOptions({ sessionId });
 
@@ -75,13 +84,21 @@ export function ExistingSessionChat({
 		],
 	});
 
+	const { data: headMessages } = useSuspenseQuery({
+		...messageHeadQueryOptions,
+		staleTime: MESSAGE_HEAD_STALE_TIME,
+		gcTime: MESSAGE_HEAD_GC_TIME,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
+
 	const {
-		data: messagesData,
-		isPending: isMessagesPending,
+		data: messagesData = headMessages,
 		isError: isMessagesError,
 		error: messagesError,
 	} = useQuery({
 		...messagesQueryOptions,
+		initialData: headMessages,
 		staleTime: 30 * 1000,
 		gcTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -131,11 +148,7 @@ export function ExistingSessionChat({
 		}
 	}
 
-	const messages = messagesData ?? [];
-
-	if (!fallbackContent && isMessagesPending && messages.length === 0) {
-		fallbackContent = <ChatLoadingSkeleton />;
-	}
+	const messages = messagesData;
 
 	// Redirect to not-found for temporary sessions - they shouldn't be directly accessible
 	useEffect(() => {
@@ -147,6 +160,22 @@ export function ExistingSessionChat({
 	if (session.isTemporary) {
 		return null;
 	}
+
+	useEffect(() => {
+		const nextMessages = messagesData;
+
+		queryClient.setQueryData(messagesQueryOptions.queryKey, (existing) => {
+			if (Array.isArray(existing) && existing.length > nextMessages.length) {
+				return existing;
+			}
+			return nextMessages;
+		});
+	}, [
+		headMessages,
+		messagesData,
+		messagesQueryOptions.queryKey,
+		queryClient,
+	]);
 
 
 	// Convert database messages to UI format
