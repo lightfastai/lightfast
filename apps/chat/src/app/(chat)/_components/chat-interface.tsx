@@ -59,7 +59,6 @@ import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
 import type { ChatInlineError } from "./chat-inline-error";
-import type { MessageHistoryMeta } from "~/lib/messages/loading";
 
 const getMetadataString = (metadata: unknown, key: string): string | undefined => {
 	if (!metadata || typeof metadata !== "object") return undefined;
@@ -121,8 +120,6 @@ interface ChatInterfaceProps {
 	}) => void;
 	onResumeStateChange?: (hasActiveStream: boolean) => void;
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
-	historyMeta?: MessageHistoryMeta;
-	onLoadEntireHistory?: () => void;
 }
 
 export function ChatInterface({
@@ -139,8 +136,6 @@ export function ChatInterface({
 	onAssistantStreamError,
 	onResumeStateChange,
 	usageLimits: externalUsageLimits,
-	historyMeta,
-	onLoadEntireHistory,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
 	const {
@@ -938,8 +933,6 @@ export function ChatInterface({
 					}
 					hasActiveStream={hasActiveStream}
 					onStreamAnimationChange={handleStreamAnimationChange}
-					historyMeta={historyMeta}
-					onLoadEntireHistory={onLoadEntireHistory}
 					onArtifactClick={
 						isAuthenticated
 							? async (artifactId) => {

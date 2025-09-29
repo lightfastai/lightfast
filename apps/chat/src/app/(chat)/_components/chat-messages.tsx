@@ -58,8 +58,6 @@ import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatInlineError } from "./chat-inline-error";
 import { ChatErrorType } from "~/lib/errors/types";
-import { Button } from "@repo/ui/components/ui/button";
-import type { MessageHistoryMeta } from "~/lib/messages/loading";
 
 const ResponsePlaceholder = () => (
 	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />
@@ -91,12 +89,6 @@ const StreamingSineWave = memo(function StreamingSineWave({
 	);
 });
 
-const SCROLL_BUTTON_READY_STATES: MessageHistoryMeta["state"][] = [
-	"complete",
-	"saturated",
-	"capped",
-];
-
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
 	status: ChatStatus;
@@ -113,8 +105,6 @@ interface ChatMessagesProps {
 	inlineErrors?: ChatInlineError[];
 	onInlineErrorDismiss?: (errorId: string) => void;
 	onStreamAnimationChange?: (hasActiveAnimation: boolean) => void;
-	historyMeta?: MessageHistoryMeta;
-	onLoadEntireHistory?: () => void;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -718,11 +708,6 @@ const AssistantMessage = memo(function AssistantMessage({
 	const shouldHideActions =
 		hideActions ||
 		(!!inlineError && (noMessageContent || inlineErrorSeverity === "fatal"));
-	const messageMetadata = message.metadata;
-	const isOversizedPreview = Boolean(
-		messageMetadata && messageMetadata.tooLarge && !messageMetadata.hasFullContent,
-	);
-
 	return (
 		<div className="py-1">
 			<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
@@ -803,12 +788,6 @@ const AssistantMessage = memo(function AssistantMessage({
 										inlineError={inlineError}
 										onDismiss={onInlineErrorDismiss}
 									/>
-								</div>
-							)}
-
-							{isOversizedPreview && (
-								<div className="mt-3 text-xs text-muted-foreground">
-									This reply was trimmed for preview.
 								</div>
 							)}
 						</div>
@@ -929,8 +908,6 @@ export function ChatMessages({
 	inlineErrors = [],
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
-	historyMeta,
-	onLoadEntireHistory,
 }: ChatMessagesProps) {
 	const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(
 		() => new Set(),
@@ -979,21 +956,7 @@ export function ChatMessages({
 	);
 
 	const streamingStatus = status === "submitted" || status === "streaming";
-	const showHistoryCapBanner = Boolean(
-		historyMeta &&
-		historyMeta.hardCapReached &&
-		!historyMeta.overrideEnabled &&
-		historyMeta.hasNextPage,
-	);
-
-	const historyLoadedEstimate = historyMeta
-		? Math.max(1, Math.round(historyMeta.totalChars / 1000))
-		: 0;
-
-	const shouldShowScrollButton =
-		!historyMeta ||
-		!historyMeta.hasNextPage ||
-		SCROLL_BUTTON_READY_STATES.includes(historyMeta.state);
+	const shouldShowScrollButton = messages.length > 0;
 
 
 	return (
@@ -1012,26 +975,6 @@ export function ChatMessages({
 										Start typing below to begin the conversation.
 									</p>
 								</div>
-							</div>
-						</div>
-					)}
-
-					{showHistoryCapBanner && (
-						<div className="mx-auto mt-4 w-full max-w-3xl px-4 lg:px-14 xl:px-20">
-							<div className="rounded-lg border border-dashed border-muted-foreground/40 bg-muted/10 p-4 text-sm">
-								<p className="font-medium">Older replies paused</p>
-								<p className="mt-1 text-muted-foreground">
-									We preloaded approximately {historyLoadedEstimate}k characters from this
-									session. Load the entire history (~1.2 MB) to continue.
-								</p>
-								<Button
-									size="sm"
-									variant="outline"
-									className="mt-3"
-									onClick={() => onLoadEntireHistory?.()}
-								>
-									Load entire history (~1.2 MB)
-								</Button>
 							</div>
 						</div>
 					)}

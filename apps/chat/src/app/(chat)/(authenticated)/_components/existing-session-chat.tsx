@@ -36,10 +36,7 @@ import {
   MESSAGE_PAGE_GC_TIME,
   MESSAGE_PAGE_STALE_TIME,
 } from "~/lib/messages/loading";
-import type {
-  MessageHistoryFetchState,
-  MessageHistoryMeta,
-} from "~/lib/messages/loading";
+import type { MessageHistoryFetchState } from "~/lib/messages/loading";
 import type { ChatRouterOutputs } from "@api/chat";
 import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
 import { computeMessageCharCount } from "@repo/chat-ai-types";
@@ -181,11 +178,9 @@ export function ExistingSessionChat({
   const messagesData = messagesQuery.data;
 
   const backgroundFetchRef = useRef(false);
-  const [historyBudgetOverride, setHistoryBudgetOverride] = useState(false);
 
   const historyStats = useMemo(() => {
     let totalChars = 0;
-    const oversizedMessageIds = new Set<string>();
 
     for (const page of messagesData.pages) {
       const pageCharCount =
@@ -200,26 +195,14 @@ export function ExistingSessionChat({
             }, 0);
 
       totalChars += pageCharCount;
-
-      for (const item of page.items) {
-        if (item.metadata.tooLarge === true) {
-          oversizedMessageIds.add(item.id);
-        }
-      }
     }
 
     return {
       totalChars,
-      oversizedMessageIds,
     };
   }, [messagesData.pages]);
-
-  const effectiveBackgroundBudget = historyBudgetOverride
-    ? Number.POSITIVE_INFINITY
-    : MESSAGE_BACKGROUND_CHAR_BUDGET;
-  const effectiveHardCap = historyBudgetOverride
-    ? Number.POSITIVE_INFINITY
-    : MESSAGE_HISTORY_HARD_CAP;
+  const effectiveBackgroundBudget = MESSAGE_BACKGROUND_CHAR_BUDGET;
+  const effectiveHardCap = MESSAGE_HISTORY_HARD_CAP;
 
   const hasHitBackgroundBudget = historyStats.totalChars >= effectiveBackgroundBudget;
   const hasHitHardCap = historyStats.totalChars >= effectiveHardCap;
@@ -305,46 +288,6 @@ export function ExistingSessionChat({
     isFetchingNextPage,
     sessionId,
   ]);
-
-  const handleLoadEntireHistory = useCallback(() => {
-    if (historyBudgetOverride) {
-      return;
-    }
-
-    setHistoryBudgetOverride(true);
-    setHistoryFetchState("prefetching");
-
-    captureMessage("chat.history.fetch.override", {
-      level: "info",
-      extra: {
-        sessionId,
-        totalChars: historyStats.totalChars,
-        hardCap: MESSAGE_HISTORY_HARD_CAP,
-      },
-    });
-  }, [historyBudgetOverride, historyStats.totalChars, sessionId]);
-
-  const historyMeta = useMemo<MessageHistoryMeta>(
-    () => ({
-      state: historyFetchState,
-      totalChars: historyStats.totalChars,
-      backgroundBudget: MESSAGE_BACKGROUND_CHAR_BUDGET,
-      hardCap: MESSAGE_HISTORY_HARD_CAP,
-      backgroundBudgetReached:
-        historyStats.totalChars >= MESSAGE_BACKGROUND_CHAR_BUDGET,
-      hardCapReached: historyStats.totalChars >= MESSAGE_HISTORY_HARD_CAP,
-      overrideEnabled: historyBudgetOverride,
-      hasNextPage,
-      oversizedMessageIds: Array.from(historyStats.oversizedMessageIds),
-    }),
-    [
-      hasNextPage,
-      historyBudgetOverride,
-      historyFetchState,
-      historyStats.oversizedMessageIds,
-      historyStats.totalChars,
-    ],
-  );
 
   // Redirect to not-found for temporary sessions - they shouldn't be directly accessible
   useEffect(() => {
@@ -442,8 +385,6 @@ export function ExistingSessionChat({
         handleSessionCreation={handleSessionCreation}
         user={user}
         usageLimits={usageLimits}
-        historyMeta={historyMeta}
-        onLoadEntireHistory={handleLoadEntireHistory}
         onNewUserMessage={(userMessage) => {
           const metrics = computeMessageCharCount(userMessage.parts);
           updateMessagesCache((draft) => {
