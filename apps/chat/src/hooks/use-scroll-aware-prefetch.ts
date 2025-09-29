@@ -4,10 +4,11 @@ import { useCallback, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/chat-trpc/react";
 import {
-  MESSAGE_HEAD_GC_TIME,
-  MESSAGE_HEAD_LIMIT,
-  MESSAGE_HEAD_STALE_TIME,
+  MESSAGE_PAGE_GC_TIME,
+  MESSAGE_PAGE_SIZE,
+  MESSAGE_PAGE_STALE_TIME,
 } from "~/lib/messages/loading";
+import type { MessageCursor, MessagePage } from "~/lib/messages/types";
 
 interface UseScrollAwarePrefetchProps {
   sessionId: string;
@@ -75,38 +76,26 @@ export function useScrollAwarePrefetch({
     
     try {
       // Check if data is already fresh
-      const listQueryOptions = trpc.message.list.queryOptions({ sessionId });
-      const headQueryOptions = trpc.message.listHead.queryOptions({
+      const listInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions({
         sessionId,
-        limit: MESSAGE_HEAD_LIMIT,
+        limit: MESSAGE_PAGE_SIZE,
       });
 
-      const cachedData = queryClient.getQueryData(listQueryOptions.queryKey);
-      const queryState = queryClient.getQueryState(listQueryOptions.queryKey);
+      const cachedData = queryClient.getQueryData(listInfiniteOptions.queryKey);
+      const queryState = queryClient.getQueryState(listInfiniteOptions.queryKey);
 
       // Skip prefetch if data exists and is still fresh (within staleTime)
       if (cachedData && queryState && Date.now() - queryState.dataUpdatedAt < 30 * 1000) {
         return;
       }
 
-      await queryClient.prefetchQuery({
-        ...headQueryOptions,
-        staleTime: MESSAGE_HEAD_STALE_TIME,
-        gcTime: MESSAGE_HEAD_GC_TIME,
-      });
-
-      const headCached = queryClient.getQueryData(headQueryOptions.queryKey);
-      if (headCached !== undefined) {
-        const existingMessages = queryClient.getQueryData(listQueryOptions.queryKey);
-        if (existingMessages === undefined) {
-          queryClient.setQueryData(listQueryOptions.queryKey, headCached);
-        }
-      }
-
-      void queryClient.prefetchQuery({
-        ...listQueryOptions,
-        staleTime: 30 * 1000,
-        gcTime: 30 * 60 * 1000,
+      await queryClient.prefetchInfiniteQuery({
+        ...listInfiniteOptions,
+        initialPageParam: null as MessageCursor | null,
+        getNextPageParam: (lastPage: Pick<MessagePage, "nextCursor">) =>
+          lastPage.nextCursor,
+        staleTime: MESSAGE_PAGE_STALE_TIME,
+        gcTime: MESSAGE_PAGE_GC_TIME,
       });
     } catch {
       // Silent failure

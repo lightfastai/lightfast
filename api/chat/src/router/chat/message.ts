@@ -9,7 +9,8 @@ import {
   LightfastChatStream,
   insertLightfastChatMessageSchema
 } from "@db/chat";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, or, lt, sql } from "drizzle-orm";
+import { formatMySqlDateTime } from "@repo/lib/datetime";
 
 export const messageRouter = {
   /**
@@ -110,25 +111,30 @@ export const messageRouter = {
     }),
 
   /**
-   * Get the most recent messages for faster initial rendering
+   * Paginated messages for streaming long histories
    */
-  listHead: protectedProcedure
+  listInfinite: protectedProcedure
     .input(
       z.object({
         sessionId: z.string(),
         limit: z.number().min(1).max(200).default(40),
+        cursor: z
+          .object({
+            createdAt: z.string(),
+            id: z.string(),
+          })
+          .nullish(),
       })
     )
     .query(async ({ ctx, input }) => {
-      // Verify session ownership
       const session = await db
         .select({ id: LightfastChatSession.id })
         .from(LightfastChatSession)
         .where(
           and(
             eq(LightfastChatSession.id, input.sessionId),
-            eq(LightfastChatSession.clerkUserId, ctx.session.userId)
-          )
+            eq(LightfastChatSession.clerkUserId, ctx.session.userId),
+          ),
         )
         .limit(1);
 
@@ -139,14 +145,46 @@ export const messageRouter = {
         });
       }
 
-      const messages = await db
-        .select()
-        .from(LightfastChatMessage)
-        .where(eq(LightfastChatMessage.sessionId, input.sessionId))
-        .orderBy(desc(LightfastChatMessage.createdAt))
-        .limit(input.limit);
+      const baseCondition = eq(
+        LightfastChatMessage.sessionId,
+        input.sessionId,
+      );
 
-      return messages
+      const whereCondition = input.cursor
+        ? (() => {
+            const cursorDate = new Date(input.cursor.createdAt);
+            const cursorCreatedAt = formatMySqlDateTime(cursorDate);
+            return and(
+              baseCondition,
+              or(
+                lt(LightfastChatMessage.createdAt, cursorCreatedAt),
+                and(
+                  eq(LightfastChatMessage.createdAt, cursorCreatedAt),
+                  lt(LightfastChatMessage.id, input.cursor.id),
+                ),
+              ),
+            );
+          })()
+        : baseCondition;
+
+      const records = await db
+        .select({
+          id: LightfastChatMessage.id,
+          role: LightfastChatMessage.role,
+          parts: LightfastChatMessage.parts,
+          modelId: LightfastChatMessage.modelId,
+          createdAt: LightfastChatMessage.createdAt,
+        })
+        .from(LightfastChatMessage)
+        .where(whereCondition)
+        .orderBy(desc(LightfastChatMessage.createdAt), desc(LightfastChatMessage.id))
+        .limit(input.limit + 1);
+
+      const hasMore = records.length > input.limit;
+      const pageRecords = hasMore ? records.slice(0, input.limit) : records;
+
+      const items = pageRecords
+        .slice()
         .reverse()
         .map((msg) => ({
           id: msg.id,
@@ -154,8 +192,19 @@ export const messageRouter = {
           parts: msg.parts,
           modelId: msg.modelId,
         }));
-    }),
 
+      const nextCursor = hasMore
+        ? {
+            createdAt: pageRecords[pageRecords.length - 1]!.createdAt,
+            id: pageRecords[pageRecords.length - 1]!.id,
+          }
+        : null;
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
 
   /**
    * Create a stream ID for a session
