@@ -19,6 +19,9 @@ type MessageCursor = NonNullable<MessagePage["nextCursor"]>;
 
 const MAX_MESSAGE_PAGES = 256;
 
+// Server-side loader that eagerly walks the infinite cursor until exhaustion.
+// The resulting pages land in the React Query cache before hydration so the
+// client `useSuspenseInfiniteQuery` call instantly receives the full history.
 async function prefetchFullMessageHistory(sessionId: string) {
 	const messagesInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions({
 		sessionId,
@@ -96,6 +99,8 @@ async function PrefetchedExistingSession({
 }: PrefetchedExistingSessionProps) {
 	await prefetchFullMessageHistory(sessionId);
 
+	// Hydrate once the cache is populated so downstream client hooks hydrate
+	// synchronously with the full conversation state.
 	return (
 		<HydrateClient>
 			<ExistingSessionChat sessionId={sessionId} agentId={agentId} />
@@ -110,6 +115,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	// Prefetch lightweight session metadata and hydrate the full message history before render.
 	prefetch(trpc.session.getMetadata.queryOptions({ sessionId }));
 
+	// Suspense keeps showing ChatLoadingSkeleton while the history prefetch runs.
 	return (
 		<Suspense fallback={<ChatLoadingSkeleton />}>
 			<PrefetchedExistingSession sessionId={sessionId} agentId={agentId} />
