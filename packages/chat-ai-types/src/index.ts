@@ -143,6 +143,11 @@ export interface LightfastAppChatUIMessageMetadata {
   sessionId?: string;
   resourceId?: string;
   modelId?: string;
+  charCount?: number;
+  tokenCount?: number;
+  previewCharCount?: number;
+  tooLarge?: boolean;
+  hasFullContent?: boolean;
 }
 
 /**
@@ -152,7 +157,9 @@ export type LightfastAppChatUIMessage = UIMessage<
   LightfastAppChatUIMessageMetadata,
   LightfastAppChatUICustomDataTypes,
   LightfastAppChatToolSet
->;
+> & {
+  modelId?: string | null;
+};
 
 /**
  * Shortcut for UI message parts.
@@ -323,3 +330,12 @@ export function isReasoningPart(
 export function isToolPart(part: LightfastAppChatUIMessagePart): boolean {
   return typeof part.type === "string" && part.type.startsWith("tool-");
 }
+
+export {
+  computeMessageCharCount,
+  createPreviewParts,
+} from "./message-metrics";
+export type {
+  MessageCharMetrics,
+  MessagePreviewResult,
+} from "./message-metrics";

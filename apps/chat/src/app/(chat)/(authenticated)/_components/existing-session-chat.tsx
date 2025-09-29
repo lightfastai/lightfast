@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { notFound } from "next/navigation";
 import type {
   InfiniteData,
@@ -21,7 +21,7 @@ import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
-import { captureException } from "@sentry/nextjs";
+import { captureException, captureMessage } from "@sentry/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   getTRPCErrorMessage,
@@ -29,12 +29,20 @@ import {
   isUnauthorized,
 } from "~/lib/trpc-errors";
 import {
+  MESSAGE_BACKGROUND_CHAR_BUDGET,
+  MESSAGE_FALLBACK_PAGE_SIZE,
+  MESSAGE_HISTORY_HARD_CAP,
+  MESSAGE_INITIAL_CHAR_BUDGET,
   MESSAGE_PAGE_GC_TIME,
-  MESSAGE_PAGE_SIZE,
   MESSAGE_PAGE_STALE_TIME,
+} from "~/lib/messages/loading";
+import type {
+  MessageHistoryFetchState,
+  MessageHistoryMeta,
 } from "~/lib/messages/loading";
 import type { ChatRouterOutputs } from "@api/chat";
 import { ChatLoadingSkeleton } from "./chat-loading-skeleton";
+import { computeMessageCharCount } from "@repo/chat-ai-types";
 
 interface ExistingSessionChatProps {
   sessionId: string;
@@ -63,7 +71,8 @@ export function ExistingSessionChat({
   // Get query options for cache updates
   const messagesInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions({
     sessionId,
-    limit: MESSAGE_PAGE_SIZE,
+    limitChars: MESSAGE_INITIAL_CHAR_BUDGET,
+    limitMessages: MESSAGE_FALLBACK_PAGE_SIZE,
   });
   const usageQueryOptions = trpc.usage.checkLimits.queryOptions({});
   const sessionQueryOptions = trpc.session.getMetadata.queryOptions({ sessionId });
@@ -171,20 +180,171 @@ export function ExistingSessionChat({
 
   const messagesData = messagesQuery.data;
 
+  const backgroundFetchRef = useRef(false);
+  const [historyBudgetOverride, setHistoryBudgetOverride] = useState(false);
+
+  const historyStats = useMemo(() => {
+    let totalChars = 0;
+    const oversizedMessageIds = new Set<string>();
+
+    for (const page of messagesData.pages) {
+      const pageCharCount =
+        typeof page.pageCharCount === "number"
+          ? page.pageCharCount
+          : page.items.reduce((sum, item) => {
+              const itemCharCount =
+                typeof item.metadata.charCount === "number"
+                  ? item.metadata.charCount
+                  : 0;
+              return sum + itemCharCount;
+            }, 0);
+
+      totalChars += pageCharCount;
+
+      for (const item of page.items) {
+        if (item.metadata.tooLarge === true) {
+          oversizedMessageIds.add(item.id);
+        }
+      }
+    }
+
+    return {
+      totalChars,
+      oversizedMessageIds,
+    };
+  }, [messagesData.pages]);
+
+  const effectiveBackgroundBudget = historyBudgetOverride
+    ? Number.POSITIVE_INFINITY
+    : MESSAGE_BACKGROUND_CHAR_BUDGET;
+  const effectiveHardCap = historyBudgetOverride
+    ? Number.POSITIVE_INFINITY
+    : MESSAGE_HISTORY_HARD_CAP;
+
+  const hasHitBackgroundBudget = historyStats.totalChars >= effectiveBackgroundBudget;
+  const hasHitHardCap = historyStats.totalChars >= effectiveHardCap;
+
+  const [historyFetchState, setHistoryFetchState] =
+    useState<MessageHistoryFetchState>("idle");
+
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = messagesQuery;
+
   useEffect(() => {
-    if (!messagesQuery.hasNextPage) return;
-    if (messagesQuery.isFetchingNextPage) return;
+    if (!hasNextPage) {
+      setHistoryFetchState("complete");
+      return;
+    }
 
-    const id = window.setTimeout(() => {
-      void messagesQuery.fetchNextPage();
-    }, 0);
+    if (isFetchingNextPage || backgroundFetchRef.current) {
+      setHistoryFetchState("prefetching");
+      return;
+    }
 
-    return () => window.clearTimeout(id);
+    if (hasHitHardCap) {
+      if (historyFetchState !== "capped") {
+        setHistoryFetchState("capped");
+        captureMessage("chat.history.fetch.capped", {
+          level: "info",
+          extra: {
+            sessionId,
+            totalChars: historyStats.totalChars,
+            hardCap: effectiveHardCap,
+          },
+        });
+      }
+      return;
+    }
+
+    if (hasHitBackgroundBudget) {
+      if (historyFetchState !== "saturated") {
+        setHistoryFetchState("saturated");
+        captureMessage("chat.history.fetch.saturated", {
+          level: "info",
+          extra: {
+            sessionId,
+            totalChars: historyStats.totalChars,
+            budget: effectiveBackgroundBudget,
+          },
+        });
+      }
+      return;
+    }
+
+    backgroundFetchRef.current = true;
+    setHistoryFetchState("prefetching");
+
+    void fetchNextPage()
+      .catch((error) => {
+        captureException(error, {
+          tags: {
+            component: "ExistingSessionChat",
+            query: "message.listInfinite",
+            phase: "background-fetch",
+          },
+          extra: {
+            sessionId,
+          },
+        });
+      })
+      .finally(() => {
+        backgroundFetchRef.current = false;
+      });
   }, [
-    messagesQuery.fetchNextPage,
-    messagesQuery.hasNextPage,
-    messagesQuery.isFetchingNextPage,
+    effectiveBackgroundBudget,
+    effectiveHardCap,
+    hasHitBackgroundBudget,
+    hasHitHardCap,
+    historyFetchState,
+    historyStats.totalChars,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    sessionId,
   ]);
+
+  const handleLoadEntireHistory = useCallback(() => {
+    if (historyBudgetOverride) {
+      return;
+    }
+
+    setHistoryBudgetOverride(true);
+    setHistoryFetchState("prefetching");
+
+    captureMessage("chat.history.fetch.override", {
+      level: "info",
+      extra: {
+        sessionId,
+        totalChars: historyStats.totalChars,
+        hardCap: MESSAGE_HISTORY_HARD_CAP,
+      },
+    });
+  }, [historyBudgetOverride, historyStats.totalChars, sessionId]);
+
+  const historyMeta = useMemo<MessageHistoryMeta>(
+    () => ({
+      state: historyFetchState,
+      totalChars: historyStats.totalChars,
+      backgroundBudget: MESSAGE_BACKGROUND_CHAR_BUDGET,
+      hardCap: MESSAGE_HISTORY_HARD_CAP,
+      backgroundBudgetReached:
+        historyStats.totalChars >= MESSAGE_BACKGROUND_CHAR_BUDGET,
+      hardCapReached: historyStats.totalChars >= MESSAGE_HISTORY_HARD_CAP,
+      overrideEnabled: historyBudgetOverride,
+      hasNextPage,
+      oversizedMessageIds: Array.from(historyStats.oversizedMessageIds),
+    }),
+    [
+      hasNextPage,
+      historyBudgetOverride,
+      historyFetchState,
+      historyStats.oversizedMessageIds,
+      historyStats.totalChars,
+    ],
+  );
 
   // Redirect to not-found for temporary sessions - they shouldn't be directly accessible
   useEffect(() => {
@@ -202,13 +362,29 @@ export function ExistingSessionChat({
       .slice()
       .reverse()
       .flatMap((page) =>
-        page.items.map((msg) => ({
-          id: msg.id,
-          role: msg.role,
-          parts: msg.parts,
-        })) as LightfastAppChatUIMessage[],
+        page.items.map<LightfastAppChatUIMessage>((msg) => {
+          const metadataFromPage: LightfastAppChatUIMessage["metadata"] =
+            msg.metadata;
+          const baseMetadata = { ...metadataFromPage };
+          const metadataModelId =
+            msg.modelId ??
+            (typeof baseMetadata.modelId === "string"
+              ? baseMetadata.modelId
+              : undefined);
+
+          return {
+            id: msg.id,
+            role: msg.role,
+            parts: msg.parts,
+            metadata: {
+              ...baseMetadata,
+              sessionId,
+              modelId: metadataModelId,
+            },
+          };
+        }),
       );
-  }, [messagesData.pages]);
+  }, [messagesData.pages, sessionId]);
 
   const initialMessages = useMemo<LightfastAppChatUIMessage[]>(
     () => [...messages],
@@ -223,6 +399,75 @@ export function ExistingSessionChat({
       return produce(oldData, updater);
     });
   };
+
+  const incrementPageStats = useCallback(
+    (page: MessagePage, charDelta: number, messageDelta: number) => {
+      page.pageCharCount =
+        typeof page.pageCharCount === "number"
+          ? page.pageCharCount + charDelta
+          : charDelta;
+      page.pageMessageCount =
+        typeof page.pageMessageCount === "number"
+          ? page.pageMessageCount + messageDelta
+          : messageDelta;
+    },
+    [],
+  );
+
+  const decrementPageStats = useCallback(
+    (page: MessagePage, charDelta: number, messageDelta: number) => {
+      const currentCharCount =
+        typeof page.pageCharCount === "number" ? page.pageCharCount : 0;
+      const currentMessageCount =
+        typeof page.pageMessageCount === "number" ? page.pageMessageCount : 0;
+
+      page.pageCharCount = Math.max(0, currentCharCount - charDelta);
+      page.pageMessageCount = Math.max(0, currentMessageCount - messageDelta);
+    },
+    [],
+  );
+
+  const handleOversizedMessageHydrated = useCallback(
+    ({
+      messageId,
+      parts,
+      charCount,
+      tokenCount,
+    }: {
+      messageId: string;
+      parts: LightfastAppChatUIMessage["parts"];
+      charCount: number;
+      tokenCount?: number;
+    }) => {
+      updateMessagesCache((draft) => {
+        draft.pages.forEach((page) => {
+          page.items.forEach((item) => {
+            if (item.id !== messageId) {
+              return;
+            }
+
+            item.parts = parts;
+            const metadataForUpdate = item.metadata;
+            const previousMetadata = { ...metadataForUpdate };
+            const previousTokenCount =
+              typeof previousMetadata.tokenCount === "number"
+                ? previousMetadata.tokenCount
+                : undefined;
+
+            item.metadata = {
+              ...previousMetadata,
+              sessionId,
+              charCount,
+              tokenCount: tokenCount ?? previousTokenCount,
+              hasFullContent: true,
+              tooLarge: false,
+            };
+          });
+        });
+      });
+    },
+    [sessionId, updateMessagesCache],
+  );
 
   const handleSessionCreation = (_firstMessage: string) => {
     // Existing sessions don't need creation
@@ -239,7 +484,11 @@ export function ExistingSessionChat({
         handleSessionCreation={handleSessionCreation}
         user={user}
         usageLimits={usageLimits}
+        historyMeta={historyMeta}
+        onLoadEntireHistory={handleLoadEntireHistory}
+        onOversizedMessageHydrated={handleOversizedMessageHydrated}
         onNewUserMessage={(userMessage) => {
+          const metrics = computeMessageCharCount(userMessage.parts);
           updateMessagesCache((draft) => {
             const lastIndex = draft.pages.length - 1;
             if (lastIndex < 0) {
@@ -250,9 +499,22 @@ export function ExistingSessionChat({
                     role: userMessage.role,
                     parts: userMessage.parts,
                     modelId: selectedModelId,
+                    metadata: {
+                      sessionId,
+                      createdAt: new Date().toISOString(),
+                      charCount: metrics.charCount,
+                      tokenCount: metrics.tokenCount,
+                      previewCharCount: undefined,
+                      tooLarge: false,
+                      hasFullContent: true,
+                    },
                   },
                 ],
                 nextCursor: null,
+                pageCharCount: metrics.charCount,
+                pageMessageCount: 1,
+                exhaustedCharBudget: false,
+                exhaustedMessageBudget: false,
               });
               draft.pageParams.push(null);
               return;
@@ -273,7 +535,17 @@ export function ExistingSessionChat({
               role: userMessage.role,
               parts: userMessage.parts,
               modelId: selectedModelId,
+              metadata: {
+                sessionId,
+                createdAt: new Date().toISOString(),
+                charCount: metrics.charCount,
+                tokenCount: metrics.tokenCount,
+                previewCharCount: undefined,
+                tooLarge: false,
+                hasFullContent: true,
+              },
             });
+            incrementPageStats(latestPage, metrics.charCount, 1);
           });
 
           // Optimistically update usage for immediate UI feedback (prevents spam clicking)
@@ -312,6 +584,9 @@ export function ExistingSessionChat({
           );
         }}
         onNewAssistantMessage={(assistantMessage) => {
+          const metrics = computeMessageCharCount(assistantMessage.parts);
+          const assistantModelId = assistantMessage.metadata?.modelId ?? null;
+
           updateMessagesCache((draft) => {
             const lastIndex = draft.pages.length - 1;
             if (lastIndex < 0) {
@@ -321,10 +596,23 @@ export function ExistingSessionChat({
                     id: assistantMessage.id,
                     role: assistantMessage.role,
                     parts: assistantMessage.parts,
-                    modelId: null,
+                    modelId: assistantModelId,
+                    metadata: {
+                      sessionId,
+                      createdAt: new Date().toISOString(),
+                      charCount: metrics.charCount,
+                      tokenCount: metrics.tokenCount,
+                      previewCharCount: undefined,
+                      tooLarge: false,
+                      hasFullContent: true,
+                    },
                   },
                 ],
                 nextCursor: null,
+                pageCharCount: metrics.charCount,
+                pageMessageCount: 1,
+                exhaustedCharBudget: false,
+                exhaustedMessageBudget: false,
               });
               draft.pageParams.push(null);
               return;
@@ -344,8 +632,18 @@ export function ExistingSessionChat({
               id: assistantMessage.id,
               role: assistantMessage.role,
               parts: assistantMessage.parts,
-              modelId: null,
+              modelId: assistantModelId,
+              metadata: {
+                sessionId,
+                createdAt: new Date().toISOString(),
+                charCount: metrics.charCount,
+                tokenCount: metrics.tokenCount,
+                previewCharCount: undefined,
+                tooLarge: false,
+                hasFullContent: true,
+              },
             });
+            incrementPageStats(latestPage, metrics.charCount, 1);
           });
 
           // Trigger background refetch to sync with database
@@ -363,7 +661,21 @@ export function ExistingSessionChat({
           if (!messageId) return;
           updateMessagesCache((draft) => {
             draft.pages.forEach((page) => {
-              page.items = page.items.filter((msg) => msg.id !== messageId);
+              page.items = page.items.filter((msg) => {
+                if (msg.id !== messageId) {
+                  return true;
+                }
+
+                const messageMetadata: LightfastAppChatUIMessage["metadata"] =
+                  msg.metadata;
+                const metadataCharCount =
+                  typeof messageMetadata.charCount === "number"
+                    ? messageMetadata.charCount
+                    : computeMessageCharCount(msg.parts).charCount;
+
+                decrementPageStats(page, metadataCharCount, 1);
+                return false;
+              });
             });
           });
         }}

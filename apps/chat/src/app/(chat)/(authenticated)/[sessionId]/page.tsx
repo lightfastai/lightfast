@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "@repo/chat-trpc/server";
 import { ChatLoadingSkeleton } from "../_components/chat-loading-skeleton";
 import { ExistingSessionChat } from "../_components/existing-session-chat";
-import { MESSAGE_PAGE_SIZE } from "~/lib/messages/loading";
+import { MESSAGE_INITIAL_CHAR_BUDGET } from "~/lib/messages/loading";
 
 interface SessionPageProps {
 	params: Promise<{
@@ -19,7 +19,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
 	prefetch(
 		trpc.message.listInfinite.infiniteQueryOptions({
 			sessionId,
-			limit: MESSAGE_PAGE_SIZE,
+			limitChars: MESSAGE_INITIAL_CHAR_BUDGET,
 		}),
 	);
 

@@ -58,6 +58,15 @@ import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatInlineError } from "./chat-inline-error";
 import { ChatErrorType } from "~/lib/errors/types";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import type { MessageHistoryMeta } from "~/lib/messages/loading";
+import { computeMessageCharCount } from "@repo/chat-ai-types";
 
 const ResponsePlaceholder = () => (
 	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />
@@ -89,6 +98,12 @@ const StreamingSineWave = memo(function StreamingSineWave({
 	);
 });
 
+const SCROLL_BUTTON_READY_STATES: MessageHistoryMeta["state"][] = [
+	"complete",
+	"saturated",
+	"capped",
+];
+
 interface ChatMessagesProps {
 	messages: LightfastAppChatUIMessage[];
 	status: ChatStatus;
@@ -105,6 +120,18 @@ interface ChatMessagesProps {
 	inlineErrors?: ChatInlineError[];
 	onInlineErrorDismiss?: (errorId: string) => void;
 	onStreamAnimationChange?: (hasActiveAnimation: boolean) => void;
+	historyMeta?: MessageHistoryMeta;
+	onLoadEntireHistory?: () => void;
+	onOversizedMessageHydrated?: (args: {
+		messageId: string;
+		parts: LightfastAppChatUIMessage["parts"];
+		charCount: number;
+		tokenCount?: number;
+	}) => void;
+	fetchFullMessage?: (params: {
+		sessionId: string;
+		messageId: string;
+	}) => Promise<LightfastAppChatUIMessage | null>;
 }
 
 // Helper to check if message has meaningful streaming content
@@ -631,6 +658,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
 	isStreamAnimating = false,
+	onExpandLargeMessage,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -649,6 +677,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	onInlineErrorDismiss?: (errorId: string) => void;
 	onStreamAnimationChange?: (messageId: string, isAnimating: boolean) => void;
 	isStreamAnimating?: boolean;
+	onExpandLargeMessage?: (messageId: string) => void;
 }) {
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
@@ -704,10 +733,14 @@ const AssistantMessage = memo(function AssistantMessage({
 	const isAnimationActive = animationStreaming || animationHook;
 	const showStreamingWave = isAnimationActive && !hasDisplayContent;
 	const noMessageContent = message.parts.length === 0;
+	const inlineErrorSeverity = inlineError ? inlineError.severity : undefined;
 	const shouldHideActions =
 		hideActions ||
-		(Boolean(inlineError) &&
-			(noMessageContent || inlineError?.severity === "fatal"));
+		(!!inlineError && (noMessageContent || inlineErrorSeverity === "fatal"));
+	const messageMetadata = message.metadata;
+	const isOversizedPreview = Boolean(
+		messageMetadata && messageMetadata.tooLarge && !messageMetadata.hasFullContent,
+	);
 
 	return (
 		<div className="py-1">
@@ -789,6 +822,18 @@ const AssistantMessage = memo(function AssistantMessage({
 										inlineError={inlineError}
 										onDismiss={onInlineErrorDismiss}
 									/>
+								</div>
+							)}
+
+							{isOversizedPreview && onExpandLargeMessage && (
+								<div className="mt-3">
+									<Button
+										size="sm"
+										variant="outline"
+										onClick={() => onExpandLargeMessage(message.id)}
+									>
+										Open full reply
+									</Button>
 								</div>
 							)}
 						</div>
@@ -909,11 +954,149 @@ export function ChatMessages({
 	inlineErrors = [],
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
+	historyMeta,
+	onLoadEntireHistory,
+	onOversizedMessageHydrated,
+	fetchFullMessage,
 }: ChatMessagesProps) {
 	const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(
 		() => new Set(),
 	);
 	const animatingMessagesRef = useRef(animatingMessageIds);
+	const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
+	const [fullMessageCache, setFullMessageCache] = useState<
+		Record<string, LightfastAppChatUIMessage>
+	>({});
+	const [fullMessageStatus, setFullMessageStatus] = useState<
+		"idle" | "loading" | "error"
+	>("idle");
+	const [fullMessageErrorText, setFullMessageErrorText] = useState<string | null>(
+		null,
+	);
+
+	const expandedMessage = useMemo(
+		() => messages.find((message) => message.id === expandedMessageId),
+		[messages, expandedMessageId],
+	);
+
+	useEffect(() => {
+		if (!expandedMessageId) {
+			setFullMessageStatus("idle");
+			setFullMessageErrorText(null);
+			return;
+		}
+
+		const currentMessage = messages.find(
+			(message) => message.id === expandedMessageId,
+		);
+
+		if (!currentMessage) {
+			setFullMessageStatus("error");
+			setFullMessageErrorText("Message not found.");
+			return;
+		}
+
+		if (currentMessage.metadata?.hasFullContent) {
+			setFullMessageStatus("idle");
+			setFullMessageErrorText(null);
+			return;
+		}
+
+		if (fullMessageCache[expandedMessageId]) {
+			setFullMessageStatus("idle");
+			setFullMessageErrorText(null);
+			return;
+		}
+
+		const sessionId = currentMessage.metadata?.sessionId;
+		if (!fetchFullMessage || !sessionId) {
+			setFullMessageStatus("error");
+			setFullMessageErrorText("Full reply unavailable.");
+			return;
+		}
+
+		let cancelled = false;
+		setFullMessageStatus("loading");
+		setFullMessageErrorText(null);
+
+		fetchFullMessage({ sessionId, messageId: expandedMessageId })
+			.then((result) => {
+				if (cancelled) return;
+				if (!result) {
+				setFullMessageStatus("error");
+				setFullMessageErrorText("Full reply unavailable.");
+				return;
+			}
+
+				setFullMessageCache((prev) => ({ ...prev, [result.id]: result }));
+				const metrics = result.metadata?.charCount
+					? {
+						charCount: result.metadata.charCount,
+						tokenCount: result.metadata.tokenCount,
+					}
+					: computeMessageCharCount(result.parts);
+
+				onOversizedMessageHydrated?.({
+					messageId: result.id,
+					parts: result.parts,
+					charCount: metrics.charCount,
+					tokenCount: metrics.tokenCount,
+				});
+
+			setFullMessageStatus("idle");
+			setFullMessageErrorText(null);
+			})
+			.catch((error) => {
+				if (cancelled) return;
+				setFullMessageStatus("error");
+				setFullMessageErrorText(
+					error instanceof Error
+						? error.message
+						: "Failed to load full reply.",
+				);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		expandedMessageId,
+		fetchFullMessage,
+		messages,
+		fullMessageCache,
+		onOversizedMessageHydrated,
+	]);
+
+	useEffect(() => {
+		if (expandedMessageId && !expandedMessage) {
+			setExpandedMessageId(null);
+		}
+	}, [expandedMessage, expandedMessageId]);
+
+	const hydratedExpandedMessage = useMemo<
+		LightfastAppChatUIMessage | undefined
+	>(() => {
+		if (expandedMessage?.metadata?.hasFullContent) {
+			return expandedMessage;
+		}
+
+		if (expandedMessageId) {
+			const cached = fullMessageCache[expandedMessageId];
+			if (cached) {
+				return cached;
+			}
+		}
+
+		return expandedMessage ?? undefined;
+	}, [expandedMessage, expandedMessageId, fullMessageCache]);
+
+	const handleExpandLargeMessage = useCallback((messageId: string) => {
+		setExpandedMessageId(messageId);
+	}, []);
+
+	const closeExpandedMessage = useCallback(() => {
+		setExpandedMessageId(null);
+	}, []);
 
 	useEffect(() => {
 		animatingMessagesRef.current = animatingMessageIds;
@@ -932,7 +1115,9 @@ export function ChatMessages({
 				} else {
 					next.delete(messageId);
 				}
-				onStreamAnimationChange?.(next.size > 0);
+				if (onStreamAnimationChange) {
+					onStreamAnimationChange(next.size > 0);
+				}
 				return next;
 			});
 		},
@@ -942,7 +1127,9 @@ export function ChatMessages({
 	useEffect(() => {
 		return () => {
 			if (animatingMessagesRef.current.size > 0) {
-				onStreamAnimationChange?.(false);
+				if (onStreamAnimationChange) {
+					onStreamAnimationChange(false);
+				}
 			}
 		};
 	}, [onStreamAnimationChange]);
@@ -953,6 +1140,26 @@ export function ChatMessages({
 	);
 
 	const streamingStatus = status === "submitted" || status === "streaming";
+	const showHistoryCapBanner = Boolean(
+		historyMeta &&
+		historyMeta.hardCapReached &&
+		!historyMeta.overrideEnabled &&
+		historyMeta.hasNextPage,
+	);
+
+	const historyLoadedEstimate = historyMeta
+		? Math.max(1, Math.round(historyMeta.totalChars / 1000))
+		: 0;
+
+	const shouldShowScrollButton =
+		!historyMeta ||
+		!historyMeta.hasNextPage ||
+		SCROLL_BUTTON_READY_STATES.includes(historyMeta.state);
+
+	const enableFullReply = Boolean(fetchFullMessage);
+	const isFullMessageLoading =
+		enableFullReply && fullMessageStatus === "loading";
+	const fullMessageError = enableFullReply ? fullMessageErrorText : null;
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
@@ -970,6 +1177,26 @@ export function ChatMessages({
 										Start typing below to begin the conversation.
 									</p>
 								</div>
+							</div>
+						</div>
+					)}
+
+					{showHistoryCapBanner && (
+						<div className="mx-auto mt-4 w-full max-w-3xl px-4 lg:px-14 xl:px-20">
+							<div className="rounded-lg border border-dashed border-muted-foreground/40 bg-muted/10 p-4 text-sm">
+								<p className="font-medium">Older replies paused</p>
+								<p className="mt-1 text-muted-foreground">
+									We preloaded approximately {historyLoadedEstimate}k characters from this
+									session. Load the entire history (~1.2 MB) to continue.
+								</p>
+								<Button
+									size="sm"
+									variant="outline"
+									className="mt-3"
+									onClick={() => onLoadEntireHistory?.()}
+								>
+									Load entire history (~1.2 MB)
+								</Button>
 							</div>
 						</div>
 					)}
@@ -998,6 +1225,9 @@ export function ChatMessages({
 											onInlineErrorDismiss={onInlineErrorDismiss}
 											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
+											onExpandLargeMessage={
+												enableFullReply ? handleExpandLargeMessage : undefined
+											}
 										/>
 									</Fragment>
 								);
@@ -1027,6 +1257,9 @@ export function ChatMessages({
 											onInlineErrorDismiss={onInlineErrorDismiss}
 											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
+											onExpandLargeMessage={
+												enableFullReply ? handleExpandLargeMessage : undefined
+											}
 										/>
 									</Fragment>
 								);
@@ -1049,11 +1282,14 @@ export function ChatMessages({
 											_isAuthenticated={_isAuthenticated}
 											hideActions
 											meaningfulContentOverride={false}
-											inlineError={turn.inlineError}
-											onInlineErrorDismiss={onInlineErrorDismiss}
-											isStreamAnimating={assistantAnimating}
-											onStreamAnimationChange={reportAnimationChange}
-										/>
+										inlineError={turn.inlineError}
+										onInlineErrorDismiss={onInlineErrorDismiss}
+										isStreamAnimating={assistantAnimating}
+										onStreamAnimationChange={reportAnimationChange}
+										onExpandLargeMessage={
+											enableFullReply ? handleExpandLargeMessage : undefined
+										}
+									/>
 									</Fragment>
 								);
 							}
@@ -1077,6 +1313,9 @@ export function ChatMessages({
 										onInlineErrorDismiss={onInlineErrorDismiss}
 										isStreamAnimating={assistantAnimating}
 										onStreamAnimationChange={reportAnimationChange}
+										onExpandLargeMessage={
+											enableFullReply ? handleExpandLargeMessage : undefined
+										}
 									/>
 								);
 							}
@@ -1085,12 +1324,61 @@ export function ChatMessages({
 						}
 					})}
 				</ConversationContent>
-				<ConversationScrollButton
-					className="absolute bottom-4 z-20 right-4 rounded-full shadow-lg transition-all duration-200"
-					variant="secondary"
-					size="icon"
-				/>
+				{shouldShowScrollButton && (
+					<ConversationScrollButton
+						className="absolute bottom-4 z-20 right-4 rounded-full shadow-lg transition-all duration-200"
+						variant="secondary"
+						size="icon"
+					/>
+				)}
 			</Conversation>
+			{enableFullReply && (
+				<Dialog
+					open={expandedMessageId !== null}
+					onOpenChange={(open) => {
+						if (!open) {
+							closeExpandedMessage();
+						}
+					}}
+				>
+					<DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>Full reply</DialogTitle>
+						</DialogHeader>
+						{isFullMessageLoading ? (
+							<div className="py-6 text-sm text-muted-foreground">
+								Loading full reply…
+							</div>
+						) : fullMessageError ? (
+							<div className="py-6 text-sm text-destructive">
+								{fullMessageError}
+							</div>
+						) : hydratedExpandedMessage ? (
+							<div className="mt-2">
+								<AssistantMessage
+									message={hydratedExpandedMessage}
+									onArtifactClick={onArtifactClick}
+									status="ready"
+									isCurrentlyStreaming={false}
+									feedback={feedback}
+									onFeedbackSubmit={onFeedbackSubmit}
+									onFeedbackRemove={onFeedbackRemove}
+									_isAuthenticated={_isAuthenticated}
+									hideActions
+									meaningfulContentOverride
+									inlineError={undefined}
+									onInlineErrorDismiss={onInlineErrorDismiss}
+									onStreamAnimationChange={undefined}
+								/>
+							</div>
+						) : (
+							<div className="py-6 text-sm text-muted-foreground">
+								This reply is no longer available.
+							</div>
+						)}
+					</DialogContent>
+				</Dialog>
+			)}
 		</div>
 	);
 }

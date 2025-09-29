@@ -18,21 +18,32 @@ type SharedSessionPayload = ChatRouterOutputs["share"]["get"];
 export function SharedSessionView({ session, messages }: SharedSessionPayload) {
 	const processedMessages = useMemo<LightfastAppChatUIMessage[]>(
 		() =>
-			messages.map((message) => ({
-				id: message.id,
-				role: message.role,
-				parts: message.parts,
-			})) as LightfastAppChatUIMessage[],
-		[messages],
+			messages.map<LightfastAppChatUIMessage>((message) => {
+				const metadataFromServer: LightfastAppChatUIMessage["metadata"] =
+					message.metadata;
+				const baseMetadata = { ...metadataFromServer };
+				return {
+					id: message.id,
+					role: message.role,
+					parts: message.parts,
+					metadata: {
+						...baseMetadata,
+						sessionId: session.id,
+					},
+				};
+			}),
+		[messages, session.id],
 	);
 
 	const hasMessages = processedMessages.length > 0;
+	const headerTitle =
+		session.title.trim().length > 0 ? session.title : "Lightfast Chat";
 
 	return (
 		<div className="min-h-screen bg-background text-foreground flex flex-col">
 			<header className="border-b border-border/60 px-4 py-3">
 				<h1 className="text-xs font-medium text-foreground">
-					{session.title || "Lightfast Chat"}
+					{headerTitle}
 				</h1>
 			</header>
 
