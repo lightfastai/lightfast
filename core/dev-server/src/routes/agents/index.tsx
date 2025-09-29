@@ -69,7 +69,7 @@ function AgentsPage() {
 	const lightfastData = loaderData.data;
 
 	// Handle no agents case
-	if (!lightfastData || !lightfastData.agents || Object.keys(lightfastData.agents).length === 0) {
+	if (!lightfastData?.agents || Object.keys(lightfastData.agents).length === 0) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
 				<div className="text-center">

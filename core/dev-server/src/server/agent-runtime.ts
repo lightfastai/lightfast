@@ -119,7 +119,7 @@ export class AgentRuntimeService {
       // Try to get config and extract agents from there
       else if (typeof lightfastInstance.getConfig === 'function') {
         const config = lightfastInstance.getConfig()
-        if (config && config.agents) {
+        if (config?.agents) {
           agents = config.agents
           console.info('📦 Extracted agents from getConfig().agents')
         }

@@ -42,9 +42,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 		context: ChatFetchContext;
 	}): Promise<void> {
 		// Only set modelId for assistant messages
-		const modelId = message.role === 'assistant' 
-			? context.modelId 
-			: null;
+		const modelId = message.role === "assistant" ? context.modelId : null;
 		
 		await this.messagesService.append({
 			sessionId,

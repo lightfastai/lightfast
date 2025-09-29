@@ -83,8 +83,8 @@ describe("InMemoryMemory", () => {
 
 			expect(messages1).toHaveLength(1);
 			expect(messages2).toHaveLength(1);
-			expect(getMessageText(messages1[0] as UIMessage)).toBe("Session 1 message");
-			expect(getMessageText(messages2[0] as UIMessage)).toBe("Session 2 message");
+			expect(getMessageText(messages1[0]!)).toBe("Session 1 message");
+			expect(getMessageText(messages2[0]!)).toBe("Session 2 message");
 		});
 
 		it("should preserve message order", async () => {

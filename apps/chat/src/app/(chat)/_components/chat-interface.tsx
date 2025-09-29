@@ -123,12 +123,6 @@ interface ChatInterfaceProps {
 	usageLimits?: UsageLimitsData; // Optional pre-fetched usage limits data (for authenticated users)
 	historyMeta?: MessageHistoryMeta;
 	onLoadEntireHistory?: () => void;
-	onOversizedMessageHydrated?: (args: {
-		messageId: string;
-		parts: LightfastAppChatUIMessage["parts"];
-		charCount: number;
-		tokenCount?: number;
-	}) => void;
 }
 
 export function ChatInterface({
@@ -147,7 +141,6 @@ export function ChatInterface({
 	usageLimits: externalUsageLimits,
 	historyMeta,
 	onLoadEntireHistory,
-	onOversizedMessageHydrated,
 }: ChatInterfaceProps) {
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
 	const {
@@ -170,45 +163,6 @@ export function ChatInterface({
 	const billingContext = useBillingContext({
 		externalUsageData: externalUsageLimits,
 	});
-
-	const fetchFullMessage = useCallback(
-		async ({
-			sessionId: targetSessionId,
-			messageId,
-		}: {
-			sessionId: string;
-			messageId: string;
-		}) => {
-				const message = await queryClient.fetchQuery(
-					trpc.message.get.queryOptions({
-						sessionId: targetSessionId,
-						messageId,
-					}),
-				);
-
-				const metadataFromServer: LightfastAppChatUIMessage["metadata"] =
-					message.metadata;
-				const baseMetadata = { ...metadataFromServer };
-				const normalizedModelId =
-					message.modelId ??
-					(typeof baseMetadata.modelId === "string"
-						? baseMetadata.modelId
-						: undefined);
-
-			return {
-				id: message.id,
-				role: message.role,
-				parts: message.parts,
-				metadata: {
-					...baseMetadata,
-					sessionId: targetSessionId,
-					modelId: normalizedModelId,
-				},
-				modelId: normalizedModelId,
-			} satisfies LightfastAppChatUIMessage;
-		},
-		[trpc],
-	);
 
 	// Streaming/storage errors surfaced inline in the conversation
 	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
@@ -986,8 +940,6 @@ export function ChatInterface({
 					onStreamAnimationChange={handleStreamAnimationChange}
 					historyMeta={historyMeta}
 					onLoadEntireHistory={onLoadEntireHistory}
-					onOversizedMessageHydrated={onOversizedMessageHydrated}
-					fetchFullMessage={fetchFullMessage}
 					onArtifactClick={
 						isAuthenticated
 							? async (artifactId) => {

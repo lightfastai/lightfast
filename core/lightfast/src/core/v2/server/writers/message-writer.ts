@@ -33,9 +33,10 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get<LightfastDBMessage[]>(key, "$");
+		const existingData = Array.isArray(existing) ? existing : [];
 
-		if (!existing || existing.length === 0) {
+		if (existingData.length === 0 || !existingData[0]) {
 			// Create new storage
 			const storage: LightfastDBMessage = {
 				sessionId,
@@ -86,13 +87,14 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
-		if (!existing || existing.length === 0) {
+		const existing = await this.redis.json.get<LightfastDBMessage[]>(key, "$");
+		const current = existing?.[0];
+		if (!current) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
-		const messages = existing[0]?.messages || [];
+		const messages = current.messages || [];
 		const messageIndex = messages.findIndex(
 			(m: UIMessage) => m.id === messageId,
 		);
@@ -134,13 +136,14 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
-		if (!existing || existing.length === 0) {
+		const existing = await this.redis.json.get<LightfastDBMessage[]>(key, "$");
+		const current = existing?.[0];
+		if (!current) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
-		const messages = existing[0]?.messages || [];
+		const messages = current.messages || [];
 		const messageIndex = messages.findIndex(
 			(m: UIMessage) => m.id === messageId,
 		);
@@ -183,13 +186,14 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data
-		const existing = await this.redis.json.get(key, "$") as LightfastDBMessage[] | null;
-		if (!existing || existing.length === 0) {
+		const existing = await this.redis.json.get<LightfastDBMessage[]>(key, "$");
+		const current = existing?.[0];
+		if (!current) {
 			throw new Error(`No messages found for session ${sessionId}`);
 		}
 
 		// Find the message to update
-		const messages = existing[0]?.messages || [];
+		const messages = current.messages || [];
 		const messageIndex = messages.findIndex(
 			(m: UIMessage) => m.id === messageId,
 		);
@@ -246,11 +250,12 @@ export class MessageWriter {
 		const now = new Date().toISOString();
 
 		// Get existing data or create new
-		const existing = await this.redis.json.get(messageKey, "$") as LightfastDBMessage[] | null;
+		const existing = await this.redis.json.get<LightfastDBMessage[]>(messageKey, "$");
+		const current = existing?.[0];
 
 		const pipeline = this.redis.pipeline();
 
-		if (!existing || existing.length === 0) {
+		if (!current) {
 			// Create new storage
 			const storage: LightfastDBMessage = {
 				sessionId,
@@ -266,7 +271,7 @@ export class MessageWriter {
 			);
 		} else {
 			// Check if this message ID already exists
-			const messages = existing[0]?.messages || [];
+			const messages = current.messages || [];
 			const existingMessageIndex = messages.findIndex(
 				(m: UIMessage) => m.id === message.id,
 			);

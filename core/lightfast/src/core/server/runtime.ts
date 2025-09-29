@@ -24,10 +24,11 @@ import {
 	toAgentApiError,
 	toMemoryApiError,
 } from "./errors";
+import type {
+	LightfastErrorSource} from "./error-classification";
 import {
 	LightfastErrorCategory,
-	LightfastErrorSeverity,
-	LightfastErrorSource,
+	LightfastErrorSeverity
 } from "./error-classification";
 import { Err, Ok } from "./result";
 import type { Result } from "./result";

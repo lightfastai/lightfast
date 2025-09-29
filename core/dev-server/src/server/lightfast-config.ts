@@ -67,7 +67,7 @@ export class LightfastConfigService {
       if (fs.existsSync(tsConfigPath)) {
         console.info(`Found TypeScript config, attempting to compile: ${tsConfigPath}`);
         try {
-          const lightfast = await loadConfig(tsConfigPath) as unknown;
+          const lightfast = await loadConfig(tsConfigPath);
           if (lightfast && typeof (lightfast as { toJSON?: () => unknown }).toJSON === 'function') {
             const jsonConfig = (lightfast as { toJSON: () => LightfastJSON }).toJSON();
             this.configCache = jsonConfig;

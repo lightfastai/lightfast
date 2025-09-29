@@ -1,7 +1,8 @@
 import { AISDKError } from "ai";
+import type {
+	LightfastErrorContext} from "./error-classification";
 import {
 	LightfastErrorCategory,
-	LightfastErrorContext,
 	LightfastErrorSeverity,
 	LightfastErrorSource,
 } from "./error-classification";

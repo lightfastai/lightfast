@@ -427,48 +427,6 @@ export function ExistingSessionChat({
     [],
   );
 
-  const handleOversizedMessageHydrated = useCallback(
-    ({
-      messageId,
-      parts,
-      charCount,
-      tokenCount,
-    }: {
-      messageId: string;
-      parts: LightfastAppChatUIMessage["parts"];
-      charCount: number;
-      tokenCount?: number;
-    }) => {
-      updateMessagesCache((draft) => {
-        draft.pages.forEach((page) => {
-          page.items.forEach((item) => {
-            if (item.id !== messageId) {
-              return;
-            }
-
-            item.parts = parts;
-            const metadataForUpdate = item.metadata;
-            const previousMetadata = { ...metadataForUpdate };
-            const previousTokenCount =
-              typeof previousMetadata.tokenCount === "number"
-                ? previousMetadata.tokenCount
-                : undefined;
-
-            item.metadata = {
-              ...previousMetadata,
-              sessionId,
-              charCount,
-              tokenCount: tokenCount ?? previousTokenCount,
-              hasFullContent: true,
-              tooLarge: false,
-            };
-          });
-        });
-      });
-    },
-    [sessionId, updateMessagesCache],
-  );
-
   const handleSessionCreation = (_firstMessage: string) => {
     // Existing sessions don't need creation
   };
@@ -486,7 +444,6 @@ export function ExistingSessionChat({
         usageLimits={usageLimits}
         historyMeta={historyMeta}
         onLoadEntireHistory={handleLoadEntireHistory}
-        onOversizedMessageHydrated={handleOversizedMessageHydrated}
         onNewUserMessage={(userMessage) => {
           const metrics = computeMessageCharCount(userMessage.parts);
           updateMessagesCache((draft) => {

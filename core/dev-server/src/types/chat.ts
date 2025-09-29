@@ -40,10 +40,10 @@ export type DevServerUIMessagePart = DevServerUIMessage["parts"][number];
  */
 export interface LightfastMessage {
   role: 'user' | 'assistant' | 'system';
-  parts: Array<{
+  parts: {
     type: 'text';
     text: string;
-  }>;
+  }[];
   id: string;
 }
 
