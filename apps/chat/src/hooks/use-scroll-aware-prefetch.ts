@@ -2,10 +2,13 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { InfiniteData } from "@tanstack/react-query";
 import { useTRPC } from "@repo/chat-trpc/react";
 import {
+  MESSAGE_BACKGROUND_CHAR_BUDGET,
+  MESSAGE_FALLBACK_PAGE_SIZE,
+  MESSAGE_INITIAL_CHAR_BUDGET,
   MESSAGE_PAGE_GC_TIME,
-  MESSAGE_PAGE_SIZE,
   MESSAGE_PAGE_STALE_TIME,
 } from "~/lib/messages/loading";
 import type { ChatRouterOutputs } from "@api/chat";
@@ -17,6 +20,7 @@ interface UseScrollAwarePrefetchProps {
 
 type MessagePage = ChatRouterOutputs["message"]["listInfinite"];
 type MessageCursor = NonNullable<MessagePage["nextCursor"]>;
+type MessagesInfiniteData = InfiniteData<MessagePage, MessageCursor | null>;
 
 /**
  * Hook that provides scroll-aware hover prefetching.
@@ -82,7 +86,8 @@ export function useScrollAwarePrefetch({
       const listInfiniteOptions = trpc.message.listInfinite.infiniteQueryOptions(
         {
           sessionId,
-          limit: MESSAGE_PAGE_SIZE,
+          limitChars: MESSAGE_INITIAL_CHAR_BUDGET,
+          limitMessages: MESSAGE_FALLBACK_PAGE_SIZE,
         },
         {
           initialCursor: null as MessageCursor | null,
@@ -99,9 +104,32 @@ export function useScrollAwarePrefetch({
       const cachedData = queryClient.getQueryData(listInfiniteOptions.queryKey);
       const queryState = queryClient.getQueryState(listInfiniteOptions.queryKey);
 
-      // Skip prefetch if data exists and is still fresh (within staleTime)
-      if (cachedData && queryState && Date.now() - queryState.dataUpdatedAt < 30 * 1000) {
-        return;
+      if (cachedData) {
+        const totalChars = (cachedData as MessagesInfiniteData).pages.reduce(
+          (sum, page) => {
+            const pageChars =
+              typeof page.pageCharCount === "number"
+                ? page.pageCharCount
+                : page.items.reduce((innerSum, item) => {
+                    const charCount = item.metadata.charCount || 0;
+                    return innerSum + charCount;
+                  }, 0);
+
+            return sum + pageChars;
+          },
+          0,
+        );
+
+        if (totalChars >= MESSAGE_BACKGROUND_CHAR_BUDGET) {
+          return;
+        }
+
+        if (
+          queryState &&
+          Date.now() - queryState.dataUpdatedAt < 30 * 1000
+        ) {
+          return;
+        }
       }
 
       await queryClient.prefetchInfiniteQuery(listInfiniteOptions);

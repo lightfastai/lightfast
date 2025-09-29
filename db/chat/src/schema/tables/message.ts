@@ -1,5 +1,12 @@
 import { relations, sql } from "drizzle-orm";
-import { datetime, index, json, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+import {
+  datetime,
+  index,
+  int,
+  json,
+  mysqlTable,
+  varchar,
+} from "drizzle-orm/mysql-core";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -45,6 +52,17 @@ export const LightfastChatMessage = mysqlTable("lightfast_chat_message", {
    * Supports Lightfast-specific content types (text, images, tool calls, custom data, etc.)
    */
   parts: json("parts").$type<LightfastAppChatUIMessage["parts"]>().notNull(),
+
+  /**
+   * Cached character count snapshot for the message content
+   * Used to budget history pagination without rehydrating full parts payloads
+   */
+  charCount: int("char_count").notNull().default(0),
+
+  /**
+   * Optional cached token count for future budgeting heuristics
+   */
+  tokenCount: int("token_count"),
   
   /**
    * The AI model used to generate this message (for assistant messages)

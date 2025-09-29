@@ -153,6 +153,9 @@ importers:
       '@db/chat':
         specifier: workspace:*
         version: link:../../db/chat
+      '@repo/chat-ai-types':
+        specifier: workspace:*
+        version: link:../../packages/chat-ai-types
       '@repo/chat-billing':
         specifier: workspace:*
         version: link:../../packages/chat-billing

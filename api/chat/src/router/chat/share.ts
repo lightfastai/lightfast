@@ -10,6 +10,7 @@ import {
   LightfastChatSessionShare,
 } from "@db/chat";
 import { uuidv4 } from "@repo/lib";
+import { computeMessageCharCount } from "@repo/chat-ai-types";
 
 import { publicProcedure, protectedProcedure } from "../../trpc";
 
@@ -156,6 +157,8 @@ export const shareRouter = {
           parts: LightfastChatMessage.parts,
           modelId: LightfastChatMessage.modelId,
           createdAt: LightfastChatMessage.createdAt,
+          charCount: LightfastChatMessage.charCount,
+          tokenCount: LightfastChatMessage.tokenCount,
         })
         .from(LightfastChatMessage)
         .where(eq(LightfastChatMessage.sessionId, share.sessionId))
@@ -173,13 +176,29 @@ export const shareRouter = {
           title: session.title,
           updatedAt: session.updatedAt,
         },
-        messages: messages.map((message) => ({
-          id: message.id,
-          role: message.role,
-          parts: message.parts,
-          modelId: message.modelId,
-          createdAt: message.createdAt,
-        })),
+        messages: messages.map((message) => {
+          const metrics =
+            message.charCount && message.charCount > 0
+              ? { charCount: message.charCount, tokenCount: message.tokenCount ?? undefined }
+              : computeMessageCharCount(
+                  message.parts as unknown as Parameters<typeof computeMessageCharCount>[0],
+                );
+
+          return {
+            id: message.id,
+            role: message.role,
+            parts: message.parts,
+            modelId: message.modelId,
+            createdAt: message.createdAt,
+            metadata: {
+              sessionId: share.sessionId,
+              createdAt: message.createdAt,
+              charCount: metrics.charCount,
+              tokenCount: metrics.tokenCount ?? undefined,
+              hasFullContent: true,
+            },
+          };
+        }),
       };
     }),
 } satisfies TRPCRouterRecord;

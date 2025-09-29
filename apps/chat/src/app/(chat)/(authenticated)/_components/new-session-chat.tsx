@@ -11,6 +11,7 @@ import { DataStreamProvider } from "~/hooks/use-data-stream";
 import { getMessageType } from "~/lib/billing/message-utils";
 import { MessageType } from "@repo/chat-billing";
 import { produce } from "immer";
+import { computeMessageCharCount } from "@repo/chat-ai-types";
 
 interface NewSessionChatProps {
 	agentId: string;
@@ -115,24 +116,34 @@ export function NewSessionChat({
 				handleSessionCreation={handleSessionCreation}
 				user={user}
 				usageLimits={usageLimits}
-				onNewUserMessage={(userMessage) => {
-					// Optimistically append the user message to the cache
-					queryClient.setQueryData(messagesQueryKey, (oldData) => {
-						const currentMessages = oldData ?? [];
-						// Check if message with this ID already exists
-						if (currentMessages.some((msg) => msg.id === userMessage.id)) {
-							return currentMessages;
-						}
-						return [
-							...currentMessages,
-							{
-								id: userMessage.id,
-								role: userMessage.role,
-								parts: userMessage.parts,
-								modelId: selectedModelId,
-							},
-						];
-					});
+					onNewUserMessage={(userMessage) => {
+						const metrics = computeMessageCharCount(userMessage.parts);
+
+						// Optimistically append the user message to the cache
+						queryClient.setQueryData(messagesQueryKey, (oldData) => {
+							const currentMessages = oldData ?? [];
+							// Check if message with this ID already exists
+							if (currentMessages.some((msg) => msg.id === userMessage.id)) {
+								return currentMessages;
+							}
+							const createdAt = new Date().toISOString();
+							return [
+								...currentMessages,
+								{
+									id: userMessage.id,
+									role: userMessage.role,
+									parts: userMessage.parts,
+									modelId: selectedModelId,
+									metadata: {
+										sessionId,
+										createdAt,
+										charCount: metrics.charCount,
+										tokenCount: metrics.tokenCount,
+										hasFullContent: true,
+									},
+								},
+							];
+						});
 
 					// Optimistically update usage for immediate UI feedback (prevents spam clicking)
 					// Server-side reservation system provides authoritative validation
@@ -209,6 +220,10 @@ export function NewSessionChat({
 					);
 				}}
 				onNewAssistantMessage={(assistantMessage) => {
+					const metrics = computeMessageCharCount(assistantMessage.parts);
+					const assistantModelId = assistantMessage.metadata?.modelId ?? null;
+					const createdAt = assistantMessage.metadata?.createdAt ?? new Date().toISOString();
+
 					// Optimistically append the assistant message to the cache
 					queryClient.setQueryData(messagesQueryKey, (oldData) => {
 						const currentMessages = oldData ?? [];
@@ -222,7 +237,14 @@ export function NewSessionChat({
 								id: assistantMessage.id,
 								role: assistantMessage.role,
 								parts: assistantMessage.parts,
-								modelId: null,
+								modelId: assistantModelId,
+								metadata: {
+									sessionId,
+									createdAt,
+									charCount: metrics.charCount,
+									tokenCount: metrics.tokenCount,
+									hasFullContent: true,
+								},
 							},
 						];
 					});
