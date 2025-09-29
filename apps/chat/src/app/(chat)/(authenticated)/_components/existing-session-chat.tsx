@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import {
 	useQuery,
@@ -88,51 +89,52 @@ export function ExistingSessionChat({
 		retry: 2,
 	});
 
+	let fallbackContent: ReactNode | null = null;
+
 	if (isMessagesError) {
 		if (isNotFound(messagesError)) {
 			notFound();
 		}
 
 		if (isUnauthorized(messagesError)) {
-			// Session expired or user lost access – surface graceful state.
-			return (
+			fallbackContent = (
 				<div className="flex h-full items-center justify-center p-6">
 					<div className="max-w-sm text-center text-sm text-muted-foreground">
 						You no longer have access to this chat.
 					</div>
 				</div>
 			);
-		}
-
-		captureException(messagesError, {
-			tags: { component: "ExistingSessionChat", query: "message.list" },
-			extra: { sessionId },
-		});
-
-		const retry = () => {
-			void queryClient.invalidateQueries({
-				queryKey: messagesQueryOptions.queryKey,
+		} else {
+			captureException(messagesError, {
+				tags: { component: "ExistingSessionChat", query: "message.list" },
+				extra: { sessionId },
 			});
-		};
 
-		return (
-			<div className="flex h-full items-center justify-center p-6">
-				<div className="flex max-w-sm flex-col items-center gap-3 text-center">
-					<p className="text-sm text-muted-foreground">
-						{getTRPCErrorMessage(messagesError)}
-					</p>
-					<Button size="sm" variant="outline" onClick={retry}>
-						Retry loading chat
-					</Button>
+			const retry = () => {
+				void queryClient.invalidateQueries({
+					queryKey: messagesQueryOptions.queryKey,
+				});
+			};
+
+			fallbackContent = (
+				<div className="flex h-full items-center justify-center p-6">
+					<div className="flex max-w-sm flex-col items-center gap-3 text-center">
+						<p className="text-sm text-muted-foreground">
+							{getTRPCErrorMessage(messagesError)}
+						</p>
+						<Button size="sm" variant="outline" onClick={retry}>
+							Retry loading chat
+						</Button>
+					</div>
 				</div>
-			</div>
-		);
+			);
+		}
 	}
 
 	const messages = messagesData ?? [];
 
-	if (isMessagesPending && messages.length === 0) {
-		return <ChatLoadingSkeleton />;
+	if (!fallbackContent && isMessagesPending && messages.length === 0) {
+		fallbackContent = <ChatLoadingSkeleton />;
 	}
 
 	// Redirect to not-found for temporary sessions - they shouldn't be directly accessible
@@ -157,6 +159,10 @@ export function ExistingSessionChat({
 			})) as LightfastAppChatUIMessage[],
 		[messages],
 	);
+
+	if (fallbackContent) {
+		return fallbackContent;
+	}
 
 	// Session already includes activeStreamId now
 
