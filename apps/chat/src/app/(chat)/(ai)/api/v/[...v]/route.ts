@@ -18,7 +18,14 @@ import type { AppRuntimeContext } from "@repo/chat-ai-types";
 import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";
 import { saveDocument } from "@repo/chat-api-services/artifacts";
 
-import type { ChatRouteResources } from "./_lib/route-policies";
+import {
+  MAX_JSON_PARSE_BYTES,
+  MAX_REQUEST_PAYLOAD_BYTES,
+} from "@repo/chat-ai-types";
+import type {
+  ChatRouteRequestBody,
+  ChatRouteResources,
+} from "./_lib/route-policies";
 import { createDocumentHandlersByArtifactKind } from "~/ai/artifacts/server";
 import { getDefaultModelForUser } from "~/ai/providers";
 import { env } from "~/env";
@@ -72,6 +79,145 @@ const applyTelemetryHeaders = (
   }
   return response;
 };
+
+class RequestPayloadTooLargeError extends Error {
+  constructor(
+    public readonly limit: number,
+    public readonly received: number,
+  ) {
+    super(`Request payload exceeded limit of ${limit} bytes`);
+    this.name = "RequestPayloadTooLargeError";
+  }
+}
+
+class RequestBodyParseError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = "RequestBodyParseError";
+  }
+}
+
+interface ParsedRequestPayload {
+  text: string;
+  size: number;
+  body: ChatRouteRequestBody | null;
+}
+
+const decoder = new TextDecoder();
+
+async function readRequestBodyWithLimit(
+  request: Request,
+  byteLimit: number,
+): Promise<{ text: string; size: number }> {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength) {
+    const declaredSize = Number(contentLength);
+    if (!Number.isNaN(declaredSize) && declaredSize > byteLimit) {
+      throw new RequestPayloadTooLargeError(byteLimit, declaredSize);
+    }
+  }
+
+  const stream = request.body;
+  if (!stream) {
+    return { text: "", size: 0 };
+  }
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    if (!value) {
+      continue;
+    }
+
+    total += value.byteLength;
+    if (total > byteLimit) {
+      void reader.cancel("payload too large");
+      throw new RequestPayloadTooLargeError(byteLimit, total);
+    }
+
+    chunks.push(value);
+  }
+
+  if (chunks.length === 0) {
+    return { text: "", size: total };
+  }
+
+  if (chunks.length === 1) {
+    return { text: decoder.decode(chunks[0]), size: total };
+  }
+
+  const buffer = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return { text: decoder.decode(buffer), size: total };
+}
+
+function safeParseRequestBody(text: string): ChatRouteRequestBody | null {
+  if (!text.trim()) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new RequestBodyParseError("Invalid JSON payload", error);
+  }
+
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new RequestBodyParseError(
+      "Chat request payload must be a JSON object",
+      parsed,
+    );
+  }
+
+  return parsed as ChatRouteRequestBody;
+}
+
+async function extractRequestPayload(
+  request: Request,
+  byteLimit: number,
+): Promise<ParsedRequestPayload> {
+  const { text, size } = await readRequestBodyWithLimit(request, byteLimit);
+
+  if (size > MAX_JSON_PARSE_BYTES) {
+    throw new RequestPayloadTooLargeError(MAX_JSON_PARSE_BYTES, size);
+  }
+
+  const body = safeParseRequestBody(text);
+
+  return { text, size, body };
+}
+
+function recreateRequestWithBody(
+  original: Request,
+  bodyText: string,
+  payloadBytes: number,
+): Request {
+  const headers = new Headers(original.headers);
+  headers.set("content-length", `${payloadBytes}`);
+
+  const init: RequestInit = {
+    method: original.method,
+    headers,
+  };
+
+  if (original.method !== "GET" && original.method !== "HEAD") {
+    init.body = bodyText;
+  }
+
+  return new Request(original.url, init);
+}
 
 const handler = async (
   req: Request,
@@ -177,6 +323,9 @@ const handler = async (
         isResume,
         webSearchEnabled: isResume ? true : false,
         lastUserMessage: "",
+        conversationCharCount: 0,
+        payloadBytes: 0,
+        body: null,
       },
       model: {
         id: isResume
@@ -184,6 +333,70 @@ const handler = async (
           : "google/gemini-2.5-flash",
       },
     };
+
+    let requestForHandlers = req;
+    let parsedRequestBody: ChatRouteRequestBody | null = null;
+
+    if (!isResume && req.method === "POST") {
+      try {
+        const parsedPayload = await extractRequestPayload(
+          req,
+          MAX_REQUEST_PAYLOAD_BYTES,
+        );
+
+        resources.request.payloadBytes = parsedPayload.size;
+        resources.request.body = parsedPayload.body;
+        parsedRequestBody = parsedPayload.body;
+
+        requestForHandlers = recreateRequestWithBody(
+          req,
+          parsedPayload.text,
+          parsedPayload.size,
+        );
+      } catch (error) {
+        console.warn(
+          "[Chat API] Failed to process request payload before guard evaluation",
+          {
+            error,
+            requestId,
+            agentId,
+            sessionId,
+            isAnonymous,
+          },
+        );
+
+        if (error instanceof RequestPayloadTooLargeError) {
+          return applyTelemetryHeaders(
+            ApiErrors.payloadTooLarge({
+              requestId,
+              isAnonymous,
+              reason: "request_payload_bytes_exceeded",
+              limitBytes: error.limit,
+              receivedBytes: error.received,
+            }),
+            telemetry,
+          );
+        }
+
+        if (error instanceof RequestBodyParseError) {
+          return applyTelemetryHeaders(
+            ApiErrors.invalidRequestBody(error.message, {
+              requestId,
+              isAnonymous,
+            }),
+            telemetry,
+          );
+        }
+
+        return applyTelemetryHeaders(
+          ApiErrors.invalidRequestBody("Unable to read chat request payload", {
+            requestId,
+            isAnonymous,
+          }),
+          telemetry,
+        );
+      }
+    }
 
     const guardResponse = await startSpan(
       {
@@ -195,7 +408,7 @@ const handler = async (
           sessionId,
         },
       },
-      () => runGuards(chatGuards, { request: req.clone(), resources }),
+      () => runGuards(chatGuards, { request: requestForHandlers, resources }),
     );
 
     if (guardResponse) {
@@ -221,6 +434,9 @@ const handler = async (
       });
       return applyTelemetryHeaders(guardResponse, telemetry);
     }
+
+    // Release the parsed body from resources now that guards have completed.
+    resources.request.body = null;
 
     const {
       memory,
@@ -321,6 +537,8 @@ const handler = async (
       isResume: requestState.isResume,
       webSearchEnabled: requestState.webSearchEnabled,
       streamingDelay,
+      payloadBytes: resources.request.payloadBytes,
+      conversationCharCount: resources.request.conversationCharCount,
     });
 
     const executeHandler = async (): Promise<Response> => {
@@ -394,7 +612,8 @@ const handler = async (
               }),
               sessionId,
               memory,
-              req,
+              req: requestForHandlers,
+              body: parsedRequestBody,
               resourceId: authState.userId,
               context: {
                 modelId: model.id,

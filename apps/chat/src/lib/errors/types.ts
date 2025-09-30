@@ -22,6 +22,7 @@ export enum ChatErrorType {
   
   // Request Issues
   INVALID_REQUEST = "INVALID_REQUEST",
+  PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE",
   
   // Server Issues
   SERVER_ERROR = "SERVER_ERROR",
@@ -92,6 +93,7 @@ export const ERROR_STATUS_CODES: Record<ChatErrorType, number> = {
   [ChatErrorType.MODEL_UNAVAILABLE]: 503,
   [ChatErrorType.INVALID_MODEL]: 400,
   [ChatErrorType.INVALID_REQUEST]: 400,
+  [ChatErrorType.PAYLOAD_TOO_LARGE]: 413,
   [ChatErrorType.SERVER_ERROR]: 500,
   [ChatErrorType.SERVICE_UNAVAILABLE]: 503,
   [ChatErrorType.UNKNOWN]: 500,

@@ -1,3 +1,9 @@
+// Payload size limits for chat API requests
+export const MAX_USER_MESSAGE_CHARS = 4_000;
+export const MAX_CONVERSATION_HISTORY_CHARS = 100_000; // ~25-50 messages
+export const MAX_REQUEST_PAYLOAD_BYTES = 1_000_000; // 1MB total payload limit
+export const MAX_JSON_PARSE_BYTES = MAX_REQUEST_PAYLOAD_BYTES;
+
 // Character budgets used for historical message pagination.
 // Update these values to tune how much history we hydrate by default:
 // - MESSAGE_INITIAL_CHAR_BUDGET: chars fetched for the first page load.

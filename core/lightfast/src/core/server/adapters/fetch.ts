@@ -79,6 +79,7 @@ export interface FetchRequestHandlerOptions<
 	generateId?: () => string;
 	enableResume?: boolean;
 	resumeOptions?: ResumeOptions;
+	body?: unknown;
 }
 
 /**
@@ -147,6 +148,7 @@ export async function fetchRequestHandler<
 		onStreamComplete,
 		onAgentStart,
 		onAgentComplete,
+		body: providedBody,
 	} = options;
 
 	try {
@@ -157,8 +159,12 @@ export async function fetchRequestHandler<
 
 		// Handle POST request
 		if (req.method === "POST") {
-			const body = await req.json();
-			const { messages } = body as { messages: UIMessage[] };
+			const hasProvidedBody = Object.prototype.hasOwnProperty.call(
+				options,
+				"body",
+			);
+			const rawBody = hasProvidedBody ? providedBody : await req.json();
+			const { messages } = (rawBody ?? {}) as { messages?: UIMessage[] };
 
 			if (!messages || messages.length === 0) {
 				throw new NoMessagesError();

@@ -339,3 +339,5 @@ export type {
   MessageCharMetrics,
   MessagePreviewResult,
 } from "./message-metrics";
+
+export * from "./message-loading";

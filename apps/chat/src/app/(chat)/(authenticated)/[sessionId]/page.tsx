@@ -11,7 +11,7 @@ import { ExistingSessionChat } from "../_components/existing-session-chat";
 import {
 	MESSAGE_INITIAL_CHAR_BUDGET,
 	MESSAGE_FALLBACK_PAGE_SIZE,
-} from "~/lib/messages/loading";
+} from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 
 type MessagePage = ChatRouterOutputs["message"]["listInfinite"];

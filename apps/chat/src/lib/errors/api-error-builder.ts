@@ -25,6 +25,7 @@ const CATEGORY_BY_TYPE: Partial<Record<ChatErrorType, string>> = {
   [ChatErrorType.MODEL_UNAVAILABLE]: "model",
   [ChatErrorType.INVALID_MODEL]: "model",
   [ChatErrorType.INVALID_REQUEST]: "request",
+  [ChatErrorType.PAYLOAD_TOO_LARGE]: "request",
   [ChatErrorType.SERVICE_UNAVAILABLE]: "infrastructure",
   [ChatErrorType.SERVER_ERROR]: "internal",
   [ChatErrorType.UNKNOWN]: "unknown",
@@ -38,6 +39,7 @@ const SEVERITY_BY_TYPE: Partial<Record<ChatErrorType, string>> = {
   [ChatErrorType.SECURITY_BLOCKED]: "fatal",
   [ChatErrorType.BOT_DETECTION]: "fatal",
   [ChatErrorType.INVALID_REQUEST]: "recoverable",
+  [ChatErrorType.PAYLOAD_TOO_LARGE]: "recoverable",
 };
 
 // Create a standardized error response
@@ -140,6 +142,24 @@ export const ApiErrors = {
     ),
   
   // Invalid Request
+  payloadTooLarge: (
+    options?: ErrorBuilderOptions & { limitBytes?: number; receivedBytes?: number },
+  ) =>
+    createErrorResponse(
+      ChatErrorType.PAYLOAD_TOO_LARGE,
+      "Request payload too large",
+      "This request exceeds the maximum allowed size. Please reduce the message or remove attachments and try again.",
+      options,
+    ),
+
+  invalidRequestBody: (reason: string, options?: ErrorBuilderOptions) =>
+    createErrorResponse(
+      ChatErrorType.INVALID_REQUEST,
+      reason,
+      "The chat request payload was invalid. Please refresh and try again.",
+      options,
+    ),
+
   invalidPath: (options?: ErrorBuilderOptions) =>
     createErrorResponse(
       ChatErrorType.INVALID_REQUEST,

@@ -10,7 +10,7 @@ import {
   MESSAGE_INITIAL_CHAR_BUDGET,
   MESSAGE_PAGE_GC_TIME,
   MESSAGE_PAGE_STALE_TIME,
-} from "~/lib/messages/loading";
+} from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 
 interface UseScrollAwarePrefetchProps {

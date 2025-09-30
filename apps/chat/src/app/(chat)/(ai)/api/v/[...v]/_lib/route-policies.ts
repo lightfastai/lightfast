@@ -8,6 +8,10 @@ import {
 } from "~/ai/providers";
 import type { ModelId } from "~/ai/providers";
 import {
+  MAX_CONVERSATION_HISTORY_CHARS,
+  MAX_USER_MESSAGE_CHARS,
+} from "@repo/chat-ai-types";
+import {
   arcjet,
   shield,
   detectBot,
@@ -31,6 +35,24 @@ import { getUserPlan } from "./user-utils";
 
 type PlanLimits = (typeof BILLING_LIMITS)[keyof typeof BILLING_LIMITS];
 
+export interface ChatRouteMessagePart {
+  text?: string;
+  [key: string]: unknown;
+}
+
+export interface ChatRouteMessage {
+  role: string;
+  parts?: ChatRouteMessagePart[];
+  [key: string]: unknown;
+}
+
+export interface ChatRouteRequestBody {
+  modelId?: string;
+  webSearchEnabled?: boolean;
+  messages?: ChatRouteMessage[];
+  [key: string]: unknown;
+}
+
 export interface ChatRouteResources extends Record<string, unknown> {
   requestId: string;
   agentId: string;
@@ -48,6 +70,9 @@ export interface ChatRouteResources extends Record<string, unknown> {
     isResume: boolean;
     webSearchEnabled: boolean;
     lastUserMessage: string;
+    conversationCharCount: number;
+    payloadBytes: number;
+    body: ChatRouteRequestBody | null;
   };
   model: {
     id: ModelId;
@@ -157,35 +182,101 @@ export const memoryGuard: ChatGuard = ({ resources }) => {
   }
 };
 
-export const parseRequestGuard: ChatGuard = async ({ request, resources }) => {
+export const parseRequestGuard: ChatGuard = ({ resources }) => {
   if (resources.request.isResume) {
     return allow();
   }
 
-  try {
-    const body = (await request.clone().json()) as {
-      modelId?: string;
-      webSearchEnabled?: boolean;
-      messages?: { role: string; parts?: { text?: string }[] }[];
-    };
+  const body = resources.request.body;
+  if (!body) {
+    return allow();
+  }
 
-    if (typeof body.modelId === "string") {
-      resources.model.id = body.modelId as ModelId;
+  if (typeof body.modelId === "string") {
+    resources.model.id = body.modelId as ModelId;
+  }
+
+  if (typeof body.webSearchEnabled === "boolean") {
+    resources.request.webSearchEnabled = body.webSearchEnabled;
+  }
+
+  const messages = Array.isArray(body.messages) ? body.messages : [];
+  if (messages.length === 0) {
+    resources.request.conversationCharCount = 0;
+    return allow();
+  }
+
+  let conversationCharCount = 0;
+  let lastUserMessage: string | null = null;
+
+  for (const message of messages) {
+    if (!message || typeof message !== "object") {
+      continue;
     }
 
-    if (typeof body.webSearchEnabled === "boolean") {
-      resources.request.webSearchEnabled = body.webSearchEnabled;
-    }
+    const parts = Array.isArray(message.parts) ? message.parts : [];
 
-    if (Array.isArray(body.messages) && body.messages.length > 0) {
-      const lastMessage = body.messages[body.messages.length - 1];
-      const candidate = lastMessage?.parts?.[0]?.text;
-      if (lastMessage?.role === "user" && typeof candidate === "string") {
-        resources.request.lastUserMessage = candidate;
+    for (const part of parts) {
+      const text =
+        part && typeof part === "object" && typeof part.text === "string"
+          ? part.text
+          : null;
+
+      if (!text) {
+        continue;
+      }
+
+      conversationCharCount += text.length;
+
+      if (conversationCharCount > MAX_CONVERSATION_HISTORY_CHARS) {
+        return deny(
+          ApiErrors.payloadTooLarge({
+            requestId: resources.requestId,
+            isAnonymous: resources.auth.isAnonymous,
+            category: "request",
+            source: "guard",
+            reason: "conversation_char_limit_exceeded",
+            conversationCharCount,
+            maxConversationChars: MAX_CONVERSATION_HISTORY_CHARS,
+          }),
+        );
       }
     }
-  } catch (error) {
-    console.warn(`[Chat API] Failed to parse request body:`, error);
+
+    if (message.role === "user") {
+      const candidate =
+        parts.find(
+          (part) =>
+            part &&
+            typeof part === "object" &&
+            typeof part.text === "string" &&
+            part.text.length > 0,
+        )?.text ?? null;
+
+      if (typeof candidate === "string") {
+        lastUserMessage = candidate;
+      }
+    }
+  }
+
+  resources.request.conversationCharCount = conversationCharCount;
+
+  if (typeof lastUserMessage === "string") {
+    if (lastUserMessage.length > MAX_USER_MESSAGE_CHARS) {
+      return deny(
+        ApiErrors.payloadTooLarge({
+          requestId: resources.requestId,
+          isAnonymous: resources.auth.isAnonymous,
+          category: "request",
+          source: "guard",
+          reason: "user_message_char_limit_exceeded",
+          userMessageLength: lastUserMessage.length,
+          maxUserMessageChars: MAX_USER_MESSAGE_CHARS,
+        }),
+      );
+    }
+
+    resources.request.lastUserMessage = lastUserMessage;
   }
 
   return allow();
