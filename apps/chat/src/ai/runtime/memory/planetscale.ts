@@ -18,6 +18,22 @@ const isFileUIPart = (
 	part: LightfastAppChatUIMessagePart,
 ): part is FileUIPart => part.type === "file";
 
+const isMissingAttachmentTableError = (error: unknown): boolean => {
+	if (!error || typeof error !== "object") {
+		return false;
+	}
+
+	const message = "message" in error ? String((error as { message?: unknown }).message) : "";
+	const cause = "cause" in error ? String((error as { cause?: unknown }).cause) : "";
+	const combined = `${message} ${cause}`;
+
+	return (
+		combined.includes("lightfast_chat_attachment") &&
+		(combined.includes("doesn't exist") || combined.includes("does not exist") ||
+			combined.includes("errno 1146"))
+	);
+};
+
 function extractFileAttachments(
 	parts: LightfastAppChatUIMessagePart[],
 ): AttachmentPayload[] {
@@ -38,7 +54,7 @@ function extractFileAttachments(
 						metadata?: Record<string, unknown> | null;
 					};
 				}
-				| undefined)?.storage || {};
+				| undefined)?.storage ?? {};
 
 		if (!storage.pathname) {
 			continue;
@@ -53,19 +69,26 @@ function extractFileAttachments(
 			continue;
 		}
 
+		const filename = typeof part.filename === "string" ? part.filename : undefined;
+		const contentType =
+			typeof part.mediaType === "string" && part.mediaType.length > 0
+				? part.mediaType
+				: undefined;
+		const metadata =
+			storage.metadata && typeof storage.metadata === "object"
+				? storage.metadata
+				: null;
+
 		attachments.push({
 			id:
 				typeof storage.id === "string" && storage.id.length > 0
 					? storage.id
 					: nanoid(),
-			pathname: storage.pathname,
-			filename: part.filename ?? undefined,
-			contentType: part.mediaType ?? undefined,
+			storagePath: storage.pathname,
+			filename,
+			contentType,
 			size,
-			metadata:
-				typeof storage.metadata === "object"
-					? (storage.metadata as Record<string, unknown> | null)
-					: null,
+			metadata,
 		});
 	}
 
@@ -112,7 +135,7 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 
 		const attachments = extractFileAttachments(message.parts);
 
-		await this.messagesService.append({
+		const payload = {
 			sessionId,
 			message: {
 				id: message.id,
@@ -120,9 +143,26 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				parts: message.parts,
 				modelId,
 			},
-			attachments: attachments.length > 0 ? attachments : undefined,
-		});
-}
+		};
+
+		try {
+			await this.messagesService.append({
+				...payload,
+				attachments: attachments.length > 0 ? attachments : undefined,
+			});
+		} catch (error) {
+			if (attachments.length > 0 && isMissingAttachmentTableError(error)) {
+				console.warn(
+					"[Memory] Attachments table missing; retrying message append without attachments",
+					{ sessionId, messageId: message.id },
+				);
+				await this.messagesService.append(payload);
+				return;
+			}
+
+			throw error;
+		}
+	}
 
 	/**
 	 * Get all messages for a session, ordered by creation time

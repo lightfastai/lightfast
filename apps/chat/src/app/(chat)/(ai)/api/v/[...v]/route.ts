@@ -131,10 +131,6 @@ async function readRequestBodyWithLimit(
     if (done) {
       break;
     }
-    if (!value) {
-      continue;
-    }
-
     total += value.byteLength;
     if (total > byteLimit) {
       void reader.cancel("payload too large");

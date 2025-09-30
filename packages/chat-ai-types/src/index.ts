@@ -1,3 +1,5 @@
+export * from "./attachments";
+
 import type {
   DeepPartial,
   ProviderMetadata,

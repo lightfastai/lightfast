@@ -12,6 +12,7 @@ import {
   insertLightfastChatAttachmentSchema,
 } from "@db/chat";
 import { eq, desc, and, or, lt, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import {
   computeMessageCharCount,
   createPreviewParts,
@@ -74,12 +75,20 @@ export const messageRouter = {
         >[0],
       );
 
+      const messageId = input.message.id;
+      if (!messageId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Message id is required",
+        });
+      }
+
       await db.transaction(async (tx) => {
         await tx.insert(LightfastChatMessage).values({
           sessionId: input.sessionId,
           role: input.message.role as "system" | "user" | "assistant",
           parts: input.message.parts,
-          id: input.message.id,
+          id: messageId,
           modelId: input.message.modelId,
           charCount: metrics.charCount,
           tokenCount: metrics.tokenCount ?? null,
@@ -88,20 +97,20 @@ export const messageRouter = {
         if (input.attachments && input.attachments.length > 0) {
           await tx
             .delete(LightfastChatAttachment)
-            .where(eq(LightfastChatAttachment.messageId, input.message.id));
+            .where(eq(LightfastChatAttachment.messageId, messageId));
 
-          await tx.insert(LightfastChatAttachment).values(
-            input.attachments.map((attachment) => ({
-              id: attachment.id,
-              messageId: input.message.id,
-              sessionId: input.sessionId,
-              storagePath: attachment.storagePath,
-              filename: attachment.filename ?? null,
-              contentType: attachment.contentType ?? null,
-              size: attachment.size,
-              metadata: attachment.metadata ?? null,
-            })),
-          );
+          const attachmentRows = input.attachments.map((attachment) => ({
+            id: attachment.id ?? nanoid(),
+            messageId,
+            sessionId: input.sessionId,
+            storagePath: attachment.storagePath,
+            filename: attachment.filename ?? null,
+            contentType: attachment.contentType ?? null,
+            size: attachment.size,
+            metadata: attachment.metadata ?? null,
+          }));
+
+          await tx.insert(LightfastChatAttachment).values(attachmentRows);
         }
 
         await tx

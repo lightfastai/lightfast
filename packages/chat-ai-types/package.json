@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./attachments": {
+      "types": "./dist/attachments.d.ts",
+      "default": "./src/attachments.ts"
     }
   },
   "license": "MIT",

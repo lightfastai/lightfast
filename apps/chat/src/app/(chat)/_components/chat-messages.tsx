@@ -143,12 +143,28 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 				align === "end" ? "justify-end" : "justify-start",
 			)}
 		>
-			{attachments.map((attachment, index) => {
-				const isImage = attachment.mediaType?.startsWith("image/");
-				const label =
-					attachment.filename ??
-					attachment.url.split("?")[0].split("/").pop() ??
-					`Attachment ${index + 1}`;
+				{attachments.map((attachment, index) => {
+					const mediaType = attachment.mediaType;
+					const isImage =
+						typeof mediaType === "string" && mediaType.startsWith("image/");
+					const filenameLabel =
+						typeof attachment.filename === "string" && attachment.filename.length > 0
+							? attachment.filename
+							: undefined;
+					const urlLabel = (() => {
+						if (typeof attachment.url !== "string" || attachment.url.length === 0) {
+							return undefined;
+						}
+
+						const [base] = attachment.url.split("?");
+						if (!base || base.length === 0) {
+							return undefined;
+						}
+
+						const segment = base.split("/").pop();
+						return segment && segment.length > 0 ? segment : undefined;
+					})();
+					const label = filenameLabel ?? urlLabel ?? `Attachment ${index + 1}`;
 
 				if (isImage) {
 					return (

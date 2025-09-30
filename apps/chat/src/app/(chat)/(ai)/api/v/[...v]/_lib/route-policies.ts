@@ -50,7 +50,7 @@ export interface ChatRouteRequestBody {
   modelId?: string;
   webSearchEnabled?: boolean;
   messages?: ChatRouteMessage[];
-  attachments?: Array<{
+  attachments?: {
     id: string;
     storagePath: string;
     size: number;
@@ -58,7 +58,7 @@ export interface ChatRouteRequestBody {
     filename?: string | null;
     url?: string;
     metadata?: Record<string, unknown> | null;
-  }>;
+  }[];
   [key: string]: unknown;
 }
 
@@ -209,8 +209,10 @@ export const parseRequestGuard: ChatGuard = ({ resources }) => {
     resources.request.webSearchEnabled = body.webSearchEnabled;
   }
 
-  const messages = Array.isArray(body.messages) ? body.messages : [];
-  if (messages.length === 0) {
+  const messageEntries: unknown[] = Array.isArray(body.messages)
+    ? (body.messages as unknown[])
+    : [];
+  if (messageEntries.length === 0) {
     resources.request.conversationCharCount = 0;
     return allow();
   }
@@ -218,18 +220,27 @@ export const parseRequestGuard: ChatGuard = ({ resources }) => {
   let conversationCharCount = 0;
   let lastUserMessage: string | null = null;
 
-  for (const message of messages) {
-    if (!message || typeof message !== "object") {
+  const getPartText = (candidate: unknown): string | null => {
+    if (!candidate || typeof candidate !== "object") {
+      return null;
+    }
+
+    const textValue = (candidate as { text?: unknown }).text;
+    return typeof textValue === "string" ? textValue : null;
+  };
+
+  for (const entry of messageEntries) {
+    if (!entry || typeof entry !== "object") {
       continue;
     }
 
-    const parts = Array.isArray(message.parts) ? message.parts : [];
+    const message = entry as ChatRouteMessage;
+    const partEntries: unknown[] = Array.isArray(message.parts)
+      ? (message.parts as unknown[])
+      : [];
 
-    for (const part of parts) {
-      const text =
-        part && typeof part === "object" && typeof part.text === "string"
-          ? part.text
-          : null;
+    for (const partEntry of partEntries) {
+      const text = getPartText(partEntry);
 
       if (!text) {
         continue;
@@ -253,17 +264,12 @@ export const parseRequestGuard: ChatGuard = ({ resources }) => {
     }
 
     if (message.role === "user") {
-      const candidate =
-        parts.find(
-          (part) =>
-            part &&
-            typeof part === "object" &&
-            typeof part.text === "string" &&
-            part.text.length > 0,
-        )?.text ?? null;
+      const candidateText = partEntries
+        .map(getPartText)
+        .find((text): text is string => typeof text === "string" && text.length > 0);
 
-      if (typeof candidate === "string") {
-        lastUserMessage = candidate;
+      if (typeof candidateText === "string") {
+        lastUserMessage = candidateText;
       }
     }
   }

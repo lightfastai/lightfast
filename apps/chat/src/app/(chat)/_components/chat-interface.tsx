@@ -24,8 +24,10 @@ import {
 import type {
 	PromptInputMessage,
 	PromptInputAttachmentPayload,
+	PromptInputAttachmentItem,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
+import type { JSONValue } from "ai";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, PaperclipIcon, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
@@ -36,6 +38,7 @@ import {
 	useRef,
 	useCallback,
 } from "react";
+import { nanoid } from "nanoid";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
@@ -88,11 +91,9 @@ import type { ModelId } from "~/ai/providers";
 import {
 	MAX_ATTACHMENT_BYTES,
 	MAX_ATTACHMENT_COUNT,
-} from "~/lib/attachments/constants";
-import {
-	inferAttachmentKind,
 	ensureAttachmentAllowed,
-} from "~/lib/attachments/utils";
+	inferAttachmentKind,
+} from "@repo/chat-ai-types";
 
 const AuthPromptSelector = dynamic(
 	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
@@ -127,7 +128,7 @@ interface UploadedAttachment {
 	size: number;
 	contentType: string;
 	filename?: string;
-	metadata?: Record<string, string | number | boolean | null> | null;
+	metadata: Record<string, JSONValue> | null;
 }
 
 interface ChatInterfaceProps {
@@ -401,6 +402,7 @@ export function ChatInterface({
 
 	const attachmentsAllowed = supportsImageAttachments || supportsPdfAttachments;
 	const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+	const attachmentUploadCounterRef = useRef(0);
 
 	const attachmentButtonDisabled =
 		!attachmentsAllowed ||
@@ -799,21 +801,32 @@ export function ChatInterface({
 		for (const attachment of attachments) {
 			const mediaType = attachment.mediaType;
 			const filename = attachment.filename ?? "attachment";
-			const size = attachment.size;
-			const kind = inferAttachmentKind(mediaType, filename);
+		const size = attachment.size;
+		const kind = inferAttachmentKind(mediaType, filename);
 
-			if (size > MAX_ATTACHMENT_BYTES) {
-				addInlineError({
-					type: ChatErrorType.INVALID_REQUEST,
-					message: `"${filename}" is too large. Attachments must be under ${Math.floor(
-						MAX_ATTACHMENT_BYTES / (1024 * 1024),
-					)}MB.`,
-					retryable: false,
-					details: undefined,
-					metadata: { filename, kind },
-				});
-				return;
-			}
+		if (typeof size === "number" && size > MAX_ATTACHMENT_BYTES) {
+			addInlineError({
+				type: ChatErrorType.INVALID_REQUEST,
+				message: `"${filename}" is too large. Attachments must be under ${Math.floor(
+					MAX_ATTACHMENT_BYTES / (1024 * 1024),
+				)}MB.`,
+				retryable: false,
+				details: undefined,
+				metadata: { filename, kind },
+			});
+			return;
+		}
+
+		if (typeof size !== "number") {
+			addInlineError({
+				type: ChatErrorType.INVALID_REQUEST,
+				message: `Unable to determine the size of "${filename}". Please reattach the file.`,
+				retryable: false,
+				details: undefined,
+				metadata: { filename, kind },
+			});
+			return;
+		}
 
 			const allowed = ensureAttachmentAllowed(kind, {
 				allowImages: supportsImageAttachments,
@@ -856,120 +869,164 @@ export function ChatInterface({
 			},
 		});
 
-		let uploadedAttachments: UploadedAttachment[] = [];
+			let uploadedAttachments: UploadedAttachment[] = [];
 
-		try {
-			if (hasAttachments) {
-				setIsUploadingAttachments(true);
-				uploadedAttachments = await uploadAttachments({
-					attachments,
-					modelId: selectedModelId,
-				});
-				if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
-					setWebSearchEnabled(true);
+			try {
+				if (hasAttachments) {
+					const unresolved = attachments.find((attachment) => {
+						const hasStoragePath = Boolean(attachment.storagePath);
+						const hasSize = typeof attachment.size === "number";
+						const hasAnyContentType =
+							typeof attachment.contentType === "string" && attachment.contentType.length > 0
+								? true
+								: typeof attachment.mediaType === "string" && attachment.mediaType.length > 0;
+
+						return !hasStoragePath || !hasSize || !hasAnyContentType;
+					});
+					if (unresolved) {
+						addInlineError({
+							type: ChatErrorType.INVALID_REQUEST,
+							message: "Attachment is still uploading. Please wait before sending.",
+							retryable: false,
+							metadata: {
+								attachmentId: unresolved.id,
+								filename: unresolved.filename,
+							},
+						});
+						return;
+					}
+
+					uploadedAttachments = attachments.map((attachment) => {
+						if (
+							!attachment.storagePath ||
+							typeof attachment.size !== "number"
+						) {
+							throw new Error("Attachment missing upload metadata.");
+						}
+
+						let inferredContentType: string;
+						if (typeof attachment.contentType === "string" && attachment.contentType.length > 0) {
+							inferredContentType = attachment.contentType;
+						} else if (
+							typeof attachment.mediaType === "string" &&
+							attachment.mediaType.length > 0
+						) {
+							inferredContentType = attachment.mediaType;
+						} else {
+							inferredContentType = "application/octet-stream";
+						}
+
+						return {
+							id: attachment.id,
+							url: attachment.url ?? "",
+							storagePath: attachment.storagePath,
+							size: attachment.size,
+							contentType: inferredContentType,
+							filename: attachment.filename ?? undefined,
+							metadata: (attachment.metadata as Record<string, JSONValue> | null) ?? null,
+						};
+					});
+
+					if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
+						setWebSearchEnabled(true);
+					}
 				}
-			}
 
-			if (isNewSession && messages.length === 0) {
-				const seedText = hasText
-					? trimmedText
-					: attachments
-							.map((attachment) => attachment.filename ?? attachment.mediaType)
+				if (isNewSession && messages.length === 0) {
+					const seedText = hasText
+						? trimmedText
+						: uploadedAttachments
+							.map((attachment) => attachment.filename ?? attachment.contentType)
 							.join(", ");
-				handleSessionCreation(seedText);
-			}
+					handleSessionCreation(seedText);
+				}
 
-			const userMessageId = crypto.randomUUID();
-			const userMessageParts: LightfastAppChatUIMessage["parts"] = [];
+				const userMessageId = crypto.randomUUID();
+				const userMessageParts: LightfastAppChatUIMessage["parts"] = [];
 
-			if (hasText) {
-				userMessageParts.push({ type: "text", text: trimmedText });
-			}
+				if (hasText) {
+					userMessageParts.push({ type: "text", text: trimmedText });
+				}
 
-			for (const uploaded of uploadedAttachments) {
-				userMessageParts.push({
-					type: "file",
-					url: uploaded.url,
-					mediaType: uploaded.contentType,
-					filename: uploaded.filename ?? undefined,
-					providerMetadata: {
-						storage: {
-							provider: "vercel-blob",
-							id: uploaded.id,
-							pathname: uploaded.storagePath,
-							size: uploaded.size,
-							metadata: uploaded.metadata ?? null,
+				for (const uploaded of uploadedAttachments) {
+					userMessageParts.push({
+						type: "file",
+						url: uploaded.url,
+						mediaType: uploaded.contentType,
+						filename: uploaded.filename ?? undefined,
+						providerMetadata: {
+							storage: {
+								provider: "vercel-blob",
+								id: uploaded.id,
+								pathname: uploaded.storagePath,
+								size: uploaded.size,
+								metadata: uploaded.metadata,
+							},
 						},
-					},
-				});
-			}
+					});
+				}
 
-			const userMessage: LightfastAppChatUIMessage = {
-				role: "user",
-				parts: userMessageParts,
-				id: userMessageId,
-			};
+				const userMessage: LightfastAppChatUIMessage = {
+					role: "user",
+					parts: userMessageParts,
+					id: userMessageId,
+				};
 
-			onNewUserMessage?.(userMessage);
+				onNewUserMessage?.(userMessage);
 
-			const requestBody: Record<string, unknown> = {
-				userMessageId,
-				modelId: selectedModelId,
-				webSearchEnabled: nextWebSearchEnabled,
-			};
-
-			if (uploadedAttachments.length > 0) {
-				requestBody.attachments = uploadedAttachments.map((uploaded) => ({
-					id: uploaded.id,
-						storagePath: uploaded.storagePath,
-					size: uploaded.size,
-					contentType: uploaded.contentType,
-					filename: uploaded.filename ?? null,
-					metadata: uploaded.metadata ?? null,
-				}));
-			}
-
-			await vercelSendMessage(userMessage, {
-				body: requestBody,
-			});
-
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "send_message_success",
-				data: {
-					agentId,
-					sessionId,
+				const requestBody: Record<string, unknown> = {
+					userMessageId,
 					modelId: selectedModelId,
-					attachmentCount: attachments.length,
-				},
-			});
+					webSearchEnabled: nextWebSearchEnabled,
+				};
 
-			if (!isAuthenticated) {
-				incrementCount();
-			}
-		} catch (unknownError) {
-			const safeError =
-				unknownError instanceof Error
-					? unknownError
-					: new Error(String(unknownError));
-			ChatErrorHandler.handleError(unknownError);
-			captureException(safeError, {
-				contexts: {
-					"chat-ui": {
+				if (uploadedAttachments.length > 0) {
+					requestBody.attachments = uploadedAttachments.map((uploaded) => ({
+						id: uploaded.id,
+							storagePath: uploaded.storagePath,
+						size: uploaded.size,
+						contentType: uploaded.contentType,
+						filename: uploaded.filename ?? null,
+						metadata: uploaded.metadata,
+					}));
+				}
+
+				await vercelSendMessage(userMessage, {
+					body: requestBody,
+				});
+
+				addBreadcrumb({
+					category: "chat-ui",
+					message: "send_message_success",
+					data: {
 						agentId,
 						sessionId,
 						modelId: selectedModelId,
+						attachmentCount: attachments.length,
 					},
-				},
-			});
-			setIsUploadingAttachments(false);
-			throwToErrorBoundary(safeError);
-			return;
-		} finally {
-			if (hasAttachments) {
-				setIsUploadingAttachments(false);
+				});
+
+				if (!isAuthenticated) {
+					incrementCount();
+				}
+			} catch (unknownError) {
+				const safeError =
+					unknownError instanceof Error
+						? unknownError
+						: new Error(String(unknownError));
+				ChatErrorHandler.handleError(unknownError);
+				captureException(safeError, {
+					contexts: {
+						"chat-ui": {
+							agentId,
+							sessionId,
+							modelId: selectedModelId,
+						},
+					},
+				});
+				throwToErrorBoundary(safeError);
+				return;
 			}
-		}
 	};
 
 	// Handle prompt input submission - converts PromptInput format to our handleSendMessage
@@ -1007,32 +1064,38 @@ export function ChatInterface({
 			const formData = new FormData();
 			formData.append("modelId", input.modelId);
 
-			const metadataPayload = input.attachments.map((attachment, index) => {
-				const providedFilename =
-					typeof attachment.filename === "string" && attachment.filename.length > 0
-						? attachment.filename
-						: undefined;
-				const fallbackName =
-					attachment.file.name && attachment.file.name.length > 0
-						? attachment.file.name
-						: `attachment-${index + 1}`;
+				const metadataPayload = input.attachments.map((attachment, index) => {
+					if (!attachment.file) {
+						throw new Error("Attachment file missing for upload.");
+					}
+					const providedFilename =
+						typeof attachment.filename === "string" && attachment.filename.length > 0
+							? attachment.filename
+							: undefined;
+					const fallbackName =
+						attachment.file.name && attachment.file.name.length > 0
+							? attachment.file.name
+							: `attachment-${index + 1}`;
 
-				return {
-					id: attachment.id,
-					mediaType: attachment.mediaType,
-					filename: providedFilename ?? fallbackName,
-					size: attachment.size,
-				};
-			});
+					return {
+						id: attachment.id,
+						mediaType: attachment.mediaType,
+						filename: providedFilename ?? fallbackName,
+						size: attachment.size ?? attachment.file.size,
+					};
+				});
 
 			formData.append("metadata", JSON.stringify(metadataPayload));
 
-			input.attachments.forEach((attachment, index) => {
-				const metadataEntry = metadataPayload[index];
-				const fallbackName =
-					attachment.file.name && attachment.file.name.length > 0
-						? attachment.file.name
-						: `attachment-${index + 1}`;
+				input.attachments.forEach((attachment, index) => {
+					if (!attachment.file) {
+						throw new Error("Attachment file missing for upload.");
+					}
+					const metadataEntry = metadataPayload[index];
+					const fallbackName =
+						attachment.file.name && attachment.file.name.length > 0
+							? attachment.file.name
+							: `attachment-${index + 1}`;
 				const inferredName =
 					metadataEntry?.filename && metadataEntry.filename.length > 0
 						? metadataEntry.filename
@@ -1063,6 +1126,88 @@ export function ChatInterface({
 		return data.attachments;
 		},
 		[agentId, sessionId],
+	);
+
+	const handleAttachmentUpload = useCallback(
+		async (file: File): Promise<PromptInputAttachmentItem | null> => {
+			attachmentUploadCounterRef.current += 1;
+			setIsUploadingAttachments(true);
+
+			try {
+				const attachmentId = nanoid();
+				const uploads = await uploadAttachments({
+					attachments: [
+						{
+							id: attachmentId,
+							file,
+							mediaType: file.type,
+							filename: file.name,
+							size: file.size,
+						},
+					],
+					modelId: selectedModelId,
+				});
+
+				const uploaded = uploads[0];
+				if (!uploaded) {
+					throw new Error("Attachment upload failed.");
+				}
+
+				if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
+					setWebSearchEnabled(true);
+				}
+
+				return {
+					type: "file",
+					id: uploaded.id,
+					url: uploaded.url,
+					mediaType: uploaded.contentType,
+					filename: uploaded.filename ?? file.name,
+					size: uploaded.size,
+					storagePath: uploaded.storagePath,
+					contentType: uploaded.contentType,
+					metadata: uploaded.metadata ?? null,
+				};
+			} catch (error) {
+				const safeError = error instanceof Error ? error : new Error(String(error));
+				addInlineError({
+					type: ChatErrorType.INVALID_REQUEST,
+					message: safeError.message || "Unable to upload attachment.",
+					retryable: false,
+					metadata: {
+						filename: file.name,
+						size: file.size,
+					},
+				});
+				captureException(safeError, {
+					contexts: {
+						attachment: {
+							filename: file.name,
+							size: file.size,
+							modelId: selectedModelId,
+						},
+					},
+				});
+				throw safeError;
+			} finally {
+				attachmentUploadCounterRef.current = Math.max(
+					0,
+					attachmentUploadCounterRef.current - 1,
+				);
+				if (attachmentUploadCounterRef.current === 0) {
+					setIsUploadingAttachments(false);
+				}
+			}
+		},
+		[
+			uploadAttachments,
+			selectedModelId,
+			webSearchEnabled,
+			billingContext.features.webSearch.enabled,
+			setWebSearchEnabled,
+			addInlineError,
+			captureException,
+		],
 	);
 
 	const AttachmentPickerButton = ({
@@ -1104,36 +1249,46 @@ export function ChatInterface({
 	// Handle prompt input errors (both file upload errors and React form events)
 	const handlePromptError = (
 		errorOrEvent:
-			| { code: "max_files" | "max_file_size" | "accept"; message: string }
-			| FormEvent<HTMLFormElement>,
-	) => {
-		// Check if it's a file upload error (has 'code' property)
-		if ("code" in errorOrEvent) {
-			console.error("Prompt input error:", errorOrEvent);
-			let userMessage = errorOrEvent.message;
-				switch (errorOrEvent.code) {
-					case "max_files":
-						userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
-						break;
-					case "max_file_size":
-						userMessage = `Each attachment must be smaller than ${Math.floor(
-							MAX_ATTACHMENT_BYTES / (1024 * 1024),
-						)}MB.`;
-						break;
-					case "accept":
-						if (supportsImageAttachments && supportsPdfAttachments) {
-							userMessage = "Only images and PDFs are supported for this model.";
-						} else if (supportsImageAttachments) {
-							userMessage = "Only image attachments are supported for this model.";
-						} else if (supportsPdfAttachments) {
-							userMessage = "Only PDF attachments are supported for this model.";
-						} else {
-							userMessage = "This model does not support file attachments.";
-						}
-						break;
-					default:
-						break;
+			| {
+					code:
+						| "max_files"
+						| "max_file_size"
+						| "accept"
+						| "upload_failed";
+					message: string;
 				}
+			| FormEvent<HTMLFormElement>,
+		) => {
+			// Check if it's a file upload error (has 'code' property)
+			if ("code" in errorOrEvent) {
+				console.error("Prompt input error:", errorOrEvent);
+				let userMessage = errorOrEvent.message;
+					switch (errorOrEvent.code) {
+						case "max_files":
+							userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
+							break;
+						case "max_file_size":
+							userMessage = `Each attachment must be smaller than ${Math.floor(
+								MAX_ATTACHMENT_BYTES / (1024 * 1024),
+							)}MB.`;
+							break;
+						case "accept":
+							if (supportsImageAttachments && supportsPdfAttachments) {
+								userMessage = "Only images and PDFs are supported for this model.";
+							} else if (supportsImageAttachments) {
+								userMessage = "Only image attachments are supported for this model.";
+							} else if (supportsPdfAttachments) {
+								userMessage = "Only PDF attachments are supported for this model.";
+							} else {
+								userMessage = "This model does not support file attachments.";
+							}
+							break;
+						case "upload_failed":
+							userMessage = errorOrEvent.message || "Unable to upload attachment.";
+							break;
+						default:
+							break;
+					}
 
 				addInlineError({
 					type: ChatErrorType.INVALID_REQUEST,
@@ -1279,13 +1434,14 @@ export function ChatInterface({
 							}
 						/>
 					</div>
-					<PromptInput
-						onSubmit={handlePromptSubmit}
-						onError={handlePromptError}
-						accept={attachmentAccept || undefined}
-						multiple
-						maxFiles={MAX_ATTACHMENT_COUNT}
-						maxFileSize={MAX_ATTACHMENT_BYTES}
+						<PromptInput
+							onSubmit={handlePromptSubmit}
+							onError={handlePromptError}
+							onAttachmentUpload={handleAttachmentUpload}
+							accept={attachmentAccept || undefined}
+							multiple
+							maxFiles={MAX_ATTACHMENT_COUNT}
+							maxFileSize={MAX_ATTACHMENT_BYTES}
 						className={cn(
 							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
 							"!divide-y-0 !shadow-sm",
@@ -1390,6 +1546,7 @@ export function ChatInterface({
 								<PromptInput
 									onSubmit={handlePromptSubmit}
 									onError={handlePromptError}
+									onAttachmentUpload={handleAttachmentUpload}
 									accept={attachmentAccept || undefined}
 									multiple
 									maxFiles={MAX_ATTACHMENT_COUNT}

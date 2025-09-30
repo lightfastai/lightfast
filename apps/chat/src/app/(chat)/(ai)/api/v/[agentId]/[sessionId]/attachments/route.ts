@@ -6,29 +6,29 @@ import { env } from "@vendor/storage/env";
 import { getModelConfig } from "~/ai/providers";
 import type { ModelId } from "~/ai/providers";
 import { getUserPlan } from "../../../[...v]/_lib/user-utils";
-import { ClerkPlanKey, BILLING_LIMITS } from "~/lib/billing/types";
+import { BILLING_LIMITS } from "~/lib/billing/types";
+import type { ClerkPlanKey } from "~/lib/billing/types";
 import {
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENT_COUNT,
   PDF_MIME_TYPE,
-} from "~/lib/attachments/constants";
-import {
-  inferAttachmentKind,
   ensureAttachmentAllowed,
+  inferAttachmentKind,
   sanitizeAttachmentFilename,
-  type AttachmentKind,
-} from "~/lib/attachments/utils";
+} from "@repo/chat-ai-types";
+import type { AttachmentKind } from "@repo/chat-ai-types";
+import { z } from "zod";
 
 const SUPPORTED_AGENT_ID = "c010";
 
-type AttachmentMetadata = {
+interface AttachmentMetadata {
   id?: string;
   mediaType?: string | null;
   filename?: string | null;
   size?: number | null;
-};
+}
 
-type UploadResult = {
+interface UploadResult {
   id: string;
   url: string;
   storagePath: string;
@@ -36,67 +36,53 @@ type UploadResult = {
   contentType: string;
   filename?: string;
   metadata?: Record<string, unknown> | null;
-};
+}
+
+const AttachmentMetadataSchema = z.object({
+  id: z.string().optional(),
+  mediaType: z.string().nullable().optional(),
+  filename: z.string().nullable().optional(),
+  size: z.number().nullable().optional(),
+});
 
 function buildErrorResponse(status: number, message: string) {
   return NextResponse.json({ error: message }, { status });
 }
 
-async function ensurePlanAllowsAttachments(plan: ClerkPlanKey) {
-  const limits = BILLING_LIMITS[plan];
-  if (!limits.hasWebSearch) {
-    throw new Response(
-      JSON.stringify({ error: "Attachments require web search access." }),
-      { status: 403 },
-    );
-  }
-}
+const planSupportsAttachments = (plan: ClerkPlanKey) =>
+  BILLING_LIMITS[plan].hasWebSearch;
 
-function validateAttachmentLimits(files: File[]) {
+const getAttachmentLimitError = (files: File[]): string | null => {
   if (files.length === 0) {
-    throw new Response(JSON.stringify({ error: "No files provided." }), {
-      status: 400,
-    });
+    return "No files provided.";
   }
 
   if (files.length > MAX_ATTACHMENT_COUNT) {
-    throw new Response(
-      JSON.stringify({
-        error: `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`,
-      }),
-      { status: 400 },
-    );
+    return `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
   }
-}
 
-function validateAttachmentKind(
+  return null;
+};
+
+const getAttachmentKindError = (
   kind: AttachmentKind,
   allowImages: boolean,
   allowPdf: boolean,
-) {
+): string | null => {
   if (ensureAttachmentAllowed(kind, { allowImages, allowPdf })) {
-    return;
+    return null;
   }
 
   if (kind === "image" && !allowImages) {
-    throw new Response(
-      JSON.stringify({ error: "This model does not support image attachments." }),
-      { status: 400 },
-    );
+    return "This model does not support image attachments.";
   }
 
   if (kind === "pdf" && !allowPdf) {
-    throw new Response(
-      JSON.stringify({ error: "This model does not support PDF attachments." }),
-      { status: 400 },
-    );
+    return "This model does not support PDF attachments.";
   }
 
-  throw new Response(
-    JSON.stringify({ error: "Only image and PDF attachments are supported." }),
-    { status: 400 },
-  );
-}
+  return "Only image and PDF attachments are supported.";
+};
 
 export async function POST(
   req: Request,
@@ -119,13 +105,6 @@ export async function POST(
       return buildErrorResponse(400, "modelId is required");
     }
 
-    let modelConfig;
-    try {
-      modelConfig = getModelConfig(modelIdValue as ModelId);
-    } catch (error) {
-      return buildErrorResponse(400, "Unknown model supplied for attachments.");
-    }
-
     const metadataRaw = formData.get("metadata");
     if (typeof metadataRaw !== "string") {
       return buildErrorResponse(400, "Attachment metadata payload missing.");
@@ -133,12 +112,13 @@ export async function POST(
 
     let metadataEntries: AttachmentMetadata[] = [];
     try {
-      const parsed = JSON.parse(metadataRaw);
-      if (!Array.isArray(parsed)) {
-        throw new Error("metadata is not an array");
+      const parsed: unknown = JSON.parse(metadataRaw);
+      const result = z.array(AttachmentMetadataSchema).safeParse(parsed);
+      if (!result.success) {
+        return buildErrorResponse(400, "Attachment metadata payload invalid JSON.");
       }
-      metadataEntries = parsed as AttachmentMetadata[];
-    } catch (error) {
+      metadataEntries = result.data;
+    } catch {
       return buildErrorResponse(400, "Attachment metadata payload invalid JSON.");
     }
 
@@ -146,7 +126,10 @@ export async function POST(
       .getAll("files")
       .filter((value): value is File => value instanceof File);
 
-    validateAttachmentLimits(fileEntries);
+    const limitError = getAttachmentLimitError(fileEntries);
+    if (limitError) {
+      return buildErrorResponse(400, limitError);
+    }
 
     if (fileEntries.length !== metadataEntries.length) {
       return buildErrorResponse(
@@ -155,16 +138,25 @@ export async function POST(
       );
     }
 
-    await ensurePlanAllowsAttachments(await getUserPlan());
+    const plan = await getUserPlan();
+    if (!planSupportsAttachments(plan)) {
+      return buildErrorResponse(403, "Attachments require web search access.");
+    }
+
+    let modelConfig;
+    try {
+      modelConfig = getModelConfig(modelIdValue as ModelId);
+    } catch {
+      return buildErrorResponse(400, "Unknown model supplied for attachments.");
+    }
 
     const allowImages = modelConfig.features.vision;
     const allowPdf = modelConfig.features.pdfSupport;
 
     const uploads: UploadResult[] = [];
 
-    for (let index = 0; index < fileEntries.length; index++) {
-      const file = fileEntries[index];
-      const metadata = metadataEntries[index] ?? {};
+    for (const [index, file] of fileEntries.entries()) {
+      const metadata = metadataEntries[index];
 
       if (file.size > MAX_ATTACHMENT_BYTES) {
         return buildErrorResponse(
@@ -175,18 +167,40 @@ export async function POST(
         );
       }
 
-      const inferredMediaType = metadata.mediaType ?? file.type;
-      const kind = inferAttachmentKind(inferredMediaType, metadata.filename ?? file.name);
-
-      validateAttachmentKind(kind, allowImages, allowPdf);
-
-      const safeFilename = sanitizeAttachmentFilename(
-        metadata.filename ?? file.name ?? `attachment-${index + 1}`,
+      const metadataMediaType =
+        metadata && typeof metadata.mediaType === "string" && metadata.mediaType.length > 0
+          ? metadata.mediaType
+          : undefined;
+      const inferredMediaType = metadataMediaType ?? file.type;
+      const kind = inferAttachmentKind(
+        inferredMediaType,
+        metadata && typeof metadata.filename === "string" && metadata.filename.length > 0
+          ? metadata.filename
+          : file.name,
       );
 
-      const attachmentId = metadata.id && metadata.id.length > 0
-        ? metadata.id
-        : nanoid();
+      const kindError = getAttachmentKindError(kind, allowImages, allowPdf);
+      if (kindError) {
+        return buildErrorResponse(400, kindError);
+      }
+
+      const metadataFilename =
+        metadata && typeof metadata.filename === "string" && metadata.filename.length > 0
+          ? metadata.filename
+          : undefined;
+      const baseFilename = metadataFilename && metadataFilename.length > 0
+        ? metadataFilename
+        : file.name;
+      const resolvedFilename =
+        baseFilename && baseFilename.length > 0
+          ? baseFilename
+          : `attachment-${index + 1}`;
+      const safeFilename = sanitizeAttachmentFilename(resolvedFilename);
+
+      const attachmentId =
+        metadata && typeof metadata.id === "string" && metadata.id.length > 0
+          ? metadata.id
+          : nanoid();
 
       const objectPath = `chat/${agentId}/${sessionId}/${nanoid(21)}-${safeFilename}`;
 
@@ -214,7 +228,7 @@ export async function POST(
         contentType: resolvedContentType,
         filename: safeFilename,
         metadata: {
-          originalFilename: metadata.filename ?? file.name,
+          originalFilename: metadataFilename ?? file.name,
           kind,
         },
       });
@@ -226,10 +240,6 @@ export async function POST(
       attachments: uploads,
     });
   } catch (error) {
-    if (error instanceof Response) {
-      return error;
-    }
-
     console.error("[Attachments Upload] Unexpected error", error);
     return buildErrorResponse(500, "Failed to upload attachments.");
   }
