@@ -120,15 +120,15 @@ type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 const IMAGE_ACCEPT = "image/*";
 const PDF_ACCEPT = "application/pdf";
 
-type UploadedAttachment = {
+interface UploadedAttachment {
 	id: string;
 	url: string;
 	storagePath: string;
 	size: number;
 	contentType: string;
 	filename?: string;
-	metadata?: Record<string, unknown> | null;
-};
+	metadata?: Record<string, string | number | boolean | null> | null;
+}
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -805,7 +805,7 @@ export function ChatInterface({
 			if (size > MAX_ATTACHMENT_BYTES) {
 				addInlineError({
 					type: ChatErrorType.INVALID_REQUEST,
-					message: `\"${filename}\" is too large. Attachments must be under ${Math.floor(
+					message: `"${filename}" is too large. Attachments must be under ${Math.floor(
 						MAX_ATTACHMENT_BYTES / (1024 * 1024),
 					)}MB.`,
 					retryable: false,
@@ -1007,23 +1007,37 @@ export function ChatInterface({
 			const formData = new FormData();
 			formData.append("modelId", input.modelId);
 
-			const metadataPayload = input.attachments.map((attachment, index) => ({
-				id: attachment.id,
-				mediaType: attachment.mediaType,
-				filename:
-					attachment.filename ??
-					attachment.file.name ??
-					`attachment-${index + 1}`,
-				size: attachment.size,
-			}));
+			const metadataPayload = input.attachments.map((attachment, index) => {
+				const providedFilename =
+					typeof attachment.filename === "string" && attachment.filename.length > 0
+						? attachment.filename
+						: undefined;
+				const fallbackName =
+					attachment.file.name && attachment.file.name.length > 0
+						? attachment.file.name
+						: `attachment-${index + 1}`;
+
+				return {
+					id: attachment.id,
+					mediaType: attachment.mediaType,
+					filename: providedFilename ?? fallbackName,
+					size: attachment.size,
+				};
+			});
 
 			formData.append("metadata", JSON.stringify(metadataPayload));
 
 			input.attachments.forEach((attachment, index) => {
+				const metadataEntry = metadataPayload[index];
+				const fallbackName =
+					attachment.file.name && attachment.file.name.length > 0
+						? attachment.file.name
+						: `attachment-${index + 1}`;
 				const inferredName =
-					metadataPayload[index]?.filename ??
-					attachment.file.name ??
-					`attachment-${index + 1}`;
+					metadataEntry?.filename && metadataEntry.filename.length > 0
+						? metadataEntry.filename
+						: fallbackName;
+
 				formData.append("files", attachment.file, inferredName);
 			});
 
@@ -1097,26 +1111,32 @@ export function ChatInterface({
 		if ("code" in errorOrEvent) {
 			console.error("Prompt input error:", errorOrEvent);
 			let userMessage = errorOrEvent.message;
-			if (errorOrEvent.code === "max_files") {
-				userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
-			} else if (errorOrEvent.code === "max_file_size") {
-				userMessage = `Each attachment must be smaller than ${Math.floor(
-					MAX_ATTACHMENT_BYTES / (1024 * 1024),
-				)}MB.`;
-			} else if (errorOrEvent.code === "accept") {
-				if (supportsImageAttachments && supportsPdfAttachments) {
-					userMessage = "Only images and PDFs are supported for this model.";
-				} else if (supportsImageAttachments) {
-					userMessage = "Only image attachments are supported for this model.";
-				} else if (supportsPdfAttachments) {
-					userMessage = "Only PDF attachments are supported for this model.";
-				} else {
-					userMessage = "This model does not support file attachments.";
+				switch (errorOrEvent.code) {
+					case "max_files":
+						userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
+						break;
+					case "max_file_size":
+						userMessage = `Each attachment must be smaller than ${Math.floor(
+							MAX_ATTACHMENT_BYTES / (1024 * 1024),
+						)}MB.`;
+						break;
+					case "accept":
+						if (supportsImageAttachments && supportsPdfAttachments) {
+							userMessage = "Only images and PDFs are supported for this model.";
+						} else if (supportsImageAttachments) {
+							userMessage = "Only image attachments are supported for this model.";
+						} else if (supportsPdfAttachments) {
+							userMessage = "Only PDF attachments are supported for this model.";
+						} else {
+							userMessage = "This model does not support file attachments.";
+						}
+						break;
+					default:
+						break;
 				}
-			}
 
-			addInlineError({
-				type: ChatErrorType.INVALID_REQUEST,
+				addInlineError({
+					type: ChatErrorType.INVALID_REQUEST,
 				message: userMessage,
 				retryable: false,
 				details: undefined,
@@ -1143,6 +1163,102 @@ export function ChatInterface({
 	) : (
 		<AuthPromptSelector />
 	);
+
+	const PromptAttachments = () => {
+		const attachments = usePromptInputAttachments();
+		const attachmentCount = attachments.files.length;
+		const hasAttachments = attachmentCount > 0;
+		const isSingleAttachment = attachmentCount === 1;
+
+		return (
+			<PromptInputAttachments
+				className={cn(
+					hasAttachments ? "border-t border-border/60 px-3 py-2" : "border-none px-3 py-0",
+					isSingleAttachment && "[&>div]:items-center",
+				)}
+			>
+				{(attachment) => (
+					<PromptInputAttachment
+						data={attachment}
+						aria-label={attachment.filename ?? "Attachment"}
+						className="bg-background"
+					/>
+				)}
+			</PromptInputAttachments>
+		);
+	};
+
+	const PromptFooterToolbar = () => {
+		const attachments = usePromptInputAttachments();
+		const hasAttachments = attachments.files.length > 0;
+
+		return (
+			<PromptInputToolbar
+				className={cn(
+					"flex items-center justify-between gap-2 bg-transparent p-2 transition-[color,box-shadow]",
+					hasAttachments ? "border-t border-border/60" : "",
+				)}
+			>
+			<div className="flex items-center gap-2">
+				<AttachmentPickerButton
+					disabled={attachmentButtonDisabled}
+					reason={attachmentDisabledReason}
+				/>
+				<PromptInputButton
+					variant={webSearchEnabled ? "secondary" : "outline"}
+					onClick={() => {
+						if (billingContext.features.webSearch.enabled) {
+							setWebSearchEnabled(!webSearchEnabled);
+						}
+					}}
+					disabled={!billingContext.features.webSearch.enabled}
+					title={
+						billingContext.features.webSearch.disabledReason ??
+						undefined
+					}
+					className={cn(
+						webSearchEnabled &&
+							"bg-secondary text-secondary-foreground hover:bg-secondary/80",
+						!billingContext.features.webSearch.enabled &&
+							"opacity-60 cursor-not-allowed",
+					)}
+				>
+					<Globe className="w-4 h-4" />
+					Search
+					{webSearchEnabled &&
+						billingContext.features.webSearch.enabled && (
+							<X
+								className="ml-1 h-3 w-3 cursor-pointer hover:opacity-70"
+								onClick={(e) => {
+									e.stopPropagation();
+									setWebSearchEnabled(false);
+								}}
+							/>
+						)}
+				</PromptInputButton>
+			</div>
+			<PromptInputTools className="flex items-center gap-2">
+				{modelSelector}
+				<PromptInputSubmit
+					status={status}
+					disabled={isPromptSubmissionDisabled}
+					title={
+						!canUseCurrentModel.allowed && isAuthenticated
+							? "reason" in canUseCurrentModel
+								? (canUseCurrentModel.reason ?? undefined)
+								: undefined
+							: undefined
+					}
+					size="icon"
+					variant="outline"
+					className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
+				>
+					<ArrowUp className="w-4 h-4" />
+				</PromptInputSubmit>
+				</PromptInputTools>
+		</PromptInputToolbar>
+		);
+	};
 
 	// Create the main chat content component
 	// Determine the appropriate UI state:
@@ -1188,77 +1304,9 @@ export function ChatInterface({
 									maxLength={4000}
 								/>
 								</div>
-								<div className="border-t border-border/60 bg-input-bg dark:bg-input-bg">
-									<PromptInputAttachments className="px-3 py-2">
-										{(attachment) => (
-											<PromptInputAttachment
-												data={attachment}
-												aria-label={attachment.filename ?? "Attachment"}
-												className="bg-background"
-											/>
-										)}
-									</PromptInputAttachments>
-									<PromptInputToolbar className="flex items-center justify-between gap-2 border-t border-border/60 bg-transparent p-2 transition-[color,box-shadow]">
-										<div className="flex items-center gap-2">
-											<AttachmentPickerButton
-												disabled={attachmentButtonDisabled}
-												reason={attachmentDisabledReason}
-											/>
-											<PromptInputButton
-												variant={webSearchEnabled ? "secondary" : "outline"}
-												onClick={() => {
-												if (billingContext.features.webSearch.enabled) {
-													setWebSearchEnabled(!webSearchEnabled);
-												}
-											}}
-												disabled={!billingContext.features.webSearch.enabled}
-												title={
-												billingContext.features.webSearch.disabledReason ??
-												undefined
-											}
-											className={cn(
-												webSearchEnabled &&
-													"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-												!billingContext.features.webSearch.enabled &&
-													"opacity-60 cursor-not-allowed",
-											)}
-										>
-											<Globe className="w-4 h-4" />
-											Search
-											{webSearchEnabled &&
-												billingContext.features.webSearch.enabled && (
-													<X
-														className="ml-1 h-3 w-3 cursor-pointer hover:opacity-70"
-														onClick={(e) => {
-															e.stopPropagation();
-															setWebSearchEnabled(false);
-														}}
-													/>
-												)}
-										</PromptInputButton>
-										</div>
-										<PromptInputTools className="flex items-center gap-2">
-											{modelSelector}
-							<PromptInputSubmit
-							status={status}
-							disabled={isPromptSubmissionDisabled}
-							title={
-								!canUseCurrentModel.allowed && isAuthenticated
-									? "reason" in canUseCurrentModel
-										? (canUseCurrentModel.reason ?? undefined)
-										: undefined
-												: undefined
-											}
-											size="icon"
-											variant="outline"
-											className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
-										>
-											<ArrowUp className="w-4 h-4" />
-										</PromptInputSubmit>
-										</PromptInputTools>
-									</PromptInputToolbar>
-								</div>
+							<PromptAttachments />
 						</PromptInputBody>
+						<PromptFooterToolbar />
 					</PromptInput>
 					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
 					<div className="hidden md:block relative mt-4 h-12">
@@ -1368,78 +1416,10 @@ export function ChatInterface({
 												maxLength={4000}
 											/>
 										</div>
-								<div className="border-t border-border/60 bg-input-bg dark:bg-input-bg">
-									<PromptInputAttachments className="px-3 py-2">
-										{(attachment) => (
-											<PromptInputAttachment
-												data={attachment}
-												aria-label={attachment.filename ?? "Attachment"}
-												className="bg-background"
-											/>
-										)}
-									</PromptInputAttachments>
-									<PromptInputToolbar className="flex items-center justify-between gap-2 border-t border-border/60 bg-transparent p-2 transition-[color,box-shadow]">
-										<div className="flex items-center gap-2">
-											<AttachmentPickerButton
-												disabled={attachmentButtonDisabled}
-												reason={attachmentDisabledReason}
-											/>
-											<PromptInputButton
-												variant={webSearchEnabled ? "secondary" : "outline"}
-												onClick={() => {
-												if (billingContext.features.webSearch.enabled) {
-													setWebSearchEnabled(!webSearchEnabled);
-												}
-											}}
-												disabled={!billingContext.features.webSearch.enabled}
-												title={
-												billingContext.features.webSearch.disabledReason ??
-												undefined
-											}
-											className={cn(
-												webSearchEnabled &&
-													"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-												!billingContext.features.webSearch.enabled &&
-													"opacity-60 cursor-not-allowed",
-											)}
-										>
-											<Globe className="w-4 h-4" />
-											Search
-											{webSearchEnabled &&
-												billingContext.features.webSearch.enabled && (
-													<X
-														className="ml-1 h-3 w-3 cursor-pointer hover:opacity-70"
-														onClick={(e) => {
-															e.stopPropagation();
-															setWebSearchEnabled(false);
-														}}
-													/>
-												)}
-										</PromptInputButton>
-										</div>
-										<PromptInputTools className="flex items-center gap-2">
-											{modelSelector}
-							<PromptInputSubmit
-							status={status}
-							disabled={isPromptSubmissionDisabled}
-							title={
-								!canUseCurrentModel.allowed && isAuthenticated
-									? "reason" in canUseCurrentModel
-										? (canUseCurrentModel.reason ?? undefined)
-										: undefined
-												: undefined
-											}
-											size="icon"
-											variant="outline"
-											className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
-										>
-											<ArrowUp className="w-4 h-4" />
-										</PromptInputSubmit>
-										</PromptInputTools>
-									</PromptInputToolbar>
-								</div>
-									</PromptInputBody>
-								</PromptInput>
+								<PromptAttachments />
+							</PromptInputBody>
+							<PromptFooterToolbar />
+							</PromptInput>
 							</div>
 
 							{/* Description text */}

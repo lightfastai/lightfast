@@ -30,6 +30,7 @@ import { nanoid } from "nanoid";
 import {
   type ChangeEventHandler,
   Children,
+  type ClipboardEventHandler,
   type ComponentProps,
   createContext,
   type FormEvent,
@@ -356,8 +357,8 @@ export const PromptInput = ({
         }
         return [];
       });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (inputRef.current) {
+        inputRef.current.value = "";
       }
     },
     [],
@@ -512,6 +513,8 @@ export const PromptInputTextarea = ({
   placeholder = "What would you like to know?",
   ...props
 }: PromptInputTextareaProps) => {
+  const attachments = usePromptInputAttachments();
+
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter") {
       // Don't submit if IME composition is in progress
@@ -533,6 +536,30 @@ export const PromptInputTextarea = ({
     }
   };
 
+  const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = (event) => {
+    const items = event.clipboardData?.items;
+
+    if (!items) {
+      return;
+    }
+
+    const files: File[] = [];
+
+    for (const item of items) {
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+
+    if (files.length > 0) {
+      event.preventDefault();
+      attachments.add(files);
+    }
+  };
+
   return (
     <Textarea
       className={cn(
@@ -547,6 +574,7 @@ export const PromptInputTextarea = ({
         onChange?.(e);
       }}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       placeholder={placeholder}
       {...props}
     />
