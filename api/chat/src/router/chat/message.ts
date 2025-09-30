@@ -9,6 +9,7 @@ import {
   LightfastChatStream,
   LightfastChatAttachment,
   insertLightfastChatMessageSchema,
+  insertLightfastChatAttachmentSchema,
 } from "@db/chat";
 import { eq, desc, and, or, lt, sql } from "drizzle-orm";
 import {
@@ -19,16 +20,15 @@ import { selectRecordsByCharBudget } from "./message-pagination";
 
 const OVERSIZED_PREVIEW_CHAR_LIMIT = 2_000;
 
-const attachmentInputSchema = z.object({
-  id: z.string(),
-  pathname: z.string(),
+const attachmentInputSchema = insertLightfastChatAttachmentSchema.pick({
+  id: true,
+  storagePath: true,
+  filename: true,
+  contentType: true,
+  size: true,
+  metadata: true,
+}).extend({
   url: z.string().optional(),
-  downloadUrl: z.string().optional(),
-  filename: z.string().nullish(),
-  contentType: z.string().optional(),
-  size: z.number().nonnegative(),
-  storageProvider: z.string().optional(),
-  metadata: z.record(z.unknown()).nullish(),
 });
 
 export const messageRouter = {
@@ -95,10 +95,7 @@ export const messageRouter = {
               id: attachment.id,
               messageId: input.message.id,
               sessionId: input.sessionId,
-              storageProvider: attachment.storageProvider ?? "vercel-blob",
-              storagePath: attachment.pathname,
-              url: attachment.url ?? null,
-              downloadUrl: attachment.downloadUrl ?? null,
+              storagePath: attachment.storagePath,
               filename: attachment.filename ?? null,
               contentType: attachment.contentType ?? null,
               size: attachment.size,

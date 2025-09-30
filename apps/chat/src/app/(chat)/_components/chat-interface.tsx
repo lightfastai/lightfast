@@ -123,13 +123,11 @@ const PDF_ACCEPT = "application/pdf";
 type UploadedAttachment = {
 	id: string;
 	url: string;
-	downloadUrl?: string;
-	pathname: string;
+	storagePath: string;
 	size: number;
 	contentType: string;
 	filename?: string;
 	metadata?: Record<string, unknown> | null;
-	storageProvider?: string;
 };
 
 interface ChatInterfaceProps {
@@ -896,10 +894,9 @@ export function ChatInterface({
 					filename: uploaded.filename ?? undefined,
 					providerMetadata: {
 						storage: {
-							provider: uploaded.storageProvider ?? "vercel-blob",
+							provider: "vercel-blob",
 							id: uploaded.id,
-							pathname: uploaded.pathname,
-							downloadUrl: uploaded.downloadUrl,
+							pathname: uploaded.storagePath,
 							size: uploaded.size,
 							metadata: uploaded.metadata ?? null,
 						},
@@ -924,13 +921,10 @@ export function ChatInterface({
 			if (uploadedAttachments.length > 0) {
 				requestBody.attachments = uploadedAttachments.map((uploaded) => ({
 					id: uploaded.id,
-					pathname: uploaded.pathname,
+						storagePath: uploaded.storagePath,
 					size: uploaded.size,
 					contentType: uploaded.contentType,
 					filename: uploaded.filename ?? null,
-					url: uploaded.url,
-					downloadUrl: uploaded.downloadUrl,
-					storageProvider: uploaded.storageProvider ?? "vercel-blob",
 					metadata: uploaded.metadata ?? null,
 				}));
 			}

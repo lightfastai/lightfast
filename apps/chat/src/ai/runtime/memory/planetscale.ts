@@ -34,9 +34,7 @@ function extractFileAttachments(
 					storage?: {
 						id?: string;
 						pathname?: string;
-						downloadUrl?: string;
 						size?: number;
-						provider?: string;
 						metadata?: Record<string, unknown> | null;
 					};
 				}
@@ -61,18 +59,9 @@ function extractFileAttachments(
 					? storage.id
 					: nanoid(),
 			pathname: storage.pathname,
-			url: part.url,
-			downloadUrl:
-				typeof storage.downloadUrl === "string"
-					? storage.downloadUrl
-					: undefined,
 			filename: part.filename ?? undefined,
 			contentType: part.mediaType ?? undefined,
 			size,
-			storageProvider:
-				typeof storage.provider === "string"
-					? storage.provider
-					: "vercel-blob",
 			metadata:
 				typeof storage.metadata === "object"
 					? (storage.metadata as Record<string, unknown> | null)

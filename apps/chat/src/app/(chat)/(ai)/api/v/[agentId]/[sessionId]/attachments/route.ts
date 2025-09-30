@@ -31,13 +31,11 @@ type AttachmentMetadata = {
 type UploadResult = {
   id: string;
   url: string;
-  downloadUrl?: string;
-  pathname: string;
+  storagePath: string;
   size: number;
   contentType: string;
   filename?: string;
   metadata?: Record<string, unknown> | null;
-  storageProvider?: string;
 };
 
 function buildErrorResponse(status: number, message: string) {
@@ -190,14 +188,14 @@ export async function POST(
         ? metadata.id
         : nanoid();
 
-      const objectPath = `chat/${agentId}/${sessionId}/${Date.now()}-${nanoid(6)}-${safeFilename}`;
+      const objectPath = `chat/${agentId}/${sessionId}/${nanoid(21)}-${safeFilename}`;
 
       const resolvedContentType = inferredMediaType && inferredMediaType.length > 0
         ? inferredMediaType
         : kind === "pdf"
           ? PDF_MIME_TYPE
           : kind === "image"
-            ? `${IMAGE_MIME_PREFIX}jpeg`
+            ? "image/jpeg"
             : "application/octet-stream";
 
       const putResult = await put(objectPath, file, {
@@ -206,15 +204,15 @@ export async function POST(
         token: env.BLOB_READ_WRITE_TOKEN,
       });
 
+      const publicUrl = new URL(putResult.pathname, env.BLOB_BASE_URI).toString();
+
       uploads.push({
         id: attachmentId,
-        url: putResult.url,
-        downloadUrl: putResult.downloadUrl,
-        pathname: putResult.pathname,
+        url: publicUrl,
+        storagePath: putResult.pathname,
         size: file.size,
         contentType: resolvedContentType,
         filename: safeFilename,
-        storageProvider: "vercel-blob",
         metadata: {
           originalFilename: metadata.filename ?? file.name,
           kind,

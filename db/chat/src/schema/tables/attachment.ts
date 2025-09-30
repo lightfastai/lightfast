@@ -20,12 +20,7 @@ export const LightfastChatAttachment = mysqlTable(
       .$defaultFn(() => uuidv4()),
     messageId: varchar("message_id", { length: 191 }).notNull(),
     sessionId: varchar("session_id", { length: 191 }).notNull(),
-    storageProvider: varchar("storage_provider", { length: 32 })
-      .notNull()
-      .default("vercel-blob"),
     storagePath: varchar("storage_path", { length: 512 }).notNull(),
-    url: varchar("url", { length: 1024 }),
-    downloadUrl: varchar("download_url", { length: 1024 }),
     filename: varchar("filename", { length: 256 }),
     contentType: varchar("content_type", { length: 128 }),
     size: bigint("size", { mode: "number" }).notNull(),

@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e2749405-6326-4da0-92f6-3be14abaa72e",
+  "id": "2be6bce1-a6e2-43a1-a81d-a504202e9cbb",
   "prevId": "4246317d-8640-45e9-9ab9-b806d2f3b4e7",
   "tables": {
     "lightfast_chat_session": {
@@ -656,33 +656,11 @@
           "notNull": true,
           "autoincrement": false
         },
-        "storage_provider": {
-          "name": "storage_provider",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'vercel-blob'"
-        },
         "storage_path": {
           "name": "storage_path",
           "type": "varchar(512)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "varchar(1024)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "download_url": {
-          "name": "download_url",
-          "type": "varchar(1024)",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "filename": {
