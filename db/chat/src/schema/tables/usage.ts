@@ -49,6 +49,12 @@ export const LightfastChatUsage = mysqlTable(
      * Plus users get 100 premium messages per month
      */
     premiumMessages: int("premium_messages").default(0).notNull(),
+
+    /**
+     * Count of file attachments uploaded during the period
+     * Helps enforce storage or attachment-based quotas.
+     */
+    attachmentCount: int("attachment_count").default(0).notNull(),
     
     /**
      * Timestamp when the usage record was created

@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_chat_usage` ADD `attachment_count` int DEFAULT 0 NOT NULL;
