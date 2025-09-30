@@ -71,6 +71,10 @@ export type PromptInputAttachmentItem = FileUIPart & {
    * Arbitrary metadata attached to the uploaded file.
    */
   metadata?: Record<string, JSONValue> | null;
+  /**
+   * Upload state - 'pending' while uploading, 'complete' when done
+   */
+  uploadState?: 'pending' | 'complete';
 };
 
 type AttachmentsContext = {
@@ -118,6 +122,7 @@ export function PromptInputAttachment({
   ...props
 }: PromptInputAttachmentProps) {
   const attachments = usePromptInputAttachments();
+  const isUploading = data.uploadState === 'pending';
 
   return (
     <div
@@ -126,16 +131,30 @@ export function PromptInputAttachment({
       {...props}
     >
       {data.mediaType?.startsWith("image/") && data.url ? (
-        <img
-          alt={data.filename || "attachment"}
-          className="size-full rounded-md object-cover"
-          height={56}
-          src={data.url}
-          width={56}
-        />
+        <div className="relative size-full">
+          <img
+            alt={data.filename || "attachment"}
+            className={cn(
+              "size-full rounded-md object-cover",
+              isUploading && "opacity-50"
+            )}
+            height={56}
+            src={data.url}
+            width={56}
+          />
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2Icon className="size-5 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex size-full items-center justify-center text-muted-foreground">
-          <PaperclipIcon className="size-4" />
+          {isUploading ? (
+            <Loader2Icon className="size-5 animate-spin text-primary" />
+          ) : (
+            <PaperclipIcon className="size-4" />
+          )}
         </div>
       )}
       <Button
@@ -145,6 +164,7 @@ export function PromptInputAttachment({
         size="icon"
         type="button"
         variant="outline"
+        disabled={isUploading}
       >
         <XIcon className="h-3 w-3" />
       </Button>
@@ -235,6 +255,7 @@ export type PromptInputAttachmentPayload = {
   storagePath?: string;
   contentType?: string;
   metadata?: Record<string, JSONValue> | null;
+  uploadState?: 'pending' | 'complete';
 };
 
 export type PromptInputMessage = {
@@ -359,45 +380,77 @@ export const PromptInput = ({
         }
 
         if (onAttachmentUpload) {
-          const uploadedItems: PromptInputAttachmentItem[] = [];
+          // Create pending items immediately for visual feedback
+          const pendingItems: PromptInputAttachmentItem[] = capped.map((file) => {
+            const itemId = nanoid();
+            // Create preview URL for images, empty string for others (required by FileUIPart)
+            const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
 
-          for (const file of capped) {
+            return {
+              id: itemId,
+              type: "file",
+              url: previewUrl,
+              mediaType: file.type || "application/octet-stream",
+              filename: file.name,
+              file,
+              size: file.size,
+              uploadState: 'pending' as const,
+            };
+          });
+
+          // Add pending items to UI immediately
+          setItems((prev) => prev.concat(pendingItems));
+
+          // Upload files and update items as they complete
+          for (const pendingItem of pendingItems) {
+            const file = pendingItem.file;
+            if (!file) continue;
+
             try {
               const uploaded = await onAttachmentUpload(file);
               if (!uploaded) {
+                // Remove the pending item if upload returned null/undefined
+                setItems((prev) => prev.filter((item) => item.id !== pendingItem.id));
+                revokeObjectURL(pendingItem.url);
                 continue;
               }
 
-              const itemId = uploaded.id ?? nanoid();
               const mediaType =
                 uploaded.mediaType ??
                 uploaded.contentType ??
-                uploaded.file?.type ??
                 file.type ??
                 "application/octet-stream";
-              const filename = uploaded.filename ?? uploaded.file?.name ?? file.name;
-              const size = uploaded.size ?? uploaded.file?.size ?? file.size;
-              const generatedUrl = uploaded.url ?? (uploaded.file ? URL.createObjectURL(uploaded.file) : undefined);
+              const filename = uploaded.filename ?? file.name;
+              const size = uploaded.size ?? file.size;
+              const finalUrl = uploaded.url ?? pendingItem.url;
 
-              uploadedItems.push({
-                ...uploaded,
-                type: "file",
-                id: itemId,
-                url: generatedUrl,
-                mediaType,
-                filename,
-                size,
-                contentType: uploaded.contentType ?? mediaType,
-              });
+              // Update the pending item with completed upload data
+              setItems((prev) =>
+                prev.map((item) =>
+                  item.id === pendingItem.id
+                    ? {
+                        ...uploaded,
+                        type: "file",
+                        id: pendingItem.id,
+                        url: finalUrl,
+                        mediaType,
+                        filename,
+                        size,
+                        contentType: uploaded.contentType ?? mediaType,
+                        uploadState: 'complete' as const,
+                      }
+                    : item
+                )
+              );
             } catch (error) {
               const message =
                 error instanceof Error ? error.message : "Failed to upload attachment.";
               onError?.({ code: "upload_failed", message });
-            }
-          }
 
-          if (uploadedItems.length > 0) {
-            setItems((prev) => prev.concat(uploadedItems));
+              // Remove the failed pending item
+              setItems((prev) => prev.filter((item) => item.id !== pendingItem.id));
+              revokeObjectURL(pendingItem.url);
+            }
           }
 
           return;
@@ -538,6 +591,7 @@ export const PromptInput = ({
         storagePath: item.storagePath,
         contentType: item.contentType,
         metadata: item.metadata ?? null,
+        uploadState: item.uploadState,
       }),
     );
 
