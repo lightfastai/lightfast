@@ -47,11 +47,24 @@ import {
   useState,
 } from "react";
 
+export type PromptInputAttachmentItem = FileUIPart & {
+  id: string;
+  /**
+   * Original File instance captured from the input element.
+   * Undefined when the attachment comes from a non-File source.
+   */
+  file?: File;
+  /**
+   * Cached byte size to avoid re-reading the File in downstream consumers.
+   */
+  size?: number;
+};
+
 type AttachmentsContext = {
-  files: (FileUIPart & { id: string })[];
+  files: PromptInputAttachmentItem[];
   add: (files: File[] | FileList) => void;
   remove: (id: string) => void;
-  clear: () => void;
+  clear: (options?: { revokeObjectURLs?: boolean }) => void;
   openFileDialog: () => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
 };
@@ -71,7 +84,7 @@ export const usePromptInputAttachments = () => {
 };
 
 export type PromptInputAttachmentProps = HTMLAttributes<HTMLDivElement> & {
-  data: FileUIPart & { id: string };
+  data: PromptInputAttachmentItem;
   className?: string;
 };
 
@@ -119,7 +132,7 @@ export type PromptInputAttachmentsProps = Omit<
   HTMLAttributes<HTMLDivElement>,
   "children"
 > & {
-  children: (attachment: FileUIPart & { id: string }) => React.ReactNode;
+  children: (attachment: PromptInputAttachmentItem) => React.ReactNode;
 };
 
 export function PromptInputAttachments({
@@ -188,9 +201,18 @@ export const PromptInputActionAddAttachments = ({
   );
 };
 
+export type PromptInputAttachmentPayload = {
+  id: string;
+  file: File;
+  url: string;
+  mediaType: string;
+  filename?: string;
+  size: number;
+};
+
 export type PromptInputMessage = {
   text?: string;
-  files?: FileUIPart[];
+  attachments?: PromptInputAttachmentPayload[];
 };
 
 export type PromptInputProps = Omit<
@@ -228,7 +250,7 @@ export const PromptInput = ({
   onSubmit,
   ...props
 }: PromptInputProps) => {
-  const [items, setItems] = useState<(FileUIPart & { id: string })[]>([]);
+  const [items, setItems] = useState<PromptInputAttachmentItem[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const anchorRef = useRef<HTMLSpanElement>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -293,14 +315,16 @@ export const PromptInput = ({
             message: "Too many files. Some were not added.",
           });
         }
-        const next: (FileUIPart & { id: string })[] = [];
+        const next: PromptInputAttachmentItem[] = [];
         for (const file of capped) {
           next.push({
             id: nanoid(),
             type: "file",
             url: URL.createObjectURL(file),
-            mediaType: file.type,
+            mediaType: file.type || "application/octet-stream",
             filename: file.name,
+            file,
+            size: file.size,
           });
         }
         return prev.concat(next);
@@ -319,16 +343,25 @@ export const PromptInput = ({
     });
   }, []);
 
-  const clear = useCallback(() => {
-    setItems((prev) => {
-      for (const file of prev) {
-        if (file.url) {
-          URL.revokeObjectURL(file.url);
+  const clear = useCallback(
+    (options?: { revokeObjectURLs?: boolean }) => {
+      const shouldRevoke = options?.revokeObjectURLs ?? true;
+      setItems((prev) => {
+        if (shouldRevoke) {
+          for (const file of prev) {
+            if (file.url) {
+              URL.revokeObjectURL(file.url);
+            }
+          }
         }
+        return [];
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
-      return [];
-    });
-  }, []);
+    },
+    [],
+  );
 
   // Note: File input cannot be programmatically set for security reasons
   // The syncHiddenInput prop is no longer functional
@@ -402,11 +435,29 @@ export const PromptInput = ({
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
-    const files: FileUIPart[] = items.map(({ ...item }) => ({
-      ...item,
-    }));
+    const attachmentsPayload: PromptInputAttachmentPayload[] = items
+      .filter((item): item is PromptInputAttachmentItem & { file: File } =>
+        Boolean(item.file),
+      )
+      .map((item) => ({
+        id: item.id,
+        file: item.file,
+        url: item.url,
+        mediaType:
+          item.mediaType || item.file.type || "application/octet-stream",
+        filename: item.filename ?? item.file.name,
+        size: item.size ?? item.file.size,
+      }));
 
-    onSubmit({ text: event.currentTarget.message.value, files }, event);
+    onSubmit(
+      {
+        text: event.currentTarget.message.value,
+        attachments: attachmentsPayload,
+      },
+      event,
+    );
+
+    clear();
   };
 
   const ctx = useMemo<AttachmentsContext>(

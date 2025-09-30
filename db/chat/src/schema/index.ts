@@ -7,3 +7,4 @@ export * from "./tables/usage";
 export * from "./tables/quota-reservations";
 export * from "./tables/session-share";
 export * from "./tables/relations";
+export * from "./tables/attachment";

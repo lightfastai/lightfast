@@ -7,6 +7,7 @@ import { braintrustEnv } from "@repo/ai/braintrust-env";
 import { env as dbEnv } from "@db/chat/env";
 import { env as securityEnv } from "@vendor/security/env";
 import { env as chatApiEnv } from "@api/chat/env";
+import { env as storageEnv } from "@vendor/storage/env";
 
 export const env = createEnv({
   extends: [
@@ -15,6 +16,7 @@ export const env = createEnv({
     chatApiEnv,
     braintrustEnv,
     dbEnv,
+    storageEnv,
     securityEnv,
   ],
   shared: {

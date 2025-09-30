@@ -3,11 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
-import { 
-  LightfastChatSession, 
-  LightfastChatMessage, 
+import {
+  LightfastChatSession,
+  LightfastChatMessage,
   LightfastChatStream,
-  insertLightfastChatMessageSchema
+  LightfastChatAttachment,
+  insertLightfastChatMessageSchema,
 } from "@db/chat";
 import { eq, desc, and, or, lt, sql } from "drizzle-orm";
 import {
@@ -17,6 +18,18 @@ import {
 import { selectRecordsByCharBudget } from "./message-pagination";
 
 const OVERSIZED_PREVIEW_CHAR_LIMIT = 2_000;
+
+const attachmentInputSchema = z.object({
+  id: z.string(),
+  pathname: z.string(),
+  url: z.string().optional(),
+  downloadUrl: z.string().optional(),
+  filename: z.string().nullish(),
+  contentType: z.string().optional(),
+  size: z.number().nonnegative(),
+  storageProvider: z.string().optional(),
+  metadata: z.record(z.unknown()).nullish(),
+});
 
 export const messageRouter = {
   /**
@@ -32,6 +45,7 @@ export const messageRouter = {
           parts: true,
           modelId: true,
         }),
+        attachments: z.array(attachmentInputSchema).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -60,22 +74,44 @@ export const messageRouter = {
         >[0],
       );
 
-      // Insert the message
-      await db.insert(LightfastChatMessage).values({
-        sessionId: input.sessionId,
-        role: input.message.role as "system" | "user" | "assistant",
-        parts: input.message.parts,
-        id: input.message.id,
-        modelId: input.message.modelId,
-        charCount: metrics.charCount,
-        tokenCount: metrics.tokenCount ?? null,
-      });
+      await db.transaction(async (tx) => {
+        await tx.insert(LightfastChatMessage).values({
+          sessionId: input.sessionId,
+          role: input.message.role as "system" | "user" | "assistant",
+          parts: input.message.parts,
+          id: input.message.id,
+          modelId: input.message.modelId,
+          charCount: metrics.charCount,
+          tokenCount: metrics.tokenCount ?? null,
+        });
 
-      // Update session's updatedAt timestamp using MySQL's CURRENT_TIMESTAMP
-      await db
-        .update(LightfastChatSession)
-        .set({ updatedAt: sql`CURRENT_TIMESTAMP` })
-        .where(eq(LightfastChatSession.id, input.sessionId));
+        if (input.attachments && input.attachments.length > 0) {
+          await tx
+            .delete(LightfastChatAttachment)
+            .where(eq(LightfastChatAttachment.messageId, input.message.id));
+
+          await tx.insert(LightfastChatAttachment).values(
+            input.attachments.map((attachment) => ({
+              id: attachment.id,
+              messageId: input.message.id,
+              sessionId: input.sessionId,
+              storageProvider: attachment.storageProvider ?? "vercel-blob",
+              storagePath: attachment.pathname,
+              url: attachment.url ?? null,
+              downloadUrl: attachment.downloadUrl ?? null,
+              filename: attachment.filename ?? null,
+              contentType: attachment.contentType ?? null,
+              size: attachment.size,
+              metadata: attachment.metadata ?? null,
+            })),
+          );
+        }
+
+        await tx
+          .update(LightfastChatSession)
+          .set({ updatedAt: sql`CURRENT_TIMESTAMP` })
+          .where(eq(LightfastChatSession.id, input.sessionId));
+      });
 
       return { success: true };
     }),

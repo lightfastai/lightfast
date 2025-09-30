@@ -50,6 +50,17 @@ export interface ChatRouteRequestBody {
   modelId?: string;
   webSearchEnabled?: boolean;
   messages?: ChatRouteMessage[];
+  attachments?: Array<{
+    id: string;
+    pathname: string;
+    size: number;
+    contentType?: string | null;
+    filename?: string | null;
+    url?: string;
+    downloadUrl?: string;
+    storageProvider?: string;
+    metadata?: Record<string, unknown> | null;
+  }>;
   [key: string]: unknown;
 }
 

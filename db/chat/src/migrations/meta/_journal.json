@@ -148,6 +148,13 @@
       "when": 1760000000000,
       "tag": "0020_chat_message_char_budget",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1759210232751,
+      "tag": "0021_futuristic_wraith",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,87 @@
 import type { Memory } from "lightfast/memory";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type {
+	LightfastAppChatUIMessage,
+	LightfastAppChatUIMessagePart,
+} from "@repo/chat-ai-types";
 import type { ChatFetchContext } from "@repo/chat-ai-types";
 import type {
 	MessagesAppendInput,
 	MessagesListInput,
 	MessagesListOutput,
 } from "@repo/chat-api-services/messages";
+import type { FileUIPart } from "ai";
+import { nanoid } from "nanoid";
+
+type AttachmentPayload = NonNullable<MessagesAppendInput["attachments"]>[number];
+
+const isFileUIPart = (
+	part: LightfastAppChatUIMessagePart,
+): part is FileUIPart => part.type === "file";
+
+function extractFileAttachments(
+	parts: LightfastAppChatUIMessagePart[],
+): AttachmentPayload[] {
+	const attachments: AttachmentPayload[] = [];
+
+	for (const part of parts) {
+		if (!isFileUIPart(part)) {
+			continue;
+		}
+
+		const storage =
+			(part.providerMetadata as
+				| {
+					storage?: {
+						id?: string;
+						pathname?: string;
+						downloadUrl?: string;
+						size?: number;
+						provider?: string;
+						metadata?: Record<string, unknown> | null;
+					};
+				}
+				| undefined)?.storage || {};
+
+		if (!storage.pathname) {
+			continue;
+		}
+
+		const size =
+			typeof storage.size === "number" && Number.isFinite(storage.size)
+				? storage.size
+				: undefined;
+
+		if (size === undefined) {
+			continue;
+		}
+
+		attachments.push({
+			id:
+				typeof storage.id === "string" && storage.id.length > 0
+					? storage.id
+					: nanoid(),
+			pathname: storage.pathname,
+			url: part.url,
+			downloadUrl:
+				typeof storage.downloadUrl === "string"
+					? storage.downloadUrl
+					: undefined,
+			filename: part.filename ?? undefined,
+			contentType: part.mediaType ?? undefined,
+			size,
+			storageProvider:
+				typeof storage.provider === "string"
+					? storage.provider
+					: "vercel-blob",
+			metadata:
+				typeof storage.metadata === "object"
+					? (storage.metadata as Record<string, unknown> | null)
+					: null,
+		});
+	}
+
+	return attachments;
+}
 
 /**
  * PlanetScale implementation of Memory interface using service layer for database operations
@@ -44,6 +120,9 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 		// Only set modelId for assistant messages
 		const modelId = message.role === "assistant" ? context.modelId : null;
 		
+
+		const attachments = extractFileAttachments(message.parts);
+
 		await this.messagesService.append({
 			sessionId,
 			message: {
@@ -52,8 +131,9 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				parts: message.parts,
 				modelId,
 			},
+			attachments: attachments.length > 0 ? attachments : undefined,
 		});
-	}
+}
 
 	/**
 	 * Get all messages for a session, ordered by creation time

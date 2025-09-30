@@ -1,11 +1,14 @@
 "use client";
 
-import type { ChatStatus, ToolUIPart } from "ai";
+import type { ChatStatus, ToolUIPart, FileUIPart } from "ai";
 import { Fragment, memo, useMemo, useRef, useEffect, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type {
+	LightfastAppChatUIMessage,
+	LightfastAppChatUIMessagePart,
+} from "@repo/chat-ai-types";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
 import {
 	parseResponseMetadata,
@@ -52,6 +55,7 @@ import {
 	Check,
 	AlertCircle,
 	X,
+  PaperclipIcon,
 } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useStream } from "~/hooks/use-stream";
@@ -116,6 +120,73 @@ const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
 		return false;
 	});
 };
+
+const isFileUIPart = (
+	part: LightfastAppChatUIMessagePart,
+): part is FileUIPart => part.type === "file";
+
+const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
+	attachments,
+	align,
+}: {
+	attachments: FileUIPart[];
+	align: "start" | "end";
+}) {
+	if (!attachments.length) {
+		return null;
+	}
+
+	return (
+		<div
+			className={cn(
+				"mt-2 flex flex-wrap gap-2",
+				align === "end" ? "justify-end" : "justify-start",
+			)}
+		>
+			{attachments.map((attachment, index) => {
+				const isImage = attachment.mediaType?.startsWith("image/");
+				const label =
+					attachment.filename ??
+					attachment.url.split("?")[0].split("/").pop() ??
+					`Attachment ${index + 1}`;
+
+				if (isImage) {
+					return (
+						<a
+							key={`${attachment.url}-${index}`}
+							href={attachment.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="group relative block overflow-hidden rounded-md border"
+						>
+							<img
+								src={attachment.url}
+								alt={label}
+								className="h-24 w-24 object-cover transition-transform group-hover:scale-[1.02]"
+								loading="lazy"
+							/>
+						</a>
+					);
+				}
+
+				return (
+					<a
+						key={`${attachment.url}-${index}`}
+						href={attachment.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-accent"
+					>
+						<PaperclipIcon className="h-4 w-4" />
+						<span className="max-w-[160px] truncate" title={label}>
+							{label}
+						</span>
+					</a>
+				);
+			})}
+		</div>
+	);
+});
 
 const StreamingResponse = memo(function StreamingResponse({
 	text,
@@ -597,17 +668,20 @@ const UserMessage = memo(function UserMessage({
 }: {
 	message: LightfastAppChatUIMessage;
 }) {
-	const textContent = message.parts
-		.filter(isTextPart)
-		.map((part) => part.text)
-		.join("\n");
+	const textParts = message.parts.filter(isTextPart);
+	const textContent = textParts.map((part) => part.text).join("\n");
+	const hasText = textContent.trim().length > 0;
+	const fileParts = message.parts.filter(isFileUIPart);
 
 	return (
 		<div className="py-1">
 			<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
 				<Message from="user" className="justify-end">
 					<MessageContent variant="chat">
-						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+						{hasText && (
+							<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+						)}
+						<MessageAttachmentPreview attachments={fileParts} align="end" />
 					</MessageContent>
 				</Message>
 			</div>
@@ -759,6 +833,16 @@ const AssistantMessage = memo(function AssistantMessage({
 											key={`${message.id}-reasoning-${index}`}
 											reasoningText={trimmedText}
 											isStreaming={isReasoningStreaming}
+										/>
+									);
+								}
+
+								if (isFileUIPart(part)) {
+									return (
+										<MessageAttachmentPreview
+											key={`${message.id}-file-${index}`}
+											attachments={[part]}
+											align="start"
 										/>
 									);
 								}

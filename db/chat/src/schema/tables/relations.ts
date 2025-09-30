@@ -6,6 +6,7 @@ import { LightfastChatMessageFeedback } from "./message-feedback";
 import { LightfastChatStream } from "./stream";
 import { LightfastChatArtifact } from "./artifact";
 import { LightfastChatSessionShare } from "./session-share";
+import { LightfastChatAttachment } from "./attachment";
 
 /**
  * Drizzle Relations
@@ -24,6 +25,7 @@ export const lightfastChatSessionRelations = relations(LightfastChatSession, ({ 
   artifacts: many(LightfastChatArtifact),
   messageFeedback: many(LightfastChatMessageFeedback),
   shares: many(LightfastChatSessionShare),
+  attachments: many(LightfastChatAttachment),
 }));
 
 // Message relations - each message belongs to one session and can have many feedback entries
@@ -33,6 +35,7 @@ export const lightfastChatMessageRelations = relations(LightfastChatMessage, ({ 
     references: [LightfastChatSession.id],
   }),
   feedback: many(LightfastChatMessageFeedback),
+  attachments: many(LightfastChatAttachment),
 }));
 
 // Artifact relations - each artifact belongs to one session
@@ -62,6 +65,20 @@ export const lightfastChatSessionShareRelations = relations(
     session: one(LightfastChatSession, {
       fields: [LightfastChatSessionShare.sessionId],
       references: [LightfastChatSession.id],
+    }),
+  }),
+);
+
+export const lightfastChatAttachmentRelations = relations(
+  LightfastChatAttachment,
+  ({ one }) => ({
+    session: one(LightfastChatSession, {
+      fields: [LightfastChatAttachment.sessionId],
+      references: [LightfastChatSession.id],
+    }),
+    message: one(LightfastChatMessage, {
+      fields: [LightfastChatAttachment.messageId],
+      references: [LightfastChatMessage.id],
     }),
   }),
 );
