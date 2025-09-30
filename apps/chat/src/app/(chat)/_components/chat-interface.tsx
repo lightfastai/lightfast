@@ -6,39 +6,17 @@ import {
 	captureException,
 	captureMessage,
 } from "@sentry/nextjs";
-import { ChatEmptyState } from "./chat-empty-state";
-import { ChatMessages } from "./chat-messages";
-import { PromptSuggestions } from "./prompt-suggestions";
-import {
-	PromptInput,
-	PromptInputBody,
-	PromptInputTextarea,
-	PromptInputToolbar,
-	PromptInputTools,
-	PromptInputSubmit,
-	PromptInputButton,
-	PromptInputAttachments,
-	PromptInputAttachment,
-	usePromptInputAttachments,
-} from "@repo/ui/components/ai-elements/prompt-input";
 import type {
 	PromptInputMessage,
-	PromptInputAttachmentPayload,
-	PromptInputAttachmentItem,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
-import type { JSONValue } from "ai";
-import { cn } from "@repo/ui/lib/utils";
-import { ArrowUp, Globe, PaperclipIcon, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import {
 	useState,
 	useMemo,
 	useEffect,
-	useRef,
 	useCallback,
 } from "react";
-import { nanoid } from "nanoid";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
@@ -47,7 +25,6 @@ import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
 import { ChatErrorType } from "~/lib/errors/types";
-import type { ChatError } from "~/lib/errors/types";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
@@ -67,7 +44,29 @@ import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
-import type { ChatInlineError } from "./chat-inline-error";
+import { useInlineErrors } from "~/hooks/use-inline-errors";
+import { useAttachmentUpload } from "~/hooks/use-attachment-upload";
+import { useStreamLifecycle } from "~/hooks/use-stream-lifecycle";
+import { validateAttachments } from "~/lib/chat/message-validation";
+import {
+	findUnresolvedAttachment,
+	convertAttachmentsToUploaded,
+	createMessageParts,
+	generateSessionSeedText,
+} from "~/lib/chat/attachment-processing";
+import type { UploadedAttachment } from "~/lib/chat/attachment-processing";
+import { ChatNewSessionView } from "./chat-new-session-view";
+import { ChatExistingSessionView } from "./chat-existing-session-view";
+
+const ProviderModelSelector = dynamic(
+	() => import("./provider-model-selector").then((mod) => mod.ProviderModelSelector),
+	{ ssr: false },
+);
+
+const AuthPromptSelector = dynamic(
+	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
+	{ ssr: false },
+);
 
 const getMetadataString = (metadata: unknown, key: string): string | undefined => {
 	if (!metadata || typeof metadata !== "object") return undefined;
@@ -75,30 +74,14 @@ const getMetadataString = (metadata: unknown, key: string): string | undefined =
 	return typeof value === "string" ? value : undefined;
 };
 
-// Dynamic imports for components that are conditionally rendered
-const ProviderModelSelector = dynamic(
-	() =>
-		import("./provider-model-selector").then(
-			(mod) => mod.ProviderModelSelector,
-		),
-	{ ssr: false },
-);
-
-// Import ProcessedModel type for model processing
-import type { ProcessedModel } from "./provider-model-selector";
-import { getVisibleModels, getModelConfig } from "~/ai/providers";
+// Import model processing types
+import { getModelConfig, getVisibleModels } from "~/ai/providers";
 import type { ModelId } from "~/ai/providers";
+import type { ProcessedModel } from "./provider-model-selector";
 import {
 	MAX_ATTACHMENT_BYTES,
 	MAX_ATTACHMENT_COUNT,
-	ensureAttachmentAllowed,
-	inferAttachmentKind,
 } from "@repo/chat-ai-types";
-
-const AuthPromptSelector = dynamic(
-	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
-	{ ssr: false },
-);
 
 const RateLimitIndicator = dynamic(
 	() => import("./rate-limit-indicator").then((mod) => mod.RateLimitIndicator),
@@ -120,16 +103,6 @@ type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
 
 const IMAGE_ACCEPT = "image/*";
 const PDF_ACCEPT = "application/pdf";
-
-interface UploadedAttachment {
-	id: string;
-	url: string;
-	storagePath: string;
-	size: number;
-	contentType: string;
-	filename?: string;
-	metadata: Record<string, JSONValue> | null;
-}
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -188,106 +161,10 @@ export function ChatInterface({
 	});
 
 	// Streaming/storage errors surfaced inline in the conversation
-	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
+	const { inlineErrors, addInlineError, dismissInlineError } = useInlineErrors();
 	const [hasStreamAnimation, setHasStreamAnimation] = useState(false);
 	const [pendingDisable, setPendingDisable] = useState(false);
 
-	const addInlineError = useCallback(
-		(error: ChatError) => {
-			const metadata: Record<string, unknown> = error.metadata ?? {};
-
-			const getStringMetadata = (key: string): string | undefined => {
-				const value = metadata[key];
-				return typeof value === "string" ? value : undefined;
-			};
-
-			const relatedAssistantMessageId = getStringMetadata("messageId");
-			const relatedUserMessageId = getStringMetadata("userMessageId");
-			const errorCode = error.errorCode ?? getStringMetadata("errorCode");
-			const category = error.category ?? getStringMetadata("category");
-			const severity = error.severity ?? getStringMetadata("severity");
-			const source = error.source ?? getStringMetadata("source");
-
-			setInlineErrors((current) => {
-				const entry: ChatInlineError = {
-					id: crypto.randomUUID(),
-					error,
-					relatedAssistantMessageId,
-					relatedUserMessageId,
-					category,
-					severity,
-					source,
-					errorCode,
-				};
-
-				const deduped = current.filter((existing) => {
-					if (
-						entry.relatedAssistantMessageId &&
-						existing.relatedAssistantMessageId ===
-							entry.relatedAssistantMessageId
-					) {
-						return false;
-					}
-					if (
-						entry.relatedUserMessageId &&
-						existing.relatedUserMessageId === entry.relatedUserMessageId &&
-						!entry.relatedAssistantMessageId &&
-						!existing.relatedAssistantMessageId
-					) {
-						return false;
-					}
-					if (
-						!entry.relatedAssistantMessageId &&
-						!entry.relatedUserMessageId &&
-						!existing.relatedAssistantMessageId &&
-						!existing.relatedUserMessageId &&
-						existing.error.type === entry.error.type &&
-						(existing.category ?? null) === (entry.category ?? null)
-					) {
-						return false;
-					}
-					return true;
-				});
-
-				return [...deduped, entry];
-			});
-		},
-		[setInlineErrors],
-	);
-
-	const dismissInlineError = useCallback(
-		(errorId: string) => {
-			setInlineErrors((current) =>
-				current.filter((entry) => entry.id !== errorId),
-			);
-		},
-		[setInlineErrors],
-	);
-
-	// Process models with accessibility information for the model selector
-	const processedModels = useMemo((): ProcessedModel[] => {
-		return getVisibleModels().map((model) => {
-			const isAccessible = billingContext.models.isAccessible(
-				model.id,
-				model.accessLevel,
-				model.billingTier,
-			);
-			const restrictionReason = billingContext.models.getRestrictionReason(
-				model.id,
-				model.accessLevel,
-				model.billingTier,
-			);
-
-			return {
-				...model,
-				id: model.id as ModelId,
-				isAccessible,
-				restrictionReason,
-				isPremium: model.billingTier === "premium",
-				requiresAuth: model.accessLevel === "authenticated",
-			};
-		});
-	}, [billingContext.models]);
 
 	// Fetch artifacts through the tRPC API so we reuse authentication and caching
 	const fetchArtifact = useCallback(
@@ -380,8 +257,7 @@ export function ChatInterface({
 	}, [isAuthenticated, remainingMessages]);
 
 	// Model selection with persistence
-	const { selectedModelId, handleModelChange } =
-		useModelSelection(isAuthenticated);
+	const { selectedModelId, handleModelChange } = useModelSelection(isAuthenticated);
 
 	const selectedModelConfig = useMemo(() => {
 		return getModelConfig(selectedModelId);
@@ -401,34 +277,43 @@ export function ChatInterface({
 	}, [supportsImageAttachments, supportsPdfAttachments]);
 
 	const attachmentsAllowed = supportsImageAttachments || supportsPdfAttachments;
-	const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
-	const attachmentUploadCounterRef = useRef(0);
 
-	const attachmentButtonDisabled =
-		!attachmentsAllowed ||
-		!billingContext.features.webSearch.enabled ||
-		isUploadingAttachments;
-
-	const attachmentDisabledReason = useMemo(() => {
-		if (!attachmentsAllowed) {
-			return "Selected model does not support attachments.";
-		}
-		if (!billingContext.features.webSearch.enabled) {
-			return (
-				billingContext.features.webSearch.disabledReason ??
-				"Web search must be enabled to attach files."
+	// Process models with accessibility information for the model selector
+	const processedModels = useMemo((): ProcessedModel[] => {
+		return getVisibleModels().map((model) => {
+			const isAccessible = billingContext.models.isAccessible(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
 			);
-		}
-		if (isUploadingAttachments) {
-			return "Uploading attachments…";
-		}
-		return undefined;
-	}, [
-		attachmentsAllowed,
-		billingContext.features.webSearch.disabledReason,
-		billingContext.features.webSearch.enabled,
-		isUploadingAttachments,
-	]);
+			const restrictionReason = billingContext.models.getRestrictionReason(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+
+			return {
+				...model,
+				id: model.id as ModelId,
+				isAccessible,
+				restrictionReason,
+				isPremium: model.billingTier === "premium",
+				requiresAuth: model.accessLevel === "authenticated",
+			};
+		});
+	}, [billingContext.models]);
+
+	// Attachment upload hook
+	const { handleAttachmentUpload, isUploadingAttachments } = useAttachmentUpload({
+		agentId,
+		sessionId,
+		selectedModelId,
+		webSearchEnabled,
+		webSearchAllowed: billingContext.features.webSearch.enabled,
+		onWebSearchEnable: () => setWebSearchEnabled(true),
+		onError: addInlineError,
+	});
+
 
 	const metricsTags = useMemo(
 		() => ({
@@ -611,64 +496,26 @@ export function ChatInterface({
 		(!isAuthenticated && hasReachedLimit) ||
 		(isAuthenticated && !canUseCurrentModel.allowed);
 
-	const previousStatusRef = useRef(status);
-	const streamStartedAtRef = useRef<number | null>(null);
-	useEffect(() => {
-		const previousStatus = previousStatusRef.current;
-		if (status === "streaming" && previousStatus !== "streaming") {
-			if (typeof performance !== "undefined") {
-				streamStartedAtRef.current = performance.now();
-			}
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "stream_started",
-				data: {
-					agentId,
-					sessionId,
-					modelId: selectedModelId,
-				},
-			});
-			setHasActiveStream(true);
-			onResumeStateChange?.(true);
-			setPendingDisable(false);
-		}
-		if (status !== "streaming" && previousStatus === "streaming") {
-			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
-				const duration = performance.now() - streamStartedAtRef.current;
-				addBreadcrumb({
-					category: "chat-ui",
-					message: "stream_duration",
-					data: {
-						...metricsTags,
-						duration,
-						finalStatus: status,
-					},
-				});
-			}
-			streamStartedAtRef.current = null;
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "stream_completed",
-				data: {
-					agentId,
-					sessionId,
-					modelId: selectedModelId,
-					finalStatus: status,
-				},
-			});
-			setPendingDisable(true);
-		}
-		previousStatusRef.current = status;
-	}, [
+	// Stream lifecycle tracking
+	useStreamLifecycle({
 		status,
-		setHasActiveStream,
-		onResumeStateChange,
-		disableResume,
-		metricsTags,
 		agentId,
 		sessionId,
 		selectedModelId,
-	]);
+		metricsTags,
+		setHasActiveStream,
+		onResumeStateChange,
+		disableResume,
+	});
+
+	// Handle pending disable after stream completes
+	useEffect(() => {
+		if (status === "streaming" || status === "submitted") {
+			setPendingDisable(false);
+		} else {
+			setPendingDisable(true);
+		}
+	}, [status]);
 
 	useEffect(() => {
 		if (!pendingDisable) {
@@ -798,58 +645,15 @@ export function ChatInterface({
 			return;
 		}
 
-		for (const attachment of attachments) {
-			const mediaType = attachment.mediaType;
-			const filename = attachment.filename ?? "attachment";
-		const size = attachment.size;
-		const kind = inferAttachmentKind(mediaType, filename);
+		// Validate all attachments
+		const validationError = validateAttachments(attachments, {
+			supportsImageAttachments,
+			supportsPdfAttachments,
+		});
 
-		if (typeof size === "number" && size > MAX_ATTACHMENT_BYTES) {
-			addInlineError({
-				type: ChatErrorType.INVALID_REQUEST,
-				message: `"${filename}" is too large. Attachments must be under ${Math.floor(
-					MAX_ATTACHMENT_BYTES / (1024 * 1024),
-				)}MB.`,
-				retryable: false,
-				details: undefined,
-				metadata: { filename, kind },
-			});
+		if (validationError) {
+			addInlineError(validationError);
 			return;
-		}
-
-		if (typeof size !== "number") {
-			addInlineError({
-				type: ChatErrorType.INVALID_REQUEST,
-				message: `Unable to determine the size of "${filename}". Please reattach the file.`,
-				retryable: false,
-				details: undefined,
-				metadata: { filename, kind },
-			});
-			return;
-		}
-
-			const allowed = ensureAttachmentAllowed(kind, {
-				allowImages: supportsImageAttachments,
-				allowPdf: supportsPdfAttachments,
-			});
-
-			if (!allowed) {
-				let errorMessage = "Only images and PDF files can be attached.";
-				if (kind === "image" && !supportsImageAttachments) {
-					errorMessage = "This model does not support image attachments.";
-				} else if (kind === "pdf" && !supportsPdfAttachments) {
-					errorMessage = "This model does not support PDF attachments.";
-				}
-
-				addInlineError({
-					type: ChatErrorType.INVALID_REQUEST,
-					message: errorMessage,
-					retryable: false,
-					details: undefined,
-					metadata: { filename, mediaType, kind },
-				});
-				return;
-			}
 		}
 
 		const nextWebSearchEnabled = hasAttachments
@@ -873,16 +677,8 @@ export function ChatInterface({
 
 			try {
 				if (hasAttachments) {
-					const unresolved = attachments.find((attachment) => {
-						const hasStoragePath = Boolean(attachment.storagePath);
-						const hasSize = typeof attachment.size === "number";
-						const hasAnyContentType =
-							typeof attachment.contentType === "string" && attachment.contentType.length > 0
-								? true
-								: typeof attachment.mediaType === "string" && attachment.mediaType.length > 0;
-
-						return !hasStoragePath || !hasSize || !hasAnyContentType;
-					});
+					// Check for unresolved attachments
+					const unresolved = findUnresolvedAttachment(attachments);
 					if (unresolved) {
 						addInlineError({
 							type: ChatErrorType.INVALID_REQUEST,
@@ -896,75 +692,24 @@ export function ChatInterface({
 						return;
 					}
 
-					uploadedAttachments = attachments.map((attachment) => {
-						if (
-							!attachment.storagePath ||
-							typeof attachment.size !== "number"
-						) {
-							throw new Error("Attachment missing upload metadata.");
-						}
+					// Convert attachments to uploaded format
+					uploadedAttachments = convertAttachmentsToUploaded(attachments);
 
-						let inferredContentType: string;
-						if (typeof attachment.contentType === "string" && attachment.contentType.length > 0) {
-							inferredContentType = attachment.contentType;
-						} else if (
-							typeof attachment.mediaType === "string" &&
-							attachment.mediaType.length > 0
-						) {
-							inferredContentType = attachment.mediaType;
-						} else {
-							inferredContentType = "application/octet-stream";
-						}
-
-						return {
-							id: attachment.id,
-							url: attachment.url ?? "",
-							storagePath: attachment.storagePath,
-							size: attachment.size,
-							contentType: inferredContentType,
-							filename: attachment.filename ?? undefined,
-							metadata: (attachment.metadata as Record<string, JSONValue> | null) ?? null,
-						};
-					});
-
+					// Enable web search if needed
 					if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
 						setWebSearchEnabled(true);
 					}
 				}
 
+				// Handle session creation for new sessions
 				if (isNewSession && messages.length === 0) {
-					const seedText = hasText
-						? trimmedText
-						: uploadedAttachments
-							.map((attachment) => attachment.filename ?? attachment.contentType)
-							.join(", ");
+					const seedText = generateSessionSeedText(trimmedText, uploadedAttachments);
 					handleSessionCreation(seedText);
 				}
 
+				// Create user message
 				const userMessageId = crypto.randomUUID();
-				const userMessageParts: LightfastAppChatUIMessage["parts"] = [];
-
-				if (hasText) {
-					userMessageParts.push({ type: "text", text: trimmedText });
-				}
-
-				for (const uploaded of uploadedAttachments) {
-					userMessageParts.push({
-						type: "file",
-						url: uploaded.url,
-						mediaType: uploaded.contentType,
-						filename: uploaded.filename ?? undefined,
-						providerMetadata: {
-							storage: {
-								provider: "vercel-blob",
-								id: uploaded.id,
-								pathname: uploaded.storagePath,
-								size: uploaded.size,
-								metadata: uploaded.metadata,
-							},
-						},
-					});
-				}
+				const userMessageParts = createMessageParts(trimmedText, uploadedAttachments);
 
 				const userMessage: LightfastAppChatUIMessage = {
 					role: "user",
@@ -1050,260 +795,48 @@ export function ChatInterface({
 		await handleSendMessage(message);
 	};
 
-	const uploadAttachments = useCallback(
-		async (
-			input: {
-				attachments: PromptInputAttachmentPayload[];
-				modelId: ModelId;
-			},
-		): Promise<UploadedAttachment[]> => {
-			if (input.attachments.length === 0) {
-				return [];
-			}
-
-			const formData = new FormData();
-			formData.append("modelId", input.modelId);
-
-				const metadataPayload = input.attachments.map((attachment, index) => {
-					if (!attachment.file) {
-						throw new Error("Attachment file missing for upload.");
-					}
-					const providedFilename =
-						typeof attachment.filename === "string" && attachment.filename.length > 0
-							? attachment.filename
-							: undefined;
-					const fallbackName =
-						attachment.file.name && attachment.file.name.length > 0
-							? attachment.file.name
-							: `attachment-${index + 1}`;
-
-					return {
-						id: attachment.id,
-						mediaType: attachment.mediaType,
-						filename: providedFilename ?? fallbackName,
-						size: attachment.size ?? attachment.file.size,
-					};
-				});
-
-			formData.append("metadata", JSON.stringify(metadataPayload));
-
-				input.attachments.forEach((attachment, index) => {
-					if (!attachment.file) {
-						throw new Error("Attachment file missing for upload.");
-					}
-					const metadataEntry = metadataPayload[index];
-					const fallbackName =
-						attachment.file.name && attachment.file.name.length > 0
-							? attachment.file.name
-							: `attachment-${index + 1}`;
-				const inferredName =
-					metadataEntry?.filename && metadataEntry.filename.length > 0
-						? metadataEntry.filename
-						: fallbackName;
-
-				formData.append("files", attachment.file, inferredName);
-			});
-
-			const response = await fetch(
-				`/api/v/${agentId}/${sessionId}/attachments`,
-				{
-					method: "POST",
-					body: formData,
-				},
-			);
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(
-					errorText || "Unable to upload attachments. Please try again.",
-				);
-			}
-
-			const data = (await response.json()) as {
-				attachments: UploadedAttachment[];
-			};
-
-		return data.attachments;
-		},
-		[agentId, sessionId],
-	);
-
-	const handleAttachmentUpload = useCallback(
-		async (file: File): Promise<PromptInputAttachmentItem | null> => {
-			attachmentUploadCounterRef.current += 1;
-			setIsUploadingAttachments(true);
-
-			try {
-				const attachmentId = nanoid();
-				const uploads = await uploadAttachments({
-					attachments: [
-						{
-							id: attachmentId,
-							file,
-							mediaType: file.type,
-							filename: file.name,
-							size: file.size,
-						},
-					],
-					modelId: selectedModelId,
-				});
-
-				const uploaded = uploads[0];
-				if (!uploaded) {
-					throw new Error("Attachment upload failed.");
-				}
-
-				if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
-					setWebSearchEnabled(true);
-				}
-
-				return {
-					type: "file",
-					id: uploaded.id,
-					url: uploaded.url,
-					mediaType: uploaded.contentType,
-					filename: uploaded.filename ?? file.name,
-					size: uploaded.size,
-					storagePath: uploaded.storagePath,
-					contentType: uploaded.contentType,
-					metadata: uploaded.metadata ?? null,
-				};
-			} catch (error) {
-				const safeError = error instanceof Error ? error : new Error(String(error));
-				addInlineError({
-					type: ChatErrorType.INVALID_REQUEST,
-					message: safeError.message || "Unable to upload attachment.",
-					retryable: false,
-					metadata: {
-						filename: file.name,
-						size: file.size,
-					},
-				});
-				captureException(safeError, {
-					contexts: {
-						attachment: {
-							filename: file.name,
-							size: file.size,
-							modelId: selectedModelId,
-						},
-					},
-				});
-				throw safeError;
-			} finally {
-				attachmentUploadCounterRef.current = Math.max(
-					0,
-					attachmentUploadCounterRef.current - 1,
-				);
-				if (attachmentUploadCounterRef.current === 0) {
-					setIsUploadingAttachments(false);
-				}
-			}
-		},
-		[
-			uploadAttachments,
-			selectedModelId,
-			webSearchEnabled,
-			billingContext.features.webSearch.enabled,
-			setWebSearchEnabled,
-			addInlineError,
-			captureException,
-		],
-	);
-
-	const AttachmentPickerButton = ({
-		disabled,
-		reason,
-	}: {
-		disabled: boolean;
-		reason?: string;
+	// Handle prompt input errors
+	const handlePromptError = (err: {
+		code: "max_files" | "max_file_size" | "accept" | "upload_failed";
+		message: string;
 	}) => {
-		const attachments = usePromptInputAttachments();
-		const count = attachments.files.length;
-		const isActive = count > 0;
-		return (
-			<PromptInputButton
-				variant="outline"
-				onClick={() => {
-					if (disabled) {
-						return;
-					}
-					attachments.openFileDialog();
-				}}
-				disabled={disabled}
-				title={disabled ? reason : undefined}
-				className={cn(
-					"flex h-8 items-center gap-1 px-3 transition-colors",
-					isActive &&
-						"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-					disabled && "opacity-60 cursor-not-allowed",
-				)}
-			>
-				<PaperclipIcon className="w-4 h-4" />
-				{count > 0 ? (
-					<span className="text-xs font-medium">{count}</span>
-				) : null}
-			</PromptInputButton>
-		);
-	};
-
-	// Handle prompt input errors (both file upload errors and React form events)
-	const handlePromptError = (
-		errorOrEvent:
-			| {
-					code:
-						| "max_files"
-						| "max_file_size"
-						| "accept"
-						| "upload_failed";
-					message: string;
+		console.error("Prompt input error:", err);
+		let userMessage = err.message;
+		switch (err.code) {
+			case "max_files":
+				userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
+				break;
+			case "max_file_size":
+				userMessage = `Each attachment must be smaller than ${Math.floor(
+					MAX_ATTACHMENT_BYTES / (1024 * 1024),
+				)}MB.`;
+				break;
+			case "accept":
+				if (supportsImageAttachments && supportsPdfAttachments) {
+					userMessage = "Only images and PDFs are supported for this model.";
+				} else if (supportsImageAttachments) {
+					userMessage = "Only image attachments are supported for this model.";
+				} else if (supportsPdfAttachments) {
+					userMessage = "Only PDF attachments are supported for this model.";
+				} else {
+					userMessage = "This model does not support file attachments.";
 				}
-			| FormEvent<HTMLFormElement>,
-		) => {
-			// Check if it's a file upload error (has 'code' property)
-			if ("code" in errorOrEvent) {
-				console.error("Prompt input error:", errorOrEvent);
-				let userMessage = errorOrEvent.message;
-					switch (errorOrEvent.code) {
-						case "max_files":
-							userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
-							break;
-						case "max_file_size":
-							userMessage = `Each attachment must be smaller than ${Math.floor(
-								MAX_ATTACHMENT_BYTES / (1024 * 1024),
-							)}MB.`;
-							break;
-						case "accept":
-							if (supportsImageAttachments && supportsPdfAttachments) {
-								userMessage = "Only images and PDFs are supported for this model.";
-							} else if (supportsImageAttachments) {
-								userMessage = "Only image attachments are supported for this model.";
-							} else if (supportsPdfAttachments) {
-								userMessage = "Only PDF attachments are supported for this model.";
-							} else {
-								userMessage = "This model does not support file attachments.";
-							}
-							break;
-						case "upload_failed":
-							userMessage = errorOrEvent.message || "Unable to upload attachment.";
-							break;
-						default:
-							break;
-					}
-
-				addInlineError({
-					type: ChatErrorType.INVALID_REQUEST,
-				message: userMessage,
-				retryable: false,
-				details: undefined,
-				metadata: {
-					reason: errorOrEvent.code,
-					modelId: selectedModelId,
-				},
-			});
-		} else {
-			// Handle React form events if needed
-			console.error("Form error:", errorOrEvent);
+				break;
+			case "upload_failed":
+				userMessage = err.message || "Unable to upload attachment.";
+				break;
 		}
+
+		addInlineError({
+			type: ChatErrorType.INVALID_REQUEST,
+			message: userMessage,
+			retryable: false,
+			details: undefined,
+			metadata: {
+				reason: err.code,
+				modelId: selectedModelId,
+			},
+		});
 	};
 
 	// Create model selector component - show auth prompt for unauthenticated users
@@ -1312,285 +845,123 @@ export function ChatInterface({
 			value={selectedModelId}
 			onValueChange={handleModelChange}
 			models={processedModels}
-			disabled={false} // Allow model selection even during streaming
+			disabled={false}
 			_isAuthenticated={isAuthenticated}
 		/>
 	) : (
 		<AuthPromptSelector />
 	);
 
-	const PromptAttachments = () => {
-		const attachments = usePromptInputAttachments();
-		const attachmentCount = attachments.files.length;
-		const hasAttachments = attachmentCount > 0;
-		const isSingleAttachment = attachmentCount === 1;
-
-		return (
-			<PromptInputAttachments
-				className={cn(
-					hasAttachments ? "border-t border-border/60 px-3 py-2" : "border-none px-3 py-0",
-					isSingleAttachment && "[&>div]:items-center",
-				)}
-			>
-				{(attachment) => (
-					<PromptInputAttachment
-						data={attachment}
-						aria-label={attachment.filename ?? "Attachment"}
-						className="bg-background"
-					/>
-				)}
-			</PromptInputAttachments>
-		);
-	};
-
-	const PromptFooterToolbar = () => {
-		const attachments = usePromptInputAttachments();
-		const hasAttachments = attachments.files.length > 0;
-
-		return (
-			<PromptInputToolbar
-				className={cn(
-					"flex items-center justify-between gap-2 bg-transparent p-2 transition-[color,box-shadow]",
-					hasAttachments ? "border-t border-border/60" : "",
-				)}
-			>
-			<div className="flex items-center gap-2">
-				<AttachmentPickerButton
-					disabled={attachmentButtonDisabled}
-					reason={attachmentDisabledReason}
-				/>
-				<PromptInputButton
-					variant={webSearchEnabled ? "secondary" : "outline"}
-					onClick={() => {
-						if (billingContext.features.webSearch.enabled) {
-							setWebSearchEnabled(!webSearchEnabled);
-						}
-					}}
-					disabled={!billingContext.features.webSearch.enabled}
-					title={
-						billingContext.features.webSearch.disabledReason ??
-						undefined
-					}
-					className={cn(
-						webSearchEnabled &&
-							"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-						!billingContext.features.webSearch.enabled &&
-							"opacity-60 cursor-not-allowed",
-					)}
-				>
-					<Globe className="w-4 h-4" />
-					Search
-					{webSearchEnabled &&
-						billingContext.features.webSearch.enabled && (
-							<X
-								className="ml-1 h-3 w-3 cursor-pointer hover:opacity-70"
-								onClick={(e) => {
-									e.stopPropagation();
-									setWebSearchEnabled(false);
-								}}
-							/>
-						)}
-				</PromptInputButton>
+	// Prepare rate limit indicator for anonymous users
+	const rateLimitIndicator =
+		!isAuthenticated && !isLimitLoading && messageCount > 0 ? (
+			<div className="mb-2">
+				<RateLimitIndicator remainingMessages={remainingMessages} />
 			</div>
-			<PromptInputTools className="flex items-center gap-2">
-				{modelSelector}
-				<PromptInputSubmit
-					status={status}
-					disabled={isPromptSubmissionDisabled}
-					title={
-						!canUseCurrentModel.allowed && isAuthenticated
-							? "reason" in canUseCurrentModel
-								? (canUseCurrentModel.reason ?? undefined)
-								: undefined
-							: undefined
-					}
-					size="icon"
-					variant="outline"
-					className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
-				>
-					<ArrowUp className="w-4 h-4" />
-				</PromptInputSubmit>
-				</PromptInputTools>
-		</PromptInputToolbar>
-		);
-	};
+		) : null;
 
-	// Create the main chat content component
-	// Determine the appropriate UI state:
-	// 1. New session with no messages -> centered empty state
-	// 2. Existing session with no messages -> conversation layout with empty state message
-	// 3. Session with messages -> normal conversation layout
+	// Determine attachment button state
+	const attachmentButtonDisabled = !attachmentsAllowed || isUploadingAttachments;
+	const attachmentDisabledReason = !attachmentsAllowed
+		? "The selected model does not support file attachments"
+		: isUploadingAttachments
+			? "Uploading..."
+			: undefined;
+
+	// Determine submit button state
+	const isSubmitDisabled =
+		status === "streaming" ||
+		isUploadingAttachments ||
+		!canUseCurrentModel.allowed ||
+		(!isAuthenticated && hasReachedLimit);
+
+	const submitDisabledReason = isUploadingAttachments
+		? "Uploading attachments..."
+		: !canUseCurrentModel.allowed
+			? ("reason" in canUseCurrentModel ? canUseCurrentModel.reason ?? "Cannot use this model" : "Cannot use this model")
+			: !isAuthenticated && hasReachedLimit
+				? "Message limit reached"
+				: status === "streaming"
+					? "Generating response..."
+					: undefined;
+
+	// Create the main chat content component using extracted view components
 	const chatContent =
 		messages.length === 0 && isNewSession ? (
-			// For truly new chats (no messages yet), show centered layout
-			<div className="h-full flex flex-col items-center justify-center bg-background">
-				<div className="w-full max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
-					<div className="mb-8">
-						<ChatEmptyState
-							prompt={
-								user?.email
-									? `Welcome back, ${user.email}`
-									: "What can I do for you?"
-							}
-						/>
-					</div>
-						<PromptInput
-							onSubmit={handlePromptSubmit}
-							onError={handlePromptError}
-							onAttachmentUpload={handleAttachmentUpload}
-							accept={attachmentAccept || undefined}
-							multiple
-							maxFiles={MAX_ATTACHMENT_COUNT}
-							maxFileSize={MAX_ATTACHMENT_BYTES}
-						className={cn(
-							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-							"!divide-y-0 !shadow-sm",
-						)}
-					>
-						<PromptInputBody className="flex flex-col">
-							<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
-								<PromptInputTextarea
-									placeholder="Ask anything..."
-									className={cn(
-										"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-										"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-										"outline-none min-h-0 min-h-[72px]",
-									)}
-									style={{ lineHeight: "24px" }}
-									maxLength={4000}
-								/>
-								</div>
-							<PromptAttachments />
-						</PromptInputBody>
-						<PromptFooterToolbar />
-					</PromptInput>
-					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
-					<div className="hidden md:block relative mt-4 h-12">
-						<div className="absolute top-0 left-0 right-0">
-							<PromptSuggestions onSelectPrompt={handleSendMessage} />
-						</div>
-					</div>
-				</div>
-			</div>
+			<ChatNewSessionView
+				userEmail={user?.email ?? undefined}
+				onSendMessage={handleSendMessage}
+				onPromptSubmit={handlePromptSubmit}
+				onPromptError={handlePromptError}
+				onAttachmentUpload={handleAttachmentUpload}
+				attachmentAccept={attachmentAccept || undefined}
+				attachmentButtonDisabled={attachmentButtonDisabled}
+				attachmentDisabledReason={attachmentDisabledReason}
+				webSearchEnabled={webSearchEnabled}
+				webSearchAllowed={billingContext.features.webSearch.enabled}
+				webSearchDisabledReason={billingContext.features.webSearch.disabledReason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
+				modelSelector={modelSelector}
+				status={status}
+				isSubmitDisabled={isSubmitDisabled}
+				submitDisabledReason={submitDisabledReason}
+			/>
 		) : (
-			// Thread view or chat with existing messages, OR existing session with no messages
-			<div className="flex flex-col h-full bg-background">
-				<ChatMessages
-					messages={messages}
-					status={status}
-					feedback={feedback}
-					onFeedbackSubmit={feedbackMutation.handleSubmit}
-					onFeedbackRemove={feedbackMutation.handleRemove}
-					_isAuthenticated={isAuthenticated}
-					isExistingSessionWithNoMessages={
-						messages.length === 0 && !isNewSession
-					}
-					hasActiveStream={hasActiveStream}
-					onStreamAnimationChange={handleStreamAnimationChange}
-					onArtifactClick={
-						isAuthenticated
-							? async (artifactId) => {
-									try {
-										// Fetch artifact data using clean REST API
-										const artifactData = await fetchArtifact(artifactId);
-
-										// Show the artifact with the fetched data
-										showArtifact({
-											documentId: artifactData.id,
-											title: artifactData.title,
-											kind: artifactData.kind,
-											content: artifactData.content,
-											status: "idle",
-											boundingBox: {
-												top: 100,
-												left: 100,
-												width: 300,
-												height: 200,
-											},
-										});
-									} catch (unknownError) {
-										// Clean error handling with user-friendly messages
-										const errorMessage =
-											unknownError instanceof Error
-												? unknownError.message
-												: "Unknown error occurred";
-										console.error("Artifact fetch failed:", errorMessage);
-
-										// Could optionally show toast notification here
-										// toast.error(`Failed to load artifact: ${errorMessage}`);
-									}
+			<ChatExistingSessionView
+				messages={messages}
+				status={status}
+				feedback={feedback}
+				onFeedbackSubmit={feedbackMutation.handleSubmit}
+				onFeedbackRemove={feedbackMutation.handleRemove}
+				isAuthenticated={isAuthenticated}
+				isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
+				hasActiveStream={hasActiveStream}
+				onStreamAnimationChange={handleStreamAnimationChange}
+				onArtifactClick={
+					isAuthenticated
+						? async (artifactId) => {
+								try {
+									const artifactData = await fetchArtifact(artifactId);
+									showArtifact({
+										documentId: artifactData.id,
+										title: artifactData.title,
+										kind: artifactData.kind,
+										content: artifactData.content,
+										status: "idle",
+										boundingBox: {
+											top: 100,
+											left: 100,
+											width: 300,
+											height: 200,
+										},
+									});
+								} catch (unknownError) {
+									const errorMessage =
+										unknownError instanceof Error
+											? unknownError.message
+											: "Unknown error occurred";
+									console.error("Artifact fetch failed:", errorMessage);
 								}
-							: undefined // Disable artifact clicking for unauthenticated users
-					}
-					inlineErrors={inlineErrors}
-					onInlineErrorDismiss={dismissInlineError}
-				/>
-				<div className="relative">
-					<div className="max-w-3xl mx-auto px-1.5 md:px-3 lg:px-6 xl:px-10">
-						{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
-						{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
-							<div className="mb-2">
-								<RateLimitIndicator remainingMessages={remainingMessages} />
-							</div>
-						)}
-
-						<div className="flex-shrink-0">
-							<div className="chat-container relative px-1.5 md:px-3 lg:px-5 xl:px-8">
-								{/* Gradient overlay */}
-								{isAuthenticated && (
-									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none z-10">
-										<div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-									</div>
-								)}
-
-								<PromptInput
-									onSubmit={handlePromptSubmit}
-									onError={handlePromptError}
-									onAttachmentUpload={handleAttachmentUpload}
-									accept={attachmentAccept || undefined}
-									multiple
-									maxFiles={MAX_ATTACHMENT_COUNT}
-									maxFileSize={MAX_ATTACHMENT_BYTES}
-									className={cn(
-										"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-										"!divide-y-0 !shadow-sm",
-									)}
-								>
-									<PromptInputBody className="flex flex-col">
-										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
-											<PromptInputTextarea
-												placeholder={
-													messages.length === 0
-														? "Ask anything..."
-														: "Continue the conversation..."
-												}
-												className={cn(
-													"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-													"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-													"outline-none min-h-0 min-h-[72px]",
-												)}
-												style={{ lineHeight: "24px" }}
-												maxLength={4000}
-											/>
-										</div>
-								<PromptAttachments />
-							</PromptInputBody>
-							<PromptFooterToolbar />
-							</PromptInput>
-							</div>
-
-							{/* Description text */}
-							{messages.length > 0 && (
-								<div className="chat-container px-1.5 md:px-3 lg:px-5 xl:px-8">
-									<p className="text-xs text-muted-foreground text-center mt-2">
-										Lightfast may make mistakes. Use with discretion.
-									</p>
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-			</div>
+							}
+						: undefined
+				}
+				inlineErrors={inlineErrors}
+				onInlineErrorDismiss={dismissInlineError}
+				onPromptSubmit={handlePromptSubmit}
+				onPromptError={handlePromptError}
+				onAttachmentUpload={handleAttachmentUpload}
+				attachmentAccept={attachmentAccept || undefined}
+				attachmentButtonDisabled={attachmentButtonDisabled}
+				attachmentDisabledReason={attachmentDisabledReason}
+				webSearchEnabled={webSearchEnabled}
+				webSearchAllowed={billingContext.features.webSearch.enabled}
+				webSearchDisabledReason={billingContext.features.webSearch.disabledReason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
+				modelSelector={modelSelector}
+				isSubmitDisabled={isSubmitDisabled}
+				submitDisabledReason={submitDisabledReason}
+				rateLimitIndicator={rateLimitIndicator}
+			/>
 		);
 
 	// Return the full layout with artifact support
