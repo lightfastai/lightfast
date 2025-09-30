@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2be6bce1-a6e2-43a1-a81d-a504202e9cbb",
-  "prevId": "4246317d-8640-45e9-9ab9-b806d2f3b4e7",
+  "id": "76219349-4820-4484-9719-5845b023b79b",
+  "prevId": "569cabc8-435f-419b-86ce-45682f68314a",
   "tables": {
     "lightfast_chat_session": {
       "name": "lightfast_chat_session",
