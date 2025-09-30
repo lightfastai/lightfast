@@ -20,9 +20,6 @@ interface UseAttachmentUploadOptions {
 	agentId: string;
 	sessionId: string;
 	selectedModelId: ModelId;
-	webSearchEnabled: boolean;
-	webSearchAllowed: boolean;
-	onWebSearchEnable: () => void;
 	onError: (error: { type: ChatErrorType; message: string; retryable: false; metadata?: Record<string, unknown> }) => void;
 }
 
@@ -34,9 +31,6 @@ export function useAttachmentUpload({
 	agentId,
 	sessionId,
 	selectedModelId,
-	webSearchEnabled,
-	webSearchAllowed,
-	onWebSearchEnable,
 	onError,
 }: UseAttachmentUploadOptions) {
 	const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
@@ -143,10 +137,6 @@ export function useAttachmentUpload({
 					throw new Error("Attachment upload failed.");
 				}
 
-				if (!webSearchEnabled && webSearchAllowed) {
-					onWebSearchEnable();
-				}
-
 				return {
 					type: "file",
 					id: uploaded.id,
@@ -192,9 +182,6 @@ export function useAttachmentUpload({
 		[
 			uploadAttachments,
 			selectedModelId,
-			webSearchEnabled,
-			webSearchAllowed,
-			onWebSearchEnable,
 			onError,
 		],
 	);

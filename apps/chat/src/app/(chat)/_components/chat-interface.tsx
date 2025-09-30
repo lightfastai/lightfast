@@ -308,9 +308,6 @@ export function ChatInterface({
 		agentId,
 		sessionId,
 		selectedModelId,
-		webSearchEnabled,
-		webSearchAllowed: billingContext.features.webSearch.enabled,
-		onWebSearchEnable: () => setWebSearchEnabled(true),
 		onError: addInlineError,
 	});
 
