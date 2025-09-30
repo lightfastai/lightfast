@@ -1,1 +1,0 @@
-CREATE INDEX `session_id_created_at_idx` ON `lightfast_chat_message` (`session_id`,`created_at`);

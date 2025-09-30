@@ -64,13 +64,11 @@ function PromptAttachments() {
 	const attachments = usePromptInputAttachments();
 	const attachmentCount = attachments.files.length;
 	const hasAttachments = attachmentCount > 0;
-	const isSingleAttachment = attachmentCount === 1;
 
 	return (
 		<PromptInputAttachments
 			className={cn(
-				hasAttachments ? "border-t border-border/60 px-3 py-2" : "border-none px-3 py-0",
-				isSingleAttachment && "[&>div]:items-center",
+				hasAttachments ? "border-b border-border/60" : "",
 			)}
 		>
 			{(attachment) => (
@@ -226,19 +224,17 @@ export function ChatPromptInput({
 			)}
 		>
 			<PromptInputBody className="flex flex-col">
-				<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
-					<PromptInputTextarea
-						placeholder={placeholder}
-						className={cn(
-							"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-							"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-							"outline-none min-h-0 min-h-[72px]",
-						)}
-						style={{ lineHeight: "24px" }}
-						maxLength={4000}
-					/>
-				</div>
 				<PromptAttachments />
+				<PromptInputTextarea
+					placeholder={placeholder}
+					className={cn(
+						"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
+						"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+						"outline-none min-h-0 min-h-[72px]",
+					)}
+					style={{ lineHeight: "24px" }}
+					maxLength={4000}
+				/>
 			</PromptInputBody>
 			<PromptFooterToolbar
 				attachmentButtonDisabled={attachmentButtonDisabled}

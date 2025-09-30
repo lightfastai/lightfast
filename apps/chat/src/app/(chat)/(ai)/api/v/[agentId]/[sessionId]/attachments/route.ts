@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { put } from "@vendor/storage";
 import { env } from "@vendor/storage/env";
+import { auth } from "@clerk/nextjs/server";
 
 import { getModelConfig } from "~/ai/providers";
 import type { ModelId } from "~/ai/providers";
@@ -89,14 +90,20 @@ export async function POST(
   context: { params: Promise<{ agentId: string; sessionId: string }> },
 ) {
   try {
-    const { agentId, sessionId } = await context.params;
+    const { agentId } = await context.params;
 
-    if (!agentId || !sessionId) {
+    if (!agentId) {
       return buildErrorResponse(400, "Invalid attachment upload path.");
     }
 
     if (agentId !== SUPPORTED_AGENT_ID) {
       return buildErrorResponse(404, "Agent not found.");
+    }
+
+    // Verify authentication
+    const { userId } = await auth();
+    if (!userId) {
+      return buildErrorResponse(401, "Unauthorized");
     }
 
     const formData = await req.formData();
@@ -202,7 +209,7 @@ export async function POST(
           ? metadata.id
           : nanoid();
 
-      const objectPath = `chat/${agentId}/${sessionId}/${nanoid(21)}-${safeFilename}`;
+      const objectPath = `chat/${userId}/${nanoid(21)}-${safeFilename}`;
 
       const resolvedContentType = inferredMediaType && inferredMediaType.length > 0
         ? inferredMediaType
@@ -236,7 +243,6 @@ export async function POST(
 
     return NextResponse.json({
       agentId,
-      sessionId,
       attachments: uploads,
     });
   } catch (error) {

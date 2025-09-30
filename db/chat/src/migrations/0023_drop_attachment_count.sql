@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_chat_usage` DROP COLUMN `attachment_count`;

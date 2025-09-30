@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_chat_session` ADD `active_stream_id` varchar(191);

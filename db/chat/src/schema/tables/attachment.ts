@@ -18,8 +18,7 @@ export const LightfastChatAttachment = mysqlTable(
       .notNull()
       .primaryKey()
       .$defaultFn(() => uuidv4()),
-    messageId: varchar("message_id", { length: 191 }).notNull(),
-    sessionId: varchar("session_id", { length: 191 }).notNull(),
+    userId: varchar("user_id", { length: 191 }).notNull(),
     storagePath: varchar("storage_path", { length: 512 }).notNull(),
     filename: varchar("filename", { length: 256 }),
     contentType: varchar("content_type", { length: 128 }),
@@ -34,8 +33,7 @@ export const LightfastChatAttachment = mysqlTable(
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    messageIdIdx: index("message_id_idx").on(table.messageId),
-    sessionIdIdx: index("session_id_idx").on(table.sessionId),
+    userIdIdx: index("user_id_idx").on(table.userId),
   }),
 );
 

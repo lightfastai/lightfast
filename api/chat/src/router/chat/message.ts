@@ -95,14 +95,9 @@ export const messageRouter = {
         });
 
         if (input.attachments && input.attachments.length > 0) {
-          await tx
-            .delete(LightfastChatAttachment)
-            .where(eq(LightfastChatAttachment.messageId, messageId));
-
           const attachmentRows = input.attachments.map((attachment) => ({
             id: attachment.id ?? nanoid(),
-            messageId,
-            sessionId: input.sessionId,
+            userId: ctx.session.userId,
             storagePath: attachment.storagePath,
             filename: attachment.filename ?? null,
             contentType: attachment.contentType ?? null,
