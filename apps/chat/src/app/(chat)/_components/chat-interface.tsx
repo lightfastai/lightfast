@@ -528,6 +528,13 @@ export function ChatInterface({
 		},
 	});
 
+	const isPromptSubmissionDisabled =
+		status === "streaming" ||
+		status === "submitted" ||
+		hasStreamAnimation ||
+		(!isAuthenticated && hasReachedLimit) ||
+		(isAuthenticated && !canUseCurrentModel.allowed);
+
 	const previousStatusRef = useRef(status);
 	const streamStartedAtRef = useRef<number | null>(null);
 	useEffect(() => {
@@ -764,7 +771,7 @@ export function ChatInterface({
 	) => {
 		event.preventDefault();
 
-		if (!message.text?.trim()) {
+		if (isPromptSubmissionDisabled || !message.text?.trim()) {
 			return;
 		}
 
@@ -884,20 +891,14 @@ export function ChatInterface({
 								{/* Right side tools */}
 								<PromptInputTools className="flex items-center gap-2">
 									{modelSelector}
-									<PromptInputSubmit
-										status={status}
-										disabled={
-											status === "streaming" ||
-											status === "submitted" ||
-											hasStreamAnimation ||
-											(!isAuthenticated && hasReachedLimit) ||
-											(isAuthenticated && !canUseCurrentModel.allowed)
-										}
-										title={
-											!canUseCurrentModel.allowed && isAuthenticated
-												? "reason" in canUseCurrentModel
-													? (canUseCurrentModel.reason ?? undefined)
-													: undefined
+					<PromptInputSubmit
+						status={status}
+						disabled={isPromptSubmissionDisabled}
+						title={
+							!canUseCurrentModel.allowed && isAuthenticated
+								? "reason" in canUseCurrentModel
+									? (canUseCurrentModel.reason ?? undefined)
+									: undefined
 												: undefined
 										}
 										size="icon"
@@ -1054,20 +1055,14 @@ export function ChatInterface({
 											{/* Right side tools */}
 											<PromptInputTools className="flex items-center gap-2">
 												{modelSelector}
-												<PromptInputSubmit
-													status={status}
-													disabled={
-														status === "streaming" ||
-														status === "submitted" ||
-														hasStreamAnimation ||
-														(!isAuthenticated && hasReachedLimit) ||
-														(isAuthenticated && !canUseCurrentModel.allowed)
-													}
-													title={
-														!canUseCurrentModel.allowed && isAuthenticated
-															? "reason" in canUseCurrentModel
-																? (canUseCurrentModel.reason ?? undefined)
-																: undefined
+									<PromptInputSubmit
+										status={status}
+										disabled={isPromptSubmissionDisabled}
+										title={
+											!canUseCurrentModel.allowed && isAuthenticated
+												? "reason" in canUseCurrentModel
+													? (canUseCurrentModel.reason ?? undefined)
+													: undefined
 															: undefined
 													}
 													size="icon"
