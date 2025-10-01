@@ -144,7 +144,9 @@
       "Bash(pnpm --filter @lightfast/chat lint)",
       "Bash(pnpm --filter @api/chat build)",
       "Bash(gh pr view:*)",
-      "WebFetch(domain:ai.google.dev)"
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(pnpm build:chat:*)",
+      "Bash(pnpm --filter @repo/chat-billing build)"
     ],
     "deny": []
   },

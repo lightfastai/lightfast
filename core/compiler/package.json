@@ -15,7 +15,7 @@
   },
   "homepage": "https://lightfast.ai",
   "bugs": "https://github.com/lightfastai/lightfast/issues",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Lightfast <hello@lightfast.ai>",
   "private": true,
   "type": "module",
