@@ -741,7 +741,6 @@ const AssistantMessage = memo(function AssistantMessage({
 	inlineError,
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
-	isStreamAnimating = false,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -759,8 +758,15 @@ const AssistantMessage = memo(function AssistantMessage({
 	inlineError?: ChatInlineError;
 	onInlineErrorDismiss?: (errorId: string) => void;
 	onStreamAnimationChange?: (messageId: string, isAnimating: boolean) => void;
-	isStreamAnimating?: boolean;
 }) {
+	// Track typewriter animation state locally to avoid circular prop dependencies
+	const [isTypewriterAnimating, setIsTypewriterAnimating] = useState(false);
+
+	// Forward animation changes to parent while tracking locally
+	const handleAnimationChange = useCallback((messageId: string, isAnimating: boolean) => {
+		setIsTypewriterAnimating(isAnimating);
+		onStreamAnimationChange?.(messageId, isAnimating);
+	}, [onStreamAnimationChange]);
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
 			return [];
@@ -811,7 +817,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	// the streaming hook (instead of `meaningfulContent`).
 	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
 	const animationStreaming = Boolean(isCurrentlyStreaming);
-	const animationHook = Boolean(isStreamAnimating);
+	const animationHook = Boolean(isTypewriterAnimating);
 	const isAnimationActive = animationStreaming || animationHook;
 	const showStreamingWave = isAnimationActive && !hasDisplayContent;
 	const noMessageContent = message.parts.length === 0;
@@ -855,7 +861,7 @@ const AssistantMessage = memo(function AssistantMessage({
 											messageId={message.id}
 											cleanedText={cleanedText}
 											shouldAnimate={shouldAnimate}
-											onAnimationStateChange={onStreamAnimationChange}
+											onAnimationStateChange={handleAnimationChange}
 										/>
 									);
 								}
@@ -1030,40 +1036,37 @@ export function ChatMessages({
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
 }: ChatMessagesProps) {
-	const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(
-		() => new Set(),
-	);
-	const animatingMessagesRef = useRef(animatingMessageIds);
-
-	useEffect(() => {
-		animatingMessagesRef.current = animatingMessageIds;
-	}, [animatingMessageIds]);
+	// Use ref instead of state - no re-renders needed, just notification to parent
+	const animatingMessageIdsRef = useRef<Set<string>>(new Set());
 
 	const reportAnimationChange = useCallback(
 		(messageId: string, isAnimating: boolean) => {
-			setAnimatingMessageIds((current) => {
-				const hasEntry = current.has(messageId);
-				if (hasEntry === isAnimating) {
-					return current;
-				}
-				const next = new Set(current);
-				if (isAnimating) {
-					next.add(messageId);
-				} else {
-					next.delete(messageId);
-				}
-				if (onStreamAnimationChange) {
-					onStreamAnimationChange(next.size > 0);
-				}
-				return next;
-			});
+			const current = animatingMessageIdsRef.current;
+			const hasEntry = current.has(messageId);
+
+			// No change, skip update
+			if (hasEntry === isAnimating) {
+				return;
+			}
+
+			// Update the set
+			if (isAnimating) {
+				current.add(messageId);
+			} else {
+				current.delete(messageId);
+			}
+
+			// Notify parent immediately (ref update doesn't trigger render, so no setState-during-render issue)
+			if (onStreamAnimationChange) {
+				onStreamAnimationChange(current.size > 0);
+			}
 		},
 		[onStreamAnimationChange],
 	);
 
 	useEffect(() => {
 		return () => {
-			if (animatingMessagesRef.current.size > 0) {
+			if (animatingMessageIdsRef.current.size > 0) {
 				if (onStreamAnimationChange) {
 					onStreamAnimationChange(false);
 				}
@@ -1104,9 +1107,8 @@ export function ChatMessages({
 					{turns.map((turn) => {
 						switch (turn.kind) {
 							case "answer": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
+								// Remove isStreamAnimating prop - AssistantMessage tracks its own animation state
+								// and reports to parent via callback. No need to pass state back down.
 								return (
 									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
@@ -1122,7 +1124,6 @@ export function ChatMessages({
 											meaningfulContentOverride={turn.hasMeaningfulContent}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
-											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
@@ -1131,9 +1132,6 @@ export function ChatMessages({
 							case "pending": {
 								const pendingAssistant = createPendingAssistantMessage(
 									turn.user,
-								);
-								const assistantAnimating = animatingMessageIds.has(
-									pendingAssistant.id,
 								);
 								return (
 									<Fragment key={turn.user.id}>
@@ -1151,16 +1149,12 @@ export function ChatMessages({
 											meaningfulContentOverride={false}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
-											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
 								);
 							}
 							case "ghost": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
 								return (
 									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
@@ -1177,16 +1171,12 @@ export function ChatMessages({
 											meaningfulContentOverride={false}
 										inlineError={turn.inlineError}
 										onInlineErrorDismiss={onInlineErrorDismiss}
-										isStreamAnimating={assistantAnimating}
 										onStreamAnimationChange={reportAnimationChange}
 									/>
 									</Fragment>
 								);
 							}
 							case "system": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
 								return (
 									<AssistantMessage
 										key={turn.assistant.id}
@@ -1201,7 +1191,6 @@ export function ChatMessages({
 										meaningfulContentOverride={turn.hasMeaningfulContent}
 										inlineError={turn.inlineError}
 										onInlineErrorDismiss={onInlineErrorDismiss}
-										isStreamAnimating={assistantAnimating}
 										onStreamAnimationChange={reportAnimationChange}
 									/>
 								);
