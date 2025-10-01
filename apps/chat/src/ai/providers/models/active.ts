@@ -64,7 +64,7 @@ export const ACTIVE_MODELS = {
 			functionCalling: true,
 			vision: true,
 			thinking: false,
-			pdfSupport: false,
+			pdfSupport: true, // Officially supports PDF since March 2025
 		},
 		accessLevel: "authenticated",
 		billingTier: "non_premium", // $2.25 total cost
@@ -84,7 +84,7 @@ export const ACTIVE_MODELS = {
 			functionCalling: true,
 			vision: true,
 			thinking: false,
-			pdfSupport: false,
+			pdfSupport: true, // Officially supports PDF since March 2025
 		},
 		accessLevel: "authenticated",
 		billingTier: "premium", // $11.25 total cost
@@ -169,9 +169,9 @@ export const ACTIVE_MODELS = {
 		features: {
 			streaming: true,
 			functionCalling: true,
-			vision: true, // Kimi K2 has multimodal capabilities
+			vision: false, // K2 is language-only; use Kimi-VL for vision
 			thinking: false,
-			pdfSupport: true,
+			pdfSupport: false, // K2 is language-only; use Kimi-VL for multimodal
 		},
 		accessLevel: "authenticated",
 		billingTier: "premium", // $2.75 total cost

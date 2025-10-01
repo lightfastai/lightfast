@@ -15,7 +15,7 @@ export const PDF_MIME_TYPE = "application/pdf";
 /**
  * Accept attribute values for file input elements
  */
-export const IMAGE_ACCEPT = "image/*";
+export const IMAGE_ACCEPT = "image/png,image/jpeg,image/jpg,image/gif,image/webp";
 export const PDF_ACCEPT = "application/pdf";
 
 export const ALLOWED_ATTACHMENT_EXTENSIONS = [
@@ -24,7 +24,6 @@ export const ALLOWED_ATTACHMENT_EXTENSIONS = [
 	"jpeg",
 	"gif",
 	"webp",
-	"heic",
 	"pdf",
 ] as const;
 

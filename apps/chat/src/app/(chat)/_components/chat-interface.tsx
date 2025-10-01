@@ -48,6 +48,8 @@ import {
 	generateSessionSeedText,
 } from "~/lib/chat/attachment-processing";
 import type { UploadedAttachment } from "~/lib/chat/attachment-processing";
+import { checkAttachmentCompatibility } from "~/lib/chat/attachment-compatibility";
+import type { IncompatibleFile } from "~/lib/chat/attachment-compatibility";
 import { ChatNewSessionView } from "./chat-new-session-view";
 import { ChatExistingSessionView } from "./chat-existing-session-view";
 import { toast } from "sonner";
@@ -92,6 +94,14 @@ const RateLimitIndicator = dynamic(
 
 const RateLimitDialog = dynamic(
 	() => import("./rate-limit-dialog").then((mod) => mod.RateLimitDialog),
+	{ ssr: false },
+);
+
+const IncompatibleAttachmentsDialog = dynamic(
+	() =>
+		import("./incompatible-attachments-dialog").then(
+			(mod) => mod.IncompatibleAttachmentsDialog,
+		),
 	{ ssr: false },
 );
 
@@ -238,6 +248,22 @@ export function ChatInterface({
 
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
+
+	// State for incompatible attachments dialog
+	const [showIncompatibilityDialog, setShowIncompatibilityDialog] =
+		useState(false);
+	const [incompatibleFiles, setIncompatibleFiles] = useState<
+		IncompatibleFile[]
+	>([]);
+	const [suggestedModelId, setSuggestedModelId] = useState<
+		ModelId | undefined
+	>();
+	const [suggestedModelName, setSuggestedModelName] = useState<
+		string | undefined
+	>();
+	const [pendingMessage, setPendingMessage] = useState<
+		PromptInputMessage | null
+	>(null);
 
 	// Web search toggle state - simplified now that it's decoupled from attachments
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
@@ -882,6 +908,22 @@ export function ChatInterface({
 				});
 				return; // Exit early - form stays intact, attachments preserved
 			}
+
+			// Check attachment compatibility with selected model
+			const compatibility = checkAttachmentCompatibility(
+				message.attachments,
+				selectedModelId,
+			);
+
+			if (!compatibility.isCompatible) {
+				// Store the message and compatibility info for dialog actions
+				setPendingMessage(message);
+				setIncompatibleFiles(compatibility.incompatibleFiles);
+				setSuggestedModelId(compatibility.suggestedModelId);
+				setSuggestedModelName(compatibility.suggestedModelName);
+				setShowIncompatibilityDialog(true);
+				return; // Exit early - dialog will handle next steps
+			}
 		}
 
 		// Send message - returns true if validation passed and message queued
@@ -946,6 +988,69 @@ export function ChatInterface({
 		});
 	};
 
+	// Handle removing incompatible attachments and sending
+	const handleRemoveIncompatibleAttachments = useCallback(() => {
+		if (!pendingMessage) return;
+
+		// Filter out incompatible attachments
+		const incompatibleFilenames = new Set(
+			incompatibleFiles.map((f) => f.filename),
+		);
+
+		const compatibleAttachments = pendingMessage.attachments?.filter(
+			(att) => !incompatibleFilenames.has(att.filename ?? ""),
+		);
+
+		// Create new message with only compatible attachments
+		const messageToSend: PromptInputMessage = {
+			...pendingMessage,
+			attachments: compatibleAttachments,
+		};
+
+		// Send the filtered message
+		const success = handleSendMessage(messageToSend);
+
+		// Clear form if successful
+		if (success && formRef.current) {
+			formRef.current.reset();
+		}
+
+		// Reset dialog state
+		setPendingMessage(null);
+		setIncompatibleFiles([]);
+		setSuggestedModelId(undefined);
+		setSuggestedModelName(undefined);
+	}, [pendingMessage, incompatibleFiles, handleSendMessage]);
+
+	// Handle switching to suggested model and sending
+	const handleSwitchToSuggestedModel = useCallback(
+		(modelId: ModelId) => {
+			if (!pendingMessage) return;
+
+			// Switch the model
+			handleModelChange(modelId);
+
+			// Send the original message with all attachments
+			// Note: We don't call handleSendMessage here because the model hasn't updated yet
+			// Instead, we'll let the form stay populated and the user can re-submit
+			// Or we can set a flag to auto-submit after model switch
+
+			// For now, just switch the model and keep the form populated
+			// User can then click send again with the new model
+			setPendingMessage(null);
+			setIncompatibleFiles([]);
+			setSuggestedModelId(undefined);
+			setSuggestedModelName(undefined);
+
+			// Show a toast confirming the model switch
+			toast.success(`Switched to ${getModelConfig(modelId).displayName}`, {
+				description: "You can now send your message with all attachments.",
+				duration: 3000,
+			});
+		},
+		[pendingMessage, handleModelChange],
+	);
+
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
 		<ProviderModelSelector
@@ -976,7 +1081,7 @@ export function ChatInterface({
 		? (billingContext.features.attachments.disabledReason ??
 			"Attachments not available")
 		: !attachmentsAllowed
-			? "The selected model does not support file attachments"
+			? `${selectedModelConfig.displayName} doesn't support attachments. Try Gemini 2.5 Flash or Claude 4 Sonnet.`
 			: isUploadingAttachments
 				? "Uploading..."
 				: undefined;
@@ -1132,6 +1237,18 @@ export function ChatInterface({
 			<RateLimitDialog
 				open={showRateLimitDialog}
 				onOpenChange={setShowRateLimitDialog}
+			/>
+
+			{/* Incompatible attachments dialog - shown when user tries to send with incompatible attachments */}
+			<IncompatibleAttachmentsDialog
+				open={showIncompatibilityDialog}
+				onOpenChange={setShowIncompatibilityDialog}
+				currentModelName={selectedModelConfig.displayName}
+				incompatibleFiles={incompatibleFiles}
+				suggestedModelId={suggestedModelId}
+				suggestedModelName={suggestedModelName}
+				onRemoveIncompatible={handleRemoveIncompatibleAttachments}
+				onSwitchModel={handleSwitchToSuggestedModel}
 			/>
 		</div>
 	);

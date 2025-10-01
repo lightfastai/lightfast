@@ -4,6 +4,11 @@ import type { FormEvent } from "react";
 import { forwardRef } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, PaperclipIcon, X } from "lucide-react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import type { ChatStatus } from "ai";
 import {
 	PromptInput,
@@ -38,7 +43,8 @@ function AttachmentPickerButton({ disabled, reason }: AttachmentPickerButtonProp
 	const attachments = usePromptInputAttachments();
 	const count = attachments.files.length;
 	const isActive = count > 0;
-	return (
+
+	const button = (
 		<PromptInputButton
 			variant="outline"
 			onClick={() => {
@@ -48,7 +54,6 @@ function AttachmentPickerButton({ disabled, reason }: AttachmentPickerButtonProp
 				attachments.openFileDialog();
 			}}
 			disabled={disabled}
-			title={disabled ? reason : undefined}
 			className={cn(
 				"flex h-8 items-center gap-1 px-3 transition-colors",
 				isActive &&
@@ -62,6 +67,22 @@ function AttachmentPickerButton({ disabled, reason }: AttachmentPickerButtonProp
 			) : null}
 		</PromptInputButton>
 	);
+
+	// Wrap in tooltip if disabled with a reason
+	if (disabled && reason) {
+		return (
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<span className="inline-flex">{button}</span>
+				</TooltipTrigger>
+				<TooltipContent>
+					<p className="max-w-xs">{reason}</p>
+				</TooltipContent>
+			</Tooltip>
+		);
+	}
+
+	return button;
 }
 
 function PromptAttachments() {

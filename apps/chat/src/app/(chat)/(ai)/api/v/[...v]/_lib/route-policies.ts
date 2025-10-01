@@ -354,6 +354,32 @@ export const enforceModelAccessGuard: ChatGuard = ({ resources }) => {
 
 export const billingGuard: ChatGuard = async ({ resources }) => {
   if (resources.auth.isAnonymous) {
+    // Check attachment access - anonymous users cannot use attachments
+    const hasAttachments =
+      resources.request.body?.attachments &&
+      Array.isArray(resources.request.body.attachments) &&
+      resources.request.body.attachments.length > 0;
+
+    if (hasAttachments) {
+      console.warn(`[Billing] Attachment access denied for anonymous user`);
+      return deny(
+        new Response(
+          JSON.stringify({
+            error: "Feature not allowed",
+            message: "File attachments require sign in",
+            code: "FEATURE_NOT_ALLOWED",
+            details: { feature: "attachments", isAnonymous: true },
+          }),
+          {
+            status: 403,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        ),
+      );
+    }
+
     resources.billing = {
       plan: ClerkPlanKey.FREE_TIER,
       limits: BILLING_LIMITS[ClerkPlanKey.FREE_TIER],
@@ -406,6 +432,32 @@ export const billingGuard: ChatGuard = async ({ resources }) => {
               message: "Web search requires upgrade to Plus plan",
               code: "FEATURE_NOT_ALLOWED",
               details: { feature: "webSearch", userPlan },
+            }),
+            {
+              status: 403,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          ),
+        );
+      }
+
+      // Check attachment access for authenticated users
+      const hasAttachments =
+        resources.request.body?.attachments &&
+        Array.isArray(resources.request.body.attachments) &&
+        resources.request.body.attachments.length > 0;
+
+      if (hasAttachments && !limits.hasAttachments) {
+        console.warn(`[Billing] Attachment access denied for ${userPlan} user`);
+        return deny(
+          new Response(
+            JSON.stringify({
+              error: "Feature not allowed",
+              message: "File attachments require upgrade to Plus plan",
+              code: "FEATURE_NOT_ALLOWED",
+              details: { feature: "attachments", userPlan },
             }),
             {
               status: 403,

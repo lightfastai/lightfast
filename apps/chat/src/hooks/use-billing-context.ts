@@ -115,8 +115,8 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 		// Web search availability
 		canUseWebSearch: planLimits.hasWebSearch,
 
-		// Attachment availability (decoupled from web search)
-		canUseAttachments: planLimits.hasAttachments,
+		// Attachment availability - requires authentication
+		canUseAttachments: isAuthenticated && planLimits.hasAttachments,
 
 		// Model access
 		canUseAllModels: userPlan === ClerkPlanKey.PLUS_TIER,
@@ -210,7 +210,11 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 
 		attachments: {
 			enabled: planCapabilities.canUseAttachments,
-			disabledReason: planCapabilities.canUseAttachments ? null : "Upgrade to use file attachments",
+			disabledReason: planCapabilities.canUseAttachments
+				? null
+				: !isAuthenticated
+					? "Sign in to use file attachments"
+					: "Get access to file attachments and more features with Plus",
 		},
 
 		artifacts: {
