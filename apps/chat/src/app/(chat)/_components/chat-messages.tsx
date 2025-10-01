@@ -1,11 +1,22 @@
 "use client";
 
-import type { ChatStatus, ToolUIPart } from "ai";
-import { Fragment, memo, useMemo, useRef, useEffect, useCallback, useState } from "react";
+import type { ChatStatus, ToolUIPart, FileUIPart } from "ai";
+import {
+	Fragment,
+	memo,
+	useMemo,
+	useRef,
+	useEffect,
+	useCallback,
+	useState,
+} from "react";
 import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type {
+	LightfastAppChatUIMessage,
+	LightfastAppChatUIMessagePart,
+} from "@repo/chat-ai-types";
 import type { CitationSource } from "@repo/ui/lib/citation-parser";
 import {
 	parseResponseMetadata,
@@ -30,11 +41,7 @@ import {
 	ReasoningTrigger,
 } from "@repo/ui/components/ai-elements/reasoning";
 
-import {
-	isReasoningPart,
-	isTextPart,
-	isToolPart,
-} from "@repo/chat-ai-types";
+import { isReasoningPart, isTextPart, isToolPart } from "@repo/chat-ai-types";
 import {
 	Conversation,
 	ConversationContent,
@@ -52,12 +59,14 @@ import {
 	Check,
 	AlertCircle,
 	X,
+	PaperclipIcon,
+	ImageIcon,
 } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
-import type { ChatInlineError } from "./chat-inline-error";
-import { ChatErrorType } from "~/lib/errors/types";
+import type { ChatInlineError } from "@repo/chat-ai-types/errors";
+import { ChatErrorType } from "@repo/chat-ai-types/errors";
 
 const ResponsePlaceholder = () => (
 	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />
@@ -117,6 +126,113 @@ const hasMeaningfulContent = (message: LightfastAppChatUIMessage): boolean => {
 	});
 };
 
+const isFileUIPart = (
+	part: LightfastAppChatUIMessagePart,
+): part is FileUIPart => part.type === "file";
+
+const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
+	attachments,
+	align,
+}: {
+	attachments: FileUIPart[];
+	align: "start" | "end";
+}) {
+	const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+	const handleImageError = useCallback((url: string) => {
+		setFailedImages((prev) => new Set(prev).add(url));
+	}, []);
+
+	if (!attachments.length) {
+		return null;
+	}
+
+	return (
+		<div
+			className={cn(
+				"mt-2 flex flex-wrap gap-2",
+				align === "end" ? "justify-end" : "justify-start",
+			)}
+		>
+			{attachments.map((attachment, index) => {
+				const mediaType = attachment.mediaType;
+				const isImage =
+					typeof mediaType === "string" && mediaType.startsWith("image/");
+				const filenameLabel =
+					typeof attachment.filename === "string" &&
+					attachment.filename.length > 0
+						? attachment.filename
+						: undefined;
+				const urlLabel = (() => {
+					if (
+						typeof attachment.url !== "string" ||
+						attachment.url.length === 0
+					) {
+						return undefined;
+					}
+
+					const [base] = attachment.url.split("?");
+					if (!base || base.length === 0) {
+						return undefined;
+					}
+
+					const segment = base.split("/").pop();
+					return segment && segment.length > 0 ? segment : undefined;
+				})();
+				const label = filenameLabel ?? urlLabel ?? `Attachment ${index + 1}`;
+				const hasImageLoadError = failedImages.has(attachment.url);
+
+				if (isImage) {
+					return (
+						<a
+							key={`${attachment.url}-${index}`}
+							href={attachment.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="group relative block overflow-hidden rounded-md border"
+							title={label}
+						>
+							{hasImageLoadError ? (
+								<div className="flex h-24 w-24 items-center justify-center bg-muted">
+									<div className="flex flex-col items-center gap-1 text-center">
+										<ImageIcon className="h-6 w-6 text-muted-foreground" />
+										<span className="max-w-[80px] truncate text-2xs text-muted-foreground">
+											{label}
+										</span>
+									</div>
+								</div>
+							) : (
+								<img
+									src={attachment.url}
+									alt={label}
+									className="h-24 w-24 object-cover transition-transform group-hover:scale-[1.02]"
+									loading="lazy"
+									onError={() => handleImageError(attachment.url)}
+								/>
+							)}
+						</a>
+					);
+				}
+
+				return (
+					<a
+						key={`${attachment.url}-${index}`}
+						href={attachment.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-accent"
+					>
+						<PaperclipIcon className="h-4 w-4" />
+						<span className="max-w-[160px] truncate" title={label}>
+							{label}
+						</span>
+					</a>
+				);
+			})}
+		</div>
+	);
+});
+
 const StreamingResponse = memo(function StreamingResponse({
 	text,
 	animate,
@@ -153,23 +269,23 @@ const StreamingResponse = memo(function StreamingResponse({
 		}
 	}, [text, animate, isAnimating, addPart]);
 
-    const shouldDisplayStream = animate || isAnimating;
-    // NOTE:
-    //  - We intentionally do NOT fall back to `text` while animating to avoid a
-    //    brief flash of the full accumulated content before the typewriter effect starts.
-    //  - This can create a very short empty state before the first frame paints.
-    //    If you want to mask that gap visually, keep the sine wave visible until the
-    //    first streamed character is rendered (e.g., expose `hasRenderedChar` from
-    //    the streaming hook and use that instead of raw `isAnimating`).
-    const displayText = shouldDisplayStream ? stream : text;
+	const shouldDisplayStream = animate || isAnimating;
+	// NOTE:
+	//  - We intentionally do NOT fall back to `text` while animating to avoid a
+	//    brief flash of the full accumulated content before the typewriter effect starts.
+	//  - This can create a very short empty state before the first frame paints.
+	//    If you want to mask that gap visually, keep the sine wave visible until the
+	//    first streamed character is rendered (e.g., expose `hasRenderedChar` from
+	//    the streaming hook and use that instead of raw `isAnimating`).
+	const displayText = shouldDisplayStream ? stream : text;
 
-    // Report only the hook animation state upstream to avoid feedback loops.
-    useEffect(() => {
-        if (!onAnimationChange) return;
-        if (lastReportedRef.current === isAnimating) return;
-        lastReportedRef.current = isAnimating;
-        onAnimationChange(isAnimating);
-    }, [isAnimating, onAnimationChange]);
+	// Report only the hook animation state upstream to avoid feedback loops.
+	useEffect(() => {
+		if (!onAnimationChange) return;
+		if (lastReportedRef.current === isAnimating) return;
+		lastReportedRef.current = isAnimating;
+		onAnimationChange(isAnimating);
+	}, [isAnimating, onAnimationChange]);
 
 	useEffect(() => {
 		return () => {
@@ -597,17 +713,20 @@ const UserMessage = memo(function UserMessage({
 }: {
 	message: LightfastAppChatUIMessage;
 }) {
-	const textContent = message.parts
-		.filter(isTextPart)
-		.map((part) => part.text)
-		.join("\n");
+	const textParts = message.parts.filter(isTextPart);
+	const textContent = textParts.map((part) => part.text).join("\n");
+	const hasText = textContent.trim().length > 0;
+	const fileParts = message.parts.filter(isFileUIPart);
 
 	return (
 		<div className="py-1">
 			<div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
 				<Message from="user" className="justify-end">
 					<MessageContent variant="chat">
-						<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+						{hasText && (
+							<p className="whitespace-pre-wrap text-sm">{textContent}</p>
+						)}
+						<MessageAttachmentPreview attachments={fileParts} align="end" />
 					</MessageContent>
 				</Message>
 			</div>
@@ -630,7 +749,6 @@ const AssistantMessage = memo(function AssistantMessage({
 	inlineError,
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
-	isStreamAnimating = false,
 }: {
 	message: LightfastAppChatUIMessage;
 	onArtifactClick?: (artifactId: string) => void;
@@ -648,8 +766,18 @@ const AssistantMessage = memo(function AssistantMessage({
 	inlineError?: ChatInlineError;
 	onInlineErrorDismiss?: (errorId: string) => void;
 	onStreamAnimationChange?: (messageId: string, isAnimating: boolean) => void;
-	isStreamAnimating?: boolean;
 }) {
+	// Track typewriter animation state locally to avoid circular prop dependencies
+	const [isTypewriterAnimating, setIsTypewriterAnimating] = useState(false);
+
+	// Forward animation changes to parent while tracking locally
+	const handleAnimationChange = useCallback(
+		(messageId: string, isAnimating: boolean) => {
+			setIsTypewriterAnimating(isAnimating);
+			onStreamAnimationChange?.(messageId, isAnimating);
+		},
+		[onStreamAnimationChange],
+	);
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
 			return [];
@@ -700,7 +828,7 @@ const AssistantMessage = memo(function AssistantMessage({
 	// the streaming hook (instead of `meaningfulContent`).
 	const hasDisplayContent = meaningfulContent || Boolean(inlineError);
 	const animationStreaming = Boolean(isCurrentlyStreaming);
-	const animationHook = Boolean(isStreamAnimating);
+	const animationHook = Boolean(isTypewriterAnimating);
 	const isAnimationActive = animationStreaming || animationHook;
 	const showStreamingWave = isAnimationActive && !hasDisplayContent;
 	const noMessageContent = message.parts.length === 0;
@@ -744,7 +872,7 @@ const AssistantMessage = memo(function AssistantMessage({
 											messageId={message.id}
 											cleanedText={cleanedText}
 											shouldAnimate={shouldAnimate}
-											onAnimationStateChange={onStreamAnimationChange}
+											onAnimationStateChange={handleAnimationChange}
 										/>
 									);
 								}
@@ -759,6 +887,16 @@ const AssistantMessage = memo(function AssistantMessage({
 											key={`${message.id}-reasoning-${index}`}
 											reasoningText={trimmedText}
 											isStreaming={isReasoningStreaming}
+										/>
+									);
+								}
+
+								if (isFileUIPart(part)) {
+									return (
+										<MessageAttachmentPreview
+											key={`${message.id}-file-${index}`}
+											attachments={[part]}
+											align="start"
 										/>
 									);
 								}
@@ -909,40 +1047,37 @@ export function ChatMessages({
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
 }: ChatMessagesProps) {
-	const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(
-		() => new Set(),
-	);
-	const animatingMessagesRef = useRef(animatingMessageIds);
-
-	useEffect(() => {
-		animatingMessagesRef.current = animatingMessageIds;
-	}, [animatingMessageIds]);
+	// Use ref instead of state - no re-renders needed, just notification to parent
+	const animatingMessageIdsRef = useRef<Set<string>>(new Set());
 
 	const reportAnimationChange = useCallback(
 		(messageId: string, isAnimating: boolean) => {
-			setAnimatingMessageIds((current) => {
-				const hasEntry = current.has(messageId);
-				if (hasEntry === isAnimating) {
-					return current;
-				}
-				const next = new Set(current);
-				if (isAnimating) {
-					next.add(messageId);
-				} else {
-					next.delete(messageId);
-				}
-				if (onStreamAnimationChange) {
-					onStreamAnimationChange(next.size > 0);
-				}
-				return next;
-			});
+			const current = animatingMessageIdsRef.current;
+			const hasEntry = current.has(messageId);
+
+			// No change, skip update
+			if (hasEntry === isAnimating) {
+				return;
+			}
+
+			// Update the set
+			if (isAnimating) {
+				current.add(messageId);
+			} else {
+				current.delete(messageId);
+			}
+
+			// Notify parent immediately (ref update doesn't trigger render, so no setState-during-render issue)
+			if (onStreamAnimationChange) {
+				onStreamAnimationChange(current.size > 0);
+			}
 		},
 		[onStreamAnimationChange],
 	);
 
 	useEffect(() => {
 		return () => {
-			if (animatingMessagesRef.current.size > 0) {
+			if (animatingMessageIdsRef.current.size > 0) {
 				if (onStreamAnimationChange) {
 					onStreamAnimationChange(false);
 				}
@@ -957,7 +1092,6 @@ export function ChatMessages({
 
 	const streamingStatus = status === "submitted" || status === "streaming";
 	const shouldShowScrollButton = messages.length > 0;
-
 
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
@@ -983,9 +1117,8 @@ export function ChatMessages({
 					{turns.map((turn) => {
 						switch (turn.kind) {
 							case "answer": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
+								// Remove isStreamAnimating prop - AssistantMessage tracks its own animation state
+								// and reports to parent via callback. No need to pass state back down.
 								return (
 									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
@@ -1001,7 +1134,6 @@ export function ChatMessages({
 											meaningfulContentOverride={turn.hasMeaningfulContent}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
-											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
@@ -1010,9 +1142,6 @@ export function ChatMessages({
 							case "pending": {
 								const pendingAssistant = createPendingAssistantMessage(
 									turn.user,
-								);
-								const assistantAnimating = animatingMessageIds.has(
-									pendingAssistant.id,
 								);
 								return (
 									<Fragment key={turn.user.id}>
@@ -1030,16 +1159,12 @@ export function ChatMessages({
 											meaningfulContentOverride={false}
 											inlineError={turn.inlineError}
 											onInlineErrorDismiss={onInlineErrorDismiss}
-											isStreamAnimating={assistantAnimating}
 											onStreamAnimationChange={reportAnimationChange}
 										/>
 									</Fragment>
 								);
 							}
 							case "ghost": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
 								return (
 									<Fragment key={turn.user.id}>
 										<UserMessage message={turn.user} />
@@ -1054,18 +1179,14 @@ export function ChatMessages({
 											_isAuthenticated={_isAuthenticated}
 											hideActions
 											meaningfulContentOverride={false}
-										inlineError={turn.inlineError}
-										onInlineErrorDismiss={onInlineErrorDismiss}
-										isStreamAnimating={assistantAnimating}
-										onStreamAnimationChange={reportAnimationChange}
-									/>
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
+											onStreamAnimationChange={reportAnimationChange}
+										/>
 									</Fragment>
 								);
 							}
 							case "system": {
-								const assistantAnimating = animatingMessageIds.has(
-									turn.assistant.id,
-								);
 								return (
 									<AssistantMessage
 										key={turn.assistant.id}
@@ -1080,7 +1201,6 @@ export function ChatMessages({
 										meaningfulContentOverride={turn.hasMeaningfulContent}
 										inlineError={turn.inlineError}
 										onInlineErrorDismiss={onInlineErrorDismiss}
-										isStreamAnimating={assistantAnimating}
 										onStreamAnimationChange={reportAnimationChange}
 									/>
 								);

@@ -1,6 +1,6 @@
 import { ErrorCode } from "@repo/ui/components/lightfast-error-page";
-import type { ApiErrorResponse, ChatError } from "~/lib/errors/types";
-import { ChatErrorType, isApiErrorResponse } from "~/lib/errors/types";
+import type { ApiErrorResponse, ChatError } from "@repo/chat-ai-types/errors";
+import { ChatErrorType, isApiErrorResponse } from "@repo/chat-ai-types/errors";
 
 export class ChatErrorHandler {
   // Parse the error to extract API error response if available

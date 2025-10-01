@@ -12,6 +12,7 @@ import { artifactRouter } from "./router/chat/artifact";
 import { usageRouter } from "./router/chat/usage";
 import { billingRouter } from "./router/billing/billing";
 import { shareRouter } from "./router/chat/share";
+import { attachmentRouter } from "./router/chat/attachment";
 
 /**
  * Primary chat app router - flattened structure
@@ -25,6 +26,7 @@ export const chatAppRouter = createTRPCRouter({
 	usage: usageRouter,
 	billing: billingRouter,
 	share: shareRouter,
+	attachment: attachmentRouter,
 });
 
 // Export type for use in client

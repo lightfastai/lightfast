@@ -6,30 +6,10 @@ import {
 	captureException,
 	captureMessage,
 } from "@sentry/nextjs";
-import { ChatEmptyState } from "./chat-empty-state";
-import { ChatMessages } from "./chat-messages";
-import { PromptSuggestions } from "./prompt-suggestions";
-import {
-	PromptInput,
-	PromptInputBody,
-	PromptInputTextarea,
-	PromptInputToolbar,
-	PromptInputTools,
-	PromptInputSubmit,
-	PromptInputButton,
-} from "@repo/ui/components/ai-elements/prompt-input";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
-import { cn } from "@repo/ui/lib/utils";
-import { ArrowUp, Globe, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import {
-	useState,
-	useMemo,
-	useEffect,
-	useRef,
-	useCallback,
-} from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
@@ -37,8 +17,7 @@ import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
-import { ChatErrorType } from "~/lib/errors/types";
-import type { ChatError } from "~/lib/errors/types";
+import { ChatErrorType } from "@repo/chat-ai-types/errors";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
@@ -58,15 +37,23 @@ import { useArtifactStreaming } from "~/hooks/use-artifact-streaming";
 import { useFeedbackQuery } from "~/hooks/use-feedback-query";
 import { useFeedbackMutation } from "~/hooks/use-feedback-mutation";
 import { useSessionState } from "~/hooks/use-session-state";
-import type { ChatInlineError } from "./chat-inline-error";
+import { useInlineErrors } from "~/hooks/use-inline-errors";
+import { useAttachmentUpload } from "~/hooks/use-attachment-upload";
+import { useStreamLifecycle } from "~/hooks/use-stream-lifecycle";
+import { validateAttachments } from "~/lib/chat/message-validation";
+import {
+	findUnresolvedAttachment,
+	convertAttachmentsToUploaded,
+	createMessageParts,
+	generateSessionSeedText,
+} from "~/lib/chat/attachment-processing";
+import type { UploadedAttachment } from "~/lib/chat/attachment-processing";
+import { checkAttachmentCompatibility } from "~/lib/chat/attachment-compatibility";
+import type { IncompatibleFile } from "~/lib/chat/attachment-compatibility";
+import { ChatNewSessionView } from "./chat-new-session-view";
+import { ChatExistingSessionView } from "./chat-existing-session-view";
+import { toast } from "sonner";
 
-const getMetadataString = (metadata: unknown, key: string): string | undefined => {
-	if (!metadata || typeof metadata !== "object") return undefined;
-	const value = (metadata as Record<string, unknown>)[key];
-	return typeof value === "string" ? value : undefined;
-};
-
-// Dynamic imports for components that are conditionally rendered
 const ProviderModelSelector = dynamic(
 	() =>
 		import("./provider-model-selector").then(
@@ -75,15 +62,30 @@ const ProviderModelSelector = dynamic(
 	{ ssr: false },
 );
 
-// Import ProcessedModel type for model processing
-import type { ProcessedModel } from "./provider-model-selector";
-import { getVisibleModels } from "~/ai/providers";
-import type { ModelId } from "~/ai/providers";
-
 const AuthPromptSelector = dynamic(
 	() => import("./auth-prompt-selector").then((mod) => mod.AuthPromptSelector),
 	{ ssr: false },
 );
+
+const getMetadataString = (
+	metadata: unknown,
+	key: string,
+): string | undefined => {
+	if (!metadata || typeof metadata !== "object") return undefined;
+	const value = (metadata as Record<string, unknown>)[key];
+	return typeof value === "string" ? value : undefined;
+};
+
+// Import model processing types
+import { getModelConfig, getVisibleModels } from "~/ai/providers";
+import type { ModelId, ChatProcessedModel } from "~/ai/providers";
+import type { PromptInputRef } from "@repo/ui/components/ai-elements/prompt-input";
+import {
+	MAX_ATTACHMENT_BYTES,
+	MAX_ATTACHMENT_COUNT,
+	IMAGE_ACCEPT,
+	PDF_ACCEPT,
+} from "@repo/chat-ai-types/attachments";
 
 const RateLimitIndicator = dynamic(
 	() => import("./rate-limit-indicator").then((mod) => mod.RateLimitIndicator),
@@ -92,6 +94,14 @@ const RateLimitIndicator = dynamic(
 
 const RateLimitDialog = dynamic(
 	() => import("./rate-limit-dialog").then((mod) => mod.RateLimitDialog),
+	{ ssr: false },
+);
+
+const IncompatibleAttachmentsDialog = dynamic(
+	() =>
+		import("./incompatible-attachments-dialog").then(
+			(mod) => mod.IncompatibleAttachmentsDialog,
+		),
 	{ ssr: false },
 );
 
@@ -137,6 +147,12 @@ export function ChatInterface({
 	onResumeStateChange,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
+	// Store callback refs to avoid dependency loop issues
+	const onResumeStateChangeRef = useRef(onResumeStateChange);
+	useEffect(() => {
+		onResumeStateChangeRef.current = onResumeStateChange;
+	}, [onResumeStateChange]);
+
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
 	const {
 		sessionId,
@@ -160,106 +176,9 @@ export function ChatInterface({
 	});
 
 	// Streaming/storage errors surfaced inline in the conversation
-	const [inlineErrors, setInlineErrors] = useState<ChatInlineError[]>([]);
+	const { inlineErrors, addInlineError, dismissInlineError } =
+		useInlineErrors();
 	const [hasStreamAnimation, setHasStreamAnimation] = useState(false);
-	const [pendingDisable, setPendingDisable] = useState(false);
-
-	const addInlineError = useCallback(
-		(error: ChatError) => {
-			const metadata: Record<string, unknown> = error.metadata ?? {};
-
-			const getStringMetadata = (key: string): string | undefined => {
-				const value = metadata[key];
-				return typeof value === "string" ? value : undefined;
-			};
-
-			const relatedAssistantMessageId = getStringMetadata("messageId");
-			const relatedUserMessageId = getStringMetadata("userMessageId");
-			const errorCode = error.errorCode ?? getStringMetadata("errorCode");
-			const category = error.category ?? getStringMetadata("category");
-			const severity = error.severity ?? getStringMetadata("severity");
-			const source = error.source ?? getStringMetadata("source");
-
-			setInlineErrors((current) => {
-				const entry: ChatInlineError = {
-					id: crypto.randomUUID(),
-					error,
-					relatedAssistantMessageId,
-					relatedUserMessageId,
-					category,
-					severity,
-					source,
-					errorCode,
-				};
-
-				const deduped = current.filter((existing) => {
-					if (
-						entry.relatedAssistantMessageId &&
-						existing.relatedAssistantMessageId ===
-							entry.relatedAssistantMessageId
-					) {
-						return false;
-					}
-					if (
-						entry.relatedUserMessageId &&
-						existing.relatedUserMessageId === entry.relatedUserMessageId &&
-						!entry.relatedAssistantMessageId &&
-						!existing.relatedAssistantMessageId
-					) {
-						return false;
-					}
-					if (
-						!entry.relatedAssistantMessageId &&
-						!entry.relatedUserMessageId &&
-						!existing.relatedAssistantMessageId &&
-						!existing.relatedUserMessageId &&
-						existing.error.type === entry.error.type &&
-						(existing.category ?? null) === (entry.category ?? null)
-					) {
-						return false;
-					}
-					return true;
-				});
-
-				return [...deduped, entry];
-			});
-		},
-		[setInlineErrors],
-	);
-
-	const dismissInlineError = useCallback(
-		(errorId: string) => {
-			setInlineErrors((current) =>
-				current.filter((entry) => entry.id !== errorId),
-			);
-		},
-		[setInlineErrors],
-	);
-
-	// Process models with accessibility information for the model selector
-	const processedModels = useMemo((): ProcessedModel[] => {
-		return getVisibleModels().map((model) => {
-			const isAccessible = billingContext.models.isAccessible(
-				model.id,
-				model.accessLevel,
-				model.billingTier,
-			);
-			const restrictionReason = billingContext.models.getRestrictionReason(
-				model.id,
-				model.accessLevel,
-				model.billingTier,
-			);
-
-			return {
-				...model,
-				id: model.id as ModelId,
-				isAccessible,
-				restrictionReason,
-				isPremium: model.billingTier === "premium",
-				requiresAuth: model.accessLevel === "authenticated",
-			};
-		});
-	}, [billingContext.models]);
 
 	// Fetch artifacts through the tRPC API so we reuse authentication and caching
 	const fetchArtifact = useCallback(
@@ -330,7 +249,23 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-	// Web search toggle state
+	// State for incompatible attachments dialog
+	const [showIncompatibilityDialog, setShowIncompatibilityDialog] =
+		useState(false);
+	const [incompatibleFiles, setIncompatibleFiles] = useState<
+		IncompatibleFile[]
+	>([]);
+	const [suggestedModelId, setSuggestedModelId] = useState<
+		ModelId | undefined
+	>();
+	const [suggestedModelName, setSuggestedModelName] = useState<
+		string | undefined
+	>();
+	const [pendingMessage, setPendingMessage] = useState<
+		PromptInputMessage | null
+	>(null);
+
+	// Web search toggle state - simplified now that it's decoupled from attachments
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
@@ -343,17 +278,100 @@ export function ChatInterface({
 	} = useAnonymousMessageLimit();
 
 	// Preload dialog image when user is close to limit (3 messages left)
+	const hasPreloadedImage = useRef(false);
 	useEffect(() => {
-		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0) {
+		if (
+			!isAuthenticated &&
+			remainingMessages <= 3 &&
+			remainingMessages > 0 &&
+			!hasPreloadedImage.current
+		) {
 			// Preload the image using Next.js Image preloader
 			const img = new Image();
 			img.src = "/og-bg-only.jpg";
+			hasPreloadedImage.current = true;
+
+			return () => {
+				// Cancel loading if component unmounts before image loads
+				img.src = "";
+			};
 		}
 	}, [isAuthenticated, remainingMessages]);
 
 	// Model selection with persistence
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
+
+	// Invalidate usage query when model changes to ensure fresh quota data
+	// This prevents showing stale quota after model switch (30s cache window)
+	const previousModelIdRef = useRef(selectedModelId);
+	useEffect(() => {
+		// Only invalidate if model actually changed (not on initial render or billing context changes)
+		const modelChanged = previousModelIdRef.current !== selectedModelId;
+		previousModelIdRef.current = selectedModelId;
+
+		if (!modelChanged || !isAuthenticated || !billingContext.isLoaded) {
+			return;
+		}
+
+		// Invalidate usage limits to refresh quota display
+		void queryClient.invalidateQueries({
+			predicate: (query) =>
+				query.queryKey[0] === "usage" && query.queryKey[1] === "checkLimits",
+		});
+	}, [selectedModelId, isAuthenticated, billingContext.isLoaded, queryClient]);
+
+	const selectedModelConfig = useMemo(() => {
+		return getModelConfig(selectedModelId);
+	}, [selectedModelId]);
+
+	const supportsImageAttachments = selectedModelConfig.features.vision;
+	const supportsPdfAttachments = selectedModelConfig.features.pdfSupport;
+	const attachmentAccept = useMemo(() => {
+		const types: string[] = [];
+		if (supportsImageAttachments) {
+			types.push(IMAGE_ACCEPT);
+		}
+		if (supportsPdfAttachments) {
+			types.push(PDF_ACCEPT);
+		}
+		const result = types.join(",");
+		// Return undefined if no types supported (prevents accept="" which allows all files)
+		return result.length > 0 ? result : undefined;
+	}, [supportsImageAttachments, supportsPdfAttachments]);
+
+	const attachmentsAllowed = supportsImageAttachments || supportsPdfAttachments;
+
+	// Process models with accessibility information for the model selector
+	const processedModels = useMemo((): ChatProcessedModel[] => {
+		return getVisibleModels().map((model): ChatProcessedModel => {
+			const isAccessible = billingContext.models.isAccessible(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+			const restrictionReason = billingContext.models.getRestrictionReason(
+				model.id,
+				model.accessLevel,
+				model.billingTier,
+			);
+
+			return {
+				...model,
+				id: model.id as ModelId,
+				isAccessible,
+				restrictionReason,
+				isPremium: model.billingTier === "premium",
+				requiresAuth: model.accessLevel === "authenticated",
+			};
+		});
+	}, [billingContext.models]);
+
+	// Attachment upload hook
+	const { handleAttachmentUpload, isUploadingAttachments } =
+		useAttachmentUpload({
+			selectedModelId,
+		});
 
 	const metricsTags = useMemo(
 		() => ({
@@ -369,12 +387,40 @@ export function ChatInterface({
 		? billingContext.usage.canUseModel(selectedModelId)
 		: { allowed: true };
 
+	// Check if web search can be used (requires both feature access AND quota)
+	const canUseWebSearch = useMemo(() => {
+		if (!billingContext.features.webSearch.enabled) {
+			return {
+				allowed: false,
+				reason:
+					billingContext.features.webSearch.disabledReason ??
+					"Web search not available",
+			};
+		}
+
+		// If authenticated, also check if user has any remaining quota
+		if (isAuthenticated && billingContext.isLoaded) {
+			const hasAnyQuota =
+				billingContext.usage.remainingMessages.nonPremium > 0 ||
+				billingContext.usage.remainingMessages.premium > 0;
+
+			if (!hasAnyQuota) {
+				return {
+					allowed: false,
+					reason: "No message quota remaining. Upgrade or wait for next month.",
+				};
+			}
+		}
+
+		return { allowed: true, reason: null };
+	}, [billingContext, isAuthenticated]);
+
 	// Create transport for AI SDK v5
 	// Uses session ID directly as the primary key
+	// Note: webSearchEnabled is passed per-message in request body, not in transport
 	const transport = useChatTransport({
 		sessionId,
 		agentId,
-		webSearchEnabled,
 	});
 
 	// Use Vercel's useChat directly with transport
@@ -396,7 +442,7 @@ export function ChatInterface({
 			const severity =
 				chatError.severity ?? getMetadataString(metadata, "severity");
 			const source = chatError.source ?? getMetadataString(metadata, "source");
-				const failedMessageId = getMetadataString(metadata, "messageId");
+			const failedMessageId = getMetadataString(metadata, "messageId");
 
 			addBreadcrumb({
 				category: "chat-ui",
@@ -439,8 +485,7 @@ export function ChatInterface({
 				});
 				setDataStream([]);
 				disableResume();
-				setPendingDisable(false);
-				onResumeStateChange?.(false);
+				onResumeStateChangeRef.current?.(false);
 				onAssistantStreamError?.({
 					messageId: failedMessageId,
 					category,
@@ -473,7 +518,7 @@ export function ChatInterface({
 			const fatalBySource = source === "guard";
 			const fatalByType = CRITICAL_ERROR_TYPES.includes(chatError.type);
 
-				if (fatalBySeverity || fatalBySource || fatalByType) {
+			if (fatalBySeverity || fatalBySource || fatalByType) {
 				interface EnhancedError extends Error {
 					statusCode?: number;
 					type?: ChatErrorType;
@@ -494,11 +539,11 @@ export function ChatInterface({
 					message: chatError.message,
 				});
 
-					captureMessage("Chat interface fatal error", {
-						level: "error",
-					});
-					throwToErrorBoundary(errorForBoundary);
-				}
+				captureMessage("Chat interface fatal error", {
+					level: "error",
+				});
+				throwToErrorBoundary(errorForBoundary);
+			}
 
 			console.error("[Chat Error] Non-fatal error captured inline", {
 				type: chatError.type,
@@ -516,11 +561,8 @@ export function ChatInterface({
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
-			if (!hasStreamAnimation) {
-				setPendingDisable(false);
-				disableResume();
-				onResumeStateChange?.(false);
-			}
+			// Note: Resume disabling is handled by the consolidated effect above
+			// which waits for both stream AND animation to complete
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
@@ -532,102 +574,56 @@ export function ChatInterface({
 		status === "streaming" ||
 		status === "submitted" ||
 		hasStreamAnimation ||
+		isUploadingAttachments ||
 		(!isAuthenticated && hasReachedLimit) ||
 		(isAuthenticated && !canUseCurrentModel.allowed);
 
-	const previousStatusRef = useRef(status);
-	const streamStartedAtRef = useRef<number | null>(null);
-	useEffect(() => {
-		const previousStatus = previousStatusRef.current;
-		if (status === "streaming" && previousStatus !== "streaming") {
-			if (typeof performance !== "undefined") {
-				streamStartedAtRef.current = performance.now();
-			}
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "stream_started",
-				data: {
-					agentId,
-					sessionId,
-					modelId: selectedModelId,
-				},
-			});
-			setHasActiveStream(true);
-			onResumeStateChange?.(true);
-			setPendingDisable(false);
-		}
-		if (status !== "streaming" && previousStatus === "streaming") {
-			if (typeof performance !== "undefined" && streamStartedAtRef.current !== null) {
-				const duration = performance.now() - streamStartedAtRef.current;
-				addBreadcrumb({
-					category: "chat-ui",
-					message: "stream_duration",
-					data: {
-						...metricsTags,
-						duration,
-						finalStatus: status,
-					},
-				});
-			}
-			streamStartedAtRef.current = null;
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "stream_completed",
-				data: {
-					agentId,
-					sessionId,
-					modelId: selectedModelId,
-					finalStatus: status,
-				},
-			});
-			setPendingDisable(true);
-		}
-		previousStatusRef.current = status;
-	}, [
+	// Stream lifecycle tracking
+	useStreamLifecycle({
 		status,
-		setHasActiveStream,
-		onResumeStateChange,
-		disableResume,
-		metricsTags,
 		agentId,
 		sessionId,
 		selectedModelId,
-	]);
+		metricsTags,
+		setHasActiveStream,
+		onResumeStateChange,
+		disableResume,
+	});
+
+	// Disable resume when BOTH stream and animation complete
+	// This consolidates the previous dual-effect state machine into a single effect
+	const previousStreamActiveRef = useRef(false);
+	const previousHasAnimationRef = useRef(false);
 
 	useEffect(() => {
-		if (!pendingDisable) {
-			return;
+		const streamActive = status === "streaming" || status === "submitted";
+		const wasActive = previousStreamActiveRef.current || previousHasAnimationRef.current;
+		const isNowInactive = !streamActive && !hasStreamAnimation;
+
+		// Only disable resume when transitioning from active to inactive
+		// (not on every render when already inactive)
+		if (wasActive && isNowInactive) {
+			disableResume();
+			onResumeStateChangeRef.current?.(false);
 		}
-		if (status === "streaming" || status === "submitted") {
-			return;
-		}
-		if (hasStreamAnimation) {
-			return;
-		}
-		setPendingDisable(false);
-		disableResume();
-		onResumeStateChange?.(false);
-	}, [
-		pendingDisable,
-		status,
-		hasStreamAnimation,
-		disableResume,
-		onResumeStateChange,
-	]);
+
+		previousStreamActiveRef.current = streamActive;
+		previousHasAnimationRef.current = hasStreamAnimation;
+	}, [status, hasStreamAnimation, disableResume]);
 
 	const handleStreamAnimationChange = useCallback(
 		(isAnimating: boolean) => {
 			setHasStreamAnimation(isAnimating);
 			if (isAnimating) {
 				setHasActiveStream(true);
-				onResumeStateChange?.(true);
+				onResumeStateChangeRef.current?.(true);
 				return;
 			}
 
 			setHasActiveStream(false);
-			onResumeStateChange?.(false);
+			onResumeStateChangeRef.current?.(false);
 		},
-		[setHasActiveStream, onResumeStateChange],
+		[setHasActiveStream],
 	);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
@@ -644,14 +640,22 @@ export function ChatInterface({
 
 	// AI SDK will handle resume automatically when resume={true} is passed to useChat
 
-	const handleSendMessage = async (message: string) => {
+	const handleSendMessage = (input: string | PromptInputMessage): boolean => {
+		const text = typeof input === "string" ? input : (input.text ?? "");
+		const trimmedText = text.trim();
+		const attachments =
+			typeof input === "string" ? [] : (input.attachments ?? []);
+		const hasText = trimmedText.length > 0;
+		const hasAttachments = attachments.length > 0;
+
 		if (
-			!message.trim() ||
+			(!hasText && !hasAttachments) ||
 			status === "streaming" ||
 			status === "submitted" ||
-			hasStreamAnimation
+			hasStreamAnimation ||
+			isUploadingAttachments
 		) {
-			return;
+			return false;
 		}
 
 		// For unauthenticated users, check anonymous message limit
@@ -665,25 +669,63 @@ export function ChatInterface({
 				metadata: { isAnonymous: true },
 			});
 			setShowRateLimitDialog(true);
-			return;
+			return false;
 		}
 
 		// For authenticated users, check usage limits based on selected model
 		if (isAuthenticated && billingContext.isLoaded) {
 			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
 			if (!usageCheck.allowed) {
-				addInlineError({
-					type: ChatErrorType.USAGE_LIMIT_EXCEEDED,
-					message:
+				toast.error("Usage limit reached", {
+					description:
 						usageCheck.reason ??
 						"You've reached your current usage limit for this model.",
-					retryable: false,
-					details: undefined,
-					metadata: { modelId: selectedModelId },
+					duration: 5000,
 				});
-				return;
+				return false;
 			}
 		}
+
+		// Fast-fail checks in order of importance
+		if (hasAttachments && !attachmentsAllowed) {
+			toast.error("Attachments not supported", {
+				description: "The selected model does not support file attachments.",
+				duration: 4000,
+			});
+			return false;
+		}
+
+		// Validate all attachments before checking billing/features
+		// This gives immediate feedback on file issues
+		if (hasAttachments) {
+			const validationError = validateAttachments(attachments, {
+				supportsImageAttachments,
+				supportsPdfAttachments,
+			});
+
+			if (validationError) {
+				toast.error(validationError.message, {
+					description: validationError.details,
+					duration: 4000,
+				});
+				return false;
+			}
+		}
+
+		// Check if attachments are allowed for user's plan
+		// This check happens after file validation to give clear, relevant error messages
+		if (hasAttachments && !billingContext.features.attachments.enabled) {
+			toast.error("Attachments not available", {
+				description:
+					billingContext.features.attachments.disabledReason ??
+					"File attachments are not available on your current plan.",
+				duration: 5000,
+			});
+			return false;
+		}
+
+		// Web search state is independent from attachments
+		const nextWebSearchEnabled = webSearchEnabled;
 
 		addBreadcrumb({
 			category: "chat-ui",
@@ -692,60 +734,121 @@ export function ChatInterface({
 				agentId,
 				sessionId,
 				modelId: selectedModelId,
-				length: message.length,
-				webSearchEnabled,
+				length: trimmedText.length,
+				attachmentCount: attachments.length,
+				webSearchEnabled: nextWebSearchEnabled,
 			},
 		});
-		// Additional context stored as breadcrumb via send_message entry
+
+		let uploadedAttachments: UploadedAttachment[] = [];
 
 		try {
-			// Call handleSessionCreation when this is the first message in a new session
-			// Only call when this is truly the first message (no existing messages)
-			// Fires optimistically - backend will handle session creation if needed
-			if (isNewSession && messages.length === 0) {
-				handleSessionCreation(message);
+			if (hasAttachments) {
+				// Check for empty attachments array (shouldn't happen, but defensive)
+				if (attachments.length === 0) {
+					toast.error("No attachments", {
+						description:
+							"Please add at least one file or remove the attachment.",
+						duration: 4000,
+					});
+					return false;
+				}
+
+				// Check for unresolved attachments
+				const unresolved = findUnresolvedAttachment(attachments);
+				if (unresolved) {
+					toast.error("Upload in progress", {
+						description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
+						duration: 4000,
+					});
+					return false;
+				}
+
+				// Convert attachments to uploaded format
+				uploadedAttachments = convertAttachmentsToUploaded(attachments);
+
+				// Verify conversion succeeded
+				if (uploadedAttachments.length === 0 && attachments.length > 0) {
+					toast.error("Attachment error", {
+						description:
+							"Failed to process attachments. Please try re-uploading.",
+						duration: 4000,
+					});
+					return false;
+				}
 			}
 
-			// Generate UUID for the user message
-			const userMessageId = crypto.randomUUID();
+			// Handle session creation for new sessions
+			if (isNewSession && messages.length === 0) {
+				const seedText = generateSessionSeedText(
+					trimmedText,
+					uploadedAttachments,
+				);
+				handleSessionCreation(seedText);
+			}
 
-			// Create the user message object
+			// Create user message
+			const userMessageId = crypto.randomUUID();
+			const userMessageParts = createMessageParts(
+				trimmedText,
+				uploadedAttachments,
+			);
+
 			const userMessage: LightfastAppChatUIMessage = {
 				role: "user",
-				parts: [{ type: "text", text: message }],
+				parts: userMessageParts,
 				id: userMessageId,
 			};
 
-			// Call the callback to update cache BEFORE sending
-			// This ensures the user message is in cache before assistant responds
 			onNewUserMessage?.(userMessage);
 
-			// Send message using Vercel's format
-			await vercelSendMessage(userMessage, {
-				body: {
-					userMessageId,
-					modelId: selectedModelId,
-					webSearchEnabled,
-				},
-			});
+			const requestBody: Record<string, unknown> = {
+				userMessageId,
+				modelId: selectedModelId,
+				webSearchEnabled: nextWebSearchEnabled,
+			};
 
-			// Success breadcrumb already recorded above
-			addBreadcrumb({
-				category: "chat-ui",
-				message: "send_message_success",
-				data: {
-					agentId,
-					sessionId,
-					modelId: selectedModelId,
-				},
-			});
+			if (uploadedAttachments.length > 0) {
+				requestBody.attachments = uploadedAttachments.map((uploaded) => ({
+					id: uploaded.id,
+					storagePath: uploaded.storagePath,
+					size: uploaded.size,
+					contentType: uploaded.contentType,
+					filename: uploaded.filename ?? null,
+					metadata: uploaded.metadata,
+				}));
+			}
 
-			// Increment count for anonymous users after successful send
+			// Start sending message (don't await - fire and forget)
+			// This allows form to clear immediately while streaming happens in background
+			vercelSendMessage(userMessage, {
+				body: requestBody,
+			})
+				.then(() => {
+					// Log success after streaming completes
+					addBreadcrumb({
+						category: "chat-ui",
+						message: "send_message_success",
+						data: {
+							agentId,
+							sessionId,
+							modelId: selectedModelId,
+							attachmentCount: uploadedAttachments.length,
+						},
+					});
+				})
+				.catch((error) => {
+					// Errors during streaming are handled by useChat's onError
+					console.error("[handleSendMessage] Stream error:", error);
+				});
+
 			if (!isAuthenticated) {
 				incrementCount();
 			}
+
+			// Return true immediately - message queued successfully, form can clear
+			return true;
 		} catch (unknownError) {
-			// Log and throw to error boundary
 			const safeError =
 				unknownError instanceof Error
 					? unknownError
@@ -761,42 +864,192 @@ export function ChatInterface({
 				},
 			});
 			throwToErrorBoundary(safeError);
+			return false;
 		}
 	};
 
+	// Form ref for programmatic reset (includes clear method for attachments)
+	const formRef = useRef<PromptInputRef | null>(null);
+
 	// Handle prompt input submission - converts PromptInput format to our handleSendMessage
+	// Must be async to match component prop signature, but doesn't await (form clears synchronously)
 	const handlePromptSubmit = async (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
-	) => {
+	): Promise<void> => {
+		await Promise.resolve(); // Satisfy linter - function must be async for prop signature
 		event.preventDefault();
 
-		if (isPromptSubmissionDisabled || !message.text?.trim()) {
+		const text = message.text ?? "";
+		const hasText = text.trim().length > 0;
+		const hasAttachments = Boolean(message.attachments?.length);
+
+		if (isPromptSubmissionDisabled || (!hasText && !hasAttachments)) {
 			return;
 		}
 
-		// Clear the form immediately after preventing default
-		event.currentTarget.reset();
+		// CRITICAL: Synchronous check for unresolved attachments BEFORE calling handleSendMessage
+		// RACE CONDITION PROTECTION: Prevents submission while attachments are uploading
+		//
+		// Why this is needed:
+		// 1. isUploadingAttachments state is async and may lag behind actual upload state
+		// 2. User can rapid-fire submit (e.g., pressing Enter multiple times)
+		// 3. State updates happen after event handlers complete
+		//
+		// This synchronous check inspects the actual attachment data structure,
+		// not the async state hook, providing a last-line defense against race conditions.
+		if (hasAttachments && message.attachments) {
+			const unresolved = findUnresolvedAttachment(message.attachments);
+			if (unresolved) {
+				// Don't proceed - show error and keep form populated with attachments
+				toast.error("Upload in progress", {
+					description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
+					duration: 4000,
+				});
+				return; // Exit early - form stays intact, attachments preserved
+			}
 
-		// Convert to our existing handleSendMessage format
-		await handleSendMessage(message.text);
-	};
+			// Check attachment compatibility with selected model
+			const compatibility = checkAttachmentCompatibility(
+				message.attachments,
+				selectedModelId,
+			);
 
-	// Handle prompt input errors (both file upload errors and React form events)
-	const handlePromptError = (
-		errorOrEvent:
-			| { code: "max_files" | "max_file_size" | "accept"; message: string }
-			| FormEvent<HTMLFormElement>,
-	) => {
-		// Check if it's a file upload error (has 'code' property)
-		if ("code" in errorOrEvent) {
-			console.error("Prompt input error:", errorOrEvent);
-			// Could integrate with toast system here if needed
-		} else {
-			// Handle React form events if needed
-			console.error("Form error:", errorOrEvent);
+			if (!compatibility.isCompatible) {
+				// Store the message and compatibility info for dialog actions
+				setPendingMessage(message);
+				setIncompatibleFiles(compatibility.incompatibleFiles);
+				setSuggestedModelId(compatibility.suggestedModelId);
+				setSuggestedModelName(compatibility.suggestedModelName);
+				setShowIncompatibilityDialog(true);
+				return; // Exit early - dialog will handle next steps
+			}
+		}
+
+		// Send message - returns true if validation passed and message queued
+		// Form clears immediately, streaming happens in background
+		const success = handleSendMessage(message);
+
+		// Clear form only if message was successfully queued
+		// On validation errors, form stays populated for retry
+		// Use ref.reset() which clears both textarea and attachments
+		if (success && formRef.current) {
+			formRef.current.reset();
 		}
 	};
+
+	// Handle prompt input errors
+	const handlePromptError = (err: {
+		code: "max_files" | "max_file_size" | "accept" | "upload_failed";
+		message: string;
+	}) => {
+		console.error("Prompt input error:", err);
+
+		let userMessage = err.message;
+		let details: string | undefined;
+
+		switch (err.code) {
+			case "max_files":
+				userMessage = `Maximum ${MAX_ATTACHMENT_COUNT} files allowed`;
+				details = `Please select ${MAX_ATTACHMENT_COUNT} or fewer files`;
+				break;
+			case "max_file_size":
+				userMessage = "File size limit exceeded";
+				details = `Each file must be under ${Math.floor(
+					MAX_ATTACHMENT_BYTES / (1024 * 1024),
+				)}MB`;
+				break;
+			case "accept":
+				if (supportsImageAttachments && supportsPdfAttachments) {
+					userMessage = "Invalid file type";
+					details = "Only images and PDFs are supported for this model";
+				} else if (supportsImageAttachments) {
+					userMessage = "Invalid file type";
+					details = "Only images are supported for this model";
+				} else if (supportsPdfAttachments) {
+					userMessage = "Invalid file type";
+					details = "Only PDFs are supported for this model";
+				} else {
+					userMessage = "File attachments not supported";
+					details = "This model does not support file attachments";
+				}
+				break;
+			case "upload_failed":
+				userMessage = "Upload failed";
+				details =
+					err.message || "Unable to upload attachment. Please try again.";
+				break;
+		}
+
+		// Use toast instead of inline error for pre-flight validation
+		toast.error(userMessage, {
+			description: details,
+			duration: 5000,
+		});
+	};
+
+	// Handle removing incompatible attachments and sending
+	const handleRemoveIncompatibleAttachments = useCallback(() => {
+		if (!pendingMessage) return;
+
+		// Filter out incompatible attachments
+		const incompatibleFilenames = new Set(
+			incompatibleFiles.map((f) => f.filename),
+		);
+
+		const compatibleAttachments = pendingMessage.attachments?.filter(
+			(att) => !incompatibleFilenames.has(att.filename ?? ""),
+		);
+
+		// Create new message with only compatible attachments
+		const messageToSend: PromptInputMessage = {
+			...pendingMessage,
+			attachments: compatibleAttachments,
+		};
+
+		// Send the filtered message
+		const success = handleSendMessage(messageToSend);
+
+		// Clear form if successful
+		if (success && formRef.current) {
+			formRef.current.reset();
+		}
+
+		// Reset dialog state
+		setPendingMessage(null);
+		setIncompatibleFiles([]);
+		setSuggestedModelId(undefined);
+		setSuggestedModelName(undefined);
+	}, [pendingMessage, incompatibleFiles, handleSendMessage]);
+
+	// Handle switching to suggested model and sending
+	const handleSwitchToSuggestedModel = useCallback(
+		(modelId: ModelId) => {
+			if (!pendingMessage) return;
+
+			// Switch the model
+			handleModelChange(modelId);
+
+			// Send the original message with all attachments
+			// Note: We don't call handleSendMessage here because the model hasn't updated yet
+			// Instead, we'll let the form stay populated and the user can re-submit
+			// Or we can set a flag to auto-submit after model switch
+
+			// For now, just switch the model and keep the form populated
+			// User can then click send again with the new model
+			setPendingMessage(null);
+			setIncompatibleFiles([]);
+			setSuggestedModelId(undefined);
+			setSuggestedModelName(undefined);
+
+			// Show a toast confirming the model switch
+			toast.success(`Switched to ${getModelConfig(modelId).displayName}`, {
+				description: "You can now send your message with all attachments.",
+				duration: 3000,
+			});
+		},
+		[pendingMessage, handleModelChange],
+	);
 
 	// Create model selector component - show auth prompt for unauthenticated users
 	const modelSelector = isAuthenticated ? (
@@ -804,291 +1057,155 @@ export function ChatInterface({
 			value={selectedModelId}
 			onValueChange={handleModelChange}
 			models={processedModels}
-			disabled={false} // Allow model selection even during streaming
+			disabled={false}
 			_isAuthenticated={isAuthenticated}
 		/>
 	) : (
 		<AuthPromptSelector />
 	);
 
-	// Create the main chat content component
-	// Determine the appropriate UI state:
-	// 1. New session with no messages -> centered empty state
-	// 2. Existing session with no messages -> conversation layout with empty state message
-	// 3. Session with messages -> normal conversation layout
+	// Prepare rate limit indicator for anonymous users
+	const rateLimitIndicator =
+		!isAuthenticated && !isLimitLoading && messageCount > 0 ? (
+			<div className="mb-2">
+				<RateLimitIndicator remainingMessages={remainingMessages} />
+			</div>
+		) : null;
+
+	// Determine attachment button state
+	const attachmentButtonDisabled =
+		!attachmentsAllowed ||
+		!billingContext.features.attachments.enabled ||
+		isUploadingAttachments;
+	const attachmentDisabledReason = !billingContext.features.attachments.enabled
+		? (billingContext.features.attachments.disabledReason ??
+			"Attachments not available")
+		: !attachmentsAllowed
+			? `${selectedModelConfig.displayName} doesn't support attachments. Try Gemini 2.5 Flash or Claude 4 Sonnet.`
+			: isUploadingAttachments
+				? "Uploading..."
+				: undefined;
+
+	// Determine submit button state
+	const isSubmitDisabled =
+		status === "streaming" ||
+		isUploadingAttachments ||
+		!canUseCurrentModel.allowed ||
+		(!isAuthenticated && hasReachedLimit);
+
+	const submitDisabledReason = isUploadingAttachments
+		? "Uploading attachments..."
+		: !canUseCurrentModel.allowed
+			? "reason" in canUseCurrentModel
+				? (canUseCurrentModel.reason ?? "Cannot use this model")
+				: "Cannot use this model"
+			: !isAuthenticated && hasReachedLimit
+				? "Message limit reached"
+				: status === "streaming"
+					? "Generating response..."
+					: undefined;
+
+	// Memoized artifact click handler for authenticated users
+	const handleArtifactClick = useCallback(
+		async (artifactId: string) => {
+			if (!isAuthenticated) return;
+
+			try {
+				const artifactData = await fetchArtifact(artifactId);
+				// Calculate responsive bounding box based on viewport
+				const viewportWidth = window.innerWidth;
+				const viewportHeight = window.innerHeight;
+				showArtifact({
+					documentId: artifactData.id,
+					title: artifactData.title,
+					kind: artifactData.kind,
+					content: artifactData.content,
+					status: "idle",
+					boundingBox: {
+						top: Math.max(60, viewportHeight * 0.1),
+						left: Math.max(60, viewportWidth * 0.05),
+						width: Math.min(400, viewportWidth * 0.4),
+						height: Math.min(300, viewportHeight * 0.4),
+					},
+				});
+			} catch (unknownError) {
+				const errorMessage =
+					unknownError instanceof Error
+						? unknownError.message
+						: "Failed to load artifact";
+
+				toast.error("Unable to load artifact", {
+					description: errorMessage,
+					duration: 4000,
+				});
+
+				console.error("Artifact fetch failed:", errorMessage);
+			}
+		},
+		[isAuthenticated, fetchArtifact, showArtifact],
+	);
+
+	// Wrapper to match expected signature for onSendMessage prop (ignores return value)
+	const handleSendMessageVoid = useCallback(
+		// eslint-disable-next-line @typescript-eslint/require-await
+		async (input: string | PromptInputMessage): Promise<void> => {
+			handleSendMessage(input);
+		},
+		[],
+	);
+
+	// Create the main chat content component using extracted view components
 	const chatContent =
 		messages.length === 0 && isNewSession ? (
-			// For truly new chats (no messages yet), show centered layout
-			<div className="h-full flex flex-col items-center justify-center bg-background">
-				<div className="w-full max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
-					<div className="mb-8">
-						<ChatEmptyState
-							prompt={
-								user?.email
-									? `Welcome back, ${user.email}`
-									: "What can I do for you?"
-							}
-						/>
-					</div>
-					<PromptInput
-						onSubmit={handlePromptSubmit}
-						onError={handlePromptError}
-						className={cn(
-							"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-							"!divide-y-0 !shadow-sm",
-						)}
-					>
-						<PromptInputBody className="flex flex-col">
-							<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
-								<PromptInputTextarea
-									placeholder="Ask anything..."
-									className={cn(
-										"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-										"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-										"outline-none min-h-0 min-h-[72px]",
-									)}
-									style={{ lineHeight: "24px" }}
-									maxLength={4000}
-								/>
-							</div>
-							<PromptInputToolbar className="flex items-center justify-between p-2 bg-input-bg dark:bg-input-bg transition-[color,box-shadow]">
-								{/* Left side tools */}
-								<div className="flex items-center gap-2">
-									<PromptInputButton
-										variant={webSearchEnabled ? "secondary" : "outline"}
-										onClick={() => {
-											if (billingContext.features.webSearch.enabled) {
-												setWebSearchEnabled(!webSearchEnabled);
-											}
-										}}
-										disabled={!billingContext.features.webSearch.enabled}
-										title={
-											billingContext.features.webSearch.disabledReason ??
-											undefined
-										}
-										className={cn(
-											webSearchEnabled &&
-												"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-											!billingContext.features.webSearch.enabled &&
-												"opacity-60 cursor-not-allowed",
-										)}
-									>
-										<Globe className="w-4 h-4" />
-										Search
-										{webSearchEnabled &&
-											billingContext.features.webSearch.enabled && (
-												<X
-													className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-													onClick={(e) => {
-														e.stopPropagation();
-														setWebSearchEnabled(false);
-													}}
-												/>
-											)}
-									</PromptInputButton>
-								</div>
-
-								{/* Right side tools */}
-								<PromptInputTools className="flex items-center gap-2">
-									{modelSelector}
-					<PromptInputSubmit
-						status={status}
-						disabled={isPromptSubmissionDisabled}
-						title={
-							!canUseCurrentModel.allowed && isAuthenticated
-								? "reason" in canUseCurrentModel
-									? (canUseCurrentModel.reason ?? undefined)
-									: undefined
-												: undefined
-										}
-										size="icon"
-										variant="outline"
-										className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
-									>
-										<ArrowUp className="w-4 h-4" />
-									</PromptInputSubmit>
-								</PromptInputTools>
-							</PromptInputToolbar>
-						</PromptInputBody>
-					</PromptInput>
-					{/* Prompt suggestions - only visible on iPad and above (md breakpoint) */}
-					<div className="hidden md:block relative mt-4 h-12">
-						<div className="absolute top-0 left-0 right-0">
-							<PromptSuggestions onSelectPrompt={handleSendMessage} />
-						</div>
-					</div>
-				</div>
-			</div>
+			<ChatNewSessionView
+				userEmail={user?.email ?? undefined}
+				onSendMessage={handleSendMessageVoid}
+				onPromptSubmit={handlePromptSubmit}
+				onPromptError={handlePromptError}
+				onAttachmentUpload={handleAttachmentUpload}
+				attachmentAccept={attachmentAccept}
+				attachmentButtonDisabled={attachmentButtonDisabled}
+				attachmentDisabledReason={attachmentDisabledReason}
+				webSearchEnabled={webSearchEnabled}
+				webSearchAllowed={canUseWebSearch.allowed}
+				webSearchDisabledReason={canUseWebSearch.reason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled((prev) => !prev)}
+				modelSelector={modelSelector}
+				status={status}
+				isSubmitDisabled={isSubmitDisabled}
+				submitDisabledReason={submitDisabledReason}
+				formRef={formRef}
+			/>
 		) : (
-			// Thread view or chat with existing messages, OR existing session with no messages
-			<div className="flex flex-col h-full bg-background">
-				<ChatMessages
-					messages={messages}
-					status={status}
-					feedback={feedback}
-					onFeedbackSubmit={feedbackMutation.handleSubmit}
-					onFeedbackRemove={feedbackMutation.handleRemove}
-					_isAuthenticated={isAuthenticated}
-					isExistingSessionWithNoMessages={
-						messages.length === 0 && !isNewSession
-					}
-					hasActiveStream={hasActiveStream}
-					onStreamAnimationChange={handleStreamAnimationChange}
-					onArtifactClick={
-						isAuthenticated
-							? async (artifactId) => {
-									try {
-										// Fetch artifact data using clean REST API
-										const artifactData = await fetchArtifact(artifactId);
-
-										// Show the artifact with the fetched data
-										showArtifact({
-											documentId: artifactData.id,
-											title: artifactData.title,
-											kind: artifactData.kind,
-											content: artifactData.content,
-											status: "idle",
-											boundingBox: {
-												top: 100,
-												left: 100,
-												width: 300,
-												height: 200,
-											},
-										});
-									} catch (unknownError) {
-										// Clean error handling with user-friendly messages
-										const errorMessage =
-											unknownError instanceof Error
-												? unknownError.message
-												: "Unknown error occurred";
-										console.error("Artifact fetch failed:", errorMessage);
-
-										// Could optionally show toast notification here
-										// toast.error(`Failed to load artifact: ${errorMessage}`);
-									}
-								}
-							: undefined // Disable artifact clicking for unauthenticated users
-					}
-					inlineErrors={inlineErrors}
-					onInlineErrorDismiss={dismissInlineError}
-				/>
-				<div className="relative">
-					<div className="max-w-3xl mx-auto px-1.5 md:px-3 lg:px-6 xl:px-10">
-						{/* Show rate limit indicator for anonymous users - only shows when messages exist (not on new chat) */}
-						{!isAuthenticated && !isLimitLoading && messageCount > 0 && (
-							<div className="mb-2">
-								<RateLimitIndicator remainingMessages={remainingMessages} />
-							</div>
-						)}
-
-						<div className="flex-shrink-0">
-							<div className="chat-container relative px-1.5 md:px-3 lg:px-5 xl:px-8">
-								{/* Gradient overlay */}
-								{isAuthenticated && (
-									<div className="absolute -top-24 left-0 right-0 h-24 pointer-events-none z-10">
-										<div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-									</div>
-								)}
-
-								<PromptInput
-									onSubmit={handlePromptSubmit}
-									onError={handlePromptError}
-									className={cn(
-										"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-										"!divide-y-0 !shadow-sm",
-									)}
-								>
-									<PromptInputBody className="flex flex-col">
-										<div className="flex-1 max-h-[180px] overflow-y-auto scrollbar-thin">
-											<PromptInputTextarea
-												placeholder={
-													messages.length === 0
-														? "Ask anything..."
-														: "Continue the conversation..."
-												}
-												className={cn(
-													"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-													"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-													"outline-none min-h-0 min-h-[72px]",
-												)}
-												style={{ lineHeight: "24px" }}
-												maxLength={4000}
-											/>
-										</div>
-										<PromptInputToolbar className="flex items-center justify-between p-2 bg-input-bg dark:bg-input-bg transition-[color,box-shadow]">
-											{/* Left side tools */}
-											<div className="flex items-center gap-2">
-												<PromptInputButton
-													variant={webSearchEnabled ? "secondary" : "outline"}
-													onClick={() => {
-														if (billingContext.features.webSearch.enabled) {
-															setWebSearchEnabled(!webSearchEnabled);
-														}
-													}}
-													disabled={!billingContext.features.webSearch.enabled}
-													title={
-														billingContext.features.webSearch.disabledReason ??
-														undefined
-													}
-													className={cn(
-														webSearchEnabled &&
-															"bg-secondary text-secondary-foreground hover:bg-secondary/80",
-														!billingContext.features.webSearch.enabled &&
-															"opacity-60 cursor-not-allowed",
-													)}
-												>
-													<Globe className="w-4 h-4" />
-													Search
-													{webSearchEnabled &&
-														billingContext.features.webSearch.enabled && (
-															<X
-																className="w-3 h-3 ml-1 hover:opacity-70 cursor-pointer"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	setWebSearchEnabled(false);
-																}}
-															/>
-														)}
-												</PromptInputButton>
-											</div>
-
-											{/* Right side tools */}
-											<PromptInputTools className="flex items-center gap-2">
-												{modelSelector}
-									<PromptInputSubmit
-										status={status}
-										disabled={isPromptSubmissionDisabled}
-										title={
-											!canUseCurrentModel.allowed && isAuthenticated
-												? "reason" in canUseCurrentModel
-													? (canUseCurrentModel.reason ?? undefined)
-													: undefined
-															: undefined
-													}
-													size="icon"
-													variant="outline"
-													className="h-8 w-8 dark:border-border/50 rounded-full dark:shadow-sm"
-												>
-													<ArrowUp className="w-4 h-4" />
-												</PromptInputSubmit>
-											</PromptInputTools>
-										</PromptInputToolbar>
-									</PromptInputBody>
-								</PromptInput>
-							</div>
-
-							{/* Description text */}
-							{messages.length > 0 && (
-								<div className="chat-container px-1.5 md:px-3 lg:px-5 xl:px-8">
-									<p className="text-xs text-muted-foreground text-center mt-2">
-										Lightfast may make mistakes. Use with discretion.
-									</p>
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-			</div>
+			<ChatExistingSessionView
+				messages={messages}
+				status={status}
+				feedback={feedback}
+				onFeedbackSubmit={feedbackMutation.handleSubmit}
+				onFeedbackRemove={feedbackMutation.handleRemove}
+				isAuthenticated={isAuthenticated}
+				isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
+				hasActiveStream={hasActiveStream}
+				onStreamAnimationChange={handleStreamAnimationChange}
+				onArtifactClick={isAuthenticated ? handleArtifactClick : undefined}
+				inlineErrors={inlineErrors}
+				onInlineErrorDismiss={dismissInlineError}
+				onPromptSubmit={handlePromptSubmit}
+				onPromptError={handlePromptError}
+				onAttachmentUpload={handleAttachmentUpload}
+				attachmentAccept={attachmentAccept}
+				attachmentButtonDisabled={attachmentButtonDisabled}
+				attachmentDisabledReason={attachmentDisabledReason}
+				webSearchEnabled={webSearchEnabled}
+				webSearchAllowed={canUseWebSearch.allowed}
+				webSearchDisabledReason={canUseWebSearch.reason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled((prev) => !prev)}
+				modelSelector={modelSelector}
+				isSubmitDisabled={isSubmitDisabled}
+				submitDisabledReason={submitDisabledReason}
+				rateLimitIndicator={rateLimitIndicator}
+				formRef={formRef}
+			/>
 		);
 
 	// Return the full layout with artifact support
@@ -1120,6 +1237,18 @@ export function ChatInterface({
 			<RateLimitDialog
 				open={showRateLimitDialog}
 				onOpenChange={setShowRateLimitDialog}
+			/>
+
+			{/* Incompatible attachments dialog - shown when user tries to send with incompatible attachments */}
+			<IncompatibleAttachmentsDialog
+				open={showIncompatibilityDialog}
+				onOpenChange={setShowIncompatibilityDialog}
+				currentModelName={selectedModelConfig.displayName}
+				incompatibleFiles={incompatibleFiles}
+				suggestedModelId={suggestedModelId}
+				suggestedModelName={suggestedModelName}
+				onRemoveIncompatible={handleRemoveIncompatibleAttachments}
+				onSwitchModel={handleSwitchToSuggestedModel}
 			/>
 		</div>
 	);

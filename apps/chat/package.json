@@ -49,6 +49,7 @@
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
+    "@vendor/storage": "workspace:^",
     "@vercel/toolbar": "^0.1.28",
     "ai": "catalog:",
     "autoevals": "^0.0.103",

@@ -8,6 +8,10 @@
       "types": "./dist/artifacts.d.ts",
       "default": "./src/artifacts.ts"
     },
+    "./attachments": {
+      "types": "./dist/attachments.d.ts",
+      "default": "./src/attachments.ts"
+    },
     "./messages": {
       "types": "./dist/messages.d.ts",
       "default": "./src/messages.ts"

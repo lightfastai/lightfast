@@ -4,6 +4,9 @@ import { TRPC_ERROR_CODES_BY_KEY } from "@trpc/server/rpc";
 
 import { ChatApiError } from "./base-service";
 
+// Re-export ChatApiError for convenience
+export { ChatApiError };
+
 export type TRPCErrorCode = TRPC_ERROR_CODE_KEY;
 
 export const TRPC_ERROR_CODES = TRPC_ERROR_CODES_BY_KEY;

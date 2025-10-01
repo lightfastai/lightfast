@@ -1,12 +1,5 @@
-import type { ChatError } from "~/lib/errors/types";
+// This file is deprecated - import directly from @repo/chat-ai-types/errors instead
+// Re-exported for backwards compatibility during migration
+import type { ChatInlineError, ChatError } from "@repo/chat-ai-types/errors";
 
-export interface ChatInlineError {
-	id: string;
-	error: ChatError;
-	relatedAssistantMessageId?: string;
-	relatedUserMessageId?: string;
-	category?: string;
-	severity?: string;
-	source?: string;
-	errorCode?: string;
-}
+export type { ChatInlineError, ChatError };

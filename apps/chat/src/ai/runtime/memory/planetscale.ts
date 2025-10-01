@@ -1,11 +1,99 @@
 import type { Memory } from "lightfast/memory";
-import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type {
+	LightfastAppChatUIMessage,
+	LightfastAppChatUIMessagePart,
+} from "@repo/chat-ai-types";
 import type { ChatFetchContext } from "@repo/chat-ai-types";
 import type {
 	MessagesAppendInput,
 	MessagesListInput,
 	MessagesListOutput,
 } from "@repo/chat-api-services/messages";
+import type { FileUIPart } from "ai";
+import { nanoid } from "nanoid";
+
+type AttachmentPayload = NonNullable<MessagesAppendInput["attachments"]>[number];
+
+const isFileUIPart = (
+	part: LightfastAppChatUIMessagePart,
+): part is FileUIPart => part.type === "file";
+
+const isMissingAttachmentTableError = (error: unknown): boolean => {
+	if (!error || typeof error !== "object") {
+		return false;
+	}
+
+	const message = "message" in error ? String((error as { message?: unknown }).message) : "";
+	const cause = "cause" in error ? String((error as { cause?: unknown }).cause) : "";
+	const combined = `${message} ${cause}`;
+
+	return (
+		combined.includes("lightfast_chat_attachment") &&
+		(combined.includes("doesn't exist") || combined.includes("does not exist") ||
+			combined.includes("errno 1146"))
+	);
+};
+
+function extractFileAttachments(
+	parts: LightfastAppChatUIMessagePart[],
+): AttachmentPayload[] {
+	const attachments: AttachmentPayload[] = [];
+
+	for (const part of parts) {
+		if (!isFileUIPart(part)) {
+			continue;
+		}
+
+		const storage =
+			(part.providerMetadata as
+				| {
+					storage?: {
+						id?: string;
+						pathname?: string;
+						size?: number;
+						metadata?: Record<string, unknown> | null;
+					};
+				}
+				| undefined)?.storage ?? {};
+
+		if (!storage.pathname) {
+			continue;
+		}
+
+		const size =
+			typeof storage.size === "number" && Number.isFinite(storage.size)
+				? storage.size
+				: undefined;
+
+		if (size === undefined) {
+			continue;
+		}
+
+		const filename = typeof part.filename === "string" ? part.filename : undefined;
+		const contentType =
+			typeof part.mediaType === "string" && part.mediaType.length > 0
+				? part.mediaType
+				: undefined;
+		const metadata =
+			storage.metadata && typeof storage.metadata === "object"
+				? storage.metadata
+				: null;
+
+		attachments.push({
+			id:
+				typeof storage.id === "string" && storage.id.length > 0
+					? storage.id
+					: nanoid(),
+			storagePath: storage.pathname,
+			filename,
+			contentType,
+			size,
+			metadata,
+		});
+	}
+
+	return attachments;
+}
 
 /**
  * PlanetScale implementation of Memory interface using service layer for database operations
@@ -44,7 +132,10 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 		// Only set modelId for assistant messages
 		const modelId = message.role === "assistant" ? context.modelId : null;
 		
-		await this.messagesService.append({
+
+		const attachments = extractFileAttachments(message.parts);
+
+		const payload = {
 			sessionId,
 			message: {
 				id: message.id,
@@ -52,7 +143,25 @@ export class PlanetScaleMemory implements Memory<LightfastAppChatUIMessage, Chat
 				parts: message.parts,
 				modelId,
 			},
-		});
+		};
+
+		try {
+			await this.messagesService.append({
+				...payload,
+				attachments: attachments.length > 0 ? attachments : undefined,
+			});
+		} catch (error) {
+			if (attachments.length > 0 && isMissingAttachmentTableError(error)) {
+				console.warn(
+					"[Memory] Attachments table missing; retrying message append without attachments",
+					{ sessionId, messageId: message.id },
+				);
+				await this.messagesService.append(payload);
+				return;
+			}
+
+			throw error;
+		}
 	}
 
 	/**

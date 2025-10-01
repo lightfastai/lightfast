@@ -7,6 +7,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./attachments": {
+      "types": "./dist/attachments.d.ts",
+      "default": "./src/attachments.ts"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "default": "./src/errors.ts"
+    },
+    "./models": {
+      "types": "./dist/models.d.ts",
+      "default": "./src/models.ts"
+    },
+    "./feedback": {
+      "types": "./dist/feedback.d.ts",
+      "default": "./src/feedback.ts"
+    },
+    "./validation": {
+      "types": "./dist/validation.d.ts",
+      "default": "./src/validation.ts"
     }
   },
   "license": "MIT",
