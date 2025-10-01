@@ -6,17 +6,10 @@ import {
 	captureException,
 	captureMessage,
 } from "@sentry/nextjs";
-import type {
-	PromptInputMessage,
-} from "@repo/ui/components/ai-elements/prompt-input";
+import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import type { FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
-import {
-	useState,
-	useMemo,
-	useEffect,
-	useCallback,
-} from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatTransport } from "~/hooks/use-chat-transport";
 import { useAnonymousMessageLimit } from "~/hooks/use-anonymous-message-limit";
@@ -60,7 +53,10 @@ import { ChatExistingSessionView } from "./chat-existing-session-view";
 import { toast } from "sonner";
 
 const ProviderModelSelector = dynamic(
-	() => import("./provider-model-selector").then((mod) => mod.ProviderModelSelector),
+	() =>
+		import("./provider-model-selector").then(
+			(mod) => mod.ProviderModelSelector,
+		),
 	{ ssr: false },
 );
 
@@ -69,7 +65,10 @@ const AuthPromptSelector = dynamic(
 	{ ssr: false },
 );
 
-const getMetadataString = (metadata: unknown, key: string): string | undefined => {
+const getMetadataString = (
+	metadata: unknown,
+	key: string,
+): string | undefined => {
 	if (!metadata || typeof metadata !== "object") return undefined;
 	const value = (metadata as Record<string, unknown>)[key];
 	return typeof value === "string" ? value : undefined;
@@ -137,6 +136,12 @@ export function ChatInterface({
 	onResumeStateChange,
 	usageLimits: externalUsageLimits,
 }: ChatInterfaceProps) {
+	// Store callback refs to avoid dependency loop issues
+	const onResumeStateChangeRef = useRef(onResumeStateChange);
+	useEffect(() => {
+		onResumeStateChangeRef.current = onResumeStateChange;
+	}, [onResumeStateChange]);
+
 	// Use hook to manage session state (handles both authenticated and unauthenticated cases)
 	const {
 		sessionId,
@@ -160,10 +165,10 @@ export function ChatInterface({
 	});
 
 	// Streaming/storage errors surfaced inline in the conversation
-	const { inlineErrors, addInlineError, dismissInlineError } = useInlineErrors();
+	const { inlineErrors, addInlineError, dismissInlineError } =
+		useInlineErrors();
 	const [hasStreamAnimation, setHasStreamAnimation] = useState(false);
 	const [pendingDisable, setPendingDisable] = useState(false);
-
 
 	// Fetch artifacts through the tRPC API so we reuse authentication and caching
 	const fetchArtifact = useCallback(
@@ -247,16 +252,24 @@ export function ChatInterface({
 	} = useAnonymousMessageLimit();
 
 	// Preload dialog image when user is close to limit (3 messages left)
+	const hasPreloadedImage = useRef(false);
 	useEffect(() => {
-		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0) {
+		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0 && !hasPreloadedImage.current) {
 			// Preload the image using Next.js Image preloader
 			const img = new Image();
 			img.src = "/og-bg-only.jpg";
+			hasPreloadedImage.current = true;
+
+			return () => {
+				// Cancel loading if component unmounts before image loads
+				img.src = "";
+			};
 		}
 	}, [isAuthenticated, remainingMessages]);
 
 	// Model selection with persistence
-	const { selectedModelId, handleModelChange } = useModelSelection(isAuthenticated);
+	const { selectedModelId, handleModelChange } =
+		useModelSelection(isAuthenticated);
 
 	const selectedModelConfig = useMemo(() => {
 		return getModelConfig(selectedModelId);
@@ -272,7 +285,9 @@ export function ChatInterface({
 		if (supportsPdfAttachments) {
 			types.push(PDF_ACCEPT);
 		}
-		return types.join(",");
+		const result = types.join(",");
+		// Return undefined if no types supported (prevents accept="" which allows all files)
+		return result.length > 0 ? result : undefined;
 	}, [supportsImageAttachments, supportsPdfAttachments]);
 
 	const attachmentsAllowed = supportsImageAttachments || supportsPdfAttachments;
@@ -303,12 +318,12 @@ export function ChatInterface({
 	}, [billingContext.models]);
 
 	// Attachment upload hook
-	const { handleAttachmentUpload, isUploadingAttachments } = useAttachmentUpload({
-		agentId,
-		sessionId,
-		selectedModelId,
-	});
-
+	const { handleAttachmentUpload, isUploadingAttachments } =
+		useAttachmentUpload({
+			agentId,
+			sessionId,
+			selectedModelId,
+		});
 
 	const metricsTags = useMemo(
 		() => ({
@@ -326,10 +341,10 @@ export function ChatInterface({
 
 	// Create transport for AI SDK v5
 	// Uses session ID directly as the primary key
+	// Note: webSearchEnabled is passed per-message in request body, not in transport
 	const transport = useChatTransport({
 		sessionId,
 		agentId,
-		webSearchEnabled,
 	});
 
 	// Use Vercel's useChat directly with transport
@@ -351,7 +366,7 @@ export function ChatInterface({
 			const severity =
 				chatError.severity ?? getMetadataString(metadata, "severity");
 			const source = chatError.source ?? getMetadataString(metadata, "source");
-				const failedMessageId = getMetadataString(metadata, "messageId");
+			const failedMessageId = getMetadataString(metadata, "messageId");
 
 			addBreadcrumb({
 				category: "chat-ui",
@@ -395,7 +410,7 @@ export function ChatInterface({
 				setDataStream([]);
 				disableResume();
 				setPendingDisable(false);
-				onResumeStateChange?.(false);
+				onResumeStateChangeRef.current?.(false);
 				onAssistantStreamError?.({
 					messageId: failedMessageId,
 					category,
@@ -428,7 +443,7 @@ export function ChatInterface({
 			const fatalBySource = source === "guard";
 			const fatalByType = CRITICAL_ERROR_TYPES.includes(chatError.type);
 
-				if (fatalBySeverity || fatalBySource || fatalByType) {
+			if (fatalBySeverity || fatalBySource || fatalByType) {
 				interface EnhancedError extends Error {
 					statusCode?: number;
 					type?: ChatErrorType;
@@ -449,11 +464,11 @@ export function ChatInterface({
 					message: chatError.message,
 				});
 
-					captureMessage("Chat interface fatal error", {
-						level: "error",
-					});
-					throwToErrorBoundary(errorForBoundary);
-				}
+				captureMessage("Chat interface fatal error", {
+					level: "error",
+				});
+				throwToErrorBoundary(errorForBoundary);
+			}
 
 			console.error("[Chat Error] Non-fatal error captured inline", {
 				type: chatError.type,
@@ -474,7 +489,7 @@ export function ChatInterface({
 			if (!hasStreamAnimation) {
 				setPendingDisable(false);
 				disableResume();
-				onResumeStateChange?.(false);
+				onResumeStateChangeRef.current?.(false);
 			}
 		},
 		onData: (dataPart) => {
@@ -524,13 +539,12 @@ export function ChatInterface({
 		}
 		setPendingDisable(false);
 		disableResume();
-		onResumeStateChange?.(false);
+		onResumeStateChangeRef.current?.(false);
 	}, [
 		pendingDisable,
 		status,
 		hasStreamAnimation,
 		disableResume,
-		onResumeStateChange,
 	]);
 
 	const handleStreamAnimationChange = useCallback(
@@ -538,14 +552,14 @@ export function ChatInterface({
 			setHasStreamAnimation(isAnimating);
 			if (isAnimating) {
 				setHasActiveStream(true);
-				onResumeStateChange?.(true);
+				onResumeStateChangeRef.current?.(true);
 				return;
 			}
 
 			setHasActiveStream(false);
-			onResumeStateChange?.(false);
+			onResumeStateChangeRef.current?.(false);
 		},
-		[setHasActiveStream, onResumeStateChange],
+		[setHasActiveStream],
 	);
 
 	// Fetch feedback for this session (only for authenticated users with existing sessions, after streaming completes)
@@ -562,13 +576,13 @@ export function ChatInterface({
 
 	// AI SDK will handle resume automatically when resume={true} is passed to useChat
 
-	const handleSendMessage = async (
+	const handleSendMessage = (
 		input: string | PromptInputMessage,
-	): Promise<void> => {
-		const text = typeof input === "string" ? input : input.text ?? "";
+	): boolean => {
+		const text = typeof input === "string" ? input : (input.text ?? "");
 		const trimmedText = text.trim();
 		const attachments =
-			typeof input === "string" ? [] : input.attachments ?? [];
+			typeof input === "string" ? [] : (input.attachments ?? []);
 		const hasText = trimmedText.length > 0;
 		const hasAttachments = attachments.length > 0;
 
@@ -579,7 +593,7 @@ export function ChatInterface({
 			hasStreamAnimation ||
 			isUploadingAttachments
 		) {
-			return;
+			return false;
 		}
 
 		// For unauthenticated users, check anonymous message limit
@@ -593,7 +607,7 @@ export function ChatInterface({
 				metadata: { isAnonymous: true },
 			});
 			setShowRateLimitDialog(true);
-			return;
+			return false;
 		}
 
 		// For authenticated users, check usage limits based on selected model
@@ -606,48 +620,49 @@ export function ChatInterface({
 						"You've reached your current usage limit for this model.",
 					duration: 5000,
 				});
-				return;
+				return false;
 			}
 		}
 
+		// Fast-fail checks in order of importance
 		if (hasAttachments && !attachmentsAllowed) {
 			toast.error("Attachments not supported", {
 				description: "The selected model does not support file attachments.",
 				duration: 4000,
 			});
-			return;
+			return false;
 		}
 
-		if (
-			hasAttachments &&
-			!billingContext.features.webSearch.enabled
-		) {
+		// Validate all attachments before checking billing/features
+		// This gives immediate feedback on file issues
+		if (hasAttachments) {
+			const validationError = validateAttachments(attachments, {
+				supportsImageAttachments,
+				supportsPdfAttachments,
+			});
+
+			if (validationError) {
+				toast.error(validationError.message, {
+					description: validationError.details,
+					duration: 4000,
+				});
+				return false;
+			}
+		}
+
+		// Check web search availability after validating attachments are valid
+		// This prevents confusing users with billing errors when files are invalid
+		if (hasAttachments && !billingContext.features.webSearch.enabled) {
 			toast.error("Web search required", {
 				description:
 					billingContext.features.webSearch.disabledReason ??
 					"Attachments require web search, which is unavailable for your account.",
 				duration: 5000,
 			});
-			return;
+			return false;
 		}
 
-		// Validate all attachments
-		const validationError = validateAttachments(attachments, {
-			supportsImageAttachments,
-			supportsPdfAttachments,
-		});
-
-		if (validationError) {
-			toast.error(validationError.message, {
-				description: validationError.details,
-				duration: 4000,
-			});
-			return;
-		}
-
-		const nextWebSearchEnabled = hasAttachments
-			? true
-			: webSearchEnabled;
+		const nextWebSearchEnabled = hasAttachments ? true : webSearchEnabled;
 
 		addBreadcrumb({
 			category: "chat-ui",
@@ -662,68 +677,91 @@ export function ChatInterface({
 			},
 		});
 
-			let uploadedAttachments: UploadedAttachment[] = [];
+		let uploadedAttachments: UploadedAttachment[] = [];
 
-			try {
-				if (hasAttachments) {
-					// Check for unresolved attachments
-					const unresolved = findUnresolvedAttachment(attachments);
-					if (unresolved) {
-						toast.error("Upload in progress", {
-							description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
-							duration: 4000,
-						});
-						return;
-					}
-
-					// Convert attachments to uploaded format
-					uploadedAttachments = convertAttachmentsToUploaded(attachments);
-
-					// Enable web search if needed
-					if (!webSearchEnabled && billingContext.features.webSearch.enabled) {
-						setWebSearchEnabled(true);
-					}
+		try {
+			if (hasAttachments) {
+				// Check for empty attachments array (shouldn't happen, but defensive)
+				if (attachments.length === 0) {
+					toast.error("No attachments", {
+						description:
+							"Please add at least one file or remove the attachment.",
+						duration: 4000,
+					});
+					return false;
 				}
 
-				// Handle session creation for new sessions
-				if (isNewSession && messages.length === 0) {
-					const seedText = generateSessionSeedText(trimmedText, uploadedAttachments);
-					handleSessionCreation(seedText);
+				// Check for unresolved attachments
+				const unresolved = findUnresolvedAttachment(attachments);
+				if (unresolved) {
+					toast.error("Upload in progress", {
+						description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
+						duration: 4000,
+					});
+					return false;
 				}
 
-				// Create user message
-				const userMessageId = crypto.randomUUID();
-				const userMessageParts = createMessageParts(trimmedText, uploadedAttachments);
+				// Convert attachments to uploaded format
+				uploadedAttachments = convertAttachmentsToUploaded(attachments);
 
-				const userMessage: LightfastAppChatUIMessage = {
-					role: "user",
-					parts: userMessageParts,
-					id: userMessageId,
-				};
-
-				onNewUserMessage?.(userMessage);
-
-				const requestBody: Record<string, unknown> = {
-					userMessageId,
-					modelId: selectedModelId,
-					webSearchEnabled: nextWebSearchEnabled,
-				};
-
-				if (uploadedAttachments.length > 0) {
-					requestBody.attachments = uploadedAttachments.map((uploaded) => ({
-						id: uploaded.id,
-							storagePath: uploaded.storagePath,
-						size: uploaded.size,
-						contentType: uploaded.contentType,
-						filename: uploaded.filename ?? null,
-						metadata: uploaded.metadata,
-					}));
+				// Verify conversion succeeded
+				if (uploadedAttachments.length === 0 && attachments.length > 0) {
+					toast.error("Attachment error", {
+						description:
+							"Failed to process attachments. Please try re-uploading.",
+						duration: 4000,
+					});
+					return false;
 				}
+			}
 
-				await vercelSendMessage(userMessage, {
-					body: requestBody,
-				});
+			// Handle session creation for new sessions
+			if (isNewSession && messages.length === 0) {
+				const seedText = generateSessionSeedText(
+					trimmedText,
+					uploadedAttachments,
+				);
+				handleSessionCreation(seedText);
+			}
 
+			// Create user message
+			const userMessageId = crypto.randomUUID();
+			const userMessageParts = createMessageParts(
+				trimmedText,
+				uploadedAttachments,
+			);
+
+			const userMessage: LightfastAppChatUIMessage = {
+				role: "user",
+				parts: userMessageParts,
+				id: userMessageId,
+			};
+
+			onNewUserMessage?.(userMessage);
+
+			const requestBody: Record<string, unknown> = {
+				userMessageId,
+				modelId: selectedModelId,
+				webSearchEnabled: nextWebSearchEnabled,
+			};
+
+			if (uploadedAttachments.length > 0) {
+				requestBody.attachments = uploadedAttachments.map((uploaded) => ({
+					id: uploaded.id,
+					storagePath: uploaded.storagePath,
+					size: uploaded.size,
+					contentType: uploaded.contentType,
+					filename: uploaded.filename ?? null,
+					metadata: uploaded.metadata,
+				}));
+			}
+
+			// Start sending message (don't await - fire and forget)
+			// This allows form to clear immediately while streaming happens in background
+			vercelSendMessage(userMessage, {
+				body: requestBody,
+			}).then(() => {
+				// Log success after streaming completes
 				addBreadcrumb({
 					category: "chat-ui",
 					message: "send_message_success",
@@ -731,39 +769,50 @@ export function ChatInterface({
 						agentId,
 						sessionId,
 						modelId: selectedModelId,
-						attachmentCount: attachments.length,
+						attachmentCount: uploadedAttachments.length,
 					},
 				});
+			}).catch((error) => {
+				// Errors during streaming are handled by useChat's onError
+				console.error("[handleSendMessage] Stream error:", error);
+			});
 
-				if (!isAuthenticated) {
-					incrementCount();
-				}
-			} catch (unknownError) {
-				const safeError =
-					unknownError instanceof Error
-						? unknownError
-						: new Error(String(unknownError));
-				ChatErrorHandler.handleError(unknownError);
-				captureException(safeError, {
-					contexts: {
-						"chat-ui": {
-							agentId,
-							sessionId,
-							modelId: selectedModelId,
-						},
-					},
-				});
-				throwToErrorBoundary(safeError);
-				return;
+			if (!isAuthenticated) {
+				incrementCount();
 			}
+
+			// Return true immediately - message queued successfully, form can clear
+			return true;
+		} catch (unknownError) {
+			const safeError =
+				unknownError instanceof Error
+					? unknownError
+					: new Error(String(unknownError));
+			ChatErrorHandler.handleError(unknownError);
+			captureException(safeError, {
+				contexts: {
+					"chat-ui": {
+						agentId,
+						sessionId,
+						modelId: selectedModelId,
+					},
+				},
+			});
+			throwToErrorBoundary(safeError);
+			return false;
+		}
 	};
 
 	// Handle prompt input submission - converts PromptInput format to our handleSendMessage
+	// Must be async to match component prop signature, but doesn't await (form clears synchronously)
 	const handlePromptSubmit = async (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
-	) => {
+	): Promise<void> => { // eslint-disable-line @typescript-eslint/require-await
 		event.preventDefault();
+
+		// Capture form element reference for reset
+		const formElement = event.currentTarget;
 
 		const text = message.text ?? "";
 		const hasText = text.trim().length > 0;
@@ -773,10 +822,30 @@ export function ChatInterface({
 			return;
 		}
 
-		// Clear the form immediately after preventing default
-		event.currentTarget.reset();
+		// CRITICAL: Synchronous check for unresolved attachments BEFORE calling handleSendMessage
+		// Prevents race condition where user presses Enter while attachments are uploading
+		// This catches the case where isUploadingAttachments state hasn't updated yet
+		if (hasAttachments && message.attachments) {
+			const unresolved = findUnresolvedAttachment(message.attachments);
+			if (unresolved) {
+				// Don't proceed - show error and keep form populated with attachments
+				toast.error("Upload in progress", {
+					description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
+					duration: 4000,
+				});
+				return; // Exit early - form stays intact, attachments preserved
+			}
+		}
 
-		await handleSendMessage(message);
+		// Send message - returns true if validation passed and message queued
+		// Form clears immediately, streaming happens in background
+		const success = handleSendMessage(message);
+
+		// Clear form only if message was successfully queued
+		// On validation errors, form stays populated for retry
+		if (success) {
+			formElement.reset();
+		}
 	};
 
 	// Handle prompt input errors
@@ -792,7 +861,7 @@ export function ChatInterface({
 		switch (err.code) {
 			case "max_files":
 				userMessage = `Maximum ${MAX_ATTACHMENT_COUNT} files allowed`;
-				details = "Remove some files to continue";
+				details = `Please select ${MAX_ATTACHMENT_COUNT} or fewer files`;
 				break;
 			case "max_file_size":
 				userMessage = "File size limit exceeded";
@@ -817,7 +886,8 @@ export function ChatInterface({
 				break;
 			case "upload_failed":
 				userMessage = "Upload failed";
-				details = err.message || "Unable to upload attachment. Please try again.";
+				details =
+					err.message || "Unable to upload attachment. Please try again.";
 				break;
 		}
 
@@ -850,7 +920,8 @@ export function ChatInterface({
 		) : null;
 
 	// Determine attachment button state
-	const attachmentButtonDisabled = !attachmentsAllowed || isUploadingAttachments;
+	const attachmentButtonDisabled =
+		!attachmentsAllowed || isUploadingAttachments;
 	const attachmentDisabledReason = !attachmentsAllowed
 		? "The selected model does not support file attachments"
 		: isUploadingAttachments
@@ -867,28 +938,81 @@ export function ChatInterface({
 	const submitDisabledReason = isUploadingAttachments
 		? "Uploading attachments..."
 		: !canUseCurrentModel.allowed
-			? ("reason" in canUseCurrentModel ? canUseCurrentModel.reason ?? "Cannot use this model" : "Cannot use this model")
+			? "reason" in canUseCurrentModel
+				? (canUseCurrentModel.reason ?? "Cannot use this model")
+				: "Cannot use this model"
 			: !isAuthenticated && hasReachedLimit
 				? "Message limit reached"
 				: status === "streaming"
 					? "Generating response..."
 					: undefined;
 
+	// Memoized artifact click handler for authenticated users
+	const handleArtifactClick = useCallback(
+		async (artifactId: string) => {
+			if (!isAuthenticated) return;
+
+			try {
+				const artifactData = await fetchArtifact(artifactId);
+				// Calculate responsive bounding box based on viewport
+				const viewportWidth = window.innerWidth;
+				const viewportHeight = window.innerHeight;
+				showArtifact({
+					documentId: artifactData.id,
+					title: artifactData.title,
+					kind: artifactData.kind,
+					content: artifactData.content,
+					status: "idle",
+					boundingBox: {
+						top: Math.max(60, viewportHeight * 0.1),
+						left: Math.max(60, viewportWidth * 0.05),
+						width: Math.min(400, viewportWidth * 0.4),
+						height: Math.min(300, viewportHeight * 0.4),
+					},
+				});
+			} catch (unknownError) {
+				const errorMessage =
+					unknownError instanceof Error
+						? unknownError.message
+						: "Failed to load artifact";
+
+				toast.error("Unable to load artifact", {
+					description: errorMessage,
+					duration: 4000,
+				});
+
+				console.error("Artifact fetch failed:", errorMessage);
+			}
+		},
+		[isAuthenticated, fetchArtifact, showArtifact],
+	);
+
+	// Wrapper to match expected signature for onSendMessage prop (ignores return value)
+	const handleSendMessageVoid = useCallback(
+		// eslint-disable-next-line @typescript-eslint/require-await
+		async (input: string | PromptInputMessage): Promise<void> => {
+			handleSendMessage(input);
+		},
+		[],
+	);
+
 	// Create the main chat content component using extracted view components
 	const chatContent =
 		messages.length === 0 && isNewSession ? (
 			<ChatNewSessionView
 				userEmail={user?.email ?? undefined}
-				onSendMessage={handleSendMessage}
+				onSendMessage={handleSendMessageVoid}
 				onPromptSubmit={handlePromptSubmit}
 				onPromptError={handlePromptError}
 				onAttachmentUpload={handleAttachmentUpload}
-				attachmentAccept={attachmentAccept || undefined}
+				attachmentAccept={attachmentAccept}
 				attachmentButtonDisabled={attachmentButtonDisabled}
 				attachmentDisabledReason={attachmentDisabledReason}
 				webSearchEnabled={webSearchEnabled}
 				webSearchAllowed={billingContext.features.webSearch.enabled}
-				webSearchDisabledReason={billingContext.features.webSearch.disabledReason ?? undefined}
+				webSearchDisabledReason={
+					billingContext.features.webSearch.disabledReason ?? undefined
+				}
 				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
 				modelSelector={modelSelector}
 				status={status}
@@ -906,51 +1030,20 @@ export function ChatInterface({
 				isExistingSessionWithNoMessages={messages.length === 0 && !isNewSession}
 				hasActiveStream={hasActiveStream}
 				onStreamAnimationChange={handleStreamAnimationChange}
-				onArtifactClick={
-					isAuthenticated
-						? async (artifactId) => {
-								try {
-									const artifactData = await fetchArtifact(artifactId);
-									showArtifact({
-										documentId: artifactData.id,
-										title: artifactData.title,
-										kind: artifactData.kind,
-										content: artifactData.content,
-										status: "idle",
-										boundingBox: {
-											top: 100,
-											left: 100,
-											width: 300,
-											height: 200,
-										},
-									});
-								} catch (unknownError) {
-									const errorMessage =
-										unknownError instanceof Error
-											? unknownError.message
-											: "Failed to load artifact";
-
-									toast.error("Unable to load artifact", {
-										description: errorMessage,
-										duration: 4000,
-									});
-
-									console.error("Artifact fetch failed:", errorMessage);
-								}
-							}
-						: undefined
-				}
+				onArtifactClick={isAuthenticated ? handleArtifactClick : undefined}
 				inlineErrors={inlineErrors}
 				onInlineErrorDismiss={dismissInlineError}
 				onPromptSubmit={handlePromptSubmit}
 				onPromptError={handlePromptError}
 				onAttachmentUpload={handleAttachmentUpload}
-				attachmentAccept={attachmentAccept || undefined}
+				attachmentAccept={attachmentAccept}
 				attachmentButtonDisabled={attachmentButtonDisabled}
 				attachmentDisabledReason={attachmentDisabledReason}
 				webSearchEnabled={webSearchEnabled}
 				webSearchAllowed={billingContext.features.webSearch.enabled}
-				webSearchDisabledReason={billingContext.features.webSearch.disabledReason ?? undefined}
+				webSearchDisabledReason={
+					billingContext.features.webSearch.disabledReason ?? undefined
+				}
 				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
 				modelSelector={modelSelector}
 				isSubmitDisabled={isSubmitDisabled}

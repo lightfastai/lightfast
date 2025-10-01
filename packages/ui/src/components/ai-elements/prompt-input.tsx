@@ -327,11 +327,26 @@ export const PromptInput = ({
       if (!accept || accept.trim() === "") {
         return true;
       }
-      // Simple check: if accept includes "image/*", filter to images; otherwise allow.
-      if (accept.includes("image/*")) {
-        return f.type.startsWith("image/");
-      }
-      return true;
+
+      // Parse accept string into patterns
+      const patterns = accept.split(',').map(p => p.trim());
+
+      return patterns.some(pattern => {
+        // Handle wildcard patterns like "image/*"
+        if (pattern.includes('*')) {
+          const prefix = pattern.replace('/*', '/');
+          return f.type.startsWith(prefix);
+        }
+        // Handle exact MIME types like "application/pdf"
+        if (pattern.includes('/')) {
+          return f.type === pattern;
+        }
+        // Handle file extensions like ".pdf"
+        if (pattern.startsWith('.')) {
+          return f.name.toLowerCase().endsWith(pattern.toLowerCase());
+        }
+        return false;
+      });
     },
     [accept]
   );
@@ -352,10 +367,19 @@ export const PromptInput = ({
         const withinSize = (f: File) =>
           maxFileSize ? f.size <= maxFileSize : true;
         const sized = accepted.filter(withinSize);
-        if (sized.length === 0 && accepted.length > 0) {
+
+        // Find which files are too large for better error messaging
+        const oversized = accepted.filter(f => !withinSize(f));
+        if (sized.length === 0 && oversized.length > 0) {
+          const maxMB = maxFileSize ? Math.floor(maxFileSize / (1024 * 1024)) : 0;
+          const firstOversized = oversized[0];
+          const fileSizeMB = firstOversized ? Math.floor(firstOversized.size / (1024 * 1024)) : 0;
+
           onError?.({
             code: "max_file_size",
-            message: "All files exceed the maximum size.",
+            message: oversized.length === 1
+              ? `"${firstOversized?.name}" is ${fileSizeMB}MB (max ${maxMB}MB)`
+              : `${oversized.length} files exceed ${maxMB}MB limit`,
           });
           return;
         }
@@ -365,15 +389,18 @@ export const PromptInput = ({
           typeof maxFiles === "number"
             ? Math.max(0, maxFiles - currentLength)
             : undefined;
-        const capped =
-          typeof capacity === "number" ? sized.slice(0, capacity) : sized;
 
+        // Reject ALL files if the total would exceed maxFiles
         if (typeof capacity === "number" && sized.length > capacity) {
           onError?.({
             code: "max_files",
-            message: "Too many files. Some were not added.",
+            message: `Maximum ${maxFiles} files allowed. Please select ${maxFiles} or fewer files.`,
           });
+          return; // Early exit - don't upload any files
         }
+
+        const capped =
+          typeof capacity === "number" ? sized.slice(0, capacity) : sized;
 
         if (capped.length === 0) {
           return;

@@ -145,6 +145,16 @@ export async function POST(
       );
     }
 
+    // Validate total size (defense in depth)
+    const totalSize = fileEntries.reduce((sum, file) => sum + file.size, 0);
+    const MAX_TOTAL_SIZE = MAX_ATTACHMENT_COUNT * MAX_ATTACHMENT_BYTES;
+    if (totalSize > MAX_TOTAL_SIZE) {
+      return buildErrorResponse(
+        400,
+        `Total file size (${Math.floor(totalSize / (1024 * 1024))}MB) exceeds maximum allowed (${Math.floor(MAX_TOTAL_SIZE / (1024 * 1024))}MB).`,
+      );
+    }
+
     const plan = await getUserPlan();
     if (!planSupportsAttachments(plan)) {
       return buildErrorResponse(403, "Attachments require web search access.");

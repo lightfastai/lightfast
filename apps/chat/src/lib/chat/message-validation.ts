@@ -89,6 +89,35 @@ export function validateAttachments(
 	attachments: PromptInputAttachmentPayload[],
 	options: ValidationOptions,
 ): ValidationError | null {
+	// Check count first - fail fast if too many attachments
+	if (attachments.length > 4) {
+		return {
+			type: ChatErrorType.INVALID_REQUEST,
+			message: `Too many attachments (${attachments.length})`,
+			details: "Maximum 4 files allowed. Please remove some files.",
+			retryable: false,
+			metadata: { count: attachments.length, max: 4 },
+		};
+	}
+
+	// Validate total size (4 files × 10MB = 40MB max)
+	const totalSize = attachments.reduce((sum, att) => {
+		const size = typeof att.size === "number" ? att.size : 0;
+		return sum + size;
+	}, 0);
+
+	const MAX_TOTAL_SIZE = 4 * MAX_ATTACHMENT_BYTES; // 40MB total
+	if (totalSize > MAX_TOTAL_SIZE) {
+		return {
+			type: ChatErrorType.INVALID_REQUEST,
+			message: "Total file size too large",
+			details: `Combined files must be under ${Math.floor(MAX_TOTAL_SIZE / (1024 * 1024))}MB. Current total: ${Math.floor(totalSize / (1024 * 1024))}MB`,
+			retryable: false,
+			metadata: { totalSize, maxTotal: MAX_TOTAL_SIZE },
+		};
+	}
+
+	// Validate each attachment
 	for (const attachment of attachments) {
 		const error = validateAttachment(attachment, options);
 		if (error) {
