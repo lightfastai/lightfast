@@ -847,7 +847,7 @@ export function ChatInterface({
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
 	): Promise<void> => {
-		// eslint-disable-line @typescript-eslint/require-await
+		await Promise.resolve(); // Satisfy linter - function must be async for prop signature
 		event.preventDefault();
 
 		// Capture form element reference for reset
