@@ -168,7 +168,6 @@ export function ChatInterface({
 	const { inlineErrors, addInlineError, dismissInlineError } =
 		useInlineErrors();
 	const [hasStreamAnimation, setHasStreamAnimation] = useState(false);
-	const [pendingDisable, setPendingDisable] = useState(false);
 
 	// Fetch artifacts through the tRPC API so we reuse authentication and caching
 	const fetchArtifact = useCallback(
@@ -254,7 +253,12 @@ export function ChatInterface({
 	// Preload dialog image when user is close to limit (3 messages left)
 	const hasPreloadedImage = useRef(false);
 	useEffect(() => {
-		if (!isAuthenticated && remainingMessages <= 3 && remainingMessages > 0 && !hasPreloadedImage.current) {
+		if (
+			!isAuthenticated &&
+			remainingMessages <= 3 &&
+			remainingMessages > 0 &&
+			!hasPreloadedImage.current
+		) {
 			// Preload the image using Next.js Image preloader
 			const img = new Image();
 			img.src = "/og-bg-only.jpg";
@@ -273,13 +277,21 @@ export function ChatInterface({
 
 	// Invalidate usage query when model changes to ensure fresh quota data
 	// This prevents showing stale quota after model switch (30s cache window)
+	const previousModelIdRef = useRef(selectedModelId);
 	useEffect(() => {
-		if (isAuthenticated && billingContext.isLoaded) {
-			// Invalidate usage limits to refresh quota display
-			void queryClient.invalidateQueries({
-				predicate: (query) => query.queryKey[0] === 'usage' && query.queryKey[1] === 'checkLimits',
-			});
+		// Only invalidate if model actually changed (not on initial render or billing context changes)
+		const modelChanged = previousModelIdRef.current !== selectedModelId;
+		previousModelIdRef.current = selectedModelId;
+
+		if (!modelChanged || !isAuthenticated || !billingContext.isLoaded) {
+			return;
 		}
+
+		// Invalidate usage limits to refresh quota display
+		void queryClient.invalidateQueries({
+			predicate: (query) =>
+				query.queryKey[0] === "usage" && query.queryKey[1] === "checkLimits",
+		});
 	}, [selectedModelId, isAuthenticated, billingContext.isLoaded, queryClient]);
 
 	const selectedModelConfig = useMemo(() => {
@@ -353,7 +365,9 @@ export function ChatInterface({
 		if (!billingContext.features.webSearch.enabled) {
 			return {
 				allowed: false,
-				reason: billingContext.features.webSearch.disabledReason ?? "Web search not available",
+				reason:
+					billingContext.features.webSearch.disabledReason ??
+					"Web search not available",
 			};
 		}
 
@@ -444,7 +458,6 @@ export function ChatInterface({
 				});
 				setDataStream([]);
 				disableResume();
-				setPendingDisable(false);
 				onResumeStateChangeRef.current?.(false);
 				onAssistantStreamError?.({
 					messageId: failedMessageId,
@@ -521,11 +534,8 @@ export function ChatInterface({
 			// Pass the assistant message to the callback
 			// This allows parent components to optimistically update the cache
 			onNewAssistantMessage?.(event.message);
-			if (!hasStreamAnimation) {
-				setPendingDisable(false);
-				disableResume();
-				onResumeStateChangeRef.current?.(false);
-			}
+			// Note: Resume disabling is handled by the consolidated effect above
+			// which waits for both stream AND animation to complete
 		},
 		onData: (dataPart) => {
 			// Accumulate streaming data parts for artifact processing
@@ -553,34 +563,26 @@ export function ChatInterface({
 		disableResume,
 	});
 
-	// Handle pending disable after stream completes
-	useEffect(() => {
-		if (status === "streaming" || status === "submitted") {
-			setPendingDisable(false);
-		} else {
-			setPendingDisable(true);
-		}
-	}, [status]);
+	// Disable resume when BOTH stream and animation complete
+	// This consolidates the previous dual-effect state machine into a single effect
+	const previousStreamActiveRef = useRef(false);
+	const previousHasAnimationRef = useRef(false);
 
 	useEffect(() => {
-		if (!pendingDisable) {
-			return;
+		const streamActive = status === "streaming" || status === "submitted";
+		const wasActive = previousStreamActiveRef.current || previousHasAnimationRef.current;
+		const isNowInactive = !streamActive && !hasStreamAnimation;
+
+		// Only disable resume when transitioning from active to inactive
+		// (not on every render when already inactive)
+		if (wasActive && isNowInactive) {
+			disableResume();
+			onResumeStateChangeRef.current?.(false);
 		}
-		if (status === "streaming" || status === "submitted") {
-			return;
-		}
-		if (hasStreamAnimation) {
-			return;
-		}
-		setPendingDisable(false);
-		disableResume();
-		onResumeStateChangeRef.current?.(false);
-	}, [
-		pendingDisable,
-		status,
-		hasStreamAnimation,
-		disableResume,
-	]);
+
+		previousStreamActiveRef.current = streamActive;
+		previousHasAnimationRef.current = hasStreamAnimation;
+	}, [status, hasStreamAnimation, disableResume]);
 
 	const handleStreamAnimationChange = useCallback(
 		(isAnimating: boolean) => {
@@ -611,9 +613,7 @@ export function ChatInterface({
 
 	// AI SDK will handle resume automatically when resume={true} is passed to useChat
 
-	const handleSendMessage = (
-		input: string | PromptInputMessage,
-	): boolean => {
+	const handleSendMessage = (input: string | PromptInputMessage): boolean => {
 		const text = typeof input === "string" ? input : (input.text ?? "");
 		const trimmedText = text.trim();
 		const attachments =
@@ -796,22 +796,24 @@ export function ChatInterface({
 			// This allows form to clear immediately while streaming happens in background
 			vercelSendMessage(userMessage, {
 				body: requestBody,
-			}).then(() => {
-				// Log success after streaming completes
-				addBreadcrumb({
-					category: "chat-ui",
-					message: "send_message_success",
-					data: {
-						agentId,
-						sessionId,
-						modelId: selectedModelId,
-						attachmentCount: uploadedAttachments.length,
-					},
+			})
+				.then(() => {
+					// Log success after streaming completes
+					addBreadcrumb({
+						category: "chat-ui",
+						message: "send_message_success",
+						data: {
+							agentId,
+							sessionId,
+							modelId: selectedModelId,
+							attachmentCount: uploadedAttachments.length,
+						},
+					});
+				})
+				.catch((error) => {
+					// Errors during streaming are handled by useChat's onError
+					console.error("[handleSendMessage] Stream error:", error);
 				});
-			}).catch((error) => {
-				// Errors during streaming are handled by useChat's onError
-				console.error("[handleSendMessage] Stream error:", error);
-			});
 
 			if (!isAuthenticated) {
 				incrementCount();
@@ -844,7 +846,8 @@ export function ChatInterface({
 	const handlePromptSubmit = async (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
-	): Promise<void> => { // eslint-disable-line @typescript-eslint/require-await
+	): Promise<void> => {
+		// eslint-disable-line @typescript-eslint/require-await
 		event.preventDefault();
 
 		// Capture form element reference for reset
@@ -968,7 +971,8 @@ export function ChatInterface({
 		!billingContext.features.attachments.enabled ||
 		isUploadingAttachments;
 	const attachmentDisabledReason = !billingContext.features.attachments.enabled
-		? billingContext.features.attachments.disabledReason ?? "Attachments not available"
+		? (billingContext.features.attachments.disabledReason ??
+			"Attachments not available")
 		: !attachmentsAllowed
 			? "The selected model does not support file attachments"
 			: isUploadingAttachments
