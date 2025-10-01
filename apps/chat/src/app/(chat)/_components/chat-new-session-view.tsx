@@ -1,10 +1,11 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, RefObject } from "react";
 import type { ChatStatus } from "ai";
 import type {
 	PromptInputMessage,
 	PromptInputAttachmentItem,
+	PromptInputRef,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { PromptError } from "@repo/chat-ai-types/validation";
 import { ChatEmptyState } from "./chat-empty-state";
@@ -28,6 +29,7 @@ interface ChatNewSessionViewProps {
 	status: ChatStatus;
 	isSubmitDisabled: boolean;
 	submitDisabledReason?: string;
+	formRef?: RefObject<PromptInputRef | null>;
 }
 
 /**
@@ -51,6 +53,7 @@ export function ChatNewSessionView({
 	status,
 	isSubmitDisabled,
 	submitDisabledReason,
+	formRef,
 }: ChatNewSessionViewProps) {
 	return (
 		<div className="h-full flex flex-col items-center justify-center bg-background">
@@ -65,6 +68,7 @@ export function ChatNewSessionView({
 					/>
 				</div>
 				<ChatPromptInput
+					ref={formRef}
 					placeholder="Ask anything..."
 					onSubmit={onPromptSubmit}
 					onError={onPromptError}

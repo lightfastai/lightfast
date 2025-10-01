@@ -1,10 +1,11 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, RefObject } from "react";
 import type { ChatStatus } from "ai";
 import type {
 	PromptInputMessage,
 	PromptInputAttachmentItem,
+	PromptInputRef,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { ChatInlineError } from "@repo/chat-ai-types/errors";
@@ -40,6 +41,7 @@ interface ChatExistingSessionViewProps {
 	isSubmitDisabled: boolean;
 	submitDisabledReason?: string;
 	rateLimitIndicator?: React.ReactNode;
+	formRef?: RefObject<PromptInputRef | null>;
 }
 
 /**
@@ -73,6 +75,7 @@ export function ChatExistingSessionView({
 	isSubmitDisabled,
 	submitDisabledReason,
 	rateLimitIndicator,
+	formRef,
 }: ChatExistingSessionViewProps) {
 	return (
 		<div className="flex flex-col h-full bg-background">
@@ -105,6 +108,7 @@ export function ChatExistingSessionView({
 							)}
 
 							<ChatPromptInput
+								ref={formRef}
 								placeholder={
 									messages.length === 0
 										? "Ask anything..."

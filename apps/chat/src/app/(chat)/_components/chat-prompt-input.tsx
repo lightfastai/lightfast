@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import { forwardRef } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUp, Globe, PaperclipIcon, X } from "lucide-react";
 import type { ChatStatus } from "ai";
@@ -19,6 +20,7 @@ import {
 import type {
 	PromptInputMessage,
 	PromptInputAttachmentItem,
+	PromptInputRef,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import {
 	MAX_ATTACHMENT_COUNT,
@@ -189,64 +191,67 @@ interface ChatPromptInputProps {
  * Reusable chat prompt input component with attachments, web search toggle, and model selector.
  * Consolidates the shared configuration between new session and existing session inputs.
  */
-export function ChatPromptInput({
-	placeholder,
-	onSubmit,
-	onError,
-	onAttachmentUpload,
-	accept,
-	attachmentButtonDisabled,
-	attachmentDisabledReason,
-	webSearchEnabled,
-	webSearchAllowed,
-	webSearchDisabledReason,
-	onWebSearchToggle,
-	modelSelector,
-	status,
-	isSubmitDisabled,
-	submitDisabledReason,
-	className,
-}: ChatPromptInputProps) {
-	return (
-		<PromptInput
-			onSubmit={onSubmit}
-			onError={onError}
-			onAttachmentUpload={onAttachmentUpload}
-			accept={accept}
-			multiple
-			maxFiles={MAX_ATTACHMENT_COUNT}
-			maxFileSize={MAX_ATTACHMENT_BYTES}
-			className={cn(
-				"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-				"!divide-y-0 !shadow-sm",
-				className,
-			)}
-		>
-			<PromptInputBody className="flex flex-col">
-				<PromptAttachments />
-				<PromptInputTextarea
-					placeholder={placeholder}
-					className={cn(
-						"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-						"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
-						"outline-none min-h-0 min-h-[72px]",
-					)}
-					style={{ lineHeight: "24px" }}
-					maxLength={MAX_PROMPT_LENGTH}
+export const ChatPromptInput = forwardRef<PromptInputRef, ChatPromptInputProps>(
+	function ChatPromptInput({
+		placeholder,
+		onSubmit,
+		onError,
+		onAttachmentUpload,
+		accept,
+		attachmentButtonDisabled,
+		attachmentDisabledReason,
+		webSearchEnabled,
+		webSearchAllowed,
+		webSearchDisabledReason,
+		onWebSearchToggle,
+		modelSelector,
+		status,
+		isSubmitDisabled,
+		submitDisabledReason,
+		className,
+	}, ref) {
+		return (
+			<PromptInput
+				ref={ref}
+				onSubmit={onSubmit}
+				onError={onError}
+				onAttachmentUpload={onAttachmentUpload}
+				accept={accept}
+				multiple
+				maxFiles={MAX_ATTACHMENT_COUNT}
+				maxFileSize={MAX_ATTACHMENT_BYTES}
+				className={cn(
+					"w-full border dark:shadow-md border-border/50 rounded-2xl overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
+					"!divide-y-0 !shadow-sm",
+					className,
+				)}
+			>
+				<PromptInputBody className="flex flex-col">
+					<PromptAttachments />
+					<PromptInputTextarea
+						placeholder={placeholder}
+						className={cn(
+							"w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
+							"!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+							"outline-none min-h-0 min-h-[72px]",
+						)}
+						style={{ lineHeight: "24px" }}
+						maxLength={MAX_PROMPT_LENGTH}
+					/>
+				</PromptInputBody>
+				<PromptFooterToolbar
+					attachmentButtonDisabled={attachmentButtonDisabled}
+					attachmentDisabledReason={attachmentDisabledReason}
+					webSearchEnabled={webSearchEnabled}
+					webSearchAllowed={webSearchAllowed}
+					webSearchDisabledReason={webSearchDisabledReason}
+					onWebSearchToggle={onWebSearchToggle}
+					modelSelector={modelSelector}
+					status={status}
+					isSubmitDisabled={isSubmitDisabled}
+					submitDisabledReason={submitDisabledReason}
 				/>
-			</PromptInputBody>
-			<PromptFooterToolbar
-				attachmentButtonDisabled={attachmentButtonDisabled}
-				attachmentDisabledReason={attachmentDisabledReason}
-				webSearchEnabled={webSearchEnabled}
-				webSearchAllowed={webSearchAllowed}
-				webSearchDisabledReason={webSearchDisabledReason}
-				onWebSearchToggle={onWebSearchToggle}
-				modelSelector={modelSelector}
-				status={status}
-				isSubmitDisabled={isSubmitDisabled}
-				submitDisabledReason={submitDisabledReason}
-			/>
-		</PromptInput>
-	);
-}
+			</PromptInput>
+		);
+	}
+);

@@ -77,6 +77,7 @@ const getMetadataString = (
 // Import model processing types
 import { getModelConfig, getVisibleModels } from "~/ai/providers";
 import type { ModelId, ChatProcessedModel } from "~/ai/providers";
+import type { PromptInputRef } from "@repo/ui/components/ai-elements/prompt-input";
 import {
 	MAX_ATTACHMENT_BYTES,
 	MAX_ATTACHMENT_COUNT,
@@ -841,6 +842,9 @@ export function ChatInterface({
 		}
 	};
 
+	// Form ref for programmatic reset (includes clear method for attachments)
+	const formRef = useRef<PromptInputRef | null>(null);
+
 	// Handle prompt input submission - converts PromptInput format to our handleSendMessage
 	// Must be async to match component prop signature, but doesn't await (form clears synchronously)
 	const handlePromptSubmit = async (
@@ -849,9 +853,6 @@ export function ChatInterface({
 	): Promise<void> => {
 		await Promise.resolve(); // Satisfy linter - function must be async for prop signature
 		event.preventDefault();
-
-		// Capture form element reference for reset
-		const formElement = event.currentTarget;
 
 		const text = message.text ?? "";
 		const hasText = text.trim().length > 0;
@@ -889,8 +890,9 @@ export function ChatInterface({
 
 		// Clear form only if message was successfully queued
 		// On validation errors, form stays populated for retry
-		if (success) {
-			formElement.reset();
+		// Use ref.reset() which clears both textarea and attachments
+		if (success && formRef.current) {
+			formRef.current.reset();
 		}
 	};
 
@@ -1067,6 +1069,7 @@ export function ChatInterface({
 				status={status}
 				isSubmitDisabled={isSubmitDisabled}
 				submitDisabledReason={submitDisabledReason}
+				formRef={formRef}
 			/>
 		) : (
 			<ChatExistingSessionView
@@ -1096,6 +1099,7 @@ export function ChatInterface({
 				isSubmitDisabled={isSubmitDisabled}
 				submitDisabledReason={submitDisabledReason}
 				rateLimitIndicator={rateLimitIndicator}
+				formRef={formRef}
 			/>
 		);
 

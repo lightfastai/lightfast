@@ -33,6 +33,7 @@ import {
   type ClipboardEventHandler,
   type ComponentProps,
   createContext,
+  forwardRef,
   type FormEvent,
   type FormEventHandler,
   Fragment,
@@ -42,6 +43,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -263,6 +265,12 @@ export type PromptInputMessage = {
   attachments?: PromptInputAttachmentPayload[];
 };
 
+export type PromptInputRef = {
+  form: HTMLFormElement | null;
+  clear: (options?: { revokeObjectURLs?: boolean }) => void;
+  reset: () => void;
+};
+
 export type PromptInputProps = Omit<
   HTMLAttributes<HTMLFormElement>,
   "onSubmit" | "onError"
@@ -290,7 +298,7 @@ export type PromptInputProps = Omit<
   ) => void;
 };
 
-export const PromptInput = ({
+export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
   className,
   accept,
   multiple,
@@ -303,7 +311,7 @@ export const PromptInput = ({
   onAttachmentsChange,
   onSubmit,
   ...props
-}: PromptInputProps) => {
+}, ref) => {
   const [items, setItems] = useState<PromptInputAttachmentItem[]>([]);
   const itemsRef = useRef<PromptInputAttachmentItem[]>(items);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -527,6 +535,16 @@ export const PromptInput = ({
     [],
   );
 
+  // Expose form ref and clear method to parent
+  useImperativeHandle(ref, () => ({
+    form: formRef.current,
+    clear,
+    reset: () => {
+      formRef.current?.reset();
+      clear();
+    },
+  }), [clear]);
+
   // Note: File input cannot be programmatically set for security reasons
   // The syncHiddenInput prop is no longer functional
   useEffect(() => {
@@ -630,7 +648,8 @@ export const PromptInput = ({
       event,
     );
 
-    clear();
+    // Don't clear automatically - let parent control via ref.reset() or ref.clear()
+    // This allows parent to validate before clearing (e.g., check for pending uploads)
   };
 
   const ctx = useMemo<AttachmentsContext>(
@@ -657,6 +676,7 @@ export const PromptInput = ({
         type="file"
       />
       <form
+        ref={formRef}
         className={cn(
           "w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm",
           className
@@ -666,7 +686,9 @@ export const PromptInput = ({
       />
     </AttachmentsContext.Provider>
   );
-};
+});
+
+PromptInput.displayName = "PromptInput";
 
 export type PromptInputBodyProps = HTMLAttributes<HTMLDivElement>;
 
