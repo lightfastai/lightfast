@@ -49,7 +49,7 @@ function buildErrorResponse(status: number, message: string) {
 }
 
 const planSupportsAttachments = (plan: ClerkPlanKey) =>
-	BILLING_LIMITS[plan].hasWebSearch;
+	BILLING_LIMITS[plan].hasAttachments;
 
 const getAttachmentLimitError = (files: File[]): string | null => {
 	if (files.length === 0) {
@@ -142,7 +142,7 @@ export async function POST(req: Request) {
 
 		const plan = await getUserPlan();
 		if (!planSupportsAttachments(plan)) {
-			return buildErrorResponse(403, "Attachments require web search access.");
+			return buildErrorResponse(403, "Your plan does not support file attachments.");
 		}
 
 		let modelConfig;

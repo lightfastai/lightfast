@@ -114,19 +114,22 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 	const planCapabilities = useMemo(() => ({
 		// Web search availability
 		canUseWebSearch: planLimits.hasWebSearch,
-		
+
+		// Attachment availability (decoupled from web search)
+		canUseAttachments: planLimits.hasAttachments,
+
 		// Model access
 		canUseAllModels: userPlan === ClerkPlanKey.PLUS_TIER,
 		allowedModels: planLimits.allowedModels,
-		
+
 		// Message limits
 		nonPremiumMessageLimit: planLimits.nonPremiumMessagesPerMonth,
 		premiumMessageLimit: planLimits.premiumMessagesPerMonth,
-		
+
 		// Feature access
 		canUsePremiumModels: planLimits.premiumMessagesPerMonth > 0,
 		canUseArtifacts: isAuthenticated,
-		
+
 		// Plan details
 		planName: userPlan === ClerkPlanKey.PLUS_TIER ? "Plus" : "Free",
 		isPlusUser: userPlan === ClerkPlanKey.PLUS_TIER,
@@ -204,12 +207,17 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 			enabled: planCapabilities.canUseWebSearch,
 			disabledReason: planCapabilities.canUseWebSearch ? null : "Upgrade to Plus for web search",
 		},
-		
+
+		attachments: {
+			enabled: planCapabilities.canUseAttachments,
+			disabledReason: planCapabilities.canUseAttachments ? null : "Upgrade to use file attachments",
+		},
+
 		artifacts: {
 			enabled: planCapabilities.canUseArtifacts,
 			disabledReason: planCapabilities.canUseArtifacts ? null : "Sign in to use artifacts",
 		},
-		
+
 		premiumModels: {
 			enabled: planCapabilities.canUsePremiumModels,
 			disabledReason: planCapabilities.canUsePremiumModels ? null : "Upgrade to Plus for premium models",
@@ -226,10 +234,14 @@ export function useBillingContext({ externalUsageData }: UseBillingContextOption
 				// For anonymous users, delegate to anonymous limit system
 				return { allowed: true, reason: null };
 			}
-			
+
 			if (isUsageLoading && !externalUsageData) {
-				// Optimistically allow while loading
-				return { allowed: true, reason: null };
+				// Block submission while loading to prevent quota overruns
+				// Better UX than allowing and then failing server-side
+				return {
+					allowed: false,
+					reason: "Loading usage data...",
+				};
 			}
 			
 			const messageType = getMessageType(modelId);

@@ -1,5 +1,6 @@
 import {
 	MAX_ATTACHMENT_BYTES,
+	MAX_ATTACHMENT_COUNT,
 	ensureAttachmentAllowed,
 	inferAttachmentKind,
 } from "@repo/chat-ai-types";
@@ -90,23 +91,23 @@ export function validateAttachments(
 	options: ValidationOptions,
 ): ValidationError | null {
 	// Check count first - fail fast if too many attachments
-	if (attachments.length > 4) {
+	if (attachments.length > MAX_ATTACHMENT_COUNT) {
 		return {
 			type: ChatErrorType.INVALID_REQUEST,
 			message: `Too many attachments (${attachments.length})`,
-			details: "Maximum 4 files allowed. Please remove some files.",
+			details: `Maximum ${MAX_ATTACHMENT_COUNT} files allowed. Please remove some files.`,
 			retryable: false,
-			metadata: { count: attachments.length, max: 4 },
+			metadata: { count: attachments.length, max: MAX_ATTACHMENT_COUNT },
 		};
 	}
 
-	// Validate total size (4 files × 10MB = 40MB max)
+	// Validate total size (MAX_ATTACHMENT_COUNT files × MAX_ATTACHMENT_BYTES each)
 	const totalSize = attachments.reduce((sum, att) => {
 		const size = typeof att.size === "number" ? att.size : 0;
 		return sum + size;
 	}, 0);
 
-	const MAX_TOTAL_SIZE = 4 * MAX_ATTACHMENT_BYTES; // 40MB total
+	const MAX_TOTAL_SIZE = MAX_ATTACHMENT_COUNT * MAX_ATTACHMENT_BYTES;
 	if (totalSize > MAX_TOTAL_SIZE) {
 		return {
 			type: ChatErrorType.INVALID_REQUEST,

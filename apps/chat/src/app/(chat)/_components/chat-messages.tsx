@@ -55,7 +55,8 @@ import {
 	Check,
 	AlertCircle,
 	X,
-  PaperclipIcon,
+	PaperclipIcon,
+	ImageIcon,
 } from "lucide-react";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useStream } from "~/hooks/use-stream";
@@ -132,6 +133,12 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 	attachments: FileUIPart[];
 	align: "start" | "end";
 }) {
+	const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+	const handleImageError = useCallback((url: string) => {
+		setFailedImages((prev) => new Set(prev).add(url));
+	}, []);
+
 	if (!attachments.length) {
 		return null;
 	}
@@ -165,6 +172,7 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 						return segment && segment.length > 0 ? segment : undefined;
 					})();
 					const label = filenameLabel ?? urlLabel ?? `Attachment ${index + 1}`;
+					const hasImageLoadError = failedImages.has(attachment.url);
 
 				if (isImage) {
 					return (
@@ -174,13 +182,26 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 							target="_blank"
 							rel="noopener noreferrer"
 							className="group relative block overflow-hidden rounded-md border"
+							title={label}
 						>
-							<img
-								src={attachment.url}
-								alt={label}
-								className="h-24 w-24 object-cover transition-transform group-hover:scale-[1.02]"
-								loading="lazy"
-							/>
+							{hasImageLoadError ? (
+								<div className="flex h-24 w-24 items-center justify-center bg-muted">
+									<div className="flex flex-col items-center gap-1 text-center">
+										<ImageIcon className="h-6 w-6 text-muted-foreground" />
+										<span className="max-w-[80px] truncate text-2xs text-muted-foreground">
+											{label}
+										</span>
+									</div>
+								</div>
+							) : (
+								<img
+									src={attachment.url}
+									alt={label}
+									className="h-24 w-24 object-cover transition-transform group-hover:scale-[1.02]"
+									loading="lazy"
+									onError={() => handleImageError(attachment.url)}
+								/>
+							)}
 						</a>
 					);
 				}

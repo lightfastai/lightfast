@@ -23,6 +23,7 @@ import type {
 import {
 	MAX_ATTACHMENT_COUNT,
 	MAX_ATTACHMENT_BYTES,
+	MAX_PROMPT_LENGTH,
 } from "@repo/chat-ai-types";
 import type { PromptError } from "@repo/chat-ai-types/validation";
 
@@ -231,7 +232,7 @@ export function ChatPromptInput({
 						"outline-none min-h-0 min-h-[72px]",
 					)}
 					style={{ lineHeight: "24px" }}
-					maxLength={4000}
+					maxLength={MAX_PROMPT_LENGTH}
 				/>
 			</PromptInputBody>
 			<PromptFooterToolbar

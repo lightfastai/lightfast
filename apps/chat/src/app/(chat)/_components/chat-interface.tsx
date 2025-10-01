@@ -239,7 +239,7 @@ export function ChatInterface({
 	// State for rate limit dialog
 	const [showRateLimitDialog, setShowRateLimitDialog] = useState(false);
 
-	// Web search toggle state
+	// Web search toggle state - simplified now that it's decoupled from attachments
 	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
 	// Anonymous message limit tracking (only for unauthenticated users)
@@ -270,6 +270,17 @@ export function ChatInterface({
 	// Model selection with persistence
 	const { selectedModelId, handleModelChange } =
 		useModelSelection(isAuthenticated);
+
+	// Invalidate usage query when model changes to ensure fresh quota data
+	// This prevents showing stale quota after model switch (30s cache window)
+	useEffect(() => {
+		if (isAuthenticated && billingContext.isLoaded) {
+			// Invalidate usage limits to refresh quota display
+			void queryClient.invalidateQueries({
+				predicate: (query) => query.queryKey[0] === 'usage' && query.queryKey[1] === 'checkLimits',
+			});
+		}
+	}, [selectedModelId, isAuthenticated, billingContext.isLoaded, queryClient]);
 
 	const selectedModelConfig = useMemo(() => {
 		return getModelConfig(selectedModelId);
@@ -336,6 +347,32 @@ export function ChatInterface({
 	const canUseCurrentModel = billingContext.isLoaded
 		? billingContext.usage.canUseModel(selectedModelId)
 		: { allowed: true };
+
+	// Check if web search can be used (requires both feature access AND quota)
+	const canUseWebSearch = useMemo(() => {
+		if (!billingContext.features.webSearch.enabled) {
+			return {
+				allowed: false,
+				reason: billingContext.features.webSearch.disabledReason ?? "Web search not available",
+			};
+		}
+
+		// If authenticated, also check if user has any remaining quota
+		if (isAuthenticated && billingContext.isLoaded) {
+			const hasAnyQuota =
+				billingContext.usage.remainingMessages.nonPremium > 0 ||
+				billingContext.usage.remainingMessages.premium > 0;
+
+			if (!hasAnyQuota) {
+				return {
+					allowed: false,
+					reason: "No message quota remaining. Upgrade or wait for next month.",
+				};
+			}
+		}
+
+		return { allowed: true, reason: null };
+	}, [billingContext, isAuthenticated]);
 
 	// Create transport for AI SDK v5
 	// Uses session ID directly as the primary key
@@ -648,19 +685,20 @@ export function ChatInterface({
 			}
 		}
 
-		// Check web search availability after validating attachments are valid
-		// This prevents confusing users with billing errors when files are invalid
-		if (hasAttachments && !billingContext.features.webSearch.enabled) {
-			toast.error("Web search required", {
+		// Check if attachments are allowed for user's plan
+		// This check happens after file validation to give clear, relevant error messages
+		if (hasAttachments && !billingContext.features.attachments.enabled) {
+			toast.error("Attachments not available", {
 				description:
-					billingContext.features.webSearch.disabledReason ??
-					"Attachments require web search, which is unavailable for your account.",
+					billingContext.features.attachments.disabledReason ??
+					"File attachments are not available on your current plan.",
 				duration: 5000,
 			});
 			return false;
 		}
 
-		const nextWebSearchEnabled = hasAttachments ? true : webSearchEnabled;
+		// Web search state is independent from attachments
+		const nextWebSearchEnabled = webSearchEnabled;
 
 		addBreadcrumb({
 			category: "chat-ui",
@@ -821,8 +859,15 @@ export function ChatInterface({
 		}
 
 		// CRITICAL: Synchronous check for unresolved attachments BEFORE calling handleSendMessage
-		// Prevents race condition where user presses Enter while attachments are uploading
-		// This catches the case where isUploadingAttachments state hasn't updated yet
+		// RACE CONDITION PROTECTION: Prevents submission while attachments are uploading
+		//
+		// Why this is needed:
+		// 1. isUploadingAttachments state is async and may lag behind actual upload state
+		// 2. User can rapid-fire submit (e.g., pressing Enter multiple times)
+		// 3. State updates happen after event handlers complete
+		//
+		// This synchronous check inspects the actual attachment data structure,
+		// not the async state hook, providing a last-line defense against race conditions.
 		if (hasAttachments && message.attachments) {
 			const unresolved = findUnresolvedAttachment(message.attachments);
 			if (unresolved) {
@@ -919,12 +964,16 @@ export function ChatInterface({
 
 	// Determine attachment button state
 	const attachmentButtonDisabled =
-		!attachmentsAllowed || isUploadingAttachments;
-	const attachmentDisabledReason = !attachmentsAllowed
-		? "The selected model does not support file attachments"
-		: isUploadingAttachments
-			? "Uploading..."
-			: undefined;
+		!attachmentsAllowed ||
+		!billingContext.features.attachments.enabled ||
+		isUploadingAttachments;
+	const attachmentDisabledReason = !billingContext.features.attachments.enabled
+		? billingContext.features.attachments.disabledReason ?? "Attachments not available"
+		: !attachmentsAllowed
+			? "The selected model does not support file attachments"
+			: isUploadingAttachments
+				? "Uploading..."
+				: undefined;
 
 	// Determine submit button state
 	const isSubmitDisabled =
@@ -1007,11 +1056,9 @@ export function ChatInterface({
 				attachmentButtonDisabled={attachmentButtonDisabled}
 				attachmentDisabledReason={attachmentDisabledReason}
 				webSearchEnabled={webSearchEnabled}
-				webSearchAllowed={billingContext.features.webSearch.enabled}
-				webSearchDisabledReason={
-					billingContext.features.webSearch.disabledReason ?? undefined
-				}
-				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
+				webSearchAllowed={canUseWebSearch.allowed}
+				webSearchDisabledReason={canUseWebSearch.reason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled((prev) => !prev)}
 				modelSelector={modelSelector}
 				status={status}
 				isSubmitDisabled={isSubmitDisabled}
@@ -1038,11 +1085,9 @@ export function ChatInterface({
 				attachmentButtonDisabled={attachmentButtonDisabled}
 				attachmentDisabledReason={attachmentDisabledReason}
 				webSearchEnabled={webSearchEnabled}
-				webSearchAllowed={billingContext.features.webSearch.enabled}
-				webSearchDisabledReason={
-					billingContext.features.webSearch.disabledReason ?? undefined
-				}
-				onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
+				webSearchAllowed={canUseWebSearch.allowed}
+				webSearchDisabledReason={canUseWebSearch.reason ?? undefined}
+				onWebSearchToggle={() => setWebSearchEnabled((prev) => !prev)}
 				modelSelector={modelSelector}
 				isSubmitDisabled={isSubmitDisabled}
 				submitDisabledReason={submitDisabledReason}

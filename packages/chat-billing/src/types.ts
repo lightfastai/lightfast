@@ -63,6 +63,7 @@ export interface BillingPlanLimits {
   nonPremiumMessagesPerMonth: number;
   premiumMessagesPerMonth: number;
   hasWebSearch: boolean;
+  hasAttachments: boolean;
 }
 
 export const BILLING_LIMITS: Record<ClerkPlanKey, BillingPlanLimits> = {
@@ -71,12 +72,14 @@ export const BILLING_LIMITS: Record<ClerkPlanKey, BillingPlanLimits> = {
     nonPremiumMessagesPerMonth: 1000,
     premiumMessagesPerMonth: 0,
     hasWebSearch: false,
+    hasAttachments: true, // Attachments are now available on free tier
   },
   [ClerkPlanKey.PLUS_TIER]: {
     plan: ClerkPlanKey.PLUS_TIER,
     nonPremiumMessagesPerMonth: 1000,
     premiumMessagesPerMonth: 100,
     hasWebSearch: true,
+    hasAttachments: true,
   },
 } as const;
 
