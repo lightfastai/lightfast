@@ -1,6 +1,7 @@
 # Lightfast
 
-[![License: FSL-1.1-Apache-2.0](https://img.shields.io/badge/License-FSL--1.1--Apache--2.0-blue.svg)](LICENSE.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License: FSL-1.1](https://img.shields.io/badge/License-FSL--1.1-orange.svg)](LICENSE-FSL.md)
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/issues)
@@ -482,9 +483,16 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## License
 
-This project is licensed under the [Functional Source License v1.1 with Apache 2.0 Future License](LICENSE.md).
+Lightfast uses a dual licensing approach:
 
-**TL;DR**: You can use this software for any purpose except creating a competing commercial product. After 2 years, it becomes Apache 2.0 licensed.
+- **Open Source Components** (Apache-2.0): Core runtime, CLI tools, and most applications are licensed under [Apache License 2.0](LICENSE)
+- **Commercial Components** (FSL-1.1): The Cloud platform (`apps/cloud`) is licensed under [Functional Source License 1.1](LICENSE-FSL.md)
+
+**For Users**: If you're using Lightfast's runtime (`lightfast`), CLI (`@lightfastai/cli`), or building applications with Lightfast, you're covered by Apache-2.0 - a permissive open source license.
+
+**For Cloud Platform**: The Cloud platform restricts competitive commercial use but allows internal use, education, and research. It converts to Apache-2.0 after 2 years.
+
+See [LICENSING.md](LICENSING.md) for complete details.
 
 ## Support
 
