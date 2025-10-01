@@ -2,7 +2,7 @@ export const privacyContent = `# Lightfast Privacy Policy
 
 Last Updated: June 17, 2025
 
-Lightfast, Inc. ("Lightfast," "we," "us," or "our") is an Australian company that provides AI-powered development tools and services globally. This Privacy Policy is designed to help you understand how we collect, use, process, and share your personal information, and to help you understand and exercise your privacy rights in accordance with the Australian Privacy Act 1988 (Cth) and other applicable privacy laws.
+Lightfast Pty Ltd ("Lightfast," "we," "us," or "our") is an Australian company that provides AI-powered development tools and services globally. This Privacy Policy is designed to help you understand how we collect, use, process, and share your personal information, and to help you understand and exercise your privacy rights in accordance with the Australian Privacy Act 1988 (Cth) and other applicable privacy laws.
 
 ## 1. SCOPE
 

@@ -6,7 +6,7 @@ FSL-1.1-Apache-2.0
 
 ## Notice
 
-Copyright 2025 Lightfast, Inc.
+Copyright 2025 Lightfast Pty Ltd
 
 ## Terms and Conditions
 
