@@ -1,6 +1,7 @@
 import { ACTIVE_MODELS } from "./models/active";
 import { DEPRECATED_MODELS } from "./models/deprecated";
 import type { ModelConfig, ModelProvider } from "./schemas";
+import type { ProcessedModel } from "@repo/chat-ai-types/models";
 
 // Merge all models together
 export const MODELS = {
@@ -10,6 +11,10 @@ export const MODELS = {
 
 // Derive ModelId type from actual models
 export type ModelId = keyof typeof MODELS;
+
+// Chat-specific processed model type with strict ModelId
+export type { ProcessedModel };
+export type ChatProcessedModel = ProcessedModel<ModelId>;
 
 // Export derived types
 export type {

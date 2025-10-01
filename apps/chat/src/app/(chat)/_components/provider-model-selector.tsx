@@ -5,7 +5,7 @@ import {
 	getModelConfig,
 	getProviderDisplayName,
 } from "~/ai/providers";
-import type { ModelId, ModelConfig } from "~/ai/providers";
+import type { ModelId, ChatProcessedModel } from "~/ai/providers";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -24,19 +24,11 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronDown, Lock, Crown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-// Extended model config with accessibility information
-export interface ProcessedModel extends ModelConfig {
-	id: ModelId;
-	isAccessible: boolean;
-	restrictionReason: string | null;
-	isPremium: boolean;
-	requiresAuth: boolean;
-}
 
 interface ProviderModelSelectorProps {
 	value: ModelId;
 	onValueChange: (value: ModelId) => void;
-	models: ProcessedModel[];
+	models: ChatProcessedModel[];
 	disabled?: boolean;
 	className?: string;
 	_isAuthenticated?: boolean;
@@ -184,8 +176,10 @@ export function ProviderModelSelector({
 										)}
 									>
 										{(() => {
+											// Type assertion needed: ModelConfig.iconProvider is generic string
+											// but we know it's IconProvider in this app context
 											const iconName = PROVIDER_ICONS[
-												model.iconProvider
+												model.iconProvider as keyof typeof PROVIDER_ICONS
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
 											return <IconComponent className="w-4 h-4 shrink-0" />;
@@ -222,8 +216,10 @@ export function ProviderModelSelector({
 								<div className="space-y-3">
 									<div className="flex items-start gap-2">
 										{(() => {
+											// Type assertion needed: ModelConfig.iconProvider is generic string
+											// but we know it's IconProvider in this app context
 											const iconName = PROVIDER_ICONS[
-												detailModel.iconProvider
+												detailModel.iconProvider as keyof typeof PROVIDER_ICONS
 											] as keyof typeof Icons;
 											const IconComponent = Icons[iconName];
 											return (
@@ -235,7 +231,7 @@ export function ProviderModelSelector({
 												{detailModel.displayName}
 											</h4>
 											<p className="text-xs text-muted-foreground capitalize">
-												{getProviderDisplayName(detailModel.iconProvider)}
+												{getProviderDisplayName(detailModel.iconProvider as keyof typeof PROVIDER_ICONS)}
 											</p>
 										</div>
 									</div>

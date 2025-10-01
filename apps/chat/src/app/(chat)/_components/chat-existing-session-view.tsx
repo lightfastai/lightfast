@@ -7,11 +7,11 @@ import type {
 	PromptInputAttachmentItem,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
+import type { ChatInlineError } from "@repo/chat-ai-types/errors";
+import type { FeedbackData } from "@repo/chat-ai-types/feedback";
+import type { PromptError } from "@repo/chat-ai-types/validation";
 import { ChatMessages } from "./chat-messages";
 import { ChatPromptInput } from "./chat-prompt-input";
-import type { ChatInlineError } from "./chat-inline-error";
-
-type FeedbackData = Record<string, "upvote" | "downvote">;
 
 interface ChatExistingSessionViewProps {
 	messages: LightfastAppChatUIMessage[];
@@ -27,10 +27,7 @@ interface ChatExistingSessionViewProps {
 	inlineErrors: ChatInlineError[];
 	onInlineErrorDismiss: (errorId: string) => void;
 	onPromptSubmit: (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => Promise<void>;
-	onPromptError: (err: {
-		code: "max_files" | "max_file_size" | "accept" | "upload_failed";
-		message: string;
-	}) => void;
+	onPromptError: (err: PromptError) => void;
 	onAttachmentUpload: (file: File) => Promise<PromptInputAttachmentItem | null>;
 	attachmentAccept?: string;
 	attachmentButtonDisabled: boolean;

@@ -60,8 +60,8 @@ import {
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useStream } from "~/hooks/use-stream";
 import { cn } from "@repo/ui/lib/utils";
-import type { ChatInlineError } from "./chat-inline-error";
-import { ChatErrorType } from "~/lib/errors/types";
+import type { ChatInlineError } from "@repo/chat-ai-types/errors";
+import { ChatErrorType } from "@repo/chat-ai-types/errors";
 
 const ResponsePlaceholder = () => (
 	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />

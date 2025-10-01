@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 import type { PromptInputAttachmentPayload, PromptInputAttachmentItem } from "@repo/ui/components/ai-elements/prompt-input";
 import type { JSONValue } from "ai";
 import type { ModelId } from "~/ai/providers";
-import { ChatErrorType } from "~/lib/errors/types";
+import { toast } from "sonner";
 
 interface UploadedAttachment {
 	id: string;
@@ -20,7 +20,6 @@ interface UseAttachmentUploadOptions {
 	agentId: string;
 	sessionId: string;
 	selectedModelId: ModelId;
-	onError: (error: { type: ChatErrorType; message: string; retryable: false; metadata?: Record<string, unknown> }) => void;
 }
 
 /**
@@ -31,7 +30,6 @@ export function useAttachmentUpload({
 	agentId,
 	sessionId,
 	selectedModelId,
-	onError,
 }: UseAttachmentUploadOptions) {
 	const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 	const attachmentUploadCounterRef = useRef(0);
@@ -150,14 +148,10 @@ export function useAttachmentUpload({
 				};
 			} catch (error) {
 				const safeError = error instanceof Error ? error : new Error(String(error));
-				onError({
-					type: ChatErrorType.INVALID_REQUEST,
-					message: safeError.message || "Unable to upload attachment.",
-					retryable: false,
-					metadata: {
-						filename: file.name,
-						size: file.size,
-					},
+				// Show toast error directly
+				toast.error("Upload failed", {
+					description: safeError.message || `Unable to upload "${file.name}". Please try again.`,
+					duration: 5000,
 				});
 				captureException(safeError, {
 					contexts: {
@@ -182,7 +176,6 @@ export function useAttachmentUpload({
 		[
 			uploadAttachments,
 			selectedModelId,
-			onError,
 		],
 	);
 

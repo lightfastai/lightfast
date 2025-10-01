@@ -1,4 +1,9 @@
+// Re-export all shared types
 export * from "./attachments";
+export * from "./errors";
+export * from "./models";
+export * from "./feedback";
+export * from "./validation";
 
 import type {
   DeepPartial,

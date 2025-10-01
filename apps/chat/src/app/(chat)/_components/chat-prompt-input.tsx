@@ -24,6 +24,7 @@ import {
 	MAX_ATTACHMENT_COUNT,
 	MAX_ATTACHMENT_BYTES,
 } from "@repo/chat-ai-types";
+import type { PromptError } from "@repo/chat-ai-types/validation";
 
 interface AttachmentPickerButtonProps {
 	disabled: boolean;
@@ -167,10 +168,7 @@ function PromptFooterToolbar({
 interface ChatPromptInputProps {
 	placeholder: string;
 	onSubmit: (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => Promise<void>;
-	onError: (err: {
-		code: "max_files" | "max_file_size" | "accept" | "upload_failed";
-		message: string;
-	}) => void;
+	onError: (err: PromptError) => void;
 	onAttachmentUpload: (file: File) => Promise<PromptInputAttachmentItem | null>;
 	accept?: string;
 	attachmentButtonDisabled: boolean;

@@ -22,6 +22,10 @@ import {
   MAX_JSON_PARSE_BYTES,
   MAX_REQUEST_PAYLOAD_BYTES,
 } from "@repo/chat-ai-types";
+import {
+  RequestPayloadTooLargeError,
+  RequestBodyParseError,
+} from "@repo/chat-ai-types/errors";
 import type {
   ChatRouteRequestBody,
   ChatRouteResources,
@@ -79,23 +83,6 @@ const applyTelemetryHeaders = (
   }
   return response;
 };
-
-class RequestPayloadTooLargeError extends Error {
-  constructor(
-    public readonly limit: number,
-    public readonly received: number,
-  ) {
-    super(`Request payload exceeded limit of ${limit} bytes`);
-    this.name = "RequestPayloadTooLargeError";
-  }
-}
-
-class RequestBodyParseError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
-    super(message);
-    this.name = "RequestBodyParseError";
-  }
-}
 
 interface ParsedRequestPayload {
   text: string;

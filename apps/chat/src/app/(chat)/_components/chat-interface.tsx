@@ -24,7 +24,7 @@ import { useModelSelection } from "~/hooks/use-model-selection";
 import { useErrorBoundaryHandler } from "~/hooks/use-error-boundary-handler";
 import { useBillingContext } from "~/hooks/use-billing-context";
 import { ChatErrorHandler } from "~/lib/errors/chat-error-handler";
-import { ChatErrorType } from "~/lib/errors/types";
+import { ChatErrorType } from "@repo/chat-ai-types/errors";
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import type { ChatRouterOutputs } from "@api/chat";
 import type { ArtifactApiResponse } from "~/components/artifacts/types";
@@ -57,6 +57,7 @@ import {
 import type { UploadedAttachment } from "~/lib/chat/attachment-processing";
 import { ChatNewSessionView } from "./chat-new-session-view";
 import { ChatExistingSessionView } from "./chat-existing-session-view";
+import { toast } from "sonner";
 
 const ProviderModelSelector = dynamic(
 	() => import("./provider-model-selector").then((mod) => mod.ProviderModelSelector),
@@ -76,12 +77,13 @@ const getMetadataString = (metadata: unknown, key: string): string | undefined =
 
 // Import model processing types
 import { getModelConfig, getVisibleModels } from "~/ai/providers";
-import type { ModelId } from "~/ai/providers";
-import type { ProcessedModel } from "./provider-model-selector";
+import type { ModelId, ChatProcessedModel } from "~/ai/providers";
 import {
 	MAX_ATTACHMENT_BYTES,
 	MAX_ATTACHMENT_COUNT,
-} from "@repo/chat-ai-types";
+	IMAGE_ACCEPT,
+	PDF_ACCEPT,
+} from "@repo/chat-ai-types/attachments";
 
 const RateLimitIndicator = dynamic(
 	() => import("./rate-limit-indicator").then((mod) => mod.RateLimitIndicator),
@@ -100,9 +102,6 @@ const ArtifactPane = dynamic(
 
 type UserInfo = ChatRouterOutputs["user"]["getUser"];
 type UsageLimitsData = ChatRouterOutputs["usage"]["checkLimits"];
-
-const IMAGE_ACCEPT = "image/*";
-const PDF_ACCEPT = "application/pdf";
 
 interface ChatInterfaceProps {
 	agentId: string;
@@ -279,8 +278,8 @@ export function ChatInterface({
 	const attachmentsAllowed = supportsImageAttachments || supportsPdfAttachments;
 
 	// Process models with accessibility information for the model selector
-	const processedModels = useMemo((): ProcessedModel[] => {
-		return getVisibleModels().map((model) => {
+	const processedModels = useMemo((): ChatProcessedModel[] => {
+		return getVisibleModels().map((model): ChatProcessedModel => {
 			const isAccessible = billingContext.models.isAccessible(
 				model.id,
 				model.accessLevel,
@@ -308,7 +307,6 @@ export function ChatInterface({
 		agentId,
 		sessionId,
 		selectedModelId,
-		onError: addInlineError,
 	});
 
 
@@ -602,26 +600,20 @@ export function ChatInterface({
 		if (isAuthenticated && billingContext.isLoaded) {
 			const usageCheck = billingContext.usage.canUseModel(selectedModelId);
 			if (!usageCheck.allowed) {
-				addInlineError({
-					type: ChatErrorType.USAGE_LIMIT_EXCEEDED,
-					message:
+				toast.error("Usage limit reached", {
+					description:
 						usageCheck.reason ??
 						"You've reached your current usage limit for this model.",
-					retryable: false,
-					details: undefined,
-					metadata: { modelId: selectedModelId },
+					duration: 5000,
 				});
 				return;
 			}
 		}
 
 		if (hasAttachments && !attachmentsAllowed) {
-			addInlineError({
-				type: ChatErrorType.INVALID_REQUEST,
-				message: "The selected model does not support attachments.",
-				retryable: false,
-				details: undefined,
-				metadata: { modelId: selectedModelId },
+			toast.error("Attachments not supported", {
+				description: "The selected model does not support file attachments.",
+				duration: 4000,
 			});
 			return;
 		}
@@ -630,14 +622,11 @@ export function ChatInterface({
 			hasAttachments &&
 			!billingContext.features.webSearch.enabled
 		) {
-			addInlineError({
-				type: ChatErrorType.INVALID_REQUEST,
-				message:
+			toast.error("Web search required", {
+				description:
 					billingContext.features.webSearch.disabledReason ??
 					"Attachments require web search, which is unavailable for your account.",
-				retryable: false,
-				details: undefined,
-				metadata: { feature: "web-search", modelId: selectedModelId },
+				duration: 5000,
 			});
 			return;
 		}
@@ -649,7 +638,10 @@ export function ChatInterface({
 		});
 
 		if (validationError) {
-			addInlineError(validationError);
+			toast.error(validationError.message, {
+				description: validationError.details,
+				duration: 4000,
+			});
 			return;
 		}
 
@@ -677,14 +669,9 @@ export function ChatInterface({
 					// Check for unresolved attachments
 					const unresolved = findUnresolvedAttachment(attachments);
 					if (unresolved) {
-						addInlineError({
-							type: ChatErrorType.INVALID_REQUEST,
-							message: "Attachment is still uploading. Please wait before sending.",
-							retryable: false,
-							metadata: {
-								attachmentId: unresolved.id,
-								filename: unresolved.filename,
-							},
+						toast.error("Upload in progress", {
+							description: `"${unresolved.filename}" is still uploading. Please wait before sending.`,
+							duration: 4000,
 						});
 						return;
 					}
@@ -798,41 +785,46 @@ export function ChatInterface({
 		message: string;
 	}) => {
 		console.error("Prompt input error:", err);
+
 		let userMessage = err.message;
+		let details: string | undefined;
+
 		switch (err.code) {
 			case "max_files":
-				userMessage = `You can attach up to ${MAX_ATTACHMENT_COUNT} files per message.`;
+				userMessage = `Maximum ${MAX_ATTACHMENT_COUNT} files allowed`;
+				details = "Remove some files to continue";
 				break;
 			case "max_file_size":
-				userMessage = `Each attachment must be smaller than ${Math.floor(
+				userMessage = "File size limit exceeded";
+				details = `Each file must be under ${Math.floor(
 					MAX_ATTACHMENT_BYTES / (1024 * 1024),
-				)}MB.`;
+				)}MB`;
 				break;
 			case "accept":
 				if (supportsImageAttachments && supportsPdfAttachments) {
-					userMessage = "Only images and PDFs are supported for this model.";
+					userMessage = "Invalid file type";
+					details = "Only images and PDFs are supported for this model";
 				} else if (supportsImageAttachments) {
-					userMessage = "Only image attachments are supported for this model.";
+					userMessage = "Invalid file type";
+					details = "Only images are supported for this model";
 				} else if (supportsPdfAttachments) {
-					userMessage = "Only PDF attachments are supported for this model.";
+					userMessage = "Invalid file type";
+					details = "Only PDFs are supported for this model";
 				} else {
-					userMessage = "This model does not support file attachments.";
+					userMessage = "File attachments not supported";
+					details = "This model does not support file attachments";
 				}
 				break;
 			case "upload_failed":
-				userMessage = err.message || "Unable to upload attachment.";
+				userMessage = "Upload failed";
+				details = err.message || "Unable to upload attachment. Please try again.";
 				break;
 		}
 
-		addInlineError({
-			type: ChatErrorType.INVALID_REQUEST,
-			message: userMessage,
-			retryable: false,
-			details: undefined,
-			metadata: {
-				reason: err.code,
-				modelId: selectedModelId,
-			},
+		// Use toast instead of inline error for pre-flight validation
+		toast.error(userMessage, {
+			description: details,
+			duration: 5000,
 		});
 	};
 
@@ -936,7 +928,13 @@ export function ChatInterface({
 									const errorMessage =
 										unknownError instanceof Error
 											? unknownError.message
-											: "Unknown error occurred";
+											: "Failed to load artifact";
+
+									toast.error("Unable to load artifact", {
+										description: errorMessage,
+										duration: 4000,
+									});
+
 									console.error("Artifact fetch failed:", errorMessage);
 								}
 							}

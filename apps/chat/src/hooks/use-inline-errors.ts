@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
-import type { ChatError } from "~/lib/errors/types";
-import type { ChatInlineError } from "~/app/(chat)/_components/chat-inline-error";
+import type { ChatError, ChatInlineError } from "@repo/chat-ai-types/errors";
 
 /**
  * Hook for managing inline chat errors that are displayed in the conversation.

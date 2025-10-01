@@ -6,7 +6,7 @@ import {
 import type {
 	PromptInputAttachmentPayload,
 } from "@repo/ui/components/ai-elements/prompt-input";
-import { ChatErrorType } from "~/lib/errors/types";
+import { ChatErrorType } from "@repo/chat-ai-types/errors";
 
 interface ValidationError {
 	type: ChatErrorType;

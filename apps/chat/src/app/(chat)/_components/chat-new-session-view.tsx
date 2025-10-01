@@ -6,6 +6,7 @@ import type {
 	PromptInputMessage,
 	PromptInputAttachmentItem,
 } from "@repo/ui/components/ai-elements/prompt-input";
+import type { PromptError } from "@repo/chat-ai-types/validation";
 import { ChatEmptyState } from "./chat-empty-state";
 import { PromptSuggestions } from "./prompt-suggestions";
 import { ChatPromptInput } from "./chat-prompt-input";
@@ -14,10 +15,7 @@ interface ChatNewSessionViewProps {
 	userEmail?: string;
 	onSendMessage: (input: string | PromptInputMessage) => Promise<void>;
 	onPromptSubmit: (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => Promise<void>;
-	onPromptError: (err: {
-		code: "max_files" | "max_file_size" | "accept" | "upload_failed";
-		message: string;
-	}) => void;
+	onPromptError: (err: PromptError) => void;
 	onAttachmentUpload: (file: File) => Promise<PromptInputAttachmentItem | null>;
 	attachmentAccept?: string;
 	attachmentButtonDisabled: boolean;
