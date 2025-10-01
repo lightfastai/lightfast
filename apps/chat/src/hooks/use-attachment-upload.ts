@@ -17,8 +17,6 @@ interface UploadedAttachment {
 }
 
 interface UseAttachmentUploadOptions {
-	agentId: string;
-	sessionId: string;
 	selectedModelId: ModelId;
 }
 
@@ -27,8 +25,6 @@ interface UseAttachmentUploadOptions {
  * Handles upload state, file processing, and integration with Vercel Blob storage.
  */
 export function useAttachmentUpload({
-	agentId,
-	sessionId,
 	selectedModelId,
 }: UseAttachmentUploadOptions) {
 	const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
@@ -86,13 +82,10 @@ export function useAttachmentUpload({
 				formData.append("files", attachment.file, inferredName);
 			});
 
-			const response = await fetch(
-				`/api/v/${agentId}/${sessionId}/attachments`,
-				{
-					method: "POST",
-					body: formData,
-				},
-			);
+			const response = await fetch("/api/attachments/upload", {
+				method: "POST",
+				body: formData,
+			});
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -107,7 +100,7 @@ export function useAttachmentUpload({
 
 			return data.attachments;
 		},
-		[agentId, sessionId],
+		[],
 	);
 
 	const handleAttachmentUpload = useCallback(

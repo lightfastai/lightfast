@@ -320,8 +320,6 @@ export function ChatInterface({
 	// Attachment upload hook
 	const { handleAttachmentUpload, isUploadingAttachments } =
 		useAttachmentUpload({
-			agentId,
-			sessionId,
 			selectedModelId,
 		});
 
