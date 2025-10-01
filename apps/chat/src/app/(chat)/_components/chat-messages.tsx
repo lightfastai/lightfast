@@ -1,7 +1,15 @@
 "use client";
 
 import type { ChatStatus, ToolUIPart, FileUIPart } from "ai";
-import { Fragment, memo, useMemo, useRef, useEffect, useCallback, useState } from "react";
+import {
+	Fragment,
+	memo,
+	useMemo,
+	useRef,
+	useEffect,
+	useCallback,
+	useState,
+} from "react";
 import dynamic from "next/dynamic";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { SineWaveDots } from "~/components/sine-wave-dots";
@@ -33,11 +41,7 @@ import {
 	ReasoningTrigger,
 } from "@repo/ui/components/ai-elements/reasoning";
 
-import {
-	isReasoningPart,
-	isTextPart,
-	isToolPart,
-} from "@repo/chat-ai-types";
+import { isReasoningPart, isTextPart, isToolPart } from "@repo/chat-ai-types";
 import {
 	Conversation,
 	ConversationContent,
@@ -150,29 +154,33 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 				align === "end" ? "justify-end" : "justify-start",
 			)}
 		>
-				{attachments.map((attachment, index) => {
-					const mediaType = attachment.mediaType;
-					const isImage =
-						typeof mediaType === "string" && mediaType.startsWith("image/");
-					const filenameLabel =
-						typeof attachment.filename === "string" && attachment.filename.length > 0
-							? attachment.filename
-							: undefined;
-					const urlLabel = (() => {
-						if (typeof attachment.url !== "string" || attachment.url.length === 0) {
-							return undefined;
-						}
+			{attachments.map((attachment, index) => {
+				const mediaType = attachment.mediaType;
+				const isImage =
+					typeof mediaType === "string" && mediaType.startsWith("image/");
+				const filenameLabel =
+					typeof attachment.filename === "string" &&
+					attachment.filename.length > 0
+						? attachment.filename
+						: undefined;
+				const urlLabel = (() => {
+					if (
+						typeof attachment.url !== "string" ||
+						attachment.url.length === 0
+					) {
+						return undefined;
+					}
 
-						const [base] = attachment.url.split("?");
-						if (!base || base.length === 0) {
-							return undefined;
-						}
+					const [base] = attachment.url.split("?");
+					if (!base || base.length === 0) {
+						return undefined;
+					}
 
-						const segment = base.split("/").pop();
-						return segment && segment.length > 0 ? segment : undefined;
-					})();
-					const label = filenameLabel ?? urlLabel ?? `Attachment ${index + 1}`;
-					const hasImageLoadError = failedImages.has(attachment.url);
+					const segment = base.split("/").pop();
+					return segment && segment.length > 0 ? segment : undefined;
+				})();
+				const label = filenameLabel ?? urlLabel ?? `Attachment ${index + 1}`;
+				const hasImageLoadError = failedImages.has(attachment.url);
 
 				if (isImage) {
 					return (
@@ -261,23 +269,23 @@ const StreamingResponse = memo(function StreamingResponse({
 		}
 	}, [text, animate, isAnimating, addPart]);
 
-    const shouldDisplayStream = animate || isAnimating;
-    // NOTE:
-    //  - We intentionally do NOT fall back to `text` while animating to avoid a
-    //    brief flash of the full accumulated content before the typewriter effect starts.
-    //  - This can create a very short empty state before the first frame paints.
-    //    If you want to mask that gap visually, keep the sine wave visible until the
-    //    first streamed character is rendered (e.g., expose `hasRenderedChar` from
-    //    the streaming hook and use that instead of raw `isAnimating`).
-    const displayText = shouldDisplayStream ? stream : text;
+	const shouldDisplayStream = animate || isAnimating;
+	// NOTE:
+	//  - We intentionally do NOT fall back to `text` while animating to avoid a
+	//    brief flash of the full accumulated content before the typewriter effect starts.
+	//  - This can create a very short empty state before the first frame paints.
+	//    If you want to mask that gap visually, keep the sine wave visible until the
+	//    first streamed character is rendered (e.g., expose `hasRenderedChar` from
+	//    the streaming hook and use that instead of raw `isAnimating`).
+	const displayText = shouldDisplayStream ? stream : text;
 
-    // Report only the hook animation state upstream to avoid feedback loops.
-    useEffect(() => {
-        if (!onAnimationChange) return;
-        if (lastReportedRef.current === isAnimating) return;
-        lastReportedRef.current = isAnimating;
-        onAnimationChange(isAnimating);
-    }, [isAnimating, onAnimationChange]);
+	// Report only the hook animation state upstream to avoid feedback loops.
+	useEffect(() => {
+		if (!onAnimationChange) return;
+		if (lastReportedRef.current === isAnimating) return;
+		lastReportedRef.current = isAnimating;
+		onAnimationChange(isAnimating);
+	}, [isAnimating, onAnimationChange]);
 
 	useEffect(() => {
 		return () => {
@@ -763,10 +771,13 @@ const AssistantMessage = memo(function AssistantMessage({
 	const [isTypewriterAnimating, setIsTypewriterAnimating] = useState(false);
 
 	// Forward animation changes to parent while tracking locally
-	const handleAnimationChange = useCallback((messageId: string, isAnimating: boolean) => {
-		setIsTypewriterAnimating(isAnimating);
-		onStreamAnimationChange?.(messageId, isAnimating);
-	}, [onStreamAnimationChange]);
+	const handleAnimationChange = useCallback(
+		(messageId: string, isAnimating: boolean) => {
+			setIsTypewriterAnimating(isAnimating);
+			onStreamAnimationChange?.(messageId, isAnimating);
+		},
+		[onStreamAnimationChange],
+	);
 	const sources = useMemo<CitationSource[]>(() => {
 		if (status !== "ready") {
 			return [];
@@ -1082,7 +1093,6 @@ export function ChatMessages({
 	const streamingStatus = status === "submitted" || status === "streaming";
 	const shouldShowScrollButton = messages.length > 0;
 
-
 	return (
 		<div className="flex-1 flex flex-col min-h-0">
 			<Conversation className="flex-1 scrollbar-thin" resize="smooth">
@@ -1169,10 +1179,10 @@ export function ChatMessages({
 											_isAuthenticated={_isAuthenticated}
 											hideActions
 											meaningfulContentOverride={false}
-										inlineError={turn.inlineError}
-										onInlineErrorDismiss={onInlineErrorDismiss}
-										onStreamAnimationChange={reportAnimationChange}
-									/>
+											inlineError={turn.inlineError}
+											onInlineErrorDismiss={onInlineErrorDismiss}
+											onStreamAnimationChange={reportAnimationChange}
+										/>
 									</Fragment>
 								);
 							}
