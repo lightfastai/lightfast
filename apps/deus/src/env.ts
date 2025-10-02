@@ -2,11 +2,13 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod";
 
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 
 export const env = createEnv({
   extends: [
     vercel(),
+    clerkEnvBase,
     sentryEnv,
   ],
   shared: {
@@ -16,6 +18,16 @@ export const env = createEnv({
   },
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    // Database credentials for Deus
+    DATABASE_HOST: z.string().min(1),
+    DATABASE_USERNAME: z.string().min(1),
+    DATABASE_PASSWORD: z.string().min(1),
+    // GitHub OAuth credentials (for repository connection)
+    GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+    GITHUB_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
+    // GitHub App credentials (optional, for GitHub App integration)
+    GITHUB_APP_ID: z.string().optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),

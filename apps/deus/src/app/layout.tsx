@@ -6,6 +6,7 @@ import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: {
@@ -54,12 +55,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head />
-      <body className={cn("bg-background dark min-h-screen", fonts)}>
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+      appearance={{
+        variables: {
+          colorPrimary: "#3b82f6",
+          colorBackground: "#0a0a0a",
+          colorInputBackground: "#18181b",
+          colorInputText: "#fafafa",
+        },
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body className={cn("bg-background dark min-h-screen", fonts)}>
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
