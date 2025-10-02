@@ -4,11 +4,13 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { env as dbEnv } from "@db/deus/env";
 
 export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
+    dbEnv,
     sentryEnv,
   ],
   shared: {
@@ -18,10 +20,6 @@ export const env = createEnv({
   },
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-    // Database credentials for Deus
-    DATABASE_HOST: z.string().min(1),
-    DATABASE_USERNAME: z.string().min(1),
-    DATABASE_PASSWORD: z.string().min(1),
     // GitHub OAuth credentials (for repository connection)
     GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
