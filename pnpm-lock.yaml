@@ -333,9 +333,6 @@ importers:
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
-      '@sentry/core':
-        specifier: 10.12.0
-        version: 10.12.0
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.84.1(react@19.1.1)
@@ -841,6 +838,9 @@ importers:
       '@db/deus':
         specifier: workspace:*
         version: link:../../db/deus
+      '@repo/deus-trpc':
+        specifier: workspace:^
+        version: link:../../packages/deus-trpc
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -883,6 +883,9 @@ importers:
       react-dom:
         specifier: ^19.1.1
         version: 19.1.1(react@19.1.1)
+      sonner:
+        specifier: ^2.0.6
+        version: 2.0.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       superjson:
         specifier: 'catalog:'
         version: 2.2.1
@@ -2520,6 +2523,55 @@ importers:
       '@api/chat':
         specifier: workspace:*
         version: link:../../api/chat
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.84.1(react@19.1.1)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.4.3(@tanstack/react-query@5.84.1(react@19.1.1))(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.3(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
+      next:
+        specifier: 'catalog:'
+        version: 15.4.5(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react:
+        specifier: ^19.1.1
+        version: 19.1.1
+      superjson:
+        specifier: 'catalog:'
+        version: 2.2.1
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      '@types/react':
+        specifier: ^19.1.11
+        version: 19.1.11
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+
+  packages/deus-trpc:
+    dependencies:
+      '@api/deus':
+        specifier: workspace:*
+        version: link:../../api/deus
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.84.1(react@19.1.1)

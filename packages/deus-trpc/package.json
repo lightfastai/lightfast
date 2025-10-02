@@ -1,0 +1,46 @@
+{
+  "name": "@repo/deus-trpc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": {
+      "default": "./src/client.ts"
+    },
+    "./server": {
+      "default": "./src/server.tsx"
+    },
+    "./react": {
+      "default": "./src/react.tsx"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@api/deus": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
+    "@trpc/tanstack-react-query": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:react19",
+    "superjson": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "eslintConfig": {
+    "extends": "@repo/eslint-config/base"
+  },
+  "prettier": "@repo/prettier-config"
+}

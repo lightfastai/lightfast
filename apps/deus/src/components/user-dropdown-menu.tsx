@@ -22,6 +22,10 @@ import {
 	AvatarFallback,
 	AvatarImage,
 } from "@repo/ui/components/ui/avatar";
+import { GitBranch, Settings } from "lucide-react";
+import Link from "next/link";
+
+import { ConnectRepositoryDialog } from "./connect-repository-dialog";
 
 interface UserDropdownMenuProps {
 	className?: string;
@@ -130,6 +134,22 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 						<div className="px-3 py-2">
 							<p className="text-xs text-muted-foreground">{emailAddress}</p>
 						</div>
+						<DropdownMenuSeparator />
+						<Link href="/settings">
+							<DropdownMenuItem className="cursor-pointer gap-2">
+								<Settings className="h-4 w-4" />
+								<span>Settings</span>
+							</DropdownMenuItem>
+						</Link>
+						<ConnectRepositoryDialog>
+							<DropdownMenuItem
+								onSelect={(e) => e.preventDefault()}
+								className="cursor-pointer gap-2"
+							>
+								<GitBranch className="h-4 w-4" />
+								<span>Connect repository</span>
+							</DropdownMenuItem>
+						</ConnectRepositoryDialog>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
 							Sign out

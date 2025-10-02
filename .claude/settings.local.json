@@ -147,7 +147,9 @@
       "WebFetch(domain:ai.google.dev)",
       "Bash(pnpm build:chat:*)",
       "Bash(pnpm --filter @repo/chat-billing build)",
-      "Bash(pnpm --filter @lightfast/deus lint)"
+      "Bash(pnpm --filter @lightfast/deus lint)",
+      "Bash(pnpm --filter @lightfast/deus typecheck)",
+      "Bash(pnpm --filter @repo/deus-trpc build)"
     ],
     "deny": []
   },

@@ -16,6 +16,7 @@
     "@api/deus": "workspace:*",
     "@clerk/nextjs": "catalog:",
     "@db/deus": "workspace:*",
+    "@repo/deus-trpc": "workspace:^",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
@@ -30,6 +31,7 @@
     "next": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "sonner": "^2.0.6",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

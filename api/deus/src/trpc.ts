@@ -7,7 +7,6 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 
-import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -23,7 +22,7 @@ export interface DeusSession {
 }
 
 /**
- * Authenticated Deus session type - used in protected procedures
+ * Authenticated deus session type - used in protected procedures
  */
 export interface AuthenticatedDeusSession {
   userId: string;
@@ -42,7 +41,9 @@ export interface AuthenticatedDeusSession {
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+}) => {
   const clerkSession = await auth();
 
   // Get the source header for logging
@@ -77,18 +78,13 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     ...shape,
     data: {
       ...shape.data,
-      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
+      zodError:
+        error.cause instanceof ZodError
+          ? error.cause.flatten()
+          : null,
     },
   }),
 });
-
-const sentryMiddleware = t.middleware(
-  trpcMiddleware({
-    attachRpcInput: true,
-  })
-);
-
-export const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -134,33 +130,33 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
 /**
  * Public (unauthed) procedure
- *
+ * 
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
+export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
- *
+ * 
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
  * the session is valid and guarantees `ctx.session.userId` is not null.
- *
+ * 
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = sentrifiedProcedure
+export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (!ctx.session?.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-
+    
     // Create authenticated session with non-null userId
     const authenticatedSession: AuthenticatedDeusSession = {
       userId: ctx.session.userId,
     };
-
+    
     return next({
       ctx: {
         ...ctx,

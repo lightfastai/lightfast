@@ -1,13 +1,13 @@
 /**
  * Deus application root router
- * This is the main router that combines all Deus-specific routers
+ * This is the main router that combines all deus-specific routers
  */
 
 import { createTRPCRouter } from "./trpc";
 import { repositoryRouter } from "./router/repository";
 
 /**
- * Primary Deus app router - flattened structure
+ * Primary deus app router
  */
 export const deusAppRouter = createTRPCRouter({
   repository: repositoryRouter,

@@ -1,8 +1,20 @@
 /**
- * Deus tRPC API package
- * Provides tRPC routers and procedures for the Deus AI workflow orchestration platform
+ * Deus API exports
  */
 
-export { deusAppRouter, type DeusAppRouter } from "./root";
+// Export the main app router
+export { deusAppRouter } from "./root";
+export type { DeusAppRouter } from "./root";
+
+// Export context creation
 export { createTRPCContext } from "./trpc";
+
+// Export router types for client usage
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { DeusAppRouter } from "./root";
+
+export type DeusRouterInputs = inferRouterInputs<DeusAppRouter>;
+export type DeusRouterOutputs = inferRouterOutputs<DeusAppRouter>;
+
+// Export TRPC utilities
 export { createCallerFactory } from "./trpc";
