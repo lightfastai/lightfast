@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import "@repo/ui/globals.css";
+import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
@@ -70,9 +70,9 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en" className="dark" suppressHydrationWarning>
         <head />
-        <body className={cn("bg-background dark min-h-screen", fonts)}>
+        <body className={cn("bg-background min-h-screen", fonts)}>
           {children}
           <Toaster />
         </body>
