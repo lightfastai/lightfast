@@ -1,24 +1,59 @@
 "use client";
 
-export default function GlobalError({
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+import type NextError from "next/error";
+import { useEffect } from "react";
+import { captureException } from "@sentry/nextjs";
+
+import { Button } from "@repo/ui/components/ui/button";
+import { fonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
+
+interface GlobalErrorProperties {
+  readonly error: NextError & { digest?: string };
+  readonly reset: () => void;
+}
+
+const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
+  useEffect(() => {
+    captureException(error);
+  }, [error]);
+
   return (
-    <html>
-      <body>
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-          <h2 className="text-2xl font-bold">Something went wrong!</h2>
-          <button
-            onClick={() => reset()}
-            className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-          >
-            Try again
-          </button>
-        </div>
+    <html lang="en">
+      <head />
+      <body
+        className={cn(
+          "dark bg-background",
+          fonts,
+        )}
+      >
+        <LightfastCustomGridBackground.Root
+          marginVertical="25vh"
+          marginHorizontal="25vw"
+          marginVerticalMobile="25vh"
+          marginHorizontalMobile="10vw"
+        >
+          <LightfastCustomGridBackground.Container>
+            <LightfastErrorPage
+              code={ErrorCode.InternalServerError}
+              description="Sorry, something went wrong on our end."
+              errorId={error.digest}
+            >
+              <Button onClick={() => reset()}>Try again</Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = '/'}
+              >
+                Return Home
+              </Button>
+            </LightfastErrorPage>
+          </LightfastCustomGridBackground.Container>
+        </LightfastCustomGridBackground.Root>
       </body>
     </html>
   );
-}
+};
+
+export default GlobalError;
