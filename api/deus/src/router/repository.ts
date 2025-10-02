@@ -80,6 +80,8 @@ export const repositoryRouter = {
   /**
    * Connect a new repository
    *
+   * MVP: Users can only connect ONE repository
+   *
    * AUTHENTICATION FLOW (MVP):
    * - User completes GitHub OAuth flow → frontend receives access_token
    * - Frontend calls this endpoint with: githubRepoId, accessToken, permissions
@@ -108,8 +110,27 @@ export const repositoryRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if repository is already connected
-      const existing = await db
+      // MVP: Check if user already has ANY repository connected
+      const existingRepos = await db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.userId, ctx.session.userId),
+            eq(DeusConnectedRepository.isActive, true)
+          )
+        )
+        .limit(1);
+
+      if (existingRepos[0]) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You can only connect one repository. Remove your existing repository first.",
+        });
+      }
+
+      // Check if this specific repository was previously connected (soft deleted)
+      const previousConnection = await db
         .select()
         .from(DeusConnectedRepository)
         .where(
@@ -120,8 +141,8 @@ export const repositoryRouter = {
         )
         .limit(1);
 
-      if (existing[0]) {
-        // If already connected, update and set to active
+      if (previousConnection[0]) {
+        // Reactivate previous connection
         await db
           .update(DeusConnectedRepository)
           .set({
@@ -131,12 +152,11 @@ export const repositoryRouter = {
             permissions: input.permissions,
             metadata: input.metadata,
           })
-          .where(eq(DeusConnectedRepository.id, existing[0].id));
+          .where(eq(DeusConnectedRepository.id, previousConnection[0].id));
 
         return {
-          id: existing[0].id,
+          id: previousConnection[0].id,
           success: true,
-          alreadyConnected: true,
         };
       }
 
@@ -156,120 +176,6 @@ export const repositoryRouter = {
       return {
         id,
         success: true,
-        alreadyConnected: false,
       };
-    }),
-
-  /**
-   * Disconnect a repository
-   * Sets the repository connection to inactive (soft delete)
-   */
-  disconnect: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify ownership
-      const repository = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.id, input.repositoryId))
-        .limit(1);
-
-      if (
-        !repository[0] ||
-        repository[0].userId !== ctx.session.userId
-      ) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Repository not found",
-        });
-      }
-
-      // Soft delete by setting isActive to false
-      await db
-        .update(DeusConnectedRepository)
-        .set({ isActive: false })
-        .where(eq(DeusConnectedRepository.id, input.repositoryId));
-
-      return { success: true };
-    }),
-
-  /**
-   * Update repository metadata cache
-   * Use this to refresh the metadata cache after fetching from GitHub API
-   */
-  updateMetadata: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-        metadata: z.record(z.unknown()),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify ownership
-      const repository = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.id, input.repositoryId))
-        .limit(1);
-
-      if (
-        !repository[0] ||
-        repository[0].userId !== ctx.session.userId
-      ) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Repository not found",
-        });
-      }
-
-      // Update metadata cache
-      await db
-        .update(DeusConnectedRepository)
-        .set({ metadata: input.metadata })
-        .where(eq(DeusConnectedRepository.id, input.repositoryId));
-
-      return { success: true };
-    }),
-
-  /**
-   * Update last synced timestamp
-   * Called after successful GitHub API interaction
-   */
-  updateLastSynced: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify ownership
-      const repository = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.id, input.repositoryId))
-        .limit(1);
-
-      if (
-        !repository[0] ||
-        repository[0].userId !== ctx.session.userId
-      ) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Repository not found",
-        });
-      }
-
-      await db
-        .update(DeusConnectedRepository)
-        .set({
-          lastSyncedAt: new Date().toISOString(),
-        })
-        .where(eq(DeusConnectedRepository.id, input.repositoryId));
-
-      return { success: true };
     }),
 } satisfies TRPCRouterRecord;

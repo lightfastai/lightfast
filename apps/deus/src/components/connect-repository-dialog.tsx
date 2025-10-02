@@ -25,7 +25,6 @@ export function ConnectRepositoryDialog({
 	const [isConnecting, setIsConnecting] = useState(false);
 
 	const trpc = useTRPC();
-	const utils = trpc.useUtils();
 
 	// Query to check if user has a connected repository
 	const { data: repositories = [] } = useQuery({
@@ -33,18 +32,7 @@ export function ConnectRepositoryDialog({
 		enabled: open,
 	});
 
-	const connectMutation = trpc.repository.connect.useMutation({
-		onSuccess: () => {
-			void utils.repository.list.invalidate();
-			setOpen(false);
-			setIsConnecting(false);
-		},
-		onError: () => {
-			setIsConnecting(false);
-		},
-	});
-
-	const hasConnectedRepo = repositories && repositories.length > 0;
+	const hasConnectedRepo = repositories.length > 0;
 
 	const handleGitHubAuth = () => {
 		setIsConnecting(true);
@@ -73,25 +61,24 @@ export function ConnectRepositoryDialog({
 					</DialogTitle>
 					<DialogDescription>
 						{hasConnectedRepo
-							? "You already have a repository connected. Disconnect it first to add a new one."
+							? "You can only connect one repository at a time. Please remove your existing repository before adding a new one."
 							: "Connect a GitHub repository to enable Deus to orchestrate workflows on your codebase."}
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex flex-col gap-4 py-4">
 					{hasConnectedRepo ? (
-						<div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+						<div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
 							<div className="flex items-center gap-3">
-								<div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-									<Github className="h-5 w-5 text-primary" />
+								<div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
+									<Github className="h-5 w-5 text-amber-500" />
 								</div>
 								<div className="flex-1">
-									<p className="text-sm font-medium">
-										{repositories[0]?.metadata?.fullName || "Repository connected"}
+									<p className="text-sm font-medium text-amber-500">
+										Repository Already Connected
 									</p>
 									<p className="text-xs text-muted-foreground">
-										Connected{" "}
-										{new Date(repositories[0]!.connectedAt).toLocaleDateString()}
+										{repositories[0]?.metadata?.fullName ?? "Repository connected"}
 									</p>
 								</div>
 							</div>
