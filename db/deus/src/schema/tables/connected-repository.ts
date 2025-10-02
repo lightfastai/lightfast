@@ -39,6 +39,11 @@ export type RepositoryMetadata = {
  *
  * DESIGN PRINCIPLE: Keep it simple - store only what's immutable or essential.
  *
+ * AUTHENTICATION APPROACH (MVP): GitHub OAuth flow
+ * - User authorizes via OAuth → we get an access_token
+ * - Token stored encrypted, scoped to user's approved repos
+ * - installationId field reserved for future GitHub App support (team/org installs)
+ *
  * What we STORE:
  * - githubRepoId: GitHub's internal ID (NEVER changes, even on rename/transfer) ✅
  * - accessToken: OAuth token for API access ✅
@@ -77,7 +82,9 @@ export const DeusConnectedRepository = mysqlTable(
       .unique(),
 
     /**
-     * GitHub App installation ID (if using GitHub App authentication)
+     * GitHub App installation ID (reserved for future GitHub App support)
+     * Currently using OAuth flow for MVP - this will be used when we add
+     * GitHub App installation support for team/org repositories
      */
     installationId: varchar("installation_id", { length: 191 }),
 

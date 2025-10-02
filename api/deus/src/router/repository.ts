@@ -80,6 +80,12 @@ export const repositoryRouter = {
   /**
    * Connect a new repository
    *
+   * AUTHENTICATION FLOW (MVP):
+   * - User completes GitHub OAuth flow → frontend receives access_token
+   * - Frontend calls this endpoint with: githubRepoId, accessToken, permissions
+   * - We store minimal immutable data only
+   * - installationId is optional (reserved for future GitHub App support)
+   *
    * SIMPLIFIED APPROACH:
    * - Store only immutable data: githubRepoId, accessToken, permissions
    * - Optionally cache metadata for UI display (can be stale)
