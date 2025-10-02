@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Create matchers so auth checks stay readable
-const isRootRoute = createRouteMatcher(["/"]);
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard", "/dashboard/(.*)"]);
 const isProtectedRoute = createRouteMatcher([
@@ -22,11 +21,6 @@ export default clerkMiddleware(
     response.headers.set("X-Frame-Options", "DENY");
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("Referrer-Policy", "origin-when-cross-origin");
-
-    // Handle redirects for authenticated users only
-    if (isRootRoute(req) && userId) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
 
     // Redirect authenticated users away from auth pages
     if (userId && isAuthRoute(req)) {
