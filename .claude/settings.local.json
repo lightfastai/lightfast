@@ -146,7 +146,8 @@
       "Bash(gh pr view:*)",
       "WebFetch(domain:ai.google.dev)",
       "Bash(pnpm build:chat:*)",
-      "Bash(pnpm --filter @repo/chat-billing build)"
+      "Bash(pnpm --filter @repo/chat-billing build)",
+      "Bash(pnpm --filter @lightfast/deus lint)"
     ],
     "deny": []
   },
