@@ -24,5 +24,5 @@ export default async function HomePage() {
 	}
 
 	// Redirect to user's default organization
-	redirect(`/org/${org.githubOrgSlug}`);
+	redirect(`/org/${org.githubOrgId}`);
 }

@@ -1,26 +1,31 @@
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { verifyOrgAccess } from "~/lib/org-access";
 
 export default async function SettingsPage({
 	params,
 }: {
-	params: Promise<{ slug: string }>;
+	params: Promise<{ orgId: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { slug } = await params;
+	const { orgId } = await params;
+	const githubOrgId = parseInt(orgId, 10);
+
+	if (isNaN(githubOrgId)) {
+		notFound();
+	}
 
 	// Verify access before redirecting
-	const access = await verifyOrgAccess(userId, slug);
+	const access = await verifyOrgAccess(userId, githubOrgId);
 
 	if (!access.hasAccess) {
 		redirect("/onboarding");
 	}
 
 	// Redirect to data-controls as the default settings page
-	redirect(`/org/${slug}/settings/data-controls`);
+	redirect(`/org/${orgId}/settings/data-controls`);
 }

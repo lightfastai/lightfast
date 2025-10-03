@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { AuthenticatedHeader } from "~/components/authenticated-header";
 import { SettingsSidebar } from "~/components/settings-sidebar";
@@ -9,19 +9,27 @@ export default async function SettingsLayout({
 	params,
 }: {
 	children: React.ReactNode;
-	params: Promise<{ slug: string }>;
+	params: Promise<{ orgId: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { slug } = await params;
+	const { orgId } = await params;
+	const githubOrgId = parseInt(orgId, 10);
+
+	if (isNaN(githubOrgId)) {
+		notFound();
+	}
 
 	// Verify user has access to this organization
-	const access = await verifyOrgAccess(userId, slug);
+	const access = await verifyOrgAccess(userId, githubOrgId);
 
 	if (!access.hasAccess) {
+		if (access.reason === "org_not_found") {
+			notFound();
+		}
 		redirect("/onboarding");
 	}
 
@@ -41,7 +49,7 @@ export default async function SettingsLayout({
 
 				<div className="flex gap-8">
 					{/* Left Sidebar Navigation */}
-					<SettingsSidebar orgSlug={slug} />
+					<SettingsSidebar orgId={orgId} />
 
 					{/* Main Content */}
 					<div className="flex-1 min-w-0">{children}</div>

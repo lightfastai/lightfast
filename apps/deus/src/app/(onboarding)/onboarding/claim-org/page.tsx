@@ -71,7 +71,7 @@ export default function ClaimOrgPage() {
 				throw new Error(error.error ?? "Failed to claim organization");
 			}
 
-			const data = (await response.json()) as { orgSlug: string };
+			const data = (await response.json()) as { orgId: number };
 
 			const accountName = installation.account
 				? "login" in installation.account
@@ -87,7 +87,7 @@ export default function ClaimOrgPage() {
 			});
 
 			// Redirect to organization home
-			router.push(`/org/${data.orgSlug}/settings`);
+			router.push(`/org/${data.orgId}/settings`);
 		} catch (error) {
 			toast({
 				title: "Failed to claim organization",

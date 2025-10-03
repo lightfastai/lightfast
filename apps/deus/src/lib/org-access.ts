@@ -26,16 +26,16 @@ export type OrgAccessResult =
  * Use this for: Read-only pages, listings, etc.
  *
  * @param userId - Clerk user ID
- * @param orgSlug - GitHub organization slug
+ * @param githubOrgId - GitHub organization ID
  * @returns Access result with org and membership data
  */
 export async function verifyOrgAccess(
 	userId: string,
-	orgSlug: string,
+	githubOrgId: number,
 ): Promise<OrgAccessResult> {
-	// 1. Find org by slug
+	// 1. Find org by GitHub org ID
 	const org = await db.query.organizations.findFirst({
-		where: eq(organizations.githubOrgSlug, orgSlug),
+		where: eq(organizations.githubOrgId, githubOrgId),
 	});
 
 	if (!org) {
@@ -108,3 +108,4 @@ export async function findUserOrganizations(userId: string) {
 
 	return memberships.map((m) => m.organization);
 }
+

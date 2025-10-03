@@ -15,14 +15,7 @@ import { env } from "~/env";
  * 4. App uses installation ID to access repositories
  */
 export function GET(request: NextRequest) {
-	const clientId = env.GITHUB_APP_CLIENT_ID;
-
-	if (!clientId) {
-		return NextResponse.json(
-			{ error: "GitHub App is not configured" },
-			{ status: 500 },
-		);
-	}
+	const clientId = env.GITHUB_CLIENT_ID;
 
 	// Get the base URL for callback
 	const baseUrl =

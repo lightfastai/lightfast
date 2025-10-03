@@ -55,14 +55,8 @@ export async function GET(request: NextRequest) {
 		);
 	}
 
-	const clientId = env.GITHUB_APP_CLIENT_ID;
-	const clientSecret = env.GITHUB_APP_CLIENT_SECRET;
-
-	if (!clientId || !clientSecret) {
-		return NextResponse.redirect(
-			`${baseUrl}/?github_error=app_not_configured`
-		);
-	}
+	const clientId = env.GITHUB_CLIENT_ID;
+	const clientSecret = env.GITHUB_CLIENT_SECRET;
 
 	try {
 		// Exchange authorization code for access token

@@ -24,16 +24,9 @@ export type GitHubRepository = components["schemas"]["repository"];
  * Get or create the GitHub App instance
  */
 function getApp(): App {
-	const appId = env.GITHUB_APP_ID;
-	const privateKey = env.GITHUB_APP_PRIVATE_KEY;
-
-	if (!appId || !privateKey) {
-		throw new Error("GitHub App credentials not configured");
-	}
-
 	return new App({
-		appId,
-		privateKey,
+		appId: env.GITHUB_APP_ID,
+		privateKey: env.GITHUB_APP_PRIVATE_KEY,
 	});
 }
 

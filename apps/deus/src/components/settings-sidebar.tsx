@@ -16,17 +16,17 @@ const settingsNavigation = [
 ];
 
 interface SettingsSidebarProps {
-	orgSlug: string;
+	orgId: string;
 }
 
-export function SettingsSidebar({ orgSlug }: SettingsSidebarProps) {
+export function SettingsSidebar({ orgId }: SettingsSidebarProps) {
 	const pathname = usePathname();
 
 	return (
 		<aside className="w-64 flex-shrink-0">
 			<nav className="space-y-1">
 				{settingsNavigation.map((item) => {
-					const href = `/org/${orgSlug}/settings/${item.path}`;
+					const href = `/org/${orgId}/settings/${item.path}`;
 					const isActive = pathname === href;
 
 					return (

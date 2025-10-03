@@ -14,21 +14,26 @@ import { verifyOrgAccess } from "~/lib/org-access";
 export default async function OrgHomePage({
 	params,
 }: {
-	params: Promise<{ slug: string }>;
+	params: Promise<{ orgId: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { slug } = await params;
+	const { orgId } = await params;
+	const githubOrgId = parseInt(orgId, 10);
+
+	if (isNaN(githubOrgId)) {
+		notFound();
+	}
 
 	// Verify user has access to this organization
-	const access = await verifyOrgAccess(userId, slug);
+	const access = await verifyOrgAccess(userId, githubOrgId);
 
 	if (!access.hasAccess) {
 		if (access.reason === "org_not_found") {
-			notFound(); // 404 page
+			notFound();
 		}
 		// User is not a member - send to onboarding
 		redirect("/onboarding");

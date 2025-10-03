@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 				// Already a member, just redirect
 				return NextResponse.json({
 					success: true,
-					orgSlug: existingOrg.githubOrgSlug,
+					orgId: existingOrg.githubOrgId,
 					alreadyMember: true,
 				});
 			}
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
 			return NextResponse.json({
 				success: true,
-				orgSlug: existingOrg.githubOrgSlug,
+				orgId: existingOrg.githubOrgId,
 				joined: true,
 			});
 		}
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json({
 			success: true,
-			orgSlug: accountSlug,
+			orgId: account.id,
 			created: true,
 		});
 	} catch (error) {

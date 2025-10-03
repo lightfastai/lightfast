@@ -165,3 +165,84 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 ## Tagline
 
 **"Make every tool AI-orchestrable. Make every workflow conversational. Make shipping products as easy as describing what you want."**
+
+---
+
+## GitHub App Configuration
+
+### Development Setup
+
+**GitHub App Name:** `Lightfast Deus App Connector Dev`
+
+**Homepage URL:** `http://localhost:4104`
+
+**Callback URL:** `http://localhost:4104/api/github/callback`
+
+**Webhook URL:** `https://your-ngrok-url.ngrok.io/api/github/webhooks`
+
+**Installation:** Only on this account (for testing)
+
+### Production Setup
+
+**GitHub App Name:** `Lightfast Deus`
+
+**Homepage URL:** `https://deus.lightfast.com`
+
+**Callback URL:** `https://deus.lightfast.com/api/github/callback`
+
+**Webhook URL:** `https://deus.lightfast.com/api/github/webhooks`
+
+**Installation:** Any account
+
+### Permissions Required
+
+**Repository Permissions:**
+- Contents: Read & Write (read/write repository files)
+- Metadata: Read-only (repository metadata - auto-granted)
+- Pull requests: Read & Write (manage PRs)
+- Workflows: Read & Write (trigger GitHub Actions)
+
+**Organization Permissions:**
+- Members: Read-only (list org members)
+
+**Account Permissions (User OAuth):**
+- Email addresses: Read-only (get user email)
+
+### Settings
+
+**User Authorization:**
+- ✅ Expire user authorization tokens (provides refresh tokens)
+- ☐ Request user authorization (OAuth) during installation (we handle separately)
+- ☐ Enable Device Flow (not needed)
+
+**Webhook:**
+- ✅ Active (receive events)
+- Webhook Secret: Set in environment variables (generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
+
+**Where to Install:**
+- Development: Only on this account
+- Production: Any account
+
+### Environment Variables
+
+After creating the GitHub App, add these to your `.env`:
+
+```bash
+# GitHub App Credentials
+GITHUB_APP_ID=123456  # From app settings page
+GITHUB_CLIENT_ID=Iv1.abc123def456  # From app settings
+GITHUB_CLIENT_SECRET=your-client-secret  # Generate in app settings
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"  # Generate and download .pem
+GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
+
+# App URLs (adjust for dev/prod)
+NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://deus.lightfast.com
+```
+
+### Key Notes
+
+- **Private Key:** Generate in GitHub App settings → "Generate a private key" → Download `.pem` file
+- **Client Secret:** Generate in GitHub App settings under "Client secrets"
+- **App ID:** Found at top of GitHub App settings page
+- **Webhook Secret:** Use cryptographically secure random string (see command above)
+- **Separate Apps:** Use different GitHub Apps for development and production
