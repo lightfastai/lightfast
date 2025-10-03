@@ -13,7 +13,7 @@ export default async function OrgHomePage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { slug } = await params;
+	await params;
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background text-foreground">

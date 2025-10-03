@@ -41,7 +41,7 @@ export default function ClaimOrgPage() {
 				installations: GitHubInstallation[];
 			};
 			setInstallations(data.installations);
-		} catch (error) {
+		} catch {
 			toast({
 				title: "Failed to fetch organizations",
 				description:
@@ -73,9 +73,17 @@ export default function ClaimOrgPage() {
 
 			const data = (await response.json()) as { orgSlug: string };
 
+			const accountName = installation.account
+				? "login" in installation.account
+					? installation.account.login
+					: "slug" in installation.account
+						? installation.account.slug
+						: "Unknown"
+				: "Unknown";
+
 			toast({
 				title: "Organization claimed!",
-				description: `Successfully claimed ${installation.account.login}`,
+				description: `Successfully claimed ${accountName}`,
 			});
 
 			// Redirect to organization home
@@ -144,6 +152,11 @@ export default function ClaimOrgPage() {
 							const account = installation.account;
 							const isClaiming = claiming === installation.id;
 
+							if (!account) return null;
+
+							const accountName = "login" in account ? account.login : "slug" in account ? account.slug : "Unknown";
+							const accountType = "type" in account ? account.type : "Organization";
+
 							return (
 								<Card
 									key={installation.id}
@@ -155,7 +168,7 @@ export default function ClaimOrgPage() {
 											{account.avatar_url ? (
 												<img
 													src={account.avatar_url}
-													alt={account.login}
+													alt={accountName}
 													className="h-12 w-12 rounded-full"
 												/>
 											) : (
@@ -168,10 +181,10 @@ export default function ClaimOrgPage() {
 										{/* Organization Info */}
 										<div className="flex-1 min-w-0">
 											<h3 className="font-semibold text-foreground">
-												{account.login}
+												{accountName}
 											</h3>
 											<p className="text-sm text-muted-foreground">
-												{account.type === "Organization"
+												{accountType === "Organization"
 													? "Organization"
 													: "Personal Account"}
 											</p>

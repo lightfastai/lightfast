@@ -150,7 +150,8 @@
       "Bash(pnpm --filter @lightfast/deus lint)",
       "Bash(pnpm --filter @lightfast/deus typecheck)",
       "Bash(pnpm --filter @repo/deus-trpc build)",
-      "Bash(pnpm --filter @lightfast/deus add octokit)"
+      "Bash(pnpm --filter @lightfast/deus add octokit)",
+      "Bash(pnpm --filter @lightfast/deus build)"
     ],
     "deny": []
   },

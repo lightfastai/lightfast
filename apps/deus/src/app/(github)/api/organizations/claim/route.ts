@@ -54,6 +54,25 @@ export async function POST(request: NextRequest) {
 
 		const account = installation.account;
 
+		if (!account) {
+			return NextResponse.json(
+				{ error: "Installation account not found" },
+				{ status: 404 },
+			);
+		}
+
+		// GitHub account can be User or Organization type
+		// Organizations have 'slug', Users have 'login'
+		const accountSlug = "slug" in account ? account.slug : "login" in account ? account.login : null;
+		const accountName = "name" in account ? account.name : "login" in account ? account.login : null;
+
+		if (!accountSlug || !accountName) {
+			return NextResponse.json(
+				{ error: "Could not determine account slug or name" },
+				{ status: 400 },
+			);
+		}
+
 		// Check if this installation is already claimed
 		const existingOrg = await db.query.organizations.findFirst({
 			where: eq(organizations.githubInstallationId, installationId),
@@ -75,9 +94,9 @@ export async function POST(request: NextRequest) {
 			.values({
 				githubInstallationId: installationId,
 				githubOrgId: account.id,
-				githubOrgSlug: account.login,
-				githubOrgName: account.login,
-				githubOrgAvatarUrl: account.avatar_url ?? null,
+				githubOrgSlug: accountSlug,
+				githubOrgName: accountName,
+				githubOrgAvatarUrl: account.avatar_url || null,
 				claimedBy: userId,
 			})
 			.$returningId();
@@ -95,7 +114,7 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json({
 			success: true,
-			orgSlug: account.login,
+			orgSlug: accountSlug,
 		});
 	} catch (error) {
 		console.error("Error claiming organization:", error);
