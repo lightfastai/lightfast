@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { AuthenticatedHeader } from "~/components/authenticated-header";
 import { SettingsSidebar } from "~/components/settings-sidebar";
+import { verifyOrgAccess } from "~/lib/org-access";
 
 export default async function SettingsLayout({
 	children,
@@ -8,7 +11,19 @@ export default async function SettingsLayout({
 	children: React.ReactNode;
 	params: Promise<{ slug: string }>;
 }) {
+	const { userId } = await auth();
+	if (!userId) {
+		redirect("/sign-in");
+	}
+
 	const { slug } = await params;
+
+	// Verify user has access to this organization
+	const access = await verifyOrgAccess(userId, slug);
+
+	if (!access.hasAccess) {
+		redirect("/onboarding");
+	}
 
 	return (
 		<>

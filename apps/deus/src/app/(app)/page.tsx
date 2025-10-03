@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@db/deus";
-import { organizationMembers } from "@db/deus/schema";
-import { eq } from "drizzle-orm";
+import { findUserDefaultOrg } from "~/lib/org-access";
 
 /**
  * Root Page - Org Redirect
@@ -17,19 +15,14 @@ export default async function HomePage() {
 		redirect("/sign-in");
 	}
 
-	// Find user's first organization
-	const userOrg = await db.query.organizationMembers.findFirst({
-		where: eq(organizationMembers.userId, userId),
-		with: {
-			organization: true,
-		},
-	});
+	// Find user's default organization
+	const org = await findUserDefaultOrg(userId);
 
-	if (!userOrg?.organization) {
+	if (!org) {
 		// User has no organizations - send to onboarding
 		redirect("/onboarding");
 	}
 
 	// Redirect to user's default organization
-	redirect(`/org/${userOrg.organization.githubOrgSlug}`);
+	redirect(`/org/${org.githubOrgSlug}`);
 }

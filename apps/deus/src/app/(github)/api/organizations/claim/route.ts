@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/deus";
 import { organizations, organizationMembers } from "@db/deus/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getUserInstallations } from "~/lib/github-app";
 
 /**
@@ -73,22 +73,55 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Check if this installation is already claimed
+		// Check if this organization already exists (by immutable GitHub org ID)
 		const existingOrg = await db.query.organizations.findFirst({
-			where: eq(organizations.githubInstallationId, installationId),
+			where: eq(organizations.githubOrgId, account.id),
 		});
 
 		if (existingOrg) {
-			return NextResponse.json(
-				{
-					error: "This organization has already been claimed",
+			// Organization already claimed - check if user is already a member
+			const existingMembership = await db.query.organizationMembers.findFirst({
+				where: and(
+					eq(organizationMembers.organizationId, existingOrg.id),
+					eq(organizationMembers.userId, userId),
+				),
+			});
+
+			if (existingMembership) {
+				// Already a member, just redirect
+				return NextResponse.json({
+					success: true,
 					orgSlug: existingOrg.githubOrgSlug,
-				},
-				{ status: 409 },
-			);
+					alreadyMember: true,
+				});
+			}
+
+			// Auto-join existing organization
+			await db.insert(organizationMembers).values({
+				organizationId: existingOrg.id,
+				userId,
+				role: "owner", // TODO: Implement proper role detection based on GitHub permissions
+			});
+
+			// Update installation ID if it changed (app was reinstalled)
+			if (existingOrg.githubInstallationId !== installationId) {
+				await db
+					.update(organizations)
+					.set({
+						githubInstallationId: installationId,
+						updatedAt: new Date().toISOString(),
+					})
+					.where(eq(organizations.id, existingOrg.id));
+			}
+
+			return NextResponse.json({
+				success: true,
+				orgSlug: existingOrg.githubOrgSlug,
+				joined: true,
+			});
 		}
 
-		// Create organization record
+		// Create new organization record
 		const [newOrg] = await db
 			.insert(organizations)
 			.values({
@@ -115,6 +148,7 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({
 			success: true,
 			orgSlug: accountSlug,
+			created: true,
 		});
 	} catch (error) {
 		console.error("Error claiming organization:", error);

@@ -1,3 +1,5 @@
+import { redirect, notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	Card,
@@ -7,13 +9,30 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 
 import { AuthenticatedHeader } from "~/components/authenticated-header";
+import { verifyOrgAccess } from "~/lib/org-access";
 
 export default async function OrgHomePage({
 	params,
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	await params;
+	const { userId } = await auth();
+	if (!userId) {
+		redirect("/sign-in");
+	}
+
+	const { slug } = await params;
+
+	// Verify user has access to this organization
+	const access = await verifyOrgAccess(userId, slug);
+
+	if (!access.hasAccess) {
+		if (access.reason === "org_not_found") {
+			notFound(); // 404 page
+		}
+		// User is not a member - send to onboarding
+		redirect("/onboarding");
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background text-foreground">
