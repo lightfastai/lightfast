@@ -8,7 +8,6 @@ import {
 	useClerk,
 	useUser,
 } from "@clerk/nextjs";
-import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	DropdownMenu,
@@ -22,10 +21,9 @@ import {
 	AvatarFallback,
 	AvatarImage,
 } from "@repo/ui/components/ui/avatar";
-import { GitBranch, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import Link from "next/link";
 
-import { ConnectRepositoryDialog } from "./connect-repository-dialog";
 
 interface UserDropdownMenuProps {
 	className?: string;
@@ -93,14 +91,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	};
 
 	if (!isLoaded) {
-		return (
-			<div
-				className={cn(
-					"h-10 w-10 animate-pulse rounded-full border border-border/50 bg-muted/40",
-					className,
-				)}
-			/>
-		);
+		return null;
 	}
 
 	return (
@@ -108,48 +99,31 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 			<SignedIn>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							size="sm"
-							className={cn(
-								"h-10 gap-2 rounded-full border border-border/40 bg-transparent px-1.5 text-foreground/80 hover:border-border hover:bg-muted/60",
-								className,
-							)}
-						>
-							<Avatar className="h-8 w-8">
+						<Button variant="ghost" size="icon" className={className}>
+							<Avatar className="h-5 w-5">
 								{user?.imageUrl ? (
 									<AvatarImage src={user.imageUrl} alt={displayName || "User avatar"} />
 								) : (
-									<AvatarFallback className="text-xs font-medium uppercase">
+									<AvatarFallback className="text-[10px] bg-blue-300 text-white">
 										{initials}
 									</AvatarFallback>
 								)}
 							</Avatar>
-							<span className="hidden text-sm font-medium text-foreground sm:inline">
-								{displayName}
-							</span>
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-56">
-						<div className="px-3 py-2">
-							<p className="text-xs text-muted-foreground">{emailAddress}</p>
+					<DropdownMenuContent align="end" className="w-64">
+						<div className="px-2 py-1.5">
+							<p className="text-xs text-muted-foreground">
+								{emailAddress || "User"}
+							</p>
 						</div>
 						<DropdownMenuSeparator />
-						<Link href="/settings">
-							<DropdownMenuItem className="cursor-pointer gap-2">
-								<Settings className="h-4 w-4" />
-								<span>Settings</span>
-							</DropdownMenuItem>
-						</Link>
-						<ConnectRepositoryDialog>
-							<DropdownMenuItem
-								onSelect={(e) => e.preventDefault()}
-								className="cursor-pointer gap-2"
-							>
-								<GitBranch className="h-4 w-4" />
-								<span>Connect repository</span>
-							</DropdownMenuItem>
-						</ConnectRepositoryDialog>
+						<DropdownMenuItem asChild>
+							<Link href="/settings" className="cursor-pointer">
+								<Settings className="mr-2 h-3 w-3" />
+								Settings
+							</Link>
+						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
 							Sign out

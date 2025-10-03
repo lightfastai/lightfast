@@ -11,7 +11,7 @@ import { TRPCReactProvider } from "@repo/deus-trpc/react";
 
 export const metadata: Metadata = {
 	title: {
-		default: "Deus - AI Workflow Orchestration",
+		default: "Deus",
 		template: `%s - Deus`,
 	},
 	metadataBase: new URL("https://deus.lightfast.ai"),
@@ -77,10 +77,10 @@ export default function RootLayout({
 			signUpFallbackRedirectUrl="/"
 			appearance={{
 				variables: {
-					colorPrimary: "#3b82f6",
-					colorBackground: "#0a0a0a",
-					colorInputBackground: "#18181b",
-					colorInputText: "#fafafa",
+					colorPrimary: "hsl(221.2 83.2% 53.3%)",
+					colorBackground: "hsl(0 0% 3.9%)",
+					colorInputBackground: "hsl(0 0% 14.9%)",
+					colorInputText: "hsl(0 0% 98%)",
 				},
 			}}
 		>

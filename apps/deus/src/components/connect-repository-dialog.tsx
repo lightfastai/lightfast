@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { GitBranch, Github } from "lucide-react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Github, Check, Loader2 } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -11,20 +11,51 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@repo/ui/components/ui/select";
 import { Button } from "@repo/ui/components/ui/button";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { useTRPC } from "@repo/deus-trpc/react";
+import { useToast } from "@repo/ui/hooks/use-toast";
+import type { GitHubInstallation, GitHubRepository } from "~/lib/github-app";
 
 interface ConnectRepositoryDialogProps {
 	children?: React.ReactNode;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
+
+/**
+ * Environment Setup Dialog (Step 2)
+ *
+ * This dialog allows users to select an organization/installation and repository
+ * to create an environment. Assumes GitHub is already connected.
+ */
 
 export function ConnectRepositoryDialog({
 	children,
+	open: controlledOpen,
+	onOpenChange,
 }: ConnectRepositoryDialogProps) {
-	const [open, setOpen] = useState(false);
-	const [isConnecting, setIsConnecting] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
+	const [selectedInstallationId, setSelectedInstallationId] = useState<number | null>(null);
+	const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
+	const [githubInstallations, setGithubInstallations] = useState<GitHubInstallation[]>([]);
+	const [githubRepos, setGithubRepos] = useState<GitHubRepository[]>([]);
+	const [fetchingInstallations, setFetchingInstallations] = useState(false);
+	const [fetchingRepos, setFetchingRepos] = useState(false);
 
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
+	const { toast } = useToast();
+
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = onOpenChange ?? setInternalOpen;
 
 	// Query to check if user has a connected repository
 	const { data: repositories = [] } = useQuery({
@@ -34,35 +65,167 @@ export function ConnectRepositoryDialog({
 
 	const hasConnectedRepo = repositories.length > 0;
 
-	const handleGitHubAuth = () => {
+	// Connect repository mutation
+	const [isConnecting, setIsConnecting] = useState(false);
+
+	const handleConnectRepository = async (repo: GitHubRepository) => {
 		setIsConnecting(true);
+		try {
+			// Use client-side tRPC call directly
+			const response = await fetch("/api/trpc/repository.connect", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"x-trpc-source": "client",
+				},
+				credentials: "include",
+				body: JSON.stringify({
+					githubRepoId: repo.id.toString(),
+					permissions: repo.permissions ?? { admin: true, push: true, pull: true },
+					metadata: {
+						fullName: repo.full_name,
+						description: repo.description,
+						language: repo.language,
+						private: repo.private,
+						owner: repo.owner.login || "",
+						ownerAvatar: repo.owner.avatar_url || "",
+						stargazersCount: repo.stargazers_count || 0,
+						updatedAt: repo.updated_at,
+					},
+				}),
+			});
 
-		// TODO: Implement GitHub OAuth flow
-		// For now, we'll show a placeholder
-		// In production, this should:
-		// 1. Redirect to GitHub OAuth
-		// 2. Handle callback with access_token
-		// 3. Fetch repositories from GitHub API
-		// 4. Let user select a repository
-		// 5. Call connectMutation with the selected repo data
+			if (!response.ok) {
+				const error: { error?: { message?: string } } = (await response.json()) as {
+					error?: { message?: string };
+				};
+				throw new Error(error.error?.message ?? "Failed to connect repository");
+			}
 
-		console.log("GitHub OAuth flow not yet implemented");
-		setIsConnecting(false);
+			// Invalidate queries to refetch the repository list
+			await queryClient.invalidateQueries({
+				queryKey: trpc.repository.list.queryKey({ includeInactive: false }),
+			});
+
+			toast({
+				title: "Repository connected",
+				description: "Your GitHub repository has been successfully connected.",
+			});
+
+			// Reset state and close dialog
+			setGithubRepos([]);
+			setSelectedRepoId(null);
+			setOpen(false);
+		} catch (err) {
+			const error = err as Error;
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "Failed to connect repository. Please try again.";
+			toast({
+				title: "Connection failed",
+				description: errorMessage,
+				variant: "destructive",
+			});
+		} finally {
+			setIsConnecting(false);
+		}
+	};
+
+	// Fetch installations when dialog opens
+	React.useEffect(() => {
+		if (open && githubInstallations.length === 0) {
+			void fetchGitHubInstallations();
+		}
+	}, [open]);
+
+	const fetchGitHubInstallations = async () => {
+		setFetchingInstallations(true);
+		try {
+			const response = await fetch("/api/github/installations");
+			if (!response.ok) {
+				throw new Error("Failed to fetch installations");
+			}
+			const data = (await response.json()) as { installations: GitHubInstallation[] };
+			const installations = data.installations;
+			setGithubInstallations(installations);
+
+			// Auto-select first installation if only one exists
+			if (installations.length === 1 && installations[0]) {
+				setSelectedInstallationId(installations[0].id);
+				await fetchGitHubRepositories(installations[0].id);
+			}
+		} catch {
+			toast({
+				title: "Failed to fetch organizations",
+				description: "Could not retrieve your GitHub organizations. Please try again.",
+				variant: "destructive",
+			});
+			setGithubInstallations([]);
+		} finally {
+			setFetchingInstallations(false);
+		}
+	};
+
+	const fetchGitHubRepositories = async (installationId: number) => {
+		setFetchingRepos(true);
+		setSelectedRepoId(null); // Reset selected repo when changing installation
+		try {
+			const response = await fetch(`/api/github/repositories?installationId=${installationId}`);
+			if (!response.ok) {
+				throw new Error("Failed to fetch repositories");
+			}
+			const data = (await response.json()) as { repositories: GitHubRepository[] };
+			setGithubRepos(data.repositories);
+		} catch {
+			toast({
+				title: "Failed to fetch repositories",
+				description: "Could not retrieve repositories for this organization. Please try again.",
+				variant: "destructive",
+			});
+			setGithubRepos([]);
+		} finally {
+			setFetchingRepos(false);
+		}
+	};
+
+	const handleInstallationChange = async (value: string) => {
+		if (value === "connect-new") {
+			// Redirect to GitHub App installation page
+			// TODO: Get the actual GitHub App slug from environment or config
+			window.location.href = "https://github.com/apps/deus-app/installations/new";
+			return;
+		}
+
+		const installationId = Number.parseInt(value, 10);
+		setSelectedInstallationId(installationId);
+		await fetchGitHubRepositories(installationId);
+	};
+
+
+	const handleSelectRepository = (repo: GitHubRepository) => {
+		setSelectedRepoId(repo.id);
+	};
+
+	const handleConnect = () => {
+		const selectedRepo = githubRepos.find((r) => r.id === selectedRepoId);
+		if (selectedRepo) {
+			void handleConnectRepository(selectedRepo);
+		}
 	};
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="sm:max-w-2xl">
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
-						<GitBranch className="h-5 w-5" />
-						Connect GitHub Repository
-					</DialogTitle>
+					<DialogTitle>Create your first environment</DialogTitle>
 					<DialogDescription>
 						{hasConnectedRepo
 							? "You can only connect one repository at a time. Please remove your existing repository before adding a new one."
-							: "Connect a GitHub repository to enable Deus to orchestrate workflows on your codebase."}
+							: githubInstallations.length > 0
+								? "Select an organization and repository to create an environment."
+								: "Loading your GitHub installations..."}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -83,30 +246,186 @@ export function ConnectRepositoryDialog({
 								</div>
 							</div>
 						</div>
-					) : (
+					) : fetchingInstallations ? (
+						<div className="flex flex-col items-center justify-center py-12">
+							<Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
+							<p className="text-sm text-muted-foreground">
+								Fetching your organizations...
+							</p>
+						</div>
+					) : githubInstallations.length > 0 ? (
 						<>
-							<div className="rounded-lg border border-dashed border-border/60 bg-muted/10 p-6 text-center">
-								<Github className="mx-auto h-12 w-12 text-muted-foreground/60" />
-								<p className="mt-3 text-sm text-muted-foreground">
-									No repository connected yet
-								</p>
+							{/* Organization Selector */}
+							<div className="flex flex-col gap-2">
+								<label htmlFor="github-org" className="text-sm font-medium">
+									GitHub organization
+								</label>
+								<Select
+									value={selectedInstallationId?.toString() ?? ""}
+									onValueChange={handleInstallationChange}
+								>
+									<SelectTrigger id="github-org" className="w-full">
+										<div className="flex items-center gap-2">
+											<Github className="h-4 w-4" />
+											<SelectValue placeholder="Select organization" />
+										</div>
+									</SelectTrigger>
+									<SelectContent>
+										{githubInstallations.map((installation) => {
+											const account = installation.account;
+											if (!account) return null;
+
+											const login = "login" in account ? account.login : account.slug;
+											const isUser = "type" in account && account.type === "User";
+
+											return (
+												<SelectItem key={installation.id} value={installation.id.toString()}>
+													<div className="flex items-center gap-2">
+														<img
+															src={account.avatar_url}
+															alt={login}
+															className="h-5 w-5 rounded-full"
+														/>
+														<span>{login}</span>
+														{isUser && (
+															<span className="text-xs text-muted-foreground">(Personal)</span>
+														)}
+													</div>
+												</SelectItem>
+											);
+										})}
+										<SelectItem value="connect-new">
+											<div className="flex items-center gap-2">
+												<Github className="h-4 w-4" />
+												<span>+ Connect GitHub org</span>
+											</div>
+										</SelectItem>
+									</SelectContent>
+								</Select>
 							</div>
 
-							<Button
-								onClick={handleGitHubAuth}
-								disabled={isConnecting}
-								className="w-full gap-2"
-							>
-								<Github className="h-4 w-4" />
-								{isConnecting ? "Connecting..." : "Connect with GitHub"}
-							</Button>
+							{/* Repository List */}
+							{fetchingRepos ? (
+								<div className="flex flex-col items-center justify-center py-12">
+									<Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
+									<p className="text-sm text-muted-foreground">
+										Loading repositories...
+									</p>
+								</div>
+							) : githubRepos.length > 0 ? (
+								<>
+									<div className="flex flex-col gap-2">
+										<label htmlFor="repository" className="text-sm font-medium">
+											Repository
+										</label>
+										<ScrollArea className="h-[400px] rounded-lg border border-border/60">
+								<div className="space-y-2 p-4">
+									{githubRepos.map((repo) => (
+										<button
+											key={repo.id}
+											onClick={() => handleSelectRepository(repo)}
+											className={`w-full rounded-lg border p-3 text-left transition-colors ${
+												selectedRepoId === repo.id
+													? "border-primary bg-primary/10"
+													: "border-border/60 hover:border-border hover:bg-muted/50"
+											}`}
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex-1 space-y-1">
+													<div className="flex items-center gap-2">
+														<p className="font-medium text-foreground">
+															{repo.full_name}
+														</p>
+														{repo.private && (
+															<span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+																Private
+															</span>
+														)}
+													</div>
+													{repo.description && (
+														<p className="text-xs text-muted-foreground line-clamp-2">
+															{repo.description}
+														</p>
+													)}
+													<div className="flex items-center gap-3 text-xs text-muted-foreground">
+														{repo.language && <span>{repo.language}</span>}
+														<span>⭐ {repo.stargazers_count}</span>
+														{repo.updated_at && (
+															<span>
+																Updated {new Date(repo.updated_at).toLocaleDateString()}
+															</span>
+														)}
+													</div>
+												</div>
+												{selectedRepoId === repo.id && (
+													<Check className="h-5 w-5 flex-shrink-0 text-primary" />
+												)}
+											</div>
+										</button>
+									))}
+									</div>
+								</ScrollArea>
+							</div>
 
 							<p className="text-xs text-muted-foreground">
-								You&apos;ll be redirected to GitHub to authorize access. We only
-								request the minimum permissions needed.
+								This list only includes repositories that you have access to in GitHub and can use with Deus.
+								Missing a repo?{" "}
+								<a
+									href={`https://github.com/settings/installations`}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-primary hover:underline"
+								>
+									Configure repository access
+								</a>
+								.
 							</p>
+
+							<div className="flex gap-2">
+								<Button
+									onClick={() => {
+										setGithubInstallations([]);
+										setGithubRepos([]);
+										setSelectedInstallationId(null);
+										setSelectedRepoId(null);
+									}}
+									variant="outline"
+									className="flex-1"
+								>
+									Cancel
+								</Button>
+								<Button
+									onClick={handleConnect}
+									disabled={!selectedRepoId || isConnecting}
+									className="flex-1 gap-2"
+								>
+									{isConnecting ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Creating...
+										</>
+									) : (
+										<>
+											<Check className="h-4 w-4" />
+											Create environment
+										</>
+									)}
+								</Button>
+							</div>
 						</>
-					)}
+					) : selectedInstallationId ? (
+						<div className="rounded-lg border border-dashed border-border/60 bg-muted/10 p-6 text-center">
+							<Github className="mx-auto h-12 w-12 text-muted-foreground/60" />
+							<p className="mt-3 text-sm text-muted-foreground">
+								No repositories found for this organization
+							</p>
+							<p className="mt-1 text-xs text-muted-foreground">
+								Make sure the GitHub App is installed on the repositories you want to connect.
+							</p>
+						</div>
+					) : null}
+					</>
+				) : null}
 				</div>
 			</DialogContent>
 		</Dialog>

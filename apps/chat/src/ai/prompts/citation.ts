@@ -1,6 +1,6 @@
 /**
  * Citation prompt components
- * 
+ *
  * Centralized citation format definition used across evaluation and production
  */
 

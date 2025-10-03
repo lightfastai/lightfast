@@ -1,6 +1,6 @@
 /**
  * Extensible metadata system for AI responses
- * 
+ *
  * Supports multiple types of structured metadata at the end of responses
  */
 
@@ -29,10 +29,10 @@ export interface FactCheckMetadata {
 }
 
 // Extensible metadata container
-export interface ResponseMetadata extends 
-	Partial<CitationMetadata>,
-	Partial<ConfidenceMetadata>, 
-	Partial<FactCheckMetadata> {
+export interface ResponseMetadata
+	extends Partial<CitationMetadata>,
+		Partial<ConfidenceMetadata>,
+		Partial<FactCheckMetadata> {
 	// Additional metadata types can be added here
 }
 
@@ -97,3 +97,4 @@ Rules:
 - Provide URLs and titles (snippets are optional)
 - Only cite facts, statistics, API details, version numbers, quotes
 - Don't cite common knowledge or your own analysis`;
+

@@ -1,0 +1,56 @@
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { env } from "~/env";
+
+/**
+ * GitHub App - Authorization Redirect
+ *
+ * Initiates the GitHub App OAuth flow by redirecting to GitHub's authorization page.
+ * User will be asked to authorize the app to access their installations.
+ *
+ * Flow:
+ * 1. User authorizes the app (OAuth)
+ * 2. App fetches user's GitHub App installations (organizations)
+ * 3. User selects organization and repository
+ * 4. App uses installation ID to access repositories
+ */
+export function GET(_request: NextRequest) {
+	const clientId = env.GITHUB_APP_CLIENT_ID;
+
+	if (!clientId) {
+		return NextResponse.json(
+			{ error: "GitHub App is not configured" },
+			{ status: 500 },
+		);
+	}
+
+	// Get the base URL for callback
+	const baseUrl =
+		env.NEXT_PUBLIC_VERCEL_ENV === "production"
+			? "https://deus.lightfast.ai"
+			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
+				? `https://${process.env.VERCEL_URL}`
+				: "http://localhost:4107";
+
+	const redirectUri = `${baseUrl}/api/github/callback`;
+
+	// Generate a random state parameter to prevent CSRF attacks
+	const state = crypto.randomUUID();
+
+	// For GitHub Apps, we still use OAuth to get a user access token
+	// This token allows us to fetch the user's installations
+	const response = NextResponse.redirect(
+		`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`,
+	);
+
+	// Set state cookie that expires in 10 minutes
+	response.cookies.set("github_oauth_state", state, {
+		httpOnly: true,
+		secure: env.NODE_ENV === "production",
+		sameSite: "lax",
+		maxAge: 600, // 10 minutes
+		path: "/",
+	});
+
+	return response;
+}

@@ -15,20 +15,22 @@ export const env = createEnv({
 	},
 	server: {
 		HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-		// GitHub OAuth credentials (for repository connection)
-		// Using OAuth flow for MVP - simpler than GitHub App installation
-		GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
-		GITHUB_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
-		// TODO: Add GitHub App support later for team/org installations if needed
+		// GitHub App credentials (for repository connection)
+		GITHUB_APP_ID: z.string().min(1).optional(),
+		GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
+		GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
+		GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
 	},
 	client: {
 		NEXT_PUBLIC_VERCEL_ENV: z
 			.enum(["development", "preview", "production"])
 			.optional(),
+		NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 	},
 	experimental__runtimeEnv: {
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	},
 	skipValidation:
 		!!process.env.CI || process.env.npm_lifecycle_event === "lint",
