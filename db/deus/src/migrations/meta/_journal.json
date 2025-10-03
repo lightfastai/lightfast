@@ -8,6 +8,13 @@
       "when": 1759406808002,
       "tag": "0000_friendly_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1759497915660,
+      "tag": "0001_rare_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

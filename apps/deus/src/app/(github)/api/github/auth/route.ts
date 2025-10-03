@@ -14,7 +14,7 @@ import { env } from "~/env";
  * 3. User selects organization and repository
  * 4. App uses installation ID to access repositories
  */
-export function GET(_request: NextRequest) {
+export function GET(request: NextRequest) {
 	const clientId = env.GITHUB_APP_CLIENT_ID;
 
 	if (!clientId) {
@@ -26,16 +26,21 @@ export function GET(_request: NextRequest) {
 
 	// Get the base URL for callback
 	const baseUrl =
-		env.NEXT_PUBLIC_VERCEL_ENV === "production"
+		env.NEXT_PUBLIC_APP_URL ??
+		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
 			? "https://deus.lightfast.ai"
 			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
 				? `https://${process.env.VERCEL_URL}`
-				: "http://localhost:4107";
+				: "http://localhost:4107");
 
 	const redirectUri = `${baseUrl}/api/github/callback`;
 
 	// Generate a random state parameter to prevent CSRF attacks
 	const state = crypto.randomUUID();
+
+	// Support custom callback URL via query parameter
+	const searchParams = request.nextUrl.searchParams;
+	const customCallback = searchParams.get("callback");
 
 	// For GitHub Apps, we still use OAuth to get a user access token
 	// This token allows us to fetch the user's installations
@@ -51,6 +56,17 @@ export function GET(_request: NextRequest) {
 		maxAge: 600, // 10 minutes
 		path: "/",
 	});
+
+	// Store custom callback if provided
+	if (customCallback) {
+		response.cookies.set("github_oauth_callback", customCallback, {
+			httpOnly: true,
+			secure: env.NODE_ENV === "production",
+			sameSite: "lax",
+			maxAge: 600, // 10 minutes
+			path: "/",
+		});
+	}
 
 	return response;
 }
