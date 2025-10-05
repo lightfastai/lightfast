@@ -23,6 +23,12 @@ export const InputBar: React.FC<InputBarProps> = ({
     (input, key) => {
       if (!isFocused) return;
 
+      // Handle Tab for switching agents
+      if (key.tab) {
+        onSwitch();
+        return;
+      }
+
       if (key.return) {
         if (value.trim()) {
           onSubmit(value);
