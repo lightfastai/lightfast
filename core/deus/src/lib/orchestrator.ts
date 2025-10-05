@@ -226,6 +226,12 @@ export class Orchestrator {
       // Get agent command (defaults to 'claude' or 'codex')
       const agentCommand = this.getAgentCommand(agentType);
 
+      // Don't spawn processes for now - just show ready state
+      // TODO: Add proper agent process integration later
+      this.updateAgentStatus(agentType, 'idle', 'Ready (mock mode)');
+      this.processes.set(agentType, null);
+      return;
+
       // Spawn the agent process
       const process = execa(agentCommand.command, agentCommand.args, {
         stdio: 'pipe',
