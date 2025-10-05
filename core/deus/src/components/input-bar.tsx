@@ -74,10 +74,12 @@ export const InputBar: React.FC<InputBarProps> = ({
 
       {/* Input field */}
       <Box>
-        <Text color={agentColor} bold>▸ </Text>
+        <Text color={agentColor} bold>
+          ▸
+        </Text>
         <Text>
           {value}
-          {isFocused && <Text inverse> </Text>}
+          <Text inverse={isFocused}> </Text>
         </Text>
       </Box>
     </Box>
