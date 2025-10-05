@@ -27,8 +27,8 @@
     "@clerk/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
     "next": "catalog:",
-    "react": "catalog:react19",
-    "react-dom": "catalog:react19",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "svix": "^1.62.0"
   },
   "devDependencies": {

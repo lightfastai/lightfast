@@ -55,13 +55,5 @@
 		"typescript": "^5.9.2",
 		"vite": "^6.3.5"
 	},
-	"prettier": "@repo/prettier-config",
-	"pnpm": {
-		"overrides": {
-			"react": "^19.1.1",
-			"react-dom": "^19.1.1",
-			"@types/react": "^19.1.11",
-			"@types/react-dom": "^19.1.8"
-		}
-	}
+	"prettier": "@repo/prettier-config"
 }

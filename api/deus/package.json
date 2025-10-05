@@ -32,7 +32,7 @@
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/observability": "workspace:*",
-		"react": "catalog:react19",
+		"react": "^19.1.1",
 		"superjson": "catalog:",
 		"zod": "catalog:"
 	},

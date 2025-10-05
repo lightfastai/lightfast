@@ -1,0 +1,76 @@
+import * as React from 'react';
+import { Box, Text, useInput } from 'ink';
+import { type AgentType } from '../types/index.js';
+
+const { useState } = React;
+
+interface InputBarProps {
+  activeAgent: AgentType;
+  onSubmit: (value: string) => void;
+  onSwitch: () => void;
+  isFocused: boolean;
+}
+
+export const InputBar: React.FC<InputBarProps> = ({
+  activeAgent,
+  onSubmit,
+  onSwitch,
+  isFocused,
+}) => {
+  const [value, setValue] = useState('');
+
+  useInput(
+    (input, key) => {
+      if (!isFocused) return;
+
+      if (key.return) {
+        if (value.trim()) {
+          onSubmit(value);
+          setValue('');
+        }
+      } else if (key.backspace || key.delete) {
+        setValue((v) => v.slice(0, -1));
+      } else if (input && !key.ctrl && !key.meta) {
+        setValue((v) => v + input);
+      }
+    },
+    { isActive: isFocused }
+  );
+
+  const agentName = activeAgent === 'claude-code' ? 'Claude Code' : 'Codex';
+  const agentColor = activeAgent === 'claude-code' ? 'cyan' : 'magenta';
+
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor="gray" padding={1}>
+      {/* Agent selector hint */}
+      <Box marginBottom={1} justifyContent="space-between">
+        <Box>
+          <Text color={agentColor} bold>
+            → {agentName}
+          </Text>
+          <Text color="gray" dimColor>
+            {' '}
+            (Tab to switch)
+          </Text>
+        </Box>
+        <Box gap={2}>
+          <Text color="gray" dimColor>
+            Ctrl+C to exit
+          </Text>
+          <Text color="gray" dimColor>
+            Ctrl+S to share context
+          </Text>
+        </Box>
+      </Box>
+
+      {/* Input field */}
+      <Box>
+        <Text color={agentColor}>▸ </Text>
+        <Text>
+          {value || (isFocused ? '' : <Text dimColor>Type your message...</Text>)}
+          {isFocused && <Text inverse> </Text>}
+        </Text>
+      </Box>
+    </Box>
+  );
+};

@@ -1,0 +1,92 @@
+# Deus - AI Agent Orchestrator
+
+> Terminal-based UI for orchestrating multiple AI agents (Claude Code & Codex) in a single interface
+
+## Overview
+
+Deus is a TUI (Terminal User Interface) application built with Ink (React for CLIs) that provides a dual-panel interface for orchestrating and coordinating multiple AI agents simultaneously. It enables developers to work with Claude Code and Codex side-by-side, share context between them, and manage their interactions seamlessly.
+
+## Features
+
+- **Dual-Panel Layout**: Side-by-side view of Claude Code and Codex agents
+- **Real-Time Status**: Live indicators showing agent state (idle, running, waiting, error)
+- **Message History**: Last 5 messages displayed per agent
+- **Keyboard Controls**: Quick navigation and context sharing
+- **Process Integration**: Spawns and communicates with real agent processes
+- **Mock Mode**: Test the UI without real agents
+- **Context Sharing**: Share information between agents with Ctrl+S
+
+## Quick Start
+
+```bash
+# Navigate to deus directory
+cd core/deus
+
+# Install dependencies
+pnpm install
+
+# Run in mock mode (default)
+pnpm dev
+
+# Run with real agents
+CLAUDE_CODE_COMMAND=claude-code CODEX_COMMAND=codex pnpm dev
+```
+
+## Keyboard Shortcuts
+
+- **Tab** - Switch between Claude Code and Codex
+- **Enter** - Send message to active agent
+- **Ctrl+C** - Exit application
+- **Ctrl+S** - Share context between agents
+- **Ctrl+K** - Clear active agent messages
+
+## Configuration
+
+Configure agent commands via environment variables:
+
+```bash
+# Claude Code
+export CLAUDE_CODE_COMMAND=/path/to/claude-code
+# or
+export CLAUDE_COMMAND=/path/to/claude
+
+# Codex
+export CODEX_COMMAND=/path/to/codex
+```
+
+If no commands are configured, Deus runs in mock mode with simulated responses.
+
+## Architecture
+
+- **Ink v6.3.1** - React for building terminal interfaces
+- **React 19.1.1** - UI component model
+- **Execa** - Process spawning and management
+- **Zod** - Runtime type validation
+- **TypeScript** - Type safety
+
+## Project Structure
+
+```
+core/deus/
+├── src/
+│   ├── components/      # React components (agent-panel, input-bar, etc.)
+│   ├── lib/            # Core logic (orchestrator)
+│   ├── types/          # Zod schemas & TypeScript types
+│   ├── cli.tsx         # CLI entry point
+│   └── index.ts        # Library exports
+├── package.json
+├── tsconfig.json
+└── tsup.config.ts
+```
+
+## Documentation
+
+See [SETUP.md](./SETUP.md) for detailed setup instructions, integration status, and development guide.
+
+## Inspiration
+
+Based on [sst/opencode](https://github.com/sst/opencode) architecture, adapted to TypeScript/JavaScript ecosystem using Ink instead of Bubble Tea (Go).
+
+## License
+
+Part of the Lightfast AI project.
