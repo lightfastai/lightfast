@@ -24,7 +24,7 @@ interface AgentPanelProps {
   isActive: boolean;
 }
 
-export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
+export const AgentPanel: React.FC<AgentPanelProps> = React.memo(({ agent, isActive }) => {
   const getBorderColor = () => {
     if (!isActive) return 'gray';
     if (agent.status === 'running') return 'green';
@@ -77,34 +77,37 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
         </Box>
       </Box>
 
-      {/* Current Task */}
-      {agent.currentTask && (
-        <Box marginBottom={1}>
+      {/* Current Task - always render to prevent layout shift */}
+      <Box marginBottom={1} height={1}>
+        {agent.currentTask ? (
           <Text color="yellow">▸ {agent.currentTask}</Text>
-        </Box>
-      )}
+        ) : (
+          <Text> </Text>
+        )}
+      </Box>
 
-      {/* Messages */}
+      {/* Messages - always render container */}
       <Box flexDirection="column" flexGrow={1}>
-        {agent.messages.slice(-5).map((msg) => (
-          <Box key={msg.id} marginBottom={0}>
-            <Text
-              color={
-                msg.role === 'user'
-                  ? 'cyan'
-                  : msg.role === 'assistant'
-                    ? 'green'
-                    : 'gray'
-              }
-              dimColor={msg.role === 'system'}
-            >
-              {msg.role === 'user' ? '→ ' : msg.role === 'assistant' ? '← ' : '• '}
-              {msg.content.slice(0, 60)}
-              {msg.content.length > 60 ? '...' : ''}
-            </Text>
-          </Box>
-        ))}
-        {agent.messages.length === 0 && (
+        {agent.messages.length > 0 ? (
+          agent.messages.slice(-5).map((msg) => (
+            <Box key={msg.id} marginBottom={0}>
+              <Text
+                color={
+                  msg.role === 'user'
+                    ? 'cyan'
+                    : msg.role === 'assistant'
+                      ? 'green'
+                      : 'gray'
+                }
+                dimColor={msg.role === 'system'}
+              >
+                {msg.role === 'user' ? '→ ' : msg.role === 'assistant' ? '← ' : '• '}
+                {msg.content.slice(0, 60)}
+                {msg.content.length > 60 ? '...' : ''}
+              </Text>
+            </Box>
+          ))
+        ) : (
           <Text color="gray" dimColor>
             No messages yet...
           </Text>
@@ -112,4 +115,4 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
       </Box>
     </Box>
   );
-};
+});

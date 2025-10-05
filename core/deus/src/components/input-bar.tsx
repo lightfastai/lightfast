@@ -11,7 +11,7 @@ interface InputBarProps {
   isFocused: boolean;
 }
 
-export const InputBar: React.FC<InputBarProps> = ({
+export const InputBar: React.FC<InputBarProps> = React.memo(({
   activeAgent,
   onSubmit,
   onSwitch,
@@ -84,4 +84,4 @@ export const InputBar: React.FC<InputBarProps> = ({
       </Box>
     </Box>
   );
-};
+});

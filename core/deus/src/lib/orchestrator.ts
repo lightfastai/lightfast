@@ -37,8 +37,14 @@ export class Orchestrator {
     return () => this.listeners.delete(listener);
   }
 
-  // Emit state changes
+  // Emit state changes with new object to trigger React updates
   private emit() {
+    // Create a new state object to ensure React detects the change
+    this.state = {
+      ...this.state,
+      claudeCode: { ...this.state.claudeCode },
+      codex: { ...this.state.codex },
+    };
     this.listeners.forEach((listener) => listener(this.state));
   }
 

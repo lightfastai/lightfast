@@ -6,7 +6,7 @@ interface StatusBarProps {
   state: OrchestrationState;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
+export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state }) => {
   const getTaskSummary = () => {
     const tasks: string[] = [];
 
@@ -56,4 +56,4 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
       </Box>
     </Box>
   );
-};
+});
