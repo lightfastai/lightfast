@@ -56,17 +56,23 @@ export class Orchestrator {
   // Switch active agent
   switchAgent() {
     const oldAgent = this.state.activeAgent;
-    this.state.activeAgent =
+    const newAgent: AgentType =
       this.state.activeAgent === 'claude-code' ? 'codex' : 'claude-code';
+
+    // Update active agent
+    this.state = {
+      ...this.state,
+      activeAgent: newAgent,
+    };
 
     // Add visual feedback
     this.addMessage(
-      this.state.activeAgent,
+      newAgent,
       'system',
-      `[Deus] Switched from ${oldAgent === 'claude-code' ? 'Claude Code' : 'Codex'} to ${this.state.activeAgent === 'claude-code' ? 'Claude Code' : 'Codex'}`
+      `[Deus] Switched from ${oldAgent === 'claude-code' ? 'Claude Code' : 'Codex'} to ${newAgent === 'claude-code' ? 'Claude Code' : 'Codex'}`
     );
 
-    this.emit();
+    // emit() is called by addMessage, so we don't need to call it again
   }
 
   // Add message to agent
@@ -80,9 +86,15 @@ export class Orchestrator {
     };
 
     if (agentType === 'claude-code') {
-      this.state.claudeCode.messages.push(message);
+      this.state.claudeCode = {
+        ...this.state.claudeCode,
+        messages: [...this.state.claudeCode.messages, message],
+      };
     } else {
-      this.state.codex.messages.push(message);
+      this.state.codex = {
+        ...this.state.codex,
+        messages: [...this.state.codex.messages, message],
+      };
     }
 
     this.emit();
@@ -95,11 +107,17 @@ export class Orchestrator {
     currentTask?: string
   ) {
     if (agentType === 'claude-code') {
-      this.state.claudeCode.status = status;
-      this.state.claudeCode.currentTask = currentTask;
+      this.state.claudeCode = {
+        ...this.state.claudeCode,
+        status,
+        currentTask,
+      };
     } else {
-      this.state.codex.status = status;
-      this.state.codex.currentTask = currentTask;
+      this.state.codex = {
+        ...this.state.codex,
+        status,
+        currentTask,
+      };
     }
 
     this.emit();
@@ -168,23 +186,35 @@ export class Orchestrator {
 
   // Share context between agents
   shareContext(key: string, value: unknown) {
-    this.state.sharedContext[key] = value;
+    this.state = {
+      ...this.state,
+      sharedContext: {
+        ...this.state.sharedContext,
+        [key]: value,
+      },
+    };
     this.addMessage(
       this.state.activeAgent,
       'system',
       `Shared context: ${key}`
     );
-    this.emit();
+    // emit() is called by addMessage, so we don't need to call it again
   }
 
   // Clear agent messages
   clearAgent(agentType: AgentType) {
     if (agentType === 'claude-code') {
-      this.state.claudeCode.messages = [];
-      this.state.claudeCode.currentTask = undefined;
+      this.state.claudeCode = {
+        ...this.state.claudeCode,
+        messages: [],
+        currentTask: undefined,
+      };
     } else {
-      this.state.codex.messages = [];
-      this.state.codex.currentTask = undefined;
+      this.state.codex = {
+        ...this.state.codex,
+        messages: [],
+        currentTask: undefined,
+      };
     }
 
     this.emit();
@@ -216,12 +246,19 @@ export class Orchestrator {
         });
       }
 
-      // Handle stderr - system/error messages
+      // Handle stderr - system/error messages (limit to prevent spam)
+      let stderrCount = 0;
+      const MAX_STDERR = 3;
       if (process.stderr) {
         process.stderr.on('data', (data: Buffer) => {
+          if (stderrCount >= MAX_STDERR) return;
           const output = data.toString().trim();
           if (output) {
             this.addMessage(agentType, 'system', output);
+            stderrCount++;
+            if (stderrCount >= MAX_STDERR) {
+              this.addMessage(agentType, 'system', '[Additional stderr output suppressed]');
+            }
           }
         });
       }
@@ -240,14 +277,17 @@ export class Orchestrator {
         this.processes.set(agentType, null);
       });
 
-      // Handle process errors
+      // Handle process errors (command not found, etc)
       process.on('error', (error) => {
         this.addMessage(
           agentType,
           'system',
-          `Process error: ${error.message}`
+          `Failed to start: ${error.message}`
         );
-        this.updateAgentStatus(agentType, 'error', error.message);
+        this.updateAgentStatus(agentType, 'error', 'Command not found');
+        // Kill the process to stop further errors
+        process.kill();
+        this.processes.set(agentType, null);
       });
 
       this.updateAgentStatus(agentType, 'idle', 'Ready');
