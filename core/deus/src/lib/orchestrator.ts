@@ -47,8 +47,17 @@ export class Orchestrator {
 
   // Switch active agent
   switchAgent() {
+    const oldAgent = this.state.activeAgent;
     this.state.activeAgent =
       this.state.activeAgent === 'claude-code' ? 'codex' : 'claude-code';
+
+    // Add visual feedback
+    this.addMessage(
+      this.state.activeAgent,
+      'system',
+      `[Deus] Switched from ${oldAgent === 'claude-code' ? 'Claude Code' : 'Codex'} to ${this.state.activeAgent === 'claude-code' ? 'Claude Code' : 'Codex'}`
+    );
+
     this.emit();
   }
 

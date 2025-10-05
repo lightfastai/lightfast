@@ -37,12 +37,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Switch agents on Tab
-    if (key.tab) {
-      orchestrator.switchAgent();
-      return;
-    }
-
     // Share context on Ctrl+S
     if (key.ctrl && input === 's') {
       orchestrator.shareContext('last-interaction', {
