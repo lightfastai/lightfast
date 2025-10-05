@@ -31,6 +31,11 @@ export const App: React.FC = () => {
   }, []);
 
   useInput((input, key) => {
+    // Only handle keyboard shortcuts, ignore regular input
+    if (!key.ctrl && !key.meta) {
+      return;
+    }
+
     // Exit on Ctrl+C
     if (key.ctrl && input === 'c') {
       exit();

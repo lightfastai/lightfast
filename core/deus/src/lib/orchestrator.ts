@@ -1,4 +1,4 @@
-import { execa, type ExecaChildProcess } from 'execa';
+import { execa } from 'execa';
 import { nanoid } from 'nanoid';
 import {
   type AgentState,
@@ -7,9 +7,11 @@ import {
   type OrchestrationState,
 } from '../types/index.js';
 
+type ExecaProcess = ReturnType<typeof execa>;
+
 export class Orchestrator {
   private state: OrchestrationState;
-  private processes: Map<AgentType, ExecaChildProcess | null> = new Map();
+  private processes: Map<AgentType, ExecaProcess | null> = new Map();
   private listeners: Set<(state: OrchestrationState) => void> = new Set();
 
   constructor() {
@@ -144,7 +146,7 @@ export class Orchestrator {
           'Running the command...',
         ];
 
-        const response = responses[Math.floor(Math.random() * responses.length)];
+        const response = responses[Math.floor(Math.random() * responses.length)]!;
         this.addMessage(agentType, 'assistant', response);
         this.updateAgentStatus(agentType, 'idle');
 
