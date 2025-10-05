@@ -76,7 +76,7 @@ export const InputBar: React.FC<InputBarProps> = ({
       <Box>
         <Text color={agentColor} bold>▸ </Text>
         <Text>
-          {value || (isFocused ? '' : <Text dimColor>Type your message...</Text>)}
+          {value}
           {isFocused && <Text inverse> </Text>}
         </Text>
       </Box>
