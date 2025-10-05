@@ -1,39 +1,38 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { Button } from "@repo/ui/components/ui/button";
-import { Icons } from "@repo/ui/components/icons";
 import { UserDropdownMenu } from "./user-dropdown-menu";
+import { OrgSwitcher } from "./org-switcher";
+import type { Organization } from "@db/deus/schema";
 
-export function AuthenticatedHeader() {
+interface AuthenticatedHeaderProps {
+	organizations: Organization[];
+}
+
+export function AuthenticatedHeader({ organizations }: AuthenticatedHeaderProps) {
 	return (
 		<>
 			{/* Mobile/Tablet header - relative positioning */}
 			<header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
-				{/* Left side - Logo */}
-				<div className="flex items-center">
-					<Button variant="ghost" size="xs" asChild>
-						<Link href="/">
-							<Icons.logoShort className="h-4 w-auto text-foreground" />
-						</Link>
-					</Button>
+				{/* Left side - Org Switcher */}
+				<div className="flex items-center min-w-0 flex-1">
+					<div className="min-w-0 flex-1 max-w-[250px]">
+						<OrgSwitcher organizations={organizations} />
+					</div>
 				</div>
 
 				{/* Right side - User menu */}
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2 shrink-0">
 					<UserDropdownMenu />
 				</div>
 			</header>
 
 			{/* Desktop header - absolute positioning */}
-			{/* Left side - Logo only */}
-			<div className="hidden lg:flex absolute top-0 left-0 h-14 items-center pl-2 z-10 w-fit">
-				<Button variant="ghost" size="lg" asChild>
-					<Link href="/">
-						<Icons.logo className="size-22 text-foreground" />
-					</Link>
-				</Button>
+			{/* Left side - Org Switcher */}
+			<div className="hidden lg:flex absolute top-0 left-0 h-14 items-center pl-4 z-10 w-fit">
+				<div className="w-[250px]">
+					<OrgSwitcher organizations={organizations} />
+				</div>
 			</div>
 
 			{/* Desktop Right side - User menu */}

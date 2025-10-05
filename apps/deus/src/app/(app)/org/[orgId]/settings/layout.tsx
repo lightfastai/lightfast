@@ -1,6 +1,5 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { AuthenticatedHeader } from "~/components/authenticated-header";
 import { SettingsSidebar } from "~/components/settings-sidebar";
 import { verifyOrgAccess } from "~/lib/org-access";
 
@@ -34,9 +33,7 @@ export default async function SettingsLayout({
 	}
 
 	return (
-		<>
-			<AuthenticatedHeader />
-			<div className="pt-14 lg:pt-20 px-6 pb-16">
+		<div className="pt-14 lg:pt-20 px-6 pb-16">
 				{/* Header */}
 				<div className="mb-8 pt-6">
 					<h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -55,6 +52,5 @@ export default async function SettingsLayout({
 					<div className="flex-1 min-w-0">{children}</div>
 				</div>
 			</div>
-		</>
 	);
 }

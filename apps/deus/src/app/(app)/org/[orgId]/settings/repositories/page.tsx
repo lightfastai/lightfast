@@ -1,9 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { DataControlsSettings } from "~/components/data-controls-settings";
+import { RepositoriesSettings } from "~/components/repositories-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
 
-export default async function DataControlsPage({
+export default async function RepositoriesPage({
 	params,
 }: {
 	params: Promise<{ orgId: string }>;
@@ -27,5 +27,5 @@ export default async function DataControlsPage({
 		redirect("/onboarding");
 	}
 
-	return <DataControlsSettings />;
+	return <RepositoriesSettings organizationId={access.org.id} />;
 }

@@ -26,6 +26,6 @@ export default async function SettingsPage({
 		redirect("/onboarding");
 	}
 
-	// Redirect to data-controls as the default settings page
-	redirect(`/org/${orgId}/settings/data-controls`);
+	// Redirect to github-integration as the default settings page
+	redirect(`/org/${orgId}/settings/github-integration`);
 }

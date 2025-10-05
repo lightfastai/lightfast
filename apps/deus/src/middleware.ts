@@ -24,7 +24,7 @@ export default clerkMiddleware(
 
     // Redirect authenticated users away from auth pages
     if (userId && isAuthRoute(req)) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     // Protect routes that require authentication

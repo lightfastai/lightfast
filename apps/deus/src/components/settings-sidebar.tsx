@@ -6,12 +6,12 @@ import { cn } from "@repo/ui/lib/utils";
 
 const settingsNavigation = [
 	{
-		name: "Data Controls",
-		path: "data-controls",
+		name: "GitHub Integration",
+		path: "github-integration",
 	},
 	{
-		name: "Environments",
-		path: "environments",
+		name: "Repositories",
+		path: "repositories",
 	},
 ];
 

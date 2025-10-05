@@ -1,9 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { EnvironmentsSettings } from "~/components/environments-settings";
+import { GitHubIntegrationSettings } from "~/components/github-integration-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
 
-export default async function EnvironmentsPage({
+export default async function GitHubIntegrationPage({
 	params,
 }: {
 	params: Promise<{ orgId: string }>;
@@ -27,5 +27,5 @@ export default async function EnvironmentsPage({
 		redirect("/onboarding");
 	}
 
-	return <EnvironmentsSettings />;
+	return <GitHubIntegrationSettings organization={access.org} />;
 }

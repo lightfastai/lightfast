@@ -113,30 +113,27 @@ export default function ClaimOrgPage() {
 	}
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-			<div className="w-full max-w-2xl">
-				<div className="mb-8 text-center">
-					<h1 className="text-3xl font-semibold tracking-tight text-foreground">
-						Claim an organization
-					</h1>
-					<p className="mt-2 text-muted-foreground">
+		<div className="flex min-h-screen items-center justify-center bg-background px-4">
+			<Card className="w-full max-w-md border-0 shadow-none">
+				<CardHeader className="text-center">
+					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+						<Github className="h-6 w-6 text-primary" />
+					</div>
+					<CardTitle>Claim an organization</CardTitle>
+					<CardDescription>
 						Select a GitHub organization to create your workspace
-					</p>
-				</div>
-
-				{installations.length === 0 ? (
-					<Card>
-						<CardHeader>
-							<CardTitle>No organizations found</CardTitle>
-							<CardDescription>
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					{installations.length === 0 ? (
+						<div className="space-y-4 rounded-lg border border-border/60 bg-muted/5 p-4">
+							<p className="text-sm text-muted-foreground text-center">
 								You need to install the Deus GitHub App on at least one
 								organization.
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
+							</p>
 							<Button asChild className="w-full">
 								<a
-									href="https://github.com/apps/deus-app/installations/new"
+									href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
@@ -144,25 +141,23 @@ export default function ClaimOrgPage() {
 									Install GitHub App
 								</a>
 							</Button>
-						</CardContent>
-					</Card>
-				) : (
-					<div className="grid gap-4">
-						{installations.map((installation) => {
-							const account = installation.account;
-							const isClaiming = claiming === installation.id;
+						</div>
+					) : (
+						<div className="space-y-3">
+							{installations.map((installation) => {
+								const account = installation.account;
+								const isClaiming = claiming === installation.id;
 
-							if (!account) return null;
+								if (!account) return null;
 
-							const accountName = "login" in account ? account.login : "slug" in account ? account.slug : "Unknown";
-							const accountType = "type" in account ? account.type : "Organization";
+								const accountName = "login" in account ? account.login : "slug" in account ? account.slug : "Unknown";
+								const accountType = "type" in account ? account.type : "Organization";
 
-							return (
-								<Card
-									key={installation.id}
-									className="transition-colors hover:bg-muted/50"
-								>
-									<CardContent className="flex items-center gap-4 p-6">
+								return (
+									<div
+										key={installation.id}
+										className="flex items-center gap-4 rounded-lg border border-border/60 bg-muted/5 p-4 transition-colors hover:bg-muted/10"
+									>
 										{/* Organization Avatar */}
 										<div className="flex-shrink-0">
 											{account.avatar_url ? (
@@ -183,7 +178,7 @@ export default function ClaimOrgPage() {
 											<h3 className="font-semibold text-foreground">
 												{accountName}
 											</h3>
-											<p className="text-sm text-muted-foreground">
+											<p className="text-xs text-muted-foreground">
 												{accountType === "Organization"
 													? "Organization"
 													: "Personal Account"}
@@ -205,18 +200,16 @@ export default function ClaimOrgPage() {
 												"Claim"
 											)}
 										</Button>
-									</CardContent>
-								</Card>
-							);
-						})}
-					</div>
-				)}
+									</div>
+								);
+							})}
+						</div>
+					)}
 
-				<div className="mt-6 text-center">
-					<p className="text-sm text-muted-foreground">
+					<p className="text-xs text-center text-muted-foreground">
 						Don't see your organization?{" "}
 						<a
-							href="https://github.com/apps/deus-app/installations/new"
+							href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-primary hover:underline"
@@ -224,8 +217,8 @@ export default function ClaimOrgPage() {
 							Install the GitHub App
 						</a>
 					</p>
-				</div>
-			</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

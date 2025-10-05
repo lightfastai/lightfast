@@ -8,7 +8,6 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 
-import { AuthenticatedHeader } from "~/components/authenticated-header";
 import { verifyOrgAccess } from "~/lib/org-access";
 
 export default async function OrgHomePage({
@@ -41,9 +40,7 @@ export default async function OrgHomePage({
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background text-foreground">
-			<AuthenticatedHeader />
-
-			<main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pb-16 pt-6 text-center">
+			<main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pb-16 pt-20 text-center">
 				<h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl">
 					What should we orchestrate next?
 				</h1>

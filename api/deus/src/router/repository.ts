@@ -8,8 +8,8 @@ import { desc, eq, and } from "drizzle-orm";
 
 export const repositoryRouter = {
   /**
-   * List user's connected repositories
-   * Returns all active repositories for the authenticated user
+   * List organization's connected repositories
+   * Returns all active repositories for the specified organization
    *
    * Note: This returns minimal data from our DB. Frontend should fetch
    * fresh repo details (name, owner, description, etc.) from GitHub API
@@ -19,11 +19,12 @@ export const repositoryRouter = {
     .input(
       z.object({
         includeInactive: z.boolean().default(false),
+        organizationId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
       const whereConditions = [
-        eq(DeusConnectedRepository.userId, ctx.session.userId),
+        eq(DeusConnectedRepository.organizationId, input.organizationId),
       ];
 
       if (!input.includeInactive) {
@@ -34,7 +35,7 @@ export const repositoryRouter = {
         .select({
           id: DeusConnectedRepository.id,
           githubRepoId: DeusConnectedRepository.githubRepoId,
-          installationId: DeusConnectedRepository.installationId,
+          githubInstallationId: DeusConnectedRepository.githubInstallationId,
           permissions: DeusConnectedRepository.permissions,
           isActive: DeusConnectedRepository.isActive,
           connectedAt: DeusConnectedRepository.connectedAt,
@@ -55,19 +56,22 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
+        organizationId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
       const repository = await db
         .select()
         .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.id, input.repositoryId))
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId)
+          )
+        )
         .limit(1);
 
-      if (
-        !repository[0] ||
-        repository[0].userId !== ctx.session.userId
-      ) {
+      if (!repository[0]) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Repository not found",
@@ -80,25 +84,23 @@ export const repositoryRouter = {
   /**
    * Connect a new repository
    *
-   * MVP: Users can only connect ONE repository
-   *
-   * AUTHENTICATION FLOW (MVP):
-   * - User completes GitHub OAuth flow → frontend receives access_token
-   * - Frontend calls this endpoint with: githubRepoId, accessToken, permissions
+   * GITHUB APP FLOW:
+   * - Organization has GitHub App installed
+   * - We use installation ID to get installation access tokens
+   * - Frontend calls this endpoint with: organizationId, githubRepoId, githubInstallationId
    * - We store minimal immutable data only
-   * - installationId is optional (reserved for future GitHub App support)
    *
    * SIMPLIFIED APPROACH:
-   * - Store only immutable data: githubRepoId, accessToken, permissions
+   * - Store only immutable data: organizationId, githubRepoId, githubInstallationId
    * - Optionally cache metadata for UI display (can be stale)
    * - Fetch fresh repo details from GitHub API when needed
    */
   connect: protectedProcedure
     .input(
       z.object({
+        organizationId: z.string(),
         githubRepoId: z.string(),
-        installationId: z.string().optional(),
-        accessToken: z.string().optional(),
+        githubInstallationId: z.string(),
         permissions: z
           .object({
             admin: z.boolean(),
@@ -110,22 +112,23 @@ export const repositoryRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // MVP: Check if user already has ANY repository connected
-      const existingRepos = await db
+      // Check if this repository is already connected to this organization
+      const existingRepo = await db
         .select()
         .from(DeusConnectedRepository)
         .where(
           and(
-            eq(DeusConnectedRepository.userId, ctx.session.userId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+            eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
             eq(DeusConnectedRepository.isActive, true)
           )
         )
         .limit(1);
 
-      if (existingRepos[0]) {
+      if (existingRepo[0]) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "You can only connect one repository. Remove your existing repository first.",
+          message: "This repository is already connected to this organization.",
         });
       }
 
@@ -135,7 +138,7 @@ export const repositoryRouter = {
         .from(DeusConnectedRepository)
         .where(
           and(
-            eq(DeusConnectedRepository.userId, ctx.session.userId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId)
           )
         )
@@ -147,8 +150,7 @@ export const repositoryRouter = {
           .update(DeusConnectedRepository)
           .set({
             isActive: true,
-            installationId: input.installationId,
-            accessToken: input.accessToken,
+            githubInstallationId: input.githubInstallationId,
             permissions: input.permissions,
             metadata: input.metadata,
           })
@@ -165,10 +167,9 @@ export const repositoryRouter = {
 
       await db.insert(DeusConnectedRepository).values({
         id,
-        userId: ctx.session.userId,
+        organizationId: input.organizationId,
         githubRepoId: input.githubRepoId,
-        installationId: input.installationId,
-        accessToken: input.accessToken,
+        githubInstallationId: input.githubInstallationId,
         permissions: input.permissions,
         metadata: input.metadata,
       });
