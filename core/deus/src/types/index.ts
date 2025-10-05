@@ -28,6 +28,7 @@ export const AgentState = z.object({
   currentTask: z.string().optional(),
   messages: z.array(Message),
   processId: z.number().optional(),
+  sessionId: z.string().optional(), // Claude conversation session ID
 });
 export type AgentState = z.infer<typeof AgentState>;
 

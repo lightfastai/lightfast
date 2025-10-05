@@ -56,11 +56,8 @@ export async function runHeadless(options: HeadlessOptions): Promise<HeadlessRes
   });
 
   try {
-    // Start the agent
+    // Start the agent (includes initialization delay)
     await orchestrator.startAgent(agent);
-
-    // Wait a bit for agent to initialize
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Send the message
     await orchestrator.sendToAgent(agent, options.message);

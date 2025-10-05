@@ -33,6 +33,11 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state }) => {
     return state.activeAgent === 'claude-code' ? 'Claude Code' : 'Codex';
   };
 
+  const getActiveSessionId = () => {
+    const agent = state.activeAgent === 'claude-code' ? state.claudeCode : state.codex;
+    return agent.sessionId ? agent.sessionId.substring(0, 8) : null;
+  };
+
   return (
     <Box
       borderStyle="round"
@@ -46,7 +51,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state }) => {
           Deus Orchestrator
         </Text>
         <Text color="gray">•</Text>
-        <Text color="cyan">Active: {getActiveAgentName()}</Text>
+        <Text color="cyan">
+          Active: {getActiveAgentName()}
+          {getActiveSessionId() && <Text color="gray"> ({getActiveSessionId()}...)</Text>}
+        </Text>
       </Box>
 
       <Box gap={3}>

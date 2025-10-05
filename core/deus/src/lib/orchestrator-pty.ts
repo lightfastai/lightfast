@@ -7,7 +7,12 @@ import {
 } from '../types/index.js';
 import { ClaudePtySpawner, stripAnsi } from './pty-spawner.js';
 
-export class Orchestrator {
+/**
+ * Orchestrator using PTY-based interactive Claude
+ * Supports full Claude features: slash commands, tab completion, thinking mode, etc.
+ */
+
+export class OrchestatorPty {
   private state: OrchestrationState;
   private spawners: Map<AgentType, ClaudePtySpawner | null> = new Map();
   private listeners: Set<(state: OrchestrationState) => void> = new Set();
@@ -51,14 +56,14 @@ export class Orchestrator {
     const newAgent: AgentType =
       this.state.activeAgent === 'claude-code' ? 'codex' : 'claude-code';
 
-    // Add visual feedback (this will emit state change)
+    // Add visual feedback
     this.addMessage(
       newAgent,
       'system',
       `[Deus] Switched from ${oldAgent === 'claude-code' ? 'Claude Code' : 'Codex'} to ${newAgent === 'claude-code' ? 'Claude Code' : 'Codex'}`
     );
 
-    // Update active agent after message is added
+    // Update active agent
     this.state = {
       ...this.state,
       activeAgent: newAgent,
@@ -150,13 +155,13 @@ export class Orchestrator {
     this.emit();
   }
 
-  // Send command to agent with coordination
+  // Send message to agent
   async sendToAgent(agentType: AgentType, message: string) {
-    // Add user message to active agent
+    // Add user message
     this.addMessage(agentType, 'user', message);
     this.updateAgentStatus(agentType, 'running', 'Processing request...');
 
-    // Coordinate with other agent - notify about the interaction
+    // Notify other agent
     const otherAgent: AgentType = agentType === 'claude-code' ? 'codex' : 'claude-code';
     const agentName = agentType === 'claude-code' ? 'Claude Code' : 'Codex';
 
@@ -171,9 +176,9 @@ export class Orchestrator {
     if (spawner && spawner.isRunning()) {
       try {
         // Send message via PTY (like typing in terminal)
-        await spawner.write(message);
+        spawner.write(message);
 
-        // Share context with other agent
+        // Share context
         this.shareContext(`last-message-${agentType}`, {
           from: agentType,
           message,
@@ -188,26 +193,42 @@ export class Orchestrator {
         this.updateAgentStatus(agentType, 'error', 'Failed to send message');
       }
     } else {
-      // If no spawner, add mock response for testing
+      // Mock response if no process
       setTimeout(() => {
         const responses = [
           'I understand. Let me help you with that.',
           'Processing your request...',
           'Analyzing the code...',
-          'Running the command...',
         ];
 
         const response = responses[Math.floor(Math.random() * responses.length)] ?? 'Processing...';
         this.addMessage(agentType, 'assistant', response);
         this.updateAgentStatus(agentType, 'idle');
 
-        // Notify other agent about response
         this.addMessage(
           otherAgent,
           'system',
           `[Deus] ${agentName} responded: "${response.slice(0, 40)}..."`
         );
       }, 1000 + Math.random() * 2000);
+    }
+  }
+
+  // Send slash command to agent
+  async sendCommand(agentType: AgentType, command: string) {
+    const spawner = this.spawners.get(agentType);
+    if (spawner && spawner.isRunning()) {
+      spawner.sendCommand(command);
+      this.addMessage(agentType, 'user', `/${command}`);
+    }
+  }
+
+  // Send Tab (for thinking mode toggle)
+  async sendTab(agentType: AgentType) {
+    const spawner = this.spawners.get(agentType);
+    if (spawner && spawner.isRunning()) {
+      spawner.sendTab();
+      this.addMessage(agentType, 'system', '[Sent Tab]');
     }
   }
 
@@ -223,7 +244,6 @@ export class Orchestrator {
 
     this.emit();
 
-    // Add message after context is shared
     this.addMessage(
       this.state.activeAgent,
       'system',
@@ -256,7 +276,7 @@ export class Orchestrator {
     this.emit();
   }
 
-  // Start actual agent process
+  // Start agent process
   async startAgent(agentType: AgentType) {
     try {
       // Only spawn PTY for Claude Code for now
@@ -319,12 +339,10 @@ export class Orchestrator {
   private getAgentCommand(
     agentType: AgentType
   ): { command: string } {
-    // Check environment variables for custom commands (allows override)
     if (agentType === 'claude-code') {
       const envCommand = process.env.CLAUDE_CODE_COMMAND || process.env.CLAUDE_COMMAND;
       return { command: envCommand || 'claude' };
     } else {
-      // codex - not implemented yet
       return { command: process.env.CODEX_COMMAND || 'codex' };
     }
   }
