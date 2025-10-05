@@ -19,7 +19,7 @@
 - Removed external component dependencies (ink-spinner, ink-text-input)
 - Built custom Spinner and TextInput using Ink's primitives
 - Status bar, dual agent panels, and input bar all rendering correctly
-- **Two modes: Mock mode (default) and Real Agent mode (via env vars)**
+- **Spawns real agent processes by default (`claude` and `codex` commands)**
 
 ## Project Structure
 
@@ -79,11 +79,8 @@ cd core/deus
 # Install dependencies (already done if you ran pnpm install from root)
 pnpm install
 
-# Run the TUI (Mock Mode - no real agents)
+# Run the TUI (spawns 'claude' and 'codex' processes)
 pnpm dev
-
-# Run with real agents (configure via environment variables)
-CLAUDE_CODE_COMMAND=claude-code CODEX_COMMAND=codex pnpm dev
 ```
 
 The TUI will display:
@@ -93,21 +90,20 @@ The TUI will display:
 
 ### Agent Configuration
 
-Deus supports two modes:
+Deus spawns real agent processes by default:
+- **Claude Code**: Uses `claude` command
+- **Codex**: Uses `codex` command
 
-1. **Mock Mode** (default): Simulates agent responses for testing the UI
-2. **Real Agent Mode**: Spawns actual agent processes
-
-To use real agents, set environment variables:
+To override with custom commands, set environment variables:
 
 ```bash
-# Claude Code agent
-export CLAUDE_CODE_COMMAND=/path/to/claude-code
+# Custom Claude Code command
+export CLAUDE_CODE_COMMAND=/path/to/custom-claude
 # or
-export CLAUDE_COMMAND=/path/to/claude
+export CLAUDE_COMMAND=/path/to/custom-claude
 
-# Codex agent
-export CODEX_COMMAND=/path/to/codex
+# Custom Codex command
+export CODEX_COMMAND=/path/to/custom-codex
 
 # Run Deus
 pnpm dev

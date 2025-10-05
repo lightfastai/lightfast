@@ -13,8 +13,8 @@ Deus is a TUI (Terminal User Interface) application built with Ink (React for CL
 - **Message History**: Last 5 messages displayed per agent
 - **Keyboard Controls**: Quick navigation and context sharing
 - **Process Integration**: Spawns and communicates with real agent processes
-- **Mock Mode**: Test the UI without real agents
 - **Context Sharing**: Share information between agents with Ctrl+S
+- **Customizable Commands**: Override default commands via environment variables
 
 ## Quick Start
 
@@ -25,11 +25,8 @@ cd core/deus
 # Install dependencies
 pnpm install
 
-# Run in mock mode (default)
+# Run the TUI (spawns 'claude' and 'codex' processes)
 pnpm dev
-
-# Run with real agents
-CLAUDE_CODE_COMMAND=claude-code CODEX_COMMAND=codex pnpm dev
 ```
 
 ## Keyboard Shortcuts
@@ -42,19 +39,21 @@ CLAUDE_CODE_COMMAND=claude-code CODEX_COMMAND=codex pnpm dev
 
 ## Configuration
 
-Configure agent commands via environment variables:
+Deus uses these commands by default:
+- **Claude Code**: `claude`
+- **Codex**: `codex`
+
+To override with custom commands, set environment variables:
 
 ```bash
-# Claude Code
-export CLAUDE_CODE_COMMAND=/path/to/claude-code
+# Custom Claude Code command
+export CLAUDE_CODE_COMMAND=/path/to/custom-claude
 # or
-export CLAUDE_COMMAND=/path/to/claude
+export CLAUDE_COMMAND=/path/to/custom-claude
 
-# Codex
-export CODEX_COMMAND=/path/to/codex
+# Custom Codex command
+export CODEX_COMMAND=/path/to/custom-codex
 ```
-
-If no commands are configured, Deus runs in mock mode with simulated responses.
 
 ## Architecture
 

@@ -152,16 +152,8 @@ export class Orchestrator {
   // Start actual agent process
   async startAgent(agentType: AgentType) {
     try {
-      // Determine which command to run based on agent type
-      // For now, we'll use environment variables to configure the agent commands
-      // Default to mock mode if no commands are provided
+      // Get agent command (defaults to 'claude' or 'codex')
       const agentCommand = this.getAgentCommand(agentType);
-
-      if (!agentCommand) {
-        // No command configured - use mock mode
-        this.updateAgentStatus(agentType, 'idle', 'Ready (Mock Mode)');
-        return;
-      }
 
       // Spawn the agent process
       const process = execa(agentCommand.command, agentCommand.args, {
@@ -227,22 +219,17 @@ export class Orchestrator {
   // Get agent command configuration
   private getAgentCommand(
     agentType: AgentType
-  ): { command: string; args: string[] } | null {
-    // Check environment variables for agent commands
+  ): { command: string; args: string[] } {
+    // Check environment variables for custom commands (allows override)
     if (agentType === 'claude-code') {
-      const command = process.env.CLAUDE_CODE_COMMAND || process.env.CLAUDE_COMMAND;
-      if (command) {
-        return { command, args: [] };
-      }
-    } else if (agentType === 'codex') {
-      const command = process.env.CODEX_COMMAND;
-      if (command) {
-        return { command, args: [] };
-      }
+      const envCommand = process.env.CLAUDE_CODE_COMMAND || process.env.CLAUDE_COMMAND;
+      const command = envCommand || 'claude'; // Default to 'claude'
+      return { command, args: [] };
+    } else {
+      // codex
+      const command = process.env.CODEX_COMMAND || 'codex'; // Default to 'codex'
+      return { command, args: [] };
     }
-
-    // No command configured
-    return null;
   }
 
   // Stop agent process
