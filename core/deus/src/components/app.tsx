@@ -6,12 +6,18 @@ import { StatusBar } from './status-bar.js';
 import { Orchestrator } from '../lib/orchestrator.js';
 import { type OrchestrationState } from '../types/index.js';
 
-const { useState, useEffect } = React;
-
-const orchestrator = new Orchestrator();
+const { useState, useEffect, useRef } = React;
 
 export const App: React.FC = () => {
   const { exit } = useApp();
+
+  // Create orchestrator instance in ref to persist across renders
+  const orchestratorRef = useRef<Orchestrator | null>(null);
+  if (!orchestratorRef.current) {
+    orchestratorRef.current = new Orchestrator();
+  }
+  const orchestrator = orchestratorRef.current;
+
   const [state, setState] = useState<OrchestrationState>(orchestrator.getState());
 
   useEffect(() => {
