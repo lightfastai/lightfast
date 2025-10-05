@@ -6,10 +6,11 @@ import {
   type OrchestrationState,
 } from '../types/index.js';
 import { ClaudePtySpawner, stripAnsi } from './pty-spawner.js';
+import { CodexPtySpawner } from './codex-pty-spawner.js';
 
 export class Orchestrator {
   private state: OrchestrationState;
-  private spawners: Map<AgentType, ClaudePtySpawner | null> = new Map();
+  private spawners: Map<AgentType, ClaudePtySpawner | CodexPtySpawner | null> = new Map();
   private listeners: Set<(state: OrchestrationState) => void> = new Set();
 
   constructor() {
@@ -259,44 +260,63 @@ export class Orchestrator {
   // Start actual agent process
   async startAgent(agentType: AgentType) {
     try {
-      // Only spawn PTY for Claude Code for now
-      if (agentType !== 'claude-code') {
-        this.updateAgentStatus(agentType, 'idle', 'Ready (mock mode)');
-        this.spawners.set(agentType, null);
-        return;
-      }
-
       const command = this.getAgentCommand(agentType);
 
-      // Create PTY spawner
-      const spawner = new ClaudePtySpawner({
-        cwd: process.cwd(),
-        command: command.command,
-        onMessage: (role, content) => {
-          // Handle structured messages from conversation file
-          if (role === 'assistant') {
-            this.addMessage(agentType, 'assistant', content);
-            this.updateAgentStatus(agentType, 'idle');
-          } else if (role === 'system') {
-            this.addMessage(agentType, 'system', content);
-          }
-          // Note: user messages are already added via sendToAgent
-        },
-        onSessionDetected: (sessionId) => {
-          this.updateSessionId(agentType, sessionId);
-          this.addMessage(agentType, 'system', `[Session: ${sessionId.substring(0, 8)}...]`);
-        },
-        onData: (data) => {
-          // Raw PTY output - can be used for real-time feedback
-          // For now, just log in debug mode
-          if (process.env.DEBUG) {
-            const clean = stripAnsi(data);
-            if (clean.trim()) {
-              console.log(`[${agentType} PTY]`, clean);
-            }
-          }
-        },
-      });
+      // Create appropriate PTY spawner based on agent type
+      const spawner = agentType === 'claude-code'
+        ? new ClaudePtySpawner({
+            cwd: process.cwd(),
+            command: command.command,
+            onMessage: (role, content) => {
+              // Handle structured messages from conversation file
+              if (role === 'assistant') {
+                this.addMessage(agentType, 'assistant', content);
+                this.updateAgentStatus(agentType, 'idle');
+              } else if (role === 'system') {
+                this.addMessage(agentType, 'system', content);
+              }
+              // Note: user messages are already added via sendToAgent
+            },
+            onSessionDetected: (sessionId) => {
+              this.updateSessionId(agentType, sessionId);
+              this.addMessage(agentType, 'system', `[Session: ${sessionId.substring(0, 8)}...]`);
+            },
+            onData: (data) => {
+              // Raw PTY output - can be used for real-time feedback
+              if (process.env.DEBUG) {
+                const clean = stripAnsi(data);
+                if (clean.trim()) {
+                  console.log(`[${agentType} PTY]`, clean);
+                }
+              }
+            },
+          })
+        : new CodexPtySpawner({
+            cwd: process.cwd(),
+            command: command.command,
+            onMessage: (role, content) => {
+              // Handle structured messages from session file
+              if (role === 'assistant') {
+                this.addMessage(agentType, 'assistant', content);
+                this.updateAgentStatus(agentType, 'idle');
+              } else if (role === 'system') {
+                this.addMessage(agentType, 'system', content);
+              }
+            },
+            onSessionDetected: (sessionId) => {
+              this.updateSessionId(agentType, sessionId);
+              this.addMessage(agentType, 'system', `[Codex Session: ${sessionId.substring(0, 8)}...]`);
+            },
+            onData: (data) => {
+              // Raw PTY output for real-time feedback
+              if (process.env.DEBUG) {
+                const clean = stripAnsi(data);
+                if (clean.trim()) {
+                  console.log(`[${agentType} PTY]`, clean);
+                }
+              }
+            },
+          });
 
       this.spawners.set(agentType, spawner);
 
