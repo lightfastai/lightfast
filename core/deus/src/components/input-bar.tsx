@@ -41,31 +41,34 @@ export const InputBar: React.FC<InputBarProps> = ({
   const agentColor = activeAgent === 'claude-code' ? 'cyan' : 'magenta';
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="gray" padding={1}>
+    <Box flexDirection="column" borderStyle="round" borderColor={agentColor} padding={1}>
       {/* Agent selector hint */}
       <Box marginBottom={1} justifyContent="space-between">
         <Box>
-          <Text color={agentColor} bold>
-            → {agentName}
+          <Text color={agentColor} bold inverse>
+            ▶ {agentName}
           </Text>
           <Text color="gray" dimColor>
             {' '}
-            (Tab to switch)
+            (Tab to switch • Coordinates with Deus)
           </Text>
         </Box>
         <Box gap={2}>
           <Text color="gray" dimColor>
-            Ctrl+C to exit
+            Ctrl+C exit
           </Text>
           <Text color="gray" dimColor>
-            Ctrl+S to share context
+            Ctrl+S share
+          </Text>
+          <Text color="gray" dimColor>
+            Ctrl+K clear
           </Text>
         </Box>
       </Box>
 
       {/* Input field */}
       <Box>
-        <Text color={agentColor}>▸ </Text>
+        <Text color={agentColor} bold>▸ </Text>
         <Text>
           {value || (isFocused ? '' : <Text dimColor>Type your message...</Text>)}
           {isFocused && <Text inverse> </Text>}

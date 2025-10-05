@@ -29,23 +29,30 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
     return Object.keys(state.sharedContext).length;
   };
 
+  const getActiveAgentName = () => {
+    return state.activeAgent === 'claude-code' ? 'Claude Code' : 'Codex';
+  };
+
   return (
     <Box
       borderStyle="round"
-      borderColor="gray"
+      borderColor="yellow"
       paddingX={2}
       paddingY={0}
       justifyContent="space-between"
     >
       <Box gap={3}>
-        <Text color="gray">Status:</Text>
-        <Text color="cyan">{getTaskSummary()}</Text>
+        <Text color="yellow" bold>
+          Deus Orchestrator
+        </Text>
+        <Text color="gray">•</Text>
+        <Text color="cyan">Active: {getActiveAgentName()}</Text>
       </Box>
 
       <Box gap={3}>
         <Text color="gray">Messages: {getTotalMessages()}</Text>
         <Text color="gray">Shared: {getSharedContextCount()}</Text>
-        <Text color="yellow">Deus Orchestrator</Text>
+        <Text color="gray">{getTaskSummary()}</Text>
       </Box>
     </Box>
   );

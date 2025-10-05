@@ -88,11 +88,21 @@ export class Orchestrator {
     this.emit();
   }
 
-  // Send command to agent
+  // Send command to agent with coordination
   async sendToAgent(agentType: AgentType, message: string) {
-    // Add user message
+    // Add user message to active agent
     this.addMessage(agentType, 'user', message);
     this.updateAgentStatus(agentType, 'running', 'Processing request...');
+
+    // Coordinate with other agent - notify about the interaction
+    const otherAgent: AgentType = agentType === 'claude-code' ? 'codex' : 'claude-code';
+    const agentName = agentType === 'claude-code' ? 'Claude Code' : 'Codex';
+
+    this.addMessage(
+      otherAgent,
+      'system',
+      `[Deus] User sent message to ${agentName}: "${message.slice(0, 50)}${message.length > 50 ? '...' : ''}"`
+    );
 
     const process = this.processes.get(agentType);
 
@@ -100,6 +110,13 @@ export class Orchestrator {
       try {
         // Send message to agent process via stdin
         process.stdin.write(`${message}\n`);
+
+        // Share context with other agent
+        this.shareContext(`last-message-${agentType}`, {
+          from: agentType,
+          message,
+          timestamp: new Date().toISOString(),
+        });
       } catch (error) {
         this.addMessage(
           agentType,
@@ -121,6 +138,13 @@ export class Orchestrator {
         const response = responses[Math.floor(Math.random() * responses.length)];
         this.addMessage(agentType, 'assistant', response);
         this.updateAgentStatus(agentType, 'idle');
+
+        // Notify other agent about response
+        this.addMessage(
+          otherAgent,
+          'system',
+          `[Deus] ${agentName} responded: "${response.slice(0, 40)}..."`
+        );
       }, 1000 + Math.random() * 2000);
     }
   }

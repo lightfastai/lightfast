@@ -46,21 +46,24 @@ core/deus/
 
 ### 1. Dual-Panel Layout
 - Split-screen design showing Claude Code and Codex side-by-side
-- Active agent highlighting with color-coded borders
+- Active agent highlighting with double border (╔══╗) and inverse header
+- Color-coded borders: cyan for active, gray for inactive, green/red/yellow for status
 - Real-time status indicators (running/idle/error/waiting)
 - Message history per agent (last 5 messages visible)
+- System messages show coordination between agents
 
 ### 2. Keyboard Controls
-- **Tab** - Switch between Claude Code and Codex
+- **Tab** - Switch between Claude Code and Codex (UI shows active agent with double border)
 - **Ctrl+C** - Exit application
 - **Ctrl+S** - Share context between agents
 - **Ctrl+K** - Clear active agent messages
-- **Enter** - Send message to active agent
+- **Enter** - Send message to active agent (coordinates with other agent)
 
 ### 3. Orchestrator
 - Centralized state management
 - Message routing between agents
-- Shared context management
+- **Agent coordination**: Messages to one agent automatically notify the other
+- Shared context management with automatic context sharing
 - Process lifecycle management
 - Event-driven updates with subscription model
 

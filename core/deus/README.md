@@ -9,10 +9,12 @@ Deus is a TUI (Terminal User Interface) application built with Ink (React for CL
 ## Features
 
 - **Dual-Panel Layout**: Side-by-side view of Claude Code and Codex agents
+- **Active Agent Indication**: Double border and highlighted header for the active agent
 - **Real-Time Status**: Live indicators showing agent state (idle, running, waiting, error)
 - **Message History**: Last 5 messages displayed per agent
 - **Keyboard Controls**: Quick navigation and context sharing
 - **Process Integration**: Spawns and communicates with real agent processes
+- **Agent Coordination**: Messages to one agent notify the other agent automatically
 - **Context Sharing**: Share information between agents with Ctrl+S
 - **Customizable Commands**: Override default commands via environment variables
 
@@ -31,11 +33,21 @@ pnpm dev
 
 ## Keyboard Shortcuts
 
-- **Tab** - Switch between Claude Code and Codex
-- **Enter** - Send message to active agent
+- **Tab** - Switch between Claude Code and Codex (UI updates to show active agent)
+- **Enter** - Send message to active agent (automatically coordinates with other agent)
 - **Ctrl+C** - Exit application
 - **Ctrl+S** - Share context between agents
 - **Ctrl+K** - Clear active agent messages
+
+## How Coordination Works
+
+When you send a message to one agent (e.g., Claude Code), Deus automatically:
+1. Sends your message to the active agent
+2. Notifies the other agent (e.g., Codex) with a system message
+3. Shares the message context in the orchestrator's shared state
+4. When the active agent responds, notifies the other agent about the response
+
+This enables both agents to be aware of what the other is doing, facilitating coordinated work.
 
 ## Configuration
 

@@ -30,7 +30,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
     if (agent.status === 'running') return 'green';
     if (agent.status === 'error') return 'red';
     if (agent.status === 'waiting') return 'yellow';
-    return 'blue';
+    return 'cyan'; // Active border is cyan
+  };
+
+  const getBorderStyle = () => {
+    return isActive ? 'double' : 'round';
   };
 
   const getStatusIcon = () => {
@@ -53,7 +57,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
   return (
     <Box
       flexDirection="column"
-      borderStyle="round"
+      borderStyle={getBorderStyle()}
       borderColor={getBorderColor()}
       padding={1}
       width="50%"
@@ -61,15 +65,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, isActive }) => {
       {/* Header */}
       <Box marginBottom={1} justifyContent="space-between">
         <Box>
-          <Text bold color={isActive ? 'cyan' : 'gray'}>
+          <Text bold color={isActive ? 'cyan' : 'gray'} inverse={isActive}>
+            {isActive ? '◆ ' : '  '}
             {title}
+            {isActive ? ' ◆' : ''}
           </Text>
-          {isActive && (
-            <Text color="cyan" dimColor>
-              {' '}
-              [ACTIVE]
-            </Text>
-          )}
         </Box>
         <Box gap={1}>
           {getStatusIcon()}
