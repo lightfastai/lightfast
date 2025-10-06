@@ -170,7 +170,8 @@ export class Orchestrator {
     const spawner = this.spawners.get(agentType);
 
     if (process.env.DEBUG) {
-      console.log(`[Orchestrator] sendToAgent: spawner exists=${!!spawner}, isRunning=${spawner?.isRunning()}`);
+      console.log(`[Orchestrator] sendToAgent: agent=${agentType}, spawner exists=${!!spawner}, isRunning=${spawner?.isRunning()}`);
+      console.log(`[Orchestrator] Available spawners:`, Array.from(this.spawners.keys()));
     }
 
     if (spawner && spawner.isRunning()) {
@@ -198,6 +199,16 @@ export class Orchestrator {
       }
     } else {
       // If no spawner, add mock response for testing
+      if (process.env.DEBUG) {
+        console.log(`[Orchestrator] No running spawner for ${agentType}, using mock response`);
+      }
+
+      this.addMessage(
+        agentType,
+        'system',
+        `⚠️ ${agentType === 'claude-code' ? 'Claude Code' : 'Codex'} is not running (showing mock response)`
+      );
+
       setTimeout(() => {
         const responses = [
           'I understand. Let me help you with that.',
@@ -268,7 +279,13 @@ export class Orchestrator {
   // Start actual agent process
   async startAgent(agentType: AgentType) {
     try {
+      this.updateAgentStatus(agentType, 'idle', 'Starting...');
+
       const command = this.getAgentCommand(agentType);
+
+      if (process.env.DEBUG) {
+        console.log(`[Orchestrator] Starting ${agentType} with command: ${command.command}`);
+      }
 
       // Create appropriate PTY spawner based on agent type
       const spawner = agentType === 'claude-code'
@@ -332,18 +349,40 @@ export class Orchestrator {
 
       this.spawners.set(agentType, spawner);
 
+      if (process.env.DEBUG) {
+        console.log(`[Orchestrator] Spawner created for ${agentType}, starting PTY...`);
+      }
+
       // Start the PTY
       await spawner.start();
 
+      if (process.env.DEBUG) {
+        console.log(`[Orchestrator] ${agentType} PTY started successfully, isRunning=${spawner.isRunning()}`);
+      }
+
+      // Verify the spawner is running before marking as ready
+      if (!spawner.isRunning()) {
+        throw new Error('PTY started but isRunning() returns false - this should not happen');
+      }
+
       this.updateAgentStatus(agentType, 'idle', 'Ready (interactive mode)');
+      this.addMessage(agentType, 'system', `✓ ${agentType === 'claude-code' ? 'Claude Code' : 'Codex'} started successfully`);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      if (process.env.DEBUG) {
+        console.error(`[Orchestrator] Failed to start ${agentType}:`, error);
+      }
+
       this.updateAgentStatus(agentType, 'error', 'Failed to start');
       this.addMessage(
         agentType,
         'system',
-        `Failed to start: ${error instanceof Error ? error.message : String(error)}`
+        `✗ Failed to start: ${errorMsg}`
       );
-      throw error;
+
+      // Don't re-throw - we've already updated the UI with the error
+      // Re-throwing would crash the app
     }
   }
 

@@ -42,23 +42,34 @@ export class CodexPtySpawner {
   async start(): Promise<void> {
     const command = this.options.command || 'codex';
 
-    // Spawn Codex in PTY (full interactive mode)
-    this.pty = pty.spawn(command, [], {
-      name: 'xterm-256color',
-      cols: 120,
-      rows: 30,
-      cwd: this.projectPath,
-      env: {
-        ...process.env,
-        TERM: 'xterm-256color',
-        // Disable terminal features that might cause issues in PTY
-        TERM_PROGRAM: 'xterm',
-      },
-    });
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Starting command: ${command}`);
+      console.log(`[Codex PTY Spawner] CWD: ${this.projectPath}`);
+    }
 
-    // Send initial cursor position response to prevent timeout
-    // Some terminals query cursor position on startup
-    this.pty.write('\x1b[1;1R');
+    // Spawn Codex in PTY (full interactive mode)
+    try {
+      this.pty = pty.spawn(command, [], {
+        name: 'xterm-256color',
+        cols: 120,
+        rows: 30,
+        cwd: this.projectPath,
+        env: {
+          ...process.env,
+          TERM: 'xterm-256color',
+        },
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (process.env.DEBUG) {
+        console.error(`[Codex PTY Spawner] Failed to spawn PTY:`, error);
+      }
+      throw new Error(`Failed to spawn ${command}: ${errorMsg}`);
+    }
+
+    // Send initial cursor position response IMMEDIATELY to prevent timeout
+    // Codex queries cursor position on startup and will exit if no response
+    this.pty.write('\x1b[1;1R'); // Row 1, Column 1
 
     // Set up sessions directory watcher to detect new session files
     this.sessionsDirWatcher = watchSessionsDir(
@@ -79,6 +90,15 @@ export class CodexPtySpawner {
 
     // Handle PTY data (raw output with ANSI codes)
     this.pty.onData((data: string) => {
+      // Respond to cursor position queries (CPR) to prevent Codex from timing out
+      // Codex sends ESC[6n on startup and expects ESC[row;colR response
+      if (data.includes('\x1b[6n')) {
+        if (process.env.DEBUG) {
+          console.log(`[Codex PTY Spawner] Detected cursor position query, responding with ESC[1;1R`);
+        }
+        this.pty?.write('\x1b[1;1R'); // Row 1, Column 1
+      }
+
       // Pass raw data to consumer for real-time display
       this.options.onData?.(data);
 
@@ -136,18 +156,22 @@ export class CodexPtySpawner {
       }
 
       // Emit structured events from the session file
-      if (event.type === 'response_item') {
+      // Use event_msg for real-time assistant responses (comes first, faster feedback)
+      if (event.type === 'event_msg' && event.payload?.type === 'agent_message') {
+        if (process.env.DEBUG) {
+          console.log(`[Codex PTY Spawner] Emitting assistant message from event_msg`);
+        }
+        this.options.onMessage?.('assistant', text);
+      }
+      // Only emit from response_item if it's a user message (for reference)
+      else if (event.type === 'response_item') {
         const role = event.payload?.role;
-
         if (role === 'user') {
           // Don't emit user messages (already added by sendToAgent)
           // this.options.onMessage?.('user', text);
-        } else if (role === 'assistant') {
-          if (process.env.DEBUG) {
-            console.log(`[Codex PTY Spawner] Emitting assistant message`);
-          }
-          this.options.onMessage?.('assistant', text);
         }
+        // Skip assistant messages from response_item to avoid duplicates
+        // (already handled by event_msg above)
       } else if (event.type === 'session_meta') {
         const sessionId = event.payload?.id;
         if (sessionId) {

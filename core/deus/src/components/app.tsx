@@ -26,9 +26,19 @@ export const App: React.FC = () => {
       setState(newState);
     });
 
-    // Initialize agents
-    orchestrator.startAgent('claude-code').catch(console.error);
-    orchestrator.startAgent('codex').catch(console.error);
+    // Initialize agents - errors are already handled in orchestrator.startAgent
+    // which updates the agent state and adds error messages to the UI
+    orchestrator.startAgent('claude-code').catch((error) => {
+      if (process.env.DEBUG) {
+        console.error('[App] Failed to start claude-code:', error);
+      }
+    });
+
+    orchestrator.startAgent('codex').catch((error) => {
+      if (process.env.DEBUG) {
+        console.error('[App] Failed to start codex:', error);
+      }
+    });
 
     return () => {
       unsubscribe();

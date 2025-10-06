@@ -9,7 +9,7 @@ import os from 'node:os';
 
 export interface CodexSessionEvent {
   timestamp: string;
-  type: 'session_meta' | 'response_item' | 'tool_use' | 'tool_result';
+  type: 'session_meta' | 'response_item' | 'tool_use' | 'tool_result' | 'event_msg' | 'turn_context';
   payload: any;
 }
 
@@ -231,6 +231,12 @@ export function watchSessionsDir(
  * Extract text content from Codex event
  */
 export function extractEventText(event: CodexSessionEvent): string {
+  // Handle agent_message events (assistant responses)
+  if (event.type === 'event_msg' && event.payload?.type === 'agent_message') {
+    return event.payload.message || '';
+  }
+
+  // Handle response_item events (user messages and other content)
   if (event.type === 'response_item' && event.payload?.content) {
     const content = event.payload.content;
 
