@@ -63,9 +63,15 @@ export class CodexPtySpawner {
     // Set up sessions directory watcher to detect new session files
     this.sessionsDirWatcher = watchSessionsDir(
       (sessionId, filePath) => {
+        // Only set session ID and notify if not already set
         if (!this.sessionId) {
           this.sessionId = sessionId;
           this.options.onSessionDetected?.(sessionId);
+        }
+
+        // Always start watching the session file when detected
+        // (even if session ID was already detected from PTY output)
+        if (!this.sessionWatcher) {
           this.startWatchingSession(filePath);
         }
       }
@@ -108,9 +114,26 @@ export class CodexPtySpawner {
    * Start watching session file for structured events
    */
   private startWatchingSession(filePath: string): void {
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Starting to watch session file: ${filePath}`);
+    }
+
     this.sessionWatcher = watchSession(filePath, (event: CodexSessionEvent) => {
+      if (process.env.DEBUG) {
+        console.log(`[Codex PTY Spawner] Received session event: type=${event.type}, role=${event.payload?.role}`);
+      }
+
       const text = extractEventText(event);
-      if (!text) return;
+      if (!text) {
+        if (process.env.DEBUG) {
+          console.log(`[Codex PTY Spawner] No text extracted from event`);
+        }
+        return;
+      }
+
+      if (process.env.DEBUG) {
+        console.log(`[Codex PTY Spawner] Extracted text: ${text.slice(0, 50)}...`);
+      }
 
       // Emit structured events from the session file
       if (event.type === 'response_item') {
@@ -120,6 +143,9 @@ export class CodexPtySpawner {
           // Don't emit user messages (already added by sendToAgent)
           // this.options.onMessage?.('user', text);
         } else if (role === 'assistant') {
+          if (process.env.DEBUG) {
+            console.log(`[Codex PTY Spawner] Emitting assistant message`);
+          }
           this.options.onMessage?.('assistant', text);
         }
       } else if (event.type === 'session_meta') {
@@ -135,7 +161,19 @@ export class CodexPtySpawner {
    * Wait until Codex is ready to receive input
    */
   async waitUntilReady(): Promise<void> {
-    return this.readyPromise;
+    // TEMPORARY: Use fixed delay instead of pattern detection
+    // Pattern detection has issues with chunked PTY data (same as Claude Code)
+    if (!this.isReady) {
+      if (process.env.DEBUG) {
+        console.log(`[Codex PTY Spawner] Waiting 3 seconds for Codex to be ready...`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      this.isReady = true;
+      if (process.env.DEBUG) {
+        console.log(`[Codex PTY Spawner] Done waiting, assuming ready`);
+      }
+    }
+    return Promise.resolve();
   }
 
   /**
@@ -146,12 +184,47 @@ export class CodexPtySpawner {
       throw new Error('PTY not started');
     }
 
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] write() called`);
+    }
+
     // Wait until Codex is ready before sending input
     await this.waitUntilReady();
 
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Ready! Writing message: "${message}"`);
+    }
+
+    // Try typing character-by-character to simulate human input
+    for (const char of message) {
+      this.pty.write(char);
+      await new Promise(resolve => setTimeout(resolve, 10)); // 10ms between chars
+    }
+
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Message typed, waiting 200ms before Enter`);
+    }
+
+    // Wait a bit before sending Enter to ensure input is fully registered
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Sending Enter to submit`);
+    }
+
     // Send message followed by Enter
-    this.pty.write(message);
     this.pty.write('\r'); // Carriage return (Enter key)
+
+    // Wait to see if the message submits
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Enter sent, waiting for response`);
+    }
+
+    if (process.env.DEBUG) {
+      console.log(`[Codex PTY Spawner] Enter sent`);
+    }
   }
 
   /**

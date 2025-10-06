@@ -186,22 +186,39 @@ export function watchSessionsDir(
 ): () => void {
   const todayDir = getTodaySessionDir();
 
+  if (process.env.DEBUG) {
+    console.log(`[codex-sync] Watching sessions directory: ${todayDir}`);
+  }
+
   // Ensure directory exists
   fs.mkdirSync(todayDir, { recursive: true });
 
   const watcher = fs.watch(todayDir, (eventType, filename) => {
+    if (process.env.DEBUG) {
+      console.log(`[codex-sync] File event: type=${eventType}, filename=${filename}`);
+    }
+
     if (eventType === 'rename' && filename && filename.endsWith('.jsonl')) {
       const sessionId = parseSessionFilename(filename);
       const filePath = path.join(todayDir, filename);
+
+      if (process.env.DEBUG) {
+        console.log(`[codex-sync] Detected session file: sessionId=${sessionId}, path=${filePath}`);
+      }
 
       // Check if file was created (not deleted)
       if (sessionId) {
         try {
           if (fs.existsSync(filePath)) {
+            if (process.env.DEBUG) {
+              console.log(`[codex-sync] Session file exists, calling callback`);
+            }
             callback(sessionId, filePath);
           }
-        } catch {
-          // Ignore errors
+        } catch (error) {
+          if (process.env.DEBUG) {
+            console.error(`[codex-sync] Error checking file:`, error);
+          }
         }
       }
     }
@@ -219,7 +236,7 @@ export function extractEventText(event: CodexSessionEvent): string {
 
     if (Array.isArray(content)) {
       return content
-        .filter((c: any) => c.type === 'input_text' || c.type === 'text')
+        .filter((c: any) => c.type === 'input_text' || c.type === 'output_text' || c.type === 'text')
         .map((c: any) => c.text)
         .join('\n');
     }
