@@ -169,7 +169,15 @@ export class Orchestrator {
 
     const spawner = this.spawners.get(agentType);
 
+    if (process.env.DEBUG) {
+      console.log(`[Orchestrator] sendToAgent: spawner exists=${!!spawner}, isRunning=${spawner?.isRunning()}`);
+    }
+
     if (spawner && spawner.isRunning()) {
+      if (process.env.DEBUG) {
+        console.log(`[Orchestrator] Calling spawner.write("${message}")`);
+      }
+
       try {
         // Send message via PTY (like typing in terminal)
         await spawner.write(message);
@@ -269,6 +277,10 @@ export class Orchestrator {
             command: command.command,
             onMessage: (role, content) => {
               // Handle structured messages from conversation file
+              if (process.env.DEBUG) {
+                console.log(`[Orchestrator] Received message: role=${role}, content=${content.slice(0, 50)}...`);
+              }
+
               if (role === 'assistant') {
                 this.addMessage(agentType, 'assistant', content);
                 this.updateAgentStatus(agentType, 'idle');

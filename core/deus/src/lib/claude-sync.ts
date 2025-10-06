@@ -27,9 +27,10 @@ export interface ClaudeMessage {
 /**
  * Encode project path for .claude directory structure
  * Example: /Users/foo/project -> -Users-foo-project
+ * Note: Also replaces @ with - to match Claude Code's encoding
  */
 export function encodeProjectPath(projectPath: string): string {
-  return projectPath.replace(/\//g, '-');
+  return projectPath.replace(/[@/]/g, '-');
 }
 
 /**
@@ -139,22 +140,64 @@ export function watchProjectDir(
 ): () => void {
   const projectDir = getProjectDir(projectPath);
 
+  if (process.env.DEBUG) {
+    console.log(`[claude-sync] Watching project directory: ${projectDir}`);
+  }
+
   // Ensure directory exists
   fs.mkdirSync(projectDir, { recursive: true });
 
-  const watcher = fs.watch(projectDir, (eventType, filename) => {
-    if (eventType === 'rename' && filename && filename.endsWith('.jsonl')) {
-      const sessionId = filename.replace('.jsonl', '');
-      const filePath = path.join(projectDir, filename);
+  let lastCheckTime = Date.now();
+  let knownFiles = new Set<string>();
 
-      // Check if file was created (not deleted)
-      try {
-        if (fs.existsSync(filePath)) {
+  // Initial scan for existing files
+  try {
+    const files = fs.readdirSync(projectDir);
+    for (const file of files) {
+      if (file.endsWith('.jsonl')) {
+        knownFiles.add(file);
+      }
+    }
+    if (process.env.DEBUG && knownFiles.size > 0) {
+      console.log(`[claude-sync] Found ${knownFiles.size} existing conversation files`);
+    }
+  } catch {
+    // Directory might not have files yet
+  }
+
+  const checkForNewFiles = () => {
+    try {
+      const files = fs.readdirSync(projectDir);
+      for (const file of files) {
+        if (file.endsWith('.jsonl') && !knownFiles.has(file)) {
+          const sessionId = file.replace('.jsonl', '');
+          const filePath = path.join(projectDir, file);
+
+          if (process.env.DEBUG) {
+            console.log(`[claude-sync] New conversation file detected: ${filePath}`);
+          }
+
+          knownFiles.add(file);
           callback(sessionId, filePath);
         }
-      } catch {
-        // Ignore errors
       }
+    } catch (error) {
+      if (process.env.DEBUG) {
+        console.error(`[claude-sync] Error scanning directory:`, error);
+      }
+    }
+  };
+
+  const watcher = fs.watch(projectDir, (eventType, filename) => {
+    if (process.env.DEBUG) {
+      console.log(`[claude-sync] File event: type=${eventType}, filename=${filename}`);
+    }
+
+    // Debounce checks to avoid excessive scanning
+    const now = Date.now();
+    if (now - lastCheckTime > 100) {
+      lastCheckTime = now;
+      checkForNewFiles();
     }
   });
 
@@ -170,10 +213,15 @@ export function extractMessageText(message: ClaudeMessage): string {
   }
 
   if (message.message?.content) {
-    return message.message.content
-      .filter(c => c.type === 'text')
-      .map(c => c.text)
-      .join('\n');
+    // Handle both array and string content
+    if (Array.isArray(message.message.content)) {
+      return message.message.content
+        .filter(c => c.type === 'text')
+        .map(c => c.text)
+        .join('\n');
+    } else if (typeof message.message.content === 'string') {
+      return message.message.content;
+    }
   }
 
   return '';

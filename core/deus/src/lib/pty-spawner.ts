@@ -25,6 +25,7 @@ export class ClaudePtySpawner {
   private isReady: boolean = false;
   private readyPromise: Promise<void>;
   private resolveReady!: () => void;
+  private startupBuffer: string = ''; // Buffer for detecting ready state
 
   constructor(options: PtySpawnerOptions) {
     this.options = options;
@@ -51,8 +52,6 @@ export class ClaudePtySpawner {
       env: {
         ...process.env,
         TERM: 'xterm-256color',
-        // Disable any prompts that might interfere
-        CLAUDE_NO_WELCOME: 'true',
       },
     });
 
@@ -60,6 +59,10 @@ export class ClaudePtySpawner {
     this.projectDirWatcher = watchProjectDir(
       this.projectPath,
       (sessionId, filePath) => {
+        if (process.env.DEBUG) {
+          console.log(`[PTY Spawner] Detected conversation file: sessionId=${sessionId}, path=${filePath}`);
+        }
+
         if (!this.sessionId) {
           this.sessionId = sessionId;
           this.options.onSessionDetected?.(sessionId);
@@ -70,14 +73,53 @@ export class ClaudePtySpawner {
 
     // Handle PTY data (raw output with ANSI codes)
     this.pty.onData((data: string) => {
+      if (process.env.DEBUG && !this.isReady) {
+        console.log(`[PTY Spawner] onData called, data length: ${data.length}`);
+      }
+
       // Pass raw data to consumer for real-time display
       this.options.onData?.(data);
 
-      // Detect when Claude is ready for input
-      // Look for "-- INSERT --" which indicates the input field is active
-      if (!this.isReady && data.includes('-- INSERT --')) {
-        this.isReady = true;
-        this.resolveReady();
+      // Detect when Claude is ready for input by buffering startup output
+      if (!this.isReady) {
+        // Add to buffer (keep last 2000 chars to avoid memory issues)
+        this.startupBuffer += data;
+        if (this.startupBuffer.length > 2000) {
+          this.startupBuffer = this.startupBuffer.slice(-2000);
+        }
+
+        if (process.env.DEBUG) {
+          console.log(`[PTY Spawner] Added to buffer, new length: ${this.startupBuffer.length}`);
+        }
+
+        // Check buffer for ready indicators
+        // With vim mode disabled, look for the prompt (> or Try "...")
+        // Or just mark ready after seeing the Claude banner
+        const hasInsertMode = this.startupBuffer.includes('-- INSERT --');
+        const hasTryPrompt = this.startupBuffer.includes('Try "');
+        const hasBanner = this.startupBuffer.includes('Claude Code v');
+
+        // Debug: log buffer when it's getting large
+        if (process.env.DEBUG && this.startupBuffer.length > 500 && this.startupBuffer.length < 550) {
+          const clean = this.startupBuffer.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+          console.log(`[PTY Spawner] Buffer @${this.startupBuffer.length}: ${clean.slice(0, 300)}`);
+          console.log(`[PTY Spawner] Checking: hasInsertMode=${hasInsertMode}, hasTryPrompt=${hasTryPrompt}, hasBanner=${hasBanner}`);
+        }
+
+        if (process.env.DEBUG && (hasInsertMode || hasTryPrompt || hasBanner)) {
+          console.log(`[PTY Spawner] Found ready indicator! INSERT=${hasInsertMode}, TRY=${hasTryPrompt}, BANNER=${hasBanner}`);
+          console.log(`[PTY Spawner] Buffer sample: ${this.startupBuffer.slice(0, 200).replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')}`);
+        }
+
+        if (hasInsertMode || hasTryPrompt || hasBanner) {
+          if (process.env.DEBUG) {
+            console.log(`[PTY Spawner] Ready detected in buffer! Setting isReady=true`);
+          }
+          this.isReady = true;
+          this.resolveReady();
+          // Clear buffer after detecting ready
+          this.startupBuffer = '';
+        }
       }
 
       // Try to extract session ID from initial output if not detected via file
@@ -106,9 +148,26 @@ export class ClaudePtySpawner {
    * Start watching conversation file for structured messages
    */
   private startWatchingConversation(filePath: string): void {
+    if (process.env.DEBUG) {
+      console.log(`[PTY Spawner] Starting to watch conversation file: ${filePath}`);
+    }
+
     this.conversationWatcher = watchConversation(filePath, (message: ClaudeMessage) => {
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Received conversation event: type=${message.type}`);
+      }
+
       const text = extractMessageText(message);
-      if (!text) return;
+      if (!text) {
+        if (process.env.DEBUG) {
+          console.log(`[PTY Spawner] No text extracted from message`);
+        }
+        return;
+      }
+
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Extracted text: ${text.slice(0, 50)}...`);
+      }
 
       // Emit structured messages from the conversation file
       if (message.type === 'user') {
@@ -125,7 +184,19 @@ export class ClaudePtySpawner {
    * Wait until Claude is ready to receive input
    */
   async waitUntilReady(): Promise<void> {
-    return this.readyPromise;
+    // TEMPORARY: Use fixed delay instead of pattern detection
+    // Pattern detection has issues with chunked PTY data
+    if (!this.isReady) {
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Waiting 3 seconds for Claude to be ready...`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      this.isReady = true;
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Done waiting, assuming ready`);
+      }
+    }
+    return Promise.resolve();
   }
 
   /**
@@ -136,12 +207,67 @@ export class ClaudePtySpawner {
       throw new Error('PTY not started');
     }
 
+    if (process.env.DEBUG) {
+      console.log(`[PTY Spawner] write() called, isReady=${this.isReady}`);
+    }
+
     // Wait until Claude is ready before sending input
     await this.waitUntilReady();
 
-    // Send message followed by Enter (\r\n for compatibility)
-    this.pty.write(message);
-    this.pty.write('\r'); // Carriage return (Enter key)
+    if (process.env.DEBUG) {
+      console.log(`[PTY Spawner] Ready! Writing message: "${message}"`);
+    }
+
+    // Create a buffer to track output after our input
+    let outputBuffer = '';
+    const outputHandler = (data: string) => {
+      outputBuffer += data;
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Output after input: ${data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').trim()}`);
+      }
+    };
+
+    const originalHandler = this.pty.onData(outputHandler);
+
+    try {
+      // Try typing character-by-character to simulate human input
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Typing "${message}" character-by-character...`);
+      }
+
+      for (let i = 0; i < message.length; i++) {
+        const char = message[i];
+        if (process.env.DEBUG && i === 0) {
+          console.log(`[PTY Spawner] First char: "${char}" (code: ${char?.charCodeAt(0)})`);
+        }
+        this.pty.write(char as string);
+        await new Promise(resolve => setTimeout(resolve, 10)); // 10ms between chars
+      }
+
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Message typed, waiting 100ms before Enter`);
+        console.log(`[PTY Spawner] Output buffer so far: ${outputBuffer.slice(0, 100)}`);
+      }
+
+      // Wait a bit before sending Enter
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Sending Enter (\\r) to submit`);
+      }
+
+      // With vim mode disabled, plain Enter submits (shortcuts show \↵ for newline)
+      this.pty.write('\r'); // Enter/Return to submit
+
+      // Wait to see if we get any response
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      if (process.env.DEBUG) {
+        console.log(`[PTY Spawner] Enter sent, output buffer after 500ms: ${outputBuffer.slice(-200)}`);
+      }
+    } finally {
+      originalHandler.dispose();
+    }
   }
 
   /**

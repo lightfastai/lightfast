@@ -36,6 +36,10 @@ export async function runHeadless(options: HeadlessOptions): Promise<HeadlessRes
   const unsubscribe = orchestrator.subscribe((state: OrchestrationState) => {
     const agentState = agent === 'claude-code' ? state.claudeCode : state.codex;
 
+    if (process.env.DEBUG) {
+      console.log(`[Headless] State update: status=${agentState.status}, messages=${agentState.messages.length}`);
+    }
+
     // Collect messages
     result.messages = agentState.messages.map(msg => ({
       role: msg.role,
@@ -45,6 +49,9 @@ export async function runHeadless(options: HeadlessOptions): Promise<HeadlessRes
 
     // Check if agent completed (went back to idle after running)
     if (agentState.status === 'idle' && result.messages.length > 1) {
+      if (process.env.DEBUG) {
+        console.log('[Headless] Agent completed');
+      }
       completed = true;
     }
 
@@ -56,8 +63,16 @@ export async function runHeadless(options: HeadlessOptions): Promise<HeadlessRes
   });
 
   try {
+    if (process.env.DEBUG) {
+      console.log(`[Headless] Starting ${agent}...`);
+    }
+
     // Start the agent (includes initialization delay)
     await orchestrator.startAgent(agent);
+
+    if (process.env.DEBUG) {
+      console.log(`[Headless] Sending message: "${options.message}"`);
+    }
 
     // Send the message
     await orchestrator.sendToAgent(agent, options.message);
