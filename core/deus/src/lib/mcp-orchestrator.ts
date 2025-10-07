@@ -2,7 +2,7 @@
  * MCP Configuration Orchestrator
  *
  * Specialized utility for managing MCP (Model Context Protocol) sessions.
- * Used internally by SimpleOrchestrator when MCP servers are requested.
+ * Used internally by Orchestrator when MCP servers are requested.
  *
  * Responsibilities:
  * - Creates .deus/sessions/{id}/ directories
@@ -10,7 +10,7 @@
  * - Spawns agent processes with MCP configuration injected
  * - Manages session lifecycle and cleanup
  *
- * Note: Most users should use SimpleOrchestrator instead, which handles
+ * Note: Most users should use Orchestrator instead, which handles
  * MCP configuration automatically. This class is for advanced use cases.
  */
 

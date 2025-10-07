@@ -1,469 +1,538 @@
 /**
- * Basic Orchestrator (Direct Agent Control)
+ * Orchestrator - Main Deus Orchestrator (v2.0)
  *
  * USE THIS FOR:
- * - Headless mode / CLI usage
- * - Direct agent control without Deus router
- * - Programmatic agent interaction
- * - Simple single-agent workflows
+ * - Full Deus experience with smart routing
+ * - Interactive TUI mode
+ * - Headless mode with Deus routing
+ * - Multi-agent workflows with Deus as coordinator
+ * - MCP integration and session management
  *
- * For the full Deus experience with smart routing, use SimpleOrchestrator instead.
+ * Features:
+ * - Deus router decides which agent to use
+ * - Sequential agent execution (one active at a time)
+ * - MCP configuration and session management
+ * - "back" command to return to Deus
+ * - Supports both interactive and headless modes
  */
 
-import { nanoid } from 'nanoid';
-import {
-  type AgentState,
-  type AgentType,
-  type Message,
-  type OrchestrationState,
-} from '../types/index.js';
+import { DeusAgent, type DeusAction, type DeusResponse } from './router.js';
+import { MCPOrchestrator } from './mcp-orchestrator.js';
+import type { AgentType } from '../types/index.js';
+import { SessionManager } from './session/session-manager.js';
 import { ClaudePtySpawner, stripAnsi } from './spawners/claude-spawner.js';
 import { CodexPtySpawner } from './spawners/codex-spawner.js';
-import { SessionManager } from './session/session-manager.js';
+import { getSessionDir } from './config/deus-config.js';
 
+export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
+
+export interface AgentMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  agent: ActiveAgent;
+}
+
+export interface OrchestratorState {
+  activeAgent: ActiveAgent;
+  messages: AgentMessage[];
+  sessionId: string | null;
+  jobType: string | null;
+  mcpServers: string[];
+}
+
+/**
+ * Orchestrator
+ * Manages sequential agent execution with Deus as the router
+ */
 export class Orchestrator {
-  private state: OrchestrationState;
-  private spawners: Map<AgentType, ClaudePtySpawner | CodexPtySpawner | null> = new Map();
-  private listeners: Set<(state: OrchestrationState) => void> = new Set();
+  private state: OrchestratorState;
+  private deusAgent: DeusAgent;
+  private mcpOrchestrator: MCPOrchestrator | null = null;
   private sessionManager: SessionManager | null = null;
+  private claudeSpawner: ClaudePtySpawner | null = null;
+  private codexSpawner: CodexPtySpawner | null = null;
+  private listeners: Set<(state: OrchestratorState) => void> = new Set();
+  private messageIdCounter = 0;
 
-  constructor(sessionManager?: SessionManager) {
+  constructor(private repoRoot: string = process.cwd()) {
+    this.deusAgent = new DeusAgent();
+
     this.state = {
-      claudeCode: this.createInitialAgentState('claude-code'),
-      codex: this.createInitialAgentState('codex'),
-      activeAgent: 'claude-code',
-      sharedContext: {},
-    };
-
-    if (sessionManager) {
-      this.sessionManager = sessionManager;
-    }
-  }
-
-  private createInitialAgentState(type: AgentType): AgentState {
-    return {
-      type,
-      status: 'idle',
+      activeAgent: 'deus',
       messages: [],
+      sessionId: null,
+      jobType: null,
+      mcpServers: [],
     };
+
+    // Add welcome message
+    this.addMessage('deus', 'system', this.getWelcomeMessage());
   }
 
-  // Subscribe to state changes
-  subscribe(listener: (state: OrchestrationState) => void) {
+  /**
+   * Initialize orchestrator
+   */
+  async initialize(): Promise<void> {
+    // Initialize session manager for Deus
+    this.sessionManager = new SessionManager();
+    await this.sessionManager.initialize();
+
+    this.state.sessionId = this.sessionManager.getSessionId();
+
+    console.log(`[Orchestrator] Initialized with session: ${this.state.sessionId}`);
+  }
+
+  /**
+   * Subscribe to state changes
+   */
+  subscribe(listener: (state: OrchestratorState) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
 
-  // Emit state changes to listeners
-  private emit() {
-    this.listeners.forEach((listener) => listener(this.state));
+  /**
+   * Emit state changes
+   */
+  private emit(): void {
+    this.listeners.forEach(listener => listener(this.state));
   }
 
-  // Get current state
-  getState(): OrchestrationState {
-    return this.state;
-  }
-
-  // Switch active agent
-  async switchAgent() {
-    const oldAgent = this.state.activeAgent;
-    const newAgent: AgentType =
-      this.state.activeAgent === 'claude-code' ? 'codex' : 'claude-code';
-
-    // Record agent switch in session
-    if (this.sessionManager) {
-      await this.sessionManager.recordAgentSwitch(oldAgent, newAgent);
-    }
-
-    // Add visual feedback (this will emit state change)
-    this.addMessage(
-      newAgent,
-      'system',
-      `[Deus] Switched from ${oldAgent === 'claude-code' ? 'Claude Code' : 'Codex'} to ${newAgent === 'claude-code' ? 'Claude Code' : 'Codex'}`
-    );
-
-    // Update active agent after message is added
-    this.state = {
-      ...this.state,
-      activeAgent: newAgent,
-    };
-
-    this.emit();
-  }
-
-  // Add message to agent
-  addMessage(agentType: AgentType, role: Message['role'], content: string) {
-    const message: Message = {
-      id: nanoid(),
+  /**
+   * Add message to state
+   */
+  private addMessage(
+    agent: ActiveAgent,
+    role: AgentMessage['role'],
+    content: string
+  ): void {
+    const message: AgentMessage = {
+      id: `msg-${this.messageIdCounter++}`,
       role,
       content,
       timestamp: new Date(),
-      agentType,
+      agent,
     };
-
-    if (agentType === 'claude-code') {
-      this.state = {
-        ...this.state,
-        claudeCode: {
-          ...this.state.claudeCode,
-          messages: [...this.state.claudeCode.messages, message],
-        },
-      };
-    } else {
-      this.state = {
-        ...this.state,
-        codex: {
-          ...this.state.codex,
-          messages: [...this.state.codex.messages, message],
-        },
-      };
-    }
-
-    this.emit();
-  }
-
-  // Update agent status
-  updateAgentStatus(
-    agentType: AgentType,
-    status: AgentState['status'],
-    currentTask?: string
-  ) {
-    if (agentType === 'claude-code') {
-      this.state = {
-        ...this.state,
-        claudeCode: {
-          ...this.state.claudeCode,
-          status,
-          currentTask,
-        },
-      };
-    } else {
-      this.state = {
-        ...this.state,
-        codex: {
-          ...this.state.codex,
-          status,
-          currentTask,
-        },
-      };
-    }
-
-    this.emit();
-  }
-
-  // Update session ID
-  private async updateSessionId(agentType: AgentType, sessionId: string) {
-    if (agentType === 'claude-code') {
-      this.state = {
-        ...this.state,
-        claudeCode: {
-          ...this.state.claudeCode,
-          sessionId,
-        },
-      };
-    } else {
-      this.state = {
-        ...this.state,
-        codex: {
-          ...this.state.codex,
-          sessionId,
-        },
-      };
-    }
-
-    this.emit();
-  }
-
-  // Send command to agent with coordination
-  async sendToAgent(agentType: AgentType, message: string) {
-    // Add user message to active agent
-    this.addMessage(agentType, 'user', message);
-    this.updateAgentStatus(agentType, 'running', 'Processing request...');
-
-    // Coordinate with other agent - notify about the interaction
-    const otherAgent: AgentType = agentType === 'claude-code' ? 'codex' : 'claude-code';
-    const agentName = agentType === 'claude-code' ? 'Claude Code' : 'Codex';
-
-    this.addMessage(
-      otherAgent,
-      'system',
-      `[Deus] User sent message to ${agentName}: "${message.slice(0, 50)}${message.length > 50 ? '...' : ''}"`
-    );
-
-    const spawner = this.spawners.get(agentType);
-
-    if (process.env.DEBUG) {
-      console.log(`[Orchestrator] sendToAgent: agent=${agentType}, spawner exists=${!!spawner}, isRunning=${spawner?.isRunning()}`);
-      console.log(`[Orchestrator] Available spawners:`, Array.from(this.spawners.keys()));
-    }
-
-    if (spawner && spawner.isRunning()) {
-      if (process.env.DEBUG) {
-        console.log(`[Orchestrator] Calling spawner.write("${message}")`);
-      }
-
-      try {
-        // Send message via PTY (like typing in terminal)
-        await spawner.write(message);
-
-        // Share context with other agent
-        await this.shareContext(`last-message-${agentType}`, {
-          from: agentType,
-          message,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (error) {
-        this.addMessage(
-          agentType,
-          'system',
-          `Error sending message: ${error instanceof Error ? error.message : String(error)}`
-        );
-        this.updateAgentStatus(agentType, 'error', 'Failed to send message');
-      }
-    } else {
-      // If no spawner, add mock response for testing
-      if (process.env.DEBUG) {
-        console.log(`[Orchestrator] No running spawner for ${agentType}, using mock response`);
-      }
-
-      this.addMessage(
-        agentType,
-        'system',
-        `⚠️ ${agentType === 'claude-code' ? 'Claude Code' : 'Codex'} is not running (showing mock response)`
-      );
-
-      setTimeout(() => {
-        const responses = [
-          'I understand. Let me help you with that.',
-          'Processing your request...',
-          'Analyzing the code...',
-          'Running the command...',
-        ];
-
-        const response = responses[Math.floor(Math.random() * responses.length)] ?? 'Processing...';
-        this.addMessage(agentType, 'assistant', response);
-        this.updateAgentStatus(agentType, 'idle');
-
-        // Notify other agent about response
-        this.addMessage(
-          otherAgent,
-          'system',
-          `[Deus] ${agentName} responded: "${response.slice(0, 40)}..."`
-        );
-      }, 1000 + Math.random() * 2000);
-    }
-  }
-
-  // Share context between agents
-  async shareContext(key: string, value: unknown) {
-    // Store in session
-    if (this.sessionManager) {
-      await this.sessionManager.shareContext(key, value);
-    }
 
     this.state = {
       ...this.state,
-      sharedContext: {
-        ...this.state.sharedContext,
-        [key]: value,
-      },
+      messages: [...this.state.messages, message],
     };
 
     this.emit();
-
-    // Add message after context is shared
-    this.addMessage(
-      this.state.activeAgent,
-      'system',
-      `Shared context: ${key}`
-    );
   }
 
-  // Clear agent messages
-  clearAgent(agentType: AgentType) {
-    if (agentType === 'claude-code') {
-      this.state = {
-        ...this.state,
-        claudeCode: {
-          ...this.state.claudeCode,
-          messages: [],
-          currentTask: undefined,
-        },
-      };
-    } else {
-      this.state = {
-        ...this.state,
-        codex: {
-          ...this.state.codex,
-          messages: [],
-          currentTask: undefined,
-        },
-      };
+  /**
+   * Handle user message
+   */
+  async handleUserMessage(message: string): Promise<void> {
+    // Add user message
+    this.addMessage(this.state.activeAgent, 'user', message);
+
+    // Route based on active agent
+    if (this.state.activeAgent === 'deus') {
+      await this.handleDeusMessage(message);
+    } else if (this.state.activeAgent === 'claude-code') {
+      await this.handleClaudeCodeMessage(message);
+    } else if (this.state.activeAgent === 'codex') {
+      await this.handleCodexMessage(message);
+    }
+  }
+
+  /**
+   * Handle message when Deus is active
+   */
+  private async handleDeusMessage(message: string): Promise<void> {
+    // Check for handback command
+    if (message.toLowerCase().trim() === 'back' || message.toLowerCase().trim() === 'return') {
+      this.addMessage('deus', 'system', "I'm already active. No agent to return from.");
+      return;
     }
 
-    this.emit();
+    // Process with Deus agent
+    const response = await this.deusAgent.processMessage(message);
+
+    // Add Deus response
+    this.addMessage('deus', 'assistant', response.response);
+
+    // If Deus decided to start an agent, do it
+    if (response.action) {
+      await this.startAgent(response.action);
+    }
   }
 
-  // Start actual agent process
-  async startAgent(agentType: AgentType) {
+  /**
+   * Handle message when Claude Code is active
+   */
+  private async handleClaudeCodeMessage(message: string): Promise<void> {
+    // Check for handback command
+    if (message.toLowerCase().trim() === 'back' || message.toLowerCase().trim() === 'return') {
+      await this.handbackToDeus();
+      return;
+    }
+
+    // Forward to Claude Code
+    if (this.claudeSpawner && this.claudeSpawner.isRunning()) {
+      try {
+        await this.claudeSpawner.write(message);
+      } catch (error) {
+        this.addMessage(
+          'claude-code',
+          'system',
+          `Error: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } else {
+      this.addMessage('claude-code', 'system', 'Claude Code is not running. Type "back" to return to Deus.');
+    }
+  }
+
+  /**
+   * Handle message when Codex is active
+   */
+  private async handleCodexMessage(message: string): Promise<void> {
+    // Check for handback command
+    if (message.toLowerCase().trim() === 'back' || message.toLowerCase().trim() === 'return') {
+      await this.handbackToDeus();
+      return;
+    }
+
+    // Forward to Codex
+    if (this.codexSpawner && this.codexSpawner.isRunning()) {
+      try {
+        await this.codexSpawner.write(message);
+      } catch (error) {
+        this.addMessage(
+          'codex',
+          'system',
+          `Error: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } else {
+      this.addMessage('codex', 'system', 'Codex is not running. Type "back" to return to Deus.');
+    }
+  }
+
+  /**
+   * Start an agent based on Deus decision
+   */
+  private async startAgent(action: DeusAction): Promise<void> {
     try {
-      this.updateAgentStatus(agentType, 'idle', 'Starting...');
+      // Only create MCP session if MCPs are requested
+      if (action.config.mcpServers.length > 0) {
+        this.addMessage('deus', 'system', 'Creating MCP session...');
 
-      const command = this.getAgentCommand(agentType);
+        // Create MCP orchestrator
+        this.mcpOrchestrator = new MCPOrchestrator({
+          jobType: action.config.jobType,
+          mcpServers: action.config.mcpServers,
+          repoRoot: this.repoRoot,
+        });
 
-      if (process.env.DEBUG) {
-        console.log(`[Orchestrator] Starting ${agentType} with command: ${command.command}`);
+        await this.mcpOrchestrator.initialize();
+
+        const manifest = this.mcpOrchestrator.getManifest();
+        if (!manifest) {
+          throw new Error('Failed to create MCP session');
+        }
+
+        // Update state
+        this.state = {
+          ...this.state,
+          jobType: manifest.jobType ?? null,
+          mcpServers: manifest.mcpServers,
+        };
+
+        this.addMessage('deus', 'system', `Session created: ${manifest.sessionId.substring(0, 8)}...`);
+      } else {
+        // No MCPs - start agent directly
+        this.state = {
+          ...this.state,
+          jobType: action.config.jobType,
+          mcpServers: [],
+        };
+
+        if (process.env.DEBUG) {
+          console.log('[Orchestrator] Starting agent without MCP configuration');
+        }
       }
 
-      // Create appropriate PTY spawner based on agent type
-      const spawner = agentType === 'claude-code'
-        ? new ClaudePtySpawner({
-            cwd: process.cwd(),
-            command: command.command,
-            onMessage: (role, content) => {
-              // Handle structured messages from conversation file
-              if (process.env.DEBUG) {
-                console.log(`[Orchestrator] Received message: role=${role}, content=${content.slice(0, 50)}...`);
-              }
-
-              if (role === 'assistant') {
-                this.addMessage(agentType, 'assistant', content);
-                this.updateAgentStatus(agentType, 'idle');
-              } else if (role === 'system') {
-                this.addMessage(agentType, 'system', content);
-              }
-              // Note: user messages are already added via sendToAgent
-            },
-            onSessionDetected: async (sessionId, filePath) => {
-              await this.updateSessionId(agentType, sessionId);
-
-              // Link agent session to Deus session
-              if (this.sessionManager && filePath) {
-                await this.sessionManager.linkAgent(agentType, sessionId, filePath);
-              }
-
-              this.addMessage(agentType, 'system', `[Session: ${sessionId.substring(0, 8)}...]`);
-            },
-            onData: (data) => {
-              // Raw PTY output - can be used for real-time feedback
-              if (process.env.DEBUG) {
-                const clean = stripAnsi(data);
-                if (clean.trim()) {
-                  console.log(`[${agentType} PTY]`, clean);
-                }
-              }
-            },
-          })
-        : new CodexPtySpawner({
-            cwd: process.cwd(),
-            command: command.command,
-            onMessage: (role, content) => {
-              // Handle structured messages from session file
-              if (role === 'assistant') {
-                this.addMessage(agentType, 'assistant', content);
-                this.updateAgentStatus(agentType, 'idle');
-              } else if (role === 'system') {
-                this.addMessage(agentType, 'system', content);
-              }
-            },
-            onSessionDetected: async (sessionId, filePath) => {
-              await this.updateSessionId(agentType, sessionId);
-
-              // Link agent session to Deus session
-              if (this.sessionManager && filePath) {
-                await this.sessionManager.linkAgent(agentType, sessionId, filePath);
-              }
-
-              this.addMessage(agentType, 'system', `[Codex Session: ${sessionId.substring(0, 8)}...]`);
-            },
-            onData: (data) => {
-              // Raw PTY output for real-time feedback
-              if (process.env.DEBUG) {
-                const clean = stripAnsi(data);
-                if (clean.trim()) {
-                  console.log(`[${agentType} PTY]`, clean);
-                }
-              }
-            },
-          });
-
-      this.spawners.set(agentType, spawner);
-
-      if (process.env.DEBUG) {
-        console.log(`[Orchestrator] Spawner created for ${agentType}, starting PTY...`);
+      // Start the appropriate agent
+      if (action.type === 'start-claude-code') {
+        await this.startClaudeCode(action.config.prompt);
+      } else {
+        await this.startCodex(action.config.prompt);
       }
-
-      // Start the PTY
-      await spawner.start();
-
-      if (process.env.DEBUG) {
-        console.log(`[Orchestrator] ${agentType} PTY started successfully, isRunning=${spawner.isRunning()}`);
-      }
-
-      // Verify the spawner is running before marking as ready
-      if (!spawner.isRunning()) {
-        throw new Error('PTY started but isRunning() returns false - this should not happen');
-      }
-
-      this.updateAgentStatus(agentType, 'idle', 'Ready (interactive mode)');
-      this.addMessage(agentType, 'system', `✓ ${agentType === 'claude-code' ? 'Claude Code' : 'Codex'} started successfully`);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-
-      if (process.env.DEBUG) {
-        console.error(`[Orchestrator] Failed to start ${agentType}:`, error);
-      }
-
-      this.updateAgentStatus(agentType, 'error', 'Failed to start');
       this.addMessage(
-        agentType,
+        'deus',
         'system',
-        `✗ Failed to start: ${errorMsg}`
+        `Failed to start agent: ${error instanceof Error ? error.message : String(error)}`
       );
-
-      // Don't re-throw - we've already updated the UI with the error
-      // Re-throwing would crash the app
     }
   }
 
-  // Get agent command configuration
-  private getAgentCommand(
-    agentType: AgentType
-  ): { command: string } {
-    // Check environment variables for custom commands (allows override)
-    if (agentType === 'claude-code') {
-      const envCommand = process.env.CLAUDE_CODE_COMMAND || process.env.CLAUDE_COMMAND;
-      return { command: envCommand || 'claude' };
+  /**
+   * Start Claude Code
+   */
+  private async startClaudeCode(prompt: string): Promise<void> {
+    this.addMessage('deus', 'system', 'Starting Claude Code...');
+
+    // Build command based on whether MCP session exists
+    let command = 'claude';
+
+    if (this.mcpOrchestrator) {
+      const manifest = this.mcpOrchestrator.getManifest();
+      if (manifest) {
+        const sessionId = manifest.sessionId;
+        const sessionDir = getSessionDir(sessionId, this.repoRoot);
+        command = `claude --session-id ${sessionId} --mcp-config ${sessionDir}/claude.json --strict-mcp-config`;
+      }
+    }
+
+    // Create PTY spawner for Claude Code
+    this.claudeSpawner = new ClaudePtySpawner({
+      cwd: this.repoRoot,
+      command,
+      onMessage: (role, content) => {
+        this.addMessage('claude-code', role === 'user' ? 'user' : 'assistant', content);
+      },
+      onSessionDetected: async (claudeSessionId, filePath) => {
+        if (this.sessionManager && filePath) {
+          await this.sessionManager.linkAgent('claude-code', claudeSessionId, filePath);
+        }
+        this.addMessage('claude-code', 'system', `Session: ${claudeSessionId.substring(0, 8)}...`);
+      },
+      onData: (data) => {
+        if (process.env.DEBUG) {
+          const clean = stripAnsi(data);
+          if (clean.trim()) {
+            console.log('[Claude Code PTY]', clean);
+          }
+        }
+      },
+    });
+
+    // Start PTY
+    await this.claudeSpawner.start();
+
+    // Switch to Claude Code
+    this.state = {
+      ...this.state,
+      activeAgent: 'claude-code',
+    };
+    this.emit();
+
+    this.addMessage('claude-code', 'system', '✓ Claude Code started. Type "back" to return to Deus.');
+
+    // Send initial prompt if provided
+    if (prompt && prompt.trim()) {
+      setTimeout(async () => {
+        try {
+          await this.claudeSpawner?.write(prompt);
+        } catch (error) {
+          console.error('[Orchestrator] Error sending initial prompt:', error);
+        }
+      }, 1000); // Wait a bit for Claude Code to be ready
+    }
+  }
+
+  /**
+   * Start Codex
+   */
+  private async startCodex(prompt: string): Promise<void> {
+    this.addMessage('deus', 'system', 'Starting Codex...');
+
+    // Build command based on whether MCP session exists
+    let command = 'codex';
+
+    // Note: For Codex, MCP config would be injected via -c flags
+    // This would require spawning with the flags from MCPOrchestrator
+    // For now, we start basic Codex without MCP injection
+
+    if (process.env.DEBUG && !this.mcpOrchestrator) {
+      console.log('[Orchestrator] Starting Codex without MCP configuration');
+    }
+
+    // Create PTY spawner for Codex
+    this.codexSpawner = new CodexPtySpawner({
+      cwd: this.repoRoot,
+      command,
+      onMessage: (role, content) => {
+        this.addMessage('codex', role === 'user' ? 'user' : 'assistant', content);
+      },
+      onSessionDetected: async (codexSessionId, filePath) => {
+        if (this.sessionManager && filePath) {
+          await this.sessionManager.linkAgent('codex', codexSessionId, filePath);
+        }
+        this.addMessage('codex', 'system', `Session: ${codexSessionId.substring(0, 8)}...`);
+      },
+      onData: (data) => {
+        if (process.env.DEBUG) {
+          const clean = stripAnsi(data);
+          if (clean.trim()) {
+            console.log('[Codex PTY]', clean);
+          }
+        }
+      },
+    });
+
+    // Start PTY
+    await this.codexSpawner.start();
+
+    // Switch to Codex
+    this.state = {
+      ...this.state,
+      activeAgent: 'codex',
+    };
+    this.emit();
+
+    this.addMessage('codex', 'system', '✓ Codex started. Type "back" to return to Deus.');
+
+    // Send initial prompt if provided
+    if (prompt && prompt.trim()) {
+      setTimeout(async () => {
+        try {
+          await this.codexSpawner?.write(prompt);
+        } catch (error) {
+          console.error('[Orchestrator] Error sending initial prompt:', error);
+        }
+      }, 1000);
+    }
+  }
+
+  /**
+   * Hand back to Deus from current agent
+   */
+  async handbackToDeus(): Promise<void> {
+    const previousAgent = this.state.activeAgent;
+
+    if (previousAgent === 'deus') {
+      this.addMessage('deus', 'system', "I'm already active.");
+      return;
+    }
+
+    this.addMessage(previousAgent, 'system', 'Returning to Deus...');
+
+    // Stop current agent
+    if (previousAgent === 'claude-code' && this.claudeSpawner) {
+      this.claudeSpawner.cleanup();
+      this.claudeSpawner = null;
+    } else if (previousAgent === 'codex' && this.codexSpawner) {
+      this.codexSpawner.cleanup();
+      this.codexSpawner = null;
+    }
+
+    // Complete MCP session
+    if (this.mcpOrchestrator) {
+      await this.mcpOrchestrator.completeSession();
+      this.mcpOrchestrator = null;
+    }
+
+    // Switch back to Deus
+    this.state = {
+      ...this.state,
+      activeAgent: 'deus',
+      jobType: null,
+      mcpServers: [],
+    };
+    this.emit();
+
+    this.addMessage('deus', 'system', `✓ Task completed. ${previousAgent} stopped. What's next?`);
+    this.deusAgent.addSystemMessage(`Completed ${previousAgent} task. Ready for next task.`);
+  }
+
+  /**
+   * Manually switch agents (for debugging)
+   */
+  async switchToAgent(agent: ActiveAgent): Promise<void> {
+    if (agent === this.state.activeAgent) {
+      this.addMessage(agent, 'system', `Already active on ${agent}`);
+      return;
+    }
+
+    // Can only switch between active spawned agents and Deus
+    if (agent === 'deus') {
+      await this.handbackToDeus();
+    } else if (agent === 'claude-code' && this.claudeSpawner?.isRunning()) {
+      this.state = { ...this.state, activeAgent: agent };
+      this.emit();
+      this.addMessage(agent, 'system', 'Switched to Claude Code');
+    } else if (agent === 'codex' && this.codexSpawner?.isRunning()) {
+      this.state = { ...this.state, activeAgent: agent };
+      this.emit();
+      this.addMessage(agent, 'system', 'Switched to Codex');
     } else {
-      // codex - not implemented yet
-      return { command: process.env.CODEX_COMMAND || 'codex' };
+      this.addMessage(
+        this.state.activeAgent,
+        'system',
+        `Cannot switch to ${agent} - not running. Type "back" to return to Deus.`
+      );
     }
   }
 
-  // Stop agent process
-  async stopAgent(agentType: AgentType) {
-    const spawner = this.spawners.get(agentType);
-    if (spawner) {
-      spawner.cleanup();
-      this.spawners.set(agentType, null);
+  /**
+   * Get current state
+   */
+  getState(): OrchestratorState {
+    return this.state;
+  }
+
+  /**
+   * Get messages for current agent
+   */
+  getMessagesForAgent(agent: ActiveAgent): AgentMessage[] {
+    return this.state.messages.filter(m => m.agent === agent);
+  }
+
+  /**
+   * Get all messages
+   */
+  getAllMessages(): AgentMessage[] {
+    return this.state.messages;
+  }
+
+  /**
+   * Cleanup
+   */
+  async cleanup(): Promise<void> {
+    // Stop all spawners
+    if (this.claudeSpawner) {
+      this.claudeSpawner.cleanup();
+      this.claudeSpawner = null;
     }
-    this.updateAgentStatus(agentType, 'idle');
-  }
 
-  // Cleanup all processes
-  async cleanup() {
-    for (const [agentType] of this.spawners) {
-      await this.stopAgent(agentType);
+    if (this.codexSpawner) {
+      this.codexSpawner.cleanup();
+      this.codexSpawner = null;
+    }
+
+    // Complete MCP session
+    if (this.mcpOrchestrator) {
+      await this.mcpOrchestrator.completeSession();
+      this.mcpOrchestrator = null;
     }
   }
 
-  // Get session manager
-  getSessionManager(): SessionManager | null {
-    return this.sessionManager;
-  }
-
-  // Get Deus session ID
-  getDeusSessionId(): string | null {
-    return this.sessionManager?.getSessionId() || null;
+  /**
+   * Get welcome message
+   */
+  private getWelcomeMessage(): string {
+    return [
+      '╔══════════════════════════════════════╗',
+      '║         Welcome to Deus v2.0         ║',
+      '║      AI Orchestrator & Router        ║',
+      '╚══════════════════════════════════════╝',
+      '',
+      "I'm Deus - I route your tasks to the right agent.",
+      '',
+      'Tell me what you need help with:',
+      '• "Review the authentication code"',
+      '• "Help me write tests for the API"',
+      '• "start code-review"',
+      '',
+      "Type 'help' for more info.",
+    ].join('\n');
   }
 }

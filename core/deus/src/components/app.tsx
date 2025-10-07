@@ -7,20 +7,20 @@ import * as React from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { InputBar } from './input-bar.js';
 import { StatusBar } from './status-bar.js';
-import { SimpleOrchestrator, type ActiveAgent, type AgentMessage } from '../lib/simple-orchestrator.js';
+import { Orchestrator, type ActiveAgent, type AgentMessage } from '../lib/orchestrator.js';
 
 const { useState, useEffect, useRef } = React;
 
 export const App: React.FC = () => {
   const { exit } = useApp();
-  const [orchestrator, setOrchestrator] = useState<SimpleOrchestrator | null>(null);
-  const [state, setState] = useState<ReturnType<SimpleOrchestrator['getState']> | null>(null);
+  const [orchestrator, setOrchestrator] = useState<Orchestrator | null>(null);
+  const [state, setState] = useState<ReturnType<Orchestrator['getState']> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize orchestrator
   useEffect(() => {
     const init = async () => {
-      const orch = new SimpleOrchestrator();
+      const orch = new Orchestrator();
       await orch.initialize();
       setOrchestrator(orch);
       setState(orch.getState());

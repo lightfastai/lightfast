@@ -24,26 +24,31 @@ lib/
 ├── utils/
 │   └── headless.ts             # Headless mode for CLI usage
 │
-├── orchestrator.ts             # Basic Orchestrator (direct agent control)
-├── simple-orchestrator.ts      # Main Orchestrator v2.0 (with Deus router)
+├── orchestrator.ts             # Main Orchestrator v2.0 (with Deus router)
 ├── mcp-orchestrator.ts         # MCP configuration manager
 └── router.ts                   # Deus agent (smart routing logic)
 ```
 
 ## 🎯 Main Entry Points
 
-### 1. `SimpleOrchestrator` - **USE THIS FOR INTERACTIVE MODE**
+### 1. `Orchestrator` - **MAIN ORCHESTRATOR (v2.0)**
 
 ```typescript
-import { SimpleOrchestrator } from './lib/simple-orchestrator.js';
+import { Orchestrator } from './lib/orchestrator.js';
 
-const orchestrator = new SimpleOrchestrator();
+// Interactive mode (TUI)
+const orchestrator = new Orchestrator();
 await orchestrator.initialize();
 await orchestrator.handleUserMessage('Review the code');
+
+// Headless mode (CLI)
+import { runHeadless } from './lib/utils/headless.js';
+const result = await runHeadless({ message: 'Review the code' });
 ```
 
 **Use cases:**
 - ✅ Interactive TUI mode
+- ✅ Headless CLI mode with smart routing
 - ✅ Multi-agent workflows with Deus as coordinator
 - ✅ MCP integration and session management
 - ✅ Smart routing (Deus decides which agent to use)
@@ -51,35 +56,13 @@ await orchestrator.handleUserMessage('Review the code');
 **Features:**
 - Deus router analyzes user intent and picks the right agent
 - Sequential execution (one agent active at a time)
-- "back" command to return to Deus
+- "back" command to return to Deus (in interactive mode)
 - Full session persistence and event sourcing
+- Supports both interactive and headless modes
 
 ---
 
-### 2. `Orchestrator` - **USE THIS FOR HEADLESS/PROGRAMMATIC MODE**
-
-```typescript
-import { Orchestrator } from './lib/orchestrator.js';
-
-const orchestrator = new Orchestrator();
-await orchestrator.startAgent('claude-code');
-await orchestrator.sendToAgent('claude-code', 'Review the code');
-```
-
-**Use cases:**
-- ✅ Headless CLI mode
-- ✅ Direct agent control without Deus router
-- ✅ Programmatic agent interaction
-- ✅ Simple single-agent workflows
-
-**Features:**
-- Direct PTY control of agents
-- No Deus router overhead
-- Simpler API for programmatic use
-
----
-
-### 3. `MCPOrchestrator` - **ADVANCED USE ONLY**
+### 2. `MCPOrchestrator` - **ADVANCED USE ONLY**
 
 ```typescript
 import { MCPOrchestrator } from './lib/mcp-orchestrator.js';
@@ -94,7 +77,7 @@ await mcp.startClaudeCode();
 - ⚠️ Custom agent spawning with MCP config
 - ⚠️ Testing MCP configurations
 
-**Note:** Most users should use `SimpleOrchestrator` instead, which handles MCP automatically.
+**Note:** Most users should use `Orchestrator` instead, which handles MCP automatically.
 
 ---
 
@@ -210,12 +193,12 @@ const response = await deus.processMessage('Review the auth code');
 
 ## 🔄 Flow Diagrams
 
-### SimpleOrchestrator Flow (Interactive Mode)
+### Orchestrator Flow (Interactive Mode)
 
 ```
 User Input
     ↓
-SimpleOrchestrator.handleUserMessage()
+Orchestrator.handleUserMessage()
     ↓
 Is Deus active? ──Yes──→ DeusAgent.processMessage()
     │                         ↓
@@ -272,7 +255,7 @@ Emit to subscribers
 - `DeusAgent` - Test routing patterns, action generation
 
 ### Integration Tests
-- `SimpleOrchestrator` - Test full workflow with mock agents
+- `Orchestrator` - Test full workflow with mock agents
 - `Orchestrator` - Test headless mode end-to-end
 - File watchers - Test conversation/session file parsing
 
@@ -291,11 +274,10 @@ Emit to subscribers
 | `session/` | 444 | Medium |
 | `sync/` | 544 | Low |
 | `config/` | 368 | Medium |
-| `simple-orchestrator.ts` | 527 | High |
-| `orchestrator.ts` | 458 | Medium |
+| `orchestrator.ts` | 539 | High |
 | `mcp-orchestrator.ts` | 386 | Medium |
 | `router.ts` | 380 | Low |
-| **Total** | **~3,622 lines** | |
+| **Total** | **~3,176 lines** | |
 
 **Duplication eliminated**: ~400 lines removed by extracting `BasePtySpawner`
 
@@ -335,7 +317,7 @@ Emit to subscribers
 ## ❓ FAQ
 
 **Q: Which orchestrator should I use?**
-A: Use `SimpleOrchestrator` for interactive mode with Deus routing, `Orchestrator` for headless/programmatic use.
+A: Use `Orchestrator` - it supports both interactive TUI mode and headless CLI mode with smart Deus routing. Use `runHeadless()` helper for headless mode.
 
 **Q: How do I add a new agent type?**
 A: 1) Create a new PTY spawner extending `BasePtySpawner`, 2) Add to `AgentType` enum, 3) Update routing logic in `DeusAgent`.

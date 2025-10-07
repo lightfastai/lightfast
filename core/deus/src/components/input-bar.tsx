@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { Box, Text, useInput } from 'ink';
-import type { ActiveAgent } from '../lib/simple-orchestrator.js';
+import type { ActiveAgent } from '../lib/orchestrator.js';
 
 const { useState } = React;
 
