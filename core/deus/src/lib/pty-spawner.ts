@@ -11,7 +11,7 @@ export interface PtySpawnerOptions {
   cwd: string;
   command?: string;
   onMessage?: (role: 'user' | 'assistant' | 'system', content: string) => void;
-  onSessionDetected?: (sessionId: string) => void;
+  onSessionDetected?: (sessionId: string, filePath: string) => void;
   onData?: (data: string) => void;
 }
 
@@ -65,7 +65,7 @@ export class ClaudePtySpawner {
 
         if (!this.sessionId) {
           this.sessionId = sessionId;
-          this.options.onSessionDetected?.(sessionId);
+          this.options.onSessionDetected?.(sessionId, filePath);
           this.startWatchingConversation(filePath);
         }
       }

@@ -1,44 +1,74 @@
 import * as React from 'react';
-import { Box, useInput, useApp } from 'ink';
+import { Box, useInput, useApp, Text } from 'ink';
 import { AgentPanel } from './agent-panel.js';
 import { InputBar } from './input-bar.js';
 import { StatusBar } from './status-bar.js';
 import { Orchestrator } from '../lib/orchestrator.js';
+import { SessionManager } from '../lib/session-manager.js';
 import { type OrchestrationState } from '../types/index.js';
 
 const { useState, useEffect, useRef } = React;
 
 export const App: React.FC = () => {
   const { exit } = useApp();
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Create orchestrator instance in ref to persist across renders
+  // Create session manager and orchestrator in ref to persist across renders
+  const sessionManagerRef = useRef<SessionManager | null>(null);
   const orchestratorRef = useRef<Orchestrator | null>(null);
-  if (!orchestratorRef.current) {
-    orchestratorRef.current = new Orchestrator();
+
+  // Initialize session manager first, then orchestrator
+  if (!sessionManagerRef.current) {
+    sessionManagerRef.current = new SessionManager();
   }
-  const orchestrator = orchestratorRef.current;
+
+  if (!orchestratorRef.current && sessionManagerRef.current) {
+    orchestratorRef.current = new Orchestrator(sessionManagerRef.current);
+  }
+
+  const orchestrator = orchestratorRef.current!;
+  const sessionManager = sessionManagerRef.current!;
 
   const [state, setState] = useState<OrchestrationState>(orchestrator.getState());
 
   useEffect(() => {
+    // Initialize session manager then start agents
+    const initializeSession = async () => {
+      try {
+        // Initialize session (creates new or loads existing)
+        await sessionManager.initialize();
+
+        if (process.env.DEBUG) {
+          console.log('[App] Session initialized:', sessionManager.getSessionId());
+        }
+
+        setIsInitializing(false);
+
+        // Initialize agents - errors are already handled in orchestrator.startAgent
+        // which updates the agent state and adds error messages to the UI
+        orchestrator.startAgent('claude-code').catch((error) => {
+          if (process.env.DEBUG) {
+            console.error('[App] Failed to start claude-code:', error);
+          }
+        });
+
+        orchestrator.startAgent('codex').catch((error) => {
+          if (process.env.DEBUG) {
+            console.error('[App] Failed to start codex:', error);
+          }
+        });
+      } catch (error) {
+        console.error('[App] Failed to initialize session:', error);
+        setIsInitializing(false);
+      }
+    };
+
     // Subscribe to orchestrator state changes
     const unsubscribe = orchestrator.subscribe((newState) => {
       setState(newState);
     });
 
-    // Initialize agents - errors are already handled in orchestrator.startAgent
-    // which updates the agent state and adds error messages to the UI
-    orchestrator.startAgent('claude-code').catch((error) => {
-      if (process.env.DEBUG) {
-        console.error('[App] Failed to start claude-code:', error);
-      }
-    });
-
-    orchestrator.startAgent('codex').catch((error) => {
-      if (process.env.DEBUG) {
-        console.error('[App] Failed to start codex:', error);
-      }
-    });
+    initializeSession();
 
     return () => {
       unsubscribe();
@@ -63,6 +93,10 @@ export const App: React.FC = () => {
       orchestrator.shareContext('last-interaction', {
         timestamp: new Date().toISOString(),
         agent: state.activeAgent,
+      }).catch((error) => {
+        if (process.env.DEBUG) {
+          console.error('[App] Failed to share context:', error);
+        }
       });
       return;
     }
@@ -79,13 +113,26 @@ export const App: React.FC = () => {
   };
 
   const handleSwitch = () => {
-    orchestrator.switchAgent();
+    orchestrator.switchAgent().catch((error) => {
+      if (process.env.DEBUG) {
+        console.error('[App] Failed to switch agent:', error);
+      }
+    });
   };
+
+  // Show loading state while initializing
+  if (isInitializing) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text>Initializing Deus session...</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" height="100%">
       {/* Status Bar */}
-      <StatusBar state={state} />
+      <StatusBar state={state} deusSessionId={sessionManager.getSessionId()} />
 
       {/* Agent Panels */}
       <Box flexGrow={1} marginY={1}>

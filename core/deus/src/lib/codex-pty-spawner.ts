@@ -11,7 +11,7 @@ export interface CodexPtySpawnerOptions {
   cwd: string;
   command?: string;
   onMessage?: (role: 'user' | 'assistant' | 'system', content: string) => void;
-  onSessionDetected?: (sessionId: string) => void;
+  onSessionDetected?: (sessionId: string, filePath: string) => void;
   onData?: (data: string) => void;
 }
 
@@ -77,7 +77,7 @@ export class CodexPtySpawner {
         // Only set session ID and notify if not already set
         if (!this.sessionId) {
           this.sessionId = sessionId;
-          this.options.onSessionDetected?.(sessionId);
+          this.options.onSessionDetected?.(sessionId, filePath);
         }
 
         // Always start watching the session file when detected

@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "deus": "./dist/cli.js"
+    "deus": "./dist/cli.js",
+    "deus-mcp": "./dist/mcp-server/index.js"
   },
   "scripts": {
     "dev": "tsx src/cli.tsx",
@@ -16,6 +17,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
     "chalk": "^5.6.0",
     "execa": "^9.5.2",
     "ink": "^6.3.1",

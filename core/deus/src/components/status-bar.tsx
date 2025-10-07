@@ -4,9 +4,10 @@ import { type OrchestrationState } from '../types/index.js';
 
 interface StatusBarProps {
   state: OrchestrationState;
+  deusSessionId?: string | null;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state }) => {
+export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state, deusSessionId }) => {
   const getTaskSummary = () => {
     const tasks: string[] = [];
 
@@ -50,6 +51,14 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state }) => {
         <Text color="yellow" bold>
           Deus Orchestrator
         </Text>
+        {deusSessionId && (
+          <>
+            <Text color="gray">•</Text>
+            <Text color="magenta">
+              Session: {deusSessionId.substring(0, 8)}...
+            </Text>
+          </>
+        )}
         <Text color="gray">•</Text>
         <Text color="cyan">
           Active: {getActiveAgentName()}

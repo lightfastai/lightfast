@@ -7,19 +7,25 @@ import {
 } from '../types/index.js';
 import { ClaudePtySpawner, stripAnsi } from './pty-spawner.js';
 import { CodexPtySpawner } from './codex-pty-spawner.js';
+import { SessionManager } from './session-manager.js';
 
 export class Orchestrator {
   private state: OrchestrationState;
   private spawners: Map<AgentType, ClaudePtySpawner | CodexPtySpawner | null> = new Map();
   private listeners: Set<(state: OrchestrationState) => void> = new Set();
+  private sessionManager: SessionManager | null = null;
 
-  constructor() {
+  constructor(sessionManager?: SessionManager) {
     this.state = {
       claudeCode: this.createInitialAgentState('claude-code'),
       codex: this.createInitialAgentState('codex'),
       activeAgent: 'claude-code',
       sharedContext: {},
     };
+
+    if (sessionManager) {
+      this.sessionManager = sessionManager;
+    }
   }
 
   private createInitialAgentState(type: AgentType): AgentState {
@@ -47,10 +53,15 @@ export class Orchestrator {
   }
 
   // Switch active agent
-  switchAgent() {
+  async switchAgent() {
     const oldAgent = this.state.activeAgent;
     const newAgent: AgentType =
       this.state.activeAgent === 'claude-code' ? 'codex' : 'claude-code';
+
+    // Record agent switch in session
+    if (this.sessionManager) {
+      await this.sessionManager.recordAgentSwitch(oldAgent, newAgent);
+    }
 
     // Add visual feedback (this will emit state change)
     this.addMessage(
@@ -129,7 +140,7 @@ export class Orchestrator {
   }
 
   // Update session ID
-  private updateSessionId(agentType: AgentType, sessionId: string) {
+  private async updateSessionId(agentType: AgentType, sessionId: string) {
     if (agentType === 'claude-code') {
       this.state = {
         ...this.state,
@@ -184,7 +195,7 @@ export class Orchestrator {
         await spawner.write(message);
 
         // Share context with other agent
-        this.shareContext(`last-message-${agentType}`, {
+        await this.shareContext(`last-message-${agentType}`, {
           from: agentType,
           message,
           timestamp: new Date().toISOString(),
@@ -232,7 +243,12 @@ export class Orchestrator {
   }
 
   // Share context between agents
-  shareContext(key: string, value: unknown) {
+  async shareContext(key: string, value: unknown) {
+    // Store in session
+    if (this.sessionManager) {
+      await this.sessionManager.shareContext(key, value);
+    }
+
     this.state = {
       ...this.state,
       sharedContext: {
@@ -306,8 +322,14 @@ export class Orchestrator {
               }
               // Note: user messages are already added via sendToAgent
             },
-            onSessionDetected: (sessionId) => {
-              this.updateSessionId(agentType, sessionId);
+            onSessionDetected: async (sessionId, filePath) => {
+              await this.updateSessionId(agentType, sessionId);
+
+              // Link agent session to Deus session
+              if (this.sessionManager && filePath) {
+                await this.sessionManager.linkAgent(agentType, sessionId, filePath);
+              }
+
               this.addMessage(agentType, 'system', `[Session: ${sessionId.substring(0, 8)}...]`);
             },
             onData: (data) => {
@@ -332,8 +354,14 @@ export class Orchestrator {
                 this.addMessage(agentType, 'system', content);
               }
             },
-            onSessionDetected: (sessionId) => {
-              this.updateSessionId(agentType, sessionId);
+            onSessionDetected: async (sessionId, filePath) => {
+              await this.updateSessionId(agentType, sessionId);
+
+              // Link agent session to Deus session
+              if (this.sessionManager && filePath) {
+                await this.sessionManager.linkAgent(agentType, sessionId, filePath);
+              }
+
               this.addMessage(agentType, 'system', `[Codex Session: ${sessionId.substring(0, 8)}...]`);
             },
             onData: (data) => {
@@ -415,5 +443,15 @@ export class Orchestrator {
     for (const [agentType] of this.spawners) {
       await this.stopAgent(agentType);
     }
+  }
+
+  // Get session manager
+  getSessionManager(): SessionManager | null {
+    return this.sessionManager;
+  }
+
+  // Get Deus session ID
+  getDeusSessionId(): string | null {
+    return this.sessionManager?.getSessionId() || null;
   }
 }

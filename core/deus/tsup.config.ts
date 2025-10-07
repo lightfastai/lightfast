@@ -3,7 +3,9 @@ import { defineConfig } from 'tsup';
 export default defineConfig([
   // CLI entry point with shebang
   {
-    entry: ['src/cli.tsx'],
+    entry: {
+      cli: 'src/cli.tsx',
+    },
     format: ['esm'],
     dts: true,
     clean: true,
@@ -12,9 +14,24 @@ export default defineConfig([
       js: '#!/usr/bin/env node',
     },
   },
+  // MCP Server entry point with shebang
+  {
+    entry: {
+      'mcp-server/index': 'src/mcp-server/index.ts',
+    },
+    format: ['esm'],
+    dts: true,
+    clean: false, // Don't clean since cli already did
+    shims: true,
+    banner: {
+      js: '#!/usr/bin/env node',
+    },
+  },
   // Library exports without shebang
   {
-    entry: ['src/index.ts'],
+    entry: {
+      index: 'src/index.ts',
+    },
     format: ['esm'],
     dts: true,
     clean: false, // Don't clean since cli already did
