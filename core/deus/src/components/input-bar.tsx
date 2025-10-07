@@ -42,62 +42,18 @@ export const InputBar: React.FC<InputBarProps> = React.memo(({
     { isActive: isFocused && !isLoading }
   );
 
-  const agentInfo = getAgentInfo(activeAgent);
   const placeholder = getPlaceholder(activeAgent);
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={agentInfo.color} padding={1}>
-      {/* Hint */}
-      <Box marginBottom={1} justifyContent="space-between">
-        <Box>
-          <Text color={agentInfo.color} bold>
-            {agentInfo.icon} {agentInfo.name}
-          </Text>
-          {activeAgent !== 'deus' && (
-            <Text color="gray" dimColor>
-              {' '}• Type "back" to return to Deus
-            </Text>
-          )}
-        </Box>
-        <Box>
-          <Text color="gray" dimColor>
-            {isLoading ? 'Thinking...' : 'Ready'}
-          </Text>
-        </Box>
-      </Box>
-
-      {/* Input field */}
-      <Box>
-        <Text color={agentInfo.color} bold>
-          {agentInfo.symbol}{' '}
-        </Text>
-        <Text>
-          {value || <Text dimColor>{placeholder}</Text>}
-          <Text inverse={isFocused && !isLoading}> </Text>
-        </Text>
-      </Box>
+    <Box borderStyle="single" borderTop borderBottom borderLeft={false} borderRight={false}>
+      <Text bold>› </Text>
+      <Text>
+        {value || <Text dimColor>{placeholder}</Text>}
+        <Text inverse={isFocused && !isLoading}> </Text>
+      </Text>
     </Box>
   );
 });
-
-/**
- * Helper: Get agent info
- */
-function getAgentInfo(agent: ActiveAgent): {
-  name: string;
-  icon: string;
-  symbol: string;
-  color: 'cyan' | 'magenta' | 'yellow';
-} {
-  switch (agent) {
-    case 'deus':
-      return { name: 'Deus', icon: '🎭', symbol: '▸', color: 'cyan' };
-    case 'claude-code':
-      return { name: 'Claude Code', icon: '🤖', symbol: '▸', color: 'magenta' };
-    case 'codex':
-      return { name: 'Codex', icon: '⚡', symbol: '▸', color: 'yellow' };
-  }
-}
 
 /**
  * Helper: Get placeholder text
@@ -105,10 +61,10 @@ function getAgentInfo(agent: ActiveAgent): {
 function getPlaceholder(agent: ActiveAgent): string {
   switch (agent) {
     case 'deus':
-      return 'Tell me what you need help with...';
+      return 'Describe a task or type a command...';
     case 'claude-code':
-      return 'Message Claude Code...';
+      return 'Describe a task or type a command...';
     case 'codex':
-      return 'Message Codex...';
+      return 'Describe a task or type a command...';
   }
 }

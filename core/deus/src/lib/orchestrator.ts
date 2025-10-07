@@ -23,6 +23,7 @@ import { SessionManager } from './session/session-manager.js';
 import { ClaudePtySpawner, stripAnsi } from './spawners/claude-spawner.js';
 import { CodexPtySpawner } from './spawners/codex-spawner.js';
 import { getSessionDir } from './config/deus-config.js';
+import { isCommand, executeCommand } from './commands.js';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -130,6 +131,12 @@ export class Orchestrator {
     // Add user message
     this.addMessage(this.state.activeAgent, 'user', message);
 
+    // Check if it's a command
+    if (isCommand(message)) {
+      await this.handleCommand(message);
+      return;
+    }
+
     // Route based on active agent
     if (this.state.activeAgent === 'deus') {
       await this.handleDeusMessage(message);
@@ -138,6 +145,19 @@ export class Orchestrator {
     } else if (this.state.activeAgent === 'codex') {
       await this.handleCodexMessage(message);
     }
+  }
+
+  /**
+   * Handle command execution
+   */
+  private async handleCommand(message: string): Promise<void> {
+    const result = await executeCommand(message, {
+      orchestratorState: this.state,
+      sessionState: this.sessionManager?.getState() || null,
+    });
+
+    // Add command result as system message
+    this.addMessage(this.state.activeAgent, 'system', result.message);
   }
 
   /**
@@ -520,11 +540,6 @@ export class Orchestrator {
    */
   private getWelcomeMessage(): string {
     return [
-      '╔══════════════════════════════════════╗',
-      '║         Welcome to Deus v2.0         ║',
-      '║      AI Orchestrator & Router        ║',
-      '╚══════════════════════════════════════╝',
-      '',
       "I'm Deus - I route your tasks to the right agent.",
       '',
       'Tell me what you need help with:',
@@ -532,7 +547,11 @@ export class Orchestrator {
       '• "Help me write tests for the API"',
       '• "start code-review"',
       '',
-      "Type 'help' for more info.",
+      'Commands:',
+      '• /help - Show available commands',
+      '• /status - View session information',
+      '',
+      'Type /help for more info.',
     ].join('\n');
   }
 }

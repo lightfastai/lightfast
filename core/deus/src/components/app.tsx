@@ -7,6 +7,7 @@ import * as React from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { InputBar } from './input-bar.js';
 import { StatusBar } from './status-bar.js';
+import { WelcomeScreen } from './welcome-screen.js';
 import { Orchestrator, type ActiveAgent, type AgentMessage } from '../lib/orchestrator.js';
 
 const { useState, useEffect, useRef } = React;
@@ -101,7 +102,7 @@ export const App: React.FC = () => {
 
       {/* Messages */}
       <Box flexDirection="column" flexGrow={1} paddingX={1} paddingY={1}>
-        <Messages messages={messages} />
+        <Messages messages={messages} activeAgent={state.activeAgent} />
       </Box>
 
       {/* Input Bar */}
@@ -118,13 +119,9 @@ export const App: React.FC = () => {
 /**
  * Messages Component
  */
-function Messages({ messages }: { messages: AgentMessage[] }) {
+function Messages({ messages, activeAgent }: { messages: AgentMessage[]; activeAgent: ActiveAgent }) {
   if (messages.length === 0) {
-    return (
-      <Box justifyContent="center" alignItems="center" flexGrow={1}>
-        <Text dimColor>No messages yet...</Text>
-      </Box>
-    );
+    return <WelcomeScreen activeAgent={activeAgent} />;
   }
 
   return (

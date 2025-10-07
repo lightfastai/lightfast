@@ -102,4 +102,15 @@ export class DeusAgent {
   clearHistory() {
     this.conversationHistory = [];
   }
+
+  /**
+   * Add a system message to conversation history
+   * Used for tracking agent state transitions
+   */
+  addSystemMessage(message: string): void {
+    this.conversationHistory.push({
+      role: 'assistant',
+      content: message,
+    });
+  }
 }

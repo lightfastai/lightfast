@@ -1,6 +1,6 @@
 /**
  * Status Bar Component
- * Shows active agent, session info, and job type
+ * Minimal header showing active session info (Codex-style)
  */
 
 import * as React from 'react';
@@ -18,70 +18,45 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
   sessionId,
   jobType,
 }) => {
-  const agentInfo = getAgentInfo(activeAgent);
+  const cwd = process.cwd();
 
   return (
-    <Box flexDirection="column" borderStyle="double" borderColor={agentInfo.color} paddingX={1}>
-      {/* Title */}
-      <Box justifyContent="center">
-        <Text bold color={agentInfo.color} inverse>
-          {' '}
-          {agentInfo.icon} {agentInfo.name}{' '}
-        </Text>
-      </Box>
-
-      {/* Status Info */}
-      <Box marginTop={1} justifyContent="space-between">
-        <Box gap={2}>
+    <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1}>
+      {/* First line: deus session */}
+      <Box justifyContent="space-between" width="100%">
+        <Box>
+          <Text>deus</Text>
           {sessionId && (
-            <Box>
-              <Text color="gray" dimColor>
-                Session:
-              </Text>
-              <Text color="yellow">
-                {' '}
-                {sessionId.slice(0, 8)}...
-              </Text>
-            </Box>
-          )}
-
-          {jobType && (
-            <Box>
-              <Text color="gray" dimColor>
-                Job:
-              </Text>
-              <Text color="cyan">
-                {' '}
-                {jobType}
-              </Text>
-            </Box>
+            <Text dimColor> session: {sessionId.slice(0, 8)}</Text>
           )}
         </Box>
 
         <Box>
-          <Text color="gray" dimColor>
+          <Text dimColor>
             {activeAgent !== 'deus' ? 'Ctrl+B back • ' : ''}Ctrl+C exit
           </Text>
+        </Box>
+      </Box>
+
+      {/* Directory */}
+      <Box marginTop={1}>
+        <Text bold>directory:   </Text>
+        <Text dimColor>{cwd}</Text>
+      </Box>
+
+      {/* Supported Spawners */}
+      <Box marginTop={1} flexDirection="column">
+        <Text bold>Supported spawners:</Text>
+        <Box marginLeft={2}>
+          <Text dimColor>• Claude Code (claude-sonnet-4-5)</Text>
+        </Box>
+        <Box marginLeft={2}>
+          <Text dimColor>• Codex (gpt-5-codex-high)</Text>
+        </Box>
+        <Box marginLeft={2}>
+          <Text dimColor>• Deus Router (gpt-4-turbo)</Text>
         </Box>
       </Box>
     </Box>
   );
 });
-
-/**
- * Helper: Get agent info
- */
-function getAgentInfo(agent: ActiveAgent): {
-  name: string;
-  icon: string;
-  color: 'cyan' | 'magenta' | 'yellow';
-} {
-  switch (agent) {
-    case 'deus':
-      return { name: 'Deus', icon: '🎭', color: 'cyan' };
-    case 'claude-code':
-      return { name: 'Claude Code', icon: '🤖', color: 'magenta' };
-    case 'codex':
-      return { name: 'Codex', icon: '⚡', color: 'yellow' };
-  }
-}
