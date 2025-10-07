@@ -1,16 +1,28 @@
 /**
- * Simple Orchestrator
- * Coordinates Deus agent and spawned agents (Claude Code or Codex)
- * Only ONE agent active at a time - sequential execution
+ * Simple Orchestrator - Main Deus Orchestrator (v2.0)
+ *
+ * USE THIS FOR:
+ * - Full Deus experience with smart routing
+ * - Interactive TUI mode
+ * - Multi-agent workflows with Deus as coordinator
+ * - MCP integration and session management
+ *
+ * For headless/programmatic use, see Orchestrator instead.
+ *
+ * Features:
+ * - Deus router decides which agent to use
+ * - Sequential agent execution (one active at a time)
+ * - MCP configuration and session management
+ * - "back" command to return to Deus
  */
 
-import { DeusAgent, type DeusAction, type DeusResponse } from './deus-agent.js';
+import { DeusAgent, type DeusAction, type DeusResponse } from './router.js';
 import { MCPOrchestrator } from './mcp-orchestrator.js';
 import type { AgentType } from '../types/index.js';
-import { SessionManager } from './session-manager.js';
-import { ClaudePtySpawner, stripAnsi } from './pty-spawner.js';
-import { CodexPtySpawner } from './codex-pty-spawner.js';
-import { getSessionDir } from './deus-config.js';
+import { SessionManager } from './session/session-manager.js';
+import { ClaudePtySpawner, stripAnsi } from './spawners/claude-spawner.js';
+import { CodexPtySpawner } from './spawners/codex-spawner.js';
+import { getSessionDir } from './config/deus-config.js';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -228,7 +240,7 @@ export class SimpleOrchestrator {
         // Update state
         this.state = {
           ...this.state,
-          jobType: manifest.jobType,
+          jobType: manifest.jobType ?? null,
           mcpServers: manifest.mcpServers,
         };
 

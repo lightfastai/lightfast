@@ -1,3 +1,15 @@
+/**
+ * Basic Orchestrator (Direct Agent Control)
+ *
+ * USE THIS FOR:
+ * - Headless mode / CLI usage
+ * - Direct agent control without Deus router
+ * - Programmatic agent interaction
+ * - Simple single-agent workflows
+ *
+ * For the full Deus experience with smart routing, use SimpleOrchestrator instead.
+ */
+
 import { nanoid } from 'nanoid';
 import {
   type AgentState,
@@ -5,9 +17,9 @@ import {
   type Message,
   type OrchestrationState,
 } from '../types/index.js';
-import { ClaudePtySpawner, stripAnsi } from './pty-spawner.js';
-import { CodexPtySpawner } from './codex-pty-spawner.js';
-import { SessionManager } from './session-manager.js';
+import { ClaudePtySpawner, stripAnsi } from './spawners/claude-spawner.js';
+import { CodexPtySpawner } from './spawners/codex-spawner.js';
+import { SessionManager } from './session/session-manager.js';
 
 export class Orchestrator {
   private state: OrchestrationState;

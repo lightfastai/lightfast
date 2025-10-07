@@ -14,7 +14,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { SessionManager, findLatestSession } from '../lib/session-manager.js';
+import { SessionManager, findLatestSession } from '../lib/session/session-manager.js';
 
 // Initialize session manager
 let sessionManager: SessionManager | null = null;

@@ -1,6 +1,17 @@
 /**
  * MCP Configuration Orchestrator
- * Manages MCP config injection for Claude Code and Codex
+ *
+ * Specialized utility for managing MCP (Model Context Protocol) sessions.
+ * Used internally by SimpleOrchestrator when MCP servers are requested.
+ *
+ * Responsibilities:
+ * - Creates .deus/sessions/{id}/ directories
+ * - Generates MCP config files for Claude Code (JSON) and Codex (CLI flags)
+ * - Spawns agent processes with MCP configuration injected
+ * - Manages session lifecycle and cleanup
+ *
+ * Note: Most users should use SimpleOrchestrator instead, which handles
+ * MCP configuration automatically. This class is for advanced use cases.
  */
 
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -13,7 +24,7 @@ import {
   saveSessionManifest,
   getSessionDir,
   type SessionManifest,
-} from './deus-config.js';
+} from './config/deus-config.js';
 
 export interface MCPOrchestratorOptions {
   repoRoot?: string;
@@ -136,7 +147,7 @@ export class MCPOrchestrator {
     console.log(`[Deus MCP] Command: claude ${args.join(' ')}`);
 
     // Spawn Claude Code process
-    const process = spawn('claude', args, {
+    const childProcess = spawn('claude', args, {
       cwd: this.repoRoot,
       stdio: 'inherit',
       env: {
@@ -147,7 +158,7 @@ export class MCPOrchestrator {
 
     const agentProcess: AgentProcess = {
       type: 'claude-code',
-      process,
+      process: childProcess,
       sessionId,
     };
 
@@ -198,7 +209,7 @@ export class MCPOrchestrator {
     console.log(`[Deus MCP] Command: codex ${args.join(' ')}`);
 
     // Spawn Codex process
-    const process = spawn('codex', args, {
+    const childProcess = spawn('codex', args, {
       cwd: this.repoRoot,
       stdio: 'inherit',
       env: {
@@ -209,7 +220,7 @@ export class MCPOrchestrator {
 
     const agentProcess: AgentProcess = {
       type: 'codex',
-      process,
+      process: childProcess,
       sessionId,
     };
 

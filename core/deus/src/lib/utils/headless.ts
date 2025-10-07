@@ -1,5 +1,5 @@
-import { Orchestrator } from './orchestrator.js';
-import type { AgentType, OrchestrationState } from '../types/index.js';
+import { Orchestrator } from '../orchestrator.js';
+import type { AgentType, OrchestrationState } from '../../types/index.js';
 
 export interface HeadlessOptions {
   agent?: AgentType;

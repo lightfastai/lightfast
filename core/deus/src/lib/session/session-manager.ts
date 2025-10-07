@@ -9,7 +9,7 @@ import {
   type LinkedAgent,
   type AgentType,
   type SessionStatus,
-} from '../types/index.js';
+} from '../../types/index.js';
 
 /**
  * Deus Session Manager

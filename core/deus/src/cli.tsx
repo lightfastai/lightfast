@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { render } from 'ink';
 import { App } from './components/app.js';
-import { runHeadless, formatHeadlessOutput } from './lib/headless.js';
+import { runHeadless, formatHeadlessOutput } from './lib/utils/headless.js';
 
 // Parse command-line arguments
 const args = process.argv.slice(2);
