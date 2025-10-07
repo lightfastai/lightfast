@@ -3,12 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { findUserDefaultOrg } from "~/lib/org-access";
 
 /**
- * Root Page - Org Redirect
+ * App Entry Point - Org Redirect
  *
  * Redirects authenticated users to their default organization.
  * If user has no organizations, redirects to onboarding.
  */
-export default async function HomePage() {
+export default async function AppPage() {
 	const { userId } = await auth();
 
 	if (!userId) {

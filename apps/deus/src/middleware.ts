@@ -4,13 +4,16 @@ import type { NextRequest } from "next/server";
 
 // Create matchers so auth checks stay readable
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/api/health(.*)", "/robots.txt", "/sitemap(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard", "/dashboard/(.*)"]);
 const isProtectedRoute = createRouteMatcher([
-  "/((?!sign-in|sign-up|api/health|robots.txt|sitemap|$).*)",
+  "/org(.*)",
+  "/onboarding(.*)",
+  "/app(.*)",
 ]);
 
 const requiresAuth = (req: NextRequest) =>
-  isDashboardRoute(req) || isProtectedRoute(req);
+  !isPublicRoute(req) && (isDashboardRoute(req) || isProtectedRoute(req));
 
 export default clerkMiddleware(
   async (auth, req: NextRequest) => {
@@ -24,7 +27,7 @@ export default clerkMiddleware(
 
     // Redirect authenticated users away from auth pages
     if (userId && isAuthRoute(req)) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/app", req.url));
     }
 
     // Protect routes that require authentication

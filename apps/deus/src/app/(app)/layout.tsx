@@ -18,9 +18,9 @@ export default async function AppLayout({
 	const organizations = await findUserOrganizations(userId);
 
 	return (
-		<>
+		<div className="dark">
 			<AuthenticatedHeader organizations={organizations} />
 			{children}
-		</>
+		</div>
 	);
 }

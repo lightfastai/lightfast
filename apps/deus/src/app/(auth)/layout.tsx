@@ -15,7 +15,7 @@ export default function AuthLayout({
 	const isSignUpPage = pathname.includes("/sign-up");
 
 	return (
-		<div className="min-h-screen bg-background flex flex-col relative">
+		<div className="dark min-h-screen bg-background flex flex-col relative">
 			{/* Mobile/Tablet header - relative positioning */}
 			<header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
 				{/* Left side - Logo */}

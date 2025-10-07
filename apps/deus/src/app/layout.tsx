@@ -73,8 +73,8 @@ export default function RootLayout({
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			signInUrl="/sign-in"
 			signUpUrl="/sign-up"
-			signInFallbackRedirectUrl="/"
-			signUpFallbackRedirectUrl="/"
+			signInFallbackRedirectUrl="/app"
+			signUpFallbackRedirectUrl="/app"
 			appearance={{
 				variables: {
 					colorPrimary: "hsl(221.2 83.2% 53.3%)",
@@ -84,9 +84,9 @@ export default function RootLayout({
 				},
 			}}
 		>
-			<html lang="en" className="dark" suppressHydrationWarning>
+			<html lang="en" suppressHydrationWarning>
 				<head />
-				<body className={cn("bg-background min-h-screen", fonts)}>
+				<body className={cn("bg-background min-h-screen antialiased", fonts)}>
 					<TRPCReactProvider>
 						{children}
 						<Toaster />

@@ -61,7 +61,7 @@ Note: With `experimental_output`, the LLM automatically returns structured data 
 **File**: `src/lib/router.ts`
 
 ```typescript
-import { generateText, output, zodSchema } from 'ai';
+import { generateText, Output, zodSchema } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { z } from 'zod';
 import { DEUS_SYSTEM_PROMPT } from './system-prompt.js';
@@ -147,7 +147,7 @@ export class DeusAgent {
         system: DEUS_SYSTEM_PROMPT,
         prompt: message,
         temperature: 0.2,
-        experimental_output: output.object({
+        experimental_output: Output.object({
           schema: zodSchema(routeDecisionSchema),
         }),
       });

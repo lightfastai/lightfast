@@ -3,7 +3,34 @@
 
 /*
  * Deus app color overrides
- * Dark mode only - optimized for AI workflow orchestration interface
+ * Light mode - cream variant for landing page
+ */
+:root {
+  --radius: 0.5rem;
+
+  /* Cream light mode colors */
+  --background: oklch(0.97 0.01 85);
+  --foreground: oklch(0.20 0.015 85);
+  --card: oklch(0.99 0.005 85);
+  --card-foreground: oklch(0.20 0.015 85);
+  --popover: oklch(0.99 0.005 85);
+  --popover-foreground: oklch(0.20 0.015 85);
+  --primary: oklch(0.25 0.02 85);
+  --primary-foreground: oklch(0.98 0.005 85);
+  --secondary: oklch(0.94 0.01 85);
+  --secondary-foreground: oklch(0.25 0.02 85);
+  --muted: oklch(0.93 0.01 85);
+  --muted-foreground: oklch(0.50 0.01 85);
+  --accent: oklch(0.92 0.015 85);
+  --accent-foreground: oklch(0.25 0.02 85);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.01 85);
+  --input: oklch(0.88 0.01 85);
+  --ring: oklch(0.60 0.015 85);
+}
+
+/*
+ * Dark mode - optimized for AI workflow orchestration interface
  */
 .dark {
   --background: oklch(0.2350 0 0);
