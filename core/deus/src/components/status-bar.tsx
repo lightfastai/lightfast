@@ -1,76 +1,87 @@
+/**
+ * Status Bar Component
+ * Shows active agent, session info, and job type
+ */
+
 import * as React from 'react';
 import { Box, Text } from 'ink';
-import { type OrchestrationState } from '../types/index.js';
+import type { ActiveAgent } from '../lib/simple-orchestrator.js';
 
 interface StatusBarProps {
-  state: OrchestrationState;
-  deusSessionId?: string | null;
+  activeAgent: ActiveAgent;
+  sessionId: string | null;
+  jobType: string | null;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = React.memo(({ state, deusSessionId }) => {
-  const getTaskSummary = () => {
-    const tasks: string[] = [];
-
-    if (state.claudeCode.status === 'running' && state.claudeCode.currentTask) {
-      tasks.push(`CC: ${state.claudeCode.currentTask}`);
-    }
-
-    if (state.codex.status === 'running' && state.codex.currentTask) {
-      tasks.push(`CX: ${state.codex.currentTask}`);
-    }
-
-    return tasks.length > 0 ? tasks.join(' | ') : 'Ready';
-  };
-
-  const getTotalMessages = () => {
-    return state.claudeCode.messages.length + state.codex.messages.length;
-  };
-
-  const getSharedContextCount = () => {
-    return Object.keys(state.sharedContext).length;
-  };
-
-  const getActiveAgentName = () => {
-    return state.activeAgent === 'claude-code' ? 'Claude Code' : 'Codex';
-  };
-
-  const getActiveSessionId = () => {
-    const agent = state.activeAgent === 'claude-code' ? state.claudeCode : state.codex;
-    return agent.sessionId ? agent.sessionId.substring(0, 8) : null;
-  };
+export const StatusBar: React.FC<StatusBarProps> = React.memo(({
+  activeAgent,
+  sessionId,
+  jobType,
+}) => {
+  const agentInfo = getAgentInfo(activeAgent);
 
   return (
-    <Box
-      borderStyle="round"
-      borderColor="yellow"
-      paddingX={2}
-      paddingY={0}
-      justifyContent="space-between"
-    >
-      <Box gap={3}>
-        <Text color="yellow" bold>
-          Deus Orchestrator
-        </Text>
-        {deusSessionId && (
-          <>
-            <Text color="gray">•</Text>
-            <Text color="magenta">
-              Session: {deusSessionId.substring(0, 8)}...
-            </Text>
-          </>
-        )}
-        <Text color="gray">•</Text>
-        <Text color="cyan">
-          Active: {getActiveAgentName()}
-          {getActiveSessionId() && <Text color="gray"> ({getActiveSessionId()}...)</Text>}
+    <Box flexDirection="column" borderStyle="double" borderColor={agentInfo.color} paddingX={1}>
+      {/* Title */}
+      <Box justifyContent="center">
+        <Text bold color={agentInfo.color} inverse>
+          {' '}
+          {agentInfo.icon} DEUS v2.0 - {agentInfo.name}{' '}
         </Text>
       </Box>
 
-      <Box gap={3}>
-        <Text color="gray">Messages: {getTotalMessages()}</Text>
-        <Text color="gray">Shared: {getSharedContextCount()}</Text>
-        <Text color="gray">{getTaskSummary()}</Text>
+      {/* Status Info */}
+      <Box marginTop={1} justifyContent="space-between">
+        <Box gap={2}>
+          {sessionId && (
+            <Box>
+              <Text color="gray" dimColor>
+                Session:
+              </Text>
+              <Text color="yellow">
+                {' '}
+                {sessionId.slice(0, 8)}...
+              </Text>
+            </Box>
+          )}
+
+          {jobType && (
+            <Box>
+              <Text color="gray" dimColor>
+                Job:
+              </Text>
+              <Text color="cyan">
+                {' '}
+                {jobType}
+              </Text>
+            </Box>
+          )}
+        </Box>
+
+        <Box>
+          <Text color="gray" dimColor>
+            {activeAgent !== 'deus' ? 'Ctrl+B back • ' : ''}Ctrl+C exit
+          </Text>
+        </Box>
       </Box>
     </Box>
   );
 });
+
+/**
+ * Helper: Get agent info
+ */
+function getAgentInfo(agent: ActiveAgent): {
+  name: string;
+  icon: string;
+  color: 'cyan' | 'magenta' | 'yellow';
+} {
+  switch (agent) {
+    case 'deus':
+      return { name: 'Deus Router', icon: '🎭', color: 'cyan' };
+    case 'claude-code':
+      return { name: 'Claude Code', icon: '🤖', color: 'magenta' };
+    case 'codex':
+      return { name: 'Codex', icon: '⚡', color: 'yellow' };
+  }
+}

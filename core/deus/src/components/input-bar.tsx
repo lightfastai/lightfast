@@ -1,33 +1,32 @@
+/**
+ * Input Bar Component
+ * Handles user input with context-aware prompts
+ */
+
 import * as React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { type AgentType } from '../types/index.js';
+import type { ActiveAgent } from '../lib/simple-orchestrator.js';
 
 const { useState } = React;
 
 interface InputBarProps {
-  activeAgent: AgentType;
+  activeAgent: ActiveAgent;
   onSubmit: (value: string) => void;
-  onSwitch: () => void;
   isFocused: boolean;
+  isLoading: boolean;
 }
 
 export const InputBar: React.FC<InputBarProps> = React.memo(({
   activeAgent,
   onSubmit,
-  onSwitch,
   isFocused,
+  isLoading,
 }) => {
   const [value, setValue] = useState('');
 
   useInput(
     (input, key) => {
-      if (!isFocused) return;
-
-      // Handle Tab for switching agents
-      if (key.tab) {
-        onSwitch();
-        return;
-      }
+      if (!isFocused || isLoading) return;
 
       if (key.return) {
         if (value.trim()) {
@@ -40,48 +39,76 @@ export const InputBar: React.FC<InputBarProps> = React.memo(({
         setValue((v) => v + input);
       }
     },
-    { isActive: isFocused }
+    { isActive: isFocused && !isLoading }
   );
 
-  const agentName = activeAgent === 'claude-code' ? 'Claude Code' : 'Codex';
-  const agentColor = activeAgent === 'claude-code' ? 'cyan' : 'magenta';
+  const agentInfo = getAgentInfo(activeAgent);
+  const placeholder = getPlaceholder(activeAgent);
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={agentColor} padding={1}>
-      {/* Agent selector hint */}
+    <Box flexDirection="column" borderStyle="round" borderColor={agentInfo.color} padding={1}>
+      {/* Hint */}
       <Box marginBottom={1} justifyContent="space-between">
         <Box>
-          <Text color={agentColor} bold inverse>
-            ▶ {agentName}
+          <Text color={agentInfo.color} bold>
+            {agentInfo.icon} {agentInfo.name}
           </Text>
-          <Text color="gray" dimColor>
-            {' '}
-            (Tab to switch • Coordinates with Deus)
-          </Text>
+          {activeAgent !== 'deus' && (
+            <Text color="gray" dimColor>
+              {' '}• Type "back" to return to Deus
+            </Text>
+          )}
         </Box>
-        <Box gap={2}>
+        <Box>
           <Text color="gray" dimColor>
-            Ctrl+C exit
-          </Text>
-          <Text color="gray" dimColor>
-            Ctrl+S share
-          </Text>
-          <Text color="gray" dimColor>
-            Ctrl+K clear
+            {isLoading ? 'Thinking...' : 'Ready'}
           </Text>
         </Box>
       </Box>
 
       {/* Input field */}
       <Box>
-        <Text color={agentColor} bold>
-          ▸
+        <Text color={agentInfo.color} bold>
+          {agentInfo.symbol}{' '}
         </Text>
         <Text>
-          {value}
-          <Text inverse={isFocused}> </Text>
+          {value || <Text dimColor>{placeholder}</Text>}
+          <Text inverse={isFocused && !isLoading}> </Text>
         </Text>
       </Box>
     </Box>
   );
 });
+
+/**
+ * Helper: Get agent info
+ */
+function getAgentInfo(agent: ActiveAgent): {
+  name: string;
+  icon: string;
+  symbol: string;
+  color: 'cyan' | 'magenta' | 'yellow';
+} {
+  switch (agent) {
+    case 'deus':
+      return { name: 'Deus', icon: '🎭', symbol: '▸', color: 'cyan' };
+    case 'claude-code':
+      return { name: 'Claude Code', icon: '🤖', symbol: '▸', color: 'magenta' };
+    case 'codex':
+      return { name: 'Codex', icon: '⚡', symbol: '▸', color: 'yellow' };
+  }
+}
+
+/**
+ * Helper: Get placeholder text
+ */
+function getPlaceholder(agent: ActiveAgent): string {
+  switch (agent) {
+    case 'deus':
+      return 'Tell me what you need help with...';
+    case 'claude-code':
+      return 'Message Claude Code...';
+    case 'codex':
+      return 'Message Codex...';
+  }
+}

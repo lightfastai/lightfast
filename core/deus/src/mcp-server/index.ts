@@ -19,10 +19,33 @@ import { SessionManager, findLatestSession } from '../lib/session-manager.js';
 // Initialize session manager
 let sessionManager: SessionManager | null = null;
 
-async function initializeSessionManager(): Promise<void> {
-  // Try to find the latest session or create a new one
-  const latestSessionId = await findLatestSession();
-  sessionManager = new SessionManager(latestSessionId || undefined);
+/**
+ * Parse command line arguments
+ */
+function parseArgs(): { sessionId?: string } {
+  const args = process.argv.slice(2);
+  let sessionId: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--session' && i + 1 < args.length) {
+      sessionId = args[i + 1];
+      break;
+    }
+  }
+
+  return { sessionId };
+}
+
+async function initializeSessionManager(providedSessionId?: string): Promise<void> {
+  let sessionId = providedSessionId;
+
+  // If no session ID provided, try to find the latest session
+  if (!sessionId) {
+    const latestSessionId = await findLatestSession();
+    sessionId = latestSessionId || undefined;
+  }
+
+  sessionManager = new SessionManager(sessionId);
   await sessionManager.initialize();
 
   console.error(`[Deus MCP] Session initialized: ${sessionManager.getSessionId()}`);
@@ -254,8 +277,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Start the server
 async function main() {
   try {
+    // Parse command line arguments
+    const { sessionId } = parseArgs();
+
+    if (sessionId) {
+      console.error(`[Deus MCP] Using session ID from command line: ${sessionId}`);
+    }
+
     // Initialize session manager
-    await initializeSessionManager();
+    await initializeSessionManager(sessionId);
 
     // Create stdio transport
     const transport = new StdioServerTransport();
