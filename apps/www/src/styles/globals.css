@@ -3,7 +3,6 @@
 
 /* Override shadcn border-radius via CSS variable */
 :root {
-	--radius: 0.25rem;
 }
 
 /* Light section - inverted colors for specific sections */
@@ -46,3 +45,4 @@
 	animation-timing-function: linear;
 	animation-iteration-count: infinite;
 }
+

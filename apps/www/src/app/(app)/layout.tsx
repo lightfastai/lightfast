@@ -7,8 +7,8 @@ interface MarketingLayoutProps {
 
 export default function MarketingLayout({ children }: MarketingLayoutProps) {
 	return (
-		<div className="relative flex min-h-screen flex-col">
-			<div className="framework bg-background">
+		<div className="framework relative flex min-h-screen flex-col">
+			<div className="bg-background">
 				<EnhancedHeader />
 			</div>
 			<div className="relative flex-1">
