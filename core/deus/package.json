@@ -10,14 +10,18 @@
     "deus-mcp": "./dist/mcp-server/index.js"
   },
   "scripts": {
-    "dev": "tsx src/cli.tsx",
+    "dev": "dotenv -e .vercel/.env.development.local -- tsx src/cli.tsx",
+    "with-env": "dotenv -e .vercel/.env.development.local --",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/gateway": "catalog:",
     "@modelcontextprotocol/sdk": "^1.19.1",
+    "ai": "catalog:",
     "chalk": "^5.6.0",
     "execa": "^9.5.2",
     "ink": "^6.3.1",
@@ -30,6 +34,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.11",
+    "dotenv-cli": "^8.0.0",
     "tsup": "^8.5.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.2"

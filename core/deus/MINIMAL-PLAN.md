@@ -20,10 +20,11 @@ Spawner (existing code - no changes)
 
 ## Implementation Steps
 
-### 1. Install Vercel AI SDK
+### 1. Install Dependencies
 ```bash
 cd core/deus
-pnpm add ai @ai-sdk/anthropic
+pnpm add ai @ai-sdk/anthropic @ai-sdk/gateway
+pnpm add -D dotenv-cli
 ```
 
 ### 2. Create System Prompt (Hardcoded)
@@ -36,12 +37,10 @@ Available agents:
 - claude-code: Code review, debugging, refactoring, documentation, git operations
 - codex: Testing, web automation, Playwright, browser tasks, E2E testing
 
-Analyze the user's request and respond with ONLY a JSON object:
-{
-  "agent": "claude-code" | "codex",
-  "mcpServers": string[],
-  "reasoning": string
-}
+Analyze the user's request and determine:
+1. Which agent should handle this task
+2. Which MCP servers are needed (if any)
+3. Your reasoning for this decision
 
 Available MCP servers:
 - playwright: Browser automation
@@ -49,20 +48,31 @@ Available MCP servers:
 - deus-session: Session management (always included)
 
 Examples:
-- "Review the auth code" → {"agent": "claude-code", "mcpServers": [], "reasoning": "Code review task"}
-- "Write tests with Playwright" → {"agent": "codex", "mcpServers": ["playwright"], "reasoning": "Browser testing"}
-- "Debug the login flow" → {"agent": "claude-code", "mcpServers": [], "reasoning": "Debugging requires code analysis"}
-- "Scrape this website" → {"agent": "codex", "mcpServers": ["playwright", "browserbase"], "reasoning": "Web scraping with browser"}
+- "Review the auth code" → agent: claude-code, mcpServers: [], reasoning: "Code review task"
+- "Write tests with Playwright" → agent: codex, mcpServers: ["playwright"], reasoning: "Browser testing"
+- "Debug the login flow" → agent: claude-code, mcpServers: [], reasoning: "Debugging requires code analysis"
+- "Scrape this website" → agent: codex, mcpServers: ["playwright", "browserbase"], reasoning: "Web scraping with browser"
 `;
 ```
+
+Note: With `experimental_output`, the LLM automatically returns structured data matching the Zod schema - no need for JSON formatting instructions!
 
 ### 3. Refactor Router
 **File**: `src/lib/router.ts`
 
 ```typescript
-import { generateText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { generateText, output, zodSchema } from 'ai';
+import { gateway } from '@ai-sdk/gateway';
+import { z } from 'zod';
 import { DEUS_SYSTEM_PROMPT } from './system-prompt.js';
+
+const routeDecisionSchema = z.object({
+  agent: z.enum(['claude-code', 'codex']),
+  mcpServers: z.array(z.string()),
+  reasoning: z.string(),
+});
+
+type RouteDecision = z.infer<typeof routeDecisionSchema>;
 
 export interface DeusResponse {
   response: string;
@@ -132,29 +142,17 @@ export class DeusAgent {
 
   private async routeWithLLM(message: string): Promise<RouteDecision | null> {
     try {
-      const { text } = await generateText({
-        model: anthropic('claude-3-5-sonnet-20241022'),
+      const result = await generateText({
+        model: gateway('anthropic/claude-sonnet-4.5'),
         system: DEUS_SYSTEM_PROMPT,
         prompt: message,
         temperature: 0.2,
+        experimental_output: output.object({
+          schema: zodSchema(routeDecisionSchema),
+        }),
       });
 
-      // Parse JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.error('[Deus Router] No JSON in response:', text);
-        return null;
-      }
-
-      const decision = JSON.parse(jsonMatch[0]) as RouteDecision;
-
-      // Validate decision
-      if (!decision.agent || !['claude-code', 'codex'].includes(decision.agent)) {
-        console.error('[Deus Router] Invalid agent:', decision.agent);
-        return null;
-      }
-
-      return decision;
+      return result.experimental_output;
     } catch (error) {
       console.error('[Deus Router] LLM error:', error);
       return null;
@@ -171,16 +169,29 @@ export class DeusAgent {
 }
 ```
 
-### 4. Environment Variable
-Add to `.env` in `core/deus/`:
+### 4. Environment Setup
+
+The project uses dotenv-cli to load environment variables from `.vercel/.env.development.local`:
+
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
+# Install dotenv-cli
+pnpm add -D dotenv-cli
+
+# Update package.json scripts
+{
+  "scripts": {
+    "dev": "dotenv -e .vercel/.env.development.local -- tsx src/cli.tsx",
+    "with-env": "dotenv -e .vercel/.env.development.local --"
+  }
+}
 ```
 
-Or export globally:
+Create `.vercel/.env.development.local` with your AI Gateway key:
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+AI_GATEWAY_API_KEY=vck_...
 ```
+
+The `gateway()` function automatically uses `AI_GATEWAY_API_KEY` from environment.
 
 ## That's It!
 
@@ -195,11 +206,12 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 ```bash
 cd core/deus
-export ANTHROPIC_API_KEY=sk-ant-...
+
+# Ensure .vercel/.env.development.local exists with AI_GATEWAY_API_KEY
 pnpm dev
 
 # Try: "Review the authentication code"
-# Expected: Routes to Claude Code
+# Expected: Routes to Claude Code via Claude Sonnet 4.5 through Vercel AI Gateway
 
 # Try: "Write Playwright tests for the login"
 # Expected: Routes to Codex with playwright MCP
@@ -207,6 +219,8 @@ pnpm dev
 # Try: "Debug the API error"
 # Expected: Routes to Claude Code
 ```
+
+The AI Gateway key is loaded automatically from `.vercel/.env.development.local` via dotenv-cli!
 
 ## What We're Skipping (For Now)
 
@@ -222,34 +236,42 @@ pnpm dev
 
 ```
 core/deus/
-├── package.json                          # Add ai, @ai-sdk/anthropic
+├── package.json                          # Add ai, @ai-sdk/anthropic, @ai-sdk/gateway, dotenv-cli
+│                                         # Update dev script with dotenv
+├── .vercel/
+│   └── .env.development.local           # NEW: AI_GATEWAY_API_KEY
 ├── src/lib/
 │   ├── system-prompt.ts                  # NEW: Hardcoded prompt
-│   └── router.ts                         # REFACTOR: Use Vercel AI SDK
+│   └── router.ts                         # REFACTOR: Use Vercel AI SDK Gateway
 ```
 
 **Lines of code**: ~80 total
 
-## Benefits of Vercel AI SDK
+## Benefits of Vercel AI SDK + Gateway
 
-1. **Already in use** - Lightfast uses it (`gateway()` in examples)
-2. **Simpler API** - `generateText()` vs raw Anthropic SDK
-3. **Provider agnostic** - Easy to swap models later
-4. **Streaming support** - Can add later if needed
-5. **Type-safe** - Full TypeScript support
+1. **Simple config** - One AI_GATEWAY_API_KEY in .vercel/.env.development.local
+2. **Structured output** - Type-safe Zod schemas with `experimental_output`
+3. **Already in use** - Lightfast uses it (`gateway()` in examples)
+4. **Simpler API** - `generateText()` vs raw Anthropic SDK
+5. **Provider agnostic** - Easy to swap models later
+6. **Gateway benefits** - Analytics, caching, rate limiting
+7. **Latest model** - Claude Sonnet 4.5
+8. **Streaming support** - Can add later if needed
+9. **Type-safe** - Full TypeScript support with inference
 
 ## Next Steps (After It Works)
 
 1. Add conversation history to LLM context
-2. Add structured output with Zod schemas
+2. ~~Add structured output with Zod schemas~~ ✅ Done!
 3. Add DEUS.md support (project context)
 4. Add .deus/config.json (agent definitions)
-5. Add pattern matching fallback (if API key missing)
+5. Add error handling for gateway failures
+6. Add streaming support for real-time routing decisions
 
 ## Timeline
 - Install SDK: 1 min
 - Write system-prompt.ts: 5 min
-- Refactor router.ts: 15 min
-- Test: 10 min
+- Refactor router.ts: 10 min (even simpler with gateway!)
+- Test: 5 min (no env setup needed!)
 
-**Total: 30 minutes**
+**Total: 20 minutes** (faster thanks to zero-config gateway!)
