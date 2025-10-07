@@ -26,7 +26,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
       <Box justifyContent="center">
         <Text bold color={agentInfo.color} inverse>
           {' '}
-          {agentInfo.icon} DEUS v2.0 - {agentInfo.name}{' '}
+          {agentInfo.icon} {agentInfo.name}{' '}
         </Text>
       </Box>
 
@@ -78,7 +78,7 @@ function getAgentInfo(agent: ActiveAgent): {
 } {
   switch (agent) {
     case 'deus':
-      return { name: 'Deus Router', icon: '🎭', color: 'cyan' };
+      return { name: 'Deus', icon: '🎭', color: 'cyan' };
     case 'claude-code':
       return { name: 'Claude Code', icon: '🤖', color: 'magenta' };
     case 'codex':
