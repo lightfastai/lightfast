@@ -55,14 +55,8 @@ export async function GET(request: NextRequest) {
 		);
 	}
 
-	const clientId = env.GITHUB_APP_CLIENT_ID;
-	const clientSecret = env.GITHUB_APP_CLIENT_SECRET;
-
-	if (!clientId || !clientSecret) {
-		return NextResponse.redirect(
-			`${baseUrl}/?github_error=app_not_configured`
-		);
-	}
+	const clientId = env.GITHUB_CLIENT_ID;
+	const clientSecret = env.GITHUB_CLIENT_SECRET;
 
 	try {
 		// Exchange authorization code for access token
@@ -99,11 +93,15 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
+		// Check for custom callback URL
+		const customCallback = request.cookies.get("github_oauth_callback")?.value;
+		const redirectUrl = customCallback
+			? `${baseUrl}${customCallback}`
+			: `${baseUrl}/?github_auth=success`;
+
 		// Redirect back to the app with success
 		// The user access token allows us to fetch installations
-		const response = NextResponse.redirect(
-			`${baseUrl}/?github_auth=success`
-		);
+		const response = NextResponse.redirect(redirectUrl);
 
 		// Store user access token in a secure, httpOnly cookie
 		response.cookies.set("github_user_token", accessToken, {
@@ -114,8 +112,9 @@ export async function GET(request: NextRequest) {
 			path: "/",
 		});
 
-		// Clear the state cookie
+		// Clear the state and callback cookies
 		response.cookies.delete("github_oauth_state");
+		response.cookies.delete("github_oauth_callback");
 
 		return response;
 	} catch (err) {

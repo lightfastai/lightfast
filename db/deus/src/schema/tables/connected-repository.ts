@@ -29,29 +29,33 @@ export type RepositoryMetadata = {
   fullName?: string; // Cache of "owner/repo" for display only
   description?: string;
   language?: string;
-  stars?: number;
-  visibility?: "public" | "private";
+  private?: boolean;
+  owner?: string;
+  ownerAvatar?: string;
+  stargazersCount?: number;
+  updatedAt?: string;
   [key: string]: unknown;
 };
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
  *
- * DESIGN PRINCIPLE: Keep it simple - store only what's immutable or essential.
+ * DESIGN PRINCIPLE: Organization-scoped via GitHub App
  *
- * AUTHENTICATION APPROACH (MVP): GitHub OAuth flow
- * - User authorizes via OAuth → we get an access_token
- * - Token stored encrypted, scoped to user's approved repos
- * - installationId field reserved for future GitHub App support (team/org installs)
+ * AUTHENTICATION APPROACH: GitHub App installation
+ * - Organization installs GitHub App
+ * - We use installation ID to get installation access tokens
+ * - Repositories are scoped to the organization
  *
  * What we STORE:
+ * - organizationId: Which Deus org this repo belongs to ✅
  * - githubRepoId: GitHub's internal ID (NEVER changes, even on rename/transfer) ✅
- * - accessToken: OAuth token for API access ✅
+ * - githubInstallationId: GitHub App installation ID for API access ✅
  * - permissions: What we're allowed to do ✅
  * - metadata: Optional cache (can be stale, for UI display only) ✅
  *
  * What we DON'T store (fetch from GitHub API instead):
- * - repoOwner, repoName, repoFullName (mutable - repos can be renamed/transferred) ❌
+ * - repoOwner, repoName (mutable - repos can be renamed/transferred) ❌
  * - defaultBranch (mutable - can be changed in settings) ❌
  * - stars, forks, watchers (change frequently) ❌
  *
@@ -69,9 +73,9 @@ export const DeusConnectedRepository = mysqlTable(
       .$defaultFn(() => uuidv4()),
 
     /**
-     * Reference to the user who connected this repository (Clerk user ID)
+     * Reference to the organization this repository belongs to
      */
-    userId: varchar("user_id", { length: 191 }).notNull(),
+    organizationId: varchar("organization_id", { length: 191 }).notNull(),
 
     /**
      * GitHub's unique repository ID (immutable, never changes)
@@ -82,17 +86,10 @@ export const DeusConnectedRepository = mysqlTable(
       .unique(),
 
     /**
-     * GitHub App installation ID (reserved for future GitHub App support)
-     * Currently using OAuth flow for MVP - this will be used when we add
-     * GitHub App installation support for team/org repositories
+     * GitHub App installation ID for this repository
+     * Used to get installation access tokens for API calls
      */
-    installationId: varchar("installation_id", { length: 191 }),
-
-    /**
-     * Encrypted access token for repository access
-     * Note: This should be encrypted at rest in production
-     */
-    accessToken: text("access_token"),
+    githubInstallationId: varchar("github_installation_id", { length: 191 }).notNull(),
 
     /**
      * Repository permissions granted to Deus
@@ -130,11 +127,14 @@ export const DeusConnectedRepository = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    // Index for fast user repository lookups
-    userIdIdx: index("user_id_idx").on(table.userId),
+    // Index for fast organization repository lookups
+    orgIdIdx: index("org_id_idx").on(table.organizationId),
 
-    // Composite index for active repositories by user (most common query)
-    userActiveIdx: index("user_active_idx").on(table.userId, table.isActive),
+    // Composite index for active repositories by organization (most common query)
+    orgActiveIdx: index("org_active_idx").on(table.organizationId, table.isActive),
+
+    // Index for GitHub installation lookups
+    installationIdx: index("installation_idx").on(table.githubInstallationId),
   }),
 );
 

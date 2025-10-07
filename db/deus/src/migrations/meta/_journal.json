@@ -8,6 +8,27 @@
       "when": 1759406808002,
       "tag": "0000_friendly_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1759497915660,
+      "tag": "0001_rare_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1759499637609,
+      "tag": "0002_lovely_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1759651157757,
+      "tag": "0003_nifty_sersi",
+      "breakpoints": true
     }
   ]
 }

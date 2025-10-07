@@ -19,7 +19,7 @@ export function OAuthSignUp() {
 			await signUp.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-up/sso-callback",
-				redirectUrlComplete: "/dashboard",
+				redirectUrlComplete: "/",
 			});
 		} catch {
 			toast.error("Failed to sign up. Please try again.");

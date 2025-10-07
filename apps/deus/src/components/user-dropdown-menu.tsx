@@ -8,6 +8,7 @@ import {
 	useClerk,
 	useUser,
 } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	DropdownMenu,
@@ -32,6 +33,17 @@ interface UserDropdownMenuProps {
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const { signOut } = useClerk();
 	const { isLoaded, isSignedIn, user } = useUser();
+	const params = useParams();
+
+	const settingsHref = useMemo(() => {
+		const orgId = params.orgId;
+		if (orgId) {
+			// Ensure orgId is a string (it could be string | string[] from params)
+			const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+			return `/org/${orgIdStr}/settings`;
+		}
+		return "/settings"; // Fallback for non-org pages
+	}, [params.orgId]);
 
 	const displayName = useMemo(() => {
 		if (!user) {
@@ -119,7 +131,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 						</div>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem asChild>
-							<Link href="/settings" className="cursor-pointer">
+							<Link href={settingsHref} className="cursor-pointer">
 								<Settings className="mr-2 h-3 w-3" />
 								Settings
 							</Link>
