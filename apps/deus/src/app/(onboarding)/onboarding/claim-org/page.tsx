@@ -46,14 +46,24 @@ function ClaimOrgContent() {
 	const fetchInstallations = async () => {
 		try {
 			const response = await fetch("/api/github/installations");
+
+			// Handle authentication errors - redirect to connect GitHub
+			if (response.status === 401) {
+				console.log("GitHub authentication required, redirecting to connect-github");
+				router.push("/onboarding/connect-github");
+				return;
+			}
+
 			if (!response.ok) {
 				throw new Error("Failed to fetch installations");
 			}
+
 			const data = (await response.json()) as {
 				installations: GitHubInstallation[];
 			};
 			setInstallations(data.installations);
-		} catch {
+		} catch (error) {
+			console.error("Failed to fetch installations:", error);
 			toast({
 				title: "Failed to fetch organizations",
 				description:
@@ -143,16 +153,25 @@ function ClaimOrgContent() {
 								You need to install the Deus GitHub App on at least one
 								organization.
 							</p>
-							<Button asChild className="w-full">
-								<a
-									href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
-									target="_blank"
-									rel="noopener noreferrer"
+							<div className="flex flex-col gap-2">
+								<Button asChild className="w-full">
+									<a
+										href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<Github className="mr-2 h-4 w-4" />
+										Install GitHub App
+									</a>
+								</Button>
+								<Button
+									variant="outline"
+									className="w-full"
+									onClick={() => router.push("/onboarding/connect-github")}
 								>
-									<Github className="mr-2 h-4 w-4" />
-									Install GitHub App
-								</a>
-							</Button>
+									Re-connect GitHub
+								</Button>
+							</div>
 						</div>
 					) : (
 						<div className="space-y-3">
