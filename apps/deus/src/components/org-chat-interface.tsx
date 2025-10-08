@@ -173,7 +173,7 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 						<TabsTrigger value="code-reviews">Code reviews</TabsTrigger>
 					</TabsList>
 					<TabsContent value="code-reviews" className="mt-6">
-						<CodeReviewsTab orgId={orgId} />
+						<CodeReviewsTab orgId={organizationId} />
 					</TabsContent>
 				</Tabs>
 			</main>

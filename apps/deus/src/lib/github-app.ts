@@ -70,3 +70,63 @@ export async function getInstallationRepositories(installationId: number) {
 
 	return data;
 }
+
+/**
+ * Get pull request details from GitHub API
+ *
+ * @param installationId - The GitHub App installation ID
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param pullNumber - Pull request number
+ * @returns Pull request data
+ */
+export async function getPullRequest(
+	installationId: number,
+	owner: string,
+	repo: string,
+	pullNumber: number
+) {
+	const app = getApp();
+	const octokit = await app.getInstallationOctokit(installationId);
+
+	const { data } = await octokit.request(
+		"GET /repos/{owner}/{repo}/pulls/{pull_number}",
+		{
+			owner,
+			repo,
+			pull_number: pullNumber,
+			headers: {
+				"X-GitHub-Api-Version": "2022-11-28",
+			},
+		}
+	);
+
+	return data;
+}
+
+/**
+ * Get repository details from GitHub API
+ *
+ * @param installationId - The GitHub App installation ID
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns Repository data
+ */
+export async function getRepository(
+	installationId: number,
+	owner: string,
+	repo: string
+) {
+	const app = getApp();
+	const octokit = await app.getInstallationOctokit(installationId);
+
+	const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
+		owner,
+		repo,
+		headers: {
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+	});
+
+	return data;
+}

@@ -409,3 +409,552 @@ When developing, prioritize:
 3. Performance with Edge Runtime
 4. User experience with proper loading states
 5. Security with input validation
+
+---
+
+# tRPC Integration Guide
+
+This guide covers tRPC patterns and best practices used across applications in the monorepo (e.g., `apps/chat`, `apps/deus`).
+
+## Architecture Overview
+
+### Package Structure
+
+```
+api/
+├── <app>/             # API backend with tRPC routers
+│   ├── src/
+│   │   ├── trpc.ts           # tRPC initialization & context
+│   │   ├── root.ts           # Main app router
+│   │   └── router/           # Feature routers
+│   └── package.json
+
+packages/
+├── <app>-trpc/        # Shared tRPC client utilities (if app-specific)
+│   ├── src/
+│   │   ├── client.ts         # Query client config
+│   │   ├── react.tsx         # Client-side provider & hooks
+│   │   └── server.tsx        # Server-side utilities (RSC)
+│   └── package.json
+
+apps/
+├── <app>/             # Frontend using tRPC
+│   ├── src/
+│   │   ├── hooks/            # Custom tRPC hooks
+│   │   └── lib/
+│   │       └── trpc-errors.ts  # Error handling utilities
+│   └── package.json
+```
+
+## Server-Side Patterns
+
+### 1. tRPC Initialization (api/*/src/trpc.ts)
+
+```typescript
+import { initTRPC, TRPCError } from "@trpc/server";
+import superjson from "superjson";
+import { ZodError } from "zod";
+import { auth } from "@vendor/clerk/server";
+import { db } from "@db/<app>/client";
+
+/**
+ * Context creation - available in all procedures
+ */
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+}) => {
+  const clerkSession = await auth();
+
+  const session = {
+    userId: clerkSession?.userId ?? null,
+  };
+
+  return {
+    session,
+    db,  // Database client
+  };
+};
+
+/**
+ * Initialize tRPC with SuperJSON transformer and Zod error formatting
+ */
+const t = initTRPC.context<typeof createTRPCContext>().create({
+  transformer: superjson,
+  errorFormatter: ({ shape, error }) => ({
+    ...shape,
+    data: {
+      ...shape.data,
+      zodError:
+        error.cause instanceof ZodError
+          ? error.cause.flatten()
+          : null,
+    },
+  }),
+});
+
+/**
+ * Procedure types
+ */
+export const createTRPCRouter = t.router;
+export const publicProcedure = t.procedure;    // Unauthenticated
+export const protectedProcedure = t.procedure  // Authenticated
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        session: { userId: ctx.session.userId },
+      },
+    });
+  });
+```
+
+**Key Features:**
+- SuperJSON transformer for Date/Map/Set serialization
+- Zod error formatting for validation errors
+- Session-based authentication middleware
+- Type-safe context with authenticated vs public procedures
+
+### 2. Router Definition (api/*/src/root.ts)
+
+```typescript
+import { createTRPCRouter } from "./trpc";
+import { featureARouter } from "./router/feature-a";
+import { featureBRouter } from "./router/feature-b";
+
+/**
+ * Main app router - flat structure for easier access
+ */
+export const appRouter = createTRPCRouter({
+  featureA: featureARouter,
+  featureB: featureBRouter,
+  // ... more routers
+});
+
+export type AppRouter = typeof appRouter;
+```
+
+**Pattern:**
+- Flat router structure (not nested) for simpler client access
+- Export router type for client-side usage
+- Feature-based router organization
+
+### 3. Feature Router Patterns (api/*/src/router/feature.ts)
+
+#### Query Example
+
+```typescript
+import type { TRPCRouterRecord } from "@trpc/server";
+import { protectedProcedure } from "../../trpc";
+import { z } from "zod";
+
+export const featureRouter = {
+  /**
+   * List items with cursor pagination
+   */
+  list: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        cursor: z.string().nullish(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const items = await ctx.db
+        .select()
+        .from(Table)
+        .where(eq(Table.userId, ctx.session.userId))
+        .limit(input.limit);
+
+      return items;
+    }),
+} satisfies TRPCRouterRecord;
+```
+
+#### Mutation Example
+
+```typescript
+export const featureRouter = {
+  /**
+   * Create or update item
+   */
+  upsert: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        data: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Verify ownership
+      const item = await ctx.db
+        .select({ id: Table.id })
+        .from(Table)
+        .where(
+          and(
+            eq(Table.id, input.id),
+            eq(Table.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!item[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Item not found",
+        });
+      }
+
+      // 2. Perform mutation
+      await ctx.db
+        .update(Table)
+        .set({ data: input.data })
+        .where(eq(Table.id, input.id));
+
+      return { success: true };
+    }),
+} satisfies TRPCRouterRecord;
+```
+
+**Best Practices:**
+- Always validate ownership before mutations
+- Use Zod for input validation
+- Throw descriptive TRPCError with appropriate codes
+- Return success indicators or data objects
+- Use `satisfies TRPCRouterRecord` for type safety
+
+### 4. Next.js API Route Handler (apps/*/src/app/(trpc)/api/trpc/[trpc]/route.ts)
+
+```typescript
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { appRouter, createTRPCContext } from "@api/<app>";
+
+export const runtime = "edge";
+
+const handler = async (req: NextRequest) => {
+  const response = await fetchRequestHandler({
+    endpoint: "/api/trpc",
+    router: appRouter,
+    req,
+    createContext: () =>
+      createTRPCContext({
+        headers: req.headers,
+      }),
+    onError({ error, path }) {
+      console.error(`>>> tRPC Error on '${path}'`, error);
+    },
+  });
+
+  return response;
+};
+
+export { handler as GET, handler as POST };
+```
+
+## Client-Side Patterns
+
+### 1. tRPC Package Setup (packages/*-trpc/src)
+
+#### Query Client (client.ts)
+
+```typescript
+import { QueryClient, defaultShouldDehydrateQuery } from "@tanstack/react-query";
+import SuperJSON from "superjson";
+
+export const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30 * 1000,  // 30s to avoid immediate refetch
+      },
+      dehydrate: {
+        serializeData: SuperJSON.serialize,
+        shouldDehydrateQuery: (query) =>
+          defaultShouldDehydrateQuery(query) ||
+          query.state.status === "pending",
+      },
+      hydrate: {
+        deserializeData: SuperJSON.deserialize,
+      },
+    },
+  });
+```
+
+#### React Provider (react.tsx)
+
+```typescript
+"use client";
+
+import { createTRPCClient, httpBatchStreamLink } from "@trpc/client";
+import { createTRPCContext } from "@trpc/tanstack-react-query";
+import type { AppRouter } from "@api/<app>";
+
+const trpcContext = createTRPCContext<AppRouter>();
+
+export const useTRPC = trpcContext.useTRPC;
+export const TRPCProvider = trpcContext.TRPCProvider;
+
+export function TRPCReactProvider({ children }) {
+  const queryClient = getQueryClient();
+  const [trpcClient] = useState(() =>
+    createTRPCClient<AppRouter>({
+      links: [
+        httpBatchStreamLink({
+          transformer: SuperJSON,
+          url: `/api/trpc`,
+          headers: () => ({ "x-trpc-source": "client" }),
+          fetch(url, init) {
+            return fetch(url, { ...init, credentials: "include" });
+          },
+        }),
+      ],
+    })
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+        {children}
+      </TRPCProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+#### Server Utilities (server.tsx)
+
+```typescript
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { appRouter, createTRPCContext } from "@api/<app>";
+
+export const trpc = createTRPCOptionsProxy<AppRouter>({
+  router: appRouter,
+  ctx: createContext,
+  queryClient: getQueryClient,
+});
+
+export function prefetch(queryOptions) {
+  const queryClient = getQueryClient();
+  if (queryOptions.queryKey[1]?.type === "infinite") {
+    void queryClient.prefetchInfiniteQuery(queryOptions);
+  } else {
+    void queryClient.prefetchQuery(queryOptions);
+  }
+}
+
+export function HydrateClient({ children }) {
+  return (
+    <HydrationBoundary state={dehydrate(getQueryClient())}>
+      {children}
+    </HydrationBoundary>
+  );
+}
+```
+
+### 2. Server Component Usage
+
+```typescript
+import { trpc, HydrateClient, prefetch } from "@repo/<app>-trpc/server";
+import { TRPCReactProvider } from "@repo/<app>-trpc/react";
+
+export default async function Layout({ children }) {
+  // Prefetch critical data in RSC
+  prefetch(trpc.feature.query.queryOptions({ param }));
+
+  return (
+    <TRPCReactProvider>
+      <HydrateClient>
+        {children}
+      </HydrateClient>
+    </TRPCReactProvider>
+  );
+}
+```
+
+### 3. Query Hooks
+
+```typescript
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@repo/<app>-trpc/react";
+
+export function useFeatureQuery({ id, enabled = true }) {
+  const trpc = useTRPC();
+
+  return useQuery({
+    ...trpc.feature.get.queryOptions({ id }),
+    enabled: Boolean(id) && enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+```
+
+### 4. Mutation Hooks with Optimistic Updates
+
+```typescript
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { produce } from "immer";
+import { useTRPC } from "@repo/<app>-trpc/react";
+
+export function useFeatureMutation() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.feature.update.mutationOptions({
+      onMutate: async (variables) => {
+        // 1. Cancel outgoing queries
+        await queryClient.cancelQueries({
+          queryKey: trpc.feature.list.queryOptions().queryKey,
+        });
+
+        // 2. Snapshot previous data
+        const previous = queryClient.getQueryData(
+          trpc.feature.list.queryOptions().queryKey
+        );
+
+        // 3. Optimistically update
+        queryClient.setQueryData(
+          trpc.feature.list.queryOptions().queryKey,
+          produce(previous, (draft) => {
+            // Update draft
+          })
+        );
+
+        return { previous };
+      },
+
+      onError: (err, vars, context) => {
+        // 4. Rollback on error
+        if (context?.previous) {
+          queryClient.setQueryData(
+            trpc.feature.list.queryOptions().queryKey,
+            context.previous
+          );
+        }
+      },
+
+      onSettled: () => {
+        // 5. Invalidate to ensure consistency
+        void queryClient.invalidateQueries({
+          queryKey: trpc.feature.list.queryOptions().queryKey,
+        });
+      },
+    })
+  );
+}
+```
+
+**Optimistic Update Pattern:**
+1. Cancel in-flight queries
+2. Snapshot current data in `onMutate`
+3. Optimistically update with `setQueryData` + `produce` (immer)
+4. Rollback in `onError` using snapshot
+5. Invalidate in `onSettled` for consistency
+
+### 5. Error Handling Utilities (apps/*/src/lib/trpc-errors.ts)
+
+```typescript
+import type { TRPCClientError } from "@trpc/client";
+import type { AppRouter } from "@api/<app>";
+
+export function isTRPCClientError(
+  error: unknown
+): error is TRPCClientError<AppRouter> {
+  return error instanceof Error && error.name === "TRPCClientError";
+}
+
+export function getTRPCErrorCode(error: unknown) {
+  if (!isTRPCClientError(error)) return null;
+  return error.data?.code as string | null;
+}
+
+export function getValidationErrors(error: unknown) {
+  if (!isTRPCClientError(error)) return null;
+  const code = getTRPCErrorCode(error);
+  if (code !== "BAD_REQUEST") return null;
+
+  if (error.data && "zodError" in error.data) {
+    const zodError = error.data.zodError;
+    if (zodError && 'fieldErrors' in zodError) {
+      return zodError.fieldErrors as Record<string, string[]>;
+    }
+  }
+  return null;
+}
+
+export function showTRPCErrorToast(error: unknown, customMessage?: string) {
+  const code = getTRPCErrorCode(error);
+  // Show appropriate toast based on error code
+  toast.error(customMessage ?? "An error occurred");
+}
+```
+
+## Common Patterns Summary
+
+### Query Pattern
+```typescript
+const trpc = useTRPC();
+return useQuery({
+  ...trpc.feature.query.queryOptions({ param }),
+  enabled: Boolean(param),
+  staleTime: 1000 * 60 * 5,
+});
+```
+
+### Mutation Pattern
+```typescript
+const trpc = useTRPC();
+return useMutation(
+  trpc.feature.mutate.mutationOptions({
+    onMutate: async (variables) => { /* optimistic update */ },
+    onError: (err, vars, context) => { /* rollback */ },
+    onSettled: () => { /* invalidate */ },
+  })
+);
+```
+
+### Server Component Prefetch
+```typescript
+import { trpc, prefetch } from "@repo/<app>-trpc/server";
+prefetch(trpc.feature.query.queryOptions({ param }));
+```
+
+### Router Definition
+```typescript
+export const featureRouter = {
+  query: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => { /* ... */ }),
+
+  mutate: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => { /* ... */ }),
+} satisfies TRPCRouterRecord;
+```
+
+## Type Safety
+
+```typescript
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@api/<app>";
+
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;
+
+// Usage
+type Item = RouterOutputs["feature"]["list"][number];
+type CreateInput = RouterInputs["feature"]["create"];
+```
+
+## Best Practices
+
+1. **Always use `queryOptions()`** for consistent query keys
+2. **Use `produce` from immer** for optimistic updates
+3. **Validate ownership** before mutations in protected procedures
+4. **Prefetch critical data** in server components
+5. **Set appropriate `staleTime`** per query type
+6. **Use `refetchType: "none"`** to avoid triggering Suspense
+7. **Handle errors gracefully** with user-friendly messages
+8. **Use SuperJSON** for Date/Map/Set serialization

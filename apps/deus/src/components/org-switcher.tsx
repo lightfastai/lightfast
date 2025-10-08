@@ -55,7 +55,7 @@ export function OrgSwitcher({ organizations, currentOrgId }: OrgSwitcherProps) {
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
-					variant="ghost"
+					variant="outline"
 					role="combobox"
 					aria-expanded={open}
 					className="w-48 justify-between px-2"

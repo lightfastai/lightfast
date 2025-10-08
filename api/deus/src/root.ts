@@ -5,12 +5,14 @@
 
 import { createTRPCRouter } from "./trpc";
 import { repositoryRouter } from "./router/repository";
+import { codeReviewRouter } from "./router/code-review";
 
 /**
  * Primary deus app router
  */
 export const deusAppRouter = createTRPCRouter({
   repository: repositoryRouter,
+  codeReview: codeReviewRouter,
 });
 
 // Export type for use in client

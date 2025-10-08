@@ -46,8 +46,21 @@ export type CodeReviewMetadata = {
 	command?: string;
 	// GitHub comment ID that triggered the review
 	triggerCommentId?: string;
-	// GitHub PR URL
+
+	// PR metadata (cached from GitHub API or webhooks)
 	prUrl?: string;
+	prTitle?: string;
+	prState?: string;
+	prMerged?: boolean;
+	prAuthor?: string;
+	prAuthorAvatar?: string;
+	branch?: string;
+
+	// Sync tracking
+	lastSyncedAt?: string;
+	deleted?: boolean;
+	deletedAt?: string;
+
 	// Number of tasks/findings created
 	taskCount?: number;
 	// Error message if failed

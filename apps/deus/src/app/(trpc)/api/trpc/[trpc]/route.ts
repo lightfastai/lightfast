@@ -4,7 +4,9 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { deusAppRouter, createTRPCContext } from "@api/deus";
 import { env } from "~/env";
 
-export const runtime = "edge";
+// Use Node.js runtime instead of Edge for GitHub App crypto operations
+// Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
+export const runtime = "nodejs";
 
 const isProductionDeploy = env.VERCEL_ENV === "production";
 
