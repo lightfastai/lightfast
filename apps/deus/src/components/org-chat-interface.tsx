@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
@@ -18,9 +18,22 @@ import type {
 	PromptInputMessage,
 	PromptInputRef,
 } from "@repo/ui/components/ai-elements/prompt-input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@repo/ui/components/ui/select";
 import { GitBranch, Mic, Plus, ArrowUp } from "lucide-react";
 import { CodeReviewsTab } from "./code-reviews-tab";
 import { useTRPC } from "@repo/deus-trpc/react";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 
 interface OrgChatInterfaceProps {
 	orgId: number;
@@ -30,6 +43,7 @@ interface OrgChatInterfaceProps {
 export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProps) {
 	const formRef = useRef<PromptInputRef | null>(null);
 	const trpc = useTRPC();
+	const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
 
 	// Query to check if organization has connected repositories
 	const { data: repositories = [] } = useQuery({
@@ -41,12 +55,24 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 
 	const hasRepositories = repositories.length > 0;
 
+	// Auto-select first repository when repositories load
+	useEffect(() => {
+		if (repositories.length > 0 && !selectedRepoId) {
+			setSelectedRepoId(repositories[0].id);
+		}
+	}, [repositories, selectedRepoId]);
+
 	const handleSubmit = async (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
 	): Promise<void> => {
 		event.preventDefault();
-		console.log("Submit", message, orgId);
+		console.log("Submit", {
+			message,
+			orgId,
+			selectedRepoId,
+			repository: repositories.find((r) => r.id === selectedRepoId),
+		});
 
 		// Clear form after successful submission
 		formRef.current?.reset();
@@ -89,7 +115,26 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 								>
 									<Plus className="h-4 w-4" />
 								</PromptInputButton>
-								{!hasRepositories && (
+								{hasRepositories ? (
+									<Select value={selectedRepoId} onValueChange={setSelectedRepoId}>
+										<SelectTrigger
+											className={cn(
+												"h-8 w-auto shrink-0 gap-1.5 rounded-full px-3 text-xs",
+												"border-border/30 dark:border-border/50",
+											)}
+										>
+											<GitBranch className="h-4 w-4" />
+											<SelectValue placeholder="Select repository" />
+										</SelectTrigger>
+										<SelectContent>
+											{repositories.map((repo) => (
+												<SelectItem key={repo.id} value={repo.id}>
+													{repo.metadata?.fullName ?? "Unknown Repository"}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								) : (
 									<PromptInputButton
 										variant="outline"
 										size="sm"
@@ -123,7 +168,14 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 					</PromptInputBody>
 				</PromptInput>
 
-				<CodeReviewsTab orgId={orgId} />
+				<Tabs defaultValue="code-reviews" className="w-full max-w-6xl mt-8">
+					<TabsList>
+						<TabsTrigger value="code-reviews">Code reviews</TabsTrigger>
+					</TabsList>
+					<TabsContent value="code-reviews" className="mt-6">
+						<CodeReviewsTab orgId={orgId} />
+					</TabsContent>
+				</Tabs>
 			</main>
 		</div>
 	);

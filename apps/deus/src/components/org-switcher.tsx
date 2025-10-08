@@ -18,7 +18,11 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import type { Organization } from "@db/deus/schema";
 
 interface OrgSwitcherProps {
@@ -54,7 +58,7 @@ export function OrgSwitcher({ organizations, currentOrgId }: OrgSwitcherProps) {
 					variant="ghost"
 					role="combobox"
 					aria-expanded={open}
-					className="w-full justify-between px-2"
+					className="w-48 justify-between px-2"
 				>
 					<div className="flex items-center gap-2 min-w-0">
 						<Avatar className="h-5 w-5 shrink-0">
@@ -76,7 +80,7 @@ export function OrgSwitcher({ organizations, currentOrgId }: OrgSwitcherProps) {
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[300px] p-0" align="start">
+			<PopoverContent className="w-[250px] p-0" align="start">
 				<Command>
 					<CommandInput placeholder="Search organizations..." />
 					<CommandList>
