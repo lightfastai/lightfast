@@ -958,3 +958,102 @@ type CreateInput = RouterInputs["feature"]["create"];
 6. **Use `refetchType: "none"`** to avoid triggering Suspense
 7. **Handle errors gracefully** with user-friendly messages
 8. **Use SuperJSON** for Date/Map/Set serialization
+
+## Critical Pattern: Prefetch + HydrateClient + useSuspenseQuery
+
+**⚠️ IMPORTANT:** When using `prefetch()` with `useSuspenseQuery`, the order of operations is critical to prevent UNAUTHORIZED errors and unnecessary client-side fetches.
+
+### ❌ Wrong Pattern (causes UNAUTHORIZED)
+
+```typescript
+// ❌ Parent Layout - HydrateClient wraps before prefetch
+export default async function Layout({ children }) {
+  return (
+    <HydrateClient>
+      {children}  {/* prefetch happens here, AFTER hydration */}
+    </HydrateClient>
+  );
+}
+
+// Child Page - prefetch happens too late
+export default async function Page() {
+  prefetch(trpc.feature.query.queryOptions({}));
+  return <ClientComponent />;
+}
+```
+
+**Why this fails:**
+1. Parent layout's `HydrateClient` dehydrates query client (empty at this point)
+2. Child page's `prefetch` executes (adds data to server query client)
+3. Data never gets serialized for hydration
+4. Client receives empty cache
+5. `useSuspenseQuery` makes client-side request
+6. Client-side request fails with UNAUTHORIZED (no Clerk session in client context)
+
+### ✅ Correct Pattern
+
+```typescript
+// Parent Layout - No HydrateClient
+export default async function Layout({ children }) {
+  return <div>{children}</div>;
+}
+
+// Page Component - prefetch THEN wrap in HydrateClient
+export default async function Page() {
+  // 1. Prefetch data first
+  prefetch(trpc.feature.query.queryOptions({}));
+
+  // 2. THEN wrap in HydrateClient to dehydrate with data
+  return (
+    <HydrateClient>
+      <ClientComponent />
+    </HydrateClient>
+  );
+}
+
+// Client Component - prevent refetch on mount
+"use client";
+export function ClientComponent() {
+  const { data } = useSuspenseQuery({
+    ...trpc.feature.query.queryOptions({}),
+    refetchOnMount: false,        // Use prefetched server data
+    refetchOnWindowFocus: false,  // Don't refetch on window focus
+  });
+}
+```
+
+### Why This Works
+
+1. **Server:** `prefetch()` adds data to query client
+2. **Server:** `HydrateClient` dehydrates query client WITH data
+3. **Client:** Hydrates query client from serialized state
+4. **Client:** `useSuspenseQuery` finds data in cache (no fetch!)
+5. **Client:** `refetchOnMount: false` prevents unnecessary refetch
+
+### Key Rules
+
+1. ✅ **Call `prefetch()` BEFORE rendering `HydrateClient`**
+2. ✅ **Wrap each page's content in its own `HydrateClient`**
+3. ✅ **Always use `refetchOnMount: false` with `useSuspenseQuery`**
+4. ✅ **Always use `refetchOnWindowFocus: false` with `useSuspenseQuery`**
+5. ❌ **Never put `HydrateClient` in parent layout when children do prefetch**
+
+### Multiple Pages with Prefetch
+
+Each page should follow the same pattern:
+
+```typescript
+// pages/page1.tsx
+export default async function Page1() {
+  prefetch(trpc.feature1.query.queryOptions({}));
+  return <HydrateClient><Component1 /></HydrateClient>;
+}
+
+// pages/page2.tsx
+export default async function Page2() {
+  prefetch(trpc.feature2.query.queryOptions({}));
+  return <HydrateClient><Component2 /></HydrateClient>;
+}
+```
+
+This ensures each page's prefetch data is properly dehydrated for hydration.
