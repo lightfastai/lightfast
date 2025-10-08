@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { SignedIn } from "@clerk/nextjs";
 import { Github, Loader2, Building2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -19,8 +20,19 @@ import type { GitHubInstallation } from "~/lib/github-app";
  *
  * Shows user's GitHub installations (organizations) and allows them to claim one.
  * After claiming, user is redirected to their org's home page.
+ *
+ * Uses treatPendingAsSignedOut={false} to allow pending users (authenticated but
+ * no active org) to access this page.
  */
 export default function ClaimOrgPage() {
+	return (
+		<SignedIn treatPendingAsSignedOut={false}>
+			<ClaimOrgContent />
+		</SignedIn>
+	);
+}
+
+function ClaimOrgContent() {
 	const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [claiming, setClaiming] = useState<number | null>(null);
