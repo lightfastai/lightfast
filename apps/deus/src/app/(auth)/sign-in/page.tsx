@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 import { SignInForm } from "../_components/sign-in-form";
 
 export const metadata: Metadata = {
@@ -14,5 +15,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
-	return <SignInForm />;
+	return (
+		<>
+			<SignedOut>
+				<RedirectToTasks />
+			</SignedOut>
+			<SignInForm />
+		</>
+	);
 }
