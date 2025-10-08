@@ -130,3 +130,59 @@ export async function getRepository(
 
 	return data;
 }
+
+/**
+ * Get authenticated user's GitHub profile
+ *
+ * @param userAccessToken - User's OAuth access token
+ * @returns User profile data including login (username)
+ */
+export async function getAuthenticatedUser(userAccessToken: string) {
+	const octokit = new Octokit({ auth: userAccessToken });
+
+	const { data } = await octokit.request("GET /user", {
+		headers: {
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+	});
+
+	return data;
+}
+
+/**
+ * Organization membership role
+ */
+export type OrgMembershipRole = "admin" | "member";
+
+/**
+ * Get user's organization membership details
+ *
+ * @param userAccessToken - User's OAuth access token
+ * @param org - Organization login/slug
+ * @param username - GitHub username to check
+ * @returns Membership data including role
+ * @throws Error if user is not a member of the organization
+ */
+export async function getOrganizationMembership(
+	userAccessToken: string,
+	org: string,
+	username: string
+): Promise<{ role: OrgMembershipRole; state: string }> {
+	const octokit = new Octokit({ auth: userAccessToken });
+
+	const { data } = await octokit.request(
+		"GET /orgs/{org}/memberships/{username}",
+		{
+			org,
+			username,
+			headers: {
+				"X-GitHub-Api-Version": "2022-11-28",
+			},
+		}
+	);
+
+	return {
+		role: data.role as OrgMembershipRole,
+		state: data.state,
+	};
+}

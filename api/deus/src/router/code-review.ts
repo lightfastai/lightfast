@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../trpc";
 import { db } from "@db/deus/client";
-import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
+import { DeusCodeReview, DeusConnectedRepository, organizationMembers } from "@db/deus";
 import {
   CODE_REVIEW_STATUS,
   CODE_REVIEW_TOOLS,
@@ -36,6 +36,25 @@ export const codeReviewRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
+      // Verify user is a member of the organization
+      const membership = await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!membership[0]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
       // First, get all repositories for this organization
       const repositories = await db
         .select({ id: DeusConnectedRepository.id })
@@ -128,6 +147,25 @@ export const codeReviewRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
+      // Verify user is a member of the organization
+      const membership = await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!membership[0]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
       const review = await db
         .select()
         .from(DeusCodeReview)
@@ -182,6 +220,25 @@ export const codeReviewRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify user is a member of the organization
+      const membership = await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!membership[0]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
       // Verify repository belongs to organization
       const repository = await db
         .select()
@@ -263,6 +320,25 @@ export const codeReviewRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify user is a member of the organization
+      const membership = await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!membership[0]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
       // Verify access to this review
       const review = await db
         .select()
@@ -324,6 +400,25 @@ export const codeReviewRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify user is a member of the organization
+      const membership = await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.userId)
+          )
+        )
+        .limit(1);
+
+      if (!membership[0]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
       // Verify repository belongs to organization
       const repository = await db
         .select()

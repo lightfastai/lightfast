@@ -4,7 +4,23 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/deus";
 import { organizations, organizationMembers } from "@db/deus/schema";
 import { eq, and } from "drizzle-orm";
-import { getUserInstallations } from "~/lib/github-app";
+import {
+	getUserInstallations,
+	getAuthenticatedUser,
+	getOrganizationMembership,
+} from "~/lib/github-app";
+import type { OrgMembershipRole } from "~/lib/github-app";
+
+/**
+ * Map GitHub organization role to Deus role
+ *
+ * GitHub admins become owners, all other members become regular members
+ */
+function mapGitHubRoleToDeusRole(
+	githubRole: OrgMembershipRole
+): "owner" | "member" {
+	return githubRole === "admin" ? "owner" : "member";
+}
 
 /**
  * Claim Organization API Route
@@ -96,29 +112,69 @@ export async function POST(request: NextRequest) {
 				});
 			}
 
-			// Auto-join existing organization
-			await db.insert(organizationMembers).values({
-				organizationId: existingOrg.id,
-				userId,
-				role: "owner", // TODO: Implement proper role detection based on GitHub permissions
-			});
+			// Verify user's GitHub organization membership and role
+			try {
+				// Get user's GitHub username
+				const githubUser = await getAuthenticatedUser(userToken);
+				const githubUsername = githubUser.login;
 
-			// Update installation ID if it changed (app was reinstalled)
-			if (existingOrg.githubInstallationId !== installationId) {
-				await db
-					.update(organizations)
-					.set({
-						githubInstallationId: installationId,
-						updatedAt: new Date().toISOString(),
-					})
-					.where(eq(organizations.id, existingOrg.id));
+				// Verify organization membership and get role
+				const membership = await getOrganizationMembership(
+					userToken,
+					accountSlug,
+					githubUsername
+				);
+
+				// Only allow active members to join
+				if (membership.state !== "active") {
+					return NextResponse.json(
+						{
+							error: "Membership not active",
+							message: "You must accept the organization invitation before claiming",
+						},
+						{ status: 403 }
+					);
+				}
+
+				// Map GitHub role to Deus role
+				const deusRole = mapGitHubRoleToDeusRole(membership.role);
+
+				// Add user to organization with verified role
+				await db.insert(organizationMembers).values({
+					organizationId: existingOrg.id,
+					userId,
+					role: deusRole,
+				});
+
+				// Update installation ID if it changed (app was reinstalled)
+				if (existingOrg.githubInstallationId !== installationId) {
+					await db
+						.update(organizations)
+						.set({
+							githubInstallationId: installationId,
+							updatedAt: new Date().toISOString(),
+						})
+						.where(eq(organizations.id, existingOrg.id));
+				}
+
+				return NextResponse.json({
+					success: true,
+					orgId: existingOrg.githubOrgId,
+					joined: true,
+					role: deusRole,
+				});
+			} catch (error) {
+				// If membership check fails, user is not a member of the organization
+				console.error("Organization membership verification failed:", error);
+				return NextResponse.json(
+					{
+						error: "Not a member",
+						message:
+							"You must be a member of this GitHub organization to claim it",
+					},
+					{ status: 403 }
+				);
 			}
-
-			return NextResponse.json({
-				success: true,
-				orgId: existingOrg.githubOrgId,
-				joined: true,
-			});
 		}
 
 		// Create new organization record

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { db } from "@db/deus/client";
 import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
 import { eq, and } from "drizzle-orm";
@@ -98,7 +98,16 @@ interface RepositoryPayload {
 function verifySignature(payload: string, signature: string): boolean {
 	const hmac = createHmac("sha256", env.GITHUB_WEBHOOK_SECRET);
 	const digest = `sha256=${hmac.update(payload).digest("hex")}`;
-	return signature === digest;
+
+	// Prevent timing attacks with constant-time comparison
+	if (signature.length !== digest.length) {
+		return false;
+	}
+
+	return timingSafeEqual(
+		Buffer.from(signature),
+		Buffer.from(digest)
+	);
 }
 
 /**

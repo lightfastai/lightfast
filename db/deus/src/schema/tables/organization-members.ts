@@ -13,8 +13,8 @@ import { organizations } from "./organizations";
  * Organization Members table
  *
  * Tracks which users have access to which organizations.
- * Currently only supports "owner" role (the user who claimed the org).
- * Future: Add more roles and GitHub org membership sync.
+ * Supports "owner" (GitHub org admin) and "member" (GitHub org member) roles.
+ * Roles are synced from GitHub organization membership.
  */
 export const organizationMembers = mysqlTable(
 	"lightfast_deus_organization_members",
@@ -28,7 +28,7 @@ export const organizationMembers = mysqlTable(
 
 		userId: varchar("user_id", { length: 191 }).notNull(), // Clerk user ID
 
-		role: mysqlEnum("role", ["owner"]).notNull().default("owner"),
+		role: mysqlEnum("role", ["owner", "member"]).notNull().default("owner"),
 
 		// Timestamps
 		joinedAt: datetime("joined_at", { mode: "string" })
