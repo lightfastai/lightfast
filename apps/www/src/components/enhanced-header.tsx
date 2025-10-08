@@ -15,12 +15,19 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import { getAppUrl } from "@repo/url-utils";
 import { UnauthenticatedMobileNav } from "./layouts/unauthenticated-mobile-nav";
 
 export function EnhancedHeader() {
 	const chatUrl = getAppUrl("chat");
 	const cloudUrl = getAppUrl("cloud");
+	const deusUrl = getAppUrl("deus");
 
 	const productLinks: Array<{
 		label: string;
@@ -102,11 +109,28 @@ export function EnhancedHeader() {
 
 					{/* Desktop actions - hidden on lg and below */}
 					<div className="hidden xl:flex items-center gap-2">
-						<Button variant="default" asChild>
-							<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
-								Try Chat
-							</Link>
-						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="default">Log In</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem asChild>
+									<Link href={cloudUrl} target="_blank" rel="noopener noreferrer">
+										Cloud
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+										Chat
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href={deusUrl} target="_blank" rel="noopener noreferrer">
+										Deus
+									</Link>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<div className="flex h-4 items-center px-3">
 							<Separator orientation="vertical" />
 						</div>

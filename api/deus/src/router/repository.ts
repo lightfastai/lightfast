@@ -41,6 +41,7 @@ export const repositoryRouter = {
           connectedAt: DeusConnectedRepository.connectedAt,
           lastSyncedAt: DeusConnectedRepository.lastSyncedAt,
           metadata: DeusConnectedRepository.metadata, // Optional cache for UI
+          codeReviewSettings: DeusConnectedRepository.codeReviewSettings,
         })
         .from(DeusConnectedRepository)
         .where(and(...whereConditions))

@@ -1,10 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-
+import { CodeReviewSettings } from "~/components/code-review-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
-import { OrgChatInterface } from "~/components/org-chat-interface";
 
-export default async function OrgHomePage({
+export default async function CodeReviewSettingsPage({
 	params,
 }: {
 	params: Promise<{ orgId: string }>;
@@ -25,17 +24,8 @@ export default async function OrgHomePage({
 	const access = await verifyOrgAccess(userId, githubOrgId);
 
 	if (!access.hasAccess) {
-		if (access.reason === "org_not_found") {
-			notFound();
-		}
-		// User is not a member - send to onboarding
 		redirect("/onboarding");
 	}
 
-	return (
-		<OrgChatInterface
-			orgId={githubOrgId}
-			organizationId={access.org.id}
-		/>
-	);
+	return <CodeReviewSettings organizationId={access.org.id} />;
 }

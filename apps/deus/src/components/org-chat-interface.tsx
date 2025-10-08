@@ -1,0 +1,130 @@
+"use client";
+
+import type { FormEvent } from "react";
+import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { cn } from "@repo/ui/lib/utils";
+import {
+	PromptInput,
+	PromptInputBody,
+	PromptInputButton,
+	PromptInputSubmit,
+	PromptInputTextarea,
+	PromptInputToolbar,
+	PromptInputTools,
+} from "@repo/ui/components/ai-elements/prompt-input";
+import type {
+	PromptInputMessage,
+	PromptInputRef,
+} from "@repo/ui/components/ai-elements/prompt-input";
+import { GitBranch, Mic, Plus, ArrowUp } from "lucide-react";
+import { CodeReviewsTab } from "./code-reviews-tab";
+import { useTRPC } from "@repo/deus-trpc/react";
+
+interface OrgChatInterfaceProps {
+	orgId: number;
+	organizationId: string;
+}
+
+export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProps) {
+	const formRef = useRef<PromptInputRef | null>(null);
+	const trpc = useTRPC();
+
+	// Query to check if organization has connected repositories
+	const { data: repositories = [] } = useQuery({
+		...trpc.repository.list.queryOptions({
+			includeInactive: false,
+			organizationId,
+		}),
+	});
+
+	const hasRepositories = repositories.length > 0;
+
+	const handleSubmit = async (
+		message: PromptInputMessage,
+		event: FormEvent<HTMLFormElement>,
+	): Promise<void> => {
+		event.preventDefault();
+		console.log("Submit", message, orgId);
+
+		// Clear form after successful submission
+		formRef.current?.reset();
+	};
+
+	return (
+		<div className="flex min-h-screen flex-col bg-background text-foreground">
+			<main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 pb-16 pt-20">
+				<div className="mb-12 w-full text-center">
+					<h1 className="text-2xl font-normal tracking-tight text-foreground md:text-4xl">
+						What should we code next?
+					</h1>
+				</div>
+
+				<PromptInput
+					ref={formRef}
+					onSubmit={handleSubmit}
+					className={cn(
+						"w-full max-w-4xl border-border/50 rounded-2xl overflow-hidden",
+						"dark:shadow-md shadow-sm bg-card/50 dark:bg-card/50",
+					)}
+				>
+					<PromptInputBody className="flex flex-col">
+						<PromptInputTextarea
+							placeholder="Describe a task"
+							className={cn(
+								"w-full resize-none border-0 rounded-none focus-visible:ring-0",
+								"bg-transparent focus:bg-transparent hover:bg-transparent",
+								"outline-none min-h-[100px] px-6 py-6 text-base",
+								"whitespace-pre-wrap break-words",
+							)}
+							style={{ lineHeight: "24px" }}
+						/>
+						<PromptInputToolbar className="flex items-center justify-between gap-2 border-t border-border/50 bg-transparent p-3">
+							<PromptInputTools className="flex items-center gap-2">
+								<PromptInputButton
+									variant="ghost"
+									size="sm"
+									className="h-8 px-2"
+								>
+									<Plus className="h-4 w-4" />
+								</PromptInputButton>
+								{!hasRepositories && (
+									<PromptInputButton
+										variant="outline"
+										size="sm"
+										className="h-8 gap-1.5 px-3"
+										asChild
+									>
+										<Link href={`/org/${orgId}/settings/repositories`}>
+											<GitBranch className="h-4 w-4" />
+											<span className="text-xs">Connect GitHub</span>
+										</Link>
+									</PromptInputButton>
+								)}
+							</PromptInputTools>
+							<div className="flex items-center gap-2">
+								<PromptInputButton
+									variant="ghost"
+									size="icon"
+									className="h-8 w-8"
+								>
+									<Mic className="h-4 w-4" />
+								</PromptInputButton>
+								<PromptInputSubmit
+									size="icon"
+									variant="outline"
+									className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
+								>
+									<ArrowUp className="h-4 w-4" />
+								</PromptInputSubmit>
+							</div>
+						</PromptInputToolbar>
+					</PromptInputBody>
+				</PromptInput>
+
+				<CodeReviewsTab orgId={orgId} />
+			</main>
+		</div>
+	);
+}

@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { mysqlTable, varchar, datetime, mysqlEnum, index } from "drizzle-orm/mysql-core";
+import {
+	mysqlTable,
+	varchar,
+	datetime,
+	mysqlEnum,
+	index,
+} from "drizzle-orm/mysql-core";
 import { uuidv4 } from "@repo/lib";
 import { organizations } from "./organizations";
 
@@ -18,9 +24,7 @@ export const organizationMembers = mysqlTable(
 			.primaryKey()
 			.$defaultFn(() => uuidv4()),
 
-		organizationId: varchar("organization_id", { length: 191 })
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
+		organizationId: varchar("organization_id", { length: 191 }).notNull(),
 
 		userId: varchar("user_id", { length: 191 }).notNull(), // Clerk user ID
 

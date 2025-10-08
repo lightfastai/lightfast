@@ -246,3 +246,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://deus.lightfast.com
 - **App ID:** Found at top of GitHub App settings page
 - **Webhook Secret:** Use cryptographically secure random string (see command above)
 - **Separate Apps:** Use different GitHub Apps for development and production
+
+
+
+### What are we building? (Jeevans words)
+Consider this: an Agent is an individual contributor with limited context about it's environment. The context is subjucated to (1, MaxToken_x]. There is clear degradation when we polute the token graph with unnecesary context.
+Lightfast is focusing on pure of context construction and engineering in a multi-agent setting.
+While developing software using Claude Code, a core concern is the practice of "multi-agent" environments. How do we get "multiple" agents to communicate effectively.
+We have seen interesting examples of this with the advent of "subagents" in Claude Code. The introduction of subagents also us to tap into this hierarchy of multi-agent communication,
+however, there are several important factors such as fine-grain system control of the context graph. If we were to build subagents, we need to ensure context degradation doesn't occur
+in the main agent. 

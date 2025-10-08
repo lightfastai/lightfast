@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { mysqlTable, varchar, int, datetime, text, index } from "drizzle-orm/mysql-core";
+import {
+	mysqlTable,
+	varchar,
+	int,
+	datetime,
+	text,
+	index,
+} from "drizzle-orm/mysql-core";
 import { uuidv4 } from "@repo/lib";
 
 /**
@@ -45,14 +52,16 @@ export const organizations = mysqlTable(
 			.default(sql`(CURRENT_TIMESTAMP)`)
 			.notNull(),
 		updatedAt: datetime("updated_at", { mode: "string" })
-			.default(sql`(CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`)
+			.default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
 			.notNull(),
 	},
 	(table) => ({
 		// Index for fast slug lookups (most common query pattern)
 		slugIdx: index("org_slug_idx").on(table.githubOrgSlug),
 		// Index for installation lookups
-		installationIdx: index("org_installation_idx").on(table.githubInstallationId),
+		installationIdx: index("org_installation_idx").on(
+			table.githubInstallationId,
+		),
 	}),
 );
 

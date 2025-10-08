@@ -34,7 +34,7 @@ export default function HomePage() {
 	return (
 		<div className="relative min-h-screen">
 			{/* Hero Section */}
-			<section className="relative mx-auto max-w-7xl py-32 sm:py-40 lg:py-48">
+			<section className="relative mx-auto max-w-7xl py-32 sm:py-8 lg:py-16">
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 					{/* Left Column - Content */}
 					<div>
@@ -56,15 +56,15 @@ export default function HomePage() {
 							>
 								Deus
 							</Link>{" "}
-							is the intelligent orchestrator that routes your requests to
-							specialized AI agents.
+							is the intelligent agent router for developers and founders to
+							build and iterate faster.
 						</h1>
 
 						{/* Supporting Description */}
 						<p className="mb-12 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-							Search million-line codebases instantly. Turn hours-long workflows
-							into a single command. Your tools. Your workflow. Your codebase,
-							evolving at thought speed.
+							One interface, infinite agents. Unified interface to connect all
+							your existing apps and tools. Manages context and sessions
+							intelligently for you while you build your product.
 						</p>
 
 						{/* Installation */}

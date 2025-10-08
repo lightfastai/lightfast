@@ -86,7 +86,9 @@ export default function RootLayout({
 		>
 			<html lang="en" suppressHydrationWarning>
 				<head />
-				<body className={cn("bg-background min-h-screen antialiased", fonts)}>
+				<body
+					className={cn("dark bg-background min-h-screen antialiased", fonts)}
+				>
 					<TRPCReactProvider>
 						{children}
 						<Toaster />

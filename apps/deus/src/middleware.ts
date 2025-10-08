@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 // Create matchers so auth checks stay readable
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/api/health(.*)", "/robots.txt", "/sitemap(.*)"]);
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api/health(.*)", "/robots.txt", "/sitemap(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard", "/dashboard/(.*)"]);
 const isProtectedRoute = createRouteMatcher([
   "/org(.*)",
