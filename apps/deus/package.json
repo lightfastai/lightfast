@@ -31,6 +31,7 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "immer": "^10.1.1",
     "next": "catalog:",
     "octokit": "^5.0.3",
     "react": "^19.1.1",

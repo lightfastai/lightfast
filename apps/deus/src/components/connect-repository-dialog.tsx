@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { produce } from "immer";
 import { Github, Check, Loader2 } from "lucide-react";
 import {
 	Dialog,
@@ -63,59 +64,92 @@ export function ConnectRepositoryDialog({
 
 	const hasConnectedRepo = repositories.length > 0;
 
-	// Connect repository mutation
-	const connectMutation = useMutation({
-		mutationFn: async (input: {
-			organizationId: string;
-			githubRepoId: string;
-			githubInstallationId: string;
-			permissions: { admin: boolean; push: boolean; pull: boolean };
-			metadata: Record<string, unknown>;
-		}): Promise<{ success: boolean }> => {
-			const response = await fetch("/api/trpc/repository.connect", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: "include",
-				body: JSON.stringify({ json: input }),
-			});
+	// Connect repository mutation using tRPC with optimistic updates
+	const connectMutation = useMutation(
+		trpc.repository.connect.mutationOptions({
+			onMutate: async (variables) => {
+				// Cancel any outgoing refetches to avoid overwriting optimistic update
+				await queryClient.cancelQueries({
+					queryKey: trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					}),
+				});
 
-			if (!response.ok) {
-				const error: { error?: { message?: string } } =
-					(await response.json()) as { error?: { message?: string } };
-				throw new Error(error.error?.message ?? "Failed to connect repository");
-			}
+				// Snapshot the previous value
+				const previousRepositories = queryClient.getQueryData(
+					trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					})
+				);
 
-			return response.json() as Promise<{ success: boolean }>;
-		},
-		onSuccess: () => {
-			// Invalidate queries to refetch the repository list
-			void queryClient.invalidateQueries({
-				queryKey: trpc.repository.list.queryKey({
-					includeInactive: false,
-					organizationId,
-				}),
-			});
+				// Optimistically update the cache
+				queryClient.setQueryData(
+					trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					}),
+					produce(previousRepositories, (draft) => {
+						if (draft) {
+							// Add the new repository to the list optimistically
+							draft.unshift({
+								id: crypto.randomUUID(), // Temporary ID
+								githubRepoId: variables.githubRepoId,
+								githubInstallationId: variables.githubInstallationId,
+								permissions: variables.permissions ?? null,
+								isActive: true,
+								connectedAt: new Date().toISOString(),
+								lastSyncedAt: null,
+								metadata: variables.metadata ?? null,
+								codeReviewSettings: null,
+							});
+						}
+					})
+				);
 
-			toast({
-				title: "Repository connected",
-				description: "Your GitHub repository has been successfully connected.",
-			});
+				return { previousRepositories };
+			},
+			onError: (error, variables, context) => {
+				// Rollback to the previous value on error
+				if (context?.previousRepositories) {
+					queryClient.setQueryData(
+						trpc.repository.list.queryKey({
+							includeInactive: false,
+							organizationId,
+						}),
+						context.previousRepositories
+					);
+				}
 
-			// Reset state and close dialog
-			setGithubRepos([]);
-			setSelectedRepoId(null);
-			setOpen(false);
-		},
-		onError: (error: Error) => {
-			toast({
-				title: "Connection failed",
-				description: error.message,
-				variant: "destructive",
-			});
-		},
-	});
+				toast({
+					title: "Connection failed",
+					description: error.message,
+					variant: "destructive",
+				});
+			},
+			onSuccess: () => {
+				toast({
+					title: "Repository connected",
+					description: "Your GitHub repository has been successfully connected.",
+				});
+
+				// Reset state and close dialog
+				setGithubRepos([]);
+				setSelectedRepoId(null);
+				setOpen(false);
+			},
+			onSettled: () => {
+				// Invalidate to ensure consistency after mutation completes
+				void queryClient.invalidateQueries({
+					queryKey: trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					}),
+				});
+			},
+		})
+	);
 
 	const handleConnectRepository = (repo: GitHubRepository) => {
 		if (!installationId) {

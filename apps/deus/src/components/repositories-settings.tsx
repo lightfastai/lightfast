@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Plus, Github, ExternalLink } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -19,7 +19,8 @@ export function RepositoriesSettings({ organizationId }: RepositoriesSettingsPro
 	const params = useParams();
 
 	// Query to fetch organization's connected repositories
-	const { data: repositories = [], isLoading } = useQuery({
+	// Using useSuspenseQuery for better loading UX with Suspense boundaries
+	const { data: repositories = [] } = useSuspenseQuery({
 		...trpc.repository.list.queryOptions({
 			includeInactive: false,
 			organizationId
@@ -51,11 +52,7 @@ export function RepositoriesSettings({ organizationId }: RepositoriesSettingsPro
 					</div>
 				</CardHeader>
 				<CardContent>
-					{isLoading ? (
-						<div className="py-8 text-center">
-							<p className="text-sm text-muted-foreground">Loading repositories...</p>
-						</div>
-					) : hasRepositories ? (
+					{hasRepositories ? (
 						<div className="space-y-3">
 							{repositories.map((repo) => (
 								<div

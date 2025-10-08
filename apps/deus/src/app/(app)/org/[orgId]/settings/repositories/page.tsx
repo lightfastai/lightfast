@@ -1,7 +1,10 @@
 import { redirect, notFound } from "next/navigation";
+import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
+import { prefetch, trpc } from "@repo/deus-trpc/server";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function RepositoriesPage({
 	params,
@@ -27,5 +30,36 @@ export default async function RepositoriesPage({
 		redirect("/onboarding");
 	}
 
-	return <RepositoriesSettings organizationId={access.org.id} />;
+	// Prefetch repositories to avoid loading state
+	prefetch(
+		trpc.repository.list.queryOptions({
+			includeInactive: false,
+			organizationId: access.org.id,
+		})
+	);
+
+	return (
+		<Suspense fallback={<RepositoriesSettingsSkeleton />}>
+			<RepositoriesSettings organizationId={access.org.id} />
+		</Suspense>
+	);
+}
+
+function RepositoriesSettingsSkeleton() {
+	return (
+		<div className="space-y-6">
+			<div className="rounded-lg border border-border/60 p-6">
+				<div className="flex items-center justify-between mb-6">
+					<div className="space-y-2">
+						<Skeleton className="h-6 w-48" />
+						<Skeleton className="h-4 w-64" />
+					</div>
+				</div>
+				<div className="space-y-3">
+					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-24 w-full" />
+				</div>
+			</div>
+		</div>
+	);
 }

@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { verifyOrgAccess } from "~/lib/org-access";
 import { OrgChatInterface } from "~/components/org-chat-interface";
+import { prefetch, trpc } from "@repo/deus-trpc/server";
 
 export default async function OrgHomePage({
 	params,
@@ -31,6 +32,14 @@ export default async function OrgHomePage({
 		// User is not a member - send to onboarding
 		redirect("/onboarding");
 	}
+
+	// Prefetch repositories for this org to avoid loading state
+	prefetch(
+		trpc.repository.list.queryOptions({
+			includeInactive: false,
+			organizationId: access.org.id,
+		})
+	);
 
 	return (
 		<OrgChatInterface

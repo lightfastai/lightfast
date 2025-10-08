@@ -2,7 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useRef, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -46,7 +46,8 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 	const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
 
 	// Query to check if organization has connected repositories
-	const { data: repositories = [] } = useQuery({
+	// Using useSuspenseQuery since data is prefetched in server component
+	const { data: repositories = [] } = useSuspenseQuery({
 		...trpc.repository.list.queryOptions({
 			includeInactive: false,
 			organizationId,

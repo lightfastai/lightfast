@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { findUserOrganizations } from "~/lib/org-access";
 import { AuthenticatedHeader } from "~/components/authenticated-header";
+import { HydrateClient } from "@repo/deus-trpc/server";
 
 export default async function AppLayout({
 	children,
@@ -18,9 +19,11 @@ export default async function AppLayout({
 	const organizations = await findUserOrganizations(userId);
 
 	return (
-		<div className="dark">
-			<AuthenticatedHeader organizations={organizations} />
-			{children}
-		</div>
+		<HydrateClient>
+			<div className="dark">
+				<AuthenticatedHeader organizations={organizations} />
+				{children}
+			</div>
+		</HydrateClient>
 	);
 }
