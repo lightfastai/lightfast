@@ -10,19 +10,17 @@ const isPublicRoute = createRouteMatcher([
 	"/api/health(.*)",
 	"/robots.txt",
 	"/sitemap(.*)",
+	"/onboarding/claim-org", // Allow pending users (authenticated but no active org)
 ]);
-const isClaimOrgRoute = createRouteMatcher(["/onboarding/claim-org"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard", "/dashboard/(.*)"]);
 const isProtectedRoute = createRouteMatcher([
 	"/org(.*)",
-	"/onboarding(.*)",
+	"/onboarding(.*)", // All onboarding routes except claim-org (handled above)
 	"/app(.*)",
 ]);
 
 const requiresAuth = (req: NextRequest) =>
-	!isPublicRoute(req) &&
-	!isClaimOrgRoute(req) &&
-	(isDashboardRoute(req) || isProtectedRoute(req));
+	!isPublicRoute(req) && (isDashboardRoute(req) || isProtectedRoute(req));
 
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
