@@ -6,6 +6,7 @@ import {
 	datetime,
 	text,
 	index,
+	mysqlEnum,
 } from "drizzle-orm/mysql-core";
 import { uuidv4 } from "@repo/lib";
 
@@ -14,11 +15,13 @@ import { uuidv4 } from "@repo/lib";
  *
  * Represents GitHub organizations that have been claimed in Deus.
  * One GitHub organization = one Deus workspace.
+ * Linked to Clerk organizations for billing and user management.
  *
  * KEY DESIGN DECISIONS:
  * - githubOrgId is UNIQUE (immutable, never changes)
  * - githubInstallationId is NOT unique (can change if app reinstalled)
  * - githubOrgSlug is NOT unique (can change if org renamed on GitHub)
+ * - clerkOrgId is UNIQUE (links to Clerk organization for billing/auth)
  * - We use index on slug for fast lookups, but allow duplicates for history
  */
 export const organizations = mysqlTable(
@@ -41,6 +44,11 @@ export const organizations = mysqlTable(
 		githubOrgName: varchar("github_org_name", { length: 255 }).notNull(),
 		githubOrgAvatarUrl: text("github_org_avatar_url"),
 
+		// Clerk organization integration
+		// UNIQUE: Links to Clerk organization for user management and future billing
+		clerkOrgId: varchar("clerk_org_id", { length: 191 }).unique(),
+		clerkOrgSlug: varchar("clerk_org_slug", { length: 255 }),
+
 		// Ownership tracking
 		claimedBy: varchar("claimed_by", { length: 191 }).notNull(), // Clerk user ID
 		claimedAt: datetime("claimed_at", { mode: "string" })
@@ -62,6 +70,8 @@ export const organizations = mysqlTable(
 		installationIdx: index("org_installation_idx").on(
 			table.githubInstallationId,
 		),
+		// Index for Clerk org lookups
+		clerkOrgIdx: index("org_clerk_org_idx").on(table.clerkOrgId),
 	}),
 );
 

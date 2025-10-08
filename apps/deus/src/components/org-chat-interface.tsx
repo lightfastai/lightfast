@@ -38,9 +38,10 @@ import {
 interface OrgChatInterfaceProps {
 	orgId: number;
 	organizationId: string;
+	orgSlug: string;
 }
 
-export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProps) {
+export function OrgChatInterface({ orgId, organizationId, orgSlug }: OrgChatInterfaceProps) {
 	const formRef = useRef<PromptInputRef | null>(null);
 	const trpc = useTRPC();
 	const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
@@ -146,7 +147,7 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 										className="h-8 gap-1.5 px-3"
 										asChild
 									>
-										<Link href={`/org/${orgId}/settings/repositories`} prefetch={true}>
+										<Link href={`/org/${orgSlug}/settings/repositories`} prefetch={true}>
 											<GitBranch className="h-4 w-4" />
 											<span className="text-xs">Connect GitHub</span>
 										</Link>

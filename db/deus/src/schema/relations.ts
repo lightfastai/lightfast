@@ -1,28 +1,18 @@
 import { relations } from "drizzle-orm";
 import { organizations } from "./tables/organizations";
-import { organizationMembers } from "./tables/organization-members";
 import { DeusConnectedRepository } from "./tables/connected-repository";
 import { DeusCodeReview } from "./tables/code-reviews";
 import { DeusCodeReviewTask } from "./tables/code-review-tasks";
 
 /**
  * Define relations between tables for Drizzle ORM queries
+ *
+ * Note: Organization memberships are managed by Clerk, not in our database.
  */
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
-	members: many(organizationMembers),
 	repositories: many(DeusConnectedRepository),
 }));
-
-export const organizationMembersRelations = relations(
-	organizationMembers,
-	({ one }) => ({
-		organization: one(organizations, {
-			fields: [organizationMembers.organizationId],
-			references: [organizations.id],
-		}),
-	}),
-);
 
 export const deusConnectedRepositoryRelations = relations(
 	DeusConnectedRepository,

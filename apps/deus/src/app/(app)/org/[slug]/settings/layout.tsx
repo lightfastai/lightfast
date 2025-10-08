@@ -1,35 +1,27 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { SettingsSidebar } from "~/components/settings-sidebar";
-import { verifyOrgAccess } from "~/lib/org-access";
+import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 export default async function SettingsLayout({
 	children,
 	params,
 }: {
 	children: React.ReactNode;
-	params: Promise<{ orgId: string }>;
+	params: Promise<{ slug: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { orgId } = await params;
-	const githubOrgId = parseInt(orgId, 10);
-
-	if (isNaN(githubOrgId)) {
-		notFound();
-	}
+	const { slug } = await params;
 
 	// Verify user has access to this organization
-	const access = await verifyOrgAccess(userId, githubOrgId);
-
-	if (!access.hasAccess) {
-		if (access.reason === "org_not_found") {
-			notFound();
-		}
-		redirect("/onboarding");
+	try {
+		await requireOrgAccess(slug);
+	} catch {
+		notFound();
 	}
 
 	return (
@@ -46,7 +38,7 @@ export default async function SettingsLayout({
 
 				<div className="flex gap-8">
 					{/* Left Sidebar Navigation */}
-					<SettingsSidebar orgId={orgId} />
+					<SettingsSidebar slug={slug} />
 
 					{/* Main Content */}
 					<div className="flex-1 min-w-0">{children}</div>

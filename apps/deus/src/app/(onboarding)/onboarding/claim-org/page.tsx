@@ -71,7 +71,7 @@ export default function ClaimOrgPage() {
 				throw new Error(error.error ?? "Failed to claim organization");
 			}
 
-			const data = (await response.json()) as { orgId: number };
+			const data = (await response.json()) as { orgId: number; slug: string };
 
 			const accountName = installation.account
 				? "login" in installation.account
@@ -86,8 +86,8 @@ export default function ClaimOrgPage() {
 				description: `Successfully claimed ${accountName}`,
 			});
 
-			// Redirect to organization home
-			router.push(`/org/${data.orgId}/settings`);
+			// Redirect to organization home using Clerk org slug
+			router.push(`/org/${data.slug}/settings`);
 		} catch (error) {
 			toast({
 				title: "Failed to claim organization",

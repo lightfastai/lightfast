@@ -36,14 +36,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 	const params = useParams();
 
 	const settingsHref = useMemo(() => {
-		const orgId = params.orgId;
-		if (orgId) {
-			// Ensure orgId is a string (it could be string | string[] from params)
-			const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
-			return `/org/${orgIdStr}/settings`;
+		const slug = params.slug;
+		if (slug) {
+			// Ensure slug is a string (it could be string | string[] from params)
+			const slugStr = Array.isArray(slug) ? slug[0] : slug;
+			return `/org/${slugStr}/settings`;
 		}
 		return "/settings"; // Fallback for non-org pages
-	}, [params.orgId]);
+	}, [params.slug]);
 
 	const displayName = useMemo(() => {
 		if (!user) {

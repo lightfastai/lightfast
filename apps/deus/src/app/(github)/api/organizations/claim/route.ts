@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { db } from "@db/deus";
-import { organizations, organizationMembers } from "@db/deus/schema";
-import { eq, and } from "drizzle-orm";
+import { organizations } from "@db/deus/schema";
+import { eq } from "drizzle-orm";
 import {
 	getUserInstallations,
 	getAuthenticatedUser,
@@ -12,21 +12,80 @@ import {
 import type { OrgMembershipRole } from "~/lib/github-app";
 
 /**
- * Map GitHub organization role to Deus role
+ * Map GitHub organization role to Clerk role
  *
- * GitHub admins become owners, all other members become regular members
+ * GitHub admins become org:admin, all other members become org:member
  */
-function mapGitHubRoleToDeusRole(
+function mapGitHubRoleToClerkRole(
 	githubRole: OrgMembershipRole
-): "owner" | "member" {
-	return githubRole === "admin" ? "owner" : "member";
+): "org:admin" | "org:member" {
+	return githubRole === "admin" ? "org:admin" : "org:member";
+}
+
+/**
+ * Create or get Clerk organization for a Deus organization
+ *
+ * If organization already has a Clerk org linked, returns the existing one.
+ * Otherwise creates a new Clerk organization.
+ */
+async function createOrGetClerkOrganization(params: {
+	userId: string;
+	orgName: string;
+	orgSlug: string;
+}): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
+	const { userId, orgName, orgSlug } = params;
+
+	try {
+		const clerk = await clerkClient();
+
+		// Create Clerk organization with the user as creator/admin
+		const clerkOrg = await clerk.organizations.createOrganization({
+			name: orgName,
+			slug: orgSlug,
+			createdBy: userId,
+		});
+
+		return {
+			clerkOrgId: clerkOrg.id,
+			clerkOrgSlug: clerkOrg.slug,
+		};
+	} catch (error) {
+		// If slug is taken, try with a suffix
+		if (error instanceof Error && error.message.includes("slug")) {
+			const clerk = await clerkClient();
+			const uniqueSlug = `${orgSlug}-${Date.now()}`;
+
+			const clerkOrg = await clerk.organizations.createOrganization({
+				name: orgName,
+				slug: uniqueSlug,
+				createdBy: userId,
+			});
+
+			return {
+				clerkOrgId: clerkOrg.id,
+				clerkOrgSlug: clerkOrg.slug,
+			};
+		}
+		throw error;
+	}
 }
 
 /**
  * Claim Organization API Route
  *
  * Allows a user to claim a GitHub organization in Deus.
- * Creates an organization record and makes the user the owner.
+ *
+ * For new organizations:
+ * - Creates Clerk organization (user becomes admin automatically via createdBy)
+ * - Creates Deus organization record linked to Clerk org
+ * - Rollback Clerk org if Deus org creation fails
+ *
+ * For existing organizations:
+ * - Ensures Clerk org is linked (creates if missing)
+ * - Verifies user's GitHub membership
+ * - Adds user to Clerk organization with appropriate role
+ *
+ * Note: All membership management is handled by Clerk. No Deus organizationMembers table.
  */
 export async function POST(request: NextRequest) {
 	const { userId } = await auth();
@@ -95,24 +154,62 @@ export async function POST(request: NextRequest) {
 		});
 
 		if (existingOrg) {
-			// Organization already claimed - check if user is already a member
-			const existingMembership = await db.query.organizationMembers.findFirst({
-				where: and(
-					eq(organizationMembers.organizationId, existingOrg.id),
-					eq(organizationMembers.userId, userId),
-				),
+			// Organization exists - ensure it has a Clerk org linked
+			if (!existingOrg.clerkOrgId) {
+				try {
+					const clerkOrgData = await createOrGetClerkOrganization({
+						userId,
+						orgName: accountName,
+						orgSlug: accountSlug,
+					});
+
+					// Update the existing organization with Clerk org details
+					await db
+						.update(organizations)
+						.set({
+							clerkOrgId: clerkOrgData.clerkOrgId,
+							clerkOrgSlug: clerkOrgData.clerkOrgSlug,
+							updatedAt: new Date().toISOString(),
+						})
+						.where(eq(organizations.id, existingOrg.id));
+
+					// Update local reference
+					existingOrg.clerkOrgId = clerkOrgData.clerkOrgId;
+					existingOrg.clerkOrgSlug = clerkOrgData.clerkOrgSlug;
+				} catch (error) {
+					console.error("Failed to create Clerk organization for existing org:", error);
+					return NextResponse.json(
+						{
+							error: "Failed to create Clerk organization",
+							message: "Could not link organization to Clerk",
+						},
+						{ status: 500 }
+					);
+				}
+			}
+
+			// Check if user is already a member of the Clerk organization
+			const clerk = await clerkClient();
+			const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
+				organizationId: existingOrg.clerkOrgId,
+				limit: 500,
 			});
 
-			if (existingMembership) {
-				// Already a member, just redirect
+			const existingClerkMembership = clerkMemberships.data.find(
+				(m) => m.publicUserData?.userId === userId
+			);
+
+			if (existingClerkMembership) {
+				// Already a member - just return success
 				return NextResponse.json({
 					success: true,
 					orgId: existingOrg.githubOrgId,
+					slug: existingOrg.clerkOrgSlug,
 					alreadyMember: true,
 				});
 			}
 
-			// Verify user's GitHub organization membership and role
+			// Not a member - verify GitHub membership and add to Clerk org
 			try {
 				// Get user's GitHub username
 				const githubUser = await getAuthenticatedUser(userToken);
@@ -136,14 +233,14 @@ export async function POST(request: NextRequest) {
 					);
 				}
 
-				// Map GitHub role to Deus role
-				const deusRole = mapGitHubRoleToDeusRole(membership.role);
+				// Map GitHub role to Clerk role
+				const clerkRole = mapGitHubRoleToClerkRole(membership.role);
 
-				// Add user to organization with verified role
-				await db.insert(organizationMembers).values({
-					organizationId: existingOrg.id,
+				// Add user to Clerk organization with verified role
+				await clerk.organizations.createOrganizationMembership({
+					organizationId: existingOrg.clerkOrgId,
 					userId,
-					role: deusRole,
+					role: clerkRole,
 				});
 
 				// Update installation ID if it changed (app was reinstalled)
@@ -160,8 +257,9 @@ export async function POST(request: NextRequest) {
 				return NextResponse.json({
 					success: true,
 					orgId: existingOrg.githubOrgId,
+					slug: existingOrg.clerkOrgSlug,
 					joined: true,
-					role: deusRole,
+					role: membership.role,
 				});
 			} catch (error) {
 				// If membership check fails, user is not a member of the organization
@@ -177,35 +275,63 @@ export async function POST(request: NextRequest) {
 			}
 		}
 
-		// Create new organization record
-		const [newOrg] = await db
-			.insert(organizations)
-			.values({
-				githubInstallationId: installationId,
-				githubOrgId: account.id,
-				githubOrgSlug: accountSlug,
-				githubOrgName: accountName,
-				githubOrgAvatarUrl: account.avatar_url || null,
-				claimedBy: userId,
-			})
-			.$returningId();
+		// Create Clerk organization first (user becomes admin automatically via createdBy)
+		let clerkOrgData: { clerkOrgId: string; clerkOrgSlug: string };
 
-		if (!newOrg) {
-			throw new Error("Failed to create organization");
+		try {
+			clerkOrgData = await createOrGetClerkOrganization({
+				userId,
+				orgName: accountName,
+				orgSlug: accountSlug,
+			});
+		} catch (error) {
+			console.error("Failed to create Clerk organization:", error);
+			return NextResponse.json(
+				{
+					error: "Failed to create Clerk organization",
+					message: "Could not create organization",
+				},
+				{ status: 500 }
+			);
 		}
 
-		// Add user as owner
-		await db.insert(organizationMembers).values({
-			organizationId: newOrg.id,
-			userId,
-			role: "owner",
-		});
+		// Create new organization record with Clerk org link
+		try {
+			const [newOrg] = await db
+				.insert(organizations)
+				.values({
+					githubInstallationId: installationId,
+					githubOrgId: account.id,
+					githubOrgSlug: accountSlug,
+					githubOrgName: accountName,
+					githubOrgAvatarUrl: account.avatar_url || null,
+					claimedBy: userId,
+					clerkOrgId: clerkOrgData.clerkOrgId,
+					clerkOrgSlug: clerkOrgData.clerkOrgSlug,
+				})
+				.$returningId();
 
-		return NextResponse.json({
-			success: true,
-			orgId: account.id,
-			created: true,
-		});
+			if (!newOrg) {
+				throw new Error("Failed to create organization");
+			}
+
+			return NextResponse.json({
+				success: true,
+				orgId: account.id,
+				slug: clerkOrgData.clerkOrgSlug,
+				created: true,
+			});
+		} catch (error) {
+			// Rollback: Delete Clerk org if Deus org creation failed
+			console.error("Failed to create Deus organization, rolling back Clerk org:", error);
+			try {
+				const clerk = await clerkClient();
+				await clerk.organizations.deleteOrganization(clerkOrgData.clerkOrgId);
+			} catch (rollbackError) {
+				console.error("Failed to rollback Clerk organization:", rollbackError);
+			}
+			throw error;
+		}
 	} catch (error) {
 		console.error("Error claiming organization:", error);
 		return NextResponse.json(

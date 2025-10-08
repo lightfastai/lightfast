@@ -40,6 +40,12 @@ export default clerkMiddleware(
   {
     signInUrl: "/sign-in",
     signUpUrl: "/sign-up",
+    organizationSyncOptions: {
+      organizationPatterns: [
+        "/org/:slug",
+        "/org/:slug/(.*)",
+      ],
+    },
   },
 );
 

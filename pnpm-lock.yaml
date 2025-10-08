@@ -901,6 +901,9 @@ importers:
       superjson:
         specifier: 'catalog:'
         version: 2.2.1
+      svix:
+        specifier: ^1.62.0
+        version: 1.69.0
       zod:
         specifier: 'catalog:'
         version: 3.25.76
