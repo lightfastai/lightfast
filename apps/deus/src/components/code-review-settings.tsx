@@ -23,12 +23,11 @@ import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { useTRPC } from "@repo/deus-trpc/react";
 import { toast } from "sonner";
+import type { CodeReviewTool } from "@repo/deus-types/code-review";
 
 interface CodeReviewSettingsProps {
 	organizationId: string;
 }
-
-type CodeReviewTool = "coderabbit" | "claude" | "vercel-agents" | "custom";
 
 const CODE_REVIEW_TOOLS: Record<
 	CodeReviewTool,

@@ -19,6 +19,7 @@
     "@octokit/openapi-types": "^26.0.0",
     "@octokit/types": "^15.0.0",
     "@repo/deus-trpc": "workspace:^",
+    "@repo/deus-types": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

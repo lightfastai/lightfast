@@ -11,61 +11,13 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
+import { CODE_REVIEW_STATUS, CODE_REVIEW_TOOLS } from "@repo/deus-types/code-review";
+import type {
+	CodeReviewMetadata,
+	CodeReviewStatus,
+	CodeReviewTool,
+} from "@repo/deus-types/code-review";
 import { uuidv4 } from "@repo/lib";
-
-/**
- * Supported code review tools
- */
-export const CODE_REVIEW_TOOLS = [
-	"coderabbit",
-	"claude",
-	"vercel-agents",
-	"custom",
-] as const;
-
-export type CodeReviewTool = (typeof CODE_REVIEW_TOOLS)[number];
-
-/**
- * Code review status
- */
-export const CODE_REVIEW_STATUS = [
-	"pending", // Review triggered, waiting to start
-	"running", // Review in progress
-	"completed", // Review finished successfully
-	"failed", // Review failed
-	"cancelled", // Review cancelled by user
-] as const;
-
-export type CodeReviewStatus = (typeof CODE_REVIEW_STATUS)[number];
-
-/**
- * Tool-specific configuration stored in metadata
- */
-export type CodeReviewMetadata = {
-	// Tool-specific command used
-	command?: string;
-	// GitHub comment ID that triggered the review
-	triggerCommentId?: string;
-
-	// PR metadata (cached from GitHub API or webhooks)
-	prUrl?: string;
-	prTitle?: string;
-	prState?: string;
-	prMerged?: boolean;
-	prAuthor?: string;
-	prAuthorAvatar?: string;
-	branch?: string;
-
-	// Sync tracking
-	lastSyncedAt?: string;
-	deleted?: boolean;
-	deletedAt?: string;
-
-	// Number of tasks/findings created
-	taskCount?: number;
-	// Error message if failed
-	error?: string;
-};
 
 /**
  * DeusCodeReview table tracks code review runs
@@ -173,3 +125,6 @@ export type InsertDeusCodeReview = typeof DeusCodeReview.$inferInsert;
 // Zod Schema exports
 export const insertDeusCodeReviewSchema = createInsertSchema(DeusCodeReview);
 export const selectDeusCodeReviewSchema = createSelectSchema(DeusCodeReview);
+
+export { CODE_REVIEW_STATUS, CODE_REVIEW_TOOLS };
+export type { CodeReviewMetadata, CodeReviewStatus, CodeReviewTool };

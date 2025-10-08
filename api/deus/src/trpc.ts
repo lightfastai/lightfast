@@ -13,20 +13,10 @@ import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
 import { db } from "@db/deus/client";
-
-/**
- * Deus session type - extracted to avoid Clerk type inference issues
- */
-export interface DeusSession {
-  userId: string | null;
-}
-
-/**
- * Authenticated deus session type - used in protected procedures
- */
-export interface AuthenticatedDeusSession {
-  userId: string;
-}
+import type {
+  AuthenticatedDeusSession,
+  DeusSession,
+} from "@repo/deus-types/session";
 
 /**
  * 1. CONTEXT
@@ -167,3 +157,7 @@ export const protectedProcedure = t.procedure
 
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";
+export type {
+  AuthenticatedDeusSession,
+  DeusSession,
+} from "@repo/deus-types/session";

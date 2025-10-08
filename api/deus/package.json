@@ -25,6 +25,7 @@
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
 		"@db/deus": "workspace:*",
+		"@repo/deus-types": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",

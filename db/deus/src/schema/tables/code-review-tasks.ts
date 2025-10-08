@@ -11,45 +11,16 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
+import {
+	TASK_SEVERITY,
+	TASK_STATUS,
+} from "@repo/deus-types/tasks";
+import type {
+	TaskMetadata,
+	TaskSeverity,
+	TaskStatus,
+} from "@repo/deus-types/tasks";
 import { uuidv4 } from "@repo/lib";
-
-/**
- * Task severity levels
- */
-export const TASK_SEVERITY = ["info", "warning", "error", "critical"] as const;
-
-export type TaskSeverity = (typeof TASK_SEVERITY)[number];
-
-/**
- * Task status
- */
-export const TASK_STATUS = [
-	"open", // Task identified, needs attention
-	"resolved", // Task resolved (manually or via new commit)
-	"dismissed", // Task dismissed by user
-] as const;
-
-export type TaskStatus = (typeof TASK_STATUS)[number];
-
-/**
- * Task metadata for storing tool-specific data
- */
-export type TaskMetadata = {
-	// GitHub comment ID
-	githubCommentId?: string;
-	// File path in the PR
-	filePath?: string;
-	// Line number (or range)
-	line?: number;
-	startLine?: number;
-	endLine?: number;
-	// Code snippet
-	codeSnippet?: string;
-	// Suggested fix
-	suggestion?: string;
-	// Tool-specific category
-	category?: string;
-};
 
 /**
  * DeusCodeReviewTask table tracks individual findings from code reviews
@@ -148,3 +119,6 @@ export const insertDeusCodeReviewTaskSchema =
 	createInsertSchema(DeusCodeReviewTask);
 export const selectDeusCodeReviewTaskSchema =
 	createSelectSchema(DeusCodeReviewTask);
+
+export { TASK_SEVERITY, TASK_STATUS };
+export type { TaskMetadata, TaskSeverity, TaskStatus };

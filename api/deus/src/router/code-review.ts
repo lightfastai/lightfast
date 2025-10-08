@@ -3,10 +3,17 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../trpc";
 import { db } from "@db/deus/client";
-import { DeusCodeReview, DeusConnectedRepository, CODE_REVIEW_TOOLS } from "@db/deus";
+import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
+import {
+  CODE_REVIEW_STATUS,
+  CODE_REVIEW_TOOLS,
+} from "@repo/deus-types/code-review";
+import type { CodeReviewStatus } from "@repo/deus-types/code-review";
 import { desc, eq, and, inArray } from "drizzle-orm";
 import { syncPRMetadata, createInitialPRMetadata } from "../lib/sync-pr-metadata";
 import { listOpenPullRequests } from "../lib/github-app";
+
+const DEFAULT_REVIEW_STATUS: CodeReviewStatus = CODE_REVIEW_STATUS[0];
 
 export const codeReviewRouter = {
   /**
@@ -24,7 +31,7 @@ export const codeReviewRouter = {
       z.object({
         organizationId: z.string(),
         repositoryId: z.string().optional(),
-        status: z.enum(["pending", "running", "completed", "failed", "cancelled"]).optional(),
+        status: z.enum(CODE_REVIEW_STATUS).optional(),
         limit: z.number().min(1).max(100).default(50),
       })
     )
@@ -229,7 +236,7 @@ export const codeReviewRouter = {
         pullRequestNumber: input.pullRequestNumber,
         githubPrId: input.githubPrId,
         reviewTool: input.reviewTool,
-        status: "pending",
+        status: DEFAULT_REVIEW_STATUS,
         triggeredBy: ctx.session.userId,
         metadata: {
           command: input.command,
@@ -405,7 +412,7 @@ export const codeReviewRouter = {
           pullRequestNumber: pr.number,
           githubPrId: pr.id.toString(),
           reviewTool: input.reviewTool,
-          status: "pending",
+          status: DEFAULT_REVIEW_STATUS,
           triggeredBy: ctx.session.userId,
           metadata,
         });

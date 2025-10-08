@@ -1,6 +1,6 @@
 import { db } from "@db/deus/client";
 import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
-import type { CodeReviewMetadata } from "@db/deus";
+import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
 import { eq } from "drizzle-orm";
 import { getPullRequest } from "./github-app";
 

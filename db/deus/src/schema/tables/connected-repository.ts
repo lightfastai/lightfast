@@ -10,41 +10,12 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
+import type {
+	CodeReviewSettings,
+	RepositoryMetadata,
+	RepositoryPermissions,
+} from "@repo/deus-types/repository";
 import { uuidv4 } from "@repo/lib";
-
-/**
- * GitHub repository permissions type
- */
-export type RepositoryPermissions = {
-	admin: boolean;
-	push: boolean;
-	pull: boolean;
-};
-
-/**
- * Code review settings for the repository
- */
-export type CodeReviewSettings = {
-	enabled?: boolean;
-	tool?: "coderabbit" | "claude" | "vercel-agents" | "custom";
-	command?: string;
-};
-
-/**
- * Repository metadata type for flexible storage
- * IMPORTANT: This is a CACHE - can be stale. Always fetch fresh from GitHub API when accuracy matters.
- */
-export type RepositoryMetadata = {
-	fullName?: string; // Cache of "owner/repo" for display only
-	description?: string;
-	language?: string;
-	private?: boolean;
-	owner?: string;
-	ownerAvatar?: string;
-	stargazersCount?: number;
-	updatedAt?: string;
-	[key: string]: unknown;
-};
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
@@ -170,3 +141,5 @@ export const insertDeusConnectedRepositorySchema = createInsertSchema(
 export const selectDeusConnectedRepositorySchema = createSelectSchema(
 	DeusConnectedRepository,
 );
+
+export type { CodeReviewSettings, RepositoryMetadata, RepositoryPermissions };
