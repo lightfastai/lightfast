@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
-import { prefetch, trpc } from "@repo/deus-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function RepositoriesPage({
@@ -39,9 +39,11 @@ export default async function RepositoriesPage({
 	);
 
 	return (
-		<Suspense fallback={<RepositoriesSettingsSkeleton />}>
-			<RepositoriesSettings organizationId={access.org.id} />
-		</Suspense>
+		<HydrateClient>
+			<Suspense fallback={<RepositoriesSettingsSkeleton />}>
+				<RepositoriesSettings organizationId={access.org.id} />
+			</Suspense>
+		</HydrateClient>
 	);
 }
 

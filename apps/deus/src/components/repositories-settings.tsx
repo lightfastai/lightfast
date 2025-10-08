@@ -25,6 +25,8 @@ export function RepositoriesSettings({ organizationId }: RepositoriesSettingsPro
 			includeInactive: false,
 			organizationId
 		}),
+		refetchOnMount: false, // Use prefetched server data
+		refetchOnWindowFocus: false, // Don't refetch on window focus
 	});
 
 	const hasRepositories = repositories.length > 0;

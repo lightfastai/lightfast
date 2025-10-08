@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { CodeReviewSettings } from "~/components/code-review-settings";
 import { verifyOrgAccess } from "~/lib/org-access";
-import { prefetch, trpc } from "@repo/deus-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function CodeReviewSettingsPage({
@@ -39,9 +39,11 @@ export default async function CodeReviewSettingsPage({
 	);
 
 	return (
-		<Suspense fallback={<CodeReviewSettingsSkeleton />}>
-			<CodeReviewSettings organizationId={access.org.id} />
-		</Suspense>
+		<HydrateClient>
+			<Suspense fallback={<CodeReviewSettingsSkeleton />}>
+				<CodeReviewSettings organizationId={access.org.id} />
+			</Suspense>
+		</HydrateClient>
 	);
 }
 

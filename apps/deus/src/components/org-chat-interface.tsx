@@ -52,6 +52,8 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 			includeInactive: false,
 			organizationId,
 		}),
+		refetchOnMount: false, // Use prefetched server data
+		refetchOnWindowFocus: false, // Don't refetch on window focus
 	});
 
 	const hasRepositories = repositories.length > 0;
