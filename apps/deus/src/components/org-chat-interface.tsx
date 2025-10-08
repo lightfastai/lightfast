@@ -25,7 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@repo/ui/components/ui/select";
-import { GitBranch, Mic, Plus, ArrowUp } from "lucide-react";
+import { GitBranch, Plus, ArrowUp } from "lucide-react";
 import { CodeReviewsTab } from "./code-reviews-tab";
 import { useTRPC } from "@repo/deus-trpc/react";
 import {
@@ -57,15 +57,16 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 
 	// Auto-select first repository when repositories load
 	useEffect(() => {
-		if (repositories.length > 0 && !selectedRepoId) {
-			setSelectedRepoId(repositories[0].id);
+		const firstRepo = repositories[0];
+		if (firstRepo && !selectedRepoId) {
+			setSelectedRepoId(firstRepo.id);
 		}
 	}, [repositories, selectedRepoId]);
 
-	const handleSubmit = async (
+	const handleSubmit = (
 		message: PromptInputMessage,
 		event: FormEvent<HTMLFormElement>,
-	): Promise<void> => {
+	): void => {
 		event.preventDefault();
 		console.log("Submit", {
 			message,
@@ -149,13 +150,6 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 								)}
 							</PromptInputTools>
 							<div className="flex items-center gap-2">
-								<PromptInputButton
-									variant="ghost"
-									size="icon"
-									className="h-8 w-8"
-								>
-									<Mic className="h-4 w-4" />
-								</PromptInputButton>
 								<PromptInputSubmit
 									size="icon"
 									variant="outline"

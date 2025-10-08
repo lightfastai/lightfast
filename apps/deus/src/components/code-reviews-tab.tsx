@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react";
+import { RefreshCw, Clock, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { useTRPC } from "@repo/deus-trpc/react";
@@ -10,25 +10,6 @@ import { useState } from "react";
 interface CodeReviewsTabProps {
 	orgId: string;
 }
-
-const STATUS_CONFIG = {
-	pending: {
-		icon: Clock,
-		color: "text-muted-foreground",
-	},
-	running: {
-		icon: Clock,
-		color: "text-blue-500",
-	},
-	completed: {
-		icon: CheckCircle2,
-		color: "text-green-500",
-	},
-	failed: {
-		icon: XCircle,
-		color: "text-destructive",
-	},
-};
 
 function formatDate(dateString: string): string {
 	const date = new Date(dateString);
@@ -146,7 +127,7 @@ export function CodeReviewsTab({ orgId }: CodeReviewsTabProps) {
 							className="w-full justify-between"
 						>
 							<span className="truncate">
-								{repo.metadata?.fullName || "Unknown repository"}
+								{repo.metadata?.fullName ?? "Unknown repository"}
 							</span>
 							{scanMutation.isPending ? (
 								<RefreshCw className="h-4 w-4 animate-spin ml-2" />
@@ -165,13 +146,10 @@ export function CodeReviewsTab({ orgId }: CodeReviewsTabProps) {
 	return (
 		<div className="space-y-0">
 			{reviews.map((review, index) => {
-				const statusConfig = STATUS_CONFIG[review.status];
-				const StatusIcon = statusConfig.icon;
-
 				// Extract cached PR metadata
-				const prTitle = review.metadata?.prTitle || `PR #${review.pullRequestNumber}`;
-				const repositoryName = review.repository?.metadata?.fullName || "Unknown repository";
-				const bugCount = review.metadata?.taskCount || 0;
+				const prTitle = review.metadata?.prTitle ?? `PR #${review.pullRequestNumber}`;
+				const repositoryName = review.repository?.metadata?.fullName ?? "Unknown repository";
+				const bugCount = review.metadata?.taskCount ?? 0;
 
 				// Check if metadata is missing (new connection, no sync yet)
 				const hasMetadata = Boolean(review.metadata?.prTitle);

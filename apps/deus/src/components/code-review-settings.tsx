@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Code2, Github, Save, Info } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -60,7 +60,6 @@ export function CodeReviewSettings({
 	organizationId,
 }: CodeReviewSettingsProps) {
 	const trpc = useTRPC();
-	const queryClient = useQueryClient();
 	const [editingRepoId, setEditingRepoId] = useState<string | null>(null);
 	const [localSettings, setLocalSettings] = useState<
 		Record<string, { enabled: boolean; tool: CodeReviewTool; command: string }>
@@ -80,20 +79,18 @@ export function CodeReviewSettings({
 	const startEditing = (repoId: string) => {
 		const repo = repositories.find((r) => r.id === repoId);
 		if (repo) {
-			const settings = repo.codeReviewSettings || {
+			const settings = repo.codeReviewSettings ?? {
 				enabled: false,
 				tool: "coderabbit" as CodeReviewTool,
 			};
 			setLocalSettings({
 				...localSettings,
 				[repoId]: {
-					enabled: settings.enabled || false,
-					tool: (settings.tool as CodeReviewTool) || "coderabbit",
+					enabled: settings.enabled ?? false,
+					tool: settings.tool ?? "coderabbit",
 					command:
-						settings.config?.command ||
-						CODE_REVIEW_TOOLS[
-							(settings.tool as CodeReviewTool) || "coderabbit"
-						].command,
+						settings.command ??
+						CODE_REVIEW_TOOLS[settings.tool ?? "coderabbit"].command,
 				},
 			});
 			setEditingRepoId(repoId);
@@ -108,11 +105,11 @@ export function CodeReviewSettings({
 	const updateLocalSetting = (
 		repoId: string,
 		key: "enabled" | "tool" | "command",
-		value: boolean | CodeReviewTool | string,
+		value: boolean | string,
 	) => {
-		const current = localSettings[repoId] || {
+		const current = localSettings[repoId] ?? {
 			enabled: false,
-			tool: "coderabbit" as CodeReviewTool,
+			tool: "coderabbit",
 			command: CODE_REVIEW_TOOLS.coderabbit.command,
 		};
 
@@ -184,10 +181,10 @@ export function CodeReviewSettings({
 							{repositories.map((repo) => {
 								const isEditing = editingRepoId === repo.id;
 								const settings =
-									localSettings[repo.id] ||
-									repo.codeReviewSettings || {
+									localSettings[repo.id] ??
+									repo.codeReviewSettings ?? {
 										enabled: false,
-										tool: "coderabbit" as CodeReviewTool,
+										tool: "coderabbit",
 									};
 
 								return (
@@ -326,15 +323,15 @@ export function CodeReviewSettings({
 													<span className="font-medium">
 														{
 															CODE_REVIEW_TOOLS[
-																(settings.tool || "coderabbit") as CodeReviewTool
+																settings.tool ?? "coderabbit"
 															].name
 														}
 													</span>
 													<span className="text-muted-foreground">·</span>
 													<code className="rounded bg-background px-1.5 py-0.5 font-mono">
-														{settings.command ||
+														{settings.command ??
 															CODE_REVIEW_TOOLS[
-																(settings.tool || "coderabbit") as CodeReviewTool
+																settings.tool ?? "coderabbit"
 															].command}
 													</code>
 												</div>
