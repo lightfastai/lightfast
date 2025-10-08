@@ -146,7 +146,7 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 										className="h-8 gap-1.5 px-3"
 										asChild
 									>
-										<Link href={`/org/${orgId}/settings/repositories`}>
+										<Link href={`/org/${orgId}/settings/repositories`} prefetch={true}>
 											<GitBranch className="h-4 w-4" />
 											<span className="text-xs">Connect GitHub</span>
 										</Link>

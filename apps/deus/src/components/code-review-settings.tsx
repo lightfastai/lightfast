@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { Code2, Github, Save, Info } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -351,7 +352,9 @@ export function CodeReviewSettings({
 										settings
 									</p>
 									<Button className="mt-4" asChild>
-										<a href="../repositories">Go to Repositories</a>
+										<Link href="../repositories" prefetch={true}>
+											Go to Repositories
+										</Link>
 									</Button>
 								</div>
 							</div>

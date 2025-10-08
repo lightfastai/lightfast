@@ -131,7 +131,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
 						</div>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem asChild>
-							<Link href={settingsHref} className="cursor-pointer">
+							<Link href={settingsHref} prefetch={true} className="cursor-pointer">
 								<Settings className="mr-2 h-3 w-3" />
 								Settings
 							</Link>
