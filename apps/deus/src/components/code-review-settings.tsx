@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Code2, Github, Save, Info } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -65,11 +65,15 @@ export function CodeReviewSettings({
 	>({});
 
 	// Query to fetch organization's connected repositories
-	const { data: repositories = [], isLoading } = useQuery({
+	// Using useSuspenseQuery since data is prefetched in server component
+	const { data: repositories = [] } = useSuspenseQuery({
 		...trpc.repository.list.queryOptions({
 			includeInactive: false,
 			organizationId,
 		}),
+		refetchOnMount: false, // Use prefetched server data
+		refetchOnWindowFocus: false, // Don't refetch on window focus
+		staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes (repos don't change often)
 	});
 
 	const hasRepositories = repositories.length > 0;
@@ -169,13 +173,7 @@ export function CodeReviewSettings({
 						</div>
 					</div>
 
-					{isLoading ? (
-						<div className="py-8 text-center">
-							<p className="text-sm text-muted-foreground">
-								Loading repositories...
-							</p>
-						</div>
-					) : hasRepositories ? (
+					{hasRepositories ? (
 						<div className="space-y-4">
 							{repositories.map((repo) => {
 								const isEditing = editingRepoId === repo.id;

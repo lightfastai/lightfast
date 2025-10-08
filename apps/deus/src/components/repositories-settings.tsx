@@ -27,6 +27,7 @@ export function RepositoriesSettings({ organizationId }: RepositoriesSettingsPro
 		}),
 		refetchOnMount: false, // Use prefetched server data
 		refetchOnWindowFocus: false, // Don't refetch on window focus
+		staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes (repos don't change often)
 	});
 
 	const hasRepositories = repositories.length > 0;
