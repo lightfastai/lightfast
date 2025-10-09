@@ -1,9 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { db } from "@db/deus";
-import { organizations } from "@db/deus/schema";
-import { eq } from "drizzle-orm";
+import { OrganizationsService } from "@repo/deus-api-services";
 import {
 	getUserInstallations,
 	getAuthenticatedUser,
@@ -189,9 +187,8 @@ export async function POST(request: NextRequest) {
 
 		// Check if this organization already exists (by immutable GitHub org ID)
 		console.log("[CLAIM ORG] Checking for existing org in DB...");
-		const existingOrg = await db.query.organizations.findFirst({
-			where: eq(organizations.githubOrgId, account.id),
-		});
+		const organizationsService = new OrganizationsService();
+		const existingOrg = await organizationsService.findByGithubOrgId(account.id);
 		console.log("[CLAIM ORG] Existing org found:", !!existingOrg);
 
 		if (existingOrg) {
@@ -212,14 +209,11 @@ export async function POST(request: NextRequest) {
 					});
 
 					// Update the existing organization with Clerk org details
-					await db
-						.update(organizations)
-						.set({
-							clerkOrgId: clerkOrgData.clerkOrgId,
-							clerkOrgSlug: clerkOrgData.clerkOrgSlug,
-							updatedAt: new Date().toISOString(),
-						})
-						.where(eq(organizations.id, existingOrg.id));
+					await organizationsService.updateClerkDetails({
+						id: existingOrg.id,
+						clerkOrgId: clerkOrgData.clerkOrgId,
+						clerkOrgSlug: clerkOrgData.clerkOrgSlug,
+					});
 
 					console.log("[CLAIM ORG] ✓ DB updated with Clerk org details");
 
@@ -320,13 +314,10 @@ export async function POST(request: NextRequest) {
 				// Update installation ID if it changed (app was reinstalled)
 				if (existingOrg.githubInstallationId !== installationId) {
 					console.log("[CLAIM ORG] Updating installation ID...");
-					await db
-						.update(organizations)
-						.set({
-							githubInstallationId: installationId,
-							updatedAt: new Date().toISOString(),
-						})
-						.where(eq(organizations.id, existingOrg.id));
+					await organizationsService.updateInstallationId({
+						id: existingOrg.id,
+						installationId,
+					});
 					console.log("[CLAIM ORG] ✓ Installation ID updated");
 				}
 
@@ -381,23 +372,16 @@ export async function POST(request: NextRequest) {
 		// Create new organization record with Clerk org link
 		console.log("[CLAIM ORG] Creating Deus org record in DB...");
 		try {
-			const [newOrg] = await db
-				.insert(organizations)
-				.values({
-					githubInstallationId: installationId,
-					githubOrgId: account.id,
-					githubOrgSlug: accountSlug,
-					githubOrgName: accountName,
-					githubOrgAvatarUrl: account.avatar_url || null,
-					claimedBy: userId,
-					clerkOrgId: clerkOrgData.clerkOrgId,
-					clerkOrgSlug: clerkOrgData.clerkOrgSlug,
-				})
-				.$returningId();
-
-			if (!newOrg) {
-				throw new Error("Failed to create organization");
-			}
+			const newOrg = await organizationsService.create({
+				githubInstallationId: installationId,
+				githubOrgId: account.id,
+				githubOrgSlug: accountSlug,
+				githubOrgName: accountName,
+				githubOrgAvatarUrl: account.avatar_url || null,
+				claimedBy: userId,
+				clerkOrgId: clerkOrgData.clerkOrgId,
+				clerkOrgSlug: clerkOrgData.clerkOrgSlug,
+			});
 
 			console.log("[CLAIM ORG] ✓ Deus org created in DB:", newOrg);
 			console.log("[CLAIM ORG] ✅ Successfully created new org");

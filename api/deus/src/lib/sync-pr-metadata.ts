@@ -1,6 +1,7 @@
 import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
-import { CodeReviewsService } from "@repo/deus-api-services/code-reviews";
-import { RepositoriesService } from "@repo/deus-api-services/repositories";
+import { db } from "@db/deus/client";
+import { DeusCodeReview, DeusConnectedRepository } from "@db/deus/schema";
+import { eq } from "drizzle-orm";
 import { getPullRequest } from "./github-app";
 
 /**
@@ -15,18 +16,27 @@ import { getPullRequest } from "./github-app";
  * @returns Updated metadata or null if sync failed
  */
 export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetadata | null> {
-	const codeReviewsService = new CodeReviewsService();
-	const repositoriesService = new RepositoriesService();
-
 	// 1. Fetch the code review and repository
-	const review = await codeReviewsService.findById(reviewId);
+	const reviewResult = await db
+		.select()
+		.from(DeusCodeReview)
+		.where(eq(DeusCodeReview.id, reviewId))
+		.limit(1);
+
+	const review = reviewResult[0];
 
 	if (!review) {
 		console.error(`[Sync] Code review ${reviewId} not found`);
 		return null;
 	}
 
-	const repo = await repositoriesService.findById(review.repositoryId);
+	const repoResult = await db
+		.select()
+		.from(DeusConnectedRepository)
+		.where(eq(DeusConnectedRepository.id, review.repositoryId))
+		.limit(1);
+
+	const repo = repoResult[0];
 
 	if (!repo) {
 		console.error(`[Sync] Repository ${review.repositoryId} not found`);
@@ -69,7 +79,10 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
 		};
 
 		// 5. Update database
-		await codeReviewsService.updateMetadata(reviewId, updatedMetadata);
+		await db
+			.update(DeusCodeReview)
+			.set({ metadata: updatedMetadata })
+			.where(eq(DeusCodeReview.id, reviewId));
 
 		console.log(`[Sync] Successfully synced PR metadata for review ${reviewId}`);
 		return updatedMetadata;
@@ -85,7 +98,10 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
 				lastSyncedAt: new Date().toISOString(),
 			};
 
-			await codeReviewsService.updateMetadata(reviewId, deletedMetadata);
+			await db
+				.update(DeusCodeReview)
+				.set({ metadata: deletedMetadata })
+				.where(eq(DeusCodeReview.id, reviewId));
 
 			return deletedMetadata;
 		}

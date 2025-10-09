@@ -1,7 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure } from "../trpc";
+import { and, eq, desc, inArray } from "drizzle-orm";
+import { protectedProcedure, publicProcedure } from "../trpc";
 import {
   CODE_REVIEW_STATUS,
   CODE_REVIEW_TOOLS,
@@ -10,9 +11,7 @@ import type { CodeReviewStatus } from "@repo/deus-types/code-review";
 import { syncPRMetadata, createInitialPRMetadata } from "../lib/sync-pr-metadata";
 import { listOpenPullRequests } from "../lib/github-app";
 import { clerkClient } from "@clerk/nextjs/server";
-import { OrganizationsService } from "@repo/deus-api-services/organizations";
-import { RepositoriesService } from "@repo/deus-api-services/repositories";
-import { CodeReviewsService } from "@repo/deus-api-services/code-reviews";
+import { DeusCodeReview, DeusConnectedRepository, organizations } from "@db/deus/schema";
 
 const DEFAULT_REVIEW_STATUS: CodeReviewStatus = CODE_REVIEW_STATUS[0];
 
@@ -39,10 +38,11 @@ export const codeReviewRouter = {
     .query(async ({ ctx, input }) => {
       // Verify user is a member of the organization
       // Get Clerk org ID from Deus organization
-      const organizationsService = new OrganizationsService();
-      const deusOrg = await organizationsService.findById(input.organizationId);
+      const deusOrgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
 
-      if (!deusOrg?.clerkOrgId) {
+      if (!deusOrgResult?.clerkOrgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Organization not found",
@@ -52,7 +52,7 @@ export const codeReviewRouter = {
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
       const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrg.clerkOrgId,
+        organizationId: deusOrgResult.clerkOrgId,
         limit: 500,
       });
 
@@ -68,11 +68,15 @@ export const codeReviewRouter = {
       }
 
       // First, get all repositories for this organization
-      const repositoriesService = new RepositoriesService();
-      const repositories = await repositoriesService.listByOrganization({
-        organizationId: input.organizationId,
-        includeInactive: false,
-      });
+      const repositories = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+            eq(DeusConnectedRepository.isActive, true)
+          )
+        );
 
       if (repositories.length === 0) {
         return [];
@@ -92,19 +96,37 @@ export const codeReviewRouter = {
         }
       }
 
+      // Build where conditions for code reviews query
+      const reviewWhereConditions = [
+        inArray(DeusCodeReview.repositoryId, repositoryIds),
+      ];
+
+      if (input.repositoryId) {
+        reviewWhereConditions.push(eq(DeusCodeReview.repositoryId, input.repositoryId));
+      }
+
+      if (input.status) {
+        reviewWhereConditions.push(eq(DeusCodeReview.status, input.status));
+      }
+
       // Get code reviews
-      const codeReviewsService = new CodeReviewsService();
-      const reviews = await codeReviewsService.listByRepositories({
-        repositoryIds,
-        repositoryId: input.repositoryId,
-        status: input.status,
-        limit: input.limit,
-      });
+      const reviews = await ctx.db
+        .select()
+        .from(DeusCodeReview)
+        .where(and(...reviewWhereConditions))
+        .orderBy(desc(DeusCodeReview.createdAt))
+        .limit(input.limit);
 
       // Join with repository data to get repo metadata
       const reviewsWithRepoData = await Promise.all(
         reviews.map(async (review) => {
-          const repo = await repositoriesService.findById(review.repositoryId);
+          const repoResult = await ctx.db
+            .select()
+            .from(DeusConnectedRepository)
+            .where(eq(DeusConnectedRepository.id, review.repositoryId))
+            .limit(1);
+
+          const repo = repoResult[0];
 
           return {
             ...review,
@@ -134,10 +156,11 @@ export const codeReviewRouter = {
     .query(async ({ ctx, input }) => {
       // Verify user is a member of the organization
       // Get Clerk org ID from Deus organization
-      const organizationsService = new OrganizationsService();
-      const deusOrg = await organizationsService.findById(input.organizationId);
+      const deusOrgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
 
-      if (!deusOrg?.clerkOrgId) {
+      if (!deusOrgResult?.clerkOrgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Organization not found",
@@ -147,7 +170,7 @@ export const codeReviewRouter = {
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
       const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrg.clerkOrgId,
+        organizationId: deusOrgResult.clerkOrgId,
         limit: 500,
       });
 
@@ -162,8 +185,13 @@ export const codeReviewRouter = {
         });
       }
 
-      const codeReviewsService = new CodeReviewsService();
-      const review = await codeReviewsService.findById(input.reviewId);
+      const reviewResult = await ctx.db
+        .select()
+        .from(DeusCodeReview)
+        .where(eq(DeusCodeReview.id, input.reviewId))
+        .limit(1);
+
+      const review = reviewResult[0];
 
       if (!review) {
         throw new TRPCError({
@@ -173,11 +201,18 @@ export const codeReviewRouter = {
       }
 
       // Verify this review belongs to a repository in the organization
-      const repositoriesService = new RepositoriesService();
-      const repository = await repositoriesService.findByIdAndOrganization(
-        review.repositoryId,
-        input.organizationId
-      );
+      const repositoryResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, review.repositoryId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId)
+          )
+        )
+        .limit(1);
+
+      const repository = repositoryResult[0];
 
       if (!repository) {
         throw new TRPCError({
@@ -210,10 +245,11 @@ export const codeReviewRouter = {
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
       // Get Clerk org ID from Deus organization
-      const organizationsService = new OrganizationsService();
-      const deusOrg = await organizationsService.findById(input.organizationId);
+      const deusOrgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
 
-      if (!deusOrg?.clerkOrgId) {
+      if (!deusOrgResult?.clerkOrgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Organization not found",
@@ -223,7 +259,7 @@ export const codeReviewRouter = {
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
       const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrg.clerkOrgId,
+        organizationId: deusOrgResult.clerkOrgId,
         limit: 500,
       });
 
@@ -239,11 +275,18 @@ export const codeReviewRouter = {
       }
 
       // Verify repository belongs to organization
-      const repositoriesService = new RepositoriesService();
-      const repository = await repositoriesService.findByIdAndOrganization(
-        input.repositoryId,
-        input.organizationId
-      );
+      const repositoryResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId)
+          )
+        )
+        .limit(1);
+
+      const repository = repositoryResult[0];
 
       if (!repository || !repository.isActive) {
         throw new TRPCError({
@@ -280,8 +323,7 @@ export const codeReviewRouter = {
       // Create code review record
       const reviewId = crypto.randomUUID();
 
-      const codeReviewsService = new CodeReviewsService();
-      await codeReviewsService.create({
+      await ctx.db.insert(DeusCodeReview).values({
         id: reviewId,
         repositoryId: input.repositoryId,
         pullRequestNumber: input.pullRequestNumber,
@@ -316,10 +358,11 @@ export const codeReviewRouter = {
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
       // Get Clerk org ID from Deus organization
-      const organizationsService = new OrganizationsService();
-      const deusOrg = await organizationsService.findById(input.organizationId);
+      const deusOrgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
 
-      if (!deusOrg?.clerkOrgId) {
+      if (!deusOrgResult?.clerkOrgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Organization not found",
@@ -329,7 +372,7 @@ export const codeReviewRouter = {
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
       const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrg.clerkOrgId,
+        organizationId: deusOrgResult.clerkOrgId,
         limit: 500,
       });
 
@@ -345,8 +388,13 @@ export const codeReviewRouter = {
       }
 
       // Verify access to this review
-      const codeReviewsService = new CodeReviewsService();
-      const review = await codeReviewsService.findById(input.reviewId);
+      const reviewResult = await ctx.db
+        .select()
+        .from(DeusCodeReview)
+        .where(eq(DeusCodeReview.id, input.reviewId))
+        .limit(1);
+
+      const review = reviewResult[0];
 
       if (!review) {
         throw new TRPCError({
@@ -355,11 +403,18 @@ export const codeReviewRouter = {
         });
       }
 
-      const repositoriesService = new RepositoriesService();
-      const repository = await repositoriesService.findByIdAndOrganization(
-        review.repositoryId,
-        input.organizationId
-      );
+      const repositoryResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, review.repositoryId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId)
+          )
+        )
+        .limit(1);
+
+      const repository = repositoryResult[0];
 
       if (!repository) {
         throw new TRPCError({
@@ -399,10 +454,11 @@ export const codeReviewRouter = {
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
       // Get Clerk org ID from Deus organization
-      const organizationsService = new OrganizationsService();
-      const deusOrg = await organizationsService.findById(input.organizationId);
+      const deusOrgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
 
-      if (!deusOrg?.clerkOrgId) {
+      if (!deusOrgResult?.clerkOrgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Organization not found",
@@ -412,7 +468,7 @@ export const codeReviewRouter = {
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
       const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrg.clerkOrgId,
+        organizationId: deusOrgResult.clerkOrgId,
         limit: 500,
       });
 
@@ -428,11 +484,18 @@ export const codeReviewRouter = {
       }
 
       // Verify repository belongs to organization
-      const repositoriesService = new RepositoriesService();
-      const repository = await repositoriesService.findByIdAndOrganization(
-        input.repositoryId,
-        input.organizationId
-      );
+      const repositoryResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, input.organizationId)
+          )
+        )
+        .limit(1);
+
+      const repository = repositoryResult[0];
 
       if (!repository || !repository.isActive) {
         throw new TRPCError({
@@ -469,17 +532,21 @@ export const codeReviewRouter = {
       let created = 0;
       let skipped = 0;
 
-      const codeReviewsService = new CodeReviewsService();
-
       // Process each PR
       for (const pr of openPRs) {
         // Check if review already exists for this PR
-        const existing = await codeReviewsService.existsForPr(
-          input.repositoryId,
-          pr.id.toString()
-        );
+        const existingResult = await ctx.db
+          .select({ id: DeusCodeReview.id })
+          .from(DeusCodeReview)
+          .where(
+            and(
+              eq(DeusCodeReview.repositoryId, input.repositoryId),
+              eq(DeusCodeReview.githubPrId, pr.id.toString())
+            )
+          )
+          .limit(1);
 
-        if (existing) {
+        if (existingResult[0]) {
           skipped++;
           continue;
         }
@@ -499,7 +566,7 @@ export const codeReviewRouter = {
         // Create code review record
         const reviewId = crypto.randomUUID();
 
-        await codeReviewsService.create({
+        await ctx.db.insert(DeusCodeReview).values({
           id: reviewId,
           repositoryId: input.repositoryId,
           pullRequestNumber: pr.number,
@@ -519,5 +586,55 @@ export const codeReviewRouter = {
         created,
         skipped,
       };
+    }),
+
+  /**
+   * Internal procedures for webhooks (PUBLIC - no auth needed)
+   * These are used by GitHub webhooks to manage code review state
+   */
+
+  /**
+   * Find reviews by repository and PR ID
+   * Used by webhooks to lookup code reviews for a specific PR
+   */
+  findByRepositoryAndPrId: publicProcedure
+    .input(
+      z.object({
+        repositoryId: z.string(),
+        githubPrId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.db
+        .select()
+        .from(DeusCodeReview)
+        .where(
+          and(
+            eq(DeusCodeReview.repositoryId, input.repositoryId),
+            eq(DeusCodeReview.githubPrId, input.githubPrId)
+          )
+        );
+    }),
+
+  /**
+   * Update metadata for multiple reviews
+   * Used by webhooks to batch update review metadata
+   */
+  updateMetadataBatch: publicProcedure
+    .input(
+      z.array(
+        z.object({
+          id: z.string(),
+          metadata: z.record(z.unknown()),
+        })
+      )
+    )
+    .mutation(async ({ ctx, input }) => {
+      for (const review of input) {
+        await ctx.db
+          .update(DeusCodeReview)
+          .set({ metadata: review.metadata })
+          .where(eq(DeusCodeReview.id, review.id));
+      }
     }),
 } satisfies TRPCRouterRecord;
