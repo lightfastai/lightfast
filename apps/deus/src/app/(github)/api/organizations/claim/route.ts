@@ -17,7 +17,7 @@ import type { OrgMembershipRole } from "~/lib/github-app";
  * GitHub admins become org:admin, all other members become org:member
  */
 function mapGitHubRoleToClerkRole(
-	githubRole: OrgMembershipRole
+	githubRole: OrgMembershipRole,
 ): "org:admin" | "org:member" {
 	return githubRole === "admin" ? "org:admin" : "org:member";
 }
@@ -86,17 +86,27 @@ async function createOrGetClerkOrganization(params: {
  * - Adds user to Clerk organization with appropriate role
  *
  * Note: All membership management is handled by Clerk. No Deus organizationMembers table.
+ *
+ * Auth: This route must support PENDING sessions (user authenticated but no org claimed yet).
+ * We use treatPendingAsSignedOut: false to treat pending sessions as authenticated.
  */
 export async function POST(request: NextRequest) {
-	const { userId } = await auth();
+	console.log("=== [CLAIM ORG] Starting claim organization request ===");
+
+	// Treat pending sessions as signed in to allow claiming org
+	const { userId } = await auth({ treatPendingAsSignedOut: false });
+	console.log("[CLAIM ORG] Auth result:", { userId });
 
 	if (!userId) {
+		console.log("[CLAIM ORG] ❌ No userId - unauthorized");
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const userToken = request.cookies.get("github_user_token")?.value;
+	console.log("[CLAIM ORG] GitHub token present:", !!userToken);
 
 	if (!userToken) {
+		console.log("[CLAIM ORG] ❌ No GitHub token");
 		return NextResponse.json(
 			{ error: "GitHub not connected. Please authorize the app first." },
 			{ status: 401 },
@@ -106,8 +116,10 @@ export async function POST(request: NextRequest) {
 	try {
 		const body = (await request.json()) as { installationId: number };
 		const { installationId } = body;
+		console.log("[CLAIM ORG] Request body:", { installationId });
 
 		if (!installationId) {
+			console.log("[CLAIM ORG] ❌ No installationId provided");
 			return NextResponse.json(
 				{ error: "installationId is required" },
 				{ status: 400 },
@@ -115,21 +127,31 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Fetch user's installations to verify access
+		console.log("[CLAIM ORG] Fetching user installations...");
 		const installationsData = await getUserInstallations(userToken);
+		console.log("[CLAIM ORG] Found installations:", installationsData.installations.length);
+
 		const installation = installationsData.installations.find(
 			(inst) => inst.id === installationId,
 		);
 
 		if (!installation) {
+			console.log("[CLAIM ORG] ❌ Installation not found:", installationId);
 			return NextResponse.json(
 				{ error: "Installation not found or access denied" },
 				{ status: 404 },
 			);
 		}
 
+		console.log("[CLAIM ORG] ✓ Installation found:", {
+			id: installation.id,
+			accountType: installation.account ? ("type" in installation.account ? installation.account.type : "unknown") : "no account",
+		});
+
 		const account = installation.account;
 
 		if (!account) {
+			console.log("[CLAIM ORG] ❌ Installation account not found");
 			return NextResponse.json(
 				{ error: "Installation account not found" },
 				{ status: 404 },
@@ -138,10 +160,27 @@ export async function POST(request: NextRequest) {
 
 		// GitHub account can be User or Organization type
 		// Organizations have 'slug', Users have 'login'
-		const accountSlug = "slug" in account ? account.slug : "login" in account ? account.login : null;
-		const accountName = "name" in account ? account.name : "login" in account ? account.login : null;
+		const accountSlug =
+			"slug" in account
+				? account.slug
+				: "login" in account
+					? account.login
+					: null;
+		const accountName =
+			"name" in account
+				? account.name
+				: "login" in account
+					? account.login
+					: null;
+
+		console.log("[CLAIM ORG] Account details:", {
+			githubOrgId: account.id,
+			accountSlug,
+			accountName,
+		});
 
 		if (!accountSlug || !accountName) {
+			console.log("[CLAIM ORG] ❌ Could not determine account slug or name");
 			return NextResponse.json(
 				{ error: "Could not determine account slug or name" },
 				{ status: 400 },
@@ -149,18 +188,27 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Check if this organization already exists (by immutable GitHub org ID)
+		console.log("[CLAIM ORG] Checking for existing org in DB...");
 		const existingOrg = await db.query.organizations.findFirst({
 			where: eq(organizations.githubOrgId, account.id),
 		});
+		console.log("[CLAIM ORG] Existing org found:", !!existingOrg);
 
 		if (existingOrg) {
+			console.log("[CLAIM ORG] → Handling existing org flow");
+
 			// Organization exists - ensure it has a Clerk org linked
 			if (!existingOrg.clerkOrgId) {
+				console.log("[CLAIM ORG] No Clerk org linked, creating one...");
 				try {
 					const clerkOrgData = await createOrGetClerkOrganization({
 						userId,
 						orgName: accountName,
 						orgSlug: accountSlug,
+					});
+					console.log("[CLAIM ORG] ✓ Clerk org created:", {
+						clerkOrgId: clerkOrgData.clerkOrgId,
+						clerkOrgSlug: clerkOrgData.clerkOrgSlug,
 					});
 
 					// Update the existing organization with Clerk org details
@@ -173,33 +221,45 @@ export async function POST(request: NextRequest) {
 						})
 						.where(eq(organizations.id, existingOrg.id));
 
+					console.log("[CLAIM ORG] ✓ DB updated with Clerk org details");
+
 					// Update local reference
 					existingOrg.clerkOrgId = clerkOrgData.clerkOrgId;
 					existingOrg.clerkOrgSlug = clerkOrgData.clerkOrgSlug;
 				} catch (error) {
-					console.error("Failed to create Clerk organization for existing org:", error);
+					console.error(
+						"[CLAIM ORG] ❌ Failed to create Clerk organization for existing org:",
+						error,
+					);
 					return NextResponse.json(
 						{
 							error: "Failed to create Clerk organization",
 							message: "Could not link organization to Clerk",
 						},
-						{ status: 500 }
+						{ status: 500 },
 					);
 				}
+			} else {
+				console.log("[CLAIM ORG] ✓ Clerk org already linked:", existingOrg.clerkOrgId);
 			}
 
 			// Check if user is already a member of the Clerk organization
+			console.log("[CLAIM ORG] Checking Clerk org membership...");
 			const clerk = await clerkClient();
-			const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-				organizationId: existingOrg.clerkOrgId,
-				limit: 500,
-			});
+			const clerkMemberships =
+				await clerk.organizations.getOrganizationMembershipList({
+					organizationId: existingOrg.clerkOrgId,
+					limit: 500,
+				});
+
+			console.log("[CLAIM ORG] Clerk org members:", clerkMemberships.data.length);
 
 			const existingClerkMembership = clerkMemberships.data.find(
-				(m) => m.publicUserData?.userId === userId
+				(m) => m.publicUserData?.userId === userId,
 			);
 
 			if (existingClerkMembership) {
+				console.log("[CLAIM ORG] ✓ User already a member, returning success");
 				// Already a member - just return success
 				return NextResponse.json({
 					success: true,
@@ -209,42 +269,57 @@ export async function POST(request: NextRequest) {
 				});
 			}
 
+			console.log("[CLAIM ORG] User not a member, verifying GitHub membership...");
+
 			// Not a member - verify GitHub membership and add to Clerk org
 			try {
 				// Get user's GitHub username
+				console.log("[CLAIM ORG] Getting GitHub user info...");
 				const githubUser = await getAuthenticatedUser(userToken);
 				const githubUsername = githubUser.login;
+				console.log("[CLAIM ORG] GitHub username:", githubUsername);
 
 				// Verify organization membership and get role
+				console.log("[CLAIM ORG] Verifying GitHub org membership...");
 				const membership = await getOrganizationMembership(
 					userToken,
 					accountSlug,
-					githubUsername
+					githubUsername,
 				);
+				console.log("[CLAIM ORG] GitHub membership:", {
+					state: membership.state,
+					role: membership.role,
+				});
 
 				// Only allow active members to join
 				if (membership.state !== "active") {
+					console.log("[CLAIM ORG] ❌ Membership not active:", membership.state);
 					return NextResponse.json(
 						{
 							error: "Membership not active",
-							message: "You must accept the organization invitation before claiming",
+							message:
+								"You must accept the organization invitation before claiming",
 						},
-						{ status: 403 }
+						{ status: 403 },
 					);
 				}
 
 				// Map GitHub role to Clerk role
 				const clerkRole = mapGitHubRoleToClerkRole(membership.role);
+				console.log("[CLAIM ORG] Mapped role:", { githubRole: membership.role, clerkRole });
 
 				// Add user to Clerk organization with verified role
+				console.log("[CLAIM ORG] Adding user to Clerk org...");
 				await clerk.organizations.createOrganizationMembership({
 					organizationId: existingOrg.clerkOrgId,
 					userId,
 					role: clerkRole,
 				});
+				console.log("[CLAIM ORG] ✓ User added to Clerk org");
 
 				// Update installation ID if it changed (app was reinstalled)
 				if (existingOrg.githubInstallationId !== installationId) {
+					console.log("[CLAIM ORG] Updating installation ID...");
 					await db
 						.update(organizations)
 						.set({
@@ -252,8 +327,10 @@ export async function POST(request: NextRequest) {
 							updatedAt: new Date().toISOString(),
 						})
 						.where(eq(organizations.id, existingOrg.id));
+					console.log("[CLAIM ORG] ✓ Installation ID updated");
 				}
 
+				console.log("[CLAIM ORG] ✅ Successfully joined existing org");
 				return NextResponse.json({
 					success: true,
 					orgId: existingOrg.githubOrgId,
@@ -263,19 +340,21 @@ export async function POST(request: NextRequest) {
 				});
 			} catch (error) {
 				// If membership check fails, user is not a member of the organization
-				console.error("Organization membership verification failed:", error);
+				console.error("[CLAIM ORG] ❌ Organization membership verification failed:", error);
 				return NextResponse.json(
 					{
 						error: "Not a member",
 						message:
 							"You must be a member of this GitHub organization to claim it",
 					},
-					{ status: 403 }
+					{ status: 403 },
 				);
 			}
 		}
 
 		// Create Clerk organization first (user becomes admin automatically via createdBy)
+		console.log("[CLAIM ORG] → Creating new org flow");
+		console.log("[CLAIM ORG] Creating Clerk organization...");
 		let clerkOrgData: { clerkOrgId: string; clerkOrgSlug: string };
 
 		try {
@@ -284,18 +363,23 @@ export async function POST(request: NextRequest) {
 				orgName: accountName,
 				orgSlug: accountSlug,
 			});
+			console.log("[CLAIM ORG] ✓ Clerk org created:", {
+				clerkOrgId: clerkOrgData.clerkOrgId,
+				clerkOrgSlug: clerkOrgData.clerkOrgSlug,
+			});
 		} catch (error) {
-			console.error("Failed to create Clerk organization:", error);
+			console.error("[CLAIM ORG] ❌ Failed to create Clerk organization:", error);
 			return NextResponse.json(
 				{
 					error: "Failed to create Clerk organization",
 					message: "Could not create organization",
 				},
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 
 		// Create new organization record with Clerk org link
+		console.log("[CLAIM ORG] Creating Deus org record in DB...");
 		try {
 			const [newOrg] = await db
 				.insert(organizations)
@@ -315,6 +399,9 @@ export async function POST(request: NextRequest) {
 				throw new Error("Failed to create organization");
 			}
 
+			console.log("[CLAIM ORG] ✓ Deus org created in DB:", newOrg);
+			console.log("[CLAIM ORG] ✅ Successfully created new org");
+
 			return NextResponse.json({
 				success: true,
 				orgId: account.id,
@@ -323,17 +410,21 @@ export async function POST(request: NextRequest) {
 			});
 		} catch (error) {
 			// Rollback: Delete Clerk org if Deus org creation failed
-			console.error("Failed to create Deus organization, rolling back Clerk org:", error);
+			console.error(
+				"[CLAIM ORG] ❌ Failed to create Deus organization, rolling back Clerk org:",
+				error,
+			);
 			try {
 				const clerk = await clerkClient();
 				await clerk.organizations.deleteOrganization(clerkOrgData.clerkOrgId);
+				console.log("[CLAIM ORG] ✓ Rolled back Clerk org");
 			} catch (rollbackError) {
-				console.error("Failed to rollback Clerk organization:", rollbackError);
+				console.error("[CLAIM ORG] ❌ Failed to rollback Clerk organization:", rollbackError);
 			}
 			throw error;
 		}
 	} catch (error) {
-		console.error("Error claiming organization:", error);
+		console.error("[CLAIM ORG] ❌ Unexpected error:", error);
 		return NextResponse.json(
 			{
 				error: "Failed to claim organization",

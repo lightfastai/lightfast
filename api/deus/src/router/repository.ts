@@ -2,9 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../trpc";
-import { db } from "@db/deus/client";
-import { DeusConnectedRepository } from "@db/deus";
-import { desc, eq, and } from "drizzle-orm";
+import { RepositoriesService } from "@repo/deus-api-services/repositories";
 
 export const repositoryRouter = {
   /**
@@ -23,31 +21,11 @@ export const repositoryRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      const whereConditions = [
-        eq(DeusConnectedRepository.organizationId, input.organizationId),
-      ];
-
-      if (!input.includeInactive) {
-        whereConditions.push(eq(DeusConnectedRepository.isActive, true));
-      }
-
-      const repositories = await db
-        .select({
-          id: DeusConnectedRepository.id,
-          githubRepoId: DeusConnectedRepository.githubRepoId,
-          githubInstallationId: DeusConnectedRepository.githubInstallationId,
-          permissions: DeusConnectedRepository.permissions,
-          isActive: DeusConnectedRepository.isActive,
-          connectedAt: DeusConnectedRepository.connectedAt,
-          lastSyncedAt: DeusConnectedRepository.lastSyncedAt,
-          metadata: DeusConnectedRepository.metadata, // Optional cache for UI
-          codeReviewSettings: DeusConnectedRepository.codeReviewSettings,
-        })
-        .from(DeusConnectedRepository)
-        .where(and(...whereConditions))
-        .orderBy(desc(DeusConnectedRepository.connectedAt));
-
-      return repositories;
+      const repositoriesService = new RepositoriesService();
+      return await repositoriesService.listByOrganization({
+        organizationId: input.organizationId,
+        includeInactive: input.includeInactive,
+      });
     }),
 
   /**
@@ -61,25 +39,20 @@ export const repositoryRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      const repository = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
-        )
-        .limit(1);
+      const repositoriesService = new RepositoriesService();
+      const repository = await repositoriesService.findByIdAndOrganization(
+        input.repositoryId,
+        input.organizationId
+      );
 
-      if (!repository[0]) {
+      if (!repository) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Repository not found",
         });
       }
 
-      return repository[0];
+      return repository;
     }),
 
   /**
@@ -113,60 +86,34 @@ export const repositoryRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if this repository is already connected to this organization
-      const existingRepo = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.organizationId, input.organizationId),
-            eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.isActive, true)
-          )
-        )
-        .limit(1);
+      const repositoriesService = new RepositoriesService();
 
-      if (existingRepo[0]) {
+      // Check if this repository is already connected to this organization
+      const existingRepo = await repositoriesService.findByGithubRepoId(
+        input.githubRepoId,
+        input.organizationId
+      );
+
+      if (existingRepo?.isActive) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "This repository is already connected to this organization.",
         });
       }
 
-      // Check if this specific repository was previously connected (soft deleted)
-      const previousConnection = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.organizationId, input.organizationId),
-            eq(DeusConnectedRepository.githubRepoId, input.githubRepoId)
-          )
-        )
-        .limit(1);
-
-      if (previousConnection[0]) {
+      if (existingRepo) {
         // Reactivate previous connection
-        await db
-          .update(DeusConnectedRepository)
-          .set({
-            isActive: true,
-            githubInstallationId: input.githubInstallationId,
-            permissions: input.permissions,
-            metadata: input.metadata,
-          })
-          .where(eq(DeusConnectedRepository.id, previousConnection[0].id));
-
-        return {
-          id: previousConnection[0].id,
-          success: true,
-        };
+        return await repositoriesService.reactivate(existingRepo.id, {
+          githubInstallationId: input.githubInstallationId,
+          permissions: input.permissions,
+          metadata: input.metadata,
+        });
       }
 
       // Generate a new UUID for the repository
       const id = crypto.randomUUID();
 
-      await db.insert(DeusConnectedRepository).values({
+      return await repositoriesService.connect({
         id,
         organizationId: input.organizationId,
         githubRepoId: input.githubRepoId,
@@ -174,10 +121,5 @@ export const repositoryRouter = {
         permissions: input.permissions,
         metadata: input.metadata,
       });
-
-      return {
-        id,
-        success: true,
-      };
     }),
 } satisfies TRPCRouterRecord;

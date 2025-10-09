@@ -10,17 +10,22 @@ const isPublicRoute = createRouteMatcher([
 	"/api/health(.*)",
 	"/robots.txt",
 	"/sitemap(.*)",
-	"/onboarding/claim-org", // Allow pending users (authenticated but no active org)
 ]);
+// Onboarding routes should be accessible to pending users (authenticated but no org claimed)
+// Uses treatPendingAsSignedOut={false} in the layout to allow access
+const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard", "/dashboard/(.*)"]);
 const isProtectedRoute = createRouteMatcher([
 	"/org(.*)",
-	"/onboarding(.*)", // All onboarding routes except claim-org (handled above)
 	"/app(.*)",
 ]);
 
+// Require auth protection for routes that need ACTIVE (non-pending) sessions
+// Onboarding routes are excluded because they handle pending sessions specially
 const requiresAuth = (req: NextRequest) =>
-	!isPublicRoute(req) && (isDashboardRoute(req) || isProtectedRoute(req));
+	!isPublicRoute(req) &&
+	!isOnboardingRoute(req) &&
+	(isDashboardRoute(req) || isProtectedRoute(req));
 
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {

@@ -1,7 +1,6 @@
-import { db } from "@db/deus/client";
-import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
 import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
-import { eq } from "drizzle-orm";
+import { CodeReviewsService } from "@repo/deus-api-services/code-reviews";
+import { RepositoriesService } from "@repo/deus-api-services/repositories";
 import { getPullRequest } from "./github-app";
 
 /**
@@ -16,33 +15,28 @@ import { getPullRequest } from "./github-app";
  * @returns Updated metadata or null if sync failed
  */
 export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetadata | null> {
-	// 1. Fetch the code review and repository
-	const review = await db
-		.select()
-		.from(DeusCodeReview)
-		.where(eq(DeusCodeReview.id, reviewId))
-		.limit(1);
+	const codeReviewsService = new CodeReviewsService();
+	const repositoriesService = new RepositoriesService();
 
-	if (!review[0]) {
+	// 1. Fetch the code review and repository
+	const review = await codeReviewsService.findById(reviewId);
+
+	if (!review) {
 		console.error(`[Sync] Code review ${reviewId} not found`);
 		return null;
 	}
 
-	const repo = await db
-		.select()
-		.from(DeusConnectedRepository)
-		.where(eq(DeusConnectedRepository.id, review[0].repositoryId))
-		.limit(1);
+	const repo = await repositoriesService.findById(review.repositoryId);
 
-	if (!repo[0]) {
-		console.error(`[Sync] Repository ${review[0].repositoryId} not found`);
+	if (!repo) {
+		console.error(`[Sync] Repository ${review.repositoryId} not found`);
 		return null;
 	}
 
 	// 2. Extract owner/repo from cached metadata or githubRepoId
-	const fullName = repo[0].metadata?.fullName;
+	const fullName = repo.metadata?.fullName;
 	if (!fullName || typeof fullName !== "string") {
-		console.error(`[Sync] Repository ${repo[0].id} missing fullName in metadata`);
+		console.error(`[Sync] Repository ${repo.id} missing fullName in metadata`);
 		return null;
 	}
 
@@ -55,15 +49,15 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
 	try {
 		// 3. Fetch fresh PR data from GitHub API
 		const pr = await getPullRequest(
-			Number(repo[0].githubInstallationId),
+			Number(repo.githubInstallationId),
 			owner,
 			repoName,
-			review[0].pullRequestNumber
+			review.pullRequestNumber
 		);
 
 		// 4. Build updated metadata
 		const updatedMetadata: CodeReviewMetadata = {
-			...review[0].metadata,
+			...review.metadata,
 			prTitle: pr.title,
 			prState: pr.state,
 			prMerged: pr.merged ?? false,
@@ -75,10 +69,7 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
 		};
 
 		// 5. Update database
-		await db
-			.update(DeusCodeReview)
-			.set({ metadata: updatedMetadata })
-			.where(eq(DeusCodeReview.id, reviewId));
+		await codeReviewsService.updateMetadata(reviewId, updatedMetadata);
 
 		console.log(`[Sync] Successfully synced PR metadata for review ${reviewId}`);
 		return updatedMetadata;
@@ -88,16 +79,13 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
 		// Handle 404 - PR deleted
 		if (error && typeof error === "object" && "status" in error && error.status === 404) {
 			const deletedMetadata: CodeReviewMetadata = {
-				...review[0].metadata,
+				...review.metadata,
 				deleted: true,
 				deletedAt: new Date().toISOString(),
 				lastSyncedAt: new Date().toISOString(),
 			};
 
-			await db
-				.update(DeusCodeReview)
-				.set({ metadata: deletedMetadata })
-				.where(eq(DeusCodeReview.id, reviewId));
+			await codeReviewsService.updateMetadata(reviewId, deletedMetadata);
 
 			return deletedMetadata;
 		}

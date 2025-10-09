@@ -31,7 +31,7 @@ interface SignInPasswordProps {
 }
 
 export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
-	const { signIn, isLoaded } = useSignIn();
+	const { signIn, isLoaded, setActive } = useSignIn();
 	const log = useLogger();
 
 	const form = useForm<PasswordFormData>({
@@ -57,6 +57,13 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
 					identifier: data.identifier,
 					timestamp: new Date().toISOString(),
 				});
+
+				// Set the session as active - Clerk will handle redirect based on session state
+				// - Pending sessions → taskUrls (e.g., /onboarding/claim-org)
+				// - Active sessions → signInFallbackRedirectUrl (e.g., /app)
+				await setActive({ session: result.createdSessionId });
+
+				// Call onSuccess for any additional handling (but no manual redirect)
 				onSuccess();
 			} else {
 				throw new Error("Sign-in incomplete");

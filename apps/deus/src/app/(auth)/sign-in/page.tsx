@@ -17,10 +17,11 @@ export const dynamic = 'force-dynamic';
 export default function SignInPage() {
 	return (
 		<>
+			{/* RedirectToTasks handles both active AND pending sessions */}
+			<RedirectToTasks />
 			<SignedOut>
-				<RedirectToTasks />
+				<SignInForm />
 			</SignedOut>
-			<SignInForm />
 		</>
 	);
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SignedIn } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 import { Github, Loader2, Building2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -21,15 +21,11 @@ import type { GitHubInstallation } from "~/lib/github-app";
  * Shows user's GitHub installations (organizations) and allows them to claim one.
  * After claiming, user is redirected to their org's home page.
  *
- * Uses treatPendingAsSignedOut={false} to allow pending users (authenticated but
- * no active org) to access this page.
+ * Auth is handled by the parent onboarding layout which uses treatPendingAsSignedOut={false}
+ * to allow pending users (authenticated but no active org) to access this page.
  */
 export default function ClaimOrgPage() {
-	return (
-		<SignedIn treatPendingAsSignedOut={false}>
-			<ClaimOrgContent />
-		</SignedIn>
-	);
+	return <ClaimOrgContent />;
 }
 
 function ClaimOrgContent() {
@@ -38,6 +34,7 @@ function ClaimOrgContent() {
 	const [claiming, setClaiming] = useState<number | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
+	const { setActive } = useClerk();
 
 	useEffect(() => {
 		void fetchInstallations();
@@ -103,12 +100,23 @@ function ClaimOrgContent() {
 						: "Unknown"
 				: "Unknown";
 
+			console.log("[CLAIM ORG CLIENT] Setting active organization:", data.slug);
+
+			// Set the claimed organization as active in Clerk session
+			// This moves the session from "pending" to "active" state
+			await setActive({
+				organization: data.slug, // Can be org slug or org ID
+			});
+
+			console.log("[CLAIM ORG CLIENT] ✓ Organization set as active");
+
 			toast({
 				title: "Organization claimed!",
 				description: `Successfully claimed ${accountName}`,
 			});
 
 			// Redirect to organization home using Clerk org slug
+			// Session is now active, so user will have full access
 			router.push(`/org/${data.slug}/settings`);
 		} catch (error) {
 			toast({

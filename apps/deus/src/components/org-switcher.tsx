@@ -58,7 +58,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 	}, [activeOrg, claimedOrgs]);
 
 	const handleSelectOrg = useCallback(
-		async (org: OrgData) => {
+		(org: OrgData) => {
 			setOpen(false);
 
 			// Guard against unclaimed orgs (should not happen with filtering)
