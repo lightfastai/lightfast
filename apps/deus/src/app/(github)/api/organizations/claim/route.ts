@@ -2,11 +2,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { OrganizationsService } from "@repo/deus-api-services";
+import type { OrgMembershipRole } from "@repo/deus-octokit-github";
 import {
 	getUserInstallations,
 	getAuthenticatedUser,
 	getOrganizationMembership,
-	type OrgMembershipRole,
 } from "@repo/deus-octokit-github";
 
 /**
