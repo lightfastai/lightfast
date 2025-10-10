@@ -55,18 +55,18 @@ export const sessionRouter = {
         id: z.string().uuid(),
         organizationId: z.string(),
         repositoryId: z.string().optional(),
-        userId: z.string(),
         cwd: z.string(),
         metadata: z.record(z.unknown()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       // Create session with CLI-provided ID
+      // userId comes from auth context (API key)
       await ctx.db.insert(DeusSession).values({
         id: input.id,
         organizationId: input.organizationId,
         repositoryId: input.repositoryId,
-        userId: input.userId,
+        userId: ctx.auth.userId,  // Get from auth context
         cwd: input.cwd,
         metadata: input.metadata,
         status: "active",
