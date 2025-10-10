@@ -25,17 +25,22 @@ export default async function OrgHomePage({
 		notFound();
 	}
 
+	// Ensure organization has a Clerk org ID (required for API calls)
+	if (!access.org.clerkOrgId) {
+		notFound();
+	}
+
 	// Prefetch repositories and sessions for this org to avoid loading state
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId: access.org.id,
+			organizationId: access.org.clerkOrgId,
 		})
 	);
 
 	prefetch(
 		trpc.session.list.queryOptions({
-			organizationId: access.org.id,
+			organizationId: access.org.clerkOrgId,
 		})
 	);
 
@@ -43,7 +48,7 @@ export default async function OrgHomePage({
 		<HydrateClient>
 			<OrgChatInterface
 				orgId={access.org.githubOrgId}
-				organizationId={access.org.id}
+				organizationId={access.org.clerkOrgId}
 				orgSlug={slug}
 			/>
 		</HydrateClient>

@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { DeusConnectedRepository } from "@db/deus/schema";
+import { DeusConnectedRepository, organizations } from "@db/deus/schema";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -19,12 +19,24 @@ export const repositoryRouter = {
     .input(
       z.object({
         includeInactive: z.boolean().default(false),
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
       const whereConditions = [
-        eq(DeusConnectedRepository.organizationId, input.organizationId),
+        eq(DeusConnectedRepository.organizationId, orgResult.id),
       ];
 
       if (!input.includeInactive) {
@@ -44,17 +56,29 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
       const result = await ctx.db
         .select()
         .from(DeusConnectedRepository)
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId),
+            eq(DeusConnectedRepository.organizationId, orgResult.id),
           ),
         )
         .limit(1);
@@ -88,7 +112,7 @@ export const repositoryRouter = {
   connect: protectedProcedure
     .input(
       z.object({
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
         githubRepoId: z.string(),
         githubInstallationId: z.string(),
         permissions: z
@@ -102,6 +126,18 @@ export const repositoryRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
       // Check if this repository is already connected to this organization
       const existingRepoResult = await ctx.db
         .select()
@@ -109,7 +145,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId),
+            eq(DeusConnectedRepository.organizationId, orgResult.id),
           ),
         )
         .limit(1);
@@ -152,7 +188,7 @@ export const repositoryRouter = {
       // Create new connection
       await ctx.db.insert(DeusConnectedRepository).values({
         id,
-        organizationId: input.organizationId,
+        organizationId: orgResult.id,
         githubRepoId: input.githubRepoId,
         githubInstallationId: input.githubInstallationId,
         permissions: input.permissions,

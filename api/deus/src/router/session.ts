@@ -53,18 +53,30 @@ export const sessionRouter = {
     .input(
       z.object({
         id: z.string().uuid(),
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
         repositoryId: z.string().optional(),
         cwd: z.string(),
         metadata: z.record(z.unknown()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Create session with CLI-provided ID
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
+      // Create session with internal org ID
       // userId comes from auth context (API key)
       await ctx.db.insert(DeusSession).values({
         id: input.id,
-        organizationId: input.organizationId,
+        organizationId: orgResult.id, // Use internal org ID
         repositoryId: input.repositoryId,
         userId: ctx.auth.userId,  // Get from auth context
         cwd: input.cwd,
@@ -224,22 +236,22 @@ export const sessionRouter = {
   list: clerkProtectedProcedure
     .input(
       z.object({
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(), // Cursor is createdAt timestamp
         status: z.enum(DEUS_SESSION_STATUS).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Verify user is a member of the organization
+      // Look up internal org ID from Clerk org ID
       const deusOrgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
+        where: eq(organizations.clerkOrgId, input.organizationId),
       });
 
-      if (!deusOrgResult?.clerkOrgId) {
+      if (!deusOrgResult) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Organization not found",
+          message: `Organization not found: ${input.organizationId}`,
         });
       }
 
@@ -247,7 +259,7 @@ export const sessionRouter = {
       const clerk = await clerkClient();
       const clerkMemberships =
         await clerk.organizations.getOrganizationMembershipList({
-          organizationId: deusOrgResult.clerkOrgId,
+          organizationId: input.organizationId, // Use Clerk org ID directly
           limit: 500,
         });
 
@@ -262,9 +274,9 @@ export const sessionRouter = {
         });
       }
 
-      // Build where conditions
+      // Build where conditions using internal org ID
       const whereConditions = [
-        eq(DeusSession.organizationId, input.organizationId),
+        eq(DeusSession.organizationId, deusOrgResult.id),
       ];
 
       if (input.status) {
@@ -299,6 +311,9 @@ export const sessionRouter = {
         hasMore && resultSessions.length > 0
           ? resultSessions[resultSessions.length - 1]?.createdAt
           : undefined;
+
+      // Debug logging
+      console.log(`[session.list] Returning ${resultSessions.length} sessions for org ${input.organizationId}`);
 
       return {
         sessions: resultSessions,

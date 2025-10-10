@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { DeusApiKey } from "@db/deus/schema";
+import { DeusApiKey, organizations } from "@db/deus/schema";
 import { TRPCError } from "@trpc/server";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -34,10 +34,22 @@ export const apiKeyRouter = {
     .input(
       z.object({
         name: z.string().min(1).max(100),
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
       // Generate API key: deus_sk_<32 random chars>
       const keySecret = nanoid(32);
       const key = `deus_sk_${keySecret}`;
@@ -63,7 +75,7 @@ export const apiKeyRouter = {
         keyHash,
         keyPreview,
         userId: ctx.auth.userId,
-        organizationId: input.organizationId,
+        organizationId: orgResult.id, // Use internal org ID
         name: input.name,
         scopes: ["admin"],
       });
@@ -84,10 +96,22 @@ export const apiKeyRouter = {
   list: protectedProcedure
     .input(
       z.object({
-        organizationId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
       // Query all API keys for the organization
       const keys = await ctx.db
         .select({
@@ -101,7 +125,7 @@ export const apiKeyRouter = {
           revokedAt: DeusApiKey.revokedAt,
         })
         .from(DeusApiKey)
-        .where(eq(DeusApiKey.organizationId, input.organizationId));
+        .where(eq(DeusApiKey.organizationId, orgResult.id));
 
       return keys;
     }),
