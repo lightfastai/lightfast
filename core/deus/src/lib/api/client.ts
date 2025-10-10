@@ -54,7 +54,7 @@ export async function verifyApiKey(apiKey: string): Promise<VerifyApiKeyResponse
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ key: apiKey }),
+      body: JSON.stringify({ json: { key: apiKey } }),
     });
 
     if (!response.ok) {
@@ -62,8 +62,9 @@ export async function verifyApiKey(apiKey: string): Promise<VerifyApiKeyResponse
       throw new Error(errorData.error?.message || 'Failed to verify API key');
     }
 
-    const data = (await response.json()) as VerifyApiKeyResponse;
-    return data;
+    // tRPC wraps response in { result: { data: ... } }
+    const responseData = (await response.json()) as { result: { data: VerifyApiKeyResponse } };
+    return responseData.result.data;
   } catch (error) {
     if (error instanceof Error) {
       throw error;
@@ -92,8 +93,9 @@ export async function getUserOrganizations(apiKey: string): Promise<ApiOrganizat
       throw new Error(errorData.error?.message || 'Failed to fetch organizations');
     }
 
-    const data = (await response.json()) as UserOrganizationsResponse;
-    return data.organizations;
+    // tRPC wraps response in { result: { data: ... } }
+    const responseData = (await response.json()) as { result: { data: ApiOrganization[] } };
+    return responseData.result.data;
   } catch (error) {
     if (error instanceof Error) {
       throw error;
