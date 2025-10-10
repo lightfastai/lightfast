@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { findUserOrganizations } from "~/lib/org-access";
+import { getUserOrganizations } from "~/lib/org-access-clerk";
 import { AuthenticatedHeader } from "~/components/authenticated-header";
 
 export default async function AppLayout({
@@ -15,7 +15,7 @@ export default async function AppLayout({
 	}
 
 	// Fetch user's organizations for the org switcher
-	const organizations = await findUserOrganizations(userId);
+	const organizations = await getUserOrganizations();
 
 	return (
 		<div className="dark">

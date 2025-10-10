@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { findUserDefaultOrg } from "~/lib/org-access";
+import { getUserOrganizations } from "~/lib/org-access-clerk";
 
 /**
  * App Entry Point - Org Redirect
@@ -15,14 +15,14 @@ export default async function AppPage() {
 		redirect("/sign-in");
 	}
 
-	// Find user's default organization
-	const org = await findUserDefaultOrg(userId);
+	// Get user's organizations
+	const orgs = await getUserOrganizations();
 
-	if (!org) {
+	if (orgs.length === 0 || !orgs[0]) {
 		// User has no organizations - send to onboarding
 		redirect("/onboarding");
 	}
 
-	// Redirect to user's default organization
-	redirect(`/org/${org.githubOrgId}`);
+	// Redirect to user's first organization using Clerk org slug
+	redirect(`/org/${orgs[0].slug}`);
 }

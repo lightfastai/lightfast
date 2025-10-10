@@ -9,7 +9,7 @@ export const CODE_REVIEW_TOOLS = [
   "coderabbit",
   "claude",
   "vercel-agents",
-  "custom"
+  "custom",
 ] as const;
 
 export type CodeReviewTool = (typeof CODE_REVIEW_TOOLS)[number];
@@ -22,7 +22,7 @@ export const CODE_REVIEW_STATUS = [
   "running",
   "completed",
   "failed",
-  "cancelled"
+  "cancelled",
 ] as const;
 
 export type CodeReviewStatus = (typeof CODE_REVIEW_STATUS)[number];

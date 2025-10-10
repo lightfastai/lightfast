@@ -1,4 +1,5 @@
 import { createDatabase } from "@vendor/db";
+
 import { env } from "../env";
 import * as schema from "./schema";
 
@@ -8,5 +9,5 @@ export const db = createDatabase(
     username: env.DATABASE_USERNAME,
     password: env.DATABASE_PASSWORD,
   },
-  schema
+  schema,
 );

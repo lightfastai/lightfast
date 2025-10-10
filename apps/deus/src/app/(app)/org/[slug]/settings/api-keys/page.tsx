@@ -1,53 +1,48 @@
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
-import { RepositoriesSettings } from "~/components/repositories-settings";
-import { verifyOrgAccess } from "~/lib/org-access";
+import { ApiKeysSettings } from "~/components/settings/api-keys/api-keys-settings";
+import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
-export default async function RepositoriesPage({
+export default async function ApiKeysPage({
 	params,
 }: {
-	params: Promise<{ orgId: string }>;
+	params: Promise<{ slug: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { orgId } = await params;
-	const githubOrgId = parseInt(orgId, 10);
+	const { slug } = await params;
 
-	if (isNaN(githubOrgId)) {
+	// Verify user has access to this organization
+	let access;
+	try {
+		access = await requireOrgAccess(slug);
+	} catch {
 		notFound();
 	}
 
-	// Verify user has access to this organization
-	const access = await verifyOrgAccess(userId, githubOrgId);
-
-	if (!access.hasAccess) {
-		redirect("/onboarding");
-	}
-
-	// Prefetch repositories to avoid loading state
+	// Prefetch API keys to avoid loading state
 	prefetch(
-		trpc.repository.list.queryOptions({
-			includeInactive: false,
+		trpc.apiKey.list.queryOptions({
 			organizationId: access.org.id,
 		})
 	);
 
 	return (
 		<HydrateClient>
-			<Suspense fallback={<RepositoriesSettingsSkeleton />}>
-				<RepositoriesSettings organizationId={access.org.id} />
+			<Suspense fallback={<ApiKeysSettingsSkeleton />}>
+				<ApiKeysSettings organizationId={access.org.id} />
 			</Suspense>
 		</HydrateClient>
 	);
 }
 
-function RepositoriesSettingsSkeleton() {
+function ApiKeysSettingsSkeleton() {
 	return (
 		<div className="space-y-6">
 			<div className="rounded-lg border border-border/60 p-6">
@@ -56,6 +51,7 @@ function RepositoriesSettingsSkeleton() {
 						<Skeleton className="h-6 w-48" />
 						<Skeleton className="h-4 w-64" />
 					</div>
+					<Skeleton className="h-9 w-32" />
 				</div>
 				<div className="space-y-3">
 					<Skeleton className="h-24 w-full" />

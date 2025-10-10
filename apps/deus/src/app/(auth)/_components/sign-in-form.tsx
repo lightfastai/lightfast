@@ -1,18 +1,17 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import { OAuthSignIn } from "./oauth-sign-in";
 import { SignInPassword } from "./sign-in-password";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 
 export function SignInForm() {
-	const router = useRouter();
 	const [error, setError] = React.useState<string | null>(null);
 
 	const handlePasswordSuccess = () => {
-		router.push("/");
+		// Clerk handles redirect automatically via setActive() in SignInPassword component
+		// No manual redirect needed - Clerk will use taskUrls or signInFallbackRedirectUrl
 	};
 
 	const handlePasswordError = (errorMessage: string) => {

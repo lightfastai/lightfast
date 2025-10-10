@@ -95,6 +95,7 @@ export function ConnectRepositoryDialog({
 							// Add the new repository to the list optimistically
 							draft.unshift({
 								id: crypto.randomUUID(), // Temporary ID
+								organizationId: variables.organizationId,
 								githubRepoId: variables.githubRepoId,
 								githubInstallationId: variables.githubInstallationId,
 								permissions: variables.permissions ?? null,
@@ -103,6 +104,7 @@ export function ConnectRepositoryDialog({
 								lastSyncedAt: null,
 								metadata: variables.metadata ?? null,
 								codeReviewSettings: null,
+								createdAt: new Date().toISOString(),
 							});
 						}
 					})

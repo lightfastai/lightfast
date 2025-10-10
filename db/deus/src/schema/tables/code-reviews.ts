@@ -1,21 +1,24 @@
 import { sql } from "drizzle-orm";
 import {
-	datetime,
-	index,
-	json,
-	mysqlEnum,
-	mysqlTable,
-	text,
-	varchar,
-	int,
+  datetime,
+  index,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  varchar,
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { CODE_REVIEW_STATUS, CODE_REVIEW_TOOLS } from "@repo/deus-types/code-review";
 import type {
-	CodeReviewMetadata,
-	CodeReviewStatus,
-	CodeReviewTool,
+  CodeReviewMetadata,
+  CodeReviewStatus,
+  CodeReviewTool,
+} from "@repo/deus-types/code-review";
+import {
+  CODE_REVIEW_STATUS,
+  CODE_REVIEW_TOOLS,
 } from "@repo/deus-types/code-review";
 import { uuidv4 } from "@repo/lib";
 
@@ -28,94 +31,94 @@ import { uuidv4 } from "@repo/lib";
  * - Creates tasks for each finding
  */
 export const DeusCodeReview = mysqlTable(
-	"lightfast_deus_code_reviews",
-	{
-		/**
-		 * Unique identifier for the code review
-		 */
-		id: varchar("id", { length: 191 })
-			.notNull()
-			.primaryKey()
-			.$defaultFn(() => uuidv4()),
+  "lightfast_deus_code_reviews",
+  {
+    /**
+     * Unique identifier for the code review
+     */
+    id: varchar("id", { length: 191 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => uuidv4()),
 
-		/**
-		 * Repository this review belongs to
-		 */
-		repositoryId: varchar("repository_id", { length: 191 }).notNull(),
+    /**
+     * Repository this review belongs to
+     */
+    repositoryId: varchar("repository_id", { length: 191 }).notNull(),
 
-		/**
-		 * GitHub Pull Request number
-		 */
-		pullRequestNumber: int("pull_request_number").notNull(),
+    /**
+     * GitHub Pull Request number
+     */
+    pullRequestNumber: int("pull_request_number").notNull(),
 
-		/**
-		 * GitHub Pull Request ID (immutable)
-		 */
-		githubPrId: varchar("github_pr_id", { length: 191 }).notNull(),
+    /**
+     * GitHub Pull Request ID (immutable)
+     */
+    githubPrId: varchar("github_pr_id", { length: 191 }).notNull(),
 
-		/**
-		 * Review tool used
-		 */
-		reviewTool: mysqlEnum("review_tool", CODE_REVIEW_TOOLS).notNull(),
+    /**
+     * Review tool used
+     */
+    reviewTool: mysqlEnum("review_tool", CODE_REVIEW_TOOLS).notNull(),
 
-		/**
-		 * Current status of the review
-		 */
-		status: mysqlEnum("status", CODE_REVIEW_STATUS)
-			.notNull()
-			.default("pending"),
+    /**
+     * Current status of the review
+     */
+    status: mysqlEnum("status", CODE_REVIEW_STATUS)
+      .notNull()
+      .default("pending"),
 
-		/**
-		 * User who triggered the review (Clerk user ID)
-		 */
-		triggeredBy: varchar("triggered_by", { length: 191 }).notNull(),
+    /**
+     * User who triggered the review (Clerk user ID)
+     */
+    triggeredBy: varchar("triggered_by", { length: 191 }).notNull(),
 
-		/**
-		 * When the review was triggered
-		 */
-		triggeredAt: datetime("triggered_at", { mode: "string" })
-			.default(sql`(CURRENT_TIMESTAMP)`)
-			.notNull(),
+    /**
+     * When the review was triggered
+     */
+    triggeredAt: datetime("triggered_at", { mode: "string" })
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
 
-		/**
-		 * When the review started running
-		 */
-		startedAt: datetime("started_at", { mode: "string" }),
+    /**
+     * When the review started running
+     */
+    startedAt: datetime("started_at", { mode: "string" }),
 
-		/**
-		 * When the review completed (success or failure)
-		 */
-		completedAt: datetime("completed_at", { mode: "string" }),
+    /**
+     * When the review completed (success or failure)
+     */
+    completedAt: datetime("completed_at", { mode: "string" }),
 
-		/**
-		 * Review metadata (tool-specific data, results)
-		 */
-		metadata: json("metadata").$type<CodeReviewMetadata>(),
+    /**
+     * Review metadata (tool-specific data, results)
+     */
+    metadata: json("metadata").$type<CodeReviewMetadata>(),
 
-		/**
-		 * Timestamp when record was created
-		 */
-		createdAt: datetime("created_at", { mode: "string" })
-			.default(sql`(CURRENT_TIMESTAMP)`)
-			.notNull(),
+    /**
+     * Timestamp when record was created
+     */
+    createdAt: datetime("created_at", { mode: "string" })
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
 
-		/**
-		 * Timestamp when record was last updated
-		 */
-		updatedAt: datetime("updated_at", { mode: "string" })
-			.default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
-			.notNull(),
-	},
-	(table) => ({
-		// Index for repository lookups
-		repositoryIdIdx: index("repository_id_idx").on(table.repositoryId),
-		// Index for PR lookups
-		prIdx: index("pr_idx").on(table.repositoryId, table.pullRequestNumber),
-		// Index for status queries
-		statusIdx: index("status_idx").on(table.status),
-		// Index for user activity
-		triggeredByIdx: index("triggered_by_idx").on(table.triggeredBy),
-	}),
+    /**
+     * Timestamp when record was last updated
+     */
+    updatedAt: datetime("updated_at", { mode: "string" })
+      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    // Index for repository lookups
+    repositoryIdIdx: index("repository_id_idx").on(table.repositoryId),
+    // Index for PR lookups
+    prIdx: index("pr_idx").on(table.repositoryId, table.pullRequestNumber),
+    // Index for status queries
+    statusIdx: index("status_idx").on(table.status),
+    // Index for user activity
+    triggeredByIdx: index("triggered_by_idx").on(table.triggeredBy),
+  }),
 );
 
 // Type exports

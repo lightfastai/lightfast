@@ -1,9 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getInstallationRepositories } from "~/lib/github-app";
-import { db } from "@db/deus/client";
-import { organizations } from "@db/deus";
-import { eq } from "drizzle-orm";
+import { OrganizationsService } from "@repo/deus-api-services";
 
 /**
  * GitHub App - Fetch Installation Repositories
@@ -38,20 +36,17 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		const org = await db
-			.select()
-			.from(organizations)
-			.where(eq(organizations.githubOrgId, githubOrgId))
-			.limit(1);
+		const organizationsService = new OrganizationsService();
+		const org = await organizationsService.findByGithubOrgId(githubOrgId);
 
-		if (!org[0]) {
+		if (!org) {
 			return NextResponse.json(
 				{ error: "Organization not found" },
 				{ status: 404 }
 			);
 		}
 
-		installationId = org[0].githubInstallationId;
+		installationId = org.githubInstallationId;
 	} else if (installationIdParam) {
 		// Direct installation ID lookup
 		installationId = Number.parseInt(installationIdParam, 10);

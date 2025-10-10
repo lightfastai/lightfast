@@ -1,39 +1,31 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
-import { verifyOrgAccess } from "~/lib/org-access";
+import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { OrgChatInterface } from "~/components/org-chat-interface";
 import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
 
 export default async function OrgHomePage({
 	params,
 }: {
-	params: Promise<{ orgId: string }>;
+	params: Promise<{ slug: string }>;
 }) {
 	const { userId } = await auth();
 	if (!userId) {
 		redirect("/sign-in");
 	}
 
-	const { orgId } = await params;
-	const githubOrgId = parseInt(orgId, 10);
+	const { slug } = await params;
 
-	if (isNaN(githubOrgId)) {
+	// Verify user has access to this organization
+	let access;
+	try {
+		access = await requireOrgAccess(slug);
+	} catch {
 		notFound();
 	}
 
-	// Verify user has access to this organization
-	const access = await verifyOrgAccess(userId, githubOrgId);
-
-	if (!access.hasAccess) {
-		if (access.reason === "org_not_found") {
-			notFound();
-		}
-		// User is not a member - send to onboarding
-		redirect("/onboarding");
-	}
-
-	// Prefetch repositories for this org to avoid loading state
+	// Prefetch repositories and sessions for this org to avoid loading state
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
@@ -41,11 +33,18 @@ export default async function OrgHomePage({
 		})
 	);
 
+	prefetch(
+		trpc.session.list.queryOptions({
+			organizationId: access.org.id,
+		})
+	);
+
 	return (
 		<HydrateClient>
 			<OrgChatInterface
-				orgId={githubOrgId}
+				orgId={access.org.githubOrgId}
 				organizationId={access.org.id}
+				orgSlug={slug}
 			/>
 		</HydrateClient>
 	);

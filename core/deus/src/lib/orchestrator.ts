@@ -24,6 +24,8 @@ import { ClaudePtySpawner, stripAnsi } from './spawners/claude-spawner.js';
 import { CodexPtySpawner } from './spawners/codex-spawner.js';
 import { getSessionDir } from './config/deus-config.js';
 import { isCommand, executeCommand } from './commands.js';
+import { SessionSyncService } from './sync/session-sync.js';
+import { loadAuthConfig, isAuthenticated } from './config/profile-config.js';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -49,17 +51,16 @@ export interface OrchestratorState {
  */
 export class Orchestrator {
   private state: OrchestratorState;
-  private deusAgent: DeusAgent;
+  private deusAgent: DeusAgent | null = null;
   private mcpOrchestrator: MCPOrchestrator | null = null;
   private sessionManager: SessionManager | null = null;
+  private syncService: SessionSyncService | null = null;
   private claudeSpawner: ClaudePtySpawner | null = null;
   private codexSpawner: CodexPtySpawner | null = null;
   private listeners: Set<(state: OrchestratorState) => void> = new Set();
   private messageIdCounter = 0;
 
   constructor(private repoRoot: string = process.cwd()) {
-    this.deusAgent = new DeusAgent();
-
     this.state = {
       activeAgent: 'deus',
       messages: [],
@@ -81,6 +82,35 @@ export class Orchestrator {
     await this.sessionManager.initialize();
 
     this.state.sessionId = this.sessionManager.getSessionId();
+
+    // Initialize Deus agent with session ID
+    this.deusAgent = new DeusAgent(this.state.sessionId);
+
+    // Initialize session sync service if authenticated
+    if (isAuthenticated()) {
+      const authConfig = loadAuthConfig();
+      this.syncService = new SessionSyncService(authConfig);
+
+      // Sync session creation
+      const sessionState = this.sessionManager.getState();
+      if (sessionState) {
+        try {
+          await this.syncService.createSession(sessionState);
+          this.syncService.startAutoSync(this.state.sessionId);
+
+          if (process.env.DEBUG) {
+            console.log('[Orchestrator] Session sync enabled');
+          }
+        } catch (error) {
+          if (process.env.DEBUG) {
+            console.error(
+              '[Orchestrator] Failed to initialize session sync:',
+              error instanceof Error ? error.message : String(error)
+            );
+          }
+        }
+      }
+    }
 
     console.log(`[Orchestrator] Initialized with session: ${this.state.sessionId}`);
   }
@@ -122,6 +152,26 @@ export class Orchestrator {
     };
 
     this.emit();
+
+    // Sync message if sync service is enabled
+    if (this.syncService && this.state.sessionId && role !== 'system') {
+      this.syncService
+        .syncMessage(
+          this.state.sessionId,
+          role,
+          content,
+          undefined, // modelId - not available at this level
+          agent
+        )
+        .catch((error) => {
+          if (process.env.DEBUG) {
+            console.error(
+              '[Orchestrator] Failed to sync message:',
+              error instanceof Error ? error.message : String(error)
+            );
+          }
+        });
+    }
   }
 
   /**
@@ -171,6 +221,11 @@ export class Orchestrator {
     }
 
     // Process with Deus agent
+    if (!this.deusAgent) {
+      this.addMessage('deus', 'system', 'Error: Deus agent not initialized');
+      return;
+    }
+
     const response = await this.deusAgent.processMessage(message);
 
     // Add Deus response
@@ -344,6 +399,17 @@ export class Orchestrator {
     };
     this.emit();
 
+    // Sync status update
+    if (this.syncService && this.state.sessionId) {
+      this.syncService
+        .updateStatus(this.state.sessionId, 'active', 'claude-code')
+        .catch((error) => {
+          if (process.env.DEBUG) {
+            console.error('[Orchestrator] Failed to sync status:', error);
+          }
+        });
+    }
+
     this.addMessage('claude-code', 'system', '✓ Claude Code started. Type "back" to return to Deus.');
 
     // Send initial prompt if provided
@@ -408,6 +474,17 @@ export class Orchestrator {
     };
     this.emit();
 
+    // Sync status update
+    if (this.syncService && this.state.sessionId) {
+      this.syncService
+        .updateStatus(this.state.sessionId, 'active', 'codex')
+        .catch((error) => {
+          if (process.env.DEBUG) {
+            console.error('[Orchestrator] Failed to sync status:', error);
+          }
+        });
+    }
+
     this.addMessage('codex', 'system', '✓ Codex started. Type "back" to return to Deus.');
 
     // Send initial prompt if provided
@@ -459,8 +536,19 @@ export class Orchestrator {
     };
     this.emit();
 
+    // Sync status update
+    if (this.syncService && this.state.sessionId) {
+      this.syncService
+        .updateStatus(this.state.sessionId, 'active', 'deus')
+        .catch((error) => {
+          if (process.env.DEBUG) {
+            console.error('[Orchestrator] Failed to sync status:', error);
+          }
+        });
+    }
+
     this.addMessage('deus', 'system', `✓ Task completed. ${previousAgent} stopped. What's next?`);
-    this.deusAgent.addSystemMessage(`Completed ${previousAgent} task. Ready for next task.`);
+    this.deusAgent?.addSystemMessage(`Completed ${previousAgent} task. Ready for next task.`);
   }
 
   /**
@@ -532,6 +620,12 @@ export class Orchestrator {
     if (this.mcpOrchestrator) {
       await this.mcpOrchestrator.completeSession();
       this.mcpOrchestrator = null;
+    }
+
+    // Stop session sync
+    if (this.syncService) {
+      this.syncService.stopAutoSync();
+      this.syncService = null;
     }
   }
 

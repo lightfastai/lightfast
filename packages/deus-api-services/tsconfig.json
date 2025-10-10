@@ -1,0 +1,12 @@
+{
+  "extends": "@repo/typescript-config/internal-package.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

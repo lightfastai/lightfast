@@ -1,0 +1,62 @@
+{
+  "name": "@repo/deus-api-services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./organizations": {
+      "types": "./dist/organizations.d.ts",
+      "default": "./src/organizations.ts"
+    },
+    "./repositories": {
+      "types": "./dist/repositories.d.ts",
+      "default": "./src/repositories.ts"
+    },
+    "./code-reviews": {
+      "types": "./dist/code-reviews.d.ts",
+      "default": "./src/code-reviews.ts"
+    },
+    "./sessions": {
+      "types": "./dist/sessions.d.ts",
+      "default": "./src/sessions.ts"
+    },
+    "./api-keys": {
+      "types": "./dist/api-keys.d.ts",
+      "default": "./src/api-keys.ts"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "default": "./src/errors.ts"
+    },
+    "./base-service": {
+      "types": "./dist/base-service.d.ts",
+      "default": "./src/base-service.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@api/deus": "workspace:*",
+    "@repo/deus-trpc": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

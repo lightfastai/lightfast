@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
 			httpOnly: true,
 			secure: env.NODE_ENV === "production",
 			sameSite: "lax",
-			maxAge: 3600, // 1 hour
+			maxAge: 86400, // 24 hours
 			path: "/",
 		});
 
