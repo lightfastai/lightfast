@@ -13,7 +13,10 @@ import { z } from "zod";
 
 import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
 
-import { apiKeyProtectedProcedure, protectedProcedure } from "../trpc";
+import {
+  apiKeyProtectedProcedure,
+  clerkProtectedProcedure,
+} from "../trpc";
 
 /**
  * Helper function to calculate character count from message parts
@@ -218,7 +221,7 @@ export const sessionRouter = {
    *
    * Returns sessions in reverse chronological order with cursor pagination.
    */
-  list: protectedProcedure
+  list: clerkProtectedProcedure
     .input(
       z.object({
         organizationId: z.string(),
@@ -249,7 +252,7 @@ export const sessionRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -309,7 +312,7 @@ export const sessionRouter = {
    * Returns session metadata without messages.
    * Use getMessages to fetch messages separately.
    */
-  get: protectedProcedure
+  get: clerkProtectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -353,7 +356,7 @@ export const sessionRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -371,7 +374,7 @@ export const sessionRouter = {
    *
    * Returns messages in chronological order (oldest first) with cursor pagination.
    */
-  getMessages: protectedProcedure
+  getMessages: clerkProtectedProcedure
     .input(
       z.object({
         sessionId: z.string(),
@@ -417,7 +420,7 @@ export const sessionRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {

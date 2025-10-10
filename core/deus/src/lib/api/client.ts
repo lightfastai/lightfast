@@ -93,9 +93,9 @@ export async function getUserOrganizations(apiKey: string): Promise<ApiOrganizat
       throw new Error(errorData.error?.message || 'Failed to fetch organizations');
     }
 
-    // tRPC wraps response in { result: { data: ... } }
-    const responseData = (await response.json()) as { result: { data: ApiOrganization[] } };
-    return responseData.result.data;
+    // tRPC wraps response in { result: { data: { json: ... } } }
+    const responseData = (await response.json()) as { result: { data: { json: ApiOrganization[] } } };
+    return responseData.result.data.json;
   } catch (error) {
     if (error instanceof Error) {
       throw error;

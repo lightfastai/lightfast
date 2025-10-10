@@ -8,6 +8,7 @@ import { codeReviewRouter } from "./router/code-review";
 import { organizationRouter } from "./router/organization";
 import { repositoryRouter } from "./router/repository";
 import { sessionRouter } from "./router/session";
+import { userRouter } from "./router/user";
 import { createTRPCRouter } from "./trpc";
 
 /**
@@ -19,6 +20,7 @@ export const deusAppRouter = createTRPCRouter({
   codeReview: codeReviewRouter,
   session: sessionRouter,
   apiKey: apiKeyRouter,
+  user: userRouter,
 });
 
 // Export type for use in client

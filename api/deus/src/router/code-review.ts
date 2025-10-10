@@ -20,7 +20,10 @@ import {
   createInitialPRMetadata,
   syncPRMetadata,
 } from "../lib/sync-pr-metadata";
-import { protectedProcedure, publicProcedure } from "../trpc";
+import {
+  clerkProtectedProcedure,
+  publicProcedure,
+} from "../trpc";
 
 const DEFAULT_REVIEW_STATUS: CodeReviewStatus = CODE_REVIEW_STATUS[0];
 
@@ -35,7 +38,7 @@ export const codeReviewRouter = {
    * - Webhooks keep metadata fresh
    * - Gracefully handles deleted PRs
    */
-  list: protectedProcedure
+  list: clerkProtectedProcedure
     .input(
       z.object({
         organizationId: z.string(),
@@ -67,7 +70,7 @@ export const codeReviewRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -158,7 +161,7 @@ export const codeReviewRouter = {
   /**
    * Get a single code review by ID
    */
-  get: protectedProcedure
+  get: clerkProtectedProcedure
     .input(
       z.object({
         reviewId: z.string(),
@@ -188,7 +191,7 @@ export const codeReviewRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -244,7 +247,7 @@ export const codeReviewRouter = {
    * Create a new code review
    * Fetches initial PR metadata from GitHub API
    */
-  create: protectedProcedure
+  create: clerkProtectedProcedure
     .input(
       z.object({
         organizationId: z.string(),
@@ -278,7 +281,7 @@ export const codeReviewRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -345,7 +348,7 @@ export const codeReviewRouter = {
         githubPrId: input.githubPrId,
         reviewTool: input.reviewTool,
         status: DEFAULT_REVIEW_STATUS,
-        triggeredBy: ctx.session.userId,
+        triggeredBy: ctx.auth.userId,
         metadata: {
           command: input.command,
           ...initialMetadata,
@@ -363,7 +366,7 @@ export const codeReviewRouter = {
    * Sync PR metadata from GitHub API
    * Manually refresh cached PR data (title, state, etc.)
    */
-  sync: protectedProcedure
+  sync: clerkProtectedProcedure
     .input(
       z.object({
         reviewId: z.string(),
@@ -393,7 +396,7 @@ export const codeReviewRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -459,7 +462,7 @@ export const codeReviewRouter = {
    * Scan repository for open PRs and create code reviews
    * Used when first connecting a repository or manually refreshing PR list
    */
-  scanRepository: protectedProcedure
+  scanRepository: clerkProtectedProcedure
     .input(
       z.object({
         organizationId: z.string(),
@@ -490,7 +493,7 @@ export const codeReviewRouter = {
         });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
       );
 
       if (!userMembership) {
@@ -591,7 +594,7 @@ export const codeReviewRouter = {
           githubPrId: pr.id.toString(),
           reviewTool: input.reviewTool,
           status: DEFAULT_REVIEW_STATUS,
-          triggeredBy: ctx.session.userId,
+          triggeredBy: ctx.auth.userId,
           metadata,
         });
 

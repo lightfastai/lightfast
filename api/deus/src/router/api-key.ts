@@ -62,7 +62,7 @@ export const apiKeyRouter = {
         id,
         keyHash,
         keyPreview,
-        userId: ctx.session.userId,
+        userId: ctx.auth.userId,
         organizationId: input.organizationId,
         name: input.name,
         scopes: ["admin"],
@@ -138,7 +138,7 @@ export const apiKeyRouter = {
         });
       }
 
-      if (key.userId !== ctx.session.userId) {
+      if (key.userId !== ctx.auth.userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to revoke this API key",

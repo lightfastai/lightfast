@@ -14,22 +14,26 @@ import { eq, sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type {
-  AuthenticatedDeusSession,
-  DeusSession,
-} from "@repo/deus-types/session";
 import { auth } from "@vendor/clerk/server";
 
 /**
- * API Key Authentication Context
- * Set when a valid API key is provided in the Authorization header
- * All API keys have admin permissions.
+ * Authentication Context - Discriminated Union
+ * Represents exactly one authentication method per request
  */
-export type ApiKeyAuth = {
-  userId: string;
-  organizationId: string;
-  scopes: string[]; // Always ['admin']
-};
+export type AuthContext =
+  | {
+      type: "clerk";
+      userId: string;
+    }
+  | {
+      type: "apiKey";
+      userId: string;
+      organizationId: string;
+      scopes: string[];
+    }
+  | {
+      type: "unauthenticated";
+    };
 
 /**
  * 1. CONTEXT
@@ -44,88 +48,94 @@ export type ApiKeyAuth = {
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const clerkSession = await auth();
+/**
+ * Verify API key from Authorization header
+ * Returns API key auth context if valid, null otherwise
+ */
+async function verifyApiKey(
+  authHeader: string | null,
+): Promise<Extract<AuthContext, { type: "apiKey" }> | null> {
+  if (!authHeader?.startsWith("Bearer deus_sk_")) return null;
 
-  // Get the source header for logging
+  const key = authHeader.replace("Bearer ", "");
+
+  try {
+    // Hash the provided key
+    const encoder = new TextEncoder();
+    const data = encoder.encode(key);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const keyHash = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Find the API key by hash
+    const keyResult = await db
+      .select({
+        id: DeusApiKey.id,
+        userId: DeusApiKey.userId,
+        organizationId: DeusApiKey.organizationId,
+        scopes: DeusApiKey.scopes,
+        expiresAt: DeusApiKey.expiresAt,
+        revokedAt: DeusApiKey.revokedAt,
+      })
+      .from(DeusApiKey)
+      .where(eq(DeusApiKey.keyHash, keyHash))
+      .limit(1);
+
+    const apiKey = keyResult[0];
+
+    // Validate the API key
+    if (!apiKey || apiKey.revokedAt) return null;
+
+    const isExpired =
+      apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date();
+    if (isExpired) return null;
+
+    // Update lastUsedAt asynchronously (don't block request)
+    void db
+      .update(DeusApiKey)
+      .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(DeusApiKey.id, apiKey.id));
+
+    return {
+      type: "apiKey",
+      userId: apiKey.userId,
+      organizationId: apiKey.organizationId,
+      scopes: apiKey.scopes,
+    };
+  } catch (error) {
+    console.error("Error verifying API key:", error);
+    return null;
+  }
+}
+
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  // Extract only what we need to avoid Clerk type inference issues
-  const session: DeusSession = {
-    userId: clerkSession?.userId ?? null,
-  };
-
-  // Check for API key authentication
-  let apiKeyAuth: ApiKeyAuth | null = null;
-  const authHeader = opts.headers.get("authorization");
-
-  if (authHeader?.startsWith("Bearer deus_sk_")) {
-    const key = authHeader.replace("Bearer ", "");
-
-    try {
-      // Hash the provided key
-      const encoder = new TextEncoder();
-      const data = encoder.encode(key);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const keyHash = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-      // Find the API key by hash
-      const keyResult = await db
-        .select({
-          id: DeusApiKey.id,
-          userId: DeusApiKey.userId,
-          organizationId: DeusApiKey.organizationId,
-          scopes: DeusApiKey.scopes,
-          expiresAt: DeusApiKey.expiresAt,
-          revokedAt: DeusApiKey.revokedAt,
-        })
-        .from(DeusApiKey)
-        .where(eq(DeusApiKey.keyHash, keyHash))
-        .limit(1);
-
-      const apiKey = keyResult[0];
-
-      // Validate the API key
-      if (apiKey && !apiKey.revokedAt) {
-        const isExpired =
-          apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date();
-
-        if (!isExpired) {
-          apiKeyAuth = {
-            userId: apiKey.userId,
-            organizationId: apiKey.organizationId,
-            scopes: apiKey.scopes,
-          };
-
-          // Update lastUsedAt asynchronously (don't block request)
-          void db
-            .update(DeusApiKey)
-            .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-            .where(eq(DeusApiKey.id, apiKey.id));
-
-          console.info(
-            `>>> tRPC Request from ${source} by API key (user: ${apiKey.userId}, org: ${apiKey.organizationId})`,
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error verifying API key:", error);
-      // Continue without API key auth
-    }
+  // Try API key authentication first (takes precedence)
+  const apiKeyAuth = await verifyApiKey(opts.headers.get("authorization"));
+  if (apiKeyAuth) {
+    console.info(
+      `>>> tRPC Request from ${source} by API key (user: ${apiKeyAuth.userId}, org: ${apiKeyAuth.organizationId})`,
+    );
+    return { auth: apiKeyAuth, db };
   }
 
-  if (session.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
-  } else if (!apiKeyAuth) {
-    console.info(`>>> tRPC Request from ${source} by unknown`);
+  // Try Clerk session authentication
+  const clerkSession = await auth();
+  if (clerkSession?.userId) {
+    console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
+    return {
+      auth: { type: "clerk" as const, userId: clerkSession.userId },
+      db,
+    };
   }
 
+  // No authentication
+  console.info(`>>> tRPC Request from ${source} - unauthenticated`);
   return {
-    session,
-    apiKeyAuth,
+    auth: { type: "unauthenticated" as const },
     db,
   };
 };
@@ -202,26 +212,51 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees `ctx.session.userId` is not null.
+ * the session is valid (either Clerk or API key) and guarantees authentication.
  *
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
+    if (ctx.auth.type === "unauthenticated") {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-
-    // Create authenticated session with non-null userId
-    const authenticatedSession: AuthenticatedDeusSession = {
-      userId: ctx.session.userId,
-    };
 
     return next({
       ctx: {
         ...ctx,
-        session: authenticatedSession,
+        // After check above, auth is either clerk or apiKey
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk" | "apiKey" }>,
+      },
+    });
+  });
+
+/**
+ * Clerk Protected procedure
+ *
+ * If you want a query or mutation to ONLY be accessible via Clerk session, use this.
+ * This is used by web UI that needs to verify Clerk organization membership.
+ *
+ * Verifies that a valid Clerk session exists and guarantees `ctx.auth` is of type "clerk".
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const clerkProtectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (ctx.auth.type !== "clerk") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Clerk session required. Please sign in.",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        // Type-safe clerk auth (guaranteed to be type "clerk")
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
       },
     });
   });
@@ -232,14 +267,14 @@ export const protectedProcedure = t.procedure
  * If you want a query or mutation to ONLY be accessible via API key authentication, use this.
  * This is used by CLI clients that authenticate with API keys instead of Clerk sessions.
  *
- * Verifies that a valid API key is provided and guarantees `ctx.apiKeyAuth` is not null.
+ * Verifies that a valid API key is provided and guarantees `ctx.auth` is of type "apiKey".
  *
  * @see https://trpc.io/docs/procedures
  */
 export const apiKeyProtectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.apiKeyAuth) {
+    if (ctx.auth.type !== "apiKey") {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message:
@@ -250,15 +285,11 @@ export const apiKeyProtectedProcedure = t.procedure
     return next({
       ctx: {
         ...ctx,
-        // Type-safe apiKeyAuth (guaranteed to be non-null)
-        apiKeyAuth: ctx.apiKeyAuth,
+        // Type-safe apiKey auth (guaranteed to be type "apiKey")
+        auth: ctx.auth as Extract<AuthContext, { type: "apiKey" }>,
       },
     });
   });
 
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";
-export type {
-  AuthenticatedDeusSession,
-  DeusSession,
-} from "@repo/deus-types/session";
