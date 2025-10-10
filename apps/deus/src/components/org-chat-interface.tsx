@@ -27,6 +27,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { GitBranch, Plus, ArrowUp } from "lucide-react";
 import { CodeReviewsTab } from "./code-reviews-tab";
+import { SessionsList } from "./sessions";
 import { useTRPC } from "@repo/deus-trpc/react";
 import {
 	Tabs,
@@ -167,10 +168,14 @@ export function OrgChatInterface({ orgId, organizationId, orgSlug }: OrgChatInte
 					</PromptInputBody>
 				</PromptInput>
 
-				<Tabs defaultValue="code-reviews" className="w-full max-w-6xl mt-8">
+				<Tabs defaultValue="sessions" className="w-full max-w-6xl mt-8">
 					<TabsList>
-						<TabsTrigger value="code-reviews">Code reviews</TabsTrigger>
+						<TabsTrigger value="sessions">Sessions</TabsTrigger>
+						<TabsTrigger value="code-reviews">Code Reviews</TabsTrigger>
 					</TabsList>
+					<TabsContent value="sessions" className="mt-6">
+						<SessionsList organizationId={organizationId} />
+					</TabsContent>
 					<TabsContent value="code-reviews" className="mt-6">
 						<CodeReviewsTab orgId={organizationId} />
 					</TabsContent>

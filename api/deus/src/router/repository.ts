@@ -1,9 +1,10 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { and, eq } from "drizzle-orm";
-import { protectedProcedure, publicProcedure } from "../trpc";
 import { DeusConnectedRepository } from "@db/deus/schema";
+import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
+
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 export const repositoryRouter = {
   /**
@@ -19,7 +20,7 @@ export const repositoryRouter = {
       z.object({
         includeInactive: z.boolean().default(false),
         organizationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const whereConditions = [
@@ -44,7 +45,7 @@ export const repositoryRouter = {
       z.object({
         repositoryId: z.string(),
         organizationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const result = await ctx.db
@@ -53,8 +54,8 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -98,7 +99,7 @@ export const repositoryRouter = {
           })
           .optional(),
         metadata: z.record(z.unknown()).optional(), // Optional cache (fullName, description, etc.)
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if this repository is already connected to this organization
@@ -108,8 +109,8 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -187,8 +188,8 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.isActive, true)
-          )
+            eq(DeusConnectedRepository.isActive, true),
+          ),
         )
         .limit(1);
       return result[0] ?? null;
@@ -203,7 +204,7 @@ export const repositoryRouter = {
       z.object({
         githubRepoId: z.string(),
         githubInstallationId: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const whereConditions = [
@@ -213,8 +214,8 @@ export const repositoryRouter = {
         whereConditions.push(
           eq(
             DeusConnectedRepository.githubInstallationId,
-            input.githubInstallationId
-          )
+            input.githubInstallationId,
+          ),
         );
       }
       await ctx.db
@@ -236,8 +237,8 @@ export const repositoryRouter = {
         .where(
           eq(
             DeusConnectedRepository.githubInstallationId,
-            input.githubInstallationId
-          )
+            input.githubInstallationId,
+          ),
         );
     }),
 
@@ -250,7 +251,7 @@ export const repositoryRouter = {
       z.object({
         githubRepoId: z.string(),
         metadata: z.record(z.unknown()),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const repos = await ctx.db

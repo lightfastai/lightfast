@@ -20,6 +20,14 @@
       "types": "./dist/code-reviews.d.ts",
       "default": "./src/code-reviews.ts"
     },
+    "./sessions": {
+      "types": "./dist/sessions.d.ts",
+      "default": "./src/sessions.ts"
+    },
+    "./api-keys": {
+      "types": "./dist/api-keys.d.ts",
+      "default": "./src/api-keys.ts"
+    },
     "./errors": {
       "types": "./dist/errors.d.ts",
       "default": "./src/errors.ts"

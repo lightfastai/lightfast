@@ -3,18 +3,22 @@
  * This is the main router that combines all deus-specific routers
  */
 
-import { createTRPCRouter } from "./trpc";
+import { apiKeyRouter } from "./router/api-key";
+import { codeReviewRouter } from "./router/code-review";
 import { organizationRouter } from "./router/organization";
 import { repositoryRouter } from "./router/repository";
-import { codeReviewRouter } from "./router/code-review";
+import { sessionRouter } from "./router/session";
+import { createTRPCRouter } from "./trpc";
 
 /**
  * Primary deus app router
  */
 export const deusAppRouter = createTRPCRouter({
-	organization: organizationRouter,
-	repository: repositoryRouter,
-	codeReview: codeReviewRouter,
+  organization: organizationRouter,
+  repository: repositoryRouter,
+  codeReview: codeReviewRouter,
+  session: sessionRouter,
+  apiKey: apiKeyRouter,
 });
 
 // Export type for use in client

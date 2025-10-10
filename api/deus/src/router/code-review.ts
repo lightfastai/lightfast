@@ -1,17 +1,26 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { clerkClient } from "@clerk/nextjs/server";
+import {
+  DeusCodeReview,
+  DeusConnectedRepository,
+  organizations,
+} from "@db/deus/schema";
 import { TRPCError } from "@trpc/server";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { and, eq, desc, inArray } from "drizzle-orm";
-import { protectedProcedure, publicProcedure } from "../trpc";
+
+import type { CodeReviewStatus } from "@repo/deus-types/code-review";
 import {
   CODE_REVIEW_STATUS,
   CODE_REVIEW_TOOLS,
 } from "@repo/deus-types/code-review";
-import type { CodeReviewStatus } from "@repo/deus-types/code-review";
-import { syncPRMetadata, createInitialPRMetadata } from "../lib/sync-pr-metadata";
+
 import { listOpenPullRequests } from "../lib/github-app";
-import { clerkClient } from "@clerk/nextjs/server";
-import { DeusCodeReview, DeusConnectedRepository, organizations } from "@db/deus/schema";
+import {
+  createInitialPRMetadata,
+  syncPRMetadata,
+} from "../lib/sync-pr-metadata";
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 const DEFAULT_REVIEW_STATUS: CodeReviewStatus = CODE_REVIEW_STATUS[0];
 
@@ -33,7 +42,7 @@ export const codeReviewRouter = {
         repositoryId: z.string().optional(),
         status: z.enum(CODE_REVIEW_STATUS).optional(),
         limit: z.number().min(1).max(100).default(50),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Verify user is a member of the organization
@@ -51,13 +60,14 @@ export const codeReviewRouter = {
 
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
-      const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrgResult.clerkOrgId,
-        limit: 500,
-      });
+      const clerkMemberships =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: deusOrgResult.clerkOrgId,
+          limit: 500,
+        });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId
+        (m) => m.publicUserData?.userId === ctx.session.userId,
       );
 
       if (!userMembership) {
@@ -74,8 +84,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.organizationId, input.organizationId),
-            eq(DeusConnectedRepository.isActive, true)
-          )
+            eq(DeusConnectedRepository.isActive, true),
+          ),
         );
 
       if (repositories.length === 0) {
@@ -102,7 +112,9 @@ export const codeReviewRouter = {
       ];
 
       if (input.repositoryId) {
-        reviewWhereConditions.push(eq(DeusCodeReview.repositoryId, input.repositoryId));
+        reviewWhereConditions.push(
+          eq(DeusCodeReview.repositoryId, input.repositoryId),
+        );
       }
 
       if (input.status) {
@@ -137,7 +149,7 @@ export const codeReviewRouter = {
                 }
               : null,
           };
-        })
+        }),
       );
 
       return reviewsWithRepoData;
@@ -151,7 +163,7 @@ export const codeReviewRouter = {
       z.object({
         reviewId: z.string(),
         organizationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Verify user is a member of the organization
@@ -169,13 +181,14 @@ export const codeReviewRouter = {
 
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
-      const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrgResult.clerkOrgId,
-        limit: 500,
-      });
+      const clerkMemberships =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: deusOrgResult.clerkOrgId,
+          limit: 500,
+        });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId
+        (m) => m.publicUserData?.userId === ctx.session.userId,
       );
 
       if (!userMembership) {
@@ -207,8 +220,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, review.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -240,7 +253,7 @@ export const codeReviewRouter = {
         githubPrId: z.string(),
         reviewTool: z.enum(CODE_REVIEW_TOOLS),
         command: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
@@ -258,13 +271,14 @@ export const codeReviewRouter = {
 
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
-      const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrgResult.clerkOrgId,
-        limit: 500,
-      });
+      const clerkMemberships =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: deusOrgResult.clerkOrgId,
+          limit: 500,
+        });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId
+        (m) => m.publicUserData?.userId === ctx.session.userId,
       );
 
       if (!userMembership) {
@@ -281,8 +295,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -300,7 +314,8 @@ export const codeReviewRouter = {
       if (!fullName || typeof fullName !== "string") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Repository metadata is missing. Please reconnect the repository.",
+          message:
+            "Repository metadata is missing. Please reconnect the repository.",
         });
       }
 
@@ -317,7 +332,7 @@ export const codeReviewRouter = {
         Number(repository.githubInstallationId),
         owner,
         repoName,
-        input.pullRequestNumber
+        input.pullRequestNumber,
       );
 
       // Create code review record
@@ -353,7 +368,7 @@ export const codeReviewRouter = {
       z.object({
         reviewId: z.string(),
         organizationId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
@@ -371,13 +386,14 @@ export const codeReviewRouter = {
 
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
-      const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrgResult.clerkOrgId,
-        limit: 500,
-      });
+      const clerkMemberships =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: deusOrgResult.clerkOrgId,
+          limit: 500,
+        });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId
+        (m) => m.publicUserData?.userId === ctx.session.userId,
       );
 
       if (!userMembership) {
@@ -409,8 +425,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, review.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -449,7 +465,7 @@ export const codeReviewRouter = {
         organizationId: z.string(),
         repositoryId: z.string(),
         reviewTool: z.enum(CODE_REVIEW_TOOLS).default("claude"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is a member of the organization
@@ -467,13 +483,14 @@ export const codeReviewRouter = {
 
       // Verify user is a member of the Clerk organization
       const clerk = await clerkClient();
-      const clerkMemberships = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: deusOrgResult.clerkOrgId,
-        limit: 500,
-      });
+      const clerkMemberships =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: deusOrgResult.clerkOrgId,
+          limit: 500,
+        });
 
       const userMembership = clerkMemberships.data.find(
-        (m) => m.publicUserData?.userId === ctx.session.userId
+        (m) => m.publicUserData?.userId === ctx.session.userId,
       );
 
       if (!userMembership) {
@@ -490,8 +507,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, input.organizationId)
-          )
+            eq(DeusConnectedRepository.organizationId, input.organizationId),
+          ),
         )
         .limit(1);
 
@@ -509,7 +526,8 @@ export const codeReviewRouter = {
       if (!fullName || typeof fullName !== "string") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Repository metadata is missing. Please reconnect the repository.",
+          message:
+            "Repository metadata is missing. Please reconnect the repository.",
         });
       }
 
@@ -526,7 +544,7 @@ export const codeReviewRouter = {
         Number(repository.githubInstallationId),
         owner,
         repoName,
-        100 // Limit to 100 most recent open PRs
+        100, // Limit to 100 most recent open PRs
       );
 
       let created = 0;
@@ -541,8 +559,8 @@ export const codeReviewRouter = {
           .where(
             and(
               eq(DeusCodeReview.repositoryId, input.repositoryId),
-              eq(DeusCodeReview.githubPrId, pr.id.toString())
-            )
+              eq(DeusCodeReview.githubPrId, pr.id.toString()),
+            ),
           )
           .limit(1);
 
@@ -602,7 +620,7 @@ export const codeReviewRouter = {
       z.object({
         repositoryId: z.string(),
         githubPrId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return await ctx.db
@@ -611,8 +629,8 @@ export const codeReviewRouter = {
         .where(
           and(
             eq(DeusCodeReview.repositoryId, input.repositoryId),
-            eq(DeusCodeReview.githubPrId, input.githubPrId)
-          )
+            eq(DeusCodeReview.githubPrId, input.githubPrId),
+          ),
         );
     }),
 
@@ -626,8 +644,8 @@ export const codeReviewRouter = {
         z.object({
           id: z.string(),
           metadata: z.record(z.unknown()),
-        })
-      )
+        }),
+      ),
     )
     .mutation(async ({ ctx, input }) => {
       for (const review of input) {

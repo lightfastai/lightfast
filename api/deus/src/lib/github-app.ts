@@ -1,4 +1,5 @@
 import { App } from "octokit";
+
 import { env } from "../env";
 
 /**
@@ -17,33 +18,33 @@ import { env } from "../env";
  * - Extra quotes or whitespace
  */
 function formatPrivateKey(key: string): string {
-	let formatted = key;
+  let formatted = key;
 
-	// Remove any surrounding quotes
-	formatted = formatted.replace(/^["']|["']$/g, '');
+  // Remove any surrounding quotes
+  formatted = formatted.replace(/^["']|["']$/g, "");
 
-	// Replace literal \n with actual newlines
-	formatted = formatted.replace(/\\n/g, '\n');
+  // Replace literal \n with actual newlines
+  formatted = formatted.replace(/\\n/g, "\n");
 
-	// Ensure proper PEM format with headers
-	if (!formatted.includes('BEGIN')) {
-		// Key is likely base64 only, add headers
-		formatted = `-----BEGIN RSA PRIVATE KEY-----\n${formatted}\n-----END RSA PRIVATE KEY-----`;
-	}
+  // Ensure proper PEM format with headers
+  if (!formatted.includes("BEGIN")) {
+    // Key is likely base64 only, add headers
+    formatted = `-----BEGIN RSA PRIVATE KEY-----\n${formatted}\n-----END RSA PRIVATE KEY-----`;
+  }
 
-	return formatted;
+  return formatted;
 }
 
 /**
  * Get or create the GitHub App instance
  */
 function getApp(): App {
-	const privateKey = formatPrivateKey(env.GITHUB_APP_PRIVATE_KEY);
+  const privateKey = formatPrivateKey(env.GITHUB_APP_PRIVATE_KEY);
 
-	return new App({
-		appId: env.GITHUB_APP_ID,
-		privateKey,
-	});
+  return new App({
+    appId: env.GITHUB_APP_ID,
+    privateKey,
+  });
 }
 
 /**
@@ -56,27 +57,27 @@ function getApp(): App {
  * @returns Pull request data
  */
 export async function getPullRequest(
-	installationId: number,
-	owner: string,
-	repo: string,
-	pullNumber: number
+  installationId: number,
+  owner: string,
+  repo: string,
+  pullNumber: number,
 ) {
-	const app = getApp();
-	const octokit = await app.getInstallationOctokit(installationId);
+  const app = getApp();
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request(
-		"GET /repos/{owner}/{repo}/pulls/{pull_number}",
-		{
-			owner,
-			repo,
-			pull_number: pullNumber,
-			headers: {
-				"X-GitHub-Api-Version": "2022-11-28",
-			},
-		}
-	);
+  const { data } = await octokit.request(
+    "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+    {
+      owner,
+      repo,
+      pull_number: pullNumber,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
 
-	return data;
+  return data;
 }
 
 /**
@@ -88,22 +89,22 @@ export async function getPullRequest(
  * @returns Repository data
  */
 export async function getRepository(
-	installationId: number,
-	owner: string,
-	repo: string
+  installationId: number,
+  owner: string,
+  repo: string,
 ) {
-	const app = getApp();
-	const octokit = await app.getInstallationOctokit(installationId);
+  const app = getApp();
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
-		owner,
-		repo,
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
+    owner,
+    repo,
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -116,25 +117,25 @@ export async function getRepository(
  * @returns List of open pull requests
  */
 export async function listOpenPullRequests(
-	installationId: number,
-	owner: string,
-	repo: string,
-	limit = 50
+  installationId: number,
+  owner: string,
+  repo: string,
+  limit = 50,
 ) {
-	const app = getApp();
-	const octokit = await app.getInstallationOctokit(installationId);
+  const app = getApp();
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
-		owner,
-		repo,
-		state: "open",
-		per_page: limit,
-		sort: "updated",
-		direction: "desc",
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
+    owner,
+    repo,
+    state: "open",
+    per_page: limit,
+    sort: "updated",
+    direction: "desc",
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
