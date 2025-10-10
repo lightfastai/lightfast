@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/deus/client";
 import { organizations } from "@db/deus/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { publicProcedure } from "../trpc";
@@ -53,7 +53,7 @@ export const organizationRouter = {
         .set({
           clerkOrgId: input.clerkOrgId,
           clerkOrgSlug: input.clerkOrgSlug,
-          updatedAt: new Date().toISOString(),
+          updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(organizations.id, input.id));
       return { success: true };
@@ -74,7 +74,7 @@ export const organizationRouter = {
         .update(organizations)
         .set({
           githubInstallationId: input.installationId,
-          updatedAt: new Date().toISOString(),
+          updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(organizations.id, input.id));
       return { success: true };

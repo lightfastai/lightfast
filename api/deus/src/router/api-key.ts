@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { DeusApiKey } from "@db/deus/schema";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { nanoid } from "@repo/lib";
@@ -149,7 +149,7 @@ export const apiKeyRouter = {
       await ctx.db
         .update(DeusApiKey)
         .set({
-          revokedAt: new Date().toISOString(),
+          revokedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(DeusApiKey.id, input.id));
 
@@ -227,7 +227,7 @@ export const apiKeyRouter = {
       await ctx.db
         .update(DeusApiKey)
         .set({
-          lastUsedAt: new Date().toISOString(),
+          lastUsedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(DeusApiKey.id, key.id));
 

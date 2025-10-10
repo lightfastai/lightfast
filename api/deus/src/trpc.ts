@@ -10,7 +10,7 @@
 import { db } from "@db/deus/client";
 import { DeusApiKey } from "@db/deus/schema";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -103,7 +103,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
           // Update lastUsedAt asynchronously (don't block request)
           void db
             .update(DeusApiKey)
-            .set({ lastUsedAt: new Date().toISOString() })
+            .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
             .where(eq(DeusApiKey.id, apiKey.id));
 
           console.info(
