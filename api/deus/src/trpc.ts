@@ -8,12 +8,11 @@
  */
 
 import { db } from "@db/deus/client";
-import { DeusApiKey } from "@db/deus/schema";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { verifyApiKey } from "./lib/verify-api-key";
 import { auth } from "@vendor/clerk/server";
 
 /**
@@ -47,68 +46,6 @@ export type AuthContext =
  *
  * @see https://trpc.io/docs/server/context
  */
-
-/**
- * Verify API key from Authorization header
- * Returns API key auth context if valid, null otherwise
- */
-async function verifyApiKey(
-  authHeader: string | null,
-): Promise<Extract<AuthContext, { type: "apiKey" }> | null> {
-  if (!authHeader?.startsWith("Bearer deus_sk_")) return null;
-
-  const key = authHeader.replace("Bearer ", "");
-
-  try {
-    // Hash the provided key
-    const encoder = new TextEncoder();
-    const data = encoder.encode(key);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const keyHash = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    // Find the API key by hash
-    const keyResult = await db
-      .select({
-        id: DeusApiKey.id,
-        userId: DeusApiKey.userId,
-        organizationId: DeusApiKey.organizationId,
-        scopes: DeusApiKey.scopes,
-        expiresAt: DeusApiKey.expiresAt,
-        revokedAt: DeusApiKey.revokedAt,
-      })
-      .from(DeusApiKey)
-      .where(eq(DeusApiKey.keyHash, keyHash))
-      .limit(1);
-
-    const apiKey = keyResult[0];
-
-    // Validate the API key
-    if (!apiKey || apiKey.revokedAt) return null;
-
-    const isExpired =
-      apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date();
-    if (isExpired) return null;
-
-    // Update lastUsedAt asynchronously (don't block request)
-    void db
-      .update(DeusApiKey)
-      .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-      .where(eq(DeusApiKey.id, apiKey.id));
-
-    return {
-      type: "apiKey",
-      userId: apiKey.userId,
-      organizationId: apiKey.organizationId,
-      scopes: apiKey.scopes,
-    };
-  } catch (error) {
-    console.error("Error verifying API key:", error);
-    return null;
-  }
-}
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";

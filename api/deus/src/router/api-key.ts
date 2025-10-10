@@ -1,23 +1,29 @@
+/**
+ * API Key router - manages API keys for Deus CLI authentication
+ *
+ * Uses crypto utilities from @repo/deus-api-key package for:
+ * - Key generation and hashing
+ * - Key format validation
+ * - Preview extraction
+ *
+ * SECURITY MODEL:
+ * - Keys are hashed with SHA-256 before storage
+ * - Only the hash is stored in the database
+ * - The actual key is returned ONCE during generation and never again
+ * - Keys are prefixed with "deus_sk_" for identification
+ * - All API keys have admin permissions (scopes are always ['admin'])
+ */
+
 import type { TRPCRouterRecord } from "@trpc/server";
 import { DeusApiKey, organizations } from "@db/deus/schema";
 import { TRPCError } from "@trpc/server";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { nanoid } from "@repo/lib";
+import { generateApiKey, hashApiKey, extractKeyPreview, API_KEY_PREFIX } from "@repo/deus-api-key";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
-/**
- * API Key router - manages API keys for Deus CLI authentication
- *
- * SECURITY MODEL:
- * - Keys are hashed with crypto.subtle.digest (SHA-256) before storage
- * - Only the hash is stored in the database
- * - The actual key is returned ONCE during generation and never again
- * - Keys are prefixed with "deus_sk_" for identification
- * - All API keys have admin permissions (scopes are always ['admin'])
- */
 export const apiKeyRouter = {
   /**
    * Generate a new API key for CLI authentication
@@ -51,20 +57,13 @@ export const apiKeyRouter = {
       }
 
       // Generate API key: deus_sk_<32 random chars>
-      const keySecret = nanoid(32);
-      const key = `deus_sk_${keySecret}`;
+      const key = generateApiKey();
 
-      // Hash the key using Web Crypto API (available in Node.js)
-      const encoder = new TextEncoder();
-      const data = encoder.encode(key);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const keyHash = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      // Hash the key for storage
+      const keyHash = await hashApiKey(key);
 
       // Extract preview (last 4 chars of the secret portion)
-      const keyPreview = keySecret.slice(-4);
+      const keyPreview = extractKeyPreview(key).replace("...", "");
 
       // Generate a new UUID for the API key
       const id = crypto.randomUUID();
@@ -195,18 +194,12 @@ export const apiKeyRouter = {
   verify: publicProcedure
     .input(
       z.object({
-        key: z.string().startsWith("deus_sk_"),
+        key: z.string().startsWith(API_KEY_PREFIX),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       // Hash the provided key
-      const encoder = new TextEncoder();
-      const data = encoder.encode(input.key);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const keyHash = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      const keyHash = await hashApiKey(input.key);
 
       // Find the API key by hash
       const keyResult = await ctx.db

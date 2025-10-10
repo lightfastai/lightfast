@@ -4,7 +4,21 @@ import { eq } from "drizzle-orm";
 
 import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
 
-import { getPullRequest } from "./github-app";
+import { createGitHubApp, getPullRequest } from "@repo/deus-octokit-github";
+import { env } from "../env";
+
+/**
+ * Helper to create the GitHub App instance with environment config
+ */
+function getApp() {
+  return createGitHubApp(
+    {
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+    },
+    true, // Format the private key
+  );
+}
 
 /**
  * Sync PR metadata from GitHub API to code review record
@@ -62,7 +76,9 @@ export async function syncPRMetadata(
 
   try {
     // 3. Fetch fresh PR data from GitHub API
+    const app = getApp();
     const pr = await getPullRequest(
+      app,
       Number(repo.githubInstallationId),
       owner,
       repoName,
@@ -140,7 +156,8 @@ export async function createInitialPRMetadata(
   pullNumber: number,
 ): Promise<CodeReviewMetadata | null> {
   try {
-    const pr = await getPullRequest(installationId, owner, repo, pullNumber);
+    const app = getApp();
+    const pr = await getPullRequest(app, installationId, owner, repo, pullNumber);
 
     return {
       prTitle: pr.title,

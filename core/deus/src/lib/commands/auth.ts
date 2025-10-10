@@ -5,6 +5,7 @@
 
 import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
+import { isValidApiKeyFormat, API_KEY_PREFIX } from '@repo/deus-api-key';
 import {
   loadConfig,
   clearConfig,
@@ -15,12 +16,7 @@ import {
   getApiUrl,
   type Organization,
 } from '../config/config.js';
-import {
-  verifyApiKey,
-  getUserOrganizations,
-  isValidApiKeyFormat,
-  type ApiOrganization,
-} from '../api/client.js';
+import { createDeusClient } from '../api/trpc.js';
 
 /**
  * Login command - authenticate with API key
@@ -30,13 +26,16 @@ export async function authLogin(apiKey: string): Promise<void> {
     // Validate API key format
     if (!isValidApiKeyFormat(apiKey)) {
       console.error(chalk.red('✗ Invalid API key format'));
-      console.error(chalk.dim('  API keys should start with "deus_sk_"'));
+      console.error(chalk.dim(`  API keys should start with "${API_KEY_PREFIX}"`));
       process.exit(1);
     }
 
+    // Create tRPC client for verification
+    const client = createDeusClient(apiKey);
+
     // Verify API key with server
     console.log(chalk.dim('Verifying API key...'));
-    const verifyResult = await verifyApiKey(apiKey);
+    const verifyResult = await client.apiKey.verify.mutate({ key: apiKey });
     console.log(chalk.green('✓ API key verified'));
 
     // Save API key
@@ -44,7 +43,7 @@ export async function authLogin(apiKey: string): Promise<void> {
 
     // Fetch user's organizations
     console.log(chalk.dim('Fetching organizations...'));
-    const orgs = await getUserOrganizations(apiKey);
+    const orgs = await client.user.organizations.query();
 
     if (orgs.length === 0) {
       console.error(chalk.red('✗ No organizations found for this user'));

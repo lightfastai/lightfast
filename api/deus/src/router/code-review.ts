@@ -15,7 +15,7 @@ import {
   CODE_REVIEW_TOOLS,
 } from "@repo/deus-types/code-review";
 
-import { listOpenPullRequests } from "../lib/github-app";
+import { createGitHubApp, listOpenPullRequests } from "@repo/deus-octokit-github";
 import {
   createInitialPRMetadata,
   syncPRMetadata,
@@ -24,6 +24,7 @@ import {
   clerkProtectedProcedure,
   publicProcedure,
 } from "../trpc";
+import { env } from "../env";
 
 const DEFAULT_REVIEW_STATUS: CodeReviewStatus = CODE_REVIEW_STATUS[0];
 
@@ -543,7 +544,15 @@ export const codeReviewRouter = {
       }
 
       // Fetch open PRs from GitHub
+      const app = createGitHubApp(
+        {
+          appId: env.GITHUB_APP_ID,
+          privateKey: env.GITHUB_APP_PRIVATE_KEY,
+        },
+        true, // Format the private key
+      );
       const openPRs = await listOpenPullRequests(
+        app,
         Number(repository.githubInstallationId),
         owner,
         repoName,

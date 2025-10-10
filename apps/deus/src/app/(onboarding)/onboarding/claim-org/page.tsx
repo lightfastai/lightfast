@@ -13,7 +13,7 @@ import {
 	CardTitle,
 } from "@repo/ui/components/ui/card";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import type { GitHubInstallation } from "~/lib/github-app";
+import type { GitHubInstallation } from "@repo/deus-octokit-github";
 
 /**
  * Claim Organization Page

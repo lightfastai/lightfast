@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getInstallationRepositories } from "~/lib/github-app";
+import { createGitHubApp, getInstallationRepositories } from "@repo/deus-octokit-github";
 import { OrganizationsService } from "@repo/deus-api-services";
+import { env } from "~/env";
 
 /**
  * GitHub App - Fetch Installation Repositories
@@ -66,7 +67,11 @@ export async function GET(request: NextRequest) {
 
 	try {
 		// Fetch repositories from GitHub
-		const data = await getInstallationRepositories(installationId);
+		const app = createGitHubApp({
+			appId: env.GITHUB_APP_ID,
+			privateKey: env.GITHUB_APP_PRIVATE_KEY,
+		});
+		const data = await getInstallationRepositories(app, installationId);
 
 		// Return repositories array and the installation ID
 		return NextResponse.json({

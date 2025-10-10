@@ -1,13 +1,11 @@
-import { App } from "octokit";
-import { Octokit } from "octokit";
+import { App, Octokit } from "octokit";
 import type { components } from "@octokit/openapi-types";
-import { env } from "~/env";
 
 /**
  * GitHub App Authentication Utilities
  *
- * Uses Octokit for GitHub App authentication and API interactions.
- * Handles installation tokens, user installations, and repository access.
+ * Shared GitHub/Octokit utilities for the Deus application.
+ * Handles GitHub App authentication, installation tokens, and repository access.
  */
 
 /**
@@ -21,12 +19,62 @@ export type GitHubInstallation = components["schemas"]["installation"];
 export type GitHubRepository = components["schemas"]["repository"];
 
 /**
- * Get or create the GitHub App instance
+ * Organization membership role
  */
-function getApp(): App {
+export type OrgMembershipRole = "admin" | "member";
+
+/**
+ * GitHub App configuration
+ */
+export interface GitHubAppConfig {
+	appId: string;
+	privateKey: string;
+}
+
+/**
+ * Format GitHub private key from environment variable
+ *
+ * Handles various formats that environment variables might use:
+ * - Literal \n characters (common in Vercel/other platforms)
+ * - Missing PEM headers/footers
+ * - Extra quotes or whitespace
+ */
+export function formatPrivateKey(key: string): string {
+	let formatted = key;
+
+	// Remove any surrounding quotes
+	formatted = formatted.replace(/^["']|["']$/g, "");
+
+	// Replace literal \n with actual newlines
+	formatted = formatted.replace(/\\n/g, "\n");
+
+	// Ensure proper PEM format with headers
+	if (!formatted.includes("BEGIN")) {
+		// Key is likely base64 only, add headers
+		formatted = `-----BEGIN RSA PRIVATE KEY-----\n${formatted}\n-----END RSA PRIVATE KEY-----`;
+	}
+
+	return formatted;
+}
+
+/**
+ * Create a GitHub App instance
+ *
+ * @param config - GitHub App configuration
+ * @param shouldFormatKey - Whether to format the private key (default: false)
+ * @returns GitHub App instance
+ */
+export function createGitHubApp(
+	config: GitHubAppConfig,
+	shouldFormatKey = false,
+): App {
+	const privateKey = shouldFormatKey
+		? formatPrivateKey(config.privateKey)
+		: config.privateKey;
+
 	return new App({
-		appId: env.GITHUB_APP_ID,
-		privateKey: env.GITHUB_APP_PRIVATE_KEY,
+		appId: config.appId,
+		privateKey,
 	});
 }
 
@@ -39,7 +87,7 @@ function getApp(): App {
  * @returns List of installations accessible to the user
  */
 export async function getUserInstallations(
-	userAccessToken: string
+	userAccessToken: string,
 ): Promise<{ installations: GitHubInstallation[] }> {
 	const octokit = new Octokit({ auth: userAccessToken });
 
@@ -55,11 +103,14 @@ export async function getUserInstallations(
 /**
  * Get repositories accessible to an installation
  *
+ * @param app - GitHub App instance
  * @param installationId - The GitHub App installation ID
  * @returns List of repositories
  */
-export async function getInstallationRepositories(installationId: number) {
-	const app = getApp();
+export async function getInstallationRepositories(
+	app: App,
+	installationId: number,
+) {
 	const octokit = await app.getInstallationOctokit(installationId);
 
 	const { data } = await octokit.request("GET /installation/repositories", {
@@ -74,6 +125,7 @@ export async function getInstallationRepositories(installationId: number) {
 /**
  * Get pull request details from GitHub API
  *
+ * @param app - GitHub App instance
  * @param installationId - The GitHub App installation ID
  * @param owner - Repository owner
  * @param repo - Repository name
@@ -81,12 +133,12 @@ export async function getInstallationRepositories(installationId: number) {
  * @returns Pull request data
  */
 export async function getPullRequest(
+	app: App,
 	installationId: number,
 	owner: string,
 	repo: string,
-	pullNumber: number
+	pullNumber: number,
 ) {
-	const app = getApp();
 	const octokit = await app.getInstallationOctokit(installationId);
 
 	const { data } = await octokit.request(
@@ -98,7 +150,7 @@ export async function getPullRequest(
 			headers: {
 				"X-GitHub-Api-Version": "2022-11-28",
 			},
-		}
+		},
 	);
 
 	return data;
@@ -107,22 +159,57 @@ export async function getPullRequest(
 /**
  * Get repository details from GitHub API
  *
+ * @param app - GitHub App instance
  * @param installationId - The GitHub App installation ID
  * @param owner - Repository owner
  * @param repo - Repository name
  * @returns Repository data
  */
 export async function getRepository(
+	app: App,
 	installationId: number,
 	owner: string,
-	repo: string
+	repo: string,
 ) {
-	const app = getApp();
 	const octokit = await app.getInstallationOctokit(installationId);
 
 	const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
 		owner,
 		repo,
+		headers: {
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+	});
+
+	return data;
+}
+
+/**
+ * List open pull requests for a repository
+ *
+ * @param app - GitHub App instance
+ * @param installationId - The GitHub App installation ID
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param limit - Maximum number of PRs to fetch (default: 50)
+ * @returns List of open pull requests
+ */
+export async function listOpenPullRequests(
+	app: App,
+	installationId: number,
+	owner: string,
+	repo: string,
+	limit = 50,
+) {
+	const octokit = await app.getInstallationOctokit(installationId);
+
+	const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
+		owner,
+		repo,
+		state: "open",
+		per_page: limit,
+		sort: "updated",
+		direction: "desc",
 		headers: {
 			"X-GitHub-Api-Version": "2022-11-28",
 		},
@@ -150,11 +237,6 @@ export async function getAuthenticatedUser(userAccessToken: string) {
 }
 
 /**
- * Organization membership role
- */
-export type OrgMembershipRole = "admin" | "member";
-
-/**
  * Get user's organization membership details
  *
  * @param userAccessToken - User's OAuth access token
@@ -166,7 +248,7 @@ export type OrgMembershipRole = "admin" | "member";
 export async function getOrganizationMembership(
 	userAccessToken: string,
 	org: string,
-	username: string
+	username: string,
 ): Promise<{ role: OrgMembershipRole; state: string }> {
 	const octokit = new Octokit({ auth: userAccessToken });
 
@@ -178,7 +260,7 @@ export async function getOrganizationMembership(
 			headers: {
 				"X-GitHub-Api-Version": "2022-11-28",
 			},
-		}
+		},
 	);
 
 	return {

@@ -6,8 +6,8 @@ import {
 	getUserInstallations,
 	getAuthenticatedUser,
 	getOrganizationMembership,
-} from "~/lib/github-app";
-import type { OrgMembershipRole } from "~/lib/github-app";
+	type OrgMembershipRole,
+} from "@repo/deus-octokit-github";
 
 /**
  * Map GitHub organization role to Clerk role

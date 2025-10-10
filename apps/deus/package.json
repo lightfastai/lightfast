@@ -21,6 +21,7 @@
 		"@octokit/openapi-types": "^26.0.0",
 		"@octokit/types": "^15.0.0",
 		"@repo/deus-api-services": "workspace:*",
+		"@repo/deus-octokit-github": "workspace:*",
 		"@repo/deus-trpc": "workspace:^",
 		"@repo/deus-types": "workspace:*",
 		"@repo/site-config": "workspace:*",

@@ -5,7 +5,7 @@
 
 import type { Config } from '../config/config.js';
 import type { DeusSessionState } from '../../types/index.js';
-import { trpcMutation } from '../api/trpc-client.js';
+import { createDeusClient, type DeusClient } from '../api/trpc.js';
 
 /**
  * Queue item for offline sync
@@ -25,9 +25,12 @@ export class SessionSyncService {
   private syncQueue: QueuedEvent[] = [];
   private autoSyncInterval: NodeJS.Timeout | null = null;
   private isOnline = true;
+  private client: DeusClient;
 
   constructor(authConfig: Config & { apiUrl: string }) {
     this.authConfig = authConfig;
+    // Initialize typed tRPC client with API key
+    this.client = createDeusClient(authConfig.apiKey!);
   }
 
   /**
@@ -51,7 +54,7 @@ export class SessionSyncService {
     };
 
     await this.syncEvent('create', payload, async () => {
-      await trpcMutation('session.create', payload, this.authConfig.apiKey!);
+      await this.client.session.create.mutate(payload);
     });
   }
 
@@ -74,7 +77,7 @@ export class SessionSyncService {
     };
 
     await this.syncEvent('message', payload, async () => {
-      await trpcMutation('session.addMessage', payload, this.authConfig.apiKey!);
+      await this.client.session.addMessage.mutate(payload);
     });
   }
 
@@ -83,8 +86,8 @@ export class SessionSyncService {
    */
   async updateStatus(
     sessionId: string,
-    status: string,
-    currentAgent?: string
+    status: 'active' | 'paused' | 'completed',
+    currentAgent?: 'claude-code' | 'codex' | 'deus'
   ): Promise<void> {
     const payload = {
       id: sessionId,
@@ -93,7 +96,7 @@ export class SessionSyncService {
     };
 
     await this.syncEvent('update', payload, async () => {
-      await trpcMutation('session.update', payload, this.authConfig.apiKey!);
+      await this.client.session.update.mutate(payload);
     });
   }
 
@@ -150,13 +153,13 @@ export class SessionSyncService {
 
     for (const event of queue) {
       try {
-        // Payloads are already in tRPC format, just need to call the right endpoint
+        // Use typed client to call the right endpoint
         if (event.type === 'create') {
-          await trpcMutation('session.create', event.payload, this.authConfig.apiKey!);
+          await this.client.session.create.mutate(event.payload as Parameters<typeof this.client.session.create.mutate>[0]);
         } else if (event.type === 'message') {
-          await trpcMutation('session.addMessage', event.payload, this.authConfig.apiKey!);
+          await this.client.session.addMessage.mutate(event.payload as Parameters<typeof this.client.session.addMessage.mutate>[0]);
         } else if (event.type === 'update') {
-          await trpcMutation('session.update', event.payload, this.authConfig.apiKey!);
+          await this.client.session.update.mutate(event.payload as Parameters<typeof this.client.session.update.mutate>[0]);
         }
       } catch (error) {
         // If still failing, put back in queue
