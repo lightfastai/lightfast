@@ -3,7 +3,7 @@
  * Handles communication with the web app's tRPC endpoints
  */
 
-import { loadAuthConfig } from '../config/profile-config.js';
+import { getApiUrl } from '../config/config.js';
 
 /**
  * API Key verification response
@@ -46,8 +46,7 @@ export interface ApiErrorResponse {
  * Verify API key with the web app
  */
 export async function verifyApiKey(apiKey: string): Promise<VerifyApiKeyResponse> {
-  const config = loadAuthConfig();
-  const apiUrl = config.apiUrl;
+  const apiUrl = getApiUrl();
 
   try {
     const response = await fetch(`${apiUrl}/api/trpc/apiKey.verify`, {
@@ -77,8 +76,7 @@ export async function verifyApiKey(apiKey: string): Promise<VerifyApiKeyResponse
  * Get user's organizations
  */
 export async function getUserOrganizations(apiKey: string): Promise<ApiOrganization[]> {
-  const config = loadAuthConfig();
-  const apiUrl = config.apiUrl;
+  const apiUrl = getApiUrl();
 
   try {
     const response = await fetch(`${apiUrl}/api/trpc/user.organizations`, {

@@ -7,7 +7,7 @@ import { generateText, Output, zodSchema } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { z } from 'zod';
 import { DEUS_SYSTEM_PROMPT } from './system-prompt.js';
-import { loadAuthConfig } from './config/profile-config.js';
+import { loadConfig, getApiUrl } from './config/config.js';
 
 export interface DeusResponse {
   response: string;
@@ -96,15 +96,16 @@ export class DeusAgent {
    * Route message via web app or local LLM
    */
   private async route(message: string): Promise<RouteDecision | null> {
-    const authConfig = loadAuthConfig();
+    const config = loadConfig();
+    const apiUrl = getApiUrl();
 
     // Try web app routing if authenticated
-    if (authConfig.apiKey && authConfig.defaultOrgSlug && this.sessionId) {
+    if (config.apiKey && config.defaultOrgSlug && this.sessionId) {
       try {
         if (process.env.DEBUG) {
           console.log('[Deus Router] Routing via web app...');
         }
-        return await this.routeViaWebApp(message, authConfig);
+        return await this.routeViaWebApp(message, { ...config, apiUrl });
       } catch (error) {
         if (process.env.DEBUG) {
           console.error(
@@ -128,7 +129,7 @@ export class DeusAgent {
    */
   private async routeViaWebApp(
     message: string,
-    authConfig: typeof loadAuthConfig extends () => infer R ? R : never
+    authConfig: ReturnType<typeof loadConfig> & { apiUrl: string }
   ): Promise<RouteDecision | null> {
     const response = await fetch(
       `${authConfig.apiUrl}/api/chat/${authConfig.defaultOrgSlug}/${this.sessionId}`,

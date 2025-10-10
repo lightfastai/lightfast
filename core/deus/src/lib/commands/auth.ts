@@ -6,15 +6,15 @@
 import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import {
-  loadAuthConfig,
-  saveAuthConfig,
-  clearAuthConfig,
+  loadConfig,
+  clearConfig,
   isAuthenticated,
   setApiKey,
   updateOrganizations,
   setDefaultOrganization,
-  type AuthConfigOrganization,
-} from '../config/profile-config.js';
+  getApiUrl,
+  type Organization,
+} from '../config/config.js';
 import {
   verifyApiKey,
   getUserOrganizations,
@@ -53,7 +53,7 @@ export async function authLogin(apiKey: string): Promise<void> {
     }
 
     // Convert API organizations to auth config format
-    const configOrgs: AuthConfigOrganization[] = orgs.map((org) => ({
+    const configOrgs: Organization[] = orgs.map((org) => ({
       id: org.id,
       slug: org.slug,
       name: org.name,
@@ -63,7 +63,7 @@ export async function authLogin(apiKey: string): Promise<void> {
     updateOrganizations(configOrgs);
 
     // Select default organization
-    let defaultOrg: AuthConfigOrganization;
+    let defaultOrg: Organization;
 
     if (orgs.length === 1) {
       // Only one org, use it as default
@@ -86,11 +86,11 @@ export async function authLogin(apiKey: string): Promise<void> {
     setDefaultOrganization(defaultOrg.id, defaultOrg.slug);
 
     // Success message
-    const config = loadAuthConfig();
+    const apiUrl = getApiUrl();
     console.log('');
     console.log(chalk.green('✓ Authentication successful!'));
     console.log(chalk.dim('  Organization:'), chalk.white(defaultOrg.name));
-    console.log(chalk.dim('  API URL:'), chalk.white(config.apiUrl));
+    console.log(chalk.dim('  API URL:'), chalk.white(apiUrl));
     console.log('');
     console.log(chalk.dim('You can now use Deus CLI to manage your sessions.'));
     console.log(chalk.dim('Try running:'), chalk.cyan('deus'));
@@ -114,7 +114,7 @@ export async function authLogout(): Promise<void> {
       return;
     }
 
-    clearAuthConfig();
+    clearConfig();
     console.log(chalk.green('✓ Successfully logged out'));
   } catch (error) {
     console.error(chalk.red('✗ Logout failed'));
@@ -130,7 +130,7 @@ export async function authLogout(): Promise<void> {
  * Status command - show authentication status
  */
 export async function authStatus(): Promise<void> {
-  const config = loadAuthConfig();
+  const config = loadConfig();
 
   if (!isAuthenticated()) {
     console.log(chalk.red('✗ Not authenticated'));
@@ -159,7 +159,7 @@ export async function authStatus(): Promise<void> {
     console.log(chalk.dim('  Organization:'), chalk.yellow('Not set'));
   }
 
-  console.log(chalk.dim('  API URL:'), chalk.white(config.apiUrl));
+  console.log(chalk.dim('  API URL:'), chalk.white(getApiUrl()));
 }
 
 /**
@@ -172,7 +172,7 @@ export async function orgList(): Promise<void> {
     process.exit(1);
   }
 
-  const config = loadAuthConfig();
+  const config = loadConfig();
 
   if (config.organizations.length === 0) {
     console.log(chalk.yellow('No organizations found'));
@@ -207,7 +207,7 @@ export async function orgSelect(slug: string): Promise<void> {
     process.exit(1);
   }
 
-  const config = loadAuthConfig();
+  const config = loadConfig();
 
   // Find organization by slug
   const org = config.organizations.find((o) => o.slug === slug);

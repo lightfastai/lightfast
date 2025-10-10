@@ -10,14 +10,6 @@ import {
   orgList,
   orgSelect,
 } from './lib/commands/auth.js';
-import {
-  profileList,
-  profileShow,
-  profileCreate,
-  profileSwitch,
-  profileDelete,
-  profilePath,
-} from './lib/commands/profile.js';
 
 // Create commander program
 const program = new Command();
@@ -70,53 +62,6 @@ org
   .description('Select default organization')
   .action(async (slug: string) => {
     await orgSelect(slug);
-  });
-
-// Profile commands
-const profile = program
-  .command('profile')
-  .description('Manage configuration profiles');
-
-profile
-  .command('list')
-  .description('List all profiles')
-  .action(async () => {
-    await profileList();
-  });
-
-profile
-  .command('show [name]')
-  .description('Show profile details (defaults to active profile)')
-  .action(async (name?: string) => {
-    await profileShow(name);
-  });
-
-profile
-  .command('create [name]')
-  .description('Create a new profile')
-  .action(async (name?: string) => {
-    await profileCreate(name);
-  });
-
-profile
-  .command('switch [name]')
-  .description('Switch to a different profile')
-  .action(async (name?: string) => {
-    await profileSwitch(name);
-  });
-
-profile
-  .command('delete [name]')
-  .description('Delete a profile')
-  .action(async (name?: string) => {
-    await profileDelete(name);
-  });
-
-profile
-  .command('path')
-  .description('Show config file path')
-  .action(async () => {
-    await profilePath();
   });
 
 // Headless mode (for backwards compatibility)

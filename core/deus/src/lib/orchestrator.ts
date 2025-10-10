@@ -25,7 +25,7 @@ import { CodexPtySpawner } from './spawners/codex-spawner.js';
 import { getSessionDir } from './config/deus-config.js';
 import { isCommand, executeCommand } from './commands.js';
 import { SessionSyncService } from './sync/session-sync.js';
-import { loadAuthConfig, isAuthenticated } from './config/profile-config.js';
+import { loadConfig, getApiUrl, isAuthenticated } from './config/config.js';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -88,7 +88,9 @@ export class Orchestrator {
 
     // Initialize session sync service if authenticated
     if (isAuthenticated()) {
-      const authConfig = loadAuthConfig();
+      const config = loadConfig();
+      const apiUrl = getApiUrl();
+      const authConfig = { ...config, apiUrl };
       this.syncService = new SessionSyncService(authConfig);
 
       // Sync session creation

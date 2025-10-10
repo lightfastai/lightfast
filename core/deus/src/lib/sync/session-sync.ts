@@ -3,7 +3,7 @@
  * Syncs CLI session state to the web app via API
  */
 
-import type { AuthConfig } from '../config/profile-config.js';
+import type { Config } from '../config/config.js';
 import type { DeusSessionState } from '../../types/index.js';
 
 /**
@@ -53,12 +53,12 @@ interface StatusUpdatePayload {
  * Handles syncing CLI session state to the web app
  */
 export class SessionSyncService {
-  private authConfig: AuthConfig;
+  private authConfig: Config & { apiUrl: string };
   private syncQueue: QueuedEvent[] = [];
   private autoSyncInterval: NodeJS.Timeout | null = null;
   private isOnline = true;
 
-  constructor(authConfig: AuthConfig) {
+  constructor(authConfig: Config & { apiUrl: string }) {
     this.authConfig = authConfig;
   }
 
