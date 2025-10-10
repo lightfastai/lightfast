@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { randomUUID } from 'node:crypto';
 import { nanoid } from 'nanoid';
 import {
   type SessionEvent,
@@ -166,7 +167,7 @@ export class SessionManager {
   private listeners: Set<(state: DeusSessionState) => void> = new Set();
 
   constructor(sessionId?: string) {
-    this.sessionId = sessionId || nanoid();
+    this.sessionId = sessionId || randomUUID();
   }
 
   /**

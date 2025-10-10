@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { Github, Loader2, Building2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -12,20 +13,28 @@ import {
 	CardTitle,
 } from "@repo/ui/components/ui/card";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import type { GitHubInstallation } from "~/lib/github-app";
+import type { GitHubInstallation } from "@repo/deus-octokit-github";
 
 /**
  * Claim Organization Page
  *
  * Shows user's GitHub installations (organizations) and allows them to claim one.
  * After claiming, user is redirected to their org's home page.
+ *
+ * Auth is handled by the parent onboarding layout which uses treatPendingAsSignedOut={false}
+ * to allow pending users (authenticated but no active org) to access this page.
  */
 export default function ClaimOrgPage() {
+	return <ClaimOrgContent />;
+}
+
+function ClaimOrgContent() {
 	const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [claiming, setClaiming] = useState<number | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
+	const { setActive } = useClerk();
 
 	useEffect(() => {
 		void fetchInstallations();
@@ -34,14 +43,24 @@ export default function ClaimOrgPage() {
 	const fetchInstallations = async () => {
 		try {
 			const response = await fetch("/api/github/installations");
+
+			// Handle authentication errors - redirect to connect GitHub
+			if (response.status === 401) {
+				console.log("GitHub authentication required, redirecting to connect-github");
+				router.push("/onboarding/connect-github");
+				return;
+			}
+
 			if (!response.ok) {
 				throw new Error("Failed to fetch installations");
 			}
+
 			const data = (await response.json()) as {
 				installations: GitHubInstallation[];
 			};
 			setInstallations(data.installations);
-		} catch {
+		} catch (error) {
+			console.error("Failed to fetch installations:", error);
 			toast({
 				title: "Failed to fetch organizations",
 				description:
@@ -71,7 +90,7 @@ export default function ClaimOrgPage() {
 				throw new Error(error.error ?? "Failed to claim organization");
 			}
 
-			const data = (await response.json()) as { orgId: number };
+			const data = (await response.json()) as { orgId: number; slug: string };
 
 			const accountName = installation.account
 				? "login" in installation.account
@@ -81,13 +100,24 @@ export default function ClaimOrgPage() {
 						: "Unknown"
 				: "Unknown";
 
+			console.log("[CLAIM ORG CLIENT] Setting active organization:", data.slug);
+
+			// Set the claimed organization as active in Clerk session
+			// This moves the session from "pending" to "active" state
+			await setActive({
+				organization: data.slug, // Can be org slug or org ID
+			});
+
+			console.log("[CLAIM ORG CLIENT] ✓ Organization set as active");
+
 			toast({
 				title: "Organization claimed!",
 				description: `Successfully claimed ${accountName}`,
 			});
 
-			// Redirect to organization home
-			router.push(`/org/${data.orgId}/settings`);
+			// Redirect to organization home using Clerk org slug
+			// Session is now active, so user will have full access
+			router.push(`/org/${data.slug}/settings`);
 		} catch (error) {
 			toast({
 				title: "Failed to claim organization",
@@ -131,16 +161,25 @@ export default function ClaimOrgPage() {
 								You need to install the Deus GitHub App on at least one
 								organization.
 							</p>
-							<Button asChild className="w-full">
-								<a
-									href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
-									target="_blank"
-									rel="noopener noreferrer"
+							<div className="flex flex-col gap-2">
+								<Button asChild className="w-full">
+									<a
+										href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<Github className="mr-2 h-4 w-4" />
+										Install GitHub App
+									</a>
+								</Button>
+								<Button
+									variant="outline"
+									className="w-full"
+									onClick={() => router.push("/onboarding/connect-github")}
 								>
-									<Github className="mr-2 h-4 w-4" />
-									Install GitHub App
-								</a>
-							</Button>
+									Re-connect GitHub
+								</Button>
+							</div>
 						</div>
 					) : (
 						<div className="space-y-3">

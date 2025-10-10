@@ -27,6 +27,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { GitBranch, Plus, ArrowUp } from "lucide-react";
 import { CodeReviewsTab } from "./code-reviews-tab";
+import { SessionsList } from "./sessions";
 import { useTRPC } from "@repo/deus-trpc/react";
 import {
 	Tabs,
@@ -38,9 +39,10 @@ import {
 interface OrgChatInterfaceProps {
 	orgId: number;
 	organizationId: string;
+	orgSlug: string;
 }
 
-export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProps) {
+export function OrgChatInterface({ orgId, organizationId, orgSlug }: OrgChatInterfaceProps) {
 	const formRef = useRef<PromptInputRef | null>(null);
 	const trpc = useTRPC();
 	const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
@@ -146,7 +148,7 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 										className="h-8 gap-1.5 px-3"
 										asChild
 									>
-										<Link href={`/org/${orgId}/settings/repositories`} prefetch={true}>
+										<Link href={`/org/${orgSlug}/settings/repositories`} prefetch={true}>
 											<GitBranch className="h-4 w-4" />
 											<span className="text-xs">Connect GitHub</span>
 										</Link>
@@ -166,10 +168,14 @@ export function OrgChatInterface({ orgId, organizationId }: OrgChatInterfaceProp
 					</PromptInputBody>
 				</PromptInput>
 
-				<Tabs defaultValue="code-reviews" className="w-full max-w-6xl mt-8">
+				<Tabs defaultValue="sessions" className="w-full max-w-6xl mt-8">
 					<TabsList>
-						<TabsTrigger value="code-reviews">Code reviews</TabsTrigger>
+						<TabsTrigger value="sessions">Sessions</TabsTrigger>
+						<TabsTrigger value="code-reviews">Code Reviews</TabsTrigger>
 					</TabsList>
+					<TabsContent value="sessions" className="mt-6">
+						<SessionsList organizationId={organizationId} />
+					</TabsContent>
 					<TabsContent value="code-reviews" className="mt-6">
 						<CodeReviewsTab orgId={organizationId} />
 					</TabsContent>

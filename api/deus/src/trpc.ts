@@ -7,16 +7,32 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 
+import { db } from "@db/deus/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { verifyApiKey } from "./lib/verify-api-key";
 import { auth } from "@vendor/clerk/server";
-import { db } from "@db/deus/client";
-import type {
-  AuthenticatedDeusSession,
-  DeusSession,
-} from "@repo/deus-types/session";
+
+/**
+ * Authentication Context - Discriminated Union
+ * Represents exactly one authentication method per request
+ */
+export type AuthContext =
+  | {
+      type: "clerk";
+      userId: string;
+    }
+  | {
+      type: "apiKey";
+      userId: string;
+      organizationId: string;
+      scopes: string[];
+    }
+  | {
+      type: "unauthenticated";
+    };
 
 /**
  * 1. CONTEXT
@@ -31,27 +47,32 @@ import type {
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}) => {
-  const clerkSession = await auth();
-
-  // Get the source header for logging
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  // Extract only what we need to avoid Clerk type inference issues
-  const session: DeusSession = {
-    userId: clerkSession?.userId ?? null,
-  };
-
-  if (session.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${session.userId}`);
-  } else {
-    console.info(`>>> tRPC Request from ${source} by unknown`);
+  // Try API key authentication first (takes precedence)
+  const apiKeyAuth = await verifyApiKey(opts.headers.get("authorization"));
+  if (apiKeyAuth) {
+    console.info(
+      `>>> tRPC Request from ${source} by API key (user: ${apiKeyAuth.userId}, org: ${apiKeyAuth.organizationId})`,
+    );
+    return { auth: apiKeyAuth, db };
   }
 
+  // Try Clerk session authentication
+  const clerkSession = await auth();
+  if (clerkSession?.userId) {
+    console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
+    return {
+      auth: { type: "clerk" as const, userId: clerkSession.userId },
+      db,
+    };
+  }
+
+  // No authentication
+  console.info(`>>> tRPC Request from ${source} - unauthenticated`);
   return {
-    session,
+    auth: { type: "unauthenticated" as const },
     db,
   };
 };
@@ -68,10 +89,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     ...shape,
     data: {
       ...shape.data,
-      zodError:
-        error.cause instanceof ZodError
-          ? error.cause.flatten()
-          : null,
+      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
 });
@@ -120,7 +138,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
 /**
  * Public (unauthed) procedure
- * 
+ *
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
@@ -129,35 +147,86 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
- * 
+ *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees `ctx.session.userId` is not null.
- * 
+ * the session is valid (either Clerk or API key) and guarantees authentication.
+ *
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
+    if (ctx.auth.type === "unauthenticated") {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    
-    // Create authenticated session with non-null userId
-    const authenticatedSession: AuthenticatedDeusSession = {
-      userId: ctx.session.userId,
-    };
-    
+
     return next({
       ctx: {
         ...ctx,
-        session: authenticatedSession,
+        // After check above, auth is either clerk or apiKey
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk" | "apiKey" }>,
+      },
+    });
+  });
+
+/**
+ * Clerk Protected procedure
+ *
+ * If you want a query or mutation to ONLY be accessible via Clerk session, use this.
+ * This is used by web UI that needs to verify Clerk organization membership.
+ *
+ * Verifies that a valid Clerk session exists and guarantees `ctx.auth` is of type "clerk".
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const clerkProtectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (ctx.auth.type !== "clerk") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Clerk session required. Please sign in.",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        // Type-safe clerk auth (guaranteed to be type "clerk")
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
+      },
+    });
+  });
+
+/**
+ * API Key Protected procedure
+ *
+ * If you want a query or mutation to ONLY be accessible via API key authentication, use this.
+ * This is used by CLI clients that authenticate with API keys instead of Clerk sessions.
+ *
+ * Verifies that a valid API key is provided and guarantees `ctx.auth` is of type "apiKey".
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const apiKeyProtectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (ctx.auth.type !== "apiKey") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message:
+          "API key required. Provide a valid API key in the Authorization header: 'Bearer deus_sk_...'",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        // Type-safe apiKey auth (guaranteed to be type "apiKey")
+        auth: ctx.auth as Extract<AuthContext, { type: "apiKey" }>,
       },
     });
   });
 
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";
-export type {
-  AuthenticatedDeusSession,
-  DeusSession,
-} from "@repo/deus-types/session";

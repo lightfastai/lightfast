@@ -1,8 +1,24 @@
 import { db } from "@db/deus/client";
-import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
-import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
+import { DeusCodeReview, DeusConnectedRepository } from "@db/deus/schema";
 import { eq } from "drizzle-orm";
-import { getPullRequest } from "./github-app";
+
+import type { CodeReviewMetadata } from "@repo/deus-types/code-review";
+
+import { createGitHubApp, getPullRequest } from "@repo/deus-octokit-github";
+import { env } from "../env";
+
+/**
+ * Helper to create the GitHub App instance with environment config
+ */
+function getApp() {
+  return createGitHubApp(
+    {
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+    },
+    true, // Format the private key
+  );
+}
 
 /**
  * Sync PR metadata from GitHub API to code review record
@@ -15,95 +31,113 @@ import { getPullRequest } from "./github-app";
  * @param reviewId - Code review ID to sync
  * @returns Updated metadata or null if sync failed
  */
-export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetadata | null> {
-	// 1. Fetch the code review and repository
-	const review = await db
-		.select()
-		.from(DeusCodeReview)
-		.where(eq(DeusCodeReview.id, reviewId))
-		.limit(1);
+export async function syncPRMetadata(
+  reviewId: string,
+): Promise<CodeReviewMetadata | null> {
+  // 1. Fetch the code review and repository
+  const reviewResult = await db
+    .select()
+    .from(DeusCodeReview)
+    .where(eq(DeusCodeReview.id, reviewId))
+    .limit(1);
 
-	if (!review[0]) {
-		console.error(`[Sync] Code review ${reviewId} not found`);
-		return null;
-	}
+  const review = reviewResult[0];
 
-	const repo = await db
-		.select()
-		.from(DeusConnectedRepository)
-		.where(eq(DeusConnectedRepository.id, review[0].repositoryId))
-		.limit(1);
+  if (!review) {
+    console.error(`[Sync] Code review ${reviewId} not found`);
+    return null;
+  }
 
-	if (!repo[0]) {
-		console.error(`[Sync] Repository ${review[0].repositoryId} not found`);
-		return null;
-	}
+  const repoResult = await db
+    .select()
+    .from(DeusConnectedRepository)
+    .where(eq(DeusConnectedRepository.id, review.repositoryId))
+    .limit(1);
 
-	// 2. Extract owner/repo from cached metadata or githubRepoId
-	const fullName = repo[0].metadata?.fullName;
-	if (!fullName || typeof fullName !== "string") {
-		console.error(`[Sync] Repository ${repo[0].id} missing fullName in metadata`);
-		return null;
-	}
+  const repo = repoResult[0];
 
-	const [owner, repoName] = fullName.split("/");
-	if (!owner || !repoName) {
-		console.error(`[Sync] Invalid fullName format: ${fullName}`);
-		return null;
-	}
+  if (!repo) {
+    console.error(`[Sync] Repository ${review.repositoryId} not found`);
+    return null;
+  }
 
-	try {
-		// 3. Fetch fresh PR data from GitHub API
-		const pr = await getPullRequest(
-			Number(repo[0].githubInstallationId),
-			owner,
-			repoName,
-			review[0].pullRequestNumber
-		);
+  // 2. Extract owner/repo from cached metadata or githubRepoId
+  const fullName = repo.metadata?.fullName;
+  if (!fullName || typeof fullName !== "string") {
+    console.error(`[Sync] Repository ${repo.id} missing fullName in metadata`);
+    return null;
+  }
 
-		// 4. Build updated metadata
-		const updatedMetadata: CodeReviewMetadata = {
-			...review[0].metadata,
-			prTitle: pr.title,
-			prState: pr.state,
-			prMerged: pr.merged ?? false,
-			prAuthor: pr.user?.login,
-			prAuthorAvatar: pr.user?.avatar_url,
-			prUrl: pr.html_url,
-			branch: pr.head.ref,
-			lastSyncedAt: new Date().toISOString(),
-		};
+  const [owner, repoName] = fullName.split("/");
+  if (!owner || !repoName) {
+    console.error(`[Sync] Invalid fullName format: ${fullName}`);
+    return null;
+  }
 
-		// 5. Update database
-		await db
-			.update(DeusCodeReview)
-			.set({ metadata: updatedMetadata })
-			.where(eq(DeusCodeReview.id, reviewId));
+  try {
+    // 3. Fetch fresh PR data from GitHub API
+    const app = getApp();
+    const pr = await getPullRequest(
+      app,
+      Number(repo.githubInstallationId),
+      owner,
+      repoName,
+      review.pullRequestNumber,
+    );
 
-		console.log(`[Sync] Successfully synced PR metadata for review ${reviewId}`);
-		return updatedMetadata;
-	} catch (error) {
-		console.error(`[Sync] Failed to sync PR metadata for review ${reviewId}:`, error);
+    // 4. Build updated metadata
+    const updatedMetadata: CodeReviewMetadata = {
+      ...review.metadata,
+      prTitle: pr.title,
+      prState: pr.state,
+      prMerged: pr.merged ?? false,
+      prAuthor: pr.user?.login,
+      prAuthorAvatar: pr.user?.avatar_url,
+      prUrl: pr.html_url,
+      branch: pr.head.ref,
+      lastSyncedAt: new Date().toISOString(),
+    };
 
-		// Handle 404 - PR deleted
-		if (error && typeof error === "object" && "status" in error && error.status === 404) {
-			const deletedMetadata: CodeReviewMetadata = {
-				...review[0].metadata,
-				deleted: true,
-				deletedAt: new Date().toISOString(),
-				lastSyncedAt: new Date().toISOString(),
-			};
+    // 5. Update database
+    await db
+      .update(DeusCodeReview)
+      .set({ metadata: updatedMetadata })
+      .where(eq(DeusCodeReview.id, reviewId));
 
-			await db
-				.update(DeusCodeReview)
-				.set({ metadata: deletedMetadata })
-				.where(eq(DeusCodeReview.id, reviewId));
+    console.log(
+      `[Sync] Successfully synced PR metadata for review ${reviewId}`,
+    );
+    return updatedMetadata;
+  } catch (error) {
+    console.error(
+      `[Sync] Failed to sync PR metadata for review ${reviewId}:`,
+      error,
+    );
 
-			return deletedMetadata;
-		}
+    // Handle 404 - PR deleted
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 404
+    ) {
+      const deletedMetadata: CodeReviewMetadata = {
+        ...review.metadata,
+        deleted: true,
+        deletedAt: new Date().toISOString(),
+        lastSyncedAt: new Date().toISOString(),
+      };
 
-		return null;
-	}
+      await db
+        .update(DeusCodeReview)
+        .set({ metadata: deletedMetadata })
+        .where(eq(DeusCodeReview.id, reviewId));
+
+      return deletedMetadata;
+    }
+
+    return null;
+  }
 }
 
 /**
@@ -116,26 +150,27 @@ export async function syncPRMetadata(reviewId: string): Promise<CodeReviewMetada
  * @returns Initial metadata or null if fetch failed
  */
 export async function createInitialPRMetadata(
-	installationId: number,
-	owner: string,
-	repo: string,
-	pullNumber: number
+  installationId: number,
+  owner: string,
+  repo: string,
+  pullNumber: number,
 ): Promise<CodeReviewMetadata | null> {
-	try {
-		const pr = await getPullRequest(installationId, owner, repo, pullNumber);
+  try {
+    const app = getApp();
+    const pr = await getPullRequest(app, installationId, owner, repo, pullNumber);
 
-		return {
-			prTitle: pr.title,
-			prState: pr.state,
-			prMerged: pr.merged ?? false,
-			prAuthor: pr.user?.login,
-			prAuthorAvatar: pr.user?.avatar_url,
-			prUrl: pr.html_url,
-			branch: pr.head.ref,
-			lastSyncedAt: new Date().toISOString(),
-		};
-	} catch (error) {
-		console.error(`[Sync] Failed to fetch initial PR metadata:`, error);
-		return null;
-	}
+    return {
+      prTitle: pr.title,
+      prState: pr.state,
+      prMerged: pr.merged ?? false,
+      prAuthor: pr.user?.login,
+      prAuthorAvatar: pr.user?.avatar_url,
+      prUrl: pr.html_url,
+      branch: pr.head.ref,
+      lastSyncedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error(`[Sync] Failed to fetch initial PR metadata:`, error);
+    return null;
+  }
 }

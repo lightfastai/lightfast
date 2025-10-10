@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 import { Plus, Github, ExternalLink } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
@@ -11,12 +10,12 @@ import { useTRPC } from "@repo/deus-trpc/react";
 
 interface RepositoriesSettingsProps {
 	organizationId: string;
+	githubOrgId: number;
 }
 
-export function RepositoriesSettings({ organizationId }: RepositoriesSettingsProps) {
+export function RepositoriesSettings({ organizationId, githubOrgId }: RepositoriesSettingsProps) {
 	const [showConnectDialog, setShowConnectDialog] = useState(false);
 	const trpc = useTRPC();
-	const params = useParams();
 
 	// Query to fetch organization's connected repositories
 	// Using useSuspenseQuery for better loading UX with Suspense boundaries
@@ -142,7 +141,7 @@ export function RepositoriesSettings({ organizationId }: RepositoriesSettingsPro
 				open={showConnectDialog}
 				onOpenChange={setShowConnectDialog}
 				organizationId={organizationId}
-				githubOrgId={params.orgId ? Number(params.orgId) : undefined}
+				githubOrgId={githubOrgId}
 			/>
 		</div>
 	);

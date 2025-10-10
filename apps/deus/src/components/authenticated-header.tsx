@@ -3,10 +3,21 @@
 import React from "react";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 import { OrgSwitcher } from "./org-switcher";
-import type { Organization } from "@db/deus/schema";
+import type { organizations } from "@db/deus/schema";
+
+/**
+ * Organization data from getUserOrganizations()
+ */
+interface OrgData {
+	id: string; // Clerk org ID
+	name: string;
+	slug: string;
+	role: string;
+	deusOrg: typeof organizations.$inferSelect | null;
+}
 
 interface AuthenticatedHeaderProps {
-	organizations: Organization[];
+	organizations: OrgData[];
 }
 
 export function AuthenticatedHeader({ organizations }: AuthenticatedHeaderProps) {

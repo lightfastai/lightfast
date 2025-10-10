@@ -17,20 +17,24 @@ const settingsNavigation = [
 		name: "Code Review",
 		path: "code-review",
 	},
+	{
+		name: "API Keys",
+		path: "api-keys",
+	},
 ];
 
 interface SettingsSidebarProps {
-	orgId: string;
+	slug: string;
 }
 
-export function SettingsSidebar({ orgId }: SettingsSidebarProps) {
+export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 	const pathname = usePathname();
 
 	return (
 		<aside className="w-64 flex-shrink-0">
 			<nav className="space-y-1">
 				{settingsNavigation.map((item) => {
-					const href = `/org/${orgId}/settings/${item.path}`;
+					const href = `/org/${slug}/settings/${item.path}`;
 					const isActive = pathname === href;
 
 					return (

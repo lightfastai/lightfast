@@ -16,7 +16,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { useTRPC } from "@repo/deus-trpc/react";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import type { GitHubRepository } from "~/lib/github-app";
+import type { GitHubRepository } from "@repo/deus-octokit-github";
 
 interface ConnectRepositoryDialogProps {
 	children?: React.ReactNode;
@@ -95,6 +95,7 @@ export function ConnectRepositoryDialog({
 							// Add the new repository to the list optimistically
 							draft.unshift({
 								id: crypto.randomUUID(), // Temporary ID
+								organizationId: variables.organizationId,
 								githubRepoId: variables.githubRepoId,
 								githubInstallationId: variables.githubInstallationId,
 								permissions: variables.permissions ?? null,
@@ -103,6 +104,7 @@ export function ConnectRepositoryDialog({
 								lastSyncedAt: null,
 								metadata: variables.metadata ?? null,
 								codeReviewSettings: null,
+								createdAt: new Date().toISOString(),
 							});
 						}
 					})

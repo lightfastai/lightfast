@@ -1,9 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getInstallationRepositories } from "~/lib/github-app";
-import { db } from "@db/deus/client";
-import { organizations } from "@db/deus";
-import { eq } from "drizzle-orm";
+import { createGitHubApp, getInstallationRepositories } from "@repo/deus-octokit-github";
+import { OrganizationsService } from "@repo/deus-api-services";
+import { env } from "~/env";
 
 /**
  * GitHub App - Fetch Installation Repositories
@@ -38,20 +37,17 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		const org = await db
-			.select()
-			.from(organizations)
-			.where(eq(organizations.githubOrgId, githubOrgId))
-			.limit(1);
+		const organizationsService = new OrganizationsService();
+		const org = await organizationsService.findByGithubOrgId(githubOrgId);
 
-		if (!org[0]) {
+		if (!org) {
 			return NextResponse.json(
 				{ error: "Organization not found" },
 				{ status: 404 }
 			);
 		}
 
-		installationId = org[0].githubInstallationId;
+		installationId = org.githubInstallationId;
 	} else if (installationIdParam) {
 		// Direct installation ID lookup
 		installationId = Number.parseInt(installationIdParam, 10);
@@ -71,7 +67,11 @@ export async function GET(request: NextRequest) {
 
 	try {
 		// Fetch repositories from GitHub
-		const data = await getInstallationRepositories(installationId);
+		const app = createGitHubApp({
+			appId: env.GITHUB_APP_ID,
+			privateKey: env.GITHUB_APP_PRIVATE_KEY,
+		});
+		const data = await getInstallationRepositories(app, installationId);
 
 		// Return repositories array and the installation ID
 		return NextResponse.json({

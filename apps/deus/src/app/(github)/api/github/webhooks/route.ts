@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { db } from "@db/deus/client";
-import { DeusCodeReview, DeusConnectedRepository } from "@db/deus";
-import { eq, and } from "drizzle-orm";
+import { RepositoriesService, CodeReviewsService } from "@repo/deus-api-services";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
@@ -121,37 +119,28 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
 		`[Webhook] PR ${action}: ${repository.full_name}#${pull_request.number}`,
 	);
 
-	// Find the connected repository
-	const repos = await db
-		.select({ id: DeusConnectedRepository.id })
-		.from(DeusConnectedRepository)
-		.where(
-			and(
-				eq(DeusConnectedRepository.githubRepoId, repository.id.toString()),
-				eq(DeusConnectedRepository.isActive, true),
-			),
-		)
-		.limit(1);
+	const repositoriesService = new RepositoriesService();
+	const codeReviewsService = new CodeReviewsService();
 
-	if (!repos[0]) {
+	// Find the connected repository
+	const repo = await repositoriesService.findActiveByGithubRepoId(
+		repository.id.toString()
+	);
+
+	if (!repo) {
 		console.log(
 			`[Webhook] Repository ${repository.id} not connected, skipping`,
 		);
 		return;
 	}
 
-	const repositoryId = repos[0].id;
+	const repositoryId = repo.id;
 
 	// Find all reviews for this PR
-	const reviews = await db
-		.select()
-		.from(DeusCodeReview)
-		.where(
-			and(
-				eq(DeusCodeReview.repositoryId, repositoryId),
-				eq(DeusCodeReview.githubPrId, pull_request.id.toString()),
-			),
-		);
+	const reviews = await codeReviewsService.findByRepositoryAndPrId(
+		repositoryId,
+		pull_request.id.toString()
+	);
 
 	if (reviews.length === 0) {
 		console.log(`[Webhook] No reviews found for PR ${pull_request.id}`);
@@ -163,9 +152,10 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
 	);
 
 	// Update metadata for all reviews of this PR
-	for (const review of reviews) {
-		const updatedMetadata = {
-			...review.metadata,
+	const updatedReviews = reviews.map((review) => ({
+		id: review.id,
+		metadata: {
+			...(review.metadata as Record<string, unknown>),
 			prTitle: pull_request.title,
 			prState: pull_request.state,
 			prMerged: pull_request.merged,
@@ -174,13 +164,10 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
 			prUrl: pull_request.html_url,
 			branch: pull_request.head.ref,
 			lastSyncedAt: new Date().toISOString(),
-		};
+		},
+	}));
 
-		await db
-			.update(DeusCodeReview)
-			.set({ metadata: updatedMetadata })
-			.where(eq(DeusCodeReview.id, review.id));
-	}
+	await codeReviewsService.updateMetadataBatch(updatedReviews);
 
 	console.log(
 		`[Webhook] Successfully updated metadata for PR ${pull_request.id}`,
@@ -211,19 +198,13 @@ async function handleInstallationRepositoriesEvent(
 		`[Webhook] Repositories removed from installation ${payload.installation.id}`,
 	);
 
+	const repositoriesService = new RepositoriesService();
+
 	for (const repo of payload.repositories_removed) {
-		await db
-			.update(DeusConnectedRepository)
-			.set({ isActive: false })
-			.where(
-				and(
-					eq(DeusConnectedRepository.githubRepoId, repo.id.toString()),
-					eq(
-						DeusConnectedRepository.githubInstallationId,
-						payload.installation.id.toString(),
-					),
-				),
-			);
+		await repositoriesService.markInactive({
+			githubRepoId: repo.id.toString(),
+			githubInstallationId: payload.installation.id.toString()
+		});
 
 		console.log(`[Webhook] Marked repository ${repo.full_name} as inactive`);
 	}
@@ -280,15 +261,10 @@ export async function POST(request: NextRequest) {
 						`[Webhook] Installation ${installationPayload.installation.id} deleted`,
 					);
 					// Mark all repositories from this installation as inactive
-					await db
-						.update(DeusConnectedRepository)
-						.set({ isActive: false })
-						.where(
-							eq(
-								DeusConnectedRepository.githubInstallationId,
-								installationPayload.installation.id.toString(),
-							),
-						);
+					const repositoriesService = new RepositoriesService();
+					await repositoriesService.markInstallationInactive(
+						installationPayload.installation.id.toString()
+					);
 				}
 				break;
 			}
@@ -300,47 +276,20 @@ export async function POST(request: NextRequest) {
 						`[Webhook] Repository ${repositoryPayload.repository.id} deleted`,
 					);
 					// Mark repository as inactive and update metadata
-					await db
-						.update(DeusConnectedRepository)
-						.set({
-							isActive: false,
-							metadata: {
-								deleted: true,
-								deletedAt: new Date().toISOString(),
-							},
-						})
-						.where(
-							eq(
-								DeusConnectedRepository.githubRepoId,
-								repositoryPayload.repository.id.toString(),
-							),
-						);
+					const repositoriesService = new RepositoriesService();
+					await repositoriesService.markDeleted(
+						repositoryPayload.repository.id.toString()
+					);
 				} else if (repositoryPayload.action === "renamed") {
 					console.log(
 						`[Webhook] Repository renamed to ${repositoryPayload.repository.full_name}`,
 					);
 					// Update cached repository name
-					const repos = await db
-						.select()
-						.from(DeusConnectedRepository)
-						.where(
-							eq(
-								DeusConnectedRepository.githubRepoId,
-								repositoryPayload.repository.id.toString(),
-							),
-						);
-
-					for (const repo of repos) {
-						await db
-							.update(DeusConnectedRepository)
-							.set({
-								metadata: {
-									...repo.metadata,
-									fullName: repositoryPayload.repository.full_name,
-								},
-							})
-							.where(eq(DeusConnectedRepository.id, repo.id));
-					}
+					const repositoriesService = new RepositoriesService();
+					await repositoriesService.updateMetadata(
+						repositoryPayload.repository.id.toString(),
+						{ fullName: repositoryPayload.repository.full_name }
+					);
 				}
 				break;
 			}

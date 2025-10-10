@@ -1,12 +1,13 @@
 /**
  * Deus Agent - Smart Router
- * Uses LLM-based routing via Vercel AI SDK
+ * Uses LLM-based routing via Vercel AI SDK or web app
  */
 
 import { generateText, Output, zodSchema } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { z } from 'zod';
 import { DEUS_SYSTEM_PROMPT } from './system-prompt.js';
+import { loadConfig, getApiUrl } from './config/config.js';
 
 export interface DeusResponse {
   response: string;
@@ -30,11 +31,26 @@ const routeDecisionSchema = z.object({
 
 type RouteDecision = z.infer<typeof routeDecisionSchema>;
 
+/**
+ * Web app router response
+ */
+interface WebAppRouterResponse {
+  agent: 'claude-code' | 'codex';
+  mcpServers: string[];
+  reasoning: string;
+  response?: string;
+}
+
 export class DeusAgent {
   private conversationHistory: Array<{
     role: 'user' | 'assistant';
     content: string;
   }> = [];
+  private sessionId: string | null = null;
+
+  constructor(sessionId?: string) {
+    this.sessionId = sessionId || null;
+  }
 
   async processMessage(userMessage: string): Promise<DeusResponse> {
     // Add to history
@@ -43,8 +59,8 @@ export class DeusAgent {
       content: userMessage,
     });
 
-    // Route with LLM
-    const decision = await this.routeWithLLM(userMessage);
+    // Route with web app or LLM
+    const decision = await this.route(userMessage);
 
     if (!decision) {
       // Fallback response
@@ -76,6 +92,73 @@ export class DeusAgent {
     };
   }
 
+  /**
+   * Route message via web app or local LLM
+   */
+  private async route(message: string): Promise<RouteDecision | null> {
+    const config = loadConfig();
+    const apiUrl = getApiUrl();
+
+    // Try web app routing if authenticated
+    if (config.apiKey && config.defaultOrgSlug && this.sessionId) {
+      try {
+        if (process.env.DEBUG) {
+          console.log('[Deus Router] Routing via web app...');
+        }
+        return await this.routeViaWebApp(message, { ...config, apiUrl });
+      } catch (error) {
+        if (process.env.DEBUG) {
+          console.error(
+            '[Deus Router] Web app routing failed, falling back to local:',
+            error instanceof Error ? error.message : String(error)
+          );
+        }
+        // Fall through to local routing
+      }
+    }
+
+    // Fallback to local LLM routing
+    if (process.env.DEBUG) {
+      console.log('[Deus Router] Routing via local LLM...');
+    }
+    return await this.routeWithLLM(message);
+  }
+
+  /**
+   * Route via web app API
+   */
+  private async routeViaWebApp(
+    message: string,
+    authConfig: ReturnType<typeof loadConfig> & { apiUrl: string }
+  ): Promise<RouteDecision | null> {
+    const response = await fetch(
+      `${authConfig.apiUrl}/api/chat/${authConfig.defaultOrgSlug}/${this.sessionId}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authConfig.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Router API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as WebAppRouterResponse;
+
+    return {
+      agent: data.agent,
+      mcpServers: data.mcpServers,
+      reasoning: data.reasoning,
+    };
+  }
+
+  /**
+   * Route with local LLM (fallback)
+   */
   private async routeWithLLM(message: string): Promise<RouteDecision | null> {
     try {
       const result = await generateText({
