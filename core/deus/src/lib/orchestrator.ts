@@ -26,6 +26,7 @@ import { getSessionDir } from './config/deus-config.js';
 import { isCommand, executeCommand } from './commands.js';
 import { SessionSyncService } from './sync/session-sync.js';
 import { loadConfig, getApiUrl, isAuthenticated } from './config/config.js';
+import type { LightfastAppDeusUIMessage } from '@repo/deus-types';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -40,6 +41,7 @@ export interface AgentMessage {
 export interface OrchestratorState {
   activeAgent: ActiveAgent;
   messages: AgentMessage[];
+  uiMessages: LightfastAppDeusUIMessage[]; // New format for Deus messages with parts
   sessionId: string | null;
   jobType: string | null;
   mcpServers: string[];
@@ -64,6 +66,7 @@ export class Orchestrator {
     this.state = {
       activeAgent: 'deus',
       messages: [],
+      uiMessages: [],
       sessionId: null,
       jobType: null,
       mcpServers: [],
@@ -133,7 +136,7 @@ export class Orchestrator {
   }
 
   /**
-   * Add message to state
+   * Add message to state (legacy format for Claude/Codex)
    */
   private addMessage(
     agent: ActiveAgent,
@@ -177,11 +180,40 @@ export class Orchestrator {
   }
 
   /**
+   * Add UIMessage to state (new format for Deus with parts)
+   */
+  private addUIMessage(message: LightfastAppDeusUIMessage): void {
+    this.state = {
+      ...this.state,
+      uiMessages: [...this.state.uiMessages, message],
+    };
+
+    this.emit();
+
+    // TODO: Sync UIMessage to backend if needed
+  }
+
+  /**
    * Handle user message
    */
   async handleUserMessage(message: string): Promise<void> {
     // Add user message
     this.addMessage(this.state.activeAgent, 'user', message);
+
+    // Also add to uiMessages if Deus is active (for new UI format)
+    if (this.state.activeAgent === 'deus') {
+      const userUIMessage: LightfastAppDeusUIMessage = {
+        id: `ui-msg-${this.messageIdCounter++}`,
+        role: 'user',
+        parts: [{ type: 'text', text: message }],
+        metadata: {
+          createdAt: new Date().toISOString(),
+          sessionId: this.state.sessionId || undefined,
+          agentType: 'deus',
+        },
+      };
+      this.addUIMessage(userUIMessage);
+    }
 
     // Check if it's a command
     if (isCommand(message)) {
@@ -230,8 +262,13 @@ export class Orchestrator {
 
     const response = await this.deusAgent.processMessage(message);
 
-    // Add Deus response
-    this.addMessage('deus', 'assistant', response.response);
+    // Add Deus response - use new UIMessage format if available
+    if (response.message) {
+      this.addUIMessage(response.message);
+    } else {
+      // Fallback to legacy format
+      this.addMessage('deus', 'assistant', response.response);
+    }
 
     // If Deus decided to start an agent, do it
     if (response.action) {

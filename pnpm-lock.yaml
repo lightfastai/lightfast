@@ -865,6 +865,9 @@ importers:
       '@repo/deus-types':
         specifier: workspace:*
         version: link:../../packages/deus-types
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -904,6 +907,9 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
+      lightfast:
+        specifier: workspace:^
+        version: link:../../core/lightfast
       next:
         specifier: 'catalog:'
         version: 15.4.5(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -1690,6 +1696,9 @@ importers:
       '@repo/deus-api-key':
         specifier: workspace:^
         version: link:../../packages/deus-api-key
+      '@repo/deus-types':
+        specifier: workspace:^
+        version: link:../../packages/deus-types
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.4.3(@trpc/server@11.4.3(typescript@5.9.2))(typescript@5.9.2)
@@ -2052,13 +2061,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@3.25.76)
+        version: 1.0.15(zod@4.0.16)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@3.25.76)
+        version: 5.0.15(zod@4.0.16)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -2834,6 +2843,13 @@ importers:
         version: 5.9.2
 
   packages/deus-types:
+    dependencies:
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@4.0.16)
+      lightfast:
+        specifier: workspace:*
+        version: link:../../core/lightfast
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -17366,6 +17382,12 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
+      zod: 4.0.16
+
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -17484,6 +17506,13 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
+
+  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@standard-schema/spec': 1.0.0
+      eventsource-parser: 3.0.5
+      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:

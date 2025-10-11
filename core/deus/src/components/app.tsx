@@ -8,6 +8,7 @@ import { Box, Text, useInput, useApp } from 'ink';
 import { InputBar } from './input-bar.js';
 import { StatusBar } from './status-bar.js';
 import { WelcomeScreen } from './welcome-screen.js';
+import { MessageList } from './message-list.js';
 import { Orchestrator, type ActiveAgent, type AgentMessage } from '../lib/orchestrator.js';
 
 const { useState, useEffect, useRef } = React;
@@ -102,7 +103,12 @@ export const App: React.FC = () => {
 
       {/* Messages */}
       <Box flexDirection="column" flexGrow={1} paddingX={1} paddingY={1}>
-        <Messages messages={messages} activeAgent={state.activeAgent} />
+        <Messages
+          messages={messages}
+          uiMessages={state.uiMessages}
+          activeAgent={state.activeAgent}
+          isLoading={isLoading}
+        />
       </Box>
 
       {/* Input Bar */}
@@ -118,8 +124,25 @@ export const App: React.FC = () => {
 
 /**
  * Messages Component
+ * Conditionally renders UIMessages for Deus or legacy messages for Claude/Codex
  */
-function Messages({ messages, activeAgent }: { messages: AgentMessage[]; activeAgent: ActiveAgent }) {
+function Messages({
+  messages,
+  uiMessages,
+  activeAgent,
+  isLoading,
+}: {
+  messages: AgentMessage[];
+  uiMessages: ReturnType<Orchestrator['getState']>['uiMessages'];
+  activeAgent: ActiveAgent;
+  isLoading: boolean;
+}) {
+  // For Deus: use new UIMessage format if available
+  if (activeAgent === 'deus' && uiMessages.length > 0) {
+    return <MessageList messages={uiMessages} isStreaming={isLoading} />;
+  }
+
+  // For Claude/Codex or when no UIMessages: use legacy format
   if (messages.length === 0) {
     return <WelcomeScreen activeAgent={activeAgent} />;
   }

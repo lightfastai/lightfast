@@ -3,15 +3,18 @@
  * Uses LLM-based routing via Vercel AI SDK or web app
  */
 
+import type { LightfastAppDeusUIMessage } from '@repo/deus-types';
 import { generateText, Output, zodSchema } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { z } from 'zod';
 import { DEUS_SYSTEM_PROMPT } from './system-prompt.js';
 import { loadConfig, getApiUrl } from './config/config.js';
+import { routeViaWebAppStreaming } from './router-streaming.js';
 
 export interface DeusResponse {
   response: string;
   action?: DeusAction;
+  message?: LightfastAppDeusUIMessage;
 }
 
 export interface DeusAction {
@@ -60,18 +63,19 @@ export class DeusAgent {
     });
 
     // Route with web app or LLM
-    const decision = await this.route(userMessage);
+    const result = await this.route(userMessage);
 
-    if (!decision) {
+    if (!result || !result.decision) {
       // Fallback response
       const fallback = "I'm not sure how to help with that. Can you clarify what you need?";
       this.conversationHistory.push({
         role: 'assistant',
         content: fallback,
       });
-      return { response: fallback };
+      return { response: fallback, message: result?.message };
     }
 
+    const { decision, message } = result;
     const response = `I'll start ${decision.agent} to help. ${decision.reasoning}`;
 
     this.conversationHistory.push({
@@ -81,6 +85,7 @@ export class DeusAgent {
 
     return {
       response,
+      message,
       action: {
         type: decision.agent === 'claude-code' ? 'start-claude-code' : 'start-codex',
         config: {
@@ -95,7 +100,7 @@ export class DeusAgent {
   /**
    * Route message via web app or local LLM
    */
-  private async route(message: string): Promise<RouteDecision | null> {
+  private async route(message: string): Promise<{ decision: RouteDecision | null; message?: LightfastAppDeusUIMessage } | null> {
     const config = loadConfig();
     const apiUrl = getApiUrl();
 
@@ -121,38 +126,33 @@ export class DeusAgent {
     if (process.env.DEBUG) {
       console.log('[Deus Router] Routing via local LLM...');
     }
-    return await this.routeWithLLM(message);
+    const decision = await this.routeWithLLM(message);
+    return decision ? { decision } : null;
   }
 
   /**
-   * Route via web app API
+   * Route via web app API with streaming and user confirmation
    */
   private async routeViaWebApp(
     message: string,
     authConfig: ReturnType<typeof loadConfig> & { apiUrl: string }
-  ): Promise<RouteDecision | null> {
-    const response = await fetch(
-      `${authConfig.apiUrl}/api/chat/${authConfig.defaultOrgSlug}/${this.sessionId}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${authConfig.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Router API error: ${response.status} ${response.statusText}`);
+  ): Promise<{ decision: RouteDecision | null; message: LightfastAppDeusUIMessage }> {
+    if (!this.sessionId) {
+      throw new Error('Session ID is required for web app routing');
     }
 
-    const data = (await response.json()) as WebAppRouterResponse;
+    // Use streaming handler which prompts for user confirmation
+    const result = await routeViaWebAppStreaming(message, this.sessionId);
+
+    const routeDecision = result.decision ? {
+      agent: result.decision.agent,
+      mcpServers: result.decision.mcpServers,
+      reasoning: result.decision.reasoning || `Starting ${result.decision.agent} for task: ${result.decision.task}`,
+    } : null;
 
     return {
-      agent: data.agent,
-      mcpServers: data.mcpServers,
-      reasoning: data.reasoning,
+      decision: routeDecision,
+      message: result.message,
     };
   }
 

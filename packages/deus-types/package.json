@@ -35,6 +35,10 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "prettier": "@repo/prettier-config",
+  "dependencies": {
+    "ai": "catalog:",
+    "lightfast": "workspace:*"
+  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",

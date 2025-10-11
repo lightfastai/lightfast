@@ -1,69 +1,63 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { generateObject } from "ai";
 import { gateway } from "@ai-sdk/gateway";
-import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@db/deus/client";
-import { DeusApiKey, DeusSession, organizations } from "@db/deus/schema";
+import { DeusApiKey } from "@db/deus/schema";
+import type { DeusAppRuntimeContext } from "@repo/deus-types";
+import { uuidv4 } from "@repo/lib";
+import { createAgent } from "lightfast/agent";
+import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { deusTools } from "./_lib/tools";
+import { DeusMemory } from "./_lib/memory";
 
 /**
  * POST /api/chat/[orgSlug]/[sessionId]
  *
- * AI-based routing decisions for Deus CLI
+ * AI-based streaming chat for Deus CLI with tool calling
  *
- * This route is called by the CLI to determine which agent to use
- * and which MCP servers to enable based on the user's request.
+ * This route supports long-running conversations where Deus can:
+ * - Decide which agent to use (Claude Code or Codex)
+ * - Execute tasks via the run_coding_tool
+ * - Maintain conversation history
  *
  * Authentication: API key via Authorization: Bearer deus_sk_...
  */
 
-// Use Edge runtime for performance
-export const runtime = "edge";
-
-/**
- * Request schema
- */
-const requestSchema = z.object({
-	message: z.string().min(1, "Message is required"),
-});
-
-/**
- * Response schema - matches the routing decision from core/deus
- */
-const routeDecisionSchema = z.object({
-	agent: z.enum(["claude-code", "codex"]),
-	mcpServers: z.array(z.string()),
-	reasoning: z.string(),
-});
-
-type RouteDecision = z.infer<typeof routeDecisionSchema>;
+// Note: Using Node.js runtime (not Edge) due to dependencies requiring node:crypto
+// export const runtime = "edge";
 
 /**
  * Deus System Prompt
  * Based on core/deus/src/lib/system-prompt.ts
  */
-const DEUS_SYSTEM_PROMPT = `You are Deus, an AI orchestrator that routes tasks to specialized agents.
+const DEUS_SYSTEM_PROMPT = `You are Deus, an AI orchestrator that routes tasks to specialized coding agents.
 
 Available agents:
-- claude-code: Code review, debugging, refactoring, documentation, git operations
+- claude-code: Code review, debugging, refactoring, documentation, git operations, general coding tasks
 - codex: Testing, web automation, Playwright, browser tasks, E2E testing
 
-Analyze the user's request and determine:
-1. Which agent should handle this task
-2. Which MCP servers are needed (if any)
-3. Your reasoning for this decision
+Your job is to:
+1. Analyze the user's coding request
+2. Determine which agent should handle it
+3. Use the run_coding_tool to execute the task
 
-Available MCP servers:
+Available MCP servers (optional):
 - playwright: Browser automation
 - browserbase: Cloud browser sessions
-- deus-session: Session management (always included)
+- deus-session: Session management (auto-included)
+
+Guidelines:
+- For code-related tasks (review, debug, refactor, implement): use claude-code
+- For testing and browser automation: use codex
+- Always provide a clear explanation of your decision
+- Include relevant MCP servers when needed
 
 Examples:
-- "Review the auth code" → agent: claude-code, mcpServers: [], reasoning: "Code review task"
-- "Write tests with Playwright" → agent: codex, mcpServers: ["playwright"], reasoning: "Browser testing"
-- "Debug the login flow" → agent: claude-code, mcpServers: [], reasoning: "Debugging requires code analysis"
-- "Scrape this website" → agent: codex, mcpServers: ["playwright", "browserbase"], reasoning: "Web scraping with browser"`;
+- "Review the auth code" → run_coding_tool(type: "claude-code", task: "Review the authentication code")
+- "Write Playwright tests" → run_coding_tool(type: "codex", task: "Write Playwright tests", mcpServers: ["playwright"])
+- "Debug login flow" → run_coding_tool(type: "claude-code", task: "Debug the login flow")
+- "Scrape this website" → run_coding_tool(type: "codex", task: "Scrape this website", mcpServers: ["playwright", "browserbase"])`;
 
 /**
  * Error types for proper error handling
@@ -91,7 +85,6 @@ function generateRequestId(): string {
 
 /**
  * Hash an API key using SHA-256
- * Same logic as api/deus/src/router/api-key.ts
  */
 async function hashApiKey(key: string): Promise<string> {
 	const encoder = new TextEncoder();
@@ -116,7 +109,6 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
 	const key = authHeader.replace("Bearer ", "");
 	const keyHash = await hashApiKey(key);
 
-	// Find the API key by hash
 	const keyResult = await db
 		.select({
 			id: DeusApiKey.id,
@@ -136,17 +128,15 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
 		return null;
 	}
 
-	// Check if revoked
 	if (apiKey.revokedAt) {
 		return null;
 	}
 
-	// Check if expired
 	if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
 		return null;
 	}
 
-	// Update lastUsedAt asynchronously (don't block request)
+	// Update lastUsedAt asynchronously
 	void db
 		.update(DeusApiKey)
 		.set({ lastUsedAt: new Date().toISOString() })
@@ -164,43 +154,118 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
  */
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: Promise<{ orgSlug: string; sessionId: string }> }
+	{ params }: { params: Promise<{ orgSlug: string; sessionId: string }> },
 ) {
 	const requestId = generateRequestId();
 	const { orgSlug, sessionId } = await params;
 
+	console.log(`[Deus API] ${requestId} - Received request`, {
+		orgSlug,
+		sessionId,
+		method: request.method,
+		url: request.url,
+		headers: {
+			contentType: request.headers.get("content-type"),
+			authorization: request.headers.get("authorization")?.slice(0, 20) + "...",
+		},
+	});
+
 	try {
+		// Log request body
+		const body = await request.text();
+		console.log(`[Deus API] ${requestId} - Request body:`, {
+			bodyLength: body.length,
+			bodyPreview: body.slice(0, 200),
+		});
+
+		// Parse and transform the request body
+		let parsedBody: any;
+		try {
+			parsedBody = JSON.parse(body);
+			console.log(`[Deus API] ${requestId} - Parsed request body:`, {
+				hasMessages: !!parsedBody?.messages,
+				hasMessage: !!parsedBody?.message,
+				messagesCount: parsedBody?.messages?.length ?? 0,
+				messageTypes: parsedBody?.messages?.map((m: any) => m.role) ?? [],
+				fullBody: parsedBody,
+			});
+
+			// Transform CLI format { message: "text" } to fetchRequestHandler format
+			if (parsedBody.message && !parsedBody.messages) {
+				console.log(
+					`[Deus API] ${requestId} - Converting CLI message format to UIMessage format`,
+				);
+
+				// Load existing messages from memory first
+				const memory = new DeusMemory();
+				const existingMessages = await memory.getMessages(sessionId);
+
+				console.log(
+					`[Deus API] ${requestId} - Loaded ${existingMessages.length} existing messages`,
+				);
+
+				// Create new user message
+				const userMessage = {
+					id: uuidv4(),
+					role: "user" as const,
+					parts: [
+						{
+							type: "text" as const,
+							text: parsedBody.message,
+						},
+					],
+				};
+
+				// Combine with existing messages
+				parsedBody = {
+					messages: [...existingMessages, userMessage],
+				};
+
+				console.log(
+					`[Deus API] ${requestId} - Transformed body now has ${parsedBody.messages.length} messages`,
+				);
+			}
+		} catch (e) {
+			console.error(`[Deus API] ${requestId} - Failed to parse JSON:`, e);
+		}
+
+		// Clone request with transformed body for fetchRequestHandler
+		const requestWithBody = new Request(request.url, {
+			method: request.method,
+			headers: request.headers,
+			body: JSON.stringify(parsedBody),
+		});
 		// 1. Authenticate API key
 		const authHeader = request.headers.get("authorization");
 		const apiKeyAuth = await authenticateApiKey(authHeader);
+
+		console.log(`[Deus API] ${requestId} - Authentication result:`, {
+			authenticated: !!apiKeyAuth,
+			userId: apiKeyAuth?.userId,
+			organizationId: apiKeyAuth?.organizationId,
+		});
 
 		if (!apiKeyAuth) {
 			return NextResponse.json<ErrorResponse>(
 				{
 					type: ErrorType.UNAUTHORIZED,
 					error: "Invalid API key",
-					message: "Provide a valid API key in the Authorization header: 'Bearer deus_sk_...'",
+					message:
+						"Provide a valid API key in the Authorization header: 'Bearer deus_sk_...'",
 				},
 				{
 					status: 401,
 					headers: { "x-request-id": requestId },
-				}
+				},
 			);
 		}
 
 		// 2. Verify organization exists and matches orgSlug
-		const orgResult = await db
-			.select({
-				id: organizations.id,
-				githubOrgSlug: organizations.githubOrgSlug,
-			})
-			.from(organizations)
-			.where(eq(organizations.githubOrgSlug, orgSlug))
-			.limit(1);
+		const orgResult = await db.query.organizations.findFirst({
+			where: (orgs, { eq }) => eq(orgs.githubOrgSlug, orgSlug),
+		});
 
-		const org = orgResult[0];
-
-		if (!org) {
+		if (!orgResult) {
 			return NextResponse.json<ErrorResponse>(
 				{
 					type: ErrorType.NOT_FOUND,
@@ -210,12 +275,12 @@ export async function POST(
 				{
 					status: 404,
 					headers: { "x-request-id": requestId },
-				}
+				},
 			);
 		}
 
-		// 3. Verify API key's organization matches the requested organization
-		if (apiKeyAuth.organizationId !== org.id) {
+		// 3. Verify API key's organization matches
+		if (apiKeyAuth.organizationId !== orgResult.id) {
 			return NextResponse.json<ErrorResponse>(
 				{
 					type: ErrorType.FORBIDDEN,
@@ -225,24 +290,21 @@ export async function POST(
 				{
 					status: 403,
 					headers: { "x-request-id": requestId },
-				}
+				},
 			);
 		}
 
 		// 4. Look up the session
-		const sessionResult = await db
-			.select({
-				id: DeusSession.id,
-				organizationId: DeusSession.organizationId,
-				cwd: DeusSession.cwd,
-				metadata: DeusSession.metadata,
-				currentAgent: DeusSession.currentAgent,
-			})
-			.from(DeusSession)
-			.where(eq(DeusSession.id, sessionId))
-			.limit(1);
+		const session = await db.query.DeusSession.findFirst({
+			where: (sessions, { eq }) => eq(sessions.id, sessionId),
+		});
 
-		const session = sessionResult[0];
+		console.log(`[Deus API] ${requestId} - Session lookup:`, {
+			found: !!session,
+			sessionId,
+			cwd: session?.cwd,
+			currentAgent: session?.currentAgent,
+		});
 
 		if (!session) {
 			return NextResponse.json<ErrorResponse>(
@@ -254,12 +316,12 @@ export async function POST(
 				{
 					status: 404,
 					headers: { "x-request-id": requestId },
-				}
+				},
 			);
 		}
 
 		// 5. Verify session belongs to the organization
-		if (session.organizationId !== org.id) {
+		if (session.organizationId !== orgResult.id) {
 			return NextResponse.json<ErrorResponse>(
 				{
 					type: ErrorType.FORBIDDEN,
@@ -269,31 +331,14 @@ export async function POST(
 				{
 					status: 403,
 					headers: { "x-request-id": requestId },
-				}
-			);
-		}
-
-		// 6. Parse and validate request body
-		const body: unknown = await request.json();
-		const parseResult = requestSchema.safeParse(body);
-
-		if (!parseResult.success) {
-			return NextResponse.json<ErrorResponse>(
-				{
-					type: ErrorType.BAD_REQUEST,
-					error: "Invalid request body",
-					message: parseResult.error.errors[0]?.message ?? "Invalid request",
 				},
-				{
-					status: 400,
-					headers: { "x-request-id": requestId },
-				}
 			);
 		}
 
-		const { message } = parseResult.data;
+		// 6. Generate message ID
+		const messageId = uuidv4();
 
-		// 7. Build context for AI routing
+		// 7. Build context for AI
 		const contextParts: string[] = [
 			`Current working directory: ${session.cwd}`,
 		];
@@ -305,32 +350,101 @@ export async function POST(
 		}
 
 		if (session.currentAgent) {
-			contextParts.push(`Previous agent: ${session.currentAgent}`);
+			contextParts.push(`Current agent: ${session.currentAgent}`);
 		}
 
 		const context = contextParts.join("\n");
-		const promptWithContext = `${context}\n\nUser request: ${message}`;
 
-		// 8. Call AI for routing decision
-		const { object: decision } = await generateObject({
-			model: gateway("anthropic/claude-4-sonnet"),
-			system: DEUS_SYSTEM_PROMPT,
-			prompt: promptWithContext,
-			schema: routeDecisionSchema,
-			temperature: 0.2,
+		// 8. Create memory instance
+		const memory = new DeusMemory();
+
+		console.log(`[Deus API] ${requestId} - Creating agent with context:`, {
+			context: contextParts,
+			messageId,
+			systemPromptLength: DEUS_SYSTEM_PROMPT.length,
 		});
 
-		// 9. Log the routing decision
-		console.log(`[Deus Router] ${requestId} - ${message} → ${decision.agent} (${decision.reasoning})`);
+		// 9. Execute with fetchRequestHandler
+		console.log(`[Deus API] ${requestId} - Starting fetchRequestHandler...`);
+		const response = await fetchRequestHandler({
+			agent: createAgent<DeusAppRuntimeContext, typeof deusTools>({
+				name: "deus",
+				system: `${DEUS_SYSTEM_PROMPT}\n\nContext:\n${context}`,
+				tools: deusTools,
+				createRuntimeContext: ({
+					sessionId: _sessionId,
+					resourceId: _resourceId,
+				}): DeusAppRuntimeContext => ({
+					userId: apiKeyAuth.userId,
+					organizationId: apiKeyAuth.organizationId,
+					agentId: "deus",
+					messageId,
+					// No tools runtime config needed - run_coding_tool uses client-side execution
+				}),
+				model: gateway("anthropic/claude-sonnet-4.5"),
+				temperature: 0.2,
+				// Allow tool calls to be generated and executed
+				// The execute function returns immediately with "completed" status
+				// Client will see the tool call in streaming response and handle it
+				maxSteps: 5,
+			}),
+			sessionId,
+			memory,
+			req: requestWithBody, // Use the cloned request with body
+			resourceId: apiKeyAuth.userId,
+			context: {},
+			createRequestContext: (req) => ({
+				userAgent: req.headers.get("user-agent") ?? undefined,
+				ipAddress:
+					req.headers.get("x-forwarded-for") ??
+					req.headers.get("x-real-ip") ??
+					undefined,
+			}),
+			generateId: () => messageId,
+			onToolCall: ({ toolCall, systemContext }) => {
+				console.log(
+					`[Deus API] ${requestId} - Tool called:`,
+					{
+						toolName: toolCall.toolName,
+						toolCallId: toolCall.toolCallId,
+						args: toolCall.args,
+						sessionId: systemContext.sessionId,
+						userId: systemContext.resourceId,
+					},
+				);
+			},
+			onError(event) {
+				const { error, systemContext } = event;
+				console.error(
+					`[Deus API Error] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}`,
+					{
+						error: error.message || JSON.stringify(error),
+						stack: error.stack,
+						sessionId: systemContext.sessionId,
+						userId: systemContext.resourceId,
+						method: request.method,
+						url: request.url,
+					},
+				);
+			},
+		});
 
-		// 10. Return the routing decision
-		return NextResponse.json<RouteDecision>(
-			decision,
-			{
-				status: 200,
-				headers: { "x-request-id": requestId },
-			}
-		);
+		console.log(`[Deus API] ${requestId} - fetchRequestHandler completed, streaming response`);
+
+		// Add telemetry headers
+		response.headers.set("x-request-id", requestId);
+		response.headers.set("x-session-id", sessionId);
+		response.headers.set("x-message-id", messageId);
+
+		console.log(`[Deus API] ${requestId} - Returning response with headers:`, {
+			requestId,
+			sessionId,
+			messageId,
+			status: response.status,
+			contentType: response.headers.get("content-type"),
+		});
+
+		return response;
 	} catch (error) {
 		console.error(`[Deus Router] ${requestId} - Error:`, error);
 
@@ -338,12 +452,15 @@ export async function POST(
 			{
 				type: ErrorType.INTERNAL_ERROR,
 				error: "Internal server error",
-				message: error instanceof Error ? error.message : "An unexpected error occurred",
+				message:
+					error instanceof Error
+						? error.message
+						: "An unexpected error occurred",
 			},
 			{
 				status: 500,
 				headers: { "x-request-id": requestId },
-			}
+			},
 		);
 	}
 }
