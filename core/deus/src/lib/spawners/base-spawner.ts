@@ -12,12 +12,19 @@ import type { IPty } from 'node-pty';
  * - Session ID detection and notification
  */
 
+export interface ApprovalPrompt {
+  prompt: string;
+  options: string[];
+  rawData: string;
+}
+
 export interface BasePtySpawnerOptions {
   cwd: string;
   command?: string;
   onMessage?: (role: 'user' | 'assistant' | 'system', content: string) => void;
   onSessionDetected?: (sessionId: string, filePath?: string) => void;
   onData?: (data: string) => void;
+  onApprovalRequest?: (approval: ApprovalPrompt) => void;
 }
 
 /**

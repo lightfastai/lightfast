@@ -27,6 +27,8 @@ import { isCommand, executeCommand } from './commands.js';
 import { SessionSyncService } from './sync/session-sync.js';
 import { loadConfig, getApiUrl, isAuthenticated } from './config/config.js';
 import type { LightfastAppDeusUIMessage } from '@repo/deus-types';
+import type { ApprovalPrompt } from './spawners/base-spawner.js';
+import { logger } from './utils/logger.js';
 
 export type ActiveAgent = 'deus' | 'claude-code' | 'codex';
 
@@ -45,6 +47,7 @@ export interface OrchestratorState {
   sessionId: string | null;
   jobType: string | null;
   mcpServers: string[];
+  pendingApproval: ApprovalPrompt | null; // Pending approval request from agent
 }
 
 /**
@@ -70,6 +73,7 @@ export class Orchestrator {
       sessionId: null,
       jobType: null,
       mcpServers: [],
+      pendingApproval: null,
     };
 
     // Add welcome message
@@ -103,16 +107,11 @@ export class Orchestrator {
           await this.syncService.createSession(sessionState);
           this.syncService.startAutoSync(this.state.sessionId);
 
-          if (process.env.DEBUG) {
-            console.log('[Orchestrator] Session sync enabled');
-          }
+          logger.info('[Orchestrator] Session sync enabled');
         } catch (error) {
-          if (process.env.DEBUG) {
-            console.error(
-              '[Orchestrator] Failed to initialize session sync:',
-              error instanceof Error ? error.message : String(error)
-            );
-          }
+          logger.error('[Orchestrator] Failed to initialize session sync', {
+            error: error instanceof Error ? error.message : String(error)
+          });
         }
       }
     }
@@ -169,12 +168,9 @@ export class Orchestrator {
           agent
         )
         .catch((error) => {
-          if (process.env.DEBUG) {
-            console.error(
-              '[Orchestrator] Failed to sync message:',
-              error instanceof Error ? error.message : String(error)
-            );
-          }
+          logger.error('[Orchestrator] Failed to sync message', {
+            error: error instanceof Error ? error.message : String(error)
+          });
         });
     }
   }
@@ -367,9 +363,7 @@ export class Orchestrator {
           mcpServers: [],
         };
 
-        if (process.env.DEBUG) {
-          console.log('[Orchestrator] Starting agent without MCP configuration');
-        }
+        logger.info('[Orchestrator] Starting agent without MCP configuration');
       }
 
       // Start the appropriate agent
@@ -419,12 +413,23 @@ export class Orchestrator {
         this.addMessage('claude-code', 'system', `Session: ${claudeSessionId.substring(0, 8)}...`);
       },
       onData: (data) => {
-        if (process.env.DEBUG) {
-          const clean = stripAnsi(data);
-          if (clean.trim()) {
-            console.log('[Claude Code PTY]', clean);
-          }
+        const clean = stripAnsi(data);
+        if (clean.trim()) {
+          logger.debug('[Claude Code PTY]', { data: clean });
         }
+      },
+      onApprovalRequest: (approval) => {
+        logger.info('[Orchestrator] Approval request received', { prompt: approval.prompt });
+
+        // Add system message to show approval is needed
+        this.addMessage('claude-code', 'system', `⚠️  Approval required - Press 'y' to approve or 'n' to reject`);
+
+        // Update state with pending approval
+        this.state = {
+          ...this.state,
+          pendingApproval: approval,
+        };
+        this.emit();
       },
     });
 
@@ -443,9 +448,7 @@ export class Orchestrator {
       this.syncService
         .updateStatus(this.state.sessionId, 'active', 'claude-code')
         .catch((error) => {
-          if (process.env.DEBUG) {
-            console.error('[Orchestrator] Failed to sync status:', error);
-          }
+          logger.error('[Orchestrator] Failed to sync status', { error });
         });
     }
 
@@ -476,8 +479,8 @@ export class Orchestrator {
     // This would require spawning with the flags from MCPOrchestrator
     // For now, we start basic Codex without MCP injection
 
-    if (process.env.DEBUG && !this.mcpOrchestrator) {
-      console.log('[Orchestrator] Starting Codex without MCP configuration');
+    if (!this.mcpOrchestrator) {
+      logger.info('[Orchestrator] Starting Codex without MCP configuration');
     }
 
     // Create PTY spawner for Codex
@@ -494,11 +497,9 @@ export class Orchestrator {
         this.addMessage('codex', 'system', `Session: ${codexSessionId.substring(0, 8)}...`);
       },
       onData: (data) => {
-        if (process.env.DEBUG) {
-          const clean = stripAnsi(data);
-          if (clean.trim()) {
-            console.log('[Codex PTY]', clean);
-          }
+        const clean = stripAnsi(data);
+        if (clean.trim()) {
+          logger.debug('[Codex PTY]', { data: clean });
         }
       },
     });
@@ -518,9 +519,7 @@ export class Orchestrator {
       this.syncService
         .updateStatus(this.state.sessionId, 'active', 'codex')
         .catch((error) => {
-          if (process.env.DEBUG) {
-            console.error('[Orchestrator] Failed to sync status:', error);
-          }
+          logger.error('[Orchestrator] Failed to sync status', { error });
         });
     }
 
@@ -580,9 +579,7 @@ export class Orchestrator {
       this.syncService
         .updateStatus(this.state.sessionId, 'active', 'deus')
         .catch((error) => {
-          if (process.env.DEBUG) {
-            console.error('[Orchestrator] Failed to sync status:', error);
-          }
+          logger.error('[Orchestrator] Failed to sync status', { error });
         });
     }
 
@@ -666,6 +663,39 @@ export class Orchestrator {
       this.syncService.stopAutoSync();
       this.syncService = null;
     }
+  }
+
+  /**
+   * Handle approval response from user
+   */
+  async handleApprovalResponse(approved: boolean): Promise<void> {
+    if (!this.state.pendingApproval) {
+      logger.debug('[Orchestrator] No pending approval to respond to');
+      return;
+    }
+
+    logger.info('[Orchestrator] Handling approval response', { approved });
+
+    // Send response to appropriate agent
+    if (this.state.activeAgent === 'claude-code' && this.claudeSpawner) {
+      this.claudeSpawner.sendApproval(approved);
+      this.addMessage(
+        'claude-code',
+        'system',
+        approved ? '✓ Approved' : '✗ Rejected'
+      );
+    } else if (this.state.activeAgent === 'codex' && this.codexSpawner) {
+      // Codex approval handling would go here
+      // For now, just log
+      logger.warn('[Orchestrator] Codex approval not implemented yet');
+    }
+
+    // Clear pending approval
+    this.state = {
+      ...this.state,
+      pendingApproval: null,
+    };
+    this.emit();
   }
 
   /**

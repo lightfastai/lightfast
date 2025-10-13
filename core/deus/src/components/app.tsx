@@ -9,7 +9,9 @@ import { InputBar } from './input-bar.js';
 import { StatusBar } from './status-bar.js';
 import { WelcomeScreen } from './welcome-screen.js';
 import { MessageList } from './message-list.js';
+import { ApprovalPrompt } from './approval-prompt.js';
 import { Orchestrator, type ActiveAgent, type AgentMessage } from '../lib/orchestrator.js';
+import { logger } from '../lib/utils/logger.js';
 
 const { useState, useEffect, useRef } = React;
 
@@ -42,6 +44,14 @@ export const App: React.FC = () => {
     if (!orchestrator) return;
 
     const unsubscribe = orchestrator.subscribe((newState) => {
+      // Debug: Log when state updates include pending approval
+      if (newState.pendingApproval) {
+        logger.debug('[App] Received state with pending approval', {
+          promptPreview: newState.pendingApproval.prompt.slice(0, 50),
+          hasApproval: !!newState.pendingApproval,
+        });
+      }
+
       setState(newState);
       setIsLoading(false);
     });
@@ -52,6 +62,12 @@ export const App: React.FC = () => {
   // Handle keyboard shortcuts
   useInput((input, key) => {
     if (!orchestrator) return;
+
+    // If there's a pending approval, don't process other shortcuts
+    // The ApprovalPrompt component will handle input
+    if (state?.pendingApproval) {
+      return;
+    }
 
     // Exit on Ctrl+C
     if (key.ctrl && input === 'c') {
@@ -92,6 +108,17 @@ export const App: React.FC = () => {
   // Get messages for current agent
   const messages = orchestrator.getMessagesForAgent(state.activeAgent);
 
+  // Check if there's a pending approval
+  const hasPendingApproval = state.pendingApproval !== null;
+
+  // Debug: Log render state
+  if (hasPendingApproval) {
+    logger.debug('[App] Rendering with pending approval', {
+      hasPendingApproval,
+      promptPreview: state.pendingApproval?.prompt.slice(0, 50),
+    });
+  }
+
   return (
     <Box flexDirection="column" height="100%">
       {/* Status Bar */}
@@ -109,13 +136,23 @@ export const App: React.FC = () => {
           activeAgent={state.activeAgent}
           isLoading={isLoading}
         />
+
+        {/* Approval Prompt (if pending) */}
+        {hasPendingApproval && state.pendingApproval && (
+          <ApprovalPrompt
+            approval={state.pendingApproval}
+            onApprove={() => orchestrator.handleApprovalResponse(true)}
+            onReject={() => orchestrator.handleApprovalResponse(false)}
+            isFocused={true}
+          />
+        )}
       </Box>
 
-      {/* Input Bar */}
+      {/* Input Bar - disabled when approval is pending */}
       <InputBar
         activeAgent={state.activeAgent}
         onSubmit={handleSubmit}
-        isFocused={!isLoading}
+        isFocused={!isLoading && !hasPendingApproval}
         isLoading={isLoading}
       />
     </Box>
