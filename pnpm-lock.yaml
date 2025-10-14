@@ -400,9 +400,6 @@ importers:
       '@repo/url-utils':
         specifier: workspace:*
         version: link:../../packages/url-utils
-      '@repo/vercel-config':
-        specifier: workspace:*
-        version: link:../../packages/vercel-config
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
@@ -1949,13 +1946,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@4.0.16)
+        version: 1.0.15(zod@3.25.76)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@4.0.16)
+        version: 5.0.15(zod@3.25.76)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -2984,34 +2981,6 @@ importers:
         version: 5.9.2
 
   packages/url-utils:
-    dependencies:
-      '@repo/vercel-config':
-        specifier: workspace:*
-        version: link:../vercel-config
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.9
-      eslint:
-        specifier: 'catalog:'
-        version: 9.32.0(jiti@2.5.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.6.2
-
-  packages/vercel-config:
     dependencies:
       typescript:
         specifier: 'catalog:'
@@ -16978,12 +16947,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
-      zod: 4.0.16
-
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -17102,13 +17065,6 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:

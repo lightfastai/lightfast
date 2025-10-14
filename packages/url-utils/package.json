@@ -19,7 +19,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/vercel-config": "workspace:*",
     "typescript": "catalog:"
   },
   "devDependencies": {
