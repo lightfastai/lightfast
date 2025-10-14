@@ -16,6 +16,7 @@
     "@clerk/elements": "^0.23.61",
     "@clerk/nextjs": "^6.31.9",
     "@hookform/resolvers": "^3.10.0",
+    "@repo/app-urls": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

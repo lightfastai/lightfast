@@ -391,6 +391,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.61.1(react@19.1.1))
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -509,6 +512,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/chat-ai':
         specifier: workspace:*
         version: link:../../packages/chat-ai
@@ -714,6 +720,9 @@ importers:
       '@db/cloud':
         specifier: workspace:*
         version: link:../../db/cloud
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -935,6 +944,9 @@ importers:
 
   apps/docs:
     dependencies:
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1056,6 +1068,9 @@ importers:
       '@repo/ai-tools':
         specifier: workspace:*
         version: link:../../packages/ai-tools
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -1225,6 +1240,9 @@ importers:
       '@repo/ai-tools':
         specifier: workspace:*
         version: link:../../packages/ai-tools
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -1364,6 +1382,9 @@ importers:
 
   apps/www:
     dependencies:
+      '@repo/app-urls':
+        specifier: workspace:*
+        version: link:../../packages/app-urls
       '@repo/email':
         specifier: workspace:*
         version: link:../../packages/email
@@ -1642,6 +1663,8 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/ui@3.2.4)(jiti@2.5.1)(jsdom@26.1.0(bufferutil@4.0.9))(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.0)
+
+  core/deus: {}
 
   core/dev-server:
     dependencies:
@@ -2366,6 +2389,40 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
+
+  packages/app-urls:
+    dependencies:
+      '@t3-oss/env-nextjs':
+        specifier: ^0.12.0
+        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@vercel/related-projects':
+        specifier: ^1.0.0
+        version: 1.0.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.9
+      eslint:
+        specifier: 'catalog:'
+        version: 9.32.0(jiti@2.5.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
 
   packages/chat-ai:
     dependencies:

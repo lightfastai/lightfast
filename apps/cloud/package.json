@@ -20,6 +20,7 @@
 		"@browserbasehq/stagehand": "catalog:",
 		"@clerk/nextjs": "^6.31.9",
 		"@db/cloud": "workspace:*",
+		"@repo/app-urls": "workspace:*",
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",
 		"@repo/url-utils": "workspace:*",

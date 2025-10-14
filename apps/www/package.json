@@ -15,6 +15,7 @@
 		"with-env": "dotenv -e ./.vercel/.env.development.local --"
 	},
 	"dependencies": {
+		"@repo/app-urls": "workspace:*",
 		"@repo/email": "workspace:*",
 		"@repo/lib": "workspace:*",
 		"@repo/site-config": "workspace:*",

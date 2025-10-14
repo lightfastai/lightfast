@@ -22,6 +22,7 @@
     "@radix-ui/react-scroll-area": "^1.2.9",
     "@repo/ai": "workspace:*",
     "@repo/ai-tools": "workspace:*",
+    "@repo/app-urls": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

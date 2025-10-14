@@ -43,6 +43,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.62.0",
     "@repo/ai": "workspace:*",
     "@repo/ai-tools": "workspace:*",
+    "@repo/app-urls": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

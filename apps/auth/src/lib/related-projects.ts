@@ -1,5 +1,5 @@
 import { withRelatedProject } from '@vercel/related-projects';
-import { env } from '~/env';
+import { env } from '@repo/app-urls';
 
 const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
 
@@ -7,7 +7,7 @@ const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
 export const playgroundUrl = withRelatedProject({
   projectName: 'lightfast-playground',
   defaultHost: isDevelopment
-    ? 'http://localhost:4105'
+    ? `http://localhost:${env.NEXT_PUBLIC_PLAYGROUND_PORT}`
     : 'https://playground.lightfast.ai',
 });
 
@@ -15,6 +15,6 @@ export const playgroundUrl = withRelatedProject({
 export const cloudUrl = withRelatedProject({
   projectName: 'lightfast-app',
   defaultHost: isDevelopment
-    ? 'http://localhost:4103'
+    ? `http://localhost:${env.NEXT_PUBLIC_CLOUD_PORT}`
     : 'https://cloud.lightfast.ai',
 });

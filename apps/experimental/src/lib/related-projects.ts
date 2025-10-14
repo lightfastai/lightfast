@@ -1,5 +1,5 @@
 import { withRelatedProject } from '@vercel/related-projects';
-import { env } from '@/env';
+import { env } from '@repo/app-urls';
 
 const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
 
@@ -7,7 +7,7 @@ const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
 export const wwwUrl = withRelatedProject({
   projectName: 'lightfast-www',
   defaultHost: isDevelopment
-    ? 'http://localhost:4101'
+    ? `http://localhost:${env.NEXT_PUBLIC_WWW_PORT}`
     : 'https://lightfast.ai',
 });
 
@@ -15,6 +15,6 @@ export const wwwUrl = withRelatedProject({
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
   defaultHost: isDevelopment
-    ? 'http://localhost:4104'
+    ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
     : 'https://auth.lightfast.ai',
 });
