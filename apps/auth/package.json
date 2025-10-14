@@ -6,9 +6,9 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env next dev -p 4104 --turbo",
+    "dev": "pnpm with-env next dev -p ${PORT:-4104} --turbo",
     "lint": "eslint",
-    "start": "pnpm with-env next start -p 4104",
+    "start": "pnpm with-env next start -p ${PORT:-4104}",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },

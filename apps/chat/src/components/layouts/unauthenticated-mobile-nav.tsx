@@ -7,11 +7,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { getAppUrl } from "@repo/url-utils";
 
 export function UnauthenticatedMobileNav() {
 	const [open, setOpen] = React.useState(false);
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>
@@ -52,13 +50,6 @@ export function UnauthenticatedMobileNav() {
 										<div className="block text-2xl font-medium py-1 text-foreground">
 											Chat
 										</div>
-										<Link
-											href={cloudUrl}
-											onClick={() => setOpen(false)}
-											className="block text-2xl font-medium py-1 transition-colors hover:text-muted-foreground"
-										>
-											Cloud
-										</Link>
 									</div>
 								</div>
 							</div>

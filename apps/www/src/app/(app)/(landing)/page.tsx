@@ -7,10 +7,9 @@ import { PlatformSection } from "~/components/landing/platform-section";
 import { BackgroundGrid } from "~/components/landing/background-grid";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
-import { getAppUrl } from "@repo/url-utils";
+import { cloudUrl } from "~/lib/related-projects";
 
 export default function HomePage() {
-	const cloudUrl = getAppUrl("cloud");
 	
 	return (
 		<div className="relative">

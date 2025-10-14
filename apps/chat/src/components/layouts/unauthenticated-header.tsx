@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { getAppUrl } from "@repo/url-utils";
 import { UnauthenticatedMobileNav } from "./unauthenticated-mobile-nav";
+import { wwwUrl } from "~/lib/related-projects";
 
 export function UnauthenticatedHeader() {
 
@@ -13,7 +13,7 @@ export function UnauthenticatedHeader() {
 				{/* Left side - Logo */}
 				<div className="flex items-center">
 					<Button variant="ghost" size="xs" asChild>
-						<Link href={getAppUrl("www")}>
+						<Link href={wwwUrl}>
 							<Icons.logoShort className="h-4 w-auto text-foreground" />
 						</Link>
 					</Button>
@@ -29,7 +29,7 @@ export function UnauthenticatedHeader() {
 			{/* Left side - Logo only */}
 			<div className="hidden lg:flex absolute top-0 left-0 h-14 items-center pl-2 z-10 w-fit">
 				<Button variant="ghost" size="lg" asChild>
-					<Link href={getAppUrl("www")}>
+					<Link href={wwwUrl}>
 						<Icons.logo className="size-22 text-foreground" />
 					</Link>
 				</Button>

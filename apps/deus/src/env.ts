@@ -24,7 +24,7 @@ export const env = createEnv({
 	client: {
 		NEXT_PUBLIC_VERCEL_ENV: z
 			.enum(["development", "preview", "production"])
-			.optional(),
+			.default("development"),
 		NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 	},
 	experimental__runtimeEnv: {

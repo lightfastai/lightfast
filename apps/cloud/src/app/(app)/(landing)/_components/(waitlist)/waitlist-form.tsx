@@ -7,7 +7,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { joinClerkWaitlistAction } from "./_actions/clerk-waitlist";
 import Link from "next/link";
-import { getAppUrl } from "@repo/url-utils";
+import { wwwUrl, authUrl } from "~/lib/related-projects";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import { captureException } from "@sentry/nextjs";
 
@@ -23,8 +23,6 @@ function SubmitButton() {
 
 export function WaitlistForm() {
 	const [state, formAction] = useActionState(joinClerkWaitlistAction, { status: "idle" });
-	const wwwUrl = getAppUrl("www");
-	const authUrl = getAppUrl("auth");
 
 	// Track client-side errors
 	useEffect(() => {

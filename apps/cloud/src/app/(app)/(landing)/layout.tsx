@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { getAppUrl } from "@repo/url-utils";
+import { chatUrl, wwwUrl } from "~/lib/related-projects";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-	const chatUrl = getAppUrl("chat");
-	const wwwUrl = getAppUrl("www");
 
 	return (
 		<div className="min-h-screen bg-background relative">

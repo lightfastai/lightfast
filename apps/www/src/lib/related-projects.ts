@@ -11,20 +11,12 @@ export const authUrl = withRelatedProject({
     : 'https://auth.lightfast.ai',
 });
 
-// Get the playground URL dynamically based on environment
-export const playgroundUrl = withRelatedProject({
-  projectName: 'lightfast-playground',
+// Get the cloud URL dynamically based on environment
+export const cloudUrl = withRelatedProject({
+  projectName: 'lightfast-app',
   defaultHost: isDevelopment
-    ? 'http://localhost:4105'
-    : 'https://playground.lightfast.ai',
-});
-
-// Get the www URL dynamically based on environment
-export const wwwUrl = withRelatedProject({
-  projectName: 'lightfast-www',
-  defaultHost: isDevelopment
-    ? 'http://localhost:4101'
-    : 'https://lightfast.ai',
+    ? 'http://localhost:4103'
+    : 'https://cloud.lightfast.ai',
 });
 
 // Get the chat URL dynamically based on environment

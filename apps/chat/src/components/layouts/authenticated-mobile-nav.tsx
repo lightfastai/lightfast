@@ -18,7 +18,6 @@ import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { getAppUrl } from "@repo/url-utils";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/chat-trpc/react";
@@ -28,7 +27,6 @@ import { SettingsDialog } from "../settings-dialog";
 export function AuthenticatedMobileNav() {
 	const [open, setOpen] = React.useState(false);
 	const [settingsOpen, setSettingsOpen] = React.useState(false);
-	const cloudUrl = getAppUrl("cloud");
 	const { signOut } = useClerk();
 	const { user: clerkUser } = useUser();
 	const trpc = useTRPC();
@@ -201,20 +199,9 @@ export function AuthenticatedMobileNav() {
 								<div className="space-y-3">
 									<div className="text-sm text-muted-foreground">Products</div>
 									<div className="space-y-1">
-										<Link
-											href="/"
-											onClick={() => setOpen(false)}
-											className="block text-lg font-medium py-2 text-foreground transition-colors hover:text-muted-foreground"
-										>
+										<div className="block text-lg font-medium py-2 text-foreground">
 											Chat
-										</Link>
-										<Link
-											href={cloudUrl}
-											onClick={() => setOpen(false)}
-											className="block text-lg font-medium py-2 transition-colors hover:text-muted-foreground"
-										>
-											Cloud
-										</Link>
+										</div>
 									</div>
 								</div>
 							</div>

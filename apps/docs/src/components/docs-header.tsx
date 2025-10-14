@@ -3,10 +3,10 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { LoginDropdown } from "./login-dropdown";
-import { getAuthUrls, getAllAppUrls } from "@repo/url-utils";
 import { SearchTrigger } from "./search-trigger";
 import { MobileNav } from "./mobile-nav";
 import { pageTree } from "../lib/source";
+import { getAuthUrls, getAllAppUrls, wwwUrl } from "@/src/lib/related-projects";
 
 export function DocsHeader() {
 	const authUrls = getAuthUrls();

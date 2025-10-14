@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Icons } from "@repo/ui/components/icons";
-import { getAppUrl } from "@repo/url-utils";
 import { UserDropdown } from "../user-dropdown";
 import { AuthenticatedMobileNav } from "./authenticated-mobile-nav";
 import { AgentInfoModal } from "../agent-info-modal";
@@ -13,8 +12,6 @@ interface AuthenticatedHeaderProps {
 }
 
 export function AuthenticatedHeader({ agentId, version = "v1" }: AuthenticatedHeaderProps) {
-	const cloudUrl = getAppUrl("cloud");
-	const chatUrl = getAppUrl("chat");
 	const newChatHref = version === "v2" ? `/v2-chat/${agentId || "a011"}` : "/";
 
 	return (
