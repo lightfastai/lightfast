@@ -25,7 +25,7 @@
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
-    "@sentry/nextjs": "^10.12.0",
+    "@sentry/nextjs": "^10.20.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",

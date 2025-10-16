@@ -34,7 +34,7 @@
 		"@repo/chat-ai-types": "workspace:*",
 		"@repo/chat-billing": "workspace:*",
 		"@repo/lib": "workspace:^",
-		"@sentry/core": "^10.12.0",
+		"@sentry/core": "^10.20.0",
 		"@t3-oss/env-nextjs": "catalog:",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",

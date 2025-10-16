@@ -15,6 +15,9 @@ import {
   type BundledTheme,
   createHighlighter,
 } from "shiki";
+
+// Re-export types for consumers
+export type { BundledLanguage, BundledTheme } from "shiki";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { cn } from "@repo/ui/lib/utils";
 import { useTheme } from "next-themes";
