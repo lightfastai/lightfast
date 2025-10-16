@@ -12,10 +12,10 @@ export enum ClerkPlanKey {
 
 export type DeploymentStage = "development" | "preview" | "production";
 
-type PlanMapping = {
+interface PlanMapping {
   production: string;
   nonProduction: string;
-};
+}
 
 const CLERK_PLAN_IDS: Record<ClerkPlanKey, PlanMapping> = {
   [ClerkPlanKey.FREE_TIER]: {

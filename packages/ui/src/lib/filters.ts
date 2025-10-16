@@ -766,7 +766,7 @@ export function __dateFilterFn<TData>(
   inputData: Date,
   filterValue: FilterModel<"date", TData>,
 ) {
-  if (!filterValue || filterValue.values.length === 0) return true;
+  if (filterValue?.values.length === 0) return true;
 
   if (
     dateFilterDetails[filterValue.operator].target === "single" &&
@@ -826,7 +826,7 @@ export function __textFilterFn<TData>(
   inputData: string,
   filterValue: FilterModel<"text", TData>,
 ) {
-  if (!filterValue || filterValue.values.length === 0) return true;
+  if (filterValue?.values.length === 0) return true;
 
   const value = inputData.toLowerCase().trim();
   const filterStr = filterValue.values[0].toLowerCase().trim();
@@ -857,7 +857,7 @@ export function __numberFilterFn<TData>(
   inputData: number,
   filterValue: FilterModel<"number", TData>,
 ) {
-  if (!filterValue.values || filterValue.values.length === 0) {
+  if (filterValue.values?.length === 0) {
     return true;
   }
 

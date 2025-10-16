@@ -115,7 +115,7 @@ const handler = async (
 								metadata: {
 									agentId,
 									agentName: "browser_010",
-									threadId,
+									sessionId,
 									userId,
 								},
 							},
@@ -148,7 +148,6 @@ const handler = async (
 											finishReason: result.finishReason,
 											usage: result.usage,
 											// Include thinking metadata if available
-											reasoningText: result.reasoningText,
 											reasoningText: result.reasoningText,
 											providerOptions: result.providerOptions,
 										},
@@ -209,7 +208,7 @@ const handler = async (
 	if (req.method === "POST") {
 		return traced(executeHandler, {
 			type: "function",
-			name: `POST /api/agents/${agentId}/${threadId}`,
+			name: `POST /api/agents/${agentId}/${sessionId}`,
 		});
 	}
 

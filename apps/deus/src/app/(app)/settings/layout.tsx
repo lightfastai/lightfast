@@ -1,4 +1,3 @@
-import { Settings } from "lucide-react";
 import { AuthenticatedHeader } from "~/components/authenticated-header";
 import { SettingsSidebar } from "~/components/settings-sidebar";
 

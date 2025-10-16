@@ -8,11 +8,11 @@
   "exports": {
     "./browserbase": {
       "types": "./dist/browserbase/index.d.ts",
-      "import": "./dist/browserbase/index.js"
+      "default": "./src/browserbase/index.ts"
     },
     "./browserbase/env": {
       "types": "./dist/browserbase/env.d.ts",
-      "import": "./dist/browserbase/env.js"
+      "default": "./src/browserbase/env.ts"
     }
   },
   "scripts": {

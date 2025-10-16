@@ -21,7 +21,7 @@
 		"@repo/site-config": "workspace:*",
 		"@repo/ui": "workspace:*",
 		"@repo/url-utils": "workspace:*",
-		"@sentry/nextjs": "^10.12.0",
+		"@sentry/nextjs": "^10.20.0",
 		"@t3-oss/env-nextjs": "catalog:",
 		"@vendor/analytics": "workspace:*",
 		"@vendor/email": "workspace:*",
@@ -30,6 +30,7 @@
 		"@vendor/observability": "workspace:*",
 		"@vendor/security": "workspace:*",
 		"@vendor/upstash": "workspace:*",
+		"@vercel/related-projects": "catalog:",
 		"geist": "catalog:",
 		"jotai": "^2.12.3",
 		"lucide-react": "catalog:",
@@ -57,10 +58,13 @@
 		"autoprefixer": "^10.4.21",
 		"dotenv-cli": "^8.0.0",
 		"eslint": "catalog:",
+		"import-in-the-middle": "catalog:",
 		"jiti": "^1.21.6",
 		"postcss": "catalog:tailwind4",
+		"require-in-the-middle": "catalog:",
 		"tailwindcss": "catalog:tailwind4",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"
 }

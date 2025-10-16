@@ -1,4 +1,4 @@
-import type { CommerceSubscription, CommerceSubscriptionItem } from "@clerk/backend";
+import type { BillingSubscription, BillingSubscriptionItem, BillingPlan } from "@clerk/backend";
 import { format, toZonedTime } from "date-fns-tz";
 import { isWithinInterval } from "date-fns";
 
@@ -12,8 +12,8 @@ export interface BillingLogger {
 }
 
 export interface SubscriptionData {
-  subscription: CommerceSubscription | null;
-  paidSubscriptionItems: CommerceSubscriptionItem[];
+  subscription: BillingSubscription | null;
+  paidSubscriptionItems: BillingSubscriptionItem[];
   planKey: ClerkPlanKey;
   hasActiveSubscription: boolean;
   billingInterval: BillingInterval;
@@ -31,7 +31,7 @@ export function deriveSubscriptionData({
   options,
 }: {
   userId: string;
-  subscription: CommerceSubscription | null;
+  subscription: BillingSubscription | null;
   options?: DeriveSubscriptionOptions;
 }): SubscriptionData {
   const logger = options?.logger;
@@ -93,7 +93,7 @@ export function deriveSubscriptionData({
 }
 
 export interface BillingSubscriptionFetcher {
-  getUserBillingSubscription(userId: string): Promise<CommerceSubscription | null>;
+  getUserBillingSubscription(userId: string): Promise<BillingSubscription>;
 }
 
 export async function fetchSubscriptionData(

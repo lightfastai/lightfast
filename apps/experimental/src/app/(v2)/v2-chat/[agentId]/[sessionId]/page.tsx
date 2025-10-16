@@ -31,7 +31,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	// If no messages exist, this might be an invalid session
 	// In v2, we don't have session metadata yet, so we just check if messages exist
 	// TODO: Add session metadata support in v2
-	if (!messages || messages.length === 0) {
+	if (messages?.length === 0) {
 		// For now, allow empty sessions (new conversations)
 		// notFound();
 	}

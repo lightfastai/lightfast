@@ -13,8 +13,7 @@ import {
 	MessageCircle,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetPrimitive } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
 import { Separator } from "@repo/ui/components/ui/separator";
