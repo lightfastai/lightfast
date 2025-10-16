@@ -21,7 +21,7 @@ export async function getMessages(sessionId: string): Promise<PlaygroundUIMessag
   try {
     // Check session ownership
     const session = await memory.getSession(sessionId);
-    if (!session || session.resourceId !== userId) {
+    if (session?.resourceId !== userId) {
       return [];
     }
 

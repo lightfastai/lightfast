@@ -1,26 +1,31 @@
 version: 1
+
 services:
   www:
     path: apps/www
-    envFile: .vercel/.env.development.local
+    envFile: apps/www/.vercel/.env.development.local
   cloud:
     path: apps/cloud
-    envFile: .vercel/.env.development.local
+    envFile: apps/cloud/.vercel/.env.development.local
   auth:
     path: apps/auth
-    envFile: .vercel/.env.development.local
+    envFile: apps/auth/.vercel/.env.development.local
   playground:
     path: apps/playground
-    envFile: .vercel/.env.development.local
+    envFile: apps/playground/.vercel/.env.development.local
   chat:
     path: apps/chat
-    envFile: .vercel/.env.development.local
+    envFile: apps/chat/.vercel/.env.development.local
   deus:
     path: apps/deus
-    envFile: .vercel/.env.development.local
-  docs:
-    path: apps/docs
-    envFile: null  # docs doesn't use env file
+    envFile: apps/deus/.vercel/.env.development.local
   experimental:
     path: apps/experimental
-    envFile: .vercel/.env.development.local
+    envFile: apps/experimental/.vercel/.env.development.local
+
+worktrees:
+  path: ./worktrees
+
+hooks:
+  postWorktreeCreate: 
+  - nextjs-apps-port-remap.sh

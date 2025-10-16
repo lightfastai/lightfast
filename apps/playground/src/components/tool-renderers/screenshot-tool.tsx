@@ -23,7 +23,7 @@ export const ScreenshotTool = memo(function ScreenshotTool({ toolPart, className
     : null;
   
   // Check if this is an error
-  const hasError = output && output.success === false;
+  const hasError = output?.success === false;
   const screenshotUrl = output && output.success !== false ? (output.screenshot ?? output.url) : null;
 
   // Show loading state for non-output states

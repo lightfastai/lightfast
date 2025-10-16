@@ -32,6 +32,7 @@
     "build": "node scripts/build-all.js",
     "build:bundle": "tsup",
     "build:quick": "tsup",
+    "prepare": "node scripts/prepare.js",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --fix",

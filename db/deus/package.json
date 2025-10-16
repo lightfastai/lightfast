@@ -35,12 +35,15 @@
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "catalog:",

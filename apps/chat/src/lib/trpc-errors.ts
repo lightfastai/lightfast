@@ -1,5 +1,5 @@
 import type { TRPCClientError } from "@trpc/client";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import type { ChatAppRouter } from "@api/chat";
 
 /**

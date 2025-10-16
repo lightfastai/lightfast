@@ -320,7 +320,7 @@ export const messageRouter = {
           return {
             id: msg.id,
             role: msg.role,
-            parts: (preview?.parts ?? msg.parts) as typeof msg.parts,
+            parts: (preview?.parts ?? msg.parts),
             modelId: msg.modelId,
             metadata: {
               sessionId: input.sessionId,
