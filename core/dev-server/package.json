@@ -38,6 +38,7 @@
     "clean": "rm -rf .output .tanstack .nitro .lightfast .cache .turbo node_modules dist"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
     "@ai-sdk/react": "catalog:",
     "@lightfastai/compiler": "workspace:*",
     "@repo/ui": "workspace:*",
