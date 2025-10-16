@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "pnpm build:prod",
+    "build:dev": "pnpm with-env:dev next build",
+    "build:prod": "pnpm with-env:prod next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev --turbo --port ${NEXT_PUBLIC_EXPERIMENTAL_PORT:-3001}",
+    "dev": "pnpm with-env:dev next dev --turbo --port ${NEXT_PUBLIC_EXPERIMENTAL_PORT:-3001}",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "start": "pnpm with-env next start --port ${NEXT_PUBLIC_EXPERIMENTAL_PORT:-3001}",
+    "start": "pnpm with-env:prod next start --port ${NEXT_PUBLIC_EXPERIMENTAL_PORT:-3001}",
     "typecheck": "tsc --noEmit",
-    "with-env": "dual run --"
+    "with-env:dev": "dual run --",
+    "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
