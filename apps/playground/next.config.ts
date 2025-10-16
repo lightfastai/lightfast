@@ -52,7 +52,6 @@ let config: NextConfig = withBetterStack(
 					"http://localhost:4103",
 				],
 			},
-			instrumentationHook: true,
 			optimizeCss: true,
 			optimizePackageImports: [
 				"@repo/ui",
@@ -61,6 +60,12 @@ let config: NextConfig = withBetterStack(
 				"@tanstack/react-query",
 			],
 		},
+		// Externalize playwright and related packages (moved from experimental)
+		serverExternalPackages: [
+			"playwright",
+			"playwright-core",
+			"@browserbasehq/stagehand",
+		],
 		transpilePackages: [
 			"@repo/ui",
 			"@repo/site-config",
@@ -78,6 +83,19 @@ let config: NextConfig = withBetterStack(
 					hostname: new URL(env.BLOB_BASE_URI).hostname,
 				},
 			],
+		},
+		webpack: (
+			config: any,
+			{ isServer }: { isServer: boolean },
+		) => {
+			if (isServer) {
+				// Externalize playwright and related packages on the server
+				config.externals = config.externals || [];
+				if (Array.isArray(config.externals)) {
+					config.externals.push("playwright", "playwright-core", "@browserbasehq/stagehand");
+				}
+			}
+			return config;
 		},
 	}),
 );

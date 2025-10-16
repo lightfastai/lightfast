@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSignIn } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { toast } from "/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";

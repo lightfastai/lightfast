@@ -6,7 +6,7 @@ import { LoginDropdown } from "./login-dropdown";
 import { SearchTrigger } from "./search-trigger";
 import { MobileNav } from "./mobile-nav";
 import { pageTree } from "../lib/source";
-import { getAuthUrls, getAllAppUrls, wwwUrl } from "@/src/lib/related-projects";
+import { getAuthUrls, getAllAppUrls } from "@/src/lib/related-projects";
 
 export function DocsHeader() {
 	const authUrls = getAuthUrls();

@@ -27,7 +27,7 @@ import {
 import { SettingsDialog } from "../settings-dialog";
 import Link from "next/link";
 import { useBillingContext } from "~/hooks/use-billing-context";
-import { toast } from "sonner";
+import { toast } from "/ui/components/ui/sonner";
 import { TemporarySessionButton } from "./temporary-session-badge";
 
 const SESSION_ID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

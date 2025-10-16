@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@clerk/nextjs": "catalog:",
     "@db/cloud": "workspace:*",
     "@repo/lib": "workspace:*",
     "@tanstack/react-query": "catalog:",
@@ -26,6 +27,7 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "@vendor/clerk": "workspace:*",
+    "drizzle-orm": "catalog:",
     "nanoid": "catalog:",
     "react": "catalog:react19",
     "superjson": "catalog:",

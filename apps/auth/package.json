@@ -16,6 +16,7 @@
     "@clerk/elements": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
+    "@clerk/themes": "catalog:",
     "@clerk/types": "catalog:",
     "@hookform/resolvers": "^3.10.0",
     "@repo/app-urls": "workspace:*",

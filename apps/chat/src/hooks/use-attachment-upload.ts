@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 import type { PromptInputAttachmentPayload, PromptInputAttachmentItem } from "@repo/ui/components/ai-elements/prompt-input";
 import type { JSONValue } from "ai";
 import type { ModelId } from "~/ai/providers";
-import { toast } from "sonner";
+import { toast } from "/ui/components/ui/sonner";
 
 interface UploadedAttachment {
 	id: string;

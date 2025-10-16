@@ -61,7 +61,8 @@
 		"jiti": "^1.21.6",
 		"postcss": "catalog:tailwind4",
 		"tailwindcss": "catalog:tailwind4",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"
 }
