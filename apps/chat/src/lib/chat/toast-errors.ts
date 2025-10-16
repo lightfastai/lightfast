@@ -1,4 +1,4 @@
-import { toast } from "/ui/components/ui/sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import type { ChatErrorType } from "@repo/chat-ai-types/errors";
 
 interface ChatToastError {

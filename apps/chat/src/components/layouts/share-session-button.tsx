@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@repo/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/tooltip";
 import { Share2, Loader2 } from "lucide-react";
-import { toast } from "/ui/components/ui/sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 
 import { useTRPC } from "@repo/chat-trpc/react";
 

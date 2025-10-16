@@ -95,3 +95,5 @@ overrides:
 publicHoistPattern:
   - "@ianvs/prettier-plugin-sort-imports"
   - prettier-plugin-tailwindcss
+  - "*import-in-the-middle*"
+  - "*require-in-the-middle*"

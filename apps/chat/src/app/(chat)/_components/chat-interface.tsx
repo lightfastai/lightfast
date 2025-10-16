@@ -52,7 +52,7 @@ import { checkAttachmentCompatibility } from "~/lib/chat/attachment-compatibilit
 import type { IncompatibleFile } from "~/lib/chat/attachment-compatibility";
 import { ChatNewSessionView } from "./chat-new-session-view";
 import { ChatExistingSessionView } from "./chat-existing-session-view";
-import { toast } from "/ui/components/ui/sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 
 const ProviderModelSelector = dynamic(
 	() =>

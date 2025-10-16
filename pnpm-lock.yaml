@@ -611,12 +611,21 @@ importers:
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 6.32.0(next@15.4.5(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@clerk/shared':
+        specifier: 'catalog:'
+        version: 3.28.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@clerk/types':
         specifier: 'catalog:'
         version: 4.86.0
       '@db/chat':
         specifier: workspace:*
         version: link:../../db/chat
+      '@hookform/resolvers':
+        specifier: 'catalog:'
+        version: 3.10.0(react-hook-form@7.61.1(react@19.1.1))
+      '@radix-ui/react-visually-hidden':
+        specifier: ^1.1.0
+        version: 1.2.3(@types/react-dom@19.1.8(@types/react@19.1.11))(@types/react@19.1.11)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -752,6 +761,9 @@ importers:
       react-dom:
         specifier: ^19.1.1
         version: 19.1.1(react@19.1.1)
+      react-hook-form:
+        specifier: 'catalog:'
+        version: 7.61.1(react@19.1.1)
       react-syntax-highlighter:
         specifier: ^15.6.1
         version: 15.6.1(react@19.1.1)
@@ -2186,13 +2198,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.15(zod@4.0.16)
+        version: 1.0.15(zod@3.25.76)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.3.0)(lightfast@file:core/lightfast(typescript@5.9.2))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@4.0.16)
+        version: 5.0.15(zod@3.25.76)
       lightfast:
         specifier: file:../../core/lightfast
         version: file:core/lightfast(typescript@5.9.2)
@@ -17297,12 +17309,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.15(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.16)
-      zod: 4.0.16
-
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -17421,13 +17427,6 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.7(zod@4.0.16)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.0.16
 
   '@ai-sdk/provider@0.0.26':
     dependencies:
