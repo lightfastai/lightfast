@@ -636,7 +636,7 @@ export async function resumeStream<
 		// Check authentication and ownership
 		const session = await memory.getSession(sessionId);
 		console.log("[Resume Stream] Found session", session);
-		if (!session || session.resourceId !== resourceId) {
+		if (session?.resourceId !== resourceId) {
 			return Err(new SessionNotFoundError());
 		}
 

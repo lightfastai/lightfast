@@ -163,7 +163,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 			// Accumulate text in the current part
 			const lastPart =
 				messagePartsRef.current[messagePartsRef.current.length - 1];
-			if (!lastPart || lastPart.type !== "text") {
+			if (lastPart?.type !== "text") {
 				messagePartsRef.current.push({ type: "text", text: chunk });
 			} else {
 				lastPart.text = (lastPart.text || "") + chunk;
