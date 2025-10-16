@@ -3,8 +3,7 @@
   "compilerOptions": {
     "paths": {
       "~/env": ["./env.ts"]
-    },
-    "types": ["node"]
+    }
   },
   "include": ["*.ts", "src"],
   "exclude": ["node_modules"]

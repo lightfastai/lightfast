@@ -28,6 +28,7 @@
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/eslint__js": "8.42.3",
+		"@types/node": "^24.3.0",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"typescript": "catalog:"

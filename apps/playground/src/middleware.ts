@@ -1,9 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { getClerkMiddlewareConfig, handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
+import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
-
-// Playground is accessed via app domain, so use app's Clerk config
-const clerkConfig = getClerkMiddlewareConfig("app");
 
 // Define public routes
 const isPublicRoute = createRouteMatcher([
@@ -28,7 +25,7 @@ export default clerkMiddleware(async (auth, req) => {
 	
 	// Apply CORS headers to the response
 	return applyCorsHeaders(response, req);
-}, clerkConfig);
+});
 
 export const config = {
 	matcher: [

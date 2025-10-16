@@ -43,7 +43,7 @@
     "jotai": "^2.12.3",
     "lightfast": "workspace:*",
     "lucide-react": "catalog:",
-    "neverthrow": "^8.2.0",
+    "neverthrow": "catalog:",
     "next": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
