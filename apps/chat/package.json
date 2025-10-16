@@ -97,7 +97,9 @@
     "autoprefixer": "^10.4.21",
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
+    "import-in-the-middle": "catalog:",
     "postcss": "catalog:tailwind4",
+    "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:"
   },

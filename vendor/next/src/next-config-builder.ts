@@ -11,6 +11,11 @@ import { env } from "../env";
 const otelRegex = /@opentelemetry\/instrumentation/;
 
 export const config: NextConfig = withVercelToolbar()({
+  serverExternalPackages: [
+    "import-in-the-middle",
+    "require-in-the-middle",
+  ],
+
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
