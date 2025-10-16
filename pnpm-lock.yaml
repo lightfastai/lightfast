@@ -175,8 +175,8 @@ importers:
         specifier: ^2.29.5
         version: 2.29.5
       '@lightfastai/dual':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^1.2.1
+        version: 1.2.1
       '@repo/prettier-config':
         specifier: workspace:*
         version: link:internal/prettier
@@ -5936,8 +5936,8 @@ packages:
       lightfast:
         optional: true
 
-  '@lightfastai/dual@1.2.0':
-    resolution: {integrity: sha512-YKWsfvIb0+PqtLiyfcJ27GUBwltrcrqZt2Bjufh8H8xND8ojsSZKFTy1MgaO3x3qOQT2GyKqlISBZzI1fHMYzg==}
+  '@lightfastai/dual@1.2.1':
+    resolution: {integrity: sha512-LMMAuRlSGdjher9V3PaW1UfRj77QkYUiHs+Hu8Ai3sddbNyNjFXGrHJLuIYu0t3URrPJzF7/Aqm5+RhT0zd9BQ==}
     engines: {node: '>=14.0.0'}
     cpu: [x64, arm64]
     os: [darwin, linux, win32]
@@ -19359,7 +19359,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@lightfastai/dual@1.2.0':
+  '@lightfastai/dual@1.2.1':
     dependencies:
       tar: 6.2.1
 
