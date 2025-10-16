@@ -30,6 +30,7 @@
 		"@vendor/observability": "workspace:*",
 		"@vendor/security": "workspace:*",
 		"@vendor/upstash": "workspace:*",
+		"@vercel/related-projects": "catalog:",
 		"geist": "catalog:",
 		"jotai": "^2.12.3",
 		"lucide-react": "catalog:",
