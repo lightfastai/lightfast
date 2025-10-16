@@ -27,16 +27,30 @@ function AddPaymentMethodFormContent({ onSuccess }: AddPaymentMethodFormProps) {
 
 		try {
 			// 1. Submit the form to the payment provider to get a payment token
-			const { data, error } = await submit();
+			const result = await submit();
 
-			// Usually a validation error from stripe that you can ignore.
-			if (error) {
+			// Check for errors
+			if (result.error) {
 				setIsSubmitting(false);
 				return;
 			}
 
-			// 2. Use the token to add the payment source to the user
-			await user.addPaymentSource(data);
+			// Check that data exists before using it
+			if (!result.data) {
+				toast({
+					title: "Error",
+					description: "Failed to process payment data",
+					variant: "destructive",
+				});
+				setIsSubmitting(false);
+				return;
+			}
+
+			// 2. Use the token to add the payment method to the user
+			await user.addPaymentMethod({
+				gateway: result.data.gateway,
+				paymentToken: result.data.paymentToken,
+			});
 
 			// 3. Handle success
 			toast({
