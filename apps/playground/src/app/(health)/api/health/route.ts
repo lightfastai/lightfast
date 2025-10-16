@@ -24,7 +24,7 @@ export function GET(request: NextRequest) {
     
     const bearerRegex = /^Bearer\s+(.+)$/i;
     const bearerMatch = bearerRegex.exec(authHeader);
-    if (!bearerMatch || bearerMatch[1] !== authToken) {
+    if (bearerMatch?.[1] !== authToken) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

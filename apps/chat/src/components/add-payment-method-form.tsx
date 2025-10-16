@@ -35,17 +35,6 @@ function AddPaymentMethodFormContent({ onSuccess }: AddPaymentMethodFormProps) {
 				return;
 			}
 
-			// Check that data exists before using it
-			if (!result.data) {
-				toast({
-					title: "Error",
-					description: "Failed to process payment data",
-					variant: "destructive",
-				});
-				setIsSubmitting(false);
-				return;
-			}
-
 			// 2. Use the token to add the payment method to the user
 			await user.addPaymentMethod({
 				gateway: result.data.gateway,

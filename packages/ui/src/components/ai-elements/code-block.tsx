@@ -2,19 +2,21 @@
 
 import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
 import {
-  type ComponentProps,
+  
   createContext,
-  type HTMLAttributes,
+  
   useContext,
   useEffect,
   useRef,
-  useState,
+  useState
 } from "react";
+import type {ComponentProps, HTMLAttributes} from "react";
 import {
-  type BundledLanguage,
-  type BundledTheme,
-  createHighlighter,
+  
+  
+  createHighlighter
 } from "shiki";
+import type {BundledLanguage, BundledTheme} from "shiki";
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";
@@ -37,9 +39,9 @@ const save = (filename: string, data: string, mimeType = "text/plain") => {
 
 const PRE_TAG_REGEX = /<pre(\s|>)/;
 
-type CodeBlockContextType = {
+interface CodeBlockContextType {
   code: string;
-};
+}
 
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
@@ -54,7 +56,7 @@ class HighlighterManager {
   > | null = null;
   private lightTheme: BundledTheme | null = null;
   private darkTheme: BundledTheme | null = null;
-  private readonly loadedLanguages: Set<BundledLanguage> = new Set();
+  private readonly loadedLanguages = new Set<BundledLanguage>();
   private initializationPromise: Promise<void> | null = null;
 
   private async ensureHighlightersInitialized(

@@ -1,9 +1,9 @@
 "use client";
 
+import type { BundledLanguage } from "@repo/ui/components/ai-elements/code-block";
 import {
 	CodeBlock,
 	CodeBlockContent,
-	type BundledLanguage,
 } from "@repo/ui/components/ai-elements/code-block";
 import { memo } from "react";
 

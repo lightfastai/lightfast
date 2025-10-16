@@ -15,24 +15,24 @@ import { uuidv4 } from "@repo/lib";
 /**
  * GitHub repository permissions type
  */
-export type RepositoryPermissions = {
+export interface RepositoryPermissions {
   admin: boolean;
   push: boolean;
   pull: boolean;
-};
+}
 
 /**
  * Repository metadata type for flexible storage
  * IMPORTANT: This is a CACHE - can be stale. Always fetch fresh from GitHub API when accuracy matters.
  */
-export type RepositoryMetadata = {
+export interface RepositoryMetadata {
   fullName?: string; // Cache of "owner/repo" for display only
   description?: string;
   language?: string;
   stars?: number;
   visibility?: "public" | "private";
   [key: string]: unknown;
-};
+}
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
