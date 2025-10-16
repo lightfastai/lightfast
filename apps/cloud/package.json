@@ -36,7 +36,7 @@
 		"@vendor/upstash": "workspace:*",
 		"@vercel/toolbar": "^0.1.28",
 		"date-fns": "^4.1.0",
-		"nanoid": "^5.1.5",
+		"nanoid": "catalog:",
 		"next": "catalog:",
 		"react": "catalog:react19",
 		"react-confetti": "^6.4.0",

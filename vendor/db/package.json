@@ -26,8 +26,8 @@
 		"@repo/lib": "workspace:*",
 		"@t3-oss/env-nextjs": "catalog:",
 		"ai": "catalog:",
-		"drizzle-orm": "^0.43.1",
-		"drizzle-zod": "^0.7.1",
+		"drizzle-orm": "catalog:",
+		"drizzle-zod": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

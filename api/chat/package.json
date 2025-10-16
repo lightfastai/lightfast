@@ -30,6 +30,7 @@
 		"@ai-sdk/gateway": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
+		"@inngest/middleware-sentry": "catalog:",
 		"@repo/chat-ai-types": "workspace:*",
 		"@repo/chat-billing": "workspace:*",
 		"@repo/lib": "workspace:^",
@@ -45,6 +46,10 @@
 		"ai": "catalog:",
 		"date-fns": "^4.1.0",
 		"date-fns-tz": "^3.2.0",
+		"drizzle-orm": "catalog:",
+		"drizzle-zod": "catalog:",
+		"inngest": "catalog:",
+		"nanoid": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"zod": "catalog:"
@@ -55,7 +60,8 @@
 		"@repo/typescript-config": "workspace:*",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "^3.2.4"
 	},
 	"prettier": "@repo/prettier-config"
 }

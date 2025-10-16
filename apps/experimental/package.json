@@ -63,7 +63,7 @@
     "exa-js": "catalog:",
     "lightfast": "workspace:*",
     "lucide-react": "catalog:",
-    "nanoid": "^5.1.5",
+    "nanoid": "catalog:",
     "next": "catalog:",
     "pino": "^9.7.0",
     "react": "catalog:react19",

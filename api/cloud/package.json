@@ -26,7 +26,7 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "nanoid": "^5.1.5",
+    "nanoid": "catalog:",
     "react": "catalog:react19",
     "superjson": "catalog:",
     "zod": "catalog:"
