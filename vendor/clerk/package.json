@@ -33,7 +33,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@clerk/types": "^4.52.0",
+    "@clerk/types": "catalog:",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
