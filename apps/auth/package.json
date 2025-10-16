@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "pnpm build:prod",
+    "build:dev": "pnpm with-env:dev next build",
+    "build:prod": "pnpm with-env:prod next build",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env next dev -p ${NEXT_PUBLIC_AUTH_PORT:-4104} --turbo",
+    "dev": "pnpm with-env:dev next dev -p ${NEXT_PUBLIC_AUTH_PORT:-4104} --turbo",
     "lint": "eslint",
-    "start": "pnpm with-env next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
+    "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
     "typecheck": "tsc --noEmit",
-    "with-env": "dual run --"
+    "with-env:dev": "dual run --",
+    "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@clerk/elements": "catalog:",
