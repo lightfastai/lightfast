@@ -29,12 +29,14 @@
     "next": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "svix": "^1.62.0"
+    "svix": "^1.62.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

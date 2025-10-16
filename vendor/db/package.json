@@ -34,6 +34,7 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
+		"@types/node": "catalog:",
 		"dotenv-cli": "^8.0.0",
 		"drizzle-kit": "^0.31.4",
 		"eslint": "catalog:",
