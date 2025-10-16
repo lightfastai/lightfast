@@ -20,7 +20,7 @@ catalog:
   eslint: ^9.23.0
   prettier: ^3.5.3
   typescript: ^5.8.2
-  typescript-eslint: ^8.33.0
+  typescript-eslint: ^8.46.1
   next: ^15.4.0
   turbo: ^2.5.5
   '@ai-sdk/anthropic': 2.0.4
@@ -91,6 +91,11 @@ linkWorkspacePackages: true
 
 overrides:
   "@types/minimatch": 5.1.2
+  # Suppress peer dependency warnings while maintaining compatibility
+  # stagehand works fine with dotenv 17.x even though it declares 16.x
+  "@browserbasehq/stagehand>dotenv": ^17.2.1
+  # zod-to-json-schema works fine with both zod 3.x and 4.x
+  "zod-to-json-schema>zod": ^3.24.0
 
 publicHoistPattern:
   - "@ianvs/prettier-plugin-sort-imports"
