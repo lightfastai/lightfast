@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllAppUrls } from "@repo/vercel-config";
 
 export interface CorsConfig {
   allowedOrigins?: string[];
@@ -48,30 +47,27 @@ const DEFAULT_CORS_CONFIG: CorsConfig = {
  * Get CORS configuration with allowed origins for all Lightfast apps
  */
 export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
-  const urls = getAllAppUrls();
-  
   const allowedOrigins = [
-    urls.cloud,
-    urls.www,
-    urls.auth,
-    urls.chat,
-    urls.docs,
-    // Add common variations
-    "https://playground.lightfast.ai",
-    "https://cloud.lightfast.ai",
+    // Production URLs
+    "https://lightfast.ai",
     "https://www.lightfast.ai",
     "https://auth.lightfast.ai",
+    "https://cloud.lightfast.ai",
     "https://chat.lightfast.ai",
     "https://docs.lightfast.ai",
+    "https://playground.lightfast.ai",
+    "https://deus.lightfast.ai",
+    "https://experimental.lightfast.ai",
     // Development URLs
     "http://localhost:4101", // www
     "http://localhost:4103", // cloud
     "http://localhost:4104", // auth
     "http://localhost:4105", // playground
     "http://localhost:4106", // chat
+    "http://localhost:4107", // deus
     "http://localhost:3000", // common dev port
-    "http://localhost:3001",
-    "http://localhost:3002",
+    "http://localhost:3001", // experimental
+    "http://localhost:3002", // docs
     ...additionalOrigins,
   ];
 

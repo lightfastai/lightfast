@@ -2,16 +2,14 @@ import Link from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { getAppUrl } from "@repo/url-utils";
 import { AppHeaderNav } from "./app-header-nav";
 
 export function AppHeader() {
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<header className="h-14 flex items-center justify-between app-container bg-background">
 			<div className="flex items-center">
-				<AppHeaderNav cloudUrl={cloudUrl} />
+				<AppHeaderNav />
 			</div>
 
 			{/* Right side actions */}

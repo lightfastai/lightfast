@@ -1,17 +1,23 @@
 import { withRelatedProject } from '@vercel/related-projects';
+import { env } from '@repo/app-urls';
 
-// Get the main app URL dynamically based on environment
+const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
+
+// Get the cloud URL dynamically based on environment
 export const cloudUrl = withRelatedProject({
   projectName: 'lightfast-app',
-  defaultHost: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:4103' 
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_CLOUD_PORT}`
     : 'https://cloud.lightfast.ai',
 });
+
+// Alias for cloud URL (used in some components)
+export const appUrl = cloudUrl;
 
 // Get the auth URL dynamically based on environment
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
-  defaultHost: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:4104' 
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
     : 'https://auth.lightfast.ai',
 });

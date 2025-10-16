@@ -3,11 +3,9 @@ import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { getAppUrl } from "@repo/url-utils";
+import { chatUrl, cloudUrl } from "~/lib/related-projects";
 
 export function SiteFooter() {
-	const chatUrl = getAppUrl("chat");
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<footer className="bg-background relative w-full text-white py-12 sm:py-16 lg:py-24">

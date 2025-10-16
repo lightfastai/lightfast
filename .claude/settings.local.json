@@ -149,7 +149,18 @@
       "Bash(pnpm --filter @repo/chat-billing build)",
       "Bash(pnpm --filter @lightfast/deus lint)",
       "Bash(pnpm --filter @lightfast/deus typecheck)",
-      "Bash(pnpm --filter @repo/deus-trpc build)"
+      "Bash(pnpm --filter @repo/deus-trpc build)",
+      "Bash(gh issue create --repo lightfastai/dual --title \"Command: dual context create\" --body \"$(cat <<''EOF''\n## Description\nImplement `dual context create` command to register new contexts.\n\n## Usage\n```bash\ndual context create main --base-port 4100\ndual context create feature-auth --base-port 4200\ndual context create            # Auto-assign port, use current git branch\n```\n\n## Tasks\n- [ ] Create `context create` cobra command\n- [ ] Parse optional context name (default: auto-detect)\n- [ ] Parse optional --base-port flag (default: auto-assign)\n- [ ] Load registry\n- [ ] Auto-assign next available port if not specified\n- [ ] Validate port not already in use\n- [ ] Add context to registry\n- [ ] Save registry\n- [ ] Print created context info\n\n## Acceptance Criteria\n- Creates context in registry\n- Auto-detects context name if not provided\n- Auto-assigns ports intelligently\n- Prevents port conflicts\n- Clear success message\nEOF\n)\" --label \"command\")",
+      "Bash(gh issue create:*)",
+      "Bash(pnpm build:auth:*)",
+      "Bash(pnpm build:www:*)",
+      "Bash(pnpm build:cloud:*)",
+      "Bash(pnpm build:deus:*)",
+      "Bash(pnpm build:playground:*)",
+      "Bash(pnpm build:docs:*)",
+      "Bash(pnpm build:experimental:*)",
+      "Bash(tee:*)",
+      "Bash(pnpm clean:*)"
     ],
     "deny": []
   },

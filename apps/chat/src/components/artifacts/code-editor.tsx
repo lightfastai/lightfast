@@ -1,10 +1,10 @@
 "use client";
 
+import type { BundledLanguage } from "@repo/ui/components/ai-elements/code-block";
 import {
 	CodeBlock,
 	CodeBlockContent,
 } from "@repo/ui/components/ai-elements/code-block";
-import type { BundledLanguage } from "shiki";
 import { memo } from "react";
 
 interface EditorProps {

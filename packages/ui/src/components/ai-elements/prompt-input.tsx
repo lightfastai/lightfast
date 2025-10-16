@@ -28,18 +28,18 @@ import {
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import {
-  type ChangeEventHandler,
+  
   Children,
-  type ClipboardEventHandler,
-  type ComponentProps,
+  
+  
   createContext,
   forwardRef,
-  type FormEvent,
-  type FormEventHandler,
+  
+  
   Fragment,
-  type HTMLAttributes,
-  type KeyboardEventHandler,
-  type RefObject,
+  
+  
+  
   useCallback,
   useContext,
   useEffect,
@@ -47,8 +47,9 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
+import type {ChangeEventHandler, ClipboardEventHandler, ComponentProps, FormEvent, FormEventHandler, HTMLAttributes, KeyboardEventHandler, RefObject} from "react";
 
 export type PromptInputAttachmentItem = FileUIPart & {
   id: string;
@@ -79,19 +80,19 @@ export type PromptInputAttachmentItem = FileUIPart & {
   uploadState?: 'pending' | 'complete';
 };
 
-type AttachmentsContext = {
+interface AttachmentsContext {
   files: PromptInputAttachmentItem[];
   add: (files: File[] | FileList) => void;
   remove: (id: string) => void;
   clear: (options?: { revokeObjectURLs?: boolean }) => void;
   openFileDialog: () => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
-};
+}
 
 const AttachmentsContext = createContext<AttachmentsContext | null>(null);
 
 const revokeObjectURL = (url?: string) => {
-  if (!url || !url.startsWith("blob:")) {
+  if (!url?.startsWith("blob:")) {
     return;
   }
   try {
@@ -247,7 +248,7 @@ export const PromptInputActionAddAttachments = ({
   );
 };
 
-export type PromptInputAttachmentPayload = {
+export interface PromptInputAttachmentPayload {
   id: string;
   file?: File;
   url?: string;
@@ -258,18 +259,18 @@ export type PromptInputAttachmentPayload = {
   contentType?: string;
   metadata?: Record<string, JSONValue> | null;
   uploadState?: 'pending' | 'complete';
-};
+}
 
-export type PromptInputMessage = {
+export interface PromptInputMessage {
   text?: string;
   attachments?: PromptInputAttachmentPayload[];
-};
+}
 
-export type PromptInputRef = {
+export interface PromptInputRef {
   form: HTMLFormElement | null;
   clear: (options?: { revokeObjectURLs?: boolean }) => void;
   reset: () => void;
-};
+}
 
 export type PromptInputProps = Omit<
   HTMLAttributes<HTMLFormElement>,

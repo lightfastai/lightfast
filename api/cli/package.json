@@ -24,6 +24,7 @@
     "@repo/lib": "workspace:*",
     "@trpc/server": "catalog:",
     "@vendor/storage": "workspace:*",
+    "drizzle-orm": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

@@ -4,16 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetPrimitive } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
-import { getAppUrl } from "@repo/url-utils";
+import { chatUrl, cloudUrl } from "~/lib/related-projects";
 
 export function UnauthenticatedMobileNav() {
 	const [open, setOpen] = React.useState(false);
-	const chatUrl = getAppUrl("chat");
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>

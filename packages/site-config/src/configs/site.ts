@@ -1,5 +1,4 @@
 import type { SiteConfig } from "@repo/ui/types/site";
-import { getAllAppUrls } from "@repo/url-utils";
 
 type SiteLinks =
   | "twitter"
@@ -37,7 +36,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
     },
     chat: {
       title: "Try Chat",
-      href: getAllAppUrls().chat,
+      href: "https://chat.lightfast.ai",
     },
   },
   location: "3141, Melbourne, VIC, Australia",

@@ -29,11 +29,14 @@
     "@types/eslint": "^8.56.5",
     "eslint": "catalog:",
     "next": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "webpack": "^5"
   },
   "dependencies": {
+    "@logtail/next": "^0.2.0",
     "@next/bundle-analyzer": "^15.0.3",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@sentry/nextjs": "^10.20.0",
+    "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.1.28",
     "next-secure-headers": "^2.2.0"

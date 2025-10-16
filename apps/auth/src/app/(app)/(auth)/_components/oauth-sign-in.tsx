@@ -3,12 +3,12 @@
 import * as React from "react";
 import type { OAuthStrategy } from "@clerk/types";
 import { useSignIn } from "@clerk/nextjs";
-import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { Icons } from "@repo/ui/components/icons";
-import { getAppUrl } from "@repo/url-utils";
 import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
+import { cloudUrl } from "~/lib/related-projects";
 
 export function OAuthSignIn() {
 	const { signIn, isLoaded } = useSignIn();
@@ -23,7 +23,7 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: getAppUrl("cloud"),
+				redirectUrlComplete: cloudUrl,
 			});
 		} catch (err) {
 			// Log the error

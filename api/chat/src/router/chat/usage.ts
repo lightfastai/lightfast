@@ -49,7 +49,7 @@ function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
 // Shared period calculation function for consistent billing logic across the system
 export async function calculateBillingPeriod(
 	userId: string,
-	timezone: string = "UTC",
+	timezone = "UTC",
 ): Promise<string> {
 	const client = await clerkClient();
 	return calculateBillingPeriodForUser({
@@ -105,7 +105,7 @@ async function incrementPremiumUsage(
 	tx: ChatDbTransaction,
 	userId: string,
 	period: string,
-	count: number = 1,
+	count = 1,
 ) {
 	try {
 		// Attempt to insert new record
@@ -144,7 +144,7 @@ async function incrementNonPremiumUsage(
 	tx: ChatDbTransaction,
 	userId: string,
 	period: string,
-	count: number = 1,
+	count = 1,
 ) {
 	try {
 		// Attempt to insert new record

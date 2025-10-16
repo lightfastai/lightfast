@@ -7,7 +7,6 @@ import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { getClerkConfig } from "@repo/url-utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { env } from "~/env";
 import { QueryProvider } from "~/providers/query-provider";
@@ -98,12 +97,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const clerkConfig = getClerkConfig("playground");
-
   return (
     <ClerkProvider
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      {...clerkConfig}
       appearance={{
         variables: {
           colorPrimary: "#3b82f6",

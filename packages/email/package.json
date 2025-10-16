@@ -27,6 +27,7 @@
     "@repo/ui": "workspace:*",
     "@vendor/email": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "neverthrow": "catalog:",
     "react-email": "4.0.7",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",

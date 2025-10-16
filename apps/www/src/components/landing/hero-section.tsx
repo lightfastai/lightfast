@@ -5,11 +5,9 @@ import Link from "next/link";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { Button } from "@repo/ui/components/ui/button";
-import { getAppUrl } from "@repo/url-utils";
+import { cloudUrl, authUrl } from "~/lib/related-projects";
 
 export function HeroSection() {
-	const cloudUrl = getAppUrl("cloud");
-	const authUrl = getAppUrl("auth");
 	const [copied, setCopied] = useState(false);
 
 	const copyToClipboard = async () => {

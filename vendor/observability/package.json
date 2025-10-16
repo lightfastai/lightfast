@@ -30,6 +30,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/react": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
@@ -37,8 +38,9 @@
   "prettier": "@repo/prettier-config",
   "dependencies": {
     "@logtail/next": "^0.2.0",
-    "@sentry/nextjs": "^10.12.0",
-    "@t3-oss/env-nextjs": "^0.12.0",
-    "react": "catalog:react19"
+    "@sentry/nextjs": "^10.20.0",
+    "@t3-oss/env-nextjs": "catalog:",
+    "react": "catalog:react19",
+    "zod": "catalog:"
   }
 }

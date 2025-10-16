@@ -13,12 +13,10 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
-import { getAppUrl } from "@repo/url-utils";
 import { UnauthenticatedMobileNav } from "./layouts/unauthenticated-mobile-nav";
+import { chatUrl, cloudUrl } from "~/lib/related-projects";
 
 export function EnhancedHeader() {
-	const chatUrl = getAppUrl("chat");
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<header className="h-14 bg-background px-4 sm:px-6 lg:px-8">

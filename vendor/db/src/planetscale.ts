@@ -3,8 +3,10 @@
  * Provides a thin wrapper around drizzle-orm and @planetscale/database
  */
 
-import { drizzle, type PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
-import { Client, type Config as PlanetScaleConfig } from "@planetscale/database";
+import { drizzle  } from "drizzle-orm/planetscale-serverless";
+import type {PlanetScaleDatabase} from "drizzle-orm/planetscale-serverless";
+import { Client  } from "@planetscale/database";
+import type {Config as PlanetScaleConfig} from "@planetscale/database";
 
 /**
  * Configuration for creating a PlanetScale database connection

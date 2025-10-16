@@ -10,7 +10,7 @@ import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { cn } from "@repo/ui/lib/utils";
 import type { PageTree } from "fumadocs-core/server";
-import { getAuthUrls } from "@repo/url-utils";
+import { getAuthUrls } from "@/src/lib/related-projects";
 
 interface MobileNavProps {
 	tree?: PageTree.Root;

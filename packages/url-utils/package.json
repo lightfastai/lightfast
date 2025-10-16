@@ -19,8 +19,10 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/vercel-config": "workspace:*",
     "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "next": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -28,6 +30,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "next": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

@@ -1,4 +1,5 @@
-import { EventSchemas, Inngest, type GetEvents } from "inngest";
+import { EventSchemas, Inngest  } from "inngest";
+import type {GetEvents} from "inngest";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
