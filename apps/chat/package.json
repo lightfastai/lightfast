@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "pnpm build:prod",
-    "build:dev": "pnpm with-env:dev next build",
-    "build:prod": "pnpm with-env:prod next build",
+    "build:dev": "pnpm with-env:dev next build --turbopack",
+    "build:prod": "pnpm with-env:prod next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env:dev next dev --turbo --port ${NEXT_PUBLIC_CHAT_PORT:-4106}",
+    "dev": "pnpm with-env:dev next dev --turbopack --port ${NEXT_PUBLIC_CHAT_PORT:-4106}",
     "lint": "eslint",
     "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_CHAT_PORT:-4106}",
     "typecheck": "tsc --noEmit",
@@ -66,6 +66,7 @@
     "ai": "catalog:",
     "autoevals": "^0.0.103",
     "braintrust": "catalog:",
+    "critters": "^0.0.25",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "drizzle-orm": "catalog:",
@@ -76,13 +77,14 @@
     "lucide-react": "catalog:",
     "mermaid": "^11.11.0",
     "nanoid": "catalog:",
-    "next": "catalog:",
+    "next": "15.5.5",
     "next-themes": "^0.4.6",
-    "react": "catalog:react19",
-    "react-dom": "catalog:react19",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-hook-form": "catalog:",
     "react-syntax-highlighter": "^15.6.1",
     "server-only": "^0.0.1",
+    "shiki": "^3.9.2",
     "superjson": "catalog:",
     "use-debounce": "^10.0.5",
     "use-stick-to-bottom": "1.1.1",
@@ -95,8 +97,8 @@
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
     "@types/node": "catalog:",
-    "@types/react": "catalog:react19",
-    "@types/react-dom": "catalog:react19",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.21",
     "dotenv-cli": "^8.0.0",
@@ -107,5 +109,11 @@
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.2",
+      "@types/react-dom": "19.2.2"
+    }
+  }
 }

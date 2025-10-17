@@ -4,11 +4,8 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import { createSecureHeaders } from "next-secure-headers";
-import webpack from "webpack";
 
 import { env } from "../env";
-
-const otelRegex = /@opentelemetry\/instrumentation/;
 
 export const config: NextConfig = withVercelToolbar()({
   serverExternalPackages: [
@@ -69,23 +66,6 @@ export const config: NextConfig = withVercelToolbar()({
         ],
       },
     ];
-  },
-
-  webpack(config, { isServer }) {
-    if (isServer) {
-      config.plugins = [...config.plugins];
-    }
-
-    config.ignoreWarnings = [{ module: otelRegex }];
-
-    config.plugins = config.plugins || [];
-    config.plugins.push(
-      new webpack.DefinePlugin({
-        __SENTRY_DEBUG__: false,
-      }),
-    );
-
-    return config;
   },
 
   // This is required to support PostHog trailing slash API requests
