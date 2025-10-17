@@ -22,7 +22,7 @@ catalog:
   prettier: ^3.5.3
   typescript: ^5.8.2
   typescript-eslint: ^8.46.1
-  next: ^15.4.0
+  next: ^15.5.5
   turbo: ^2.5.5
   '@ai-sdk/anthropic': 2.0.4
   '@ai-sdk/gateway': 1.0.7
