@@ -1,5 +1,7 @@
 # Lightfast
 
+hello world
+
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![License: FSL-1.1](https://img.shields.io/badge/License-FSL--1.1-orange.svg)](LICENSE-FSL.md)
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
