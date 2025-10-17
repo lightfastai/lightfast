@@ -23,9 +23,23 @@ echo "[port-remap] Remapping PORTs for context: $DUAL_CONTEXT_NAME" >&2
 echo "[port-remap] Worktree path: $DUAL_CONTEXT_PATH" >&2
 echo "[port-remap] Project root: $DUAL_PROJECT_ROOT" >&2
 
-# Remap offset - add 100 to each base port
-REMAP_OFFSET=100
+# Generate unique offset based on context name hash
+# This ensures each worktree gets different ports without needing registry
+if command -v md5 >/dev/null 2>&1; then
+  # macOS
+  CONTEXT_HASH=$(echo -n "$DUAL_CONTEXT_NAME" | md5 -q)
+else
+  # Linux
+  CONTEXT_HASH=$(echo -n "$DUAL_CONTEXT_NAME" | md5sum | cut -d' ' -f1)
+fi
 
+# Use first 3 hex chars to generate offset multiplier (1-100)
+# This gives us 100 unique port ranges, each separated by 100 ports
+OFFSET_MULTIPLIER=$(( (0x${CONTEXT_HASH:0:3} % 100) + 1 ))
+REMAP_OFFSET=$((OFFSET_MULTIPLIER * 100))
+
+echo "[port-remap] Context hash: ${CONTEXT_HASH:0:8}..." >&2
+echo "[port-remap] Offset multiplier: $OFFSET_MULTIPLIER (range: 1-100)" >&2
 echo "[port-remap] Using remap offset: +$REMAP_OFFSET" >&2
 
 # Remap each service's PORT based on packages/app-urls/src/env.ts
