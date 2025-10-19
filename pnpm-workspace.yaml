@@ -1,12 +1,12 @@
 packages:
-  - api/*
-  - apps/*
-  - core/*
-  - db/*
-  - packages/*
-  - internal/*
-  - vendor/*
-  - examples/*
+- api/*
+- apps/*
+- core/*
+- db/*
+- packages/*
+- internal/*
+- vendor/*
+- examples/*
 catalog:
   '@tanstack/react-query': ^5.80.7
   '@trpc/client': ^11.4.0
@@ -72,37 +72,31 @@ catalogs:
     '@tailwindcss/postcss': 4.1.11
     '@tailwindcss/typography': ^0.5.16
 onlyBuiltDependencies:
-  - '@clerk/shared'
-  - '@lightfastai/dual'
-  - '@sentry/cli'
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
-  - bufferutil
-  - core-js
-  - core-js-pure
-  - esbuild
-  - protobufjs
-  - sharp
+- '@clerk/shared'
+- '@lightfastai/dual'
+- '@sentry/cli'
+- '@tailwindcss/oxide'
+- '@vercel/speed-insights'
+- bufferutil
+- core-js
+- core-js-pure
+- esbuild
+- protobufjs
+- sharp
 ignoredBuiltDependencies:
-  - bufferutil
-  - core-js
-  - core-js-pure
-  - esbuild
-  - protobufjs
-  - sharp
-
+- bufferutil
+- core-js
+- core-js-pure
+- esbuild
+- protobufjs
+- sharp
 linkWorkspacePackages: true
-
 overrides:
-  "@types/minimatch": 5.1.2
-  # Suppress peer dependency warnings while maintaining compatibility
-  # stagehand works fine with dotenv 17.x even though it declares 16.x
-  "@browserbasehq/stagehand>dotenv": ^17.2.1
-  # zod-to-json-schema works fine with both zod 3.x and 4.x
-  "zod-to-json-schema>zod": ^3.24.0
-
+  '@types/minimatch': 5.1.2
+  '@browserbasehq/stagehand>dotenv': ^17.2.1
+  zod-to-json-schema>zod: ^3.24.0
 publicHoistPattern:
-  - "@ianvs/prettier-plugin-sort-imports"
-  - prettier-plugin-tailwindcss
-  - "*import-in-the-middle*"
-  - "*require-in-the-middle*"
+- '@ianvs/prettier-plugin-sort-imports'
+- prettier-plugin-tailwindcss
+- '*import-in-the-middle*'
+- '*require-in-the-middle*'
