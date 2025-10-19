@@ -16,17 +16,18 @@ import { attachmentRouter } from "./router/chat/attachment";
 
 /**
  * Primary chat app router - flattened structure
+ * Type annotation needed due to Clerk types in isolated mode
  */
 export const chatAppRouter = createTRPCRouter({
-	user: userRouter,
-	session: sessionRouter,
-	message: messageRouter,
-	messageFeedback: messageFeedbackRouter,
-	artifact: artifactRouter,
-	usage: usageRouter,
-	billing: billingRouter,
-	share: shareRouter,
-	attachment: attachmentRouter,
+  user: userRouter,
+  session: sessionRouter,
+  message: messageRouter,
+  messageFeedback: messageFeedbackRouter,
+  artifact: artifactRouter,
+  usage: usageRouter,
+  billing: billingRouter,
+  share: shareRouter,
+  attachment: attachmentRouter,
 });
 
 // Export type for use in client

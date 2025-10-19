@@ -28,6 +28,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/gateway": "catalog:",
+		"@clerk/backend": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/chat": "workspace:*",
 		"@inngest/middleware-sentry": "catalog:",
