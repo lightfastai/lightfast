@@ -6,8 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "pnpm build:prod",
-		"build:dev": "pnpm with-env:dev next build",
-		"build:prod": "pnpm with-env:prod next build",
+		"build:dev": "pnpm with-env:dev next build --turbopack",
+		"build:prod": "pnpm with-env:prod next build --turbopack",
 		"clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
 		"dev": "pnpm with-env:dev next dev --turbo --port ${NEXT_PUBLIC_CLOUD_PORT:-4103}",
 		"lint": "eslint",
