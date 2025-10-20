@@ -6,22 +6,22 @@ const paragraphs = [
   {
     id: 0,
     className: "font-semibold text-foreground",
-    text: "Built for technical founders and devs",
+    text: "Built for dev founders shipping products",
   },
   {
     id: 1,
     className: "text-foreground",
-    text: "Lightfast is a cloud-native agent execution engine designed for developers who want to build production-grade AI applications without infrastructure complexity. Deploy agents in minutes, not days.",
+    text: "Connect AI to any tool via natural language. Automate complex workflows without code. From GitHub to APIs, databases to CLIs—make every tool AI-orchestrable.",
   },
   {
     id: 2,
     className: "text-foreground",
-    text: "Building AI agents shouldn't require infrastructure expertise. Focus on your logic while we handle the orchestration.",
+    text: "AI-native workflows that understand intent, not just trigger-action. Describe what you want, we figure out how. Context-aware orchestration that learns from production.",
   },
   {
     id: 3,
     className: "text-foreground",
-    text: "So you don't just deploy faster, you build something you're proud of",
+    text: "Ship products faster. Focus on building, not configuring integrations.",
   },
 ];
 
