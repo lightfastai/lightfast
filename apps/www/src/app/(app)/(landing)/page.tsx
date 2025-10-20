@@ -43,7 +43,7 @@ export default function HomePage() {
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col px-16 py-16 justify-end relative">
+        <div className="flex flex-col px-16 pt-8 py-16 justify-end relative">
           {/* Bottom: Waitlist Description */}
           <div className="max-w-xl">
             {/* Dashed line above */}
