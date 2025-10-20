@@ -37,6 +37,42 @@ export const organizationRouter = {
     }),
 
   /**
+   * Find organization by Clerk org ID (for Clerk-authenticated requests)
+   */
+  findByClerkOrgId: publicProcedure
+    .input(z.object({ clerkOrgId: z.string() }))
+    .query(async ({ input }) => {
+      const result = await db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.clerkOrgId),
+      });
+      return result ?? null;
+    }),
+
+  /**
+   * Find organization by Clerk org slug (for URL routing)
+   */
+  findByClerkOrgSlug: publicProcedure
+    .input(z.object({ clerkOrgSlug: z.string() }))
+    .query(async ({ input }) => {
+      const result = await db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgSlug, input.clerkOrgSlug),
+      });
+      return result ?? null;
+    }),
+
+  /**
+   * Find organization by GitHub org slug (for API routes)
+   */
+  findByGithubOrgSlug: publicProcedure
+    .input(z.object({ githubOrgSlug: z.string() }))
+    .query(async ({ input }) => {
+      const result = await db.query.organizations.findFirst({
+        where: eq(organizations.githubOrgSlug, input.githubOrgSlug),
+      });
+      return result ?? null;
+    }),
+
+  /**
    * Update organization with Clerk details
    */
   updateClerkDetails: publicProcedure

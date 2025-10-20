@@ -77,4 +77,84 @@ export class SessionsService extends DeusApiService {
       },
     );
   }
+
+  /**
+   * INTERNAL: Get session by ID (no auth check)
+   *
+   * This method should ONLY be called from contexts where authentication
+   * has already been performed (e.g., API routes with API key validation).
+   * Do not call this from client-facing code.
+   *
+   * @param sessionId - The session ID to retrieve
+   * @returns Session or null if not found
+   */
+  async getSessionInternal(sessionId: string) {
+    return await this.call(
+      "session.getInternal",
+      (caller) => caller.session.getInternal({ id: sessionId }),
+      {
+        fallbackMessage: "Failed to get session",
+        details: { sessionId },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
+   * INTERNAL: Get messages for a session (no auth check)
+   *
+   * This method should ONLY be called from contexts where authentication
+   * has already been performed. Returns messages in descending order (newest first).
+   *
+   * @param sessionId - The session ID to get messages for
+   * @param limit - Maximum number of messages to return (default: 100)
+   * @returns Array of messages
+   */
+  async getSessionMessagesInternal(sessionId: string, limit?: number) {
+    return await this.call(
+      "session.getMessagesInternal",
+      (caller) =>
+        caller.session.getMessagesInternal({
+          sessionId,
+          limit,
+        }),
+      {
+        fallbackMessage: "Failed to get session messages",
+        details: { sessionId, limit },
+      },
+    );
+  }
+
+  /**
+   * INTERNAL: Add a message to a session (no auth check)
+   *
+   * This method should ONLY be called from contexts where authentication
+   * has already been performed.
+   *
+   * @param params - Message parameters
+   * @returns Success indicator
+   */
+  async addMessageInternal(params: {
+    id: string;
+    sessionId: string;
+    role: "system" | "user" | "assistant";
+    parts: unknown[];
+    charCount: number;
+    modelId?: string | null;
+  }) {
+    return await this.call(
+      "session.addMessageInternal",
+      (caller) => caller.session.addMessageInternal(params),
+      {
+        fallbackMessage: "Failed to add message to session",
+        details: { sessionId: params.sessionId, messageId: params.id },
+      },
+    );
+  }
 }

@@ -44,6 +44,69 @@ export class OrganizationsService extends DeusApiService {
   }
 
   /**
+   * Find organization by Clerk org ID
+   */
+  async findByClerkOrgId(clerkOrgId: string) {
+    return await this.call(
+      "organization.findByClerkOrgId",
+      (caller) => caller.organization.findByClerkOrgId({ clerkOrgId }),
+      {
+        fallbackMessage: "Failed to find organization by Clerk org ID",
+        details: { clerkOrgId },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
+   * Find organization by Clerk org slug
+   */
+  async findByClerkOrgSlug(clerkOrgSlug: string) {
+    return await this.call(
+      "organization.findByClerkOrgSlug",
+      (caller) => caller.organization.findByClerkOrgSlug({ clerkOrgSlug }),
+      {
+        fallbackMessage: "Failed to find organization by Clerk org slug",
+        details: { clerkOrgSlug },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
+   * Find organization by GitHub org slug
+   */
+  async findByGithubOrgSlug(githubOrgSlug: string) {
+    return await this.call(
+      "organization.findByGithubOrgSlug",
+      (caller) => caller.organization.findByGithubOrgSlug({ githubOrgSlug }),
+      {
+        fallbackMessage: "Failed to find organization by GitHub org slug",
+        details: { githubOrgSlug },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
    * Update organization with Clerk details
    */
   async updateClerkDetails(params: {

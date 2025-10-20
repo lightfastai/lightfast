@@ -1,13 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { gateway } from "@ai-sdk/gateway";
-import { eq } from "drizzle-orm";
-import { db } from "@db/deus/client";
-import { DeusApiKey } from "@db/deus/schema";
 import type { DeusAppRuntimeContext } from "@repo/deus-types";
 import { uuidv4 } from "@repo/lib";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
+import { ApiKeysService, OrganizationsService, SessionsService } from "@repo/deus-api-services";
 import { deusTools } from "./_lib/tools";
 import { DeusMemory } from "./_lib/memory";
 
@@ -84,18 +82,7 @@ function generateRequestId(): string {
 }
 
 /**
- * Hash an API key using SHA-256
- */
-async function hashApiKey(key: string): Promise<string> {
-	const encoder = new TextEncoder();
-	const data = encoder.encode(key);
-	const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-/**
- * Authenticate and validate API key
+ * Authenticate and validate API key using ApiKeysService
  */
 async function authenticateApiKey(authHeader: string | null): Promise<{
 	userId: string;
@@ -107,46 +94,15 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
 	}
 
 	const key = authHeader.replace("Bearer ", "");
-	const keyHash = await hashApiKey(key);
 
-	const keyResult = await db
-		.select({
-			id: DeusApiKey.id,
-			userId: DeusApiKey.userId,
-			organizationId: DeusApiKey.organizationId,
-			scopes: DeusApiKey.scopes,
-			expiresAt: DeusApiKey.expiresAt,
-			revokedAt: DeusApiKey.revokedAt,
-		})
-		.from(DeusApiKey)
-		.where(eq(DeusApiKey.keyHash, keyHash))
-		.limit(1);
-
-	const apiKey = keyResult[0];
-
-	if (!apiKey) {
+	try {
+		const apiKeysService = new ApiKeysService();
+		const result = await apiKeysService.verifyApiKey(key);
+		return result;
+	} catch (error) {
+		// Key is invalid, revoked, or expired
 		return null;
 	}
-
-	if (apiKey.revokedAt) {
-		return null;
-	}
-
-	if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
-		return null;
-	}
-
-	// Update lastUsedAt asynchronously
-	void db
-		.update(DeusApiKey)
-		.set({ lastUsedAt: new Date().toISOString() })
-		.where(eq(DeusApiKey.id, apiKey.id));
-
-	return {
-		userId: apiKey.userId,
-		organizationId: apiKey.organizationId,
-		scopes: apiKey.scopes,
-	};
 }
 
 /**
@@ -260,10 +216,9 @@ export async function POST(
 			);
 		}
 
-		// 2. Verify organization exists and matches orgSlug
-		const orgResult = await db.query.organizations.findFirst({
-			where: (orgs, { eq }) => eq(orgs.githubOrgSlug, orgSlug),
-		});
+		// 2. Verify organization exists and matches orgSlug using service
+		const orgService = new OrganizationsService();
+		const orgResult = await orgService.findByGithubOrgSlug(orgSlug);
 
 		if (!orgResult) {
 			return NextResponse.json<ErrorResponse>(
@@ -294,10 +249,9 @@ export async function POST(
 			);
 		}
 
-		// 4. Look up the session
-		const session = await db.query.DeusSession.findFirst({
-			where: (sessions, { eq }) => eq(sessions.id, sessionId),
-		});
+		// 4. Look up the session using service
+		const sessionService = new SessionsService();
+		const session = await sessionService.getSessionInternal(sessionId);
 
 		console.log(`[Deus API] ${requestId} - Session lookup:`, {
 			found: !!session,

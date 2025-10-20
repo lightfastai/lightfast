@@ -1,8 +1,7 @@
 import "server-only";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { db } from "@db/deus";
-import { organizations } from "@db/deus/schema";
-import { eq } from "drizzle-orm";
+import type { organizations } from "@db/deus/schema";
+import { OrganizationsService } from "@repo/deus-api-services";
 
 /**
  * Organization access utilities using Clerk RBAC
@@ -84,10 +83,9 @@ export async function getActiveOrg(): Promise<
 		return { hasOrg: false, reason: "no_active_org" };
 	}
 
-	// Find corresponding Deus organization
-	const deusOrg = await db.query.organizations.findFirst({
-		where: eq(organizations.clerkOrgId, orgId),
-	});
+	// Find corresponding Deus organization using service
+	const orgService = new OrganizationsService();
+	const deusOrg = await orgService.findByClerkOrgId(orgId);
 
 	if (!deusOrg) {
 		return { hasOrg: false, reason: "org_not_found_in_deus", clerkOrgId: orgId };
@@ -133,10 +131,9 @@ export async function requireOrgAccess(
 		throw new Error("No active organization. Please select an organization.");
 	}
 
-	// Find org by slug to verify it exists
-	const org = await db.query.organizations.findFirst({
-		where: eq(organizations.clerkOrgSlug, slug),
-	});
+	// Find org by slug to verify it exists using service
+	const orgService = new OrganizationsService();
+	const org = await orgService.findByClerkOrgSlug(slug);
 
 	if (!org) {
 		throw new Error(`Organization not found: ${slug}`);
@@ -235,15 +232,14 @@ export async function getUserOrganizations(): Promise<
 		userId,
 	});
 
-	// Enrich with Deus data
+	// Enrich with Deus data using service
+	const orgService = new OrganizationsService();
 	const orgsWithData = await Promise.all(
 		memberships.map(async (membership) => {
 			const clerkOrg = membership.organization;
 
 			// Find corresponding Deus organization
-			const deusOrg = await db.query.organizations.findFirst({
-				where: eq(organizations.clerkOrgId, clerkOrg.id),
-			});
+			const deusOrg = await orgService.findByClerkOrgId(clerkOrg.id);
 
 			return {
 				id: clerkOrg.id,
@@ -284,9 +280,9 @@ export async function getUserOrganizations(): Promise<
 export async function getOrgBySlug(
 	slug: string,
 ): Promise<typeof organizations.$inferSelect | undefined> {
-	return await db.query.organizations.findFirst({
-		where: eq(organizations.clerkOrgSlug, slug),
-	});
+	const orgService = new OrganizationsService();
+	const org = await orgService.findByClerkOrgSlug(slug);
+	return org ?? undefined;
 }
 
 /**
@@ -313,7 +309,7 @@ export async function findOrgByGitHubId(
 		return undefined;
 	}
 
-	return await db.query.organizations.findFirst({
-		where: eq(organizations.githubOrgId, numericOrgId),
-	});
+	const orgService = new OrganizationsService();
+	const org = await orgService.findByGithubOrgId(numericOrgId);
+	return org ?? undefined;
 }

@@ -16,6 +16,7 @@ import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
 import {
   apiKeyProtectedProcedure,
   clerkProtectedProcedure,
+  publicProcedure,
 } from "../trpc";
 
 /**
@@ -477,5 +478,88 @@ export const sessionRouter = {
         messages: resultMessages,
         nextCursor,
       };
+    }),
+
+  /**
+   * INTERNAL: Get session by ID (no auth check - use only from authenticated contexts)
+   *
+   * This is a PUBLIC procedure intended ONLY for internal use by API routes
+   * that have already performed authentication. Do not call directly from client.
+   */
+  getInternal: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .select()
+        .from(DeusSession)
+        .where(eq(DeusSession.id, input.id))
+        .limit(1);
+
+      return result[0] ?? null;
+    }),
+
+  /**
+   * INTERNAL: Get messages for session (no auth check - use only from authenticated contexts)
+   *
+   * Returns messages in descending order (newest first).
+   * This is a PUBLIC procedure intended ONLY for internal use by API routes
+   * that have already performed authentication.
+   */
+  getMessagesInternal: publicProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        limit: z.number().min(1).max(100).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const messages = await ctx.db
+        .select({
+          id: DeusMessage.id,
+          role: DeusMessage.role,
+          parts: DeusMessage.parts,
+          modelId: DeusMessage.modelId,
+          createdAt: DeusMessage.createdAt,
+        })
+        .from(DeusMessage)
+        .where(eq(DeusMessage.sessionId, input.sessionId))
+        .orderBy(desc(DeusMessage.createdAt))
+        .limit(input.limit ?? 100);
+
+      return messages;
+    }),
+
+  /**
+   * INTERNAL: Add message to session (no auth check - use only from authenticated contexts)
+   *
+   * This is a PUBLIC procedure intended ONLY for internal use by API routes
+   * that have already performed authentication. Do not call directly from client.
+   */
+  addMessageInternal: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        sessionId: z.string(),
+        role: z.enum(["system", "user", "assistant"]),
+        parts: z.array(z.any()),
+        charCount: z.number(),
+        modelId: z.string().nullable().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.insert(DeusMessage).values({
+        id: input.id,
+        sessionId: input.sessionId,
+        role: input.role,
+        parts: input.parts,
+        charCount: input.charCount,
+        modelId: input.modelId ?? null,
+      });
+
+      return { success: true };
     }),
 } satisfies TRPCRouterRecord;

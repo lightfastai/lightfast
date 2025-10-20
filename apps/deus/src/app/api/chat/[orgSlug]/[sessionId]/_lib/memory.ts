@@ -1,9 +1,6 @@
 import type { Memory } from "lightfast/memory";
-import { eq, desc } from "drizzle-orm";
-import { db } from "@db/deus/client";
-import { DeusMessage } from "@db/deus/schema";
 import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
-import { uuidv4 } from "@repo/lib";
+import { SessionsService } from "@repo/deus-api-services";
 
 /**
  * Simple Memory implementation for Deus sessions
@@ -11,7 +8,7 @@ import { uuidv4 } from "@repo/lib";
  */
 export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	/**
-	 * Append a single message to a session
+	 * Append a single message to a session using SessionsService
 	 */
 	async appendMessage({
 		sessionId,
@@ -37,47 +34,37 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 			partTypes: message.parts.map((p) => p.type),
 		});
 
-		await db.insert(DeusMessage).values({
+		const sessionService = new SessionsService();
+		await sessionService.addMessageInternal({
 			id: message.id,
 			sessionId,
 			role: message.role,
-			parts: message.parts as any,
+			parts: message.parts as unknown[],
 			charCount,
 			modelId: message.modelId ?? null,
-			// Let MySQL handle timestamps with CURRENT_TIMESTAMP default
-			// createdAt and updatedAt will be set automatically
 		});
 
 		console.log(`[DeusMemory] Message saved successfully`);
 	}
 
 	/**
-	 * Get all messages for a session, ordered by creation time
+	 * Get all messages for a session, ordered by creation time using SessionsService
 	 */
 	async getMessages(sessionId: string): Promise<LightfastAppDeusUIMessage[]> {
 		console.log(`[DeusMemory] Loading messages for session ${sessionId}...`);
 
-		const messages = await db
-			.select({
-				id: DeusMessage.id,
-				role: DeusMessage.role,
-				parts: DeusMessage.parts,
-				modelId: DeusMessage.modelId,
-				createdAt: DeusMessage.createdAt,
-			})
-			.from(DeusMessage)
-			.where(eq(DeusMessage.sessionId, sessionId))
-			.orderBy(desc(DeusMessage.createdAt));
+		const sessionService = new SessionsService();
+		const messages = await sessionService.getSessionMessagesInternal(sessionId);
 
 		console.log(`[DeusMemory] Loaded ${messages.length} messages from database`);
 
-		// Reverse to get chronological order
+		// Reverse to get chronological order (service returns DESC, we need ASC)
 		const result = messages.reverse().map(
 			(msg): LightfastAppDeusUIMessage => ({
 				id: msg.id,
 				role: msg.role as "user" | "assistant" | "system",
 				parts: msg.parts as LightfastAppDeusUIMessage["parts"],
-				modelId: msg.modelId,
+				modelId: msg.modelId ?? undefined,
 			}),
 		);
 
@@ -101,14 +88,13 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	}
 
 	/**
-	 * Get session metadata
+	 * Get session metadata using SessionsService
 	 */
 	async getSession(
 		sessionId: string,
 	): Promise<{ resourceId: string; id: string } | null> {
-		const session = await db.query.DeusSession.findFirst({
-			where: (sessions, { eq }) => eq(sessions.id, sessionId),
-		});
+		const sessionService = new SessionsService();
+		const session = await sessionService.getSessionInternal(sessionId);
 
 		if (!session) {
 			return null;

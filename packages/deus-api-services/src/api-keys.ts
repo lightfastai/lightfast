@@ -70,4 +70,28 @@ export class ApiKeysService extends DeusApiService {
       },
     );
   }
+
+  /**
+   * Verify an API key (used by CLI and API routes)
+   *
+   * Validates the API key by:
+   * 1. Hashing the provided key and matching against stored hash
+   * 2. Checking if the key is revoked
+   * 3. Checking if the key is expired
+   * 4. Updating the lastUsedAt timestamp
+   *
+   * @param key - The API key to verify (e.g., "deus_sk_...")
+   * @returns Object containing userId, organizationId, and scopes
+   * @throws DeusApiError if the key is invalid, revoked, or expired
+   */
+  async verifyApiKey(key: string) {
+    return await this.call(
+      "apiKey.verify",
+      (caller) => caller.apiKey.verify({ key }),
+      {
+        fallbackMessage: "Failed to verify API key",
+        details: { keyPreview: key.slice(-4) },
+      },
+    );
+  }
 }
