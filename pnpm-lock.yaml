@@ -1176,14 +1176,14 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       fumadocs-core:
-        specifier: ^15.6.9
-        version: 15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        specifier: 15.6.9
+        version: 15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       fumadocs-mdx:
-        specifier: ^11.7.4
-        version: 11.10.1(fumadocs-core@15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+        specifier: 11.7.4
+        version: 11.7.4(fumadocs-core@15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       fumadocs-ui:
-        specifier: ^15.6.9
-        version: 15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.11)
+        specifier: 15.6.9
+        version: 15.6.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.11)
       geist:
         specifier: 'catalog:'
         version: 1.5.1(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
@@ -2261,13 +2261,13 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: ^1.0.15
-        version: 1.0.41(zod@4.1.12)
+        version: 1.0.41(zod@3.25.76)
       '@lightfastai/cli':
         specifier: file:../../core/cli
         version: file:core/cli(@types/node@24.8.1)(lightfast@file:core/lightfast(typescript@5.9.3))
       ai:
         specifier: 5.0.15
-        version: 5.0.15(zod@4.1.12)
+        version: 5.0.15(zod@3.25.76)
       lightfast:
         specifier: file:../../core/lightfast
         version: link:../../core/lightfast
@@ -11413,32 +11413,25 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  fumadocs-core@15.8.5:
-    resolution: {integrity: sha512-hyJtKGuB2J/5y7tDfI1EnGMKlNbSXM5N5cpwvgCY0DcBJwFMDG/GpSpaVRzh3aWy67pAYDZFIwdtbKXBa/q5bg==}
+  fumadocs-core@15.6.9:
+    resolution: {integrity: sha512-GVrJ2C2fch3KfNz3utqvF2CeZ7Uc947lfo7Deq1mKhWlH+HY3RSUM9MMecRl+uTzu9TNWPCUwj9q0XSUBh5VbQ==}
     peerDependencies:
       '@mixedbread/sdk': ^0.19.0
       '@oramacloud/client': 1.x.x || 2.x.x
-      '@tanstack/react-router': 1.x.x
       '@types/react': ^19.1.11
       algoliasearch: 5.x.x
-      lucide-react: '*'
       next: 14.x.x || 15.x.x
       react: ^19.1.1
       react-dom: ^19.1.1
       react-router: 7.x.x
-      waku: ^0.26.0
     peerDependenciesMeta:
       '@mixedbread/sdk':
         optional: true
       '@oramacloud/client':
         optional: true
-      '@tanstack/react-router':
-        optional: true
       '@types/react':
         optional: true
       algoliasearch:
-        optional: true
-      lucide-react:
         optional: true
       next:
         optional: true
@@ -11448,11 +11441,9 @@ packages:
         optional: true
       react-router:
         optional: true
-      waku:
-        optional: true
 
-  fumadocs-mdx@11.10.1:
-    resolution: {integrity: sha512-WoEzzzoKncXl7PM++GRxEplAb73y3A4ow+QdTYybhVtoYXgJzvTzkLc5OIlNQm72Dv+OxSAx7uk11zTTOX9YMQ==}
+  fumadocs-mdx@11.7.4:
+    resolution: {integrity: sha512-PNn3AcbaDJwAaXlm5lgVG4CavWOPWVH9FNaB1L0BsKMthnprDlagDy54+8QX3EAzeUB2eLYTtrD3BIjzbzpFEg==}
     hasBin: true
     peerDependencies:
       '@fumadocs/mdx-remote': ^1.4.0
@@ -11470,8 +11461,8 @@ packages:
       vite:
         optional: true
 
-  fumadocs-ui@15.8.5:
-    resolution: {integrity: sha512-9pyB+9rOOsrFnmmZ9xREp/OgVhyaSq2ocEpqTNbeQ7tlJ6JWbdFWfW0C9lRXprQEB6DJWUDtDxqKS5QXLH0EGA==}
+  fumadocs-ui@15.6.9:
+    resolution: {integrity: sha512-4zQcWqBJx7DuJn3IWAVrRY7o7Xx6DsScq3U8R8Qu2EJOuioJHotyLoVldSaB3wLioxtR7ito6866LZDp3oci6A==}
     peerDependencies:
       '@types/react': ^19.1.11
       next: 14.x.x || 15.x.x
@@ -16034,13 +16025,6 @@ snapshots:
       '@vercel/oidc': 3.0.2
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.41(zod@4.1.12)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@4.1.12)
-      '@vercel/oidc': 3.0.2
-      zod: 4.1.12
-
   '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -16143,13 +16127,6 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.6
       zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.12(zod@4.1.12)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.6
-      zod: 4.1.12
 
   '@ai-sdk/provider-utils@3.0.3(zod@3.25.76)':
     dependencies:
@@ -24925,7 +24902,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  fumadocs-core@15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       '@formatjs/intl-localematcher': 0.6.2
       '@orama/orama': 3.1.16
@@ -24937,7 +24914,6 @@ snapshots:
       image-size: 2.0.2
       negotiator: 1.0.0
       npm-to-yarn: 3.0.1
-      path-to-regexp: 8.3.0
       react-remove-scroll: 2.7.1(@types/react@19.2.2)(react@19.2.0)
       remark: 15.0.1
       remark-gfm: 4.0.1
@@ -24946,31 +24922,26 @@ snapshots:
       shiki: 3.13.0
       unist-util-visit: 5.0.0
     optionalDependencies:
-      '@tanstack/react-router': 1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@types/react': 19.2.2
-      lucide-react: 0.451.0(react@19.2.0)
       next: 15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-mdx@11.10.1(fumadocs-core@15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)):
+  fumadocs-mdx@11.7.4(fumadocs-core@15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)):
     dependencies:
       '@mdx-js/mdx': 3.1.1
       '@standard-schema/spec': 1.0.0
       chokidar: 4.0.3
       esbuild: 0.25.11
       estree-util-value-to-estree: 3.4.0
-      fumadocs-core: 15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      fumadocs-core: 15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       js-yaml: 4.1.0
       lru-cache: 11.2.2
       picocolors: 1.1.1
-      remark-mdx: 3.1.1
-      remark-parse: 11.0.0
       tinyexec: 1.0.1
       tinyglobby: 0.2.15
-      unified: 11.0.5
       unist-util-visit: 5.0.0
       zod: 4.1.12
     optionalDependencies:
@@ -24980,7 +24951,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-ui@15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.11):
+  fumadocs-ui@15.6.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.11):
     dependencies:
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@radix-ui/react-collapsible': 1.1.12(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -24993,7 +24964,7 @@ snapshots:
       '@radix-ui/react-slot': 1.2.3(@types/react@19.2.2)(react@19.2.0)
       '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       class-variance-authority: 0.7.1
-      fumadocs-core: 15.8.5(@tanstack/react-router@1.133.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.2)(lucide-react@0.451.0(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      fumadocs-core: 15.6.9(@types/react@19.2.2)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       lodash.merge: 4.6.2
       next-themes: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       postcss-selector-parser: 7.1.0
@@ -25009,13 +24980,10 @@ snapshots:
     transitivePeerDependencies:
       - '@mixedbread/sdk'
       - '@oramacloud/client'
-      - '@tanstack/react-router'
       - '@types/react-dom'
       - algoliasearch
-      - lucide-react
       - react-router
       - supports-color
-      - waku
 
   function-bind@1.1.2: {}
 
