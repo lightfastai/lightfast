@@ -1,54 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { authUrl } from "~/lib/related-projects";
 
 export function VerticalNavbar() {
   return (
-    <nav className="flex flex-row items-center gap-8 border border-muted px-1 py-1 rounded-md backdrop-blur-sm">
-      <Link
-        href="/pricing"
-        className={cn(
-          "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-          "whitespace-nowrap px-2 pl-4",
-        )}
-      >
-        Pricing
-      </Link>
+    <nav className="flex flex-row items-center gap-4">
+      <Tabs defaultValue="home">
+        <TabsList>
+          <TabsTrigger value="home" asChild>
+            <Link href="/">Home</Link>
+          </TabsTrigger>
 
-      <Link
-        href="https://github.com/lightfastai/lightfast"
-        className={cn(
-          "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-          "whitespace-nowrap px-2",
-        )}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        GitHub
-      </Link>
+          <TabsTrigger value="pricing" asChild>
+            <Link href="/pricing">Pricing</Link>
+          </TabsTrigger>
 
-      <Link
-        href="/updates"
-        className={cn(
-          "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-          "whitespace-nowrap px-2",
-        )}
-      >
-        Updates
-      </Link>
+          <TabsTrigger value="github" asChild>
+            <Link
+              href="https://github.com/lightfastai/lightfast"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </Link>
+          </TabsTrigger>
 
-      <Link
-        href={authUrl}
-        className={cn(
-          "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-          "whitespace-nowrap px-2",
-        )}
-      >
-        Sign In
-      </Link>
+          <TabsTrigger value="updates" asChild>
+            <Link href="/updates">Updates</Link>
+          </TabsTrigger>
+
+          <TabsTrigger value="signin" asChild>
+            <Link href={authUrl}>Sign In</Link>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Button
         asChild
