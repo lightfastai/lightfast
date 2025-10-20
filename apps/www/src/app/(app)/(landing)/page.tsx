@@ -19,11 +19,11 @@ export default function HomePage() {
         </div>
 
         {/* Middle: Headline and Waitlist Form */}
-        <div className="flex-1 flex flex-col justify-center w-full">
+        <div className="flex-1 flex flex-col justify-center w-full relative">
           {/* Dotted line above */}
-          <div className="w-full border-t border-dotted border-muted mb-8" />
+          <div className="-mx-16 border-t border-dotted border-muted mb-8" />
 
-          <div className="space-y-8 w-full">
+          <div className="space-y-8 w-full px-0">
             <h1
               className={`text-7xl font-light leading-[1.2] tracking-[-0.7] text-foreground whitespace-nowrap ${exposureTrial.className}`}
             >
@@ -35,7 +35,7 @@ export default function HomePage() {
           </div>
 
           {/* Dotted line below */}
-          <div className="w-full border-t border-dotted border-muted mt-8" />
+          <div className="-mx-16 border-t border-dotted border-muted mt-8" />
         </div>
 
         {/* Spacer */}
@@ -43,11 +43,11 @@ export default function HomePage() {
       </div>
 
       {/* Right Section */}
-      <div className="flex flex-col px-16 pt-8 py-16 justify-end">
+      <div className="flex flex-col px-16 pt-8 py-16 justify-end relative">
         {/* Bottom: Waitlist Description */}
         <div className="max-w-xl">
           {/* Dashed line above */}
-          <div className="w-full border-t border-dashed border-muted mb-8" />
+          <div className="-mx-16 border-t border-dashed border-muted mb-8" />
           <WaitlistDescription />
         </div>
       </div>
