@@ -1,6 +1,8 @@
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 import { WaitlistDescription } from "./_components/(waitlist)/waitlist-description";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
+import { ManifestoGrid } from "~/components/landing/manifesto-grid";
+import { SiteFooter } from "~/components/landing/footer-section";
 import { MarketingHeader } from "~/components/marketing/marketing-header";
 import { localFont } from "next/font/local";
 
@@ -11,45 +13,55 @@ const exposureTrial = localFont({
 
 export default function HomePage() {
   return (
-    <div className="hero bg-background flex flex-col min-h-screen">
-      <MarketingHeader />
-      {/* Main Content Section */}
-      <div className="flex flex-1 border-b border-dashed border-border">
-        {/* Left Section */}
-        <div className="flex flex-col flex-1 px-16 py-16 border-r border-dashed border-border">
-          {/* Headline and Waitlist Form */}
-          <div className="flex-1 flex flex-col justify-center w-full relative">
-            {/* Dotted line above */}
-            <div className="-mx-16 border-t border-dashed border-border mb-8" />
+    <>
+      <div className="hero bg-background flex flex-col min-h-screen">
+        <MarketingHeader />
+        {/* Main Content Section */}
+        <div className="flex flex-1 border-b border-dashed border-border">
+          {/* Left Section */}
+          <div className="flex flex-col flex-1 px-16 py-16 border-r border-dashed border-border">
+            {/* Headline and Waitlist Form */}
+            <div className="flex-1 flex flex-col justify-center w-full relative">
+              {/* Dotted line above */}
+              <div className="-mx-16 border-t border-dashed border-border mb-8" />
 
-            <div className="space-y-8 w-full px-0">
-              <h1
-                className={`text-7xl font-light leading-[1.2] tracking-[-0.7] text-foreground whitespace-nowrap ${exposureTrial.className}`}
-              >
-                One interface, infinite agents.
-              </h1>
-              <div className="max-w-3xl">
-                <WaitlistForm />
+              <div className="space-y-8 w-full px-0">
+                <h1
+                  className={`text-7xl font-light leading-[1.2] tracking-[-0.7] text-foreground whitespace-nowrap ${exposureTrial.className}`}
+                >
+                  One interface, infinite agents.
+                </h1>
+                <div className="max-w-3xl">
+                  <WaitlistForm />
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex flex-col px-16 py-16 justify-end relative">
+            {/* Waitlist Description */}
+            <div className="max-w-xl">
+              {/* Dashed line above */}
+              <div className="-mx-16 border-t border-dashed border-border mb-8" />
+              <WaitlistDescription />
             </div>
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className="flex flex-col px-16 py-16 justify-end relative">
-          {/* Waitlist Description */}
-          <div className="max-w-xl">
-            {/* Dashed line above */}
-            <div className="-mx-16 border-t border-dashed border-border mb-8" />
-            <WaitlistDescription />
-          </div>
+        {/* Bottom Section: Framework Showcase */}
+        <div className="px-16 py-16 border-t border-dashed border-border">
+          <FrameworkShowcase />
         </div>
       </div>
 
-      {/* Bottom Section: Framework Showcase */}
-      <div className="px-16 py-16 border-t border-dashed border-border">
-        <FrameworkShowcase />
+      {/* Manifesto Grid Section - Outside hero container */}
+      <div className="manifesto bg-background px-16 py-16">
+        <ManifestoGrid />
       </div>
-    </div>
+
+      {/* Footer Section */}
+      <SiteFooter />
+    </>
   );
 }

@@ -11,11 +11,11 @@ export function MarketingHeader() {
         <Button
           variant="ghost"
           size="lg"
-          className="hover:bg-black hover:text-white"
+          className="hover:bg-black group"
           asChild
         >
           <Link href="/">
-            <Icons.logo className="size-22 text-foreground" />
+            <Icons.logo className="size-22 text-foreground group-hover:text-white transition-colors" />
           </Link>
         </Button>
       </div>

@@ -10,17 +10,17 @@ export function SiteFooter() {
 	return (
 		<footer className="bg-background relative w-full text-white py-12 sm:py-16 lg:py-24">
 			{/* Section 1 - Logo and Products/Links */}
-			<section className="pb-8 sm:pb-10 lg:pb-12 px-4 sm:px-6 lg:px-8">
-				<div className="mx-auto w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl">
-					{/* Mobile/Tablet: Stack vertically, Desktop: Side by side with proper alignment */}
-					<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 lg:gap-12">
-						{/* Logo - Fixed width on desktop for alignment */}
-						<div className="flex-shrink-0 lg:w-1/2">
+			<section className="pb-8 sm:pb-10 lg:pb-12 px-16">
+				<div className="mx-auto w-full">
+					{/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+						{/* Logo - First 2 columns */}
+						<div className="lg:col-span-2">
 							<Icons.logo className="text-foreground w-24 sm:w-28 lg:w-32" />
 						</div>
 
-						{/* Products and Links - Right aligned section */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-8 lg:gap-16 xl:gap-24 lg:w-1/2">
+						{/* Products and Links - Last column */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
 							{/* Products Column */}
 							<div className="flex flex-col">
 								<h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-xl font-semibold">
@@ -80,12 +80,12 @@ export function SiteFooter() {
 			</section>
 
 			{/* Section 2 - Contact and Early Access */}
-			<section className="py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-				<div className="mx-auto w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl">
-					{/* Stack on mobile/tablet, side by side on desktop with proper alignment */}
-					<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 lg:gap-12">
-						{/* Contact - Fixed width on desktop */}
-						<div className="flex flex-col lg:w-1/2">
+			<section className="py-6 sm:py-8 px-16">
+				<div className="mx-auto w-full">
+					{/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+						{/* Contact - First 2 columns */}
+						<div className="flex flex-col lg:col-span-2">
 							<h3 className="text-foreground mb-2 text-base sm:text-lg font-semibold">
 								Have questions or want to chat?
 							</h3>
@@ -102,22 +102,20 @@ export function SiteFooter() {
 							</div>
 						</div>
 
-						{/* Newsletter Signup - Right aligned */}
-						<div className="lg:w-1/2">
-							<div className="flex flex-col lg:max-w-xs">
-								<h3 className="text-foreground text-sm sm:text-base mb-3 sm:mb-4 font-semibold">
-									Stay in the loop and be the first to know what's coming next
-									for Lightfast, get industry expert analysis, and much more.
-								</h3>
-								<div className="flex flex-col gap-2">
-									<Link
-										href="#"
-										className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-2 text-sm font-medium transition-colors duration-200 hover:underline"
-									>
-										Subscribe to Lightfast
-										<ArrowRight className="size-4" />
-									</Link>
-								</div>
+						{/* Newsletter Signup - Last column */}
+						<div className="flex flex-col">
+							<h3 className="text-foreground text-sm sm:text-base mb-3 sm:mb-4 font-semibold">
+								Stay in the loop and be the first to know what's coming next
+								for Lightfast, get industry expert analysis, and much more.
+							</h3>
+							<div className="flex flex-col gap-2">
+								<Link
+									href="#"
+									className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-2 text-sm font-medium transition-colors duration-200 hover:underline"
+								>
+									Subscribe to Lightfast
+									<ArrowRight className="size-4" />
+								</Link>
 							</div>
 						</div>
 					</div>
@@ -125,12 +123,12 @@ export function SiteFooter() {
 			</section>
 
 			{/* Section 3 - Copyright and Social */}
-			<section className="py-6 sm:py-8 px-4 sm:px-6 lg:px-8 border-t border-border/10">
-				<div className="mx-auto w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl">
-					{/* Stack on mobile/tablet, side by side on desktop with proper alignment */}
-					<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 lg:gap-12">
-						{/* Social Links - Fixed width on desktop to match other sections */}
-						<div className="flex items-center gap-4 sm:gap-6 lg:w-1/2">
+			<section className="py-6 sm:py-8 px-16 border-t border-border/10">
+				<div className="mx-auto w-full">
+					{/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+						{/* Social Links - First 2 columns */}
+						<div className="flex items-center gap-4 sm:gap-6 lg:col-span-2">
 							<Link
 								target="_blank"
 								href={siteConfig.links.github.href}
@@ -157,34 +155,32 @@ export function SiteFooter() {
 							</Link>
 						</div>
 
-						{/* Copyright and Additional Info - Right aligned */}
-						<div className="lg:w-1/2">
-							<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-8">
-								{/* Copyright */}
-								<div className="flex items-center">
-									<span className="group text-muted-foreground relative cursor-default text-xs sm:text-sm">
-										<span className="group-hover:text-foreground relative inline-block transition-all duration-300 group-hover:-translate-y-1">
-											{siteConfig.name}
-										</span>
-										<span className="group-hover:text-muted-foreground/60 relative mx-1 inline-block transition-all duration-300">
-											Inc.
-										</span>
-										<span className="group-hover:text-muted-foreground/60 relative inline-block transition-all duration-300">
-											©
-										</span>
-										<span className="group-hover:text-foreground relative ml-1 inline-block transition-all duration-300 group-hover:-translate-y-1">
-											{new Date().getFullYear()}
-										</span>
-										<span className="from-primary/40 via-primary to-primary/40 absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full" />
+						{/* Copyright and Additional Info - Last column */}
+						<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-8">
+							{/* Copyright */}
+							<div className="flex items-center">
+								<span className="group text-muted-foreground relative cursor-default text-xs sm:text-sm">
+									<span className="group-hover:text-foreground relative inline-block transition-all duration-300 group-hover:-translate-y-1">
+										{siteConfig.name}
 									</span>
-								</div>
+									<span className="group-hover:text-muted-foreground/60 relative mx-1 inline-block transition-all duration-300">
+										Inc.
+									</span>
+									<span className="group-hover:text-muted-foreground/60 relative inline-block transition-all duration-300">
+										©
+									</span>
+									<span className="group-hover:text-foreground relative ml-1 inline-block transition-all duration-300 group-hover:-translate-y-1">
+										{new Date().getFullYear()}
+									</span>
+									<span className="from-primary/40 via-primary to-primary/40 absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full" />
+								</span>
+							</div>
 
-								{/* Additional Info */}
-								<div className="hidden sm:block">
-									<p className="text-muted-foreground text-xs">
-										All rights reserved
-									</p>
-								</div>
+							{/* Additional Info */}
+							<div className="hidden sm:block">
+								<p className="text-muted-foreground text-xs">
+									All rights reserved
+								</p>
 							</div>
 						</div>
 					</div>

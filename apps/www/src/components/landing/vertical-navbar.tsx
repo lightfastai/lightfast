@@ -15,7 +15,6 @@ export function VerticalNavbar() {
     if (pathname === "/") return "home";
     if (pathname === "/pricing") return "pricing";
     if (pathname === "/updates") return "updates";
-    if (pathname === authUrl) return "signin";
     return "home";
   };
 
@@ -34,17 +33,17 @@ export function VerticalNavbar() {
           <TabsTrigger value="updates" asChild>
             <Link href="/updates">Updates</Link>
           </TabsTrigger>
-
-          <TabsTrigger value="signin" asChild>
-            <Link href={authUrl}>Sign In</Link>
-          </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <Button variant="outline" size="sm" className="text-foreground" asChild>
+        <Link href={authUrl}>Sign In</Link>
+      </Button>
 
       <Button
         asChild
         size="sm"
-        className="rounded-sm hover:bg-black hover:text-foreground"
+        className="rounded-sm hover:bg-black hover:text-white"
       >
         <Link href="/early-access">Join Early Access</Link>
       </Button>

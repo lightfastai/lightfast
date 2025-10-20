@@ -4,6 +4,8 @@
 /* Override shadcn border-radius via CSS variable */
 :root {
   --brand-blue: oklch(0.4512 0.275 269.89);
+  --brand-orange: oklch(0.5913 0.2286 31.28);
+  --brand-orange-overlay: oklch(0.6496 0.2375 31.9);
 }
 
 /* Light section - inverted colors for specific sections */
@@ -48,6 +50,29 @@
   --accent-foreground: var(--brand-blue);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 40%);
+  --input: oklch(1 0 0 / 15%);
+  --input-bg: oklch(0.145 0 0 / 30%);
+  --ring: oklch(0.985 0 0);
+}
+
+/* Manifesto section - brand orange background with light text */
+.manifesto {
+  --background: var(--brand-orange);
+  --foreground: oklch(0.985 0 0);
+  --card: var(--brand-orange);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: var(--brand-orange);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.145 0 0 / 30%);
+  --muted-foreground: oklch(0.985 0 0);
+  --accent: var(--brand-orange-overlay);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: var(--brand-orange-overlay);
   --input: oklch(1 0 0 / 15%);
   --input-bg: oklch(0.145 0 0 / 30%);
   --ring: oklch(0.985 0 0);
