@@ -108,7 +108,8 @@ export function FrameworkShowcase() {
 						);
 					})}
 				</div>
-				{/* Gradient overlays for fade effect - only on right side to not cover grid line */}
+				{/* Gradient overlays for fade effect on both sides */}
+				<div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent pointer-events-none" />
 				<div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent pointer-events-none" />
 			</div>
 		</div>

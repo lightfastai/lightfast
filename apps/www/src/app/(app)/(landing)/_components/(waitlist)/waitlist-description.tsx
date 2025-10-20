@@ -55,7 +55,7 @@ export function WaitlistDescription() {
 
   return (
     <motion.div
-      className="space-y-4 text-sm"
+      className="space-y-4 text-md"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
