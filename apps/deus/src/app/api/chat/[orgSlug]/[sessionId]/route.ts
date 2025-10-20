@@ -1,13 +1,23 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { gateway } from "@ai-sdk/gateway";
+import { stepCountIs } from "ai";
 import type { DeusAppRuntimeContext } from "@repo/deus-types";
+import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
 import { uuidv4 } from "@repo/lib";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
 import { ApiKeysService, OrganizationsService, SessionsService } from "@repo/deus-api-services";
 import { deusTools } from "./_lib/tools";
 import { DeusMemory } from "./_lib/memory";
+
+/**
+ * Request body type for CLI requests
+ */
+interface DeusRequestBody {
+	message?: string;
+	messages?: LightfastAppDeusUIMessage[];
+}
 
 /**
  * POST /api/chat/[orgSlug]/[sessionId]
@@ -99,7 +109,7 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
 		const apiKeysService = new ApiKeysService();
 		const result = await apiKeysService.verifyApiKey(key);
 		return result;
-	} catch (error) {
+	} catch {
 		// Key is invalid, revoked, or expired
 		return null;
 	}
@@ -135,14 +145,14 @@ export async function POST(
 		});
 
 		// Parse and transform the request body
-		let parsedBody: any;
+		let parsedBody: DeusRequestBody = {};
 		try {
-			parsedBody = JSON.parse(body);
+			parsedBody = JSON.parse(body) as DeusRequestBody;
 			console.log(`[Deus API] ${requestId} - Parsed request body:`, {
-				hasMessages: !!parsedBody?.messages,
-				hasMessage: !!parsedBody?.message,
-				messagesCount: parsedBody?.messages?.length ?? 0,
-				messageTypes: parsedBody?.messages?.map((m: any) => m.role) ?? [],
+				hasMessages: !!parsedBody.messages,
+				hasMessage: !!parsedBody.message,
+				messagesCount: parsedBody.messages?.length ?? 0,
+				messageTypes: parsedBody.messages?.map((m: LightfastAppDeusUIMessage) => m.role) ?? [],
 				fullBody: parsedBody,
 			});
 
@@ -178,7 +188,7 @@ export async function POST(
 				};
 
 				console.log(
-					`[Deus API] ${requestId} - Transformed body now has ${parsedBody.messages.length} messages`,
+					`[Deus API] ${requestId} - Transformed body now has ${parsedBody.messages?.length ?? 0} messages`,
 				);
 			}
 		} catch (e) {
@@ -297,10 +307,20 @@ export async function POST(
 			`Current working directory: ${session.cwd}`,
 		];
 
-		if (session.metadata?.git) {
-			const git = session.metadata.git;
-			if (git.branch) contextParts.push(`Git branch: ${git.branch}`);
-			if (git.remote) contextParts.push(`Git remote: ${git.remote}`);
+		if (session.metadata && typeof session.metadata === "object" && "git" in session.metadata) {
+			const gitData = (session.metadata as Record<string, unknown>).git;
+			if (gitData && typeof gitData === "object" && "branch" in gitData) {
+				const branch = (gitData as Record<string, unknown>).branch;
+				if (typeof branch === "string") {
+					contextParts.push(`Git branch: ${branch}`);
+				}
+			}
+			if (gitData && typeof gitData === "object" && "remote" in gitData) {
+				const remote = (gitData as Record<string, unknown>).remote;
+				if (typeof remote === "string") {
+					contextParts.push(`Git remote: ${remote}`);
+				}
+			}
 		}
 
 		if (session.currentAgent) {
@@ -340,7 +360,7 @@ export async function POST(
 				// Allow tool calls to be generated and executed
 				// The execute function returns immediately with "completed" status
 				// Client will see the tool call in streaming response and handle it
-				maxSteps: 5,
+				stopWhen: stepCountIs(5),
 			}),
 			sessionId,
 			memory,
@@ -355,18 +375,6 @@ export async function POST(
 					undefined,
 			}),
 			generateId: () => messageId,
-			onToolCall: ({ toolCall, systemContext }) => {
-				console.log(
-					`[Deus API] ${requestId} - Tool called:`,
-					{
-						toolName: toolCall.toolName,
-						toolCallId: toolCall.toolCallId,
-						args: toolCall.args,
-						sessionId: systemContext.sessionId,
-						userId: systemContext.resourceId,
-					},
-				);
-			},
 			onError(event) {
 				const { error, systemContext } = event;
 				console.error(

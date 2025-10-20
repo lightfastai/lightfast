@@ -6,7 +6,7 @@ import { SessionsService } from "@repo/deus-api-services";
  * Simple Memory implementation for Deus sessions
  * Implements the required Memory interface from lightfast
  */
-export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
+export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 	/**
 	 * Append a single message to a session using SessionsService
 	 */
@@ -16,7 +16,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	}: {
 		sessionId: string;
 		message: LightfastAppDeusUIMessage;
-		context: {};
+		context: object;
 	}): Promise<void> {
 		// Calculate character count
 		const charCount = message.parts.reduce((acc, part) => {
@@ -62,7 +62,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 		const result = messages.reverse().map(
 			(msg): LightfastAppDeusUIMessage => ({
 				id: msg.id,
-				role: msg.role as "user" | "assistant" | "system",
+				role: msg.role,
 				parts: msg.parts as LightfastAppDeusUIMessage["parts"],
 				modelId: msg.modelId ?? undefined,
 			}),
@@ -77,11 +77,11 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	 * Create or ensure a session exists
 	 */
 	async createSession({
-		sessionId,
+		sessionId: _sessionId,
 	}: {
 		sessionId: string;
 		resourceId: string;
-		context: {};
+		context: object;
 	}): Promise<void> {
 		// Sessions are already created by the CLI, so this is a no-op
 		// The session existence is validated in the route handler
@@ -110,12 +110,12 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	 * Set active stream ID for a session
 	 */
 	async createStream({
-		sessionId,
-		streamId,
+		sessionId: _sessionId,
+		streamId: _streamId,
 	}: {
 		sessionId: string;
 		streamId: string;
-		context: {};
+		context: object;
 	}): Promise<void> {
 		// Deus doesn't currently support stream resume, so this is a no-op
 		// Can be implemented later if needed
@@ -124,23 +124,25 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, {}> {
 	/**
 	 * Get all stream IDs for a session
 	 */
-	async getSessionStreams(sessionId: string): Promise<string[]> {
+	getSessionStreams(sessionId: string): Promise<string[]> {
 		// Deus doesn't currently support stream resume
-		return [];
+		void sessionId; // Use the parameter to satisfy linter
+		return Promise.resolve([]);
 	}
 
 	/**
 	 * Get active stream ID for a session
 	 */
-	async getActiveStream(sessionId: string): Promise<string | null> {
+	getActiveStream(sessionId: string): Promise<string | null> {
 		// Deus doesn't currently support stream resume
-		return null;
+		void sessionId; // Use the parameter to satisfy linter
+		return Promise.resolve(null);
 	}
 
 	/**
 	 * Clear active stream ID for a session
 	 */
-	async clearActiveStream(sessionId: string): Promise<void> {
+	async clearActiveStream(_sessionId: string): Promise<void> {
 		// Deus doesn't currently support stream resume, so this is a no-op
 	}
 }

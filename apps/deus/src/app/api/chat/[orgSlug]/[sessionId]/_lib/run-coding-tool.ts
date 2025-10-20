@@ -54,19 +54,19 @@ export function runCodingTool() {
 			"Execute a coding task with the specified agent (Claude Code or Codex). This requires user confirmation in the CLI before the agent starts executing.",
 		inputSchema,
 		outputSchema,
-		execute: async (
+		execute: (
 			input: RunCodingToolInput,
 			_context: DeusLightfastRuntimeContext,
 		): Promise<RunCodingToolOutput> => {
 			// This should never execute in practice because the client handles the tool call
 			// However, the AI SDK's agent pattern requires an execute function
 			// If this does execute (due to client not handling it), return a pending status
-			return {
+			return Promise.resolve({
 				agentType: input.type,
 				status: "completed" as const,
 				message: `Pending user confirmation for ${input.type} execution`,
 				mcpServers: input.mcpServers,
-			};
+			});
 		},
 	});
 }

@@ -44,6 +44,7 @@
 		"@vendor/next": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"ai": "catalog:",
+		"date-fns": "^4.1.0",
 		"immer": "^10.1.1",
 		"lightfast": "workspace:^",
 		"lucide-react": "catalog:",
