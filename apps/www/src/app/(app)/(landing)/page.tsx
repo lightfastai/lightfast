@@ -31,6 +31,7 @@ export default function HomePage() {
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2000);
 	};
+
 	return (
 		<div className="relative min-h-screen">
 			{/* Hero Section */}

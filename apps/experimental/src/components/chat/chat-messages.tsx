@@ -166,8 +166,7 @@ function MessageItem({
 	const hasActiveReasoningPart = useMemo(() => {
 		if (
 			message.runtimeStatus !== "streaming" ||
-			!message.parts ||
-			message.parts.length === 0
+			message.parts?.length === 0
 		) {
 			return false;
 		}

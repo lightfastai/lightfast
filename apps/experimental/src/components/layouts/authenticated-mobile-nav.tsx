@@ -4,13 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { Menu, X, LogOut, Settings, User } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { Sheet, SheetTrigger } from "@repo/ui/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetPrimitive } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { getAppUrl } from "@repo/url-utils";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { env } from "@/env";
 
 interface AuthenticatedMobileNavProps {
 	agentId?: string;
@@ -22,8 +21,10 @@ export function AuthenticatedMobileNav({
 	version = "v1",
 }: AuthenticatedMobileNavProps) {
 	const [open, setOpen] = React.useState(false);
-	const cloudUrl = getAppUrl("cloud");
-	const chatUrl = getAppUrl("chat");
+	const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development' || !env.NEXT_PUBLIC_VERCEL_ENV;
+	const chatUrl = isDevelopment
+		? 'http://localhost:4106'
+		: 'https://chat.lightfast.ai';
 	const { signOut } = useClerk();
 	const { user } = useUser();
 	const newChatHref = version === "v2" ? `/v2-chat/${agentId || "a011"}` : "/";
@@ -125,13 +126,6 @@ export function AuthenticatedMobileNav({
 											className="block text-lg font-medium py-2 transition-colors hover:text-muted-foreground"
 										>
 											Chat
-										</Link>
-										<Link
-											href={cloudUrl}
-											onClick={() => setOpen(false)}
-											className="block text-lg font-medium py-2 transition-colors hover:text-muted-foreground"
-										>
-											Cloud
 										</Link>
 									</div>
 								</div>

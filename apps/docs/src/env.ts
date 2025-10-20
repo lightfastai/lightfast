@@ -12,10 +12,11 @@ export const env = createEnv({
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
   },
   client: {
-    // Add any client-side environment variables here if needed
+    NEXT_PUBLIC_VERCEL_ENV: z.enum(["development", "preview", "production"]).default("development"),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

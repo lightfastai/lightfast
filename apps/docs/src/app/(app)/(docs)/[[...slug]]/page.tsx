@@ -19,8 +19,7 @@ export default async function Page({
 
 	// Show custom landing page for the get-started/overview page
 	if (
-		resolvedParams.slug &&
-		resolvedParams.slug.length === 2 &&
+		resolvedParams.slug?.length === 2 &&
 		resolvedParams.slug[0] === "get-started" &&
 		resolvedParams.slug[1] === "overview"
 	) {

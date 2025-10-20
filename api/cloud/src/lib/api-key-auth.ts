@@ -85,7 +85,7 @@ export async function validateApiKey(
 ): Promise<ApiKeyAuthContext | null> {
   try {
     // Validate format
-    if (!apiKey || !apiKey.startsWith(API_KEY_PREFIX)) {
+    if (!apiKey?.startsWith(API_KEY_PREFIX)) {
       return null;
     }
 

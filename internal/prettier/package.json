@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.3.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

@@ -14,7 +14,6 @@ const config: NextConfig = {
 	transpilePackages: [
 		"@repo/ui",
 		"@repo/url-utils",
-		"@repo/vercel-config",
 	],
 };
 

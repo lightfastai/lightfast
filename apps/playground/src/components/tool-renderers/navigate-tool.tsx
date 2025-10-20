@@ -38,7 +38,7 @@ export const NavigateTool = memo(function NavigateTool({ toolPart, className }: 
   const output = state === "output-available" && "output" in toolPart && toolPart.output
     ? toolPart.output as PlaygroundToolSet['stagehandNavigate']['output']
     : null;
-  const hasError = output && output.success === false;
+  const hasError = output?.success === false;
 
   // For simple success cases without errors, show inline
   if (state === "output-available" && !hasError) {

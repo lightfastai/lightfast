@@ -3,21 +3,23 @@
 import { Button } from "../ui/button";
 import {
 	Carousel,
-	type CarouselApi,
+	
 	CarouselContent,
-	CarouselItem,
+	CarouselItem
 } from "../ui/carousel";
+import type {CarouselApi} from "../ui/carousel";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "../../lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
-	type ComponentProps,
+	
 	createContext,
 	useCallback,
 	useContext,
 	useEffect,
-	useState,
+	useState
 } from "react";
+import type {ComponentProps} from "react";
 
 export type InlineCitationProps = ComponentProps<"span">;
 

@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     // Security check: Verify session ownership via memory system
     // The resourceId in session metadata stores the userId (owner)
     const sessionData = await memory.getSession(sessionId);
-    if (!sessionData || sessionData.resourceId !== userId) {
+    if (sessionData?.resourceId !== userId) {
       return NextResponse.json(
         { error: "Forbidden: Access denied to this session" },
         { status: 403 }

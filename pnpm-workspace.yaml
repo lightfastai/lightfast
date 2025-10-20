@@ -1,12 +1,12 @@
 packages:
-  - api/*
-  - apps/*
-  - core/*
-  - db/*
-  - packages/*
-  - internal/*
-  - vendor/*
-  - examples/*
+- api/*
+- apps/*
+- core/*
+- db/*
+- packages/*
+- internal/*
+- vendor/*
+- examples/*
 catalog:
   '@tanstack/react-query': ^5.80.7
   '@trpc/client': ^11.4.0
@@ -17,10 +17,12 @@ catalog:
   '@types/node': ^20.16.11
   '@types/eslint__js': 8.42.3
   zod: ^3.24.0
+  '@eslint/js': ^9.37.0
   eslint: ^9.23.0
   prettier: ^3.5.3
   typescript: ^5.8.2
-  next: ^15.4.0
+  typescript-eslint: ^8.46.1
+  next: ^15.5.5
   turbo: ^2.5.5
   '@ai-sdk/anthropic': 2.0.4
   '@ai-sdk/gateway': 1.0.7
@@ -29,17 +31,35 @@ catalog:
   ai: 5.0.15
   '@upstash/redis': ^1.35.1
   '@vercel/blob': ^1.1.1
+  '@vercel/related-projects': ^1.0.0
   '@vercel/sandbox': ^0.0.13
   redis: ^5.6.0
   braintrust: ^0.2.1
   exa-js: ^1.8.22
   '@browserbasehq/stagehand': ^2.3.1
   '@t3-oss/env-core': ^0.12.0
+  '@t3-oss/env-nextjs': ^0.12.0
   resumable-stream: ^2.0.0
+  '@clerk/backend': 2.18.1
   '@clerk/elements': 0.23.63
-  '@clerk/nextjs': 6.32.0
+  '@clerk/nextjs': 6.33.5
+  '@clerk/shared': 3.28.0
   '@clerk/themes': 2.4.19
+  '@clerk/types': 4.52.0
   zustand: ^5.0.7
+  geist: ^1.3.1
+  neverthrow: ^8.2.0
+  clsx: ^2.1.1
+  tailwind-merge: ^3.3.1
+  inngest: ^3.35.1
+  '@inngest/middleware-sentry': ^0.1.2
+  nanoid: ^5.1.5
+  drizzle-orm: ^0.43.1
+  drizzle-zod: ^0.7.1
+  react-hook-form: ^7.61.1
+  '@hookform/resolvers': ^3.10.0
+  import-in-the-middle: ^1.8.1
+  require-in-the-middle: ^7.1.1
 catalogs:
   tailwind4:
     tailwindcss: 4.1.11
@@ -47,20 +67,31 @@ catalogs:
     '@tailwindcss/postcss': 4.1.11
     '@tailwindcss/typography': ^0.5.16
 onlyBuiltDependencies:
-  - '@clerk/shared'
-  - '@sentry/cli'
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
-  - bufferutil
-  - core-js
-  - core-js-pure
-  - esbuild
-  - protobufjs
-  - sharp
+- '@clerk/shared'
+- '@lightfastai/dual'
+- '@sentry/cli'
+- '@tailwindcss/oxide'
+- '@vercel/speed-insights'
+- bufferutil
+- core-js
+- core-js-pure
+- esbuild
+- protobufjs
+- sharp
 ignoredBuiltDependencies:
-  - bufferutil
-  - core-js
-  - core-js-pure
-  - esbuild
-  - protobufjs
-  - sharp
+- bufferutil
+- core-js
+- core-js-pure
+- esbuild
+- protobufjs
+- sharp
+linkWorkspacePackages: true
+overrides:
+  '@types/minimatch': 5.1.2
+  '@browserbasehq/stagehand>dotenv': ^17.2.1
+  zod-to-json-schema>zod: ^3.24.0
+publicHoistPattern:
+- '@ianvs/prettier-plugin-sort-imports'
+- prettier-plugin-tailwindcss
+- '*import-in-the-middle*'
+- '*require-in-the-middle*'

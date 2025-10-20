@@ -9,21 +9,8 @@ import { env } from "~/env";
 
 type InitOptions = Parameters<typeof initSentry>[0];
 type Integration = ReturnType<typeof vercelAIIntegration>;
-interface ProfilingModule {
-	nodeProfilingIntegration: () => Integration;
-}
 
-const loadNodeProfilingIntegration = (): Integration => {
-  type RequireFn = (moduleId: string) => unknown;
-  const nodeRequire = eval("require") as RequireFn;
-  const { nodeProfilingIntegration } = nodeRequire(
-    "@sentry/profiling-node",
-  ) as ProfilingModule;
-
-  return nodeProfilingIntegration();
-};
-
-const createInitOptions = (runtime: "nodejs" | "edge") => {
+const createInitOptions = (_runtime: "nodejs" | "edge"): InitOptions => {
   const asIntegration = <T extends Integration>(integration: T) => integration;
 
   const integrations: Integration[] = [
@@ -31,9 +18,8 @@ const createInitOptions = (runtime: "nodejs" | "edge") => {
     asIntegration(consoleLoggingIntegration({ levels: ["log", "warn", "error"] })),
   ];
 
-  if (runtime === "nodejs") {
-    integrations.push(loadNodeProfilingIntegration());
-  }
+  // Note: Node.js profiling integration removed due to Next.js 15.5 + Turbopack build issues
+  // with dynamic require() statements in @sentry-internal/node-cpu-profiler
 
   const baseOptions: InitOptions = {
     dsn: env.NEXT_PUBLIC_SENTRY_DSN,
@@ -43,15 +29,6 @@ const createInitOptions = (runtime: "nodejs" | "edge") => {
     enableLogs: true,
     integrations,
   };
-
-	if (runtime === "nodejs") {
-		return {
-			...baseOptions,
-			profilesSampleRate: 1,
-			profileSessionSampleRate: 1,
-			profileLifecycle: "trace",
-		};
-	}
 
 	return baseOptions;
 };

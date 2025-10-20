@@ -25,7 +25,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/js-cookie": "^3.0.6",
-    "@types/react": "^19.1.11",
+    "@types/react": "19.2.2",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
@@ -34,7 +34,9 @@
   "dependencies": {
     "@arcjet/decorate": "1.0.0-beta.10",
     "@arcjet/next": "1.0.0-beta.10",
+    "@t3-oss/env-nextjs": "catalog:",
     "js-cookie": "^3.0.5",
-    "react": "^19.1.1"
+    "react": "19.2.0",
+    "zod": "catalog:"
   }
 }

@@ -144,7 +144,7 @@ export function scoreConciseness(
  * into fewer characters
  */
 export function scoreInformationDensity(output: string): number {
-	if (!output || output.length === 0) return 0;
+	if (output.length === 0) return 0;
 	
 	// Simple heuristics for information density
 	const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);

@@ -33,7 +33,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 	const session = await memory.getSession(sessionId);
 
 	// If session doesn't exist or user doesn't own it, return 404
-	if (!session || session.resourceId !== userId) {
+	if (session?.resourceId !== userId) {
 		notFound();
 	}
 

@@ -50,11 +50,12 @@ export class PinoLoggerAdapter implements ILogger {
 		context: LogEventContextMap[T],
 	): void {
 		// Log events at info level with event name and full context
-		// Merge event name into context to avoid pino's complex type constraints
-		this.pino.info({
+		// Explicitly type the object to satisfy Pino's type system
+		const logData: Record<string, any> = {
 			event: eventName,
 			...context,
-		});
+		};
+		this.pino.info(logData);
 	}
 
 	child(bindings: Record<string, any>): ILogger {

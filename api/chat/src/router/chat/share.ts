@@ -105,7 +105,7 @@ export const shareRouter = {
 
       const share = shareRecords[0];
 
-      if (!share || !share.isActive) {
+      if (!share?.isActive) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Share not found",

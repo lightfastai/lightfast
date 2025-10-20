@@ -14,6 +14,7 @@ export default defineConfig({
   // Bundle all our workspace packages and their dependencies
   noExternal: [
     '@lightfastai/cli-core',
+    '@lightfastai/cloud-client',
     '@lightfastai/compiler',
     /^\.\.\//, // Bundle relative imports from cli-core
   ],

@@ -1,10 +1,7 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
-    "types": [
-      "node"
-    ],
-    "paths": {
+   "paths": {
       "~/env": [
         "./env.ts"
       ]

@@ -2,16 +2,18 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { getAppUrl } from "@repo/url-utils";
 import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
+import { cloudUrl } from "~/lib/related-projects";
+
+const wwwUrl = process.env.NODE_ENV === 'development'
+	? 'http://localhost:4101'
+	: 'https://lightfast.ai';
 
 export default function AuthLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const wwwUrl = getAppUrl("www");
-	const cloudUrl = getAppUrl("cloud");
 
 	return (
 		<>
