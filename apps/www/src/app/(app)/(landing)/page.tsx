@@ -19,7 +19,7 @@ export default function HomePage() {
         <div className="flex flex-col flex-1 px-16 pt-8 py-16 border-r border-dashed border-muted">
           {/* Top: Logo */}
           <div>
-            <Icons.logo className="w-36 text-foreground" />
+            <Icons.logo className="w-24 text-foreground" />
           </div>
 
           {/* Middle: Headline and Waitlist Form */}
