@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 import { WaitlistDescription } from "./_components/(waitlist)/waitlist-description";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
-import { VerticalNavbar } from "~/components/landing/vertical-navbar";
+import { MarketingHeader } from "~/components/marketing/marketing-header";
 import { localFont } from "next/font/local";
 
 const exposureTrial = localFont({
@@ -14,21 +11,13 @@ const exposureTrial = localFont({
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col hero bg-background min-h-screen overflow-x-hidden">
-      {/* Top Section */}
+    <div className="hero bg-background flex flex-col min-h-screen">
+      <MarketingHeader />
+      {/* Main Content Section */}
       <div className="flex flex-1 border-b border-dashed border-border">
         {/* Left Section */}
-        <div className="flex flex-col flex-1 px-16 pt-8 py-16 border-r border-dashed border-border">
-          {/* Top: Logo */}
-          <div>
-            <Button variant="ghost" size="lg" className="hover:bg-black hover:text-white" asChild>
-              <Link href="/">
-                <Icons.logo className="size-22 text-foreground" />
-              </Link>
-            </Button>
-          </div>
-
-          {/* Middle: Headline and Waitlist Form */}
+        <div className="flex flex-col flex-1 px-16 py-16 border-r border-dashed border-border">
+          {/* Headline and Waitlist Form */}
           <div className="flex-1 flex flex-col justify-center w-full relative">
             {/* Dotted line above */}
             <div className="-mx-16 border-t border-dashed border-border mb-8" />
@@ -44,19 +33,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {/* Spacer */}
-          <div />
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col px-16 pt-8 py-16 justify-between relative">
-          {/* Top: Navbar */}
-          <div className="flex justify-end">
-            <VerticalNavbar />
-          </div>
-
-          {/* Bottom: Waitlist Description */}
+        <div className="flex flex-col px-16 py-16 justify-end relative">
+          {/* Waitlist Description */}
           <div className="max-w-xl">
             {/* Dashed line above */}
             <div className="-mx-16 border-t border-dashed border-border mb-8" />

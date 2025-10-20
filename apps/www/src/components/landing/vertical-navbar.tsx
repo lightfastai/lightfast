@@ -1,15 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { authUrl } from "~/lib/related-projects";
 
 export function VerticalNavbar() {
+  const pathname = usePathname();
+
+  // Map pathname to tab value
+  const getActiveTab = () => {
+    if (pathname === "/") return "home";
+    if (pathname === "/pricing") return "pricing";
+    if (pathname === "/updates") return "updates";
+    if (pathname === authUrl) return "signin";
+    return "home";
+  };
+
   return (
     <nav className="flex flex-row items-center gap-4">
-      <Tabs defaultValue="home">
+      <Tabs value={getActiveTab()}>
         <TabsList>
           <TabsTrigger value="home" asChild>
             <Link href="/">Home</Link>
