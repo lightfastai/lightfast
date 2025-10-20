@@ -1,11 +1,11 @@
 import { Icons } from "@repo/ui/components/icons";
-import { EarlyAccessSection } from "../../../components/early-access-section";
+import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 
 export default function HomePage() {
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen">
       {/* Left Section - 61.8% (Golden Ratio) */}
-      <div className="w-[61.8%] flex flex-col p-8 border-r border-dashed border-gray-300">
+      <div className="w-[61.8%] flex flex-col p-8 border-r border-dashed border-muted">
         {/* Top: Logo - 38.2% of vertical space */}
         <div className="mb-[38.2%]">
           <Icons.logo className="w-24" />
@@ -19,7 +19,7 @@ export default function HomePage() {
 
           {/* CTA positioned in golden ratio quadrant */}
           <div className="pt-4">
-            <EarlyAccessSection />
+            <WaitlistForm />
           </div>
         </div>
 
