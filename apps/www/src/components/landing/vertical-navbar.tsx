@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
+import { Icons } from "@repo/ui/components/icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { authUrl } from "~/lib/related-projects";
 
@@ -16,16 +17,6 @@ export function VerticalNavbar() {
 
           <TabsTrigger value="pricing" asChild>
             <Link href="/pricing">Pricing</Link>
-          </TabsTrigger>
-
-          <TabsTrigger value="github" asChild>
-            <Link
-              href="https://github.com/lightfastai/lightfast"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
-            </Link>
           </TabsTrigger>
 
           <TabsTrigger value="updates" asChild>
@@ -44,6 +35,17 @@ export function VerticalNavbar() {
         className="rounded-sm hover:bg-black hover:text-foreground"
       >
         <Link href="/early-access">Join Early Access</Link>
+      </Button>
+
+      <Button variant="ghost" size="icon" className="text-white" asChild>
+        <Link
+          href="https://github.com/lightfastai/lightfast"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Icons.gitHub className="h-5 w-5" />
+          <span className="sr-only">GitHub</span>
+        </Link>
       </Button>
     </nav>
   );
