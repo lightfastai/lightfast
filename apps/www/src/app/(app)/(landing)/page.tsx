@@ -2,6 +2,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 import { WaitlistDescription } from "./_components/(waitlist)/waitlist-description";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
+import { VerticalNavbar } from "~/components/landing/vertical-navbar";
 import { localFont } from "next/font/local";
 
 const exposureTrial = localFont({
@@ -43,7 +44,12 @@ export default function HomePage() {
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col px-16 pt-8 py-16 justify-end relative">
+        <div className="flex flex-col px-16 pt-8 py-16 justify-between relative">
+          {/* Top: Navbar */}
+          <div className="flex justify-end">
+            <VerticalNavbar />
+          </div>
+
           {/* Bottom: Waitlist Description */}
           <div className="max-w-xl">
             {/* Dashed line above */}
