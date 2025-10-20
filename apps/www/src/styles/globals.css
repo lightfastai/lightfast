@@ -3,46 +3,69 @@
 
 /* Override shadcn border-radius via CSS variable */
 :root {
+  --brand-blue: oklch(0.4512 0.275 269.89);
 }
 
 /* Light section - inverted colors for specific sections */
 .light-section,
 .framework {
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--input-bg: oklch(1 0 0);
-	--ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --input-bg: oklch(1 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+/* Hero section - brand blue background with light text */
+.hero {
+  --background: oklch(0.4512 0.275 269.89);
+  --foreground: oklch(0.985 0 0);
+  --card: var(--brand-blue);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: var(--brand-blue);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0 / 30%);
+  --muted-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: var(--brand-blue);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 15%);
+  --input-bg: oklch(0.145 0 0 / 30%);
+  --ring: oklch(0.985 0 0);
 }
 
 /* Framework showcase animations */
 @keyframes framework-scroll {
-	from {
-		transform: translateX(0);
-	}
-	to {
-		transform: translateX(-33.333%);
-	}
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
 }
 
 .animate-framework-scroll {
-	animation-name: framework-scroll;
-	animation-duration: 30s;
-	animation-timing-function: linear;
-	animation-iteration-count: infinite;
+  animation-name: framework-scroll;
+  animation-duration: 30s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
-

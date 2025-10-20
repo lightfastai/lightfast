@@ -81,7 +81,7 @@ export function WaitlistForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="pr-56 pl-8 rounded-full h-12"
+          className="pr-56 pl-8 rounded-full h-12 text-white"
           aria-describedby="email-error"
           aria-invalid={
             state.status === "validation_error" &&

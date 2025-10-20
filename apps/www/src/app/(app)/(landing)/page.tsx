@@ -10,19 +10,19 @@ const exposureTrial = localFont({
 
 export default function HomePage() {
   return (
-    <div className="flex h-screen">
-      {/* Left Section - 61.8% (Golden Ratio) */}
-      <div className="w-[61.8%] flex flex-col p-8 border-r border-dashed border-foreground">
+    <div className="flex h-screen hero bg-background">
+      {/* Left Section */}
+      <div className="flex flex-col flex-1 px-16 pt-8 py-16 border-r border-dashed border-muted">
         {/* Top: Logo */}
         <div>
-          <Icons.logo className="w-24" />
+          <Icons.logo className="w-36 text-foreground" />
         </div>
 
-        {/* Middle: Headline and Waitlist Form - positioned at 38.2% from top */}
-        <div className="flex-1 flex flex-col justify-center">
-          <div className="space-y-8">
+        {/* Middle: Headline and Waitlist Form */}
+        <div className="flex-1 flex flex-col justify-center w-full">
+          <div className="space-y-8 w-full">
             <h1
-              className={`text-6xl font-light leading-[1.2] text-foreground pr-8 ${exposureTrial.className}`}
+              className={`text-7xl font-light leading-[1.2] tracking-[-0.7] text-foreground whitespace-nowrap ${exposureTrial.className}`}
             >
               One interface, infinite agents.
             </h1>
@@ -32,14 +32,17 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Spacer */}
+        <div />
+      </div>
+
+      {/* Right Section */}
+      <div className="flex flex-col px-16 pt-8 py-16 justify-end">
         {/* Bottom: Waitlist Description */}
         <div className="max-w-xl">
           <WaitlistDescription />
         </div>
       </div>
-
-      {/* Right Section - 38.2% (Golden Ratio Complement) */}
-      <div className="w-[38.2%] h-full" />
     </div>
   );
 }
