@@ -1,5 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
+import { IntegrationsShowcase } from "./_components/integrations-showcase";
 
 export default function HomePage() {
   return (
@@ -28,7 +29,9 @@ export default function HomePage() {
       </div>
 
       {/* Right Section - 38.2% (Golden Ratio Complement) */}
-      <div className="w-[38.2%]" />
+      <div className="w-[38.2%]">
+        <IntegrationsShowcase />
+      </div>
     </div>
   );
 }
