@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
+import { authUrl } from "~/lib/related-projects";
 
 export function VerticalNavbar() {
   return (
@@ -11,20 +12,22 @@ export function VerticalNavbar() {
         href="/pricing"
         className={cn(
           "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-          "whitespace-nowrap px-2",
+          "whitespace-nowrap px-2 pl-4",
         )}
       >
         Pricing
       </Link>
 
       <Link
-        href="/blog"
+        href="https://github.com/lightfastai/lightfast"
         className={cn(
           "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
           "whitespace-nowrap px-2",
         )}
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        Blog
+        GitHub
       </Link>
 
       <Link
@@ -38,7 +41,7 @@ export function VerticalNavbar() {
       </Link>
 
       <Link
-        href="/sign-in"
+        href={authUrl}
         className={cn(
           "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
           "whitespace-nowrap px-2",
@@ -47,7 +50,11 @@ export function VerticalNavbar() {
         Sign In
       </Link>
 
-      <Button asChild size="sm" className="rounded-sm">
+      <Button
+        asChild
+        size="sm"
+        className="rounded-sm hover:bg-black hover:text-foreground"
+      >
         <Link href="/early-access">Join Early Access</Link>
       </Button>
     </nav>

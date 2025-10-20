@@ -12,7 +12,7 @@ const exposureTrial = localFont({
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col hero bg-background min-h-screen">
+    <div className="flex flex-col hero bg-background min-h-screen overflow-x-hidden">
       {/* Top Section */}
       <div className="flex flex-1 border-b border-dashed border-muted">
         {/* Left Section */}
