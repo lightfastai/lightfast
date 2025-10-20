@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"@repo/app-urls": "workspace:*",
+		"@repo/deus-billing": "workspace:*",
 		"@repo/email": "workspace:*",
 		"@repo/lib": "workspace:*",
 		"@repo/site-config": "workspace:*",
