@@ -5,26 +5,19 @@ import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@repo/ui/components/ui/card";
+import { Card } from "@repo/ui/components/ui/card";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { getAppUrl } from "@repo/url-utils";
+import { deusUrl } from "~/lib/related-projects";
 import { DeusIntegrationShowcase } from "~/components/landing/deus-integration-showcase";
 import { DeusIntegrationsSection } from "~/components/landing/deus-integrations-section";
 
 export default function HomePage() {
 	const [copied, setCopied] = React.useState(false);
-	const deusUrl = getAppUrl("deus");
 
 	const copyToClipboard = async () => {
 		await navigator.clipboard.writeText("npm install -g @lightfastai/deus");

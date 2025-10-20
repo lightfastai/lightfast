@@ -12,10 +12,10 @@ import {
 	Stars,
 } from "lucide-react";
 
-type IntegrationItem = {
+interface IntegrationItem {
 	name: string;
 	Icon: ComponentType<SVGProps<SVGSVGElement>>;
-};
+}
 
 const integrations: IntegrationItem[] = [
 	{ name: "Claude Code", Icon: Sparkles },

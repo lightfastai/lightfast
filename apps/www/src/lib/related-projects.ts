@@ -26,3 +26,11 @@ export const authUrl = withRelatedProject({
     ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
     : 'https://auth.lightfast.ai',
 });
+
+// Get the deus URL dynamically based on environment
+export const deusUrl = withRelatedProject({
+  projectName: 'lightfast-deus',
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_DEUS_PORT}`
+    : 'https://deus.lightfast.ai',
+});

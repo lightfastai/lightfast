@@ -13,14 +13,14 @@ import {
 
 import { Button } from "@repo/ui/components/ui/button";
 
-type Integration = {
+interface Integration {
 	id: string;
 	name: string;
 	tagline: string;
 	description: string;
 	highlights: string[];
 	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-};
+}
 
 const integrations: Integration[] = [
 	{

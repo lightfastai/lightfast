@@ -21,21 +21,18 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getAppUrl } from "@repo/url-utils";
+import { chatUrl, cloudUrl, deusUrl } from "~/lib/related-projects";
 import { UnauthenticatedMobileNav } from "./layouts/unauthenticated-mobile-nav";
 
 export function EnhancedHeader() {
-	const chatUrl = getAppUrl("chat");
-	const cloudUrl = getAppUrl("cloud");
-	const deusUrl = getAppUrl("deus");
 
-	const productLinks: Array<{
+	const productLinks: {
 		label: string;
 		href: string;
 		target?: "_blank";
 		rel?: string;
 		isExternal?: boolean;
-	}> = [
+	}[] = [
 		{
 			label: "Chat",
 			href: chatUrl,
