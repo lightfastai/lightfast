@@ -1,4 +1,4 @@
-import { localFont } from "next/font/local";
+import localFont from "next/font/local";
 
 const exposureTrial = localFont({
 	src: "../../../public/fonts/exposure-plus-10.woff2",

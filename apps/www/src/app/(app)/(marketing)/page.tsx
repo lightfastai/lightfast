@@ -2,9 +2,11 @@ import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 import { WaitlistDescription } from "./_components/(waitlist)/waitlist-description";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
 import { ManifestoGrid } from "~/components/landing/manifesto-grid";
+import { CenteredWaitlistSection } from "~/components/landing/centered-waitlist-section";
+import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
 import { SiteFooter } from "~/components/landing/footer-section";
 import { MarketingHeader } from "~/components/marketing/marketing-header";
-import { localFont } from "next/font/local";
+import localFont from "next/font/local";
 
 const exposureTrial = localFont({
   src: "../../../../public/fonts/exposure-plus-10.woff2",
@@ -14,7 +16,7 @@ const exposureTrial = localFont({
 export default function HomePage() {
   return (
     <>
-      <div className="hero bg-background flex flex-col min-h-screen">
+      <div className="bg-background flex flex-col min-h-screen">
         <MarketingHeader />
         {/* Main Content Section */}
         <div className="flex flex-1 border-b border-dashed border-border">
@@ -55,13 +57,23 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Why Cloud Infrastructure Section */}
+      <WhyCloudInfrastructureSection />
+
       {/* Manifesto Grid Section - Outside hero container */}
-      <div className="manifesto bg-background px-16 py-16">
+      <div className="manifesto bg-background px-16 py-48">
         <ManifestoGrid />
       </div>
 
+      {/* Centered Waitlist Section */}
+      <div className="dark">
+        <CenteredWaitlistSection />
+      </div>
+
       {/* Footer Section */}
-      <SiteFooter />
+      <div className="dark">
+        <SiteFooter />
+      </div>
     </>
   );
 }
