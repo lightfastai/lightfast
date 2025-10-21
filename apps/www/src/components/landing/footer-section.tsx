@@ -7,9 +7,9 @@ import { chatUrl, cloudUrl } from "~/lib/related-projects";
 
 export function SiteFooter() {
   return (
-    <footer className="bg-background relative w-full text-foreground py-12 sm:py-16 lg:py-24">
+    <footer className="relative w-full text-foreground">
       {/* Section 1 - Logo and Products/Links */}
-      <section className="pb-8 sm:pb-10 lg:pb-12 px-16">
+      <section className="pb-8 sm:pb-10 lg:pb-12">
         <div className="mx-auto w-full">
           {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -60,7 +60,7 @@ export function SiteFooter() {
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
                     <span className="block sm:hidden">Terms</span>
-                    <span className="hidden sm:block">Terms & Conditions</span>
+                    <span className="hidden sm:block">Terms</span>
                   </Link>
                   <Link
                     href="/legal/privacy"
@@ -77,7 +77,7 @@ export function SiteFooter() {
       </section>
 
       {/* Section 2 - Contact and Early Access */}
-      <section className="py-6 sm:py-8 px-16">
+      <section className="py-6 sm:py-8">
         <div className="mx-auto w-full">
           {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -120,7 +120,7 @@ export function SiteFooter() {
       </section>
 
       {/* Section 3 - Copyright and Social */}
-      <section className="py-6 sm:py-8 px-16 border-t border-border/10">
+      <section className="py-6 sm:py-8 border-t border-border/10">
         <div className="mx-auto w-full">
           {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">

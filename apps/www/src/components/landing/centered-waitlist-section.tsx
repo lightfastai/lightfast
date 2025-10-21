@@ -10,8 +10,8 @@ const exposureTrial = localFont({
 
 export function CenteredWaitlistSection() {
   return (
-    <section className="bg-background pt-36 pb-36 px-16">
-      <div className="max-w-4xl mx-auto">
+    <section>
+      <div className="mx-auto">
         {/* Top text */}
         <p className="text-center text-sm text-muted-foreground mb-12">
           Ready to give it a try?
@@ -25,9 +25,7 @@ export function CenteredWaitlistSection() {
         </h2>
 
         {/* Centered form */}
-        <div className="max-w-2xl mx-auto">
-          <WaitlistForm />
-        </div>
+        <WaitlistForm />
       </div>
     </section>
   );

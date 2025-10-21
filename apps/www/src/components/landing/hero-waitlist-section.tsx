@@ -14,9 +14,7 @@ export function HeroWaitlistSection() {
       >
         One interface, infinite agents.
       </h1>
-      <div className="max-w-xl">
-        <WaitlistForm />
-      </div>
+      <WaitlistForm />
     </div>
   );
 }

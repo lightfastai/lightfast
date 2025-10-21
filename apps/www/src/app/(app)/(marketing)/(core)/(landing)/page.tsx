@@ -10,7 +10,9 @@ export default function HomePage() {
       {/* Hero Waitlist Section */}
       <div className="pt-48 px-16">
         <div className="max-w-7xl mx-auto">
-          <HeroWaitlistSection />
+          <div className="max-w-xl">
+            <HeroWaitlistSection />
+          </div>
         </div>
       </div>
 
@@ -31,8 +33,10 @@ export default function HomePage() {
       </div>
 
       {/* Why Cloud Infrastructure Section */}
-      <div className="dark">
-        <WhyCloudInfrastructureSection />
+      <div className="manifesto-page py-20 sm:py-24 lg:pt-32 lg:pb-56 px-16">
+        <div className="max-w-7xl mx-auto">
+          <WhyCloudInfrastructureSection />
+        </div>
       </div>
     </>
   );

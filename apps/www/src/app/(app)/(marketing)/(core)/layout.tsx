@@ -12,7 +12,7 @@ export default function CoreMarketingLayout({
   return (
     <div className="manifesto-page bg-background">
       {/* Header with navigation */}
-      <header className="absolute top-0 left-0 right-0 z-50">
+      <header className="absolute top-0 left-0 right-0 z-50 px-16">
         <div className="flex pt-8 pb-8 items-center justify-between max-w-7xl mx-auto">
           {/* Logo - Left */}
           <div className="-ml-2 flex items-center">

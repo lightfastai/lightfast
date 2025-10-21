@@ -14,8 +14,8 @@ export function ReadyToOrchestrateSection() {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <section className="bg-background py-16 px-16">
-      <div className=" mx-auto">
+    <section>
+      <div className="mx-auto">
         <Link
           href="/docs"
           className="block"
@@ -26,7 +26,7 @@ export function ReadyToOrchestrateSection() {
             className={`
               relative overflow-hidden
               border border-border
-              p-36
+              p-18
               transition-all duration-700 ease-out
               ${
                 isHovered

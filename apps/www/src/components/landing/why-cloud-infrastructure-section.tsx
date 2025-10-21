@@ -5,9 +5,8 @@ import { cloudUrl } from "~/lib/related-projects";
 
 export function WhyCloudInfrastructureSection() {
   return (
-    <div className="bg-background py-20 sm:py-24 lg:pt-32 lg:pb-56 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl">
-        <div className="space-y-12">
+    <div className="bg-background">
+      <div className="space-y-12">
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
               <span>Why Agent Orchestration?</span>
@@ -141,7 +140,6 @@ export function WhyCloudInfrastructureSection() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }
