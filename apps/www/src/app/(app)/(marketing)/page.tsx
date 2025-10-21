@@ -3,6 +3,7 @@ import { WaitlistDescription } from "./_components/(waitlist)/waitlist-descripti
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
 import { ManifestoGrid } from "~/components/landing/manifesto-grid";
 import { CenteredWaitlistSection } from "~/components/landing/centered-waitlist-section";
+import { ReadyToOrchestrateSection } from "~/components/landing/ready-to-orchestrate-section";
 import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
 import { SiteFooter } from "~/components/landing/footer-section";
 import { MarketingHeader } from "~/components/marketing/marketing-header";
@@ -58,7 +59,9 @@ export default function HomePage() {
       </div>
 
       {/* Why Cloud Infrastructure Section */}
-      <WhyCloudInfrastructureSection />
+      <div className="dark">
+        <WhyCloudInfrastructureSection />
+      </div>
 
       {/* Manifesto Grid Section - Outside hero container */}
       <div className="manifesto bg-background px-16 py-48">
@@ -68,6 +71,11 @@ export default function HomePage() {
       {/* Centered Waitlist Section */}
       <div className="dark">
         <CenteredWaitlistSection />
+      </div>
+
+      {/* Ready to Orchestrate Section */}
+      <div className="dark">
+        <ReadyToOrchestrateSection />
       </div>
 
       {/* Footer Section */}
