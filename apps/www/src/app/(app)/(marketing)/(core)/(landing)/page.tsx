@@ -3,6 +3,7 @@ import { FrameworkShowcase } from "~/components/landing/framework-showcase";
 import { ManifestoGrid } from "~/components/landing/manifesto-grid";
 import { HeroWaitlistSection } from "~/components/landing/hero-waitlist-section";
 import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
+import { DeusShowcase } from "~/components/landing/deus-showcase";
 
 export default function HomePage() {
   return (
@@ -16,7 +17,16 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Manifesto Grid Section - First component at top */}
+      {/* Deus Showcase Section */}
+      <div className="flex flex-col py-32 items-center justify-center px-16">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="h-[900px] w-full">
+            <DeusShowcase />
+          </div>
+        </div>
+      </div>
+
+      {/* Manifesto Grid Section */}
       <div className="flex flex-col py-32 items-center justify-center">
         <div className="manifesto bg-background p-4 rounded-md">
           <div className="h-[700px] w-full max-w-7xl mx-auto">
