@@ -30,7 +30,7 @@ export function ReadyToOrchestrateSection() {
               transition-all duration-700 ease-out
               ${
                 isHovered
-                  ? "bg-foreground text-background"
+                  ? "bg-muted text-foreground"
                   : "bg-background text-foreground"
               }
             `}
@@ -41,7 +41,7 @@ export function ReadyToOrchestrateSection() {
               {/* Top text */}
               <p
                 className={`text-sm mb-8 transition-colors duration-700 ${
-                  isHovered ? "text-background/60" : "text-muted-foreground"
+                  isHovered ? "text-muted-foreground" : "text-muted-foreground"
                 }`}
               >
                 READY TO BUILD?
@@ -57,7 +57,7 @@ export function ReadyToOrchestrateSection() {
               {/* Description */}
               <p
                 className={`text-lg max-w-2xl mb-12 transition-colors duration-700 ${
-                  isHovered ? "text-background/70" : "text-foreground/70"
+                  isHovered ? "text-foreground/70" : "text-foreground/70"
                 }`}
               >
                 Build AI agents that actually work in production. Start with our
