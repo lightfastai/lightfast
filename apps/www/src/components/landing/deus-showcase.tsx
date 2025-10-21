@@ -21,22 +21,15 @@ export function DeusShowcase() {
       <div className="relative flex items-center justify-center w-full h-full p-8">
         <div className="w-[90%] h-[85%] min-w-[800px]">
           {/* Window Chrome */}
-          <div className="w-full h-full rounded-lg shadow-2xl overflow-hidden bg-background border border-border flex flex-col">
+          <div className="w-full bg-background/95 backdrop-blur-lg h-full rounded-lg shadow-2xl overflow-hidden border border-border flex flex-col">
             {/* Title Bar */}
-            <div className="h-12 bg-muted/50 border-b border-border flex items-center px-4 flex-shrink-0">
+            <div className="h-8 border-b border-border flex items-center px-2 flex-shrink-0">
               {/* macOS-style dots */}
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                <div className="w-3 h-3 rounded-full bg-muted" />
+                <div className="w-3 h-3 rounded-full bg-muted" />
+                <div className="w-3 h-3 rounded-full bg-muted" />
               </div>
-
-              {/* Window Title */}
-              <div className="flex-1 flex justify-center">
-                <span className="text-sm text-foreground/60">Deus</span>
-              </div>
-
-              {/* Spacer to balance the dots */}
               <div className="w-[52px]" />
             </div>
 

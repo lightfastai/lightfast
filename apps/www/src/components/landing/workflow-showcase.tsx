@@ -22,11 +22,31 @@ export function WorkflowShowcase() {
 
   const workflowSteps: WorkflowStep[] = [
     { text: "Creating feature branch", status: "pending", tool: "GitHub" },
-    { text: "Generating PR from latest commits", status: "pending", tool: "GitHub" },
-    { text: "Creating Linear ticket AUTH-123", status: "pending", tool: "Linear" },
-    { text: "Linking PR to ticket", status: "pending", tool: "Linear + GitHub" },
-    { text: "Triggering preview deployment", status: "pending", tool: "Vercel" },
-    { text: "Notifying team in #engineering", status: "pending", tool: "Slack" },
+    {
+      text: "Generating PR from latest commits",
+      status: "pending",
+      tool: "GitHub",
+    },
+    {
+      text: "Creating Linear ticket AUTH-123",
+      status: "pending",
+      tool: "Linear",
+    },
+    {
+      text: "Linking PR to ticket",
+      status: "pending",
+      tool: "Linear + GitHub",
+    },
+    {
+      text: "Triggering preview deployment",
+      status: "pending",
+      tool: "Vercel",
+    },
+    {
+      text: "Notifying team in #engineering",
+      status: "pending",
+      tool: "Slack",
+    },
   ];
 
   const [steps, setSteps] = useState<WorkflowStep[]>(workflowSteps);
@@ -51,7 +71,7 @@ export function WorkflowShowcase() {
               return { ...step, status: "running" };
             }
             return step;
-          })
+          }),
         );
 
         // Complete step after short delay
@@ -62,7 +82,7 @@ export function WorkflowShowcase() {
                 return { ...step, status: "completed" };
               }
               return step;
-            })
+            }),
           );
           setCurrentStep((prev) => prev + 1);
         }, 600);
@@ -75,7 +95,7 @@ export function WorkflowShowcase() {
   const isCompleted = currentStep >= steps.length;
 
   return (
-    <div className="w-full h-full bg-background border border-border rounded-lg overflow-hidden flex">
+    <div className="w-full h-full border border-border rounded-lg overflow-hidden flex">
       {/* Left Panel - Integrations */}
       <div className="w-1/4 border-r border-border bg-muted/30 p-6">
         <div className="space-y-4">
