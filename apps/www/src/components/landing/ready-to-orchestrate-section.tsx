@@ -26,7 +26,7 @@ export function ReadyToOrchestrateSection() {
             className={`
               relative overflow-hidden
               border border-border
-              p-24
+              p-36
               transition-all duration-700 ease-out
               ${
                 isHovered
@@ -35,9 +35,11 @@ export function ReadyToOrchestrateSection() {
               }
             `}
           >
-            <div className={`transition-all duration-700 origin-left ${
-              isHovered ? "scale-[1.04]" : "scale-100"
-            }`}>
+            <div
+              className={`transition-all duration-700 origin-left ${
+                isHovered ? "scale-[1.04]" : "scale-100"
+              }`}
+            >
               {/* Top text */}
               <p
                 className={`text-sm mb-8 transition-colors duration-700 ${
@@ -67,7 +69,9 @@ export function ReadyToOrchestrateSection() {
 
               {/* CTA with arrow */}
               <div className="flex items-center gap-4">
-                <span className="text-lg font-medium">Explore Documentation</span>
+                <span className="text-lg font-medium">
+                  Explore Documentation
+                </span>
                 <ArrowRight
                   className={`w-8 h-8 transition-transform duration-700 ${
                     isHovered ? "translate-x-2" : ""

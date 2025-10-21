@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
 import { HeroDescription } from "~/components/landing/hero-description";
 import { FrameworkShowcase } from "~/components/landing/framework-showcase";
@@ -7,7 +8,10 @@ import { ReadyToOrchestrateSection } from "~/components/landing/ready-to-orchest
 import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
 import { BuildShipMonitorSection } from "~/components/landing/build-ship-monitor-section";
 import { SiteFooter } from "~/components/landing/footer-section";
-import { MarketingHeader } from "~/components/marketing/marketing-header";
+import { AppNavbar } from "~/components/landing/app-navbar";
+import { AppSideNavbar } from "~/components/landing/app-side-navbar";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
 import localFont from "next/font/local";
 
 const exposureTrial = localFont({
@@ -19,7 +23,33 @@ export default function HomePage() {
   return (
     <>
       <div className="dark bg-background flex flex-col min-h-screen">
-        <MarketingHeader />
+        {/* Header with navigation */}
+        <header className="absolute top-0 left-0 right-0 flex px-16 pt-8 pb-8 items-center justify-between z-10">
+          {/* Logo - Left */}
+          <div className="-ml-2">
+            <Button
+              variant="ghost"
+              size="lg"
+              className="hover:bg-black group"
+              asChild
+            >
+              <Link href="/">
+                <Icons.logo className="size-22 text-foreground group-hover:text-white transition-colors" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Main navigation tabs - Center */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <AppNavbar />
+          </div>
+
+          {/* Action buttons - Right */}
+          <div className="ml-auto">
+            <AppSideNavbar />
+          </div>
+        </header>
+
         {/* Main Content Section */}
         <div className="flex flex-col flex-1 border-b border-dashed border-border">
           {/* Top dashed line */}
@@ -71,21 +101,6 @@ export default function HomePage() {
       {/* Manifesto Grid Section - Outside hero container */}
       <div className="manifesto bg-background px-16 py-48">
         <ManifestoGrid />
-      </div>
-
-      {/* Centered Waitlist Section */}
-      <div className="dark">
-        <CenteredWaitlistSection />
-      </div>
-
-      {/* Ready to Orchestrate Section */}
-      <div className="dark">
-        <ReadyToOrchestrateSection />
-      </div>
-
-      {/* Footer Section */}
-      <div className="dark">
-        <SiteFooter />
       </div>
     </>
   );
