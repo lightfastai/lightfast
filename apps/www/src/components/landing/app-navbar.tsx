@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
+import { Button } from "@repo/ui/components/ui/button";
+import { ScrollText, X } from "lucide-react";
 
 /**
  * AppNavbar - Main navigation tabs for the marketing site
@@ -25,13 +27,14 @@ export function AppNavbar() {
   /**
    * Maps the current pathname to the corresponding tab value
    *
-   * @returns {string} The active tab identifier ("home" | "pricing" | "updates" | "docs")
+   * @returns {string} The active tab identifier ("home" | "pricing" | "updates" | "docs" | "")
    *
    * Tab Mapping:
    * - "/" → "home"
    * - "/pricing" → "pricing"
    * - "/updates" → "updates"
    * - "/docs" → "docs"
+   * - "/manifesto" → "" (no selection)
    * - fallback → "home"
    */
   const getActiveTab = () => {
@@ -39,6 +42,7 @@ export function AppNavbar() {
     if (pathname === "/pricing") return "pricing";
     if (pathname === "/updates") return "updates";
     if (pathname.startsWith("/docs")) return "docs";
+    if (pathname === "/manifesto") return "";
     return "home";
   };
 
@@ -64,6 +68,20 @@ export function AppNavbar() {
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {/* Manifesto button - separate from tabs */}
+      <Button variant={"secondary"} size="lg" asChild>
+        <Link
+          href={pathname === "/manifesto" ? "/" : "/manifesto"}
+          className="text-foreground"
+        >
+          {pathname === "/manifesto" ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <ScrollText className="h-4 w-4" />
+          )}
+        </Link>
+      </Button>
     </nav>
   );
 }

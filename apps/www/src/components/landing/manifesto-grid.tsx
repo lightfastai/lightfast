@@ -84,7 +84,7 @@ export function ManifestoGrid() {
   };
 
   return (
-    <div className="w-full h-screen flex items-center justify-center relative">
+    <div className="w-full h-full relative bg-background">
       {/* Grid Container - 12 columns, 3 rows */}
       <div className="grid grid-cols-12 gap-0 border border-border w-full h-full">
         {manifestoContent.map((cell, i) => {
