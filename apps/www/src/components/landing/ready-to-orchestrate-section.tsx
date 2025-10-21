@@ -14,7 +14,7 @@ export function ReadyToOrchestrateSection() {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <section className="bg-background py-48 px-16">
+    <section className="bg-background py-16 px-16">
       <div className=" mx-auto">
         <Link
           href="/docs"
