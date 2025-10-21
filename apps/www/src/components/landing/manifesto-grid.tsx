@@ -86,7 +86,7 @@ export function ManifestoGrid() {
   return (
     <div className="w-full h-full relative bg-background">
       {/* Grid Container - 12 columns, 3 rows */}
-      <div className="grid grid-cols-12 gap-0 border border-border w-full h-full">
+      <div className="grid grid-cols-12 gap-0.5 w-full h-full">
         {manifestoContent.map((cell, i) => {
           const hasContent = cell.text.length > 0;
           const isHovered = hoveredCell === i;
@@ -94,7 +94,7 @@ export function ManifestoGrid() {
           return (
             <div
               key={`cell-${i}`}
-              className={`col-span-1 border-r border-b border-border transition-all duration-300 p-3 flex hover:bg-accent/50 ${getAlignmentClass(
+              className={`col-span-1 border rounded-sm border-border transition-all duration-300 p-3 flex hover:bg-accent/50 ${getAlignmentClass(
                 cell.align,
               )} ${hasContent ? "cursor-pointer" : ""}`}
               onMouseEnter={() => hasContent && setHoveredCell(i)}
@@ -102,7 +102,7 @@ export function ManifestoGrid() {
             >
               {hasContent && (
                 <p
-                  className={`text-xs leading-tight text-foreground/70 uppercase transition-all duration-300 ${getHoverClass(
+                  className={`text-xs leading-tight text-foreground/70 transition-all duration-300 ${getHoverClass(
                     cell.hover,
                     isHovered,
                   )}`}
@@ -129,7 +129,7 @@ export function ManifestoGrid() {
 
       {/* Logo Overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <Icons.logo className="w-1/6 h-auto text-foreground" />
+        <Icons.logo className="w-1/4 h-auto text-foreground" />
       </div>
     </div>
   );
