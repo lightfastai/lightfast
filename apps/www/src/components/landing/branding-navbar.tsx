@@ -22,17 +22,12 @@ export function BrandingNavbar() {
 
   return (
     <>
-      <header className="absolute manifesto-page bg-background top-0 left-0 right-0 z-50">
+      <header className="absolute manifesto-page top-0 left-0 right-0 z-50">
         <div className="mx-auto px-8 sm:px-16">
           <div className="relative flex items-center justify-between py-8">
             {/* Logo - Left */}
             <div className="-ml-2 flex items-center">
-              <Button
-                variant="ghost"
-                size="lg"
-                className="group hover:bg-black"
-                asChild
-              >
+              <Button variant="ghost" size="lg" className="group" asChild>
                 <Link href="/">
                   <Icons.logo className="size-22 text-foreground transition-colors group-hover:text-white" />
                 </Link>
@@ -61,7 +56,7 @@ export function BrandingNavbar() {
             {/* Contact Button - Right */}
             <div className="ml-auto">
               <Button variant="ghost" size="lg" asChild>
-                <Link href="#contact">
+                <Link href="/contact">
                   <span className="text-sm text-foreground font-medium uppercase tracking-wider">
                     Contact
                   </span>

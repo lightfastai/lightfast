@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,17 +10,18 @@ import {
   SheetContent,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
-import { X } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { LIGHT_TRANSLATIONS } from "~/config/translations";
 import { useNavigationOverlay } from "./navigation-overlay-provider";
 import { useTextCycle } from "~/hooks/use-text-cycle";
 import { exposureTrial } from "~/lib/fonts";
+import { Matrix, wave } from "@repo/ui/components/ui/matrix";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "Manifesto", href: "/manifesto" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "/contact" },
 ] as const;
 
 const LEGAL_ITEMS = [
@@ -56,6 +58,7 @@ export function BrandingMenuSheet({
   open,
   onOpenChange,
 }: BrandingMenuSheetProps) {
+  const pathname = usePathname();
   const { navigateFromManifesto } = useNavigationOverlay();
 
   // Text cycling for Japanese "Light" on hover
@@ -100,26 +103,48 @@ export function BrandingMenuSheet({
         {/* Menu Content - 3 Column Grid */}
         <div className="h-full px-8 sm:px-16 pb-8 pt-32">
           <div className="grid grid-cols-3 gap-x-16 h-full w-full">
-            {/* First Column - Japanese "Light" with cycling on hover */}
-            <div className="col-span-1 flex flex-col">
+            {/* First Column - Japanese "Light" with cycling on hover + Matrix */}
+            <div className="col-span-1 flex flex-col justify-between h-full">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                onMouseEnter={start}
-                onMouseLeave={reset}
-                className="cursor-default"
               >
-                <h2 className={`text-6xl font-light text-foreground`}>
-                  {isActive && currentItem
-                    ? currentItem.word
-                    : JAPANESE_LIGHT?.word}
-                </h2>
-                <p className="mt-2 text-xs font-mono text-muted-foreground">
-                  {isActive && currentItem
-                    ? currentItem.language
-                    : JAPANESE_LIGHT?.language}
-                </p>
+                <div
+                  onMouseEnter={start}
+                  onMouseLeave={reset}
+                  className="cursor-default inline-block min-w-[20ch] pr-8"
+                >
+                  <h2 className={`text-6xl font-light text-foreground`}>
+                    {isActive && currentItem
+                      ? currentItem.word
+                      : JAPANESE_LIGHT?.word}
+                  </h2>
+                  <p className="mt-2 text-xs font-mono text-muted-foreground">
+                    {isActive && currentItem
+                      ? currentItem.language
+                      : JAPANESE_LIGHT?.language}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Matrix Animation at Bottom */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-auto text-foreground"
+              >
+                <Matrix
+                  rows={7}
+                  cols={7}
+                  frames={wave}
+                  fps={24}
+                  size={8}
+                  gap={3}
+                  brightness={0.8}
+                  ariaLabel="Animated wave pattern"
+                />
               </motion.div>
             </div>
 
@@ -127,26 +152,33 @@ export function BrandingMenuSheet({
             <div className="col-span-1 flex flex-col h-full relative">
               {/* Nav Items */}
               <div className="flex flex-col gap-y-6">
-                {NAV_ITEMS.map((item, index) => (
-                  <motion.div
-                    key={item.href}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 + 0.2 }}
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={
-                        item.href === "/"
-                          ? handleHomeClick
-                          : () => onOpenChange(false)
-                      }
-                      className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                {NAV_ITEMS.map((item, index) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 + 0.2 }}
+                      className="flex items-center gap-4"
                     >
-                      {item.label}
-                    </Link>
-                  </motion.div>
-                ))}
+                      {isActive && (
+                        <ChevronRight className="w-8 h-8 text-foreground" />
+                      )}
+                      <Link
+                        href={item.href}
+                        onClick={
+                          item.href === "/"
+                            ? handleHomeClick
+                            : () => onOpenChange(false)
+                        }
+                        className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
               </div>
 
               {/* Social Links - Bottom of Second Column */}
@@ -177,22 +209,29 @@ export function BrandingMenuSheet({
 
             {/* Third Column - Legal Items */}
             <div className="col-span-1 flex flex-col gap-y-6">
-              {LEGAL_ITEMS.map((item, index) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.2 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => onOpenChange(false)}
-                    className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+              {LEGAL_ITEMS.map((item, index) => {
+                const isActive = pathname === item.href;
+                return (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 + 0.2 }}
+                    className="flex items-center gap-4"
                   >
-                    {item.label}
-                  </Link>
-                </motion.div>
-              ))}
+                    {isActive && (
+                      <ChevronRight className="w-8 h-8 text-foreground" />
+                    )}
+                    <Link
+                      href={item.href}
+                      onClick={() => onOpenChange(false)}
+                      className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </div>
