@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import localFont from "next/font/local";
 
@@ -35,48 +36,69 @@ export function ReadyToOrchestrateSection() {
               }
             `}
           >
-            <div
-              className={`transition-all duration-700 origin-left ${
-                isHovered ? "scale-[1.04]" : "scale-100"
-              }`}
-            >
-              {/* Top text */}
-              <p
-                className={`text-sm mb-8 transition-colors duration-700 ${
-                  isHovered ? "text-muted-foreground" : "text-muted-foreground"
+            {/* Right image - absolutely positioned to extend to edges */}
+            <div className="absolute top-0 right-0 bottom-0 w-[30%] overflow-hidden hidden lg:block">
+              <div
+                className={`h-full transition-transform duration-700 ease-out ${
+                  isHovered ? "scale-110" : "scale-100"
                 }`}
               >
-                READY TO BUILD?
-              </p>
-
-              {/* Main heading */}
-              <h2
-                className={`text-6xl font-light leading-[1.2] tracking-[-0.7] mb-6 ${exposureTrial.className}`}
-              >
-                Ready to orchestrate?
-              </h2>
-
-              {/* Description */}
-              <p
-                className={`text-lg max-w-2xl mb-12 transition-colors duration-700 ${
-                  isHovered ? "text-foreground/70" : "text-foreground/70"
-                }`}
-              >
-                Build AI agents that actually work in production. Start with our
-                documentation to learn how to orchestrate complex workflows,
-                manage resources, and deploy agents in minutes.
-              </p>
-
-              {/* CTA with arrow */}
-              <div className="flex items-center gap-4">
-                <span className="text-lg font-medium">
-                  Explore Documentation
-                </span>
-                <ArrowRight
-                  className={`w-8 h-8 transition-transform duration-700 ${
-                    isHovered ? "translate-x-2" : ""
-                  }`}
+                <Image
+                  src="/images/playground-placeholder-2.webp"
+                  alt="Lightfast Playground"
+                  width={800}
+                  height={600}
+                  className="w-full h-full object-cover"
+                  priority
                 />
+              </div>
+            </div>
+
+            {/* Content - with right padding to avoid image overlap */}
+            <div className="relative z-10 lg:pr-[calc(30%+3rem)]">
+              <div
+                className={`transition-all duration-700 origin-left ${
+                  isHovered ? "scale-[1.04]" : "scale-100"
+                }`}
+              >
+                {/* Top text */}
+                <p
+                  className={`text-sm mb-8 transition-colors duration-700 ${
+                    isHovered ? "text-muted-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  READY TO BUILD?
+                </p>
+
+                {/* Main heading */}
+                <h2
+                  className={`text-6xl font-light leading-[1.2] tracking-[-0.7] mb-6 ${exposureTrial.className}`}
+                >
+                  Ready to orchestrate?
+                </h2>
+
+                {/* Description */}
+                <p
+                  className={`text-lg max-w-2xl mb-12 transition-colors duration-700 ${
+                    isHovered ? "text-foreground/70" : "text-foreground/70"
+                  }`}
+                >
+                  Build AI agents that actually work in production. Start with our
+                  documentation to learn how to orchestrate complex workflows,
+                  manage resources, and deploy agents in minutes.
+                </p>
+
+                {/* CTA with arrow */}
+                <div className="flex items-center gap-4">
+                  <span className="text-lg font-medium">
+                    Explore Documentation
+                  </span>
+                  <ArrowRight
+                    className={`w-8 h-8 transition-transform duration-700 ${
+                      isHovered ? "translate-x-2" : ""
+                    }`}
+                  />
+                </div>
               </div>
             </div>
           </div>
