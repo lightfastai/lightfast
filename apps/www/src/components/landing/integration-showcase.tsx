@@ -98,7 +98,7 @@ export function IntegrationShowcase() {
                       : ""
                   }`}
                 >
-                  <Icon className="w-10 h-10 lg:w-12 lg:h-12 transition-all duration-200 text-muted-foreground" />
+                  <Icon className="h-8 w-auto lg:h-10 lg:w-auto max-w-[120px] lg:max-w-[160px] transition-all duration-200 text-muted-foreground" />
                 </div>
               </div>
             );
