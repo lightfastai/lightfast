@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import localFont from "next/font/local";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -12,15 +11,18 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
+import { LIGHT_TRANSLATIONS } from "~/config/translations";
+import { useNavigationOverlay } from "./navigation-overlay-provider";
+import { useTextCycle } from "~/hooks/use-text-cycle";
+import { exposureTrial } from "~/lib/fonts";
 
-const exposureTrial = localFont({
-  src: "../../../public/fonts/exposure-plus-10.woff2",
-  variable: "--font-exposure-trial",
-});
-
-const MENU_ITEMS = [
+const NAV_ITEMS = [
+  { label: "Home", href: "/" },
   { label: "Manifesto", href: "/manifesto" },
   { label: "Contact", href: "#contact" },
+] as const;
+
+const LEGAL_ITEMS = [
   { label: "Terms", href: "/legal/terms" },
   { label: "Privacy", href: "/legal/privacy" },
 ] as const;
@@ -30,6 +32,11 @@ const SOCIAL_LINKS = [
   { label: "GitHub", href: "https://github.com/lightfastai", icon: "gitHub" },
   { label: "Discord", href: "#discord", icon: "discord" },
 ] as const;
+
+// Get Japanese translation
+const JAPANESE_LIGHT = LIGHT_TRANSLATIONS.find(
+  (t) => t.language === "Japanese",
+);
 
 interface BrandingMenuSheetProps {
   open: boolean;
@@ -41,25 +48,47 @@ interface BrandingMenuSheetProps {
  *
  * Features:
  * - Slides down from top (2/3 viewport height)
- * - Large menu items in 2-column grid
- * - Social links in bottom right
+ * - 3-column layout: Japanese "Light" | Navigation + Social | Legal
  * - Staggered animations
+ * - Uses static variant animation when navigating to Home
  */
 export function BrandingMenuSheet({
   open,
   onOpenChange,
 }: BrandingMenuSheetProps) {
+  const { navigateFromManifesto } = useNavigationOverlay();
+
+  // Text cycling for Japanese "Light" on hover
+  const { currentItem, start, reset, isActive } = useTextCycle(
+    LIGHT_TRANSLATIONS,
+    {
+      interval: 500,
+      loop: false,
+    },
+  );
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onOpenChange(false);
+    navigateFromManifesto("/");
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="top" className="h-2/3 p-0 [&>button]:hidden">
+      <SheetContent
+        side="top"
+        className="h-2/3 p-0 dark bg-background [&>button]:hidden border-border/30"
+      >
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
         {/* Header with Logo and Close Button */}
         <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-8 flex items-center justify-between">
-          <div className="-ml-2">
-            <Link href="/" onClick={() => onOpenChange(false)}>
-              <Icons.logo className="size-22 text-foreground" />
-            </Link>
+          <div className="-ml-2 flex items-center">
+            <Button variant="ghost" size="lg" className="group" asChild>
+              <Link href="/" onClick={handleHomeClick}>
+                <Icons.logo className="size-22 text-foreground transition-colors group-hover:text-white" />
+              </Link>
+            </Button>
           </div>
           <SheetClose asChild>
             <Button variant="ghost" className="rounded-full">
@@ -69,16 +98,36 @@ export function BrandingMenuSheet({
         </div>
 
         {/* Menu Content - 3 Column Grid */}
-        <div className="h-full px-8 sm:px-16 pb-8">
-          <div className="grid grid-cols-3 gap-x-16 h-full w-full mx-auto max-w-7xl">
-            {/* First Column - Empty */}
-            <div className="col-span-1" />
+        <div className="h-full px-8 sm:px-16 pb-8 pt-32">
+          <div className="grid grid-cols-3 gap-x-16 h-full w-full">
+            {/* First Column - Japanese "Light" with cycling on hover */}
+            <div className="col-span-1 flex flex-col">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                onMouseEnter={start}
+                onMouseLeave={reset}
+                className="cursor-default"
+              >
+                <h2 className={`text-6xl font-light text-foreground`}>
+                  {isActive && currentItem
+                    ? currentItem.word
+                    : JAPANESE_LIGHT?.word}
+                </h2>
+                <p className="mt-2 text-xs font-mono text-muted-foreground">
+                  {isActive && currentItem
+                    ? currentItem.language
+                    : JAPANESE_LIGHT?.language}
+                </p>
+              </motion.div>
+            </div>
 
             {/* Second Column - Nav Items + Social Links */}
-            <div className="col-span-1 flex flex-col justify-between h-full">
+            <div className="col-span-1 flex flex-col h-full relative">
               {/* Nav Items */}
-              <div className="flex flex-col justify-center gap-y-12 flex-1">
-                {MENU_ITEMS.map((item, index) => (
+              <div className="flex flex-col gap-y-6">
+                {NAV_ITEMS.map((item, index) => (
                   <motion.div
                     key={item.href}
                     initial={{ opacity: 0, y: 20 }}
@@ -87,8 +136,12 @@ export function BrandingMenuSheet({
                   >
                     <Link
                       href={item.href}
-                      onClick={() => onOpenChange(false)}
-                      className={`block font-light text-4xl md:text-5xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                      onClick={
+                        item.href === "/"
+                          ? handleHomeClick
+                          : () => onOpenChange(false)
+                      }
+                      className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                     >
                       {item.label}
                     </Link>
@@ -97,7 +150,7 @@ export function BrandingMenuSheet({
               </div>
 
               {/* Social Links - Bottom of Second Column */}
-              <div className="flex gap-4 mt-auto">
+              <div className="flex gap-4 absolute bottom-0 left-0">
                 {SOCIAL_LINKS.map((social, index) => {
                   const Icon = Icons[social.icon];
                   return (
@@ -122,8 +175,25 @@ export function BrandingMenuSheet({
               </div>
             </div>
 
-            {/* Third Column - Empty */}
-            <div className="col-span-1" />
+            {/* Third Column - Legal Items */}
+            <div className="col-span-1 flex flex-col gap-y-6">
+              {LEGAL_ITEMS.map((item, index) => (
+                <motion.div
+                  key={item.href}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 + 0.2 }}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={() => onOpenChange(false)}
+                    className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                  >
+                    {item.label}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </SheetContent>

@@ -1,12 +1,7 @@
 "use client";
 
 import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
-import localFont from "next/font/local";
-
-const exposureTrial = localFont({
-  src: "../../../public/fonts/exposure-plus-10.woff2",
-  variable: "--font-exposure-trial",
-});
+import { exposureTrial } from "~/lib/fonts";
 
 export function CenteredWaitlistSection() {
   return (

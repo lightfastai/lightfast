@@ -1,12 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import localFont from "next/font/local";
-
-const exposureTrial = localFont({
-  src: "../../../public/fonts/exposure-plus-10.woff2",
-  variable: "--font-exposure-trial",
-});
+import { exposureTrial } from "~/lib/fonts";
 
 export function ReadyToOrchestrateSection() {
   return (

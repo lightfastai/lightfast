@@ -22,7 +22,7 @@ export function BrandingNavbar() {
 
   return (
     <>
-      <header className="absolute top-0 left-0 right-0 z-50">
+      <header className="absolute manifesto-page bg-background top-0 left-0 right-0 z-50">
         <div className="mx-auto px-8 sm:px-16">
           <div className="relative flex items-center justify-between py-8">
             {/* Logo - Left */}

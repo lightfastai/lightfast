@@ -13,7 +13,7 @@ export default function BrandingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex manifesto-page bg-background min-h-screen flex-col overflow-x-hidden bg-background">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
       <BrandingNavbar />
       {children}
     </div>

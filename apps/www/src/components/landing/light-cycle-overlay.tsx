@@ -3,22 +3,8 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
-/**
- * Translations of "Light" in different languages
- * Used for the manifesto page transition animation
- */
-const LIGHT_TRANSLATIONS = [
-  { word: "Light", language: "English" },
-  { word: "Luz", language: "Spanish" },
-  { word: "Lumière", language: "French" },
-  { word: "Licht", language: "German" },
-  { word: "Luce", language: "Italian" },
-  { word: "ライト", language: "Japanese" },
-  { word: "Φως", language: "Greek" },
-  { word: "אור", language: "Hebrew" },
-  { word: "Işık", language: "Turkish" },
-];
+import { LIGHT_TRANSLATIONS } from "~/config/translations";
+import { useTextCycle } from "~/hooks/use-text-cycle";
 
 /**
  * LightCycleOverlay - Fullscreen animation overlay
@@ -45,9 +31,14 @@ export function LightCycleOverlay({
   onComplete: () => void;
   variant?: "cycle" | "static";
 }) {
-  // Derive initial index from isVisible to avoid setState in effect
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+
+  // Use text cycle hook for cycling through translations
+  const { currentItem, start } = useTextCycle(LIGHT_TRANSLATIONS, {
+    interval: 500,
+    loop: false,
+    onComplete,
+  });
 
   // Ensure component is mounted (for SSR compatibility)
   useEffect(() => {
@@ -75,7 +66,7 @@ export function LightCycleOverlay({
     }
   }, [isVisible]);
 
-  // Cycle through translations - includes reset logic
+  // Handle cycling based on variant
   useEffect(() => {
     if (!isVisible) return;
 
@@ -85,23 +76,9 @@ export function LightCycleOverlay({
       return () => clearTimeout(timeout);
     }
 
-    // Cycle variant: cycle through all words
-    let index = 0;
-    setCurrentIndex(0);
-
-    const interval = setInterval(() => {
-      index++;
-      if (index >= LIGHT_TRANSLATIONS.length) {
-        clearInterval(interval);
-        // Delay before completing to show the last word
-        setTimeout(onComplete, 400);
-      } else {
-        setCurrentIndex(index);
-      }
-    }, 500); // Change word every 500ms
-
-    return () => clearInterval(interval);
-  }, [isVisible, onComplete, variant]);
+    // Cycle variant: start cycling through translations
+    start();
+  }, [isVisible, variant, start, onComplete]);
 
   // Don't render portal during SSR
   if (!mounted) return null;
@@ -131,10 +108,10 @@ export function LightCycleOverlay({
             <div className="flex flex-col items-center gap-4">
               <div className="text-center">
                 <h1 className="text-6xl font-mono font-bold text-foreground">
-                  {LIGHT_TRANSLATIONS[currentIndex]?.word}
+                  {currentItem?.word}
                 </h1>
                 <p className="mt-2 text-xs font-mono text-muted-foreground">
-                  {LIGHT_TRANSLATIONS[currentIndex]?.language}
+                  {currentItem?.language}
                 </p>
               </div>
             </div>

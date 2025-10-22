@@ -1,9 +1,4 @@
-import localFont from "next/font/local";
-
-const exposureTrial = localFont({
-  src: "../../../../../public/fonts/exposure-plus-10.woff2",
-  variable: "--font-exposure-trial",
-});
+import { exposureTrial } from "~/lib/fonts";
 
 export default function UpdatesPage() {
   return (

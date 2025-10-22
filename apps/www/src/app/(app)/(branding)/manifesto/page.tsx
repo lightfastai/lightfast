@@ -2,7 +2,7 @@ import { ManifestoPresentation } from "~/components/landing/manifesto-presentati
 
 export default function ManifestoPage() {
   return (
-    <div className="relative h-screen overflow-hidden">
+    <div className="relative manifesto-page bg-background h-screen overflow-hidden">
       {/* Manifesto Presentation - Full viewport */}
       <ManifestoPresentation />
     </div>
