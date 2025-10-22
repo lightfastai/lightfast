@@ -61,10 +61,18 @@ const integrations: Integration[] = [
 		wordmarkUrl:
 			"https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/67ac9b4644222140ae614b06_Wordmark.svg",
 	},
-	// Icon-only (no public wordmark CDN available)
+	// PostHog wordmark from GitHub
+	{
+		name: "PostHog",
+		slug: "posthog",
+		wordmarkUrl:
+			"https://raw.githubusercontent.com/PostHog/posthog.com/master/static/brand/posthog-logo.svg",
+	},
+	// Icon-only (no public hotlink-friendly wordmark CDN available)
+	// Notion: Brandfetch has wordmarks but blocks hotlinking
+	// Linear: Official brand assets require manual download from linear.app/brand
 	{ name: "Notion", slug: "notion", iconUrl: "https://cdn.simpleicons.org/notion" },
 	{ name: "Linear", slug: "linear", iconUrl: "https://cdn.simpleicons.org/linear" },
-	{ name: "PostHog", slug: "posthog", iconUrl: "https://cdn.simpleicons.org/posthog" },
 	{ name: "Gmail", slug: "gmail", iconUrl: "https://cdn.simpleicons.org/gmail" },
 	{
 		name: "Google Docs",
