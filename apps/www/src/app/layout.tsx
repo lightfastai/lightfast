@@ -160,7 +160,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="manifesto-page bg-background text-foreground"
+    >
       <head>
         <StructuredData type="Organization" />
         <StructuredData type="WebSite" />

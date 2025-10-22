@@ -272,11 +272,11 @@ export function ManifestoPresentation() {
                   }}
                   style={{
                     zIndex: isActive
-                      ? 100
+                      ? 40
                       : wasPreviouslyActive
-                        ? 90
+                        ? 35
                         : isPast
-                          ? 50 - slideDistance
+                          ? 30 - slideDistance
                           : 10,
                     boxShadow: isActive
                       ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
