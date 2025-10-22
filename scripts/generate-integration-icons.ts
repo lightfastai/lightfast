@@ -55,6 +55,11 @@ function parseSVG(svgContent: string): { attributes: string; paths: string } {
 	// Remove xmlns if present (we'll add it in the template)
 	attributes = attributes.replace(/xmlns="[^"]+"\s*/g, "");
 
+	// Remove width and height attributes (keep viewBox for aspect ratio)
+	// This allows CSS classes like h-8 w-auto to control sizing
+	attributes = attributes.replace(/width="[^"]+"\s*/g, "");
+	attributes = attributes.replace(/height="[^"]+"\s*/g, "");
+
 	// Extract everything between <svg> and </svg>
 	const innerContent = svgContent
 		.replace(/<svg[^>]+>/, "")
