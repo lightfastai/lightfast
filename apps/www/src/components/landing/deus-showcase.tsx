@@ -22,14 +22,14 @@ export function DeusShowcase() {
       <div className="relative flex items-center justify-center w-full h-full p-8">
         <div className="w-[90%] h-[85%] min-w-[800px]">
           {/* Window Chrome */}
-          <div className="w-full bg-background/95 backdrop-blur-lg h-full rounded-lg shadow-2xl overflow-hidden border border-border flex flex-col">
+          <div className="w-full bg-background/80 backdrop-blur-xl h-full rounded-lg shadow-2xl overflow-hidden border border-border flex flex-col">
             {/* Title Bar */}
             <div className="h-8 border-b border-border flex items-center px-2 flex-shrink-0 relative">
               {/* macOS-style dots */}
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-muted" />
-                <div className="w-3 h-3 rounded-full bg-muted" />
-                <div className="w-3 h-3 rounded-full bg-muted" />
+                <div className="w-3 h-3 rounded-full bg-border/80" />
+                <div className="w-3 h-3 rounded-full bg-border/80" />
+                <div className="w-3 h-3 rounded-full bg-border/80" />
               </div>
 
               {/* File path with plus icon */}
