@@ -103,6 +103,21 @@ async function downloadLogo(
 	// Replace hardcoded fill colors with currentColor to respect CSS color
 	svgContent = svgContent.replace(/fill="[^"]+"/g, 'fill="currentColor"');
 
+	// Add viewBox if missing (based on width/height attributes)
+	if (!svgContent.includes("viewBox")) {
+		const widthMatch = svgContent.match(/width="([^"]+)"/);
+		const heightMatch = svgContent.match(/height="([^"]+)"/);
+		if (widthMatch && heightMatch) {
+			const width = widthMatch[1];
+			const height = heightMatch[1];
+			// Add viewBox before the first > in the svg tag
+			svgContent = svgContent.replace(
+				/<svg([^>]*)>/,
+				`<svg$1 viewBox="0 0 ${width} ${height}">`,
+			);
+		}
+	}
+
 	return { content: svgContent, type };
 }
 
