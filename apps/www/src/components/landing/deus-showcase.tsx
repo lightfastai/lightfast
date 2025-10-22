@@ -8,7 +8,7 @@ export function DeusShowcase() {
   return (
     <div className="relative w-full h-full min-h-[700px]">
       {/* Background Image */}
-      <div className="absolute inset-0 overflow-hidden rounded-lg">
+      <div className="absolute inset-0 overflow-hidden rounded-sm">
         <Image
           src="/images/playground-placeholder-1.webp"
           alt="Background"
@@ -24,7 +24,7 @@ export function DeusShowcase() {
           {/* Window Chrome */}
           <div className="w-full bg-background/80 backdrop-blur-xl h-full rounded-lg shadow-2xl overflow-hidden border border-border flex flex-col">
             {/* Title Bar */}
-            <div className="h-8 border-b border-border flex items-center px-2 flex-shrink-0 relative">
+            <div className="h-8 flex items-center px-2 flex-shrink-0 relative">
               {/* macOS-style dots */}
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-border/80" />
@@ -39,7 +39,7 @@ export function DeusShowcase() {
                     ~/work-env/lightfast-internal
                   </span>
                   {/* Green highlight under path */}
-                  <div className="absolute bottom-[-6px] left-0 right-0 h-0.5 bg-green-500/60" />
+                  <div className="absolute bottom-[-5px] left-0 right-0 h-0.5 bg-green-500/60" />
                 </div>
                 <Plus className="w-3 h-3 text-muted-foreground" />
               </div>

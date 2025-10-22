@@ -501,7 +501,7 @@ export function WorkflowShowcase() {
   };
 
   return (
-    <div className="w-full h-full border border-border rounded-lg overflow-hidden flex">
+    <div className="w-full h-full border-t overflow-hidden flex">
       {/* Left Sidebar - Active Workflows */}
       <div className="w-72 border-r border-border flex flex-col">
         {/* Header */}
@@ -713,7 +713,10 @@ export function WorkflowShowcase() {
                     ...(currentWorkflow.tasksCompleted || []),
                     ...(currentWorkflow.tasksRemaining || []),
                   ].find((t) => t.id === selectedTask)?.text
-                : currentWorkflow.title.replace(/^(feat|fix|refactor|chore):\s*/i, "")}
+                : currentWorkflow.title.replace(
+                    /^(feat|fix|refactor|chore):\s*/i,
+                    "",
+                  )}
             </div>
           </div>
 

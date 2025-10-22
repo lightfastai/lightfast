@@ -59,7 +59,7 @@ export function PricingFAQ() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Top row - heading on left */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">
           Frequently Asked Questions
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -73,7 +73,7 @@ export function PricingFAQ() {
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
             <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left">
+              <AccordionTrigger className="text-left text-foreground">
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">

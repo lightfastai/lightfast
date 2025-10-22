@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
@@ -12,37 +9,23 @@ const exposureTrial = localFont({
 });
 
 export function ReadyToOrchestrateSection() {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <section>
       <div className="mx-auto">
-        <Link
-          href="/docs"
-          className="block"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <Link href="/docs" className="group block">
           <div
-            className={`
+            className="
               relative overflow-hidden
               border border-border
-              p-18
+              p-18 rounded-sm
+              bg-background text-foreground
+              hover:bg-muted
               transition-all duration-700 ease-out
-              ${
-                isHovered
-                  ? "bg-muted text-foreground"
-                  : "bg-background text-foreground"
-              }
-            `}
+            "
           >
             {/* Right image - absolutely positioned to extend to edges */}
             <div className="absolute top-0 right-0 bottom-0 w-[30%] overflow-hidden hidden lg:block">
-              <div
-                className={`h-full transition-transform duration-700 ease-out ${
-                  isHovered ? "scale-110" : "scale-100"
-                }`}
-              >
+              <div className="h-full transition-transform duration-700 ease-out group-hover:scale-110">
                 <Image
                   src="/images/playground-placeholder-2.webp"
                   alt="Lightfast Playground"
@@ -56,17 +39,9 @@ export function ReadyToOrchestrateSection() {
 
             {/* Content - with right padding to avoid image overlap */}
             <div className="relative z-10 lg:pr-[calc(30%+3rem)]">
-              <div
-                className={`transition-all duration-700 origin-left ${
-                  isHovered ? "scale-[1.04]" : "scale-100"
-                }`}
-              >
+              <div className="transition-all duration-700 origin-left group-hover:scale-[1.04]">
                 {/* Top text */}
-                <p
-                  className={`text-sm mb-8 transition-colors duration-700 ${
-                    isHovered ? "text-muted-foreground" : "text-muted-foreground"
-                  }`}
-                >
+                <p className="text-sm mb-8 text-muted-foreground transition-colors duration-700">
                   READY TO BUILD?
                 </p>
 
@@ -78,14 +53,10 @@ export function ReadyToOrchestrateSection() {
                 </h2>
 
                 {/* Description */}
-                <p
-                  className={`text-lg max-w-2xl mb-12 transition-colors duration-700 ${
-                    isHovered ? "text-foreground/70" : "text-foreground/70"
-                  }`}
-                >
-                  Build AI agents that actually work in production. Start with our
-                  documentation to learn how to orchestrate complex workflows,
-                  manage resources, and deploy agents in minutes.
+                <p className="text-lg max-w-2xl mb-12 text-foreground/70 transition-colors duration-700">
+                  Build AI agents that actually work in production. Start with
+                  our documentation to learn how to orchestrate complex
+                  workflows, manage resources, and deploy agents in minutes.
                 </p>
 
                 {/* CTA with arrow */}
@@ -93,11 +64,7 @@ export function ReadyToOrchestrateSection() {
                   <span className="text-lg font-medium">
                     Explore Documentation
                   </span>
-                  <ArrowRight
-                    className={`w-8 h-8 transition-transform duration-700 ${
-                      isHovered ? "translate-x-2" : ""
-                    }`}
-                  />
+                  <ArrowRight className="w-8 h-8 transition-transform duration-700 group-hover:translate-x-2" />
                 </div>
               </div>
             </div>

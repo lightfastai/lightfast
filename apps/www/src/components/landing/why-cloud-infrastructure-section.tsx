@@ -9,20 +9,21 @@ export function WhyCloudInfrastructureSection() {
       <div className="space-y-12">
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
-              <span>Why Agent Orchestration?</span>
+              <span>Why Agent Orchestration with Lightfast?</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-              Multi-agent workflows are fundamentally complex
+              Orchestration for startups looking to scale
             </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
             {/* Left side - Visual representation */}
             <div className="space-y-6">
+              {/* Without Lightfast Card */}
               <div className="rounded-lg border bg-card p-6 space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="font-mono text-sm bg-muted text-foreground px-3 py-1.5 rounded">
-                    MANUAL ORCHESTRATION
+                  <div className="font-mono text-sm bg-red-500/10 text-red-500 px-3 py-1.5 rounded">
+                    WITHOUT LIGHTFAST
                   </div>
                   <div className="text-muted-foreground">→</div>
                   <div className="space-y-2">
@@ -33,19 +34,19 @@ export function WhyCloudInfrastructureSection() {
                       <div className="flex items-center gap-2">
                         <span className="text-red-500">✗</span>
                         <span className="text-foreground">
-                          Context pollution
+                          Context fragmentation
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-red-500">✗</span>
                         <span className="text-foreground">
-                          Agent coordination
+                          Engineering bottlenecks
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-red-500">✗</span>
                         <span className="text-foreground">
-                          Workflow reliability
+                          Manual workflows
                         </span>
                       </div>
                     </div>
@@ -53,11 +54,12 @@ export function WhyCloudInfrastructureSection() {
                 </div>
               </div>
 
+              {/* Visual bars */}
               <div className="rounded-lg border bg-card p-6">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-orange-500">!</span>
+                      <span className="text-red-500">✗</span>
                       <span className="text-xs font-mono text-foreground">
                         CONTEXT
                       </span>
@@ -70,7 +72,7 @@ export function WhyCloudInfrastructureSection() {
                     <div className="flex items-center gap-2">
                       <span className="text-red-500">✗</span>
                       <span className="text-xs font-mono text-foreground">
-                        STATE
+                        TEAM
                       </span>
                     </div>
                     <div className="h-2 bg-muted rounded" />
@@ -81,12 +83,12 @@ export function WhyCloudInfrastructureSection() {
                     <div className="flex items-center gap-2">
                       <span className="text-green-500">✓</span>
                       <span className="text-xs font-mono text-foreground">
-                        TOOLS
+                        WITH LIGHTFAST
                       </span>
                     </div>
-                    <div className="h-2 bg-muted rounded" />
-                    <div className="h-2 bg-muted rounded w-3/4" />
-                    <div className="h-2 bg-muted rounded w-1/2" />
+                    <div className="h-2 bg-green-500/40 rounded" />
+                    <div className="h-2 bg-green-500/40 rounded w-3/4" />
+                    <div className="h-2 bg-green-500/40 rounded w-1/2" />
                   </div>
                 </div>
               </div>
@@ -106,34 +108,33 @@ export function WhyCloudInfrastructureSection() {
             <div className="space-y-8">
               <div className="space-y-3">
                 <h3 className="text-xl font-semibold text-foreground">
-                  Is context degradation killing your agents?
+                  Is context fragmentation slowing you down?
                 </h3>
                 <p className="text-muted-foreground">
-                  Individual agents have limited context windows (1,
-                  MaxToken_x]. Pollution degrades the token graph. Our platform
-                  manages context construction across multi-agent hierarchies
-                  without degradation.
+                  Managing codebase + Linear + Notion + GitHub + Slack in one place.
+                  Our platform provides deep context understanding across your entire stack,
+                  preventing context degradation in multi-agent workflows.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <h3 className="text-xl font-semibold text-foreground">
-                  Can your agents communicate effectively?
+                  Are you building integrations instead of product?
                 </h3>
                 <p className="text-muted-foreground">
-                  Multi-agent coordination requires stateful context and
-                  fine-grain control. We provide the orchestration layer for
-                  subagent hierarchies to collaborate seamlessly.
+                  Deep tool orchestration, not surface-level connections. We provide
+                  semantic understanding of workflows with stateful context and
+                  fine-grain control across your entire tool ecosystem.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <h3 className="text-xl font-semibold text-foreground">
-                  How do you scale complex workflows?
+                  Can your team self-serve answers?
                 </h3>
                 <p className="text-muted-foreground">
-                  AI-native workflows need more than trigger-action chains. Our
-                  state-machine engine orchestrates multi-step workflows with
+                  Non-technical teammates execute technical workflows without engineering
+                  bottlenecks. Our orchestration layer enables multi-step workflows with
                   proper resource scheduling and error recovery.
                 </p>
               </div>

@@ -13,7 +13,7 @@ export function PricingSimple() {
 					className="flex flex-col border border-border/50 rounded-sm p-6 h-full"
 				>
 					<div className="space-y-1">
-						<h3 className="text-md font-bold">{plan.name}</h3>
+						<h3 className="text-md font-bold text-foreground">{plan.name}</h3>
 						<p className="text-md text-muted-foreground">{plan.description}</p>
 					</div>
 
@@ -21,7 +21,7 @@ export function PricingSimple() {
 						{plan.features.map((feature, featureIndex) => (
 							<div key={featureIndex} className="flex items-start gap-3">
 								<Check className="w-4 h-4 text-foreground flex-shrink-0 mt-0.5" />
-								<span className="text-xs">{feature}</span>
+								<span className="text-xs text-foreground">{feature}</span>
 							</div>
 						))}
 					</div>
@@ -29,7 +29,7 @@ export function PricingSimple() {
 					<div className="mt-12">
 						<div className="space-y-4">
 							<div className="flex items-baseline gap-2">
-								<span className="text-4xl font-bold">${plan.price}</span>
+								<span className="text-4xl font-bold text-foreground">${plan.price}</span>
 								<span className="text-muted-foreground">/ {plan.interval}</span>
 							</div>
 

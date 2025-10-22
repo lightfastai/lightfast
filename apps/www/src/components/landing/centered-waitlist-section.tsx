@@ -13,13 +13,13 @@ export function CenteredWaitlistSection() {
     <section>
       <div className="mx-auto">
         {/* Top text */}
-        <p className="text-center text-sm text-muted-foreground mb-12">
+        <p className="text-center text-sm text-muted-foreground">
           Ready to give it a try?
         </p>
 
         {/* Main heading */}
         <h2
-          className={`text-5xl font-light pt-16 leading-[1.2] tracking-[-0.7] text-foreground text-center mb-8 ${exposureTrial.className}`}
+          className={`text-5xl font-light pt-8 leading-[1.2] tracking-[-0.7] text-foreground text-center mb-16 ${exposureTrial.className}`}
         >
           Get on the list.
         </h2>
