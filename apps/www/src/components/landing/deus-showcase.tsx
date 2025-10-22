@@ -2,6 +2,7 @@
 
 import { WorkflowShowcase } from "./workflow-showcase";
 import Image from "next/image";
+import { Plus } from "lucide-react";
 
 export function DeusShowcase() {
   return (
@@ -23,14 +24,25 @@ export function DeusShowcase() {
           {/* Window Chrome */}
           <div className="w-full bg-background/95 backdrop-blur-lg h-full rounded-lg shadow-2xl overflow-hidden border border-border flex flex-col">
             {/* Title Bar */}
-            <div className="h-8 border-b border-border flex items-center px-2 flex-shrink-0">
+            <div className="h-8 border-b border-border flex items-center px-2 flex-shrink-0 relative">
               {/* macOS-style dots */}
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-muted" />
                 <div className="w-3 h-3 rounded-full bg-muted" />
                 <div className="w-3 h-3 rounded-full bg-muted" />
               </div>
-              <div className="w-[52px]" />
+
+              {/* File path with plus icon */}
+              <div className="flex items-center gap-2 ml-4">
+                <div className="relative">
+                  <span className="text-xs text-muted-foreground font-mono">
+                    ~/work-env/lightfast-internal
+                  </span>
+                  {/* Green highlight under path */}
+                  <div className="absolute bottom-[-6px] left-0 right-0 h-0.5 bg-green-500/60" />
+                </div>
+                <Plus className="w-3 h-3 text-muted-foreground" />
+              </div>
             </div>
 
             {/* Content Area */}
