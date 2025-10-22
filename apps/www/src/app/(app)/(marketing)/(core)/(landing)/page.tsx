@@ -1,5 +1,5 @@
 import { HeroDescription } from "~/components/landing/hero-description";
-import { FrameworkShowcase } from "~/components/landing/framework-showcase";
+import { IntegrationShowcase } from "~/components/landing/integration-showcase";
 import { ManifestoGrid } from "~/components/landing/manifesto-grid";
 import { HeroWaitlistSection } from "~/components/landing/hero-waitlist-section";
 import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
@@ -26,10 +26,10 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Bottom Section: Framework Showcase */}
+      {/* Bottom Section: Integration Showcase */}
       <div className="px-16 py-16 w-full flex justify-center">
         <div className="max-w-7xl mx-auto">
-          <FrameworkShowcase />
+          <IntegrationShowcase />
         </div>
       </div>
 

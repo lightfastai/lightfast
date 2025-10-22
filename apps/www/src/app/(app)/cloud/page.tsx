@@ -1,6 +1,6 @@
 import React from "react";
 import { HeroSection } from "~/components/landing/hero-section";
-import { FrameworkShowcase } from "~/components/landing/framework-showcase";
+import { IntegrationShowcase } from "~/components/landing/integration-showcase";
 // import { BuildShipMonitorSection } from "~/components/landing/build-ship-monitor-section";
 import { PlatformSection } from "~/components/landing/platform-section";
 import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
@@ -17,7 +17,7 @@ export default function CloudPage() {
 			<div className="pt-12 pb-4 sm:pt-16 sm:pb-8 lg:pt-12 lg:pb-12 relative px-4 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl space-y-12 sm:space-y-24 lg:space-y-32">
 					<HeroSection />
-					<FrameworkShowcase />
+					<IntegrationShowcase />
 				</div>
 			</div>
 
