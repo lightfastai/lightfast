@@ -103,6 +103,7 @@ export function ManifestoPresentation() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Minimum swipe distance for trigger (in px)
   const minSwipeDistance = 50;
@@ -186,6 +187,7 @@ export function ManifestoPresentation() {
 
   const navigateToSlide = (index: number) => {
     if (index !== currentSlide && !isAnimating) {
+      setHasInteracted(true);
       setIsAnimating(true);
       setPreviousSlide(currentSlide);
       setCurrentSlide(index);
@@ -247,7 +249,10 @@ export function ManifestoPresentation() {
                 <motion.div
                   key={slide.id}
                   className={`absolute inset-0 rounded-xl shadow-2xl overflow-hidden`}
-                  initial={{ y: "100%" }}
+                  initial={
+                    // First card on initial load should not slide up
+                    index === 0 && !hasInteracted ? { y: "0%" } : { y: "100%" }
+                  }
                   animate={{
                     y: animateY,
                     scale: animateScale,
