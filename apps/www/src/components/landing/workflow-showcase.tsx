@@ -34,6 +34,7 @@ export function WorkflowShowcase() {
   const [workflowStarted, setWorkflowStarted] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState(127);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
 
   const integrations = [
     { name: "GitHub", status: "connected", color: "text-purple-400" },
@@ -407,31 +408,56 @@ export function WorkflowShowcase() {
       const currentWorkflow = workflows.find(
         (wf) => wf.number === selectedWorkflow,
       )!;
+
+      // Check if task is in completed list
+      const isCompleted =
+        currentWorkflow.tasksCompleted?.some((t) => t.id === selectedTask) ??
+        false;
+
       const allTasks = [
         ...(currentWorkflow.tasksCompleted || []),
         ...(currentWorkflow.tasksRemaining || []),
       ];
       const task = allTasks.find((t) => t.id === selectedTask);
+
       if (task) {
-        setSteps(task.workflow);
-        setCurrentStep(0);
-        setWorkflowStarted(false);
+        // If task is completed, show all steps as completed
+        if (isCompleted) {
+          setSteps(
+            task.workflow.map((step) => ({ ...step, status: "completed" })),
+          );
+          setCurrentStep(task.workflow.length);
+          setIsTaskCompleted(true);
+          setWorkflowStarted(false);
+        } else {
+          // If task is remaining, show steps as pending
+          setSteps(
+            task.workflow.map((step) => ({ ...step, status: "pending" })),
+          );
+          setCurrentStep(0);
+          setIsTaskCompleted(false);
+          setWorkflowStarted(false);
+        }
       }
     } else {
       setSteps(defaultWorkflowSteps);
       setCurrentStep(0);
+      setIsTaskCompleted(false);
       setWorkflowStarted(false);
     }
   }, [selectedTask, selectedWorkflow]);
 
   useEffect(() => {
-    // Start workflow after 1 second
-    const startTimeout = setTimeout(() => {
-      setWorkflowStarted(true);
-    }, 1000);
+    // Only auto-start workflow for default PR workflow (not tasks)
+    // For remaining tasks, user needs to click button to start
+    if (!selectedTask && !isTaskCompleted) {
+      const startTimeout = setTimeout(() => {
+        setWorkflowStarted(true);
+      }, 1000);
 
-    return () => clearTimeout(startTimeout);
-  }, [steps]);
+      return () => clearTimeout(startTimeout);
+    }
+  }, [steps, selectedTask, isTaskCompleted]);
 
   useEffect(() => {
     if (!workflowStarted) return;
@@ -470,6 +496,10 @@ export function WorkflowShowcase() {
     (wf) => wf.number === selectedWorkflow,
   )!;
 
+  const handleStartOrchestration = () => {
+    setWorkflowStarted(true);
+  };
+
   return (
     <div className="w-full h-full border border-border rounded-lg overflow-hidden flex">
       {/* Left Sidebar - Active Workflows */}
@@ -477,7 +507,6 @@ export function WorkflowShowcase() {
         {/* Header */}
         <div className="border-b border-border bg-muted/20 px-4 py-3">
           <div className="flex items-center gap-2">
-            <GitPullRequest className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
               Workflows
             </span>
@@ -490,7 +519,10 @@ export function WorkflowShowcase() {
             {workflows.map((wf) => (
               <button
                 key={wf.number}
-                onClick={() => setSelectedWorkflow(wf.number)}
+                onClick={() => {
+                  setSelectedWorkflow(wf.number);
+                  setSelectedTask(null);
+                }}
                 className={`w-full px-4 py-3 text-left cursor-pointer transition-colors hover:bg-muted/50 ${
                   selectedWorkflow === wf.number ? "bg-muted/30" : ""
                 }`}
@@ -670,94 +702,76 @@ export function WorkflowShowcase() {
         </div>
       </div>
 
-      {/* Right Content - Deus Workflow */}
-      <div className="w-96 flex flex-col bg-muted/30">
-        <div className="border-b border-border bg-muted/20 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium text-foreground">
-                Deus Orchestration
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {selectedTask ? "Task Workflow" : "PR Workflow"}
-              </div>
+      {/* Right Content - Deus Conversation */}
+      <div className="w-96 flex flex-col">
+        <div className="flex-1 overflow-auto p-6 space-y-4 text-sm">
+          {/* User Message */}
+          <div className="flex justify-end">
+            <div className="bg-background/30 text-foreground rounded-2xl px-4 py-3 font-sans text-sm max-w-[85%]">
+              {selectedTask
+                ? [
+                    ...(currentWorkflow.tasksCompleted || []),
+                    ...(currentWorkflow.tasksRemaining || []),
+                  ].find((t) => t.id === selectedTask)?.text
+                : currentWorkflow.title.replace(/^(feat|fix|refactor|chore):\s*/i, "")}
             </div>
-            {selectedTask && (
+          </div>
+
+          {/* Deus Response */}
+          <div className="space-y-3">
+            <div className="font-sans text-sm text-foreground/90 leading-relaxed">
+              I'll help you with this. Let me orchestrate the necessary steps
+              and coordinate with the required tools.
+            </div>
+
+            {/* Start Button for Remaining Tasks */}
+            {selectedTask && !isTaskCompleted && !workflowStarted && (
               <button
-                onClick={() => setSelectedTask(null)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={handleStartOrchestration}
+                className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
               >
-                Back to PR
+                Press here to continue orchestrating
               </button>
             )}
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto p-6 space-y-6 font-mono text-sm">
-          {/* Deus Response */}
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">
-              {selectedTask ? "Subtask:" : "Task:"}
-            </div>
-            <div className="bg-muted/40 border border-border rounded-md p-4">
-              <span className="text-foreground">
-                {selectedTask
-                  ? `"${
-                      [
-                        ...(currentWorkflow.tasksCompleted || []),
-                        ...(currentWorkflow.tasksRemaining || []),
-                      ].find((t) => t.id === selectedTask)?.text
-                    }"`
-                  : '"Integrate Clerk authentication"'}
-              </span>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <div className="text-foreground/70 text-xs">
-              Orchestrating workflow...
-            </div>
-
-            {/* Workflow Steps */}
-            <div className="space-y-2 pt-2">
+            {/* Tool Calls */}
+            <div className="space-y-2">
               {steps.map((step, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 text-xs transition-all duration-300"
+                  className="border rounded-lg transition-all duration-300 hover:bg-border/30"
                 >
-                  <div className="flex-shrink-0">
-                    {step.status === "completed" && (
-                      <Check className="w-4 h-4 text-green-500" />
-                    )}
-                    {step.status === "running" && (
-                      <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                    )}
-                    {step.status === "pending" && (
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <span
-                      className={
-                        step.status === "completed"
-                          ? "text-foreground"
-                          : step.status === "running"
-                            ? "text-blue-400"
-                            : "text-muted-foreground"
-                      }
-                    >
-                      {step.text}
-                    </span>
-                    <span className="text-muted-foreground ml-2">
-                      ({step.tool})
-                    </span>
+                  <div className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        {step.status === "completed" && (
+                          <Check className="w-4 h-4 text-green-500" />
+                        )}
+                        {step.status === "running" && (
+                          <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                        )}
+                        {step.status === "pending" && (
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-xs text-muted-foreground lowercase font-sans">
+                          {step.tool}: {step.text}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
+            {/* Final Response */}
             {isCompleted && (
-              <div className="pt-4 text-green-500 text-xs font-medium">
-                ✓ Workflow completed successfully
+              <div className="font-sans mt-3">
+                <span className="text-foreground/90 text-sm leading-relaxed">
+                  ✓ All steps completed successfully. The workflow has been
+                  orchestrated and executed.
+                </span>
               </div>
             )}
           </div>

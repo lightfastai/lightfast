@@ -26,15 +26,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Manifesto Grid Section */}
-      <div className="flex flex-col py-32 items-center justify-center">
-        <div className="manifesto bg-background p-4 rounded-md">
-          <div className="h-[700px] w-full max-w-7xl mx-auto">
-            <ManifestoGrid />
-          </div>
-        </div>
-      </div>
-
       {/* Bottom Section: Framework Showcase */}
       <div className="px-16 py-16 w-full flex justify-center">
         <div className="max-w-7xl mx-auto">
