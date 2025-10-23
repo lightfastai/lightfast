@@ -1,23 +1,15 @@
 "use client";
 
 import { WorkflowShowcase } from "./workflow-showcase";
-import Image from "next/image";
+import { LightfastImageViewer } from "~/components/search/lightfast-image-viewer";
 import { Plus } from "lucide-react";
 
 export function DeusShowcase() {
   return (
-    <div className="relative w-full h-full min-h-[700px]">
-      {/* Background Image */}
-      <div className="absolute inset-0 overflow-hidden rounded-sm">
-        <Image
-          src="/images/playground-placeholder-1.webp"
-          alt="Background"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-
+    <LightfastImageViewer
+      src="/images/playground-placeholder-1.webp"
+      alt="Background"
+    >
       {/* Window Frame Container */}
       <div className="relative flex items-center justify-center w-full h-full p-8">
         <div className="w-[90%] h-[85%] min-w-[800px]">
@@ -52,6 +44,6 @@ export function DeusShowcase() {
           </div>
         </div>
       </div>
-    </div>
+    </LightfastImageViewer>
   );
 }

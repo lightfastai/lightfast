@@ -89,19 +89,19 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Integration Showcase Section */}
+      <div className="py-16">
+        <div className="w-full">
+          <IntegrationShowcase />
+        </div>
+      </div>
+
       {/* Deus Showcase Section */}
       <div className="flex flex-col py-32 items-center justify-center">
         <div className="w-full">
           <div className="h-[900px] w-full">
             <DeusShowcase />
           </div>
-        </div>
-      </div>
-
-      {/* Bottom Section: Integration Showcase */}
-      <div className="py-16 w-full flex justify-center">
-        <div className="w-full">
-          <IntegrationShowcase />
         </div>
       </div>
 
