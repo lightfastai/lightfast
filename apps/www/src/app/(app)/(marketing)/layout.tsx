@@ -12,6 +12,7 @@ import { CenteredWaitlistSection } from "~/components/landing/centered-waitlist-
 import { ReadyToOrchestrateSection } from "~/components/landing/ready-to-orchestrate-section";
 import { SiteFooter } from "~/components/landing/footer-section";
 import { LightfastSineWaveMatrix } from "~/components/landing/lightfast-sine-wave-matrix";
+import { authUrl } from "~/lib/related-projects";
 
 export default function MarketingLayout({
   children,
@@ -49,7 +50,7 @@ export default function MarketingLayout({
                 className="rounded-full"
                 asChild
               >
-                <Link href="/sign-in">
+                <Link href={`${authUrl}/sign-in`}>
                   <span className="text-xs text-foreground font-medium uppercase tracking-widest">
                     Sign In
                   </span>
