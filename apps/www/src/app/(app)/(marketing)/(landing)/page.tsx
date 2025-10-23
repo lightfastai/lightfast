@@ -12,7 +12,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <div className="pt-48 pb-32 max-w-7xl mx-auto">
+      <div className="pb-32">
         <div className="space-y-12">
           <div className="space-y-3">
             <h1
@@ -33,8 +33,8 @@ export default function HomePage() {
       </div>
 
       {/* Engine Section - Grid Layout */}
-      <div className="pb-32 px-16">
-        <div className="grid max-w-7xl mx-auto grid-cols-1 bg-card border border-border rounded-sm p-6 lg:grid-cols-12 gap-16">
+      <div className="pb-32">
+        <div className="grid grid-cols-1 bg-card border border-border rounded-sm p-6 lg:grid-cols-12 gap-16">
           {/* Left Column: Engine Description (5/12) */}
           <div className="lg:col-span-5 flex flex-col">
             <div className="space-y-3">
@@ -90,8 +90,8 @@ export default function HomePage() {
       </div>
 
       {/* Deus Showcase Section */}
-      <div className="flex flex-col py-32 items-center justify-center px-16">
-        <div className="w-full max-w-7xl mx-auto">
+      <div className="flex flex-col py-32 items-center justify-center">
+        <div className="w-full">
           <div className="h-[900px] w-full">
             <DeusShowcase />
           </div>
@@ -99,22 +99,22 @@ export default function HomePage() {
       </div>
 
       {/* Bottom Section: Integration Showcase */}
-      <div className="px-16 py-16 w-full flex justify-center">
-        <div className="max-w-7xl mx-auto">
+      <div className="py-16 w-full flex justify-center">
+        <div className="w-full">
           <IntegrationShowcase />
         </div>
       </div>
 
       {/* Why Cloud Infrastructure Section */}
-      <div className="py-20 px-16">
-        <div className="max-w-7xl mx-auto">
+      <div className="py-20">
+        <div className="w-full">
           <WhyCloudInfrastructureSection />
         </div>
       </div>
 
       {/* Three Card Showcase Section */}
-      <div className="py-32 px-16 bg-background">
-        <div className="max-w-7xl mx-auto">
+      <div className="py-32 bg-background">
+        <div className="w-full">
           <div className="space-y-12">
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">

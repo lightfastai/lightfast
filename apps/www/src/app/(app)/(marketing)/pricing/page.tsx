@@ -84,31 +84,25 @@ export default function PricingPage() {
           license: "https://github.com/lightfastai/lightfast/blob/main/LICENSE",
         }}
       />
-      <div className="min-h-screen flex flex-col gap-4 py-16">
+      <div className="min-h-screen flex flex-col gap-36">
         {/* Hero Section */}
         <section className="relative">
-          <div className="relative max-w-5xl mx-auto">
-            <div className="py-8 px-4 sm:px-6 lg:px-8">
-              <PricingHero />
-            </div>
+          <div className="relative max-w-7xl mx-auto">
+            <PricingHero />
           </div>
         </section>
 
         {/* Simple Pricing Section */}
         <section className="relative">
           <div className="relative max-w-7xl mx-auto">
-            <div className="py-8 px-4 sm:px-6 lg:px-8">
-              <PricingSimple />
-            </div>
+            <PricingSimple />
           </div>
         </section>
 
         {/* FAQ Section */}
         <section className="relative">
           <div className="relative max-w-7xl mx-auto">
-            <div className="py-8 px-4 sm:px-6 lg:px-8">
-              <PricingFAQ />
-            </div>
+            <PricingFAQ />
           </div>
         </section>
       </div>

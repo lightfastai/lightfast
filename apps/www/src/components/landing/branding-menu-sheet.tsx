@@ -16,15 +16,19 @@ import { LIGHT_TRANSLATIONS } from "~/config/translations";
 import { useNavigationOverlay } from "./navigation-overlay-provider";
 import { useTextCycle } from "~/hooks/use-text-cycle";
 import { exposureTrial } from "~/lib/fonts";
-import { Matrix, wave } from "@repo/ui/components/ui/matrix";
+import { LightfastSineWaveMatrix } from "./lightfast-sine-wave-matrix";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Manifesto", href: "/manifesto" },
-  { label: "Contact", href: "/contact" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Updates", href: "/updates" },
+  { label: "Docs", href: "/docs" },
+  { label: "Early Access", href: "/early-access" },
 ] as const;
 
-const LEGAL_ITEMS = [
+const THIRD_COLUMN_ITEMS = [
+  { label: "Manifesto", href: "/manifesto" },
+  { label: "Contact", href: "/contact" },
   { label: "Terms", href: "/legal/terms" },
   { label: "Privacy", href: "/legal/privacy" },
 ] as const;
@@ -133,18 +137,9 @@ export function BrandingMenuSheet({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="mt-auto text-foreground"
+                className="mt-auto"
               >
-                <Matrix
-                  rows={7}
-                  cols={7}
-                  frames={wave}
-                  fps={24}
-                  size={8}
-                  gap={3}
-                  brightness={0.8}
-                  ariaLabel="Animated wave pattern"
-                />
+                <LightfastSineWaveMatrix />
               </motion.div>
             </div>
 
@@ -160,10 +155,10 @@ export function BrandingMenuSheet({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 + 0.2 }}
-                      className="flex items-center gap-4"
+                      className="relative"
                     >
                       {isActive && (
-                        <ChevronRight className="w-8 h-8 text-foreground" />
+                        <ChevronRight className="absolute -left-12 top-1/2 -translate-y-1/2 w-8 h-8 text-foreground" />
                       )}
                       <Link
                         href={item.href}
@@ -207,9 +202,9 @@ export function BrandingMenuSheet({
               </div>
             </div>
 
-            {/* Third Column - Legal Items */}
+            {/* Third Column - Manifesto, Contact, Legal Items */}
             <div className="col-span-1 flex flex-col gap-y-6">
-              {LEGAL_ITEMS.map((item, index) => {
+              {THIRD_COLUMN_ITEMS.map((item, index) => {
                 const isActive = pathname === item.href;
                 return (
                   <motion.div
@@ -219,9 +214,11 @@ export function BrandingMenuSheet({
                     transition={{ delay: index * 0.1 + 0.2 }}
                     className="flex items-center gap-4"
                   >
-                    {isActive && (
-                      <ChevronRight className="w-8 h-8 text-foreground" />
-                    )}
+                    <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                      {isActive && (
+                        <ChevronRight className="w-8 h-8 text-foreground" />
+                      )}
+                    </div>
                     <Link
                       href={item.href}
                       onClick={() => onOpenChange(false)}
