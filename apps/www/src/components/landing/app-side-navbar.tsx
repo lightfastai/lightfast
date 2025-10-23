@@ -31,16 +31,12 @@ export function AppSideNavbar() {
       </Button>
 
       {/* Primary CTA - Join Early Access */}
-      <Button
-        asChild
-        size="sm"
-        className="rounded-sm hover:bg-black hover:text-white"
-      >
+      <Button asChild size="sm">
         <Link href="/early-access">Join Early Access</Link>
       </Button>
 
       {/* GitHub repository link - Opens in new tab */}
-      <Button variant="ghost" size="icon" className="text-white" asChild>
+      <Button variant="ghost" size="icon" className="text-foreground" asChild>
         <Link
           href="https://github.com/lightfastai/lightfast"
           target="_blank"

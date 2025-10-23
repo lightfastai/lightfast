@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Button } from "@repo/ui/components/ui/button";
 import { ScrollText, X } from "lucide-react";
 import { useNavigationOverlay } from "./navigation-overlay-provider";
@@ -28,32 +27,10 @@ export function AppNavbar() {
   const { navigateToManifesto, navigateFromManifesto } = useNavigationOverlay();
 
   /**
-   * Maps the current pathname to the corresponding tab value
-   *
-   * @returns {string} The active tab identifier ("home" | "pricing" | "updates" | "docs" | "")
-   *
-   * Tab Mapping:
-   * - "/" → "home"
-   * - "/pricing" → "pricing"
-   * - "/updates" → "updates"
-   * - "/docs" → "docs"
-   * - "/manifesto" → "" (no selection)
-   * - fallback → "home"
-   */
-  const getActiveTab = () => {
-    if (pathname === "/") return "home";
-    if (pathname === "/pricing") return "pricing";
-    if (pathname === "/updates") return "updates";
-    if (pathname.startsWith("/docs")) return "docs";
-    if (pathname === "/manifesto") return "";
-    return "home";
-  };
-
-  /**
-   * Handle tab click
+   * Handle navigation click
    * Intercepts navigation when leaving manifesto page
    */
-  const handleTabClick = (route: string) => (e: React.MouseEvent) => {
+  const handleNavClick = (route: string) => (e: React.MouseEvent) => {
     // If on manifesto page, trigger reverse animation
     if (pathname === "/manifesto") {
       e.preventDefault();
@@ -82,39 +59,45 @@ export function AppNavbar() {
 
   return (
     <>
-      <nav className="flex flex-row items-center gap-4">
-        {/* Main navigation tabs - Home, Pricing, Updates, Docs */}
-        <Tabs value={getActiveTab()}>
-          <TabsList>
-            <TabsTrigger value="home" asChild>
-              <Link href="/" onClick={handleTabClick("/")}>
-                Home
-              </Link>
-            </TabsTrigger>
+      <nav className="flex flex-row items-center gap-6">
+        {/* Main navigation links */}
+        <div className="flex items-center gap-6">
+          <Link
+            href="/"
+            onClick={handleNavClick("/")}
+            className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+          >
+            Home
+          </Link>
 
-            <TabsTrigger value="pricing" asChild>
-              <Link href="/pricing" onClick={handleTabClick("/pricing")}>
-                Pricing
-              </Link>
-            </TabsTrigger>
+          <Link
+            href="/pricing"
+            onClick={handleNavClick("/pricing")}
+            className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+          >
+            Pricing
+          </Link>
 
-            <TabsTrigger value="updates" asChild>
-              <Link href="/updates" onClick={handleTabClick("/updates")}>
-                Updates
-              </Link>
-            </TabsTrigger>
+          <Link
+            href="/updates"
+            onClick={handleNavClick("/updates")}
+            className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+          >
+            Updates
+          </Link>
 
-            <TabsTrigger value="docs" asChild>
-              <Link href="/docs" onClick={handleTabClick("/docs")}>
-                Docs
-              </Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+          <Link
+            href="/docs"
+            onClick={handleNavClick("/docs")}
+            className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+          >
+            Docs
+          </Link>
+        </div>
 
-        {/* Manifesto button - separate from tabs */}
+        {/* Manifesto button */}
         <Button
-          variant={"secondary"}
+          variant={"ghost"}
           size={"lg"}
           onClick={handleManifestoClick}
           className="text-foreground"

@@ -32,7 +32,7 @@ function ContextCard() {
       </div>
 
       {/* Content - Network Graph */}
-      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-muted/30 rounded-sm overflow-auto">
+      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-card rounded-sm overflow-auto">
         <div className="relative h-full flex items-center justify-center isolate">
           {/* Connection Lines - Behind everything */}
           <svg
@@ -140,7 +140,7 @@ function TeamCard() {
       </div>
 
       {/* Content - Grid Layout */}
-      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-muted/30 rounded-sm overflow-auto">
+      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-card rounded-sm overflow-auto">
         <div className="grid grid-cols-2 gap-3 h-full">
           {/* Before */}
           <div className="space-y-2">
@@ -210,7 +210,7 @@ function MultiAgentCard() {
       </div>
 
       {/* Content - Agent Bars */}
-      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-muted/30 rounded-sm overflow-auto">
+      <div className="flex-1 p-4 border border-border mx-4 mb-4 bg-card rounded-sm overflow-auto">
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">

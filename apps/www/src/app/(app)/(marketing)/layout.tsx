@@ -13,7 +13,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="manifesto-page flex flex-col bg-background min-h-screen overflow-x-hidden">
+    <div className="dark flex flex-col bg-background min-h-screen overflow-x-hidden">
       <div className="bg-background">
         {/* Header with navigation */}
         <header className="absolute top-0 left-0 right-0 z-50 px-16">

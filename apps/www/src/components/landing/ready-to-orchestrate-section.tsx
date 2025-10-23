@@ -13,8 +13,8 @@ export function ReadyToOrchestrateSection() {
               relative overflow-hidden
               border border-border
               p-18 rounded-sm
-              bg-background text-foreground
-              hover:bg-muted
+              bg-card text-foreground
+              hover:bg-card
               transition-all duration-700 ease-out
             "
           >
