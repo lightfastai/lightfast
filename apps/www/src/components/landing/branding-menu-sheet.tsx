@@ -63,7 +63,7 @@ export function BrandingMenuSheet({
   onOpenChange,
 }: BrandingMenuSheetProps) {
   const pathname = usePathname();
-  const { navigateFromManifesto } = useNavigationOverlay();
+  const { navigateFromManifesto, navigateToManifesto } = useNavigationOverlay();
 
   // Text cycling for Japanese "Light" on hover
   const { currentItem, start, reset, isActive } = useTextCycle(
@@ -78,6 +78,23 @@ export function BrandingMenuSheet({
     e.preventDefault();
     onOpenChange(false);
     navigateFromManifesto("/");
+  };
+
+  /**
+   * Handle manifesto click
+   * Triggers forward animation when navigating TO manifesto page
+   */
+  const handleManifestoClick = (e: React.MouseEvent) => {
+    // If already on manifesto, don't do anything (just close menu)
+    if (pathname === "/manifesto") {
+      onOpenChange(false);
+      return;
+    }
+
+    // Prevent default navigation and trigger forward animation
+    e.preventDefault();
+    onOpenChange(false);
+    navigateToManifesto();
   };
 
   return (
@@ -221,7 +238,11 @@ export function BrandingMenuSheet({
                     </div>
                     <Link
                       href={item.href}
-                      onClick={() => onOpenChange(false)}
+                      onClick={
+                        item.href === "/manifesto"
+                          ? handleManifestoClick
+                          : () => onOpenChange(false)
+                      }
                       className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                     >
                       {item.label}

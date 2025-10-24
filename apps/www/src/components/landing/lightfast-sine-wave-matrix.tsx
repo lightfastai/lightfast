@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Matrix, wave } from "@repo/ui/components/ui/matrix";
 import {
   Tooltip,
@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import { useNavigationOverlay } from "./navigation-overlay-provider";
 
 /**
  * LightfastSineWaveMatrix - Animated matrix wave pattern component
@@ -30,13 +31,34 @@ import {
  * ```
  */
 export function LightfastSineWaveMatrix() {
+  const pathname = usePathname();
+  const { navigateToManifesto, navigateFromManifesto } = useNavigationOverlay();
+
+  /**
+   * Handle matrix click
+   * Triggers overlay animation when navigating to/from manifesto
+   */
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // If on manifesto, navigate back home with reverse animation
+    if (pathname === "/manifesto") {
+      navigateFromManifesto("/");
+      return;
+    }
+
+    // Otherwise, navigate to manifesto with forward animation
+    navigateToManifesto();
+  };
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link
-            href="/manifesto"
-            className="block border border-border p-2 w-fit rounded-sm overflow-hidden text-foreground hover:opacity-80 transition-opacity"
+          <button
+            onClick={handleClick}
+            className="block border border-border p-2 w-fit rounded-sm overflow-hidden text-foreground hover:opacity-80 transition-opacity cursor-pointer"
+            aria-label="Navigate to manifesto"
           >
             <Matrix
               rows={7}
@@ -48,7 +70,7 @@ export function LightfastSineWaveMatrix() {
               brightness={0.8}
               ariaLabel="Animated wave pattern"
             />
-          </Link>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="right" className="text-md font-base">
           <p>Learn more about our company</p>
