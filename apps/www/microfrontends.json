@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "lightfast-www": {
+      "packageName": "@lightfast/www",
+      "development": {
+        "local": 4101,
+        "fallback": "lightfast.ai"
+      }
+    },
+    "lightfast-docs": {
+      "packageName": "@lightfast/docs",
+      "development": {
+        "local": 4102
+      },
+      "routing": [
+        {
+          "group": "docs",
+          "paths": ["/docs", "/docs/:path*"]
+        }
+      ]
+    }
+  }
+}

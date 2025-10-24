@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@vercel/microfrontends/next/client";
 import { usePathname } from "next/navigation";
 import type { PageTree } from "fumadocs-core/server";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { ArrowLeft } from "lucide-react";
 
 interface CustomSidebarProps {
 	tree?: PageTree.Root;
@@ -23,6 +24,21 @@ export function CustomSidebar({ tree, className }: CustomSidebarProps) {
 		>
 			<ScrollArea className="h-full">
 				<nav className="px-4 lg:px-6">
+					{/* Cross-zone link back to main site */}
+					<div className="mb-6 pb-4 border-b border-border">
+						<Button
+							variant="ghost"
+							size="sm"
+							className="w-full justify-start text-xs"
+							asChild
+						>
+							<Link href="/">
+								<ArrowLeft className="mr-2 h-3 w-3" />
+								Back to Home
+							</Link>
+						</Button>
+					</div>
+
 					<div className="space-y-4">
 						{tree.children.map((item, index) => (
 							<div key={item.$id ?? `item-${index}`} className="space-y-2">

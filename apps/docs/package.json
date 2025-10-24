@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port ${NEXT_PUBLIC_DOCS_PORT:-3002} --turbo",
+    "dev": "next dev --port $(microfrontends port) --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -19,6 +19,7 @@
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
+    "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
     "clsx": "^2.1.1",
     "fumadocs-core": "15.6.9",

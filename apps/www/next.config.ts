@@ -1,4 +1,5 @@
 import { NextConfig } from "next";
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 
 import "~/env";
 
@@ -53,7 +54,7 @@ let config: NextConfig = withBetterStack(
 		async rewrites() {
 			const docsUrl =
 				env.VERCEL_ENV === "development"
-					? "http://localhost:3002"
+					? "http://localhost:4102"
 					: "https://lightfast-docs.vercel.app";
 
 			return [
@@ -74,4 +75,4 @@ if (env.VERCEL) {
 	config = withSentry(config);
 }
 
-export default config;
+export default withMicrofrontends(config, { debug: true });

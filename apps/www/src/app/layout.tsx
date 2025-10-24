@@ -8,6 +8,10 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import {
+  PrefetchCrossZoneLinks,
+  PrefetchCrossZoneLinksProvider,
+} from "@vercel/microfrontends/next/client";
 
 import { createBaseUrl } from "~/lib/base-url";
 import { StructuredData } from "~/components/structured-data";
@@ -167,12 +171,15 @@ export default function RootLayout({
         <StructuredData type="SoftwareApplication" />
       </head>
       <body className={cn("min-h-screen", fonts)}>
-        <PostHogProvider baseUrl={createBaseUrl()}>
-          {children}
-          <Toaster />
-          <VercelAnalytics />
-          <SpeedInsights />
-        </PostHogProvider>
+        <PrefetchCrossZoneLinksProvider>
+          <PostHogProvider baseUrl={createBaseUrl()}>
+            {children}
+            <Toaster />
+            <VercelAnalytics />
+            <SpeedInsights />
+          </PostHogProvider>
+          <PrefetchCrossZoneLinks />
+        </PrefetchCrossZoneLinksProvider>
       </body>
     </html>
   );

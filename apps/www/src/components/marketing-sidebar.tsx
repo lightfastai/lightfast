@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@vercel/microfrontends/next/client";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/pricing", label: "Pricing" },
   { href: "/updates", label: "Updates" },
-  { href: "/docs", label: "Docs" },
+  { href: "/docs", label: "Docs" }, // Cross-zone link to docs microfrontend
   { href: "/early-access", label: "Early Access" },
 ] as const;
 
