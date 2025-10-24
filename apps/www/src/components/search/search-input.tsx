@@ -63,7 +63,7 @@ export function SearchInput() {
         <PromptInputBody>
           <PromptInputTextarea
             placeholder={`Search ${selectedContext}...`}
-            className="min-h-[60px]"
+            className="min-h-[90px]"
           />
         </PromptInputBody>
 
@@ -90,7 +90,7 @@ export function SearchInput() {
             })}
           </PromptInputTools>
 
-          <PromptInputSubmit />
+          <PromptInputSubmit className="rounded-full" />
         </PromptInputToolbar>
       </PromptInput>
     </div>
