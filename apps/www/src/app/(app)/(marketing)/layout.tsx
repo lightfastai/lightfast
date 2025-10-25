@@ -33,6 +33,19 @@ export default function MarketingLayout({
             <div className="flex items-center justify-end">
               {/* Action Buttons - Right */}
               <div className="flex items-center gap-4">
+                {/* Search Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  asChild
+                >
+                  <Link href="/search">
+                    <Search className="h-5 w-5 text-foreground" />
+                    <span className="sr-only">Search</span>
+                  </Link>
+                </Button>
+
                 {/* GitHub Link */}
                 <Button
                   variant="outline"
@@ -45,21 +58,8 @@ export default function MarketingLayout({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Icons.github className="h-5 w-5 text-foreground" />
+                    <Icons.gitHub className="h-5 w-5 text-foreground" />
                     <span className="sr-only">GitHub</span>
-                  </Link>
-                </Button>
-
-                {/* Search Button */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                  asChild
-                >
-                  <Link href="/search">
-                    <Search className="h-5 w-5 text-foreground" />
-                    <span className="sr-only">Search</span>
                   </Link>
                 </Button>
 

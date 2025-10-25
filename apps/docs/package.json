@@ -22,6 +22,7 @@
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
     "clsx": "^2.1.1",
+    "framer-motion": "^11.3.19",
     "fumadocs-core": "15.6.9",
     "fumadocs-mdx": "11.7.4",
     "fumadocs-ui": "15.6.9",
