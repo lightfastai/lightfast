@@ -163,11 +163,11 @@ export function ManifestoPresentation() {
   // Touch handlers for swipe navigation
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientY);
+    setTouchStart(e.targetTouches[0]?.clientY ?? null);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientY);
+    setTouchEnd(e.targetTouches[0]?.clientY ?? null);
   };
 
   const onTouchEnd = () => {
@@ -451,7 +451,7 @@ export function ManifestoPresentation() {
                 )}
               </motion.div>
               <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs text-white opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap">
-                {index + 1}. {slides[index].title || slides[index].id}
+                {index + 1}. {slides[index]?.title || slides[index]?.id}
               </span>
             </button>
           );

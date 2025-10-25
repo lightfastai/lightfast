@@ -44,7 +44,7 @@ function ensureFrameSize(frame: Frame, rows: number, cols: number): Frame {
     const row = frame[r] || []
     result.push([])
     for (let c = 0; c < cols; c++) {
-      result[r][c] = row[c] ?? 0
+      result[r]![c] = row[c] ?? 0
     }
   }
   return result
@@ -127,8 +127,8 @@ function emptyFrame(rows: number, cols: number): Frame {
 }
 
 function setPixel(frame: Frame, row: number, col: number, value: number): void {
-  if (row >= 0 && row < frame.length && col >= 0 && col < frame[0].length) {
-    frame[row][col] = value
+  if (row >= 0 && row < frame.length && col >= 0 && col < (frame[0]?.length ?? 0)) {
+    frame[row]![col] = value
   }
 }
 

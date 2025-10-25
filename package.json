@@ -20,6 +20,7 @@
     "clean:workspaces": "turbo run clean",
     "dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/experimental --filter=@lightfast/docs --filter=@lightfast/cloud --filter=@lightfast/auth --filter=@lightfast/chat --filter=@lightfast/playground",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
+    "dev:www+docs": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/docs",
     "dev:cloud": "turbo watch dev -F @lightfast/cloud --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
     "dev:experimental": "turbo watch dev -F @lightfast/experimental --continue",

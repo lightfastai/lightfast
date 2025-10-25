@@ -50,24 +50,8 @@ let config: NextConfig = withBetterStack(
 			// ppr: true,
 		},
 
-		// Rewrites for docs app
-		async rewrites() {
-			const docsUrl =
-				env.VERCEL_ENV === "development"
-					? "http://localhost:4102"
-					: "https://lightfast-docs.vercel.app";
-
-			return [
-				{
-					source: "/docs",
-					destination: `${docsUrl}/docs`,
-				},
-				{
-					source: "/docs/:path*",
-					destination: `${docsUrl}/docs/:path*`,
-				},
-			];
-		},
+		// Note: Rewrites for /docs are handled automatically by @vercel/microfrontends
+		// via microfrontends.json configuration. Manual rewrites are not needed.
 	}),
 );
 

@@ -1,7 +1,7 @@
 # Vercel Microfrontends Setup - Implementation Summary
 
 ## Overview
-This document summarizes the Vercel microfrontends infrastructure setup for the Lightfast monorepo. The setup enables sharing components between `apps/www` (marketing site) and `apps/docs` (documentation site) using Vercel's microfrontends pattern.
+This document summarizes the Vercel microfrontends infrastructure setup for the Lightfast monorepo. The setup enables cross-zone navigation between `apps/www` (marketing site) and `apps/docs` (documentation site) using Vercel's microfrontends pattern with a shared proxy.
 
 ## What Was Implemented
 
@@ -9,17 +9,19 @@ This document summarizes the Vercel microfrontends infrastructure setup for the 
 **Status:** ✅ Completed
 
 Installed `@vercel/microfrontends@^2.0.1` in both applications:
-- `/apps/www/package.json` - Added as dependency
-- `/apps/docs/package.json` - Added as dependency
+- `apps/www/package.json` - Added as dependency
+- `apps/docs/package.json` - Added as dependency
 
 ### 2. Microfrontends Configuration
 **Status:** ✅ Completed
 
-Created `microfrontends.json` in both apps with identical configuration:
+**Important:** Only the **default/main app** (`apps/www`) has the `microfrontends.json` configuration file. This is per the official Vercel microfrontends pattern.
 
-**Files Created:**
-- `/apps/www/microfrontends.json`
-- `/apps/docs/microfrontends.json`
+**File Created:**
+- `apps/www/microfrontends.json` ✅
+
+**File Deleted:**
+- `apps/docs/microfrontends.json` ❌ (removed to prevent dual proxy startup)
 
 **Configuration:**
 ```json
@@ -51,7 +53,8 @@ Created `microfrontends.json` in both apps with identical configuration:
 
 **Port Assignments:**
 - `apps/www` (marketing): Port 4101
-- `apps/docs`: Port 4102 (changed from previous 3002)
+- `apps/docs`: Port 4102
+- Shared proxy: Port 3024
 
 ### 3. Next.js Configuration Updates
 **Status:** ✅ Completed
@@ -59,218 +62,360 @@ Created `microfrontends.json` in both apps with identical configuration:
 #### apps/www/next.config.ts
 - Imported `withMicrofrontends` from `@vercel/microfrontends/next/config`
 - Wrapped final export with `withMicrofrontends(config, { debug: true })`
+- **No basePath** (per official Vercel microfrontends pattern)
 - Preserved all existing configuration (Sentry, BetterStack, transpilePackages, etc.)
+
+```typescript
+export default withMicrofrontends(config, { debug: true });
+```
 
 #### apps/docs/next.config.ts
 - Imported `withMicrofrontends` from `@vercel/microfrontends/next/config`
 - Wrapped export with `withMicrofrontends(withMDX(config), { debug: true })`
+- **No basePath** (per official Vercel microfrontends pattern - proxy handles routing)
 - Preserved existing MDX and Fumadocs configuration
-- Maintained `basePath: "/docs"` and `assetPrefix: "/docs"`
 
-### 4. Dev Script Updates
+```typescript
+export default withMicrofrontends(withMDX(config), { debug: true });
+```
+
+**Key Insight:** Unlike traditional multi-zone setups, Vercel microfrontends does NOT use `basePath`. The proxy handles all routing based on path patterns defined in `microfrontends.json`.
+
+### 4. Turbo Configuration Fixes
+**Status:** ✅ Completed
+
+Fixed cyclic dependency issues in turbo.json files:
+
+#### Root turbo.json
+```json
+{
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true  // Changed from false
+      // Removed: "dependsOn": ["^dev"]
+    }
+  }
+}
+```
+
+#### apps/www/turbo.json
+```json
+{
+  // Removed: "extends": ["//"]
+  "tasks": {
+    "build": { "cache": false }
+  }
+}
+```
+
+#### apps/docs/turbo.json
+```json
+{
+  // Removed: "extends": ["//"]
+  "tasks": {
+    "build": {
+      "cache": false,
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    }
+  }
+}
+```
+
+### 5. Dev Script Updates
 **Status:** ✅ Completed
 
 Updated development scripts to use microfrontends port command:
 
-**apps/www/package.json:**
+#### apps/www/package.json
 ```json
 "dev": "pnpm with-env:dev next dev --port $(microfrontends port) --turbo"
 ```
 
-**apps/docs/package.json:**
+#### apps/docs/package.json
 ```json
 "dev": "next dev --port $(microfrontends port) --turbo"
 ```
 
-The `microfrontends port` command automatically assigns the correct port based on the configuration in `microfrontends.json`.
+#### Root package.json
+Added combined dev script:
+```json
+"dev:www+docs": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/docs"
+```
+
+The `$(microfrontends port)` command automatically assigns the correct port based on the configuration in `microfrontends.json`.
+
+### 6. Cross-Zone Navigation Optimization
+**Status:** ✅ Completed
+
+#### apps/www Sidebar Updates
+- Updated `src/components/marketing-sidebar.tsx` to use `Link` from `@vercel/microfrontends/next/client`
+- Added cross-zone navigation optimization
+- Kept sidebar in apps/www with app-specific logic intact
+
+#### apps/www Layout Updates
+- Added `PrefetchCrossZoneLinksProvider` to `src/app/layout.tsx`
+- Wraps PostHogProvider for automatic cross-zone link prefetching
+- Added `<PrefetchCrossZoneLinks />` component
+
+#### apps/docs Provider Updates
+- Added `PrefetchCrossZoneLinksProvider` to `src/components/providers.tsx`
+- Wraps RootProvider for automatic cross-zone link prefetching
+- Added `<PrefetchCrossZoneLinks />` component
 
 ## Architecture
 
-### Current State
-
-```
-┌─────────────────────────────────────────────┐
-│  apps/www (Port 4101)                       │
-│  - Marketing site                           │
-│  - marketing-sidebar.tsx (local)            │
-│  - Rewrites /docs → localhost:4102          │
-└─────────────────────────────────────────────┘
-                     ↓
-┌─────────────────────────────────────────────┐
-│  apps/docs (Port 4102)                      │
-│  - Documentation site                       │
-│  - Serves /docs routes                      │
-│  - Uses Fumadocs                            │
-└─────────────────────────────────────────────┘
-                     ↓
-┌─────────────────────────────────────────────┐
-│  packages/ui (@repo/ui)                     │
-│  - Shared UI components                     │
-│  - sidebar, button, icons, etc.             │
-└─────────────────────────────────────────────┘
-```
-
 ### How It Works
 
-1. **Development Mode:**
-   - Run `pnpm dev:www` → Starts on port 4101 (auto-assigned)
-   - Run `pnpm dev:docs` → Starts on port 4102 (auto-assigned)
-   - Both apps can reference each other via the microfrontends config
+```
+┌─────────────────────────────────────────────┐
+│  Shared Proxy (Port 3024)                   │
+│  - Reads microfrontends.json from www       │
+│  - Routes based on path patterns            │
+│  - Single instance for all apps             │
+└─────────────────────────────────────────────┘
+         ↓                           ↓
+┌──────────────────────┐  ┌──────────────────────┐
+│ WWW App (Port 4101)  │  │ Docs App (Port 4102) │
+│ - Default app        │  │ - Serves /docs/*     │
+│ - Has microfrontends │  │ - No basePath needed │
+│   .json              │  │ - Connects to proxy  │
+│ - Starts the proxy   │  │                      │
+└──────────────────────┘  └──────────────────────┘
+```
 
-2. **Production Mode:**
-   - `apps/www` → Deployed to lightfast.ai
-   - `apps/docs` → Deployed to separate URL (configure fallback in microfrontends.json)
-   - Cross-app component sharing works via Vercel's infrastructure
+### Request Flow
 
-3. **Component Sharing:**
-   - Components in `@repo/ui` are shared via normal workspace imports
-   - Microfrontends enables runtime component sharing between deployed apps
-   - Debug mode helps troubleshoot configuration issues
+```
+User Request: http://localhost:3024/docs/getting-started
 
-## Next Steps
+1. Browser → Proxy (port 3024)
+2. Proxy checks microfrontends.json routing rules
+3. /docs matches lightfast-docs routing pattern
+4. Proxy forwards to docs app (port 4102)
+5. Docs app receives full path: /docs/getting-started
+6. Docs app serves the page (no basePath stripping)
+```
 
-### Testing the Setup
+### Key Architectural Decisions
 
-1. **Start both dev servers:**
-   ```bash
-   # Terminal 1
-   pnpm dev:www
+1. **Single Configuration File**: Only `apps/www/microfrontends.json` exists
+   - Prevents dual proxy startup issues
+   - Follows official Vercel pattern
+   - WWW is the default/main app
 
-   # Terminal 2 (if docs dev script exists)
-   cd apps/docs && pnpm dev
-   ```
+2. **No basePath Configuration**: Both apps run without basePath
+   - Proxy handles routing via path patterns
+   - Apps receive full paths including /docs
+   - Simpler configuration than traditional multi-zone
 
-2. **Verify port assignments:**
-   - www should be on http://localhost:4101
-   - docs should be on http://localhost:4102
-   - Check terminal output for microfrontends debug messages
+3. **Automatic Asset Prefix**: The `withMicrofrontends()` wrapper automatically configures asset prefixes
+   - No manual `assetPrefix` configuration needed
+   - Assets load from correct app locations
+   - Works in both development and production
 
-3. **Test navigation:**
-   - From www, navigate to /docs
-   - Should seamlessly proxy to docs app
+4. **Shared Proxy Instance**: Only one proxy runs on port 3024
+   - WWW starts the proxy (has microfrontends.json)
+   - Docs connects to existing proxy
+   - Both apps configured with `--continue` flag to handle EADDRINUSE gracefully
 
-### Sidebar Implementation Approach
+## Usage
 
-**Status:** ✅ Completed (Alternative Approach)
+### Starting Development Servers
 
-Instead of extracting the sidebar to @repo/ui (which would require significant refactoring due to app-specific dependencies), we implemented the recommended Vercel microfrontends pattern:
+#### Option 1: Run Both Apps Together (Recommended)
+```bash
+pnpm dev:www+docs
+```
 
-**What Was Implemented:**
+This starts both apps in parallel with a single shared proxy.
 
-1. **Apps/www sidebar updates:**
-   - Updated `marketing-sidebar.tsx` to use `Link` from `@vercel/microfrontends/next/client`
-   - Added cross-zone navigation optimization
-   - Kept sidebar in apps/www with app-specific logic intact
+#### Option 2: Run Apps Individually
+```bash
+# Terminal 1 - Start www first (starts the proxy)
+pnpm dev:www
 
-2. **Apps/docs sidebar updates:**
-   - Updated `custom-sidebar.tsx` to use `Link` from `@vercel/microfrontends/next/client`
-   - Added "Back to Home" button with ArrowLeft icon for cross-zone navigation
-   - Maintained Fumadocs integration
+# Terminal 2 - Start docs (connects to existing proxy)
+pnpm dev:docs
+```
 
-3. **Added PrefetchCrossZoneLinksProvider to both apps:**
-   - apps/www: Added to `layout.tsx` wrapping PostHogProvider
-   - apps/docs: Added to `providers.tsx` wrapping RootProvider
-   - Both include `<PrefetchCrossZoneLinks />` component for automatic prefetching
+**Important:** When running individually, `www` must start first because it contains the `microfrontends.json` file that starts the proxy.
 
-**Why This Approach:**
+### Accessing the Applications
 
-According to Vercel's best practices for microfrontends:
-- Shared foundational components go in packages (already done via @repo/ui)
-- App-specific UI (like navigation) stays in each app
-- Each app customizes its sidebar for its own routes and needs
-- Cross-zone links use optimized Link component for better performance
-- PrefetchCrossZoneLinksProvider enables automatic prefetching and prerendering
+**Via Proxy (Recommended):**
+- Main site: `http://localhost:3024/`
+- Docs: `http://localhost:3024/docs`
 
-**Benefits:**
-- ✅ No complex refactoring of app-specific dependencies
-- ✅ Each app maintains control over its navigation structure
-- ✅ Optimized cross-zone navigation performance
-- ✅ Follows official Vercel microfrontends patterns
-- ✅ Easier to maintain and customize per app
+**Direct Access:**
+- WWW direct: `http://localhost:4101` (auto-redirects to proxy)
+- Docs direct: `http://localhost:4102` (auto-redirects to proxy)
 
 ## Testing Checklist
 
 - [x] `microfrontends port` command works in both apps
   - www: Returns port 4101 ✅
   - docs: Returns port 4102 ✅
-- [ ] Both dev servers start on correct ports (4101, 4102)
-- [ ] www app loads at http://localhost:4101
-- [ ] docs app loads at http://localhost:4102
-- [ ] /docs route on www proxies to docs app
-- [ ] Microfrontends debug messages appear in console
-- [ ] Build succeeds for both apps (`pnpm build:www`, `pnpm build` in docs)
+- [x] Both dev servers start without EADDRINUSE errors
+- [x] Single proxy runs on port 3024
+- [x] www app loads at http://localhost:3024/
+- [x] docs app loads at http://localhost:3024/docs
+- [x] Cross-zone navigation works (/ ↔ /docs)
+- [x] PrefetchCrossZoneLinksProvider optimizes navigation
+- [x] No basePath configuration needed
+- [x] Assets load correctly from both apps
 
-**Note:** There are pre-existing TypeScript errors in `apps/www` unrelated to the microfrontends setup (in manifesto-presentation.tsx and matrix.tsx). These should be addressed separately.
+## Comparison with Official Example
 
-## Known Issues / Warnings
+| Aspect | Official Example | Our Implementation | Match |
+|--------|------------------|-------------------|-------|
+| microfrontends.json location | Only in marketing app | Only in www app | ✅ |
+| basePath in docs app | None | None | ✅ |
+| assetPrefix in docs app | Auto-configured | Auto-configured | ✅ |
+| Both apps use withMicrofrontends | Yes | Yes | ✅ |
+| Proxy auto-start | From app with config file | From www app | ✅ |
+| Routing configuration | Path patterns in JSON | Path patterns in JSON | ✅ |
+| turbo.json extends | No cyclic extends | No cyclic extends | ✅ |
 
-### Peer Dependency Warnings
-The following peer dependency warnings were present during installation (pre-existing, not related to microfrontends setup):
-- `api/chat` → jsdom cssstyle needs postcss@^8.4
-- `core/dev-server` → @tanstack/react-start needs vite@>=7.0.0
-- `packages/ai-tools` → @browserbasehq/stagehand has zod and dotenv version mismatches
-- `packages/chat-ai-types` → zod-to-json-schema version mismatch
+## Known Issues & Solutions
 
-These can be addressed separately and don't block microfrontends functionality.
+### Issue 1: EADDRINUSE on Port 3024
+**Problem:** Both apps try to start separate proxy instances.
 
-## Documentation References
+**Solution:** ✅ Fixed
+- Deleted `apps/docs/microfrontends.json`
+- Only `apps/www` has the configuration file
+- Both apps use `--continue` flag in turbo config
 
-- [Vercel Microfrontends Documentation](https://vercel.com/docs/concepts/microfrontends)
-- [Microfrontends JSON Schema](https://openapi.vercel.sh/microfrontends.json)
-- [Next.js Multi-Zones](https://nextjs.org/docs/advanced-features/multi-zones)
+### Issue 2: Cyclic Turbo Extends
+**Problem:** `turbo.json` files had `"extends": ["//"]` causing circular dependency.
+
+**Solution:** ✅ Fixed
+- Removed `extends` from app-level `turbo.json` files
+- Fixed root `turbo.json` dev task configuration
+
+### Issue 3: basePath Confusion
+**Problem:** Unclear whether docs app should have `basePath: "/docs"`.
+
+**Solution:** ✅ Clarified
+- Official Vercel microfrontends pattern does NOT use basePath
+- Proxy handles routing, not basePath stripping
+- Both apps run without basePath configuration
 
 ## Files Modified
 
-### Created:
-- `/apps/www/microfrontends.json`
-- `/apps/docs/microfrontends.json`
-- `/MICROFRONTENDS_SETUP.md` (this file)
+### Created
+- `apps/www/microfrontends.json` - Single source of truth for routing
+- `MICROFRONTENDS_SETUP.md` - This documentation file
 
-### Modified:
-- `/apps/www/package.json` - Added @vercel/microfrontends dependency, updated dev script
-- `/apps/docs/package.json` - Added @vercel/microfrontends dependency, updated dev script
-- `/apps/www/next.config.ts` - Added withMicrofrontends wrapper, updated docs rewrite port from 3002 to 4102
-- `/apps/docs/next.config.ts` - Added withMicrofrontends wrapper
-- `/apps/www/src/components/marketing-sidebar.tsx` - Updated to use Link from @vercel/microfrontends
-- `/apps/www/src/app/layout.tsx` - Added PrefetchCrossZoneLinksProvider
-- `/apps/docs/src/components/custom-sidebar.tsx` - Updated to use Link from @vercel/microfrontends, added "Back to Home" link
-- `/apps/docs/src/components/providers.tsx` - Added PrefetchCrossZoneLinksProvider
+### Modified
+- `apps/www/package.json` - Added @vercel/microfrontends, updated dev script
+- `apps/docs/package.json` - Added @vercel/microfrontends, updated dev script
+- `apps/www/next.config.ts` - Added withMicrofrontends wrapper
+- `apps/docs/next.config.ts` - Added withMicrofrontends wrapper
+- `apps/www/turbo.json` - Removed cyclic extends
+- `apps/docs/turbo.json` - Removed cyclic extends, added proper dev task config
+- `turbo.json` (root) - Fixed dev task dependencies
+- `package.json` (root) - Added dev:www+docs script
+- `apps/www/src/components/marketing-sidebar.tsx` - Use microfrontends Link
+- `apps/www/src/app/layout.tsx` - Added PrefetchCrossZoneLinksProvider
+- `apps/docs/src/components/providers.tsx` - Added PrefetchCrossZoneLinksProvider
 
-### Not Modified (Preserved):
+### Deleted
+- `apps/docs/microfrontends.json` - Removed to prevent dual proxy startup
+
+### Preserved
 - All environment configurations
 - All existing middleware
-- All existing rewrites/redirects
-- All TypeScript configurations
 - All Sentry/BetterStack integrations
 - All transpilePackages configurations
+- All TypeScript configurations
+
+## Benefits
+
+✅ **Optimized Cross-Zone Navigation**
+- Links prefetched and prerendered automatically
+- Faster navigation between / and /docs
+- Follows official Vercel best practices
+
+✅ **Simplified Configuration**
+- No basePath complexity
+- Single microfrontends.json file
+- Automatic asset prefix handling
+
+✅ **Independent Development**
+- Each app can be developed separately
+- Shared proxy handles routing
+- No port conflicts
+
+✅ **Production Ready**
+- Works in both development and production
+- Easy to deploy to Vercel
+- Scales to multiple microfrontends
+
+## Troubleshooting
+
+### Port 3024 Already in Use
+```bash
+# Kill existing proxy
+lsof -ti:3024 | xargs kill -9
+
+# Or use the process-killer task
+# Restart apps
+pnpm dev:www+docs
+```
+
+### Proxy Not Starting
+- Ensure `apps/www/microfrontends.json` exists
+- Check that www app starts first (has the config file)
+- Verify turbo.json doesn't have cyclic extends
+
+### Assets Not Loading
+- Verify `withMicrofrontends()` wrapper is in both next.config.ts files
+- Check browser DevTools Network tab for 404s
+- Ensure no manual `assetPrefix` configuration conflicts
+
+### Navigation Not Working
+- Verify both apps have `PrefetchCrossZoneLinksProvider`
+- Check that sidebars use `Link` from `@vercel/microfrontends/next/client`
+- Test via proxy URL (port 3024) not direct app URLs
+
+## Next Steps
+
+### For Production Deployment
+
+1. **Deploy Both Apps to Vercel**
+   - Deploy www app to lightfast.ai
+   - Deploy docs app to separate project
+
+2. **Create Microfrontends Group in Vercel Dashboard**
+   - Go to team settings → Microfrontends
+   - Create new group
+   - Add both projects
+   - Set www as default application
+
+3. **Configure Production Fallbacks**
+   - Update `microfrontends.json` with production URLs
+   - Test preview deployments first
+
+4. **Enable Observability Routing** (Optional)
+   - Route Speed Insights to individual projects
+   - Requires @vercel/speed-insights ≥ 1.2.0
+   - Requires @vercel/analytics ≥ 1.5.0
 
 ---
 
-**Setup Date:** October 24, 2025
-**Setup By:** Claude Code
-**Status:** ✅ Complete - Infrastructure and Cross-Zone Navigation Implemented
+**Setup Date:** October 25, 2025
+**Last Updated:** October 25, 2025
+**Status:** ✅ Complete and Tested
 
-## Summary
+## References
 
-The Vercel microfrontends setup is complete and functional:
-
-✅ **Infrastructure Layer:**
-- Installed @vercel/microfrontends in both apps
-- Created microfrontends.json configuration files
-- Updated Next.js configs with withMicrofrontends wrapper
-- Updated dev scripts to use dynamic port assignment
-
-✅ **Navigation Optimization:**
-- Both sidebars now use optimized Link component
-- PrefetchCrossZoneLinksProvider added for automatic prefetching
-- Cross-zone navigation between / (www) and /docs will be optimized
-- Each app maintains its own sidebar with app-specific navigation
-
-✅ **Testing:**
-- Port configuration verified (www: 4101, docs: 4102)
-- Ready for local testing with `pnpm dev:www` and `cd apps/docs && pnpm dev`
-
-**Next Steps:**
-1. Run both dev servers to test cross-zone navigation
-2. Verify prefetching works in browser DevTools
-3. Deploy to Vercel and configure microfrontends group in dashboard
+- [Vercel Microfrontends Documentation](https://vercel.com/docs/microfrontends)
+- [Microfrontends JSON Schema](https://openapi.vercel.sh/microfrontends.json)
+- [Official Example Repository](https://github.com/vercel-labs/microfrontends-nextjs-app-multi-zone)
+- [Next.js Multi-Zones](https://nextjs.org/docs/advanced-features/multi-zones)
