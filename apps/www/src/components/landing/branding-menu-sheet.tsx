@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "Pricing", href: "/pricing" },
   { label: "Updates", href: "/updates" },
-  { label: "Docs", href: "/docs" },
+  { label: "Docs", href: "/docs/get-started/overview" },
   { label: "Early Access", href: "/early-access" },
 ] as const;
 
@@ -106,7 +106,7 @@ export function BrandingMenuSheet({
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
         {/* Header with Logo and Close Button */}
-        <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-8 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-4 flex items-center justify-between">
           <div className="-ml-2 flex items-center">
             <Button variant="ghost" size="lg" className="group" asChild>
               <Link href="/" onClick={handleHomeClick}>

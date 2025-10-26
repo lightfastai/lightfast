@@ -1,7 +1,7 @@
 import { getPage, getPages } from "@/src/lib/source";
 import { mdxComponents } from "@/mdx-components";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
 import { DocsLayout } from "@/src/components/docs-layout";
 
@@ -11,6 +11,12 @@ export default async function Page({
   params: Promise<{ slug?: string[] }>;
 }) {
   const resolvedParams = await params;
+
+  // Redirect /docs to /docs/get-started/overview
+  if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
+    redirect("/docs/get-started/overview");
+  }
+
   const page = getPage(resolvedParams.slug);
 
   if (!page) {
@@ -19,7 +25,7 @@ export default async function Page({
 
   // Show custom landing page for the get-started/overview page
   if (
-    resolvedParams.slug?.length === 2 &&
+    resolvedParams.slug.length === 2 &&
     resolvedParams.slug[0] === "get-started" &&
     resolvedParams.slug[1] === "overview"
   ) {
