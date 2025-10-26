@@ -20,7 +20,17 @@ export function ReadyToOrchestrateSection() {
           >
             {/* Right image - absolutely positioned to extend to edges */}
             <div className="absolute top-0 right-0 bottom-0 w-[30%] overflow-hidden hidden lg:block">
-              <div className="h-full transition-transform duration-700 ease-out group-hover:scale-110"></div>
+              <div className="h-full transition-transform duration-700 ease-out group-hover:scale-110">
+                <Image
+                  src="/images/playground-placeholder-4.webp"
+                  alt="Lightfast Playground"
+                  width={800}
+                  height={600}
+                  className="w-full h-full object-cover"
+                  priority
+                  unoptimized
+                />
+              </div>
             </div>
 
             {/* Content - with right padding to avoid image overlap */}

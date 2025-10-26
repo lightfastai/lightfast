@@ -1,6 +1,6 @@
 "use client";
 
-import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
+import { WaitlistForm } from "~/app/(app)/(search)/_components/(waitlist)/waitlist-form";
 import { exposureTrial } from "~/lib/fonts";
 
 export function CenteredWaitlistSection() {

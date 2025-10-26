@@ -30,7 +30,6 @@ type UrlSuffix = z.infer<typeof urlSuffixSchema>;
  * @private
  */
 const createEnvironmentUrl = (suffix: UrlSuffix = ""): string => {
-  // eslint-disable-next-line no-restricted-properties
   const port = process.env.PORT ?? 4105;
 
   // Parse and validate the suffix

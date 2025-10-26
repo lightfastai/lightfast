@@ -18,7 +18,7 @@ const NavigationOverlayContext = createContext<
  *
  * Provides shared navigation overlay state that persists across route group changes.
  * This ensures the overlay animation isn't interrupted when navigating between
- * (marketing) and (branding) route groups.
+ * (search) and other route groups.
  */
 export function NavigationOverlayProvider({
   children,
