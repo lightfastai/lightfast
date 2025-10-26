@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -17,6 +17,21 @@ type WaitlistState =
       fieldErrors: { email?: string[] };
       error: string;
     };
+
+// API Response types matching the server
+type WaitlistSuccessResponse = {
+  success: true;
+  message: string;
+};
+
+type WaitlistErrorResponse = {
+  success: false;
+  error: string;
+  isRateLimit?: boolean;
+  fieldErrors?: { email?: string[] };
+};
+
+type WaitlistResponse = WaitlistSuccessResponse | WaitlistErrorResponse;
 
 export function WaitlistForm() {
   const [state, setState] = useState<WaitlistState>({ status: "idle" });
@@ -57,7 +72,7 @@ export function WaitlistForm() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as WaitlistResponse;
 
       if (!response.ok || !data.success) {
         // Handle validation errors
@@ -65,7 +80,7 @@ export function WaitlistForm() {
           setState({
             status: "validation_error",
             fieldErrors: data.fieldErrors,
-            error: data.error || "Please fix the errors below",
+            error: data.error ?? "Please fix the errors below",
           });
           return;
         }
@@ -73,7 +88,7 @@ export function WaitlistForm() {
         // Handle other errors
         setState({
           status: "error",
-          error: data.error || "An error occurred. Please try again.",
+          error: data.error ?? "An error occurred. Please try again.",
           isRateLimit: data.isRateLimit,
         });
         return;
@@ -82,7 +97,7 @@ export function WaitlistForm() {
       // Success
       setState({
         status: "success",
-        message: data.message || "Successfully joined the waitlist!",
+        message: data.message ?? "Successfully joined the waitlist!",
       });
       setEmail(""); // Clear the input
     } catch (error) {
