@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/pricing", label: "Pricing" },
   { href: "/updates", label: "Updates" },
-  { href: "/docs", label: "Docs" }, // Cross-zone link to docs microfrontend
+  { href: "/docs/get-started/overview", label: "Docs" }, // Cross-zone link to docs microfrontend
   { href: "/early-access", label: "Early Access" },
 ] as const;
 
@@ -73,32 +73,38 @@ export function MarketingSidebar() {
       className="border-0 pl-16 ![border-right:0]"
     >
       {/* Header with Logo and Sidebar Trigger */}
-      <SidebarHeader className="flex flex-row items-center gap-2 py-4 px-0">
-        <div className="-ml-2 flex items-center">
-          <Button
-            variant="ghost"
-            size="lg"
-            className="hover:bg-black group"
-            asChild
-          >
-            <MicrofrontendLink href="/" onClick={handleNavClick("/")}>
-              <Icons.logo className="size-22 text-foreground group-hover:text-white transition-colors" />
-            </MicrofrontendLink>
-          </Button>
+      <SidebarHeader className="p-0">
+        <div className="flex flex-row items-center gap-2 py-4 px-0 border-b border-border/30">
+          <div className="-ml-2 flex items-center">
+            <Button
+              variant="ghost"
+              size="lg"
+              className="hover:bg-black group"
+              asChild
+            >
+              <MicrofrontendLink href="/" onClick={handleNavClick("/")}>
+                <Icons.logo className="size-22 text-foreground group-hover:text-white transition-colors" />
+              </MicrofrontendLink>
+            </Button>
+          </div>
+          <SidebarTrigger />
         </div>
-        <SidebarTrigger />
       </SidebarHeader>
 
-      {/* Navigation Content with Matrix at top */}
-      <SidebarContent className="pt-[20vh] pb-8 px-0">
+      {/* Navigation Content */}
+      <SidebarContent className="pt-8 pb-8 px-0">
+        {/* Matrix Animation */}
         <SidebarGroup className="px-0">
           <SidebarGroupContent className="px-0">
-            {/* Matrix Animation */}
             <div className="mb-8">
               <LightfastSineWaveMatrix />
             </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-            {/* Navigation Menu */}
+        {/* Navigation Menu */}
+        <SidebarGroup className="px-0">
+          <SidebarGroupContent className="px-0">
             <SidebarMenu className="gap-3">
               {NAV_ITEMS.map((link) => {
                 const isActive = pathname === link.href;
