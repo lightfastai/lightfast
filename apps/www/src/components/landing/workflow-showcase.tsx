@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Check, Clock, Loader2, GitPullRequest, Circle } from "lucide-react";
 
 interface WorkflowStep {
@@ -43,7 +43,7 @@ export function WorkflowShowcase() {
     { name: "Slack", status: "connected", color: "text-yellow-400" },
   ];
 
-  const workflows: Workflow[] = [
+  const workflows: Workflow[] = useMemo(() => [
     {
       number: 127,
       title: "feat: Add Clerk authentication",
@@ -369,9 +369,9 @@ export function WorkflowShowcase() {
         "Added request validation schemas",
       ],
     },
-  ];
+  ], []);
 
-  const defaultWorkflowSteps: WorkflowStep[] = [
+  const defaultWorkflowSteps: WorkflowStep[] = useMemo(() => [
     { text: "Creating feature branch", status: "pending", tool: "GitHub" },
     {
       text: "Generating PR from latest commits",
@@ -398,7 +398,7 @@ export function WorkflowShowcase() {
       status: "pending",
       tool: "Slack",
     },
-  ];
+  ], []);
 
   const [steps, setSteps] = useState<WorkflowStep[]>(defaultWorkflowSteps);
 
