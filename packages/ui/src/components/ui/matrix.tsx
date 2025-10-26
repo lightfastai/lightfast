@@ -295,7 +295,7 @@ export function vu(columns: number, levels: number[]): Frame {
   const frame = emptyFrame(rows, columns)
 
   for (let col = 0; col < Math.min(columns, levels.length); col++) {
-    const level = Math.max(0, Math.min(1, levels[col]))
+    const level = Math.max(0, Math.min(1, levels[col] ?? 0))
     const height = Math.floor(level * rows)
 
     for (let row = 0; row < rows; row++) {
@@ -309,7 +309,10 @@ export function vu(columns: number, levels: number[]): Frame {
         } else {
           brightness = 0.6
         }
-        frame[row][col] = brightness
+        const rowArray = frame[row];
+        if (rowArray) {
+          rowArray[col] = brightness;
+        }
       }
     }
   }
@@ -349,7 +352,7 @@ export const snake: Frame[] = (() => {
   const frames: Frame[] = []
   const rows = 7
   const cols = 7
-  const path: Array<[number, number]> = []
+  const path: [number, number][] = []
 
   let x = 0
   let y = 0
@@ -404,9 +407,12 @@ export const snake: Frame[] = (() => {
     for (let i = 0; i < snakeLength; i++) {
       const idx = frame - i
       if (idx >= 0 && idx < path.length) {
-        const [y, x] = path[idx]
-        const brightness = 1 - i / snakeLength
-        setPixel(f, y, x, brightness)
+        const point = path[idx];
+        if (point) {
+          const [y, x] = point;
+          const brightness = 1 - i / snakeLength;
+          setPixel(f, y, x, brightness);
+        }
       }
     }
 
@@ -459,7 +465,8 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
       }
 
       if (frames && frames.length > 0) {
-        return ensureFrameSize(frames[frameIndex] || frames[0], rows, cols)
+        const firstFrame = frames[0];
+        return ensureFrameSize(frames[frameIndex] ?? (firstFrame ?? []), rows, cols)
       }
 
       return ensureFrameSize([], rows, cols)
@@ -470,10 +477,13 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
 
       for (let row = 0; row < rows; row++) {
         positions[row] = []
-        for (let col = 0; col < cols; col++) {
-          positions[row][col] = {
-            x: col * (size + gap),
-            y: row * (size + gap),
+        const rowPositions = positions[row];
+        if (rowPositions) {
+          for (let col = 0; col < cols; col++) {
+            rowPositions[col] = {
+              x: col * (size + gap),
+              y: row * (size + gap),
+            }
           }
         }
       }

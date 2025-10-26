@@ -1,89 +1,116 @@
+import Link from "next/link";
+import Image from "next/image";
 import { CodeEditor } from "@/src/components/code-editor";
+import { exposureTrial } from "@/src/lib/fonts";
 
 const products = [
-	{
-		name: "cloud",
-		title: "Lightfast Cloud",
-		description: "Deploy and manage AI agents at scale with our cloud platform",
-		gradient: "from-blue-400 via-purple-400 to-indigo-400",
-		href: "/cloud",
-	},
-	{
-		name: "chat",
-		title: "Lightfast Chat",
-		description:
-			"Our in-house chat experience that provides multiple models out of the box",
-		gradient: "from-purple-400 via-pink-400 to-red-400",
-		href: "/chat",
-	},
+  {
+    name: "cloud",
+    title: "Lightfast Cloud",
+    description: "Deploy and manage AI agents at scale with our cloud platform",
+    image: "/images/cloud-preview.webp",
+    href: "/cloud",
+  },
+  {
+    name: "chat",
+    title: "Lightfast Chat",
+    description:
+      "Our in-house chat experience that provides multiple models out of the box",
+    image: "/images/chat-preview.webp",
+    href: "/chat",
+  },
 ];
 
 export function DeveloperPlatformLanding() {
-    return (
-        <div className="mx-auto max-w-4xl px-4 py-16">
-            <div className="mx-auto">
-				{/* Header */}
-				<div className="text-left">
-					<h1 className="text-3xl font-semibold tracking-tight mb-6">
-						Lightfast Cloud Docs
-					</h1>
-				</div>
+  return (
+    <div className="mx-auto">
+      {/* Header Section */}
+      <div className="pb-32">
+        <div className="space-y-3">
+          <h1
+            className={`text-6xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
+          >
+            Lightfast Cloud Docs
+          </h1>
+          <p className="text-md text-muted-foreground leading-relaxed max-w-md">
+            Build and deploy AI agents with the Lightfast Cloud platform.
+            Everything you need to get started.
+          </p>
+        </div>
+      </div>
 
-				{/* Main Content Grid */}
-                <div className="grid bg-muted/20 rounded-xl p-6 lg:grid-cols-2 gap-12 items-start mb-20">
-					{/* Left Column - Description */}
-					<div>
-						<h2 className="text-sm font-semibold mb-6">Developer quickstart</h2>
-						<p className="text-md text-muted-foreground mb-6 leading-relaxed">
-							Make your first agent request in minutes. Learn the basics of the
-							Lightfast platform.
-						</p>
-					</div>
+      {/* Quickstart Section - Grid Layout */}
+      <div className="pb-32">
+        <div className="grid grid-cols-1 bg-card border border-border rounded-sm p-6 lg:grid-cols-12 gap-16">
+          {/* Left Column: Description (5/12) */}
+          <div className="lg:col-span-5 flex flex-col">
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
+                Quickstart
+              </p>
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+                Make your first agent request in minutes
+              </h3>
+            </div>
+            <div className="flex-1 flex items-center">
+              <div className="space-y-6 -mt-8">
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Learn the basics of the Lightfast platform. Create, deploy,
+                  and manage AI agents with our developer-friendly APIs.
+                </p>
+              </div>
+            </div>
+          </div>
 
-					{/* Right Column - Code Editor */}
-					<div>
-						<CodeEditor />
-					</div>
-				</div>
+          {/* Right Column: Code Editor (7/12) */}
+          <div className="lg:col-span-7 h-full">
+            <CodeEditor />
+          </div>
+        </div>
+      </div>
 
-				{/* Products Section */}
-				<div className="mb-16">
-					<div className="flex justify-between items-center mb-8">
-						<h2 className="text-2xl font-semibold">Explore products</h2>
-					</div>
-					<div className="grid md:grid-cols-2 gap-6">
-						{products.map((product) => (
-							<a
-								key={product.name}
-								href={product.href}
-								className="group cursor-pointer block"
-							>
-								{/* Gradient Card */}
-								<div
-									className={`relative h-32 bg-gradient-to-br ${product.gradient} rounded-lg mb-4 transition-transform group-hover:scale-105`}
-								>
-									<div className="absolute inset-0 bg-black/10 rounded-lg" />
-									<div className="absolute inset-0 flex items-center justify-center">
-										<h3 className="text-white text-2xl font-semibold drop-shadow-lg">
-											{product.title}
-										</h3>
-									</div>
-								</div>
+      {/* Products Section */}
+      <div className="py-32">
+        <div className="space-y-12">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
+              <span>Products</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+              Explore the Lightfast ecosystem
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {products.map((product) => (
+              <Link
+                key={product.name}
+                href={product.href}
+                className="group cursor-pointer block"
+              >
+                {/* Image Card */}
+                <div className="relative h-64 rounded-sm mb-4 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                  <Image
+                    src={product.image}
+                    alt={product.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
 
-								{/* Card Content */}
-								<div>
-									<h4 className="text-xl font-semibold mb-2">
-										{product.title}
-									</h4>
-									<p className="text-muted-foreground text-sm leading-relaxed">
-										{product.description}
-									</p>
-								</div>
-							</a>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+                {/* Card Content */}
+                <div className="space-y-2">
+                  <h4 className="text-xl font-semibold text-foreground">
+                    {product.title}
+                  </h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {product.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

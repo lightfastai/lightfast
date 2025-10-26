@@ -4,19 +4,19 @@ import type { CodeReviewTool } from "./code-review";
  * Repository level shared types.
  */
 
-export type RepositoryPermissions = {
+export interface RepositoryPermissions {
   admin: boolean;
   push: boolean;
   pull: boolean;
-};
+}
 
-export type CodeReviewSettings = {
+export interface CodeReviewSettings {
   enabled?: boolean;
   tool?: CodeReviewTool;
   command?: string;
-};
+}
 
-export type RepositoryMetadata = {
+export interface RepositoryMetadata {
   fullName?: string;
   description?: string;
   language?: string;
@@ -28,4 +28,4 @@ export type RepositoryMetadata = {
   deleted?: boolean;
   deletedAt?: string;
   extras?: Record<string, unknown>;
-};
+}

@@ -96,7 +96,7 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             <div className="px-16 py-16">
               {/* Page Content */}
-              <main className="min-w-0 max-w-6xl mx-auto">{children}</main>
+              <main className="min-w-0">{children}</main>
             </div>
           </div>
         </SidebarInset>

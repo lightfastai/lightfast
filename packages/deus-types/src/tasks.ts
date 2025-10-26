@@ -10,7 +10,7 @@ export const TASK_STATUS = ["open", "resolved", "dismissed"] as const;
 
 export type TaskStatus = (typeof TASK_STATUS)[number];
 
-export type TaskMetadata = {
+export interface TaskMetadata {
   githubCommentId?: string;
   filePath?: string;
   line?: number;
@@ -19,4 +19,4 @@ export type TaskMetadata = {
   codeSnippet?: string;
   suggestion?: string;
   category?: string;
-};
+}

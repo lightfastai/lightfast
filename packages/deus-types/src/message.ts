@@ -51,20 +51,18 @@ export interface RunCodingToolOutput {
 /**
  * Tool set definition for Deus CLI interactions.
  */
-export type LightfastAppDeusToolSet = {
+export interface LightfastAppDeusToolSet {
 	run_coding_tool: {
 		input: RunCodingToolInput;
 		output: RunCodingToolOutput;
 	};
-};
+}
 
 /**
  * Custom data types for Deus streaming.
  * Currently empty but can be extended for custom streaming events.
  */
-export interface LightfastAppDeusUICustomDataTypes {
-	[key: string]: unknown;
-}
+export type LightfastAppDeusUICustomDataTypes = Record<string, unknown>;
 
 /**
  * Main UI message type for Deus CLI sessions.
