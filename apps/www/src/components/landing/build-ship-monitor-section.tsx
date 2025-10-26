@@ -174,27 +174,27 @@ export function BuildShipMonitorSection() {
 									<div className="relative overflow-hidden rounded-xl border bg-card">
 										<div className="absolute inset-0 bg-gradient-to-br from-emerald-950/20 to-emerald-900/20" />
 										<div className="relative p-8 h-[600px] flex items-center justify-center">
-											{/* 
+											{/*
 												TODO: Replace with actual graphics based on section:
-												
+
 												BUILD Section (activeSection === 0):
 												- State machine diagram showing nodes and connections
 												- Workflow orchestration visualization with branching paths
 												- Resource allocation grid showing sandbox/browser instances
 												- Human approval flow diagram with decision points
-												
+
 												SHIP Section (activeSection === 1):
 												- Deployment pipeline visualization (similar to CI/CD flow)
 												- Global infrastructure map with edge locations
 												- Version timeline with rollback capabilities
 												- Performance metrics dashboard preview
-												
+
 												MONITOR Section (activeSection === 2):
 												- Real-time metrics charts (cost, latency, tokens)
 												- Alert system visualization with thresholds
 												- Execution trace tree diagram
 												- Live dashboard with multiple metric streams
-												
+
 												Style guidelines:
 												- Use emerald-400/500 for primary accents
 												- Dark background with subtle grid pattern

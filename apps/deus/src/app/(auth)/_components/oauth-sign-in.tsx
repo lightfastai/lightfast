@@ -19,7 +19,9 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: "/dashboard",
+				redirectUrlComplete: "/onboarding",
+				// Let Clerk handle redirect based on session state (pending/active)
+				// Pending users will be redirected to taskUrls, active users to signInFallbackRedirectUrl
 			});
 		} catch {
 			toast.error("Failed to sign in. Please try again.");

@@ -8,17 +8,10 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as AgentsAgentIdRouteImport } from './routes/agents/$agentId'
-import { ServerRoute as ApiStreamServerRouteImport } from './routes/api/stream'
-import { ServerRoute as ApiAgentsServerRouteImport } from './routes/api/agents'
-import { ServerRoute as ApiAgentsAgentIdServerRouteImport } from './routes/api/agents.$agentId'
-
-const rootServerRouteImport = createServerRootRoute()
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,21 +27,6 @@ const AgentsAgentIdRoute = AgentsAgentIdRouteImport.update({
   id: '/agents/$agentId',
   path: '/agents/$agentId',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStreamServerRoute = ApiStreamServerRouteImport.update({
-  id: '/api/stream',
-  path: '/api/stream',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAgentsServerRoute = ApiAgentsServerRouteImport.update({
-  id: '/api/agents',
-  path: '/api/agents',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAgentsAgentIdServerRoute = ApiAgentsAgentIdServerRouteImport.update({
-  id: '/$agentId',
-  path: '/$agentId',
-  getParentRoute: () => ApiAgentsServerRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -80,34 +58,6 @@ export interface RootRouteChildren {
   AgentsAgentIdRoute: typeof AgentsAgentIdRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
 }
-export interface FileServerRoutesByFullPath {
-  '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/stream': typeof ApiStreamServerRoute
-  '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/stream': typeof ApiStreamServerRoute
-  '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/agents': typeof ApiAgentsServerRouteWithChildren
-  '/api/stream': typeof ApiStreamServerRoute
-  '/api/agents/$agentId': typeof ApiAgentsAgentIdServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/agents' | '/api/stream' | '/api/agents/$agentId'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/agents' | '/api/stream' | '/api/agents/$agentId'
-  id: '__root__' | '/api/agents' | '/api/stream' | '/api/agents/$agentId'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiAgentsServerRoute: typeof ApiAgentsServerRouteWithChildren
-  ApiStreamServerRoute: typeof ApiStreamServerRoute
-}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
@@ -134,43 +84,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/stream': {
-      id: '/api/stream'
-      path: '/api/stream'
-      fullPath: '/api/stream'
-      preLoaderRoute: typeof ApiStreamServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/agents': {
-      id: '/api/agents'
-      path: '/api/agents'
-      fullPath: '/api/agents'
-      preLoaderRoute: typeof ApiAgentsServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/agents/$agentId': {
-      id: '/api/agents/$agentId'
-      path: '/$agentId'
-      fullPath: '/api/agents/$agentId'
-      preLoaderRoute: typeof ApiAgentsAgentIdServerRouteImport
-      parentRoute: typeof ApiAgentsServerRoute
-    }
-  }
-}
-
-interface ApiAgentsServerRouteChildren {
-  ApiAgentsAgentIdServerRoute: typeof ApiAgentsAgentIdServerRoute
-}
-
-const ApiAgentsServerRouteChildren: ApiAgentsServerRouteChildren = {
-  ApiAgentsAgentIdServerRoute: ApiAgentsAgentIdServerRoute,
-}
-
-const ApiAgentsServerRouteWithChildren = ApiAgentsServerRoute._addFileChildren(
-  ApiAgentsServerRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -180,10 +93,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiAgentsServerRoute: ApiAgentsServerRouteWithChildren,
-  ApiStreamServerRoute: ApiStreamServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

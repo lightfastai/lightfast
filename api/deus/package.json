@@ -25,6 +25,9 @@
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
 		"@db/deus": "workspace:*",
+		"@repo/deus-api-key": "workspace:*",
+		"@repo/deus-octokit-github": "workspace:*",
+		"@repo/deus-types": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"@tanstack/react-query": "catalog:",

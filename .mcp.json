@@ -12,6 +12,12 @@
 				"--isolated",
 				"--no-sandbox"
 			]
+		},
+		"deus-session": {
+			"command": "node",
+			"args": [
+				"./core/deus/dist/mcp-server/index.js"
+			]
 		}
 	}
 }

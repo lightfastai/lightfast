@@ -3,6 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 
+import { ExternalLink } from "lucide-react";
+
 import { Icons } from "@repo/ui/components/icons";
 import { Button, buttonVariants } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -13,10 +15,40 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
+import { chatUrl, cloudUrl, deusUrl } from "~/lib/related-projects";
 import { UnauthenticatedMobileNav } from "./layouts/unauthenticated-mobile-nav";
-import { chatUrl, cloudUrl } from "~/lib/related-projects";
 
 export function EnhancedHeader() {
+
+	const productLinks: {
+		label: string;
+		href: string;
+		target?: "_blank";
+		rel?: string;
+		isExternal?: boolean;
+	}[] = [
+		{
+			label: "Chat",
+			href: chatUrl,
+			target: "_blank",
+			rel: "noopener noreferrer",
+			isExternal: true,
+		},
+		{
+			label: "Cloud",
+			href: cloudUrl,
+		},
+		{
+			label: "SDK",
+			href: "/docs",
+		},
+	];
 
 	return (
 		<header className="h-14 bg-background px-4 sm:px-6 lg:px-8">
@@ -39,70 +71,23 @@ export function EnhancedHeader() {
 									Products
 								</NavigationMenuTrigger>
 								<NavigationMenuContent className="bg-background">
-									<div className="flex flex-col gap-3 p-3 rounded-sm md:w-[300px]">
-										<h3 className="text-2xs font-medium text-muted-foreground px-4">
-											Core Features
-										</h3>
-										{/* Chat Product */}
-										<Button
-											variant="ghost"
-											className="h-auto justify-start w-full"
-											asChild
-										>
-											<Link
-												href={chatUrl}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												<div className="text-left w-full">
-													<div className="text-xs font-medium leading-none mb-1">
-														Chat
-													</div>
-													<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
-														Interactive AI assistant for your development
-														workflow
-													</p>
-												</div>
-											</Link>
-										</Button>
-
-										{/* Cloud Product */}
-										<Button
-											variant="ghost"
-											className="h-auto justify-start w-full"
-											asChild
-										>
-											<Link href={cloudUrl}>
-												<div className="text-left w-full">
-													<div className="text-xs font-medium leading-none mb-1">
-														Cloud
-													</div>
-													<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
-														Managed infrastructure for deploying AI agents at
-														scale
-													</p>
-												</div>
-											</Link>
-										</Button>
-
-										{/* SDK Product */}
-										<Button
-											variant="ghost"
-											className="h-auto justify-start w-full"
-											asChild
-										>
-											<Link href="/docs">
-												<div className="text-left w-full">
-													<div className="text-xs font-medium leading-none mb-1">
-														SDK
-													</div>
-													<p className="text-muted-foreground text-xs leading-snug whitespace-normal break-words">
-														Developer tools for building and orchestrating AI
-														agents
-													</p>
-												</div>
-											</Link>
-										</Button>
+									<div className="flex flex-col gap-3 rounded-sm p-1 md:w-[160px]">
+										<div className="flex flex-col gap-1">
+											{productLinks.map((item) => (
+												<Link
+													key={item.label}
+													href={item.href}
+													target={item.target}
+													rel={item.rel}
+													className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+												>
+													<span>{item.label}</span>
+													{item.isExternal ? (
+														<ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+													) : null}
+												</Link>
+											))}
+										</div>
 									</div>
 								</NavigationMenuContent>
 							</NavigationMenuItem>
@@ -116,17 +101,33 @@ export function EnhancedHeader() {
 									Docs
 								</Link>
 							</NavigationMenuItem>
-
 						</NavigationMenuList>
 					</NavigationMenu>
 
 					{/* Desktop actions - hidden on lg and below */}
 					<div className="hidden xl:flex items-center gap-2">
-						<Button variant="default" asChild>
-							<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
-								Try Chat
-							</Link>
-						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="default">Log In</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem asChild>
+									<Link href={cloudUrl} target="_blank" rel="noopener noreferrer">
+										Cloud
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+										Chat
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href={deusUrl} target="_blank" rel="noopener noreferrer">
+										Deus
+									</Link>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<div className="flex h-4 items-center px-3">
 							<Separator orientation="vertical" />
 						</div>

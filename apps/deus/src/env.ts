@@ -15,11 +15,13 @@ export const env = createEnv({
 	},
 	server: {
 		HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-		// GitHub App credentials (for repository connection)
-		GITHUB_APP_ID: z.string().min(1).optional(),
-		GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
-		GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
-		GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
+		// GitHub App credentials (required)
+		GITHUB_APP_ID: z.string().min(1),
+		GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+		GITHUB_CLIENT_ID: z.string().min(1),
+		GITHUB_CLIENT_SECRET: z.string().min(1),
+		GITHUB_WEBHOOK_SECRET: z.string().min(32),
+		// No ANTHROPIC_API_KEY needed - Vercel AI Gateway uses VERCEL_OIDC_TOKEN
 	},
 	client: {
 		NEXT_PUBLIC_VERCEL_ENV: z

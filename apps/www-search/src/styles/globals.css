@@ -1,0 +1,28 @@
+/* Import the base UI globals */
+@import "@repo/ui/globals.css";
+
+/* Override shadcn border-radius via CSS variable */
+:root {
+  --brand-blue: oklch(0.4512 0.275 269.89);
+  --brand-orange: oklch(0.5913 0.2286 31.28);
+  --brand-orange-overlay: oklch(0.6496 0.2375 31.9);
+  --brand-gray: oklch(0.1957 0 0);
+}
+
+.dark {
+  --background: oklch(0 0 0);
+  --card: oklch(0.12 0 0);
+
+  /* Sidebar variables */
+  --sidebar-width: 20rem;
+  --sidebar-width-mobile: 18rem;
+  --sidebar-width-icon: 3rem;
+  --sidebar: oklch(0 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: transparent;
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: transparent;
+  --sidebar-ring: oklch(0.556 0 0);
+}

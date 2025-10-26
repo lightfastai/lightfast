@@ -19,7 +19,9 @@ export function OAuthSignUp() {
 			await signUp.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-up/sso-callback",
-				redirectUrlComplete: "/dashboard",
+				redirectUrlComplete: "/onboarding",
+				// Let Clerk handle redirect based on session state (pending/active)
+				// Pending users will be redirected to taskUrls, active users to signUpFallbackRedirectUrl
 			});
 		} catch {
 			toast.error("Failed to sign up. Please try again.");

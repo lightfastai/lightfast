@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "ask": [
+      "Edit",
+      "Write",
+      "Bash(*)"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": false,
+  "disableAllHooks": false,
+  "outputStyle": "default"
+}

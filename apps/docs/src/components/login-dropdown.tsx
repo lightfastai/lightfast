@@ -17,8 +17,12 @@ interface LoginDropdownProps {
 export function LoginDropdown({ chatUrl, cloudUrl }: LoginDropdownProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">Login</Button>
+      <DropdownMenuTrigger asChild suppressHydrationWarning>
+        <Button variant="outline" size="lg" className="rounded-full">
+          <span className="text-xs text-foreground font-medium uppercase tracking-widest">
+            Sign In
+          </span>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>

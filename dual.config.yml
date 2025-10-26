@@ -4,6 +4,9 @@ services:
   www:
     path: apps/www
     envFile: apps/www/.vercel/.env.development.local
+  search:
+    path: apps/www-search
+    envFile: apps/www-search/.vercel/.env.development.local
   cloud:
     path: apps/cloud
     envFile: apps/cloud/.vercel/.env.development.local

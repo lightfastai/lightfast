@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 import { SignUpForm } from "../_components/sign-up-form";
 
 export const metadata: Metadata = {
@@ -14,5 +15,13 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function SignUpPage() {
-	return <SignUpForm />;
+	return (
+		<>
+			{/* RedirectToTasks handles both active AND pending sessions */}
+			<RedirectToTasks />
+			<SignedOut>
+				<SignUpForm />
+			</SignedOut>
+		</>
+	);
 }

@@ -1,0 +1,56 @@
+{
+  "name": "@lightfastai/deus",
+  "version": "0.1.0",
+  "description": "Terminal UI for orchestrating Claude Code & Codex agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "deus": "./dist/cli.js",
+    "deus-mcp": "./dist/mcp-server/index.js"
+  },
+  "scripts": {
+    "dev": "dotenv -e .vercel/.env.development.local -- tsx src/cli.tsx",
+    "with-env": "dotenv -e .vercel/.env.development.local --",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/gateway": "catalog:",
+    "@api/deus": "workspace:^",
+    "@inquirer/prompts": "^7.8.4",
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@repo/deus-api-key": "workspace:^",
+    "@repo/deus-types": "workspace:^",
+    "@trpc/client": "catalog:",
+    "ai": "catalog:",
+    "chalk": "^5.6.0",
+    "commander": "^12.1.0",
+    "execa": "^9.5.2",
+    "ink": "^6.3.1",
+    "nanoid": "^5.1.5",
+    "node-pty": "^1.0.0",
+    "react": "19.2.0",
+    "superjson": "catalog:",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "@types/react": "19.2.2",
+    "dotenv-cli": "^8.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  },
+  "keywords": [
+    "terminal",
+    "tui",
+    "claude-code",
+    "codex",
+    "ai-agents"
+  ]
+}

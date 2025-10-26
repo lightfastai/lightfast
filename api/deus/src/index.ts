@@ -1,3 +1,8 @@
+// Export router types for client usage
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+
+import type { DeusAppRouter } from "./root";
+
 /**
  * Deus API exports
  */
@@ -8,10 +13,6 @@ export type { DeusAppRouter } from "./root";
 
 // Export context creation
 export { createTRPCContext } from "./trpc";
-
-// Export router types for client usage
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { DeusAppRouter } from "./root";
 
 export type DeusRouterInputs = inferRouterInputs<DeusAppRouter>;
 export type DeusRouterOutputs = inferRouterOutputs<DeusAppRouter>;
