@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { arcjet, shield, detectBot, fixedWindow, validateEmail, ARCJET_KEY } from "@vendor/security";
 import { redis } from "@vendor/upstash";
@@ -9,17 +10,17 @@ import { env } from "~/env";
 export const runtime = "edge";
 
 // Response types
-type WaitlistSuccessResponse = {
+interface WaitlistSuccessResponse {
 	success: true;
 	message: string;
-};
+}
 
-type WaitlistErrorResponse = {
+interface WaitlistErrorResponse {
 	success: false;
 	error: string;
 	isRateLimit?: boolean;
 	fieldErrors?: { email?: string[] };
-};
+}
 
 type WaitlistResponse = WaitlistSuccessResponse | WaitlistErrorResponse;
 
@@ -83,7 +84,7 @@ const aj = arcjet({
 export async function POST(request: NextRequest): Promise<NextResponse<WaitlistResponse>> {
 	try {
 		// Parse request body
-		const body = await request.json();
+		const body = (await request.json()) as unknown;
 
 		// Parse and validate email
 		const validatedFields = waitlistSchema.safeParse(body);
