@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port $(microfrontends port) --turbo",
-    "build": "next build",
+    "build": "pnpm build:prod",
+    "build:dev": "next build --turbopack",
+    "build:prod": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore",

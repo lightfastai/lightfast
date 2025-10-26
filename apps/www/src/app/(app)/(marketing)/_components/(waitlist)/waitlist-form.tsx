@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -19,17 +20,17 @@ type WaitlistState =
     };
 
 // API Response types matching the server
-type WaitlistSuccessResponse = {
+interface WaitlistSuccessResponse {
   success: true;
   message: string;
-};
+}
 
-type WaitlistErrorResponse = {
+interface WaitlistErrorResponse {
   success: false;
   error: string;
   isRateLimit?: boolean;
   fieldErrors?: { email?: string[] };
-};
+}
 
 type WaitlistResponse = WaitlistSuccessResponse | WaitlistErrorResponse;
 
@@ -75,29 +76,32 @@ export function WaitlistForm() {
       const data = (await response.json()) as WaitlistResponse;
 
       if (!response.ok || !data.success) {
-        // Handle validation errors
-        if (data.fieldErrors) {
+        // Type narrowing: if success is false, data is WaitlistErrorResponse
+        if (!data.success) {
+          // Handle validation errors
+          if (data.fieldErrors) {
+            setState({
+              status: "validation_error",
+              fieldErrors: data.fieldErrors,
+              error: data.error,
+            });
+            return;
+          }
+
+          // Handle other errors
           setState({
-            status: "validation_error",
-            fieldErrors: data.fieldErrors,
-            error: data.error ?? "Please fix the errors below",
+            status: "error",
+            error: data.error,
+            isRateLimit: data.isRateLimit,
           });
           return;
         }
-
-        // Handle other errors
-        setState({
-          status: "error",
-          error: data.error ?? "An error occurred. Please try again.",
-          isRateLimit: data.isRateLimit,
-        });
-        return;
       }
 
-      // Success
+      // Type narrowing: if we got here, data.success is true
       setState({
         status: "success",
-        message: data.message ?? "Successfully joined the waitlist!",
+        message: data.message,
       });
       setEmail(""); // Clear the input
     } catch (error) {

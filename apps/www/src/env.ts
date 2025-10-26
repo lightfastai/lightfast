@@ -37,6 +37,7 @@ export const env = createEnv({
 	server: {
 		RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
 		HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+		PORT: z.coerce.number().positive().optional().default(3000),
 	},
 
 	/**
@@ -53,6 +54,7 @@ export const env = createEnv({
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
 	},
+	// Server variables don't need to be in experimental__runtimeEnv
 	skipValidation:
 		!!process.env.CI || process.env.npm_lifecycle_event === "lint",
 
