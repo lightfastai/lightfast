@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { env } from "~/env";
+import { env } from "@/src/env";
 
 export const runtime = "edge";
 
