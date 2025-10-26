@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { env } from "@/src/env";
 
 export const runtime = "edge";
 
@@ -12,7 +13,7 @@ export function GET(_request: NextRequest) {
     status: "ok",
     timestamp: new Date().toISOString(),
     service: "docs",
-    environment: process.env.NODE_ENV,
+    environment: env.NODE_ENV,
   });
   
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");

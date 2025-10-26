@@ -33,17 +33,17 @@ export const metadata: Metadata = {
   },
 };
 
-type Integration = {
+interface Integration {
   name: string;
   description: string;
   status: "live" | "coming-soon";
-};
+}
 
-type IntegrationCategory = {
+interface IntegrationCategory {
   title: string;
   description: string;
   integrations: Integration[];
-};
+}
 
 const integrationCategories: IntegrationCategory[] = [
   {

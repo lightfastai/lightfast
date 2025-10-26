@@ -1,13 +1,14 @@
 "use client"
 
 import { useMemo } from "react"
-import { Matrix, type Frame } from "@repo/ui/components/ui/matrix"
+import { Matrix  } from "@repo/ui/components/ui/matrix"
+import type {Frame} from "@repo/ui/components/ui/matrix";
 
 function generateWaveFrames(rows: number, cols: number, frameCount: number): Frame[] {
   const frames: Frame[] = []
 
   for (let frame = 0; frame < frameCount; frame++) {
-    const f: Frame = Array.from({ length: rows }, () => Array(cols).fill(0))
+    const f: number[][] = Array.from({ length: rows }, () => Array(cols).fill(0) as number[])
     const phase = (frame / frameCount) * Math.PI * 2
 
     for (let col = 0; col < cols; col++) {
@@ -15,15 +16,24 @@ function generateWaveFrames(rows: number, cols: number, frameCount: number): Fra
       const height = Math.sin(phase + colPhase) * (rows / 3) + rows / 2
       const row = Math.floor(height)
 
-      if (row >= 0 && row < rows && f[row]) {
-        f[row]![col] = 1
-        const frac = height - row
-        if (row > 0 && f[row - 1]) f[row - 1]![col] = 1 - frac
-        if (row < rows - 1 && f[row + 1]) f[row + 1]![col] = frac
+      if (row >= 0 && row < rows) {
+        const currentRow = f[row];
+        if (currentRow) {
+          currentRow[col] = 1;
+          const frac = height - row;
+          if (row > 0) {
+            const prevRow = f[row - 1];
+            if (prevRow) prevRow[col] = 1 - frac;
+          }
+          if (row < rows - 1) {
+            const nextRow = f[row + 1];
+            if (nextRow) nextRow[col] = frac;
+          }
+        }
       }
     }
 
-    frames.push(f)
+    frames.push(f as Frame)
   }
 
   return frames

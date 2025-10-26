@@ -1,40 +1,41 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { joinWaitlistAction } from "./_actions/waitlist";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import { captureException } from "@sentry/nextjs";
 
-function SubmitButton({ hasEmail }: { hasEmail: boolean }) {
-  const { pending } = useFormStatus();
+type WaitlistState =
+  | { status: "idle" }
+  | { status: "pending" }
+  | { status: "success"; message: string }
+  | { status: "error"; error: string; isRateLimit?: boolean }
+  | {
+      status: "validation_error";
+      fieldErrors: { email?: string[] };
+      error: string;
+    };
 
-  return (
-    <Button
-      type="submit"
-      disabled={!hasEmail || pending}
-      size="lg"
-      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
-    >
-      {pending ? (
-        <>
-          <Loader2 className="size-4 animate-spin mr-2" />
-          Joining...
-        </>
-      ) : (
-        "Join Waitlist"
-      )}
-    </Button>
-  );
+// API Response types matching the server
+interface WaitlistSuccessResponse {
+  success: true;
+  message: string;
 }
 
+interface WaitlistErrorResponse {
+  success: false;
+  error: string;
+  isRateLimit?: boolean;
+  fieldErrors?: { email?: string[] };
+}
+
+type WaitlistResponse = WaitlistSuccessResponse | WaitlistErrorResponse;
+
 export function WaitlistForm() {
-  const [state, formAction] = useActionState(joinWaitlistAction, {
-    status: "idle",
-  });
+  const [state, setState] = useState<WaitlistState>({ status: "idle" });
   const [email, setEmail] = useState("");
 
   // Track client-side errors
@@ -56,6 +57,68 @@ export function WaitlistForm() {
     }
   }, [state]);
 
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email) return;
+
+    setState({ status: "pending" });
+
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = (await response.json()) as WaitlistResponse;
+
+      if (!response.ok || !data.success) {
+        // Type narrowing: if success is false, data is WaitlistErrorResponse
+        if (!data.success) {
+          // Handle validation errors
+          if (data.fieldErrors) {
+            setState({
+              status: "validation_error",
+              fieldErrors: data.fieldErrors,
+              error: data.error,
+            });
+            return;
+          }
+
+          // Handle other errors
+          setState({
+            status: "error",
+            error: data.error,
+            isRateLimit: data.isRateLimit,
+          });
+          return;
+        }
+      }
+
+      // Type narrowing: if we got here, data.success is true
+      setState({
+        status: "success",
+        message: data.message,
+      });
+      setEmail(""); // Clear the input
+    } catch (error) {
+      console.error("Waitlist submission error:", error);
+      captureException(error, {
+        tags: {
+          component: "waitlist-form",
+          error_type: "network_error",
+        },
+      });
+      setState({
+        status: "error",
+        error: "Network error. Please check your connection and try again.",
+      });
+    }
+  };
+
   if (state.status === "success") {
     return (
       <>
@@ -71,8 +134,10 @@ export function WaitlistForm() {
     );
   }
 
+  const isPending = state.status === "pending";
+
   return (
-    <form action={formAction} className="w-full flex flex-col gap-3">
+    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
       <div className="relative flex items-center">
         <Input
           type="email"
@@ -81,6 +146,7 @@ export function WaitlistForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={isPending}
           className="pr-56 pl-8 rounded-full h-12 text-foreground"
           aria-describedby="email-error"
           aria-invalid={
@@ -91,7 +157,21 @@ export function WaitlistForm() {
         <span className="absolute right-36 text-xs text-muted-foreground pointer-events-none">
           Press Enter
         </span>
-        <SubmitButton hasEmail={email.length > 0} />
+        <Button
+          type="submit"
+          disabled={!email || isPending}
+          size="lg"
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin mr-2" />
+              Joining...
+            </>
+          ) : (
+            "Join Waitlist"
+          )}
+        </Button>
       </div>
       {state.status === "validation_error" && state.fieldErrors.email && (
         <p id="email-error" className="text-xs text-destructive pl-3">

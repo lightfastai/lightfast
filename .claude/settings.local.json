@@ -163,7 +163,8 @@
       "Bash(pnpm build:docs:*)",
       "Bash(pnpm build:experimental:*)",
       "Bash(tee:*)",
-      "Bash(pnpm clean:*)"
+      "Bash(pnpm clean:*)",
+      "Read(//private/tmp/repos/microfrontends-nextjs-app-multi-zone/**)"
     ],
     "deny": []
   },

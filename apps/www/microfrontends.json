@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "lightfast-www": {
+      "packageName": "@lightfast/www",
+      "development": {
+        "local": 4101,
+        "fallback": "lightfast.ai"
+      }
+    },
+    "lightfast-docs": {
+      "packageName": "@lightfast/docs",
+      "assetPrefix": "docs",
+      "development": {
+        "local": 4102
+      },
+      "routing": [
+        {
+          "group": "docs",
+          "paths": ["/docs", "/docs/:path*"]
+        }
+      ]
+    },
+    "lightfast-www-search": {
+      "packageName": "@lightfast/www-search",
+      "assetPrefix": "search",
+      "development": {
+        "local": 4105
+      },
+      "routing": [
+        {
+          "group": "search",
+          "paths": ["/search", "/search/:path*"]
+        }
+      ]
+    }
+  }
+}

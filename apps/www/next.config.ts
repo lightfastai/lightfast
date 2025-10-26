@@ -1,4 +1,5 @@
 import { NextConfig } from "next";
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 
 import "~/env";
 
@@ -49,24 +50,8 @@ let config: NextConfig = withBetterStack(
 			// ppr: true,
 		},
 
-		// Rewrites for docs app
-		async rewrites() {
-			const docsUrl =
-				env.VERCEL_ENV === "development"
-					? "http://localhost:3002"
-					: "https://lightfast-docs.vercel.app";
-
-			return [
-				{
-					source: "/docs",
-					destination: `${docsUrl}/docs`,
-				},
-				{
-					source: "/docs/:path*",
-					destination: `${docsUrl}/docs/:path*`,
-				},
-			];
-		},
+		// Note: Rewrites for /docs are handled automatically by @vercel/microfrontends
+		// via microfrontends.json configuration. Manual rewrites are not needed.
 	}),
 );
 
@@ -74,4 +59,4 @@ if (env.VERCEL) {
 	config = withSentry(config);
 }
 
-export default config;
+export default withMicrofrontends(config, { debug: true });

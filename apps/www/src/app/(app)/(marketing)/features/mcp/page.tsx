@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IntegrationIcons } from "@repo/ui/integration-icons";
+import type { IntegrationIcons } from "@repo/ui/integration-icons";
 import { exposureTrial } from "~/lib/fonts";
 
 export const metadata: Metadata = {
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
   },
 };
 
-type MCPServer = {
+interface MCPServer {
   name: string;
   slug: keyof typeof IntegrationIcons;
   description: string;
   capabilities: string[];
   status: "connected" | "coming-soon";
-};
+}
 
 const mcpServers: MCPServer[] = [
   {

@@ -306,7 +306,7 @@ export const codeReviewRouter = {
 
       const repository = repositoryResult[0];
 
-      if (!repository || !repository.isActive) {
+      if (!repository?.isActive) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Repository not found or not connected to this organization",
@@ -518,7 +518,7 @@ export const codeReviewRouter = {
 
       const repository = repositoryResult[0];
 
-      if (!repository || !repository.isActive) {
+      if (!repository?.isActive) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Repository not found or not connected to this organization",

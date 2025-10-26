@@ -30,7 +30,7 @@ export type CodeReviewStatus = (typeof CODE_REVIEW_STATUS)[number];
 /**
  * Metadata stored for a code review run.
  */
-export type CodeReviewMetadata = {
+export interface CodeReviewMetadata {
   command?: string;
   triggerCommentId?: string;
   prUrl?: string;
@@ -45,4 +45,4 @@ export type CodeReviewMetadata = {
   deletedAt?: string;
   taskCount?: number;
   error?: string;
-};
+}
