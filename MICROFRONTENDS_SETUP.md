@@ -306,6 +306,34 @@ pnpm dev:docs
 - Proxy handles routing, not basePath stripping
 - Both apps run without basePath configuration
 
+### Issue 4: Next.js Image Optimization Not Working
+**Problem:** Next.js Image component fails to optimize images in microfrontend apps with error: "The requested resource isn't a valid image for /images/... received null"
+
+**Root Cause:**
+- The Next.js Image optimizer (`/_next/image`) cannot resolve image paths correctly through the microfrontend proxy
+- Even though static files in `public/` are accessible directly (e.g., `/images/photo.webp` returns 200), the optimizer fails to read them for processing
+
+**Solution:** ✅ Use unoptimized images
+```tsx
+// Add unoptimized prop to Image components in microfrontend apps
+<Image
+  src="/images/photo.webp"
+  alt="Description"
+  fill
+  className="object-cover"
+  priority
+  unoptimized  // ← Required for microfrontends
+/>
+```
+
+**Notes:**
+- This only affects non-default microfrontend apps (e.g., `www-search`, `docs`)
+- The main/default app (`www`) can use optimized images normally
+- Static images in `public/` folder work fine for direct access
+- Only the Next.js image optimization pipeline is affected
+- Impact: Slightly larger image file sizes, but images still load correctly
+- Alternative: Use external image optimization service (e.g., Cloudinary, Vercel Blob)
+
 ## Files Modified
 
 ### Created

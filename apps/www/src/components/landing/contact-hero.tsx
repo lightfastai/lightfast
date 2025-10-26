@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import { exposureTrial } from "~/lib/fonts";
 
 /**

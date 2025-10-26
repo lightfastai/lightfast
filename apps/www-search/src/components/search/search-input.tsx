@@ -9,10 +9,11 @@ import {
   PromptInputToolbar,
   PromptInputTools,
   PromptInputButton,
-  PromptInputSubmit,
-  type PromptInputMessage,
-  type PromptInputRef,
+  PromptInputSubmit
+  
+  
 } from "@repo/ui/components/ai-elements/prompt-input";
+import type {PromptInputMessage, PromptInputRef} from "@repo/ui/components/ai-elements/prompt-input";
 import { cn } from "@repo/ui/lib/utils";
 
 type SearchContext = "code" | "company" | "docs";
@@ -27,10 +28,10 @@ export function SearchInput() {
     { id: "docs" as const, label: "Docs" },
   ];
 
-  const handleSubmit = async (
+  const handleSubmit = (
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>,
-  ): Promise<void> => {
+  ): void => {
     event.preventDefault();
     const text = message.text ?? "";
     const trimmedText = text.trim();

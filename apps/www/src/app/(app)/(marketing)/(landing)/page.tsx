@@ -1,6 +1,4 @@
-import { HeroDescription } from "~/components/landing/hero-description";
 import { IntegrationShowcase } from "~/components/landing/integration-showcase";
-import { ManifestoGrid } from "~/components/landing/manifesto-grid";
 import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
 import { exposureTrial } from "~/lib/fonts";
 import { LightfastEngineVisual } from "~/components/landing/lightfast-engine-visual";

@@ -36,10 +36,10 @@ export const metadata: Metadata = {
 
 export default function SearchPage() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       {/* Search Section */}
-      <div className="pb-16">
-        <div className="relative max-w-5xl mx-auto">
+      <div className="flex-1 flex items-center justify-center px-4 py-16">
+        <div className="relative max-w-5xl w-full mx-auto">
           <div className="space-y-12">
             {/* Header */}
             <div className="text-center space-y-4">
@@ -68,15 +68,15 @@ export default function SearchPage() {
       </div>
 
       {/* Image Viewer Section */}
-      <div className="py-16">
-        <div className="w-full">
+      <div className="py-16 px-4">
+        <div className="w-full max-w-7xl mx-auto">
           <div className="h-[700px] w-full">
-            <LightfastImageViewer src="/images/playground-placeholder-4.webp">
-              HI
-            </LightfastImageViewer>
+            <LightfastImageViewer
+              src={"/images/playground-placeholder-2.webp"}
+            />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

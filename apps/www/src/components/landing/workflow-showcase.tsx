@@ -36,7 +36,7 @@ export function WorkflowShowcase() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
 
-  const integrations = [
+  const _integrations = [
     { name: "GitHub", status: "connected", color: "text-purple-400" },
     { name: "Linear", status: "connected", color: "text-blue-400" },
     { name: "Vercel", status: "connected", color: "text-foreground" },
@@ -402,50 +402,54 @@ export function WorkflowShowcase() {
 
   const [steps, setSteps] = useState<WorkflowStep[]>(defaultWorkflowSteps);
 
-  // Switch workflow when task is selected
+  // Reset when task changes - use layout effect to avoid flicker
   useEffect(() => {
-    if (selectedTask) {
-      const currentWorkflow = workflows.find(
-        (wf) => wf.number === selectedWorkflow,
-      )!;
+    const updateState = () => {
+      if (selectedTask) {
+        const currentWorkflow = workflows.find(
+          (wf) => wf.number === selectedWorkflow,
+        );
 
-      // Check if task is in completed list
-      const isCompleted =
-        currentWorkflow.tasksCompleted?.some((t) => t.id === selectedTask) ??
-        false;
-
-      const allTasks = [
-        ...(currentWorkflow.tasksCompleted || []),
-        ...(currentWorkflow.tasksRemaining || []),
-      ];
-      const task = allTasks.find((t) => t.id === selectedTask);
-
-      if (task) {
-        // If task is completed, show all steps as completed
-        if (isCompleted) {
-          setSteps(
-            task.workflow.map((step) => ({ ...step, status: "completed" })),
-          );
-          setCurrentStep(task.workflow.length);
-          setIsTaskCompleted(true);
-          setWorkflowStarted(false);
-        } else {
-          // If task is remaining, show steps as pending
-          setSteps(
-            task.workflow.map((step) => ({ ...step, status: "pending" })),
-          );
-          setCurrentStep(0);
-          setIsTaskCompleted(false);
-          setWorkflowStarted(false);
+        if (!currentWorkflow) {
+          setSteps(defaultWorkflowSteps);
+          return;
         }
+
+        const isCompleted =
+          currentWorkflow.tasksCompleted?.some((t) => t.id === selectedTask) ??
+          false;
+
+        const allTasks = [
+          ...(currentWorkflow.tasksCompleted ?? []),
+          ...(currentWorkflow.tasksRemaining ?? []),
+        ];
+        const task = allTasks.find((t) => t.id === selectedTask);
+
+        if (task) {
+          if (isCompleted) {
+            setSteps(task.workflow.map((step) => ({ ...step, status: "completed" as const })));
+            setCurrentStep(task.workflow.length);
+            setIsTaskCompleted(true);
+            setWorkflowStarted(false);
+          } else {
+            setSteps(task.workflow.map((step) => ({ ...step, status: "pending" as const })));
+            setCurrentStep(0);
+            setIsTaskCompleted(false);
+            setWorkflowStarted(false);
+          }
+        }
+      } else {
+        setSteps(defaultWorkflowSteps);
+        setCurrentStep(0);
+        setIsTaskCompleted(false);
+        setWorkflowStarted(false);
       }
-    } else {
-      setSteps(defaultWorkflowSteps);
-      setCurrentStep(0);
-      setIsTaskCompleted(false);
-      setWorkflowStarted(false);
-    }
-  }, [selectedTask, selectedWorkflow]);
+    };
+
+    // Use timeout to avoid synchronous setState in effect
+    const timeoutId = setTimeout(updateState, 0);
+    return () => clearTimeout(timeoutId);
+  }, [selectedTask, selectedWorkflow, defaultWorkflowSteps, workflows]);
 
   useEffect(() => {
     // Only auto-start workflow for default PR workflow (not tasks)
@@ -494,7 +498,7 @@ export function WorkflowShowcase() {
   const isCompleted = currentStep >= steps.length;
   const currentWorkflow = workflows.find(
     (wf) => wf.number === selectedWorkflow,
-  )!;
+  );
 
   const handleStartOrchestration = () => {
     setWorkflowStarted(true);
@@ -559,12 +563,12 @@ export function WorkflowShowcase() {
                   Description
                 </h3>
                 <p className="text-foreground/70 leading-relaxed">
-                  {currentWorkflow.description}
+                  {currentWorkflow?.description}
                 </p>
               </div>
 
               {/* Related Issues */}
-              {currentWorkflow.relatedIssues && (
+              {currentWorkflow?.relatedIssues && (
                 <div>
                   <h3 className="text-foreground font-medium mb-2">
                     Found Related Issues
@@ -589,7 +593,7 @@ export function WorkflowShowcase() {
               )}
 
               {/* Tasks Completed */}
-              {currentWorkflow.tasksCompleted && (
+              {currentWorkflow?.tasksCompleted && (
                 <div>
                   <h3 className="text-foreground font-medium mb-2 flex items-center gap-2">
                     Tasks Completed ({currentWorkflow.tasksCompleted.length})
@@ -615,7 +619,7 @@ export function WorkflowShowcase() {
               )}
 
               {/* Tasks Remaining */}
-              {currentWorkflow.tasksRemaining && (
+              {currentWorkflow?.tasksRemaining && (
                 <div>
                   <h3 className="text-foreground font-medium mb-2 flex items-center gap-2">
                     Tasks Remaining ({currentWorkflow.tasksRemaining.length})
@@ -642,7 +646,7 @@ export function WorkflowShowcase() {
 
               {/* Test Coverage, Database Branch & Deployment */}
               <div className="flex flex-col gap-4">
-                {currentWorkflow.testCoverage && (
+                {currentWorkflow?.testCoverage && (
                   <div>
                     <h3 className="text-foreground font-medium mb-2">
                       Test Coverage
@@ -654,7 +658,7 @@ export function WorkflowShowcase() {
                     </div>
                   </div>
                 )}
-                {currentWorkflow.databaseBranch && (
+                {currentWorkflow?.databaseBranch && (
                   <div>
                     <h3 className="text-foreground font-medium mb-2">
                       Database Branch
@@ -672,7 +676,7 @@ export function WorkflowShowcase() {
                     </div>
                   </div>
                 )}
-                {currentWorkflow.deploymentStatus && (
+                {currentWorkflow?.deploymentStatus && (
                   <div>
                     <h3 className="text-foreground font-medium mb-2">
                       Deployment
@@ -692,7 +696,7 @@ export function WorkflowShowcase() {
                   Technical Changes
                 </h3>
                 <ul className="text-foreground/70 space-y-1 list-disc list-inside">
-                  {currentWorkflow.changes.map((change, idx) => (
+                  {currentWorkflow?.changes.map((change, idx) => (
                     <li key={idx}>{change}</li>
                   ))}
                 </ul>
@@ -710,10 +714,10 @@ export function WorkflowShowcase() {
             <div className="bg-background/30 text-foreground rounded-2xl px-4 py-3 font-sans text-sm max-w-[85%]">
               {selectedTask
                 ? [
-                    ...(currentWorkflow.tasksCompleted || []),
-                    ...(currentWorkflow.tasksRemaining || []),
+                    ...(currentWorkflow?.tasksCompleted ?? []),
+                    ...(currentWorkflow?.tasksRemaining ?? []),
                   ].find((t) => t.id === selectedTask)?.text
-                : currentWorkflow.title.replace(
+                : currentWorkflow?.title.replace(
                     /^(feat|fix|refactor|chore):\s*/i,
                     "",
                   )}

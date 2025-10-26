@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Icons } from "@repo/ui/components/icons";
@@ -111,6 +111,17 @@ export function ManifestoPresentation() {
   // Track navigation direction
   const isMovingForward = currentSlide > previousSlide;
 
+  // Navigation function
+  const navigateToSlide = useCallback((index: number) => {
+    if (index !== currentSlide && !isAnimating) {
+      setHasInteracted(true);
+      setIsAnimating(true);
+      setPreviousSlide(currentSlide);
+      setCurrentSlide(index);
+      setTimeout(() => setIsAnimating(false), 700);
+    }
+  }, [currentSlide, isAnimating]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -133,7 +144,7 @@ export function ManifestoPresentation() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentSlide, isAnimating]);
+  }, [currentSlide, isAnimating, navigateToSlide]);
 
   // Mouse wheel navigation with throttling
   useEffect(() => {
@@ -158,7 +169,7 @@ export function ManifestoPresentation() {
 
     window.addEventListener("wheel", handleWheel, { passive: false });
     return () => window.removeEventListener("wheel", handleWheel);
-  }, [currentSlide, isAnimating]);
+  }, [currentSlide, isAnimating, navigateToSlide]);
 
   // Touch handlers for swipe navigation
   const onTouchStart = (e: React.TouchEvent) => {
@@ -182,16 +193,6 @@ export function ManifestoPresentation() {
     }
     if (isDownSwipe) {
       navigateToSlide(Math.max(currentSlide - 1, 0));
-    }
-  };
-
-  const navigateToSlide = (index: number) => {
-    if (index !== currentSlide && !isAnimating) {
-      setHasInteracted(true);
-      setIsAnimating(true);
-      setPreviousSlide(currentSlide);
-      setCurrentSlide(index);
-      setTimeout(() => setIsAnimating(false), 700);
     }
   };
 
@@ -418,7 +419,6 @@ export function ManifestoPresentation() {
         {slides.map((_, index) => {
           const isActive = index === currentSlide;
           const isPast = index < currentSlide;
-          const isFuture = index > currentSlide;
 
           return (
             <button
@@ -451,7 +451,7 @@ export function ManifestoPresentation() {
                 )}
               </motion.div>
               <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs text-white opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap">
-                {index + 1}. {slides[index]?.title || slides[index]?.id}
+                {index + 1}. {slides[index]?.title ?? slides[index]?.id}
               </span>
             </button>
           );

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { useState } from "react";
 import { BrandingMenuSheet } from "~/components/landing/branding-menu-sheet";
 import { Icons } from "@repo/ui/components/icons";
@@ -41,10 +40,10 @@ export default function MarketingLayout({
                   className="rounded-full"
                   asChild
                 >
-                  <MicrofrontendLink href="/search">
+                  <Link href="/search">
                     <Search className="h-5 w-5 text-foreground" />
                     <span className="sr-only">Search</span>
-                  </MicrofrontendLink>
+                  </Link>
                 </Button>
 
                 {/* GitHub Link */}
