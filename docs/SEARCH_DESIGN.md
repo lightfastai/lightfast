@@ -1,6 +1,8 @@
 # Search & Retrieval Design (2025 Refresh)
 
-> Target: <90 ms p95 for identifier queries, <150 ms p95 for semantic queries while maintaining high recall across chunked memories.
+> Target: <90 ms p95 for identifier queries, <150 ms p95 for semantic queries while maintaining high recall across chunked knowledge documents.
+
+Terminology: The chunked retrieval layer is the Knowledge Store. The Memory Graph (entities/relationships/beliefs) can bias retrieval and support graph-first queries; see `docs/MEMORY_GRAPH_DESIGN.md`.
 
 ---
 
@@ -13,7 +15,7 @@ User Query → Query Processor → Hybrid Retrieval → Rerank (conditional) →
 1. **Query processor** parses syntax (`#123`, `type:issue`, `from:github`), builds lexical + vector intents, and selects embedding model.
 2. **Hybrid retrieval** executes lexical search (Postgres full-text or Meilisearch) and Pinecone dense+sparse search over chunks.
 3. **Rerank** uses Cohere Rerank (`rerank-v3.5` primary, `rerank-3-nimble` fallback) when semantic mode is enabled and candidate count exceeds threshold.
-4. **Hydration** fetches chunk + memory details from Redis (fallback to PlanetScale) and prepares highlights/snippets.
+4. **Hydration** fetches chunk + document details from Redis (fallback to PlanetScale) and prepares highlights/snippets.
 
 ---
 
@@ -76,7 +78,7 @@ export async function embedChunk(text: string, model: string) {
 ## Lexical Layer
 
 Implementation options:
-- PostgreSQL full-text search on `memory_chunks.text` (GIN index) filtered by workspace.
+- PostgreSQL full-text search on `knowledge_chunks.text` (GIN index) filtered by workspace.
 - Or dedicated Meilisearch/OpenSearch index for large-scale deployments.
 
 ```typescript
@@ -148,22 +150,22 @@ If `rerank === true` and candidate count > `RERANK_MIN_K` (default 20), call Coh
 async function hydrateCandidates(candidates: Candidate[]): Promise<RankedResult[]> {
   const chunkIds = candidates.map((c) => c.chunkId);
   const chunks = await getChunksWithCache(chunkIds);
-  const memories = await getMemoriesWithCache(chunks.map((c) => c.memoryId));
+  const documents = await getDocumentsWithCache(chunks.map((c) => c.documentId));
 
   return candidates.map((candidate) => {
     const chunk = chunksById[candidate.chunkId];
-    const memory = memoriesById[chunk.memoryId];
-    const highlight = buildHighlight(candidate, chunk, memory);
+    const doc = documentsById[chunk.documentId];
+    const highlight = buildHighlight(candidate, chunk, doc);
 
     return {
-      memoryId: memory.id,
+      documentId: doc.id,
       chunkId: chunk.id,
       score: candidate.score,
-      title: memory.title,
-      type: memory.type,
-      source: memory.source,
-      occurredAt: memory.occurredAt,
-      author: memory.author,
+      title: doc.title,
+      type: doc.type,
+      source: doc.source,
+      occurredAt: doc.occurredAt,
+      author: doc.author,
       sectionLabel: chunk.sectionLabel,
       highlight,
     };
@@ -171,7 +173,7 @@ async function hydrateCandidates(candidates: Candidate[]): Promise<RankedResult[
 }
 ```
 
-`getChunksWithCache` attempts Redis (`chunks:{memoryId}:v{version}`) before PlanetScale. Cache misses log metrics for observability.
+`getChunksWithCache` attempts Redis (`chunks:{documentId}:v{version}`) before PlanetScale. Cache misses log metrics for observability.
 
 Highlights are generated via keyword matches or windowing around the matched tokens (for lexical hits) and via Cohere highlight API for semantic matches.
 
@@ -179,7 +181,7 @@ Highlights are generated via keyword matches or windowing around the matched tok
 
 ## Response Assembly
 
-- Return `RankedResult[]` to the UI, grouped by memory with top chunks collapsed.
+- Return `RankedResult[]` to the UI, grouped by document with top chunks collapsed.
 - For answer generation, the orchestrator fetches the full chunk texts in the requested order and builds the LLM prompt.
 
 ```typescript

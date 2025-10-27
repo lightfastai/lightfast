@@ -2,6 +2,8 @@
 
 Quick reference for building the redesigned stack: PlanetScale (durable store), S3/GCS for raw artifacts, Pinecone for chunk embeddings, Redis for cache/queues.
 
+Terminology: The chunked retrieval layer is the Knowledge Store. The relationships‑first layer is the Memory Graph (entities/relationships/beliefs). See `docs/KNOWLEDGE_STORE.md` and `docs/MEMORY_GRAPH_DESIGN.md`.
+
 ---
 
 ## Dependencies
@@ -33,7 +35,8 @@ UPSTASH_REDIS_REST_TOKEN=
 ## PlanetScale Schema Snippets
 
 ```sql
-CREATE TABLE memories (
+-- Knowledge Store (canonical tables)
+CREATE TABLE knowledge_documents (
   id              varchar(40) PRIMARY KEY,
   organization_id varchar(40) NOT NULL,
   workspace_id    varchar(40) NOT NULL,
@@ -55,9 +58,9 @@ CREATE TABLE memories (
   UNIQUE KEY uniq_workspace_source (workspace_id, source, source_id)
 );
 
-CREATE TABLE memory_chunks (
+CREATE TABLE knowledge_chunks (
   id              varchar(40) PRIMARY KEY,
-  memory_id       varchar(40) NOT NULL,
+  document_id     varchar(40) NOT NULL,
   workspace_id    varchar(40) NOT NULL,
   chunk_index     int NOT NULL,
   text            mediumtext NOT NULL,
@@ -70,25 +73,14 @@ CREATE TABLE memory_chunks (
   sparse_vector   json NULL,
   created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   superseded_at   timestamp NULL,
-  INDEX idx_memory_chunks_memory (memory_id),
-  INDEX idx_memory_chunks_workspace (workspace_id, chunk_hash)
-);
-
-CREATE TABLE memory_relationships (
-  id                varchar(40) PRIMARY KEY,
-  workspace_id      varchar(40) NOT NULL,
-  from_memory_id    varchar(40) NOT NULL,
-  to_memory_id      varchar(40) NOT NULL,
-  relationship_type varchar(32) NOT NULL,
-  confidence        decimal(4,3) NOT NULL,
-  detected_by       varchar(16) NOT NULL,
-  created_at        timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_relationships_outbound (workspace_id, from_memory_id),
-  INDEX idx_relationships_inbound (workspace_id, to_memory_id)
+  INDEX idx_knowledge_chunks_document (document_id),
+  INDEX idx_knowledge_chunks_workspace (workspace_id, chunk_hash)
 );
 ```
 
 RLS (via Prisma middleware or custom API layer) enforces workspace scoping.
+
+See `docs/MEMORY_GRAPH_DESIGN.md` for the Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
 
 ---
 
@@ -136,8 +128,8 @@ await pinecone.configureIndex({
 ```typescript
 import { db } from '@/lib/planetscale';
 
-export async function upsertMemory(input: MemoryRecordInput): Promise<MemoryRecord> {
-  const existing = await db.memories.findUnique({
+export async function upsertKnowledgeDocument(input: KnowledgeDocumentInput): Promise<KnowledgeDocument> {
+  const existing = await db.knowledgeDocuments.findUnique({
     where: { workspaceId_source_sourceId: input.workspaceKey },
   });
 
@@ -146,7 +138,7 @@ export async function upsertMemory(input: MemoryRecordInput): Promise<MemoryReco
   }
 
   const version = existing ? existing.version + 1 : 1;
-  return await db.memories.upsert({
+  return await db.knowledgeDocuments.upsert({
     where: { workspaceId_source_sourceId: input.workspaceKey },
     update: {
       title: input.title,
@@ -168,16 +160,16 @@ export async function upsertMemory(input: MemoryRecordInput): Promise<MemoryReco
 `replaceChunks` soft-deletes old chunks and inserts new ones:
 
 ```typescript
-export async function replaceChunks(memory: MemoryRecord, drafts: ChunkDraft[]): Promise<MemoryChunkRecord[]> {
-  await db.memoryChunks.updateMany({
-    where: { memoryId: memory.id, supersededAt: null },
+export async function replaceChunks(doc: KnowledgeDocument, drafts: ChunkDraft[]): Promise<KnowledgeChunkRecord[]> {
+  await db.knowledgeChunks.updateMany({
+    where: { documentId: doc.id, supersededAt: null },
     data: { supersededAt: new Date() },
   });
 
   const rows = drafts.map((draft, index) => ({
     id: newId(),
-    memoryId: memory.id,
-    workspaceId: memory.workspaceId,
+    documentId: doc.id,
+    workspaceId: doc.workspaceId,
     chunkIndex: index,
     text: draft.text,
     tokenCount: draft.tokenCount,
@@ -188,7 +180,7 @@ export async function replaceChunks(memory: MemoryRecord, drafts: ChunkDraft[]):
     keywords: draft.keywords,
   }));
 
-  await db.memoryChunks.createMany({ data: rows });
+  await db.knowledgeChunks.createMany({ data: rows });
   return rows;
 }
 ```
@@ -203,7 +195,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
 export async function upsertChunkVector(
-  chunk: MemoryChunkRecord,
+  chunk: KnowledgeChunkRecord,
   embedding: number[],
   opts: { source: string }
 ) {
@@ -214,7 +206,7 @@ export async function upsertChunkVector(
     values: embedding,
     metadata: {
       workspaceId: chunk.workspaceId,
-      memoryId: chunk.memoryId,
+      documentId: chunk.documentId,
       chunkIndex: chunk.chunkIndex,
       chunkHash: chunk.chunkHash,
       type: chunk.sectionLabel ?? null,
@@ -276,10 +268,10 @@ import { Redis } from '@upstash/redis';
 
 const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
 
-export async function primeMemoryCache(memory: MemoryRecord, chunks: MemoryChunkRecord[]): Promise<void> {
+export async function primeKnowledgeCache(doc: KnowledgeDocument, chunks: KnowledgeChunkRecord[]): Promise<void> {
   await redis.pipeline()
-    .set(`memory:${memory.id}`, JSON.stringify(memory), { ex: 72 * 60 * 60 })
-    .set(`chunks:${memory.id}:v${memory.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
+    .set(`document:${doc.id}`, JSON.stringify(doc), { ex: 72 * 60 * 60 })
+    .set(`chunks:${doc.id}:v${doc.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
     .exec();
 }
 ```
@@ -287,7 +279,7 @@ export async function primeMemoryCache(memory: MemoryRecord, chunks: MemoryChunk
 Dedup keys:
 
 ```typescript
-await redis.set(`source-dedupe:${memory.source}:${memory.sourceId}`, memory.contentHash, { ex: 86_400 });
+await redis.set(`source-dedupe:${doc.source}:${doc.sourceId}`, doc.contentHash, { ex: 86_400 });
 ```
 
 Relationship adjacency lists are stored as Redis sets for convenience but can be rebuilt from PlanetScale when caches invalidate.
@@ -311,21 +303,21 @@ export async function storeRawArtifact(key: string, body: Uint8Array | string) {
 }
 ```
 
-We keep artifact keys under `workspaces/{workspaceId}/memories/{memoryId}/...`.
+We keep artifact keys under `workspaces/{workspaceId}/knowledge/{documentId}/...`.
 
 ---
 
 ## Braintrust Hooks
 
-After inserting a memory, enqueue a Braintrust test run if the workspace has suites:
+After inserting a document, enqueue a Braintrust test run if the workspace has suites:
 
 ```typescript
 import { braintrust } from '@/lib/braintrust';
 
 await braintrust.tests.enqueue({
-  workspaceId: memory.workspaceId,
+  workspaceId: doc.workspaceId,
   suite: 'post-ingest-regression',
-  payload: { memoryId: memory.id, version: memory.version },
+  payload: { documentId: doc.id, version: doc.version },
 });
 ```
 
@@ -335,8 +327,8 @@ Braintrust callbacks write evaluation metrics into `feedback_events` for observa
 
 ## Checklist per Ingestion
 
-1. Normalize source payload → `MemoryRecordInput` + `ChunkDraft[]`.
-2. Persist via transaction (memories + chunks + artifact uploads).
+1. Normalize source payload → `KnowledgeDocumentInput` + `ChunkDraft[]`.
+2. Persist via transaction (knowledge_documents + knowledge_chunks + artifact uploads).
 3. Prime Redis caches (best-effort).
 4. Enqueue embedding jobs with correct `inputType` values (`search_document` for chunks) and wait for Pinecone upserts.
 5. Run relationship detection and update graph tables.

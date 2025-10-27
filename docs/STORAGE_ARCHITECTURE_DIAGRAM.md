@@ -13,18 +13,18 @@
                                                │
                                ┌───────────────┴────────────────┐
                                │                                │
-                         Normalized Memory               Attachments & Diffs
+                         Normalized Knowledge Doc        Attachments & Diffs
                                │                                │
                                ▼                                ▼
                      ┌──────────────────┐              ┌──────────────────┐
                      │ PlanetScale /    │              │ Object Storage   │
                      │ Postgres         │              │ (S3 / GCS)       │
-                     │ memories, chunks │◄──raw_pointer│ Versioned Blobs  │
+                     │ knowledge_*      │◄──raw_pointer│ Versioned Blobs  │
                      └─────────┬────────┘              └────────┬─────────┘
                                │                                 │
                                │                                 │
                       ┌────────▼──────────┐          ┌──────────▼──────────┐
-                      │ Memory Chunking   │          │  Embedding Pipeline │
+                      │ Document Chunking │          │  Embedding Pipeline │
                       │ (200–400 tokens)  │──────────►  Voyage / Cohere    │
                       │ Adaptive overlap  │          │  Embedding Versions │
                       └────────┬──────────┘          └──────────┬──────────┘
@@ -53,7 +53,7 @@
 ```
 ┌─────────────┐   ┌──────────────┐   ┌────────────────┐   ┌─────────────────┐   ┌─────────────────┐
 │ Source Event│──►│ Normalize +  │──►│ Chunk Builder   │──►│ PlanetScale Txn │──►│ Embedding Queue │
-│ (webhook)   │   │ Hash Content  │   │ 300±50 tokens   │   │ upsert memory + │   │ batch → Voyage  │
+│ (webhook)   │   │ Hash Content  │   │ 300±50 tokens   │   │ upsert knowledge│   │ batch → Voyage  │
 └─────────────┘   └──────┬───────┘   └────────┬───────┘   │ chunks          │   └────────┬────────┘
                          │                    │           └──────┬────────┘            │
                          │                    │                  │                     │
@@ -62,9 +62,9 @@
                    (Redis TTL)         (versioned)           (embed_version)     (namespace/tenant)
 ```
 
-- Transactions ensure `memories` + `memory_chunks` stay consistent.
+- Transactions ensure `knowledge_documents` + `knowledge_chunks` stay consistent.
 - Pinecone is updated only after the database commit succeeds.
-- Redis caches the newest memory snapshot and chunk bundle for rapid UI fetches.
+- Redis caches the newest knowledge document snapshot and chunk bundle for rapid UI fetches.
 
 ---
 
@@ -109,7 +109,7 @@ Latency budgets: lexical ≤30 ms, dense ≤40 ms, rerank ≤30 ms, hydrat
 
 | Layer | Stores | Notes |
 |-------|--------|-------|
-| PlanetScale | Canonical memories, chunk descriptors, relationships, retrieval logs, feedback | Source of truth; backups + PITR |
+| PlanetScale | Canonical knowledge documents, chunk descriptors, relationships, retrieval logs, feedback | Source of truth; backups + PITR |
 | S3 / GCS | Large raw payloads, diff bundles | Versioned; referenced by `raw_pointer` |
 | Pinecone | Chunk embeddings, minimal metadata, sparse vectors | Namespaces per workspace + embedding version |
 | Redis | Hot chunk cache, dedupe keys, work queues | TTL-based; recoverable via database replay |

@@ -23,14 +23,14 @@ Each week culminates in a demoable slice with automated validation.
 
 **Goals:** Establish data model, infrastructure plumbing, and ingestion skeletons.
 
-- Define and migrate PlanetScale tables (`memories`, `memory_chunks`, `memory_relationships`, `retrieval_logs`, `feedback_events`).
-- Provision S3 bucket (`workspaces/{workspace}/memories/{id}` prefix) with lifecycle policies.
+- Define PlanetScale tables for the Knowledge Store and Memory Graph (`knowledge_documents`, `knowledge_chunks`, `relationships`, `retrieval_logs`, `feedback_events`).
+- Provision S3 bucket (`workspaces/{workspace}/knowledge/{documentId}` prefix) with lifecycle policies.
 - Set up Redis namespaces for cache + dedupe keys.
 - Implement typed clients (`lib/planetscale`, `lib/s3`, `lib/redis`, `lib/pinecone`).
-- Scaffolding Inngest functions + TypeScript domain types (`MemoryRecord`, `ChunkDraft`).
+- Scaffolding Inngest functions + TypeScript domain types (`KnowledgeDocument`, `ChunkDraft`).
 - Create Braintrust workspace + seed baseline suite for GitHub QA.
 
-**Exit criteria:** Local integration test writes a `MemoryRecord` + chunks transactionally and confirms Pinecone + Redis stubs invoked (no real data yet).
+**Exit criteria:** Local integration test writes a knowledge document + chunks transactionally and confirms Pinecone + Redis stubs invoked (no real data yet).
 
 ---
 
@@ -39,10 +39,10 @@ Each week culminates in a demoable slice with automated validation.
 **Goals:** End-to-end GitHub PR ingestion including chunk embeddings.
 
 - Implement GitHub webhook handler with signature validation + idempotency (`source-dedupe:*`).
-- Build `normalizePullRequest` that fetches timeline, generates `MemoryRecordDraft`, chunk list (300±50 tokens), and S3 uploads for large diffs.
-- Implement `persistMemoryDraft` transaction + Redis cache priming.
-- Add embedding worker that batches `memory.embedding.requested` jobs, writes Pinecone vectors (namespace `${workspace}-${version}`), and records embedding versions.
-- Execute Braintrust smoke suite for ingested PR memories.
+- Build `normalizePullRequest` that fetches timeline, generates `KnowledgeDocumentDraft`, chunk list (300±50 tokens), and S3 uploads for large diffs.
+- Implement `persistKnowledgeDraft` transaction + Redis cache priming.
+- Add embedding worker that batches `knowledge.embedding.requested` jobs, writes Pinecone vectors (namespace `${workspace}-${version}`), and records embedding versions.
+- Execute Braintrust smoke suite for ingested PR documents.
 - Instrument Inngest tracing + metrics (ingest latency, chunk counts).
 
 **Exit criteria:** Creating a PR in staging repo results in searchable chunks with accurate metadata; Braintrust smoke suite passes.
@@ -51,11 +51,11 @@ Each week culminates in a demoable slice with automated validation.
 
 ## Week 3 – Slack & Relationships
 
-**Goals:** Add second source and populate relationship graph.
+**Goals:** Add second source and populate the Memory Graph.
 
 - Implement Slack Events API ingestion (URL verification, event callback, token rotation helper).
-- Normalize Slack messages into memories + conversation-aware chunking (group by thread turns).
-- Extend relationship detector (regex + heuristics) to capture mentions across GitHub ↔ Slack, store in `memory_relationships`, and push adjacency hints to Redis.
+- Normalize Slack messages into knowledge documents + conversation-aware chunking (group by thread turns).
+- Extend relationship detector (regex + heuristics) to capture mentions across GitHub ↔ Slack, store in `relationships`, and push adjacency hints to Redis.
 - Build regeneration job to recompute relationships from history when rules change.
 - Update Braintrust suites to include Slack retrieval scenarios.
 
@@ -81,11 +81,11 @@ Each week culminates in a demoable slice with automated validation.
 
 **Goals:** Close the loop on quality and reliability.
 
-- Integrate Braintrust regression suites triggered on `memory.persisted` events.
+- Integrate Braintrust regression suites triggered on `knowledge.persisted` events.
 - Implement embedding drift monitor + alert (compare new vs previous cosine similarity).
 - Add retry/dead-letter flows for failed embeddings and relationship detection.
 - Incident runbooks: Pinecone outage, Redis cache loss, S3 upload failure, PlanetScale failover.
-- Conduct load test (simulate 10k memories, 2k queries/hour) and tune Redis/Pinecone limits.
+- Conduct load test (simulate 10k knowledge documents, 2k queries/hour) and tune Redis/Pinecone limits.
 
 **Exit criteria:** Braintrust regression gate ✅, alerting wired to PagerDuty, DR drills documented.
 
@@ -95,8 +95,8 @@ Each week culminates in a demoable slice with automated validation.
 
 **Goals:** Polished release with support docs.
 
-- Finalize developer documentation (Storage Architecture, Memory Design, Search Design, Sync Flows).
-- Build admin tools for replaying ingestion (per workspace re-sync) and manual memory invalidation.
+- Finalize developer documentation (Storage Architecture, Knowledge Store, Memory Graph, Search Design, Sync Flows).
+- Build admin tools for replaying ingestion (per workspace re-sync) and manual knowledge document invalidation.
 - Perform canary rollout to first customer workspace; monitor for 48 hours.
 - Gather feedback, address remaining gaps, and prepare launch comms.
 

@@ -1,6 +1,6 @@
 # Sync Pipeline Design (2025 Refresh)
 
-> Describes how Lightfast ingests source events, normalizes them into canonical memories, persists them durably, and updates retrieval indices. This replaces the earlier design that wrote full memories to Pinecone + Redis directly.
+Describes how Lightfast ingests source events, normalizes them into canonical knowledge documents, persists them durably, and updates retrieval indices. For the relationships‑first Memory layer, see `docs/MEMORY_GRAPH_DESIGN.md`.
 
 ---
 
@@ -15,8 +15,8 @@ Ingress Layer (webhooks, pollers) → Idempotency check (Redis)
         ▼
 Inngest Orchestrator (per-source functions)
         │
-        ├─► Normalize payload → MemoryDraft
-        ├─► Persist memory + chunks (PlanetScale transaction)
+        ├─► Normalize payload → DocumentDraft
+        ├─► Persist document + chunks (PlanetScale transaction)
         ├─► Upload large artifacts (S3)
         ├─► Publish embedding jobs
         ├─► Detect relationships
@@ -50,10 +50,10 @@ interface SourceEventEnvelope<T> {
 ### Internal Events
 
 ```typescript
-interface MemoryPersistedEvent {
-  name: 'memory.persisted';
+interface KnowledgePersistedEvent {
+  name: 'knowledge.persisted';
   data: {
-    memoryId: string;
+    documentId: string;
     workspaceId: string;
     organizationId: string;
     version: number;
@@ -63,9 +63,9 @@ interface MemoryPersistedEvent {
 }
 
 interface EmbeddingRequestedEvent {
-  name: 'memory.embedding.requested';
+  name: 'knowledge.embedding.requested';
   data: {
-    memoryId: string;
+    documentId: string;
     chunkId: string;
     workspaceId: string;
     embeddingModel: string;
@@ -74,7 +74,7 @@ interface EmbeddingRequestedEvent {
 }
 ```
 
-`memory.persisted` triggers relationship detection, cache warming, Braintrust test scheduling, and Pinecone upserts once embeddings are ready (see `docs/EVALUATION_PLAYBOOK.md`).
+`knowledge.persisted` triggers relationship detection, cache warming, Braintrust test scheduling, and Pinecone upserts once embeddings are ready (see `docs/EVALUATION_PLAYBOOK.md`).
 
 ---
 
@@ -127,7 +127,7 @@ export const processGitHubPR = inngest.createFunction(
   async ({ event, step }) => {
     const draft = await step.run('normalize', () => normalizePullRequest(event.data));
 
-    const persistenceResult = await step.run('persist', () => persistMemoryDraft(draft));
+    const persistenceResult = await step.run('persist', () => persistKnowledgeDraft(draft));
     if (!persistenceResult.didChange) {
       return { skipped: true };
     }
@@ -137,7 +137,7 @@ export const processGitHubPR = inngest.createFunction(
     await step.run('cache-prime', () => primeCaches(persistenceResult));
     await step.run('emit-event', () => emitPersistedEvent(persistenceResult));
 
-    return { memoryId: persistenceResult.memoryId, version: persistenceResult.version };
+    return { documentId: persistenceResult.documentId, version: persistenceResult.version };
   }
 );
 ```
@@ -145,12 +145,12 @@ export const processGitHubPR = inngest.createFunction(
 ### `normalizePullRequest`
 
 - Fetches full PR details (reviews, comments) if not present in webhook.
-- Generates `MemoryRecordDraft` + `ChunkDraft[]`.
+- Generates `KnowledgeDocumentDraft` + `ChunkDraft[]`.
 - Computes `content_hash` from normalized payload.
 
 ```typescript
-interface MemoryRecordDraft {
-  memory: MemoryRecordInput;      // Fields for `memories` table
+interface KnowledgeDocumentDraft {
+  document: KnowledgeDocumentInput;      // Fields for `knowledge_documents` table
   chunks: ChunkDraft[];           // Plain text + metadata
   rawArtifacts?: RawArtifact[];   // Attachments to upload to S3
 }
@@ -168,34 +168,34 @@ interface ChunkDraft {
 
 ## Persistence Layer
 
-`persistMemoryDraft` wraps database writes in a PlanetScale transaction:
+`persistKnowledgeDraft` wraps database writes in a PlanetScale transaction:
 
-1. Upsert row in `memories` using `content_hash` for optimistic concurrency.
+1. Upsert row in `knowledge_documents` using `content_hash` for optimistic concurrency.
 2. If the hash changed or row missing:
    - Increment `version`.
-   - Insert new chunks into `memory_chunks`, marking old ones `superseded_at = now()`.
+   - Insert new chunks into `knowledge_chunks`, marking old ones `superseded_at = now()`.
    - Upload `rawArtifacts` to S3 and update `raw_pointer` fields.
 3. Return metadata for downstream steps.
 
 ```typescript
-async function persistMemoryDraft(draft: MemoryRecordDraft): Promise<PersistResult> {
+async function persistKnowledgeDraft(draft: KnowledgeDocumentDraft): Promise<PersistResult> {
   return await db.$transaction(async (tx) => {
-    const existing = await tx.memories.findUnique(...);
-    if (existing && existing.contentHash === draft.memory.contentHash) {
+    const existing = await tx.knowledgeDocuments.findUnique(...);
+    if (existing && existing.contentHash === draft.document.contentHash) {
       return { didChange: false };
     }
 
     const version = existing ? existing.version + 1 : 1;
-    const memoryRow = await upsertMemory(tx, draft.memory, version);
-    const chunkRows = await replaceChunks(tx, memoryRow.id, version, draft.chunks);
-    await uploadArtifacts(memoryRow, draft.rawArtifacts);
+    const docRow = await upsertKnowledgeDocument(tx, draft.document, version);
+    const chunkRows = await replaceChunks(tx, docRow.id, version, draft.chunks);
+    await uploadArtifacts(docRow, draft.rawArtifacts);
 
     return {
       didChange: true,
-      memoryId: memoryRow.id,
+      documentId: docRow.id,
       version,
       chunkIds: chunkRows.map((c) => c.id),
-      embeddingModel: selectEmbeddingModel(memoryRow.workspaceId),
+      embeddingModel: selectEmbeddingModel(docRow.workspaceId),
     };
   });
 }
@@ -207,14 +207,14 @@ Cache priming runs after commit so that Redis exposes the latest version.
 
 ## Embedding Jobs
 
-`enqueueEmbeddingJobs` publishes one `memory.embedding.requested` event per chunk. Worker characteristics:
+`enqueueEmbeddingJobs` publishes one `knowledge.embedding.requested` event per chunk. Worker characteristics:
 
 ```typescript
 export const embedChunk = inngest.createFunction(
   { id: 'embed-chunk', retries: 5, concurrency: { limit: 32, key: 'event.data.workspaceId' } },
-  { event: 'memory.embedding.requested' },
+  { event: 'knowledge.embedding.requested' },
   async ({ event, step }) => {
-    const chunk = await db.memoryChunks.findUniqueOrThrow({ where: { id: event.data.chunkId } });
+    const chunk = await db.knowledgeChunks.findUniqueOrThrow({ where: { id: event.data.chunkId } });
     if (chunk.supersededAt) return { skipped: 'superseded' };
 
     const embedding = await step.run('generate-embedding', () => embedText(chunk.text));
@@ -227,7 +227,7 @@ export const embedChunk = inngest.createFunction(
 ```
 
 - Embedding namespace = `${workspaceId}-${embeddingModelVersion}`.
-- Pinecone metadata includes `memoryId`, `chunkIndex`, `chunkHash`, `type`, `createdAt`.
+- Pinecone metadata includes `documentId`, `chunkIndex`, `chunkHash`, `type`, `createdAt`.
 - Sparse vectors (optional) are generated inside `embedText` or by an auxiliary worker.
 
 ---
@@ -242,12 +242,12 @@ async function detectRelationships(result: PersistResult) {
   const references = await extractReferences(chunks.join('\n'));
 
   const resolved = await resolveReferences(references, result.workspaceId);
-  await upsertRelationships(result.memoryId, resolved);
+  await upsertRelationships(result.documentId, resolved);
 }
 ```
 
 - Resolution first checks deterministic IDs (e.g., `#123` → PR number) via PlanetScale queries before falling back to Pinecone keyword search.
-- Writes to `memory_relationships` and pushes adjacency lists into Redis (`refs:*`).
+- Writes to `relationships` and pushes adjacency lists into Redis (`refs:*`).
 
 ---
 
@@ -255,12 +255,12 @@ async function detectRelationships(result: PersistResult) {
 
 ```typescript
 async function primeCaches(result: PersistResult) {
-  const memory = await db.memories.findUniqueOrThrow({ where: { id: result.memoryId } });
-  const chunks = await db.memoryChunks.findMany({ where: { memoryId: result.memoryId, supersededAt: null }, orderBy: { chunkIndex: 'asc' } });
+  const doc = await db.knowledgeDocuments.findUniqueOrThrow({ where: { id: result.documentId } });
+  const chunks = await db.knowledgeChunks.findMany({ where: { documentId: result.documentId, supersededAt: null }, orderBy: { chunkIndex: 'asc' } });
 
   await redis.pipeline()
-    .set(`memory:${memory.id}`, JSON.stringify(memory), { ex: 72 * 60 * 60 })
-    .set(`chunks:${memory.id}:v${memory.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
+    .set(`document:${doc.id}`, JSON.stringify(doc), { ex: 72 * 60 * 60 })
+    .set(`chunks:${doc.id}:v${doc.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
     .exec();
 }
 ```
@@ -271,14 +271,14 @@ Cache priming is best-effort; failures are logged but do not fail the ingestion 
 
 ## Braintrust Evaluation Hooks
 
-- Each `memory.persisted` event creates a Braintrust test run when relevant benchmark suites exist for the workspace (suite definitions in `docs/EVALUATION_PLAYBOOK.md`).
+- Each `knowledge.persisted` event creates a Braintrust test run when relevant benchmark suites exist for the workspace (suite definitions in `docs/EVALUATION_PLAYBOOK.md`).
 - Retrieval queries generated from Braintrust scenarios run through the same hybrid pipeline and write results into `feedback_events`.
 
 ```typescript
 await braintrust.tests.enqueue({
   workspaceId,
   suite: 'post-ingest-regression',
-  payload: { memoryId, version },
+  payload: { documentId, version },
 });
 ```
 

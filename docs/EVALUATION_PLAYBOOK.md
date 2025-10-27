@@ -4,6 +4,8 @@
 
 This playbook documents how Lightfast uses Braintrust to evaluate retrieval and response quality. It complements the storage and search design docs, providing the operational details for suites, metrics, calibration, and incident handling.
 
+Terminology: evaluate both Knowledge (chunked retrieval) and Memory (graph) modes. Retrieval logs include `retrieval_mode: 'knowledge' | 'graph' | 'hybrid'` to segment metrics.
+
 ---
 
 ## Goals
@@ -19,9 +21,10 @@ This playbook documents how Lightfast uses Braintrust to evaluate retrieval and 
 | Suite | Trigger | Purpose | Sample Size | Latency Target |
 |-------|---------|---------|-------------|----------------|
 | **Smoke** | Manual / CI | Validate pipeline after deploys | 5–10 queries per source | <5 min total |
-| **Regression** | `memory.persisted` event (post-ingest) | Catch retrieval drift per workspace | 25 canonical queries | <10 min per workspace |
+| **Regression** | `knowledge.persisted` event (post-ingest) | Catch retrieval drift per workspace | 25 canonical queries | <10 min per workspace |
 | **Weekly Benchmark** | Cron (Sunday 02:00 UTC) | Track long-term trends | 100 mixed queries | <60 min |
 | **Source-specific** | Manual / schedule | Deep dive for GitHub, Slack, Notion, Linear | 15 per source | <10 min |
+| **Graph QA (Ownership/Deps/Alignment)** | Weekly / on change | Validate Memory Graph answers | 20 graph queries | <10 min |
 | **Rerank Calibration** | Quarterly or on rerank model changes | Recompute Cohere relevance threshold | 30 borderline pairs | <30 min |
 
 All suites run against the production retrieval API to ensure realistic telemetry. Regression suites can be scoped to a workspace to respect data isolation.
@@ -55,6 +58,8 @@ All suites run against the production retrieval API to ensure realistic telemetr
 | Rerank relevance score | Mean Cohere score for borderline docs | Workspace-specific | −0.05 drop vs. baseline |
 | Latency split | p95 for dense, rerank, hydration | ≤150 ms total | >170 ms |
 | Snippet accuracy | % highlighting correct span | ≥90% | <85% |
+
+Segment all metrics by `retrieval_mode` to spot regressions that affect only graph-biased or graph-first queries.
 
 Threshold breaches trigger PagerDuty via Grafana alerts (metrics sourced from `feedback_events` and `retrieval_logs`). Braintrust webhooks also push a summary message to `#lightfast-alerts` with suite name, failing cases, and links.
 

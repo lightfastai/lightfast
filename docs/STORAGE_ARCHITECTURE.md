@@ -6,10 +6,10 @@
 
 ## Executive Summary
 
-We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage model that balances durability, recall quality, and latency by combining a durable relational store, object storage, Pinecone for vector search, and Redis for operational caching. This redesign aligns the Lightfast platform with 2024–2025 best practices published by Pinecone, Cohere, and Chroma, as well as recent academic work on hybrid retrieval and continual evaluation. The key shifts are:
+We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage model that balances durability, recall quality, and latency by combining a durable relational store, object storage, Pinecone for vector search, and Redis for operational caching. This redesign aligns the Lightfast platform with 2024–2025 best practices published by Pinecone, Cohere, and Chroma, as well as recent academic work on hybrid retrieval and continual evaluation. Terminology: the chunked retrieval layer is the Knowledge Store; the relationships-first layer is the Memory Graph. The key shifts are:
 
-- **Durable source of truth:** PlanetScale/Postgres (plus S3 for large artifacts) now stores canonical memory documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
-- **Chunk-level indexing:** Ingestion splits every memory into 200–400-token chunks with semantic overlap, stores chunk descriptors relationally, and indexes them in Pinecone with lean metadata (<1 KB) for fast, filterable retrieval.
+- **Durable source of truth:** PlanetScale/Postgres (plus S3 for large artifacts) now stores canonical knowledge documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
+- **Chunk-level indexing:** Ingestion splits every knowledge document into 200–400-token chunks with semantic overlap, stores chunk descriptors relationally, and indexes them in Pinecone with lean metadata (<1 KB) for fast, filterable retrieval.
 - **Hybrid retrieval path:** Queries run through a lexical pre-filter, Pinecone dense search, and lightweight reranking, giving high recall with configurable latency budgets.
 - **Observability + evaluation:** Retrieval logs, embedding versions, feedback scores, and drift monitors persist in the durable store and feed dashboards and automated eval jobs (see `docs/EVALUATION_PLAYBOOK.md`).
 - **Redis as cache, not database:** Redis holds hot documents, deduplication keys, and transient job state. Recovery flows rely on the durable store rather than Redis snapshots.
@@ -18,7 +18,7 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 ## Guiding Goals
 
-1. **Durability & auditability:** Every memory and chunk must be reproducible without external APIs; ingestion updates are idempotent and versioned.
+1. **Durability & auditability:** Every knowledge document and chunk must be reproducible without external APIs; ingestion updates are idempotent and versioned.
 2. **Recall and precision:** Support multi-stage retrieval (lexical + dense + rerank) while keeping p95 <150 ms for semantic queries and <90 ms for identifier lookups.
 3. **Operability:** Provide metrics, alerting, and evaluation hooks that surface drift, stale embeddings, and retrieval blind spots.
 4. **Cost-awareness:** Store vectors only once, compress large blobs, and scale components (Pinecone pods, Redis tiers) independently.
@@ -43,8 +43,9 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 ┌─────────────┐  ┌──────────────┐                   ┌────────────────┐ ┌────────────┐
 │ Durable DB  │  │ Object Store │                   │ Redis (Cache)  │ │ Observability│
 │ PlanetScale │  │   (S3/GCS)   │                   │  (Upstash)     │ │  (Grafana)  │
-│ memories,   │  │ raw payloads │                   │ hot chunks,    │ │ logs, evals │
-│ chunks,     │  │ diff bundles │                   │ dedupe, tasks  │ │             │
+│ knowledge_  │  │ raw payloads │                   │ hot chunks,    │ │ logs, evals │
+│ documents & │  │ diff bundles │                   │ dedupe, tasks  │ │             │
+│ chunks      │  │              │                   │                │ │             │
 └────┬────────┘  └────┬─────────┘                   └────────┬───────┘ └────┬───────┘
      │                │                                        │             │
      │                │                                        │             │
@@ -72,14 +73,14 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 ### PlanetScale / Postgres (Primary Store)
 
-- Tables: `memories`, `memory_chunks`, `memory_relationships`, `retrieval_logs`, `feedback_events`, `embedding_versions`.
+- Tables: `knowledge_documents`, `knowledge_chunks`, `relationships`, `retrieval_logs`, `feedback_events`, `embedding_versions`.
 - Stores canonical JSON payloads (normalized by source), chunk descriptors, relationship graphs, and lineage (ingestion job IDs).
 - Provides transactional guarantees for multi-table updates (memory + chunks + relationships) and supports point-in-time recovery.
 - Enables analytical queries, governance checks, and structured filters (labels, repositories, channel IDs, tenant IDs).
 
 ### Object Storage (S3 or GCS)
 
-- Persists large raw artifacts (attachments, code diffs >1 MB, rendered HTML) referenced from `memories.raw_pointer`.
+- Persists large raw artifacts (attachments, code diffs >1 MB, rendered HTML) referenced from `knowledge_documents.raw_pointer`.
 - Versioned buckets retain diffs for compliance and offline analysis.
 - Lifecycle policies move cold data to infrequent access tiers while keeping metadata active in PlanetScale.
 
@@ -92,8 +93,8 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 ### Redis (Operational Cache)
 
-- Holds hot `memory` documents and chunk bundles for low-latency detail fetches (TTL-based).
-- Maintains ingestion deduplication keys (`memory:source:{source_id}`) and work queues.
+- Holds hot documents and chunk bundles for low-latency detail fetches (TTL-based).
+- Maintains ingestion deduplication keys (`document:source:{source_id}`) and work queues.
 - Stores short-lived relationship adjacency lists for quick navigation; authoritative graph persists in Postgres.
 
 ### Observability Stack
@@ -108,9 +109,9 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 | Entity | Purpose | Key Fields |
 |--------|---------|------------|
-| `memories` | Canonical document per source object | `id`, `workspace_id`, `source`, `source_id`, `title`, `summary`, `raw_pointer`, `content_hash`, `state`, `metadata_json`, `version`, `created_at`, `updated_at` |
-| `memory_chunks` | Chunk-level text & descriptors | `id`, `memory_id`, `chunk_index`, `token_count`, `text`, `keywords`, `embedding_model`, `embedding_version`, `chunk_hash`, `created_at` |
-| `memory_relationships` | Directed graph edges | `id`, `workspace_id`, `from_memory_id`, `to_memory_id`, `relationship_type`, `confidence`, `created_at` |
+| `knowledge_documents` | Canonical document per source object | `id`, `workspace_id`, `source`, `source_id`, `title`, `summary`, `raw_pointer`, `content_hash`, `state`, `metadata_json`, `version`, `created_at`, `updated_at` |
+| `knowledge_chunks` | Chunk-level text & descriptors | `id`, `document_id`, `chunk_index`, `token_count`, `text`, `keywords`, `embedding_model`, `embedding_version`, `chunk_hash`, `created_at` |
+| `relationships` | Directed graph edges | `id`, `workspace_id`, `from_kind`, `from_id`, `to_kind`, `to_id`, `relationship_type`, `confidence`, `created_at` |
 | `retrieval_logs` | Query telemetry | `id`, `workspace_id`, `query_text`, `lexical_ids`, `vector_ids`, `rerank_ids`, `latencies_json`, `top_k`, `user_id`, `created_at` |
 | `feedback_events` | Human/automatic feedback | `id`, `retrieval_log_id`, `signal_type`, `score`, `comment`, `created_at` |
 
@@ -121,19 +122,19 @@ Large blobs (diffs, message history) live in object storage, referenced via `raw
 ## Ingestion Pipeline
 
 1. **Event Capture:** Source webhooks or pollers enqueue events to Inngest.
-2. **Normalization:** Workers fetch the latest resource, map it to a `Memory` shape, and compute a `content_hash` for idempotency.
+2. **Normalization:** Workers fetch the latest resource, map it to a Knowledge Document shape, and compute a `content_hash` for idempotency.
 3. **Chunking:** Apply adaptive token-based chunking (default 300 tokens ±50, 10–15% overlap). Specialized chunkers handle code (preserve syntax blocks) and threaded conversations (roll up by speaker turns).
 4. **Persistence:**
-   - Upsert `memories` row with optimistic locking (`content_hash`).
-   - Replace associated `memory_chunks` within a transaction; mark old chunks as superseded but keep historical copies for replay.
+   - Upsert `knowledge_documents` row with optimistic locking (`content_hash`).
+   - Replace associated `knowledge_chunks` within a transaction; mark old chunks as superseded but keep historical copies for replay.
    - Store attachments/raw transcripts in S3 and update `raw_pointer` references.
 5. **Embedding:**
    - Batch embed chunks via Voyage/Cohere with `inputType='search_document'`; record `embedding_version`, provider, dimension, and compression flags (float32 vs int8).
    - For large backfills, submit Cohere Embed Jobs and stream results into the namespace.
    - Upsert vectors into Pinecone collection matching workspace and embedding version (768-dimension default, Matryoshka-compatible for downsampling).
 6. **Cache & Graph:**
-   - Populate Redis with hot memory/chunk bundles (configurable TTL, default 3 days).
-   - Detect references (regex + link resolvers) and update `memory_relationships`; push adjacency hints into Redis for quick lookups.
+   - Populate Redis with hot document/chunk bundles (configurable TTL, default 3 days).
+   - Detect references (regex + link resolvers) and update `relationships`; push adjacency hints into Redis for quick lookups.
 7. **Post-Processing:** Emit evaluation tasks when chunk count crosses thresholds or embedding versions change.
 
 Retries use the `content_hash` to avoid duplicate rows. Pinecone updates occur after Postgres commits to guarantee durability before indexing.
@@ -180,7 +181,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 }
 ```
 
-**Short-code / identifier queries** bypass reranking and fall back to direct key lookups (`memory.source_id`, `memory.number`). Results cache in Redis for 60 s.
+**Short-code / identifier queries** bypass reranking and fall back to direct key lookups (`knowledge_documents.source_id`, `knowledge_documents.number` when applicable). Results cache in Redis for 60 s.
 
 ---
 
@@ -188,7 +189,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 
 - Maintain `embedding_versions` table capturing model name, provider, dimensionality (default 768), compression (`float32`, `int8`, `binary`), cost, latency, and rollout status.
 - Support Matryoshka-compatible embeddings so we can truncate to 256/512 dimensions for candidate generation while retaining 768-dimension vectors for reranking.
-- A nightly job compares `memories.updated_at` with `memory_chunks.embedding_version`; stale chunks enqueue for re-embedding.
+- A nightly job compares `knowledge_documents.updated_at` with `knowledge_chunks.embedding_version`; stale chunks enqueue for re-embedding.
 - Cohere Embed Jobs handle bulk refreshes; streaming workers update Pinecone namespaces and append version metadata.
 - Canary workspaces migrate first; Pinecone namespaces per version allow phased rollover. Completed migrations archive obsolete namespaces after 30 days.
 - Drift monitors compute similarity deltas between old/new embeddings and alert when thresholds exceed configured bounds.
@@ -222,20 +223,16 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 | Redis | Multi-tier (cache + job queues) | Evict cold caches; rely on Postgres for rehyration |
 | S3 | Lifecycle rules to Glacier for >180-day artifacts | Set budgets per workspace |
 
-Expected monthly cost for 100k memories (≈400k chunks): Pinecone $70, PlanetScale $60, Redis $25, S3 $15, totaling ~$170 with robust durability and observability.
+Expected monthly cost for 100k knowledge documents (≈400k chunks): Pinecone $70, PlanetScale $60, Redis $25, S3 $15, totaling ~$170 with robust durability and observability.
 
 ---
 
-## Migration Blueprint
+## Build Blueprint
 
-1. **Introduce PlanetScale schema:** Create tables + backfill existing Redis data into `memories`/`memory_chunks` via scripts.
-2. **Dual-write period:** Ingestion writes to both Redis (existing) and PlanetScale/S3; Pinecone still receives full memories for now.
-3. **Chunking rollout:** Enable chunking + minimal Pinecone metadata; migrate embeddings into new namespaces.
-4. **Update retrieval service:** Switch to PlanetScale hydration + hybrid retrieval path, keeping old Redis fallback temporarily.
-5. **Decommission legacy paths:** Remove full-memory Pinecone metadata and Redis-as-source-of-truth flows once verification passes.
-6. **Enable evaluation stack:** Deploy logs dashboards, nightly eval jobs, and drift monitors before cutting over.
-
-Total migration estimated at 4–6 weeks with progressive verification gates (per-workspace canaries, recall checks).
+1. **Create PlanetScale schema:** `knowledge_documents`, `knowledge_chunks`, and graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`).
+2. **Implement ingestion:** Normalize → persist documents + chunks → embed + upsert vectors.
+3. **Enable retrieval:** Hybrid pipeline with optional rerank and caching.
+4. **Wire evaluation:** Retrieval logs, feedback events, and dashboards.
 
 ---
 
