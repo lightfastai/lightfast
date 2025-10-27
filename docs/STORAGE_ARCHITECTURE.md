@@ -1,0 +1,249 @@
+# Storage Architecture Analysis & Redesign
+
+**Last Updated:** 2025-02-10
+
+---
+
+## Executive Summary
+
+We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage model that balances durability, recall quality, and latency by combining a durable relational store, object storage, Pinecone for vector search, and Redis for operational caching. This redesign aligns the Lightfast platform with 2024–2025 best practices published by Pinecone, Cohere, and Chroma, as well as recent academic work on hybrid retrieval and continual evaluation. The key shifts are:
+
+- **Durable source of truth:** PlanetScale/Postgres (plus S3 for large artifacts) now stores canonical memory documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
+- **Chunk-level indexing:** Ingestion splits every memory into 200–400-token chunks with semantic overlap, stores chunk descriptors relationally, and indexes them in Pinecone with lean metadata (<1 KB) for fast, filterable retrieval.
+- **Hybrid retrieval path:** Queries run through a lexical pre-filter, Pinecone dense search, and lightweight reranking, giving high recall with configurable latency budgets.
+- **Observability + evaluation:** Retrieval logs, embedding versions, feedback scores, and drift monitors persist in the durable store and feed dashboards and automated eval jobs.
+- **Redis as cache, not database:** Redis holds hot documents, deduplication keys, and transient job state. Recovery flows rely on the durable store rather than Redis snapshots.
+
+---
+
+## Guiding Goals
+
+1. **Durability & auditability:** Every memory and chunk must be reproducible without external APIs; ingestion updates are idempotent and versioned.
+2. **Recall and precision:** Support multi-stage retrieval (lexical + dense + rerank) while keeping p95 <150 ms for semantic queries and <90 ms for identifier lookups.
+3. **Operability:** Provide metrics, alerting, and evaluation hooks that surface drift, stale embeddings, and retrieval blind spots.
+4. **Cost-awareness:** Store vectors only once, compress large blobs, and scale components (Pinecone pods, Redis tiers) independently.
+5. **Multi-tenant isolation:** Enforce namespace- and row-level isolation, residency controls, and configurable retention policies per workspace.
+
+---
+
+## Target Architecture Overview
+
+```
+             ┌────────────────────────────────────────────────┐
+             │              Source Connectors                  │
+             │ GitHub ▪ Linear ▪ Notion ▪ Slack ▪ Atlassian ...│
+             └──────────────────────────┬──────────────────────┘
+                                        │
+                               Ingestion Orchestrator
+                                 (Inngest + Workers)
+                                        │
+        ┌──────────────┬────────────────┴────────────────────┬──────────────┐
+        │              │                                    │              │
+        ▼              ▼                                    ▼              ▼
+┌─────────────┐  ┌──────────────┐                   ┌────────────────┐ ┌────────────┐
+│ Durable DB  │  │ Object Store │                   │ Redis (Cache)  │ │ Observability│
+│ PlanetScale │  │   (S3/GCS)   │                   │  (Upstash)     │ │  (Grafana)  │
+│ memories,   │  │ raw payloads │                   │ hot chunks,    │ │ logs, evals │
+│ chunks,     │  │ diff bundles │                   │ dedupe, tasks  │ │             │
+└────┬────────┘  └────┬─────────┘                   └────────┬───────┘ └────┬───────┘
+     │                │                                        │             │
+     │                │                                        │             │
+     │                └─────────────────────┐                  │             │
+     │                                      │                  │             │
+     │                         Chunk Embeddings + Metadata     │             │
+     │                                      │                  │             │
+     │                                      ▼                  │             │
+     │                              ┌────────────────┐         │             │
+     └──────────────────────────────►  Pinecone RAG   ◄─────────┘             │
+                                    │  (vector + sparse) │                   │
+                                    └────────────────┘                     │
+                                          │                                │
+                                   Retrieval Services                      │
+                                          │                                │
+                              ┌────────────┴─────────────┐                │
+                              │   Lightfast Experiences  │                │
+                              │  CLI ▪ UI ▪ API Clients  │◄───────────────┘
+                              └──────────────────────────┘
+```
+
+---
+
+## Component Responsibilities
+
+### PlanetScale / Postgres (Primary Store)
+
+- Tables: `memories`, `memory_chunks`, `memory_relationships`, `retrieval_logs`, `feedback_events`, `embedding_versions`.
+- Stores canonical JSON payloads (normalized by source), chunk descriptors, relationship graphs, and lineage (ingestion job IDs).
+- Provides transactional guarantees for multi-table updates (memory + chunks + relationships) and supports point-in-time recovery.
+- Enables analytical queries, governance checks, and structured filters (labels, repositories, channel IDs, tenant IDs).
+
+### Object Storage (S3 or GCS)
+
+- Persists large raw artifacts (attachments, code diffs >1 MB, rendered HTML) referenced from `memories.raw_pointer`.
+- Versioned buckets retain diffs for compliance and offline analysis.
+- Lifecycle policies move cold data to infrequent access tiers while keeping metadata active in PlanetScale.
+
+### Pinecone (Vector + Sparse Index)
+
+- Stores chunk embeddings (dense) and optional sparse vectors (BM25/SPLADE tokens) per chunk.
+- Metadata budget <1 KB per vector: workspace ID, memory ID, chunk index, chunk hash, source, type, created/updated timestamps, access labels, retrieval score hints.
+- Namespaces per workspace enforce tenant isolation; collections segmented by embedding model version enable phased migrations.
+
+### Redis (Operational Cache)
+
+- Holds hot `memory` documents and chunk bundles for low-latency detail fetches (TTL-based).
+- Maintains ingestion deduplication keys (`memory:source:{source_id}`) and work queues.
+- Stores short-lived relationship adjacency lists for quick navigation; authoritative graph persists in Postgres.
+
+### Observability Stack
+
+- `retrieval_logs` capture query parameters, candidate chunk IDs, scores, reranker decisions, and latency splits.
+- Metrics exported to Prometheus/Grafana (p50/p95 latency, recall@k from eval harness, embedding refresh lag).
+- Evaluation jobs (Braintrust test runs) write scores into `feedback_events` for regression detection.
+
+---
+
+## Data Model Summary
+
+| Entity | Purpose | Key Fields |
+|--------|---------|------------|
+| `memories` | Canonical document per source object | `id`, `workspace_id`, `source`, `source_id`, `title`, `summary`, `raw_pointer`, `content_hash`, `state`, `metadata_json`, `version`, `created_at`, `updated_at` |
+| `memory_chunks` | Chunk-level text & descriptors | `id`, `memory_id`, `chunk_index`, `token_count`, `text`, `keywords`, `embedding_model`, `embedding_version`, `chunk_hash`, `created_at` |
+| `memory_relationships` | Directed graph edges | `id`, `workspace_id`, `from_memory_id`, `to_memory_id`, `relationship_type`, `confidence`, `created_at` |
+| `retrieval_logs` | Query telemetry | `id`, `workspace_id`, `query_text`, `lexical_ids`, `vector_ids`, `rerank_ids`, `latencies_json`, `top_k`, `user_id`, `created_at` |
+| `feedback_events` | Human/automatic feedback | `id`, `retrieval_log_id`, `signal_type`, `score`, `comment`, `created_at` |
+
+Large blobs (diffs, message history) live in object storage, referenced via `raw_pointer`.
+
+---
+
+## Ingestion Pipeline
+
+1. **Event Capture:** Source webhooks or pollers enqueue events to Inngest.
+2. **Normalization:** Workers fetch the latest resource, map it to a `Memory` shape, and compute a `content_hash` for idempotency.
+3. **Chunking:** Apply adaptive token-based chunking (default 300 tokens ±50, 10–15% overlap). Specialized chunkers handle code (preserve syntax blocks) and threaded conversations (roll up by speaker turns).
+4. **Persistence:**
+   - Upsert `memories` row with optimistic locking (`content_hash`).
+   - Replace associated `memory_chunks` within a transaction; mark old chunks as superseded but keep historical copies for replay.
+   - Store attachments/raw transcripts in S3 and update `raw_pointer` references.
+5. **Embedding:**
+   - Batch embed chunks via Voyage/Cohere; record `embedding_version` and provider.
+   - Upsert vectors into Pinecone collection matching workspace and embedding version.
+6. **Cache & Graph:**
+   - Populate Redis with hot memory/chunk bundles (configurable TTL, default 3 days).
+   - Detect references (regex + link resolvers) and update `memory_relationships`; push adjacency hints into Redis for quick lookups.
+7. **Post-Processing:** Emit evaluation tasks when chunk count crosses thresholds or embedding versions change.
+
+Retries use the `content_hash` to avoid duplicate rows. Pinecone updates occur after Postgres commits to guarantee durability before indexing.
+
+---
+
+## Retrieval Pipeline
+
+```typescript
+async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
+  const tracing = startSpan("rag.retrieve");
+
+  // Stage 1: Lexical / metadata filter (30ms budget)
+  const lexicalCandidates = await lexicalStore.search({
+    workspaceId: query.workspaceId,
+    terms: query.text,
+    filters: query.filters,
+    topK: LEXICAL_TOP_K,
+  });
+
+  // Stage 2: Vector search (40ms budget)
+  const embedding = await embedQuery(query.text, query.embeddingModel);
+  const pineconeHits = await pinecone.query({
+    namespace: namespaceFor(query.workspaceId, query.embeddingModel),
+    vector: embedding.values,
+    sparseValues: embedding.sparse,
+    filter: buildMetadataFilter(query.filters),
+    topK: VECTOR_TOP_K,
+    includeMetadata: true,
+  });
+
+  // Merge candidates (lexical IDs weight boosted)
+  const merged = mergeCandidates(lexicalCandidates, pineconeHits);
+
+  // Stage 3: Lightweight rerank (optional, 30ms budget)
+  const reranked = shouldRerank(query)
+    ? await cohereRerank(rerankInput(merged, query.text))
+    : merged;
+
+  tracing.recordLatencySplit();
+
+  // Stage 4: Hydrate chunks from Redis or Postgres
+  return await hydrateChunks(reranked, query.includeMetadata);
+}
+```
+
+**Short-code / identifier queries** bypass reranking and fall back to direct key lookups (`memory.source_id`, `memory.number`). Results cache in Redis for 60 s.
+
+---
+
+## Embedding Refresh & Versioning
+
+- Maintain `embedding_versions` table capturing model name, provider, dimensionality, cost, latency, and rollout status.
+- A nightly job compares `memories.updated_at` with `memory_chunks.embedding_version`; stale chunks enqueue for re-embedding.
+- Canary workspaces migrate first; Pinecone namespaces per version allow phased rollover. Completed migrations archive obsolete namespaces after 30 days.
+- Drift monitors compute similarity deltas between old/new embeddings and alert when thresholds exceed configured bounds.
+
+---
+
+## Observability & Continuous Evaluation
+
+- **Retrieval logging:** Each query writes latency breakdowns, candidate lists, and reranker scores to `retrieval_logs`.
+- **Feedback loops:** UI captures user votes/comments per answer; automated eval jobs (Braintrust suites) replay benchmark question sets weekly and log scores.
+- **Dashboards & Alerts:** Grafana dashboards expose embed throughput, queue backlogs, Pinecone error rates, stale chunk counts, and recall@k. SLO alerts trigger when p95 > targets or stale chunk percentage >5%.
+- **Incident response:** Runbooks document redeploying Pinecone namespaces, replaying ingestion via changelog tables, and restoring from PlanetScale backups.
+
+---
+
+## Governance & Multi-Tenant Controls
+
+- Workspace-scoped API tokens map to database row-level security policies; Pinecone namespaces and S3 prefixes also embed workspace IDs.
+- Encryption at rest: PlanetScale (automatic), S3 SSE-KMS, Redis TLS enforced.
+- Data retention policies configurable per workspace (default 365 days, with legal hold override).
+- Access audits query `retrieval_logs` to trace which chunks powered a response, supporting compliance reviews.
+
+---
+
+## Cost & Scaling Considerations
+
+| Component | Scaling Knobs | Notes |
+|-----------|---------------|-------|
+| Pinecone | Namespace per workspace, collection per embedding version | Serverless pool scales automatically; monitor metadata size (<1 KB) |
+| PlanetScale | Sharding by workspace, connection pooling via Prisma | Storage ~10 GB per 200k chunks (compressed); use row pruning for inactive workspaces |
+| Redis | Multi-tier (cache + job queues) | Evict cold caches; rely on Postgres for rehyration |
+| S3 | Lifecycle rules to Glacier for >180-day artifacts | Set budgets per workspace |
+
+Expected monthly cost for 100k memories (≈400k chunks): Pinecone $70, PlanetScale $60, Redis $25, S3 $15, totaling ~$170 with robust durability and observability.
+
+---
+
+## Migration Blueprint
+
+1. **Introduce PlanetScale schema:** Create tables + backfill existing Redis data into `memories`/`memory_chunks` via scripts.
+2. **Dual-write period:** Ingestion writes to both Redis (existing) and PlanetScale/S3; Pinecone still receives full memories for now.
+3. **Chunking rollout:** Enable chunking + minimal Pinecone metadata; migrate embeddings into new namespaces.
+4. **Update retrieval service:** Switch to PlanetScale hydration + hybrid retrieval path, keeping old Redis fallback temporarily.
+5. **Decommission legacy paths:** Remove full-memory Pinecone metadata and Redis-as-source-of-truth flows once verification passes.
+6. **Enable evaluation stack:** Deploy logs dashboards, nightly eval jobs, and drift monitors before cutting over.
+
+Total migration estimated at 4–6 weeks with progressive verification gates (per-workspace canaries, recall checks).
+
+---
+
+## References
+
+- Pinecone (2024a). *Designing a Production-Ready RAG Stack.*
+- Pinecone (2024b). *The RAG Maturity Model.*
+- Cohere (2024a). *Production RAG Best Practices.*
+- Cohere (2024b). *Evaluating RAG Systems.*
+- Chroma (2024). *Chroma in Production.*
+- Asai, A. et al. (2023). *Self-RAG.*
+- Jain, A. et al. (2024). *GraphRAG.*
+- Sota, N. et al. (2024). *Dynamic RAG.*
+- Li, J. et al. (2024). *LongRAG.*
+- Sun, Z. et al. (2024). *Adaptive RAG Evaluation.*
