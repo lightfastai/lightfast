@@ -2,7 +2,7 @@
 
 Quick reference for building the redesigned stack: PlanetScale (durable store), S3/GCS for raw artifacts, Pinecone for chunk embeddings, Redis for cache/queues.
 
-Terminology: The chunked retrieval layer is the Knowledge Store. The relationships‑first layer is the Memory Graph (entities/relationships/beliefs). See `docs/KNOWLEDGE_STORE.md` and `docs/MEMORY_GRAPH_DESIGN.md`.
+Terminology: The chunked retrieval layer is the Knowledge Store. The relationships‑first layer is the Memory Graph (entities/relationships/beliefs). See `docs/KNOWLEDGE_STORE.md` and `docs/memory/GRAPH.md`.
 
 ---
 
@@ -80,7 +80,7 @@ CREATE TABLE knowledge_chunks (
 
 RLS (via Prisma middleware or custom API layer) enforces workspace scoping.
 
-See `docs/MEMORY_GRAPH_DESIGN.md` for the Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
+See `docs/memory/GRAPH.md` for the Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
 
 ---
 

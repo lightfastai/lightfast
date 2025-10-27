@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+<meta name="robots" content="index, follow">
+
+    <title>3 Ways To Build LLMs With Long-Term Memory</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="preload" as="style" href="/blog/assets/built/screen.css?v=259661198b" />
+    <link rel="preload" as="script" href="/blog/assets/built/casper.js?v=259661198b" />
+
+    <link rel="stylesheet" type="text/css" href="/blog/assets/built/screen.css?v=259661198b" />
+
+    <link rel="icon" href="https://supermemory.ai/blog/content/images/size/w256h256/2025/06/SuperM_LinkedIn-Github-Twitter_ProfilePicture--1--1.png" type="image/png">
+    <link rel="canonical" href="https://supermemory.ai/blog/3-ways-to-build-llms-with-long-term-memory/">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+    <meta property="og:site_name" content="supermemory - Blog">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="3 Ways To Build LLMs With Long-Term Memory">
+    <meta property="og:description" content="You’ve already met our guide on implementing short-term conversational memory using LangChain, which is great for managing context inside a single chat window.
+
+But life, therapy, and enterprise apps sprawl across days, weeks, and years. If our agents are doomed to goldfish-brain amnesia, users end up re-explaining everything from">
+    <meta property="og:url" content="https://supermemory.ai/blog/3-ways-to-build-llms-with-long-term-memory/">
+    <meta property="og:image" content="https://supermemory.ai/blog/content/images/2025/06/3.webp">
+    <meta property="article:published_time" content="2025-06-23T07:08:11.000Z">
+    <meta property="article:modified_time" content="2025-06-23T07:08:11.000Z">
+    <meta property="article:tag" content="Learning">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="3 Ways To Build LLMs With Long-Term Memory">
+    <meta name="twitter:description" content="You’ve already met our guide on implementing short-term conversational memory using LangChain, which is great for managing context inside a single chat window.
+
+But life, therapy, and enterprise apps sprawl across days, weeks, and years. If our agents are doomed to goldfish-brain amnesia, users end up re-explaining everything from">
+    <meta name="twitter:url" content="https://supermemory.ai/blog/3-ways-to-build-llms-with-long-term-memory/">
+    <meta name="twitter:image" content="https://supermemory.ai/blog/content/images/2025/06/3.webp">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Naman Bansal">
+    <meta name="twitter:label2" content="Filed under">
+    <meta name="twitter:data2" content="Learning">
+    <meta name="twitter:site" content="@supermemoryai">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="675">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "supermemory - Blog",
+        "url": "https://supermemory.ai/blog/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg"
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Naman Bansal",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://www.gravatar.com/avatar/1b424ffbaa308b371e62efa5919dfe3d?s=250&r=x&d=mp",
+            "width": 250,
+            "height": 250
+        },
+        "url": "https://supermemory.ai/blog/author/naman/",
+        "sameAs": []
+    },
+    "contributor": [
+        {
+            "@type": "Person",
+            "name": "Dhravya Shah",
+            "image": {
+                "@type": "ImageObject",
+                "url": "https://supermemory.ai/blog/content/images/2025/06/90306c68c41aba2b0c763682af4907f6.png"
+            },
+            "url": "https://supermemory.ai/blog/author/dhravya/",
+            "sameAs": [
+                "https://dhravya.dev",
+                "https://x.com/dhravyashah"
+            ]
+        }
+    ],
+    "headline": "3 Ways To Build LLMs With Long-Term Memory",
+    "url": "https://supermemory.ai/blog/3-ways-to-build-llms-with-long-term-memory/",
+    "datePublished": "2025-06-23T07:08:11.000Z",
+    "dateModified": "2025-06-23T07:08:11.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://supermemory.ai/blog/content/images/2025/06/3.webp",
+        "width": 1200,
+        "height": 675
+    },
+    "keywords": "Learning",
+    "description": "You’ve already met our guide on implementing short-term conversational memory using LangChain, which is great for managing context inside a single chat window.\n\nBut life, therapy, and enterprise apps sprawl across days, weeks, and years. If our agents are doomed to goldfish-brain amnesia, users end up re-explaining everything from their favorite color to yesterday’s heartbreak.\n\nIt&#x27;s time to graduate from sticky notes to an external brain. This guide will show you what long-term memory in LLMs r",
+    "mainEntityOfPage": "https://supermemory.ai/blog/3-ways-to-build-llms-with-long-term-memory/"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 5.130">
+    <link rel="alternate" type="application/rss+xml" title="supermemory - Blog" href="https://supermemory.ai/blog/rss/">
+    
+    <script defer src="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/sodo-search.min.js" data-key="d2a094c14f6148bdbd8ad26051" data-styles="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/main.css" data-sodo-search="https://supermemory.ai/blog/" data-locale="en" crossorigin="anonymous"></script>
+    
+    <link href="https://supermemory.ai/blog/webmentions/receive/" rel="webmention">
+    <script defer src="/blog/public/cards.min.js?v=259661198b"></script><style>:root {--ghost-accent-color: #3d49d8;}</style>
+    <link rel="stylesheet" type="text/css" href="/blog/public/cards.min.css?v=259661198b">
+    <style>
+  .gh-footer-copyright {
+    display: none !important;
+}
+a[href*="ghost.org"] {
+    display: none !important;
+}
+::selection {
+  background: #267BF1;
+  color: #FFF;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all navigation logo links
+    const logoLinks = document.querySelectorAll('.gh-navigation-logo');
+    
+    logoLinks.forEach(function(link) {
+        // Change the href to point to main site
+        link.href = 'https://supermemory.ai';
+    });
+});
+
+  // Ensure all pages point to the main domain version
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical && canonical.href.includes('blog.supermemory.ai')) {
+    canonical.href = canonical.href.replace('blog.supermemory.ai', 'supermemory.ai/blog');
+  }
+
+if (typeof window !== 'undefined') {
+  // Client-side check
+  const hostname = window.location.hostname;
+  const userAgent = navigator.userAgent;
+  const isCloudflareWorker = userAgent.includes('Cloudflare-Workers');
+  const isGhostAdmin = window.location.pathname.startsWith('/ghost');
+  
+  if (hostname === 'blog.supermemory.ai' && !isCloudflareWorker && !isGhostAdmin) {
+    window.location.replace('https://supermemory.ai/blog' + window.location.pathname.replace('/blog', '') + window.location.search);
+  }
+}
+</script>
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Ce js Ls Te Fs Ds capture Ye calculateEventProperties zs register register_once register_for_session unregister unregister_for_session Ws getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Bs Us createPersonProfile Hs Ms Gs opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ns debug L qs getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_9wkqAZtZYAUCNwvus0hYqcZbw5EBEX2s3QXjZoNdUNS', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2025-05-24',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+    <link rel="preconnect" href="https://fonts.bunny.net"><link rel="stylesheet" href="https://fonts.bunny.net/css?family=space-grotesk:700|space-mono:400,700"><style>:root {--gh-font-heading: Space Grotesk;--gh-font-body: Space Mono;}</style>
+
+</head>
+<body class="post-template tag-learning gh-font-heading-space-grotesk gh-font-body-space-mono is-head-left-logo">
+<div class="viewport">
+
+    <header id="gh-head" class="gh-head outer">
+        <div class="gh-head-inner inner">
+            <div class="gh-head-brand">
+                <a class="gh-head-logo" href="https://supermemory.ai/blog">
+                        <img src="https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg" alt="supermemory - Blog">
+                </a>
+                <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                <button class="gh-burger" aria-label="Main Menu"></button>
+            </div>
+
+            <nav class="gh-head-menu">
+                <ul class="nav">
+    <li class="nav-home"><a href="https://supermemory.ai">Home</a></li>
+    <li class="nav-blogs"><a href="https://supermemory.ai/blog">Blogs</a></li>
+    <li class="nav-updates"><a href="https://docs.supermemory.ai/changelog/overview">Updates</a></li>
+    <li class="nav-docs"><a href="https://docs.supermemory.ai">Docs</a></li>
+</ul>
+
+            </nav>
+
+            <div class="gh-head-actions">
+                        <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="site-content">
+        
+
+
+
+<main id="site-main" class="site-main">
+<article class="article post tag-learning ">
+
+    <header class="article-header gh-canvas">
+
+        <div class="article-tag post-card-tags">
+                <span class="post-card-primary-tag">
+                    <a href="/blog/tag/learning/">Learning</a>
+                </span>
+        </div>
+
+        <h1 class="article-title">3 Ways To Build LLMs With Long-Term Memory</h1>
+
+
+        <div class="article-byline">
+        <section class="article-byline-content">
+
+            <ul class="author-list instapaper_ignore">
+                <li class="author-list-item">
+                    <a href="/blog/author/naman/" class="author-avatar" aria-label="Read more of Naman Bansal">
+                        <img class="author-profile-image" src="https://www.gravatar.com/avatar/1b424ffbaa308b371e62efa5919dfe3d?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp" alt="Naman Bansal" />
+                    </a>
+                </li>
+                <li class="author-list-item">
+                    <a href="/blog/author/dhravya/" class="author-avatar" aria-label="Read more of Dhravya Shah">
+                        <img class="author-profile-image" src="/blog/content/images/size/w100/2025/06/90306c68c41aba2b0c763682af4907f6.png" alt="Dhravya Shah" />
+                    </a>
+                </li>
+            </ul>
+
+            <div class="article-byline-meta">
+                <h4 class="author-name"><a href="/blog/author/naman/">Naman Bansal</a>, <a href="/blog/author/dhravya/">Dhravya Shah</a></h4>
+                <div class="byline-meta-content">
+                    <time class="byline-meta-date" datetime="2025-06-23">23 Jun 2025</time>
+                        <span class="byline-reading-time"><span class="bull">&bull;</span> 13 min read</span>
+                </div>
+            </div>
+
+        </section>
+        </div>
+
+            <figure class="article-image">
+                <img
+                    srcset="/content/images/size/w300/2025/06/3.webp 300w,
+                            /content/images/size/w600/2025/06/3.webp 600w,
+                            /content/images/size/w1000/2025/06/3.webp 1000w,
+                            /content/images/size/w2000/2025/06/3.webp 2000w"
+                    sizes="(min-width: 1400px) 1400px, 92vw"
+                    src="/blog/content/images/size/w2000/2025/06/3.webp"
+                    alt="3 Ways To Build LLMs With Long-Term Memory"
+                />
+            </figure>
+
+    </header>
+
+    <section class="gh-content gh-canvas">
+        <p>You’ve already met our guide on implementing short-term <a href="https://supermemory.ai/blog/how-to-add-conversational-memory-to-llms-using-langchain/?ref=blog.supermemory.ai">conversational memory using LangChain</a>, which is great for managing context inside a single chat window.</p><p>But life, therapy, and enterprise apps sprawl across days, weeks, and years. If our agents are doomed to goldfish-brain amnesia, users end up re-explaining everything from their favorite color to yesterday’s heartbreak.</p><p>It's time to graduate from sticky notes to an external brain. This guide will show you what long-term memory in LLMs really is and how to implement it using multiple techniques, like in-memory stores in LangChain, vector databases, Supermemory, etc.</p><h2 id="why-long-term-memory-matters">Why Long-Term Memory Matters</h2><p>Relying on raw token history means stuffing ever-growing chat logs back into each prompt. That quickly blows past context windows, hikes latency and cost, and still buries the signal beneath filler:</p><ul><li>No prioritization. The model wastes attention on greetings while forgetting allergies or project deadlines</li><li>Brittle reasoning. Events like “last Friday’s outage” can’t be referenced without replaying the whole week</li><li>Repetitive answers. The agent re-derives stable traits (“prefers metric units”) every turn</li></ul><p>Real-world apps need selective, structured, semantically indexed data points—facts, timelines, preferences, insights gleaned from analysis, just to skim the top.</p><p>Selecting, pruning, and handing these nuggets to a language model keeps prompts lean, token counts reasonable, and replies coherent across browser tabs and chat threads.</p><h2 id="therapy-assistant-short-term-context-edition">Therapy Assistant, Short-Term Context Edition</h2><p>In part one, we built a therapy assistant that remembers within a session via trimming or summarizing. Close the tab or start a new chat session, however, and it’s obvious the bot needs some therapy of its own.</p><ul><li>Personal details vanish, and users must retell their story</li><li>No cross-thread recall. Parallel chats never share insights</li><li>Token bloat. Replaying the whole transcript balloons prompts</li></ul><p>In short, we need long-term memory.</p><h3 id="goal">Goal</h3><p>Augment our therapy assistant with long-term, structured memory so sessions feel like genuine continuity. Users should see smooth recall of names, milestones, and coping strategies, plus tighter, more context-aware suggestions because the bot can finally connect the dots between Monday’s panic and Friday’s breakthrough.</p><p>We’ll layer in hybrid storage: JSON for crisp facts, a vector database for nuance, and a lightweight retrieval loop that feeds only the relevant slices back to the model.</p><h2 id="persistent-memory-the-langgraph-approach">Persistent Memory: The LangGraph Approach</h2><p>LangGraph has built-in persistence to support long-term LLM memory using states, threads, and checkpointers. For short-term memory, LangGraph stores the list of messages to the chatbot in the state. Using threads, you can uniquely identify which user session the particular memory belongs to. <a href="https://supermemory.ai/blog/how-to-add-conversational-memory-to-llms-using-langchain/?ref=blog.supermemory.ai">Refer to our short-term memory guide</a> for a full breakdown of how these work.</p><p>However, this memory cannot be shared across threads or across user sessions. For that, LangGraph implements something called stores.</p><p>A <code>Store</code> can well, store information as JSON documents across threads and make it available to the graph at any particular point, across different user sessions. Information is organized using <code>namespaces</code>, which basically are folders, but if you want to get technical, they are tuples that are used to uniquely identify a set of memories. Here's an example declaration:</p><pre><code class="language-python">user_id = "1"
+namespace_for_memory = (user_id, "memories")
+</code></pre><p>Memory stores are basically like databases managed by LangGraph. Hopefully, this diagram helps you visualize how stores work:</p><figure class="kg-card kg-image-card"><img src="https://i.postimg.cc/4ykB1hjf/shared-state.png" class="kg-image" alt="memory store diagram" loading="lazy" width="1280" height="671"></figure><p>Every time our therapy agent receives a message, we hydrate working memory with just the bits that matter.</p><h2 id="building-the-persistent-therapy-bot">Building the Persistent Therapy Bot</h2><p>Let's start building our therapy chatbot, and then extend it with persistent memory. We'll start by using the code for the chatbot from our previous tutorial.</p><h3 id="setup">Setup</h3><p>Create a directory for the chatbot and open it in your IDE:</p><pre><code class="language-bash">mkdir memory-chatbot
+</code></pre><p>Install all the necessary Python libraries:</p><pre><code class="language-python">pip install --upgrade --quiet langchain langchain-openai langgraph
+</code></pre><p>Note: Use <code>pip3</code> in case just <code>pip</code> doesn’t work.</p><h3 id="basic-conversational-chatbot">Basic Conversational Chatbot</h3><p>Create a file <code>file.py</code>, and start with the following imports:</p><pre><code class="language-python">from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import RemoveMessage, trim_messages
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import START, MessagesState, StateGraph
+</code></pre><p>Set your OpenAI API key as an environment variable by running the following in your terminal:</p><pre><code class="language-bash">export OPENAI_API_KEY=”YOUR_API_KEY”
+</code></pre><p>Back to the Python file. Import the API key with:</p><pre><code class="language-python">os.environ.get("OPENAI_API_KEY")
+</code></pre><p>Awesome! LangGraph uses graphs to represent and execute workflows. Each graph contains nodes, which are the individual steps or logic blocks that get executed. Create a function to represent that as follows:</p><pre><code class="language-python">def build_summarized(model: ChatOpenAI, trigger_len: int = 8) -&gt; StateGraph:
+    builder = StateGraph(state_schema=MessagesState)
+
+    def chat_node(state: MessagesState):
+        system = SystemMessage(content="You're a kind therapy assistant.")
+        summary_prompt = (
+            "Distill the above chat messages into a single summary message. "
+            "Include as many specific details as you can."
+        )
+
+        if len(state["messages"]) &gt;= trigger_len:
+            history = state["messages"][:-1]
+            last_user = state["messages"][-1]
+            summary_msg = model.invoke(history + [HumanMessage(content=summary_prompt)])
+            deletions = [RemoveMessage(id=m.id) for m in state["messages"]]
+            human_msg = HumanMessage(content=last_user.content)
+            response = model.invoke([system, summary_msg, human_msg])
+            message_updates = [summary_msg, human_msg, response] + deletions
+        else:
+            response = model.invoke([system] + state["messages"])
+            message_updates = response
+        return {"messages": message_updates}
+
+    builder.add_node("chat", chat_node)
+    builder.add_edge(START, "chat")
+    return builder
+
+</code></pre><p>Let's break this function down. The <code>build_summarized</code> function takes in a <code>model</code> and a <code>trigger_len</code> variable as input. The <code>model</code> is the LLM that'll be used under the hood. We'll touch on the <code>trigger_len</code> variable in a second.</p><p>The graph is initialized in the <code>builder</code> variable, and the <code>chat_node</code> function represents the chatbot's node in the graph. It takes the <code>state </code>as an argument, which contains a list of messages stored by the chatbot.</p><p>The <code>chat_node</code> function summarizes the conversation history if it passes a certain length, which is what the <code>trigger_len</code> variable expresses. Only the recent message history is stored in memory, and the rest is deleted.</p><p>Using an interactive CLI, we'll stitch it together so you can talk to the chatbot:</p><pre><code class="language-python">def interactive_chat(build_graph, thread_id: str):
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    graph = build_graph(model)
+    chat_app = graph.compile(checkpointer=MemorySaver())
+
+    while True:
+        try:
+            user_input = input("You: ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting.")
+            break
+
+        state_update = {"messages": [HumanMessage(content=user_input)]}
+        result = chat_app.invoke(
+            state_update, {"configurable": {"thread_id": thread_id}}
+        )
+        print("Bot:", result["messages"][-1].content)
+</code></pre><p>And:</p><pre><code class="language-python">if __name__ == "__main__":
+    interactive_chat(build_summarized, thread_id="demo")
+</code></pre><p><code>MemorySaver</code> keeps threads alive, <code>thread_id</code> lets you spawn parallel sessions. Right now, our chatbot doesn't have any persistent memory. This is just the basic implementation of a chatbot that you can actually talk to, and that can store the memory for individual sessions.</p><h2 id="memory-types-for-human-like-interactions">Memory Types for Human-like Interactions</h2><p>Before we extend our chatbot with persistent memory, let's understand how effective memory mirrors human cognition:</p><ul><li>Semantic (Facts): Zara's birthday is September 14th</li><li>Episodic (Events): Zara went through a breakup in May</li><li>Procedural (Steps and Habits): Zara uses breathing exercises when anxious</li></ul><h3 id="memory-types-mapped-to-therapy">Memory Types Mapped to Therapy</h3>
+<!--kg-card-begin: html-->
+<table>
+<thead>
+<tr>
+<th>Memory kind</th>
+<th>Therapy analogue</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semantic</td>
+<td>Stable facts</td>
+<td>“Name is Zara”</td>
+</tr>
+<tr>
+<td>Episodic</td>
+<td>Lived events</td>
+<td>“Broke up in May”</td>
+</tr>
+<tr>
+<td>Procedural</td>
+<td>Coping steps</td>
+<td>“Box breathing on bad days”</td>
+</tr>
+</tbody>
+</table>
+<!--kg-card-end: html-->
+<h3 id="designing-the-memory-schema">Designing the Memory Schema</h3>
+<!--kg-card-begin: html-->
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Example</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>facts</code></td>
+<td><code>{ "name": "Zara", "birthday": "1995-09-14" }</code></td>
+<td>Rapport, grounding</td>
+</tr>
+<tr>
+<td><code>traits</code></td>
+<td><code>["anxious_on_mondays", "prefers_metric"]</code></td>
+<td>Tone adaptation</td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td><code>[{"date": "2025-05-01", "text": "Break-up"}]</code></td>
+<td>Temporal reasoning</td>
+</tr>
+<tr>
+<td><code>embeddings</code></td>
+<td>Vector IDs pointing to free-text chunks</td>
+<td>Nuanced recall</td>
+</tr>
+</tbody>
+</table>
+<!--kg-card-end: html-->
+<h2 id="implementing-persistent-memory-in-llms">Implementing Persistent Memory in LLMs</h2><p>There’s no single best way to implement long-term memory. As always, it boils down to your individual needs; however, we will go over three approaches that you can use.</p><h3 id="in-memory-store">In-Memory Store</h3><p><code>InMemoryStore()</code> is one of the types of memory stores that LangGraph provides for implementing persistent LLM memory. Let's write some code and demonstrate how it works. Create a new file <code>long-term.py</code> and import the necessary libraries and environment variables as follows:</p><pre><code class="language-python">import os
+import uuid
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.store.memory import InMemoryStore
+from langgraph.store.base import BaseStore
+from langchain_core.runnables.config import RunnableConfig
+from langchain.embeddings import init_embeddings
+
+os.environ.get("OPENAI_API_KEY")
+</code></pre><p>Initialize the model:</p><pre><code class="language-python">model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+</code></pre><p>Let's build the graph:</p><pre><code class="language-python">builder = StateGraph(state_schema=MessagesState)
+</code></pre><p>We'll have two nodes this time: <code>update_memory</code> to analyze user messages, find facts, and store them, and <code>chat</code> to retrieve the facts and respond.</p><p>Create the <code>update_memory</code> node as follows:</p><pre><code>def update_memory(state: MessagesState, config: RunnableConfig, store: BaseStore):
+    user_id = config["configurable"]["user_id"]
+    namespace = (user_id, "memories")
+
+    last_message = state["messages"][-1]
+    analyze_prompt = (
+        "Analyze the last message and extract any facts that can be stored. "
+        "If there are no facts, return an empty string."
+    )
+
+    # Ask the model to summarize facts
+    analyze_msg = model.invoke([last_message] + [HumanMessage(content=analyze_prompt)])
+    memory_content = analyze_msg.content.strip()
+
+    memory_id = str(uuid.uuid4())  # Unique ID for this memory entry
+
+    store.put(
+        namespace=namespace,
+        key=memory_id,
+        value={"facts": memory_content},
+        index=["facts"]  # This enables semantic search over 'facts'
+    )
+</code></pre><p>The <code>state</code>, <code>config</code>, and <code>store</code> have been passed as arguments. The <code>user_id</code> is retrieved and used to point to the correct namespace.</p><p>The user's last message is analyzed using another LLM prompt and the facts are stored and put in the memory store using the <code>store.put()</code> function.</p><p>We're also using semantic search in this code on the <code>facts</code> field, thus is has been passed in the <code>index</code> so that it can be embedded. Semantic search allows us to retrieve the right memories using natural questions. For instance, memory about the user's favorite food can be retrieved even with a question like 'What do I like eating?'.</p><p>Great, now, let's move on to the <code>chat</code> node:</p><pre><code class="language-python">def chat_node(state: MessagesState, config: RunnableConfig, store: BaseStore):
+    user_id = config["configurable"]["user_id"]
+    namespace = (user_id, "memories")
+
+    # Fetch up to 3 memories that are similar to the user's current message
+    memories = store.search(
+        namespace=namespace,
+        query=state["messages"][-1].content,
+        limit=3
+    )
+
+    # Convert memory objects to a usable string
+    info = "\n".join([d.value["facts"] for d in memories])
+    system = SystemMessage(content=f"You're a kind therapy assistant. Here's any past memory: {info}")
+
+    # Respond based on memory + user input
+    response = model.invoke([system, state["messages"][-1]])
+
+    return {"messages": [response]}
+
+</code></pre><p>This node takes the latest user query and searches the store to retrieve any memories matching that query. The retrieved memories are fed to the LLM as a part of the system prompt, and an appropriate response is generated. Next, the nodes are added to the graph and connected:</p><pre><code class="language-python">builder.add_node("update_memory", update_memory)
+builder.add_node("chat", chat_node)
+builder.add_edge(START, "update_memory")
+builder.add_edge("update_memory", "chat")
+</code></pre><p>Finally, the memory checkpointer and the store are actually declared, and the graph gets compiled:</p><pre><code class="language-python">memory = MemorySaver()
+inmemstore = InMemoryStore(
+    index={
+        "embed": init_embeddings("openai:text-embedding-3-small"),
+        "dims": 1536,
+        "fields": ["facts"]
+    }
+)
+
+chat_app = builder.compile(
+    checkpointer=memory,
+    store=inmemstore
+)
+</code></pre><p>An embedding function is used to convert the user's input into vector data that can be searched and retrieved using natural language queries.</p><p>Now, let's test this chatbot:</p><pre><code class="language-python">input_messages = {"messages": [
+    HumanMessage(content="Hello, I am Jack from SF. I love pizzas with olives and bell peppers.")
+]}
+config = {"configurable": {"thread_id": "3", "user_id": "1"}}
+
+for chunk in chat_app.stream(input_messages, config, stream_mode="values"):
+    chunk["messages"][-1].pretty_print()
+
+input_messages = {"messages": [
+    HumanMessage(content="Thinking of making one actually. What favorite toppings should I use?")
+]}
+config = {"configurable": {"thread_id": "6", "user_id": "1"}}
+
+for chunk in chat_app.stream(input_messages, config, stream_mode="values"):
+    chunk["messages"][-1].pretty_print()
+
+</code></pre><p>The above code runs two separate conversations across different thread IDs (3 and 6), still the chatbot can remember and retrieve the accurate information as seen in the output:</p><pre><code>================================ Human Message =================================
+
+Hello, I am Jack from SF. I love pizzas they re my favorite with olives and bell pepper as my favorite toppings.
+================================== Ai Message ==================================
+
+Hi Jack! It’s great to meet you! Pizza is such a delicious choice, especially with olives and bell peppers. Do you have a favorite place in San Francisco to get your pizza, or do you enjoy making it at home?
+================================ Human Message =================================
+
+Thinking of making one actually. What favorite toppings should I use?
+================================== Ai Message ==================================
+
+Since you mentioned that Jack enjoys olives and bell peppers on his pizza, those would be great toppings to consider! You could also think about adding some cheese, pepperoni, or mushrooms for extra flavor. What do you think?
+
+</code></pre><p>Voila! The in-memory store works! However, there's one big issue - it can't be used in production environments without hooking it up to a vector/Postgres database.</p><h3 id="vector-database">Vector Database</h3><p>That's where our next approach comes in: a vector database. It'll allow us to not only persist data across sessions in production-grade apps, but also make it very easy to scale. There are a lot of vector DBs you can choose from for LLM memory, but in this tutorial ,we'll be using Chroma.</p><p>Install it:</p><pre><code class="language-python">pip3 install chromadb
+</code></pre><p>This time, our therapy chatbot will have both long-term memory with Chroma and short-term memory with summarizing. Do the necessary imports first:</p><pre><code>import os
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import RemoveMessage
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, START, MessagesState
+from langchain_chroma import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.runnables.config import RunnableConfig
+
+os.environ.get("OPENAI_API_KEY")
+</code></pre><p>After that, initialize the model and vector database and create the graph:</p><pre><code class="language-python">model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+embedding_model = OpenAIEmbeddings(model="text-embedding-3-small")
+vector_db = Chroma(collection_name="therapy_longterm", embedding_function=embedding_model, persist_directory="./chroma_langchain_db")
+
+builder = StateGraph(state_schema=MessagesState)
+</code></pre><p>An embedding model is necessary to convert the textual data into vector embeddings that can later be searched. We declare a Chroma database by creating a collection, which is basically like a folder containing all your embeddings, documents, etc. A persistent directory stores the data locally.</p><p>Now, the first step would be to create a node that stores the appropriate memory for Chroma:</p><pre><code class="language-python">def store_facts_to_chroma(state: MessagesState, config: RunnableConfig):
+    user_id = config["configurable"]["user_id"]
+    last_msg = state["messages"][-1]
+
+    extract_prompt = HumanMessage(content="Extract any specific facts from the user's last message. If none, return nothing.")
+    extracted = model.invoke([last_msg, extract_prompt]).content.strip()
+
+    if extracted:
+        vector_db.add_texts([extracted], metadatas=[{"user": user_id}])
+</code></pre><p>This function retrieves the <code>user_id</code> and the user's last message. Using another LLM prompt, any specific facts are extracted and then added to the vector database using the <code>add_texts()</code> function, which is specifically used to convert textual data into embeddings and store it. The <code>metadata</code> stores additional data about an embedding which can be used to filter data during retrieval.</p><p>We'll associate every embedding with a particular user so that we can retrieve it later.</p><p>Now, let's create a chat node that combines both short-term + long-term memory as follows:</p><pre><code>def chat_node(state: MessagesState, config: RunnableConfig):
+    user_id = config["configurable"]["user_id"]
+    last_input = state["messages"][-1]
+    history = state["messages"][:-1]
+
+    # Retrieve relevant long-term memory
+    retrieved = vector_db.similarity_search_with_score(
+        last_input.content,
+        k=3,
+        filter={"user": user_id}
+    )
+    long_term_context = "\n".join([doc.page_content for doc, _ in retrieved])
+
+    # Add relevant facts to system prompt
+    system_message = SystemMessage(
+        content=f"You're a kind therapy assistant. Here are past facts you may find useful:\n{long_term_context}"
+    )
+
+    if len(history) &gt;= 8:
+        # Summarize history and trim
+        summary_prompt = HumanMessage(content="Distill the above chat messages into a single summary message. Include as many specific details as you can.")
+        summary_message = model.invoke(history + [summary_prompt])
+        delete_messages = [RemoveMessage(id=m.id) for m in state["messages"]]
+
+        response = model.invoke([system_message, summary_message, last_input])
+        message_updates = [summary_message, last_input, response] + delete_messages
+    else:
+        response = model.invoke([system_message] + state["messages"])
+        message_updates = response
+
+    return {"messages": message_updates}
+</code></pre><p>This function first retrieves the relevant long-term memory to answer a user's question using a similarity search. This context is passed to the system prompt. On top of that, a conversational history of recent messages is also maintained, which leads to efficient answering and retrieval. Messages more than 8 tokens old are summarized.</p><p>Finally, the nodes are added to the graph, and everything is linked and stitched together as follows:</p><pre><code class="language-python">builder.add_node("store_facts", store_facts_to_chroma)
+builder.add_node("chat", chat_node)
+builder.add_edge(START, "store_facts")
+builder.add_edge("store_facts", "chat")
+
+# Compile graph with short-term memory (MemorySaver)
+memory = MemorySaver()
+chat_app = builder.compile(checkpointer=memory)
+
+# Run interactive loop
+if __name__ == "__main__":
+    thread_id = "8"
+    user_id = "user-44"
+
+    while True:
+        try:
+            user_input = input("You: ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting.")
+            break
+
+        state_update = {"messages": [HumanMessage(content=user_input)]}
+        config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
+
+        result = chat_app.invoke(state_update, config)
+        ai_msg = result["messages"][-1]
+        print("Bot:", ai_msg.content)
+</code></pre><p>Let's see the results of this. First, I ran a conversation and gave the model some facts:</p><figure class="kg-card kg-image-card"><img src="https://i.postimg.cc/xTrgcBKH/Screenshot-2025-06-22-at-23-42-54.png" class="kg-image" alt="" loading="lazy" width="1280" height="186"></figure><p>After that, I closed that session, started a new one, and asked it questions referencing my previous chat:</p><figure class="kg-card kg-image-card"><img src="https://i.postimg.cc/4NzPtw50/Screenshot-2025-06-22-at-23-43-51.png" class="kg-image" alt="" loading="lazy" width="976" height="216"></figure><p>And the chatbot successfully remembers!</p><p>There are a couple of other techniques you could use, like JSON stores and knowledge graphs, and we'll quickly touch on them.</p><h3 id="json-store">JSON Store</h3><p>Use a JSON store if you’re just getting started or storing a few fixed keys per user (like name, location, preferences).</p><p><strong>Pros</strong></p><ul><li>Dead simple. No dependencies or setup. Great for prototyping.</li><li>You can open the file, see what went wrong, and fix it manually.</li><li>Works well with Git. You can diff and audit changes easily.</li></ul><p><strong>Cons</strong></p><ul><li>Doesn’t scale. Disk I/O slows down fast once you have more than a few users.</li><li>No search. You can’t ask “what did the user say about their brother last week?” without scanning everything.</li><li>Schema changes are annoying. You’ll need migration logic if field names change.</li></ul><h3 id="knowledge-graph-advanced">Knowledge Graph (Advanced)</h3><p>This is basically memory with structure. Nodes (e.g., people, events, feelings) and edges (e.g., “talked to”, “felt about”) let you model complex relationships over time. Use it if you're building something domain-heavy like medical, legal, or diagnostic agents.</p><p><strong>Pros</strong></p><ul><li>Great for long timelines and causal reasoning.</li><li>Makes the bot explainable. You can trace why it said something.</li><li>Queries can get surgical. Ask “How often has John mentioned his mom after fights?”</li></ul><p><strong>Cons</strong></p><ul><li>Setup is heavy. You’ll need to choose a graph DB, define your schema, and build an ETL process.</li><li>Total overkill for simple use cases.</li><li>Learning curve. Graph thinking is its own skill.</li></ul><p>Each system forgets in its own way: JSON forgets structure, graphs forget boundaries, vectors forget order. The trick is choosing one whose blind spots won’t trip your app.</p><p>Start with the simplest thing that won’t sabotage you. If responses feel slow or clueless, that’s your cue to mutate: shard JSON, add vectors, or graduate to a graph.</p><h2 id="supermemory-super-simple-persistence">Supermemory: Super Simple Persistence</h2><p>Building bespoke persistence in LangGraph teaches you the plumbing. Most days, though, you just want the sink to work.</p><p>Supermemory bolts in with a few lines. Quickly install it from your command line:</p><pre><code>pip3 install supermemory
+</code></pre><p>Declare a client with your API key:</p><pre><code>import supermemory
+
+client = supermemory(
+    api_key="YOUR_API_KEY",
+)
+</code></pre><p>Now, easily add memories:</p><pre><code class="language-python">client.memory.create(
+    customId="id1",
+    content="documents related to python",
+    metadata={
+        "category": "datascience",
+        "tag_1": "ai",
+        "tag_2": "machine-learning",
+    },
+    containerTags=["user_123", "project_xyz"]
+)
+</code></pre><p>You can assign IDs, metadata, tags, etc. And retrieving is super simple as well:</p><pre><code class="language-python">
+client.search.execute(
+    q="machine learning concepts",
+    limit=10
+)
+</code></pre><p>You can use NLP, and with automatic chunking, the retrieval is one of the fastest in the entire industry.<br>Apart from that, Supermemory offers multimodal search, sub-second retrieval, and a model-agnostic proxy that stretches context windows indefinitely!</p><h2 id="conclusion">Conclusion</h2><p>Awesome, your chatbots now have long-term memory as well. Now, take it to the next level by keeping a tight feedback loop: log prompts and retrievals, review mismatches, prune stale memories, and refactor schemas regularly. Keep a tab on the context and don’t be sentimental about deleting what no longer serves.</p><p>Nail that, and a clear, relevant memory stack will turn your ordinary LLMs into extraordinary ones. However, LangGraph's solutions, like in-memory stores and traditional vector databases, start breaking at scale. That is where Supermemory's simple, yet infinitely scalable system comes in - test how easy it is to get started <a>today.</a></p>
+    </section>
+
+
+</article>
+</main>
+
+
+
+
+            <aside class="read-more-wrap outer">
+                <div class="read-more inner">
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Matryoshka-Representation-Learning.png 300w,
+                    /content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png 600w,
+                    /content/images/size/w1000/2025/10/Matryoshka-Representation-Learning.png 1000w,
+                    /content/images/size/w2000/2025/10/Matryoshka-Representation-Learning.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png"
+            alt="Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Embeddings are the cornerstone of any retrieval system. And the larger the embeddings, the more information they can store.
+
+But large embeddings require a lot of memory, which leads to high computational costs and latency.
+
+To reduce this high cost, we can use models that produce embeddings with small dimensions,</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">8 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Frame-2147228224.png 300w,
+                    /content/images/size/w600/2025/10/Frame-2147228224.png 600w,
+                    /content/images/size/w1000/2025/10/Frame-2147228224.png 1000w,
+                    /content/images/size/w2000/2025/10/Frame-2147228224.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Frame-2147228224.png"
+            alt="Incident Report: October 18, 2025 Service Degradation"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Incident Report: October 18, 2025 Service Degradation
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Summary
+
+On October 18, between 1:17 PM and 1:45 PM PDT, we experienced service degradation that resulted in elevated API response times and some timeouts. This happened when two enterprise customers started major data backfills simultaneously— while we&#39;d planned for one, the second caught us by</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">6 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/18.png 300w,
+                    /content/images/size/w600/2025/10/18.png 600w,
+                    /content/images/size/w1000/2025/10/18.png 1000w,
+                    /content/images/size/w2000/2025/10/18.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/18.png"
+            alt="How To Make Your MCP Clients Share Context with Supermemory MCP"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    How To Make Your MCP Clients Share Context with Supermemory MCP
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Let’s get practical here: have you ever dropped a PDF into Cursor, then pasted the same content into Claude just to “remind it”? Or tried to follow up on a thread, only to realize the memory lives in a different tool?
+
+It’s annoying. It breaks your flow. And</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-07">07 Oct 2025</time>
+                <span class="post-card-meta-length">5 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                </div>
+            </aside>
+
+
+
+    </div>
+
+    <footer class="site-footer outer">
+        <div class="inner">
+            <section class="copyright"><a href="https://supermemory.ai/blog">supermemory - Blog</a> &copy; 2025</section>
+            <nav class="site-footer-nav">
+                <ul class="nav">
+    <li class="nav-sign-up"><a href="#/portal/">Sign up</a></li>
+    <li class="nav-get-started"><a href="https://console.supermemory.ai">Get Started</a></li>
+</ul>
+
+            </nav>
+            <div class="gh-powered-by"><a href="https://ghost.org/" target="_blank" rel="noopener">Powered by Ghost</a></div>
+        </div>
+    </footer>
+
+</div>
+
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="pswp__bg"></div>
+
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script
+    src="https://code.jquery.com/jquery-3.5.1.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+    crossorigin="anonymous">
+</script>
+<script src="/blog/assets/built/casper.js?v=259661198b"></script>
+<script>
+$(document).ready(function () {
+    // Mobile Menu Trigger
+    $('.gh-burger').click(function () {
+        $('body').toggleClass('gh-head-open');
+    });
+    // FitVids - Makes video embeds responsive
+    $(".gh-content").fitVids();
+});
+</script>
+
+<script>
+  // Change main logo link
+  const mainLogo = document.querySelector('a.gh-head-logo');
+  if (mainLogo) {
+    mainLogo.href = "https://supermemory.ai/";
+  }
+
+  // Add "Get Started" button to gh-head-actions
+  const actionsDiv = document.querySelector('div.gh-head-actions');
+  if (actionsDiv) {
+    const btn = document.createElement('a');
+    btn.href = "https://console.supermemory.ai";
+    btn.textContent = "Get Started";
+
+    // Button styles
+    btn.style.background = "#267BF1";
+    btn.style.color = "#FFF";
+    btn.style.padding = "1rem 2rem";
+    btn.style.borderRadius = "6px";
+    btn.style.fontWeight = "600";
+    btn.style.textDecoration = "none";
+    btn.style.fontSize = "1.6rem";
+    btn.style.transition = "background 0.2s";
+    btn.onmouseover = () => btn.style.background = "#1563c7";
+    btn.onmouseout = () => btn.style.background = "#267BF1";
+
+    actionsDiv.appendChild(btn);
+  }
+</script>
+
+</body>
+</html>

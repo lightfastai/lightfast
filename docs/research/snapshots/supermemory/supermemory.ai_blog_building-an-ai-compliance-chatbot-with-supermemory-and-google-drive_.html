@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+<meta name="robots" content="index, follow">
+
+    <title>Building an AI Compliance Chatbot With Supermemory and Google Drive</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="preload" as="style" href="/blog/assets/built/screen.css?v=259661198b" />
+    <link rel="preload" as="script" href="/blog/assets/built/casper.js?v=259661198b" />
+
+    <link rel="stylesheet" type="text/css" href="/blog/assets/built/screen.css?v=259661198b" />
+
+    <link rel="icon" href="https://supermemory.ai/blog/content/images/size/w256h256/2025/06/SuperM_LinkedIn-Github-Twitter_ProfilePicture--1--1.png" type="image/png">
+    <link rel="canonical" href="https://supermemory.ai/blog/building-an-ai-compliance-chatbot-with-supermemory-and-google-drive/">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+    <meta property="og:site_name" content="supermemory - Blog">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building an AI Compliance Chatbot With Supermemory and Google Drive">
+    <meta property="og:description" content="Contract compliance reviews are a serious drain on time and focus. It’s a repetitive process that takes away from actual legal thinking, and the workflow is absolutely broken.
+
+Files live in different places. You’re never sure if you’re reading the latest version. And no one has time">
+    <meta property="og:url" content="https://supermemory.ai/blog/building-an-ai-compliance-chatbot-with-supermemory-and-google-drive/">
+    <meta property="og:image" content="https://supermemory.ai/blog/content/images/2025/07/Frame_2147223301.webp">
+    <meta property="article:published_time" content="2025-07-20T20:18:56.000Z">
+    <meta property="article:modified_time" content="2025-07-20T20:18:56.000Z">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Building an AI Compliance Chatbot With Supermemory and Google Drive">
+    <meta name="twitter:description" content="Contract compliance reviews are a serious drain on time and focus. It’s a repetitive process that takes away from actual legal thinking, and the workflow is absolutely broken.
+
+Files live in different places. You’re never sure if you’re reading the latest version. And no one has time">
+    <meta name="twitter:url" content="https://supermemory.ai/blog/building-an-ai-compliance-chatbot-with-supermemory-and-google-drive/">
+    <meta name="twitter:image" content="https://supermemory.ai/blog/content/images/2025/07/Frame_2147223301.webp">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Naman Bansal">
+    <meta name="twitter:site" content="@supermemoryai">
+    <meta property="og:image:width" content="1108">
+    <meta property="og:image:height" content="623">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "supermemory - Blog",
+        "url": "https://supermemory.ai/blog/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg"
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Naman Bansal",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://www.gravatar.com/avatar/1b424ffbaa308b371e62efa5919dfe3d?s=250&r=x&d=mp",
+            "width": 250,
+            "height": 250
+        },
+        "url": "https://supermemory.ai/blog/author/naman/",
+        "sameAs": []
+    },
+    "headline": "Building an AI Compliance Chatbot With Supermemory and Google Drive",
+    "url": "https://supermemory.ai/blog/building-an-ai-compliance-chatbot-with-supermemory-and-google-drive/",
+    "datePublished": "2025-07-20T20:18:56.000Z",
+    "dateModified": "2025-07-20T20:18:56.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://supermemory.ai/blog/content/images/2025/07/Frame_2147223301.webp",
+        "width": 1108,
+        "height": 623
+    },
+    "description": "Contract compliance reviews are a serious drain on time and focus. It’s a repetitive process that takes away from actual legal thinking, and the workflow is absolutely broken.\n\nFiles live in different places. You’re never sure if you’re reading the latest version. And no one has time to manually track every obligation, clause, or renewal date buried inside a hundred PDFs.\n\nBut what if you had an AI assistant to automatically handle it? One that connects directly to your (or your client’s) Google",
+    "mainEntityOfPage": "https://supermemory.ai/blog/building-an-ai-compliance-chatbot-with-supermemory-and-google-drive/"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 5.130">
+    <link rel="alternate" type="application/rss+xml" title="supermemory - Blog" href="https://supermemory.ai/blog/rss/">
+    
+    <script defer src="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/sodo-search.min.js" data-key="d2a094c14f6148bdbd8ad26051" data-styles="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/main.css" data-sodo-search="https://supermemory.ai/blog/" data-locale="en" crossorigin="anonymous"></script>
+    
+    <link href="https://supermemory.ai/blog/webmentions/receive/" rel="webmention">
+    <script defer src="/blog/public/cards.min.js?v=259661198b"></script><style>:root {--ghost-accent-color: #3d49d8;}</style>
+    <link rel="stylesheet" type="text/css" href="/blog/public/cards.min.css?v=259661198b">
+    <style>
+  .gh-footer-copyright {
+    display: none !important;
+}
+a[href*="ghost.org"] {
+    display: none !important;
+}
+::selection {
+  background: #267BF1;
+  color: #FFF;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all navigation logo links
+    const logoLinks = document.querySelectorAll('.gh-navigation-logo');
+    
+    logoLinks.forEach(function(link) {
+        // Change the href to point to main site
+        link.href = 'https://supermemory.ai';
+    });
+});
+
+  // Ensure all pages point to the main domain version
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical && canonical.href.includes('blog.supermemory.ai')) {
+    canonical.href = canonical.href.replace('blog.supermemory.ai', 'supermemory.ai/blog');
+  }
+
+if (typeof window !== 'undefined') {
+  // Client-side check
+  const hostname = window.location.hostname;
+  const userAgent = navigator.userAgent;
+  const isCloudflareWorker = userAgent.includes('Cloudflare-Workers');
+  const isGhostAdmin = window.location.pathname.startsWith('/ghost');
+  
+  if (hostname === 'blog.supermemory.ai' && !isCloudflareWorker && !isGhostAdmin) {
+    window.location.replace('https://supermemory.ai/blog' + window.location.pathname.replace('/blog', '') + window.location.search);
+  }
+}
+</script>
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Ce js Ls Te Fs Ds capture Ye calculateEventProperties zs register register_once register_for_session unregister unregister_for_session Ws getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Bs Us createPersonProfile Hs Ms Gs opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ns debug L qs getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_9wkqAZtZYAUCNwvus0hYqcZbw5EBEX2s3QXjZoNdUNS', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2025-05-24',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+    <link rel="preconnect" href="https://fonts.bunny.net"><link rel="stylesheet" href="https://fonts.bunny.net/css?family=space-grotesk:700|space-mono:400,700"><style>:root {--gh-font-heading: Space Grotesk;--gh-font-body: Space Mono;}</style>
+
+</head>
+<body class="post-template gh-font-heading-space-grotesk gh-font-body-space-mono is-head-left-logo">
+<div class="viewport">
+
+    <header id="gh-head" class="gh-head outer">
+        <div class="gh-head-inner inner">
+            <div class="gh-head-brand">
+                <a class="gh-head-logo" href="https://supermemory.ai/blog">
+                        <img src="https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg" alt="supermemory - Blog">
+                </a>
+                <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                <button class="gh-burger" aria-label="Main Menu"></button>
+            </div>
+
+            <nav class="gh-head-menu">
+                <ul class="nav">
+    <li class="nav-home"><a href="https://supermemory.ai">Home</a></li>
+    <li class="nav-blogs"><a href="https://supermemory.ai/blog">Blogs</a></li>
+    <li class="nav-updates"><a href="https://docs.supermemory.ai/changelog/overview">Updates</a></li>
+    <li class="nav-docs"><a href="https://docs.supermemory.ai">Docs</a></li>
+</ul>
+
+            </nav>
+
+            <div class="gh-head-actions">
+                        <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="site-content">
+        
+
+
+
+<main id="site-main" class="site-main">
+<article class="article post ">
+
+    <header class="article-header gh-canvas">
+
+        <div class="article-tag post-card-tags">
+        </div>
+
+        <h1 class="article-title">Building an AI Compliance Chatbot With Supermemory and Google Drive</h1>
+
+
+        <div class="article-byline">
+        <section class="article-byline-content">
+
+            <ul class="author-list instapaper_ignore">
+                <li class="author-list-item">
+                    <a href="/blog/author/naman/" class="author-avatar" aria-label="Read more of Naman Bansal">
+                        <img class="author-profile-image" src="https://www.gravatar.com/avatar/1b424ffbaa308b371e62efa5919dfe3d?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp" alt="Naman Bansal" />
+                    </a>
+                </li>
+            </ul>
+
+            <div class="article-byline-meta">
+                <h4 class="author-name"><a href="/blog/author/naman/">Naman Bansal</a></h4>
+                <div class="byline-meta-content">
+                    <time class="byline-meta-date" datetime="2025-07-20">20 Jul 2025</time>
+                        <span class="byline-reading-time"><span class="bull">&bull;</span> 15 min read</span>
+                </div>
+            </div>
+
+        </section>
+        </div>
+
+            <figure class="article-image">
+                <img
+                    srcset="/content/images/size/w300/2025/07/Frame_2147223301.webp 300w,
+                            /content/images/size/w600/2025/07/Frame_2147223301.webp 600w,
+                            /content/images/size/w1000/2025/07/Frame_2147223301.webp 1000w,
+                            /content/images/size/w2000/2025/07/Frame_2147223301.webp 2000w"
+                    sizes="(min-width: 1400px) 1400px, 92vw"
+                    src="/blog/content/images/size/w2000/2025/07/Frame_2147223301.webp"
+                    alt="Building an AI Compliance Chatbot With Supermemory and Google Drive"
+                />
+            </figure>
+
+    </header>
+
+    <section class="gh-content gh-canvas">
+        <p>Contract compliance reviews are a serious drain on time and focus. It’s a repetitive process that takes away from actual legal thinking, and the workflow is absolutely broken.</p><p>Files live in different places. You’re never sure if you’re reading the latest version. And no one has time to manually track every obligation, clause, or renewal date buried inside a hundred PDFs.</p><p>But what if you had an AI assistant to automatically handle it? One that connects directly to your (or your client’s) Google Drive, stays in sync automatically, and lets you chat with your documents.</p><p>In this guide, we’ll walk through building that AI assistant. It connects directly to your Google Drive, keeps itself updated as documents change, and lets you ask questions or run checks over the entire set of contracts without manual uploads or setup.</p><p>You’ll use<a href="https://supermemory.ai/?ref=blog.supermemory.ai"><u> Supermemory</u></a> to handle document syncing and memory, with a TypeScript backend and a Vite React frontend. You can also access all the code here:<a href="https://github.com/namancoderpro/ai-drive-chat?ref=blog.supermemory.ai"><u> GitHub repo</u></a></p><h2 id="planning-the-app">Planning the app</h2><p>Before jumping into the code, it helps to get clear on what we’re actually building and why. Here’s how I thought through the design:</p><h3 id="1-what%E2%80%99s-the-assistant-actually-doing">1. What’s the Assistant Actually Doing?</h3><p>At a high level, it needs to:</p><ul><li>Connect to a Google Drive and access all relevant legal docs</li><li>Automatically sync new or updated files</li><li>Let the user ask questions about any of the documents</li><li>Respond using context pulled from those files, plus memory of past chats</li></ul><p>So the three core jobs are: connect, sync, and chat.</p><h3 id="2-why-supermemory">2. Why Supermemory?</h3><p>Most “chat with your documents” setups require manually uploading files or rebuilding context every time. I wanted something that just stayed in sync without needing to re-upload or reprocess every time someone edits a contract.</p><p>Supermemory handles all that for me. It:</p><ul><li>Connects directly to Google Drive</li><li>Watches for file changes and syncs them</li><li>Adds memory and document context automatically to each AI call</li></ul><p>That’s huge because I don’t have to manually store, chunk, or retrieve anything.</p><h3 id="3-tools-breakdown">3. Tools Breakdown</h3><p>Here’s how I picked the stack:</p><ul><li><strong>Memory + File Syncing:</strong> Supermemory handles both, so no need to build my own database or embedding system.</li><li><strong>Chat + AI Responses:</strong> OpenAI (GPT-4o) via Supermemory, so memory is already baked into the API call.</li><li><strong>Backend:</strong> TypeScript with Express as it’s simple and flexible for API routes.</li><li><strong>Frontend:</strong> Vite + React + Tailwind because it’s fast to build and easy to style.</li></ul><h3 id="4-assistant-workflow">4. Assistant Workflow</h3><p>Here’s the basic flow this app follows:</p><ol><li><strong>Connect</strong> – User clicks a button → initiates Google Drive OAuth via Supermemory</li><li><strong>Sync</strong> – After uploading contracts, user clicks sync → Supermemory indexes the new files</li><li><strong>Chat</strong> – User sends a message → app hits the /chat API → Supermemory auto-adds document context → GPT-4o generates a useful, formatted reply</li></ol><p>That’s the thinking. Now let’s dive right into the code.</p><h2 id="building-the-app-step-by-step">Building the app: step-by-step</h2><h3 id="project-setup">Project Setup</h3><p>The first step in the tutorial is to set up our project. First, create a general directory that will house the project's backend and frontend files.</p><pre><code>mkdir compliance-checker-assistant
+</code></pre>
+<p>Navigate to the compliance-checker-assistant directory in your terminal to continue with the tutorial.</p><pre><code>cd compliance-checker-assistant
+</code></pre>
+<h3 id="create-assistant-backend">Create Assistant Backend</h3><p>To set up our AI assistant backend. First, add a backend folder to your compliance-checker-assistant folder and navigate to the folder.</p><pre><code>mkdir backend
+cd backend
+</code></pre>
+<p>Initialize Node in the backend folder.</p><pre><code>npm init -y
+</code></pre>
+<p>For the backend, we will be installing the following packages.&nbsp;</p><ol><li>express:&nbsp; To create our backend routes</li><li>dotenv:&nbsp; To pass env variables</li><li>openai:&nbsp; The OpenAI Typescript SDK</li><li>supermemory: Supermemory AI Typescript SDK</li></ol><p>Install the required packages with the following command -</p><pre><code>npm install express supermemory openai
+</code></pre>
+<p>Install TypeScript and add types for Express.js and Node.</p><pre><code>npm install --save-dev typescript @types/node @types/express
+</code></pre>
+<p>Initialize TypeScript:</p><pre><code>npx tsc --init
+</code></pre>
+<p>This command will add a tsconfig.json file to your backend folder. Open the tsconfig.json file and add the following code to it:</p><pre><code>"outDir": "./dist/",
+</code></pre>
+<p>Add the following scripts to your package.json file.</p><pre><code>"scripts": {
+   "build": "tsc",
+   "start": "node dist/app.js",
+   "dev": "ts-node src/app.ts"
+ },
+</code></pre>
+<p>Create a .env file and add the following keys and their values to the file.</p><pre><code>SUPERMEMORY_API_KEY=
+OPENAI_API_KEY=
+</code></pre>
+<p>For instructions on how to retrieve your Supermemory AI api key, see - https://supermemory.ai/docs/model-enhancement/getting-started#get-your-supermemory-api-key</p><p>For instructions on how to retrieve your OpenAI&nbsp; api key, see - https://platform.openai.com/api-keys</p><h3 id="create-your-assistant-server">Create your Assistant server</h3><p>After setting up our backend, the next step is to create the assistant server. For this tutorial, we will be adding three routes to our backend.</p><ol><li>api/connect - This route will be used to connect to our Google Drive application with Supermemory AI. This will enable Supermemory AI to access the contract and compliance files stored in the drive.</li><li>api/sync - This route will be used to sync Supermemory AI and our Google Drive. This is useful when we add new files to our drive and we need to keep our Supermemory files up to date.</li><li>api/chat - This route will be used to chat with our AI assistant.&nbsp;</li></ol><p>Add a src folder to your backend folder, and add an app.ts file to the folder.</p><pre><code>mkdir src
+touch app.ts
+</code></pre>
+<p>Add the following code sample to the app.ts&nbsp; file</p><pre><code>
+import express from "express";
+import "dotenv/config";
+import chatRoutes from "./routes/chatRoutes";
+
+const app = express();
+const PORT = 3100;
+
+app.use(express.json());
+
+app.use("/api", chatRoutes);
+
+app.listen(PORT, () =&gt; {
+ console.log(`Server running on http://localhost:${PORT}`);
+});
+</code></pre>
+<p>In this code, we created our backend server using Express.js. We imported our .env file parameters using dotenv, imported our routes, and configured our server to listen on port 3100.&nbsp;</p><p>To create the required routes, add a routes folder to your src folder and add a chatRoutes.ts file to the folder.</p><pre><code>mkdir routes
+touch routes/chatRoutes.ts
+</code></pre>
+<p>Add the following code to the chatRoutes.ts file</p><pre><code>
+import express, {
+ Request,
+ Response,
+ NextFunction,
+ RequestHandler,
+} from "express";
+import Supermemory from "supermemory";
+import OpenAI from "openai";
+const router = express.Router();
+const client = new Supermemory({
+ apiKey: process.env["SUPERMEMORY_API_KEY"], // This is the default and can be omitted
+});
+
+const openai = new OpenAI({
+ apiKey: process.env.OPENAI_API_KEY,
+ baseURL: "https://api.supermemory.ai/v3/https://api.openai.com/v1",
+ defaultHeaders: {
+   "x-api-key": process.env.SUPERMEMORY_API_KEY,
+ },
+});
+</code></pre>
+<p>In this code, we created an Express router, initialized a Supermemory client, and an OpenAI client. Note the OpenAI baseUrl and default headers; with this configuration, Supermemory automatically appends relevant memory and context to our conversation when interacting with OpenAI APIs.</p><p>Add the following code to the chatRoutes.ts file to create the api/connect route -</p><pre><code>router.get("/connect", async (req: Request, res: Response) =&gt; {
+ try {
+   const connection = await client.connections.create("google-drive", {
+     redirectUrl: "http://localhost:5173",
+   });
+   res.status(201).json({
+     message: "authenticate",
+     url: connection.authLink,
+   });
+ } catch (error) {
+   console.error("Connection creation failed:", error);
+   res.status(500).json({
+     message: "Failed to initiate connection",
+     error: (error as Error).message,
+   });
+ }
+});
+</code></pre>
+<p>First, we created a new Google Drive connection using the Suprememory SDK. An authentication link is then collected from the response and sent back as a response for the API.&nbsp;</p><p>Note that we added a redirectUrl parameter to the request. The authentication link will redirect to the redirect URL after the authentication process is completed.</p><p>Add the following code to the chatRoutes.ts file to create the api/sync route -</p><pre><code>router.get("/sync", async (req: Request, res: Response) =&gt; {
+ try {
+   await client.connections.import("google-drive");
+   res.status(201).json({
+     message: "synced",
+   });
+ } catch (error) {
+   console.error("Sync failed:", error);
+   res.status(500).json({
+     message: "Failed to initiate sync",
+     error: (error as Error).message,
+   });
+ }
+});
+</code></pre>
+<p>This code performs a connection sync between Supermemory and Google Drive. After completing the sync, the api returns a `synced` response.</p><p>Add the following code to the chatRoutes.ts file to create the api/chat route -</p><pre><code>interface ChatRequestBody {
+ message: string;
+}
+interface ChatResponse {
+ response: string | null;
+}
+interface ErrorResponse {
+ error: string;
+}
+
+const chatHandler: RequestHandler&lt;
+ {},
+ ChatResponse | ErrorResponse,
+ ChatRequestBody
+&gt; = async (req, res, next) =&gt; {
+ const { message } = req.body;
+ if (!message) {
+   res
+     .status(400)
+     .json({ error: 'Request body must include a "message" field.' });
+   return;
+ }
+
+ try {
+   const completion = await openai.chat.completions.create({
+     model: "gpt-4o",
+     user: "sheriff",
+     messages: [
+       {
+         role: "system",
+         content:
+           "You are ContractGuard, an AI assistant for contract and compliance reviews. When given any contract text, you will:\n\n1. Highlight key obligations and risks.\n2. Point out missing or non-standard clauses.\n3. Recommend fixes or best-practice language.\n4. Always format your answer in Markdown with headings and bullet points.",
+       },
+       { role: "user", content: message },
+     ],
+   });
+
+   res.status(200).json({
+     response: completion.choices[0].message.content,
+   });
+   return;
+ } catch (err) {
+   console.error("Chat failed:", err);
+   res.status(500).json({ error: "Failed to initiate AI chat." });
+   return;
+ }
+};
+
+router.post("/chat", chatHandler);
+</code></pre>
+<p>The `chatHandler` function first extracts the user’s message from the request body. It then passes the system our AI assistant system's prompt and the extracted user message to the OpenAI SDK to get a response.&nbsp;</p><p>Note that we are not adding our previous conversation manually to the messages; this is handled automatically by Supermemory. In addition to that, Supermemory also handles the AI’s interaction with your Google Drive files.</p><p>Add the following to the end of the chatRoutes.ts file to export your routes.</p><pre><code>export default router;</code></pre><p>Start your backend server with the following command.</p><pre><code>npm run build
+npm run start</code></pre><p>You can access your backend server at http://localhost:3100.</p><h3 id="create-your-app%E2%80%99s-frontend">Create your app’s frontend</h3><p>After completing the assistant's backend, the next step is to create a chat interface frontend for the assistant. We will be using Vite React, TypeScript, and Tailwind CSS for our frontend code.</p><p>Create a Vite React TypeScript project named frontend.</p><pre><code>npm create vite@latest frontend -- --template react-ts</code></pre><p>Navigate to the project and install the required dependencies</p><pre><code>cd frontend
+npm install</code></pre><p>Install Tailwind CSS Vite</p><pre><code>npm install tailwindcss @tailwindcss/vite</code></pre><p>Open your vite.config.ts and update it to the following code.</p><pre><code>import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+ plugins: [react(), tailwindcss()],
+ })
+</code></pre><p>Open your src/index.css file and import Tailwind CSS at the top of the file</p><pre><code>@import "tailwindcss";</code></pre><p>Start your frontend server.</p><pre><code>npm run dev</code></pre><p>You should be able to access your app at http://localhost:5173/.</p><p>The next step is to implement the chat interface, open your App.tsx file, and replace the code with the following code.</p><p>Let’s start with the necessary imports:</p><pre><code>import type React from 'react'
+
+import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { Send, Bot, User, Loader2 } from 'lucide-react'</code></pre><p>At the top of the file, we’ll now define TypeScript interfaces for our chat messages and API responses:</p><pre><code class="language-javascript">interface Message {
+ id: string
+ role: 'user' | 'assistant'
+ content: string
+ timestamp: Date
+}
+
+interface ConnectResponse {
+ message: string;
+ url?: string;
+ error?: string;
+}
+
+interface SyncResponse {
+ message: string;
+ error?: string;
+}</code></pre><p>Since this project is built with TypeScript, defining interfaces upfront helps make the entire frontend codebase easier to reason about and catch bugs early. We only define a few interfaces here, but they’re essential to how the chat system operates.</p>
+<p>The <code>Message</code> interface represents a single message in the conversation. It includes an <code>id</code> (used as a unique key when rendering messages), a <code>role</code> (either&nbsp; <code>user</code> or <code>assistant</code> so we can style them differently), the <code>content</code> (which is the actual message text), and a <code>timestamp</code>.</p>
+<p>Every time a user sends a message or the assistant replies, we create a new <code>Message</code> object and add it to our state.</p>
+<p>The <code>ConnectResponse</code> and <code>SyncResponse</code> types are used to type-check the data we get back from the backend API when connecting to Google Drive or syncing files to avoid runtime errors.</p><p>Now, let’s set up the states and refs:</p><pre><code>function App () {
+ const [messages, setMessages] = useState&lt;Message[]&gt;([])
+ const [input, setInput] = useState('')
+ const [isLoading, setIsLoading] = useState(false)
+ const messagesEndRef = useRef&lt;HTMLDivElement&gt;(null)</code></pre><p><code>messages</code> is the core of the chat experience. It’s an array that holds every message in the order they were sent.</p>
+<p><code>input</code> stores whatever the user is currently typing. As the user types in the input box, this gets updated in real-time.</p>
+<p><code>isLoading</code> is a simple flag to tell us when the assistant is “thinking.”<br>
+It’s used to disable the input field and show a spinner in the chat UI so users don’t accidentally submit multiple messages or get confused by lag.</p>
+<p><code>messagesRef</code> is a reference to an invisible div at the bottom of the chat window. We use this to automatically scroll the chat down to the latest message every time a new one is added.</p>
+<p>Next, we’ll write functions to connect to Google Drive and Sync the content, sending requests to our backend APIs:</p>
+<pre><code>const handleConnect = async () =&gt; {
+   try {
+     const res = await fetch('http://localhost:3100/api/connect', {
+       method: 'GET',
+       credentials: 'include',
+     });
+     const data: ConnectResponse = await res.json();
+
+     if (!res.ok) {
+       console.log(data.error ?? data.message);
+     } else if (data.url) {
+       // redirect to the OAuth URL
+       window.location.href = data.url;
+     }
+   } catch (err) {
+     console.log((err as Error).message);
+   }
+ };
+
+ const handleSync = async () =&gt; {
+   try {
+     const res = await fetch('http://localhost:3100/api/sync', {
+       method: 'GET',
+       credentials: 'include',
+     });
+     const data: SyncResponse = await res.json();
+
+     if (!res.ok) {
+       console.log(data.error ?? data.message);
+     } else {
+       console.log(data.message);
+     }
+   } catch (err) {
+     console.log((err as Error).message);
+   } 
+ };
+</code></pre>
+<p>The <code>handleConnect</code> function makes a GET request to our backend route at <code>/api/connect</code>, it gets the <code>authLink</code> returned from the backend, and redirects the user to it. This is how the user grants permissions to Supermemory to read our GDrive files.</p>
+<p>The <code>handleSync</code> function explicitly tells Supermemory to sync to Google Drive. Supermemory automatically does it whenever a new doc is uploaded, but in case you need manual refreshing, this function will work.</p>
+<p>It also sends a GET request to our backend /api/sync endpoint and when it’s successfully done, we log a simple confirmation message <code>{message: ‘synced’}</code> in the console.</p>
+<p>Now, let’s handle the main logic of sending messages and receiving responses:</p>
+<pre><code> const scrollToBottom = () =&gt; {
+   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+ }
+
+ useEffect(() =&gt; {
+   scrollToBottom()
+ }, [messages])
+</code></pre>
+<p>The <code>scrollToBottom</code> function is a little helper that scrolls automatically down when a new message loads.</p>
+<p>Now, the <code>chatHandler</code> is the main function that encompasses the logic of our app:</p>
+<pre><code>const chatHandler: RequestHandler&lt;{}, ChatResponse | ErrorResponse, ChatRequestBody&gt; = async (req, res) =&gt; {
+ const { message } = req.body;
+ if (!message) {
+   res.status(400).json({ error: 'Request body must include a "message" field.' });
+   return;
+ }
+
+ try {
+   // Initial response: model decides if it should use the search tool
+   const initial = await openai.responses.create({
+     model: "gpt-4o",
+     instructions: `You are ContractGuard, an assistant for contract and compliance reviews.
+Decide if you need to search documents to answer the user's question.
+If yes, call the 'supermemory_search' tool with the query parameter.
+Otherwise, provide an answer directly.`,
+     input: message,
+     tools: [
+       {
+         type: "function",
+         name: "supermemory_search",
+         description: "Search documents in Google Drive",
+         strict: true,
+         parameters: {
+           type: "object",
+           properties: {
+             query: {
+               type: "string",
+               description: "The search query for finding relevant documents"
+             },
+           },
+           required: ["query"],
+           additionalProperties: false,
+         },
+       },
+     ],
+     tool_choice: "auto",
+   });
+
+   // Check if there's a function call in the output
+   const functionCall = initial.output.find(item =&gt; item.type === "function_call");
+  
+   if (functionCall &amp;&amp; functionCall.name === "supermemory_search") {
+     const args = JSON.parse(functionCall.arguments || "{}");
+    
+            // Perform the search using supermemory client
+      let docs;
+      try {
+        // Use the correct Supermemory API method
+        docs = await client.search.execute({
+          q: args.query,
+          limit: 5
+        });
+       
+        console.log(`🔍 Search executed: "${args.query}"`);
+      } catch (searchError) {
+        console.error("Supermemory search failed:", searchError);
+        res.status(500).json({ error: "Failed to search documents. Please try again." });
+        return;
+      }
+
+     // Second response: provide search results for final answer
+     const followUp = await openai.responses.create({
+       model: "gpt-4o",
+       instructions: `You are ContractGuard. Use the provided search results to answer the user's question about contracts and compliance.
+Be specific and cite relevant information from the documents when possible.`,
+       input: [
+         {
+           type: "function_call",
+           call_id: functionCall.call_id,
+           name: functionCall.name,
+           arguments: functionCall.arguments,
+         },
+         {
+           type: "function_call_output",
+           call_id: functionCall.call_id,
+           output: JSON.stringify(docs),
+         },
+         {
+           role: "user",
+           content: message,
+         }
+       ],
+     });
+    
+     res.status(200).json({
+       response: followUp.output_text || "I found some documents but couldn't generate a response. Please try rephrasing your question."
+     });
+     return;
+   }
+
+   // No tool call needed: return the direct answer
+   res.status(200).json({
+     response: initial.output_text || "I'm ready to help with contract and compliance questions. Please ask me anything!"
+   });
+   return;
+
+ } catch (err) {
+   console.error("Chat handler error:", err);
+   res.status(500).json({
+     error: "An error occurred while processing your request. Please try again."
+   });
+   return;
+ }
+};
+</code></pre>
+<p>First, as soon as a request hits ‘/chat’, we pul message out of the JSON body. If it’s missing, we return a 400 error. Then, we use OpenAI’s Responses API with three key pieces:</p>
+<ul>
+<li><code>instructions</code> that tell the model it’s ContractGuard and should decide whether it needs to search the Drive documents.</li>
+<li>A single tool definition named ‘supermemory_search’, which strictly accepts an object with a <code>query</code> string.</li>
+<li><code>tool_choice: “auto”</code>, so the model can either answer directly or invoke our search tool.</li>
+</ul>
+<p>At this point, the model returns a sequence of output items, which may include a <code>function_call</code> if it thinks a search is required. If there’s a function called <code>supermemory_search</code> in the output, it means the model wants us to run a document search.</p>
+<p>So, we use Supermemory’s <code>.search.execute()</code> method, we run that <code>query</code> against the user’s connected Drive docs, limiting the results to the top 5.</p>
+<p>Then, we hit the Responses API again, with the original function_call object, the search results, and the user’s original message.</p>
+<p>Lastly, we have a simple utility to wipe the entire chat history.</p>
+<pre><code>&nbsp;const clearChat = () =&gt; { &nbsp; setMessages([]) }
+</code></pre>
+<p>We’ve also created the UI for the app below and linked the functions to distinct buttons:</p><pre><code> return (
+   &lt;div className='flex flex-col h-screen w-screen bg-gray-50'&gt;
+     {/* Header */}
+     &lt;header className='bg-white shadow-sm border-b px-4 py-3'&gt;
+       &lt;div className='max-w-4xl mx-auto flex items-center justify-between'&gt;
+         &lt;h1 className='text-xl font-semibold text-gray-800 flex items-center gap-2'&gt;
+         ContractGuard
+         &lt;/h1&gt;
+         &lt;div className='flex items-center gap-2'&gt;
+           &lt;button
+             onClick={handleConnect}
+             className='px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
+           &gt;
+             Connect to Google Drive
+           &lt;/button&gt;
+
+           &lt;button
+             onClick={handleSync}
+             className='px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
+           &gt;
+             Sync Google Drive
+           &lt;/button&gt;
+           &lt;button
+             onClick={clearChat}
+             className='px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
+           &gt;
+             Clear chats
+           &lt;/button&gt;
+         &lt;/div&gt;
+       &lt;/div&gt;
+     &lt;/header&gt;
+
+     {/* Messages */}
+     &lt;div className='flex-1 overflow-y-auto px-4 py-6'&gt;
+       &lt;div className='max-w-4xl mx-auto space-y-6'&gt;
+         {messages.length === 0 &amp;&amp; (
+           &lt;div className='text-center text-gray-500 py-12'&gt;
+             &lt;Bot className='w-12 h-12 mx-auto mb-4 text-gray-300' /&gt;
+             &lt;p className='text-lg'&gt;Start a conversation with the AI&lt;/p&gt;
+             &lt;p className='text-sm'&gt;Type your message below to get started&lt;/p&gt;
+           &lt;/div&gt;
+         )}
+
+         {messages.map(message =&gt; (
+           &lt;div
+             key={message.id}
+             className={`flex gap-3 ${
+               message.role === 'user' ? 'justify-end' : 'justify-start'
+             }`}
+           &gt;
+             {message.role === 'assistant' &amp;&amp; (
+               &lt;div className='flex-shrink-0'&gt;
+                 &lt;div className='w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center'&gt;
+                   &lt;Bot className='w-4 h-4 text-white' /&gt;
+                 &lt;/div&gt;
+               &lt;/div&gt;
+             )}
+
+             &lt;div
+               className={`max-w-3xl rounded-lg px-4 py-3 ${
+                 message.role === 'user'
+                   ? 'bg-blue-600 text-white'
+                   : 'bg-white border border-gray-200'
+               }`}
+             &gt;
+               {message.role === 'user' ? (
+                 &lt;p className='whitespace-pre-wrap'&gt;{message.content}&lt;/p&gt;
+               ) : (
+                 &lt;div className='prose prose-sm max-w-none text-black'&gt;
+                   &lt;ReactMarkdown
+                     components={{
+                       code ({ inline, className, children, ...props }) {
+                         if (inline) {
+                           return (
+                             &lt;code
+                               className='bg-gray-100 px-1 py-0.5 rounded text-sm'
+                               {...props}
+                             &gt;
+                               {children}
+                             &lt;/code&gt;
+                           )
+                         }
+                         return (
+                           &lt;pre className='bg-gray-100 rounded-lg p-4 overflow-x-auto text-sm'&gt;
+                             &lt;code className={className} {...props}&gt;
+                               {children}
+                             &lt;/code&gt;
+                           &lt;/pre&gt;
+                         )
+                       }
+                     }}
+                   &gt;
+                     {message.content}
+                   &lt;/ReactMarkdown&gt;
+                 &lt;/div&gt;
+               )}
+               &lt;div className='text-xs opacity-70 mt-2'&gt;
+                 {message.timestamp.toLocaleTimeString()}
+               &lt;/div&gt;
+             &lt;/div&gt;
+
+             {message.role === 'user' &amp;&amp; (
+               &lt;div className='flex-shrink-0'&gt;
+                 &lt;div className='w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center'&gt;
+                   &lt;User className='w-4 h-4 text-white' /&gt;
+                 &lt;/div&gt;
+               &lt;/div&gt;
+             )}
+           &lt;/div&gt;
+         ))}
+
+         {isLoading &amp;&amp; (
+           &lt;div className='flex gap-3 justify-start'&gt;
+             &lt;div className='flex-shrink-0'&gt;
+               &lt;div className='w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center'&gt;
+                 &lt;Bot className='w-4 h-4 text-white' /&gt;
+               &lt;/div&gt;
+             &lt;/div&gt;
+             &lt;div className='bg-white border border-gray-200 rounded-lg px-4 py-3'&gt;
+               &lt;div className='flex items-center gap-2 text-gray-500'&gt;
+                 &lt;Loader2 className='w-4 h-4 animate-spin' /&gt;
+                 &lt;span&gt;AI is thinking...&lt;/span&gt;
+               &lt;/div&gt;
+             &lt;/div&gt;
+           &lt;/div&gt;
+         )}
+
+         &lt;div ref={messagesEndRef} /&gt;
+       &lt;/div&gt;
+     &lt;/div&gt;
+
+     {/* Input */}
+     &lt;div className='bg-white border-t px-4 py-4 text-black'&gt;
+       &lt;div className='max-w-4xl mx-auto'&gt;
+         &lt;form onSubmit={sendMessage} className='flex gap-3'&gt;
+           &lt;input
+             type='text'
+             value={input}
+             onChange={e =&gt; setInput(e.target.value)}
+             placeholder='Type your message...'
+             disabled={isLoading}
+             className='flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50'
+           /&gt;
+           &lt;button
+             type='submit'
+             disabled={!input.trim() || isLoading}
+             className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2'
+           &gt;
+             {isLoading ? (
+               &lt;Loader2 className='w-4 h-4 animate-spin' /&gt;
+             ) : (
+               &lt;Send className='w-4 h-4' /&gt;
+             )}
+             Send
+           &lt;/button&gt;
+         &lt;/form&gt;
+       &lt;/div&gt;
+     &lt;/div&gt;
+   &lt;/div&gt;
+ )
+}
+
+export default App
+</code></pre>
+<p>This code implements a connect button, sync button, and a chat interface. Your frontend app should change to the following.</p><figure class="kg-card kg-image-card"><img src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXcBqV4rsY4idtlZOzEORhc7uuHl4LBCYNmY1ll5axq-aokiuEbS6Tno2Wuz1DqY4ZlLsavT7yZdPbr0ZND2lP64Ew7SQOkH9iWH-b9k74GBYcHmWWiyGunFtUMppMD4dvNgM5kmPw?key=yaSvOVpdgQgQh3vtNv08hg" class="kg-image" alt="" loading="lazy" width="624" height="352"></figure><h3 id="chat-with-your-assistant">Chat with your assistant</h3><p>To chat with your AI assistant, first, click <strong>Connect to Google Drive</strong>, you will be redirected to an OAuth URL to complete your authorization process that wil grant Supermemory access to files in your Google Drive, then upload your Contract and Compliance files to your google drive and click<strong> Sync Google Drive</strong> to bring Supermemory AI up to date with the new files.</p><p>Ask a question to your AI via the chat interface, Supermemory will automatically insert context from the contract and compliance files stored in your Google Drive and your previous conversations with the AI into the AI chat, helping your AI give you the correct answers.</p><h2 id="conclusion">Conclusion</h2><p>And that’s a wrap. You now have a contract compliance chatbot that:</p><ul><li>Connects itself straight to Google Drive without any manual uploads</li><li>Automatically keeps its document “memory” up to date</li><li>Decides when to dig into your contracts and brings back precise, cited answers</li></ul><p>By leaning on Supermemory as your memory layer, you never have to build complex ingestion pipelines or worry about stitching context back into your prompts. Supermemory handles the Drive sync, the embedding, and the context injection so you can focus on tweaking your assistant’s prompts, refining its compliance checks, and rolling it out to real users.</p><p>Head over to <a href="http://supermemory.ai/?ref=blog.supermemory.ai"><u>supermemory.ai</u></a> and grab your API key now, it’s free.</p>
+    </section>
+
+
+</article>
+</main>
+
+
+
+
+            <aside class="read-more-wrap outer">
+                <div class="read-more inner">
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Matryoshka-Representation-Learning.png 300w,
+                    /content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png 600w,
+                    /content/images/size/w1000/2025/10/Matryoshka-Representation-Learning.png 1000w,
+                    /content/images/size/w2000/2025/10/Matryoshka-Representation-Learning.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png"
+            alt="Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Embeddings are the cornerstone of any retrieval system. And the larger the embeddings, the more information they can store.
+
+But large embeddings require a lot of memory, which leads to high computational costs and latency.
+
+To reduce this high cost, we can use models that produce embeddings with small dimensions,</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">8 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Frame-2147228224.png 300w,
+                    /content/images/size/w600/2025/10/Frame-2147228224.png 600w,
+                    /content/images/size/w1000/2025/10/Frame-2147228224.png 1000w,
+                    /content/images/size/w2000/2025/10/Frame-2147228224.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Frame-2147228224.png"
+            alt="Incident Report: October 18, 2025 Service Degradation"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Incident Report: October 18, 2025 Service Degradation
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Summary
+
+On October 18, between 1:17 PM and 1:45 PM PDT, we experienced service degradation that resulted in elevated API response times and some timeouts. This happened when two enterprise customers started major data backfills simultaneously— while we&#39;d planned for one, the second caught us by</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">6 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/18.png 300w,
+                    /content/images/size/w600/2025/10/18.png 600w,
+                    /content/images/size/w1000/2025/10/18.png 1000w,
+                    /content/images/size/w2000/2025/10/18.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/18.png"
+            alt="How To Make Your MCP Clients Share Context with Supermemory MCP"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    How To Make Your MCP Clients Share Context with Supermemory MCP
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Let’s get practical here: have you ever dropped a PDF into Cursor, then pasted the same content into Claude just to “remind it”? Or tried to follow up on a thread, only to realize the memory lives in a different tool?
+
+It’s annoying. It breaks your flow. And</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-07">07 Oct 2025</time>
+                <span class="post-card-meta-length">5 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                </div>
+            </aside>
+
+
+
+    </div>
+
+    <footer class="site-footer outer">
+        <div class="inner">
+            <section class="copyright"><a href="https://supermemory.ai/blog">supermemory - Blog</a> &copy; 2025</section>
+            <nav class="site-footer-nav">
+                <ul class="nav">
+    <li class="nav-sign-up"><a href="#/portal/">Sign up</a></li>
+    <li class="nav-get-started"><a href="https://console.supermemory.ai">Get Started</a></li>
+</ul>
+
+            </nav>
+            <div class="gh-powered-by"><a href="https://ghost.org/" target="_blank" rel="noopener">Powered by Ghost</a></div>
+        </div>
+    </footer>
+
+</div>
+
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="pswp__bg"></div>
+
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script
+    src="https://code.jquery.com/jquery-3.5.1.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+    crossorigin="anonymous">
+</script>
+<script src="/blog/assets/built/casper.js?v=259661198b"></script>
+<script>
+$(document).ready(function () {
+    // Mobile Menu Trigger
+    $('.gh-burger').click(function () {
+        $('body').toggleClass('gh-head-open');
+    });
+    // FitVids - Makes video embeds responsive
+    $(".gh-content").fitVids();
+});
+</script>
+
+<script>
+  // Change main logo link
+  const mainLogo = document.querySelector('a.gh-head-logo');
+  if (mainLogo) {
+    mainLogo.href = "https://supermemory.ai/";
+  }
+
+  // Add "Get Started" button to gh-head-actions
+  const actionsDiv = document.querySelector('div.gh-head-actions');
+  if (actionsDiv) {
+    const btn = document.createElement('a');
+    btn.href = "https://console.supermemory.ai";
+    btn.textContent = "Get Started";
+
+    // Button styles
+    btn.style.background = "#267BF1";
+    btn.style.color = "#FFF";
+    btn.style.padding = "1rem 2rem";
+    btn.style.borderRadius = "6px";
+    btn.style.fontWeight = "600";
+    btn.style.textDecoration = "none";
+    btn.style.fontSize = "1.6rem";
+    btn.style.transition = "background 0.2s";
+    btn.onmouseover = () => btn.style.background = "#1563c7";
+    btn.onmouseout = () => btn.style.background = "#267BF1";
+
+    actionsDiv.appendChild(btn);
+  }
+</script>
+
+</body>
+</html>

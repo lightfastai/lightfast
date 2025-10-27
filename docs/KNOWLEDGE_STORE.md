@@ -2,7 +2,7 @@
 
 Last Updated: 2025-10-27
 
-The Knowledge Store is Lightfast’s retrieval layer: normalized source artifacts (documents) split into chunks, embedded, and retrieved via a hybrid pipeline. “Memory” refers to the relationships‑first graph layer (entities/relationships/beliefs) documented in `docs/MEMORY_GRAPH_DESIGN.md`.
+The Knowledge Store is Lightfast’s retrieval layer: normalized source artifacts (documents) split into chunks, embedded, and retrieved via a hybrid pipeline. “Memory” refers to the relationships‑first graph layer (entities/relationships/beliefs) documented in `docs/memory/GRAPH.md`.
 
 ---
 
@@ -88,7 +88,7 @@ Stored in `knowledge_chunks` (PlanetScale table).
   - Vector: Pinecone dense (+ optional sparse) search per embedding version namespace.
   - Rerank: optional Cohere rerank for top fused candidates.
 - Hydration: chunks and their parent documents from Redis, fallback to PlanetScale.
-- Graph bias: when Memory Graph is enabled, apply boost for chunks connected to relevant entities/edges (see `docs/MEMORY_GRAPH_DESIGN.md`).
+- Graph bias: when Memory Graph is enabled, apply boost for chunks connected to relevant entities/edges (see `docs/memory/GRAPH.md`).
 
 ---
 
@@ -111,7 +111,7 @@ Stored in `knowledge_chunks` (PlanetScale table).
 
 ## References
 
-- docs/MEMORY_GRAPH_DESIGN.md — relationships‑first Memory layer
+- docs/memory/GRAPH.md — relationships‑first Memory layer
 - docs/STORAGE_ARCHITECTURE.md — durable core and indexing
 - docs/STORAGE_IMPLEMENTATION_GUIDE.md — schema and helpers
 - docs/SYNC_DESIGN.md — ingestion pipeline hooks

@@ -114,7 +114,7 @@ Repeat this workflow whenever:
 - `docs/SEARCH_DESIGN.md` (Rerank calibration notes)
 - `docs/SYNC_DESIGN.md` (Braintrust hooks in pipeline)
 - Braintrust documentation: https://www.braintrustdata.com/docs
-- Cohere rerank best practices: `docs/memory-best-practices/COHERE_BEST_PRACTICES.md`
+- Cohere rerank best practices: `docs/rag-best-practices/COHERE_BEST_PRACTICES.md`
 
 ---
 

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+<meta name="robots" content="index, follow">
+
+    <title>We solved AI API interoperability</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="preload" as="style" href="/blog/assets/built/screen.css?v=259661198b" />
+    <link rel="preload" as="script" href="/blog/assets/built/casper.js?v=259661198b" />
+
+    <link rel="stylesheet" type="text/css" href="/blog/assets/built/screen.css?v=259661198b" />
+
+    <link rel="icon" href="https://supermemory.ai/blog/content/images/size/w256h256/2025/06/SuperM_LinkedIn-Github-Twitter_ProfilePicture--1--1.png" type="image/png">
+    <link rel="canonical" href="https://supermemory.ai/blog/we-solved-ai-api-interoperability/">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+    <meta property="og:site_name" content="supermemory - Blog">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="We solved AI API interoperability">
+    <meta property="og:description" content="One API to rule them all, One spec to find them,
+One library to bring them all and in the TypeScript, bind them.
+
+When we were building the the Infinite Chat API, initially, we only supported the OpenAI format. This was fine, until a lot of our customers started asking,">
+    <meta property="og:url" content="https://supermemory.ai/blog/we-solved-ai-api-interoperability/">
+    <meta property="og:image" content="https://supermemory.ai/blog/content/images/2025/07/9.png">
+    <meta property="article:published_time" content="2025-07-07T02:35:52.000Z">
+    <meta property="article:modified_time" content="2025-07-07T02:55:37.000Z">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="We solved AI API interoperability">
+    <meta name="twitter:description" content="One API to rule them all, One spec to find them,
+One library to bring them all and in the TypeScript, bind them.
+
+When we were building the the Infinite Chat API, initially, we only supported the OpenAI format. This was fine, until a lot of our customers started asking,">
+    <meta name="twitter:url" content="https://supermemory.ai/blog/we-solved-ai-api-interoperability/">
+    <meta name="twitter:image" content="https://supermemory.ai/blog/content/images/2025/07/9.png">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Alex Foster">
+    <meta name="twitter:site" content="@supermemoryai">
+    <meta name="twitter:creator" content="@neprodian">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="675">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "supermemory - Blog",
+        "url": "https://supermemory.ai/blog/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg"
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Foster",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://supermemory.ai/blog/content/images/2025/07/wpHoAdJe_400x400-1.jpg",
+            "width": 400,
+            "height": 400
+        },
+        "url": "https://supermemory.ai/blog/author/alex/",
+        "sameAs": [
+            "https://alexfoster.dev",
+            "https://x.com/neprodian"
+        ]
+    },
+    "contributor": [
+        {
+            "@type": "Person",
+            "name": "Dhravya Shah",
+            "image": {
+                "@type": "ImageObject",
+                "url": "https://supermemory.ai/blog/content/images/2025/06/90306c68c41aba2b0c763682af4907f6.png"
+            },
+            "url": "https://supermemory.ai/blog/author/dhravya/",
+            "sameAs": [
+                "https://dhravya.dev",
+                "https://x.com/dhravyashah"
+            ]
+        }
+    ],
+    "headline": "We solved AI API interoperability",
+    "url": "https://supermemory.ai/blog/we-solved-ai-api-interoperability/",
+    "datePublished": "2025-07-07T02:35:52.000Z",
+    "dateModified": "2025-07-07T02:55:37.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://supermemory.ai/blog/content/images/2025/07/9.png",
+        "width": 1200,
+        "height": 675
+    },
+    "description": "One API to rule them all, One spec to find them,\nOne library to bring them all and in the TypeScript, bind them.\n\nWhen we were building the the Infinite Chat API, initially, we only supported the OpenAI format. This was fine, until a lot of our customers started asking, asking for more.\n\n\n\n\n\nSkip to the repo\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLLM Bridge - Interoperability between input formats of various LLMs, with observability, error handling, etc. built in.\n\n\n\n\n\n\nREPOSITORY\n\n\n\n\n\n\n\nMany customers were using Anthr",
+    "mainEntityOfPage": "https://supermemory.ai/blog/we-solved-ai-api-interoperability/"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 5.130">
+    <link rel="alternate" type="application/rss+xml" title="supermemory - Blog" href="https://supermemory.ai/blog/rss/">
+    
+    <script defer src="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/sodo-search.min.js" data-key="d2a094c14f6148bdbd8ad26051" data-styles="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/main.css" data-sodo-search="https://supermemory.ai/blog/" data-locale="en" crossorigin="anonymous"></script>
+    
+    <link href="https://supermemory.ai/blog/webmentions/receive/" rel="webmention">
+    <script defer src="/blog/public/cards.min.js?v=259661198b"></script><style>:root {--ghost-accent-color: #3d49d8;}</style>
+    <link rel="stylesheet" type="text/css" href="/blog/public/cards.min.css?v=259661198b">
+    <style>
+  .gh-footer-copyright {
+    display: none !important;
+}
+a[href*="ghost.org"] {
+    display: none !important;
+}
+::selection {
+  background: #267BF1;
+  color: #FFF;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all navigation logo links
+    const logoLinks = document.querySelectorAll('.gh-navigation-logo');
+    
+    logoLinks.forEach(function(link) {
+        // Change the href to point to main site
+        link.href = 'https://supermemory.ai';
+    });
+});
+
+  // Ensure all pages point to the main domain version
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical && canonical.href.includes('blog.supermemory.ai')) {
+    canonical.href = canonical.href.replace('blog.supermemory.ai', 'supermemory.ai/blog');
+  }
+
+if (typeof window !== 'undefined') {
+  // Client-side check
+  const hostname = window.location.hostname;
+  const userAgent = navigator.userAgent;
+  const isCloudflareWorker = userAgent.includes('Cloudflare-Workers');
+  const isGhostAdmin = window.location.pathname.startsWith('/ghost');
+  
+  if (hostname === 'blog.supermemory.ai' && !isCloudflareWorker && !isGhostAdmin) {
+    window.location.replace('https://supermemory.ai/blog' + window.location.pathname.replace('/blog', '') + window.location.search);
+  }
+}
+</script>
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Ce js Ls Te Fs Ds capture Ye calculateEventProperties zs register register_once register_for_session unregister unregister_for_session Ws getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Bs Us createPersonProfile Hs Ms Gs opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ns debug L qs getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_9wkqAZtZYAUCNwvus0hYqcZbw5EBEX2s3QXjZoNdUNS', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2025-05-24',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+    <link rel="preconnect" href="https://fonts.bunny.net"><link rel="stylesheet" href="https://fonts.bunny.net/css?family=space-grotesk:700|space-mono:400,700"><style>:root {--gh-font-heading: Space Grotesk;--gh-font-body: Space Mono;}</style>
+
+</head>
+<body class="post-template gh-font-heading-space-grotesk gh-font-body-space-mono is-head-left-logo">
+<div class="viewport">
+
+    <header id="gh-head" class="gh-head outer">
+        <div class="gh-head-inner inner">
+            <div class="gh-head-brand">
+                <a class="gh-head-logo" href="https://supermemory.ai/blog">
+                        <img src="https://supermemory.ai/blog/content/images/2025/06/Frame-2147223248.svg" alt="supermemory - Blog">
+                </a>
+                <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                <button class="gh-burger" aria-label="Main Menu"></button>
+            </div>
+
+            <nav class="gh-head-menu">
+                <ul class="nav">
+    <li class="nav-home"><a href="https://supermemory.ai">Home</a></li>
+    <li class="nav-blogs"><a href="https://supermemory.ai/blog">Blogs</a></li>
+    <li class="nav-updates"><a href="https://docs.supermemory.ai/changelog/overview">Updates</a></li>
+    <li class="nav-docs"><a href="https://docs.supermemory.ai">Docs</a></li>
+</ul>
+
+            </nav>
+
+            <div class="gh-head-actions">
+                        <button class="gh-search gh-icon-btn" aria-label="Search this site" data-ghost-search><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="site-content">
+        
+
+
+
+<main id="site-main" class="site-main">
+<article class="article post ">
+
+    <header class="article-header gh-canvas">
+
+        <div class="article-tag post-card-tags">
+        </div>
+
+        <h1 class="article-title">We solved AI API interoperability</h1>
+
+
+        <div class="article-byline">
+        <section class="article-byline-content">
+
+            <ul class="author-list instapaper_ignore">
+                <li class="author-list-item">
+                    <a href="/blog/author/alex/" class="author-avatar" aria-label="Read more of Alex Foster">
+                        <img class="author-profile-image" src="/blog/content/images/size/w100/2025/07/wpHoAdJe_400x400-1.jpg" alt="Alex Foster" />
+                    </a>
+                </li>
+                <li class="author-list-item">
+                    <a href="/blog/author/dhravya/" class="author-avatar" aria-label="Read more of Dhravya Shah">
+                        <img class="author-profile-image" src="/blog/content/images/size/w100/2025/06/90306c68c41aba2b0c763682af4907f6.png" alt="Dhravya Shah" />
+                    </a>
+                </li>
+            </ul>
+
+            <div class="article-byline-meta">
+                <h4 class="author-name"><a href="/blog/author/alex/">Alex Foster</a>, <a href="/blog/author/dhravya/">Dhravya Shah</a></h4>
+                <div class="byline-meta-content">
+                    <time class="byline-meta-date" datetime="2025-07-07">07 Jul 2025</time>
+                        <span class="byline-reading-time"><span class="bull">&bull;</span> 7 min read</span>
+                </div>
+            </div>
+
+        </section>
+        </div>
+
+            <figure class="article-image">
+                <img
+                    srcset="/content/images/size/w300/2025/07/9.png 300w,
+                            /content/images/size/w600/2025/07/9.png 600w,
+                            /content/images/size/w1000/2025/07/9.png 1000w,
+                            /content/images/size/w2000/2025/07/9.png 2000w"
+                    sizes="(min-width: 1400px) 1400px, 92vw"
+                    src="/blog/content/images/size/w2000/2025/07/9.png"
+                    alt="We solved AI API interoperability"
+                />
+            </figure>
+
+    </header>
+
+    <section class="gh-content gh-canvas">
+        <blockquote>One API to rule them all, One spec to find them,<br>One library to bring them all and in the TypeScript, bind them.</blockquote><p>When we were building the the Infinite Chat API, initially, we only supported the OpenAI format. This was fine, until a lot of our customers started asking, asking for more.</p><div class="kg-card kg-cta-card kg-cta-bg-grey kg-cta-immersive  kg-cta-has-img  " data-layout="immersive">
+            
+                <div class="kg-cta-sponsor-label-wrapper">
+                    <div class="kg-cta-sponsor-label">
+                        <span style="white-space: pre-wrap;">Skip to the repo</span>
+                    </div>
+                </div>
+            
+            <div class="kg-cta-content">
+                
+                    <div class="kg-cta-image-container">
+                        <a href="https://github.com/supermemoryai/llm-bridge?ref=blog.supermemory.ai"><img src="https://supermemory.ai/blog/content/images/2025/07/llm-bridge.png" alt="CTA Image" data-image-dimensions="1200x600"></a>
+                    </div>
+                
+                
+                    <div class="kg-cta-content-inner">
+                    
+                        <div class="kg-cta-text">
+                            <p dir="ltr"><i><b><strong class="italic" style="white-space: pre-wrap;">LLM Bridge</strong></b></i><span style="white-space: pre-wrap;"> - Interoperability between input formats of various LLMs, with observability, error handling, etc. built in.</span></p>
+                        </div>
+                    
+                    
+                        <a href="https://github.com/supermemoryai/llm-bridge?ref=blog.supermemory.ai" class="kg-cta-button " style="background-color: #000000; color: #ffffff;">
+                            REPOSITORY
+                        </a>
+                        
+                    </div>
+                
+            </div>
+        </div><p>Many customers were using Anthropic SDKs, Gemini pro models, AI SDK, langchain, etc. We wanted to keep our developer experience as beautiful as it currently is - one universal 'routing' layer, and proxy, that also serves as a memory provider. </p><p>Now, we were stuck implementing a complex system, with multiple different providers, each provider having different ways to do multi-modal, tool call chains, calculating token counts, etc. etc. for all these different models and functionalities that they provide.</p><p>Almost immediately, our straightforward logic splinted into a mountain of complexity. Instead of a clean pipeline, we were left inundated with branching logic, special-case conditionals, and provider-specific exceptions. Where there used to be a simple flow, we now had three to six different diverging code paths, each adding friction, increasing the maintenance burden, and slowly draining our sanity. We find ourselves wondering: "How is there not a universal standard for handling this already?"</p><h2 id="introducing-llm-bridge">Introducing LLM-Bridge </h2><p>We've gone through the pain, and this is why we're so excited to announce a brand new open-source package designed to streamline exactly these types of workflows: <code>llm-bridge</code>. </p><p>The package aims to be the bridge between the different LLM API formats by implementing a standard, universal format that losslessly represents any well-formed OpenAI, Anthropic, or Gemini API payload, as well as helper functions to convert our universal representation to and from any of these API providers' formats. </p><p>We've recently been dogfooding this package in the newest version of our Infinite Chat offering, and since it's been such a useful tool for us internally, we've open-sourced it on <a href="https://github.com/supermemoryai/llm-bridge?ref=blog.supermemory.ai">Github</a> so that everyone in the community can contribute to and benefit from it.</p><h2 id="why-did-we-build-this">Why did we build this?</h2><p>We currently offer a product called Infinite Chat, a model-enhancing service which allows developers to extend the context window of any model far beyond its technical context limit. At a high level, we've designed it to act as a proxy for LLM APIs, intercepting requests to the OpenAI, Anthropic, and Gemini APIs, extracting relevant data from them, and feeding additional context back into the requests as needed. This makes adoption seamless: all you have to do as a developer is prepend your provider's base URL with our API's URL, add your Supermemory API key, and we take care of the rest. That is, there is <em>no change</em> to the client interface—you can keep using your SDK of choice no matter what.</p><pre><code class="language-JS">const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://api.supermemory.ai/v3/https://api.openai.com/v1",
+  headers: {
+    "x-api-key": process.env.SUPERMEMORY_API_KEY,
+  },
+});
+
+/// or new Anthropic() or new GoogleGenAI()</code></pre><p>This is a huge win for our users but it comes at a cost for us: we have to be able to process every single possible request, in any state, to any AI provider's API, in a way that is completely invisible to the client. As you might expect, this is not an easy problem to solve and a major pain point we encountered was simply in processing the different request shapes for each of the target APIs. The current state of the ecosystem is such that the OpenAI, Anthropic, and Google APIs are not cross-compatible. They all demand data to be sent in similar but slightly different formats. While they do all offer specific OpenAI-compatible endpoints, their compatibility isn't perfect and they don't always offer full feature parity with the proprietary endpoints. More importantly though, as developers, we shouldn't have to force our users to modify their choice of API to use our service.</p><p>As a result, the status quo is that anybody wishing to be able to accept any of these formats has to implement their own logic for each of them, or write their own ad-hoc and often leaky abstractions narrowly tailored to their needs. Unfortunately, all of that glue quickly balloons in complexity and silently drifts as vendors add features. This is the problem <code>llm-bridge</code> was built to solve.</p><figure class="kg-card kg-image-card kg-card-hascaption"><img src="https://supermemory.ai/blog/content/images/2025/07/standards_2x.png" class="kg-image" alt="" loading="lazy" width="1000" height="567" srcset="https://supermemory.ai/blog/content/images/size/w600/2025/07/standards_2x.png 600w, https://supermemory.ai/blog/content/images/2025/07/standards_2x.png 1000w" sizes="(min-width: 720px) 720px"><figcaption><span style="white-space: pre-wrap;">From xkcd's "Standards" (</span><a href="https://xkcd.com/927?ref=blog.supermemory.ai"><span style="white-space: pre-wrap;">https://xkcd.com/927</span></a><span style="white-space: pre-wrap;">)</span></figcaption></figure><p>If you've been active in this space recently, you may already be thinking of a few offerings that share the goal of unifying interactions with the different provider APIs (inb4 Vercel's AI SDK). These all have their place, but none of them quite fit our needs. Specifically, our solution had to:</p><ol><li>Be universal</li><li>Be lightweight</li><li>Retain full feature parity (multimodality, tool calls)</li><li>Support lossless transformations, and translations</li><li>Not require changes to the client interface</li></ol><p>There are plenty of products which meet 3 or 4 of these criteria, but none that meet all 5. So, we built our own.</p><h2 id="how-did-we-solve-it">How did we solve it?</h2><p>Our solution is <code>llm-bridge</code>, a library which defines a universal format for representing API requests for any of the major providers. With <code>llm-bridge</code>, you can do any processing you need on any request intended for any of the major providers, like changing the messages array, updating the system prompt, extracting multimodal data, and more. When you're done, you can use one of our helper functions to convert it into the right format for your target API, even if the target is different than that of the original payload. Because every vendor-specific oddity is stashed intact under original, you never lose multimodal blobs or tool definitions; because the same helpers wrap and translate errors, you can bubble one canonical exception type up your stack instead of juggling three dialects. In effect, three diverging code paths shrink to a symmetrical “normalize → process → emit” pipeline that’s less than a dozen lines long yet preserves full feature parity across OpenAI, Claude, and Gemini.</p><figure class="kg-card kg-image-card"><img src="https://supermemory.ai/blog/content/images/2025/07/Screenshot-2025-07-06-at-14.41.01.png" class="kg-image" alt="" loading="lazy" width="2000" height="660" srcset="https://supermemory.ai/blog/content/images/size/w600/2025/07/Screenshot-2025-07-06-at-14.41.01.png 600w, https://supermemory.ai/blog/content/images/size/w1000/2025/07/Screenshot-2025-07-06-at-14.41.01.png 1000w, https://supermemory.ai/blog/content/images/size/w1600/2025/07/Screenshot-2025-07-06-at-14.41.01.png 1600w, https://supermemory.ai/blog/content/images/2025/07/Screenshot-2025-07-06-at-14.41.01.png 2156w" sizes="(min-width: 720px) 720px"></figure><p><code>llm-bridge</code> is designed to make working with these APIs simpler for all use-cases, whether you run a proxy for LLM APIs, are building middleware for LLMs, or are building consumer-facing apps. Here are some of the things it can do for you:</p><h3 id="transform-between-request-formats">Transform between request formats</h3><p>Transformations in <code>llm-bridge</code> are lossless, meaning that round-trip transformations preserve all the information from the original request. Every original key is tucked under a <code>_original</code> field, so <code>fromUniversal</code> can reproduce the exact JSON you fed in. You can use the universal format as your base too, if you're building a consumer-facing app and just need a way to construct and represent an abstract LLM API call.</p><pre><code class="language-JS">import { toUniversal, fromUniversal } from "llm-bridge"
+
+const uni = toUniversal("openai", openaiReq)   // ↙ normalise
+// ...inspect / mutate...
+// add messages in the middle, edit messages, etc.
+
+const claudeReq = fromUniversal("anthropic", uni)  // ↗ emit
+</code></pre><p>You can also "edit" messages mid-conversion, for functionality like:</p><pre><code class="language-typescript">async function editMessages(universal: UniversalBody): Promise&lt;{
+  request: UniversalBody
+  contextModified: boolean
+}&gt; {
+  let processed = universal
+  let contextModified = false
+  
+  // 1. Convert multimodal if needed
+  if (hasMultimodalContent(universal)) {
+    processed = await enhancedMultimodalProcessor(processed, {
+      imageDescriptionService: async (data) =&gt; {
+        // Call your vision API here
+        return "A photo of a sunset over mountains"
+      },
+      documentParser: async (data, mimeType) =&gt; {
+        // Parse PDF/document here
+        return "Document content extracted..."
+      }
+    })
+    contextModified = true
+  }
+  
+  // 2. Add or edit context context
+  processed.messages.push({
+    id: generateId(),
+    role: 'system',
+    content: [{ type: 'text', text: 'Your memory here...' }],
+    metadata: { provider: processed.provider }
+  })
+  
+  return { request: processed, contextModified: true }
+}</code></pre><h3 id="error-handling">Error handling</h3><p>LLM providers each return their own distinct error formats, making consistent error handling tricky. With llm-bridge, you can translate errors from any provider into a single, consistent format, simplifying your error handling significantly.</p><pre><code class="language-JS">import { buildUniversalError, translateError } from 'llm-bridge'
+
+// Create a universal error
+const error = buildUniversalError(
+  "rate_limit_error", 
+  "Rate limit exceeded",
+  "openai",
+  { retryAfter: 60 }
+)
+
+// Translate to different provider formats
+const anthropicError = translateError(error.universal, "anthropic")
+const googleError = translateError(error.universal, "google")
+</code></pre><h3 id="utilities">Utilities</h3><p>The library also ships helpers for the small but common things you may need when handling inputs and outputs for each of the APIs, like token counting.</p><h3 id="use-cases-and-examples">Use cases and examples</h3><ul><li>Translating between model calls <a href="https://github.com/supermemoryai/llm-bridge/blob/main/examples/basic-translation.ts?ref=blog.supermemory.ai">(For eg: Proxy Claude code requests to send them to Gemini instead)</a></li><li><a href="https://github.com/supermemoryai/llm-bridge/blob/main/examples/cost-optimizer.ts?ref=blog.supermemory.ai">Routing and optimizing costs</a></li><li>Analyzing images and <a href="https://github.com/supermemoryai/llm-bridge/blob/main/examples/image-analysis.ts?ref=blog.supermemory.ai">converting multi-modal into text to save money</a></li><li><a href="https://github.com/supermemoryai/llm-bridge/blob/main/examples/load-balancer.ts?ref=blog.supermemory.ai">Load balancing between different providers based on availability</a></li><li>Generating summaries using cheaper models</li></ul><figure class="kg-card kg-image-card"><img src="https://supermemory.ai/blog/content/images/2025/07/image.png" class="kg-image" alt="" loading="lazy" width="1244" height="486" srcset="https://supermemory.ai/blog/content/images/size/w600/2025/07/image.png 600w, https://supermemory.ai/blog/content/images/size/w1000/2025/07/image.png 1000w, https://supermemory.ai/blog/content/images/2025/07/image.png 1244w" sizes="(min-width: 720px) 720px"></figure><h3 id="dogfooding-at-supermemory">Dogfooding at supermemory</h3><p>We heavily use llm-bridge internally at supermemory to handle requests in our <a href="https://x.com/supermemoryai/status/1923122703009186217?ref=blog.supermemory.ai">Infinite Chat endpoint</a>, and many others, especially for conversational tasks. </p><p>This is, literally, our code, where the manipulation of data happens inside <code>async r =&gt; {}</code>. </p><figure class="kg-card kg-image-card"><img src="https://supermemory.ai/blog/content/images/2025/07/image-1.png" class="kg-image" alt="" loading="lazy" width="659" height="428" srcset="https://supermemory.ai/blog/content/images/size/w600/2025/07/image-1.png 600w, https://supermemory.ai/blog/content/images/2025/07/image-1.png 659w"></figure><p><br>We recognize any providers have OpenAI-compatible format support, but we still decided to build LLM-bridge because we, as supermemory, wanted to allow developers to use their preferred SDKs and format, and leave the worry of memory to us.</p><h3 id="vibe-coding">Vibe coding</h3><p>This project was vibe-coded using Claude Code. because no one wants to go through the pain of going through every single model provider :( </p><p>But we think that's a good thing. The TL;DR is that llm-bridge is almost <strong><em>fully</em></strong> <strong><em>covered</em></strong> with tests using <a href="https://vitest.dev/?ref=blog.supermemory.ai">vitest</a>, where very single unique implementation of llm-bridge is verifiably testable inside the <a href="https://github.com/supermemoryai/llm-bridge/tree/main/test?ref=blog.supermemory.ai">tests/ folder</a></p><h2 id="putting-it-all-together">Putting it all together</h2><p>When your app receives an LLM request, all you have to do is pass it through <code>llm-bridge</code>—the rest happens automatically. The library handles converting requests from any provider into a universal representation, so you can seamlessly inspect, modify, or reroute them without worrying about vendor-specific details. </p><p>By standardizing API interactions into a single format, it becomes trivial to add failover, traffic splitting, analytics, or cost-based routing—all without touching the client's existing integration. We built this to simplify our own workflows, and we’re excited to see how it can streamline yours. Check out the <a href="https://github.com/supermemoryai/llm-bridge?ref=blog.supermemory.ai">repo</a>, try it out in your own stack, and let us know what you think!</p>
+    </section>
+
+
+</article>
+</main>
+
+
+
+
+            <aside class="read-more-wrap outer">
+                <div class="read-more inner">
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Matryoshka-Representation-Learning.png 300w,
+                    /content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png 600w,
+                    /content/images/size/w1000/2025/10/Matryoshka-Representation-Learning.png 1000w,
+                    /content/images/size/w2000/2025/10/Matryoshka-Representation-Learning.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Matryoshka-Representation-Learning.png"
+            alt="Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/matryoshka-representation-learning-the-ultimate-guide-how-we-use-it/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Matryoshka Representation Learning: The Ultimate Guide &amp; How We Use It
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Embeddings are the cornerstone of any retrieval system. And the larger the embeddings, the more information they can store.
+
+But large embeddings require a lot of memory, which leads to high computational costs and latency.
+
+To reduce this high cost, we can use models that produce embeddings with small dimensions,</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">8 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/Frame-2147228224.png 300w,
+                    /content/images/size/w600/2025/10/Frame-2147228224.png 600w,
+                    /content/images/size/w1000/2025/10/Frame-2147228224.png 1000w,
+                    /content/images/size/w2000/2025/10/Frame-2147228224.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/Frame-2147228224.png"
+            alt="Incident Report: October 18, 2025 Service Degradation"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/incident-report-october-18-2025-service-degradation/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    Incident Report: October 18, 2025 Service Degradation
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Summary
+
+On October 18, between 1:17 PM and 1:45 PM PDT, we experienced service degradation that resulted in elevated API response times and some timeouts. This happened when two enterprise customers started major data backfills simultaneously— while we&#39;d planned for one, the second caught us by</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-19">19 Oct 2025</time>
+                <span class="post-card-meta-length">6 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                        
+<article class="post-card post keep-ratio">
+
+    <a class="post-card-image-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+
+        <img class="post-card-image"
+            srcset="/content/images/size/w300/2025/10/18.png 300w,
+                    /content/images/size/w600/2025/10/18.png 600w,
+                    /content/images/size/w1000/2025/10/18.png 1000w,
+                    /content/images/size/w2000/2025/10/18.png 2000w"
+            sizes="(max-width: 1000px) 400px, 800px"
+            src="/blog/content/images/size/w600/2025/10/18.png"
+            alt="How To Make Your MCP Clients Share Context with Supermemory MCP"
+            loading="lazy"
+        />
+
+
+    </a>
+
+    <div class="post-card-content">
+
+        <a class="post-card-content-link" href="/blog/how-to-make-your-mcp-clients-share-context-with-supermemory-mcp/">
+            <header class="post-card-header">
+                <div class="post-card-tags">
+                </div>
+                <h2 class="post-card-title">
+                    How To Make Your MCP Clients Share Context with Supermemory MCP
+                </h2>
+            </header>
+                <div class="post-card-excerpt">Let’s get practical here: have you ever dropped a PDF into Cursor, then pasted the same content into Claude just to “remind it”? Or tried to follow up on a thread, only to realize the memory lives in a different tool?
+
+It’s annoying. It breaks your flow. And</div>
+        </a>
+
+        <footer class="post-card-meta">
+            <time class="post-card-meta-date" datetime="2025-10-07">07 Oct 2025</time>
+                <span class="post-card-meta-length">5 min read</span>
+        </footer>
+
+    </div>
+
+</article>
+                </div>
+            </aside>
+
+
+
+    </div>
+
+    <footer class="site-footer outer">
+        <div class="inner">
+            <section class="copyright"><a href="https://supermemory.ai/blog">supermemory - Blog</a> &copy; 2025</section>
+            <nav class="site-footer-nav">
+                <ul class="nav">
+    <li class="nav-sign-up"><a href="#/portal/">Sign up</a></li>
+    <li class="nav-get-started"><a href="https://console.supermemory.ai">Get Started</a></li>
+</ul>
+
+            </nav>
+            <div class="gh-powered-by"><a href="https://ghost.org/" target="_blank" rel="noopener">Powered by Ghost</a></div>
+        </div>
+    </footer>
+
+</div>
+
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="pswp__bg"></div>
+
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script
+    src="https://code.jquery.com/jquery-3.5.1.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+    crossorigin="anonymous">
+</script>
+<script src="/blog/assets/built/casper.js?v=259661198b"></script>
+<script>
+$(document).ready(function () {
+    // Mobile Menu Trigger
+    $('.gh-burger').click(function () {
+        $('body').toggleClass('gh-head-open');
+    });
+    // FitVids - Makes video embeds responsive
+    $(".gh-content").fitVids();
+});
+</script>
+
+<script>
+  // Change main logo link
+  const mainLogo = document.querySelector('a.gh-head-logo');
+  if (mainLogo) {
+    mainLogo.href = "https://supermemory.ai/";
+  }
+
+  // Add "Get Started" button to gh-head-actions
+  const actionsDiv = document.querySelector('div.gh-head-actions');
+  if (actionsDiv) {
+    const btn = document.createElement('a');
+    btn.href = "https://console.supermemory.ai";
+    btn.textContent = "Get Started";
+
+    // Button styles
+    btn.style.background = "#267BF1";
+    btn.style.color = "#FFF";
+    btn.style.padding = "1rem 2rem";
+    btn.style.borderRadius = "6px";
+    btn.style.fontWeight = "600";
+    btn.style.textDecoration = "none";
+    btn.style.fontSize = "1.6rem";
+    btn.style.transition = "background 0.2s";
+    btn.onmouseover = () => btn.style.background = "#1563c7";
+    btn.onmouseout = () => btn.style.background = "#267BF1";
+
+    actionsDiv.appendChild(btn);
+  }
+</script>
+
+</body>
+</html>

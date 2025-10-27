@@ -54,14 +54,17 @@ Lightfast builds a relationships‑first Memory layer and a production‑ready K
   - [Design](KNOWLEDGE_STORE.md)
   - [Search & Retrieval](SEARCH_DESIGN.md)
 - [Memory (Graph)](#memory-graph)
-  - [Design](MEMORY_GRAPH_DESIGN.md)
+  - [Overview](memory/README.md)
+  - [Graph Design](memory/GRAPH.md)
+  - [SPEC (Research Mode)](memory/SPEC.md)
+  - [Research: Belief & Intent](memory/RESEARCH_BELIEF_INTENT.md)
 - [Sync & Ingestion](#sync--ingestion)
   - [Pipeline](SYNC_DESIGN.md)
 - [Implementation Guides](#implementation-guides)
   - [Storage Implementation](STORAGE_IMPLEMENTATION_GUIDE.md)
 - [Evaluation & Quality](#evaluation--quality)
   - [Evaluation Playbook](EVALUATION_PLAYBOOK.md)
-  - [Memory Best Practices](memory-best-practices)
+  - [RAG Best Practices](rag-best-practices)
 - [Roadmap](#roadmap)
   - [MVP Roadmap](MVP_ROADMAP.md)
 - [Glossary](#glossary)
@@ -109,7 +112,7 @@ See: KNOWLEDGE_STORE.md and SEARCH_DESIGN.md
 - Beliefs: long‑lived mission/vision/principles/goals with corroboration rules and stability checks.
 - Graph‑aware retrieval: traverse 1–2 hops for ownership/dependency/alignment questions; bias chunk ranking; include a concise “graph rationale” in responses.
 
-See: MEMORY_GRAPH_DESIGN.md
+See: memory/GRAPH.md
 
 ---
 
@@ -140,7 +143,7 @@ See: STORAGE_IMPLEMENTATION_GUIDE.md
 - Metrics: recall@k, rerank calibration, snippet accuracy, latency splits; segmented by `retrieval_mode` (knowledge/graph/hybrid).
 - Suites: smoke, regression (on `knowledge.persisted`), weekly benchmarks, source‑specific, and Graph QA (ownership/dependencies/alignment).
 
-See: EVALUATION_PLAYBOOK.md and memory-best-practices
+See: EVALUATION_PLAYBOOK.md and rag-best-practices
 
 ---
 
@@ -169,7 +172,7 @@ See: MVP_ROADMAP.md
 
 1) STORAGE_ARCHITECTURE.md → big picture and constraints
 2) KNOWLEDGE_STORE.md → canonical document/chunk model and retrieval
-3) MEMORY_GRAPH_DESIGN.md → entities, relationships, beliefs, and traversal
+3) memory/GRAPH.md → entities, relationships, beliefs, and traversal
 4) SYNC_DESIGN.md → how data flows in and gets indexed
 5) SEARCH_DESIGN.md → how queries are executed and answered
 6) STORAGE_IMPLEMENTATION_GUIDE.md → code‑level helpers and config

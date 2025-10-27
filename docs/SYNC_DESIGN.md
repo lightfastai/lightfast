@@ -1,6 +1,6 @@
 # Sync Pipeline Design (2025 Refresh)
 
-Describes how Lightfast ingests source events, normalizes them into canonical knowledge documents, persists them durably, and updates retrieval indices. For the relationships‑first Memory layer, see `docs/MEMORY_GRAPH_DESIGN.md`.
+Describes how Lightfast ingests source events, normalizes them into canonical knowledge documents, persists them durably, and updates retrieval indices. For the relationships‑first Memory layer, see `docs/memory/GRAPH.md`.
 
 ---
 

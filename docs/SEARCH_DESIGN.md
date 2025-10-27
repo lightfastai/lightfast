@@ -2,7 +2,7 @@
 
 > Target: <90 ms p95 for identifier queries, <150 ms p95 for semantic queries while maintaining high recall across chunked knowledge documents.
 
-Terminology: The chunked retrieval layer is the Knowledge Store. The Memory Graph (entities/relationships/beliefs) can bias retrieval and support graph-first queries; see `docs/MEMORY_GRAPH_DESIGN.md`.
+Terminology: The chunked retrieval layer is the Knowledge Store. The Memory Graph (entities/relationships/beliefs) can bias retrieval and support graph-first queries; see `docs/memory/GRAPH.md`.
 
 ---
 
@@ -18,6 +18,19 @@ User Query → Query Processor → Hybrid Retrieval → Rerank (conditional) →
 4. **Hydration** fetches chunk + document details from Redis (fallback to PlanetScale) and prepares highlights/snippets.
 
 ---
+
+## Router Modes (Knowledge + Memory)
+
+- `knowledge` (default fast path): run the hybrid retrieval pipeline only. Skip graph traversal. Use when queries are identifier-based or generic semantic.
+- `graph`: resolve entities from the query, traverse 1–2 hops in the Memory Graph, hydrate supporting chunks for those entities/edges, and compose an answer with a graph rationale.
+- `hybrid`: run hybrid retrieval and, in parallel, a bounded traversal. Apply a graphBoost to candidates linked to traversed entities/edges, then proceed to rerank and compose with rationale.
+
+Classification hints
+- Identifier tokens (`#123`, `LINEAR-ABC-12`, `repo:path`) → `knowledge`.
+- Ownership/dependency/alignment phrasing (“who owns…”, “what depends…”, “how does … align…”) → `graph` or `hybrid`.
+- If ambiguous, prefer `hybrid` with a strict traversal time budget (e.g., 15–30 ms) and hop limit of 1–2.
+
+The router mode is logged per request and exposed via `retrieval_logs.routerMode`.
 
 ## Query Processing
 
@@ -136,13 +149,44 @@ function fuseCandidates(lexical: LexicalCandidate[], vector: VectorCandidate[]):
   lexical.forEach((hit) => boost(hit.chunkId, hit.score * LEXICAL_WEIGHT, 'lexical', hit.payload));
   vector.forEach((hit) => boost(hit.id, hit.score * VECTOR_WEIGHT, 'vector', hit.payload));
 
-  return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, FUSED_TOP_K);
+return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, FUSED_TOP_K);
 }
 ```
 
 If `rerank === true` and candidate count > `RERANK_MIN_K` (default 20), call Cohere Rerank with the top 50 fused candidates and request `topN = 5` for UI display or `topN = 10` when composing LLM prompts. Stick to `rerank-v3.5` for multilingual coverage and fall back to `rerank-3-nimble` when the latency budget is tight. Maintain a per-workspace relevance threshold calibrated via Braintrust regression suites (sample 30–50 borderline query/document pairs and average their scores) to drop low-score results.
 
 ---
+
+## Graph Integration (Memory + Knowledge)
+
+Entity resolution
+- Resolve entity mentions via alias tables (emails, GitHub/Slack handles, repo URLs, canonical names).
+- Seeds: detected entities and/or high-confidence entities inferred from top fused candidates.
+
+Bounded traversal
+- Use Redis adjacency caches: `graph:out:{ws}:{kind}:{id}` and `graph:in:{ws}:{kind}:{id}`.
+- Limit by hop (1–2) and allowlist per intent:
+  - Ownership: OWNED_BY, MEMBER_OF
+  - Dependencies: DEPENDS_ON, BLOCKED_BY, RESOLVES
+  - Alignment: ALIGNS_WITH_GOAL
+- Collect related `documentId`s from `document_entities` and `relationship_evidence`.
+
+Graph boost
+- For each candidate chunk, if its `documentId` is linked to any traversed node/edge, add `GRAPH_WEIGHT * linkScore` to its fused score.
+- `linkScore` can be a fixed boost or a function of edge confidence and hop distance (e.g., `confidence * (hop == 1 ? 1.0 : 0.6)`).
+
+Rationale
+- Attach a short rationale when graph influenced ranking or when routerMode = `graph`:
+  - Entities resolved, edges traversed (type, from, to), evidence doc/chunk IDs.
+  - Include URLs/paths for clickable audit trails in the UI.
+
+Failure and fallbacks
+- If traversal exceeds the time budget, skip graph boosting and continue with hybrid-only.
+- If Memory Graph is disabled/empty for the workspace, always run `knowledge` mode.
+
+Logging and eval
+- Add to `retrieval_logs`: `routerMode`, `graphSeeds`, `graphEdgesUsed`, `graphBoostApplied`, `rationaleIds`.
+- Graph QA runs against ownership/dependency/alignment questions, tracking accuracy and rationale faithfulness.
 
 ## Hydration & Highlighting
 
@@ -215,6 +259,7 @@ Latency metrics feed `retrieval_logs` for dashboards and SLO monitoring.
 - Add personalized re-ranking based on user interaction data (clicks, thumbs up/down).
 - Integrate conversation-aware retrieval to bias towards recent conversational context.
 - Explore hierarchical graph retrieval (GraphRAG) for complex multi-hop queries.
+- Add as‑of temporal queries (respect `since`/`until` and intent events) when `temporal.as_of` flag is enabled.
 
 ---
 
