@@ -27,7 +27,7 @@ Key properties:
 - **Idempotent**: Every ingestion run checks `content_hash` before writing.
 - **Durable-first**: Pinecone/Redis updates happen *after* PlanetScale commits.
 - **Chunk-aware**: Transformations produce chunk lists to embed asynchronously.
-- **Observable**: Each step emits telemetry into `retrieval_logs` and Braintrust evaluation queues.
+- **Observable**: Each step emits telemetry into `retrieval_logs` and Braintrust evaluation queues (playbook in `docs/EVALUATION_PLAYBOOK.md`).
 
 ---
 
@@ -74,7 +74,7 @@ interface EmbeddingRequestedEvent {
 }
 ```
 
-`memory.persisted` triggers relationship detection, cache warming, Braintrust test scheduling, and Pinecone upserts once embeddings are ready.
+`memory.persisted` triggers relationship detection, cache warming, Braintrust test scheduling, and Pinecone upserts once embeddings are ready (see `docs/EVALUATION_PLAYBOOK.md`).
 
 ---
 
@@ -271,7 +271,7 @@ Cache priming is best-effort; failures are logged but do not fail the ingestion 
 
 ## Braintrust Evaluation Hooks
 
-- Each `memory.persisted` event creates a Braintrust test run when relevant benchmark suites exist for the workspace.
+- Each `memory.persisted` event creates a Braintrust test run when relevant benchmark suites exist for the workspace (suite definitions in `docs/EVALUATION_PLAYBOOK.md`).
 - Retrieval queries generated from Braintrust scenarios run through the same hybrid pipeline and write results into `feedback_events`.
 
 ```typescript

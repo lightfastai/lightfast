@@ -203,7 +203,7 @@ Latency metrics feed `retrieval_logs` for dashboards and SLO monitoring.
 ## Monitoring & Offline Evaluation
 
 - Log every query to `retrieval_logs` (query text, filters, candidate IDs, latencies, rerank flag, rerank threshold used).
-- Braintrust suites run weekly/regression triggers to evaluate recall@k, hit rate of known answers, rerank score calibration, and snippet quality.
+- Braintrust suites run weekly/regression triggers to evaluate recall@k, hit rate of known answers, rerank score calibration, and snippet quality (playbook in `docs/EVALUATION_PLAYBOOK.md`).
 - Drift detection compares score distributions and embedding similarity between model versions; alerts when deltas exceed thresholds.
 
 ---

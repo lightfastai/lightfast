@@ -11,7 +11,7 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 - **Durable source of truth:** PlanetScale/Postgres (plus S3 for large artifacts) now stores canonical memory documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
 - **Chunk-level indexing:** Ingestion splits every memory into 200–400-token chunks with semantic overlap, stores chunk descriptors relationally, and indexes them in Pinecone with lean metadata (<1 KB) for fast, filterable retrieval.
 - **Hybrid retrieval path:** Queries run through a lexical pre-filter, Pinecone dense search, and lightweight reranking, giving high recall with configurable latency budgets.
-- **Observability + evaluation:** Retrieval logs, embedding versions, feedback scores, and drift monitors persist in the durable store and feed dashboards and automated eval jobs.
+- **Observability + evaluation:** Retrieval logs, embedding versions, feedback scores, and drift monitors persist in the durable store and feed dashboards and automated eval jobs (see `docs/EVALUATION_PLAYBOOK.md`).
 - **Redis as cache, not database:** Redis holds hot documents, deduplication keys, and transient job state. Recovery flows rely on the durable store rather than Redis snapshots.
 
 ---
@@ -100,7 +100,7 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 - `retrieval_logs` capture query parameters, candidate chunk IDs, scores, reranker decisions, and latency splits.
 - Metrics exported to Prometheus/Grafana (p50/p95 latency, recall@k from eval harness, embedding refresh lag).
-- Evaluation jobs (Braintrust test runs) write scores into `feedback_events` for regression detection.
+- Evaluation jobs (Braintrust test runs) write scores into `feedback_events` for regression detection—suite catalog and thresholds live in `docs/EVALUATION_PLAYBOOK.md`.
 
 ---
 
@@ -198,7 +198,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 ## Observability & Continuous Evaluation
 
 - **Retrieval logging:** Each query writes latency breakdowns, candidate lists, and reranker scores to `retrieval_logs`.
-- **Feedback loops:** UI captures user votes/comments per answer; automated eval jobs (Braintrust suites) replay benchmark question sets weekly and log scores.
+- **Feedback loops:** UI captures user votes/comments per answer; automated eval jobs (Braintrust suites) replay benchmark question sets weekly and log scores (detailed in `docs/EVALUATION_PLAYBOOK.md`).
 - **Dashboards & Alerts:** Grafana dashboards expose embed throughput, queue backlogs, Pinecone error rates, stale chunk counts, and recall@k. SLO alerts trigger when p95 > targets or stale chunk percentage >5%.
 - **Incident response:** Runbooks document redeploying Pinecone namespaces, replaying ingestion via changelog tables, and restoring from PlanetScale backups.
 
