@@ -74,6 +74,12 @@ Each edge has: `type`, `from`, `to`, `confidence`, `detectedBy` (rule|llm|manual
 
 ---
 
+## Identity Integration
+
+- Person entities represent humans within a workspace; provider accounts (GitHub/Slack/Linear/Notion/SSO) attach via `entity_aliases`.
+- Deterministic resolution maps connector events to the correct Person (provider_user_id → verified email → multi‑signal).
+- See `docs/IDENTITY_DESIGN.md` for auth user vs Person mapping, schema, and APIs.
+
 ## Graph‑Aware Retrieval
 
 1) Classification
@@ -122,4 +128,3 @@ See `docs/memory/SPEC.md` for research‑mode flags and promotion criteria.
 - docs/SYNC_DESIGN.md (Ingestion, Relationship Detection)
 - docs/SEARCH_DESIGN.md (Pipeline, Rerank, Hydration)
 - docs/EVALUATION_PLAYBOOK.md (Suites, Metrics, Calibration)
-

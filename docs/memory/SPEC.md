@@ -149,6 +149,10 @@ Phase 6 — Temporal Reasoning (RR 1.2)
 - Rollback
   - Toggle flags off; preserve data; revert router version; documented runbooks.
 
+Identity migrations
+- Add `users`, `user_identities`, `workspace_users`, and `workspace_person_map` as described in `docs/IDENTITY_DESIGN.md`.
+- Extend `entity_aliases` alias_type coverage to include provider IDs and SSO subjects; enforce uniqueness (workspace_id, alias_type, value).
+
 ---
 
 ## Observability and Guardrails
@@ -189,4 +193,3 @@ Phase 6 — Temporal Reasoning (RR 1.2)
 ## References
 
 - See docs/memory/RESEARCH_BELIEF_INTENT.md for literature survey and comparative analysis.
-
