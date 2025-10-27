@@ -1,0 +1,263 @@
+# Storage Implementation Guide (2025 Refresh)
+
+Quick reference for building the redesigned stack: PlanetScale (durable store), S3/GCS for raw artifacts, Pinecone for chunk embeddings, Redis for cache/queues.
+
+---
+
+## Dependencies
+
+```bash
+pnpm add @planetscale/database            # PlanetScale client (or Prisma)
+pnpm add @aws-sdk/client-s3               # S3 uploads
+pnpm add @pinecone-database/pinecone
+pnpm add @upstash/redis
+```
+
+Configure service credentials in `.env`:
+
+```
+PLANETSCALE_HOST=
+PLANETSCALE_USERNAME=
+PLANETSCALE_PASSWORD=
+S3_BUCKET=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+PINECONE_API_KEY=
+PINECONE_ENVIRONMENT=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
+
+---
+
+## PlanetScale Schema Snippets
+
+```sql
+CREATE TABLE memories (
+  id              varchar(40) PRIMARY KEY,
+  organization_id varchar(40) NOT NULL,
+  workspace_id    varchar(40) NOT NULL,
+  source          varchar(20) NOT NULL,
+  source_id       varchar(128) NOT NULL,
+  type            varchar(32) NOT NULL,
+  title           text NOT NULL,
+  summary         text NULL,
+  state           varchar(32) NULL,
+  raw_pointer     varchar(255) NULL,
+  content_hash    char(64) NOT NULL,
+  metadata_json   json NOT NULL,
+  author_json     json NOT NULL,
+  occurred_at     timestamp NOT NULL,
+  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  version         int NOT NULL,
+  lineage_json    json NOT NULL,
+  UNIQUE KEY uniq_workspace_source (workspace_id, source, source_id)
+);
+
+CREATE TABLE memory_chunks (
+  id              varchar(40) PRIMARY KEY,
+  memory_id       varchar(40) NOT NULL,
+  workspace_id    varchar(40) NOT NULL,
+  chunk_index     int NOT NULL,
+  text            mediumtext NOT NULL,
+  token_count     int NOT NULL,
+  section_label   varchar(255) NULL,
+  embedding_model varchar(64) NOT NULL,
+  embedding_version varchar(32) NOT NULL,
+  chunk_hash      char(64) NOT NULL,
+  keywords        json NOT NULL,
+  sparse_vector   json NULL,
+  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  superseded_at   timestamp NULL,
+  INDEX idx_memory_chunks_memory (memory_id),
+  INDEX idx_memory_chunks_workspace (workspace_id, chunk_hash)
+);
+
+CREATE TABLE memory_relationships (
+  id                varchar(40) PRIMARY KEY,
+  workspace_id      varchar(40) NOT NULL,
+  from_memory_id    varchar(40) NOT NULL,
+  to_memory_id      varchar(40) NOT NULL,
+  relationship_type varchar(32) NOT NULL,
+  confidence        decimal(4,3) NOT NULL,
+  detected_by       varchar(16) NOT NULL,
+  created_at        timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_relationships_outbound (workspace_id, from_memory_id),
+  INDEX idx_relationships_inbound (workspace_id, to_memory_id)
+);
+```
+
+RLS (via Prisma middleware or custom API layer) enforces workspace scoping.
+
+---
+
+## Persistence Helpers
+
+```typescript
+import { db } from '@/lib/planetscale';
+
+export async function upsertMemory(input: MemoryRecordInput): Promise<MemoryRecord> {
+  const existing = await db.memories.findUnique({
+    where: { workspaceId_source_sourceId: input.workspaceKey },
+  });
+
+  if (existing && existing.contentHash === input.contentHash) {
+    return existing; // No-op
+  }
+
+  const version = existing ? existing.version + 1 : 1;
+  return await db.memories.upsert({
+    where: { workspaceId_source_sourceId: input.workspaceKey },
+    update: {
+      title: input.title,
+      summary: input.summary,
+      state: input.state,
+      rawPointer: input.rawPointer,
+      contentHash: input.contentHash,
+      metadataJson: input.metadataJson,
+      authorJson: input.author,
+      occurredAt: input.occurredAt,
+      version,
+      lineageJson: input.lineage,
+    },
+    create: { ...input, version },
+  });
+}
+```
+
+`replaceChunks` soft-deletes old chunks and inserts new ones:
+
+```typescript
+export async function replaceChunks(memory: MemoryRecord, drafts: ChunkDraft[]): Promise<MemoryChunkRecord[]> {
+  await db.memoryChunks.updateMany({
+    where: { memoryId: memory.id, supersededAt: null },
+    data: { supersededAt: new Date() },
+  });
+
+  const rows = drafts.map((draft, index) => ({
+    id: newId(),
+    memoryId: memory.id,
+    workspaceId: memory.workspaceId,
+    chunkIndex: index,
+    text: draft.text,
+    tokenCount: draft.tokenCount,
+    sectionLabel: draft.sectionLabel ?? null,
+    embeddingModel: draft.embeddingModel,
+    embeddingVersion: draft.embeddingVersion,
+    chunkHash: draft.chunkHash,
+    keywords: draft.keywords,
+  }));
+
+  await db.memoryChunks.createMany({ data: rows });
+  return rows;
+}
+```
+
+---
+
+## Pinecone Upsert Helper
+
+```typescript
+import { Pinecone } from '@pinecone-database/pinecone';
+
+const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+
+export async function upsertChunkVector(chunk: MemoryChunkRecord, embedding: number[]) {
+  const namespace = `${chunk.workspaceId}-${chunk.embeddingVersion}`;
+
+  await pinecone.index('lightfast-chunks').namespace(namespace).upsert([{
+    id: chunk.id,
+    values: embedding,
+    metadata: {
+      workspaceId: chunk.workspaceId,
+      memoryId: chunk.memoryId,
+      chunkIndex: chunk.chunkIndex,
+      chunkHash: chunk.chunkHash,
+      type: chunk.sectionLabel ?? null,
+      createdAt: chunk.createdAt.toISOString(),
+    },
+  }]);
+}
+```
+
+To remove superseded chunks, call `deleteMany` using the chunk IDs returned from `replaceChunks` when chunks are replaced.
+
+---
+
+## Redis Cache Contract
+
+```typescript
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
+
+export async function primeMemoryCache(memory: MemoryRecord, chunks: MemoryChunkRecord[]): Promise<void> {
+  await redis.pipeline()
+    .set(`memory:${memory.id}`, JSON.stringify(memory), { ex: 72 * 60 * 60 })
+    .set(`chunks:${memory.id}:v${memory.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
+    .exec();
+}
+```
+
+Dedup keys:
+
+```typescript
+await redis.set(`source-dedupe:${memory.source}:${memory.sourceId}`, memory.contentHash, { ex: 86_400 });
+```
+
+Relationship adjacency lists are stored as Redis sets for convenience but can be rebuilt from PlanetScale when caches invalidate.
+
+---
+
+## S3 Upload Helper
+
+```typescript
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-east-1' });
+
+export async function storeRawArtifact(key: string, body: Uint8Array | string) {
+  await s3.send(new PutObjectCommand({
+    Bucket: process.env.S3_BUCKET!,
+    Key: key,
+    Body: typeof body === 'string' ? Buffer.from(body) : body,
+    ContentType: 'application/json',
+  }));
+}
+```
+
+We keep artifact keys under `workspaces/{workspaceId}/memories/{memoryId}/...`.
+
+---
+
+## Braintrust Hooks
+
+After inserting a memory, enqueue a Braintrust test run if the workspace has suites:
+
+```typescript
+import { braintrust } from '@/lib/braintrust';
+
+await braintrust.tests.enqueue({
+  workspaceId: memory.workspaceId,
+  suite: 'post-ingest-regression',
+  payload: { memoryId: memory.id, version: memory.version },
+});
+```
+
+Braintrust callbacks write evaluation metrics into `feedback_events` for observability dashboards.
+
+---
+
+## Checklist per Ingestion
+
+1. Normalize source payload → `MemoryRecordInput` + `ChunkDraft[]`.
+2. Persist via transaction (memories + chunks + artifact uploads).
+3. Prime Redis caches (best-effort).
+4. Enqueue embedding jobs and wait for Pinecone upserts.
+5. Run relationship detection and update graph tables.
+6. Trigger Braintrust evaluation and log ingestion metrics.
+
+---
+
+_Last reviewed: 2025-02-10_
