@@ -23,11 +23,11 @@ Each week culminates in a demoable slice with automated validation.
 
 **Goals:** Establish data model, infrastructure plumbing, and ingestion skeletons.
 
-- Define PlanetScale tables for the Knowledge Store and Memory Graph (`knowledge_documents`, `knowledge_chunks`, `relationships`, `retrieval_logs`, `feedback_events`).
+- Define Drizzle schema (PlanetScale MySQL) for the Knowledge Store and Memory Graph (`knowledge_documents`, `knowledge_chunks`, `relationships`, `retrieval_logs`, `feedback_events`).
 - Provision S3 bucket (`workspaces/{workspace}/knowledge/{documentId}` prefix) with lifecycle policies.
 - Set up Redis namespaces for cache + dedupe keys.
-- Implement typed clients (`lib/planetscale`, `lib/s3`, `lib/redis`, `lib/pinecone`).
-- Scaffolding Inngest functions + TypeScript domain types (`KnowledgeDocument`, `ChunkDraft`).
+- Implement typed clients/packages (`@db/cloud` Drizzle client, `lib/s3`, `lib/redis`, `lib/pinecone`).
+- Scaffolding Inngest functions + types inferred from tRPC RouterOutputs (e.g., `CloudRouterOutputs['knowledge']['getDocumentById']`) and `ChunkDraft` for ingestion.
 - Create Braintrust workspace + seed baseline suite for GitHub QA.
 
 **Exit criteria:** Local integration test writes a knowledge document + chunks transactionally and confirms Pinecone + Redis stubs invoked (no real data yet).

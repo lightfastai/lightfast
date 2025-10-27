@@ -15,51 +15,69 @@ Scope: Define how a human user with multiple provider accounts (GitHub, Linear, 
 
 ---
 
-## Data Model (PlanetScale/MySQL)
+## Data Model (Drizzle, PlanetScale MySQL)
 
-```sql
--- App-level users (login identity)
-CREATE TABLE users (
-  id              varchar(40) PRIMARY KEY,
-  primary_email   varchar(255) NULL,
-  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_primary_email (primary_email)
+```ts
+import { mysqlTable, varchar, json, timestamp, index, uniqueIndex } from 'drizzle-orm/mysql-core';
+
+// App-level users (login identity)
+export const users = mysqlTable(
+  'users',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    primaryEmail: varchar('primary_email', { length: 255 }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).onUpdateNow().defaultNow().notNull(),
+  },
+  (t) => ({ uniqPrimaryEmail: uniqueIndex('uniq_primary_email').on(t.primaryEmail) }),
 );
 
--- Linked identities (IdPs and product accounts)
-CREATE TABLE user_identities (
-  id                 varchar(40) PRIMARY KEY,
-  user_id            varchar(40) NOT NULL,
-  provider           varchar(32) NOT NULL,  -- google|okta|github|slack|linear|notion|microsoft|saml
-  provider_user_id   varchar(255) NOT NULL, -- stable subject/id from provider
-  email              varchar(255) NULL,
-  email_verified     tinyint(1) NOT NULL DEFAULT 0,
-  metadata_json      json NOT NULL,
-  created_at         timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_provider_subject (provider, provider_user_id),
-  INDEX idx_uid_user (user_id)
+// Linked identities (IdPs and product accounts)
+export const userIdentities = mysqlTable(
+  'user_identities',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    userId: varchar('user_id', { length: 40 }).notNull(),
+    provider: varchar('provider', { length: 32 }).notNull(), // google|okta|github|slack|linear|notion|microsoft|saml
+    providerUserId: varchar('provider_user_id', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }),
+    emailVerified: varchar('email_verified', { length: 1 }).notNull().default('0'),
+    metadataJson: json('metadata_json').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqProviderSubject: uniqueIndex('uniq_provider_subject').on(t.provider, t.providerUserId),
+    idxByUser: index('idx_uid_user').on(t.userId),
+  }),
 );
 
--- Workspace membership and roles for app users
-CREATE TABLE workspace_users (
-  id              varchar(40) PRIMARY KEY,
-  workspace_id    varchar(40) NOT NULL,
-  user_id         varchar(40) NOT NULL,
-  role            varchar(16) NOT NULL, -- admin|editor|viewer
-  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_ws_user (workspace_id, user_id)
+// Workspace membership and roles for app users
+export const workspaceUsers = mysqlTable(
+  'workspace_users',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    userId: varchar('user_id', { length: 40 }).notNull(),
+    role: varchar('role', { length: 16 }).notNull(), // admin|editor|viewer
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({ uniqWsUser: uniqueIndex('uniq_ws_user').on(t.workspaceId, t.userId) }),
 );
 
--- Map an app user to a graph Person entity within a workspace
-CREATE TABLE workspace_person_map (
-  id                varchar(40) PRIMARY KEY,
-  workspace_id      varchar(40) NOT NULL,
-  user_id           varchar(40) NOT NULL,
-  person_entity_id  varchar(40) NOT NULL,
-  created_at        timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_ws_user_map (workspace_id, user_id),
-  UNIQUE KEY uniq_ws_person_map (workspace_id, person_entity_id)
+// Map an app user to a graph Person entity within a workspace
+export const workspacePersonMap = mysqlTable(
+  'workspace_person_map',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    userId: varchar('user_id', { length: 40 }).notNull(),
+    personEntityId: varchar('person_entity_id', { length: 40 }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqWsUserMap: uniqueIndex('uniq_ws_user_map').on(t.workspaceId, t.userId),
+    uniqWsPersonMap: uniqueIndex('uniq_ws_person_map').on(t.workspaceId, t.personEntityId),
+  }),
 );
 ```
 
@@ -184,4 +202,3 @@ Logs
 
 - Memory Graph aliasing and person entities: `docs/memory/GRAPH.md`
 - Research‑mode rollout and acceptance: `docs/memory/SPEC.md`
-

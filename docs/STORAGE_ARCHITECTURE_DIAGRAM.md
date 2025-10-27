@@ -17,8 +17,8 @@
                                │                                │
                                ▼                                ▼
                      ┌──────────────────┐              ┌──────────────────┐
-                     │ PlanetScale /    │              │ Object Storage   │
-                     │ Postgres         │              │ (S3 / GCS)       │
+                     │ PlanetScale      │              │ Object Storage   │
+                     │ (MySQL)          │              │ (S3 / GCS)       │
                      │ knowledge_*      │◄──raw_pointer│ Versioned Blobs  │
                      └─────────┬────────┘              └────────┬─────────┘
                                │                                 │
@@ -52,7 +52,7 @@
 
 ```
 ┌─────────────┐   ┌──────────────┐   ┌────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│ Source Event│──►│ Normalize +  │──►│ Chunk Builder   │──►│ PlanetScale Txn │──►│ Embedding Queue │
+│ Source Event│──►│ Normalize +  │──►│ Chunk Builder   │──►│ Drizzle Txn     │──►│ Embedding Queue │
 │ (webhook)   │   │ Hash Content  │   │ 300±50 tokens   │   │ upsert knowledge│   │ batch → Voyage  │
 └─────────────┘   └──────┬───────┘   └────────┬───────┘   │ chunks          │   └────────┬────────┘
                          │                    │           └──────┬────────┘            │

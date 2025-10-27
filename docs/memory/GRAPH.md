@@ -8,7 +8,7 @@ This document defines Lightfast’s graph‑native Memory layer: durable entitie
 
 ## Executive Summary
 
-- Durable core remains: PlanetScale/Postgres + S3; Redis for cache/queues; Pinecone for vectors (hybrid retrieval).
+- Durable core remains: PlanetScale (MySQL) via Drizzle + S3; Redis for cache/queues; Pinecone for vectors (hybrid retrieval).
 - Add Memory Graph: entities (people, repos, services, components, projects, customers, goals), typed relationships (AUTHORED_BY, OWNED_BY, DEPENDS_ON, RESOLVES, ALIGNS_WITH_GOAL, etc.), and beliefs (mission, vision, principles, goals) with provenance, confidence, and time.
 - Populate deterministic edges from connectors first; augment with LLM extraction under confidence gating (never overwrite deterministic truth).
 - Expose graph‑aware retrieval: traverse 1–2 hops to seed and boost chunk retrieval; include a short “graph rationale” in answers with links to evidence.
@@ -54,7 +54,7 @@ Each edge has: `type`, `from`, `to`, `confidence`, `detectedBy` (rule|llm|manual
 - Tables: `entities`, `entity_aliases`, `document_entities`, `relationships`, `relationship_evidence`, `beliefs`, `belief_links`.
 - Temporal: edges carry `since`/`until`; beliefs have revisions and status.
 - RLS: all tables workspace‑scoped; provenance and confidence required for writes.
-- See `docs/STORAGE_IMPLEMENTATION_GUIDE.md` for DDL patterns and caching.
+- See `docs/STORAGE_IMPLEMENTATION_GUIDE.md` for Drizzle schema patterns and caching.
 
 ---
 

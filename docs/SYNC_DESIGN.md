@@ -16,7 +16,7 @@ Ingress Layer (webhooks, pollers) → Idempotency check (Redis)
 Inngest Orchestrator (per-source functions)
         │
         ├─► Normalize payload → DocumentDraft
-        ├─► Persist document + chunks (PlanetScale transaction)
+        ├─► Persist document + chunks (Drizzle transaction on PlanetScale MySQL)
         ├─► Upload large artifacts (S3)
         ├─► Publish embedding jobs
         ├─► Detect relationships
@@ -25,7 +25,7 @@ Inngest Orchestrator (per-source functions)
 
 Key properties:
 - **Idempotent**: Every ingestion run checks `content_hash` before writing.
-- **Durable-first**: Pinecone/Redis updates happen *after* PlanetScale commits.
+- **Durable-first**: Pinecone/Redis updates happen after the Drizzle transaction commits (PlanetScale MySQL).
 - **Chunk-aware**: Transformations produce chunk lists to embed asynchronously.
 - **Observable**: Each step emits telemetry into `retrieval_logs` and Braintrust evaluation queues (playbook in `docs/EVALUATION_PLAYBOOK.md`).
 
@@ -168,7 +168,7 @@ interface ChunkDraft {
 
 ## Persistence Layer
 
-`persistKnowledgeDraft` wraps database writes in a PlanetScale transaction:
+`persistKnowledgeDraft` wraps database writes in a Drizzle transaction (PlanetScale MySQL):
 
 1. Upsert row in `knowledge_documents` using `content_hash` for optimistic concurrency.
 2. If the hash changed or row missing:
@@ -246,7 +246,7 @@ async function detectRelationships(result: PersistResult) {
 }
 ```
 
-- Resolution first checks deterministic IDs (e.g., `#123` → PR number) via PlanetScale queries before falling back to Pinecone keyword search.
+- Resolution first checks deterministic IDs (e.g., `#123` → PR number) via Drizzle SQL queries on PlanetScale before falling back to Pinecone keyword search.
 - Writes to `relationships` and pushes adjacency lists into Redis (`refs:*`).
 
 ---

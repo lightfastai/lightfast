@@ -1,6 +1,6 @@
 # Storage Implementation Guide (2025 Refresh)
 
-Quick reference for building the redesigned stack: PlanetScale (durable store), S3/GCS for raw artifacts, Pinecone for chunk embeddings, Redis for cache/queues.
+Quick reference for building the redesigned stack: PlanetScale (MySQL via Drizzle) as the durable store, S3/GCS for raw artifacts, Pinecone for chunk embeddings, and Redis for cache/queues.
 
 Terminology: The chunked retrieval layer is the Knowledge Store. The relationships‑first layer is the Memory Graph (entities/relationships/beliefs). See `docs/KNOWLEDGE_STORE.md` and `docs/memory/GRAPH.md`.
 
@@ -9,78 +9,110 @@ Terminology: The chunked retrieval layer is the Knowledge Store. The relationshi
 ## Dependencies
 
 ```bash
-pnpm add @planetscale/database            # PlanetScale client (or Prisma)
-pnpm add @aws-sdk/client-s3               # S3 uploads
-pnpm add @pinecone-database/pinecone
-pnpm add @upstash/redis
+# Database (PlanetScale MySQL + Drizzle)
+pnpm add drizzle-orm drizzle-zod @planetscale/database
+# Migrations / tooling (in db/* workspaces)
+pnpm add -D drizzle-kit dotenv-cli
+
+# Storage / search / cache
+pnpm add @aws-sdk/client-s3 @pinecone-database/pinecone @upstash/redis
 ```
 
 Configure service credentials in `.env`:
 
 ```
-PLANETSCALE_HOST=
-PLANETSCALE_USERNAME=
-PLANETSCALE_PASSWORD=
+# PlanetScale (MySQL)
+DATABASE_HOST=
+DATABASE_USERNAME=
+DATABASE_PASSWORD=
+
+# Object store
 S3_BUCKET=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
+
+# Pinecone
 PINECONE_API_KEY=
 PINECONE_ENVIRONMENT=
+
+# Redis
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 ```
 
 ---
 
-## PlanetScale Schema Snippets
+## Drizzle Schema (PlanetScale MySQL)
 
-```sql
--- Knowledge Store (canonical tables)
-CREATE TABLE knowledge_documents (
-  id              varchar(40) PRIMARY KEY,
-  organization_id varchar(40) NOT NULL,
-  workspace_id    varchar(40) NOT NULL,
-  source          varchar(20) NOT NULL,
-  source_id       varchar(128) NOT NULL,
-  type            varchar(32) NOT NULL,
-  title           text NOT NULL,
-  summary         text NULL,
-  state           varchar(32) NULL,
-  raw_pointer     varchar(255) NULL,
-  content_hash    char(64) NOT NULL,
-  metadata_json   json NOT NULL,
-  author_json     json NOT NULL,
-  occurred_at     timestamp NOT NULL,
-  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  version         int NOT NULL,
-  lineage_json    json NOT NULL,
-  UNIQUE KEY uniq_workspace_source (workspace_id, source, source_id)
+Example Drizzle definitions for the Knowledge Store tables. Use drizzle‑kit to generate and run migrations.
+
+```ts
+import {
+  mysqlTable,
+  varchar,
+  text,
+  mediumtext,
+  int,
+  char,
+  json,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/mysql-core';
+
+export const knowledgeDocuments = mysqlTable(
+  'knowledge_documents',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    organizationId: varchar('organization_id', { length: 40 }).notNull(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    source: varchar('source', { length: 20 }).notNull(),
+    sourceId: varchar('source_id', { length: 128 }).notNull(),
+    type: varchar('type', { length: 32 }).notNull(),
+    title: text('title').notNull(),
+    summary: text('summary'),
+    state: varchar('state', { length: 32 }),
+    rawPointer: varchar('raw_pointer', { length: 255 }),
+    contentHash: char('content_hash', { length: 64 }).notNull(),
+    metadataJson: json('metadata_json').notNull(),
+    authorJson: json('author_json').notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'date' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).onUpdateNow().defaultNow().notNull(),
+    version: int('version').notNull(),
+    lineageJson: json('lineage_json').notNull(),
+  },
+  (t) => ({
+    uniqWorkspaceSource: uniqueIndex('uniq_workspace_source').on(t.workspaceId, t.source, t.sourceId),
+  }),
 );
 
-CREATE TABLE knowledge_chunks (
-  id              varchar(40) PRIMARY KEY,
-  document_id     varchar(40) NOT NULL,
-  workspace_id    varchar(40) NOT NULL,
-  chunk_index     int NOT NULL,
-  text            mediumtext NOT NULL,
-  token_count     int NOT NULL,
-  section_label   varchar(255) NULL,
-  embedding_model varchar(64) NOT NULL,
-  embedding_version varchar(32) NOT NULL,
-  chunk_hash      char(64) NOT NULL,
-  keywords        json NOT NULL,
-  sparse_vector   json NULL,
-  created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  superseded_at   timestamp NULL,
-  INDEX idx_knowledge_chunks_document (document_id),
-  INDEX idx_knowledge_chunks_workspace (workspace_id, chunk_hash)
+export const knowledgeChunks = mysqlTable(
+  'knowledge_chunks',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    documentId: varchar('document_id', { length: 40 }).notNull(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    chunkIndex: int('chunk_index').notNull(),
+    text: mediumtext('text').notNull(),
+    tokenCount: int('token_count').notNull(),
+    sectionLabel: varchar('section_label', { length: 255 }),
+    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
+    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
+    chunkHash: char('chunk_hash', { length: 64 }).notNull(),
+    keywords: json('keywords').notNull(),
+    sparseVector: json('sparse_vector'),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    supersededAt: timestamp('superseded_at', { mode: 'date' }),
+  },
+  (t) => ({
+    idxByDocument: index('idx_knowledge_chunks_document').on(t.documentId),
+    idxByWorkspaceHash: index('idx_knowledge_chunks_workspace').on(t.workspaceId, t.chunkHash),
+  }),
 );
 ```
 
-RLS (via Prisma middleware or custom API layer) enforces workspace scoping.
-
-See `docs/memory/GRAPH.md` for the Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
+Workspace scoping is enforced in the application layer (PlanetScale has no native RLS). See `docs/memory/GRAPH.md` for Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
 
 ---
 
@@ -89,6 +121,8 @@ See `docs/memory/GRAPH.md` for the Memory Graph tables (`entities`, `relationshi
 Create a serverless index per environment with 768 dimensions (balances recall and storage cost) and dot-product similarity to support hybrid scoring. Keep metadata under 5KB and explicitly declare indexed fields once pod-based options are enabled.
 
 ```typescript
+// If you inferred KnowledgeChunk from tRPC, import the alias here
+// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
 import { Pinecone } from '@pinecone-database/pinecone';
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
@@ -123,65 +157,99 @@ await pinecone.configureIndex({
 
 ---
 
-## Persistence Helpers
+## Persistence Helpers (Drizzle)
 
-```typescript
-import { db } from '@/lib/planetscale';
+```ts
+// Prefer inferring API-facing types from tRPC RouterOutputs
+// Adjust the path to your actual route names
+import type { CloudRouterOutputs } from '@api/cloud';
+type KnowledgeDocument = CloudRouterOutputs['knowledge']['getDocumentById'];
+// Optional: if you expose a 'listChunks' or similar endpoint
+// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
 
-export async function upsertKnowledgeDocument(input: KnowledgeDocumentInput): Promise<KnowledgeDocument> {
-  const existing = await db.knowledgeDocuments.findUnique({
-    where: { workspaceId_source_sourceId: input.workspaceKey },
-  });
+import { and, eq, isNull } from 'drizzle-orm';
+import { db } from '@db/cloud/client';
+import { knowledgeDocuments, knowledgeChunks } from '@db/cloud/schema';
 
-  if (existing && existing.contentHash === input.contentHash) {
-    return existing; // No-op
-  }
+export async function upsertKnowledgeDocument(input: KnowledgeDocumentInput) {
+  const [existing] = await db
+    .select()
+    .from(knowledgeDocuments)
+    .where(
+      and(
+        eq(knowledgeDocuments.workspaceId, input.workspaceId),
+        eq(knowledgeDocuments.source, input.source),
+        eq(knowledgeDocuments.sourceId, input.sourceId),
+      ),
+    )
+    .limit(1);
+
+  if (existing && existing.contentHash === input.contentHash) return existing; // No-op
 
   const version = existing ? existing.version + 1 : 1;
-  return await db.knowledgeDocuments.upsert({
-    where: { workspaceId_source_sourceId: input.workspaceKey },
-    update: {
-      title: input.title,
-      summary: input.summary,
-      state: input.state,
-      rawPointer: input.rawPointer,
-      contentHash: input.contentHash,
-      metadataJson: input.metadataJson,
-      authorJson: input.author,
-      occurredAt: input.occurredAt,
-      version,
-      lineageJson: input.lineage,
-    },
-    create: { ...input, version },
-  });
+
+  await db
+    .insert(knowledgeDocuments)
+    .values({ ...input, version })
+    .onDuplicateKeyUpdate({
+      set: {
+        title: input.title,
+        summary: input.summary ?? null,
+        state: input.state ?? null,
+        rawPointer: input.rawPointer ?? null,
+        contentHash: input.contentHash,
+        metadataJson: input.metadataJson,
+        authorJson: input.author,
+        occurredAt: input.occurredAt,
+        version,
+        lineageJson: input.lineage,
+        updatedAt: new Date(),
+      },
+    });
+
+  const [row] = await db
+    .select()
+    .from(knowledgeDocuments)
+    .where(
+      and(
+        eq(knowledgeDocuments.workspaceId, input.workspaceId),
+        eq(knowledgeDocuments.source, input.source),
+        eq(knowledgeDocuments.sourceId, input.sourceId),
+      ),
+    )
+    .limit(1);
+
+  return row!;
 }
 ```
 
-`replaceChunks` soft-deletes old chunks and inserts new ones:
+Replace chunks transactionally:
 
-```typescript
-export async function replaceChunks(doc: KnowledgeDocument, drafts: ChunkDraft[]): Promise<KnowledgeChunkRecord[]> {
-  await db.knowledgeChunks.updateMany({
-    where: { documentId: doc.id, supersededAt: null },
-    data: { supersededAt: new Date() },
+```ts
+export async function replaceChunks(doc: KnowledgeDocument, drafts: ChunkDraft[]) {
+  return db.transaction(async (tx) => {
+    await tx
+      .update(knowledgeChunks)
+      .set({ supersededAt: new Date() })
+      .where(and(eq(knowledgeChunks.documentId, doc.id), isNull(knowledgeChunks.supersededAt)));
+
+    const rows = drafts.map((draft, index) => ({
+      id: newId(),
+      documentId: doc.id,
+      workspaceId: doc.workspaceId,
+      chunkIndex: index,
+      text: draft.text,
+      tokenCount: draft.tokenCount,
+      sectionLabel: draft.sectionLabel ?? null,
+      embeddingModel: draft.embeddingModel,
+      embeddingVersion: draft.embeddingVersion,
+      chunkHash: draft.chunkHash,
+      keywords: draft.keywords,
+    }));
+
+    if (rows.length) await tx.insert(knowledgeChunks).values(rows);
+    return rows;
   });
-
-  const rows = drafts.map((draft, index) => ({
-    id: newId(),
-    documentId: doc.id,
-    workspaceId: doc.workspaceId,
-    chunkIndex: index,
-    text: draft.text,
-    tokenCount: draft.tokenCount,
-    sectionLabel: draft.sectionLabel ?? null,
-    embeddingModel: draft.embeddingModel,
-    embeddingVersion: draft.embeddingVersion,
-    chunkHash: draft.chunkHash,
-    keywords: draft.keywords,
-  }));
-
-  await db.knowledgeChunks.createMany({ data: rows });
-  return rows;
 }
 ```
 
@@ -195,7 +263,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
 export async function upsertChunkVector(
-  chunk: KnowledgeChunkRecord,
+  chunk: KnowledgeChunk,
   embedding: number[],
   opts: { source: string }
 ) {
@@ -264,11 +332,13 @@ Track `embedding_version` whenever the model, dimension (Matryoshka truncation),
 ## Redis Cache Contract
 
 ```typescript
+// If you inferred KnowledgeChunk from tRPC, import the alias here
+// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
 
-export async function primeKnowledgeCache(doc: KnowledgeDocument, chunks: KnowledgeChunkRecord[]): Promise<void> {
+export async function primeKnowledgeCache(doc: KnowledgeDocument, chunks: KnowledgeChunk[]): Promise<void> {
   await redis.pipeline()
     .set(`document:${doc.id}`, JSON.stringify(doc), { ex: 72 * 60 * 60 })
     .set(`chunks:${doc.id}:v${doc.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })

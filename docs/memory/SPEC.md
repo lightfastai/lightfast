@@ -141,7 +141,7 @@ Phase 6 — Temporal Reasoning (RR 1.2)
 ## Deployment and Migrations
 
 - Migrations
-  - Forward-only schema changes with PlanetScale; pre‑create tables; dual‑read/dual‑write where needed; zero‑downtime backfills.
+  - Forward-only schema changes with PlanetScale via Drizzle migrations; pre‑create tables; dual‑read/dual‑write where needed; zero‑downtime backfills.
 - Feature Flags
   - Per‑workspace toggles; gradual rollout by cohort; observability for enablement.
 - Reindexing

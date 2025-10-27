@@ -135,66 +135,95 @@ Beliefs provide the “why”; intents connect the “why” to the “what” a
 
 ## Proposed Data Model Additions
 
-Extend docs/memory/GRAPH.md with first‑class Intents and supporting logs. Keep beliefs as specified; add revision and linkage mechanics. SQL shown for PlanetScale/Postgres; adapt naming to the existing conventions.
+Extend docs/memory/GRAPH.md with first‑class Intents and supporting logs. Keep beliefs as specified; add revision and linkage mechanics. Drizzle schema (PlanetScale MySQL) shown below; adapt naming to the existing conventions.
 
-```sql
--- Intents: desired outcomes instantiated as commitments
-CREATE TABLE intents (
-  id               varchar(40) PRIMARY KEY,
-  workspace_id     varchar(40) NOT NULL,
-  title            varchar(255) NOT NULL,
-  description      mediumtext NULL,
-  intent_type      varchar(24) NOT NULL, -- objective|key_result|initiative|commitment|experiment
-  status           varchar(16) NOT NULL, -- proposed|committed|in_progress|paused|completed|abandoned
-  priority         varchar(16) NULL,     -- p0|p1|p2 or custom
-  owner_entity_id  varchar(40) NULL,     -- team or person
-  belief_id        varchar(40) NULL,     -- aligns to active belief/goal
-  start_at         timestamp NULL,
-  due_at           timestamp NULL,
-  confidence       decimal(4,3) NULL,    -- inferred mapping confidence if LLM‑linked
-  source           varchar(20) NOT NULL, -- rule|llm|manual
-  source_document_id varchar(40) NULL,
-  created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_intent_ws_status (workspace_id, status),
-  INDEX idx_intent_belief (workspace_id, belief_id)
+```ts
+import {
+  mysqlTable,
+  varchar,
+  mediumtext,
+  timestamp,
+  json,
+  index,
+} from 'drizzle-orm/mysql-core';
+
+// Intents: desired outcomes instantiated as commitments
+export const intents = mysqlTable(
+  'intents',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: mediumtext('description'),
+    intentType: varchar('intent_type', { length: 24 }).notNull(), // objective|key_result|initiative|commitment|experiment
+    status: varchar('status', { length: 16 }).notNull(), // proposed|committed|in_progress|paused|completed|abandoned
+    priority: varchar('priority', { length: 16 }),
+    ownerEntityId: varchar('owner_entity_id', { length: 40 }),
+    beliefId: varchar('belief_id', { length: 40 }),
+    startAt: timestamp('start_at', { mode: 'date' }),
+    dueAt: timestamp('due_at', { mode: 'date' }),
+    confidence: varchar('confidence', { length: 8 }), // store as string/DECIMAL if preferred
+    source: varchar('source', { length: 20 }).notNull(), // rule|llm|manual
+    sourceDocumentId: varchar('source_document_id', { length: 40 }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).onUpdateNow().defaultNow().notNull(),
+  },
+  (t) => ({
+    idxStatus: index('idx_intent_ws_status').on(t.workspaceId, t.status),
+    idxBelief: index('idx_intent_belief').on(t.workspaceId, t.beliefId),
+  }),
 );
 
--- Link intents to entities/documents (many‑to‑many roles)
-CREATE TABLE intent_links (
-  id               varchar(40) PRIMARY KEY,
-  workspace_id     varchar(40) NOT NULL,
-  intent_id        varchar(40) NOT NULL,
-  ref_kind         varchar(16) NOT NULL, -- entity|document
-  ref_id           varchar(40) NOT NULL,
-  role             varchar(24) NOT NULL, -- owner|assignee|evidence|depends_on|related
-  created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_il_intent (workspace_id, intent_id),
-  INDEX idx_il_ref (workspace_id, ref_kind, ref_id)
+// Link intents to entities/documents (many‑to‑many roles)
+export const intentLinks = mysqlTable(
+  'intent_links',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    intentId: varchar('intent_id', { length: 40 }).notNull(),
+    refKind: varchar('ref_kind', { length: 16 }).notNull(), // entity|document
+    refId: varchar('ref_id', { length: 40 }).notNull(),
+    role: varchar('role', { length: 24 }).notNull(), // owner|assignee|evidence|depends_on|related
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({
+    idxByIntent: index('idx_il_intent').on(t.workspaceId, t.intentId),
+    idxByRef: index('idx_il_ref').on(t.workspaceId, t.refKind, t.refId),
+  }),
 );
 
--- Intent lifecycle events for auditing and temporal reasoning
-CREATE TABLE intent_events (
-  id               varchar(40) PRIMARY KEY,
-  workspace_id     varchar(40) NOT NULL,
-  intent_id        varchar(40) NOT NULL,
-  event_type       varchar(24) NOT NULL, -- created|committed|status_changed|deadline_set|completed|abandoned
-  metadata_json    json NOT NULL,
-  occurred_at      timestamp NOT NULL,
-  created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_ie_intent_time (workspace_id, intent_id, occurred_at)
+// Intent lifecycle events for auditing and temporal reasoning
+export const intentEvents = mysqlTable(
+  'intent_events',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    intentId: varchar('intent_id', { length: 40 }).notNull(),
+    eventType: varchar('event_type', { length: 24 }).notNull(), // created|committed|status_changed|deadline_set|completed|abandoned
+    metadataJson: json('metadata_json').notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'date' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({
+    idxByIntentTime: index('idx_ie_intent_time').on(t.workspaceId, t.intentId, t.occurredAt),
+  }),
 );
 
--- Optional: belief revision/audit log (AGM‑inspired)
-CREATE TABLE belief_revisions (
-  id               varchar(40) PRIMARY KEY,
-  workspace_id     varchar(40) NOT NULL,
-  belief_id        varchar(40) NOT NULL,
-  change_type      varchar(16) NOT NULL, -- created|updated|superseded
-  reason           varchar(255) NULL,
-  evidence_document_id varchar(40) NULL,
-  created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_br_belief (workspace_id, belief_id)
+// Optional: belief revision/audit log (AGM‑inspired)
+export const beliefRevisions = mysqlTable(
+  'belief_revisions',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    beliefId: varchar('belief_id', { length: 40 }).notNull(),
+    changeType: varchar('change_type', { length: 16 }).notNull(), // created|updated|superseded
+    reason: varchar('reason', { length: 255 }),
+    evidenceDocumentId: varchar('evidence_document_id', { length: 40 }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({
+    idxByBelief: index('idx_br_belief').on(t.workspaceId, t.beliefId),
+  }),
 );
 ```
 

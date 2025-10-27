@@ -83,7 +83,7 @@ Lightfast builds a relationships‑first Memory layer and a production‑ready K
 
 ## Architecture
 
-- Durable core: PlanetScale/Postgres + S3 for raw artifacts; Redis for cache/queues.
+- Durable core: PlanetScale (MySQL) via Drizzle + S3 for raw artifacts; Redis for cache/queues.
 - Indexing: chunk documents (200–400 tokens) and embed vectors in Pinecone (optionally sparse features).
 - Retrieval: hybrid pipeline with optional reranking and graph‑aware bias for relationship queries.
 - Observability: retrieval logs, feedback events, dashboards, and eval suites for continual quality monitoring.
@@ -129,7 +129,7 @@ See: SYNC_DESIGN.md
 ## Implementation Guides
 
 - Storage Implementation Guide covers:
-  - PlanetScale DDL for Knowledge Store and Memory Graph.
+  - Drizzle schema (PlanetScale MySQL) for Knowledge Store and Memory Graph.
   - Pinecone index setup and upsert helpers.
   - S3 and Redis utilities.
 

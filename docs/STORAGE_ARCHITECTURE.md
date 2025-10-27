@@ -8,7 +8,7 @@
 
 We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage model that balances durability, recall quality, and latency by combining a durable relational store, object storage, Pinecone for vector search, and Redis for operational caching. This redesign aligns the Lightfast platform with 2024–2025 best practices published by Pinecone, Cohere, and Chroma, as well as recent academic work on hybrid retrieval and continual evaluation. Terminology: the chunked retrieval layer is the Knowledge Store; the relationships-first layer is the Memory Graph. The key shifts are:
 
-- **Durable source of truth:** PlanetScale/Postgres (plus S3 for large artifacts) now stores canonical knowledge documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
+- **Durable source of truth:** PlanetScale (MySQL) via Drizzle (plus S3 for large artifacts) now stores canonical knowledge documents, chunk metadata, and lineage so we can replay ingestion, audit changes, and meet compliance.
 - **Chunk-level indexing:** Ingestion splits every knowledge document into 200–400-token chunks with semantic overlap, stores chunk descriptors relationally, and indexes them in Pinecone with lean metadata (<1 KB) for fast, filterable retrieval.
 - **Hybrid retrieval path:** Queries run through a lexical pre-filter, Pinecone dense search, and lightweight reranking, giving high recall with configurable latency budgets.
 - **Observability + evaluation:** Retrieval logs, embedding versions, feedback scores, and drift monitors persist in the durable store and feed dashboards and automated eval jobs (see `docs/EVALUATION_PLAYBOOK.md`).
@@ -71,7 +71,7 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 ## Component Responsibilities
 
-### PlanetScale / Postgres (Primary Store)
+### PlanetScale (MySQL) via Drizzle (Primary Store)
 
 - Tables: `knowledge_documents`, `knowledge_chunks`, `relationships`, `retrieval_logs`, `feedback_events`, `embedding_versions`.
 - Stores canonical JSON payloads (normalized by source), chunk descriptors, relationship graphs, and lineage (ingestion job IDs).
@@ -95,7 +95,7 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 
 - Holds hot documents and chunk bundles for low-latency detail fetches (TTL-based).
 - Maintains ingestion deduplication keys (`document:source:{source_id}`) and work queues.
-- Stores short-lived relationship adjacency lists for quick navigation; authoritative graph persists in Postgres.
+- Stores short-lived relationship adjacency lists for quick navigation; authoritative graph persists in PlanetScale.
 
 ### Observability Stack
 
@@ -137,7 +137,7 @@ Large blobs (diffs, message history) live in object storage, referenced via `raw
    - Detect references (regex + link resolvers) and update `relationships`; push adjacency hints into Redis for quick lookups.
 7. **Post-Processing:** Emit evaluation tasks when chunk count crosses thresholds or embedding versions change.
 
-Retries use the `content_hash` to avoid duplicate rows. Pinecone updates occur after Postgres commits to guarantee durability before indexing.
+Retries use the `content_hash` to avoid duplicate rows. Pinecone updates occur only after the Drizzle transaction commits on PlanetScale to guarantee durability before indexing.
 
 ---
 
@@ -176,7 +176,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 
   tracing.recordLatencySplit();
 
-  // Stage 4: Hydrate chunks from Redis or Postgres
+  // Stage 4: Hydrate chunks from Redis or PlanetScale (via Drizzle)
   return await hydrateChunks(reranked, query.includeMetadata);
 }
 ```
@@ -219,8 +219,8 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 | Component | Scaling Knobs | Notes |
 |-----------|---------------|-------|
 | Pinecone | Namespace per workspace, collection per embedding version | Serverless pool scales automatically; monitor metadata size (<1 KB) |
-| PlanetScale | Sharding by workspace, connection pooling via Prisma | Storage ~10 GB per 200k chunks (compressed); use row pruning for inactive workspaces |
-| Redis | Multi-tier (cache + job queues) | Evict cold caches; rely on Postgres for rehyration |
+| PlanetScale | Sharding by workspace, Drizzle + serverless driver | Storage ~10 GB per 200k chunks (compressed); use row pruning for inactive workspaces |
+| Redis | Multi-tier (cache + job queues) | Evict cold caches; rely on PlanetScale for rehydration |
 | S3 | Lifecycle rules to Glacier for >180-day artifacts | Set budgets per workspace |
 
 Expected monthly cost for 100k knowledge documents (≈400k chunks): Pinecone $70, PlanetScale $60, Redis $25, S3 $15, totaling ~$170 with robust durability and observability.
@@ -229,7 +229,7 @@ Expected monthly cost for 100k knowledge documents (≈400k chunks): Pinecone $7
 
 ## Build Blueprint
 
-1. **Create PlanetScale schema:** `knowledge_documents`, `knowledge_chunks`, and graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`).
+1. **Create Drizzle schema (PlanetScale MySQL):** `knowledge_documents`, `knowledge_chunks`, and graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`).
 2. **Implement ingestion:** Normalize → persist documents + chunks → embed + upsert vectors.
 3. **Enable retrieval:** Hybrid pipeline with optional rerank and caching.
 4. **Wire evaluation:** Retrieval logs, feedback events, and dashboards.

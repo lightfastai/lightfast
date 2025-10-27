@@ -63,7 +63,7 @@ interface ProcessedQuery {
 ```
 
 Rules:
-- If the query is a short identifier (`#123`, `LINEAR-ABC-12`, `notion:xyz`), switch to `identifier` mode → direct SQL lookup, no embedding.
+- If the query is a short identifier (`#123`, `LINEAR-ABC-12`, `notion:xyz`), switch to `identifier` mode → direct lookup in PlanetScale via Drizzle, no embedding.
 - Otherwise generate embeddings with the current workspace-specific model (Voyage large or Cohere embed-v3) and optionally produce sparse vectors.
 - Always set Cohere `inputType` correctly: `search_query` for queries, `search_document` for chunks.
 - Parse and remove syntax tokens before sending to the embedder.

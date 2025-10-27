@@ -8,7 +8,7 @@ The Knowledge Store is Lightfast’s retrieval layer: normalized source artifact
 
 ## Executive Summary
 
-- Source of truth: PlanetScale rows for documents and chunk descriptors; large raw artifacts live in S3.
+- Source of truth: PlanetScale (MySQL) via Drizzle for documents and chunk descriptors; large raw artifacts live in S3.
 - Indexing: 200–400 token chunking with overlap; embeddings in Pinecone with lean metadata; optional sparse vectors.
 - Retrieval: lexical prefilter + dense search + optional rerank; hydrate from Redis/PlanetScale.
 - Versioning: deterministic `content_hash` and immutable versions; chunk supersession on change.
@@ -28,55 +28,31 @@ This document defines the Knowledge Store schema and retrieval interplay.
 
 ## Canonical Document Record
 
+In tRPC-based apps, infer types from your router outputs rather than defining ad-hoc interfaces:
+
 ```typescript
-interface KnowledgeDocument {
-  id: string;
-  organizationId: string;
-  workspaceId: string;
-  source: 'github' | 'linear' | 'notion' | 'slack' | 'discord' | 'manual';
-  sourceId: string;
-  type: 'pull_request' | 'issue' | 'message' | 'doc_page' | 'ticket' | 'custom';
-  title: string;
-  summary: string | null;
-  state: string | null;
-  rawPointer: string | null;     // S3 key
-  contentHash: string;           // deterministic hash of normalized payload
-  metadataJson: JsonValue;       // labels, numbers, fields
-  author: { id: string; displayName: string; avatarUrl?: string; handle?: string };
-  occurredAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  version: number;
-  lineage: { sourceEventId: string; ingestedAt: Date; previousVersionId: string | null };
-}
+import type { CloudRouterOutputs } from '@api/cloud';
+
+// Example: adjust the path to your actual route name
+type KnowledgeDocument = CloudRouterOutputs['knowledge']['getDocumentById'];
 ```
 
-Stored in `knowledge_documents` (PlanetScale table).
+Stored in `knowledge_documents` (PlanetScale MySQL via Drizzle).
 
 ---
 
 ## Chunk Model
 
+In tRPC-based apps, infer chunk types from router outputs:
+
 ```typescript
-interface KnowledgeChunk {
-  id: string;
-  documentId: string;            // FK → knowledge_documents.id
-  workspaceId: string;
-  chunkIndex: number;            // 0-based
-  text: string;                  // 200–400 tokens, 10–15% overlap
-  tokenCount: number;
-  sectionLabel?: string;
-  embeddingModel: string;
-  embeddingVersion: string;
-  chunkHash: string;             // idempotent updates
-  keywords: string[];
-  sparseVector?: { indices: number[]; values: number[] };
-  createdAt: Date;
-  supersededAt: Date | null;
-}
+import type { CloudRouterOutputs } from '@api/cloud';
+
+// Example: listChunks returns an array; pick an element type
+type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
 ```
 
-Stored in `knowledge_chunks` (PlanetScale table).
+Stored in `knowledge_chunks` (PlanetScale MySQL via Drizzle).
 
 ---
 
