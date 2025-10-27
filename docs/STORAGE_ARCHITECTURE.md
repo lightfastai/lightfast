@@ -86,8 +86,9 @@ We are adopting a production-grade Retrieval-Augmented Generation (RAG) storage 
 ### Pinecone (Vector + Sparse Index)
 
 - Stores chunk embeddings (dense) and optional sparse vectors (BM25/SPLADE tokens) per chunk.
+- Serverless is default for cost/ops efficiency; move specific workspaces to pod-based indexes when hybrid dense+sparse scoring or selective metadata indexing is required.
 - Metadata budget <1 KB per vector: workspace ID, memory ID, chunk index, chunk hash, source, type, created/updated timestamps, access labels, retrieval score hints.
-- Namespaces per workspace enforce tenant isolation; collections segmented by embedding model version enable phased migrations.
+- Namespaces per workspace enforce tenant isolation; collections segmented by embedding model version enable phased migrations; selective indexing keeps only filterable keys (`workspace_id`, `entity_type`, `source`, `created_at`, `author_id`) indexed when pods are used.
 
 ### Redis (Operational Cache)
 
@@ -127,8 +128,9 @@ Large blobs (diffs, message history) live in object storage, referenced via `raw
    - Replace associated `memory_chunks` within a transaction; mark old chunks as superseded but keep historical copies for replay.
    - Store attachments/raw transcripts in S3 and update `raw_pointer` references.
 5. **Embedding:**
-   - Batch embed chunks via Voyage/Cohere; record `embedding_version` and provider.
-   - Upsert vectors into Pinecone collection matching workspace and embedding version.
+   - Batch embed chunks via Voyage/Cohere with `inputType='search_document'`; record `embedding_version`, provider, dimension, and compression flags (float32 vs int8).
+   - For large backfills, submit Cohere Embed Jobs and stream results into the namespace.
+   - Upsert vectors into Pinecone collection matching workspace and embedding version (768-dimension default, Matryoshka-compatible for downsampling).
 6. **Cache & Graph:**
    - Populate Redis with hot memory/chunk bundles (configurable TTL, default 3 days).
    - Detect references (regex + link resolvers) and update `memory_relationships`; push adjacency hints into Redis for quick lookups.
@@ -159,7 +161,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
     vector: embedding.values,
     sparseValues: embedding.sparse,
     filter: buildMetadataFilter(query.filters),
-    topK: VECTOR_TOP_K,
+    topK: VECTOR_TOP_K ?? 50,
     includeMetadata: true,
   });
 
@@ -168,7 +170,7 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 
   // Stage 3: Lightweight rerank (optional, 30ms budget)
   const reranked = shouldRerank(query)
-    ? await cohereRerank(rerankInput(merged, query.text))
+    ? await cohereRerank(rerankInput(merged, query.text), { topN: 5, model: 'rerank-v3.5' })
     : merged;
 
   tracing.recordLatencySplit();
@@ -184,8 +186,10 @@ async function retrieve(query: RetrievalQuery): Promise<RankedChunks> {
 
 ## Embedding Refresh & Versioning
 
-- Maintain `embedding_versions` table capturing model name, provider, dimensionality, cost, latency, and rollout status.
+- Maintain `embedding_versions` table capturing model name, provider, dimensionality (default 768), compression (`float32`, `int8`, `binary`), cost, latency, and rollout status.
+- Support Matryoshka-compatible embeddings so we can truncate to 256/512 dimensions for candidate generation while retaining 768-dimension vectors for reranking.
 - A nightly job compares `memories.updated_at` with `memory_chunks.embedding_version`; stale chunks enqueue for re-embedding.
+- Cohere Embed Jobs handle bulk refreshes; streaming workers update Pinecone namespaces and append version metadata.
 - Canary workspaces migrate first; Pinecone namespaces per version allow phased rollover. Completed migrations archive obsolete namespaces after 30 days.
 - Drift monitors compute similarity deltas between old/new embeddings and alert when thresholds exceed configured bounds.
 

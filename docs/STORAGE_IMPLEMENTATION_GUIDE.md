@@ -92,6 +92,45 @@ RLS (via Prisma middleware or custom API layer) enforces workspace scoping.
 
 ---
 
+## Pinecone Index Configuration
+
+Create a serverless index per environment with 768 dimensions (balances recall and storage cost) and dot-product similarity to support hybrid scoring. Keep metadata under 5KB and explicitly declare indexed fields once pod-based options are enabled.
+
+```typescript
+import { Pinecone } from '@pinecone-database/pinecone';
+
+const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+
+await pinecone.createIndex({
+  name: `lightfast-chunks-${process.env.NODE_ENV}`,
+  dimension: 768,
+  metric: 'dotproduct',
+  spec: {
+    serverless: {
+      cloud: 'aws',
+      region: 'us-east-1',
+    },
+  },
+});
+```
+
+When migrating to pod-based hybrid search, enable selective metadata indexing so only frequently-used filters incur index overhead:
+
+```typescript
+await pinecone.configureIndex({
+  name: 'lightfast-chunks-prod',
+  spec: {
+    pod: {
+      metadata_config: {
+        indexed: ['workspace_id', 'entity_type', 'source', 'created_at', 'author_id'],
+      },
+    },
+  },
+});
+```
+
+---
+
 ## Persistence Helpers
 
 ```typescript
@@ -163,7 +202,11 @@ import { Pinecone } from '@pinecone-database/pinecone';
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
-export async function upsertChunkVector(chunk: MemoryChunkRecord, embedding: number[]) {
+export async function upsertChunkVector(
+  chunk: MemoryChunkRecord,
+  embedding: number[],
+  opts: { source: string }
+) {
   const namespace = `${chunk.workspaceId}-${chunk.embeddingVersion}`;
 
   await pinecone.index('lightfast-chunks').namespace(namespace).upsert([{
@@ -176,12 +219,53 @@ export async function upsertChunkVector(chunk: MemoryChunkRecord, embedding: num
       chunkHash: chunk.chunkHash,
       type: chunk.sectionLabel ?? null,
       createdAt: chunk.createdAt.toISOString(),
+      source: opts.source,
     },
   }]);
 }
 ```
 
 To remove superseded chunks, call `deleteMany` using the chunk IDs returned from `replaceChunks` when chunks are replaced.
+
+---
+
+## Cohere Embedding Helpers
+
+```typescript
+import { cohere } from '@/lib/cohere';
+
+export async function embedChunks(texts: string[], model: string) {
+  return cohere.embed({
+    texts,
+    model,
+    inputType: 'search_document',
+  });
+}
+
+export async function embedQuery(text: string, model: string) {
+  const { embeddings } = await cohere.embed({
+    texts: [text],
+    model,
+    inputType: 'search_query',
+  });
+  return embeddings[0];
+}
+```
+
+For >100k chunk backfills, use Embed Jobs so Cohere handles batching and validation:
+
+```typescript
+const job = await cohere.embedJobs.create({
+  datasetId,
+  model: 'embed-english-v3.0',
+  inputType: 'search_document',
+});
+
+await pollUntilComplete(job.id);
+const chunks = await cohere.embedJobs.getResults(job.id);
+```
+
+Track `embedding_version` whenever the model, dimension (Matryoshka truncation), or compression (`float32`, `int8`, `binary`) changes.
 
 ---
 
@@ -254,9 +338,10 @@ Braintrust callbacks write evaluation metrics into `feedback_events` for observa
 1. Normalize source payload → `MemoryRecordInput` + `ChunkDraft[]`.
 2. Persist via transaction (memories + chunks + artifact uploads).
 3. Prime Redis caches (best-effort).
-4. Enqueue embedding jobs and wait for Pinecone upserts.
+4. Enqueue embedding jobs with correct `inputType` values (`search_document` for chunks) and wait for Pinecone upserts.
 5. Run relationship detection and update graph tables.
 6. Trigger Braintrust evaluation and log ingestion metrics.
+7. Periodically export representative rerank samples to recalibrate Cohere relevance thresholds.
 
 ---
 

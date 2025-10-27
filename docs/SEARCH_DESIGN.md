@@ -12,7 +12,7 @@ User Query → Query Processor → Hybrid Retrieval → Rerank (conditional) →
 
 1. **Query processor** parses syntax (`#123`, `type:issue`, `from:github`), builds lexical + vector intents, and selects embedding model.
 2. **Hybrid retrieval** executes lexical search (Postgres full-text or Meilisearch) and Pinecone dense+sparse search over chunks.
-3. **Rerank** uses Cohere Rerank or in-house cross-encoder when semantic mode is enabled and candidate count exceeds threshold.
+3. **Rerank** uses Cohere Rerank (`rerank-v3.5` primary, `rerank-3-nimble` fallback) when semantic mode is enabled and candidate count exceeds threshold.
 4. **Hydration** fetches chunk + memory details from Redis (fallback to PlanetScale) and prepares highlights/snippets.
 
 ---
@@ -49,8 +49,27 @@ interface ProcessedQuery {
 
 Rules:
 - If the query is a short identifier (`#123`, `LINEAR-ABC-12`, `notion:xyz`), switch to `identifier` mode → direct SQL lookup, no embedding.
-- Otherwise generate embeddings with the current workspace-specific model (Voyage large or fallback) and optionally produce sparse vectors.
+- Otherwise generate embeddings with the current workspace-specific model (Voyage large or Cohere embed-v3) and optionally produce sparse vectors.
+- Always set Cohere `inputType` correctly: `search_query` for queries, `search_document` for chunks.
 - Parse and remove syntax tokens before sending to the embedder.
+
+```typescript
+export async function embedQuery(text: string, model: string) {
+  return cohere.embed({
+    texts: [text],
+    model,
+    inputType: 'search_query',
+  });
+}
+
+export async function embedChunk(text: string, model: string) {
+  return cohere.embed({
+    texts: [text],
+    model,
+    inputType: 'search_document',
+  });
+}
+```
 
 ---
 
@@ -87,7 +106,7 @@ async function vectorSearch(request: EmbeddingRequest): Promise<VectorCandidate[
     vector: request.values,
     sparseVector: request.sparse,
     filter: request.metadataFilter,
-    topK: request.topK,
+    topK: request.topK ?? 50, // default to 50 for Cohere rerank stage
     includeMetadata: true,
   });
 }
@@ -119,7 +138,7 @@ function fuseCandidates(lexical: LexicalCandidate[], vector: VectorCandidate[]):
 }
 ```
 
-If `rerank === true` and candidate count > `RERANK_MIN_K`, call Cohere Rerank with top N chunk texts (cached). We skip reranking for identifier queries and short responses to maintain latency.
+If `rerank === true` and candidate count > `RERANK_MIN_K` (default 20), call Cohere Rerank with the top 50 fused candidates and request `topN = 5` for UI display or `topN = 10` when composing LLM prompts. Stick to `rerank-v3.5` for multilingual coverage and fall back to `rerank-3-nimble` when the latency budget is tight. Maintain a per-workspace relevance threshold calibrated via Braintrust regression suites (sample 30–50 borderline query/document pairs and average their scores) to drop low-score results.
 
 ---
 
@@ -183,8 +202,8 @@ Latency metrics feed `retrieval_logs` for dashboards and SLO monitoring.
 
 ## Monitoring & Offline Evaluation
 
-- Log every query to `retrieval_logs` (query text, filters, candidate IDs, latencies, rerank flag).
-- Braintrust suites run weekly/regression triggers to evaluate recall@k, hit rate of known answers, and snippet quality.
+- Log every query to `retrieval_logs` (query text, filters, candidate IDs, latencies, rerank flag, rerank threshold used).
+- Braintrust suites run weekly/regression triggers to evaluate recall@k, hit rate of known answers, rerank score calibration, and snippet quality.
 - Drift detection compares score distributions and embedding similarity between model versions; alerts when deltas exceed thresholds.
 
 ---
