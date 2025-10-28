@@ -1,18 +1,18 @@
-# Evaluation Playbook (Braintrust)
+# Evaluation Playbook (Neural Memory)
 
-**Last Updated:** 2025-02-10
+Last Updated: 2025-10-28
 
-This playbook documents how Lightfast uses Braintrust to evaluate retrieval and response quality. It complements the storage and search design docs, providing the operational details for suites, metrics, calibration, and incident handling.
+This playbook describes how we evaluate retrieval and response quality across Knowledge (chunks) and Neural Memory (observations/summaries), with graph influence tracked explicitly. We use Braintrust for suites and dashboards.
 
-Terminology: evaluate both Knowledge (chunked retrieval) and Memory (graph) modes. Retrieval logs include `retrieval_mode: 'knowledge' | 'graph' | 'hybrid'` to segment metrics.
+Retrieval logs segment by `routerMode: 'knowledge' | 'neural' | 'hybrid'` and include graph influence flags.
 
 ---
 
 ## Goals
 
-1. Guarantee recall and precision stay within targets as data and models evolve.
-2. Detect regressions quickly, with clear alerting and triage paths.
-3. Provide engineers with a repeatable workflow for adding new suites, updating thresholds, and interpreting results.
+1. Maintain recall/precision targets while data/models evolve.
+2. Detect regressions quickly with clear triage and playbooks.
+3. Calibrate weights per workspace (fusion, rerank thresholds) using feedback.
 
 ---
 
@@ -20,12 +20,12 @@ Terminology: evaluate both Knowledge (chunked retrieval) and Memory (graph) mode
 
 | Suite | Trigger | Purpose | Sample Size | Latency Target |
 |-------|---------|---------|-------------|----------------|
-| **Smoke** | Manual / CI | Validate pipeline after deploys | 5–10 queries per source | <5 min total |
-| **Regression** | `knowledge.persisted` event (post-ingest) | Catch retrieval drift per workspace | 25 canonical queries | <10 min per workspace |
-| **Weekly Benchmark** | Cron (Sunday 02:00 UTC) | Track long-term trends | 100 mixed queries | <60 min |
-| **Source-specific** | Manual / schedule | Deep dive for GitHub, Slack, Notion, Linear | 15 per source | <10 min |
-| **Graph QA (Ownership/Deps/Alignment)** | Weekly / on change | Validate Memory Graph answers | 20 graph queries | <10 min |
-| **Rerank Calibration** | Quarterly or on rerank model changes | Recompute Cohere relevance threshold | 30 borderline pairs | <30 min |
+| Smoke | Manual / CI | Validate pipeline after deploys | 5–10 queries per source | <5 min total |
+| Regression | post-ingest (knowledge.persisted) | Catch retrieval drift per workspace | 25 canonical queries | <10 min/workspace |
+| Weekly Benchmark | Cron | Track long-term trends | 100 mixed queries | <60 min |
+| Source-specific | Manual / schedule | Deep dive per source | 15 per source | <10 min |
+| Graph QA (Ownership/Deps/Alignment) | Weekly / on change | Validate graph bias & rationale | 20 graph queries | <10 min |
+| Rerank Calibration | Quarterly or on changes | Recompute relevance thresholds | 30 borderline pairs | <30 min |
 
 All suites run against the production retrieval API to ensure realistic telemetry. Regression suites can be scoped to a workspace to respect data isolation.
 
@@ -34,30 +34,30 @@ All suites run against the production retrieval API to ensure realistic telemetr
 ## Test Construction
 
 ### Canonical Queries
-- Collect user-facing questions per workspace (support requests, search analytics, Braintrust feedback).
-- Normalize to remove PII and anonymize thread IDs.
-- Store in `braintrust_queries` table with metadata: source, difficulty, expected snippets.
+- Collect representative questions per workspace; strip PII.
+- Store in `braintrust_queries` with source, difficulty, expected evidence.
 
 ### Borderline Examples
-- For each rerank calibration run, sample queries where human reviewers marked a result as “barely relevant.”
-- Capture the borderline document’s chunk text (via PlanetScale) so we can compute Cohere scores offline.
-- Keep 30–50 pairs per workspace; refresh every quarter or when domain shifts (new product area).
+- Sample borderline query/evidence pairs for rerank calibration.
+- Keep 30–50 pairs per workspace; refresh quarterly or on domain shifts.
 
 ### Answer Keys
-- For regression and benchmark suites, annotate expected top results (memory IDs) and acceptable alternatives.
-- Use the Braintrust comparison feature to flag missing results, wrong snippets, or hallucinated content.
+- Annotate expected evidence (chunkIds/observationIds) and acceptable alternatives.
+- Flag missing evidence, wrong snippets, or hallucinations.
 
 ---
 
 ## Metrics & Thresholds
 
-| Metric | Definition | Target | Alert Threshold |
-|--------|------------|--------|-----------------|
-| `recall@5` | % of suites where canonical answer appears in top 5 | ≥95% | <92% (page) |
-| `recall@10` | % top 10 coverage | ≥98% | <96% |
-| Rerank relevance score | Mean Cohere score for borderline docs | Workspace-specific | −0.05 drop vs. baseline |
-| Latency split | p95 for dense, rerank, hydration | ≤150 ms total | >170 ms |
-| Snippet accuracy | % highlighting correct span | ≥90% | <85% |
+| Metric | Definition | Target | Alert |
+|--------|------------|--------|-------|
+| recall@5 | % of suites where canonical evidence in top 5 | ≥95% | <92% |
+| recall@10 | % in top 10 | ≥98% | <96% |
+| rerank score | Mean score for borderline pairs | workspace-calibrated | −0.05 vs. baseline |
+| latency split | p95 for dense/rerank/hydration | ≤150 ms total | >170 ms |
+| snippet accuracy | % highlighting correct span | ≥90% | <85% |
+| rationale faithfulness | % where rationale matches evidence | ≥95% | <92% |
+| contribution shares | % results by chunks vs observations | tracked | drift alert on spikes |
 
 Segment all metrics by `retrieval_mode` to spot regressions that affect only graph-biased or graph-first queries.
 
@@ -68,10 +68,10 @@ Threshold breaches trigger PagerDuty via Grafana alerts (metrics sourced from `f
 ## Calibration Workflow
 
 1. **Collect pairs:** Pull 30–50 borderline query/document pairs from Braintrust feedback or manual review.
-2. **Score:** Run Cohere Rerank (`rerank-v3.5`) offline and store scores in `rerank_thresholds` table.
+2. **Score:** Run cross-encoder rerank offline and store scores in `rerank_thresholds`.
 3. **Compute threshold:** Average scores; set `threshold = mean - 1σ` to provide buffer against noise.
 4. **Deploy:** Update configuration (`rerank.threshold`) per workspace. Include threshold in `retrieval_logs` for audit.
-5. **Verify:** Run the rerank calibration suite; ensure low-score results are filtered and recall remains above 95%.
+5. **Verify:** Run the suite; ensure low-score results are filtered and recall ≥95%.
 
 Repeat this workflow whenever:
 - Rerank model or parameters change.
@@ -83,10 +83,10 @@ Repeat this workflow whenever:
 ## Alert Triage & Incident Response
 
 1. **Triage:** On alert, review Braintrust dashboard and failing cases. Classify the regression:
-   - Embedding drift (new content missing, low similarity).
-   - Rerank threshold too aggressive (many borderline items filtered).
-   - Pipeline bug (chunks missing, metadata wrong).
-   - Infrastructure (Pinecone latency, Redis miss).
+   - Embedding drift (missing content, low similarity)
+   - Rerank threshold too aggressive
+   - Pipeline bug (missing observations/chunks, bad metadata)
+   - Infrastructure (Pinecone latency, Redis miss)
 
 2. **Mitigation Playbooks:**
    - **Embedding drift:** Trigger re-embed job (via Cohere Embed Jobs) for affected workspaces; validate metrics post-refresh.
@@ -94,7 +94,7 @@ Repeat this workflow whenever:
    - **Pipeline bug:** Roll back recent changes or hotfix; rerun smoke suite.
    - **Infra:** Follow incident runbooks (Pinecone backup namespace, Redis failover, etc.).
 
-3. **Resolution:** Post summary in `#lightfast-alerts` with root cause, fix, and follow-up tasks. Update this playbook if new failure mode discovered.
+3. **Resolution:** Post summary with root cause, fix, and follow-ups. Update this playbook if a new failure mode appears.
 
 ---
 
@@ -104,20 +104,20 @@ Repeat this workflow whenever:
 2. Create suite in Braintrust (`braintrust suites create …`), linking to the retrieval API endpoint.
 3. Add suite metadata to `braintrust_suites.yaml` (workspace, triggers, owners).
 4. Update Grafana dashboard and PagerDuty routing if thresholds differ.
-5. Run smoke tests locally (`pnpm braintrust run <suite>`). Confirm results in dashboard before enabling automation.
+5. Run smoke tests locally; confirm results before enabling automation.
 
 ---
 
 ## References
 
-- `docs/STORAGE_ARCHITECTURE.md` (Observability section)
-- `docs/SEARCH_DESIGN.md` (Rerank calibration notes)
-- `docs/SYNC_DESIGN.md` (Braintrust hooks in pipeline)
-- Braintrust documentation: https://www.braintrustdata.com/docs
-- Cohere rerank best practices: `docs/rag-best-practices/COHERE_BEST_PRACTICES.md`
+- docs/STORAGE_ARCHITECTURE.md
+- docs/SEARCH_DESIGN.md
+- docs/SYNC_DESIGN.md
+- Braintrust docs
+- Cohere rerank best practices: docs/rag-best-practices/COHERE_BEST_PRACTICES.md
 
 ---
 
-_Owners:_ Infra + ML Platform team  
-_Point of Contact:_ @storage-ops  
-_Review Cadence:_ Quarterly or after major retrieval changes
+Owners: Infra + ML Platform  
+Point of Contact: @storage-ops  
+Review Cadence: Quarterly or after major retrieval changes
