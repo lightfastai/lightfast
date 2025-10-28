@@ -1,74 +1,86 @@
 # Storage Architecture Visual Summary
 
-## Target Architecture
+Last Updated: 2025-10-28
+
+## Target Architecture (Neural Memory)
 
 ```
-                                ┌───────────────────────────────┐
-                                │        Source Systems         │
-                                │ GitHub ▪ Linear ▪ Slack ▪ ... │
-                                └──────────────┬────────────────┘
-                                               │
-                                       Ingestion Orchestrator
-                                         (Inngest + Workers)
-                                               │
-                               ┌───────────────┴────────────────┐
-                               │                                │
-                         Normalized Knowledge Doc        Attachments & Diffs
-                               │                                │
-                               ▼                                ▼
-                     ┌──────────────────┐              ┌──────────────────┐
-                     │ PlanetScale      │              │ Object Storage   │
-                     │ (MySQL)          │              │ (S3 / GCS)       │
-                     │ knowledge_*      │◄──raw_pointer│ Versioned Blobs  │
-                     └─────────┬────────┘              └────────┬─────────┘
-                               │                                 │
-                               │                                 │
-                      ┌────────▼──────────┐          ┌──────────▼──────────┐
-                      │ Document Chunking │          │  Embedding Pipeline │
-                      │ (200–400 tokens)  │──────────►  Voyage / Cohere    │
-                      │ Adaptive overlap  │          │  Embedding Versions │
-                      └────────┬──────────┘          └──────────┬──────────┘
-                               │                                 │
-                      ┌────────▼──────────┐          ┌──────────▼──────────┐
-                      │ Redis (Cache &    │  cache   │ Pinecone Collection │
-                      │ Job State)        │──────────► Dense + Sparse Vecs │
-                      │ Hot chunks ▪ TTL  │          │ <1 KB metadata      │
-                      └────────┬──────────┘          └──────┬──────────────┘
-                               │                           │
-                     ┌─────────▼──────────────┐            │
-                     │ Retrieval Service      │◄───────────┘
-                     │ Hybrid search pipeline │
-                     └─────────┬──────────────┘
-                               │
-                     ┌─────────▼──────────────┐
-                     │ Lightfast APIs & UI    │
-                     │ Responses & Analytics  │
-                     └────────────────────────┘
+                               ┌───────────────────────────────┐
+                               │        Source Systems         │
+                               │ GitHub ▪ Linear ▪ Slack ▪ ... │
+                               └──────────────┬────────────────┘
+                                              │
+                                      Ingestion Orchestrator
+                                        (Inngest + Workers)
+                                              │
+                         ┌────────────────────┴────────────────────┐
+                         │                                         │
+                 Normalized Doc + Chunks                Observation Drafts
+                         │                                         │
+                         ▼                                         ▼
+                ┌──────────────────┐                        ┌──────────────────┐
+                │ PlanetScale      │                        │ PlanetScale      │
+                │ knowledge_*      │                        │ memory_observations│
+                └────────┬─────────┘                        └────────┬─────────┘
+                         │                                          │
+                         │                                          │
+                ┌────────▼──────────┐                      ┌─────────▼──────────┐
+                │ Object Storage    │                      │ Consolidation Jobs │
+                │ (S3 raw bodies)   │                      │ summaries ▪ profiles│
+                └────────┬──────────┘                      └─────────┬──────────┘
+                         │                                          │
+                ┌────────▼──────────┐                      ┌─────────▼──────────┐
+                │ Embedding Pipeline│                      │ Embedding Pipeline │
+                │ (Cohere, versions)│                      │   (multi‑view)     │
+                └────────┬──────────┘                      └─────────┬──────────┘
+                         │                                          │
+                ┌────────▼──────────┐                      ┌─────────▼──────────┐
+                │ Pinecone: chunks  │                      │ Pinecone: obs/sum/ │
+                │ namespace per ws  │                      │ profiles namespaces │
+                └────────┬──────────┘                      └─────────┬──────────┘
+                         │                                          │
+                ┌────────▼──────────┐                      ┌─────────▼──────────┐
+                │ Redis Caches      │◄───────┐     ┌──────►│ Redis Caches      │
+                │ docs/chunks (TTL) │        │     │       │ obs/sum profiles  │
+                └────────┬──────────┘        │     │       └─────────┬──────────┘
+                         │                   │     │                 │
+                         │                   │     │                 │
+                ┌────────▼───────────────────▼─────▼─────────────────▼──────────┐
+                │                   Retrieval Router (Service)                   │
+                │   knowledge | neural | hybrid • graph bias (1–2 hops)         │
+                │   fusion + rerank • rationale • hydration • logging            │
+                └────────┬──────────────────────────────────────────────────────┘
+                         │
+                ┌────────▼──────────────────────────────────────────────────────┐
+                │           Lightfast Public API + MCP (4 routes/tools)         │
+                │   POST /v1/search • /contents • /similar • /answer (SSE opt)  │
+                └───────────────────────────────────────────────────────────────┘
+```
+
+Graph signals (entities/relationships) live in PlanetScale with Redis adjacency caches; retrieval applies bounded bias and returns rationale.
+
+---
+
+## Ingestion & Consolidation
+
+```
+┌─────────────┐  ┌──────────────┐  ┌────────────────┐  ┌─────────────────┐  ┌────────────────────┐
+│ Source Event│►│ Normalize     │►│ Doc/Chunk Build │►│ Drizzle Txn     │►│ Embed & Index      │
+│ (webhook)   │  │ + Observations│  │ (200–400 tokens)│  │ (doc/chunk/obs) │  │ (chunks/observations)│
+└─────────────┘  └──────┬───────┘  └────────┬───────┘  └────────┬────────┘  └──────────┬───────────┘
+                        │                   │                   │                      │
+                        ▼                   ▼                   ▼                      ▼
+                  Dedupe Cache         S3 Upload           Persisted Rows         Pinecone Upsert
+                  (Redis TTL)          (raw bodies)        (versioned)            (per‑ws namespace)
+
+Nightly / thresholds:
+Observations ► Cluster ► Summaries ► Embed/Index
+Entities ► Rebuild Profiles (centroids) ► Update drift
 ```
 
 ---
 
-## Ingestion Flow
-
-```
-┌─────────────┐   ┌──────────────┐   ┌────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│ Source Event│──►│ Normalize +  │──►│ Chunk Builder   │──►│ Drizzle Txn     │──►│ Embedding Queue │
-│ (webhook)   │   │ Hash Content  │   │ 300±50 tokens   │   │ upsert knowledge│   │ batch → Voyage  │
-└─────────────┘   └──────┬───────┘   └────────┬───────┘   │ chunks          │   └────────┬────────┘
-                         │                    │           └──────┬────────┘            │
-                         │                    │                  │                     │
-                         ▼                    ▼                  ▼                     ▼
-                   Dedup Cache         S3 Upload (raw)       Chunk Records       Pinecone Upsert
-                   (Redis TTL)         (versioned)           (embed_version)     (namespace/tenant)
-```
-
-- Transactions ensure `knowledge_documents` + `knowledge_chunks` stay consistent.
-- Pinecone is updated only after the database commit succeeds.
-- Redis caches the newest knowledge document snapshot and chunk bundle for rapid UI fetches.
-
----
-
-## Retrieval Flow (Hybrid)
+## Retrieval & Rationale
 
 ```
 ┌────────────────────┐
@@ -76,32 +88,32 @@
 └──────────┬─────────┘
            │
            ▼
-  ┌────────────────────┐
-  │ Lexical Filter     │  (Postgres full-text / Meilisearch / sparse vectors)
-  └────────┬───────────┘
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Router: knowledge | neural | hybrid                                  │
+  │  - knowledge: lexical + dense over chunks                             │
+  │  - neural: dense over observations (± summaries, profiles)            │
+  │  - hybrid: run both, fuse weights (vector/lexical/graph/recency/…)    │
+  └────────┬─────────────────────────────────────────────────────────────┘
            │
            ▼
-  ┌────────────────────┐
-  │ Dense Retrieval    │  (Pinecone vector query)
-  └────────┬───────────┘
-           │
-           ▼
-  ┌────────────────────┐
-  │ Lightweight Rerank │  (Cohere Rerank / cross-encoder)
-  └────────┬───────────┘
-           │
-           ▼
-  ┌────────────────────┐
-  │ Hydrate Chunks     │  (Redis cache → PlanetScale fallback)
-  └────────┬───────────┘
-           │
-           ▼
-  ┌────────────────────┐
-  │ Compose Response   │  (LLM prompt assembly + guardrails)
-  └────────────────────┘
+  ┌────────────────────┐      Graph Bias (bounded 1–2 hops)      ┌────────────────────┐
+  │ Fusion & Scoring   │◄────────────────────────────────────────►│ Graph Adjacency    │
+  │ + cross‑encoder    │                                          │ (Redis + DB)       │
+  └────────┬───────────┘                                          └────────┬───────────┘
+           │                                                               │
+           ▼                                                               │
+  ┌────────────────────┐                                                   │
+  │ Hydration (Redis → │                                                   │
+  │ PlanetScale)       │                                                   │
+  └────────┬───────────┘                                                   │
+           │                                                               │
+           ▼                                                               │
+  ┌────────────────────┐                                                   │
+  │ Compose Response   │  citations + rationale (entities/edges/evidence)  │
+  └────────────────────┘                                                   │
 ```
 
-Latency budgets: lexical ≤30 ms, dense ≤40 ms, rerank ≤30 ms, hydration ≤20 ms (hot cache) to meet <150 ms p95.
+Targets (p95): identifier <90 ms; semantic <150 ms; contents hydration <120 ms; answer 1.5–2.5 s (model‑dependent).
 
 ---
 
@@ -109,42 +121,43 @@ Latency budgets: lexical ≤30 ms, dense ≤40 ms, rerank ≤30 ms, hydrat
 
 | Layer | Stores | Notes |
 |-------|--------|-------|
-| PlanetScale | Canonical knowledge documents, chunk descriptors, relationships, retrieval logs, feedback | Source of truth; backups + PITR |
-| S3 / GCS | Large raw payloads, diff bundles | Versioned; referenced by `raw_pointer` |
-| Pinecone | Chunk embeddings, minimal metadata, sparse vectors | Namespaces per workspace + embedding version |
-| Redis | Hot chunk cache, dedupe keys, work queues | TTL-based; recoverable via database replay |
-| Observability | Metrics, traces, evaluation scores | Grafana/Prometheus + eval DB tables |
+| PlanetScale | knowledge_*, memory_observations, memory_summaries, memory_profiles, entities, relationships | Source of truth; backups + PITR |
+| S3 / GCS | Raw bodies, diffs, attachments | Versioned; referenced by raw pointers |
+| Pinecone | chunks, observations, summaries, profiles (per‑ws namespaces) | Metadata under ~1 KB |
+| Redis | Hot caches (docs/chunks/obs), dedupe keys, adjacency, queues | TTL; recoverable via DB replay |
+| Observability | retrieval_logs, feedback_events, dashboards | latency splits, contribution shares, drift |
 
 ---
 
-## Evaluation & Governance
+## Mermaid (alternate view)
 
+```mermaid
+flowchart TB
+  subgraph Sources
+    A[GitHub] --- B[Linear] --- C[Slack] --- D[Notion]
+  end
+  A --> E[Ingestion Orchestrator]
+  B --> E
+  C --> E
+  D --> E
+  E --> F[PlanetScale: knowledge_*]
+  E --> G[PlanetScale: memory_observations]
+  F --> H[S3 Raw Bodies]
+  G --> I[Consolidation Jobs]
+  I --> J[PlanetScale: memory_summaries / memory_profiles]
+  F --> K[Embed + Index: Pinecone chunks]
+  G --> L[Embed + Index: Pinecone observations]
+  J --> M[Embed + Index: Pinecone summaries/profiles]
+  subgraph Caches
+    N[Redis: docs/chunks] --- O[Redis: obs/summaries] --- P[Redis: graph adjacency]
+  end
+  K --> Q[Retrieval Router]
+  L --> Q
+  M --> Q
+  P --> Q
+  Q --> R[API v1: search • contents • similar • answer]
 ```
-                         ┌────────────────────────┐
-                         │ Scheduled Benchmarks    │
-                         │ (Braintrust suites)     │
-                         └───────────┬────────────┘
-                                     │ writes
-                                     ▼
-                              ┌──────────────┐
-                              │ feedback_events │
-                              │ (PlanetScale) │
-                              └──────┬───────┘
-                                     │ joins
-                                     ▼
-┌────────────────────────┐   ┌──────────────┐   ┌──────────────────────────┐
-│ Retrieval Logs (query, │◄──┤ retrieval_logs│   │ Grafana Dashboards       │
-│ candidates, latency)   │   └──────────────┘   │ p95, recall@k, drift     │
-└──────────┬─────────────┘                      └──────────────────────────┘
-           │ exports
-           ▼
-   Incident Runbooks + Alerting
-```
-
-- Every response traces back to the chunks that informed it.
-- Drift monitors compare embedding versions and alert on similarity deltas.
-- Audit queries can filter retrieval history by workspace, user, or data classification.
 
 ---
 
-**Outcome:** The combination of a durable relational core, chunk-level indexing, hybrid retrieval, and continuous evaluation delivers resilient, observable, and high-recall RAG capabilities aligned with current industry guidance.
+Every answer cites evidence (chunks/observations) and, when graph influenced, includes a compact rationale of entities and edges.

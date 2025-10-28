@@ -1,19 +1,16 @@
-# Memory Graph Design (Relationships‑First Memory)
+# Graph Rationale & Signals
 
-Last Updated: 2025-10-27
+Last Updated: 2025-10-28
 
-This document defines Lightfast’s graph‑native Memory layer: durable entities, typed relationships, and long‑lived beliefs with provenance. It complements the Knowledge Store and enables explainable, multi‑hop answers to “who/why/depends” questions.
+This document focuses on the explicit structure that augments neural retrieval: entities and relationships that provide explainability and bounded bias. It complements Knowledge (chunks) and Neural Memory (observations/summaries/profiles).
 
 ---
 
 ## Executive Summary
 
-- Durable core remains: PlanetScale (MySQL) via Drizzle + S3; Redis for cache/queues; Pinecone for vectors (hybrid retrieval).
-- Add Memory Graph: entities (people, repos, services, components, projects, customers, goals), typed relationships (AUTHORED_BY, OWNED_BY, DEPENDS_ON, RESOLVES, ALIGNS_WITH_GOAL, etc.), and beliefs (mission, vision, principles, goals) with provenance, confidence, and time.
-- Populate deterministic edges from connectors first; augment with LLM extraction under confidence gating (never overwrite deterministic truth).
-- Expose graph‑aware retrieval: traverse 1–2 hops to seed and boost chunk retrieval; include a short “graph rationale” in answers with links to evidence.
-
-Outcomes: explainable answers, multi‑hop reasoning, and traceable links from purpose → projects → code → customers.
+- Entities (people, teams, repos, services, components, projects, customers, goals) and typed relationships (OWNED_BY, DEPENDS_ON, RESOLVES, ALIGNS_WITH_GOAL, etc.) provide explainability and short-hop traversal.
+- Deterministic edges from connectors come first; LLM-assisted extraction may propose edges with confidence and evidence; never overwrite deterministic truth.
+- Retrieval uses bounded traversal (1–2 hops) for graph bias and returns a concise rationale with evidence links.
 
 ---
 
@@ -43,68 +40,59 @@ Each edge has: `type`, `from`, `to`, `confidence`, `detectedBy` (rule|llm|manual
 - AFFECTS_METRIC: (pr|release|experiment) → metric
 - ALIGNS_WITH_GOAL: (project|ticket|doc|page) → goal
 
-### Beliefs
-- Types: mission, vision, principle, policy, goal, theme
-- Consolidated from authoritative sources; status: active|superseded; revisions tracked with evidence and reasons.
+Beliefs/intent are not a privileged data type; they appear within summaries and descriptors.
 
 ---
 
 ## Storage (sketch)
 
-- Tables: `entities`, `entity_aliases`, `document_entities`, `relationships`, `relationship_evidence`, `beliefs`, `belief_links`.
-- Temporal: edges carry `since`/`until`; beliefs have revisions and status.
-- RLS: all tables workspace‑scoped; provenance and confidence required for writes.
-- See `docs/STORAGE_IMPLEMENTATION_GUIDE.md` for Drizzle schema patterns and caching.
+- Tables: `entities`, `entity_aliases`, `document_entities`, `relationships`, `relationship_evidence`.
+- Temporal: edges carry `since`/`until`.
+- RLS: workspace‑scoped; provenance and confidence required for writes.
 
 ---
 
 ## Ingestion
 
 1) Deterministic (high precision)
-- GitHub: AUTHORED_BY, RESOLVES (linked issues), IMPLEMENTS (Linear smart links), TOUCHES_COMPONENT (paths → component map), OWNED_BY (CODEOWNERS).
-- Linear: BLOCKED_BY/RELATES_TO/DUPLICATES, PART_OF (Project), ASSIGNED_TO (Person).
-- Notion: AUTHOR (Page → Person), ALIGNS_WITH_GOAL (tags/db), draft beliefs from mission/vision/principle pages.
+- GitHub: AUTHORED_BY, RESOLVES, IMPLEMENTS (smart links), TOUCHES_COMPONENT, OWNED_BY (CODEOWNERS).
+- Linear: BLOCKED_BY/RELATES_TO/DUPLICATES, PART_OF, ASSIGNED_TO.
+- Notion: AUTHOR (Page → Person), ALIGNS_WITH_GOAL (db/tags).
 
 2) LLM‑assisted (recall/semantics)
 - Extract missing entities; propose edges with evidence spans and confidence.
-- Gating: accept ≥0.80; review 0.60–0.79; discard <0.60. Never overwrite deterministic edges.
-
-3) Belief consolidation
-- Aggregate from authoritative sources; elevate to active when corroborated by ≥2 sources and stable ≥14 days; supersede prior with audit trail.
+- Gates: accept ≥0.80; review 0.60–0.79; discard <0.60; deterministic precedence.
 
 ---
 
 ## Identity Integration
 
-- Person entities represent humans within a workspace; provider accounts (GitHub/Slack/Linear/Notion/SSO) attach via `entity_aliases`.
-- Deterministic resolution maps connector events to the correct Person (provider_user_id → verified email → multi‑signal).
-- See `docs/IDENTITY_DESIGN.md` for auth user vs Person mapping, schema, and APIs.
+- Person entities represent humans; provider accounts attach via `entity_aliases`.
+- Multi-signal deterministic resolution (provider_user_id → verified email → alias set).
+- See `docs/IDENTITY_DESIGN.md`.
 
 ## Graph‑Aware Retrieval
 
 1) Classification
-- Ownership/dependency/alignment → graph‑first (traverse, then hydrate chunks).
-- General semantic → hybrid retrieval with graph bias for nearby entities.
+- Ownership/dependency/alignment → hybrid with graph bias.
 
 2) Traversal
-- Seed from query terms via alias resolution or top fused candidates; expand 1–2 hops with edge whitelists per intent (e.g., ownership: OWNED_BY/MEMBER_OF; dependency: DEPENDS_ON/BLOCKED_BY/RESOLVES).
+- Seed from query entities or top candidates; expand 1–2 hops with allowlists per intent (OWNED_BY/MEMBER_OF; DEPENDS_ON/BLOCKED_BY/RESOLVES; ALIGNS_WITH_GOAL).
 
-3) Fusion and prompt
-- Boost candidate chunks whose `documentId` is within N hops; rerank; include a “graph rationale” listing entities/edges and evidence links.
+3) Fusion and rationale
+- Boost candidates linked to traversed entities/edges; rerank; include a compact rationale (entities, edges, evidence links).
 
 ---
 
 ## APIs (sketch)
 
-- upsertEntity, upsertRelationship (with optional evidence), traverseNeighborhood.
-- Belief endpoints for consolidation; optional Intent endpoints if enabled (see SPEC).
+- upsertEntity, upsertRelationship (with evidence), traverseNeighborhood.
 
 ---
 
 ## Evaluation
 
 - Relationship precision/recall by type; target ≥95% deterministic, ≥85% LLM‑assisted after review.
-- Belief stability: weekly churn <5%; revision correctness.
 - Graph QA: ownership, dependency, alignment with rationale faithfulness.
 - Metrics logged in retrieval logs with graph‑specific fields.
 
@@ -112,19 +100,19 @@ Each edge has: `type`, `from`, `to`, `confidence`, `detectedBy` (rule|llm|manual
 
 ## Rollout
 
-- Phase 0: Schema foundation and backfill deterministic edges for GitHub/Linear.
-- Phase 1: Deterministic graph, Redis adjacency, and “Why” evidence surfaces.
-- Phase 2: Beliefs extraction and consolidation; belief cards.
-- Phase 3: Graph‑aware retrieval bias for ownership/dependency.
-- Phase 4: Quality loop, adjudication UI, drift/alerting.
+- Phase 0: Schema + deterministic edges
+- Phase 1: Redis adjacency + rationale surfaces
+- Phase 2: LLM-assisted proposals + adjudication
+- Phase 3: Graph‑aware bias in retrieval
+- Phase 4: Quality loop + drift/alerting
 
-See `docs/memory/SPEC.md` for research‑mode flags and promotion criteria.
+See `docs/memory/SPEC.md` for flags and criteria.
 
 ---
 
 ## References
 
-- docs/STORAGE_IMPLEMENTATION_GUIDE.md (Schema, Caching, Pinecone)
-- docs/SYNC_DESIGN.md (Ingestion, Relationship Detection)
-- docs/SEARCH_DESIGN.md (Pipeline, Rerank, Hydration)
-- docs/EVALUATION_PLAYBOOK.md (Suites, Metrics, Calibration)
+- docs/STORAGE_IMPLEMENTATION_GUIDE.md (schema/caching)
+- docs/SYNC_DESIGN.md (ingestion)
+- docs/SEARCH_DESIGN.md (retrieval)
+- docs/EVALUATION_PLAYBOOK.md (evaluation)

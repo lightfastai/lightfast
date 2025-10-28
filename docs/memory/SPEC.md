@@ -1,122 +1,95 @@
-# MEMORY System Spec (Research Mode + Incremental Rollout)
+# Neural Memory System Spec (Rollout)
 
-Last Updated: 2025-10-27
+Last Updated: 2025-10-28
 
-Scope: Define reliable outcomes for Memory and a research-mode pathway to introduce Relationships, Beliefs, and Intents incrementally with evaluation, versioning, and safe deployment. Applies to the Memory Graph, retrieval integration, and adjacent ingestion.
+Scope: Define reliable outcomes for Neural Memory (observations, summaries, profiles) and Graph signals; outline evaluation, versioning, and safe deployment. Applies to retrieval integration and ingestion.
 
 ---
 
 ## Reliable Outcomes (Definitions and Targets)
 
 - Correctness
-  - Relationships: deterministic edges precision ≥95%, LLM-assisted precision ≥85% (review queue for 60–79% confidence), recall tracked against gold sets.
-  - Beliefs: extraction precision ≥90% on authoritative sources; belief supersession correctness ≥95% on curated conflicts.
-  - Intents: type/owner/status accuracy ≥90% on deterministic seeds; inferred links precision ≥85%.
+  - Observations: precision of extraction ≥90% on “high-signal” heuristics; provenance retained.
+  - Summaries: coverage and factual consistency pass human checks; drift <5% across periods.
+  - Relationships: deterministic edges precision ≥95%; LLM-assisted ≥85% after review.
 - Explainability
-  - Every graph-influenced answer includes a “graph rationale” with entities, edges, and evidence (document/chunk) 100% of the time.
-  - Evidence sufficiency score ≥0.9 (human-rated) on sampled answers.
+  - Graph-influenced answers include a rationale (entities, edges, evidence) 100% of the time.
+  - Evidence sufficiency score ≥0.9 on sampled answers.
 - Stability
-  - Belief churn <5% per week unless source changes; intent status drift alerts within 24h of upstream changes.
   - Result reproducibility: same query + same corpus → identical top‑k within ±1 position 99% of time.
+  - Summaries age in; observations age out according to policy; profiles rebuilt on schedule.
 - Latency
-  - Retrieval P50 ≤300ms, P95 ≤800ms for hybrid+graph; ingestion SLAs documented per source.
+  - Retrieval P95 ≤150 ms (search/similar); ingestion SLAs documented.
 - Safety and Privacy
-  - Zero cross‑tenant leakage; conversation memories never surface in org answers without explicit sharing.
-  - PII redaction on memory write paths; “forget/export” honored within SLA (e.g., 24h).
+  - Tenant isolation; PII redaction on writes; forget/export within 24h.
 - Robustness
-  - Fallbacks: if graph is unavailable or sparse, degrade to hybrid retrieval with minimal quality loss (<5% on QA metrics).
-  - Conflict handling: AGM‑style revision preserves audit trail; no silent overwrites of deterministic facts.
+  - Fallbacks: degrade to knowledge-only when neural or graph signals are absent without >5% QA loss.
 
 ---
 
 ## Architecture Invariants (Non‑Negotiables)
 
 - Non‑parametric by default: organizational truth lives in stores, not weights.
-- Provenance everywhere: edges, beliefs, intents carry sources, evidence, and confidence.
-- Deterministic first: never overwrite deterministic edges with LLM inferences; only add or raise confidence.
-- Temporal semantics: since/until on edges; belief revisions and intent events enable as‑of queries.
-- Workspace isolation: RLS and namespaced indices; per‑user scopes for conversation memory.
-- Safe defaults: features ship behind flags; fallbacks always available.
+- Provenance everywhere: observations, summaries, and edges carry sources and evidence.
+- Deterministic first: never overwrite deterministic edges with LLM inferences.
+- Temporal semantics: since/until on edges; windows on summaries.
+- Workspace isolation: RLS + namespaced indices; per‑user scopes for personal memory.
+- Safe defaults: features behind flags; fallbacks always available.
 
 ---
 
 ## Versioning and Flags
 
 - Versioning
-  - Memory Spec version: M-SPEC SemVer, documents capabilities and thresholds.
-  - Graph Schema version: G-SCHEMA SemVer, tracked via migrations.
-  - Retrieval Router version: RR SemVer, logged with responses.
+  - Memory Spec version (M-SPEC), Graph Schema (G-SCHEMA), Router (RR); logged in responses.
 - Feature Flags (workspace‑scoped)
-  - relationships.deterministic
-  - relationships.llm_assisted
-  - beliefs.core
-  - intents.core
-  - retrieval.graph_bias
-  - retrieval.graph_rationale
-  - router.enable
-  - conversation.memory
-  - temporal.as_of
-- Promotion policy
-  - Research → Pilot → GA per feature, with acceptance criteria and rollback plans.
+  - relationships.deterministic, relationships.llm_assisted
+  - neural.observations, neural.summaries, neural.profiles
+  - retrieval.graph_bias, retrieval.graph_rationale, router.enable
+  - conversation.memory, temporal.as_of
+- Promotion policy: Research → Pilot → GA; acceptance criteria + rollback.
 
 ---
 
-## Phased Rollout Plan (Incremental Introduction)
+## Phased Rollout Plan
 
-Phase 0 — Baseline (M-SPEC 0.1)
-- Deliver: Knowledge Store + hybrid retrieval; retrieval logs + basic eval harness.
-- Accept: baseline QA and latency recorded; no regressions in existing flows.
+Phase 0 — Baseline
+- Deliver: Knowledge + hybrid retrieval; logs + eval harness.
+- Accept: baseline QA/latency recorded; no regressions.
 
-Phase 1 — Relationships (Deterministic) (M-SPEC 0.2, G-SCHEMA 1.0)
-- Deliver: entities, entity_aliases, document_entities, relationships, relationship_evidence; connector mappers (GitHub/Linear/Notion deterministic).
-- Retrieval: optional graph_bias off by default; enable rationale surfacing for inspection.
-- Accept: precision ≥95% on deterministic edge gold sets; zero leakage; latency P95 ≤850ms with graph_bias off.
+Phase 1 — Relationships (Deterministic)
+- Deliver: entities, aliases, document_entities, relationships, relationship_evidence.
+- Accept: precision ≥95%; rationale surfacing wired; zero leakage.
 
-Phase 1.1 — Graph Rationale + Graph QA (RR 1.0)
-- Deliver: graph-aware answer composition and QA suites (ownership/dependency/alignment).
-- Accept: rationale present 100%; Graph QA accuracy ≥ baseline; no latency regressions >5%.
+Phase 2 — Neural Observations
+- Deliver: observation extraction + embeddings + index; retrieval fusion.
+- Accept: contribution share reasonable; no latency regressions; QA stable.
 
-Phase 2 — Relationships (LLM‑assisted) (M-SPEC 0.3)
-- Deliver: extractors with confidence gating; adjudication queue and feedback logging.
-- Accept: assisted precision ≥85% on reviewed sets; no deterministic regressions; review queue SLAs.
+Phase 3 — Summaries & Profiles
+- Deliver: clustering jobs; profiles per entity; drift monitors.
+- Accept: improved recall/precision on overview/ownership; QA green.
 
-Phase 3 — Beliefs (Core) (G-SCHEMA 1.1)
-- Deliver: beliefs, belief_links, belief_revisions; consolidation rules (corroboration ≥2 sources, stability window ≥14 days).
-- Retrieval: alignment questions route to beliefs; rationale includes belief evidence.
-- Accept: belief extraction precision ≥90%; weekly churn <5%; conflicting updates resolved with audit trail.
+Phase 4 — Relationships (LLM‑assisted)
+- Deliver: proposals with confidence + evidence; adjudication queue.
+- Accept: ≥85% precision post-review; deterministic unaffected.
 
-Phase 4 — Intents (Core) (G-SCHEMA 1.2)
-- Deliver: intents, intent_links, intent_events; deterministic seeds from OKR/Jira/GitHub; LLM proposals gated.
-- Retrieval: ownership/alignment enhanced via intent edges; status queries supported.
-- Accept: type/owner/status ≥90% on deterministic; inferred links ≥85% precision; as‑of intent status works.
-
-Phase 5 — Router + Personal Memory (RR 1.1)
-- Deliver: memory router; conversation memory (optional module) with TTL, consent, export/forget.
-- Accept: zero leakage to org answers; preference recall accuracy ≥95% on personal tasks; QA unaffected in org tasks.
-
-Phase 6 — Temporal Reasoning (RR 1.2)
-- Deliver: as‑of queries honoring since/until and intent events; time-sliced traversal.
-- Accept: temporal QA ≥90% accuracy on curated benchmarks; latency within budget.
+Phase 5 — Router & Temporal Windows
+- Deliver: router modes logged; time windows respected in traversal and scoring.
+- Accept: temporal QA ≥90%; latency budgets met.
 
 ---
 
 ## Evaluation and Braintrust Protocol
 
-- Suites (by layer)
-  - Smoke: ingestion and retrieval health; index coverage.
-  - Relationships: precision/recall per type; edge-level evidence checks.
-  - Graph QA: ownership, dependency, alignment with rationale faithfulness.
-  - Beliefs: extraction accuracy, supersession correctness, stability.
-  - Intents: type/owner/status accuracy; lifecycle event reflection latency.
-  - Router: correct routing decisions; no leakage between scopes.
-  - Temporal: as‑of accuracy; regression on non‑temporal queries.
+- Suites
+  - Smoke; Relationships; Graph QA; Observations; Summaries/Profiles; Router; Temporal.
 - Triggers
   - On ingestion events; nightly regression; pre‑release canary.
 - Metrics
-  - QA: EM/F1; rationale faithfulness; human evidence sufficiency.
-  - Retrieval: recall@k, mAP, reranker gains; latency P50/P95.
-  - Stability: churn, drift alerts; revision audit completeness.
-  - Safety: leakage rate, PII redaction success, access violations.
+  - QA: EM/F1; rationale faithfulness; evidence sufficiency.
+  - Retrieval: recall@k, mAP, rerank gains; latency P50/P95.
+  - Stability: churn, drift; profile rebuild health.
+  - Safety: leakage rate; PII redaction success; access violations.
 - Reporting
   - Dashboards segmented by retrieval_mode and RR version; experiment IDs persisted in retrieval logs.
 
@@ -150,16 +123,16 @@ Phase 6 — Temporal Reasoning (RR 1.2)
   - Toggle flags off; preserve data; revert router version; documented runbooks.
 
 Identity migrations
-- Add `users`, `user_identities`, `workspace_users`, and `workspace_person_map` as described in `docs/IDENTITY_DESIGN.md`.
-- Extend `entity_aliases` alias_type coverage to include provider IDs and SSO subjects; enforce uniqueness (workspace_id, alias_type, value).
+- Add `users`, `user_identities`, `workspace_users`, `workspace_person_map` as needed (see `docs/IDENTITY_DESIGN.md`).
+- Extend `entity_aliases` to include provider IDs and SSO subjects.
 
 ---
 
 ## Observability and Guardrails
 
 - Logs
-  - Retrieval logs include RR version, graph_bias on/off, seeds, edges considered, evidence IDs.
-  - Ingestion logs for extractor decisions and confidence; adjudication outcomes.
+  - Retrieval logs include RR version, graph_bias, seeds, edges considered, evidence IDs, contribution shares.
+  - Ingestion logs for observation extraction, extractor decisions/confidence, adjudication outcomes.
 - Alerts
   - Precision drops, churn spikes, leakage signals, latency regressions.
 - Guardrails
@@ -169,7 +142,7 @@ Identity migrations
 
 ## API and Contracts (Sketch)
 
-- Determinism and idempotency for upserts; evidence required on relationship/belief/intent writes.
+- Determinism and idempotency for upserts; evidence required on relationship writes.
 - Router reports chosen path and rationale IDs; error codes distinguish fallback modes.
 - Version headers: X-Memory-Spec, X-Router-Version for traceability.
 
@@ -181,10 +154,10 @@ Identity migrations
   - Schema live; mappers implemented; precision ≥95%; dashboards green; runbook written; flags staged to Pilot.
 - Relationships (LLM)
   - Gating live; adjudication queue; precision ≥85% on reviewed set; zero regression to deterministic; Pilot.
-- Beliefs
-  - Consolidation rules; revisions logged; stability <5% churn; QA green; Pilot.
-- Intents
-  - Lifecycle events; status queries; accuracy thresholds met; as‑of works; Pilot.
+- Observations
+  - Extraction quality ≥90% on sampled sets; embeddings live; contribution share tracked; Pilot.
+- Summaries/Profiles
+  - Clustering stable; profiles rebuilt; improved QA on overview/ownership; Pilot.
 - Router and Conversation Memory
   - Correct routing; zero leakage; forget/export; GA only after two stable sprints.
 
@@ -192,4 +165,4 @@ Identity migrations
 
 ## References
 
-- See docs/memory/RESEARCH_BELIEF_INTENT.md for literature survey and comparative analysis.
+—

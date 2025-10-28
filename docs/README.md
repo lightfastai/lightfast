@@ -1,179 +1,158 @@
-# Lightfast Documentation
+# Lightfast — Neural Memory for Teams
 
-Last Updated: 2025-10-27
+Last Updated: 2025-10-28
 
-Lightfast builds a relationships‑first Memory layer and a production‑ready Knowledge Store for teams. We connect your tools (GitHub, Linear, Notion, Slack, etc.), normalize artifacts into durable knowledge, and construct a Memory Graph of entities, relationships, and beliefs (mission, vision, goals). The result: explainable answers, multi‑hop reasoning (who/why/depends), and traceable links from purpose → projects → code → customers.
+Lightfast is a neural memory system that combines semantic retrieval with explicit structure. We unify three pillars:
 
----
+- Knowledge (durable chunks from sources like GitHub, Linear, Notion, Slack)
+- Neural Memory (observations, summaries, and profiles purpose-built for semantic search)
+- Graph (entities and relationships for explainability and short-hop reasoning)
 
-## Purpose
-
-- Make organizational intent computable so teams — and their AI tools — act with shared context.
-- Turn mission, vision, goals, and relationships into an operating memory that connects people, work, and outcomes.
-
-## Vision
-
-- Any tool or agent can answer why, who, how, and what depends on what — with evidence — across the company’s ecosystem, in real time.
-
-## Positioning
-
-- Relationships‑first memory (beyond RAG): a graph of entities, edges, and beliefs.
-- Purpose‑centric: extract and stabilize mission/vision/goals; connect them to code, tickets, and docs.
-- Explainable by design: every answer cites graph edges and supporting text.
-
-## Guiding Principles
-
-- Relationship first; retrieval second.
-- Durable, real‑time, and explainable.
-- Developer‑first, config‑driven, and interoperable.
-- Privacy and tenancy by default.
-- Evaluation‑backed decisions (quality, drift, latency).
-
-## North‑Star Outcomes
-
-- Time‑to‑context: seconds to “the why” behind any artifact.
-- Graph coverage: % of artifacts linked to owners, dependencies, and goals.
-- Answer quality: % multi‑hop questions answered with evidence.
-- Onboarding compression: time saved to productive contributions.
-- Agent success: task completion rate when powered by our memory.
+Together, they deliver answers and context with evidence — fast, explainable, and agent-ready.
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Purpose](#purpose)
+- [Mission](#mission)
 - [Vision](#vision)
-- [Positioning](#positioning)
-- [Guiding Principles](#guiding-principles)
-- [North‑Star Outcomes](#north-star-outcomes)
-- [Architecture](#architecture)
-  - [Storage Architecture](STORAGE_ARCHITECTURE.md)
-  - [Architecture Diagram](STORAGE_ARCHITECTURE_DIAGRAM.md)
-- [Knowledge Store](#knowledge-store)
-  - [Design](KNOWLEDGE_STORE.md)
-  - [Search & Retrieval](SEARCH_DESIGN.md)
-- [Memory (Graph)](#memory-graph)
-  - [Overview](memory/README.md)
-  - [Graph Design](memory/GRAPH.md)
-  - [SPEC (Research Mode)](memory/SPEC.md)
-  - [Research: Belief & Intent](memory/RESEARCH_BELIEF_INTENT.md)
-- [Sync & Ingestion](#sync--ingestion)
-  - [Pipeline](SYNC_DESIGN.md)
-- [Implementation Guides](#implementation-guides)
-  - [Storage Implementation](STORAGE_IMPLEMENTATION_GUIDE.md)
-- [Evaluation & Quality](#evaluation--quality)
-  - [Evaluation Playbook](EVALUATION_PLAYBOOK.md)
-  - [RAG Best Practices](rag-best-practices)
-- [Roadmap](#roadmap)
-  - [MVP Roadmap](MVP_ROADMAP.md)
+- [Principles](#principles)
+- [What We Store](#what-we-store)
+- [How It Works](#how-it-works)
+- [External Interface (v1)](#external-interface-v1)
+- [Architecture (High Level)](#architecture-high-level)
+- [Roadmap (Docs)](#roadmap-docs)
+- [Docs Index](#docs-index)
 - [Glossary](#glossary)
+- [Reading Order](#reading-order)
+- [Next Steps](#next-steps)
+
+## Mission
+
+- Make organizational knowledge immediately findable, navigable, and trustworthy for people and agents.
+- Capture high-signal observations as they happen and retain long-lived structure for reasoning.
+
+## Vision
+
+- Any tool can ask “who/what/why/depends” and receive accurate, explainable answers grounded in memory — not just keywords — across the company’s ecosystem in real time.
+
+## Principles
+
+- Neural-first, structure-aware: semantic retrieval augmented by explicit entities/edges.
+- Evidence over assertion: every claim traces to memory (chunks/observations) and relations.
+- Multi-representation by default: titles, snippets, bodies, and summaries improve recall and precision.
+- Developer-first, tenant-safe: simple APIs, clear contracts, strong isolation.
+- Quality as a loop: measure, calibrate, and adapt with feedback.
 
 ---
 
-## Overview
+## What We Store
 
-- Vision: Make organizational intent (mission, vision, goals) computable and connect it to day‑to‑day outputs (code, issues, docs, conversations) via a first‑class Memory Graph.
-- Two layers by design:
-  - Knowledge Store: durable, chunked documents + hybrid retrieval (lexical + vector + optional rerank) for high recall and low latency.
-  - Memory Graph: entities, typed relationships, and beliefs with provenance, confidence, and time. Enables multi‑hop reasoning and explainability.
-- Connectors: GitHub, Linear, Notion, Slack (extensible) populate the Knowledge Store and seed the Memory Graph with deterministic edges; LLMs augment where helpful with confidence gating.
+- Knowledge Chunks: durable slices of documents for high-recall retrieval.
+- Memory Observations: atomic “moments” like decisions, incident lines, PR highlights, Q/A; multi-view embeddings.
+- Memory Summaries: clustered rollups by entity/topic/time for quick orientation and aging/compression.
+- Memory Profiles: per-entity prototype vectors (centroids) and descriptors for personalization and biasing.
+- Graph: explicit entities and typed relationships for explainability and 1–2 hop traversal.
 
----
-
-## Architecture
-
-- Durable core: PlanetScale (MySQL) via Drizzle + S3 for raw artifacts; Redis for cache/queues.
-- Indexing: chunk documents (200–400 tokens) and embed vectors in Pinecone (optionally sparse features).
-- Retrieval: hybrid pipeline with optional reranking and graph‑aware bias for relationship queries.
-- Observability: retrieval logs, feedback events, dashboards, and eval suites for continual quality monitoring.
-
-See: STORAGE_ARCHITECTURE.md and STORAGE_ARCHITECTURE_DIAGRAM.md
+Beliefs and intent live within summaries, not as a privileged type. They emerge from memory rather than constraining it.
 
 ---
 
-## Knowledge Store
+## How It Works
 
-- Canonical tables: `knowledge_documents`, `knowledge_chunks`.
-- Capabilities:
-  - Deterministic versioning via `content_hash`.
-  - Hybrid retrieval pipeline; identifier fast‑path.
-  - Redis hydration cache for hot chunks/documents.
-- Interfaces: `GET /api/knowledge/documents/:id`, `GET /api/knowledge/chunks`, `POST /api/knowledge/search` (supports `mode: 'knowledge' | 'graph' | 'hybrid'`).
-
-See: KNOWLEDGE_STORE.md and SEARCH_DESIGN.md
+- Ingest: connectors normalize artifacts → create chunks and observations; attach entities, timestamps, and importance; embed multiple views.
+- Index: vector indexes per workspace and embedding version for chunks, observations, summaries, and profiles.
+- Retrieve: hybrid pipeline fuses dense, lexical, graph bias, recency, importance, and profile similarity; cross-encoder reranks top-K.
+- Explain: cite chunks/observations and show graph rationale (entities, edges, evidence) when applicable.
+- Answer: compose extractive or abstractive responses with citations; stream when needed.
 
 ---
 
-## Memory (Graph)
+## External Interface (v1)
 
-- Core tables: `entities`, `entity_aliases`, `document_entities`, `relationships`, `relationship_evidence`, `beliefs`, `belief_links`.
-- Relationship vocabulary (examples): AUTHORED_BY, OWNED_BY, MEMBER_OF, REFERENCES, RESOLVES, DUPLICATES, RELATES_TO, BLOCKED_BY, DEPENDS_ON, IMPLEMENTS, TOUCHES_COMPONENT, AFFECTS_METRIC, ALIGNS_WITH_GOAL.
-- Beliefs: long‑lived mission/vision/principles/goals with corroboration rules and stability checks.
-- Graph‑aware retrieval: traverse 1–2 hops for ownership/dependency/alignment questions; bias chunk ranking; include a concise “graph rationale” in responses.
+- POST `/v1/search`: ranked results with optional rationale and highlights.
+- POST `/v1/contents`: hydrate documents/chunks and expand graph context.
+- POST `/v1/similar`: find semantically similar content to text/chunk/document.
+- POST `/v1/answer`: retrieve → synthesize an answer with citations (stream optional).
 
-See: memory/GRAPH.md
-
----
-
-## Sync & Ingestion
-
-- Flow: Source Event → Normalize → Persist (documents + chunks) → Upload artifacts (S3) → Embed + Index → Detect relationships → Prime caches → Emit eval events.
-- Deterministic edges from connectors first; LLM‑assisted extraction adds candidates with confidence thresholds and evidence.
-- Events: `knowledge.persisted`, `knowledge.embedding.requested`.
-
-See: SYNC_DESIGN.md
+See API_SPEC.md for request/response contracts and limits.
 
 ---
 
-## Implementation Guides
+## Architecture (High Level)
 
-- Storage Implementation Guide covers:
-  - Drizzle schema (PlanetScale MySQL) for Knowledge Store and Memory Graph.
-  - Pinecone index setup and upsert helpers.
-  - S3 and Redis utilities.
-
-See: STORAGE_IMPLEMENTATION_GUIDE.md
-
----
-
-## Evaluation & Quality
-
-- Continuous evaluation with Braintrust.
-- Metrics: recall@k, rerank calibration, snippet accuracy, latency splits; segmented by `retrieval_mode` (knowledge/graph/hybrid).
-- Suites: smoke, regression (on `knowledge.persisted`), weekly benchmarks, source‑specific, and Graph QA (ownership/dependencies/alignment).
-
-See: EVALUATION_PLAYBOOK.md and rag-best-practices
+- Storage: PlanetScale (MySQL) for metadata, S3 for raw bodies, Redis for caches/queues.
+- Indexing: Pinecone for dense (+ optional sparse) vectors; namespaces per workspace and embedding version.
+- Router: `knowledge | neural | hybrid` under the hood (public API stays simple); graph bias is bounded and explainable.
+- Rerank: cross-encoder rerank on fused candidates; calibrated thresholds per workspace.
+- Observability: request IDs, latency stages, router mode, graph influence, and contribution shares (chunks vs observations vs summaries).
+- Evaluation: recall@k, rerank lift, snippet accuracy, rationale faithfulness, latency; regression + periodic suites.
 
 ---
 
-## Roadmap
+## Roadmap (Docs)
 
-- MVP milestones: schema and ingestion foundations → GitHub + embeddings → Slack + relationships → hybrid search + observability → evaluation + hardening → GA polish.
+- SPEC.md — full architecture spec (data model, pipelines, retrieval, scoring, SLOs, security, evaluation)
+- API_SPEC.md — public API contracts (search, contents, similar, answer)
+- MCP_SPEC.md — MCP tool mapping for agents
+- DATA_MODEL.md — ERD and index families
+- OBSERVATIONS_HEURISTICS.md — guidance for high‑signal extraction
+- Implementation Guides — to follow after spec sign-off
 
-See: MVP_ROADMAP.md
+---
+
+## Docs Index
+
+- Core
+  - SPEC.md — Architecture Spec
+  - DATA_MODEL.md — ERD and index families
+  - STORAGE_ARCHITECTURE.md — Storage & Indexing
+  - STORAGE_ARCHITECTURE_DIAGRAM.md — Architecture diagrams (ASCII + Mermaid)
+- Retrieval
+  - SEARCH_DESIGN.md — Retrieval & Ranking
+  - RETRIEVAL_ROUTER_DIAGRAM.md — Router internals (flow, knobs)
+- Ingestion
+  - SYNC_DESIGN.md — Ingestion & Consolidation
+  - OBSERVATIONS_HEURISTICS.md — High‑signal extraction
+- APIs & Agents
+  - API_SPEC.md — Public API (v1)
+  - MCP_SPEC.md — MCP mapping
+- Memory & Identity
+  - docs/memory/GRAPH.md — Graph rationale & signals
+  - docs/memory/SPEC.md — Neural Memory rollout
+  - docs/memory/RESEARCH_NEURAL_SEARCH.md — Research notes
+  - IDENTITY_DESIGN.md — Users ↔ Graph Persons
 
 ---
 
 ## Glossary
 
-- Knowledge Document: canonical, normalized representation of a source artifact (PR, issue, doc page, message, etc.).
-- Knowledge Chunk: 200–400 token slice with overlap, indexed for retrieval.
-- Memory Graph: entities, relationships, and beliefs with provenance and confidence.
-- Entity: person/team/repo/service/component/project/customer/goal/etc.
-- Relationship: typed edge (e.g., IMPLEMENTS, DEPENDS_ON) between entities and/or documents.
-- Belief: mission/vision/principle/goal; long‑lived, consolidated from authoritative sources.
-- Connector: integration that ingests events and data (GitHub/Linear/Notion/Slack).
-- Workspace: multi‑tenant boundary spanning documents, entities, and indices.
+- Observation: atomic, high-signal memory unit with provenance and embeddings.
+- Summary: clustered rollup (entity/topic/time) that compresses observations.
+- Profile: per-entity centroid and descriptors used for biasing and personalization.
+- Graph Rationale: compact explanation of entities/edges that influenced retrieval.
 
 ---
 
-## Reading Order (Suggested)
+## Reading Order
 
-1) STORAGE_ARCHITECTURE.md → big picture and constraints
-2) KNOWLEDGE_STORE.md → canonical document/chunk model and retrieval
-3) memory/GRAPH.md → entities, relationships, beliefs, and traversal
-4) SYNC_DESIGN.md → how data flows in and gets indexed
-5) SEARCH_DESIGN.md → how queries are executed and answered
-6) STORAGE_IMPLEMENTATION_GUIDE.md → code‑level helpers and config
-7) EVALUATION_PLAYBOOK.md → how we measure and guard quality
+1) SPEC.md — architecture deep dive
+2) API_SPEC.md — external contracts
+3) MCP_SPEC.md — agent tooling
+4) Implementation Guides — ingestion, indexing, retrieval, and ops
+
+---
+
+## Next Steps
+
+- Docs
+  - CONSOLIDATION_POLICY.md — windows, summary format, coverage metrics, rebuild cadence.
+  - RETRIEVAL_CONFIG.md — weights/topK/rerank thresholds/graph hop+weights/decays; defaults by workspace size.
+  - PRIVACY_SECURITY.md — tenancy, PII redaction, retention, personal memory opt‑in/out.
+  - DIAGRAM_EXPORTS.md — PNG/SVG export workflow for Mermaid diagrams.
+- Examples
+  - QUERY_EXAMPLES.md — sample requests for `/v1/search`, `/v1/similar`, `/v1/answer` with expected shapes.
+  - RATIONALE_EXAMPLES.md — example graph rationales and evidence traces.
+- Implementation Guides (follow‑up)
+  - Minimal ingestion walkthrough (from GitHub PR → chunks + observations).
+  - Retrieval router tuning guide (how to calibrate weights and thresholds).

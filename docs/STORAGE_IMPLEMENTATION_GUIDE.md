@@ -1,8 +1,8 @@
-# Storage Implementation Guide (2025 Refresh)
+# Storage Implementation Guide — Neural Memory
 
-Quick reference for building the redesigned stack: PlanetScale (MySQL via Drizzle) as the durable store, S3/GCS for raw artifacts, Pinecone for chunk embeddings, and Redis for cache/queues.
+Last Updated: 2025-10-28
 
-Terminology: The chunked retrieval layer is the Knowledge Store. The relationships‑first layer is the Memory Graph (entities/relationships/beliefs). See `docs/KNOWLEDGE_STORE.md` and `docs/memory/GRAPH.md`.
+This guide implements the storage stack for Lightfast’s Neural Memory architecture: PlanetScale (MySQL via Drizzle) for durable metadata, S3 for raw artifacts, Pinecone for vector indexes (chunks/observations/summaries/profiles), and Redis for caches/queues.
 
 ---
 
@@ -18,7 +18,7 @@ pnpm add -D drizzle-kit dotenv-cli
 pnpm add @aws-sdk/client-s3 @pinecone-database/pinecone @upstash/redis
 ```
 
-Configure service credentials in `.env`:
+Environment
 
 ```
 # PlanetScale (MySQL)
@@ -27,15 +27,15 @@ DATABASE_USERNAME=
 DATABASE_PASSWORD=
 
 # Object store
+AWS_REGION=us-east-1
 S3_BUCKET=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 
 # Pinecone
 PINECONE_API_KEY=
-PINECONE_ENVIRONMENT=
 
-# Redis
+# Redis (Upstash)
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 ```
@@ -44,7 +44,7 @@ UPSTASH_REDIS_REST_TOKEN=
 
 ## Drizzle Schema (PlanetScale MySQL)
 
-Example Drizzle definitions for the Knowledge Store tables. Use drizzle‑kit to generate and run migrations.
+Representative Drizzle definitions for Knowledge (documents/chunks), Neural Memory (observations/summaries/profiles), and Graph (entities/relationships). Use `drizzle-kit` to generate migrations.
 
 ```ts
 import {
@@ -58,14 +58,16 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  double,
 } from 'drizzle-orm/mysql-core';
 
+// Knowledge — documents
 export const knowledgeDocuments = mysqlTable(
   'knowledge_documents',
   {
     id: varchar('id', { length: 40 }).primaryKey(),
-    organizationId: varchar('organization_id', { length: 40 }).notNull(),
     workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    organizationId: varchar('organization_id', { length: 40 }).notNull(),
     source: varchar('source', { length: 20 }).notNull(),
     sourceId: varchar('source_id', { length: 128 }).notNull(),
     type: varchar('type', { length: 32 }).notNull(),
@@ -87,6 +89,7 @@ export const knowledgeDocuments = mysqlTable(
   }),
 );
 
+// Knowledge — chunks
 export const knowledgeChunks = mysqlTable(
   'knowledge_chunks',
   {
@@ -102,6 +105,7 @@ export const knowledgeChunks = mysqlTable(
     chunkHash: char('chunk_hash', { length: 64 }).notNull(),
     keywords: json('keywords').notNull(),
     sparseVector: json('sparse_vector'),
+    occurredAt: timestamp('occurred_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     supersededAt: timestamp('superseded_at', { mode: 'date' }),
   },
@@ -110,78 +114,216 @@ export const knowledgeChunks = mysqlTable(
     idxByWorkspaceHash: index('idx_knowledge_chunks_workspace').on(t.workspaceId, t.chunkHash),
   }),
 );
+
+// Neural Memory — observations
+export const memoryObservations = mysqlTable(
+  'memory_observations',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    documentId: varchar('document_id', { length: 40 }), // optional link to source doc
+    text: mediumtext('text').notNull(),
+    title: text('title'),
+    summary: text('summary'),
+    occurredAt: timestamp('occurred_at', { mode: 'date' }).notNull(),
+    importance: double('importance').default(0).notNull(),
+    tags: json('tags'),
+    subjectRefs: json('subject_refs'), // e.g., entities/messages
+    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
+    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
+    privacy: varchar('privacy', { length: 16 }).default('org').notNull(),
+    contentHash: char('content_hash', { length: 64 }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({ idxByWorkspace: index('idx_memory_obs_ws').on(t.workspaceId, t.occurredAt) }),
+);
+
+// Neural Memory — summaries (cluster rollups)
+export const memorySummaries = mysqlTable(
+  'memory_summaries',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    windowJson: json('window_json').notNull(), // { entityId/topic, timeWindow }
+    text: mediumtext('text').notNull(),
+    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
+    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
+    coverageJson: json('coverage_json').notNull(), // counts, sources
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+);
+
+// Neural Memory — profiles (entity centroids)
+export const memoryProfiles = mysqlTable(
+  'memory_profiles',
+  {
+    id: varchar('id', { length: 40 }).primaryKey(),
+    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+    entityId: varchar('entity_id', { length: 40 }).notNull(),
+    centroidsJson: json('centroids_json').notNull(), // { title: number[], body: number[], summary: number[] }
+    descriptors: json('descriptors'),
+    drift: double('drift').default(0).notNull(),
+    lastRebuiltAt: timestamp('last_rebuilt_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => ({ idxByEntity: index('idx_memory_profiles_entity').on(t.workspaceId, t.entityId) }),
+);
+
+// Graph — entities & relationships (sketch)
+export const entities = mysqlTable('entities', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+  kind: varchar('kind', { length: 24 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const entityAliases = mysqlTable('entity_aliases', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  entityId: varchar('entity_id', { length: 40 }).notNull(),
+  aliasType: varchar('alias_type', { length: 24 }).notNull(),
+  value: varchar('value', { length: 255 }).notNull(),
+  verified: int('verified').default(0).notNull(),
+});
+
+export const relationships = mysqlTable('relationships', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
+  type: varchar('type', { length: 32 }).notNull(),
+  fromId: varchar('from_id', { length: 40 }).notNull(),
+  toId: varchar('to_id', { length: 40 }).notNull(),
+  confidence: double('confidence').default(1).notNull(),
+  since: timestamp('since', { mode: 'date' }),
+  until: timestamp('until', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const relationshipEvidence = mysqlTable('relationship_evidence', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  relationshipId: varchar('relationship_id', { length: 40 }).notNull(),
+  documentId: varchar('document_id', { length: 40 }),
+  chunkId: varchar('chunk_id', { length: 40 }),
+  observationId: varchar('observation_id', { length: 40 }),
+  weight: double('weight').default(1).notNull(),
+});
 ```
 
-Workspace scoping is enforced in the application layer (PlanetScale has no native RLS). See `docs/memory/GRAPH.md` for Memory Graph tables (`entities`, `relationships`, `relationship_evidence`, `beliefs`, etc.).
+Workspace isolation is enforced at the application layer (PlanetScale has no native RLS). Include workspace IDs in every table and index namespaces in Pinecone by workspace + version.
 
 ---
 
-## Pinecone Index Configuration
+## Pinecone Indexes
 
-Create a serverless index per environment with 768 dimensions (balances recall and storage cost) and dot-product similarity to support hybrid scoring. Keep metadata under 5KB and explicitly declare indexed fields once pod-based options are enabled.
+We maintain four index families and per-workspace namespaces:
 
-```typescript
-// If you inferred KnowledgeChunk from tRPC, import the alias here
-// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
+- chunks — `lightfast-chunks`
+- observations — `lightfast-observations`
+- summaries — `lightfast-summaries`
+- profiles — `lightfast-profiles`
+
+Namespace pattern: `${workspaceId}-${embeddingVersion}`.
+
+Example creation (serverless):
+
+```ts
 import { Pinecone } from '@pinecone-database/pinecone';
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
 await pinecone.createIndex({
-  name: `lightfast-chunks-${process.env.NODE_ENV}`,
+  name: 'lightfast-chunks',
   dimension: 768,
   metric: 'dotproduct',
-  spec: {
-    serverless: {
-      cloud: 'aws',
-      region: 'us-east-1',
-    },
-  },
+  spec: { serverless: { cloud: 'aws', region: 'us-east-1' } },
 });
 ```
 
-When migrating to pod-based hybrid search, enable selective metadata indexing so only frequently-used filters incur index overhead:
+Upserts
 
-```typescript
-await pinecone.configureIndex({
-  name: 'lightfast-chunks-prod',
-  spec: {
-    pod: {
-      metadata_config: {
-        indexed: ['workspace_id', 'entity_type', 'source', 'created_at', 'author_id'],
+```ts
+export async function upsertChunkVector(chunk: KnowledgeChunk, embedding: number[]) {
+  const namespace = `${chunk.workspaceId}-${chunk.embeddingVersion}`;
+  await pinecone.index('lightfast-chunks').namespace(namespace).upsert([
+    {
+      id: chunk.id,
+      values: embedding,
+      metadata: {
+        workspaceId: chunk.workspaceId,
+        documentId: chunk.documentId,
+        chunkIndex: chunk.chunkIndex,
+        chunkHash: chunk.chunkHash,
+        section: chunk.sectionLabel ?? null,
+        occurredAt: chunk.occurredAt?.toISOString() ?? null,
+        source: 'knowledge',
       },
     },
-  },
-});
+  ]);
+}
+
+export async function upsertObservationVectors(obs: MemoryObservation, views: { title?: number[]; body: number[]; summary?: number[] }) {
+  const namespace = `${obs.workspaceId}-${obs.embeddingVersion}`;
+  const items = [
+    { id: `${obs.id}:body`, values: views.body },
+    ...(views.title ? [{ id: `${obs.id}:title`, values: views.title }] : []),
+    ...(views.summary ? [{ id: `${obs.id}:summary`, values: views.summary }] : []),
+  ].map((v) => ({
+    ...v,
+    metadata: {
+      workspaceId: obs.workspaceId,
+      observationId: obs.id,
+      occurredAt: obs.occurredAt.toISOString(),
+      importance: obs.importance,
+      source: 'observation',
+    },
+  }));
+  await pinecone.index('lightfast-observations').namespace(namespace).upsert(items);
+}
 ```
+
+Keep metadata under ~1 KB; store heavy fields in PlanetScale and reference IDs in Pinecone.
+
+---
+
+## Embedding Helpers
+
+```ts
+import { cohere } from '@/lib/cohere';
+
+export async function embedQuery(text: string, model: string) {
+  const { embeddings } = await cohere.embed({ texts: [text], model, inputType: 'search_query' });
+  return embeddings[0];
+}
+
+export async function embedChunkText(text: string, model: string) {
+  const { embeddings } = await cohere.embed({ texts: [text], model, inputType: 'search_document' });
+  return embeddings[0];
+}
+
+export async function embedObservationViews(obs: { title?: string; text: string; summary?: string }, model: string) {
+  const texts = [obs.text, obs.title, obs.summary].filter(Boolean) as string[];
+  const { embeddings } = await cohere.embed({ texts, model, inputType: 'search_document' });
+  const [body, title, summary] = embeddings;
+  return { body: body ?? embeddings[0], title, summary };
+}
+```
+
+Track `embeddingVersion` whenever model, dimension (Matryoshka truncation), or compression changes.
 
 ---
 
 ## Persistence Helpers (Drizzle)
 
-```ts
-// Prefer inferring API-facing types from tRPC RouterOutputs
-// Adjust the path to your actual route names
-import type { CloudRouterOutputs } from '@api/cloud';
-type KnowledgeDocument = CloudRouterOutputs['knowledge']['getDocumentById'];
-// Optional: if you expose a 'listChunks' or similar endpoint
-// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
+Upsert documents, replace chunks, and insert observations in a transaction.
 
+```ts
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '@db/cloud/client';
-import { knowledgeDocuments, knowledgeChunks } from '@db/cloud/schema';
+import { db } from '@/db/client';
+import { knowledgeDocuments, knowledgeChunks, memoryObservations } from '@/db/schema';
 
 export async function upsertKnowledgeDocument(input: KnowledgeDocumentInput) {
   const [existing] = await db
     .select()
     .from(knowledgeDocuments)
-    .where(
-      and(
-        eq(knowledgeDocuments.workspaceId, input.workspaceId),
-        eq(knowledgeDocuments.source, input.source),
-        eq(knowledgeDocuments.sourceId, input.sourceId),
-      ),
-    )
+    .where(and(eq(knowledgeDocuments.workspaceId, input.workspaceId), eq(knowledgeDocuments.source, input.source), eq(knowledgeDocuments.sourceId, input.sourceId)))
     .limit(1);
 
   if (existing && existing.contentHash === input.contentHash) return existing; // No-op
@@ -210,28 +352,15 @@ export async function upsertKnowledgeDocument(input: KnowledgeDocumentInput) {
   const [row] = await db
     .select()
     .from(knowledgeDocuments)
-    .where(
-      and(
-        eq(knowledgeDocuments.workspaceId, input.workspaceId),
-        eq(knowledgeDocuments.source, input.source),
-        eq(knowledgeDocuments.sourceId, input.sourceId),
-      ),
-    )
+    .where(and(eq(knowledgeDocuments.workspaceId, input.workspaceId), eq(knowledgeDocuments.source, input.source), eq(knowledgeDocuments.sourceId, input.sourceId)))
     .limit(1);
 
   return row!;
 }
-```
 
-Replace chunks transactionally:
-
-```ts
-export async function replaceChunks(doc: KnowledgeDocument, drafts: ChunkDraft[]) {
+export async function replaceChunks(doc: KnowledgeDocumentRow, drafts: ChunkDraft[]) {
   return db.transaction(async (tx) => {
-    await tx
-      .update(knowledgeChunks)
-      .set({ supersededAt: new Date() })
-      .where(and(eq(knowledgeChunks.documentId, doc.id), isNull(knowledgeChunks.supersededAt)));
+    await tx.update(knowledgeChunks).set({ supersededAt: new Date() }).where(and(eq(knowledgeChunks.documentId, doc.id), isNull(knowledgeChunks.supersededAt)));
 
     const rows = drafts.map((draft, index) => ({
       id: newId(),
@@ -245,120 +374,65 @@ export async function replaceChunks(doc: KnowledgeDocument, drafts: ChunkDraft[]
       embeddingVersion: draft.embeddingVersion,
       chunkHash: draft.chunkHash,
       keywords: draft.keywords,
+      occurredAt: doc.occurredAt,
     }));
 
     if (rows.length) await tx.insert(knowledgeChunks).values(rows);
     return rows;
   });
 }
+
+export async function insertObservations(workspaceId: string, drafts: ObservationDraft[], documentId?: string) {
+  if (!drafts.length) return [] as MemoryObservationRow[];
+  const rows = drafts.map((d) => ({
+    id: newId(),
+    workspaceId,
+    documentId: documentId ?? null,
+    text: d.text,
+    title: d.title ?? null,
+    summary: d.summary ?? null,
+    occurredAt: new Date(d.occurredAt),
+    importance: d.importance ?? 0,
+    tags: d.tags ?? null,
+    subjectRefs: d.subjectRefs ?? null,
+    embeddingModel: d.embeddingModel,
+    embeddingVersion: d.embeddingVersion,
+    privacy: d.privacy ?? 'org',
+    contentHash: d.contentHash,
+  }));
+  await db.insert(memoryObservations).values(rows);
+  return rows;
+}
 ```
 
 ---
 
-## Pinecone Upsert Helper
+## Redis Cache Contracts
 
-```typescript
-import { Pinecone } from '@pinecone-database/pinecone';
-
-const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-
-export async function upsertChunkVector(
-  chunk: KnowledgeChunk,
-  embedding: number[],
-  opts: { source: string }
-) {
-  const namespace = `${chunk.workspaceId}-${chunk.embeddingVersion}`;
-
-  await pinecone.index('lightfast-chunks').namespace(namespace).upsert([{
-    id: chunk.id,
-    values: embedding,
-    metadata: {
-      workspaceId: chunk.workspaceId,
-      documentId: chunk.documentId,
-      chunkIndex: chunk.chunkIndex,
-      chunkHash: chunk.chunkHash,
-      type: chunk.sectionLabel ?? null,
-      createdAt: chunk.createdAt.toISOString(),
-      source: opts.source,
-    },
-  }]);
-}
-```
-
-To remove superseded chunks, call `deleteMany` using the chunk IDs returned from `replaceChunks` when chunks are replaced.
-
----
-
-## Cohere Embedding Helpers
-
-```typescript
-import { cohere } from '@/lib/cohere';
-
-export async function embedChunks(texts: string[], model: string) {
-  return cohere.embed({
-    texts,
-    model,
-    inputType: 'search_document',
-  });
-}
-
-export async function embedQuery(text: string, model: string) {
-  const { embeddings } = await cohere.embed({
-    texts: [text],
-    model,
-    inputType: 'search_query',
-  });
-  return embeddings[0];
-}
-```
-
-For >100k chunk backfills, use Embed Jobs so Cohere handles batching and validation:
-
-```typescript
-const job = await cohere.embedJobs.create({
-  datasetId,
-  model: 'embed-english-v3.0',
-  inputType: 'search_document',
-});
-
-await pollUntilComplete(job.id);
-const chunks = await cohere.embedJobs.getResults(job.id);
-```
-
-Track `embedding_version` whenever the model, dimension (Matryoshka truncation), or compression (`float32`, `int8`, `binary`) changes.
-
----
-
-## Redis Cache Contract
-
-```typescript
-// If you inferred KnowledgeChunk from tRPC, import the alias here
-// type KnowledgeChunk = CloudRouterOutputs['knowledge']['listChunks'][number];
+```ts
 import { Redis } from '@upstash/redis';
-
 const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
 
-export async function primeKnowledgeCache(doc: KnowledgeDocument, chunks: KnowledgeChunk[]): Promise<void> {
+export async function primeKnowledgeCache(doc: KnowledgeDocumentRow, chunks: KnowledgeChunkRow[]): Promise<void> {
   await redis.pipeline()
     .set(`document:${doc.id}`, JSON.stringify(doc), { ex: 72 * 60 * 60 })
     .set(`chunks:${doc.id}:v${doc.version}`, JSON.stringify(chunks), { ex: 24 * 60 * 60 })
     .exec();
 }
+
+export async function setDedupeKey(source: string, sourceId: string, contentHash: string) {
+  await redis.set(`source-dedupe:${source}:${sourceId}`, contentHash, { ex: 86_400 });
+}
+
+// Graph adjacency caches (example keys)
+// graph:out:{workspaceId}:{kind}:{id} -> JSON-encoded neighbor list
 ```
-
-Dedup keys:
-
-```typescript
-await redis.set(`source-dedupe:${doc.source}:${doc.sourceId}`, doc.contentHash, { ex: 86_400 });
-```
-
-Relationship adjacency lists are stored as Redis sets for convenience but can be rebuilt from PlanetScale when caches invalidate.
 
 ---
 
 ## S3 Upload Helper
 
-```typescript
+```ts
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-east-1' });
@@ -373,38 +447,53 @@ export async function storeRawArtifact(key: string, body: Uint8Array | string) {
 }
 ```
 
-We keep artifact keys under `workspaces/{workspaceId}/knowledge/{documentId}/...`.
+Key pattern: `workspaces/{workspaceId}/knowledge/{documentId}/...`.
+
+---
+
+## Consolidation Jobs (Sketch)
+
+```ts
+export async function clusterObservations(workspaceId: string) {
+  // 1) Fetch recent observations; 2) cluster by entity/topic/time window; 3) generate summary text; 4) embed and store in memory_summaries
+}
+
+export async function rebuildProfiles(workspaceId: string) {
+  // compute centroids per entity across observations/summaries; update memory_profiles
+}
+```
+
+Run nightly or on thresholds (count/time) per workspace. Store coverage/drift metrics.
 
 ---
 
 ## Braintrust Hooks
 
-After inserting a document, enqueue a Braintrust test run if the workspace has suites:
-
-```typescript
+```ts
 import { braintrust } from '@/lib/braintrust';
-
-await braintrust.tests.enqueue({
-  workspaceId: doc.workspaceId,
-  suite: 'post-ingest-regression',
-  payload: { documentId: doc.id, version: doc.version },
-});
+await braintrust.tests.enqueue({ workspaceId: doc.workspaceId, suite: 'post-ingest-regression', payload: { documentId: doc.id, version: doc.version } });
 ```
 
-Braintrust callbacks write evaluation metrics into `feedback_events` for observability dashboards.
+Hook both `knowledge.persisted` and consolidation jobs to regression suites.
 
 ---
 
-## Checklist per Ingestion
+## Checklists
 
-1. Normalize source payload → `KnowledgeDocumentInput` + `ChunkDraft[]`.
-2. Persist via transaction (knowledge_documents + knowledge_chunks + artifact uploads).
-3. Prime Redis caches (best-effort).
-4. Enqueue embedding jobs with correct `inputType` values (`search_document` for chunks) and wait for Pinecone upserts.
-5. Run relationship detection and update graph tables.
-6. Trigger Braintrust evaluation and log ingestion metrics.
-7. Periodically export representative rerank samples to recalibrate Cohere relevance thresholds.
+Per ingestion
+- Normalize payload → Document + Chunks + Observations
+- Transactionally persist rows; upload raw artifacts
+- Prime caches; set dedupe key
+- Enqueue embeddings for chunks/observations; upsert Pinecone
+- Detect relationships (deterministic first); update caches
+- Emit eval events
+
+Nightly
+- Cluster observations → summaries; embed/index
+- Rebuild profiles; compute drift
+- Refresh stale embeddings if needed; archive old namespaces after migrations
 
 ---
 
-_Last reviewed: 2025-02-10_
+_Last reviewed: 2025-10-28_
+
