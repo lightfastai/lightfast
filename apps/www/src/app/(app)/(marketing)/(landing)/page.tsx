@@ -1,10 +1,9 @@
-import { IntegrationShowcase } from "~/components/landing/integration-showcase";
 import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
 import { exposureTrial } from "~/lib/fonts";
-import { LightfastEngineVisual } from "~/components/landing/lightfast-engine-visual";
-import { WhyCloudInfrastructureSection } from "~/components/landing/why-cloud-infrastructure-section";
-import { DeusShowcase } from "~/components/landing/deus-showcase";
-import { ThreeCardShowcase } from "~/components/landing/three-card-showcase";
+import { ExaSearchVisual } from "~/components/landing/exa-search-visual";
+import { IntegrationShowcase } from "~/components/landing/integration-showcase";
+import { McpAgentVisual } from "~/components/landing/mcp-agent-visual";
+import { NeuralMemoryVisual } from "~/components/landing/neural-memory-visual";
 
 export default function HomePage() {
   return (
@@ -16,11 +15,11 @@ export default function HomePage() {
             <h1
               className={`text-6xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
             >
-              One interface, infinite agents.
+              Memory built for teams
             </h1>
             <p className="text-md text-muted-foreground leading-relaxed max-w-md">
-              One conversation orchestrates countless agents working across
-              Linear, GitHub, PostHog, and your entire startup stack.
+              Search everything your team knows. Get answers with sources,
+              instantly.
             </p>
           </div>
 
@@ -30,50 +29,46 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Engine Section - Grid Layout */}
+      {/* How It Works Section - Grid Layout */}
       <div className="pb-32">
-        <div className="grid grid-cols-1 bg-card border border-border rounded-sm p-6 lg:grid-cols-12 gap-16">
-          {/* Left Column: Engine Description (5/12) */}
-          <div className="lg:col-span-5 flex flex-col">
+        <div className="grid grid-cols-1 bg-card border border-none rounded-sm lg:grid-cols-12 gap-16">
+          {/* Left Column: Simple Description (5/12) */}
+          <div className="lg:col-span-4 flex flex-col p-0">
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
-                Engine
+                How It Works
               </p>
               <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
-                Focus on building
+                Search by meaning, not keywords
               </h3>
             </div>
             <div className="flex-1 flex items-center">
               <div className="space-y-6 -mt-8">
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
-                    Lightfast Sync Engine
+                    Find what you need
                   </h4>
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    Built for deep reasoning and complex orchestration.
-                    Maintains context across multi-step workflows and
-                    coordinates your entire stack.
+                    Ask questions naturally. Get answers from across your entire
+                    organization instantly.
                   </p>
                 </div>
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
-                    Deep Context Graph
+                    See the source
                   </h4>
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    Unified understanding across your codebase, business
-                    content, and tools. Correlates GitHub commits, Linear
-                    issues, PostHog analytics, and Sentry errors as one
-                    knowledge graph.
+                    Every answer shows where it came from. Click through to the
+                    original discussion, commit, or document.
                   </p>
                 </div>
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
-                    Security by Design
+                    Understand relationships
                   </h4>
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    Sandboxed execution for every workflow. Scoped credentials,
-                    runtime validation, and human-in-the-loop for critical
-                    actions.
+                    See who owns what, what depends on what, and why decisions
+                    were made.
                   </p>
                 </div>
               </div>
@@ -81,49 +76,120 @@ export default function HomePage() {
           </div>
 
           {/* Right Column: Engine Visual (7/12) */}
-          <div className="lg:col-span-7 h-full">
-            <LightfastEngineVisual />
+          <div className="lg:col-span-8 h-full">
+            <ExaSearchVisual />
           </div>
         </div>
       </div>
 
-      {/* Integration Showcase Section */}
-      <div className="py-16">
-        <div className="w-full">
-          <IntegrationShowcase />
-        </div>
+      {/* Integrations Section */}
+      <div className="pb-32">
+        <IntegrationShowcase />
       </div>
 
-      {/* Deus Showcase Section */}
-      <div className="flex flex-col py-32 items-center justify-center">
-        <div className="w-full">
-          <div className="h-[900px] w-full">
-            <DeusShowcase />
-          </div>
-        </div>
-      </div>
-
-      {/* Why Cloud Infrastructure Section */}
-      <div className="py-20">
-        <div className="w-full">
-          <WhyCloudInfrastructureSection />
-        </div>
-      </div>
-
-      {/* Three Card Showcase Section */}
-      <div className="py-32 bg-background">
-        <div className="w-full">
-          <div className="space-y-12">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
-                <span>See Lightfast in Action</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-                Deep context understanding, team unblocking, and intelligent
-                orchestration
-              </h2>
+      {/* Built for Agents Section - Grid Layout */}
+      <div className="pb-32">
+        <div className="grid grid-cols-1 bg-accent/40 p-6 border border-none rounded-sm lg:grid-cols-12 gap-16">
+          {/* Left Column: Description */}
+          <div className="lg:col-span-4 flex flex-col p-0">
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
+                For Agents
+              </p>
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+                Built for autonomous workflows
+              </h3>
             </div>
-            <ThreeCardShowcase />
+            <div className="flex-1 flex items-center">
+              <div className="space-y-6 -mt-8">
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    MCP tools ready
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Same four routes, available as MCP tools. Let your agents
+                    search memory, find similar content, and synthesize
+                    answers—all with citations.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    Agent-native API
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Simple, composable tools that agents can use independently
+                    or chain together for complex reasoning.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    Always grounded
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Every tool returns citations. Agents can verify claims and
+                    show their work to users.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Agent Visual */}
+          <div className="lg:col-span-8 h-full">
+            <McpAgentVisual />
+          </div>
+        </div>
+      </div>
+
+      {/* Neural Memory Section - Grid Layout */}
+      <div className="pb-32">
+        <div className="grid grid-cols-1 bg-accent/40 p-6 border border-none rounded-sm lg:grid-cols-12 gap-16">
+          {/* Left Column: Description */}
+          <div className="lg:col-span-4 flex flex-col p-0">
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
+                Neural Memory
+              </p>
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+                Capture decisions as they happen
+              </h3>
+            </div>
+            <div className="flex-1 flex items-center">
+              <div className="space-y-6 -mt-8">
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    Automatic extraction
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Extract key decisions, incidents, and highlights from PRs,
+                    issues, and discussions. No manual tagging required.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    Context over time
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    See what was discussed, who was involved, and why decisions
+                    were made. Never lose institutional knowledge.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">
+                    Organized summaries
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Related observations cluster into summaries by entity,
+                    topic, and time. Find patterns across your organization.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Memory Visual */}
+          <div className="lg:col-span-8 h-full">
+            <NeuralMemoryVisual />
           </div>
         </div>
       </div>

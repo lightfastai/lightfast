@@ -17,7 +17,7 @@
       "routing": [
         {
           "group": "docs",
-          "paths": ["/docs", "/docs/:path*"]
+          "paths": ["/docs", "/docs/:path*", "/api", "/api/:path*"]
         }
       ]
     },

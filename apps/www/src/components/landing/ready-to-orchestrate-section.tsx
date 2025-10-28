@@ -28,6 +28,7 @@ export function ReadyToOrchestrateSection() {
                   height={600}
                   className="w-full h-full object-cover"
                   priority
+                  unoptimized
                 />
               </div>
             </div>
