@@ -75,15 +75,15 @@ flowchart TB
   R -->|hybrid| N
 
   subgraph Knowledge
-    K1[Lexical ≤30ms]
-    K2[Dense ≤40ms]
+    K1[Lexical <=30ms]
+    K2[Dense <=40ms]
     K1 --> K
     K2 --> K
   end
 
   subgraph Neural
-    N1[Dense ≤40ms]
-    N2[Profiles sim ≤10ms]
+    N1[Dense <=40ms]
+    N2[Profiles sim <=10ms]
     N1 --> N
     N2 --> N
   end
@@ -93,7 +93,7 @@ flowchart TB
 
   subgraph GraphBias
     G1[Resolve entities]
-    G2[Traverse hops 1–2]
+    G2[Traverse hops 1-2]
     G3[Boost candidates]
   end
 
@@ -102,10 +102,10 @@ flowchart TB
   G1 --> G2 --> G3 --> F
 
   F --> S{Rerank gate}
-  S -->|K≥min & allowed| CE[Cross‑encoder rerank ≤30ms]
+  S -->|K>=min & allowed| CE[Cross-encoder rerank <=30ms]
   S -->|else| H
   CE --> H
-  H[Hydration (Redis→DB) ≤20ms]
+  H[Hydration (Redis->DB) <=20ms]
   H --> O[Response with citations + optional rationale]
 ```
 
@@ -139,4 +139,3 @@ flowchart TB
 ---
 
 Calibration and thresholds are maintained via Braintrust suites and feedback signals. See docs/EVALUATION_PLAYBOOK.md.
-

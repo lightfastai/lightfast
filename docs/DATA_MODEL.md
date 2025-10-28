@@ -10,22 +10,29 @@ This document captures the canonical data model for Lightfast’s Neural Memory 
 
 ```mermaid
 erDiagram
-  WORKSPACES ||--o{ KNOWLEDGE_DOCUMENTS : has
-  WORKSPACES ||--o{ KNOWLEDGE_CHUNKS : has
-  WORKSPACES ||--o{ MEMORY_OBSERVATIONS : has
-  WORKSPACES ||--o{ MEMORY_SUMMARIES : has
-  WORKSPACES ||--o{ MEMORY_PROFILES : has
-  WORKSPACES ||--o{ ENTITIES : has
-  ENTITIES ||--o{ ENTITY_ALIASES : has
-  KNOWLEDGE_DOCUMENTS ||--o{ KNOWLEDGE_CHUNKS : contains
-  KNOWLEDGE_DOCUMENTS ||--o{ DOCUMENT_ENTITIES : links
-  ENTITIES ||--o{ DOCUMENT_ENTITIES : linked
-  RELATIONSHIPS ||--o{ RELATIONSHIP_EVIDENCE : supportedBy
-  ENTITIES ||--o{ RELATIONSHIPS : from
-  ENTITIES ||--o{ RELATIONSHIPS : to
-  KNOWLEDGE_DOCUMENTS ||--o{ RELATIONSHIP_EVIDENCE : citedBy
-  KNOWLEDGE_CHUNKS ||--o{ RELATIONSHIP_EVIDENCE : citedBy
-  MEMORY_OBSERVATIONS ||--o{ RELATIONSHIP_EVIDENCE : citedBy
+  %% Short names used for GitHub Mermaid compatibility
+  WS ||--o{ DOC : has
+  WS ||--o{ CHUNK : has
+  WS ||--o{ OBS : has
+  WS ||--o{ SUM : has
+  WS ||--o{ PROF : has
+  WS ||--o{ ENT : has
+  ENT ||--o{ ALIAS : has
+  DOC ||--o{ CHUNK : contains
+  DOC ||--o{ DOC_ENT : links
+  ENT ||--o{ DOC_ENT : linked
+  REL ||--o{ REL_EVID : supportedBy
+  ENT ||--o{ REL : from
+  ENT ||--o{ REL : to
+  DOC ||--o{ REL_EVID : cites
+  CHUNK ||--o{ REL_EVID : cites
+  OBS ||--o{ REL_EVID : cites
+
+  %% Mapping:
+  %% WS=WORKSPACES, DOC=KNOWLEDGE_DOCUMENTS, CHUNK=KNOWLEDGE_CHUNKS,
+  %% OBS=MEMORY_OBSERVATIONS, SUM=MEMORY_SUMMARIES, PROF=MEMORY_PROFILES,
+  %% ENT=ENTITIES, ALIAS=ENTITY_ALIASES, DOC_ENT=DOCUMENT_ENTITIES,
+  %% REL=RELATIONSHIPS, REL_EVID=RELATIONSHIP_EVIDENCE
 
   WORKSPACES {
     string id PK
@@ -243,4 +250,3 @@ Metadata budget: keep under ~1 KB; store heavy fields in PlanetScale and referen
 - docs/SYNC_DESIGN.md
 - docs/SEARCH_DESIGN.md
 - docs/memory/GRAPH.md
-

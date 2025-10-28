@@ -155,7 +155,7 @@ flowchart TB
   L --> Q
   M --> Q
   P --> Q
-  Q --> R[API v1: search • contents • similar • answer]
+  Q --> R[API v1: search / contents / similar / answer]
 ```
 
 ---
