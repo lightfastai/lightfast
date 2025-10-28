@@ -8,10 +8,10 @@ export function WhyCloudInfrastructureSection() {
     <div className="space-y-12">
       <div className="space-y-6">
         <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">
-          <span>Why Agent Orchestration with Lightfast?</span>
+          <span>The Problem</span>
         </div>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-          Orchestration for startups looking to scale
+          Your team's memory, organized
         </h2>
       </div>
 
@@ -33,18 +33,18 @@ export function WhyCloudInfrastructureSection() {
                   <div className="flex items-center gap-2">
                     <span className="text-red-500">✗</span>
                     <span className="text-foreground">
-                      Context fragmentation
+                      Lost context
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-red-500">✗</span>
                     <span className="text-foreground">
-                      Engineering bottlenecks
+                      Knowledge scattered
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-red-500">✗</span>
-                    <span className="text-foreground">Manual workflows</span>
+                    <span className="text-foreground">Hunting for answers</span>
                   </div>
                 </div>
               </div>
@@ -58,7 +58,7 @@ export function WhyCloudInfrastructureSection() {
                 <div className="flex items-center gap-2">
                   <span className="text-red-500">✗</span>
                   <span className="text-xs font-mono text-foreground">
-                    CONTEXT
+                    SCATTERED
                   </span>
                 </div>
                 <div className="h-2 bg-muted rounded" />
@@ -69,7 +69,7 @@ export function WhyCloudInfrastructureSection() {
                 <div className="flex items-center gap-2">
                   <span className="text-red-500">✗</span>
                   <span className="text-xs font-mono text-foreground">
-                    TEAM
+                    LOST
                   </span>
                 </div>
                 <div className="h-2 bg-muted rounded" />
@@ -80,7 +80,7 @@ export function WhyCloudInfrastructureSection() {
                 <div className="flex items-center gap-2">
                   <span className="text-green-500">✓</span>
                   <span className="text-xs font-mono text-foreground">
-                    WITH LIGHTFAST
+                    ORGANIZED
                   </span>
                 </div>
                 <div className="h-2 bg-green-500/40 rounded" />
@@ -105,36 +105,37 @@ export function WhyCloudInfrastructureSection() {
         <div className="space-y-8">
           <div className="space-y-3">
             <h3 className="text-xl font-semibold text-foreground">
-              Is context fragmentation slowing you down?
+              Losing context across tools?
             </h3>
             <p className="text-muted-foreground">
-              Managing codebase + Linear + Notion + GitHub + Slack in one place.
-              Our platform provides deep context understanding across your
-              entire stack, preventing context degradation in multi-agent
-              workflows.
+              Decisions in Slack. Context in Linear. Code in GitHub. When
+              someone asks "why did we do this?" the answer is scattered across
+              your entire stack. Lightfast unifies everything so you can search
+              by meaning and find what you need instantly.
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-xl font-semibold text-foreground">
-              Are you building integrations instead of product?
+              Searching instead of building?
             </h3>
             <p className="text-muted-foreground">
-              Deep tool orchestration, not surface-level connections. We provide
-              semantic understanding of workflows with stateful context and
-              fine-grain control across your entire tool ecosystem.
+              Your team spends hours hunting for information instead of shipping
+              product. Every answer should cite its source. Every search should
+              understand intent. Stop wasting time—make knowledge instantly
+              accessible.
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-xl font-semibold text-foreground">
-              Can your team self-serve answers?
+              Can anyone find what they need?
             </h3>
             <p className="text-muted-foreground">
-              Non-technical teammates execute technical workflows without
-              engineering bottlenecks. Our orchestration layer enables
-              multi-step workflows with proper resource scheduling and error
-              recovery.
+              New teammates shouldn't need to ask 10 people to find context.
+              Agents shouldn't fail because they can't access knowledge.
+              Lightfast makes your team's memory searchable for everyone—people
+              and AI.
             </p>
           </div>
         </div>

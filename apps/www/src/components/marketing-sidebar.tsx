@@ -116,7 +116,7 @@ export function MarketingSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={`h-auto p-0 text-3xl font-light bg-transparent hover:bg-transparent hover:opacity-60 data-[active=true]:bg-transparent data-[active=true]:font-light justify-start ${exposureTrial.className}`}
+                      className={`h-auto p-0 text-xl font-light bg-transparent hover:bg-transparent hover:opacity-60 data-[active=true]:bg-transparent data-[active=true]:font-light justify-start ${exposureTrial.className}`}
                     >
                       <Link
                         href={link.href}
