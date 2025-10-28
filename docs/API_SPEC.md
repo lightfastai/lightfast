@@ -53,9 +53,14 @@ Request
 
 ```json
 {
-  "workspaceId": "ws_123",
+  "organizationId": "org_001",          // optional; required if scope = "org"
+  "workspaceId": "ws_123",              // optional when scope = "org"
+  "scope": "auto",                       // auto | workspace | org (default: auto)
   "q": "who owns billing service and related incidents?",
-  "mode": "auto",
+  "mode": "auto",                        // auto | knowledge | graph | hybrid | keyword | neural | fast (default: auto)
+  "autoprompt": true,                     // default: true (query rewrite / expansion)
+  "context": false,                       // default: false (if true, return concatenated contents)
+  "moderation": false,                    // optional content moderation
   "filters": {
     "sources": ["github", "notion", "slack"],
     "types": ["pull_request", "issue", "doc"],
@@ -64,7 +69,7 @@ Request
     "after": "2025-01-01T00:00:00.000Z",
     "before": null
   },
-  "topK": 20,
+  "topK": 20,                             // default: 10 (cap 50)
   "include": {
     "document": true,
     "rationale": true,
@@ -76,7 +81,12 @@ Request
 }
 ```
 
-- `mode`: `auto | knowledge | graph | hybrid` (default `auto`)
+- `scope`: `auto | workspace | org` (default `auto`)
+  - auto: infer from query + context (defaults to workspace if provided; falls back to org if recall is low)
+- `mode`: `auto | knowledge | graph | hybrid | keyword | neural | fast` (default `auto`)
+  - auto: router chooses lexical + dense + optional graph/rerank; fast path for identifiers
+- `autoprompt`: enable light query rewriting/expansion
+- `context`: when `true`, returns concatenated contents optimized for RAG
 - `filters`: optional metadata constraints
 - `include.rationale`: includes graph seeds/edges when graph bias used
 - `quality.rerank`: toggles reranking for semantic queries
@@ -114,6 +124,10 @@ Response
   },
   "usage": {
     "latencyMs": 122,
+    "routerScope": "workspace",
+    "inferredFamily": "observations",           // docs | code | tickets | messages | incidents | summaries
+    "inferredTimeRange": { "after": null, "before": null },
+    "contributionShares": { "chunks": 0.35, "observations": 0.55, "summaries": 0.10 },
     "stages": { "lexical": 21, "vector": 44, "rerank": 36, "hydrate": 21 }
   },
   "requestId": "req_789"
@@ -123,6 +137,21 @@ Response
 Notes
 - Results are chunk-oriented but carry document metadata. Clients can request raw content via `/v1/contents`.
 - Graph rationale only included if `include.rationale = true`.
+- When no filters are provided, the router infers scope, family (docs/code/tickets/messages/incidents/summaries), and temporal hints; recency decay is applied by default.
+
+---
+
+### What does mode = "auto" do?
+
+`auto` delegates to the retrieval router to maximize quality within latency budgets:
+
+- Scope inference: prefer workspace if provided; fallback to org aggregator if workspace recall is low or the intent is org‑level (policy/ownership/roadmap).
+- Family inference: classify the query (docs/code/tickets/messages/incidents/summaries) and prioritize the corresponding index family.
+- Hybrid retrieval: combine lexical prefilter with dense vector search; identifier fast‑paths skip embedding.
+- Graph seeding: resolve entities/aliases from the query, apply bounded 1–2 hop boost with rationale (if used).
+- Temporal: parse natural time (e.g., "last week") or apply recency decay by default.
+- Personalization: bias with profile centroids when available (team/workspace).
+- Rerank: apply cross‑encoder rerank on fused top‑K and trim tails; thresholds are calibrated per workspace.
 
 ---
 
@@ -196,11 +225,21 @@ Request
 
 ```json
 {
-  "workspaceId": "ws_123",
-  "subject": { "kind": "text", "text": "Stripe webhook retries and idempotency" },
-  "by": "chunks",
+  "organizationId": "org_001",          // optional; required if scope = "org"
+  "workspaceId": "ws_123",              // optional when scope = "org"
+  "scope": "auto",                       // auto | workspace | org (default: auto)
+  "mode": "auto",                        // auto | neural | keyword | hybrid | fast (default: auto)
+  "autoprompt": true,                     // default: true (query rewrite / expansion for text)
+  "subject": {
+    "kind": "text",
+    "text": "Stripe webhook retries and idempotency"
+    // or { "kind": "document", "documentId": "doc_abc" }
+    // or { "kind": "chunk",    "chunkId":    "chnk_001" }
+  },
+  "by": "chunks",                         // 'chunks' | 'documents'
   "filters": { "sources": ["github", "notion"] },
-  "topK": 10
+  "topK": 10,                              // default: 10 (cap 50)
+  "quality": { "rerank": false }
 }
 ```
 
@@ -222,7 +261,7 @@ Response
       "highlight": "Implements idempotency key and backoff..."
     }
   ],
-  "usage": { "latencyMs": 88 },
+  "usage": { "latencyMs": 88, "routerScope": "workspace" },
   "requestId": "req_791"
 }
 ```
@@ -237,9 +276,13 @@ Request (non-streaming)
 
 ```json
 {
-  "workspaceId": "ws_123",
+  "organizationId": "org_001",          // optional; required if scope = "org"
+  "workspaceId": "ws_123",              // optional when scope = "org"
+  "scope": "auto",                       // auto | workspace | org (default: auto)
   "question": "Who owns the billing service and what incidents affected it in Q3?",
-  "mode": "hybrid",
+  "mode": "auto",                        // auto | knowledge | graph | hybrid | keyword | neural | fast
+  "autoprompt": true,
+  "context": false,                      // if true, embed concatenated retrieval contents into prompt
   "answerType": "abstractive",
   "citations": true,
   "maxTokens": 400,
@@ -248,7 +291,8 @@ Request (non-streaming)
     "after": "2025-07-01T00:00:00.000Z",
     "before": "2025-09-30T23:59:59.999Z"
   },
-  "include": { "rationale": true }
+  "include": { "rationale": true },
+  "quality": { "rerank": true }
 }
 ```
 
@@ -270,7 +314,7 @@ Response (non-streaming)
     "latencyMs": 130
   },
   "generation": { "model": "gpt-4o-mini", "latencyMs": 420 },
-  "usage": { "latencyMs": 580 },
+  "usage": { "latencyMs": 580, "routerScope": "workspace" },
   "requestId": "req_792"
 }
 ```
@@ -289,7 +333,7 @@ Notes
 
 ```ts
 // Mode selection
-export type RetrievalMode = 'auto' | 'knowledge' | 'graph' | 'hybrid';
+export type RetrievalMode = 'auto' | 'knowledge' | 'graph' | 'hybrid' | 'keyword' | 'neural' | 'fast';
 
 // Shared filters
 export interface RetrievalFilters {
@@ -301,6 +345,9 @@ export interface RetrievalFilters {
   after?: string;      // ISO date
   before?: string;     // ISO date
 }
+
+// Scope selection
+export type RetrievalScope = 'auto' | 'workspace' | 'org';
 ```
 
 ---

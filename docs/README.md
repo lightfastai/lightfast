@@ -111,6 +111,7 @@ See API_SPEC.md for request/response contracts and limits.
 - Retrieval
   - SEARCH_DESIGN.md — Retrieval & Ranking
   - RETRIEVAL_ROUTER_DIAGRAM.md — Router internals (flow, knobs)
+  - research/NEURAL_SEARCH_PAPERS.md — Curated literature for neural search
 - Ingestion
   - SYNC_DESIGN.md — Ingestion & Consolidation
   - OBSERVATIONS_HEURISTICS.md — High‑signal extraction
@@ -156,3 +157,4 @@ See API_SPEC.md for request/response contracts and limits.
 - Implementation Guides (follow‑up)
   - Minimal ingestion walkthrough (from GitHub PR → chunks + observations).
   - Retrieval router tuning guide (how to calibrate weights and thresholds).
+- What does Data Related to Processes, what about mission vision, etc, etc.

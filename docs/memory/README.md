@@ -37,6 +37,7 @@ Beliefs/intent are expressed within summaries — not as a privileged type.
 
 1) `SPEC.md` — Neural memory spec and rollout
 2) `GRAPH.md` — Graph rationale and bounded traversal
+3) `ORG_WORKSPACE_MEMORY.md` — Org vs Workspace scoping for neural memory
 3) `../SEARCH_DESIGN.md` — retrieval and fusion
 4) `../SYNC_DESIGN.md` — ingestion and consolidation
 5) `../EVALUATION_PLAYBOOK.md` — suites/metrics and calibration
