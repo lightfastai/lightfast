@@ -13,24 +13,24 @@ import {
 import { X, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { LIGHT_TRANSLATIONS } from "~/config/translations";
-import { useNavigationOverlay } from "./navigation-overlay-provider";
 import { useTextCycle } from "~/hooks/use-text-cycle";
 import { exposureTrial } from "~/lib/fonts";
 import { LightfastSineWaveMatrix } from "./lightfast-sine-wave-matrix";
+import { wwwUrl } from "~/lib/related-projects";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Updates", href: "/updates" },
-  { label: "Docs", href: "/docs/get-started/overview" },
-  { label: "Early Access", href: "/early-access" },
+  { label: "Home", href: wwwUrl },
+  { label: "Search", href: "/search" },
+  { label: "Pricing", href: `${wwwUrl}/pricing` },
+  { label: "Updates", href: `${wwwUrl}/updates` },
+  { label: "Docs", href: `${wwwUrl}/docs/get-started/overview` },
 ] as const;
 
 const THIRD_COLUMN_ITEMS = [
-  { label: "Manifesto", href: "/manifesto" },
-  { label: "Contact", href: "/contact" },
-  { label: "Terms", href: "/legal/terms" },
-  { label: "Privacy", href: "/legal/privacy" },
+  { label: "Manifesto", href: `${wwwUrl}/manifesto` },
+  { label: "Contact", href: `${wwwUrl}/contact` },
+  { label: "Terms", href: `${wwwUrl}/legal/terms` },
+  { label: "Privacy", href: `${wwwUrl}/legal/privacy` },
 ] as const;
 
 const SOCIAL_LINKS = [
@@ -56,14 +56,13 @@ interface BrandingMenuSheetProps {
  * - Slides down from top (2/3 viewport height)
  * - 3-column layout: Japanese "Light" | Navigation + Social | Legal
  * - Staggered animations
- * - Uses static variant animation when navigating to Home
+ * - Simplified for search app (no manifesto navigation overlay)
  */
 export function BrandingMenuSheet({
   open,
   onOpenChange,
 }: BrandingMenuSheetProps) {
   const pathname = usePathname();
-  const { navigateFromManifesto } = useNavigationOverlay();
 
   // Text cycling for Japanese "Light" on hover
   const { currentItem, start, reset, isActive } = useTextCycle(
@@ -73,12 +72,6 @@ export function BrandingMenuSheet({
       loop: false,
     },
   );
-
-  const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onOpenChange(false);
-    navigateFromManifesto("/");
-  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -92,7 +85,7 @@ export function BrandingMenuSheet({
         <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-4 flex items-center justify-between">
           <div className="-ml-2 flex items-center">
             <Button variant="ghost" size="lg" className="group" asChild>
-              <Link href="/" onClick={handleHomeClick}>
+              <Link href={wwwUrl} onClick={() => onOpenChange(false)}>
                 <Icons.logo className="size-22 text-foreground transition-colors group-hover:text-white" />
               </Link>
             </Button>
@@ -162,11 +155,7 @@ export function BrandingMenuSheet({
                       )}
                       <Link
                         href={item.href}
-                        onClick={
-                          item.href === "/"
-                            ? handleHomeClick
-                            : () => onOpenChange(false)
-                        }
+                        onClick={() => onOpenChange(false)}
                         className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                       >
                         {item.label}

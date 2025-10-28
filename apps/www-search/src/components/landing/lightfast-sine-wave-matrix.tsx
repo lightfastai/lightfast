@@ -8,12 +8,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import { wwwUrl } from "~/lib/related-projects";
 
 /**
  * LightfastSineWaveMatrix - Animated matrix wave pattern component
  *
  * Displays a 7x7 matrix grid with sine wave animation pattern.
- * Links to the manifesto page with a tooltip on hover.
+ * Links to the main www site.
  * Used in navigation sidebars and menu overlays.
  *
  * Features:
@@ -21,13 +22,8 @@ import {
  * - Sine wave animation at 24fps
  * - Bordered container with rounded corners
  * - 80% brightness for subtle effect
- * - Clickable link to /manifesto
- * - Hover tooltip: "Learn more about our brand"
- *
- * @example
- * ```tsx
- * <LightfastSineWaveMatrix />
- * ```
+ * - Clickable link to main site
+ * - Hover tooltip: "Learn more about our company"
  */
 export function LightfastSineWaveMatrix() {
   return (
@@ -35,8 +31,9 @@ export function LightfastSineWaveMatrix() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            href="/manifesto"
+            href={`${wwwUrl}/manifesto`}
             className="block border border-border p-2 w-fit rounded-sm overflow-hidden text-foreground hover:opacity-80 transition-opacity"
+            aria-label="Learn more about Lightfast"
           >
             <Matrix
               rows={7}
