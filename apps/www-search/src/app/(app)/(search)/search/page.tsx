@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SearchInput } from "~/components/search/search-input";
-import { LightfastImageViewer } from "~/components/search/lightfast-image-viewer";
+import { SearchNavbar } from "~/components/search/search-navbar";
 import { exposureTrial } from "~/lib/fonts";
 
 export const metadata: Metadata = {
@@ -36,45 +36,22 @@ export const metadata: Metadata = {
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Search Section */}
-      <div className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="relative max-w-5xl w-full mx-auto">
-          <div className="space-y-12">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <h1
-                className={`text-4xl font-light tracking-[-0.7] text-foreground ${exposureTrial.className}`}
-              >
-                Search about Lightfast
-              </h1>
-              <p className="text-sm max-w-xs text-muted-foreground mx-auto">
-                Try searching for features, integrations, or documentation about
-                Lightfast
-              </p>
-            </div>
+    <div className="h-full w-full flex flex-col">
+      {/* Navbar with Menu */}
+      <SearchNavbar />
 
-            {/* Search Input */}
-            <SearchInput />
+      {/* Main Content - Top Aligned */}
+      <div className="flex-1 overflow-y-auto px-4 pt-24">
+        <div className="w-full max-w-3xl mx-auto space-y-8 pb-12">
+          {/* Header */}
+          <h1
+            className={`text-4xl font-light tracking-[-0.7] text-foreground ${exposureTrial.className}`}
+          >
+            Search about Lightfast
+          </h1>
 
-            {/* Helper Text */}
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Try searching for features, integrations, or documentation
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Image Viewer Section */}
-      <div className="py-16 px-4">
-        <div className="w-full max-w-7xl mx-auto">
-          <div className="h-[700px] w-full">
-            <LightfastImageViewer
-              src={"/images/playground-placeholder-2.webp"}
-            />
-          </div>
+          {/* Search Input */}
+          <SearchInput />
         </div>
       </div>
     </div>
