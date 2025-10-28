@@ -70,7 +70,7 @@ export function MarketingSidebar() {
       side="left"
       variant="sidebar"
       collapsible="header-only"
-      className="border-0 pl-16 ![border-right:0]"
+      className="border-0 px-12 ![border-right:0]"
     >
       {/* Header with Logo and Sidebar Trigger */}
       <SidebarHeader className="p-0">

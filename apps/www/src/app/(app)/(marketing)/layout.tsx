@@ -30,7 +30,7 @@ export default function MarketingLayout({
         {/* Main Content Area */}
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Header with actions */}
-          <header className="shrink-0 py-4 px-16 bg-background">
+          <header className="shrink-0 py-4 px-12 bg-background">
             <div className="flex items-center justify-end">
               {/* Action Buttons - Right */}
               <div className="flex items-center gap-4">
@@ -98,7 +98,7 @@ export default function MarketingLayout({
 
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="px-16 py-16">
+            <div className="px-12 py-12">
               {/* Page Content */}
               <main className="min-w-0">{children}</main>
 
