@@ -13,7 +13,8 @@
   },
   "scripts": {
     "dev": "basehub dev",
-    "build": "basehub build",
+    "build": "echo '[skip] @vendor/cms build is handled by the consuming app'",
+    "basehub:build": "basehub build",
     "analyze": "basehub",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "prettier --check . --ignore-path ../../.gitignore",
