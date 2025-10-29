@@ -44,7 +44,7 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
         {/* Main Content Area */}
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Header with actions */}
-          <header className="shrink-0 py-4 px-16 bg-background">
+          <header className="shrink-0 py-4 page-gutter-wide bg-background">
             <div className="flex items-center justify-end">
               {/* Action Buttons - Right (from right to left: Menu, Sign In, GitHub, Search) */}
               <div className="flex items-center gap-4">
@@ -94,7 +94,7 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
 
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="px-16 py-16">
+            <div className="page-gutter-wide py-16">
               {/* Page Content */}
               <main className="min-w-0">{children}</main>
             </div>

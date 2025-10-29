@@ -10,7 +10,7 @@ const config: NextConfig = {
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */
-  transpilePackages: ["@repo/ui", "@repo/url-utils"],
+  transpilePackages: ["@repo/ui", "@repo/url-utils", "@vendor/seo"],
 };
 
 // Use withMicrofrontends (www will start the proxy automatically)

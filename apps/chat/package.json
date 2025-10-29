@@ -60,6 +60,7 @@
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
+    "@vendor/seo": "workspace:*",
     "@vendor/storage": "workspace:^",
     "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.1.28",

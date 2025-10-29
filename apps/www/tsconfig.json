@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "types": [],
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@vendor/cms/*": ["../../vendor/cms/*"]
     },
     "plugins": [{ "name": "next" }],
     "module": "esnext"

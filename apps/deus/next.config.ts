@@ -11,12 +11,13 @@ import { mergeNextConfig } from "@vendor/next/merge-config";
 const config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     reactStrictMode: true,
-    transpilePackages: [
-      "@repo/ui",
-      "@repo/site-config",
-      "@vendor/observability",
-      "@vendor/next",
-    ],
+  transpilePackages: [
+    "@repo/ui",
+    "@repo/site-config",
+    "@vendor/seo",
+    "@vendor/observability",
+    "@vendor/next",
+  ],
     experimental: {
       optimizeCss: true,
       optimizePackageImports: ["@repo/ui", "lucide-react"],

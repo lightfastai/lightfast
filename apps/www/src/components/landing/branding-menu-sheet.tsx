@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "~/components/ui/link";
 import { usePathname } from "next/navigation";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
@@ -13,31 +13,10 @@ import {
 import { X, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { LIGHT_TRANSLATIONS } from "~/config/translations";
-import { useNavigationOverlay } from "./navigation-overlay-provider";
+import { INTERNAL_NAV, SOCIAL_NAV, LEGAL_NAV } from "~/config/nav";
 import { useTextCycle } from "~/hooks/use-text-cycle";
 import { exposureTrial } from "~/lib/fonts";
 import { LightfastSineWaveMatrix } from "./lightfast-sine-wave-matrix";
-
-const NAV_ITEMS = [
-  { label: "Home", href: "/" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Updates", href: "/updates" },
-  { label: "Docs", href: "/docs/get-started/overview" },
-  { label: "Early Access", href: "/early-access" },
-] as const;
-
-const THIRD_COLUMN_ITEMS = [
-  { label: "Manifesto", href: "/manifesto" },
-  { label: "Contact", href: "/contact" },
-  { label: "Terms", href: "/legal/terms" },
-  { label: "Privacy", href: "/legal/privacy" },
-] as const;
-
-const SOCIAL_LINKS = [
-  { label: "X", href: "https://x.com/lightfastai", icon: "twitter" },
-  { label: "GitHub", href: "https://github.com/lightfastai", icon: "gitHub" },
-  { label: "Discord", href: "#discord", icon: "discord" },
-] as const;
 
 // Get Japanese translation
 const JAPANESE_LIGHT = LIGHT_TRANSLATIONS.find(
@@ -63,7 +42,8 @@ export function BrandingMenuSheet({
   onOpenChange,
 }: BrandingMenuSheetProps) {
   const pathname = usePathname();
-  const { navigateFromManifesto, navigateToManifesto } = useNavigationOverlay();
+
+  // Third-column legal links now sourced from shared config
 
   // Text cycling for Japanese "Light" on hover
   const { currentItem, start, reset, isActive } = useTextCycle(
@@ -74,27 +54,8 @@ export function BrandingMenuSheet({
     },
   );
 
-  const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleHomeClick = (_e: React.MouseEvent) => {
     onOpenChange(false);
-    navigateFromManifesto("/");
-  };
-
-  /**
-   * Handle manifesto click
-   * Triggers forward animation when navigating TO manifesto page
-   */
-  const handleManifestoClick = (e: React.MouseEvent) => {
-    // If already on manifesto, don't do anything (just close menu)
-    if (pathname === "/manifesto") {
-      onOpenChange(false);
-      return;
-    }
-
-    // Prevent default navigation and trigger forward animation
-    e.preventDefault();
-    onOpenChange(false);
-    navigateToManifesto();
   };
 
   return (
@@ -106,7 +67,7 @@ export function BrandingMenuSheet({
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
         {/* Header with Logo and Close Button */}
-        <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-4 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 page-gutter-md py-4 flex items-center justify-between">
           <div className="-ml-2 flex items-center">
             <Button variant="ghost" size="lg" className="group" asChild>
               <Link href="/" onClick={handleHomeClick}>
@@ -122,7 +83,7 @@ export function BrandingMenuSheet({
         </div>
 
         {/* Menu Content - 3 Column Grid */}
-        <div className="h-full px-8 sm:px-16 pb-8 pt-32">
+        <div className="h-full page-gutter-md pb-8 pt-32">
           <div className="grid grid-cols-3 gap-x-16 h-full w-full">
             {/* First Column - Japanese "Light" with cycling on hover + Matrix */}
             <div className="col-span-1 flex flex-col justify-between h-full">
@@ -164,7 +125,7 @@ export function BrandingMenuSheet({
             <div className="col-span-1 flex flex-col h-full relative">
               {/* Nav Items */}
               <div className="flex flex-col gap-y-6">
-                {NAV_ITEMS.map((item, index) => {
+                {INTERNAL_NAV.map((item, index) => {
                   const isActive = pathname === item.href;
                   return (
                     <motion.div
@@ -179,14 +140,11 @@ export function BrandingMenuSheet({
                       )}
                       <Link
                         href={item.href}
-                        onClick={
-                          item.href === "/"
-                            ? handleHomeClick
-                            : () => onOpenChange(false)
-                        }
+                        microfrontend={item.microfrontend}
+                        onClick={() => onOpenChange(false)}
                         className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                       >
-                        {item.label}
+                        {item.title}
                       </Link>
                     </motion.div>
                   );
@@ -195,8 +153,8 @@ export function BrandingMenuSheet({
 
               {/* Social Links - Bottom of Second Column */}
               <div className="flex gap-4 absolute bottom-0 left-0">
-                {SOCIAL_LINKS.map((social, index) => {
-                  const Icon = Icons[social.icon];
+                {SOCIAL_NAV.map((social, index) => {
+                  const Icon = social.icon ? Icons[social.icon] : null;
                   return (
                     <motion.div
                       key={social.href}
@@ -209,9 +167,9 @@ export function BrandingMenuSheet({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center w-10 h-10 rounded-full border border-border/20 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        aria-label={social.label}
+                        aria-label={social.label ?? social.title}
                       >
-                        <Icon className="w-5 h-5" />
+                        {Icon ? <Icon className="w-5 h-5" /> : null}
                       </Link>
                     </motion.div>
                   );
@@ -221,7 +179,7 @@ export function BrandingMenuSheet({
 
             {/* Third Column - Manifesto, Contact, Legal Items */}
             <div className="col-span-1 flex flex-col gap-y-6">
-              {THIRD_COLUMN_ITEMS.map((item, index) => {
+              {LEGAL_NAV.map((item, index) => {
                 const isActive = pathname === item.href;
                 return (
                   <motion.div
@@ -238,14 +196,10 @@ export function BrandingMenuSheet({
                     </div>
                     <Link
                       href={item.href}
-                      onClick={
-                        item.href === "/manifesto"
-                          ? handleManifestoClick
-                          : () => onOpenChange(false)
-                      }
+                      onClick={() => onOpenChange(false)}
                       className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                     >
-                      {item.label}
+                      {item.title}
                     </Link>
                   </motion.div>
                 );

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { SettingsNav } from "./_components/settings-nav";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
 	title: "Settings",
 	description: "Manage your account settings and preferences.",
-};
+});
 
 export default function SettingsLayout({
 	children,
@@ -25,4 +26,3 @@ export default function SettingsLayout({
 		</div>
 	);
 }
-

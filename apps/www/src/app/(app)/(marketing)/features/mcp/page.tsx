@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import type { IntegrationIcons } from "@repo/ui/integration-icons";
 import { exposureTrial } from "~/lib/fonts";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
   title: "MCP Servers - Lightfast",
   description:
     "Explore the Model Context Protocol servers that power Lightfast's deep integrations.",
@@ -12,14 +13,6 @@ export const metadata: Metadata = {
       "Explore the Model Context Protocol servers that power Lightfast's deep integrations.",
     url: "https://lightfast.ai/features/mcp",
     type: "website",
-    images: [
-      {
-        url: "https://lightfast.ai/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast MCP Servers",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -31,7 +24,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://lightfast.ai/features/mcp",
   },
-};
+});
 
 interface MCPServer {
   name: string;

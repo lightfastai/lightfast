@@ -25,7 +25,7 @@ export function DeveloperPlatformLanding() {
   return (
     <div className="mx-auto">
       {/* Header Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-3">
           <h1
             className={`text-6xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
@@ -40,7 +40,7 @@ export function DeveloperPlatformLanding() {
       </div>
 
       {/* Quickstart Section - Grid Layout */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="grid grid-cols-1 bg-card border border-border rounded-sm p-6 lg:grid-cols-12 gap-16">
           {/* Left Column: Description (5/12) */}
           <div className="lg:col-span-5 flex flex-col">
@@ -70,7 +70,7 @@ export function DeveloperPlatformLanding() {
       </div>
 
       {/* Products Section */}
-      <div className="py-32">
+      <div className="section-gap-y">
         <div className="space-y-12">
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider font-medium">

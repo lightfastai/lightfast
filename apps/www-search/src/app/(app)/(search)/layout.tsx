@@ -3,5 +3,9 @@ export default function SearchLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="dark bg-background h-screen w-screen overflow-hidden">{children}</div>;
+  return (
+    <div className="dark bg-background/80 backdrop-blur-sm h-screen w-screen overflow-hidden">
+      {children}
+    </div>
+  );
 }

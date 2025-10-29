@@ -11,6 +11,14 @@ export const playgroundUrl = withRelatedProject({
     : 'https://playground.lightfast.ai',
 });
 
+// Get the www URL dynamically based on environment
+export const wwwUrl = withRelatedProject({
+  projectName: 'lightfast-www',
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_WWW_PORT}`
+    : 'https://lightfast.ai',
+});
+
 // Get the cloud URL dynamically based on environment
 export const cloudUrl = withRelatedProject({
   projectName: 'lightfast-app',

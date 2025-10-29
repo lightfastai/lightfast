@@ -58,6 +58,7 @@
     "@vendor/analytics": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/seo": "workspace:*",
     "@vercel/blob": "catalog:",
     "@vercel/related-projects": "catalog:",
     "@vercel/sandbox": "catalog:",

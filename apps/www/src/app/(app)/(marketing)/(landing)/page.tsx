@@ -1,4 +1,6 @@
 import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
+import Link from "~/components/ui/link";
+import { Button } from "@repo/ui/components/ui/button";
 import { exposureTrial } from "~/lib/fonts";
 import { ExaSearchVisual } from "~/components/landing/exa-search-visual";
 import { IntegrationShowcase } from "~/components/landing/integration-showcase";
@@ -9,11 +11,11 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <div className="pb-32">
+      <div className="section-gap-b py-16">
         <div className="space-y-12">
           <div className="space-y-3">
             <h1
-              className={`text-6xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
+              className={`text-4xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
             >
               Memory built for teams
             </h1>
@@ -30,20 +32,20 @@ export default function HomePage() {
       </div>
 
       {/* How It Works Section - Grid Layout */}
-      <div className="pb-32">
-        <div className="grid grid-cols-1 bg-card border border-none rounded-sm lg:grid-cols-12 gap-16">
+      <div className="section-gap-b">
+        <div className="grid grid-cols-1 border border-none bg-muted/40 p-6 rounded-sm lg:grid-cols-12 gap-16">
           {/* Left Column: Simple Description (5/12) */}
           <div className="lg:col-span-4 flex flex-col p-0">
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
                 How It Works
               </p>
-              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl text-foreground">
                 Search by meaning, not keywords
               </h3>
             </div>
-            <div className="flex-1 flex items-center">
-              <div className="space-y-6 -mt-8">
+            <div className="flex-1 flex mt-6 lg:mt-0 lg:items-center">
+              <div className="space-y-8 md:space-y-10 lg:-mt-8">
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
                     Find what you need
@@ -83,12 +85,12 @@ export default function HomePage() {
       </div>
 
       {/* Integrations Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <IntegrationShowcase />
       </div>
 
       {/* Built for Agents Section - Grid Layout */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="grid grid-cols-1 bg-accent/40 p-6 border border-none rounded-sm lg:grid-cols-12 gap-16">
           {/* Left Column: Description */}
           <div className="lg:col-span-4 flex flex-col p-0">
@@ -96,12 +98,12 @@ export default function HomePage() {
               <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
                 For Agents
               </p>
-              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl text-foreground">
                 Built for autonomous workflows
               </h3>
             </div>
-            <div className="flex-1 flex items-center">
-              <div className="space-y-6 -mt-8">
+            <div className="flex-1 flex mt-6 lg:mt-0 lg:items-center">
+              <div className="space-y-8 md:space-y-10 lg:-mt-8">
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
                     MCP tools ready
@@ -142,7 +144,7 @@ export default function HomePage() {
       </div>
 
       {/* Neural Memory Section - Grid Layout */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="grid grid-cols-1 bg-accent/40 p-6 border border-none rounded-sm lg:grid-cols-12 gap-16">
           {/* Left Column: Description */}
           <div className="lg:col-span-4 flex flex-col p-0">
@@ -150,12 +152,12 @@ export default function HomePage() {
               <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
                 Neural Memory
               </p>
-              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl max-w-sm text-foreground">
+              <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl text-foreground">
                 Capture decisions as they happen
               </h3>
             </div>
-            <div className="flex-1 flex items-center">
-              <div className="space-y-6 -mt-8">
+            <div className="flex-1 flex mt-6 lg:mt-0 lg:items-center">
+              <div className="space-y-8 md:space-y-10 lg:-mt-8">
                 <div>
                   <h4 className="text-md font-semibold mb-2 text-foreground">
                     Automatic extraction
@@ -190,6 +192,28 @@ export default function HomePage() {
           {/* Right Column: Memory Visual */}
           <div className="lg:col-span-8 h-full">
             <NeuralMemoryVisual />
+          </div>
+        </div>
+      </div>
+
+      {/* Changelog Section */}
+      <div className="section-gap-b">
+        <div className="bg-accent/40 p-6 border border-none rounded-sm">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
+              Updates
+            </p>
+            <h3 className="text-3xl font-base leading-tight sm:text-3xl lg:text-2xl text-foreground">
+              Changelog
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              See the latest improvements, features, and fixes across Lightfast.
+            </p>
+          </div>
+          <div className="mt-6">
+            <Button variant="secondary" asChild>
+              <Link href="/changelog">View Changelog</Link>
+            </Button>
           </div>
         </div>
       </div>

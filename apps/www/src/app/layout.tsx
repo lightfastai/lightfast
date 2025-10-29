@@ -8,59 +8,22 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { createMetadata } from "@vendor/seo/metadata";
 import {
   PrefetchCrossZoneLinks,
   PrefetchCrossZoneLinksProvider,
 } from "@vercel/microfrontends/next/client";
 
 import { createBaseUrl } from "~/lib/base-url";
-import { StructuredData } from "~/components/structured-data";
+import { JsonLd } from "@vendor/seo/json-ld";
 
-export const metadata: Metadata = {
-  title: {
-    default:
-      "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
-    template: `%s | Lightfast - AI Agent Infrastructure`,
-  },
-  metadataBase: new URL(siteConfig.url),
+export const metadata: Metadata = createMetadata({
+  title: "Lightfast – Neural Memory for Teams",
   description:
-    "The infrastructure layer for the agent economy. Build production-ready AI agents with cloud-native execution engine. Advanced orchestration, resource scheduling, and enterprise-grade security. Deploy in minutes, not days.",
-  keywords: [
-    // Core positioning
-    "AI agent platform",
-    "cloud-native agent execution",
-    "agent infrastructure",
-    "production AI agents",
-    "enterprise AI platform",
-
-    // vs Competitors
-    "Langchain alternative",
-    "CrewAI alternative",
-    "better than Trigger.dev for AI",
-    "AI agent orchestration platform",
-
-    // Technical features
-    "state machine orchestration",
-    "resource scheduling AI",
-    "human-in-the-loop AI",
-    "AI agent deployment",
-    "agent execution engine",
-    "AI workflow automation",
-
-    // Developer focused
-    "developer AI platform",
-    "AI infrastructure tools",
-    "scalable AI agents",
-    "AI agent development",
-    "agent framework",
-    "AI development platform",
-
-    // Business value
-    "enterprise AI infrastructure",
-    "production-ready AI",
-    "AI agent economy",
-    "agent deployment platform",
-  ],
+    "Neural memory built for teams. Search by meaning with sources. Capture decisions, context, and ownership across code, docs, and tools. Developer‑first API and MCP tools.",
+  image: siteConfig.ogImage,
+  applicationName: "Lightfast Neural Memory",
+  metadataBase: new URL(siteConfig.url),
   authors: [
     {
       name: siteConfig.name,
@@ -70,7 +33,7 @@ export const metadata: Metadata = {
   creator: siteConfig.name,
   publisher: siteConfig.name,
   category: "Technology",
-  classification: "AI Infrastructure Platform",
+  classification: "Neural Memory Platform",
   robots: {
     index: true,
     follow: true,
@@ -83,33 +46,24 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "PLACEHOLDER_VERIFICATION_CODE", // Replace with actual Google Search Console verification code
+    google: "PLACEHOLDER_VERIFICATION_CODE",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
+    title: "Lightfast – Neural Memory for Teams",
     description:
-      "The infrastructure layer for the agent economy. Deploy production-ready AI agents with advanced orchestration, resource scheduling, and enterprise security.",
+      "Search by meaning with sources. Capture decisions, context, and ownership across your stack.",
     siteName: siteConfig.name,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
-        type: "image/jpeg",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast - Cloud-Native Agent Execution Engine for Production AI",
+    title: "Lightfast – Neural Memory for Teams",
     description:
-      "The infrastructure layer for the agent economy. Deploy production-ready AI agents with advanced orchestration and enterprise security.",
+      "Semantic search with sources. Developer‑first API and MCP tools.",
     images: [siteConfig.ogImage],
   },
   icons: {
@@ -135,7 +89,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.json",
-  applicationName: "Lightfast AI Agent Platform",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -152,7 +105,7 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
-};
+});
 
 export const viewport: Viewport = {
   themeColor: "#09090b",
@@ -166,11 +119,38 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <StructuredData type="Organization" />
-        <StructuredData type="WebSite" />
-        <StructuredData type="SoftwareApplication" />
+        <JsonLd
+          code={{
+            "@context": "https://schema.org",
+            "@type": ["Organization", "TechnologyCompany"],
+            name: siteConfig.name,
+            url: siteConfig.url,
+            logo: `${siteConfig.url}/logo.png`,
+            sameAs: [
+              siteConfig.links.twitter.href,
+              siteConfig.links.github.href,
+              siteConfig.links.discord.href,
+            ],
+          } as any}
+        />
+        <JsonLd
+          code={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: `${siteConfig.name} – Neural Memory for Teams`,
+            url: siteConfig.url,
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+              },
+              "query-input": "required name=search_term_string",
+            },
+          } as any}
+        />
       </head>
-      <body className={cn("min-h-screen", fonts)}>
+      <body className={cn("min-h-screen bg-background dark", fonts)}>
         <PrefetchCrossZoneLinksProvider>
           <PostHogProvider baseUrl={createBaseUrl()}>
             {children}

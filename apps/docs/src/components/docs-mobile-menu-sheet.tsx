@@ -50,7 +50,7 @@ export function DocsMobileMenuSheet({
         <SheetTitle className="sr-only">Documentation Menu</SheetTitle>
 
         {/* Header with Logo and Close Button */}
-        <div className="absolute top-0 left-0 right-0 px-8 sm:px-16 py-8 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 page-gutter-wide py-8 flex items-center justify-between">
           <div className="-ml-2 flex items-center">
             <Button variant="ghost" size="lg" className="group" asChild>
               <Link href="/" onClick={() => onOpenChange(false)}>
@@ -66,7 +66,7 @@ export function DocsMobileMenuSheet({
         </div>
 
         {/* Menu Content */}
-        <div className="h-full px-8 sm:px-16 pb-8 pt-32">
+        <div className="h-full page-gutter-wide pb-8 pt-32">
           <div className="grid grid-cols-2 gap-x-16 h-full w-full">
             {/* First Column - Matrix */}
             <div className="col-span-1 flex flex-col justify-start">

@@ -26,6 +26,7 @@ let config: NextConfig = withBetterStack(
 			"@repo/ui",
 			"@repo/site-config",
 			"@repo/url-utils",
+			"@vendor/seo",
 			"@vendor/clerk",
 			"@vendor/observability",
 			"@vendor/next",

@@ -6,6 +6,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Providers } from "@/src/components/providers";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { createMetadata } from "@vendor/seo/metadata";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -18,35 +19,24 @@ export default function Layout({ children }: { children: ReactNode }) {
   );
 }
 
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
+export const metadata: Metadata = createMetadata({
+  title: "Lightfast – Neural Memory for Teams",
   description: siteConfig.description,
-  keywords: [...docsMetadata.keywords],
+  image: siteConfig.ogImage,
+  metadataBase: new URL(siteConfig.url),
   authors: [...docsMetadata.authors],
   creator: docsMetadata.creator,
-  metadataBase: new URL(siteConfig.url),
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: siteConfig.name,
+    title: `${siteConfig.name} – Neural Memory for Teams`,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.name,
+    title: `${siteConfig.name} – Neural Memory for Teams`,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
     creator: "@lightfastai",
@@ -70,4 +60,4 @@ export const metadata: Metadata = {
       },
     ],
   },
-};
+});

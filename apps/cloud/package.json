@@ -38,6 +38,7 @@
 		"@vendor/next": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/security": "workspace:*",
+		"@vendor/seo": "workspace:*",
 		"@vendor/upstash": "workspace:*",
 		"@vercel/toolbar": "^0.1.28",
 		"date-fns": "^4.1.0",

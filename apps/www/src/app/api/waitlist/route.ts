@@ -283,7 +283,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<WaitlistR
 				{
 					success: true,
 					message:
-						"Successfully joined the waitlist! We'll send you an invite when Lightfast Cloud is ready.",
+						"Successfully joined the waitlist! We'll send you an invite when Lightfast is ready.",
 				},
 				{ status: 200 }
 			);

@@ -18,6 +18,7 @@ let nextConfig: NextConfig = withBetterStack(
 			"@lightfast/types",
 			"@lightfast/evals",
 			"@vendor/analytics",
+			"@vendor/seo",
 		],
 		experimental: {
 			/** Optimize client-side routing */

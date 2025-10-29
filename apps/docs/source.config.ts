@@ -4,4 +4,8 @@ export const { docs, meta } = defineDocs({
 	dir: "src/content/docs",
 });
 
+export const { docs: apiDocs, meta: apiMeta } = defineDocs({
+	dir: "src/content/api",
+});
+
 export default defineConfig();

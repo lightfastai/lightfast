@@ -1,33 +1,31 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
+import { wwwUrl } from "~/lib/related-projects";
 
 import { WaitlistForm } from "./_components/(waitlist)/waitlist-form";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Lightfast Cloud - Enterprise Agent Execution Platform | Join Waitlist",
-  description: "Join the waitlist for Lightfast Cloud - the enterprise-grade platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring for mission-critical workloads.",
-  keywords: [
-    "Lightfast Cloud waitlist",
-    "enterprise AI platform",
-    "agent deployment platform", 
-    "production AI agents",
-    "enterprise agent orchestration",
-    "AI infrastructure platform",
-    "cloud agent platform",
-    "early access AI platform"
-  ],
+export const metadata: Metadata = createMetadata({
+  title:
+    "Lightfast Cloud - Enterprise Agent Execution Platform | Join Waitlist",
+  description:
+    "Join the waitlist for Lightfast Cloud - the enterprise-grade platform for deploying and scaling AI agents in production. Advanced orchestration, security, and monitoring for mission-critical workloads.",
   openGraph: {
     title: "Join Lightfast Cloud Waitlist - Enterprise Agent Platform",
-    description: "Get early access to the enterprise-grade platform for deploying AI agents in production.",
+    description:
+      "Get early access to the enterprise-grade platform for deploying AI agents in production.",
     url: "https://cloud.lightfast.ai",
   },
   twitter: {
-    title: "Join Lightfast Cloud Waitlist - Enterprise Agent Platform", 
-    description: "Get early access to the enterprise-grade platform for deploying AI agents in production.",
+    title: "Join Lightfast Cloud Waitlist - Enterprise Agent Platform",
+    description:
+      "Get early access to the enterprise-grade platform for deploying AI agents in production.",
   },
   alternates: {
     canonical: "https://cloud.lightfast.ai",
   },
-};
+});
 
 export default function HomePage() {
 	return (
@@ -45,6 +43,19 @@ export default function HomePage() {
 					<div className="w-full max-w-sm">
 						<WaitlistForm />
 					</div>
+				</div>
+
+				{/* Changelog section */}
+				<div className="max-w-md mx-auto text-center border-t border-border pt-10">
+					<h2 className="text-2xl font-semibold mb-2">Changelog</h2>
+					<p className="text-sm text-muted-foreground mb-6">
+						See what's new, improvements, and fixes across Lightfast.
+					</p>
+					<Button variant="outline" size="lg" asChild>
+						<Link href={`${wwwUrl}/changelog`} target="_blank" rel="noopener noreferrer">
+							View Changelog
+						</Link>
+					</Button>
 				</div>
 			</div>
 		</div>
