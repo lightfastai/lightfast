@@ -10,24 +10,14 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { env } from "~/env";
 import { QueryProvider } from "~/providers/query-provider";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Lightfast Playground",
-    template: `%s - Lightfast Playground`,
-  },
-  metadataBase: new URL(siteConfig.url),
+export const metadata: Metadata = createMetadata({
+  title: "Lightfast Playground",
   description: "Interactive AI agent playground",
-  keywords: [
-    "Lightfast Playground",
-    "AI agent testing",
-    "interactive agent sandbox",
-    "agent prototyping",
-    "AI workflow testing",
-    "developer playground",
-    "agent experimentation",
-    "browser automation testing",
-  ],
+  image: siteConfig.ogImage,
+  metadataBase: new URL(siteConfig.url),
+  applicationName: "Lightfast Playground",
   authors: [
     {
       name: siteConfig.name,
@@ -42,14 +32,6 @@ export const metadata: Metadata = {
     title: "Lightfast Playground",
     description: "Interactive AI agent playground",
     siteName: siteConfig.name,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Playground",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -77,7 +59,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/playground/manifest.webmanifest",
-  applicationName: "Lightfast Playground",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -86,7 +67,7 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-};
+});
 
 export const viewport: Viewport = {
   themeColor: "#09090b",

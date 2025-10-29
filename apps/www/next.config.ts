@@ -13,12 +13,13 @@ import { mergeNextConfig } from "@vendor/next/merge-config";
 import { env } from "~/env";
 
 let config: NextConfig = withBetterStack(
-	mergeNextConfig(vendorConfig, {
-		reactStrictMode: true,
+    mergeNextConfig(vendorConfig, {
+        reactStrictMode: true,
 
 		/** Enables hot reloading for local packages without a build step */
 		transpilePackages: [
 			"@repo/ui",
+			"@vendor/seo",
 			"@vendor/security",
 			"@vendor/analytics",
 			"@vendor/email",
@@ -27,6 +28,7 @@ let config: NextConfig = withBetterStack(
 			"@vendor/observability",
 			"@vendor/next",
 			"@vendor/upstash",
+			"@vendor/cms",
 			"@repo/site-config",
 			"@repo/email",
 			"@repo/lib",
@@ -50,9 +52,9 @@ let config: NextConfig = withBetterStack(
 			// ppr: true,
 		},
 
-		// Note: Rewrites for /docs are handled automatically by @vercel/microfrontends
-		// via microfrontends.json configuration. Manual rewrites are not needed.
-	}),
+        // Note: Rewrites for /docs are handled automatically by @vercel/microfrontends
+        // via microfrontends.json configuration. Manual rewrites are not needed.
+    }),
 );
 
 if (env.VERCEL) {

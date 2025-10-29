@@ -245,7 +245,7 @@ export async function joinWaitlistAction(
 			return {
 				status: "success",
 				message:
-					"Successfully joined the waitlist! We'll send you an invite when Lightfast Cloud is ready.",
+					"Successfully joined the waitlist! We'll send you an invite when Lightfast is ready.",
 			};
 		} catch (clerkError) {
 			// If it's already an error we want to show, return it

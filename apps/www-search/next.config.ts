@@ -14,6 +14,7 @@ const config: NextConfig = {
   transpilePackages: [
     "@repo/ui",
     "@repo/site-config",
+    "@vendor/seo",
     "@vendor/clerk",
     "@vendor/security",
     "@vendor/upstash",

@@ -1,0 +1,42 @@
+{
+  "name": "@vendor/cms",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./index.ts"
+    },
+    "./env": "./env.ts",
+    "./next-config": "./next-config.ts",
+    "./components/*": "./components/*"
+  },
+  "scripts": {
+    "dev": "basehub dev",
+    "build": "basehub build",
+    "analyze": "basehub",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "catalog:",
+    "basehub": "^9.5.2",
+    "react": "19.2.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "next": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

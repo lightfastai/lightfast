@@ -33,6 +33,7 @@
     "@vendor/db": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/seo": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "geist": "catalog:",
     "lucide-react": "catalog:",

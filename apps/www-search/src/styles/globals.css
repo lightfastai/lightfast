@@ -9,20 +9,33 @@
   --brand-gray: oklch(0.1957 0 0);
 }
 
-.dark {
-  --background: oklch(0 0 0);
-  --card: oklch(0.12 0 0);
+/* Placeholder slide animations for search input */
+@keyframes lf-slide-up-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
 
-  /* Sidebar variables */
-  --sidebar-width: 20rem;
-  --sidebar-width-mobile: 18rem;
-  --sidebar-width-icon: 3rem;
-  --sidebar: oklch(0 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: transparent;
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: transparent;
-  --sidebar-ring: oklch(0.556 0 0);
+@keyframes lf-slide-up-out {
+  from {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.animate-lf-slide-up-in {
+  animation: lf-slide-up-in 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.animate-lf-slide-up-out {
+  animation: lf-slide-up-out 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }

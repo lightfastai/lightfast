@@ -55,7 +55,7 @@ export function NeuralMemoryVisual() {
       <div className="absolute inset-0 p-4">
         <div className="relative w-full h-full rounded-sm overflow-hidden">
           <Image
-            src="/images/playground-placeholder-2.webp"
+            src="/images/blue-sky.webp"
             alt="Background"
             fill
             className="object-cover"

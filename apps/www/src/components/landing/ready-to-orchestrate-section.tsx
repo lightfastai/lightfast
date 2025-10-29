@@ -22,7 +22,7 @@ export function ReadyToOrchestrateSection() {
             <div className="absolute top-0 right-0 bottom-0 w-[30%] overflow-hidden hidden lg:block">
               <div className="h-full transition-transform duration-700 ease-out group-hover:scale-110">
                 <Image
-                  src="/images/playground-placeholder-2.webp"
+                  src="/images/blue-sky.webp"
                   alt="Lightfast Playground"
                   width={800}
                   height={600}

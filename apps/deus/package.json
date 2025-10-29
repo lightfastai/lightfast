@@ -43,6 +43,7 @@
 		"@vendor/clerk": "workspace:*",
 		"@vendor/next": "workspace:*",
 		"@vendor/observability": "workspace:*",
+        "@vendor/seo": "workspace:*",
 		"ai": "catalog:",
 		"date-fns": "^4.1.0",
 		"immer": "^10.1.1",

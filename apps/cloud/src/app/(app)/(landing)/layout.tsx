@@ -4,23 +4,22 @@ import { Button } from "@repo/ui/components/ui/button";
 import { chatUrl, wwwUrl } from "~/lib/related-projects";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background relative">
+      <header className="absolute top-0 left-0 right-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-12 flex items-center justify-between">
+          <Link href={wwwUrl} className="flex items-center">
+            <Icons.logo className="h-5 w-auto" />
+          </Link>
 
-	return (
-		<div className="min-h-screen bg-background relative">
-			<header className="absolute top-0 left-0 right-0 z-10">
-				<div className="max-w-5xl mx-auto px-4 py-12 flex items-center justify-between">
-					<Link href={wwwUrl} className="flex items-center">
-						<Icons.logo className="h-5 w-auto" />
-					</Link>
-
-					<Button variant="outline" size="lg" asChild>
-						<Link href={chatUrl} target="_blank" rel="noopener noreferrer">
-							Go to Lightfast Chat
-						</Link>
-					</Button>
-				</div>
-			</header>
-			<main className="h-screen">{children}</main>
-		</div>
-	);
+          <Button variant="outline" size="lg" asChild>
+            <Link href={chatUrl} target="_blank" rel="noopener noreferrer">
+              Go to Lightfast Chat
+            </Link>
+          </Button>
+        </div>
+      </header>
+      <main className="h-screen">{children}</main>
+    </div>
+  );
 }

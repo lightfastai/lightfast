@@ -18,6 +18,7 @@ let config: NextConfig = withBetterStack(
 			"@repo/ui",
 			"@repo/site-config",
 			"@repo/url-utils",
+			"@vendor/seo",
 			"@vendor/observability",
 			"@vendor/next",
 			"@vendor/clerk",
@@ -31,4 +32,3 @@ if (env.VERCEL) {
 }
 
 export default config;
-

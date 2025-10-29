@@ -1,35 +1,18 @@
 import type { Metadata } from "next";
 import { exposureTrial } from "~/lib/fonts";
 import { ArrowRight } from "lucide-react";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
   title: "Use Cases - AI Orchestration for Technical Founders",
   description:
     "Discover how Lightfast helps technical founders scale their startups from 0 to $100M ARR. From product development to team unblocking, see real-world use cases of AI workflow orchestration.",
-  keywords: [
-    "AI workflow automation use cases",
-    "technical founder tools",
-    "startup orchestration platform",
-    "dev workflow automation examples",
-    "AI team collaboration",
-    "product development automation",
-    "startup scaling tools",
-    "AI orchestration examples",
-  ],
   openGraph: {
     title: "Use Cases - AI Orchestration for Technical Founders",
     description:
       "Discover how Lightfast helps technical founders scale their startups. See real-world use cases of AI workflow orchestration.",
     url: "https://lightfast.ai/use-cases",
     type: "website",
-    images: [
-      {
-        url: "https://lightfast.ai/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "AI Workflow Automation Platform",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -41,13 +24,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://lightfast.ai/use-cases",
   },
-};
+});
 
 export default function UseCasesPage() {
   return (
     <>
       {/* Header Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-6">
           <div className="space-y-3">
             <h1
@@ -72,7 +55,7 @@ export default function UseCasesPage() {
       </div>
 
       {/* Product Development Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-12">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
@@ -141,7 +124,7 @@ export default function UseCasesPage() {
       </div>
 
       {/* Team Unblocking Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-12">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
@@ -225,7 +208,7 @@ export default function UseCasesPage() {
       </div>
 
       {/* Context Retrieval Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-12">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
@@ -294,7 +277,7 @@ export default function UseCasesPage() {
       </div>
 
       {/* Cross-Functional Workflows Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="space-y-12">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
@@ -377,7 +360,7 @@ export default function UseCasesPage() {
       </div>
 
       {/* Value Proposition Section */}
-      <div className="pb-32">
+      <div className="section-gap-b">
         <div className="bg-card border border-border rounded-sm p-12">
           <div className="space-y-8 max-w-3xl">
             <div className="space-y-4">

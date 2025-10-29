@@ -3,15 +3,16 @@ import type React from "react";
 import { LayoutBackButton } from "~/components/layout-back-button";
 import { TRPCReactProvider } from "@repo/chat-trpc/react";
 import { Toaster } from "@repo/ui/components/ui/toaster";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
 	title: "Payment - Lightfast Chat",
 	description: "Manage your subscription and billing",
 	robots: {
 		index: false,
 		follow: false,
 	},
-};
+});
 
 interface PaymentLayoutProps {
 	children: React.ReactNode;

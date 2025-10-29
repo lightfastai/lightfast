@@ -127,7 +127,7 @@ export function DeusIntegrationsSection() {
 	const ActiveIcon = activeIntegration.icon;
 
 	return (
-		<section className="bg-background py-20 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
+		<section className="bg-background py-20 sm:py-24 lg:py-32 page-gutter-sm">
 			<div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl space-y-12">
 				<div className="space-y-3 text-left">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">

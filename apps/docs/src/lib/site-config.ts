@@ -4,10 +4,10 @@ type SiteLinks = "twitter" | "github" | "discord" | "chat" | "home";
 
 export const siteConfig: SiteConfig<SiteLinks> = {
 	name: "Lightfast Docs",
-	url: "https://chat.lightfast.ai",
+	url: "https://docs.lightfast.ai",
 	ogImage: "https://lightfast.ai/og.jpg",
 	description:
-		"Documentation for Lightfast Chat - Learn how to build and deploy real-time AI chat applications with Claude 4, GPT-4o, and streaming responses.",
+		"Documentation for Lightfast Neural Memory — Learn how to integrate team memory via simple REST API and MCP tools. Build search by meaning with sources.",
 	links: {
 		twitter: {
 			title: "Twitter",
@@ -16,7 +16,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
 		},
 		github: {
 			title: "GitHub",
-			href: "https://github.com/lightfastai/chat",
+			href: "https://github.com/lightfastai/lightfast",
 			external: true,
 		},
 		discord: {
@@ -42,18 +42,14 @@ export const siteConfig: SiteConfig<SiteLinks> = {
 export const docsMetadata = {
 	keywords: [
 		"Lightfast documentation",
-		"AI agent docs",
-		"agent framework documentation",
-		"AI orchestration guide",
-		"state machine tutorials",
-		"agent deployment guide",
-		"AI infrastructure docs",
+		"neural memory docs",
+		"organizational memory docs",
+		"semantic search docs",
+		"answers with sources",
 		"developer API reference",
-		"workflow automation docs",
-		"resource scheduling guide",
+		"MCP tools",
+		"REST API",
 		"security best practices",
-		"SDK documentation",
-		"agent platform docs",
 	],
 	authors: [
 		{

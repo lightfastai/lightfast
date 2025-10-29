@@ -1,14 +1,11 @@
-import { source } from "@/src/lib/source";
+import { apiSource } from "@/src/lib/source";
 import { createFromSource } from "fumadocs-core/search/server";
 
 /**
- * Fumadocs search API endpoint
- * 
- * Note: This app uses basePath: "/docs" in next.config.ts, so this route is 
- * actually accessible at /docs/api/search, not /api/search.
- * 
- * The search provider in providers.tsx must be configured with the full path:
- * api: "/docs/api/search"
+ * API reference search endpoint
+ *
+ * This route handles search for API reference documentation.
+ * Accessible at /api/search.
  */
-export const { GET } = createFromSource(source);
+export const { GET } = createFromSource(apiSource);
 

@@ -11,6 +11,7 @@ import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
 import { upstashEnv } from "@vendor/upstash/env";
+import { basehubEnv } from "@vendor/cms/env";
 
 export const env = createEnv({
 	extends: [
@@ -24,6 +25,7 @@ export const env = createEnv({
 		posthogEnv,
 		nextEnv,
 		upstashEnv,
+		basehubEnv,
 	],
 	shared: {
 		NODE_ENV: z

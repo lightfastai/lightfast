@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { SearchResults } from "./search-results";
+import { useTextCycle } from "~/hooks/use-text-cycle";
+import { MemoryCta } from "./memory-cta";
 
 interface SearchResult {
   documentId: string;
@@ -84,6 +86,50 @@ export function SearchInput() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Rotating placeholder messages
+  const PLACEHOLDERS = [
+    "Ask me about our team.",
+    "Ask me about our mission.",
+    "Ask me about our docs.",
+  ] as const;
+  const { currentItem: rotatingPlaceholder, start } = useTextCycle(
+    PLACEHOLDERS,
+    {
+      interval: 2000,
+      loop: true,
+    },
+  );
+
+  // Track previous placeholder to animate it out
+  const [prevPlaceholder, setPrevPlaceholder] = useState<string | undefined>(
+    undefined,
+  );
+  const rotationCounterRef = useRef(0);
+  const lastShownRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (rotatingPlaceholder === undefined) return;
+
+    // The previous value becomes the slide-out text
+    setPrevPlaceholder(lastShownRef.current);
+    // Update the last shown ref to the new value
+    lastShownRef.current = rotatingPlaceholder;
+
+    // Bump counter so keys change and animations replay
+    rotationCounterRef.current += 1;
+  }, [rotatingPlaceholder]);
+
+  // Focus input on initial mount
+  useEffect(() => {
+    inputRef.current?.focus();
+    // Select any existing text (none on first load, but keeps UX consistent)
+    inputRef.current?.select();
+    // Start rotating placeholder text
+    start();
+  }, [start]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -92,6 +138,9 @@ export function SearchInput() {
     if (!trimmedText) {
       return;
     }
+
+    // Mark that we've started a search to hide the hero image
+    setHasSearched(true);
 
     console.log("Search:", { query: trimmedText });
 
@@ -121,13 +170,44 @@ export function SearchInput() {
         <form onSubmit={handleSubmit} className="relative">
           <input
             type="text"
+            ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Try searching for features, integrations, or documentation about Lightfast"
+            placeholder={""}
             className="w-full bg-transparent text-foreground text-lg placeholder:text-muted-foreground border-b border-border focus:border-foreground outline-none transition-colors pb-3 pr-12"
             disabled={isSearching}
           />
+
+          {/* Animated placeholder overlay (only when input is empty) */}
+          {query.trim().length === 0 && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 flex items-end pb-3 pr-12"
+            >
+              <div className="relative h-[1.75rem] overflow-hidden w-full text-muted-foreground text-2xl">
+                {/* Previous text sliding out */}
+                {prevPlaceholder && (
+                  <span
+                    key={`prev-${rotationCounterRef.current}`}
+                    className="absolute inset-x-0 bottom-0 animate-lf-slide-up-out"
+                  >
+                    {prevPlaceholder}
+                  </span>
+                )}
+                {/* Current text sliding in */}
+                {rotatingPlaceholder && (
+                  <span
+                    key={`curr-${rotationCounterRef.current}`}
+                    className="absolute inset-x-0 bottom-0 animate-lf-slide-up-in"
+                  >
+                    {rotatingPlaceholder}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <Button
             type="submit"
             size="icon"

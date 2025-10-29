@@ -1,9 +1,9 @@
 import { getPage, getPages } from "@/src/lib/source";
-import { mdxComponents } from "@/mdx-components";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
-import { DocsLayout } from "@/src/components/docs-layout";
+import { SharedPage } from "@/src/components/shared-page";
+import { generatePageMetadata } from "@/src/lib/metadata-utils";
 
 export default async function Page({
   params,
@@ -35,13 +35,7 @@ export default async function Page({
   const MDX = page.data.body;
   const toc = page.data.toc;
 
-  return (
-    <DocsLayout toc={toc}>
-      <article className="max-w-none">
-        <MDX components={mdxComponents} />
-      </article>
-    </DocsLayout>
-  );
+  return <SharedPage MDX={MDX} toc={toc} />;
 }
 
 export function generateStaticParams() {
@@ -57,25 +51,5 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const resolvedParams = await params;
   const page = getPage(resolvedParams.slug);
-
-  if (!page) {
-    return {
-      title: "Not Found",
-      description: "Page not found",
-    };
-  }
-
-  return {
-    title: page.data.title,
-    description: page.data.description,
-    openGraph: {
-      title: page.data.title,
-      description: page.data.description,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: page.data.title,
-      description: page.data.description,
-    },
-  };
+  return generatePageMetadata(page?.data ?? null);
 }

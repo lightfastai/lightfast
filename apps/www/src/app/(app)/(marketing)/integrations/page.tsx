@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { exposureTrial } from "~/lib/fonts";
 import { WaitlistForm } from "../_components/(waitlist)/waitlist-form";
+import { createMetadata } from "@vendor/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
   title: "Integrations - Lightfast",
   description:
     "Deep integrations that understand context, not just trigger-action. Lightfast provides semantic understanding across your entire startup stack.",
@@ -12,14 +13,6 @@ export const metadata: Metadata = {
       "Deep integrations that understand context, not just trigger-action. Lightfast provides semantic understanding across your entire startup stack.",
     url: "https://lightfast.ai/integrations",
     type: "website",
-    images: [
-      {
-        url: "https://lightfast.ai/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Integrations",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -31,7 +24,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://lightfast.ai/integrations",
   },
-};
+});
 
 interface Integration {
   name: string;
