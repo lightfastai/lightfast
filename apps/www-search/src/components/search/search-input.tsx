@@ -6,7 +6,6 @@ import { ArrowUp } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { SearchResults } from "./search-results";
 import { useTextCycle } from "~/hooks/use-text-cycle";
-import { MemoryCta } from "./memory-cta";
 
 interface SearchResult {
   documentId: string;
@@ -86,7 +85,6 @@ export function SearchInput() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Rotating placeholder messages
@@ -139,8 +137,7 @@ export function SearchInput() {
       return;
     }
 
-    // Mark that we've started a search to hide the hero image
-    setHasSearched(true);
+    // Begin search: results section will display when populated
 
     console.log("Search:", { query: trimmedText });
 
