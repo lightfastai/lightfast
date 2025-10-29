@@ -14,7 +14,7 @@ import { CenteredWaitlistSection } from "~/components/landing/centered-waitlist-
 import { ReadyToOrchestrateSection } from "~/components/landing/ready-to-orchestrate-section";
 import { SiteFooter } from "~/components/landing/footer-section";
 import { authUrl } from "~/lib/related-projects";
-import { INTERNAL_NAV, FEATURES_NAV, RESOURCES_NAV } from "~/config/nav";
+import { INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
 
 export default function MarketingLayout({
   children,
@@ -42,9 +42,10 @@ export default function MarketingLayout({
 
           {/* Center: Nav items */}
           <nav className="hidden md:flex items-center md:justify-self-center">
-            {/* Features dropdown */}
+            {/* Features dropdown disabled */}
             <NavigationMenu viewport={false}>
               <NavigationMenuList>
+                {/*
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Features</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -62,6 +63,7 @@ export default function MarketingLayout({
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
+                */}
                 {/* Resources dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
