@@ -40,7 +40,8 @@ export default async function LegalPage({ params }: LegalPageProps) {
       {async ([data]) => {
         "use server";
 
-        const page = data.legalPages.item;
+        const d = data as any;
+        const page = d.legalPages?.item;
         if (!page) notFound();
         return (
           <div className="w-full py-8 sm:py-12 lg:py-16">

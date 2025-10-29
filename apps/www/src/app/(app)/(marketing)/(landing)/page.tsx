@@ -11,7 +11,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <div className="section-gap-b">
+      <div className="section-gap-b py-16">
         <div className="space-y-12">
           <div className="space-y-3">
             <h1
@@ -33,7 +33,7 @@ export default function HomePage() {
 
       {/* How It Works Section - Grid Layout */}
       <div className="section-gap-b">
-        <div className="grid grid-cols-1 border border-none rounded-sm lg:grid-cols-12 gap-16">
+        <div className="grid grid-cols-1 border border-none bg-muted/40 p-6 rounded-sm lg:grid-cols-12 gap-16">
           {/* Left Column: Simple Description (5/12) */}
           <div className="lg:col-span-4 flex flex-col p-0">
             <div className="space-y-3">

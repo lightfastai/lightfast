@@ -5,11 +5,6 @@ export const basehubEnv = createEnv({
   shared: {},
   server: {
     BASEHUB_TOKEN: z.string().min(1).startsWith("bshb_pk_"),
-    BASEHUB_CHANGELOG_TOKEN: z
-      .string()
-      .min(1)
-      .startsWith("bshb_pk_")
-      .optional(),
   },
   client: {},
   experimental__runtimeEnv: {},
@@ -18,4 +13,3 @@ export const basehubEnv = createEnv({
     process.env.npm_lifecycle_event === "lint" ||
     process.env.SKIP_ENV_VALIDATION === "true",
 });
-

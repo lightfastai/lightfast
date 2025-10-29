@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm build:prod",
-    "build:dev": "pnpm with-env:dev sh -c \"pnpm -F @vendor/cms run basehub:build && next build --turbopack\"",
-    "build:prod": "pnpm with-env:prod sh -c \"pnpm -F @vendor/cms run basehub:build && next build --turbopack\"",
+    "build:dev": "pnpm with-env:dev next build --turbopack",
+    "build:prod": "pnpm with-env:prod next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
     "dev": "pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
     "format": "prettier --check . --ignore-path ../../.gitignore",

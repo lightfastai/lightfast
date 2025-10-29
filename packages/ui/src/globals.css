@@ -171,7 +171,7 @@
 
   /* Unified page gutters for horizontal padding */
   .page-gutter {
-    @apply px-8 md:px-32; /* 2rem → 3rem at md */
+    @apply px-8 md:px-48; /* 2rem → 3rem at md */
   }
 
   /* Smaller, app-like gutter used across console/docs */

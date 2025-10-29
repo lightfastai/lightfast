@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return createMetadata({
     title: post._title ?? "Blog",
     description: post.description ?? "",
-    image: post.image?.url,
+    image: post.image?.url ?? undefined,
     alternates: {
       canonical: `${baseUrl}/blog/${slug}`,
     },

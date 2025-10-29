@@ -131,7 +131,7 @@ export default function RootLayout({
               siteConfig.links.github.href,
               siteConfig.links.discord.href,
             ],
-          }}
+          } as any}
         />
         <JsonLd
           code={{
@@ -147,7 +147,7 @@ export default function RootLayout({
               },
               "query-input": "required name=search_term_string",
             },
-          }}
+          } as any}
         />
       </head>
       <body className={cn("min-h-screen bg-background dark", fonts)}>
