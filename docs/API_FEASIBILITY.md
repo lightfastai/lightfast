@@ -1,8 +1,18 @@
+---
+title: 4-Route API Feasibility (Knowledge + Memory)
+description: Validating feasibility and guardrails for the public API overlay
+status: working
+owner: platform-apis
+audience: engineering
+last_updated: 2025-10-27
+tags: [api]
+---
+
 # 4-Route API Feasibility (Knowledge + Memory)
 
 Last Updated: 2025-10-27
 
-This note validates that the proposed external API (docs/API_SPEC.md) is achievable with the current Knowledge Store and Memory Graph designs. It also calls out small implementation notes and guardrails.
+This note validates that the proposed external API (docs/reference/api/api-spec.md) is achievable with the current Knowledge Store and Memory Graph designs. It also calls out small implementation notes and guardrails.
 
 ---
 
@@ -12,8 +22,8 @@ This note validates that the proposed external API (docs/API_SPEC.md) is achieva
 - No schema changes are strictly required. A few metadata invariants and best practices ensure smooth filtering, traversal, and hydration.
 
 Status by endpoint
-- POST /v1/search → Ready: uses Query Processor + Hybrid Retrieval + optional Graph boost/rationale (docs/SEARCH_DESIGN.md).
-- POST /v1/contents → Ready: Redis hydration + PlanetScale fallback; S3 body optional (docs/KNOWLEDGE_STORE.md).
+- POST /v1/search → Ready: uses Query Processor + Hybrid Retrieval + optional Graph boost/rationale (docs/architecture/retrieval/search-design.md).
+- POST /v1/contents → Ready: Redis hydration + PlanetScale fallback; S3 body optional (docs/architecture/knowledge-store.md).
 - POST /v1/similar → Ready: dense (+ optional sparse) search; embed subject text or hydrate chunk/document text to embed.
 - POST /v1/answer → Ready: retrieval above + LLM synthesis + SSE streaming; citations sourced from retrieval/hydration.
 
@@ -32,10 +42,10 @@ Status by endpoint
 ## Endpoint Mapping Details
 
 ### POST /v1/search
-- Query processing: existing rules (identifier vs semantic; mode selection; metadata filter build) per docs/SEARCH_DESIGN.md.
+- Query processing: existing rules (identifier vs semantic; mode selection; metadata filter build) per docs/architecture/retrieval/search-design.md.
 - Hybrid retrieval: lexical + vector; rerank optional and thresholded; fuse and cap to topK.
 - Graph bias: optional 1–2 hop traversal with edge allowlist; add `GRAPH_WEIGHT * linkScore` to candidates; include rationale when requested.
-- Highlights: `buildHighlight(candidate, chunk, doc)` already outlined in docs/SEARCH_DESIGN.md.
+- Highlights: `buildHighlight(candidate, chunk, doc)` already outlined in docs/architecture/retrieval/search-design.md.
 
 Implementation notes
 - Return `routerMode` for observability and to match API spec.
@@ -110,4 +120,3 @@ To support filters in `search` and `similar`, ensure:
 ## Conclusion
 
 The four-route API cleanly overlays the current Knowledge + Memory design. Provided the metadata invariants and graph caches are respected, each endpoint is straightforward to implement with existing components and achieves the stated performance targets.
-
