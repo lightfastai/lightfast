@@ -125,10 +125,6 @@ export type LightfastAppChatToolSet = {
     input: CreateDocumentToolInput;
     output: CreateDocumentToolOutput;
   };
-  [key: string]: {
-    input: unknown;
-    output: unknown | undefined;
-  };
 }
 
 /**
