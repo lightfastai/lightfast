@@ -4,6 +4,7 @@ import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { clerkClient } from "@clerk/nextjs/server";
 import { deriveSubscriptionData } from "@repo/chat-billing";
+import type { SubscriptionData, SubscriptionItemData } from "./types";
 
 const billingLogger = {
   info: (message: string, metadata?: Record<string, unknown>) =>
@@ -19,97 +20,112 @@ export const billingRouter = {
    * Get user's subscription data with computed state
    * Replicates useSubscriptionState logic server-side for unified data fetching
    */
-  getSubscription: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      const client = await clerkClient();
+  getSubscription: protectedProcedure.query(
+    async ({
+      ctx,
+    }): Promise<{
+      subscription: SubscriptionData | null;
+      paidSubscriptionItems: SubscriptionItemData[];
+      freeTierSubscriptionItems: SubscriptionItemData[];
+      allSubscriptionItems: SubscriptionItemData[];
+      isCanceled: boolean;
+      hasActiveSubscription: boolean;
+      nextBillingDate: string | null;
+      billingInterval: "month" | "annual";
+    }> => {
+      try {
+        const client = await clerkClient();
 
-      // Get the subscription data from Clerk
-      const subscription = await client.billing.getUserBillingSubscription(
-        ctx.session.userId,
-      );
-      const derived = deriveSubscriptionData({
-        userId: ctx.session.userId,
-        subscription,
-        options: { logger: billingLogger },
-      });
+        // Get the subscription data from Clerk
+        const subscription = await client.billing.getUserBillingSubscription(
+          ctx.session.userId,
+        );
+        const derived = deriveSubscriptionData({
+          userId: ctx.session.userId,
+          subscription,
+          options: { logger: billingLogger },
+        });
 
-      const subscriptionData = subscription
-        ? JSON.parse(JSON.stringify(subscription))
-        : null;
-      const allSubscriptionItems = subscriptionData?.subscriptionItems ?? [];
+        const subscriptionData: SubscriptionData | null = subscription
+          ? JSON.parse(JSON.stringify(subscription))
+          : null;
+        const allSubscriptionItems: SubscriptionItemData[] =
+          subscriptionData?.subscriptionItems ?? [];
 
-      const freeTierPlanIds = ["cplan_free", "free-tier"];
-      const paidSubscriptionItems = allSubscriptionItems.filter(
-        (item: any) =>
-          !freeTierPlanIds.includes(item?.plan?.id ?? "") &&
-          !freeTierPlanIds.includes(item?.plan?.name ?? ""),
-      );
+        const freeTierPlanIds = ["cplan_free", "free-tier"];
+        const paidSubscriptionItems = allSubscriptionItems.filter(
+          (item) =>
+            !freeTierPlanIds.includes(item?.plan?.id ?? "") &&
+            !freeTierPlanIds.includes(item?.plan?.name ?? ""),
+        );
 
-      const freeTierSubscriptionItems = allSubscriptionItems.filter(
-        (item: any) =>
-          freeTierPlanIds.includes(item?.plan?.id ?? "") ||
-          freeTierPlanIds.includes(item?.plan?.name ?? ""),
-      );
+        const freeTierSubscriptionItems = allSubscriptionItems.filter(
+          (item) =>
+            freeTierPlanIds.includes(item?.plan?.id ?? "") ||
+            freeTierPlanIds.includes(item?.plan?.name ?? ""),
+        );
 
-      const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-      const nextBillingDate = subscriptionData?.nextPayment?.date;
-      const billingInterval = derived.billingInterval;
+        const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+        const nextBillingDate = subscriptionData?.nextPayment?.date;
+        const billingInterval = derived.billingInterval;
 
-      return {
-        // Raw data (now plain objects)
-        subscription: subscriptionData,
-        paidSubscriptionItems,
-        freeTierSubscriptionItems,
-        allSubscriptionItems,
+        return {
+          // Raw data (now plain objects)
+          subscription: subscriptionData,
+          paidSubscriptionItems,
+          freeTierSubscriptionItems,
+          allSubscriptionItems,
 
-        // Computed state
-        isCanceled,
-        hasActiveSubscription: derived.hasActiveSubscription,
-        nextBillingDate: nextBillingDate
-          ? new Date(nextBillingDate).toISOString()
-          : null,
-        billingInterval,
-      };
-    } catch (error) {
-      console.error(
-        `Failed to get subscription for user ${ctx.session.userId}:`,
-        error,
-      );
+          // Computed state
+          isCanceled,
+          hasActiveSubscription: derived.hasActiveSubscription,
+          nextBillingDate: nextBillingDate
+            ? new Date(nextBillingDate).toISOString()
+            : null,
+          billingInterval,
+        };
+      } catch (error) {
+        console.error(
+          `Failed to get subscription for user ${ctx.session.userId}:`,
+          error,
+        );
 
-      // Handle specific Clerk errors
-      if (error instanceof Error) {
-        if (error.message.includes("not found")) {
-          // Return null subscription data instead of throwing
-          return {
-            subscription: null,
-            paidSubscriptionItems: [],
-            freeTierSubscriptionItems: [],
-            allSubscriptionItems: [],
-            isCanceled: false,
-            hasActiveSubscription: false,
-            nextBillingDate: null,
-            billingInterval: "month" as const,
-          };
+        // Handle specific Clerk errors
+        if (error instanceof Error) {
+          if (error.message.includes("not found")) {
+            // Return null subscription data instead of throwing
+            return {
+              subscription: null,
+              paidSubscriptionItems: [],
+              freeTierSubscriptionItems: [],
+              allSubscriptionItems: [],
+              isCanceled: false,
+              hasActiveSubscription: false,
+              nextBillingDate: null,
+              billingInterval: "month",
+            };
+          }
+
+          if (
+            error.message.includes("unauthorized") ||
+            error.message.includes("forbidden")
+          ) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message:
+                "You don't have permission to access billing information",
+            });
+          }
         }
 
-        if (
-          error.message.includes("unauthorized") ||
-          error.message.includes("forbidden")
-        ) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You don't have permission to access billing information",
-          });
-        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "Failed to retrieve subscription information. Please try again later.",
+        });
       }
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message:
-          "Failed to retrieve subscription information. Please try again later.",
-      });
-    }
-  }),
+    },
+  ),
 
   /**
    * Cancel a subscription item
@@ -123,50 +139,61 @@ export const billingRouter = {
         endNow: z.boolean().default(false),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const client = await clerkClient();
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }): Promise<{
+        success: boolean;
+        subscriptionItem: SubscriptionItemData;
+      }> => {
+        try {
+          const client = await clerkClient();
 
-        // Cancel the subscription item using Clerk's billing API
-        const result = await client.billing.cancelSubscriptionItem(
-          input.subscriptionItemId,
-          { endNow: input.endNow },
-        );
+          // Cancel the subscription item using Clerk's billing API
+          const result = await client.billing.cancelSubscriptionItem(
+            input.subscriptionItemId,
+            { endNow: input.endNow },
+          );
 
-        return {
-          success: true,
-          subscriptionItem: result,
-        } as const;
-      } catch (error) {
-        console.error(
-          `Failed to cancel subscription item ${input.subscriptionItemId}:`,
-          error,
-        );
+          return {
+            success: true,
+            subscriptionItem: JSON.parse(
+              JSON.stringify(result),
+            ) as SubscriptionItemData,
+          };
+        } catch (error) {
+          console.error(
+            `Failed to cancel subscription item ${input.subscriptionItemId}:`,
+            error,
+          );
 
-        // Handle specific Clerk errors
-        if (error instanceof Error) {
-          if (error.message.includes("not found")) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Subscription item not found",
-            });
+          // Handle specific Clerk errors
+          if (error instanceof Error) {
+            if (error.message.includes("not found")) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Subscription item not found",
+              });
+            }
+
+            if (
+              error.message.includes("unauthorized") ||
+              error.message.includes("forbidden")
+            ) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message:
+                  "You don't have permission to cancel this subscription",
+              });
+            }
           }
 
-          if (
-            error.message.includes("unauthorized") ||
-            error.message.includes("forbidden")
-          ) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: "You don't have permission to cancel this subscription",
-            });
-          }
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to cancel subscription. Please try again later.",
+          });
         }
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to cancel subscription. Please try again later.",
-        });
-      }
-    }),
+      },
+    ),
 } satisfies TRPCRouterRecord;

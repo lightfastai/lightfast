@@ -16,7 +16,6 @@ import { attachmentRouter } from "./router/chat/attachment";
 
 /**
  * Primary chat app router - flattened structure
- * Type annotation needed due to Clerk types in isolated mode
  */
 export const chatAppRouter = createTRPCRouter({
   user: userRouter,

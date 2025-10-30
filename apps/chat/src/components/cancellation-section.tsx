@@ -1,10 +1,9 @@
 "use client";
 
- 
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +16,6 @@ import {
 } from "@repo/ui/components/ui/card";
 import {
 	Tooltip,
-	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
@@ -83,7 +81,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 	// Handle subscription cancellation
 	const handleCancelSubscription = () => {
-		if (!paidSubscriptionItems?.[0]?.id) {
+		if (!paidSubscriptionItems[0]?.id) {
 			toast({
 				title: "Error",
 				description: "No active paid subscription found to cancel.",
@@ -98,7 +96,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 		if (confirmed) {
 			cancelSubscriptionMutation.mutate({
-				subscriptionItemId: paidSubscriptionItems[0]!.id,
+				subscriptionItemId: paidSubscriptionItems[0].id,
 				endNow: false, // Cancel at end of billing period
 			});
 		}
@@ -127,9 +125,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 							<TooltipTrigger asChild>
 								<Button
 									variant="destructive"
-									disabled={
-										cancelSubscriptionMutation.isPending || isCanceled
-									}
+									disabled={cancelSubscriptionMutation.isPending}
 									onClick={handleCancelSubscription}
 								>
 									{cancelSubscriptionMutation.isPending
@@ -137,11 +133,6 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 										: "Cancel plan"}
 								</Button>
 							</TooltipTrigger>
-							{isCanceled && (
-								<TooltipContent>
-									<p>Your plan has already been cancelled</p>
-								</TooltipContent>
-							)}
 						</Tooltip>
 					</TooltipProvider>
 				</div>

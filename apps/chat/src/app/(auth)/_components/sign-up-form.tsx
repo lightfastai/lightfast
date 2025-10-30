@@ -8,8 +8,10 @@ import { SignUpPassword } from "./sign-up-password";
 import { OAuthSignUp } from "./oauth-sign-up";
 import Link from "next/link";
 import { siteConfig } from "@repo/site-config";
+import { env } from "~/env";
 
 export function SignUpForm() {
+	const isDev = env.NEXT_PUBLIC_VERCEL_ENV === "development";
 	const [verificationStep, setVerificationStep] = React.useState<
 		"email" | "code" | "password"
 	>("email");
@@ -105,31 +107,35 @@ export function SignUpForm() {
 							</div>
 						</div>
 
-						{/* Password Sign Up Option */}
-						<Button
-							variant="outline"
-							onClick={() => setVerificationStep("password")}
-							className="w-full h-12"
-						>
-							Sign up with Password
-						</Button>
+						{/* Password Sign Up Option (dev only) */}
+						{isDev && (
+							<>
+								<Button
+									variant="outline"
+									onClick={() => setVerificationStep("password")}
+									className="w-full h-12"
+								>
+									Sign up with Password
+								</Button>
 
-						{/* Separator */}
-						<div className="relative">
-							<div className="absolute inset-0 flex items-center">
-								<Separator className="w-full" />
-							</div>
-							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">Or</span>
-							</div>
-						</div>
+								{/* Separator */}
+								<div className="relative">
+									<div className="absolute inset-0 flex items-center">
+										<Separator className="w-full" />
+									</div>
+									<div className="relative flex justify-center text-xs uppercase">
+										<span className="bg-background px-2 text-muted-foreground">Or</span>
+									</div>
+								</div>
+							</>
+						)}
 
 						{/* OAuth Sign Up */}
 						<OAuthSignUp />
 					</>
 				)}
 
-				{!error && verificationStep === "password" && (
+				{!error && isDev && verificationStep === "password" && (
 					<>
 						<SignUpPassword
 							onSuccess={handlePasswordSuccess}
@@ -193,4 +199,3 @@ export function SignUpForm() {
 		</div>
 	);
 }
-

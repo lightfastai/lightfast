@@ -7,6 +7,7 @@ import { SignInEmailInput } from "./sign-in-email-input";
 import { SignInCodeVerification } from "./sign-in-code-verification";
 import { SignInPassword } from "./sign-in-password";
 import { OAuthSignIn } from "./oauth-sign-in";
+import { env } from "~/env";
 
 interface SignInFormProps {
 	verificationStep?: "email" | "code" | "password";
@@ -17,6 +18,7 @@ export function SignInForm({
 	verificationStep: controlledStep,
 	onVerificationStepChange,
 }: SignInFormProps = {}) {
+	const isDev = env.NEXT_PUBLIC_VERCEL_ENV === "development";
 	const [internalStep, setInternalStep] = React.useState<"email" | "code" | "password">(
 		"email",
 	);
@@ -85,31 +87,35 @@ export function SignInForm({
 							</div>
 						</div>
 
-						{/* Password Sign In Option */}
-						<Button
-							variant="outline"
-							onClick={() => setVerificationStep("password")}
-							className="w-full h-12"
-						>
-							Sign in with Password
-						</Button>
+						{/* Password Sign In Option (dev only) */}
+						{isDev && (
+							<>
+								<Button
+									variant="outline"
+									onClick={() => setVerificationStep("password")}
+									className="w-full h-12"
+								>
+									Sign in with Password
+								</Button>
 
-						{/* Separator */}
-						<div className="relative">
-							<div className="absolute inset-0 flex items-center">
-								<Separator className="w-full" />
-							</div>
-							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">Or</span>
-							</div>
-						</div>
+								{/* Separator */}
+								<div className="relative">
+									<div className="absolute inset-0 flex items-center">
+										<Separator className="w-full" />
+									</div>
+									<div className="relative flex justify-center text-xs uppercase">
+										<span className="bg-background px-2 text-muted-foreground">Or</span>
+									</div>
+								</div>
+							</>
+						)}
 
 						{/* OAuth Sign In */}
 						<OAuthSignIn />
 					</>
 				)}
 
-				{!error && verificationStep === "password" && (
+				{!error && isDev && verificationStep === "password" && (
 					<>
 						<SignInPassword
 							onSuccess={handlePasswordSuccess}
@@ -151,4 +157,3 @@ export function SignInForm({
 		</div>
 	);
 }
-
