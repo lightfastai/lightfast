@@ -1,5 +1,5 @@
 {
-  "name": "@repo/deus-octokit-github",
+  "name": "@repo/console-api-key",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./crypto": {
+      "types": "./dist/crypto.d.ts",
+      "default": "./src/crypto.ts"
     }
   },
   "scripts": {
@@ -16,8 +20,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@octokit/openapi-types": "^26.0.0",
-    "octokit": "^5.0.3"
+    "@db/deus": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@trpc/server": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
