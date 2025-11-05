@@ -15,11 +15,7 @@ The following components are licensed under **Apache License 2.0** ([view full t
 
 #### Core Packages
 - `lightfast` - Core runtime and agent framework
-- `@lightfastai/cli` - Command-line interface
-- `@lightfastai/cli-core` - CLI commands and orchestration
-- `@lightfastai/compiler` - TypeScript compilation engine
-- `@lightfastai/dev-server` - Development server UI
-- `@lightfastai/cloud-client` - Cloud API client
+- `deus` - Advanced AI orchestration and automation framework
 
 #### Applications
 - `apps/www` - Marketing website
@@ -124,11 +120,7 @@ apps/playground/LICENSE           # Apache-2.0
 apps/experimental/LICENSE         # Apache-2.0
 
 core/lightfast/LICENSE            # Apache-2.0
-core/cli/LICENSE                  # Apache-2.0
-core/cli-core/LICENSE             # Apache-2.0
-core/compiler/LICENSE             # Apache-2.0
-core/dev-server/LICENSE           # Apache-2.0
-core/cloud-client/LICENSE         # Apache-2.0
+core/deus/LICENSE                 # Apache-2.0
 ```
 
 ## Third-Party Dependencies
