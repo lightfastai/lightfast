@@ -44,7 +44,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@api/deus": "workspace:*",
+    "@api/console": "workspace:*",
     "@repo/console-trpc": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:"

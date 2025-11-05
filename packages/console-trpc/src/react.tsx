@@ -11,7 +11,7 @@ import {
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
-import type { DeusAppRouter } from "@api/deus";
+import type { DeusAppRouter } from "@api/console";
 import { createQueryClient } from "./client";
 
 export interface CreateTRPCReactProviderOptions {

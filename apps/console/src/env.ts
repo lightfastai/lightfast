@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
-import { env as dbEnv } from "@db/deus/env";
+import { env as dbEnv } from "@db/console/env";
 
 export const env = createEnv({
 	extends: [vercel(), clerkEnvBase, dbEnv, sentryEnv],

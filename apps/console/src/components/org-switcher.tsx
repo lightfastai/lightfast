@@ -24,7 +24,7 @@ import {
 	AvatarFallback,
 	AvatarImage,
 } from "@repo/ui/components/ui/avatar";
-import type { organizations } from "@db/deus/schema";
+import type { organizations } from "@db/console/schema";
 
 /**
  * Organization data from getUserOrganizations()

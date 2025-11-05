@@ -1,6 +1,6 @@
 import type { TRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
-import type { DeusAppRouter } from "@api/deus";
+import type { DeusAppRouter } from "@api/console";
 
 /**
  * TRPC error codes that can be returned from the server

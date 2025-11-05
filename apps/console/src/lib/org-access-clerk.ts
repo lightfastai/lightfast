@@ -1,7 +1,7 @@
 import "server-only";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import type { organizations } from "@db/deus/schema";
-import { OrganizationsService } from "@repo/deus-api-services";
+import type { organizations } from "@db/console/schema";
+import { OrganizationsService } from "@repo/console-api-services";
 
 /**
  * Organization access utilities using Clerk RBAC
