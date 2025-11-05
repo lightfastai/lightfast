@@ -1,5 +1,5 @@
 {
-  "name": "@repo/deus-api-key",
+  "name": "@repo/console-billing",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,22 +8,23 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./crypto": {
-      "types": "./dist/crypto.d.ts",
-      "default": "./src/crypto.ts"
+    "./pricing": {
+      "types": "./dist/pricing.d.ts",
+      "default": "./src/pricing.ts"
     }
   },
+  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@db/deus": "workspace:*",
-    "@repo/lib": "workspace:*",
-    "@trpc/server": "catalog:",
-    "zod": "catalog:"
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

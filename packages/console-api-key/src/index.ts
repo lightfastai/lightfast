@@ -1,7 +1,7 @@
 /**
- * @repo/deus-api-key
+ * @repo/console-api-key
  *
- * API Key cryptographic utilities for Deus CLI authentication
+ * API Key cryptographic utilities for Console CLI authentication
  *
  * This package provides cryptographic utilities for:
  * - Generating API keys with the correct format
@@ -12,7 +12,7 @@
  * @example
  * ```ts
  * // Generate and hash a key
- * import { generateApiKey, hashApiKey, extractKeyPreview } from "@repo/deus-api-key";
+ * import { generateApiKey, hashApiKey, extractKeyPreview } from "@repo/console-api-key";
  * const key = generateApiKey();
  * const hash = await hashApiKey(key);
  * const preview = extractKeyPreview(key);

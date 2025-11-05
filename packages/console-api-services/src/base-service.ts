@@ -2,7 +2,7 @@ import type { TRPC_ERROR_CODE_KEY } from "@trpc/server/rpc";
 import { TRPCError } from "@trpc/server";
 import { TRPC_ERROR_CODES_BY_KEY } from "@trpc/server/rpc";
 
-import { createCaller } from "@repo/deus-trpc/server";
+import { createCaller } from "@repo/console-trpc/server";
 
 export type DeusApiCaller = Awaited<ReturnType<typeof createCaller>>;
 

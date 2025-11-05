@@ -1,17 +1,12 @@
 {
-  "name": "@repo/deus-trpc",
+  "name": "@repo/console-octokit-github",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./client": {
-      "default": "./src/client.ts"
-    },
-    "./server": {
-      "default": "./src/server.tsx"
-    },
-    "./react": {
-      "default": "./src/react.tsx"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
     }
   },
   "scripts": {
@@ -21,26 +16,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@api/deus": "workspace:*",
-    "@tanstack/react-query": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
-    "next": "catalog:",
-    "react": "19.2.0",
-    "superjson": "catalog:"
+    "@octokit/openapi-types": "^26.0.0",
+    "octokit": "^5.0.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "19.2.2",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
-  },
-  "eslintConfig": {
-    "extends": "@repo/eslint-config/base"
   },
   "prettier": "@repo/prettier-config"
 }

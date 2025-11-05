@@ -1,5 +1,5 @@
 {
-  "name": "@repo/deus-api-services",
+  "name": "@repo/console-api-services",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@api/deus": "workspace:*",
-    "@repo/deus-trpc": "workspace:*",
+    "@repo/console-trpc": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:"
   },

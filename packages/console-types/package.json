@@ -1,5 +1,5 @@
 {
-  "name": "@repo/deus-billing",
+  "name": "@repo/console-types",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,21 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./pricing": {
-      "types": "./dist/pricing.d.ts",
-      "default": "./src/pricing.ts"
+    "./code-review": {
+      "types": "./dist/code-review.d.ts",
+      "default": "./src/code-review.ts"
+    },
+    "./repository": {
+      "types": "./dist/repository.d.ts",
+      "default": "./src/repository.ts"
+    },
+    "./session": {
+      "types": "./dist/session.d.ts",
+      "default": "./src/session.ts"
+    },
+    "./tasks": {
+      "types": "./dist/tasks.d.ts",
+      "default": "./src/tasks.ts"
     }
   },
   "license": "MIT",
@@ -22,9 +34,10 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
+  "prettier": "@repo/prettier-config",
   "dependencies": {
-    "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0"
+    "ai": "catalog:",
+    "lightfast": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -34,6 +47,5 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }
