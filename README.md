@@ -42,7 +42,6 @@ Production-ready Next.js applications with modern architecture:
 - **🌐 www** - Marketing website and landing pages (Next.js 15 + App Router)
 - **🔐 auth** - Authentication service and user management
 - **☁️ cloud** - Main platform application for agent orchestration
-- **🎮 playground** - Interactive agent playground and testing environment
 - **💬 chat** - AI chat application demo with Convex real-time backend
 - **📚 docs** - Documentation site with Fumadocs
 
@@ -147,30 +146,26 @@ Additional directories for project infrastructure:
    # Or start specific apps
    pnpm run dev:www      # Marketing site (port 4101)
    pnpm run dev:cloud    # Main cloud app
-   pnpm run dev:playground # Playground
    pnpm run dev:docs     # Documentation
    ```
 
 ## Available Scripts
 
 ### Development
-- `pnpm dev` - Start main development servers (www, docs, cloud, auth, chat, playground)
+- `pnpm dev` - Start main development servers (www, docs, cloud, auth, chat)
 - `pnpm dev:www` - Marketing website (port 4101)
 - `pnpm dev:cloud` - Main platform application
 - `pnpm dev:auth` - Authentication service
-- `pnpm dev:playground` - Agent playground
 - `pnpm dev:chat` - Chat application
 - `pnpm dev:docs` - Documentation site
 - `pnpm dev:email` - Email development server
-- `pnpm dev:cloud+playground` - Run cloud and playground together
-- `pnpm dev:cloud+playground+auth+docs` - Run multiple apps together
+- `pnpm dev:cloud+auth+docs` - Run multiple apps together
 
 ### Building
 - `pnpm build` - Build all applications (Turbo orchestrated)
 - `pnpm build:www` - Build marketing site only
 - `pnpm build:cloud` - Build cloud app only
 - `pnpm build:auth` - Build auth service only
-- `pnpm build:playground` - Build playground only
 - `pnpm build:chat` - Build chat app only
 - `pnpm build:docs` - Build documentation only
 
@@ -232,8 +227,7 @@ ARCJET_KEY=your-arcjet-key
 
 Each application may require additional environment variables. Check each app's README for specific requirements:
 - `apps/www/README.md` - Marketing site configuration
-- `apps/cloud/README.md` - Main cloud app configuration  
-- `apps/playground/README.md` - Playground configuration
+- `apps/cloud/README.md` - Main cloud app configuration
 - `apps/chat/README.md` - Chat app configuration
 
 ## Project Structure
@@ -247,7 +241,6 @@ lightfast/
 │   ├── www/                  # Marketing website (port 4101)
 │   ├── auth/                 # Authentication service and user management
 │   ├── cloud/                # Main platform application
-│   ├── playground/           # Interactive agent playground
 │   ├── chat/                 # AI chat application with Convex
 │   └── docs/                 # Documentation site with Fumadocs
 ├── db/                        # Database schemas and migrations
