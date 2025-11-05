@@ -8,9 +8,8 @@
 
 A cloud-native agent execution engine that abstracts infrastructure complexity, enabling developers to focus on building AI agent applications.
 
-🌐 **Website**: [lightfast.ai](https://lightfast.ai)  
-📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)  
-🎮 **Cloud**: [cloud.lightfast.ai](https://cloud.lightfast.ai)  
+🌐 **Website**: [lightfast.ai](https://lightfast.ai)
+📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
 💬 **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)  
 
 ## About
@@ -41,7 +40,6 @@ The core contains the AI agent framework and execution engine:
 Production-ready Next.js applications with modern architecture:
 - **🌐 www** - Marketing website and landing pages (Next.js 15 + App Router)
 - **🔐 auth** - Authentication service and user management
-- **☁️ cloud** - Main platform application for agent orchestration
 - **💬 chat** - AI chat application demo with Convex real-time backend
 - **📚 docs** - Documentation site with Fumadocs
 
@@ -49,14 +47,12 @@ Production-ready Next.js applications with modern architecture:
 
 Database schemas, migrations, and related utilities:
 - **💬 chat** - Chat application database schemas and migrations
-- **☁️ cloud** - Main platform database schemas and migrations
 
 ### API (`api/`)
 
 API definitions, schemas, and shared utilities:
 - **💬 chat** - Chat application API definitions and utilities
-- **🛠️ cli** - CLI API definitions and client utilities  
-- **☁️ cloud** - Main platform API schemas and utilities
+- **🛠️ cli** - CLI API definitions and client utilities
 
 ### Supporting Directories
 
@@ -134,7 +130,6 @@ Additional directories for project infrastructure:
    ```bash
    # Copy environment files for each app you want to run
    cp apps/www/.env.example apps/www/.env.local
-   cp apps/cloud/.env.example apps/cloud/.env.local
    # Edit .env.local files with your configuration
    ```
 
@@ -145,26 +140,23 @@ Additional directories for project infrastructure:
    
    # Or start specific apps
    pnpm run dev:www      # Marketing site (port 4101)
-   pnpm run dev:cloud    # Main cloud app
    pnpm run dev:docs     # Documentation
    ```
 
 ## Available Scripts
 
 ### Development
-- `pnpm dev` - Start main development servers (www, docs, cloud, auth, chat)
+- `pnpm dev` - Start main development servers (www, docs, auth, chat)
 - `pnpm dev:www` - Marketing website (port 4101)
-- `pnpm dev:cloud` - Main platform application
 - `pnpm dev:auth` - Authentication service
 - `pnpm dev:chat` - Chat application
 - `pnpm dev:docs` - Documentation site
 - `pnpm dev:email` - Email development server
-- `pnpm dev:cloud+auth+docs` - Run multiple apps together
+- `pnpm dev:auth+docs` - Run multiple apps together
 
 ### Building
 - `pnpm build` - Build all applications (Turbo orchestrated)
 - `pnpm build:www` - Build marketing site only
-- `pnpm build:cloud` - Build cloud app only
 - `pnpm build:auth` - Build auth service only
 - `pnpm build:chat` - Build chat app only
 - `pnpm build:docs` - Build documentation only
@@ -227,7 +219,6 @@ ARCJET_KEY=your-arcjet-key
 
 Each application may require additional environment variables. Check each app's README for specific requirements:
 - `apps/www/README.md` - Marketing site configuration
-- `apps/cloud/README.md` - Main cloud app configuration
 - `apps/chat/README.md` - Chat app configuration
 
 ## Project Structure
@@ -240,16 +231,13 @@ lightfast/
 ├── apps/                      # Next.js applications
 │   ├── www/                  # Marketing website (port 4101)
 │   ├── auth/                 # Authentication service and user management
-│   ├── cloud/                # Main platform application
 │   ├── chat/                 # AI chat application with Convex
 │   └── docs/                 # Documentation site with Fumadocs
 ├── db/                        # Database schemas and migrations
-│   ├── chat/                 # Chat application database schemas
-│   └── cloud/                # Main platform database schemas
+│   └── chat/                 # Chat application database schemas
 ├── api/                       # API definitions and shared utilities
 │   ├── chat/                 # Chat application API definitions
-│   ├── cli/                  # CLI API definitions and utilities
-│   └── cloud/                # Main platform API schemas
+│   └── cli/                  # CLI API definitions and utilities
 ├── packages/                  # Shared packages (@repo/*)
 │   ├── ui/                   # UI component library (shadcn/ui + Radix)
 │   ├── lib/                  # Shared utilities and helper functions
@@ -297,7 +285,7 @@ lightfast/
 ### Working with the Monorepo
 
 1. **Install dependencies**: `pnpm install` (installs all workspace dependencies)
-2. **Run specific app**: `pnpm dev:www` or `pnpm dev:cloud`
+2. **Run specific app**: `pnpm dev:www` or `pnpm dev:chat`
 3. **Build specific app**: `pnpm build:www` (uses Turbo filters)
 4. **Add dependency to specific app**: `pnpm add package-name --filter @lightfast/www`
 5. **Run script in specific app**: `pnpm --filter @lightfast/www run script-name`
@@ -306,7 +294,7 @@ lightfast/
 
 The monorepo uses consistent naming conventions across workspaces:
 
-- **Apps**: `@lightfast/[app-name]` (e.g., `@lightfast/www`, `@lightfast/cloud`)
+- **Apps**: `@lightfast/[app-name]` (e.g., `@lightfast/www`, `@lightfast/chat`)
 - **Packages**: `@repo/[package-name]` (e.g., `@repo/ui`, `@repo/lib`)
 - **Vendor**: `@vendor/[service-name]` (e.g., `@vendor/db`, `@vendor/auth`)
 - **Core**: `@lightfastai/[tool-name]` (e.g., `@lightfastai/cli`, `@lightfastai/compiler`)
@@ -440,12 +428,9 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 Lightfast uses a dual licensing approach:
 
-- **Open Source Components** (Apache-2.0): Core runtime, CLI tools, and most applications are licensed under [Apache License 2.0](LICENSE)
-- **Commercial Components** (FSL-1.1): The Cloud platform (`apps/cloud`) is licensed under [Functional Source License 1.1](LICENSE-FSL.md)
+All components are licensed under [Apache License 2.0](LICENSE) - a permissive open source license.
 
-**For Users**: If you're using Lightfast's runtime (`lightfast`), CLI (`@lightfastai/cli`), or building applications with Lightfast, you're covered by Apache-2.0 - a permissive open source license.
-
-**For Cloud Platform**: The Cloud platform restricts competitive commercial use but allows internal use, education, and research. It converts to Apache-2.0 after 2 years.
+**For Users**: You're covered by Apache-2.0 for all Lightfast components - use freely in commercial and non-commercial projects.
 
 See [LICENSING.md](LICENSING.md) for complete details.
 
