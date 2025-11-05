@@ -32,13 +32,9 @@ Lightfast is a comprehensive monorepo built with pnpm workspaces and Turborepo, 
 
 ### Core (`core/`)
 
-The core contains the complete CLI toolchain and agent framework:
+The core contains the AI agent framework and execution engine:
 - **⚡ lightfast** - Core AI agent framework and execution engine
-- **🛠️ cli** - Published CLI package (`@lightfastai/cli`) that bundles everything
-- **🧠 cli-core** - Core CLI logic and commands (dev, compile, clean)
-- **⚙️ compiler** - TypeScript compilation engine with caching and hot reload
-- **🌐 dev-server** - Development server with React UI for agent management
-- **☁️ cloud-client** - Cloud platform client utilities
+- **🤖 deus** - Advanced AI orchestration and automation framework
 
 ### Applications (`apps/`)
 
@@ -72,7 +68,6 @@ Additional directories for project infrastructure:
 - **📚 docs** - Additional documentation and guides
 - **🛠️ scripts** - Build scripts, deployment utilities, and automation tools
 - **📁 examples** - Example projects and usage demonstrations
-  - **💬 1-agent-chat** - Simple agent chat implementation
   - **🤖 nextjs-ai-chatbot** - Advanced AI chatbot with Next.js
 - **🌳 worktrees** - Git worktrees for parallel development branches
 
@@ -248,13 +243,9 @@ Each application may require additional environment variables. Check each app's 
 
 ```
 lightfast/
-├── core/                      # Core CLI toolchain and agent framework
-│   ├── cli/                  # Published CLI package (@lightfastai/cli)
-│   ├── cli-core/             # Core CLI logic and commands
-│   ├── compiler/             # TypeScript compilation engine
-│   ├── dev-server/           # Development server with React UI
+├── core/                      # Core AI agent framework and orchestration
 │   ├── lightfast/            # AI agent framework and execution engine
-│   └── cloud-client/         # Cloud platform client utilities
+│   └── deus/                 # Advanced AI orchestration and automation
 ├── apps/                      # Next.js applications
 │   ├── www/                  # Marketing website (port 4101)
 │   ├── auth/                 # Authentication service and user management
@@ -296,7 +287,6 @@ lightfast/
 │   └── typescript/           # TypeScript configurations (@repo/typescript-config)
 ├── docs/                      # Additional documentation and guides
 ├── examples/                  # Example projects and demonstrations
-│   ├── 1-agent-chat/         # Simple agent chat implementation
 │   └── nextjs-ai-chatbot/    # Advanced AI chatbot with Next.js
 ├── scripts/                   # Build scripts and automation tools
 ├── worktrees/                 # Git worktrees for parallel development
@@ -387,30 +377,6 @@ pnpm lint:fix     # Fix linting issues
 pnpm format:fix   # Fix formatting
 pnpm typecheck    # Check types
 ```
-
-### CLI Development
-
-The `@lightfastai/cli` package provides the main CLI tool for agent development:
-
-```bash
-# Install the CLI (when published)
-npm install -g @lightfastai/cli
-
-# Or use it directly from the monorepo
-cd core/cli
-pnpm build  # Build the complete CLI bundle
-node dist/index.js --help
-
-# CLI commands
-cli dev      # Start development server
-cli compile  # Compile agent configuration
-cli clean    # Clean build artifacts
-```
-
-The CLI includes:
-- **TypeScript compiler** with hot reload and caching
-- **Development server** with React UI for agent management
-- **Agent configuration** compilation and validation
 
 ## Deployment
 
