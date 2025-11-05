@@ -22,7 +22,6 @@ The following components are licensed under **Apache License 2.0** ([view full t
 - `apps/docs` - Documentation site
 - `apps/auth` - Authentication service
 - `apps/chat` - Chat interface
-- `apps/playground` - Interactive playground
 
 **Why Apache 2.0?**
 - Explicit patent grant protecting contributors and users
@@ -115,7 +114,6 @@ apps/www/LICENSE                  # Apache-2.0
 apps/docs/LICENSE                 # Apache-2.0
 apps/auth/LICENSE                 # Apache-2.0
 apps/chat/LICENSE                 # Apache-2.0
-apps/playground/LICENSE           # Apache-2.0
 
 core/lightfast/LICENSE            # Apache-2.0
 core/deus/LICENSE                 # Apache-2.0
