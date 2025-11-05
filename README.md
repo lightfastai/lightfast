@@ -43,7 +43,6 @@ Production-ready Next.js applications with modern architecture:
 - **🔐 auth** - Authentication service and user management
 - **☁️ cloud** - Main platform application for agent orchestration
 - **🎮 playground** - Interactive agent playground and testing environment
-- **🧪 experimental** - Experimental features and prototypes
 - **💬 chat** - AI chat application demo with Convex real-time backend
 - **📚 docs** - Documentation site with Fumadocs
 
@@ -155,11 +154,10 @@ Additional directories for project infrastructure:
 ## Available Scripts
 
 ### Development
-- `pnpm dev` - Start main development servers (www, experimental, docs, cloud, auth, chat, playground)
+- `pnpm dev` - Start main development servers (www, docs, cloud, auth, chat, playground)
 - `pnpm dev:www` - Marketing website (port 4101)
-- `pnpm dev:cloud` - Main platform application  
+- `pnpm dev:cloud` - Main platform application
 - `pnpm dev:auth` - Authentication service
-- `pnpm dev:experimental` - Experimental features
 - `pnpm dev:playground` - Agent playground
 - `pnpm dev:chat` - Chat application
 - `pnpm dev:docs` - Documentation site
@@ -170,9 +168,8 @@ Additional directories for project infrastructure:
 ### Building
 - `pnpm build` - Build all applications (Turbo orchestrated)
 - `pnpm build:www` - Build marketing site only
-- `pnpm build:cloud` - Build cloud app only  
+- `pnpm build:cloud` - Build cloud app only
 - `pnpm build:auth` - Build auth service only
-- `pnpm build:experimental` - Build experimental features only
 - `pnpm build:playground` - Build playground only
 - `pnpm build:chat` - Build chat app only
 - `pnpm build:docs` - Build documentation only
@@ -251,7 +248,6 @@ lightfast/
 │   ├── auth/                 # Authentication service and user management
 │   ├── cloud/                # Main platform application
 │   ├── playground/           # Interactive agent playground
-│   ├── experimental/         # Experimental features and prototypes
 │   ├── chat/                 # AI chat application with Convex
 │   └── docs/                 # Documentation site with Fumadocs
 ├── db/                        # Database schemas and migrations
