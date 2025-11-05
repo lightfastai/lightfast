@@ -414,7 +414,7 @@ When developing, prioritize:
 
 # tRPC Integration Guide
 
-This guide covers tRPC patterns and best practices used across applications in the monorepo (e.g., `apps/chat`, `apps/deus`).
+This guide covers tRPC patterns and best practices used across applications in the monorepo (e.g., `apps/chat`, `apps/console`).
 
 ## Architecture Overview
 

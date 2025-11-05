@@ -1,5 +1,5 @@
 {
-	"name": "@lightfast/deus",
+	"name": "@lightfast/console",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
@@ -8,9 +8,9 @@
 		"build:dev": "pnpm with-env:dev next build --turbopack",
 		"build:prod": "pnpm with-env:prod next build --turbopack",
 		"clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-		"dev": "pnpm with-env:dev next dev --turbo --port ${NEXT_PUBLIC_DEUS_PORT:-4107}",
+		"dev": "pnpm with-env:dev next dev --turbo --port ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
 		"lint": "eslint",
-		"start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_DEUS_PORT:-4107}",
+		"start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
 		"typecheck": "tsc --noEmit",
 		"with-env:dev": "dual run --",
 		"with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
