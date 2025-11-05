@@ -3,7 +3,7 @@
 import { Github, CheckCircle2, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import type { Organization } from "@db/deus/schema";
+import type { Organization } from "@db/console/schema";
 
 interface GitHubIntegrationSettingsProps {
 	organization: Organization;

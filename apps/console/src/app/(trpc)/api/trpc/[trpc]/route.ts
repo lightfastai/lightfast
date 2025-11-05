@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { deusAppRouter, createTRPCContext } from "@api/deus";
+import { deusAppRouter, createTRPCContext } from "@api/console";
 import { env } from "~/env";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations

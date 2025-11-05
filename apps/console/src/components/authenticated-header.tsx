@@ -3,7 +3,7 @@
 import React from "react";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 import { OrgSwitcher } from "./org-switcher";
-import type { organizations } from "@db/deus/schema";
+import type { organizations } from "@db/console/schema";
 
 /**
  * Organization data from getUserOrganizations()

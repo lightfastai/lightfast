@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/deus": "workspace:*",
+    "@db/console": "workspace:*",
     "@repo/lib": "workspace:*",
     "@trpc/server": "catalog:",
     "zod": "catalog:"

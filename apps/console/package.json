@@ -18,11 +18,11 @@
 	"dependencies": {
 		"@ai-sdk/gateway": "catalog:",
 		"@ai-sdk/openai": "^0.0.70",
-		"@api/deus": "workspace:*",
+		"@api/console": "workspace:*",
 		"@clerk/nextjs": "catalog:",
 		"@clerk/shared": "catalog:",
 		"@clerk/types": "catalog:",
-		"@db/deus": "workspace:*",
+		"@db/console": "workspace:*",
 		"@hookform/resolvers": "catalog:",
 		"@octokit/openapi-types": "^26.0.0",
 		"@octokit/types": "^15.0.0",

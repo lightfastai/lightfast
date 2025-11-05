@@ -10,8 +10,8 @@ import {
 } from "@trpc/tanstack-react-query";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import type { DeusAppRouter } from "@api/deus";
-import { deusAppRouter, createTRPCContext } from "@api/deus";
+import type { DeusAppRouter } from "@api/console";
+import { deusAppRouter, createTRPCContext } from "@api/console";
 
 import { createQueryClient } from "./client";
 
