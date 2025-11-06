@@ -4,9 +4,13 @@ import { env } from "../env";
 export default defineConfig({
   schema: "./src/schema/index.ts",
   out: "./src/migrations",
-  dialect: "mysql",
+  dialect: "postgresql",
   dbCredentials: {
-    url: `mysql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-app?sslaccept=strict`,
+    host: env.DATABASE_HOST,
+    user: env.DATABASE_USERNAME,
+    password: env.DATABASE_PASSWORD,
+    database: "lightfast-app",
+    ssl: true,
   },
   introspect: {
     casing: "camel",

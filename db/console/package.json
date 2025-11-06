@@ -31,10 +31,12 @@
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@repo/console-types": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
+    "postgres": "^3.4.5",
     "zod": "catalog:"
   },
   "devDependencies": {

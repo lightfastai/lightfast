@@ -257,10 +257,10 @@ importers:
         version: 3.2.0(date-fns@4.1.0)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       inngest:
         specifier: 'catalog:'
         version: 3.44.3(encoding@0.1.13)(express@5.1.0)(h3@1.15.4)(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@3.25.76)
@@ -339,7 +339,7 @@ importers:
         version: link:../../vendor/observability
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       react:
         specifier: ^19.1.1
         version: 19.2.0
@@ -647,7 +647,7 @@ importers:
         version: 3.2.0(date-fns@4.1.0)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       exa-js:
         specifier: 'catalog:'
         version: 1.10.2(encoding@0.1.13)(ws@8.18.3)
@@ -1470,10 +1470,10 @@ importers:
         version: 5.0.15(zod@3.25.76)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -1508,6 +1508,9 @@ importers:
 
   db/console:
     dependencies:
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../../packages/console-types
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -1516,10 +1519,13 @@ importers:
         version: link:../../vendor/db
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.7
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -2515,9 +2521,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -3092,10 +3095,10 @@ importers:
         version: 5.0.15(zod@3.25.76)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -12766,6 +12769,10 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
+
   posthog-js@1.276.0:
     resolution: {integrity: sha512-FYZE1037LrAoKKeUU0pUL7u8WwNK2BVeg5TFApwquVPUdj9h7u5Z077A313hPN19Ar+7Y+VHxqYqdHc4VNsVgw==}
     peerDependencies:
@@ -22229,16 +22236,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5):
+  drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7):
     optionalDependencies:
       '@libsql/client': 0.14.0
       '@opentelemetry/api': 1.9.0
       '@planetscale/database': 1.19.0
       '@types/pg': 8.15.5
+      postgres: 3.4.7
 
-  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76):
+  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76):
     dependencies:
-      drizzle-orm: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+      drizzle-orm: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       zod: 3.25.76
 
   dunder-proto@1.0.1:
@@ -26081,6 +26089,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  postgres@3.4.7: {}
 
   posthog-js@1.276.0:
     dependencies:

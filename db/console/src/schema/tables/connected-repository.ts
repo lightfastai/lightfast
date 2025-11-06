@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import type { RepositoryMetadata, RepositoryPermissions } from "@repo/console-types/repository";
+import type { RepositoryMetadata, RepositoryPermissions } from "@repo/console-types";
 import { randomUUID } from "node:crypto";
 
 /**
