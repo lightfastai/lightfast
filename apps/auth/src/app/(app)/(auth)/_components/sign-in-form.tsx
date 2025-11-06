@@ -6,7 +6,7 @@ import { SignInEmailInput } from "./sign-in-email-input";
 import { SignInCodeVerification } from "./sign-in-code-verification";
 import { SignInPassword } from "./sign-in-password";
 import { OAuthSignIn } from "./oauth-sign-in";
-import { cloudUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 interface SignInFormProps {
 	verificationStep?: "email" | "code" | "password";
@@ -43,10 +43,10 @@ export function SignInForm({
 	}
 
 	function handlePasswordSuccess() {
-		// Password sign-in is complete, redirect to cloud app
+		// Password sign-in is complete, redirect to console app
 		setError("");
-		// Redirect to cloud app root after successful authentication
-		window.location.href = cloudUrl;
+		// Redirect to console app root after successful authentication
+		window.location.href = consoleUrl;
 	}
 
 	return (

@@ -52,11 +52,11 @@ echo "[port-remap]   www: PORT 4101 → $WWW_PORT" >&2
 echo "www:PORT=$WWW_PORT"
 echo "www:NEXT_PUBLIC_WWW_PORT=$WWW_PORT"
 
-# cloud: 4103 -> 4203
-CLOUD_PORT=$((4103 + REMAP_OFFSET))
-echo "[port-remap]   cloud: PORT 4103 → $CLOUD_PORT" >&2
-echo "cloud:PORT=$CLOUD_PORT"
-echo "cloud:NEXT_PUBLIC_CLOUD_PORT=$CLOUD_PORT"
+# www-search: 4105 -> 4205
+WWW_SEARCH_PORT=$((4105 + REMAP_OFFSET))
+echo "[port-remap]   www-search: PORT 4105 → $WWW_SEARCH_PORT" >&2
+echo "www-search:PORT=$WWW_SEARCH_PORT"
+echo "www-search:NEXT_PUBLIC_WWW_SEARCH_PORT=$WWW_SEARCH_PORT"
 
 # auth: 4104 -> 4204
 AUTH_PORT=$((4104 + REMAP_OFFSET))
@@ -64,23 +64,17 @@ echo "[port-remap]   auth: PORT 4104 → $AUTH_PORT" >&2
 echo "auth:PORT=$AUTH_PORT"
 echo "auth:NEXT_PUBLIC_AUTH_PORT=$AUTH_PORT"
 
-# playground: 4105 -> 4205
-PLAYGROUND_PORT=$((4105 + REMAP_OFFSET))
-echo "[port-remap]   playground: PORT 4105 → $PLAYGROUND_PORT" >&2
-echo "playground:PORT=$PLAYGROUND_PORT"
-echo "playground:NEXT_PUBLIC_PLAYGROUND_PORT=$PLAYGROUND_PORT"
-
 # chat: 4106 -> 4206
 CHAT_PORT=$((4106 + REMAP_OFFSET))
 echo "[port-remap]   chat: PORT 4106 → $CHAT_PORT" >&2
 echo "chat:PORT=$CHAT_PORT"
 echo "chat:NEXT_PUBLIC_CHAT_PORT=$CHAT_PORT"
 
-# deus: 4107 -> 4207
-DEUS_PORT=$((4107 + REMAP_OFFSET))
-echo "[port-remap]   deus: PORT 4107 → $DEUS_PORT" >&2
-echo "deus:PORT=$DEUS_PORT"
-echo "deus:NEXT_PUBLIC_DEUS_PORT=$DEUS_PORT"
+# console: 4107 -> 4207
+CONSOLE_PORT=$((4107 + REMAP_OFFSET))
+echo "[port-remap]   console: PORT 4107 → $CONSOLE_PORT" >&2
+echo "console:PORT=$CONSOLE_PORT"
+echo "console:NEXT_PUBLIC_CONSOLE_PORT=$CONSOLE_PORT"
 
 # docs: 3002 -> 3102
 DOCS_PORT=$((3002 + REMAP_OFFSET))
@@ -88,22 +82,14 @@ echo "[port-remap]   docs: PORT 3002 → $DOCS_PORT" >&2
 echo "docs:PORT=$DOCS_PORT"
 echo "docs:NEXT_PUBLIC_DOCS_PORT=$DOCS_PORT"
 
-# experimental: 3001 -> 3101
-EXPERIMENTAL_PORT=$((3001 + REMAP_OFFSET))
-echo "[port-remap]   experimental: PORT 3001 → $EXPERIMENTAL_PORT" >&2
-echo "experimental:PORT=$EXPERIMENTAL_PORT"
-echo "experimental:NEXT_PUBLIC_EXPERIMENTAL_PORT=$EXPERIMENTAL_PORT"
-
 # Also set global NEXT_PUBLIC port variables for cross-app references
 # These are needed when one app needs to reference another app's URL
 echo "GLOBAL:NEXT_PUBLIC_WWW_PORT=$WWW_PORT"
-echo "GLOBAL:NEXT_PUBLIC_CLOUD_PORT=$CLOUD_PORT"
+echo "GLOBAL:NEXT_PUBLIC_WWW_SEARCH_PORT=$WWW_SEARCH_PORT"
 echo "GLOBAL:NEXT_PUBLIC_AUTH_PORT=$AUTH_PORT"
-echo "GLOBAL:NEXT_PUBLIC_PLAYGROUND_PORT=$PLAYGROUND_PORT"
 echo "GLOBAL:NEXT_PUBLIC_CHAT_PORT=$CHAT_PORT"
-echo "GLOBAL:NEXT_PUBLIC_DEUS_PORT=$DEUS_PORT"
+echo "GLOBAL:NEXT_PUBLIC_CONSOLE_PORT=$CONSOLE_PORT"
 echo "GLOBAL:NEXT_PUBLIC_DOCS_PORT=$DOCS_PORT"
-echo "GLOBAL:NEXT_PUBLIC_EXPERIMENTAL_PORT=$EXPERIMENTAL_PORT"
 
 echo "[port-remap] PORT remapping complete!" >&2
 echo "[port-remap] Services will use remapped ports (base + $REMAP_OFFSET)" >&2

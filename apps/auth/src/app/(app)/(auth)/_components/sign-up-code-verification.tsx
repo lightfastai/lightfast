@@ -7,7 +7,7 @@ import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
 import { handleClerkError, handleUnexpectedStatus } from "~/app/lib/clerk/error-handler";
-import { cloudUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 interface SignUpCodeVerificationProps {
 	email: string;
@@ -54,7 +54,7 @@ export function SignUpCodeVerification({
 				await setActive({ session: result.createdSessionId });
 				
 				// Redirect to organization selection for the auth flow
-				window.location.href = `/onboarding/choose-organization?redirect_url=${cloudUrl}/`;
+				window.location.href = `/onboarding/choose-organization?redirect_url=${consoleUrl}/`;
 			} else {
 				// Log unexpected status for debugging
 				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {

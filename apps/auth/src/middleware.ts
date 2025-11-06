@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { cloudUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 
 // Define public routes that don't need authentication
@@ -64,8 +64,8 @@ export default clerkMiddleware(
 
 		// Handle authenticated users with organizations - redirect away from auth pages
 		if (isAuthenticated && orgId && orgSlug && isAuthRoute(req)) {
-			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → cloud app /orgs/${orgSlug}/dashboard`);
-			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, cloudUrl));
+			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → console app /orgs/${orgSlug}/dashboard`);
+			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
 		}
 
 		// Handle root path redirect logic
@@ -83,9 +83,9 @@ export default clerkMiddleware(
 			}
 			
 			if (orgId) {
-				// Authenticated with org - redirect to cloud app
-				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → cloud app /orgs/${orgSlug}/dashboard`);
-				return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, cloudUrl));
+				// Authenticated with org - redirect to console app
+				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → console app /orgs/${orgSlug}/dashboard`);
+				return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
 			}
 		}
 

@@ -2,14 +2,14 @@
 
 import { TaskChooseOrganization } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
-import { cloudUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 export default function SelectOrganizationPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <TaskChooseOrganization
-          redirectUrlComplete={`${cloudUrl}/orgs/:orgId/dashboard`}
+          redirectUrlComplete={`${consoleUrl}/orgs/:orgId/dashboard`}
           appearance={{
             baseTheme: dark,
             
