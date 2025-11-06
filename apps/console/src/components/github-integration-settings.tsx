@@ -41,7 +41,7 @@ export function GitHubIntegrationSettings({ organization }: GitHubIntegrationSet
 									GitHub App Connected
 								</p>
 								<p className="text-xs text-muted-foreground mt-1">
-									Your organization is connected to the Deus GitHub App
+									Your organization is connected to the Console GitHub App
 								</p>
 							</div>
 						</div>

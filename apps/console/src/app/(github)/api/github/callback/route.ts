@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 	const baseUrl =
 		env.NEXT_PUBLIC_APP_URL ??
 		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
-			? "https://deus.lightfast.ai"
+			? "https://console.lightfast.ai"
 			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
 				? `https://${process.env.VERCEL_URL}`
 				: "http://localhost:4107");

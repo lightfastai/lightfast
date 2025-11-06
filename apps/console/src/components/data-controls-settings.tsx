@@ -27,7 +27,7 @@ export function DataControlsSettings() {
 						GitHub Connection
 					</CardTitle>
 					<CardDescription>
-						Connect your GitHub account to enable Deus to orchestrate workflows on your codebase
+						Connect your GitHub account to enable Console to orchestrate workflows on your codebase
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -59,7 +59,7 @@ export function DataControlsSettings() {
 										GitHub not connected
 									</p>
 									<p className="mt-1 text-xs text-muted-foreground">
-										Connect your GitHub account to get started with Deus
+										Connect your GitHub account to get started with Console
 									</p>
 								</div>
 							</div>

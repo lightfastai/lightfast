@@ -6,7 +6,7 @@ import { Plus, Github, ExternalLink } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { ConnectRepositoryDialog } from "./connect-repository-dialog";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface RepositoriesSettingsProps {
 	organizationId: string;
@@ -121,7 +121,7 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 										No repositories connected
 									</p>
 									<p className="mt-1 text-xs text-muted-foreground max-w-sm">
-										Connect a GitHub repository from your organization to get started with Deus
+										Connect a GitHub repository from your organization to get started with Console
 									</p>
 									<Button
 										onClick={() => setShowConnectDialog(true)}

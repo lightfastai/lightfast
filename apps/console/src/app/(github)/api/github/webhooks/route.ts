@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { RepositoriesService, CodeReviewsService } from "@repo/deus-api-services";
+import { RepositoriesService, CodeReviewsService } from "@repo/console-api-services";
 import { env } from "~/env";
 
 export const runtime = "nodejs";

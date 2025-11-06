@@ -1,6 +1,6 @@
 /**
- * Deus application root router
- * This is the main router that combines all deus-specific routers
+ * Console application root router
+ * This is the main router that combines all console-specific routers
  */
 
 import { apiKeyRouter } from "./router/api-key";
@@ -12,9 +12,9 @@ import { userRouter } from "./router/user";
 import { createTRPCRouter } from "./trpc";
 
 /**
- * Primary deus app router
- */
-export const deusAppRouter = createTRPCRouter({
+ * Primary console app router
+*/
+export const consoleAppRouter = createTRPCRouter({
   organization: organizationRouter,
   repository: repositoryRouter,
   codeReview: codeReviewRouter,
@@ -24,4 +24,4 @@ export const deusAppRouter = createTRPCRouter({
 });
 
 // Export type for use in client
-export type DeusAppRouter = typeof deusAppRouter;
+export type ConsoleAppRouter = typeof consoleAppRouter;

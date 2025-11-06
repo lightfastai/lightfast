@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Deus - AI Workflow Orchestration",
-    short_name: "Deus",
+    name: "Console - AI Workflow Orchestration",
+    short_name: "Console",
     description: "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
     start_url: "/",
     display: "standalone",

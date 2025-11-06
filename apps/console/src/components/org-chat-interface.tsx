@@ -28,7 +28,7 @@ import {
 import { GitBranch, Plus, ArrowUp } from "lucide-react";
 import { CodeReviewsTab } from "./code-reviews-tab";
 import { SessionsList } from "./sessions";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import {
 	Tabs,
 	TabsContent,

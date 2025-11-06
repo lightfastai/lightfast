@@ -4,9 +4,9 @@ import { SignInForm } from "../_components/sign-in-form";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
-	title: "Sign In - Deus",
+title: "Sign In - Console",
 	description:
-		"Sign in to Deus - AI Workflow Orchestration Platform. Access your account and start building AI-powered workflows.",
+	"Sign in to Console - AI Workflow Orchestration Platform. Access your account and start building AI-powered workflows.",
 	robots: {
 		index: false,
 		follow: true,

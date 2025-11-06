@@ -22,9 +22,9 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "sonner";
-import type { CodeReviewTool } from "@repo/deus-types/code-review";
+import type { CodeReviewTool } from "@repo/console-types/code-review";
 
 interface CodeReviewSettingsProps {
 	organizationId: string;
@@ -166,7 +166,7 @@ export function CodeReviewSettings({
 							<div className="text-xs text-foreground/80">
 								<p className="font-medium">How it works:</p>
 								<p className="mt-1">
-									When you trigger a code review, Deus will post a comment on your
+									When you trigger a code review, Console will post a comment on your
 									PR with the configured command. The review tool will run on
 									GitHub and post its findings as comments.
 								</p>

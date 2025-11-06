@@ -56,7 +56,7 @@ export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
     "https://chat.lightfast.ai",
     "https://docs.lightfast.ai",
     "https://playground.lightfast.ai",
-    "https://deus.lightfast.ai",
+    "https://console.lightfast.ai",
     "https://experimental.lightfast.ai",
     // Development URLs
     "http://localhost:4101", // www
@@ -64,7 +64,7 @@ export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
     "http://localhost:4104", // auth
     "http://localhost:4105", // playground
     "http://localhost:4106", // chat
-    "http://localhost:4107", // deus
+    "http://localhost:4107", // console
     "http://localhost:3000", // common dev port
     "http://localhost:3001", // experimental
     "http://localhost:3002", // docs

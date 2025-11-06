@@ -49,7 +49,7 @@ export function DeusIntegrationShowcase() {
 		<div className="w-full space-y-6">
 			<div className="text-left">
 				<h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
-					<span className="text-muted-foreground">Deus works with </span>
+					<span className="text-muted-foreground">Console works with </span>
 					<span className="text-foreground inline-flex min-w-[140px] items-center gap-2">
 						{hovered ?? fallbackName}
 					</span>

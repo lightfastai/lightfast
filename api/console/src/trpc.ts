@@ -215,7 +215,7 @@ export const apiKeyProtectedProcedure = t.procedure
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message:
-          "API key required. Provide a valid API key in the Authorization header: 'Bearer deus_sk_...'",
+          "API key required. Provide a valid API key in the Authorization header: 'Bearer console_sk_...'",
       });
     }
 

@@ -46,7 +46,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 	const router = useRouter();
 	const { organization: activeOrg } = useOrganization();
 
-	// Filter to only show organizations that have been claimed in Deus
+	// Filter to only show organizations that have been claimed in Console
 	const claimedOrgs = useMemo(() => {
 		return organizations.filter((org) => org.deusOrg !== null);
 	}, [organizations]);

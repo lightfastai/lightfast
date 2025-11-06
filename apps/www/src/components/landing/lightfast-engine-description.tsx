@@ -2,7 +2,7 @@
  * Lightfast Engine Description Component
  *
  * Showcases Lightfast's three technical pillars:
- * 1. Deus Sync Engine - Deep reasoning and complex orchestration
+ * 1. Console Sync Engine - Deep reasoning and complex orchestration
  * 2. Deep Context Graph - Unified understanding across tools
  * 3. Security by Design - Sandboxed execution and runtime validation
  */
@@ -10,9 +10,9 @@
 export function LightfastEngineDescription() {
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-10">
-      {/* Pillar 1: Deus Sync Engine */}
+      {/* Pillar 1: Console Sync Engine */}
       <h3 className="text-md font-semibold text-foreground">
-        Deus Sync Engine
+        Console Sync Engine
       </h3>
       <p className="text-muted-foreground leading-relaxed">
         Built for deep reasoning and complex orchestration. Maintains context

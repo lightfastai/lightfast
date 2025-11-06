@@ -35,10 +35,12 @@ export const authUrl = withRelatedProject({
     : 'https://auth.lightfast.ai',
 });
 
-// Get the deus URL dynamically based on environment
-export const deusUrl = withRelatedProject({
+// Get the console URL dynamically based on environment
+export const consoleUrl = withRelatedProject({
   projectName: 'lightfast-deus',
   defaultHost: isDevelopment
     ? `http://localhost:${env.NEXT_PUBLIC_DEUS_PORT}`
-    : 'https://deus.lightfast.ai',
+    : 'https://console.lightfast.ai',
 });
+// Temporary alias to avoid breaking imports
+export const deusUrl = consoleUrl;

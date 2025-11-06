@@ -28,7 +28,7 @@ const integrations: Integration[] = [
 		name: "Claude Code",
 		tagline: "Anthropic's pair programmer for deep refactors.",
 		description:
-			"Dispatch complex implementation work to Claude Code and get iterative edits without leaving Deus.",
+            "Dispatch complex implementation work to Claude Code and get iterative edits without leaving Console.",
 		highlights: [
 			"Understands large repositories and multi-file diffs",
 			"Great for refactors, tests, and explaining code",
@@ -54,7 +54,7 @@ const integrations: Integration[] = [
 		name: "Linear",
 		tagline: "Sync tasks with your product roadmap.",
 		description:
-			"Create, update, and triage Linear issues straight from Deus conversations or automations.",
+            "Create, update, and triage Linear issues straight from Console conversations or automations.",
 		highlights: [
 			"Turn AI insights into actionable tickets",
 			"Keep status and assignees in sync automatically",
@@ -71,14 +71,14 @@ const integrations: Integration[] = [
 		highlights: [
 			"Surfaces risky changes with suggested fixes",
 			"Understands project conventions and test coverage",
-			"Feeds review context back into Deus",
+            "Feeds review context back into Console",
 		],
 		icon: Bot,
 	},
 	{
 		id: "github",
 		name: "GitHub",
-		tagline: "Bring repos, branches, and PRs into Deus.",
+            tagline: "Bring repos, branches, and PRs into Console.",
 		description:
 			"Connect GitHub to grant agents real repository context and automate branch workflows.",
 		highlights: [
@@ -93,7 +93,7 @@ const integrations: Integration[] = [
 		name: "Notion",
 		tagline: "Reference specs and docs instantly.",
 		description:
-			"Deus agents can search Notion workspaces to ground answers in the docs your team trusts.",
+            "Console agents can search Notion workspaces to ground answers in the docs your team trusts.",
 		highlights: [
 			"Semantic search across product specs and RFCs",
 			"Keep documentation in sync with latest changes",
@@ -134,10 +134,10 @@ export function DeusIntegrationsSection() {
 						Integrations
 					</p>
 					<h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground">
-						Deus connects to the tools your team already uses
+                        Console connects to the tools your team already uses
 					</h2>
 					<p className="max-w-2xl text-sm sm:text-base text-muted-foreground">
-						Route work between AI agents and the systems you rely on. Switch contexts without leaving Deus.
+                        Route work between AI agents and the systems you rely on. Switch contexts without leaving Console.
 					</p>
 				</div>
 

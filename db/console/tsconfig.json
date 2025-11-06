@@ -1,9 +1,14 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "dist",
-    "tsBuildInfoFile": ".cache/tsbuildinfo.json"
+    "tsBuildInfoFile": ".cache/tsbuildinfo.json",
+    "baseUrl": ".",
+    "paths": {
+      "@repo/console-types": ["../../packages/console-types/dist/index.d.ts"],
+      "@repo/console-types/*": ["../../packages/console-types/dist/*.d.ts", "../../packages/console-types/dist/*/index.d.ts"],
+      "@repo/lib": ["../../packages/lib/dist/index.d.ts"],
+      "@repo/lib/*": ["../../packages/lib/dist/*.d.ts", "../../packages/lib/dist/*/index.d.ts"]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules"]

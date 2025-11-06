@@ -14,7 +14,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
 interface GenerateApiKeyDialogProps {

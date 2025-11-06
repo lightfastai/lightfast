@@ -9,8 +9,8 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-// Import the UIMessage type from Deus types package
-import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
+// Import the UIMessage type from Console types package
+import type { LightfastAppConsoleUIMessage } from "@repo/console-types";
 import { uuidv4 } from "@repo/lib";
 
 /**
@@ -52,7 +52,7 @@ export const DeusMessage = mysqlTable(
      * Can be 'system', 'user', or 'assistant' as defined by Vercel AI SDK
      */
     role: varchar("role", { length: 20 })
-      .$type<LightfastAppDeusUIMessage["role"]>()
+      .$type<LightfastAppConsoleUIMessage["role"]>()
       .notNull(),
 
     /**
@@ -60,7 +60,7 @@ export const DeusMessage = mysqlTable(
      * Uses Deus-specific UIMessage type for proper type safety
      * Supports text, images, tool calls, custom data, etc.
      */
-    parts: json("parts").$type<LightfastAppDeusUIMessage["parts"]>().notNull(),
+    parts: json("parts").$type<LightfastAppConsoleUIMessage["parts"]>().notNull(),
 
     /**
      * Cached character count snapshot for the message content

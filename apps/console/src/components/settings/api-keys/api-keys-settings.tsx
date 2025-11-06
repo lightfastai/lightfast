@@ -13,7 +13,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { GenerateApiKeyDialog } from "./generate-api-key-dialog";
 import { ApiKeyCard } from "./api-key-card";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface ApiKeysSettingsProps {
 	organizationId: string;
@@ -76,7 +76,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
 									<Key className="h-12 w-12 text-muted-foreground/60" />
 									<p className="mt-3 text-sm font-medium">No API keys created</p>
 									<p className="mt-1 text-xs text-muted-foreground max-w-sm">
-										Generate an API key to authenticate with the Deus CLI and access the
+										Generate an API key to authenticate with the Console CLI and access the
 										API programmatically
 									</p>
 									<Button

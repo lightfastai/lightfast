@@ -4,28 +4,34 @@
  * These types follow the Vercel AI SDK UIMessage pattern used in chat.
  */
 
-import type { DeepPartial, ProviderMetadata, UIMessage, UIMessageStreamWriter } from "ai";
+import type {
+  DeepPartial,
+  ProviderMetadata,
+  UIMessage,
+  UIMessageStreamWriter,
+  UITools,
+} from "ai";
 import type { RuntimeContext } from "lightfast/server/adapters/types";
 
 /**
  * Metadata stored on Deus UI messages.
  */
-export interface LightfastAppDeusUIMessageMetadata {
-	createdAt?: string;
-	sessionId?: string;
-	modelId?: string;
-	charCount?: number;
-	tokenCount?: number;
-	agentType?: "deus" | "claude-code" | "codex";
+export interface LightfastAppConsoleUIMessageMetadata {
+  createdAt?: string;
+  sessionId?: string;
+  modelId?: string;
+  charCount?: number;
+  tokenCount?: number;
+  agentType?: "console" | "claude-code" | "codex";
 }
 
 /**
  * Input for the run_coding_tool
  */
 export interface RunCodingToolInput {
-	type: "claude-code" | "codex";
-	task: string;
-	mcpServers?: string[];
+  type: "claude-code" | "codex";
+  task: string;
+  mcpServers?: string[];
 }
 
 /**
@@ -38,49 +44,49 @@ export interface RunCodingToolInput {
  * 4. CLI sends this result back to continue the conversation
  */
 export interface RunCodingToolOutput {
-	agentType: "claude-code" | "codex";
-	status: "completed" | "error" | "cancelled";
-	message: string;
-	mcpServers?: string[];
-	/** Execution time in milliseconds (if completed) */
-	executionTime?: number;
-	/** Error details (if status is "error") */
-	error?: string;
+  agentType: "claude-code" | "codex";
+  status: "completed" | "error" | "cancelled";
+  message: string;
+  mcpServers?: string[];
+  /** Execution time in milliseconds (if completed) */
+  executionTime?: number;
+  /** Error details (if status is "error") */
+  error?: string;
 }
 
 /**
  * Tool set definition for Deus CLI interactions.
  */
-export interface LightfastAppDeusToolSet {
-	run_coding_tool: {
-		input: RunCodingToolInput;
-		output: RunCodingToolOutput;
-	};
+export interface LightfastAppConsoleToolSet {
+  run_coding_tool: {
+    input: RunCodingToolInput;
+    output: RunCodingToolOutput;
+  };
 }
 
 /**
  * Custom data types for Deus streaming.
  * Currently empty but can be extended for custom streaming events.
  */
-export type LightfastAppDeusUICustomDataTypes = Record<string, unknown>;
+export type LightfastAppConsoleUICustomDataTypes = Record<string, unknown>;
 
 /**
  * Main UI message type for Deus CLI sessions.
  * Follows the same pattern as LightfastAppChatUIMessage from chat-ai-types.
  */
-export type LightfastAppDeusUIMessage = UIMessage<
-	LightfastAppDeusUIMessageMetadata,
-	LightfastAppDeusUICustomDataTypes,
-	LightfastAppDeusToolSet
+export type LightfastAppConsoleUIMessage = UIMessage<
+  LightfastAppConsoleUIMessageMetadata,
+  LightfastAppConsoleUICustomDataTypes,
+  LightfastAppConsoleToolSet & UITools
 > & {
-	modelId?: string | null;
+  modelId?: string | null;
 };
 
 /**
  * Shortcut for UI message parts.
  */
-export type LightfastAppDeusUIMessagePart =
-	LightfastAppDeusUIMessage["parts"][number];
+export type LightfastAppConsoleUIMessagePart =
+  LightfastAppConsoleUIMessage["parts"][number];
 
 /**
  * Runtime context passed to tool factories for Deus agents.
@@ -89,35 +95,34 @@ export type LightfastAppDeusUIMessagePart =
  * Note: run_coding_tool uses client-side execution (no execute block),
  * so no runtime config is needed for tools.
  */
-export interface DeusAppRuntimeContext {
-	/** User ID from API key authentication */
-	userId: string;
-	/** Organization ID from API key */
-	organizationId: string;
-	/** Agent ID (always "deus" for the orchestrator) */
-	agentId: string;
-	/** Current message ID being processed */
-	messageId?: string;
-	/** Data stream for streaming responses */
-	dataStream?: UIMessageStreamWriter<UIMessage>;
+export interface ConsoleAppRuntimeContext {
+  /** User ID from API key authentication */
+  userId: string;
+  /** Organization ID from API key */
+  organizationId: string;
+  /** Agent ID (always "console" for the orchestrator) */
+  agentId: string;
+  /** Current message ID being processed */
+  messageId?: string;
+  /** Data stream for streaming responses */
+  dataStream?: UIMessageStreamWriter<UIMessage>;
 }
 
 /**
  * Runtime context wrapper consumed by Lightfast tool factories.
  */
-export type DeusLightfastRuntimeContext =
-	RuntimeContext<DeusAppRuntimeContext>;
+export type ConsoleLightfastRuntimeContext = RuntimeContext<ConsoleAppRuntimeContext>;
 
 /**
  * Context used when fetching Deus session context.
  */
-export interface DeusFetchContext {
-	cwd: string;
-	git?: {
-		branch?: string;
-		remote?: string;
-	};
-	currentAgent?: "claude-code" | "codex";
+export interface ConsoleFetchContext {
+  cwd: string;
+  git?: {
+    branch?: string;
+    remote?: string;
+  };
+  currentAgent?: "claude-code" | "codex";
 }
 
 /**
@@ -125,87 +130,87 @@ export interface DeusFetchContext {
  * Follows the same pattern as chat-ai-types.
  */
 type ToolUIPartState<TName extends string, TInput, TOutput> =
-	| {
-			type: `tool-${TName}`;
-			toolCallId: string;
-			state: "input-streaming";
-			input: DeepPartial<TInput> | undefined;
-			providerExecuted?: boolean;
-			output?: never;
-			errorText?: never;
-	  }
-	| {
-			type: `tool-${TName}`;
-			toolCallId: string;
-			state: "input-available";
-			input: TInput;
-			providerExecuted?: boolean;
-			output?: never;
-			errorText?: never;
-			callProviderMetadata?: ProviderMetadata;
-	  }
-	| {
-			type: `tool-${TName}`;
-			toolCallId: string;
-			state: "output-available";
-			input: TInput;
-			output: TOutput;
-			errorText?: never;
-			providerExecuted?: boolean;
-			callProviderMetadata?: ProviderMetadata;
-			preliminary?: boolean;
-	  }
-	| {
-			type: `tool-${TName}`;
-			toolCallId: string;
-			state: "output-error";
-			input: TInput | undefined;
-			rawInput?: unknown;
-			output?: never;
-			errorText: string;
-			providerExecuted?: boolean;
-			callProviderMetadata?: ProviderMetadata;
-	  };
+  | {
+      type: `tool-${TName}`;
+      toolCallId: string;
+      state: "input-streaming";
+      input: DeepPartial<TInput> | undefined;
+      providerExecuted?: boolean;
+      output?: never;
+      errorText?: never;
+    }
+  | {
+      type: `tool-${TName}`;
+      toolCallId: string;
+      state: "input-available";
+      input: TInput;
+      providerExecuted?: boolean;
+      output?: never;
+      errorText?: never;
+      callProviderMetadata?: ProviderMetadata;
+    }
+  | {
+      type: `tool-${TName}`;
+      toolCallId: string;
+      state: "output-available";
+      input: TInput;
+      output: TOutput;
+      errorText?: never;
+      providerExecuted?: boolean;
+      callProviderMetadata?: ProviderMetadata;
+      preliminary?: boolean;
+    }
+  | {
+      type: `tool-${TName}`;
+      toolCallId: string;
+      state: "output-error";
+      input: TInput | undefined;
+      rawInput?: unknown;
+      output?: never;
+      errorText: string;
+      providerExecuted?: boolean;
+      callProviderMetadata?: ProviderMetadata;
+    };
 
 /**
  * Typed tool UI part for run_coding_tool.
  */
 export type RunCodingToolUIPart = ToolUIPartState<
-	"run_coding_tool",
-	RunCodingToolInput,
-	RunCodingToolOutput
+  "run_coding_tool",
+  RunCodingToolInput,
+  RunCodingToolOutput
 >;
 
 /**
  * Type guard that narrows a UI message part to a text part.
  */
 export function isTextPart(
-	part: LightfastAppDeusUIMessagePart,
-): part is Extract<LightfastAppDeusUIMessagePart, { type: "text" }> {
-	return part.type === "text";
+  part: LightfastAppConsoleUIMessagePart,
+): part is Extract<LightfastAppConsoleUIMessagePart, { type: "text" }> {
+  return part.type === "text";
 }
 
 /**
  * Type guard that narrows a UI message part to a reasoning part.
  */
 export function isReasoningPart(
-	part: LightfastAppDeusUIMessagePart,
-): part is Extract<LightfastAppDeusUIMessagePart, { type: "reasoning" }> {
-	return part.type === "reasoning";
+  part: LightfastAppConsoleUIMessagePart,
+): part is Extract<LightfastAppConsoleUIMessagePart, { type: "reasoning" }> {
+  return part.type === "reasoning";
 }
 
 /**
  * Type guard that checks for any tool part.
  */
-export function isToolPart(part: LightfastAppDeusUIMessagePart): boolean {
-	return typeof part.type === "string" && part.type.startsWith("tool-");
+export function isToolPart(part: LightfastAppConsoleUIMessagePart): boolean {
+  return typeof part.type === "string" && part.type.startsWith("tool-");
 }
 
 /**
  * Type guard that narrows a UI message part to run_coding_tool part.
  */
 export function isRunCodingToolPart(
-	part: LightfastAppDeusUIMessagePart,
+  part: LightfastAppConsoleUIMessagePart,
 ): part is RunCodingToolUIPart {
-	return part.type === "tool-run_coding_tool";
+  return part.type === "tool-run_coding_tool";
 }

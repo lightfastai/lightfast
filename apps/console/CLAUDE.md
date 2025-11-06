@@ -1,4 +1,4 @@
-# Deus - AI Workflow Orchestration Platform
+# Console - AI Workflow Orchestration Platform
 
 ## Mission
 
@@ -45,7 +45,7 @@ Build a general-purpose agent orchestration platform that connects AI to any too
 - **Marketplace Revenue**: 70% to integration developers, 30% platform fee
 - **Usage-Based**: Additional workflow runs beyond plan limits ($0.10/run)
 - **Hosting**: MCP server hosting for integration developers ($49/mo per server)
-- **White-Label**: License Deus for enterprises ($50k-$200k/year)
+- **White-Label**: License Console for enterprises ($50k-$200k/year)
 
 #### Revenue Model Evolution
 
@@ -65,19 +65,19 @@ Expand beyond dev tools to any professional workflow - sales, marketing, finance
 
 #### Long-term (2029+): Ambient AI Operating System
 
-Every digital tool becomes AI-orchestrable via MCP. Deus becomes the execution layer for personal and business AI agents.
+Every digital tool becomes AI-orchestrable via MCP. Console becomes the execution layer for personal and business AI agents.
 
 **Vision**: "Jarvis for everyone" - your AI assistant that can actually do things across your entire digital world.
 
 ### Strategic Position in Lightfast Ecosystem
 
 - **Lightfast Core**: Agent execution engine (infrastructure)
-- **Deus**: Agent orchestration platform (application layer)
-- **Synergy**: Deus runs on Lightfast's execution engine, proving the platform's capabilities while generating revenue to fund core R&D
+- **Console**: Agent orchestration platform (application layer)
+- **Synergy**: Console runs on Lightfast's execution engine, proving the platform's capabilities while generating revenue to fund core R&D
 
 ### Ultimate Goal
 
-Use commercial success from Deus to fund Lightfast's AGI research - building the reasoning and execution capabilities for human-level AI that can orchestrate arbitrary tasks across any domain.
+Use commercial success from Console to fund Lightfast's AGI research - building the reasoning and execution capabilities for human-level AI that can orchestrate arbitrary tasks across any domain.
 
 ---
 
@@ -89,11 +89,11 @@ Every integration speaks Model Context Protocol. Build adapters for legacy APIs,
 
 ### 2. AI-Native, Not No-Code
 
-Don't make users build workflows in visual editors. Let them describe intent, Deus figures out how.
+Don't make users build workflows in visual editors. Let them describe intent, Console figures out how.
 
 ### 3. Context Over Configuration
 
-Deus understands your project, your team, your patterns. Suggestions get smarter over time.
+Console understands your project, your team, your patterns. Suggestions get smarter over time.
 
 ### 4. Marketplace-First Growth
 
@@ -115,7 +115,7 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 - **Primary**: 100 active users, 50% create custom workflows, 80% MoM retention
 - **Secondary**: Average 3 integrations/user, 10 workflows executed/user/week
-- **Qualitative**: Users say "I can't imagine shipping without Deus"
+- **Qualitative**: Users say "I can't imagine shipping without Console"
 
 ### Phase 2: Integration Ecosystem (Months 6-18)
 
@@ -127,13 +127,13 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 - **Primary**: 200+ integrations, 50+ developers, $100k MRR, 10k users
 - **Secondary**: $100k/mo marketplace GMV, 10k+ workflows, 1M+ runs/month
-- **Qualitative**: Companies choose tools based on Deus integration availability
+- **Qualitative**: Companies choose tools based on Console integration availability
 
 ### Phase 4: Platform Leader (Year 3+)
 
 - **Primary**: 500+ integrations, 100k users, $1M+ MRR
 - **Secondary**: Category leader in "AI workflow platforms"
-- **Qualitative**: "Deus" becomes a verb ("just Deus that workflow")
+- **Qualitative**: "Console" becomes a verb ("just Console that workflow")
 
 ---
 
@@ -172,7 +172,7 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 ### Development Setup
 
-**GitHub App Name:** `Lightfast Deus App Connector Dev`
+**GitHub App Name:** `Lightfast Console App Connector Dev`
 
 **Homepage URL:** `http://localhost:4104`
 
@@ -184,13 +184,13 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 ### Production Setup
 
-**GitHub App Name:** `Lightfast Deus`
+**GitHub App Name:** `Lightfast Console`
 
-**Homepage URL:** `https://deus.lightfast.com`
+**Homepage URL:** `https://console.lightfast.com`
 
-**Callback URL:** `https://deus.lightfast.com/api/github/callback`
+**Callback URL:** `https://console.lightfast.com/api/github/callback`
 
-**Webhook URL:** `https://deus.lightfast.com/api/github/webhooks`
+**Webhook URL:** `https://console.lightfast.com/api/github/webhooks`
 
 **Installation:** Any account
 
@@ -236,7 +236,7 @@ GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVA
 GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
 
 # App URLs (adjust for dev/prod)
-NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://deus.lightfast.com
+NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://console.lightfast.com
 ```
 
 ### Key Notes

@@ -37,7 +37,7 @@ export interface ApiKeyAuthContext {
  * 4. Updates the lastUsedAt timestamp asynchronously
  * 5. Returns the auth context
  *
- * @param authHeader - The Authorization header value (e.g., "Bearer deus_sk_...")
+ * @param authHeader - The Authorization header value (e.g., "Bearer console_sk_...")
  * @returns API key auth context if valid, null otherwise
  *
  * @example

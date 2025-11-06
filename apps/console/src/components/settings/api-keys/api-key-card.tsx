@@ -20,7 +20,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { useToast } from "@repo/ui/hooks/use-toast";
 
 interface ApiKeyCardProps {

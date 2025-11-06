@@ -10,10 +10,10 @@ import { OrganizationsService } from "@repo/console-api-services";
  * custom database queries with Clerk's built-in organization context and RBAC.
  *
  * Key concepts:
- * - Clerk organizations are linked to Deus organizations via clerkOrgId
+ * - Clerk organizations are linked to Console organizations via clerkOrgId
  * - User's active organization is tracked by Clerk (orgId from auth())
  * - Roles are managed by Clerk (orgRole from auth())
- * - We still query Deus database for GitHub-specific data
+ * - We still query Console database for GitHub-specific data
  *
  * @see org-access.ts - Legacy database-only access control
  */
@@ -35,11 +35,11 @@ export interface NoActiveOrg {
 }
 
 /**
- * Result when organization is not found in Deus database
+ * Result when organization is not found in Console database
  */
 export interface OrgNotFound {
 	hasOrg: false;
-	reason: "org_not_found_in_deus";
+	reason: "org_not_found_in_console";
 	clerkOrgId: string;
 }
 
@@ -49,9 +49,9 @@ export interface OrgNotFound {
 export type ActiveOrgResult = OrgWithAccess | NoActiveOrg | OrgNotFound;
 
 /**
- * Get user's active Clerk organization with Deus data
+ * Get user's active Clerk organization with Console data
  *
- * This function combines Clerk's active organization context with Deus's
+ * This function combines Clerk's active organization context with Console's
  * organization data. It returns the organization that the user currently
  * has selected in their Clerk session.
  *
@@ -83,17 +83,17 @@ export async function getActiveOrg(): Promise<
 		return { hasOrg: false, reason: "no_active_org" };
 	}
 
-	// Find corresponding Deus organization using service
+	// Find corresponding Console organization using service
 	const orgService = new OrganizationsService();
-	const deusOrg = await orgService.findByClerkOrgId(orgId);
+	const consoleOrg = await orgService.findByClerkOrgId(orgId);
 
-	if (!deusOrg) {
-		return { hasOrg: false, reason: "org_not_found_in_deus", clerkOrgId: orgId };
+	if (!consoleOrg) {
+		return { hasOrg: false, reason: "org_not_found_in_console", clerkOrgId: orgId };
 	}
 
 	return {
 		hasOrg: true,
-		org: deusOrg,
+		org: consoleOrg,
 		role: orgRole ?? "org:member", // Default to member if role is missing
 	};
 }
@@ -193,7 +193,7 @@ export async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
  * Get all organizations the user belongs to
  *
  * Fetches all Clerk organizations the user is a member of, and enriches
- * them with Deus organization data (GitHub details).
+ * them with Console organization data (GitHub details).
  *
  * Use this for:
  * - Organization switcher/picker UI

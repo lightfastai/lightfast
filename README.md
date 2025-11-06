@@ -33,7 +33,7 @@ Lightfast is a comprehensive monorepo built with pnpm workspaces and Turborepo, 
 
 The core contains the AI agent framework and execution engine:
 - **⚡ lightfast** - Core AI agent framework and execution engine
-- **🤖 deus** - Advanced AI orchestration and automation framework
+- **🤖 Console** - Advanced AI orchestration and automation framework
 
 ### Applications (`apps/`)
 
@@ -227,7 +227,7 @@ Each application may require additional environment variables. Check each app's 
 lightfast/
 ├── core/                      # Core AI agent framework and orchestration
 │   ├── lightfast/            # AI agent framework and execution engine
-│   └── deus/                 # Advanced AI orchestration and automation
+│   └── console/              # Advanced AI orchestration and automation
 ├── apps/                      # Next.js applications
 │   ├── www/                  # Marketing website (port 4101)
 │   ├── auth/                 # Authentication service and user management
