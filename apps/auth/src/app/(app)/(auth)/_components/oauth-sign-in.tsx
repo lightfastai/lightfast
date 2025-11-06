@@ -8,7 +8,7 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { Icons } from "@repo/ui/components/icons";
 import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
-import { cloudUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 export function OAuthSignIn() {
 	const { signIn, isLoaded } = useSignIn();
@@ -23,7 +23,7 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: cloudUrl,
+				redirectUrlComplete: consoleUrl,
 			});
 		} catch (err) {
 			// Log the error

@@ -11,10 +11,10 @@ import {
 
 interface LoginDropdownProps {
   chatUrl: string;
-  cloudUrl: string;
+  consoleUrl: string;
 }
 
-export function LoginDropdown({ chatUrl, cloudUrl }: LoginDropdownProps) {
+export function LoginDropdown({ chatUrl, consoleUrl }: LoginDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild suppressHydrationWarning>
@@ -29,7 +29,7 @@ export function LoginDropdown({ chatUrl, cloudUrl }: LoginDropdownProps) {
           <Link href={chatUrl}>Chat</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={cloudUrl}>Cloud</Link>
+          <Link href={consoleUrl}>Console</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

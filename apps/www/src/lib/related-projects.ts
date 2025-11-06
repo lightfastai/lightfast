@@ -19,14 +19,6 @@ export const chatUrl = withRelatedProject({
     : 'https://chat.lightfast.ai',
 });
 
-// Get the cloud URL dynamically based on environment
-export const cloudUrl = withRelatedProject({
-  projectName: 'lightfast-app',
-  defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_CLOUD_PORT}`
-    : 'https://cloud.lightfast.ai',
-});
-
 // Get the auth URL dynamically based on environment
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
@@ -37,10 +29,8 @@ export const authUrl = withRelatedProject({
 
 // Get the console URL dynamically based on environment
 export const consoleUrl = withRelatedProject({
-  projectName: 'lightfast-deus',
+  projectName: 'lightfast-console',
   defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_DEUS_PORT}`
+    ? `http://localhost:${env.NEXT_PUBLIC_CONSOLE_PORT}`
     : 'https://console.lightfast.ai',
 });
-// Temporary alias to avoid breaking imports
-export const deusUrl = consoleUrl;

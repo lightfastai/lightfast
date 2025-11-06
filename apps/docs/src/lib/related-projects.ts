@@ -19,14 +19,6 @@ export const authUrl = withRelatedProject({
     : 'https://auth.lightfast.ai',
 });
 
-// Get the cloud URL dynamically based on environment
-export const cloudUrl = withRelatedProject({
-  projectName: 'lightfast-app',
-  defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_CLOUD_PORT}`
-    : 'https://cloud.lightfast.ai',
-});
-
 // Get the chat URL dynamically based on environment
 export const chatUrl = withRelatedProject({
   projectName: 'lightfast-chat',
@@ -35,13 +27,29 @@ export const chatUrl = withRelatedProject({
     : 'https://chat.lightfast.ai',
 });
 
+// Get the console URL dynamically based on environment
+export const consoleUrl = withRelatedProject({
+  projectName: 'lightfast-console',
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_CONSOLE_PORT}`
+    : 'https://console.lightfast.ai',
+});
+
+// Get the www-search URL dynamically based on environment
+export const wwwSearchUrl = withRelatedProject({
+  projectName: 'lightfast-www-search',
+  defaultHost: isDevelopment
+    ? `http://localhost:${env.NEXT_PUBLIC_WWW_SEARCH_PORT}`
+    : 'https://search.lightfast.ai',
+});
+
 // Helper for auth URLs (replicates getAuthUrls from url-config)
 export function getAuthUrls() {
   return {
     signIn: `${authUrl}/sign-in`,
     signUp: `${authUrl}/sign-up`,
-    afterSignIn: cloudUrl,
-    afterSignUp: cloudUrl,
+    afterSignIn: consoleUrl,
+    afterSignUp: consoleUrl,
     afterSignOut: wwwUrl,
   };
 }
@@ -50,20 +58,12 @@ export function getAuthUrls() {
 export function getAllAppUrls() {
   return {
     www: wwwUrl,
+    wwwSearch: wwwSearchUrl,
     auth: authUrl,
-    cloud: cloudUrl,
     chat: chatUrl,
+    console: consoleUrl,
     docs: isDevelopment
       ? `http://localhost:${env.NEXT_PUBLIC_DOCS_PORT}`
       : 'https://docs.lightfast.ai',
-    playground: isDevelopment
-      ? `http://localhost:${env.NEXT_PUBLIC_PLAYGROUND_PORT}`
-      : 'https://playground.lightfast.ai',
-    deus: isDevelopment
-      ? `http://localhost:${env.NEXT_PUBLIC_DEUS_PORT}`
-      : 'https://deus.lightfast.ai',
-    experimental: isDevelopment
-      ? `http://localhost:${env.NEXT_PUBLIC_EXPERIMENTAL_PORT}`
-      : 'https://experimental.lightfast.ai',
   };
 }

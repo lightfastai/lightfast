@@ -33,7 +33,7 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
   const appUrls = getAllAppUrls();
 
   const chatSignInUrl = `${authUrls.signIn}?redirect_url=${encodeURIComponent(appUrls.chat)}`;
-  const cloudSignInUrl = `${authUrls.signIn}?redirect_url=${encodeURIComponent(appUrls.cloud)}`;
+  const consoleSignInUrl = `${authUrls.signIn}?redirect_url=${encodeURIComponent(appUrls.console)}`;
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -71,7 +71,7 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
                 {/* Sign In Button */}
                 <LoginDropdown
                   chatUrl={chatSignInUrl}
-                  cloudUrl={cloudSignInUrl}
+                  consoleUrl={consoleSignInUrl}
                 />
 
                 {/* Menu Button */}

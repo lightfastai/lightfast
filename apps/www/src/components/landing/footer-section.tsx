@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { chatUrl, cloudUrl } from "~/lib/related-projects";
+import { chatUrl, consoleUrl } from "~/lib/related-projects";
 
 export function SiteFooter() {
   return (
@@ -35,10 +35,10 @@ export function SiteFooter() {
                     Chat
                   </Link>
                   <Link
-                    href={cloudUrl}
+                    href={consoleUrl}
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
-                    Cloud
+                    Console
                   </Link>
                   <Link
                     href="/docs/sdk"
