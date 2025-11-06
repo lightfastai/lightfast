@@ -102,10 +102,9 @@ export function ConnectRepositoryDialog({
 								isActive: true,
 								connectedAt: new Date().toISOString(),
 								lastSyncedAt: null,
-								metadata: variables.metadata ?? null,
-								codeReviewSettings: null,
-								createdAt: new Date().toISOString(),
-							});
+                                metadata: variables.metadata ?? null,
+                                createdAt: new Date().toISOString(),
+                            });
 						}
 					})
 				);

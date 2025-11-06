@@ -25,7 +25,6 @@
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
 		"@db/console": "workspace:*",
-		"@repo/console-api-key": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",
 		"@repo/console-types": "workspace:*",
 		"@repo/lib": "workspace:^",

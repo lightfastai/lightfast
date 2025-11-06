@@ -13,14 +13,6 @@ const settingsNavigation = [
 		name: "Repositories",
 		path: "repositories",
 	},
-	{
-		name: "Code Review",
-		path: "code-review",
-	},
-	{
-		name: "API Keys",
-		path: "api-keys",
-	},
 ];
 
 interface SettingsSidebarProps {

@@ -30,7 +30,7 @@ export default async function OrgHomePage({
 		notFound();
 	}
 
-	// Prefetch repositories and sessions for this org to avoid loading state
+    // Prefetch repositories for this org to avoid loading state
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
@@ -38,11 +38,7 @@ export default async function OrgHomePage({
 		})
 	);
 
-	prefetch(
-		trpc.session.list.queryOptions({
-			organizationId: access.org.clerkOrgId,
-		})
-	);
+
 
 	return (
 		<HydrateClient>

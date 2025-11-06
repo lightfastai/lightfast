@@ -10,12 +10,8 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import type {
-  CodeReviewSettings,
-  RepositoryMetadata,
-  RepositoryPermissions,
-} from "@repo/console-types/repository";
-import { uuidv4 } from "@repo/lib";
+import type { RepositoryMetadata, RepositoryPermissions } from "@repo/console-types/repository";
+import { randomUUID } from "node:crypto";
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
@@ -50,7 +46,7 @@ export const DeusConnectedRepository = mysqlTable(
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => uuidv4()),
+      .$defaultFn(() => randomUUID()),
 
     /**
      * Reference to the organization this repository belongs to
@@ -93,12 +89,6 @@ export const DeusConnectedRepository = mysqlTable(
      */
     lastSyncedAt: datetime("last_synced_at", { mode: "string" }),
 
-    /**
-     * Code review settings for this repository
-     */
-    codeReviewSettings: json(
-      "code_review_settings",
-    ).$type<CodeReviewSettings>(),
 
     /**
      * Optional metadata cache (can be stale - don't rely on this for operations)
@@ -129,8 +119,7 @@ export const DeusConnectedRepository = mysqlTable(
 );
 
 // Type exports
-export type DeusConnectedRepository =
-  typeof DeusConnectedRepository.$inferSelect;
+export type DeusConnectedRepository = typeof DeusConnectedRepository.$inferSelect;
 export type InsertDeusConnectedRepository =
   typeof DeusConnectedRepository.$inferInsert;
 
@@ -142,4 +131,4 @@ export const selectDeusConnectedRepositorySchema = createSelectSchema(
   DeusConnectedRepository,
 );
 
-export type { CodeReviewSettings, RepositoryMetadata, RepositoryPermissions };
+export type { RepositoryMetadata, RepositoryPermissions };
