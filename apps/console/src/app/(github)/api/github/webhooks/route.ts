@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { RepositoriesService, CodeReviewsService } from "@repo/console-api-services";
+import { RepositoriesService } from "@repo/console-api-services";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
@@ -11,19 +11,13 @@ export const runtime = "nodejs";
  * https://docs.github.com/en/webhooks/webhook-events-and-payloads
  */
 type GitHubWebhookEvent =
-	| "pull_request"
-	| "pull_request.opened"
-	| "pull_request.edited"
-	| "pull_request.closed"
-	| "pull_request.reopened"
-	| "pull_request.synchronize"
-	| "installation"
-	| "installation.deleted"
-	| "installation_repositories"
-	| "installation_repositories.removed"
-	| "repository"
-	| "repository.deleted"
-	| "repository.renamed";
+    | "installation"
+    | "installation.deleted"
+    | "installation_repositories"
+    | "installation_repositories.removed"
+    | "repository"
+    | "repository.deleted"
+    | "repository.renamed";
 
 /**
  * Pull Request Event Payload
@@ -108,71 +102,7 @@ function verifySignature(payload: string, signature: string): boolean {
 	);
 }
 
-/**
- * Handle pull_request webhook events
- * Updates cached PR metadata in code reviews
- */
-async function handlePullRequestEvent(payload: PullRequestPayload) {
-	const { action, pull_request, repository } = payload;
-
-	console.log(
-		`[Webhook] PR ${action}: ${repository.full_name}#${pull_request.number}`,
-	);
-
-	const repositoriesService = new RepositoriesService();
-	const codeReviewsService = new CodeReviewsService();
-
-	// Find the connected repository
-	const repo = await repositoriesService.findActiveByGithubRepoId(
-		repository.id.toString()
-	);
-
-	if (!repo) {
-		console.log(
-			`[Webhook] Repository ${repository.id} not connected, skipping`,
-		);
-		return;
-	}
-
-	const repositoryId = repo.id;
-
-	// Find all reviews for this PR
-	const reviews = await codeReviewsService.findByRepositoryAndPrId(
-		repositoryId,
-		pull_request.id.toString()
-	);
-
-	if (reviews.length === 0) {
-		console.log(`[Webhook] No reviews found for PR ${pull_request.id}`);
-		return;
-	}
-
-	console.log(
-		`[Webhook] Updating ${reviews.length} review(s) for PR ${pull_request.id}`,
-	);
-
-	// Update metadata for all reviews of this PR
-	const updatedReviews = reviews.map((review) => ({
-		id: review.id,
-		metadata: {
-			...(review.metadata as Record<string, unknown>),
-			prTitle: pull_request.title,
-			prState: pull_request.state,
-			prMerged: pull_request.merged,
-			prAuthor: pull_request.user.login,
-			prAuthorAvatar: pull_request.user.avatar_url,
-			prUrl: pull_request.html_url,
-			branch: pull_request.head.ref,
-			lastSyncedAt: new Date().toISOString(),
-		},
-	}));
-
-	await codeReviewsService.updateMetadataBatch(updatedReviews);
-
-	console.log(
-		`[Webhook] Successfully updated metadata for PR ${pull_request.id}`,
-	);
-}
+// pull_request events are ignored since code reviews were removed
 
 /**
  * Installation Repositories Event Payload
@@ -245,10 +175,7 @@ export async function POST(request: NextRequest) {
 			| RepositoryPayload;
 
 		// Route to appropriate handler
-		switch (event) {
-			case "pull_request":
-				await handlePullRequestEvent(body as PullRequestPayload);
-				break;
+        switch (event) {
 
 			case "installation_repositories":
 				await handleInstallationRepositoriesEvent(body as InstallationRepositoriesPayload);

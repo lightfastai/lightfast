@@ -16,8 +16,6 @@
     "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@ai-sdk/gateway": "catalog:",
-    "@ai-sdk/openai": "^0.0.70",
     "@api/console": "workspace:*",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
@@ -45,10 +43,9 @@
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/seo": "workspace:*",
-    "ai": "catalog:",
     "date-fns": "^4.1.0",
     "immer": "^10.1.1",
-    "lightfast": "workspace:^",
+    
     "lucide-react": "catalog:",
     "next": "catalog:",
     "octokit": "^5.0.3",

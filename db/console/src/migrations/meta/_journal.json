@@ -8,6 +8,13 @@
       "when": 1760005787059,
       "tag": "0000_past_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1762394926925,
+      "tag": "0001_luxuriant_hellcat",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,6 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { verifyApiKey } from "./lib/verify-api-key";
 import { auth } from "@vendor/clerk/server";
 
 /**
@@ -23,12 +22,6 @@ export type AuthContext =
   | {
       type: "clerk";
       userId: string;
-    }
-  | {
-      type: "apiKey";
-      userId: string;
-      organizationId: string;
-      scopes: string[];
     }
   | {
       type: "unauthenticated";
@@ -50,16 +43,7 @@ export type AuthContext =
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  // Try API key authentication first (takes precedence)
-  const apiKeyAuth = await verifyApiKey(opts.headers.get("authorization"));
-  if (apiKeyAuth) {
-    console.info(
-      `>>> tRPC Request from ${source} by API key (user: ${apiKeyAuth.userId}, org: ${apiKeyAuth.organizationId})`,
-    );
-    return { auth: apiKeyAuth, db };
-  }
-
-  // Try Clerk session authentication
+  // Authenticate via Clerk session only
   const clerkSession = await auth();
   if (clerkSession?.userId) {
     console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
@@ -163,8 +147,8 @@ export const protectedProcedure = t.procedure
     return next({
       ctx: {
         ...ctx,
-        // After check above, auth is either clerk or apiKey
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk" | "apiKey" }>,
+        // After check above, auth is clerk
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
       },
     });
   });
@@ -208,25 +192,6 @@ export const clerkProtectedProcedure = t.procedure
  *
  * @see https://trpc.io/docs/procedures
  */
-export const apiKeyProtectedProcedure = t.procedure
-  .use(timingMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "apiKey") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message:
-          "API key required. Provide a valid API key in the Authorization header: 'Bearer console_sk_...'",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        // Type-safe apiKey auth (guaranteed to be type "apiKey")
-        auth: ctx.auth as Extract<AuthContext, { type: "apiKey" }>,
-      },
-    });
-  });
 
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";

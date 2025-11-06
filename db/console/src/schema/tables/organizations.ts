@@ -9,7 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
-import { uuidv4 } from "@repo/lib";
+import { randomUUID } from "node:crypto";
 
 /**
  * Organizations table
@@ -31,7 +31,7 @@ export const organizations = mysqlTable(
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => uuidv4()),
+      .$defaultFn(() => randomUUID()),
 
     // GitHub App installation details
     // IMMUTABLE: GitHub's internal org ID - this is our source of truth
