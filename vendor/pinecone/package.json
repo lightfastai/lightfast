@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-types",
+  "name": "@vendor/pinecone",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,21 +8,22 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./api": "./src/api/index.ts",
-    "./document": "./src/document.ts",
-    "./vector": "./src/vector.ts",
-    "./error": "./src/error.ts"
+    "./client": "./src/client.ts",
+    "./types": "./src/types.ts",
+    "./env": "./env.ts"
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup --watch",
+    "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@mastra/pinecone": "^0.1.0-alpha.57",
+    "@t3-oss/env-nextjs": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -32,7 +33,6 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

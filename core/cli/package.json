@@ -1,29 +1,33 @@
 {
-  "name": "@repo/console-types",
+  "name": "@lightfastai/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "lightfast": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./api": "./src/api/index.ts",
-    "./document": "./src/document.ts",
-    "./vector": "./src/vector.ts",
-    "./error": "./src/error.ts"
+      "default": "./dist/index.js"
+    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup",
+    "build": "tsup src/index.ts src/bin.ts --format esm --dts",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup --watch",
+    "dev": "tsup src/index.ts src/bin.ts --format esm --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "@repo/console-chunking": "workspace:*",
+    "@repo/console-config": "workspace:*",
+    "@repo/console-embed": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ora": "^8.1.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

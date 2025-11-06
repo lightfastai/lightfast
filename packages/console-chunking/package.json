@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-types",
+  "name": "@repo/console-chunking",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,10 +8,9 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./api": "./src/api/index.ts",
-    "./document": "./src/document.ts",
-    "./vector": "./src/vector.ts",
-    "./error": "./src/error.ts"
+    "./chunk": "./src/chunk.ts",
+    "./mdx": "./src/mdx.ts",
+    "./hash": "./src/hash.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -23,7 +22,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "@repo/console-types": "workspace:*",
+    "gray-matter": "^4.0.3",
+    "js-tiktoken": "^1.0.15"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

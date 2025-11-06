@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-types",
+  "name": "@repo/console-config",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,10 +8,9 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./api": "./src/api/index.ts",
-    "./document": "./src/document.ts",
-    "./vector": "./src/vector.ts",
-    "./error": "./src/error.ts"
+    "./parse": "./src/parse.ts",
+    "./schema": "./src/schema.ts",
+    "./resolve": "./src/resolve.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -23,6 +22,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "fast-glob": "^3.3.2",
+    "yaml": "^2.7.0",
     "zod": "catalog:"
   },
   "devDependencies": {

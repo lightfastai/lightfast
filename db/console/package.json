@@ -9,7 +9,6 @@
       "default": "./src/index.ts"
     },
     "./schema": "./src/schema/index.ts",
-    "./constants": "./src/constants.ts",
     "./client": "./src/client.ts",
     "./env": {
       "types": "./dist/env.d.ts",
@@ -32,15 +31,14 @@
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@repo/console-types": "workspace:*",
-    "@repo/lib": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@planetscale/database": "^1.19.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

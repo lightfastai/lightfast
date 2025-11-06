@@ -1,7 +1,5 @@
-/**
- * Deus database package
- * Provides database schema and client for the Deus AI workflow orchestration platform
- */
-
+// Export all schemas
 export * from "./schema";
-export { db } from "./client";
+
+// Export client
+export * from "./client";
