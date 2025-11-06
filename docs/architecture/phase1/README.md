@@ -41,6 +41,7 @@ See API contracts: ../../reference/api/api-spec.md
 
 ## Navigation
 
+- Package Structure: ./package-structure.md
 - DX Configuration: ./dx-configuration.md
 - Data Model: ./data-model.md
 - Inngest Pipeline: ./inngest-pipeline.md
