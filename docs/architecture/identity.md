@@ -25,13 +25,13 @@ Scope: Define how a human user with multiple provider accounts (GitHub, Linear, 
 
 ---
 
-## Data Model (Drizzle, PlanetScale MySQL)
+## Data Model (Drizzle, PlanetScale Postgres)
 
 ```ts
-import { mysqlTable, varchar, json, timestamp, index, uniqueIndex } from 'drizzle-orm/mysql-core';
+import { pgTable, varchar, jsonb, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 // App-level users (login identity)
-export const users = mysqlTable(
+export const users = pgTable(
   'users',
   {
     id: varchar('id', { length: 40 }).primaryKey(),
@@ -43,7 +43,7 @@ export const users = mysqlTable(
 );
 
 // Linked identities (IdPs and product accounts)
-export const userIdentities = mysqlTable(
+export const userIdentities = pgTable(
   'user_identities',
   {
     id: varchar('id', { length: 40 }).primaryKey(),
@@ -62,7 +62,7 @@ export const userIdentities = mysqlTable(
 );
 
 // Workspace membership and roles for app users
-export const workspaceUsers = mysqlTable(
+export const workspaceUsers = pgTable(
   'workspace_users',
   {
     id: varchar('id', { length: 40 }).primaryKey(),
@@ -75,7 +75,7 @@ export const workspaceUsers = mysqlTable(
 );
 
 // Map an app user to a graph Person entity within a workspace
-export const workspacePersonMap = mysqlTable(
+export const workspacePersonMap = pgTable(
   'workspace_person_map',
   {
     id: varchar('id', { length: 40 }).primaryKey(),

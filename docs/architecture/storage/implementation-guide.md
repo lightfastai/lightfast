@@ -1,6 +1,6 @@
 ---
 title: Storage Implementation Guide — Neural Memory
-description: Implementing PlanetScale, S3, Pinecone, and Redis for the Neural Memory stack
+description: Implementing PlanetScale Postgres, S3, Mastra Pinecone, and Redis for the Neural Memory stack
 status: working
 owner: platform-storage
 audience: engineering
@@ -10,31 +10,29 @@ tags: [storage, implementation]
 
 # Storage Implementation Guide — Neural Memory
 
-Last Updated: 2025-10-28
+Last Updated: 2025-11-06
 
-This guide implements the storage stack for Lightfast’s Neural Memory architecture: PlanetScale (MySQL via Drizzle) for durable metadata, S3 for raw artifacts, Pinecone for vector indexes (chunks/observations/summaries/profiles), and Redis for caches/queues.
+This guide implements the storage stack for Lightfast’s Neural Memory architecture: PlanetScale Postgres (via Drizzle) for durable metadata, S3 for raw artifacts, Mastra Pinecone for vector indexes (docs/observations/summaries/profiles), and Redis for caches/queues.
 
 ---
 
 ## Dependencies
 
 ```bash
-# Database (PlanetScale MySQL + Drizzle)
-pnpm add drizzle-orm drizzle-zod @planetscale/database
+# Database (PlanetScale Postgres + Drizzle)
+pnpm add drizzle-orm drizzle-zod pg
 # Migrations / tooling (in db/* workspaces)
 pnpm add -D drizzle-kit dotenv-cli
 
 # Storage / search / cache
-pnpm add @aws-sdk/client-s3 @pinecone-database/pinecone @upstash/redis
+pnpm add @aws-sdk/client-s3 @mastra/pinecone @upstash/redis
 ```
 
 Environment
 
 ```
-# PlanetScale (MySQL)
-DATABASE_HOST=
-DATABASE_USERNAME=
-DATABASE_PASSWORD=
+# PlanetScale (Postgres)
+DATABASE_URL=
 
 # Object store
 AWS_REGION=us-east-1
@@ -52,244 +50,33 @@ UPSTASH_REDIS_REST_TOKEN=
 
 ---
 
-## Drizzle Schema (PlanetScale MySQL)
+## Drizzle Schema (Postgres)
 
-Representative Drizzle definitions for Knowledge (documents/chunks), Neural Memory (observations/summaries/profiles), and Graph (entities/relationships). Use `drizzle-kit` to generate migrations.
+See per-phase data models:
+- Phase 1: docs/architecture/phase1/data-model.md (stores, docs_documents, vector_entries, ingestion_commits)
+- Phase 2: will introduce observations/summaries/profiles/relationships and embedding_versions in a Postgres-first design.
 
-```ts
-import {
-  mysqlTable,
-  varchar,
-  text,
-  mediumtext,
-  int,
-  char,
-  json,
-  timestamp,
-  index,
-  uniqueIndex,
-  double,
-} from 'drizzle-orm/mysql-core';
-
-// Knowledge — documents
-export const knowledgeDocuments = mysqlTable(
-  'knowledge_documents',
-  {
-    id: varchar('id', { length: 40 }).primaryKey(),
-    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-    organizationId: varchar('organization_id', { length: 40 }).notNull(),
-    source: varchar('source', { length: 20 }).notNull(),
-    sourceId: varchar('source_id', { length: 128 }).notNull(),
-    type: varchar('type', { length: 32 }).notNull(),
-    title: text('title').notNull(),
-    summary: text('summary'),
-    state: varchar('state', { length: 32 }),
-    rawPointer: varchar('raw_pointer', { length: 255 }),
-    contentHash: char('content_hash', { length: 64 }).notNull(),
-    metadataJson: json('metadata_json').notNull(),
-    authorJson: json('author_json').notNull(),
-    occurredAt: timestamp('occurred_at', { mode: 'date' }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date' }).onUpdateNow().defaultNow().notNull(),
-    version: int('version').notNull(),
-    lineageJson: json('lineage_json').notNull(),
-  },
-  (t) => ({
-    uniqWorkspaceSource: uniqueIndex('uniq_workspace_source').on(t.workspaceId, t.source, t.sourceId),
-  }),
-);
-
-// Knowledge — chunks
-export const knowledgeChunks = mysqlTable(
-  'knowledge_chunks',
-  {
-    id: varchar('id', { length: 40 }).primaryKey(),
-    documentId: varchar('document_id', { length: 40 }).notNull(),
-    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-    chunkIndex: int('chunk_index').notNull(),
-    text: mediumtext('text').notNull(),
-    tokenCount: int('token_count').notNull(),
-    sectionLabel: varchar('section_label', { length: 255 }),
-    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
-    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
-    chunkHash: char('chunk_hash', { length: 64 }).notNull(),
-    keywords: json('keywords').notNull(),
-    sparseVector: json('sparse_vector'),
-    occurredAt: timestamp('occurred_at', { mode: 'date' }),
-    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-    supersededAt: timestamp('superseded_at', { mode: 'date' }),
-  },
-  (t) => ({
-    idxByDocument: index('idx_knowledge_chunks_document').on(t.documentId),
-    idxByWorkspaceHash: index('idx_knowledge_chunks_workspace').on(t.workspaceId, t.chunkHash),
-  }),
-);
-
-// Neural Memory — observations
-export const memoryObservations = mysqlTable(
-  'memory_observations',
-  {
-    id: varchar('id', { length: 40 }).primaryKey(),
-    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-    documentId: varchar('document_id', { length: 40 }), // optional link to source doc
-    text: mediumtext('text').notNull(),
-    title: text('title'),
-    summary: text('summary'),
-    occurredAt: timestamp('occurred_at', { mode: 'date' }).notNull(),
-    importance: double('importance').default(0).notNull(),
-    tags: json('tags'),
-    subjectRefs: json('subject_refs'), // e.g., entities/messages
-    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
-    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
-    privacy: varchar('privacy', { length: 16 }).default('org').notNull(),
-    contentHash: char('content_hash', { length: 64 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-  },
-  (t) => ({ idxByWorkspace: index('idx_memory_obs_ws').on(t.workspaceId, t.occurredAt) }),
-);
-
-// Neural Memory — summaries (cluster rollups)
-export const memorySummaries = mysqlTable(
-  'memory_summaries',
-  {
-    id: varchar('id', { length: 40 }).primaryKey(),
-    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-    windowJson: json('window_json').notNull(), // { entityId/topic, timeWindow }
-    text: mediumtext('text').notNull(),
-    embeddingModel: varchar('embedding_model', { length: 64 }).notNull(),
-    embeddingVersion: varchar('embedding_version', { length: 32 }).notNull(),
-    coverageJson: json('coverage_json').notNull(), // counts, sources
-    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-  },
-);
-
-// Neural Memory — profiles (entity centroids)
-export const memoryProfiles = mysqlTable(
-  'memory_profiles',
-  {
-    id: varchar('id', { length: 40 }).primaryKey(),
-    workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-    entityId: varchar('entity_id', { length: 40 }).notNull(),
-    centroidsJson: json('centroids_json').notNull(), // { title: number[], body: number[], summary: number[] }
-    descriptors: json('descriptors'),
-    drift: double('drift').default(0).notNull(),
-    lastRebuiltAt: timestamp('last_rebuilt_at', { mode: 'date' }).defaultNow().notNull(),
-  },
-  (t) => ({ idxByEntity: index('idx_memory_profiles_entity').on(t.workspaceId, t.entityId) }),
-);
-
-// Graph — entities & relationships (sketch)
-export const entities = mysqlTable('entities', {
-  id: varchar('id', { length: 40 }).primaryKey(),
-  workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-  kind: varchar('kind', { length: 24 }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-});
-
-export const entityAliases = mysqlTable('entity_aliases', {
-  id: varchar('id', { length: 40 }).primaryKey(),
-  entityId: varchar('entity_id', { length: 40 }).notNull(),
-  aliasType: varchar('alias_type', { length: 24 }).notNull(),
-  value: varchar('value', { length: 255 }).notNull(),
-  verified: int('verified').default(0).notNull(),
-});
-
-export const relationships = mysqlTable('relationships', {
-  id: varchar('id', { length: 40 }).primaryKey(),
-  workspaceId: varchar('workspace_id', { length: 40 }).notNull(),
-  type: varchar('type', { length: 32 }).notNull(),
-  fromId: varchar('from_id', { length: 40 }).notNull(),
-  toId: varchar('to_id', { length: 40 }).notNull(),
-  confidence: double('confidence').default(1).notNull(),
-  since: timestamp('since', { mode: 'date' }),
-  until: timestamp('until', { mode: 'date' }),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-});
-
-export const relationshipEvidence = mysqlTable('relationship_evidence', {
-  id: varchar('id', { length: 40 }).primaryKey(),
-  relationshipId: varchar('relationship_id', { length: 40 }).notNull(),
-  documentId: varchar('document_id', { length: 40 }),
-  chunkId: varchar('chunk_id', { length: 40 }),
-  observationId: varchar('observation_id', { length: 40 }),
-  weight: double('weight').default(1).notNull(),
-});
-```
-
-Workspace isolation is enforced at the application layer (PlanetScale has no native RLS). Include workspace IDs in every table and index namespaces in Pinecone by workspace + version.
+Workspace isolation can adopt Postgres RLS in Phase 2. Include workspace IDs in every table and scope queries by workspace.
 
 ---
 
-## Pinecone Indexes
+## Mastra Pinecone Indexes
 
-We maintain four index families and per-workspace namespaces:
+We maintain one index per `(workspace, store)` for docs in Phase 1. Phase 2 may add families or labels for observations/summaries/profiles.
 
-- chunks — `lightfast-chunks`
-- observations — `lightfast-observations`
-- summaries — `lightfast-summaries`
-- profiles — `lightfast-profiles`
+Index naming: `ws_${workspaceId}__store_${store}` (dimension 1536 in v1).
 
-Namespace pattern: `${workspaceId}-${embeddingVersion}`.
-
-Example creation (serverless):
+Example creation and upsert via Mastra client:
 
 ```ts
-import { Pinecone } from '@pinecone-database/pinecone';
+import { PineconeVector } from '@mastra/pinecone';
 
-const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-
-await pinecone.createIndex({
-  name: 'lightfast-chunks',
-  dimension: 768,
-  metric: 'dotproduct',
-  spec: { serverless: { cloud: 'aws', region: 'us-east-1' } },
-});
+const store = new PineconeVector({ apiKey: process.env.PINECONE_API_KEY! });
+await store.createIndex({ indexName, dimension: 1536 });
+await store.upsert({ indexName, vectors, metadata });
 ```
 
-Upserts
-
-```ts
-export async function upsertChunkVector(chunk: KnowledgeChunk, embedding: number[]) {
-  const namespace = `${chunk.workspaceId}-${chunk.embeddingVersion}`;
-  await pinecone.index('lightfast-chunks').namespace(namespace).upsert([
-    {
-      id: chunk.id,
-      values: embedding,
-      metadata: {
-        workspaceId: chunk.workspaceId,
-        documentId: chunk.documentId,
-        chunkIndex: chunk.chunkIndex,
-        chunkHash: chunk.chunkHash,
-        section: chunk.sectionLabel ?? null,
-        occurredAt: chunk.occurredAt?.toISOString() ?? null,
-        source: 'knowledge',
-      },
-    },
-  ]);
-}
-
-export async function upsertObservationVectors(obs: MemoryObservation, views: { title?: number[]; body: number[]; summary?: number[] }) {
-  const namespace = `${obs.workspaceId}-${obs.embeddingVersion}`;
-  const items = [
-    { id: `${obs.id}:body`, values: views.body },
-    ...(views.title ? [{ id: `${obs.id}:title`, values: views.title }] : []),
-    ...(views.summary ? [{ id: `${obs.id}:summary`, values: views.summary }] : []),
-  ].map((v) => ({
-    ...v,
-    metadata: {
-      workspaceId: obs.workspaceId,
-      observationId: obs.id,
-      occurredAt: obs.occurredAt.toISOString(),
-      importance: obs.importance,
-      source: 'observation',
-    },
-  }));
-  await pinecone.index('lightfast-observations').namespace(namespace).upsert(items);
-}
-```
-
-Keep metadata under ~1 KB; store heavy fields in PlanetScale and reference IDs in Pinecone.
+Keep metadata under ~1 KB; store heavy fields in Postgres and reference IDs in index metadata.
 
 ---
 
@@ -316,7 +103,7 @@ export async function embedObservationViews(obs: { title?: string; text: string;
 }
 ```
 
-Track `embeddingVersion` whenever model, dimension (Matryoshka truncation), or compression changes.
+Track `embeddingVersion` in Phase 2 whenever model, dimension, or compression changes.
 
 ---
 
