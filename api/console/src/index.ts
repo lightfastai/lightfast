@@ -1,21 +1,21 @@
 // Export router types for client usage
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-import type { DeusAppRouter } from "./root";
+import type { ConsoleAppRouter } from "./root";
 
 /**
- * Deus API exports
+ * Console API exports
  */
 
 // Export the main app router
-export { deusAppRouter } from "./root";
-export type { DeusAppRouter } from "./root";
+export { consoleAppRouter } from "./root";
+export type { ConsoleAppRouter } from "./root";
 
 // Export context creation
 export { createTRPCContext } from "./trpc";
 
-export type DeusRouterInputs = inferRouterInputs<DeusAppRouter>;
-export type DeusRouterOutputs = inferRouterOutputs<DeusAppRouter>;
+export type ConsoleRouterInputs = inferRouterInputs<ConsoleAppRouter>;
+export type ConsoleRouterOutputs = inferRouterOutputs<ConsoleAppRouter>;
 
 // Export TRPC utilities
 export { createCallerFactory } from "./trpc";

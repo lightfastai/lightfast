@@ -10,9 +10,9 @@
 import { nanoid } from "@repo/lib";
 
 /**
- * API key prefix for Deus CLI authentication
+ * API key prefix for Console CLI authentication
  */
-export const API_KEY_PREFIX = "deus_sk_";
+export const API_KEY_PREFIX = "console_sk_";
 
 /**
  * Length of the random portion of the API key
@@ -25,14 +25,14 @@ export const API_KEY_SECRET_LENGTH = 32;
 export const API_KEY_PREVIEW_LENGTH = 4;
 
 /**
- * Generate a new API key with the format: deus_sk_<32 random chars>
+ * Generate a new API key with the format: console_sk_<32 random chars>
  *
  * @returns The generated API key
  *
  * @example
  * ```ts
  * const key = generateApiKey();
- * // Returns: "deus_sk_abc123...xyz789"
+ * // Returns: "console_sk_abc123...xyz789"
  * ```
  */
 export function generateApiKey(): string {
@@ -52,7 +52,7 @@ export function generateApiKey(): string {
  *
  * @example
  * ```ts
- * const hash = await hashApiKey("deus_sk_abc123");
+ * const hash = await hashApiKey("console_sk_abc123");
  * // Returns: "abc123...def456" (64 character hex string)
  * ```
  */
@@ -75,7 +75,7 @@ export async function hashApiKey(key: string): Promise<string> {
  *
  * @example
  * ```ts
- * const preview = extractKeyPreview("deus_sk_abc123xyz789");
+ * const preview = extractKeyPreview("console_sk_abc123xyz789");
  * // Returns: "...9789" (last 4 chars of the secret)
  * ```
  */
@@ -99,9 +99,9 @@ export function extractKeyPreview(key: string): string {
  *
  * @example
  * ```ts
- * isValidApiKeyFormat("deus_sk_abc123");  // true
+ * isValidApiKeyFormat("console_sk_abc123");  // true
  * isValidApiKeyFormat("invalid_key");     // false
- * isValidApiKeyFormat("deus_sk_");        // false (too short)
+ * isValidApiKeyFormat("console_sk_");        // false (too short)
  * ```
  */
 export function isValidApiKeyFormat(key: string): boolean {

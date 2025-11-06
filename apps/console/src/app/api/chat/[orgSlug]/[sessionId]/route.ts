@@ -2,44 +2,43 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { gateway } from "@ai-sdk/gateway";
 import { stepCountIs } from "ai";
-import type { DeusAppRuntimeContext } from "@repo/deus-types";
-import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
+import type { ConsoleAppRuntimeContext } from "@repo/console-types";
+import type { LightfastAppConsoleUIMessage } from "@repo/console-types";
 import { uuidv4 } from "@repo/lib";
 import { createAgent } from "lightfast/agent";
 import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
-import { ApiKeysService, OrganizationsService, SessionsService } from "@repo/deus-api-services";
-import { deusTools } from "./_lib/tools";
-import { DeusMemory } from "./_lib/memory";
+import { ApiKeysService, OrganizationsService, SessionsService } from "@repo/console-api-services";
+import { consoleTools } from "./_lib/tools";
+import { ConsoleMemory } from "./_lib/memory";
 
 /**
  * Request body type for CLI requests
  */
-interface DeusRequestBody {
+interface ConsoleRequestBody {
 	message?: string;
-	messages?: LightfastAppDeusUIMessage[];
+	messages?: LightfastAppConsoleUIMessage[];
 }
 
 /**
  * POST /api/chat/[orgSlug]/[sessionId]
  *
- * AI-based streaming chat for Deus CLI with tool calling
+ * AI-based streaming chat for Console CLI with tool calling
  *
- * This route supports long-running conversations where Deus can:
+ * This route supports long-running conversations where Console can:
  * - Decide which agent to use (Claude Code or Codex)
  * - Execute tasks via the run_coding_tool
  * - Maintain conversation history
  *
- * Authentication: API key via Authorization: Bearer deus_sk_...
+ * Authentication: API key via Authorization: Bearer console_sk_...
  */
 
 // Note: Using Node.js runtime (not Edge) due to dependencies requiring node:crypto
 // export const runtime = "edge";
 
 /**
- * Deus System Prompt
- * Based on core/deus/src/lib/system-prompt.ts
+ * Console System Prompt
  */
-const DEUS_SYSTEM_PROMPT = `You are Deus, an AI orchestrator that routes tasks to specialized coding agents.
+const CONSOLE_SYSTEM_PROMPT = `You are Console, an AI orchestrator that routes tasks to specialized coding agents.
 
 Available agents:
 - claude-code: Code review, debugging, refactoring, documentation, git operations, general coding tasks
@@ -99,7 +98,7 @@ async function authenticateApiKey(authHeader: string | null): Promise<{
 	organizationId: string;
 	scopes: string[];
 } | null> {
-	if (!authHeader?.startsWith("Bearer deus_sk_")) {
+	if (!authHeader?.startsWith("Bearer console_sk_")) {
 		return null;
 	}
 
@@ -125,7 +124,7 @@ export async function POST(
 	const requestId = generateRequestId();
 	const { orgSlug, sessionId } = await params;
 
-	console.log(`[Deus API] ${requestId} - Received request`, {
+	console.log(`[Console API] ${requestId} - Received request`, {
 		orgSlug,
 		sessionId,
 		method: request.method,
@@ -145,30 +144,26 @@ export async function POST(
 		});
 
 		// Parse and transform the request body
-		let parsedBody: DeusRequestBody = {};
+		let parsedBody: ConsoleRequestBody = {};
 		try {
 			parsedBody = JSON.parse(body) as DeusRequestBody;
-			console.log(`[Deus API] ${requestId} - Parsed request body:`, {
+			console.log(`[Console API] ${requestId} - Parsed request body:`, {
 				hasMessages: !!parsedBody.messages,
 				hasMessage: !!parsedBody.message,
 				messagesCount: parsedBody.messages?.length ?? 0,
-				messageTypes: parsedBody.messages?.map((m: LightfastAppDeusUIMessage) => m.role) ?? [],
+				messageTypes: parsedBody.messages?.map((m: LightfastAppConsoleUIMessage) => m.role) ?? [],
 				fullBody: parsedBody,
 			});
 
 			// Transform CLI format { message: "text" } to fetchRequestHandler format
 			if (parsedBody.message && !parsedBody.messages) {
-				console.log(
-					`[Deus API] ${requestId} - Converting CLI message format to UIMessage format`,
-				);
+				console.log(`[Console API] ${requestId} - Converting CLI message format to UIMessage format`);
 
 				// Load existing messages from memory first
-				const memory = new DeusMemory();
+				const memory = new ConsoleMemory();
 				const existingMessages = await memory.getMessages(sessionId);
 
-				console.log(
-					`[Deus API] ${requestId} - Loaded ${existingMessages.length} existing messages`,
-				);
+				console.log(`[Console API] ${requestId} - Loaded ${existingMessages.length} existing messages`);
 
 				// Create new user message
 				const userMessage = {
@@ -187,9 +182,7 @@ export async function POST(
 					messages: [...existingMessages, userMessage],
 				};
 
-				console.log(
-					`[Deus API] ${requestId} - Transformed body now has ${parsedBody.messages?.length ?? 0} messages`,
-				);
+				console.log(`[Console API] ${requestId} - Transformed body now has ${parsedBody.messages?.length ?? 0} messages`);
 			}
 		} catch (e) {
 			console.error(`[Deus API] ${requestId} - Failed to parse JSON:`, e);
@@ -205,7 +198,7 @@ export async function POST(
 		const authHeader = request.headers.get("authorization");
 		const apiKeyAuth = await authenticateApiKey(authHeader);
 
-		console.log(`[Deus API] ${requestId} - Authentication result:`, {
+		console.log(`[Console API] ${requestId} - Authentication result:`, {
 			authenticated: !!apiKeyAuth,
 			userId: apiKeyAuth?.userId,
 			organizationId: apiKeyAuth?.organizationId,
@@ -217,7 +210,7 @@ export async function POST(
 					type: ErrorType.UNAUTHORIZED,
 					error: "Invalid API key",
 					message:
-						"Provide a valid API key in the Authorization header: 'Bearer deus_sk_...'",
+						"Provide a valid API key in the Authorization header: 'Bearer console_sk_...'",
 				},
 				{
 					status: 401,
@@ -263,7 +256,7 @@ export async function POST(
 		const sessionService = new SessionsService();
 		const session = await sessionService.getSessionInternal(sessionId);
 
-		console.log(`[Deus API] ${requestId} - Session lookup:`, {
+		console.log(`[Console API] ${requestId} - Session lookup:`, {
 			found: !!session,
 			sessionId,
 			cwd: session?.cwd,
@@ -330,28 +323,28 @@ export async function POST(
 		const context = contextParts.join("\n");
 
 		// 8. Create memory instance
-		const memory = new DeusMemory();
+		const memory = new ConsoleMemory();
 
-		console.log(`[Deus API] ${requestId} - Creating agent with context:`, {
+		console.log(`[Console API] ${requestId} - Creating agent with context:`, {
 			context: contextParts,
 			messageId,
-			systemPromptLength: DEUS_SYSTEM_PROMPT.length,
+				systemPromptLength: CONSOLE_SYSTEM_PROMPT.length,
 		});
 
 		// 9. Execute with fetchRequestHandler
 		console.log(`[Deus API] ${requestId} - Starting fetchRequestHandler...`);
 		const response = await fetchRequestHandler({
-			agent: createAgent<DeusAppRuntimeContext, typeof deusTools>({
-				name: "deus",
-				system: `${DEUS_SYSTEM_PROMPT}\n\nContext:\n${context}`,
-				tools: deusTools,
+			agent: createAgent<ConsoleAppRuntimeContext, typeof consoleTools>({
+				name: "console",
+				system: `${CONSOLE_SYSTEM_PROMPT}\n\nContext:\n${context}`,
+				tools: consoleTools,
 				createRuntimeContext: ({
 					sessionId: _sessionId,
 					resourceId: _resourceId,
-				}): DeusAppRuntimeContext => ({
+				}): ConsoleAppRuntimeContext => ({
 					userId: apiKeyAuth.userId,
 					organizationId: apiKeyAuth.organizationId,
-					agentId: "deus",
+					agentId: "console",
 					messageId,
 					// No tools runtime config needed - run_coding_tool uses client-side execution
 				}),
@@ -378,7 +371,7 @@ export async function POST(
 			onError(event) {
 				const { error, systemContext } = event;
 				console.error(
-					`[Deus API Error] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}`,
+					`[Console API Error] Session: ${systemContext.sessionId}, User: ${systemContext.resourceId}`,
 					{
 						error: error.message || JSON.stringify(error),
 						stack: error.stack,
@@ -391,14 +384,14 @@ export async function POST(
 			},
 		});
 
-		console.log(`[Deus API] ${requestId} - fetchRequestHandler completed, streaming response`);
+		console.log(`[Console API] ${requestId} - fetchRequestHandler completed, streaming response`);
 
 		// Add telemetry headers
 		response.headers.set("x-request-id", requestId);
 		response.headers.set("x-session-id", sessionId);
 		response.headers.set("x-message-id", messageId);
 
-		console.log(`[Deus API] ${requestId} - Returning response with headers:`, {
+		console.log(`[Console API] ${requestId} - Returning response with headers:`, {
 			requestId,
 			sessionId,
 			messageId,
@@ -408,7 +401,7 @@ export async function POST(
 
 		return response;
 	} catch (error) {
-		console.error(`[Deus Router] ${requestId} - Error:`, error);
+		console.error(`[Console Router] ${requestId} - Error:`, error);
 
 		return NextResponse.json<ErrorResponse>(
 			{

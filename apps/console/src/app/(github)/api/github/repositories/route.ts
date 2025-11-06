@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { createGitHubApp, getInstallationRepositories } from "@repo/deus-octokit-github";
-import { OrganizationsService } from "@repo/deus-api-services";
+import { createGitHubApp, getInstallationRepositories } from "@repo/console-octokit-github";
+import { OrganizationsService } from "@repo/console-api-services";
 import { env } from "~/env";
 
 /**

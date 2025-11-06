@@ -6,7 +6,7 @@ import { Plus, Github, ExternalLink } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { ConnectRepositoryDialog } from "./connect-repository-dialog";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface RepositoriesSettingsProps {
 	organizationId: string;

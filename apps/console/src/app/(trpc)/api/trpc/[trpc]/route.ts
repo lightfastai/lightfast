@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { deusAppRouter, createTRPCContext } from "@api/console";
+import { consoleAppRouter, createTRPCContext } from "@api/console";
 import { env } from "~/env";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
@@ -15,7 +15,7 @@ const isProductionDeploy = env.VERCEL_ENV === "production";
  * - Production: restrict to known origins
  * - Other environments: allow all origins for easier local/preview development
  */
-const productionOrigins = new Set(["https://deus.lightfast.ai"]);
+const productionOrigins = new Set(["https://console.lightfast.ai"]);
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
 	const originHeader = req.headers.get("origin");
@@ -57,7 +57,7 @@ export const OPTIONS = (req: NextRequest) => {
 const handler = async (req: NextRequest) => {
 	const response = await fetchRequestHandler({
 		endpoint: "/api/trpc",
-		router: deusAppRouter,
+    router: consoleAppRouter,
 		req,
 		createContext: () =>
 			createTRPCContext({

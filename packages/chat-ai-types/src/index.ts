@@ -163,7 +163,7 @@ export interface LightfastAppChatUIMessageMetadata {
 export type LightfastAppChatUIMessage = UIMessage<
   LightfastAppChatUIMessageMetadata,
   LightfastAppChatUICustomDataTypes,
-  LightfastAppChatToolSet
+  LightfastAppChatToolSet & UITools
 > & {
   modelId?: string | null;
 };

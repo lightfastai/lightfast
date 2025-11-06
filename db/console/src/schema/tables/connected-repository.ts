@@ -14,7 +14,7 @@ import type {
   CodeReviewSettings,
   RepositoryMetadata,
   RepositoryPermissions,
-} from "@repo/deus-types/repository";
+} from "@repo/console-types/repository";
 import { uuidv4 } from "@repo/lib";
 
 /**

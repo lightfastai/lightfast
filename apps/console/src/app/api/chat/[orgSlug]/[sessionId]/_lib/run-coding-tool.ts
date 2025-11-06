@@ -2,10 +2,10 @@ import { createTool } from "lightfast/tool";
 import { z } from "zod";
 
 import type {
-	RunCodingToolInput,
-	RunCodingToolOutput,
-	DeusLightfastRuntimeContext,
-} from "@repo/deus-types";
+    RunCodingToolInput,
+    RunCodingToolOutput,
+    ConsoleLightfastRuntimeContext,
+} from "@repo/console-types";
 
 const inputSchema: z.ZodType<RunCodingToolInput> = z.object({
 	type: z
@@ -45,19 +45,19 @@ const outputSchema: z.ZodType<RunCodingToolOutput> = z.object({
  * It should never actually execute because the client intercepts the tool call first.
  */
 export function runCodingTool() {
-	return createTool<
-		DeusLightfastRuntimeContext,
-		typeof inputSchema,
-		typeof outputSchema
-	>({
+    return createTool<
+        ConsoleLightfastRuntimeContext,
+        typeof inputSchema,
+        typeof outputSchema
+    >({
 		description:
 			"Execute a coding task with the specified agent (Claude Code or Codex). This requires user confirmation in the CLI before the agent starts executing.",
 		inputSchema,
 		outputSchema,
-		execute: (
-			input: RunCodingToolInput,
-			_context: DeusLightfastRuntimeContext,
-		): Promise<RunCodingToolOutput> => {
+        execute: (
+            input: RunCodingToolInput,
+            _context: ConsoleLightfastRuntimeContext,
+        ): Promise<RunCodingToolOutput> => {
 			// This should never execute in practice because the client handles the tool call
 			// However, the AI SDK's agent pattern requires an execute function
 			// If this does execute (due to client not handling it), return a pending status

@@ -7,29 +7,29 @@ import { Toaster } from "@repo/ui/components/ui/sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { TRPCReactProvider } from "@repo/deus-trpc/react";
+import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
-  title: "Deus",
+  title: "Console",
   description:
     "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
   image: siteConfig.ogImage,
-  metadataBase: new URL("https://deus.lightfast.ai"),
+  metadataBase: new URL("https://console.lightfast.ai"),
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://deus.lightfast.ai",
-    title: "Deus - AI Workflow Orchestration",
+    url: "https://console.lightfast.ai",
+    title: "Console - AI Workflow Orchestration",
     description:
       "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
     siteName: siteConfig.name,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Deus - AI Workflow Orchestration",
+    title: "Console - AI Workflow Orchestration",
     description:
       "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
     images: [siteConfig.ogImage],

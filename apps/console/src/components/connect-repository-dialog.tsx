@@ -14,9 +14,9 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { useToast } from "@repo/ui/hooks/use-toast";
-import type { GitHubRepository } from "@repo/deus-octokit-github";
+import type { GitHubRepository } from "@repo/console-octokit-github";
 
 interface ConnectRepositoryDialogProps {
 	children?: React.ReactNode;

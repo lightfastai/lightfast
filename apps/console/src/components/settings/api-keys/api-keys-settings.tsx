@@ -13,7 +13,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { GenerateApiKeyDialog } from "./generate-api-key-dialog";
 import { ApiKeyCard } from "./api-key-card";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface ApiKeysSettingsProps {
 	organizationId: string;

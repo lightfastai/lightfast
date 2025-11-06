@@ -22,9 +22,9 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "sonner";
-import type { CodeReviewTool } from "@repo/deus-types/code-review";
+import type { CodeReviewTool } from "@repo/console-types/code-review";
 
 interface CodeReviewSettingsProps {
 	organizationId: string;

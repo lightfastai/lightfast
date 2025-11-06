@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/deus-trpc/react";
+import { useTRPC } from "@repo/console-trpc/react";
 import { SessionCard } from "./session-card";
 import { useState } from "react";
 import {

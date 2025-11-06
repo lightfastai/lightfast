@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { OrgChatInterface } from "~/components/org-chat-interface";
-import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 
 export default async function OrgHomePage({
 	params,

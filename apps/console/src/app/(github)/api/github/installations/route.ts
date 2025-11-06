@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getUserInstallations } from "@repo/deus-octokit-github";
+import { getUserInstallations } from "@repo/console-octokit-github";
 
 /**
  * GitHub App - Fetch User Installations

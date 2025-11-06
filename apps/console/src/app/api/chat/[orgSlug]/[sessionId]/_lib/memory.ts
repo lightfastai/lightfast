@@ -1,23 +1,23 @@
 import type { Memory } from "lightfast/memory";
-import type { LightfastAppDeusUIMessage } from "@repo/deus-types";
-import { SessionsService } from "@repo/deus-api-services";
+import type { LightfastAppConsoleUIMessage } from "@repo/console-types";
+import { SessionsService } from "@repo/console-api-services";
 
 /**
  * Simple Memory implementation for Deus sessions
  * Implements the required Memory interface from lightfast
  */
-export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
+export class ConsoleMemory implements Memory<LightfastAppConsoleUIMessage, object> {
 	/**
 	 * Append a single message to a session using SessionsService
 	 */
 	async appendMessage({
 		sessionId,
-		message,
-	}: {
-		sessionId: string;
-		message: LightfastAppDeusUIMessage;
-		context: object;
-	}): Promise<void> {
+    message,
+  }: {
+    sessionId: string;
+    message: LightfastAppConsoleUIMessage;
+    context: object;
+  }): Promise<void> {
 		// Calculate character count
 		const charCount = message.parts.reduce((acc, part) => {
 			if ("text" in part && typeof part.text === "string") {
@@ -26,7 +26,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 			return acc;
 		}, 0);
 
-		console.log(`[DeusMemory] Appending message to session ${sessionId}:`, {
+    console.log(`[ConsoleMemory] Appending message to session ${sessionId}:`, {
 			messageId: message.id,
 			role: message.role,
 			partsCount: message.parts.length,
@@ -44,31 +44,31 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 			modelId: message.modelId ?? null,
 		});
 
-		console.log(`[DeusMemory] Message saved successfully`);
-	}
+    console.log(`[ConsoleMemory] Message saved successfully`);
+  }
 
 	/**
 	 * Get all messages for a session, ordered by creation time using SessionsService
 	 */
-	async getMessages(sessionId: string): Promise<LightfastAppDeusUIMessage[]> {
-		console.log(`[DeusMemory] Loading messages for session ${sessionId}...`);
+  async getMessages(sessionId: string): Promise<LightfastAppConsoleUIMessage[]> {
+    console.log(`[ConsoleMemory] Loading messages for session ${sessionId}...`);
 
 		const sessionService = new SessionsService();
 		const messages = await sessionService.getSessionMessagesInternal(sessionId);
 
-		console.log(`[DeusMemory] Loaded ${messages.length} messages from database`);
+    console.log(`[ConsoleMemory] Loaded ${messages.length} messages from database`);
 
 		// Reverse to get chronological order (service returns DESC, we need ASC)
-		const result = messages.reverse().map(
-			(msg): LightfastAppDeusUIMessage => ({
-				id: msg.id,
-				role: msg.role,
-				parts: msg.parts as LightfastAppDeusUIMessage["parts"],
-				modelId: msg.modelId ?? undefined,
-			}),
-		);
+    const result = messages.reverse().map(
+      (msg): LightfastAppConsoleUIMessage => ({
+        id: msg.id,
+        role: msg.role,
+        parts: msg.parts as LightfastAppConsoleUIMessage["parts"],
+        modelId: msg.modelId ?? undefined,
+      }),
+    );
 
-		console.log(`[DeusMemory] Returning ${result.length} messages in chronological order`);
+    console.log(`[ConsoleMemory] Returning ${result.length} messages in chronological order`);
 
 		return result;
 	}
@@ -117,7 +117,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 		streamId: string;
 		context: object;
 	}): Promise<void> {
-		// Deus doesn't currently support stream resume, so this is a no-op
+    // Console doesn't currently support stream resume, so this is a no-op
 		// Can be implemented later if needed
 	}
 
@@ -125,7 +125,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 	 * Get all stream IDs for a session
 	 */
 	getSessionStreams(sessionId: string): Promise<string[]> {
-		// Deus doesn't currently support stream resume
+    // Console doesn't currently support stream resume
 		void sessionId; // Use the parameter to satisfy linter
 		return Promise.resolve([]);
 	}
@@ -134,7 +134,7 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 	 * Get active stream ID for a session
 	 */
 	getActiveStream(sessionId: string): Promise<string | null> {
-		// Deus doesn't currently support stream resume
+    // Console doesn't currently support stream resume
 		void sessionId; // Use the parameter to satisfy linter
 		return Promise.resolve(null);
 	}
@@ -143,6 +143,6 @@ export class DeusMemory implements Memory<LightfastAppDeusUIMessage, object> {
 	 * Clear active stream ID for a session
 	 */
 	async clearActiveStream(_sessionId: string): Promise<void> {
-		// Deus doesn't currently support stream resume, so this is a no-op
-	}
+    // Console doesn't currently support stream resume, so this is a no-op
+  }
 }

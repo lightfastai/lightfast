@@ -10,8 +10,8 @@ import {
 } from "@trpc/tanstack-react-query";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import type { DeusAppRouter } from "@api/console";
-import { deusAppRouter, createTRPCContext } from "@api/console";
+import type { ConsoleAppRouter } from "@api/console";
+import { consoleAppRouter, createTRPCContext } from "@api/console";
 
 import { createQueryClient } from "./client";
 
@@ -26,15 +26,15 @@ const createContext = cache(async () => {
 
 export const getQueryClient = cache(createQueryClient);
 
-export const trpc: TRPCOptionsProxy<DeusAppRouter> = createTRPCOptionsProxy({
-  router: deusAppRouter,
+export const trpc: TRPCOptionsProxy<ConsoleAppRouter> = createTRPCOptionsProxy({
+  router: consoleAppRouter,
   ctx: createContext,
   queryClient: getQueryClient,
 });
 
 export const createCaller = cache(async () => {
   const ctx = await createContext();
-  return deusAppRouter.createCaller(ctx);
+  return consoleAppRouter.createCaller(ctx);
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import type { TRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
-import type { DeusAppRouter } from "@api/console";
+import type { ConsoleAppRouter } from "@api/console";
 
 /**
  * TRPC error codes that can be returned from the server
@@ -50,7 +50,7 @@ export const ERROR_MESSAGES: Record<TRPCErrorCode, string> = {
  */
 export function isTRPCClientError(
 	error: unknown
-): error is TRPCClientError<DeusAppRouter> {
+): error is TRPCClientError<ConsoleAppRouter> {
 	return error instanceof Error && error.name === "TRPCClientError";
 }
 

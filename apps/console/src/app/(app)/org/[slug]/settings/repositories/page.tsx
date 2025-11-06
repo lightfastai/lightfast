@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
-import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function RepositoriesPage({

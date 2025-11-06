@@ -11,7 +11,7 @@ import {
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
-import type { DeusAppRouter } from "@api/console";
+import type { ConsoleAppRouter } from "@api/console";
 import { createQueryClient } from "./client";
 
 export interface CreateTRPCReactProviderOptions {
@@ -19,7 +19,7 @@ export interface CreateTRPCReactProviderOptions {
   getAuthHeaders?: () => Record<string, string>;
 }
 
-const trpcContext = createTRPCContext<DeusAppRouter>();
+const trpcContext = createTRPCContext<ConsoleAppRouter>();
 
 export const useTRPC = trpcContext.useTRPC;
 export const TRPCProvider = trpcContext.TRPCProvider;
@@ -50,7 +50,7 @@ export function TRPCReactProvider({
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
-    createTRPCClient<DeusAppRouter>({
+    createTRPCClient<ConsoleAppRouter>({
       links: [
         loggerLink({
           enabled: (op) =>

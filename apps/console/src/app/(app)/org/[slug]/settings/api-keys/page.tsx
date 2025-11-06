@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { ApiKeysSettings } from "~/components/settings/api-keys/api-keys-settings";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
-import { prefetch, trpc, HydrateClient } from "@repo/deus-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function ApiKeysPage({

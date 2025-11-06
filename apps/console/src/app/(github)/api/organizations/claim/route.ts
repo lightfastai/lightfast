@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { OrganizationsService } from "@repo/deus-api-services";
-import type { OrgMembershipRole } from "@repo/deus-octokit-github";
+import { OrganizationsService } from "@repo/console-api-services";
+import type { OrgMembershipRole } from "@repo/console-octokit-github";
 import {
 	getUserInstallations,
 	getAuthenticatedUser,
 	getOrganizationMembership,
-} from "@repo/deus-octokit-github";
+} from "@repo/console-octokit-github";
 
 /**
  * Map GitHub organization role to Clerk role
