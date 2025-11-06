@@ -1,29 +1,190 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
 # Project Specification
 See @SPEC.md for business goals and product vision.
 
-# Common Commands
+# Monorepo Overview
+
+Lightfast is a comprehensive pnpm workspace monorepo with Turborepo orchestration containing:
+
+## Applications (6)
+- **apps/www** (port 4101) - Marketing website with Next.js 15 + App Router
+- **apps/chat** (port 4106) - AI chat demo with Convex real-time backend + tRPC
+- **apps/console** (port 4107) - Workflow orchestration platform with tRPC
+- **apps/auth** - Centralized Clerk authentication service
+- **apps/docs** - Documentation site built with Fumadocs
+- **apps/www-search** - Search interface with Exa integration
+
+## Package Organization (40+ packages)
+
+### Vendor Layer (@vendor/*) - 12 packages
+Third-party service abstractions for easy swapping:
+- `@vendor/analytics` - PostHog + Vercel Analytics
+- `@vendor/clerk` - Authentication (server + client)
+- `@vendor/db` - Database layer (Drizzle + PlanetScale)
+- `@vendor/email` - Email services with Resend
+- `@vendor/inngest` - Background job processing
+- `@vendor/next` - Next.js configuration utilities
+- `@vendor/observability` - Sentry + BetterStack monitoring
+- `@vendor/security` - Arcjet rate limiting and security
+- `@vendor/storage` - Vercel Blob file storage
+- `@vendor/upstash` - Redis, KV, and QStash
+- `@vendor/vercel` - Vercel platform utilities
+- `@vendor/zod` - Zod validation extensions
+
+### Shared Packages (@repo/*) - 19+ packages
+Shared libraries and utilities:
+- `@repo/ui` - 200+ shadcn/ui components with Tailwind CSS v4
+- `@repo/lib` - Shared utilities and helper functions
+- `@repo/ai` - Vercel AI SDK integrations
+- `@repo/ai-tools` - AI browser automation with Browserbase
+- `@repo/email` - Email templates and utilities
+- `@repo/site-config` - Site configuration utilities
+- `@repo/url-utils` - URL manipulation and validation
+- `@repo/vercel-config` - Vercel deployment configurations
+- `@repo/chat-trpc` - tRPC client utilities for chat app
+- `@repo/console-trpc` - tRPC client utilities for console app
+- Plus: billing, i18n, markdown, and more
+
+### API Layer (@api/*) - 2 packages
+tRPC backend servers:
+- `@api/chat` - Chat application tRPC router
+- `@api/console` - Console application tRPC router
+
+### Database Layer (@db/*) - 2 packages
+Drizzle ORM schemas and migrations:
+- `@db/chat` - Chat application database schemas
+- `@db/console` - Console application database schemas
+
+### Core Framework (core/*) - 1 package
+- `core/lightfast` - AI agent framework and execution engine
+
+### Internal Tooling (@repo/*-config) - 3 packages
+- `@repo/eslint-config` - ESLint configurations
+- `@repo/prettier-config` - Prettier configurations
+- `@repo/typescript-config` - TypeScript configurations
+
+## Key Technologies
+
+**Build System:**
+- pnpm 10.5.2 (enforced by packageManager)
+- Turborepo 2.5+ with intelligent caching
+- Node.js >= 22.0.0 (enforced by engines)
+
+**Frontend:**
+- Next.js 15+ with App Router and React 19
+- TypeScript 5.9+ with strict type checking
+- Tailwind CSS v4 via `@repo/ui`
+- tRPC 11+ for type-safe APIs (chat, console apps)
+
+**Backend:**
+- Drizzle ORM with PlanetScale (MySQL)
+- Convex (chat app real-time backend)
+- Upstash Redis for caching and queuing
+
+**AI/ML:**
+- Vercel AI SDK 5.0+ (streaming, tool calling)
+- Anthropic Claude Sonnet 4 and Haiku
+- OpenAI GPT-4o and GPT-4o-mini
+- Browserbase (browser automation)
+- Exa (AI-powered search)
+- BrainTrust (evaluation metrics)
+
+## Dependency Management
+
+**Workspace Protocol:**
+Internal packages use `workspace:*`:
+```json
+{
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@vendor/db": "workspace:*"
+  }
+}
+```
+
+**Catalog Feature:**
+Consistent versioning via pnpm catalogs:
+```yaml
+catalog:
+  next: ^15.5.5
+  react: 19.1.0
+  typescript: ^5.8.2
+```
+
+Reference in packages:
+```json
+{
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:"
+  }
+}
+```
+
+**Adding Dependencies:**
+```bash
+# Add to specific app/package
+pnpm add package-name --filter @lightfast/www
+
+# Run script in specific package
+pnpm --filter @lightfast/www run script-name
+```
+
+## Multi-App Development with Dual
+
+This monorepo uses **Dual** (`@lightfastai/dual`) for managing multiple Next.js apps with different port assignments.
+
+**Configuration:** `dual.config.yml` defines 8 services with their paths and environment files.
+
+**Port Assignments (per context):**
+- www: basePort + 1 (e.g., 4101)
+- auth: basePort + 2 (e.g., 4102)
+- chat: basePort + 6 (e.g., 4106)
+- console: basePort + 7 (e.g., 4107)
+
+**Worktrees:**
+Git worktrees are stored in `./worktrees/` for parallel development branches.
+
+## Common Commands
 
 ## Build, Lint, and Typecheck
 ```bash
-# App-specific build commands (NEVER use pnpm build for all packages)
-pnpm build:www      # Build www app only
-pnpm build:auth     # Build auth app only
-pnpm build:cloud    # Build cloud app only
+# App-specific build commands (NEVER use global pnpm build)
+pnpm build:www          # Build www app only
+pnpm build:www-search   # Build www-search app only
+pnpm build:auth         # Build auth app only
+pnpm build:chat         # Build chat app only
+pnpm build:console      # Build console app only
+pnpm build:docs         # Build docs app only
 
 # Linting and formatting (global commands)
-pnpm lint           # Lint all packages
-pnpm lint:fix       # Fix linting issues
+pnpm lint           # Lint all packages with Turbo caching
+pnpm lint:fix       # Fix linting issues automatically
+pnpm lint:ws        # Check workspace dependencies with Sherif
 pnpm typecheck      # Run TypeScript type checking
-pnpm format         # Check formatting
-pnpm format:fix     # Fix formatting issues
+pnpm format         # Check formatting with Prettier
+pnpm format:fix     # Fix formatting issues automatically
 
 # Development servers
-pnpm dev            # Start development servers
+pnpm dev            # Start main dev servers (www, docs, auth, chat)
 pnpm dev:www        # Start www app only (port 4101)
+pnpm dev:search     # Start www-search app only
+pnpm dev:auth       # Start auth app only
+pnpm dev:chat       # Start chat app only (port 4106)
+pnpm dev:console    # Start console app only (port 4107)
+pnpm dev:docs       # Start docs app only
+pnpm dev:email      # Start email development server
 
 # Other useful commands
-pnpm clean          # Clean all build artifacts
-pnpm clean:workspaces # Clean turbo workspaces
+pnpm clean          # Clean all build artifacts and caches
+pnpm clean:workspaces # Clean Turbo workspaces only
+pnpm ui             # Manage shadcn/ui components
+pnpm brain          # Run evaluation scripts (BrainTrust)
 ```
 
 ## Database Commands
@@ -34,17 +195,38 @@ pnpm db:studio      # Open database studio
 ```
 
 ## Environment Variable Management
-```bash
-# Environment variables loaded via `dotenv` in app packages
-# Check individual app package.json files for environment-specific commands
 
-# Repository Structure
-- **Monorepo**: pnpm workspace with Turbo
-- **Apps**:
-  - `apps/www` - Marketing site (port 4101)
-- **Packages**: Shared libraries in `packages/`
-- **Vendor**: Third-party integrations in `vendor/`
-- **Internal**: ESLint, Prettier, TypeScript configs in `internal/`
+**Environment Files:**
+Each app uses typed environment variables via `@t3-oss/env-nextjs` (see each app's `src/env.ts`).
+
+**Development Environment:**
+```bash
+# Environment files typically stored in:
+apps/<app>/.vercel/.env.development.local
+
+# Use dual.config.yml to see which env file each service uses
+```
+
+**Validation:**
+- All environment variables are validated at build time via Zod schemas
+- Server-only variables are never exposed to the client
+- Type-safe access through `~/env` imports
+
+## Repository Structure
+- **Monorepo**: pnpm workspace with Turborepo orchestration
+- **Apps** (`apps/`): 6 Next.js applications
+  - `www` (4101) - Marketing site
+  - `chat` (4106) - AI chat with Convex + tRPC
+  - `console` (4107) - Workflow orchestration with tRPC
+  - `auth` - Authentication service
+  - `docs` - Documentation with Fumadocs
+  - `www-search` - Search interface with Exa
+- **Packages** (`packages/`): 19+ shared libraries (@repo/*)
+- **Vendor** (`vendor/`): 12 third-party abstractions (@vendor/*)
+- **API** (`api/`): 2 tRPC backend servers (@api/*)
+- **Database** (`db/`): 2 Drizzle schema packages (@db/*)
+- **Core** (`core/`): AI agent framework (core/lightfast)
+- **Internal** (`internal/`): Dev tooling configs (@repo/*-config)
 
 # Code Style
 - ESLint configuration extends from `@repo/eslint-config`
@@ -64,8 +246,111 @@ Check package.json files for test commands - currently no global test command co
 ## Workflow 1: Investigate External Repos
 Clone repos to `/tmp/repos/<repo-name>` for safe investigation without affecting the current workspace.
 
-## Workflow 2: Investigate Dependencies  
+## Workflow 2: Investigate Dependencies
 In pnpm monorepo with `node-linker=hoisted`, all dependencies are hoisted to root `node_modules/` - check there first.
+
+---
+
+# Architectural Patterns
+
+## Package Dependency Layers
+
+Follow this dependency flow to maintain clean architecture:
+
+```
+Applications (@lightfast/*)
+    ↓
+tRPC API + Database Schemas (@api/*, @db/*)
+    ↓
+Shared Packages (@repo/*) + Vendor Abstractions (@vendor/*)
+    ↓
+External Services (Claude, OpenAI, PlanetScale, Clerk, etc.)
+```
+
+**Key Rules:**
+1. **Never** import vendor packages directly in apps - use `@vendor/*` abstractions
+2. **Never** have circular dependencies between layers
+3. **Always** use `workspace:*` for internal package dependencies
+4. **Always** use catalog versions for shared external dependencies
+
+## Type Safety Chain
+
+The codebase maintains end-to-end type safety:
+
+```
+TypeScript → Zod Validation → tRPC → Database Schema Generation → API Response
+```
+
+**Pattern:**
+1. Define Zod schemas for validation (`*.schema.ts`)
+2. Use in tRPC procedures for input validation
+3. Generate TypeScript types from Drizzle schemas
+4. Infer types from tRPC routers for client-side usage
+
+## Result Pattern with neverthrow
+
+Use the Result pattern for explicit error handling:
+
+```typescript
+import { Result, ok, err } from "neverthrow";
+
+async function fetchDataSafe(): Promise<Result<Data, Error>> {
+  try {
+    const data = await fetchData();
+    return ok(data);
+  } catch (error) {
+    return err(new Error("Failed to fetch"));
+  }
+}
+
+// Usage
+const result = await fetchDataSafe();
+result.match(
+  (data) => console.log("Success:", data),
+  (error) => console.error("Error:", error)
+);
+```
+
+## Vendor Package Pattern
+
+All third-party integrations are abstracted in `@vendor/*` packages:
+
+**Benefits:**
+- Easy to swap providers (e.g., PlanetScale → Neon)
+- Consistent API across the monorepo
+- Centralized configuration and error handling
+- Better testing with mocked vendor packages
+
+**Example:**
+```typescript
+// ❌ Don't import directly
+import { sql } from "@planetscale/database";
+
+// ✅ Use vendor abstraction
+import { db } from "@vendor/db/client";
+```
+
+## Turborepo Caching Strategy
+
+Turborepo intelligently caches:
+- Build outputs
+- Lint results
+- Type check results
+- Test results
+
+**Cache Invalidation:**
+- Triggered by file changes in the workspace
+- Input hashes include `package.json`, `tsconfig.json`, source files
+- Remote caching via Vercel for team collaboration
+
+**Performance:**
+```bash
+# First build: 2-3 minutes
+pnpm build:www
+
+# Cached build: 100-500ms
+pnpm build:www  # Cache hit!
+```
 
 ---
 
@@ -1057,3 +1342,218 @@ export default async function Page2() {
 ```
 
 This ensures each page's prefetch data is properly dehydrated for hydration.
+
+---
+
+# Troubleshooting Common Issues
+
+## Build Issues
+
+### "Cannot find module '@repo/ui'" or similar
+**Cause:** Workspace dependencies not installed or built
+**Solution:**
+```bash
+# Clean and reinstall
+pnpm clean
+pnpm install
+
+# Build dependencies first
+pnpm --filter @repo/ui build
+```
+
+### "Turbo task failed with no output"
+**Cause:** Turbo cache corruption
+**Solution:**
+```bash
+# Clear Turbo cache
+pnpm clean:workspaces
+
+# Or delete .turbo directory
+rm -rf .turbo
+```
+
+### "Type errors in node_modules"
+**Cause:** Mismatched TypeScript versions or corrupt node_modules
+**Solution:**
+```bash
+# Ensure consistent TypeScript version from catalog
+pnpm install
+
+# Check for multiple TypeScript versions
+pnpm list typescript
+```
+
+## Development Server Issues
+
+### Port already in use (4101, 4106, 4107, etc.)
+**Cause:** Previous dev server still running
+**Solution:**
+```bash
+# Kill all Next.js dev servers
+pkill -f "next dev"
+
+# Or kill specific port
+lsof -ti:4101 | xargs kill -9
+```
+
+### Changes not reflecting in browser
+**Cause:** Turbo watch mode not detecting changes or browser cache
+**Solution:**
+```bash
+# 1. Hard refresh browser (Cmd+Shift+R)
+
+# 2. Restart dev server with cache clear
+pnpm clean:workspaces && pnpm dev:www
+```
+
+### "Module not found" after adding new package
+**Cause:** Package not in dependencies or dev server needs restart
+**Solution:**
+```bash
+# 1. Verify package is in package.json
+cat apps/www/package.json | grep "package-name"
+
+# 2. Reinstall and restart
+pnpm install
+# Kill and restart dev server
+```
+
+## tRPC Issues
+
+### UNAUTHORIZED errors on client-side
+**Cause:** Wrong prefetch/HydrateClient pattern (see tRPC guide above)
+**Solution:** Ensure prefetch runs BEFORE HydrateClient wrapping
+
+### Type errors with tRPC client
+**Cause:** API and client using different router types
+**Solution:**
+```bash
+# Rebuild API package
+pnpm --filter @api/chat build
+
+# Restart dev server for chat app
+pkill -f "next dev" && pnpm dev:chat
+```
+
+## Database Issues
+
+### "Cannot connect to database"
+**Cause:** Missing or invalid DATABASE_URL
+**Solution:**
+```bash
+# Check environment variable
+echo $DATABASE_URL
+
+# Verify .env.development.local exists
+cat apps/chat/.vercel/.env.development.local
+```
+
+### "Table does not exist"
+**Cause:** Migrations not run
+**Solution:**
+```bash
+pnpm db:migrate
+```
+
+## Environment Variable Issues
+
+### "Invalid environment variables" error
+**Cause:** Zod validation failed in env.ts
+**Solution:**
+```bash
+# 1. Check which variables are required
+cat apps/www/src/env.ts
+
+# 2. Verify .env.development.local has all required vars
+cat apps/www/.vercel/.env.development.local
+
+# 3. Copy from example if needed
+cp apps/www/.env.example apps/www/.vercel/.env.development.local
+```
+
+### Environment variables not loading
+**Cause:** Wrong file location or not using pnpm with-env
+**Solution:**
+```bash
+# Verify env file location matches dual.config.yml
+cat dual.config.yml
+
+# Use pnpm with-env for custom env file
+pnpm with-env next dev
+```
+
+## Workspace Issues
+
+### Sherif warnings after pnpm install
+**Cause:** Inconsistent dependencies across workspace
+**Solution:**
+```bash
+# Fix automatically
+pnpm lint:ws
+
+# Manually check for duplicates
+pnpm list package-name
+```
+
+### Turbo not detecting changes
+**Cause:** Turbo's file watcher not working or incorrect turbo.json config
+**Solution:**
+```bash
+# 1. Check turbo.json inputs include your files
+cat turbo.json
+
+# 2. Use --force to bypass cache
+pnpm build:www --force
+
+# 3. Clear cache and rebuild
+pnpm clean:workspaces && pnpm build:www
+```
+
+## Performance Issues
+
+### Slow builds
+**Cause:** No Turbo cache or too many packages building
+**Solution:**
+```bash
+# 1. Use app-specific builds (NOT pnpm build)
+pnpm build:www  # Only builds www and dependencies
+
+# 2. Enable remote caching
+pnpm vercel:link
+
+# 3. Check for unnecessary rebuilds
+turbo run build --dry-run
+```
+
+### Slow type checking
+**Cause:** TypeScript checking all node_modules
+**Solution:**
+```bash
+# Use per-app typecheck instead of global
+pnpm --filter @lightfast/www typecheck
+```
+
+## Quick Diagnostics
+
+Run these commands to diagnose issues:
+
+```bash
+# Check workspace health
+pnpm lint:ws
+
+# Verify all packages install correctly
+pnpm install --force
+
+# Check for outdated packages
+pnpm outdated
+
+# Verify Node.js and pnpm versions
+node --version  # Should be >= 22.0.0
+pnpm --version  # Should be 10.5.2
+
+# Check Turbo cache
+turbo daemon status
+
+# View Turbo logs
+cat .turbo/turbo-*.log
+```
