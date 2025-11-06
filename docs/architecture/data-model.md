@@ -217,13 +217,7 @@ All tables are workspace‑scoped for isolation and auditability.
 
 ---
 
-## Vector Index Families (Pinecone)
+## Vector Index Families (Mastra Pinecone)
 
-- chunks → `lightfast-chunks`
-- observations → `lightfast-observations`
-- summaries → `lightfast-summaries`
-- profiles → `lightfast-profiles`
-
-Namespace: `${workspaceId}-${embeddingVersion}`.
-
-Metadata budget: keep under ~1 KB; store heavy fields in PlanetScale and reference IDs in vectors.
+- Phase 1 (Docs): one index per `(workspaceId, store)`; dim=1536 (v1). Index name: `ws_${workspaceId}__store_${store}`.
+- Phase 2 (Memory): separate families or labels for observations/summaries/profiles. Keep index metadata lean (<1 KB); store heavy fields in Postgres and reference IDs in vectors.

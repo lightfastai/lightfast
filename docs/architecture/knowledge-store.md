@@ -18,7 +18,7 @@ The Knowledge layer stores normalized source artifacts (documents) as durable re
 
 ## Executive Summary
 
-- Source of truth: PlanetScale (MySQL) for documents and chunk descriptors; large raw artifacts in S3.
+- Source of truth: PlanetScale Postgres for documents and chunk descriptors; large raw artifacts in S3 (if used).
 - Indexing: 200–400 token chunking with overlap; embeddings in Pinecone; optional sparse vectors.
 - Retrieval: lexical prefilter + dense search + optional rerank; hydrate from Redis/PlanetScale.
 - Versioning: deterministic `content_hash` and immutable versions; chunk supersession on change.

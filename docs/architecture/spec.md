@@ -57,7 +57,7 @@ Beliefs/intent are modeled as summary content and descriptors rather than a spec
 
 ## 3. Data Model (Conceptual)
 
-Relational (PlanetScale/MySQL via Drizzle):
+Relational (PlanetScale Postgres via Drizzle):
 
 - `workspaces` — tenant boundary.
 - `entities` — id, kind, displayName, canonical refs, createdAt, updatedAt.
@@ -79,7 +79,7 @@ Index metadata:
 
 - `embedding_versions` — name, dim, model, createdAt, status.
 
-Vector (Pinecone):
+Vector (Mastra Pinecone):
 
 - Namespaces per workspace and embedding version.
 - Index families: chunks, observations, summaries, profiles (separate indexes or collections).
@@ -100,7 +100,7 @@ Flow: Source Event → Normalize → Persist → Upload Raw (S3) → Embed → I
 - Chunk: 200–400 tokens with overlap; label sections.
 - Observe: extract salient “moments” (decisions, conclusions, incident lines, PR titles/summaries).
 - Embed: per view (title/body/summary) with `inputType` tuned for query/doc roles.
-- Index: upsert to Pinecone under `{workspaceId}-{embeddingVersion}`.
+- Index: upsert to Mastra Pinecone under a store-specific index name.
 - Events: `memory.observation.created`, `knowledge.chunk.created`, `embedding.requested`.
 
 ---

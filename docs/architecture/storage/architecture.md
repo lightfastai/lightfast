@@ -1,6 +1,6 @@
 ---
 title: Storage & Indexing — Neural Memory Stack
-description: Durable storage, vector indexing, caches/queues, and multi-tenant safety
+description: Durable storage, vector indexing (Mastra Pinecone), caches/queues, and multi-tenant safety
 status: working
 owner: platform-storage
 audience: engineering
@@ -10,19 +10,23 @@ tags: [storage]
 
 # Storage & Indexing — Neural Memory Stack
 
-Last Updated: 2025-10-28
+Last Updated: 2025-11-06
 
-We combine a durable relational core, object storage, vector indexes, and caches to support Knowledge (chunks), Neural Memory (observations, summaries, profiles), and Graph signals. The design prioritizes durability, recall, latency, and multi-tenant isolation.
+We combine a durable relational core, object storage, vector indexes, and caches to support Knowledge (docs chunks), Neural Memory (observations, summaries, profiles), and Graph signals. The design prioritizes durability, recall, latency, and multi-tenant isolation.
 
 ---
 
 ## Executive Summary
 
-- Durable source of truth: PlanetScale (MySQL via Drizzle) stores canonical documents, chunks, observations, summaries, profiles, entities, relationships, and lineage; S3 stores raw bodies and attachments.
-- Vector indexing: Pinecone namespaces per workspace and embedding version; separate collections for chunks, observations, summaries, and profiles.
-- Hybrid retrieval: lexical + dense + rerank fused with graph bias, recency, importance, and profile similarity.
-- Observability & eval: retrieval logs, embedding versions, feedback, drift monitors, and dashboards (see ../../operations/evaluation-playbook.md).
-- Redis used as cache/queues only; durability lives in PlanetScale + S3.
+- Phase 1 (Docs-only):
+  - Source of truth: PlanetScale stores docs metadata (path, slug, contentHash) and vector entry mapping; no S3 required for docs.
+  - Vector indexing: Mastra Pinecone with one index per `(workspace, store)`; embeddings computed in-pipeline (char-hash 1536 in v1).
+  - Retrieval: query Mastra Pinecone index; optional rerank (if enabled); serve snippets and URLs.
+- Phase 2 (Neural Memory expansion):
+  - Add observations, summaries, profiles, and relationships tables.
+  - Add index families or labels for observations/summaries/profiles as needed.
+- Observability & eval: ingestion/retrieval latency splits, dedupe hits, quality metrics (see ../../operations/evaluation-playbook.md).
+- Redis optional for caches/queues; durability lives in PlanetScale (+ S3 for large raw artifacts if used).
 
 ---
 
@@ -37,84 +41,91 @@ We combine a durable relational core, object storage, vector indexes, and caches
 
 ## Architecture Overview
 
-Connectors → Ingestion Orchestrator → PlanetScale (documents/chunks/observations/graph) + S3 (raw) → Embedding/Index Jobs → Pinecone (chunks/observations/summaries/profiles) → Redis caches → Retrieval Router → Rerank → Hydration
+Phase 1 (Docs)
+GitHub Push → Inngest → PlanetScale (docs + vector map) → Chunk/Embed (char-hash) → Mastra Pinecone (store index) → Retrieval API → apps/docs
+
+Phase 2 (Memory)
+Connectors (GitHub/Linear/Notion) → Inngest → PlanetScale (documents/observations/graph) + S3 (raw) → Embedding/Index Jobs → Mastra Pinecone (families) → Retrieval Router → Rerank → Hydration
 
 ---
 
 ## Data Model (storage sketch)
 
-Relational (PlanetScale)
-- knowledge_documents, knowledge_chunks
-- entities, entity_aliases, document_entities, relationships, relationship_evidence
-- memory_observations (views, embeddings refs/versions, importance, privacy)
-- memory_summaries (window, embeddings, coverage)
-- memory_profiles (entityId, centroids, descriptors, drift)
-- embedding_versions (name, dim, model, status)
+Phase 1 (Docs)
+- Relational (PlanetScale)
+  - stores (workspaceId, name, indexName, embeddingDim)
+  - docs_documents (storeId, path, slug, title, description, contentHash, commitSha, committedAt, chunkCount, frontmatter)
+  - vector_entries (storeId, docId, chunkIndex, contentHash, indexName, upsertedAt)
+  - ingestion_commits (storeId, beforeSha, afterSha, deliveryId, status, processedAt)
+- Vector (Mastra Pinecone via @mastra/pinecone)
+  - Index per `(workspaceId, store)`; dimension 1536 (v1); vector metadata kept minimal
+- Object Storage (S3)
+  - Not required for docs v1 (optional for large raw bodies)
 
-Object Storage (S3)
-- Raw bodies, diffs, attachments; lifecycle rules for cold data.
-
-Vector (Pinecone)
-- Namespaces: `{workspaceId}-{embeddingVersion}`
-- Index families: `chunks`, `observations`, `summaries`, `profiles`
-
-Cache/Queues (Redis)
-- Hydration caches (documents/chunks/observations)
-- Graph adjacency caches (`graph:out`, `graph:in`)
-- Work queues: embedding, clustering, profiles
+Phase 2 (Memory)
+- Relational adds: entities, relationships, memory_observations, memory_summaries, memory_profiles, embedding_versions
+- Vector expands: separate families or labels for observations/summaries/profiles (still Mastra Pinecone)
+- S3: raw artifacts, large payloads; lifecycle for cold data
 
 ---
 
 ## Indexing & Metadata
 
-- Chunking: 200–400 tokens with overlap; section labels; occurredAt.
-- Observations: extract titles, conclusions, decision lines; multi-view embeddings.
-- Summaries: cluster observations per entity/topic/time; store coverage stats.
-- Profiles: entity centroids per view; drift indicators.
-- Metadata budget: keep Pinecone metadata under ~1 KB; store heavy fields in PlanetScale with IDs in metadata.
+- Phase 1 (Docs):
+  - Chunking: char-length (default ~1600 chars, overlap ~200) with light heading awareness
+  - Embeddings: char-hash 1536 (v1); dimension recorded in `stores.embeddingDim`
+  - Metadata: keep index metadata lean (path, slug, chunkIndex, contentHash); store heavier fields in PlanetScale
+- Phase 2 (Memory):
+  - Observations: extract titles, conclusions, decision lines; multi-view embeddings
+  - Summaries: cluster observations per entity/topic/time; coverage stats in DB
+  - Profiles: entity centroids per view; drift indicators
 
 ---
 
 ## Embedding & Versioning
 
-- `embedding_versions` tracks model, dim, compression, latency, status.
-- Matryoshka-compatible models allow truncated vector search for speed with full-dim rerank features.
-- Namespaces per workspace + version enable phased rollover; archive old namespaces after migration grace.
-- Drift monitors compute similarity deltas between versions; trigger alerts on threshold breaches.
+- Phase 1: single default embedding (char-hash 1536) per store; capture dim on `stores.embeddingDim`.
+- Phase 2: introduce `embedding_versions` for model rollouts; consider store-level or family-level versioning.
+- Optional: Matryoshka-compatible models and drift monitors as we adopt learned embeddings.
 
 ---
 
 ## Caches & Hydration
 
-- Redis caches hot documents, chunks, and observations; keys versioned by document version.
-- Hydration always falls back to PlanetScale on misses.
-- TTL tuned by access frequency; cold data evicted safely.
+- Optional Redis caches for hot docs/snippets; keys keyed by `(storeId, path, contentHash)`.
+- Hydration falls back to PlanetScale on misses.
 
 ---
 
 ## Multi-Tenant Safety
 
 - DB row-level security by workspace; audit fields on all writes.
-- Pinecone namespaces and S3 prefixes include workspace IDs; per-tenant encryption policies.
+- Mastra Pinecone index names include workspace/store identifiers; per-tenant isolation.
 - Retention policies per workspace (defaults; legal-hold overrides supported).
 
 ---
 
 ## Cost & Scaling
 
-- Pinecone: scale by collections and pod classes; monitor metadata <1 KB; prune stale observations into summaries.
-- PlanetScale: shard by workspace; prune superseded chunks; compress raw artifacts in S3 with lifecycle to Glacier.
-- Redis: multi-tier for caches and queues; rely on PlanetScale for recovery.
+- Mastra Pinecone: one index per store; monitor metadata <1 KB; adjust pod classes; prune stale entries after deletes.
+- PlanetScale: shard by workspace; prune superseded chunk maps; optional S3 lifecycle for raw bodies.
+- Redis: optional caches only; rely on PlanetScale for recovery.
 
 ---
 
 ## Build Blueprint
 
-1) Create Drizzle schema for knowledge, neural memory, and graph tables.
-2) Implement ingestion to produce chunks and observations; attach entities and importance.
-3) Build embedding/indexing workers per index family; add drift monitors.
-4) Wire retrieval router with fusion and rerank; add hydration caches.
-5) Add evaluation dashboards and alerts.
+- Phase 1 (Docs)
+  1) Create Drizzle schema for stores, docs_documents, vector_entries, ingestion_commits
+  2) Implement Inngest pipeline: push→diff→chunk→embed→Mastra Pinecone upsert; handle deletes
+  3) Implement `/v1/search` wrapper over Mastra Pinecone (store-scoped)
+  4) Add basic observability and dashboards
+
+- Phase 2 (Memory)
+  1) Add observations/summaries/profiles/relationships tables
+  2) Extend ingestion for GitHub/Linear/Notion connectors; add embedding/indexing workers per family
+  3) Introduce embedding_versions and drift monitors
+  4) Wire fusion retrieval + optional rerank and hydration caches
 
 ---
 

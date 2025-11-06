@@ -35,6 +35,10 @@ Memory
 - Graph: ./memory/graph.md
 - Org vs Workspace: ./memory/org-workspace-memory.md
 
+Phases
+- Phase 1 (Docs, GitHub, Discord): ./phase1/README.md
+- Phase 2 (Linear, Notion): ./phase2/README.md
+
 Operations
 - Evaluation Playbook: ../operations/evaluation-playbook.md
 - SLOs: ../operations/slo.md
