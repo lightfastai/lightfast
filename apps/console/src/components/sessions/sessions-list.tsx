@@ -66,7 +66,7 @@ export function SessionsList({ organizationId }: SessionsListProps) {
 					<p className="text-sm font-medium mb-1">No sessions found</p>
 					<p className="text-xs text-muted-foreground">
 						{statusFilter === "all"
-							? "Start using Deus CLI to create your first session"
+							? "Start using Console CLI to create your first session"
 							: `No ${statusFilter} sessions at the moment`}
 					</p>
 				</div>

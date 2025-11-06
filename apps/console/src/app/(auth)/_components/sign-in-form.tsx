@@ -23,7 +23,7 @@ export function SignInForm() {
 			{/* Header */}
 			<div className="text-center">
 				<h1 className="text-3xl font-semibold text-foreground">
-					Log in to Deus
+					Log in to Console
 				</h1>
 			</div>
 

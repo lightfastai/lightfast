@@ -4,9 +4,9 @@ import { SignUpForm } from "../_components/sign-up-form";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
-	title: "Sign Up - Deus",
+title: "Sign Up - Console",
 	description:
-		"Create your Deus account. Join the AI workflow orchestration platform and start automating complex workflows with natural language.",
+	"Create your Console account. Join the AI workflow orchestration platform and start automating complex workflows with natural language.",
 	robots: {
 		index: false,
 		follow: true,

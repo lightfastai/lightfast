@@ -158,7 +158,7 @@ function ClaimOrgContent() {
 					{installations.length === 0 ? (
 						<div className="space-y-4 rounded-lg border border-border/60 bg-muted/5 p-4">
 							<p className="text-sm text-muted-foreground text-center">
-								You need to install the Deus GitHub App on at least one
+								You need to install the Console GitHub App on at least one
 								organization.
 							</p>
 							<div className="flex flex-col gap-2">

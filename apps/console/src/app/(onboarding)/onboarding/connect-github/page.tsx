@@ -32,7 +32,7 @@ export default function ConnectGitHubPage() {
 					</div>
 					<CardTitle>Connect GitHub</CardTitle>
 					<CardDescription>
-						Connect your GitHub account to get started with Deus
+						Connect your GitHub account to get started with Console
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -47,7 +47,7 @@ export default function ConnectGitHubPage() {
 									Permissions always respected
 								</p>
 								<p className="mt-1 text-xs text-muted-foreground">
-									Deus is strictly limited to permissions you've explicitly set.
+									Console is strictly limited to permissions you've explicitly set.
 								</p>
 							</div>
 						</div>
@@ -59,7 +59,7 @@ export default function ConnectGitHubPage() {
 							<div className="flex-1">
 								<p className="text-sm font-medium">You're in control</p>
 								<p className="mt-1 text-xs text-muted-foreground">
-									Deus always respects your training data preferences, and is
+									Console always respects your training data preferences, and is
 									limited to permissions you've explicitly set.
 								</p>
 							</div>

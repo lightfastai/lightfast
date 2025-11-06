@@ -12,7 +12,7 @@ type ExtractToolType<T> = T extends (...args: unknown[]) => (
     ? R
     : never;
 
-// Complete tools object for Deus agent
+// Complete tools object for Console agent
 export const consoleTools: ToolFactorySet<RuntimeContext<ConsoleAppRuntimeContext>> =
     {
         run_coding_tool: runCodingTool(),

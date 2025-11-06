@@ -89,7 +89,7 @@ export function GitHubConnectDialog({
 						Connect GitHub
 					</DialogTitle>
 					<DialogDescription>
-						Connect your GitHub account to enable Deus to orchestrate workflows on your codebase.
+						Connect your GitHub account to enable Console to orchestrate workflows on your codebase.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -112,7 +112,7 @@ export function GitHubConnectDialog({
 							<div>
 								<p className="text-sm font-medium">Permissions always respected</p>
 								<p className="text-xs text-muted-foreground mt-1">
-									Deus is strictly limited to permissions you've explicitly set.
+									Console is strictly limited to permissions you've explicitly set.
 								</p>
 							</div>
 						</div>
@@ -126,7 +126,7 @@ export function GitHubConnectDialog({
 							<div>
 								<p className="text-sm font-medium">You're in control</p>
 								<p className="text-xs text-muted-foreground mt-1">
-									Deus always respects your training data preferences, and is limited to permissions you've explicitly set.
+									Console always respects your training data preferences, and is limited to permissions you've explicitly set.
 								</p>
 							</div>
 						</div>

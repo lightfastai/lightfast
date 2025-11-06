@@ -3,7 +3,7 @@ import type { LightfastAppConsoleUIMessage } from "@repo/console-types";
 import { SessionsService } from "@repo/console-api-services";
 
 /**
- * Simple Memory implementation for Deus sessions
+ * Simple Memory implementation for Console sessions
  * Implements the required Memory interface from lightfast
  */
 export class ConsoleMemory implements Memory<LightfastAppConsoleUIMessage, object> {

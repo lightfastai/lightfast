@@ -121,7 +121,7 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 										No repositories connected
 									</p>
 									<p className="mt-1 text-xs text-muted-foreground max-w-sm">
-										Connect a GitHub repository from your organization to get started with Deus
+										Connect a GitHub repository from your organization to get started with Console
 									</p>
 									<Button
 										onClick={() => setShowConnectDialog(true)}

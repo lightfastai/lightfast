@@ -46,7 +46,7 @@ export function SignUpForm() {
 			{/* Header */}
 			<div className="text-center">
 				<h1 className="text-3xl font-semibold text-foreground">
-					Sign up for Deus
+					Sign up for Console
 				</h1>
 			</div>
 

@@ -319,7 +319,7 @@ export function ConnectRepositoryDialog({
 							</div>
 
 							<p className="text-xs text-muted-foreground">
-								This list only includes repositories that you have access to in GitHub and can use with Deus.
+								This list only includes repositories that you have access to in GitHub and can use with Console.
 								Missing a repo?{" "}
 								<a
 									href={`https://github.com/settings/installations`}

@@ -11,7 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import type { LightfastAppDeusUIMessage } from "@repo/console-types";
+import type { LightfastAppConsoleUIMessage } from "@repo/console-types";
 
 import {
   apiKeyProtectedProcedure,
@@ -22,13 +22,21 @@ import {
 /**
  * Helper function to calculate character count from message parts
  */
-function calculateCharCount(parts: LightfastAppDeusUIMessage["parts"]): number {
-  return parts.reduce((total, part) => {
-    if (part.type === "text") {
-      return total + part.text.length;
-    }
-    return total;
-  }, 0);
+function calculateCharCount(
+  parts: LightfastAppConsoleUIMessage["parts"],
+): number {
+  return parts.reduce<number>(
+    (
+      total: number,
+      part: LightfastAppConsoleUIMessage["parts"][number],
+    ) => {
+      if (part.type === "text") {
+        return total + part.text.length;
+      }
+      return total;
+    },
+    0,
+  );
 }
 
 /**
@@ -194,7 +202,7 @@ export const sessionRouter = {
 
       // Calculate character count from parts
       const charCount = calculateCharCount(
-        input.parts as LightfastAppDeusUIMessage["parts"],
+        input.parts as LightfastAppConsoleUIMessage["parts"],
       );
 
       // Generate message ID

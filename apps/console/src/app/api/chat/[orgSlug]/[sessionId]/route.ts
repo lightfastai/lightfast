@@ -138,7 +138,7 @@ export async function POST(
 	try {
 		// Log request body
 		const body = await request.text();
-		console.log(`[Deus API] ${requestId} - Request body:`, {
+		console.log(`[Console API] ${requestId} - Request body:`, {
 			bodyLength: body.length,
 			bodyPreview: body.slice(0, 200),
 		});
@@ -146,7 +146,7 @@ export async function POST(
 		// Parse and transform the request body
 		let parsedBody: ConsoleRequestBody = {};
 		try {
-			parsedBody = JSON.parse(body) as DeusRequestBody;
+			parsedBody = JSON.parse(body) as ConsoleRequestBody;
 			console.log(`[Console API] ${requestId} - Parsed request body:`, {
 				hasMessages: !!parsedBody.messages,
 				hasMessage: !!parsedBody.message,
@@ -185,7 +185,7 @@ export async function POST(
 				console.log(`[Console API] ${requestId} - Transformed body now has ${parsedBody.messages?.length ?? 0} messages`);
 			}
 		} catch (e) {
-			console.error(`[Deus API] ${requestId} - Failed to parse JSON:`, e);
+			console.error(`[Console API] ${requestId} - Failed to parse JSON:`, e);
 		}
 
 		// Clone request with transformed body for fetchRequestHandler
@@ -332,7 +332,7 @@ export async function POST(
 		});
 
 		// 9. Execute with fetchRequestHandler
-		console.log(`[Deus API] ${requestId} - Starting fetchRequestHandler...`);
+		console.log(`[Console API] ${requestId} - Starting fetchRequestHandler...`);
 		const response = await fetchRequestHandler({
 			agent: createAgent<ConsoleAppRuntimeContext, typeof consoleTools>({
 				name: "console",

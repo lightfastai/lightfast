@@ -21,7 +21,7 @@ function mapGitHubRoleToClerkRole(
 }
 
 /**
- * Create or get Clerk organization for a Deus organization
+ * Create or get Clerk organization for a Console organization
  *
  * If organization already has a Clerk org linked, returns the existing one.
  * Otherwise creates a new Clerk organization.
@@ -71,19 +71,19 @@ async function createOrGetClerkOrganization(params: {
 /**
  * Claim Organization API Route
  *
- * Allows a user to claim a GitHub organization in Deus.
+ * Allows a user to claim a GitHub organization in Console.
  *
  * For new organizations:
  * - Creates Clerk organization (user becomes admin automatically via createdBy)
- * - Creates Deus organization record linked to Clerk org
- * - Rollback Clerk org if Deus org creation fails
+ * - Creates Console organization record linked to Clerk org
+ * - Rollback Clerk org if Console org creation fails
  *
  * For existing organizations:
  * - Ensures Clerk org is linked (creates if missing)
  * - Verifies user's GitHub membership
  * - Adds user to Clerk organization with appropriate role
  *
- * Note: All membership management is handled by Clerk. No Deus organizationMembers table.
+ * Note: All membership management is handled by Clerk. No Console organizationMembers table.
  *
  * Auth: This route must support PENDING sessions (user authenticated but no org claimed yet).
  * We use treatPendingAsSignedOut: false to treat pending sessions as authenticated.
@@ -370,7 +370,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Create new organization record with Clerk org link
-		console.log("[CLAIM ORG] Creating Deus org record in DB...");
+		console.log("[CLAIM ORG] Creating Console org record in DB...");
 		try {
 			const newOrg = await organizationsService.create({
 				githubInstallationId: installationId,
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
 				clerkOrgSlug: clerkOrgData.clerkOrgSlug,
 			});
 
-			console.log("[CLAIM ORG] ✓ Deus org created in DB:", newOrg);
+			console.log("[CLAIM ORG] ✓ Console org created in DB:", newOrg);
 			console.log("[CLAIM ORG] ✅ Successfully created new org");
 
 			return NextResponse.json({
@@ -393,9 +393,9 @@ export async function POST(request: NextRequest) {
 				created: true,
 			});
 		} catch (error) {
-			// Rollback: Delete Clerk org if Deus org creation failed
+				// Rollback: Delete Clerk org if Console org creation failed
 			console.error(
-				"[CLAIM ORG] ❌ Failed to create Deus organization, rolling back Clerk org:",
+					"[CLAIM ORG] ❌ Failed to create Console organization, rolling back Clerk org:",
 				error,
 			);
 			try {

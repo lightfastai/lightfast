@@ -35,7 +35,7 @@ export function GET(request: NextRequest) {
   const response = NextResponse.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    service: "deus",
+    service: "console",
     environment: env.NODE_ENV,
   });
 
