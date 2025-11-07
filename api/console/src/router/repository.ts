@@ -4,8 +4,21 @@ import { DeusConnectedRepository, organizations } from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
+import { env } from "../env";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
+
+// Helper to create GitHub App instance
+function getGitHubApp() {
+  return createGitHubApp(
+    {
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+    },
+    true // Format private key
+  );
+}
 
 export const repositoryRouter = {
   /**
@@ -320,5 +333,121 @@ export const repositoryRouter = {
           metadata: { deleted: true, deletedAt: new Date().toISOString() },
         })
         .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
+    }),
+
+  /**
+   * Detect lightfast.yml configuration in repository
+   * Can be called manually to re-check config status
+   */
+  detectConfig: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Look up internal org ID from Clerk org ID
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
+      // Get repository
+      const repoResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, orgResult.id)
+          )
+        )
+        .limit(1);
+
+      const repository = repoResult[0];
+
+      if (!repository) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repository not found",
+        });
+      }
+
+      // Extract owner and repo name from metadata
+      const fullName = repository.metadata?.fullName;
+      if (!fullName) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Repository metadata missing fullName",
+        });
+      }
+
+      const [owner, repo] = fullName.split("/");
+      if (!owner || !repo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid repository fullName format",
+        });
+      }
+
+      // Detect config
+      try {
+        const app = getGitHubApp();
+        const detector = new ConfigDetectorService(app);
+
+        // Use default branch or 'main' as fallback
+        const ref = "main"; // TODO: Get default branch from metadata if available
+
+        const result = await detector.detectConfig(
+          owner,
+          repo,
+          ref,
+          Number.parseInt(repository.githubInstallationId, 10)
+        );
+
+        // Compute workspace ID
+        const workspaceId = `ws_${orgResult.githubOrgSlug}`;
+
+        // Update repository with detection result
+        await ctx.db
+          .update(DeusConnectedRepository)
+          .set({
+            configStatus: result.exists ? "configured" : "unconfigured",
+            configPath: result.path,
+            configDetectedAt: new Date().toISOString(),
+            workspaceId,
+          })
+          .where(eq(DeusConnectedRepository.id, repository.id));
+
+        return {
+          exists: result.exists,
+          path: result.path,
+          workspaceId,
+        };
+      } catch (error: any) {
+        console.error("[tRPC] Config detection failed:", error);
+
+        // Update status to error
+        await ctx.db
+          .update(DeusConnectedRepository)
+          .set({
+            configStatus: "error",
+            configDetectedAt: new Date().toISOString(),
+          })
+          .where(eq(DeusConnectedRepository.id, repository.id));
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to detect configuration",
+          cause: error,
+        });
+      }
     }),
 } satisfies TRPCRouterRecord;

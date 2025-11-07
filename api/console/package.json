@@ -48,8 +48,10 @@
 		"drizzle-orm": "catalog:",
 		"gray-matter": "^4.0.3",
 		"inngest": "catalog:",
+		"minimatch": "^10.1.1",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
+		"yaml": "^2.7.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

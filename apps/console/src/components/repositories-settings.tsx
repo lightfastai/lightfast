@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Github, ExternalLink } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import { useToast } from "@repo/ui/hooks/use-toast";
 import { ConnectRepositoryDialog } from "./connect-repository-dialog";
+import { RepositoryConfigStatus, type ConfigStatus } from "./repository-config-status";
+import { SetupGuideModal } from "./setup-guide-modal";
 import { useTRPC } from "@repo/console-trpc/react";
 
 interface RepositoriesSettingsProps {
@@ -15,7 +18,11 @@ interface RepositoriesSettingsProps {
 
 export function RepositoriesSettings({ organizationId, githubOrgId }: RepositoriesSettingsProps) {
 	const [showConnectDialog, setShowConnectDialog] = useState(false);
+	const [showSetupGuide, setShowSetupGuide] = useState(false);
+	const [selectedRepoForSetup, setSelectedRepoForSetup] = useState<string>("");
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
+	const { toast } = useToast();
 
 	// Query to fetch organization's connected repositories
 	// Using useSuspenseQuery for better loading UX with Suspense boundaries
@@ -30,6 +37,47 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 	});
 
 	const hasRepositories = repositories.length > 0;
+
+	// Mutation to detect config for a repository
+	const detectConfigMutation = useMutation(
+		trpc.repository.detectConfig.mutationOptions({
+			onSuccess: (data, variables) => {
+				toast({
+					title: data.exists ? "Configuration found" : "No configuration",
+					description: data.exists
+						? `Found config at ${data.path}`
+						: "Set up lightfast.yml to start indexing",
+				});
+
+				// Invalidate to refetch with updated status
+				void queryClient.invalidateQueries({
+					queryKey: trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					}),
+				});
+			},
+			onError: (error) => {
+				toast({
+					title: "Detection failed",
+					description: error.message,
+					variant: "destructive",
+				});
+			},
+		})
+	);
+
+	const handleSetupClick = (repoFullName: string) => {
+		setSelectedRepoForSetup(repoFullName);
+		setShowSetupGuide(true);
+	};
+
+	const handleRetryConfig = (repositoryId: string) => {
+		detectConfigMutation.mutate({
+			repositoryId,
+			organizationId,
+		});
+	};
 
 	return (
 		<div className="space-y-6">
@@ -59,55 +107,68 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 							{repositories.map((repo) => (
 								<div
 									key={repo.id}
-									className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/5 p-4"
+									className="flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/5 p-4"
 								>
-									<div className="flex items-start gap-3 min-w-0 flex-1">
-										<div className="flex-shrink-0 mt-0.5">
-											<Github className="h-5 w-5 text-muted-foreground" />
+									<div className="flex items-start justify-between gap-3">
+										<div className="flex items-start gap-3 min-w-0 flex-1">
+											<div className="flex-shrink-0 mt-0.5">
+												<Github className="h-5 w-5 text-muted-foreground" />
+											</div>
+											<div className="min-w-0 flex-1">
+												<div className="flex items-center gap-2">
+													<p className="text-sm font-medium truncate">
+														{repo.metadata?.fullName ?? "Unknown Repository"}
+													</p>
+													{repo.metadata?.private && (
+														<span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+															Private
+														</span>
+													)}
+												</div>
+												{repo.metadata?.description && (
+													<p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+														{repo.metadata.description}
+													</p>
+												)}
+												<div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+													{repo.metadata?.language && (
+														<span>{repo.metadata.language}</span>
+													)}
+													{repo.metadata?.stargazersCount !== undefined && (
+														<span>⭐ {repo.metadata.stargazersCount}</span>
+													)}
+												</div>
+											</div>
 										</div>
-										<div className="min-w-0 flex-1">
-											<div className="flex items-center gap-2">
-												<p className="text-sm font-medium truncate">
-													{repo.metadata?.fullName ?? "Unknown Repository"}
-												</p>
-												{repo.metadata?.private && (
-													<span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-														Private
-													</span>
-												)}
-											</div>
-											{repo.metadata?.description && (
-												<p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-													{repo.metadata.description}
-												</p>
-											)}
-											<div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-												{repo.metadata?.language && (
-													<span>{repo.metadata.language}</span>
-												)}
-												{repo.metadata?.stargazersCount !== undefined && (
-													<span>⭐ {repo.metadata.stargazersCount}</span>
-												)}
-											</div>
+										<div className="flex items-center gap-2 shrink-0">
+											<Button
+												variant="ghost"
+												size="sm"
+												asChild
+											>
+												<a
+													href={`https://github.com/${repo.metadata?.fullName}`}
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													<ExternalLink className="h-4 w-4" />
+												</a>
+											</Button>
+											<Button variant="outline" size="sm">
+												Remove
+											</Button>
 										</div>
 									</div>
-									<div className="flex items-center gap-2 shrink-0 ml-4">
-										<Button
-											variant="ghost"
-											size="sm"
-											asChild
-										>
-											<a
-												href={`https://github.com/${repo.metadata?.fullName}`}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												<ExternalLink className="h-4 w-4" />
-											</a>
-										</Button>
-										<Button variant="outline" size="sm">
-											Remove
-										</Button>
+
+									{/* Configuration Status */}
+									<div className="border-t border-border/40 pt-3">
+										<RepositoryConfigStatus
+											status={(repo.configStatus as ConfigStatus) ?? "pending"}
+											documentCount={repo.documentCount ?? 0}
+											lastIngestedAt={repo.lastIngestedAt ?? undefined}
+											onSetup={() => handleSetupClick(repo.metadata?.fullName ?? "")}
+											onRetry={() => handleRetryConfig(repo.id)}
+										/>
 									</div>
 								</div>
 							))}
@@ -142,6 +203,12 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 				onOpenChange={setShowConnectDialog}
 				organizationId={organizationId}
 				githubOrgId={githubOrgId}
+			/>
+
+			<SetupGuideModal
+				open={showSetupGuide}
+				onOpenChange={setShowSetupGuide}
+				repositoryName={selectedRepoForSetup}
 			/>
 		</div>
 	);

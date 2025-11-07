@@ -6,3 +6,4 @@ export * from "./document";
 export * from "./vector";
 export * from "./error";
 export * from "./repository";
+export * from "./workspace";

@@ -21,35 +21,6 @@ type GitHubWebhookEvent =
     | "push";
 
 /**
- * Pull Request Event Payload
- */
-interface PullRequestPayload {
-	action: "opened" | "edited" | "closed" | "reopened" | "synchronize";
-	pull_request: {
-		id: number;
-		number: number;
-		title: string;
-		state: "open" | "closed";
-		merged: boolean;
-		user: {
-			login: string;
-			avatar_url: string;
-		};
-		html_url: string;
-		head: {
-			ref: string;
-		};
-	};
-	repository: {
-		id: number;
-		full_name: string;
-	};
-	installation?: {
-		id: number;
-	};
-}
-
-/**
  * Installation Event Payload
  */
 interface InstallationPayload {
@@ -99,12 +70,12 @@ interface PushPayload {
 	installation?: {
 		id: number;
 	};
-	commits: Array<{
+	commits: {
 		id: string;
 		added: string[];
 		modified: string[];
 		removed: string[];
-	}>;
+	}[];
 }
 
 /**
@@ -125,8 +96,6 @@ function verifySignature(payload: string, signature: string): boolean {
 		Buffer.from(digest)
 	);
 }
-
-// pull_request events are ignored since code reviews were removed
 
 /**
  * Installation Repositories Event Payload
@@ -177,7 +146,26 @@ async function handlePushEvent(payload: PushPayload, deliveryId: string) {
 		return;
 	}
 
+	// Check installation ID is present
+	if (!payload.installation?.id) {
+		console.error(`[Webhook] No installation ID in push event for ${payload.repository.full_name}`);
+		return;
+	}
+
 	console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
+
+	// Resolve workspace ID from organization
+	let workspaceId = payload.repository.full_name; // Fallback
+	try {
+		// Extract owner from repository full_name (owner/repo)
+		const [owner] = payload.repository.full_name.split("/");
+
+		// Compute workspace ID as ws_${orgSlug}
+		workspaceId = `ws_${owner}`;
+		console.log(`[Webhook] Computed workspace ID: ${workspaceId}`);
+	} catch (error) {
+		console.error(`[Webhook] Failed to compute workspace ID, using fallback:`, error);
+	}
 
 	// Aggregate changed files from all commits
 	const changedFiles = new Map<string, "added" | "modified" | "removed">();
@@ -187,24 +175,27 @@ async function handlePushEvent(payload: PushPayload, deliveryId: string) {
 		commit.removed.forEach((path) => changedFiles.set(path, "removed"));
 	}
 
-	// TODO: Fetch lightfast.yml from repo to get actual patterns
-	// For Phase 1, filter for docs files
-	const allFiles = Array.from(changedFiles.entries())
-		.filter(([path]) => {
-			const lowerPath = path.toLowerCase();
-			return (
-				lowerPath.startsWith("docs/") &&
-				(lowerPath.endsWith(".md") || lowerPath.endsWith(".mdx"))
-			);
-		})
-		.map(([path, status]) => ({ path, status }));
+	// Check if lightfast.yml was modified - trigger config re-detection
+	const configModified = Array.from(changedFiles.keys()).some((path) =>
+		["lightfast.yml", ".lightfast.yml", "lightfast.yaml", ".lightfast.yaml"].includes(path)
+	);
+
+	if (configModified) {
+		console.log(`[Webhook] lightfast.yml was modified, config re-detection will be triggered by ingestion workflow`);
+	}
+
+	// Convert to array for Inngest (filtering will happen in the workflow after loading config)
+	const allFiles = Array.from(changedFiles.entries()).map(([path, status]) => ({
+		path,
+		status,
+	}));
 
 	if (allFiles.length === 0) {
-		console.log(`[Webhook] No docs files changed`);
+		console.log(`[Webhook] No files changed`);
 		return;
 	}
 
-	console.log(`[Webhook] Found ${allFiles.length} docs files to process`);
+	console.log(`[Webhook] Found ${allFiles.length} changed files`);
 
 	// Trigger Inngest workflow
 	// Dynamic import to avoid loading Inngest in route module
@@ -213,8 +204,10 @@ async function handlePushEvent(payload: PushPayload, deliveryId: string) {
 	await inngest.send({
 		name: "apps-console/docs.push",
 		data: {
-			workspaceId: payload.repository.full_name,
-			storeName: "docs", // TODO: Get from lightfast.yml config
+			workspaceId, // Now computed from organization slug
+			storeName: "docs", // Will be overridden by lightfast.yml if present
+			repoFullName: payload.repository.full_name,
+			githubInstallationId: payload.installation.id,
 			beforeSha: payload.before,
 			afterSha: payload.after,
 			deliveryId,
@@ -222,7 +215,9 @@ async function handlePushEvent(payload: PushPayload, deliveryId: string) {
 		},
 	});
 
-	console.log(`[Webhook] Triggered ingestion for ${allFiles.length} files`);
+	console.log(
+		`[Webhook] Triggered ingestion workflow for ${allFiles.length} files (workspace: ${workspaceId}, installation ${payload.installation.id})`
+	);
 }
 
 /**
@@ -252,10 +247,9 @@ export async function POST(request: NextRequest) {
 		}
 
 		const event = eventHeader as GitHubWebhookEvent;
-		const deliveryId = request.headers.get("x-github-delivery") || "unknown";
+		const deliveryId = request.headers.get("x-github-delivery") ?? "unknown";
 
 		const body = JSON.parse(payload) as
-			| PullRequestPayload
 			| InstallationRepositoriesPayload
 			| InstallationPayload
 			| RepositoryPayload

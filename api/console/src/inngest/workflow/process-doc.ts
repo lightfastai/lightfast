@@ -39,7 +39,15 @@ export const processDoc: ReturnType<typeof inngest.createFunction> = inngest.cre
 	},
 	{ event: "apps-console/docs.file.process" },
 	async ({ event, step }) => {
-		const { workspaceId, storeName, repoFullName, filePath, commitSha, committedAt } = event.data;
+		const {
+			workspaceId,
+			storeName,
+			repoFullName,
+			filePath,
+			commitSha,
+			committedAt,
+			githubInstallationId
+		} = event.data;
 
 		log.info("Processing document", {
 			workspaceId,
@@ -50,16 +58,52 @@ export const processDoc: ReturnType<typeof inngest.createFunction> = inngest.cre
 
 		// Step 1: Fetch file content from GitHub
 		const fileContent = await step.run("fetch-content", async () => {
-			// TODO: Implement GitHub API call using @repo/console-octokit-github
-			// For Phase 1, this is a placeholder
-			log.info("Fetching file content (placeholder)", { filePath });
+			try {
+				// Import GitHub utilities
+				const { createGitHubApp, getThrottledInstallationOctokit, GitHubContentService } = await import("@repo/console-octokit-github");
+				const { env } = await import("../../env");
 
-			// Placeholder: In real implementation, fetch from GitHub
-			// const octokit = createOctokit();
-			// const content = await octokit.getFileContent(repoFullName, filePath, commitSha);
-			// return content;
+				log.info("Fetching file content from GitHub", {
+					filePath,
+					repoFullName,
+					commitSha,
+					installationId: githubInstallationId
+				});
 
-			throw new Error("GitHub API integration not yet implemented - Phase 1.4");
+				// Create GitHub App and get installation Octokit
+				const app = createGitHubApp({
+					appId: env.GITHUB_APP_ID,
+					privateKey: env.GITHUB_APP_PRIVATE_KEY,
+				});
+
+				const octokit = await getThrottledInstallationOctokit(app, githubInstallationId);
+
+				// Create content service and fetch file
+				const contentService = new GitHubContentService(octokit);
+				const [owner, repo] = repoFullName.split("/");
+
+				const fetchedFile = await contentService.fetchSingleFile(
+					owner,
+					repo,
+					filePath,
+					commitSha
+				);
+
+				if (!fetchedFile) {
+					throw new Error(`File not found: ${filePath} at commit ${commitSha}`);
+				}
+
+				log.info("Successfully fetched file content", {
+					filePath,
+					contentLength: fetchedFile.content.length,
+					sha: fetchedFile.sha,
+				});
+
+				return fetchedFile.content;
+			} catch (error) {
+				log.error("Failed to fetch file content", { error, filePath });
+				throw error;
+			}
 		});
 
 		// Step 2: Parse MDX and extract metadata

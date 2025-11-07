@@ -1,822 +1,493 @@
 {
-  "version": "5",
-  "dialect": "mysql",
-  "id": "d8e44070-f6c6-46e1-84c6-dbc8f0bcdde7",
+  "id": "e7fa9354-775d-499c-b936-852085ed2d21",
   "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "lightfast_deus_connected_repository": {
-      "name": "lightfast_deus_connected_repository",
+    "public.lf_stores": {
+      "name": "lf_stores",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "primaryKey": true,
+          "notNull": true
         },
-        "organization_id": {
-          "name": "organization_id",
+        "workspace_id": {
+          "name": "workspace_id",
           "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
-        "github_repo_id": {
-          "name": "github_repo_id",
+        "name": {
+          "name": "name",
           "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
-        "github_installation_id": {
-          "name": "github_installation_id",
+        "index_name": {
+          "name": "index_name",
           "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
-        "permissions": {
-          "name": "permissions",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
+        "embedding_dim": {
+          "name": "embedding_dim",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "connected_at": {
-          "name": "connected_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "last_synced_at": {
-          "name": "last_synced_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "code_review_settings": {
-          "name": "code_review_settings",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "default": 1536
         },
         "created_at": {
           "name": "created_at",
-          "type": "datetime",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        }
-      },
-      "indexes": {
-        "org_id_idx": {
-          "name": "org_id_idx",
-          "columns": ["organization_id"],
-          "isUnique": false
-        },
-        "org_active_idx": {
-          "name": "org_active_idx",
-          "columns": ["organization_id", "is_active"],
-          "isUnique": false
-        },
-        "installation_idx": {
-          "name": "installation_idx",
-          "columns": ["github_installation_id"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_connected_repository_id": {
-          "name": "lightfast_deus_connected_repository_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {
-        "lightfast_deus_connected_repository_github_repo_id_unique": {
-          "name": "lightfast_deus_connected_repository_github_repo_id_unique",
-          "columns": ["github_repo_id"]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "lightfast_deus_organizations": {
-      "name": "lightfast_deus_organizations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_org_id": {
-          "name": "github_org_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_installation_id": {
-          "name": "github_installation_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_org_slug": {
-          "name": "github_org_slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_org_name": {
-          "name": "github_org_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_org_avatar_url": {
-          "name": "github_org_avatar_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_org_slug": {
-          "name": "clerk_org_slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "claimed_by": {
-          "name": "claimed_by",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "claimed_at": {
-          "name": "claimed_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "datetime",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {
-        "org_slug_idx": {
-          "name": "org_slug_idx",
-          "columns": ["github_org_slug"],
-          "isUnique": false
+        "idx_stores_ws": {
+          "name": "idx_stores_ws",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
-        "org_installation_idx": {
-          "name": "org_installation_idx",
-          "columns": ["github_installation_id"],
-          "isUnique": false
-        },
-        "org_clerk_org_idx": {
-          "name": "org_clerk_org_idx",
-          "columns": ["clerk_org_id"],
-          "isUnique": false
+        "uq_ws_name": {
+          "name": "uq_ws_name",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_organizations_id": {
-          "name": "lightfast_deus_organizations_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {
-        "lightfast_deus_organizations_github_org_id_unique": {
-          "name": "lightfast_deus_organizations_github_org_id_unique",
-          "columns": ["github_org_id"]
-        },
-        "lightfast_deus_organizations_clerk_org_id_unique": {
-          "name": "lightfast_deus_organizations_clerk_org_id_unique",
-          "columns": ["clerk_org_id"]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "lightfast_deus_code_reviews": {
-      "name": "lightfast_deus_code_reviews",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "repository_id": {
-          "name": "repository_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "pull_request_number": {
-          "name": "pull_request_number",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "github_pr_id": {
-          "name": "github_pr_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "review_tool": {
-          "name": "review_tool",
-          "type": "enum('coderabbit','claude','vercel-agents','custom')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "enum('pending','running','completed','failed','cancelled')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
-        },
-        "triggered_by": {
-          "name": "triggered_by",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "triggered_at": {
-          "name": "triggered_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {
-        "repository_id_idx": {
-          "name": "repository_id_idx",
-          "columns": ["repository_id"],
-          "isUnique": false
-        },
-        "pr_idx": {
-          "name": "pr_idx",
-          "columns": ["repository_id", "pull_request_number"],
-          "isUnique": false
-        },
-        "status_idx": {
-          "name": "status_idx",
-          "columns": ["status"],
-          "isUnique": false
-        },
-        "triggered_by_idx": {
-          "name": "triggered_by_idx",
-          "columns": ["triggered_by"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_code_reviews_id": {
-          "name": "lightfast_deus_code_reviews_id",
-          "columns": ["id"]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraint": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "lightfast_deus_code_review_tasks": {
-      "name": "lightfast_deus_code_review_tasks",
+    "public.lf_docs_documents": {
+      "name": "lf_docs_documents",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "primaryKey": true,
+          "notNull": true
         },
-        "code_review_id": {
-          "name": "code_review_id",
+        "store_id": {
+          "name": "store_id",
           "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
         },
         "title": {
           "name": "title",
-          "type": "varchar(500)",
+          "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": false
         },
         "description": {
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": false
         },
-        "severity": {
-          "name": "severity",
-          "type": "enum('info','warning','error','critical')",
+        "content_hash": {
+          "name": "content_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "commit_sha": {
+          "name": "commit_sha",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "committed_at": {
+          "name": "committed_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'info'"
+          "default": "now()"
         },
-        "status": {
-          "name": "status",
-          "type": "enum('open','resolved','dismissed')",
+        "frontmatter": {
+          "name": "frontmatter",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chunk_count": {
+          "name": "chunk_count",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'open'"
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        },
-        "resolved_at": {
-          "name": "resolved_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "resolved_by": {
-          "name": "resolved_by",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "code_review_id_idx": {
-          "name": "code_review_id_idx",
-          "columns": ["code_review_id"],
-          "isUnique": false
-        },
-        "status_idx": {
-          "name": "status_idx",
-          "columns": ["status"],
-          "isUnique": false
-        },
-        "severity_idx": {
-          "name": "severity_idx",
-          "columns": ["severity"],
-          "isUnique": false
-        },
-        "review_status_idx": {
-          "name": "review_status_idx",
-          "columns": ["code_review_id", "status"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_code_review_tasks_id": {
-          "name": "lightfast_deus_code_review_tasks_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_deus_api_keys": {
-      "name": "lightfast_deus_api_keys",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "key_hash": {
-          "name": "key_hash",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "key_preview": {
-          "name": "key_preview",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "scopes": {
-          "name": "scopes",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "last_used_at": {
-          "name": "last_used_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {
-        "key_hash_idx": {
-          "name": "key_hash_idx",
-          "columns": ["key_hash"],
-          "isUnique": false
-        },
-        "org_id_idx": {
-          "name": "org_id_idx",
-          "columns": ["organization_id"],
-          "isUnique": false
-        },
-        "user_id_idx": {
-          "name": "user_id_idx",
-          "columns": ["user_id"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_api_keys_id": {
-          "name": "lightfast_deus_api_keys_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {
-        "lightfast_deus_api_keys_key_hash_unique": {
-          "name": "lightfast_deus_api_keys_key_hash_unique",
-          "columns": ["key_hash"]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "lightfast_deus_sessions": {
-      "name": "lightfast_deus_sessions",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "repository_id": {
-          "name": "repository_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "enum('active','paused','completed')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'active'"
-        },
-        "current_agent": {
-          "name": "current_agent",
-          "type": "enum('deus','claude-code','codex')",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "cwd": {
-          "name": "cwd",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {
-        "org_created_at_idx": {
-          "name": "org_created_at_idx",
-          "columns": ["organization_id", "created_at"],
-          "isUnique": false
-        },
-        "user_id_idx": {
-          "name": "user_id_idx",
-          "columns": ["user_id"],
-          "isUnique": false
-        },
-        "repository_id_idx": {
-          "name": "repository_id_idx",
-          "columns": ["repository_id"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_sessions_id": {
-          "name": "lightfast_deus_sessions_id",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_deus_messages": {
-      "name": "lightfast_deus_messages",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "parts": {
-          "name": "parts",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "char_count": {
-          "name": "char_count",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
           "default": 0
         },
-        "token_count": {
-          "name": "token_count",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "model_id": {
-          "name": "model_id",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
-          "type": "datetime",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "datetime",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {
-        "session_id_created_at_idx": {
-          "name": "session_id_created_at_idx",
-          "columns": ["session_id", "created_at"],
-          "isUnique": false
+        "idx_docs_store": {
+          "name": "idx_docs_store",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_docs_store_slug": {
+          "name": "idx_docs_store_slug",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_docs_store_path": {
+          "name": "uq_docs_store_path",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_deus_messages_id": {
-          "name": "lightfast_deus_messages_id",
-          "columns": ["id"]
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lf_vector_entries": {
+      "name": "lf_vector_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "store_id": {
+          "name": "store_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doc_id": {
+          "name": "doc_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chunk_index": {
+          "name": "chunk_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "index_name": {
+          "name": "index_name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upserted_at": {
+          "name": "upserted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
+      "indexes": {
+        "idx_vec_store_doc": {
+          "name": "idx_vec_store_doc",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "doc_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_vec_unique": {
+          "name": "uq_vec_unique",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "doc_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chunk_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraint": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lf_ingestion_commits": {
+      "name": "lf_ingestion_commits",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "store_id": {
+          "name": "store_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "before_sha": {
+          "name": "before_sha",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "after_sha": {
+          "name": "after_sha",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'processed'"
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_commits_store": {
+          "name": "idx_commits_store",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_commit_after": {
+          "name": "uq_commit_after",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "after_sha",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_commit_delivery": {
+          "name": "uq_commit_delivery",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "delivery_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
   "views": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
-  },
-  "internal": {
-    "tables": {},
-    "indexes": {}
+    "tables": {}
   }
 }

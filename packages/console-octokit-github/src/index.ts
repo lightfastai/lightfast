@@ -268,3 +268,14 @@ export async function getOrganizationMembership(
 		state: data.state,
 	};
 }
+
+// Export throttled utilities
+export { createThrottledOctokit, getThrottledInstallationOctokit, checkRateLimit } from "./throttled";
+
+// Export GitHub content service
+export { GitHubContentService } from "./github-content";
+export type { ChangedFile, FetchedFile } from "./github-content";
+
+// Export configuration detector
+export { ConfigDetectorService } from "./config-detector";
+export type { ConfigDetectionResult } from "./config-detector";

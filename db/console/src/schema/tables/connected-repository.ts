@@ -1,17 +1,30 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
-  datetime,
   index,
-  json,
-  mysqlTable,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
   text,
+  timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import type { RepositoryMetadata, RepositoryPermissions } from "@repo/console-types";
 import { randomUUID } from "node:crypto";
+
+/**
+ * Configuration status enum for lightfast.yml
+ */
+export const configStatusEnum = pgEnum("config_status", [
+  "configured",
+  "unconfigured",
+  "ingesting",
+  "error",
+  "pending",
+]);
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
@@ -37,7 +50,7 @@ import { randomUUID } from "node:crypto";
  *
  * WHY: Single source of truth = GitHub API. No sync logic, no webhooks, no staleness. Ship faster. 🚀
  */
-export const DeusConnectedRepository = mysqlTable(
+export const DeusConnectedRepository = pgTable(
   "lightfast_deus_connected_repository",
   {
     /**
@@ -70,7 +83,7 @@ export const DeusConnectedRepository = mysqlTable(
     /**
      * Repository permissions granted to Deus
      */
-    permissions: json("permissions").$type<RepositoryPermissions>(),
+    permissions: jsonb("permissions").$type<RepositoryPermissions>(),
 
     /**
      * Whether this connection is currently active
@@ -78,29 +91,67 @@ export const DeusConnectedRepository = mysqlTable(
     isActive: boolean("is_active").notNull().default(true),
 
     /**
+     * Whether this repository is enabled in its workspace (Phase 2)
+     * Phase 1: Always true
+     * Phase 2: Can be disabled at workspace level
+     */
+    isEnabled: boolean("is_enabled").notNull().default(true),
+
+    /**
      * When the repository was first connected
      */
-    connectedAt: datetime("connected_at", { mode: "string" })
-      .default(sql`(CURRENT_TIMESTAMP)`)
+    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: false })
+      .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
     /**
      * Last time we successfully interacted with GitHub API for this repo
      */
-    lastSyncedAt: datetime("last_synced_at", { mode: "string" }),
+    lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: false }),
 
+    /**
+     * Configuration status for lightfast.yml
+     */
+    configStatus: configStatusEnum("config_status")
+      .notNull()
+      .default("pending"),
+
+    /**
+     * Path to lightfast.yml config file (e.g., 'lightfast.yml' or '.lightfast.yml')
+     */
+    configPath: varchar("config_path", { length: 255 }),
+
+    /**
+     * When configuration was last detected/checked
+     */
+    configDetectedAt: timestamp("config_detected_at", { mode: "string", withTimezone: false }),
+
+    /**
+     * Workspace ID computed from organization (ws_${githubOrgSlug})
+     */
+    workspaceId: varchar("workspace_id", { length: 191 }),
+
+    /**
+     * Total number of indexed documents
+     */
+    documentCount: integer("document_count").notNull().default(0),
+
+    /**
+     * Last successful ingestion timestamp
+     */
+    lastIngestedAt: timestamp("last_ingested_at", { mode: "string", withTimezone: false }),
 
     /**
      * Optional metadata cache (can be stale - don't rely on this for operations)
      * Use for UI display, but always fetch fresh from GitHub when accuracy matters
      */
-    metadata: json("metadata").$type<RepositoryMetadata>(),
+    metadata: jsonb("metadata").$type<RepositoryMetadata>(),
 
     /**
      * Timestamp when record was created
      */
-    createdAt: datetime("created_at", { mode: "string" })
-      .default(sql`(CURRENT_TIMESTAMP)`)
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+      .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => ({
@@ -111,6 +162,13 @@ export const DeusConnectedRepository = mysqlTable(
     orgActiveIdx: index("org_active_idx").on(
       table.organizationId,
       table.isActive,
+    ),
+
+    // Composite index for active, enabled repositories by workspace (Phase 2)
+    workspaceActiveIdx: index("workspace_active_idx").on(
+      table.workspaceId,
+      table.isActive,
+      table.isEnabled,
     ),
 
     // Index for GitHub installation lookups

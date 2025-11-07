@@ -21,6 +21,10 @@ const eventsMap = {
 			workspaceId: z.string(),
 			/** Store name for this ingestion (e.g., "docs") */
 			storeName: z.string(),
+			/** Repository full name (owner/repo) */
+			repoFullName: z.string(),
+			/** GitHub installation ID */
+			githubInstallationId: z.number(),
 			/** SHA before push */
 			beforeSha: z.string(),
 			/** SHA after push */
@@ -49,6 +53,8 @@ const eventsMap = {
 			storeName: z.string(),
 			/** Repository full name (owner/repo) */
 			repoFullName: z.string(),
+			/** GitHub installation ID */
+			githubInstallationId: z.number(),
 			/** File path relative to repo root */
 			filePath: z.string(),
 			/** Git SHA of the commit */

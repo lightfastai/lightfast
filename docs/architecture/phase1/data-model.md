@@ -25,12 +25,47 @@ Minimal schema to support push-to-main docs ingestion and Mastra Pinecone indexi
 
 ## Tables
 
+### Workspaces Table
+
+Represents isolated knowledge bases within an organization.
+
+**Phase 1:** One default workspace per organization (ws_${orgSlug})
+**Phase 2:** Multiple workspaces per organization
+
+Fields:
+- id: varchar(191) (PK) - Workspace identifier (e.g., ws_acme_corp)
+- organizationId: varchar(191) (FK) - Links to organization
+- name: string - Display name ("Acme Corp Knowledge Base")
+- slug: string - URL-friendly name
+- isDefault: boolean - Auto-created default workspace
+- settings: jsonb - Workspace-level configuration
+- createdAt: timestamp
+- updatedAt: timestamp
+
+Indexes:
+- organizationId (for listing org workspaces)
+- organizationId + isDefault (for finding default workspace)
+
+**Phase 1 Implementation:**
+In Phase 1, workspaces are implicitly resolved from organizations:
+- Workspace ID computed as: `ws_${githubOrgSlug}`
+- No explicit workspace table (added in Phase 1.7 for Phase 2 compatibility)
+- All repositories in an organization share the same default workspace
+
+**Phase 2 Implementation:**
+Workspaces table will be created with migration, supporting:
+- Multiple workspaces per organization
+- Explicit workspace assignment for repositories
+- Workspace-level settings and defaults
+
+### Stores Table
+
 1) stores
 - Identity and config per `(workspaceId, store)`
 
 Fields
 - id (pk, uuid, varchar(191))
-- workspaceId (varchar(191), idx)
+- workspaceId (varchar(191), idx) — references workspace (implicit in Phase 1)
 - name (varchar(191)) — human store name; unique per workspace
 - indexName (varchar(191)) — resolved `ws_${workspaceId}__store_${name}`
 - embeddingDim (int) — default 1536
@@ -90,6 +125,29 @@ Fields
 Constraints
 - unique(storeId, afterSha)
 - unique(storeId, deliveryId)
+
+5) connected_repository (lightfast_deus_connected_repository)
+- Tracks which GitHub repositories are connected to the organization
+
+Fields
+- id (pk, uuid)
+- organizationId (fk → organizations.id)
+- githubRepoId (unique, immutable)
+- githubInstallationId
+- isActive (boolean) — repository connection status
+- permissions (json) — GitHub permissions
+- metadata (json) — cached repo metadata
+- workspaceId (varchar) — computed in Phase 1 as `ws_${orgSlug}`, explicit in Phase 2
+- isEnabled (boolean) — for Phase 2 workspace assignment (true = included in workspace)
+
+**Phase 1 Behavior:**
+- workspaceId computed at runtime from organization
+- isEnabled not used (all repos contribute to default workspace)
+
+**Phase 2 Behavior:**
+- workspaceId explicitly stored
+- isEnabled controls whether repo contributes to specific workspace
+- Allows excluding specific repos or assigning to different workspaces
 
 ---
 

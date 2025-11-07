@@ -33,11 +33,21 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 	},
 	{ event: "apps-console/docs.push" },
 	async ({ event, step }) => {
-		const { workspaceId, storeName, beforeSha, afterSha, deliveryId, changedFiles } = event.data;
+		const {
+			workspaceId,
+			storeName,
+			repoFullName,
+			githubInstallationId,
+			beforeSha,
+			afterSha,
+			deliveryId,
+			changedFiles
+		} = event.data;
 
 		log.info("Starting docs ingestion", {
 			workspaceId,
 			storeName,
+			repoFullName,
 			deliveryId,
 			changedCount: changedFiles.length,
 		});
@@ -84,30 +94,91 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 		}
 
 		// Step 2: Load lightfast.yml from repository
-		// TODO: Implement in next phase - for now, assume all .mdx/.md files in docs/
 		const configPatterns = await step.run("load-config", async () => {
-			// Placeholder: In real implementation, fetch lightfast.yml from GitHub
-			// using @repo/console-config loadConfig() and @repo/console-octokit-github
-			log.info("Loading config (placeholder)", { workspaceId });
+			try {
+				// Import GitHub utilities
+				const { createGitHubApp, getThrottledInstallationOctokit, GitHubContentService } = await import("@repo/console-octokit-github");
+				const { loadConfig } = await import("@repo/console-config");
+				const { env } = await import("../../env");
 
-			// For Phase 1, assume simple pattern
-			return {
-				globs: ["docs/**/*.md", "docs/**/*.mdx"],
-			};
+				log.info("Loading lightfast.yml from repository", {
+					repoFullName,
+					ref: afterSha
+				});
+
+				// Create GitHub App and get installation Octokit
+				const app = createGitHubApp({
+					appId: env.GITHUB_APP_ID,
+					privateKey: env.GITHUB_APP_PRIVATE_KEY,
+				});
+
+				const octokit = await getThrottledInstallationOctokit(app, githubInstallationId);
+
+				// Create content service and fetch lightfast.yml
+				const contentService = new GitHubContentService(octokit);
+				const [owner, repo] = repoFullName.split("/");
+
+				const configFile = await contentService.fetchSingleFile(
+					owner,
+					repo,
+					"lightfast.yml",
+					afterSha
+				);
+
+				if (!configFile) {
+					log.warn("No lightfast.yml found in repository, using default patterns");
+					return {
+						globs: ["docs/**/*.md", "docs/**/*.mdx"],
+					};
+				}
+
+				// Parse config (parse YAML then validate)
+				const yaml = await import("yaml");
+				const { validateConfig } = await import("@repo/console-config");
+
+				const parsed = yaml.parse(configFile.content);
+				const configResult = validateConfig(parsed);
+
+				if (configResult.isErr()) {
+					log.error("Invalid lightfast.yml config", { error: configResult.error });
+					return {
+						globs: ["docs/**/*.md", "docs/**/*.mdx"],
+					};
+				}
+
+				const config = configResult.value;
+
+				log.info("Loaded lightfast.yml config", {
+					store: config.store,
+					globs: config.include,
+				});
+
+				return {
+					globs: config.include,
+					store: config.store,
+				};
+			} catch (error) {
+				log.error("Failed to load config, using defaults", { error });
+				return {
+					globs: ["docs/**/*.md", "docs/**/*.mdx"],
+				};
+			}
 		});
 
 		// Step 3: Filter changed files by config globs
 		const filteredFiles = await step.run("filter-files", async () => {
-			// TODO: Use @repo/console-config matchFiles() with actual patterns
-			// For Phase 1, simple string matching
+			const { minimatch } = await import("minimatch");
+
 			const filtered = changedFiles.filter((file: { path: string; status: string }) => {
-				const path = file.path.toLowerCase();
-				return path.startsWith("docs/") && (path.endsWith(".md") || path.endsWith(".mdx"));
+				return configPatterns.globs.some((glob: string) =>
+					minimatch(file.path, glob)
+				);
 			});
 
 			log.info("Filtered files", {
 				total: changedFiles.length,
 				matched: filtered.length,
+				globs: configPatterns.globs,
 			});
 
 			return filtered;
@@ -155,7 +226,7 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 							data: {
 								workspaceId,
 								storeName,
-								repoFullName: workspaceId, // Assuming workspaceId is repo full name
+								repoFullName,
 								filePath: file.path,
 							},
 						});
@@ -168,7 +239,8 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 							data: {
 								workspaceId,
 								storeName,
-								repoFullName: workspaceId,
+								repoFullName,
+								githubInstallationId,
 								filePath: file.path,
 								commitSha: afterSha,
 								committedAt: new Date().toISOString(), // TODO: Get from commit

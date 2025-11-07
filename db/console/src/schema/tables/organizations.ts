@@ -1,13 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
-  datetime,
   index,
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgTable,
   text,
+  timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
 import { randomUUID } from "node:crypto";
 
@@ -25,7 +24,7 @@ import { randomUUID } from "node:crypto";
  * - clerkOrgId is UNIQUE (links to Clerk organization for billing/auth)
  * - We use index on slug for fast lookups, but allow duplicates for history
  */
-export const organizations = mysqlTable(
+export const organizations = pgTable(
   "lightfast_deus_organizations",
   {
     id: varchar("id", { length: 191 })
@@ -35,10 +34,10 @@ export const organizations = mysqlTable(
 
     // GitHub App installation details
     // IMMUTABLE: GitHub's internal org ID - this is our source of truth
-    githubOrgId: int("github_org_id").notNull().unique(),
+    githubOrgId: integer("github_org_id").notNull().unique(),
 
     // Can change if app is reinstalled to same org
-    githubInstallationId: int("github_installation_id").notNull(),
+    githubInstallationId: integer("github_installation_id").notNull(),
 
     // Can change if org is renamed on GitHub
     githubOrgSlug: varchar("github_org_slug", { length: 255 }).notNull(),
@@ -52,16 +51,16 @@ export const organizations = mysqlTable(
 
     // Ownership tracking
     claimedBy: varchar("claimed_by", { length: 191 }).notNull(), // Clerk user ID
-    claimedAt: datetime("claimed_at", { mode: "string" })
-      .default(sql`(CURRENT_TIMESTAMP)`)
+    claimedAt: timestamp("claimed_at", { mode: "string", withTimezone: false })
+      .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
     // Timestamps
-    createdAt: datetime("created_at", { mode: "string" })
-      .default(sql`(CURRENT_TIMESTAMP)`)
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+      .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: datetime("updated_at", { mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: false })
+      .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => ({

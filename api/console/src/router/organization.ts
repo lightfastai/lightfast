@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Phase 1.4+ - Update schema and re-enable
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
 import { organizations } from "@db/console/schema";
@@ -137,7 +136,7 @@ export const organizationRouter = {
       const [newOrg] = await db
         .insert(organizations)
         .values(input)
-        .$returningId();
+        .returning({ id: organizations.id });
 
       if (!newOrg) {
         throw new Error("Failed to create organization");
