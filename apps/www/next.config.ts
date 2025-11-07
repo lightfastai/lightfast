@@ -1,5 +1,6 @@
 import { NextConfig } from "next";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import { createMDX } from "fumadocs-mdx/next";
 
 import "~/env";
 
@@ -11,6 +12,8 @@ import {
 import { mergeNextConfig } from "@vendor/next/merge-config";
 
 import { env } from "~/env";
+
+const withMDX = createMDX();
 
 let config: NextConfig = withBetterStack(
     mergeNextConfig(vendorConfig, {
@@ -61,4 +64,4 @@ if (env.VERCEL) {
 	config = withSentry(config);
 }
 
-export default withMicrofrontends(config, { debug: true });
+export default withMicrofrontends(withMDX(config), { debug: true });

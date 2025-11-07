@@ -10,14 +10,12 @@ import { NeuralMemoryVisual } from "~/components/landing/neural-memory-visual";
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section with Brand Blue Background */}
+      {/* Hero Section with Brand Blue Background - breaks out of parent padding */}
       <div
-        className="relative min-h-[70vh] flex items-center"
-        style={{
-          background: `linear-gradient(to bottom, var(--brand-blue), var(--brand-blue))`,
-        }}
+        className="-mx-8 md:-mx-16 -mt-12 min-h-[70vh] flex items-center"
+        style={{ backgroundColor: "var(--brand-blue)" }}
       >
-        <div className="section-gap-b py-16 w-full">
+        <div className="w-full px-8 md:px-16 py-16">
           <div className="space-y-12">
             <div className="space-y-3">
               <h1
