@@ -11,6 +11,10 @@
 		"./env": {
 			"types": "./dist/env.d.ts",
 			"default": "./src/env.ts"
+		},
+		"./inngest": {
+			"types": "./dist/inngest/index.d.ts",
+			"default": "./src/inngest/index.ts"
 		}
 	},
 	"license": "MIT",
@@ -25,6 +29,10 @@
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
 		"@db/console": "workspace:*",
+		"@inngest/middleware-sentry": "catalog:",
+		"@repo/console-chunking": "workspace:*",
+		"@repo/console-config": "workspace:*",
+		"@repo/console-embed": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",
 		"@repo/console-types": "workspace:*",
 		"@repo/lib": "workspace:^",
@@ -34,8 +42,12 @@
 		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
+		"@vendor/inngest": "workspace:*",
 		"@vendor/observability": "workspace:*",
+		"@vendor/pinecone": "workspace:*",
 		"drizzle-orm": "catalog:",
+		"gray-matter": "^4.0.3",
+		"inngest": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"zod": "catalog:"

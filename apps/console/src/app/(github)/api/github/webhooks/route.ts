@@ -17,7 +17,8 @@ type GitHubWebhookEvent =
     | "installation_repositories.removed"
     | "repository"
     | "repository.deleted"
-    | "repository.renamed";
+    | "repository.renamed"
+    | "push";
 
 /**
  * Pull Request Event Payload
@@ -84,6 +85,29 @@ interface RepositoryPayload {
 }
 
 /**
+ * Push Event Payload
+ */
+interface PushPayload {
+	ref: string;
+	before: string;
+	after: string;
+	repository: {
+		id: number;
+		full_name: string;
+		default_branch: string;
+	};
+	installation?: {
+		id: number;
+	};
+	commits: Array<{
+		id: string;
+		added: string[];
+		modified: string[];
+		removed: string[];
+	}>;
+}
+
+/**
  * Verify GitHub webhook signature
  * https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
  */
@@ -141,6 +165,67 @@ async function handleInstallationRepositoriesEvent(
 }
 
 /**
+ * Handle push webhook events
+ * Triggers docs ingestion workflow via Inngest
+ */
+async function handlePushEvent(payload: PushPayload, deliveryId: string) {
+	const branch = payload.ref.replace("refs/heads/", "");
+
+	// Only process default branch
+	if (branch !== payload.repository.default_branch) {
+		console.log(`[Webhook] Ignoring push to non-default branch: ${branch}`);
+		return;
+	}
+
+	console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
+
+	// Aggregate changed files from all commits
+	const changedFiles = new Map<string, "added" | "modified" | "removed">();
+	for (const commit of payload.commits) {
+		commit.added.forEach((path) => changedFiles.set(path, "added"));
+		commit.modified.forEach((path) => changedFiles.set(path, "modified"));
+		commit.removed.forEach((path) => changedFiles.set(path, "removed"));
+	}
+
+	// TODO: Fetch lightfast.yml from repo to get actual patterns
+	// For Phase 1, filter for docs files
+	const allFiles = Array.from(changedFiles.entries())
+		.filter(([path]) => {
+			const lowerPath = path.toLowerCase();
+			return (
+				lowerPath.startsWith("docs/") &&
+				(lowerPath.endsWith(".md") || lowerPath.endsWith(".mdx"))
+			);
+		})
+		.map(([path, status]) => ({ path, status }));
+
+	if (allFiles.length === 0) {
+		console.log(`[Webhook] No docs files changed`);
+		return;
+	}
+
+	console.log(`[Webhook] Found ${allFiles.length} docs files to process`);
+
+	// Trigger Inngest workflow
+	// Dynamic import to avoid loading Inngest in route module
+	const { inngest } = await import("@api/console/inngest");
+
+	await inngest.send({
+		name: "apps-console/docs.push",
+		data: {
+			workspaceId: payload.repository.full_name,
+			storeName: "docs", // TODO: Get from lightfast.yml config
+			beforeSha: payload.before,
+			afterSha: payload.after,
+			deliveryId,
+			changedFiles: allFiles,
+		},
+	});
+
+	console.log(`[Webhook] Triggered ingestion for ${allFiles.length} files`);
+}
+
+/**
  * GitHub Webhook Handler
  * POST /api/github/webhooks
  */
@@ -167,15 +252,20 @@ export async function POST(request: NextRequest) {
 		}
 
 		const event = eventHeader as GitHubWebhookEvent;
+		const deliveryId = request.headers.get("x-github-delivery") || "unknown";
 
 		const body = JSON.parse(payload) as
 			| PullRequestPayload
 			| InstallationRepositoriesPayload
 			| InstallationPayload
-			| RepositoryPayload;
+			| RepositoryPayload
+			| PushPayload;
 
 		// Route to appropriate handler
         switch (event) {
+			case "push":
+				await handlePushEvent(body as PushPayload, deliveryId);
+				break;
 
 			case "installation_repositories":
 				await handleInstallationRepositoriesEvent(body as InstallationRepositoriesPayload);
