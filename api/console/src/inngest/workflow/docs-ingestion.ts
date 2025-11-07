@@ -26,7 +26,7 @@ import { getOrCreateStore } from "../../lib/stores";
  * Orchestrates processing of a GitHub push event. Ensures idempotency
  * and delegates individual file processing to child workflows.
  */
-export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.createFunction(
+export const docsIngestion = inngest.createFunction(
 	{
 		id: "apps-console/docs-ingestion",
 		name: "Docs Ingestion",
@@ -110,6 +110,10 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 				// Create content service and fetch lightfast.yml
 				const contentService = new GitHubContentService(octokit);
 				const [owner, repo] = repoFullName.split("/");
+
+				if (!owner || !repo) {
+					throw new Error(`Invalid repository full name: ${repoFullName}`);
+				}
 
 				const configFile = await contentService.fetchSingleFile(
 					owner,

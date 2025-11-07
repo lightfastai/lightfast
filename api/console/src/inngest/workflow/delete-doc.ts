@@ -25,7 +25,7 @@ import { pineconeClient } from "@vendor/pinecone";
  * Orchestrates the complete pipeline for deleting a document:
  * find → delete vectors → delete entries → delete document
  */
-export const deleteDoc: ReturnType<typeof inngest.createFunction> = inngest.createFunction(
+export const deleteDoc = inngest.createFunction(
 	{
 		id: "apps-console/delete-doc",
 		name: "Delete Document",

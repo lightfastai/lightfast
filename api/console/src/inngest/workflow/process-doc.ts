@@ -31,7 +31,7 @@ import type { Chunk } from "@repo/console-chunking";
  * Orchestrates the complete pipeline for ingesting a single document:
  * fetch → parse → chunk → embed → upsert → record
  */
-export const processDoc: ReturnType<typeof inngest.createFunction> = inngest.createFunction(
+export const processDoc = inngest.createFunction(
 	{
 		id: "apps-console/process-doc",
 		name: "Process Document",
@@ -81,6 +81,10 @@ export const processDoc: ReturnType<typeof inngest.createFunction> = inngest.cre
 				// Create content service and fetch file
 				const contentService = new GitHubContentService(octokit);
 				const [owner, repo] = repoFullName.split("/");
+
+				if (!owner || !repo) {
+					throw new Error(`Invalid repository full name: ${repoFullName}`);
+				}
 
 				const fetchedFile = await contentService.fetchSingleFile(
 					owner,
