@@ -1,0 +1,12 @@
+{
+  "title": "API Reference",
+  "description": "Complete API documentation for Lightfast Memory API",
+  "defaultOpen": true,
+  "pages": [
+    "overview",
+    "authentication",
+    "memory",
+    "errors",
+    "sdks"
+  ]
+}

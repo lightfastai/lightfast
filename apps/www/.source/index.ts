@@ -1,0 +1,23 @@
+// @ts-nocheck -- skip type checking
+import * as meta_1 from "../src/content/docs/get-started/meta.json?collection=meta&hash=1762507087941"
+import * as meta_0 from "../src/content/docs/meta.json?collection=meta&hash=1762507087941"
+import * as docs_1 from "../src/content/docs/get-started/overview.mdx?collection=docs&hash=1762507087941"
+import * as docs_0 from "../src/content/docs/index.mdx?collection=docs&hash=1762507087941"
+import * as apiMeta_1 from "../src/content/api/memory/meta.json?collection=apiMeta&hash=1762507087941"
+import * as apiMeta_0 from "../src/content/api/meta.json?collection=apiMeta&hash=1762507087941"
+import * as apiDocs_9 from "../src/content/api/memory/updateMemory.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_8 from "../src/content/api/memory/searchMemories.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_7 from "../src/content/api/memory/listMemories.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_6 from "../src/content/api/memory/getMemory.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_5 from "../src/content/api/memory/deleteMemory.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_4 from "../src/content/api/memory/addMemory.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_3 from "../src/content/api/sdks.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_2 from "../src/content/api/overview.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_1 from "../src/content/api/errors.mdx?collection=apiDocs&hash=1762507087941"
+import * as apiDocs_0 from "../src/content/api/authentication.mdx?collection=apiDocs&hash=1762507087941"
+import { _runtime } from "fumadocs-mdx"
+import * as _source from "../source.config"
+export const apiDocs = _runtime.doc<typeof _source.apiDocs>([{ info: {"path":"authentication.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/authentication.mdx"}, data: apiDocs_0 }, { info: {"path":"errors.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/errors.mdx"}, data: apiDocs_1 }, { info: {"path":"overview.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/overview.mdx"}, data: apiDocs_2 }, { info: {"path":"sdks.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/sdks.mdx"}, data: apiDocs_3 }, { info: {"path":"memory/addMemory.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/addMemory.mdx"}, data: apiDocs_4 }, { info: {"path":"memory/deleteMemory.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/deleteMemory.mdx"}, data: apiDocs_5 }, { info: {"path":"memory/getMemory.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/getMemory.mdx"}, data: apiDocs_6 }, { info: {"path":"memory/listMemories.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/listMemories.mdx"}, data: apiDocs_7 }, { info: {"path":"memory/searchMemories.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/searchMemories.mdx"}, data: apiDocs_8 }, { info: {"path":"memory/updateMemory.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/updateMemory.mdx"}, data: apiDocs_9 }]);
+export const apiMeta = _runtime.meta<typeof _source.apiMeta>([{ info: {"path":"meta.json","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/meta.json"}, data: apiMeta_0 }, { info: {"path":"memory/meta.json","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/api/memory/meta.json"}, data: apiMeta_1 }]);
+export const docs = _runtime.doc<typeof _source.docs>([{ info: {"path":"index.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/docs/index.mdx"}, data: docs_0 }, { info: {"path":"get-started/overview.mdx","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/docs/get-started/overview.mdx"}, data: docs_1 }]);
+export const meta = _runtime.meta<typeof _source.meta>([{ info: {"path":"meta.json","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/docs/meta.json"}, data: meta_0 }, { info: {"path":"get-started/meta.json","absolutePath":"/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/src/content/docs/get-started/meta.json"}, data: meta_1 }]);

@@ -22,7 +22,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="dark w-full bg-background min-h-screen flex flex-col">
+    <div className="w-full bg-background min-h-screen flex flex-col">
       {/* Top Navbar */}
       <header className="shrink-0 fixed top-0 left-0 right-0 z-50 py-4 page-gutter bg-background">
         <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">

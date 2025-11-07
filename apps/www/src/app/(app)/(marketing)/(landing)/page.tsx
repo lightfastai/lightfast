@@ -10,23 +10,30 @@ import { NeuralMemoryVisual } from "~/components/landing/neural-memory-visual";
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section */}
-      <div className="section-gap-b py-16">
-        <div className="space-y-12">
-          <div className="space-y-3">
-            <h1
-              className={`text-4xl font-light leading-[1.2] tracking-[-0.7] text-foreground ${exposureTrial.className}`}
-            >
-              Memory built for teams
-            </h1>
-            <p className="text-md text-muted-foreground leading-relaxed max-w-md">
-              Search everything your team knows. Get answers with sources,
-              instantly.
-            </p>
-          </div>
+      {/* Hero Section with Brand Blue Background */}
+      <div
+        className="relative min-h-[70vh] flex items-center"
+        style={{
+          background: `linear-gradient(to bottom, var(--brand-blue), var(--brand-blue))`,
+        }}
+      >
+        <div className="section-gap-b py-16 w-full">
+          <div className="space-y-12">
+            <div className="space-y-3">
+              <h1
+                className={`text-4xl font-light leading-[1.2] tracking-[-0.7] text-white ${exposureTrial.className}`}
+              >
+                Memory built for teams
+              </h1>
+              <p className="text-md text-white/80 leading-relaxed max-w-md">
+                Search everything your team knows. Get answers with sources,
+                instantly.
+              </p>
+            </div>
 
-          <div className="max-w-xl">
-            <WaitlistForm />
+            <div className="max-w-xl">
+              <WaitlistForm />
+            </div>
           </div>
         </div>
       </div>

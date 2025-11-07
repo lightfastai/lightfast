@@ -8,29 +8,29 @@
         "fallback": "lightfast.ai"
       }
     },
-    "lightfast-docs": {
-      "packageName": "@lightfast/docs",
-      "assetPrefix": "docs",
+    "lightfast-auth": {
+      "packageName": "@lightfast/auth",
+      "assetPrefix": "auth",
       "development": {
-        "local": 4102
+        "local": 4104
       },
       "routing": [
         {
-          "group": "docs",
-          "paths": ["/docs", "/docs/:path*", "/api", "/api/:path*"]
+          "group": "auth",
+          "paths": ["/auth", "/auth/:path*"]
         }
       ]
     },
-    "lightfast-www-search": {
-      "packageName": "@lightfast/www-search",
-      "assetPrefix": "search",
+    "lightfast-console": {
+      "packageName": "@lightfast/console",
+      "assetPrefix": "console",
       "development": {
-        "local": 4105
+        "local": 4107
       },
       "routing": [
         {
-          "group": "search",
-          "paths": ["/search", "/search/:path*"]
+          "group": "console",
+          "paths": ["/console", "/console/:path*"]
         }
       ]
     }
