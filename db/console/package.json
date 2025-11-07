@@ -10,6 +10,7 @@
     },
     "./schema": "./src/schema/index.ts",
     "./client": "./src/client.ts",
+    "./utils": "./src/utils/workspace.ts",
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./env.ts"

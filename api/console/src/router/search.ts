@@ -16,6 +16,9 @@ import { pineconeClient } from "@vendor/pinecone";
 import { createCharHashEmbedding } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
+import { db } from "@db/console/client";
+import { stores } from "@db/console/schema";
+import { eq, and } from "drizzle-orm";
 
 /**
  * Search router - public procedures for search endpoints
@@ -61,16 +64,27 @@ export const searchRouter = {
 
 				const storeName = storeLabel.replace("store:", "");
 
-				// Resolve workspace and index name
-				// TODO: Get workspace from authentication context or request
-				const workspaceId = process.env.LIGHTFAST_WORKSPACE || "default";
-				const indexName = pineconeClient.resolveIndexName(workspaceId, storeName);
+				// Phase 1.6: Look up store to get workspaceId
+				const store = await db.query.stores.findFirst({
+					where: eq(stores.name, storeName),
+				});
+
+				if (!store) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: `Store not found: ${storeName}`,
+					});
+				}
+
+				const workspaceId = store.workspaceId;
+				const indexName = store.indexName;
 
 				log.info("Resolved index", {
 					requestId,
 					workspaceId,
 					storeName,
 					indexName,
+					storeId: store.id,
 				});
 
 				// Generate query embedding

@@ -61,7 +61,7 @@ export function SetupGuideModal({
 				description: "lightfast.yml template has been copied.",
 			});
 			setTimeout(() => setCopied(false), 2000);
-		} catch (error) {
+		} catch {
 			toast({
 				title: "Copy failed",
 				description: "Failed to copy to clipboard. Please copy manually.",

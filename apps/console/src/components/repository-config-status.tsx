@@ -23,7 +23,6 @@ interface RepositoryConfigStatusProps {
 export function RepositoryConfigStatus({
 	status,
 	documentCount,
-	lastIngestedAt,
 	onSetup,
 	onRetry,
 }: RepositoryConfigStatusProps) {

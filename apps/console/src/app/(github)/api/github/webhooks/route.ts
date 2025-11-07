@@ -2,81 +2,16 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { RepositoriesService } from "@repo/console-api-services";
+import type {
+	PushEvent,
+	InstallationEvent,
+	InstallationRepositoriesEvent,
+	RepositoryEvent,
+	WebhookEvent,
+} from "@repo/console-octokit-github";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
-
-/**
- * GitHub Webhook Event Types
- * https://docs.github.com/en/webhooks/webhook-events-and-payloads
- */
-type GitHubWebhookEvent =
-    | "installation"
-    | "installation.deleted"
-    | "installation_repositories"
-    | "installation_repositories.removed"
-    | "repository"
-    | "repository.deleted"
-    | "repository.renamed"
-    | "push";
-
-/**
- * Installation Event Payload
- */
-interface InstallationPayload {
-	action:
-		| "created"
-		| "deleted"
-		| "suspend"
-		| "unsuspend"
-		| "new_permissions_accepted";
-	installation: {
-		id: number;
-	};
-}
-
-/**
- * Repository Event Payload
- */
-interface RepositoryPayload {
-	action:
-		| "created"
-		| "deleted"
-		| "archived"
-		| "unarchived"
-		| "edited"
-		| "renamed"
-		| "transferred"
-		| "publicized"
-		| "privatized";
-	repository: {
-		id: number;
-		full_name: string;
-	};
-}
-
-/**
- * Push Event Payload
- */
-interface PushPayload {
-	ref: string;
-	before: string;
-	after: string;
-	repository: {
-		id: number;
-		full_name: string;
-		default_branch: string;
-	};
-	installation?: {
-		id: number;
-	};
-	commits: {
-		id: string;
-		added: string[];
-		modified: string[];
-		removed: string[];
-	}[];
-}
 
 /**
  * Verify GitHub webhook signature
@@ -98,22 +33,13 @@ function verifySignature(payload: string, signature: string): boolean {
 }
 
 /**
- * Installation Repositories Event Payload
- */
-interface InstallationRepositoriesPayload {
-	action: "added" | "removed";
-	repositories_removed?: { id: number; full_name: string }[];
-	installation: { id: number };
-}
-
-/**
  * Handle installation_repositories webhook events
  * Marks repositories as inactive when removed from installation
  */
 async function handleInstallationRepositoriesEvent(
-	payload: InstallationRepositoriesPayload
+	payload: InstallationRepositoriesEvent
 ) {
-	if (payload.action !== "removed" || !payload.repositories_removed) {
+	if (payload.action !== "removed") {
 		return;
 	}
 
@@ -137,7 +63,7 @@ async function handleInstallationRepositoriesEvent(
  * Handle push webhook events
  * Triggers docs ingestion workflow via Inngest
  */
-async function handlePushEvent(payload: PushPayload, deliveryId: string) {
+async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 	const branch = payload.ref.replace("refs/heads/", "");
 
 	// Only process default branch
@@ -246,27 +172,27 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const event = eventHeader as GitHubWebhookEvent;
+		const event = eventHeader as WebhookEvent;
 		const deliveryId = request.headers.get("x-github-delivery") ?? "unknown";
 
 		const body = JSON.parse(payload) as
-			| InstallationRepositoriesPayload
-			| InstallationPayload
-			| RepositoryPayload
-			| PushPayload;
+			| InstallationRepositoriesEvent
+			| InstallationEvent
+			| RepositoryEvent
+			| PushEvent;
 
 		// Route to appropriate handler
         switch (event) {
 			case "push":
-				await handlePushEvent(body as PushPayload, deliveryId);
+				await handlePushEvent(body as PushEvent, deliveryId);
 				break;
 
 			case "installation_repositories":
-				await handleInstallationRepositoriesEvent(body as InstallationRepositoriesPayload);
+				await handleInstallationRepositoriesEvent(body as InstallationRepositoriesEvent);
 				break;
 
 			case "installation": {
-				const installationPayload = body as InstallationPayload;
+				const installationPayload = body as InstallationEvent;
 				if (installationPayload.action === "deleted") {
 					console.log(
 						`[Webhook] Installation ${installationPayload.installation.id} deleted`,
@@ -281,7 +207,7 @@ export async function POST(request: NextRequest) {
 			}
 
 			case "repository": {
-				const repositoryPayload = body as RepositoryPayload;
+				const repositoryPayload = body as RepositoryEvent;
 				if (repositoryPayload.action === "deleted") {
 					console.log(
 						`[Webhook] Repository ${repositoryPayload.repository.id} deleted`,
@@ -306,7 +232,8 @@ export async function POST(request: NextRequest) {
 			}
 
 			default:
-				console.log(`[Webhook] Unhandled event: ${event}`);
+				// TypeScript ensures all cases are handled (event type is 'never' here)
+				console.log('[Webhook] Unhandled event:', event as string);
 		}
 
 		return NextResponse.json({ received: true });

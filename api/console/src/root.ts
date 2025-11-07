@@ -12,6 +12,10 @@ import { createTRPCRouter } from "./trpc";
 import { organizationRouter } from "./router/organization";
 import { repositoryRouter } from "./router/repository";
 
+// Phase 1.6: Stores and Clerk integration
+import { storesRouter } from "./router/stores";
+import { clerkRouter } from "./router/clerk";
+
 /**
  * Primary console app router
 */
@@ -23,6 +27,10 @@ export const consoleAppRouter = createTRPCRouter({
   // Phase 1.5: Organization and repository management
   organization: organizationRouter,
   repository: repositoryRouter,
+
+  // Phase 1.6: Stores and Clerk integration
+  stores: storesRouter,
+  clerk: clerkRouter,
 });
 
 // Export type for use in client

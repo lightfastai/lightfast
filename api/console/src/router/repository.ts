@@ -1,6 +1,7 @@
 // @ts-nocheck - TODO: Phase 1.4+ - Update schema and re-enable
 import type { TRPCRouterRecord } from "@trpc/server";
 import { DeusConnectedRepository, organizations } from "@db/console/schema";
+import { getOrCreateDefaultWorkspace } from "@db/console/utils";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -152,6 +153,12 @@ export const repositoryRouter = {
         });
       }
 
+      // Get or create default workspace for organization
+      const workspaceId = await getOrCreateDefaultWorkspace(
+        orgResult.clerkOrgId,
+        orgResult.githubOrgSlug,
+      );
+
       // Check if this repository is already connected to this organization
       const existingRepoResult = await ctx.db
         .select()
@@ -180,6 +187,7 @@ export const repositoryRouter = {
           .set({
             isActive: true,
             githubInstallationId: input.githubInstallationId,
+            workspaceId,
             permissions: input.permissions,
             metadata: input.metadata,
             lastSyncedAt: new Date().toISOString(),
@@ -205,6 +213,7 @@ export const repositoryRouter = {
         organizationId: orgResult.id,
         githubRepoId: input.githubRepoId,
         githubInstallationId: input.githubInstallationId,
+        workspaceId,
         permissions: input.permissions,
         metadata: input.metadata,
         isActive: true,

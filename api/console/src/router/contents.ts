@@ -13,8 +13,8 @@ import {
 	type ContentsResponse,
 } from "@repo/console-types/api";
 import { db } from "@db/console/client";
-import { docsDocuments } from "@db/console/schema";
-import { inArray } from "drizzle-orm";
+import { docsDocuments, stores } from "@db/console/schema";
+import { inArray, eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 
@@ -45,7 +45,7 @@ export const contentsRouter = {
 			});
 
 			try {
-				// Fetch documents by IDs
+				// Phase 1.6: Fetch documents with workspace scoping via stores join
 				const documents = await db
 					.select({
 						id: docsDocuments.id,
@@ -54,8 +54,11 @@ export const contentsRouter = {
 						description: docsDocuments.description,
 						frontmatter: docsDocuments.frontmatter,
 						committedAt: docsDocuments.committedAt,
+						storeId: docsDocuments.storeId,
+						workspaceId: stores.workspaceId,
 					})
 					.from(docsDocuments)
+					.innerJoin(stores, eq(docsDocuments.storeId, stores.id))
 					.where(inArray(docsDocuments.id, input.ids));
 
 				log.info("Documents fetched", {

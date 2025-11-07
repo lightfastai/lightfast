@@ -18,6 +18,7 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
+import { getOrCreateStore } from "../../lib/stores";
 
 /**
  * Main docs ingestion function
@@ -55,28 +56,20 @@ export const docsIngestion: ReturnType<typeof inngest.createFunction> = inngest.
 		// Step 1: Check idempotency - has this delivery already been processed?
 		const existingCommit = await step.run("check-idempotency", async () => {
 			try {
-				// First, get or create store
-				const [store] = await db
-					.select()
-					.from(stores)
-					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)))
-					.limit(1);
+			// First, get or create store
+			const store = await getOrCreateStore({
+				workspaceId,
+				storeName,
+				embeddingDim: 1536, // CharHash embedding dimension
+			});
 
-				if (!store) {
-					// TODO: Create store if it doesn't exist (Phase 1.5)
-					log.warn("Store not found, will need to create", {
-						workspaceId,
-						storeName,
-					});
-					return null;
-				}
-
-				// Check if we've already processed this delivery
-				const [existing] = await db
-					.select()
-					.from(ingestionCommits)
-					.where(and(eq(ingestionCommits.storeId, store.id), eq(ingestionCommits.deliveryId, deliveryId)))
-					.limit(1);
+			// Check if we've already processed this delivery
+			const existing = await db.query.ingestionCommits.findFirst({
+					where: and(
+						eq(ingestionCommits.storeId, store.id),
+						eq(ingestionCommits.deliveryId, deliveryId)
+					),
+				});
 
 				return existing ?? null;
 			} catch (error) {

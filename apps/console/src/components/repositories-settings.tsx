@@ -7,7 +7,8 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { ConnectRepositoryDialog } from "./connect-repository-dialog";
-import { RepositoryConfigStatus, type ConfigStatus } from "./repository-config-status";
+import { RepositoryConfigStatus } from "./repository-config-status";
+import type { ConfigStatus } from "./repository-config-status";
 import { SetupGuideModal } from "./setup-guide-modal";
 import { useTRPC } from "@repo/console-trpc/react";
 
@@ -41,7 +42,7 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 	// Mutation to detect config for a repository
 	const detectConfigMutation = useMutation(
 		trpc.repository.detectConfig.mutationOptions({
-			onSuccess: (data, variables) => {
+			onSuccess: (data) => {
 				toast({
 					title: data.exists ? "Configuration found" : "No configuration",
 					description: data.exists
@@ -163,8 +164,8 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 									{/* Configuration Status */}
 									<div className="border-t border-border/40 pt-3">
 										<RepositoryConfigStatus
-											status={(repo.configStatus as ConfigStatus) ?? "pending"}
-											documentCount={repo.documentCount ?? 0}
+											status={repo.configStatus as ConfigStatus}
+											documentCount={repo.documentCount}
 											lastIngestedAt={repo.lastIngestedAt ?? undefined}
 											onSetup={() => handleSetupClick(repo.metadata?.fullName ?? "")}
 											onRetry={() => handleRetryConfig(repo.id)}
