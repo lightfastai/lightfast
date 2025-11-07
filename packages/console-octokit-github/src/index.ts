@@ -282,3 +282,6 @@ export type { ConfigDetectionResult } from "./config-detector";
 
 // Export webhook types
 export type { PushEvent, InstallationEvent, InstallationRepositoriesEvent, RepositoryEvent, WebhookEvent } from "./webhook-types";
+
+// Export GitHub environment configuration
+export { githubEnv } from "./env";

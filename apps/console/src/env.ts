@@ -5,9 +5,10 @@ import { z } from "zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as dbEnv } from "@db/console/env";
+import { githubEnv } from "@repo/console-octokit-github/env";
 
 export const env = createEnv({
-	extends: [vercel(), clerkEnvBase, dbEnv, sentryEnv],
+	extends: [vercel(), clerkEnvBase, dbEnv, sentryEnv, githubEnv],
 	shared: {
 		NODE_ENV: z
 			.enum(["development", "production", "test"])
@@ -15,12 +16,6 @@ export const env = createEnv({
 	},
 	server: {
 		HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-		// GitHub App credentials (required)
-		GITHUB_APP_ID: z.string().min(1),
-		GITHUB_APP_PRIVATE_KEY: z.string().min(1),
-		GITHUB_CLIENT_ID: z.string().min(1),
-		GITHUB_CLIENT_SECRET: z.string().min(1),
-		GITHUB_WEBHOOK_SECRET: z.string().min(32),
 		// No ANTHROPIC_API_KEY needed - Vercel AI Gateway uses VERCEL_OIDC_TOKEN
 	},
 	client: {

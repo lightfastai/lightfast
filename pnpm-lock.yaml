@@ -328,6 +328,9 @@ importers:
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
+      '@sentry/core':
+        specifier: ^10.20.0
+        version: 10.20.0
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -2479,12 +2482,18 @@ importers:
       '@octokit/webhooks-types':
         specifier: ^7.6.1
         version: 7.6.1
+      '@t3-oss/env-nextjs':
+        specifier: 'catalog:'
+        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
       minimatch:
         specifier: ^10.1.1
         version: 10.1.1
       octokit:
         specifier: ^5.0.3
         version: 5.0.4
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

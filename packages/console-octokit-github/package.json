@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./src/env.ts"
     }
   },
   "scripts": {
@@ -20,8 +24,10 @@
     "@octokit/plugin-retry": "^8.0.3",
     "@octokit/plugin-throttling": "^11.0.3",
     "@octokit/webhooks-types": "^7.6.1",
+    "@t3-oss/env-nextjs": "catalog:",
     "minimatch": "^10.1.1",
-    "octokit": "^5.0.3"
+    "octokit": "^5.0.3",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

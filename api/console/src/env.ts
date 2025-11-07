@@ -4,15 +4,12 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { githubEnv } from "@repo/console-octokit-github/env";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, sentryEnv],
+  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv],
   shared: {},
-  server: {
-    // GitHub App credentials (required for API operations)
-    GITHUB_APP_ID: z.string().min(1),
-    GITHUB_APP_PRIVATE_KEY: z.string().min(1),
-  },
+  server: {},
   client: {},
   experimental__runtimeEnv: {},
   skipValidation:
