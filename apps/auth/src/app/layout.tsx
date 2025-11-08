@@ -9,6 +9,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
+import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
   title: `${siteConfig.name} Auth`,
@@ -80,6 +81,8 @@ export default function RootLayout({
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			signInUrl="/sign-in"
 			signUpUrl="/sign-up"
+			signInFallbackRedirectUrl={consoleUrl}
+			signUpFallbackRedirectUrl={consoleUrl}
 			appearance={{
 				variables: {
 					colorPrimary: "#3b82f6",
