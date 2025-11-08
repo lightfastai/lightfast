@@ -12,7 +12,6 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in/sso-callback",
 	"/sign-up",
 	"/sign-up/sso-callback",
-	"/onboarding/choose-organization",
 	"/api/health",
 	"/robots.txt",
 	"/sitemap.xml",
@@ -22,7 +21,6 @@ const isPublicRoute = createRouteMatcher([
 const isAuthRoute = createRouteMatcher([
 	"/sign-in",
 	"/sign-up",
-	"/onboarding/choose-organization",
 ]);
 
 // Define organization routes that need Clerk organization sync
@@ -77,9 +75,9 @@ export default clerkMiddleware(
 			}
 			
 			if (!orgId) {
-				// Authenticated but no org - go to org selection (session task)
-				console.log("[AUTH MIDDLEWARE] Redirecting to onboarding/choose-organization (no org)");
-				return NextResponse.redirect(new URL("/onboarding/choose-organization", req.url));
+				// Authenticated but no org - redirect to console app onboarding
+				console.log("[AUTH MIDDLEWARE] Redirecting to console app onboarding (no org)");
+				return NextResponse.redirect(new URL("/onboarding/choose-organization", consoleUrl));
 			}
 			
 			if (orgId) {
