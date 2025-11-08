@@ -10,27 +10,35 @@
     },
     "lightfast-auth": {
       "packageName": "@lightfast/auth",
-      "assetPrefix": "auth",
       "development": {
         "local": 4104
       },
       "routing": [
         {
           "group": "auth",
-          "paths": ["/auth", "/auth/:path*"]
+          "paths": [
+            "/sign-in",
+            "/sign-in/:path*",
+            "/sign-up"
+          ]
         }
       ]
     },
     "lightfast-console": {
       "packageName": "@lightfast/console",
-      "assetPrefix": "console",
       "development": {
         "local": 4107
       },
       "routing": [
         {
           "group": "console",
-          "paths": ["/console", "/console/:path*"]
+          "paths": [
+            "/app",
+            "/org",
+            "/org/:path*",
+            "/onboarding",
+            "/onboarding/:path*"
+          ]
         }
       ]
     }
