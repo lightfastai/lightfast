@@ -25,7 +25,7 @@ const isAuthRoute = createRouteMatcher([
 
 // Define organization routes that need Clerk organization sync
 const isOrgRoute = createRouteMatcher([
-	"/orgs/(.*)"
+	"/org/(.*)"
 ]);
 
 const isRootRedirect = createRouteMatcher(["/"]);
@@ -62,8 +62,8 @@ export default clerkMiddleware(
 
 		// Handle authenticated users with organizations - redirect away from auth pages
 		if (isAuthenticated && orgId && orgSlug && isAuthRoute(req)) {
-			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → console app /orgs/${orgSlug}/dashboard`);
-			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
+			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → console app /org/${orgSlug}`);
+			return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
 		}
 
 		// Handle root path redirect logic
@@ -77,13 +77,13 @@ export default clerkMiddleware(
 			if (!orgId) {
 				// Authenticated but no org - redirect to console app onboarding
 				console.log("[AUTH MIDDLEWARE] Redirecting to console app onboarding (no org)");
-				return NextResponse.redirect(new URL("/onboarding/choose-organization", consoleUrl));
+				return NextResponse.redirect(new URL("/onboarding/claim-org", consoleUrl));
 			}
 			
 			if (orgId) {
 				// Authenticated with org - redirect to console app
-				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → console app /orgs/${orgSlug}/dashboard`);
-				return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
+				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → console app /org/${orgSlug}`);
+				return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
 			}
 		}
 
@@ -97,9 +97,9 @@ export default clerkMiddleware(
 		return applyCorsHeaders(response, req);
 	},
 	{
-		// Organization sync for /orgs/:slug routes in auth app
+		// Organization sync for /org/:slug routes in auth app
 		organizationSyncOptions: {
-			organizationPatterns: ["/orgs/:slug", "/orgs/:slug/(.*)"],
+			organizationPatterns: ["/org/:slug", "/org/:slug/(.*)"],
 		},
 	},
 );
