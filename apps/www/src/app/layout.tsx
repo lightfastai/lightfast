@@ -16,6 +16,7 @@ import {
 
 import { createBaseUrl } from "~/lib/base-url";
 import { JsonLd } from "@vendor/seo/json-ld";
+import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – Neural Memory for Teams",
@@ -116,43 +117,39 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema: WithContext<Organization> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/logo.png`,
+    sameAs: [
+      siteConfig.links.twitter.href,
+      siteConfig.links.github.href,
+      siteConfig.links.discord.href,
+    ],
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: `${siteConfig.name} – Neural Memory for Teams`,
+    url: siteConfig.url,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  } as const;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <JsonLd
-          code={
-            {
-              "@context": "https://schema.org",
-              "@type": ["Organization", "TechnologyCompany"],
-              name: siteConfig.name,
-              url: siteConfig.url,
-              logo: `${siteConfig.url}/logo.png`,
-              sameAs: [
-                siteConfig.links.twitter.href,
-                siteConfig.links.github.href,
-                siteConfig.links.discord.href,
-              ],
-            } as any
-          }
-        />
-        <JsonLd
-          code={
-            {
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: `${siteConfig.name} – Neural Memory for Teams`,
-              url: siteConfig.url,
-              potentialAction: {
-                "@type": "SearchAction",
-                target: {
-                  "@type": "EntryPoint",
-                  urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
-                },
-                "query-input": "required name=search_term_string",
-              },
-            } as any
-          }
-        />
+        <JsonLd code={organizationSchema} />
+        <JsonLd code={websiteSchema} />
       </head>
       <body className={cn("min-h-screen bg-background", fonts)}>
         <PrefetchCrossZoneLinksProvider>

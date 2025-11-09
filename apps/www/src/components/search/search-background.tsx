@@ -12,7 +12,6 @@ export function SearchBackground() {
         alt=""
         fill
         priority
-        unoptimized
         className="object-cover scale-110 blur-3xl"
       />
     </div>

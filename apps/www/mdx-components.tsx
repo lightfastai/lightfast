@@ -5,7 +5,6 @@ import { ApiEndpoint } from "@/src/components/api-endpoint";
 import { ApiMethod } from "@/src/components/api-method";
 import { CodeBlock } from "@/src/components/code-block";
 import { ApiReferenceCard, ApiReferenceGrid } from "@/src/components/api-reference-card";
-import { APIPage } from "fumadocs-openapi/ui";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -251,5 +250,4 @@ export const mdxComponents = {
   CodeBlock,
   ApiReferenceCard,
   ApiReferenceGrid,
-  APIPage,
 };

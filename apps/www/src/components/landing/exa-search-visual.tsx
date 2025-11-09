@@ -5,8 +5,6 @@
  * Displays a code-like search query and mock search results.
  */
 
-import Image from "next/image";
-
 export function ExaSearchVisual() {
   const searchResults = [
     {
@@ -42,19 +40,7 @@ export function ExaSearchVisual() {
   ];
 
   return (
-    <div className="h-full flex flex-col relative px-16 py-24">
-      <div className="absolute inset-0 p-4">
-        <div className="relative w-full h-full rounded-sm overflow-hidden">
-          <Image
-            src="/images/blue-sky.webp"
-            alt="Background"
-            fill
-            className="object-cover"
-            priority
-            unoptimized
-          />
-        </div>
-      </div>
+    <div className="h-full flex flex-col relative">
       <div className="flex flex-col gap-3 bg-background p-3 rounded-md h-full relative z-10">
         {/* Search Query Display */}
         <div className="bg-secondary rounded-md px-3 py-4 font-mono text-sm">
