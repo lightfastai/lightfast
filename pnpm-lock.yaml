@@ -72,6 +72,9 @@ catalogs:
     braintrust:
       specifier: ^0.2.1
       version: 0.2.6
+    clsx:
+      specifier: ^2.1.1
+      version: 2.1.1
     drizzle-orm:
       specifier: ^0.43.1
       version: 0.43.1
@@ -120,6 +123,9 @@ catalogs:
     superjson:
       specifier: ^2.2.1
       version: 2.2.2
+    tailwind-merge:
+      specifier: ^3.3.1
+      version: 3.3.1
     turbo:
       specifier: ^2.5.5
       version: 2.5.8
@@ -461,6 +467,9 @@ importers:
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
+      '@vercel/microfrontends':
+        specifier: ^2.0.1
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
@@ -817,6 +826,9 @@ importers:
       '@octokit/types':
         specifier: ^15.0.0
         version: 15.0.0
+      '@repo/app-urls':
+        specifier: workspace:^
+        version: link:../../packages/app-urls
       '@repo/console-api-services':
         specifier: workspace:*
         version: link:../../packages/console-api-services
@@ -874,6 +886,12 @@ importers:
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
+      '@vercel/microfrontends':
+        specifier: ^2.0.1
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.0
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -1068,6 +1086,9 @@ importers:
 
   apps/www:
     dependencies:
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.14
+        version: 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@repo/app-urls':
         specifier: workspace:*
         version: link:../../packages/app-urls
@@ -1127,10 +1148,13 @@ importers:
         version: link:../../vendor/upstash
       '@vercel/microfrontends':
         specifier: ^2.0.1
-        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       framer-motion:
         specifier: ^11.3.19
         version: 11.18.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1167,6 +1191,9 @@ importers:
       shiki:
         specifier: ^3.9.2
         version: 3.13.0
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.3.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -1192,130 +1219,6 @@ importers:
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      '@types/react':
-        specifier: ^19.1.11
-        version: 19.2.2
-      '@types/react-dom':
-        specifier: ^19.1.8
-        version: 19.2.2(@types/react@19.2.2)
-      autoprefixer:
-        specifier: ^10.4.21
-        version: 10.4.21(postcss@8.5.6)
-      dotenv-cli:
-        specifier: ^8.0.0
-        version: 8.0.0
-      eslint:
-        specifier: 'catalog:'
-        version: 9.38.0(jiti@1.21.7)
-      import-in-the-middle:
-        specifier: 'catalog:'
-        version: 1.15.0
-      jiti:
-        specifier: ^1.21.6
-        version: 1.21.7
-      postcss:
-        specifier: catalog:tailwind4
-        version: 8.5.6
-      require-in-the-middle:
-        specifier: 'catalog:'
-        version: 7.5.2
-      tailwindcss:
-        specifier: catalog:tailwind4
-        version: 4.1.11
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      typescript-eslint:
-        specifier: 'catalog:'
-        version: 8.46.1(eslint@9.38.0(jiti@1.21.7))(typescript@5.9.3)
-
-  apps/www-search:
-    dependencies:
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
-      '@repo/site-config':
-        specifier: workspace:*
-        version: link:../../packages/site-config
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@repo/url-utils':
-        specifier: workspace:*
-        version: link:../../packages/url-utils
-      '@sentry/nextjs':
-        specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.1.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.102.1)
-      '@t3-oss/env-nextjs':
-        specifier: 'catalog:'
-        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/next':
-        specifier: workspace:*
-        version: link:../../vendor/next
-      '@vendor/security':
-        specifier: workspace:*
-        version: link:../../vendor/security
-      '@vendor/seo':
-        specifier: workspace:*
-        version: link:../../vendor/seo
-      '@vendor/upstash':
-        specifier: workspace:*
-        version: link:../../vendor/upstash
-      '@vercel/microfrontends':
-        specifier: ^2.0.1
-        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.0
-      framer-motion:
-        specifier: ^11.3.19
-        version: 11.18.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      geist:
-        specifier: 'catalog:'
-        version: 1.5.1(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      lucide-react:
-        specifier: 'catalog:'
-        version: 0.451.0(react@19.2.0)
-      neverthrow:
-        specifier: 'catalog:'
-        version: 8.2.0
-      next:
-        specifier: 'catalog:'
-        version: 15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react:
-        specifier: ^19.1.1
-        version: 19.2.0
-      react-confetti:
-        specifier: ^6.4.0
-        version: 6.4.0(react@19.2.0)
-      react-dom:
-        specifier: ^19.1.1
-        version: 19.2.0(react@19.2.0)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@tailwindcss/postcss':
-        specifier: catalog:tailwind4
-        version: 4.1.11
-      '@tailwindcss/typography':
-        specifier: catalog:tailwind4
-        version: 0.5.19(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
@@ -20733,7 +20636,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))':
+  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
       '@next/env': 15.5.4
       '@types/md5': 2.3.6

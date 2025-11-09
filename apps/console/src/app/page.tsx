@@ -1,12 +1,20 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
+import { authUrl } from "~/lib/related-projects";
 
+/**
+ * Console App Root
+ *
+ * Redirects users to the appropriate destination:
+ * - Authenticated users → onboarding (where they can claim/switch orgs)
+ * - Unauthenticated users → auth app sign-in
+ */
 export default async function RootPage() {
-	const user = await currentUser();
+	const { userId } = await auth();
 
-	if (user) {
-		redirect("/app");
+	if (userId) {
+		redirect("/onboarding/claim-org");
 	}
 
-	redirect("/sign-in");
+	redirect(`${authUrl}/sign-in`);
 }

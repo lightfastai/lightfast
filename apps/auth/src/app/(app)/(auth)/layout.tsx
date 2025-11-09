@@ -32,7 +32,7 @@ export default function AuthLayout({
             {/* Right: Waitlist CTA */}
             <div className="flex items-center gap-2 md:justify-self-end">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="lg"
                 asChild
                 className="rounded-full"

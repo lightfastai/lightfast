@@ -12,7 +12,6 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in/sso-callback",
 	"/sign-up",
 	"/sign-up/sso-callback",
-	"/onboarding/choose-organization",
 	"/api/health",
 	"/robots.txt",
 	"/sitemap.xml",
@@ -22,87 +21,61 @@ const isPublicRoute = createRouteMatcher([
 const isAuthRoute = createRouteMatcher([
 	"/sign-in",
 	"/sign-up",
-	"/onboarding/choose-organization",
 ]);
 
-// Define organization routes that need Clerk organization sync
-const isOrgRoute = createRouteMatcher([
-	"/orgs/(.*)"
-]);
-
-const isRootRedirect = createRouteMatcher(["/"]);
+const isRootPath = createRouteMatcher(["/"]);
 
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
 		// Handle CORS preflight requests
 		const preflightResponse = handleCorsPreflightRequest(req);
-		if (preflightResponse) {
-			return preflightResponse;
+		if (preflightResponse) return preflightResponse;
+
+		// Single auth check - detect both pending and active users
+		// Pending = authenticated but no org (hasn't completed choose-organization task)
+		// Active = authenticated with org (completed all tasks)
+		const { userId, orgId, orgSlug } = await auth({ treatPendingAsSignedOut: false });
+		const isPending = Boolean(userId && !orgId);
+		const isActive = Boolean(userId && orgId);
+
+		// UX improvement: redirect authenticated users away from auth pages
+		if ((isPending || isActive) && isAuthRoute(req)) {
+			// Pending users → onboarding to claim org
+			if (isPending) {
+				return NextResponse.redirect(new URL("/onboarding/claim-org", consoleUrl));
+			}
+			// Active users → their org dashboard
+			if (isActive && orgSlug) {
+				return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
+			}
 		}
 
-		// For /orgs/:slug routes, let Clerk's organizationSyncOptions handle everything
-		if (isOrgRoute(req)) {
-			console.log(
-				`[AUTH MIDDLEWARE] Organization route detected, letting Clerk handle: ${req.nextUrl.pathname}`,
-			);
-			await auth.protect();
-			const response = NextResponse.next();
-			return applyCorsHeaders(response, req);
-		}
-
-		const authResult = await auth();
-		const { userId, orgId, orgSlug, sessionId, isAuthenticated } = authResult;
-
-		console.log(`[AUTH MIDDLEWARE] Auth state:`, {
-			isAuthenticated,
-			userId: userId ? "present" : "null",
-			orgId: orgId ? "present" : "null", 
-			orgSlug: orgSlug ?? "null",
-			sessionId: sessionId ? "present" : "null",
-			pathname: req.nextUrl.pathname,
-		});
-
-		// Handle authenticated users with organizations - redirect away from auth pages
-		if (isAuthenticated && orgId && orgSlug && isAuthRoute(req)) {
-			console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user away from auth route: ${req.nextUrl.pathname} → console app /orgs/${orgSlug}/dashboard`);
-			return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
-		}
-
-		// Handle root path redirect logic
-		if (isRootRedirect(req)) {
-			if (!isAuthenticated) {
-				// Not authenticated - go to sign-in
-				console.log("[AUTH MIDDLEWARE] Redirecting to sign-in (not authenticated)");
+		// Root path routing
+		if (isRootPath(req)) {
+			if (!userId) {
+				// Not signed in → sign-in page
 				return NextResponse.redirect(new URL("/sign-in", req.url));
 			}
-			
-			if (!orgId) {
-				// Authenticated but no org - go to org selection (session task)
-				console.log("[AUTH MIDDLEWARE] Redirecting to onboarding/choose-organization (no org)");
-				return NextResponse.redirect(new URL("/onboarding/choose-organization", req.url));
+			if (isPending) {
+				// Signed in but no org → onboarding
+				return NextResponse.redirect(new URL("/onboarding/claim-org", consoleUrl));
 			}
-			
-			if (orgId) {
-				// Authenticated with org - redirect to console app
-				console.log(`[AUTH MIDDLEWARE] Redirecting authenticated user with org from root → console app /orgs/${orgSlug}/dashboard`);
-				return NextResponse.redirect(new URL(`/orgs/${orgSlug}/dashboard`, consoleUrl));
+			if (isActive && orgSlug) {
+				// Signed in with org → org dashboard
+				return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
 			}
 		}
 
-		// Protect all routes except public ones
+		// Protect non-public routes (will redirect to sign-in if needed)
 		if (!isPublicRoute(req)) {
 			await auth.protect();
 		}
 
-		// Allow request to continue
-		const response = NextResponse.next();
-		return applyCorsHeaders(response, req);
+		return applyCorsHeaders(NextResponse.next(), req);
 	},
 	{
-		// Organization sync for /orgs/:slug routes in auth app
-		organizationSyncOptions: {
-			organizationPatterns: ["/orgs/:slug", "/orgs/:slug/(.*)"],
-		},
+		// Enable debug logging in development
+		debug: process.env.NODE_ENV === "development",
 	},
 );
 

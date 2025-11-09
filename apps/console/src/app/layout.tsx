@@ -9,6 +9,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
+import { authUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
   title: "Console",
@@ -53,10 +54,10 @@ export default function RootLayout({
 	return (
 		<ClerkProvider
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			signInUrl="/sign-in"
-			signUpUrl="/sign-up"
-			signInFallbackRedirectUrl="/app"
-			signUpFallbackRedirectUrl="/app"
+			signInUrl={`${authUrl}/sign-in`}
+			signUpUrl={`${authUrl}/sign-up`}
+			signInFallbackRedirectUrl="/onboarding/claim-org"
+			signUpFallbackRedirectUrl="/onboarding/claim-org"
 			taskUrls={{
 				"choose-organization": "/onboarding/claim-org",
 			}}

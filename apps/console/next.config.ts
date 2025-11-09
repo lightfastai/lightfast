@@ -1,4 +1,5 @@
 import { NextConfig } from "next";
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 
 import "./src/env";
 
@@ -28,4 +29,4 @@ const config: NextConfig = withBetterStack(
   })
 );
 
-export default config;
+export default withMicrofrontends(config, { debug: true });

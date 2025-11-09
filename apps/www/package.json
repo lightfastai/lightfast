@@ -18,6 +18,7 @@
     "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.14",
     "@repo/app-urls": "workspace:*",
     "@repo/console-billing": "workspace:*",
     "@repo/email": "workspace:*",
@@ -39,6 +40,7 @@
     "@vendor/upstash": "workspace:*",
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
+    "clsx": "catalog:",
     "framer-motion": "^11.3.19",
     "geist": "catalog:",
     "jotai": "^2.12.3",
@@ -51,6 +53,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.61.1",
     "shiki": "^3.9.2",
+    "tailwind-merge": "catalog:",
     "zod": "catalog:",
     "zustand": "catalog:"
   },
