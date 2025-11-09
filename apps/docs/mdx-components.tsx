@@ -1,0 +1,255 @@
+import { cn } from "@repo/ui/lib/utils";
+import type React from "react";
+import { FeatureList } from "@/src/components/feature-list";
+import { ApiEndpoint } from "@/src/components/api-endpoint";
+import { ApiMethod } from "@/src/components/api-method";
+import { CodeBlock } from "@/src/components/code-block";
+import { ApiReferenceCard, ApiReferenceGrid } from "@/src/components/api-reference-card";
+import { APIPage } from "fumadocs-openapi/ui";
+
+// Properly typed component props based on react-markdown's actual types
+type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
+  node?: unknown;
+  children?: React.ReactNode;
+};
+
+// Code component specific props
+interface CodeComponentProps extends MarkdownComponentProps {
+  inline?: boolean;
+}
+
+export const mdxComponents = {
+  // Code components - handles both inline and block code
+  code({ inline, className, children, ...props }: CodeComponentProps) {
+    // Inline code styling
+    if (inline) {
+      return (
+        <code className={cn("bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono", className)} {...props}>
+          {children}
+        </code>
+      );
+    }
+    // Block code without syntax highlighting
+    return (
+      <code className={cn("font-mono text-xs", className)} {...props}>
+        {children}
+      </code>
+    );
+  },
+
+  // Pre component for code blocks
+  pre({ children, className, ...props }: MarkdownComponentProps) {
+    return (
+      <pre
+        className={cn(
+          "my-4 relative w-full rounded-md border border-border bg-muted/50 dark:bg-muted/20",
+          "text-foreground p-3 text-xs font-mono leading-relaxed",
+          "overflow-auto",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </pre>
+    );
+  },
+
+  // Typography components
+  strong({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <strong className="font-semibold" {...props}>
+        {children}
+      </strong>
+    );
+  },
+
+  em({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <em className="italic" {...props}>
+        {children}
+      </em>
+    );
+  },
+
+  // Link component with Next.js best practices
+  a({ href, children, ...props }: MarkdownComponentProps & { href?: string }) {
+    const isExternal = href?.startsWith("http");
+    return (
+      <a
+        href={href}
+        className="text-blue-500 hover:text-blue-600 underline underline-offset-2 transition-colors"
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
+
+  // Heading components with consistent styling (reduced by one size)
+  h1({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h1 className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6 first:mt-0" {...props}>
+        {children}
+      </h1>
+    );
+  },
+
+  h2({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-5" {...props}>
+        {children}
+      </h2>
+    );
+  },
+
+  h3({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h3 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4" {...props}>
+        {children}
+      </h3>
+    );
+  },
+
+  h4({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h4 className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-3" {...props}>
+        {children}
+      </h4>
+    );
+  },
+
+  h5({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h5 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
+        {children}
+      </h5>
+    );
+  },
+
+  h6({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <h6 className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-2" {...props}>
+        {children}
+      </h6>
+    );
+  },
+
+  // Paragraph with proper spacing and text-sm
+  p({ children, ...props }: MarkdownComponentProps) {
+    return (
+      <p className="text-sm leading-7 [&:not(:first-child)]:mt-3 break-words" {...props}>
+        {children}
+      </p>
+    );
+  },
+
+  // List components
+  ul({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <ul className={cn("my-3 ml-6 list-disc [&>li]:mt-1", className)} {...props}>
+        {children}
+      </ul>
+    );
+  },
+
+  ol({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <ol className={cn("my-3 ml-6 list-decimal [&>li]:mt-1", className)} {...props}>
+        {children}
+      </ol>
+    );
+  },
+
+  li({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <li className={cn("text-sm leading-7 break-words", className)} {...props}>
+        {children}
+      </li>
+    );
+  },
+
+  // Horizontal rule
+  hr({ ...props }: MarkdownComponentProps) {
+    return <hr className="my-6 border-border" {...props} />;
+  },
+
+  // Blockquote
+  blockquote({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <blockquote
+        className={cn("text-sm mt-3 border-l-4 border-border pl-4 italic text-muted-foreground", className)}
+        {...props}
+      >
+        {children}
+      </blockquote>
+    );
+  },
+
+  // Table components with better styling
+  table({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <div className="my-3 w-full overflow-y-auto">
+        <table className={cn("w-full border-collapse", className)} {...props}>
+          {children}
+        </table>
+      </div>
+    );
+  },
+
+  thead({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <thead className={cn("border-b", className)} {...props}>
+        {children}
+      </thead>
+    );
+  },
+
+  tbody({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props}>
+        {children}
+      </tbody>
+    );
+  },
+
+  tr({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <tr className={cn("border-b transition-colors hover:bg-muted/50", className)} {...props}>
+        {children}
+      </tr>
+    );
+  },
+
+  th({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <th
+        className={cn(
+          "text-sm h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 break-words",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </th>
+    );
+  },
+
+  td({ className, children, ...props }: MarkdownComponentProps) {
+    return (
+      <td className={cn("text-sm p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words", className)} {...props}>
+        {children}
+      </td>
+    );
+  },
+
+  // Custom components
+  FeatureList,
+  ApiEndpoint,
+  ApiMethod,
+  CodeBlock,
+  ApiReferenceCard,
+  ApiReferenceGrid,
+  APIPage,
+};

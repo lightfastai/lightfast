@@ -41,6 +41,23 @@
           ]
         }
       ]
+    },
+    "lightfast-docs": {
+      "packageName": "@lightfast/docs",
+      "development": {
+        "local": 3002
+      },
+      "routing": [
+        {
+          "group": "docs",
+          "paths": [
+            "/docs",
+            "/docs/:path*",
+            "/api",
+            "/api/:path*"
+          ]
+        }
+      ]
     }
   }
 }

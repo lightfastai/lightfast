@@ -13,6 +13,9 @@ services:
   console:
     path: apps/console
     envFile: apps/console/.vercel/.env.development.local
+  docs:
+    path: apps/docs
+    envFile: apps/docs/.vercel/.env.development.local
 
 worktrees:
   path: ./worktrees

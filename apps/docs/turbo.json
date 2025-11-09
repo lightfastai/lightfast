@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "build": {
+      "cache": false,
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    }
+  }
+}
