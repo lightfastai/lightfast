@@ -56,8 +56,8 @@ export default function RootLayout({
 			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			signInUrl={`${authUrl}/sign-in`}
 			signUpUrl={`${authUrl}/sign-up`}
-			signInFallbackRedirectUrl="/app"
-			signUpFallbackRedirectUrl="/app"
+			signInFallbackRedirectUrl="/onboarding/claim-org"
+			signUpFallbackRedirectUrl="/onboarding/claim-org"
 			taskUrls={{
 				"choose-organization": "/onboarding/claim-org",
 			}}

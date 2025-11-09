@@ -3,8 +3,9 @@ import { db } from "@db/console/client";
 import { organizations } from "@db/console/schema";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { clerkClient } from "@vendor/clerk/server";
 
-import { publicProcedure } from "../trpc";
+import { publicProcedure, protectedProcedure } from "../trpc";
 
 /**
  * Organization router - internal procedures for API routes
@@ -12,6 +13,48 @@ import { publicProcedure } from "../trpc";
  * that don't have user authentication context
  */
 export const organizationRouter = {
+  /**
+   * List user's organizations with enriched data
+   * Returns Clerk orgs joined with database org records
+   */
+  listUserOrganizations: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.auth.type !== "clerk") {
+      throw new Error("Clerk authentication required");
+    }
+
+    const userId = ctx.auth.userId;
+    const clerk = await clerkClient();
+
+    // Get all organizations the user belongs to from Clerk
+    const { data: memberships } = await clerk.users.getOrganizationMembershipList({
+      userId,
+    });
+
+    // Enrich with database data
+    const enrichedOrgs = await Promise.all(
+      memberships.map(async (membership) => {
+        const clerkOrg = membership.organization;
+
+        // Find corresponding database record
+        const dbOrg = await db.query.organizations.findFirst({
+          where: eq(organizations.clerkOrgId, clerkOrg.id),
+        });
+
+        return {
+          id: clerkOrg.id,
+          slug: clerkOrg.slug,
+          name: clerkOrg.name,
+          role: membership.role,
+          imageUrl: clerkOrg.imageUrl,
+          // Database org info (null if not yet claimed in our system)
+          dbOrg: dbOrg ?? null,
+        };
+      })
+    );
+
+    return enrichedOrgs;
+  }),
+
   /**
    * Find organization by GitHub org ID (for API routes)
    */

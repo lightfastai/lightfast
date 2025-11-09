@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClerk } from "@clerk/nextjs";
-import { Github, Loader2, Building2 } from "lucide-react";
+import { Github, Loader2, Building2, Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
 	Card,
@@ -12,14 +13,17 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@repo/ui/components/ui/card";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import type { GitHubInstallation } from "@repo/console-octokit-github";
+import { useTRPC } from "@repo/console-trpc/react";
 
 /**
  * Claim Organization Page
  *
- * Shows user's GitHub installations (organizations) and allows them to claim one.
- * After claiming, user is redirected to their org's home page.
+ * Shows:
+ * 1. Existing organizations the user can switch to
+ * 2. GitHub installations they can claim as new organizations
  *
  * Auth is handled by the parent onboarding layout which uses treatPendingAsSignedOut={false}
  * to allow pending users (authenticated but no active org) to access this page.
@@ -30,11 +34,26 @@ export default function ClaimOrgPage() {
 
 function ClaimOrgContent() {
 	const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [loadingInstallations, setLoadingInstallations] = useState(true);
 	const [claiming, setClaiming] = useState<number | null>(null);
+	const [switching, setSwitching] = useState<string | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
 	const { setActive } = useClerk();
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
+
+	// Fetch user's existing organizations via tRPC
+	// Following pattern from apps/chat/src/hooks/use-pinned-sessions.ts
+	const orgsQuery = useQuery({
+		...trpc.organization.listUserOrganizations.queryOptions(),
+		// Disable refetch on mount to avoid unnecessary requests
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+	});
+
+	// Filter to only show orgs that have been claimed in our system
+	const claimedOrgs = orgsQuery.data?.filter((org) => org.dbOrg !== null) ?? [];
 
 	useEffect(() => {
 		void fetchInstallations();
@@ -68,7 +87,37 @@ function ClaimOrgContent() {
 				variant: "destructive",
 			});
 		} finally {
-			setLoading(false);
+			setLoadingInstallations(false);
+		}
+	};
+
+	const handleSwitchOrg = async (org: typeof claimedOrgs[number]) => {
+		setSwitching(org.slug);
+		try {
+			console.log("[CLAIM ORG] Switching to organization:", org.slug);
+
+			// Set the organization as active in Clerk session
+			await setActive({
+				organization: org.slug,
+			});
+
+			console.log("[CLAIM ORG] ✓ Organization switched");
+
+			toast({
+				title: "Organization activated!",
+				description: `Switched to ${org.name}`,
+			});
+
+			// Redirect to organization home
+			router.push(`/org/${org.slug}/settings`);
+		} catch (error) {
+			toast({
+				title: "Failed to switch organization",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+				variant: "destructive",
+			});
+			setSwitching(null);
 		}
 	};
 
@@ -115,6 +164,11 @@ function ClaimOrgContent() {
 				description: `Successfully claimed ${accountName}`,
 			});
 
+			// Invalidate organizations query to refresh the list
+			await queryClient.invalidateQueries({
+				queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
+			});
+
 			// Redirect to organization home using Clerk org slug
 			// Session is now active, so user will have full access
 			router.push(`/org/${data.slug}/settings`);
@@ -128,6 +182,8 @@ function ClaimOrgContent() {
 			setClaiming(null);
 		}
 	};
+
+	const loading = orgsQuery.isLoading || loadingInstallations;
 
 	if (loading) {
 		return (
@@ -143,46 +199,136 @@ function ClaimOrgContent() {
 	}
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-background px-4">
+		<div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
 			<Card className="w-full max-w-md border-0 shadow-none">
 				<CardHeader className="text-center">
 					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-						<Github className="h-6 w-6 text-primary" />
+						<Building2 className="h-6 w-6 text-primary" />
 					</div>
-					<CardTitle>Claim an organization</CardTitle>
+					<CardTitle>Select an organization</CardTitle>
 					<CardDescription>
-						Select a GitHub organization to create your workspace
+						{claimedOrgs.length > 0
+							? "Switch to an existing organization or claim a new one"
+							: "Claim a GitHub organization to create your workspace"}
 					</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-4">
-					{installations.length === 0 ? (
-						<div className="space-y-4 rounded-lg border border-border/60 bg-muted/5 p-4">
-							<p className="text-sm text-muted-foreground text-center">
-								You need to install the Console GitHub App on at least one
-								organization.
-							</p>
-							<div className="flex flex-col gap-2">
-								<Button asChild className="w-full">
-									<a
-										href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
-										target="_blank"
-										rel="noopener noreferrer"
-									>
-										<Github className="mr-2 h-4 w-4" />
-										Install GitHub App
-									</a>
-								</Button>
-								<Button
-									variant="outline"
-									className="w-full"
-									onClick={() => router.push("/onboarding/connect-github")}
-								>
-									Re-connect GitHub
-								</Button>
+				<CardContent className="space-y-6">
+					{/* Existing Organizations Section */}
+					{claimedOrgs.length > 0 && (
+						<div className="space-y-3">
+							<div className="flex items-center gap-2">
+								<Check className="h-4 w-4 text-muted-foreground" />
+								<h3 className="text-sm font-medium text-muted-foreground">
+									Your Organizations
+								</h3>
+							</div>
+							<div className="space-y-2">
+								{claimedOrgs.map((org) => {
+									const isSwitching = switching === org.slug;
+
+									return (
+										<div
+											key={org.id}
+											className="flex items-center gap-4 rounded-lg border border-border/60 bg-muted/5 p-4 transition-colors hover:bg-muted/10"
+										>
+											{/* Organization Avatar */}
+											<div className="flex-shrink-0">
+												{org.imageUrl ? (
+													<img
+														src={org.imageUrl}
+														alt={org.name}
+														className="h-12 w-12 rounded-full"
+													/>
+												) : (
+													<div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+														<Building2 className="h-6 w-6 text-muted-foreground" />
+													</div>
+												)}
+											</div>
+
+											{/* Organization Info */}
+											<div className="flex-1 min-w-0">
+												<h3 className="font-semibold text-foreground">
+													{org.name}
+												</h3>
+												<p className="text-xs text-muted-foreground">
+													{org.dbOrg?.githubOrgSlug && `@${org.dbOrg.githubOrgSlug}`}
+												</p>
+											</div>
+
+											{/* Switch Button */}
+											<Button
+												onClick={() => handleSwitchOrg(org)}
+												disabled={isSwitching}
+												size="sm"
+												variant="default"
+											>
+												{isSwitching ? (
+													<>
+														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														Switching...
+													</>
+												) : (
+													"Switch"
+												)}
+											</Button>
+										</div>
+									);
+								})}
 							</div>
 						</div>
-					) : (
-						<div className="space-y-3">
+					)}
+
+					{/* Separator if both sections exist */}
+					{claimedOrgs.length > 0 && installations.length > 0 && (
+						<div className="relative">
+							<Separator />
+							<div className="absolute inset-0 flex items-center justify-center">
+								<span className="bg-background px-2 text-xs text-muted-foreground">
+									OR
+								</span>
+							</div>
+						</div>
+					)}
+
+					{/* GitHub Installations Section */}
+					<div className="space-y-3">
+						{installations.length > 0 && (
+							<div className="flex items-center gap-2">
+								<Github className="h-4 w-4 text-muted-foreground" />
+								<h3 className="text-sm font-medium text-muted-foreground">
+									Claim New Organization
+								</h3>
+							</div>
+						)}
+						{installations.length === 0 && claimedOrgs.length === 0 ? (
+							<div className="space-y-4 rounded-lg border border-border/60 bg-muted/5 p-4">
+								<p className="text-sm text-muted-foreground text-center">
+									You need to install the Console GitHub App on at least one
+									organization.
+								</p>
+								<div className="flex flex-col gap-2">
+									<Button asChild className="w-full">
+										<a
+											href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											<Github className="mr-2 h-4 w-4" />
+											Install GitHub App
+										</a>
+									</Button>
+									<Button
+										variant="outline"
+										className="w-full"
+										onClick={() => router.push("/onboarding/connect-github")}
+									>
+										Re-connect GitHub
+									</Button>
+								</div>
+							</div>
+						) : installations.length > 0 ? (
+							<div className="space-y-2">
 							{installations.map((installation) => {
 								const account = installation.account;
 								const isClaiming = claiming === installation.id;
@@ -242,20 +388,24 @@ function ClaimOrgContent() {
 									</div>
 								);
 							})}
-						</div>
-					)}
+							</div>
+						) : null}
+					</div>
 
-					<p className="text-xs text-center text-muted-foreground">
-						Don't see your organization?{" "}
-						<a
-							href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-primary hover:underline"
-						>
-							Install the GitHub App
-						</a>
-					</p>
+					{/* Footer message */}
+					{installations.length === 0 && claimedOrgs.length > 0 && (
+						<p className="text-xs text-center text-muted-foreground">
+							Want to add another organization?{" "}
+							<a
+								href="https://github.com/apps/lightfast-deus-app-connector-dev/installations/new"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-primary hover:underline"
+							>
+								Install the GitHub App
+							</a>
+						</p>
+					)}
 				</CardContent>
 			</Card>
 		</div>

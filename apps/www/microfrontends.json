@@ -16,11 +16,7 @@
       "routing": [
         {
           "group": "auth",
-          "paths": [
-            "/sign-in",
-            "/sign-in/:path*",
-            "/sign-up"
-          ]
+          "paths": ["/sign-in", "/sign-in/:path*", "/sign-up"]
         }
       ]
     },
@@ -33,28 +29,17 @@
         {
           "group": "console",
           "paths": [
-            "/app",
             "/org",
             "/org/:path*",
             "/onboarding",
-            "/onboarding/:path*"
-          ]
-        }
-      ]
-    },
-    "lightfast-docs": {
-      "packageName": "@lightfast/docs",
-      "development": {
-        "local": 3002
-      },
-      "routing": [
-        {
-          "group": "docs",
-          "paths": [
-            "/docs",
-            "/docs/:path*",
-            "/api",
-            "/api/:path*"
+            "/onboarding/:path*",
+            "/api/github",
+            "/api/github/:path*",
+            "/api/organizations",
+            "/api/organizations/:path*",
+            "/api/trpc",
+            "/api/trpc/:path*",
+            "/api/inngest"
           ]
         }
       ]
