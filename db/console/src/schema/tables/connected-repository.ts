@@ -51,7 +51,7 @@ export const configStatusEnum = pgEnum("config_status", [
  * WHY: Single source of truth = GitHub API. No sync logic, no webhooks, no staleness. Ship faster. 🚀
  */
 export const DeusConnectedRepository = pgTable(
-  "lightfast_deus_connected_repository",
+  "lightfast_connected_repository",
   {
     /**
      * Unique identifier for the connected repository

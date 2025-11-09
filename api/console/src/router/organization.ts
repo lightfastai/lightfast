@@ -36,8 +36,9 @@ export const organizationRouter = {
         const clerkOrg = membership.organization;
 
         // Find corresponding database record
+        // Note: organization.id IS the Clerk org ID in our new schema
         const dbOrg = await db.query.organizations.findFirst({
-          where: eq(organizations.clerkOrgId, clerkOrg.id),
+          where: eq(organizations.id, clerkOrg.id),
         });
 
         return {
@@ -81,12 +82,13 @@ export const organizationRouter = {
 
   /**
    * Find organization by Clerk org ID (for Clerk-authenticated requests)
+   * Note: This is now the same as findById since Clerk org ID IS the primary key
    */
   findByClerkOrgId: publicProcedure
     .input(z.object({ clerkOrgId: z.string() }))
     .query(async ({ input }) => {
       const result = await db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.clerkOrgId),
+        where: eq(organizations.id, input.clerkOrgId),
       });
       return result ?? null;
     }),
@@ -117,12 +119,12 @@ export const organizationRouter = {
 
   /**
    * Update organization with Clerk details
+   * Note: With new schema, we can only update clerkOrgSlug (id IS the Clerk org ID, immutable)
    */
   updateClerkDetails: publicProcedure
     .input(
       z.object({
-        id: z.string(),
-        clerkOrgId: z.string(),
+        id: z.string(), // This IS the Clerk org ID
         clerkOrgSlug: z.string(),
       }),
     )
@@ -130,7 +132,6 @@ export const organizationRouter = {
       await db
         .update(organizations)
         .set({
-          clerkOrgId: input.clerkOrgId,
           clerkOrgSlug: input.clerkOrgSlug,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
@@ -161,24 +162,34 @@ export const organizationRouter = {
 
   /**
    * Create new organization
+   * Note: Clerk org ID becomes the primary key (id field)
    */
   create: publicProcedure
     .input(
       z.object({
+        clerkOrgId: z.string(), // This becomes the primary key 'id'
+        clerkOrgSlug: z.string(),
         githubInstallationId: z.number(),
         githubOrgId: z.number(),
         githubOrgSlug: z.string(),
         githubOrgName: z.string(),
         githubOrgAvatarUrl: z.string().nullable(),
         claimedBy: z.string(),
-        clerkOrgId: z.string(),
-        clerkOrgSlug: z.string(),
       }),
     )
     .mutation(async ({ input }) => {
       const [newOrg] = await db
         .insert(organizations)
-        .values(input)
+        .values({
+          id: input.clerkOrgId, // Clerk org ID is the primary key
+          clerkOrgSlug: input.clerkOrgSlug,
+          githubInstallationId: input.githubInstallationId,
+          githubOrgId: input.githubOrgId,
+          githubOrgSlug: input.githubOrgSlug,
+          githubOrgName: input.githubOrgName,
+          githubOrgAvatarUrl: input.githubOrgAvatarUrl,
+          claimedBy: input.claimedBy,
+        })
         .returning({ id: organizations.id });
 
       if (!newOrg) {

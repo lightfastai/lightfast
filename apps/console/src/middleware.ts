@@ -11,8 +11,12 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 // Onboarding routes - accessible to pending users (authenticated but no org claimed)
-const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
-
+// Includes both page routes and API routes used during onboarding
+const isOnboardingRoute = createRouteMatcher([
+	"/onboarding(.*)",
+	"/api/github(.*)",
+	"/api/organizations(.*)",
+]);
 export default clerkMiddleware(
 	async (auth, req: NextRequest) => {
 		// Single auth check - detect both pending and active users

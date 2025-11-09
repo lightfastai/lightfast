@@ -38,9 +38,9 @@ export const repositoryRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -75,9 +75,9 @@ export const repositoryRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -141,9 +141,9 @@ export const repositoryRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -154,9 +154,9 @@ export const repositoryRouter = {
       }
 
       // Get or create default workspace for organization
+      // orgResult.id IS the Clerk org ID (our new schema uses Clerk org ID as primary key)
       const workspaceId = await getOrCreateDefaultWorkspace(
-        orgResult.clerkOrgId,
-        orgResult.githubOrgSlug,
+        orgResult.id,
       );
 
       // Check if this repository is already connected to this organization
@@ -356,9 +356,9 @@ export const repositoryRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {

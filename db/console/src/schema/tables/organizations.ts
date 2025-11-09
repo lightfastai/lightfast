@@ -8,32 +8,33 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { randomUUID } from "node:crypto";
-
 /**
  * Organizations table
  *
- * Represents GitHub organizations that have been claimed in Deus.
- * One GitHub organization = one Deus workspace.
- * Linked to Clerk organizations for billing and user management.
+ * Represents GitHub organizations that have been claimed in Lightfast.
+ * One GitHub organization = one Lightfast organization.
+ * Clerk organization is the source of truth - we use Clerk org ID as primary key.
  *
  * KEY DESIGN DECISIONS:
+ * - id is Clerk org ID (source of truth for organization identity)
  * - githubOrgId is UNIQUE (immutable, never changes)
  * - githubInstallationId is NOT unique (can change if app reinstalled)
  * - githubOrgSlug is NOT unique (can change if org renamed on GitHub)
- * - clerkOrgId is UNIQUE (links to Clerk organization for billing/auth)
  * - We use index on slug for fast lookups, but allow duplicates for history
  */
 export const organizations = pgTable(
-  "lightfast_deus_organizations",
+  "lightfast_organizations",
   {
+    // Clerk organization ID - this is our primary key and source of truth
     id: varchar("id", { length: 191 })
       .notNull()
-      .primaryKey()
-      .$defaultFn(() => randomUUID()),
+      .primaryKey(),
+
+    // Clerk organization slug (can change if org renamed in Clerk)
+    clerkOrgSlug: varchar("clerk_org_slug", { length: 255 }).notNull(),
 
     // GitHub App installation details
-    // IMMUTABLE: GitHub's internal org ID - this is our source of truth
+    // IMMUTABLE: GitHub's internal org ID - used for GitHub API operations
     githubOrgId: integer("github_org_id").notNull().unique(),
 
     // Can change if app is reinstalled to same org
@@ -43,11 +44,6 @@ export const organizations = pgTable(
     githubOrgSlug: varchar("github_org_slug", { length: 255 }).notNull(),
     githubOrgName: varchar("github_org_name", { length: 255 }).notNull(),
     githubOrgAvatarUrl: text("github_org_avatar_url"),
-
-    // Clerk organization integration
-    // UNIQUE: Links to Clerk organization for user management and future billing
-    clerkOrgId: varchar("clerk_org_id", { length: 191 }).unique(),
-    clerkOrgSlug: varchar("clerk_org_slug", { length: 255 }),
 
     // Ownership tracking
     claimedBy: varchar("claimed_by", { length: 191 }).notNull(), // Clerk user ID
@@ -64,14 +60,14 @@ export const organizations = pgTable(
       .notNull(),
   },
   (table) => ({
-    // Index for fast slug lookups (most common query pattern)
-    slugIdx: index("org_slug_idx").on(table.githubOrgSlug),
+    // Index for fast GitHub slug lookups
+    githubSlugIdx: index("org_github_slug_idx").on(table.githubOrgSlug),
     // Index for installation lookups
     installationIdx: index("org_installation_idx").on(
       table.githubInstallationId,
     ),
-    // Index for Clerk org lookups
-    clerkOrgIdx: index("org_clerk_org_idx").on(table.clerkOrgId),
+    // Index for Clerk slug lookups
+    clerkSlugIdx: index("org_clerk_slug_idx").on(table.clerkOrgSlug),
   }),
 );
 

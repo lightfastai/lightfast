@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const docsDocuments = pgTable(
-  "lf_docs_documents",
+  "lightfast_docs_documents",
   {
     /** Unique identifier for the document */
     id: varchar("id", { length: 191 }).primaryKey(),

@@ -13,39 +13,43 @@ import { randomUUID } from "node:crypto";
 /**
  * Workspaces table represents isolated knowledge bases within an organization.
  *
- * PHASE 1: One default workspace per organization (ws_${orgSlug})
- * PHASE 2: Multiple workspaces per organization
+ * PHASE 1: One default workspace per organization with auto-generated friendly name
+ * PHASE 2: Multiple workspaces per organization (user can create custom workspaces)
  *
  * Design:
  * - Each workspace is a separate Pinecone index/namespace
  * - Repositories can be assigned to workspaces
  * - Search/contents queries are scoped to workspace
- * - Default workspace is auto-created on org creation
+ * - Default workspace is auto-created on org creation with friendly name (e.g., "Robust Chicken")
+ * - Name is auto-generated using friendlier-words for default workspaces
+ * - Slug is derived from name (e.g., robust-chicken)
  */
 export const workspaces = pgTable(
   "lightfast_workspaces",
   {
     /**
-     * Workspace identifier (e.g., ws_acme_corp, ws_acme_backend)
-     * Format: ws_${slug}
+     * Unique workspace identifier (UUID)
      */
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => `ws_${randomUUID().slice(0, 8)}`),
+      .$defaultFn(() => randomUUID()),
 
     /**
-     * Organization this workspace belongs to
+     * Organization this workspace belongs to (Clerk org ID)
      */
     organizationId: varchar("organization_id", { length: 191 }).notNull(),
 
     /**
      * Display name for workspace
+     * Auto-generated friendly name for default workspaces (e.g., "Robust Chicken")
+     * User-provided for custom workspaces (Phase 2)
      */
     name: varchar("name", { length: 255 }).notNull(),
 
     /**
      * URL-friendly slug (unique within organization)
+     * Derived from name (e.g., robust-chicken)
      */
     slug: varchar("slug", { length: 191 }).notNull(),
 

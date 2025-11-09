@@ -45,7 +45,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
   // Authenticate via Clerk session only
-  const clerkSession = await auth();
+  // treatPendingAsSignedOut: false allows pending users (authenticated but no org) to access tRPC procedures
+  // This is needed for onboarding flows where users claim their first organization
+  const clerkSession = await auth({ treatPendingAsSignedOut: false });
   if (clerkSession?.userId) {
     console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
     return {

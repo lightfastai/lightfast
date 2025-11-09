@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const vectorEntries = pgTable(
-  "lf_vector_entries",
+  "lightfast_vector_entries",
   {
     /** Vector ID used in Pinecone index (e.g., ${docId}#${chunkIndex}) */
     id: varchar("id", { length: 191 }).primaryKey(),

@@ -134,65 +134,17 @@ export async function POST(request: NextRequest) {
 
 		if (existingOrg) {
 			console.log("[CLAIM ORG] → Handling existing org flow");
+			console.log("[CLAIM ORG] ✓ Org already exists with Clerk org ID:", existingOrg.id);
 
-			// Organization exists - ensure it has a Clerk org linked
-			if (!existingOrg.clerkOrgId) {
-				console.log("[CLAIM ORG] No Clerk org linked, creating one...");
-				try {
-					const clerkOrgData =
-						await clerkIntegrationService.createOrGetClerkOrganization({
-							userId,
-							orgName: accountName,
-							orgSlug: accountSlug,
-						});
-					console.log("[CLAIM ORG] ✓ Clerk org created:", {
-						clerkOrgId: clerkOrgData.clerkOrgId,
-						clerkOrgSlug: clerkOrgData.clerkOrgSlug,
-					});
-
-					// Update the existing organization with Clerk org details
-					await organizationsService.updateClerkDetails({
-						id: existingOrg.id,
-						clerkOrgId: clerkOrgData.clerkOrgId,
-						clerkOrgSlug: clerkOrgData.clerkOrgSlug,
-					});
-
-					console.log("[CLAIM ORG] ✓ DB updated with Clerk org details");
-
-					// Create default workspace for newly-linked organization
-					console.log("[CLAIM ORG] Creating default workspace...");
-					const workspaceId = await getOrCreateDefaultWorkspace(
-						clerkOrgData.clerkOrgId,
-						accountSlug,
-					);
-					console.log("[CLAIM ORG] ✓ Default workspace created:", workspaceId);
-
-					// Update local reference
-					existingOrg.clerkOrgId = clerkOrgData.clerkOrgId;
-					existingOrg.clerkOrgSlug = clerkOrgData.clerkOrgSlug;
-				} catch (error) {
-					console.error(
-						"[CLAIM ORG] ❌ Failed to create Clerk organization for existing org:",
-						error,
-					);
-					return NextResponse.json(
-						{
-							error: "Failed to create Clerk organization",
-							message: "Could not link organization to Clerk",
-						},
-						{ status: 500 },
-					);
-				}
-			} else {
-				console.log("[CLAIM ORG] ✓ Clerk org already linked:", existingOrg.clerkOrgId);
-			}
+			// Note: With new schema, existingOrg.id IS the Clerk org ID (primary key)
+			// Organizations cannot exist without a Clerk org
 
 			// Check if user is already a member of the Clerk organization
 			console.log("[CLAIM ORG] Checking Clerk org membership...");
 			const clerk = await clerkClient();
 			const clerkMemberships =
 				await clerk.organizations.getOrganizationMembershipList({
-					organizationId: existingOrg.clerkOrgId,
+					organizationId: existingOrg.id, // id IS the Clerk org ID
 					limit: 500,
 				});
 
@@ -227,7 +179,7 @@ export async function POST(request: NextRequest) {
 				console.log("[CLAIM ORG] Verifying GitHub org membership and adding to Clerk...");
 				const { role: githubRole } =
 					await clerkIntegrationService.addUserToClerkOrganization({
-						clerkOrgId: existingOrg.clerkOrgId,
+						clerkOrgId: existingOrg.id, // id IS the Clerk org ID
 						userId,
 						githubToken: userToken,
 						githubOrgSlug: accountSlug,
@@ -313,7 +265,6 @@ export async function POST(request: NextRequest) {
 			console.log("[CLAIM ORG] Creating default workspace...");
 			const workspaceId = await getOrCreateDefaultWorkspace(
 				clerkOrgData.clerkOrgId,
-				accountSlug,
 			);
 			console.log("[CLAIM ORG] ✓ Default workspace created:", workspaceId);
 

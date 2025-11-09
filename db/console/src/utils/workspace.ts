@@ -1,18 +1,17 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaces } from "../schema";
+import { generateWorkspaceName, generateWorkspaceSlug } from "./workspace-names";
 
 /**
  * Get or create default workspace for organization
- * Phase 1: Always creates/returns the default workspace
+ * Phase 1: Always creates/returns the default workspace with friendly auto-generated name
  *
- * @param organizationId - Organization ID from Clerk
- * @param orgSlug - GitHub organization slug
- * @returns Workspace ID (e.g., ws_acme_corp)
+ * @param organizationId - Clerk organization ID (this is the primary key in organizations table)
+ * @returns Workspace ID (UUID)
  */
 export async function getOrCreateDefaultWorkspace(
   organizationId: string,
-  orgSlug: string,
 ): Promise<string> {
   // Check if default workspace exists
   const existing = await db.query.workspaces.findFirst({
@@ -26,15 +25,18 @@ export async function getOrCreateDefaultWorkspace(
     return existing.id;
   }
 
-  // Create default workspace
-  const workspaceId = `ws_${orgSlug}`;
+  // Generate friendly workspace name (e.g., "Robust Chicken")
+  const friendlyName = generateWorkspaceName();
+  const slug = generateWorkspaceSlug(friendlyName);
+
+  // Create default workspace with UUID id
   const [newWorkspace] = await db
     .insert(workspaces)
     .values({
-      id: workspaceId,
+      // id is auto-generated UUID via $defaultFn
       organizationId,
-      name: `${orgSlug} Knowledge Base`,
-      slug: orgSlug,
+      name: friendlyName,
+      slug,
       isDefault: true,
       settings: {},
     })
@@ -45,15 +47,4 @@ export async function getOrCreateDefaultWorkspace(
   }
 
   return newWorkspace.id;
-}
-
-/**
- * Compute workspace ID from organization slug
- * Phase 1: ws_${orgSlug}
- *
- * @param orgSlug - GitHub organization slug
- * @returns Workspace ID
- */
-export function computeWorkspaceId(orgSlug: string): string {
-  return `ws_${orgSlug}`;
 }

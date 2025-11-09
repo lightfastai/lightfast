@@ -1,5 +1,4 @@
-import { redirect, notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { OrgChatInterface } from "~/components/org-chat-interface";
@@ -10,11 +9,7 @@ export default async function OrgHomePage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId } = await auth();
-	if (!userId) {
-		redirect("/sign-in");
-	}
-
+	// Note: Auth is handled by middleware (auth.protect())
 	const { slug } = await params;
 
 	// Verify user has access to this organization
@@ -25,16 +20,13 @@ export default async function OrgHomePage({
 		notFound();
 	}
 
-	// Ensure organization has a Clerk org ID (required for API calls)
-	if (!access.org.clerkOrgId) {
-		notFound();
-	}
+	// Note: access.org.id IS the Clerk org ID (primary key)
 
     // Prefetch repositories for this org to avoid loading state
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId: access.org.clerkOrgId,
+			organizationId: access.org.id,
 		})
 	);
 
@@ -44,7 +36,7 @@ export default async function OrgHomePage({
 		<HydrateClient>
 			<OrgChatInterface
 				orgId={access.org.githubOrgId}
-				organizationId={access.org.clerkOrgId}
+				organizationId={access.org.id}
 				orgSlug={slug}
 			/>
 		</HydrateClient>

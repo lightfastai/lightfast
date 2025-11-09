@@ -7,7 +7,7 @@ import * as schema from "./schema";
  * Create a new database client instance using postgres-js
  */
 export function createClient() {
-  const connectionString = `postgres://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-app?sslmode=require`;
+  const connectionString = `postgresql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}:6432/postgres?sslmode=verify-full`;
 
   const client = postgres(connectionString, {
     ssl: "require",

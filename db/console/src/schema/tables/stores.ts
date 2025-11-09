@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const stores = pgTable(
-  "lf_stores",
+  "lightfast_stores",
   {
     /** Unique identifier for the store */
     id: varchar("id", { length: 191 }).primaryKey(),

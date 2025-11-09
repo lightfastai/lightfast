@@ -10,7 +10,7 @@ import { OrganizationsService } from "@repo/console-api-services";
  * custom database queries with Clerk's built-in organization context and RBAC.
  *
  * Key concepts:
- * - Clerk organizations are linked to Console organizations via clerkOrgId
+ * - Console organization.id IS the Clerk org ID (primary key)
  * - User's active organization is tracked by Clerk (orgId from auth())
  * - Roles are managed by Clerk (orgRole from auth())
  * - We still query Console database for GitHub-specific data
@@ -140,7 +140,8 @@ export async function requireOrgAccess(
 	}
 
 	// Verify user's active org matches the requested org
-	if (org.clerkOrgId !== clerkOrgId) {
+	// Note: org.id IS the Clerk org ID (primary key)
+	if (org.id !== clerkOrgId) {
 		throw new Error(
 			"Access denied. Your active organization does not match the requested organization.",
 		);

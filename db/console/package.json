@@ -37,6 +37,7 @@
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
+    "friendlier-words": "^1.1.3",
     "postgres": "^3.4.5",
     "zod": "catalog:"
   },

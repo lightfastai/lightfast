@@ -7,9 +7,10 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     host: env.DATABASE_HOST,
+    port: 5432, // Direct connection for migrations (not pgBouncer)
     user: env.DATABASE_USERNAME,
     password: env.DATABASE_PASSWORD,
-    database: "lightfast-app",
+    database: "postgres",
     ssl: true,
   },
   introspect: {

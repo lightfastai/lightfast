@@ -1,5 +1,4 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 export default async function SettingsPage({
@@ -7,11 +6,7 @@ export default async function SettingsPage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId } = await auth();
-	if (!userId) {
-		redirect("/sign-in");
-	}
-
+	// Note: Auth is handled by middleware (auth.protect())
 	const { slug } = await params;
 
 	// Verify access before redirecting

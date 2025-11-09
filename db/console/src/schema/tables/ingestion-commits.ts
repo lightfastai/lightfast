@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const ingestionCommits = pgTable(
-  "lf_ingestion_commits",
+  "lightfast_ingestion_commits",
   {
     /** Unique identifier for the commit record */
     id: varchar("id", { length: 191 }).primaryKey(),

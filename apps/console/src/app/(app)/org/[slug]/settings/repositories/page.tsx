@@ -1,6 +1,5 @@
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
@@ -11,11 +10,7 @@ export default async function RepositoriesPage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId } = await auth();
-	if (!userId) {
-		redirect("/sign-in");
-	}
-
+	// Note: Auth is handled by middleware (auth.protect())
 	const { slug } = await params;
 
 	// Verify user has access to this organization

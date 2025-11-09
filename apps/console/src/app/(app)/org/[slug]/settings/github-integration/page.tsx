@@ -1,5 +1,4 @@
-import { redirect, notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 import { GitHubIntegrationSettings } from "~/components/github-integration-settings";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
@@ -8,11 +7,7 @@ export default async function GitHubIntegrationPage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId } = await auth();
-	if (!userId) {
-		redirect("/sign-in");
-	}
-
+	// Note: Auth is handled by middleware (auth.protect())
 	const { slug } = await params;
 
 	// Verify user has access to this organization
