@@ -1,0 +1,16 @@
+# Lightfast Configuration
+# Docs: https://docs.lightfast.com/config
+
+version: 1
+
+# Store name (unique identifier for this documentation set)
+store: root-store
+
+# Files to include (glob patterns)
+include:
+  - "README.md"
+
+# Files to exclude (optional)
+exclude:
+  - "**/node_modules/**"
+  - "**/.git/**"
