@@ -30,10 +30,42 @@ export class PineconeClient {
 
   /**
    * Resolve index name from workspace and store
-   * Format: ws_{workspaceId}__store_{storeName}
+   *
+   * Pinecone constraints: lower-case alphanumeric and '-'
+   * We sanitize both parts and join with '-'.
+   * Also clamp to a safe length and add a short hash when needed.
    */
   resolveIndexName(workspaceId: string, storeName: string): string {
-    return `ws_${workspaceId}__store_${storeName}`;
+    const sanitize = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-") // replace illegal chars (including underscores) with '-'
+        .replace(/^-+/, "") // trim leading '-'
+        .replace(/-+$/, "") // trim trailing '-'
+        .replace(/-{2,}/g, "-"); // collapse multiple '-'
+
+    const ws = sanitize(workspaceId);
+    const st = sanitize(storeName);
+    let name = `${ws}-${st}`;
+
+    // Pinecone index name max length is limited (commonly 45). Clamp defensively to 45.
+    const MAX = 45;
+    if (name.length > MAX) {
+      const hash = this.shortHash(`${ws}:${st}`);
+      // Reserve 5 for '-' + 4-char hash
+      const base = name.slice(0, MAX - 5).replace(/-+$/, "");
+      name = `${base}-${hash}`;
+    }
+    return name;
+  }
+
+  private shortHash(input: string): string {
+    let h = 0;
+    for (let i = 0; i < input.length; i++) {
+      h = (h * 31 + input.charCodeAt(i)) >>> 0;
+    }
+    // 4 hex chars
+    return (h % 0xffff).toString(16).padStart(4, "0");
   }
 
   /**
@@ -44,11 +76,20 @@ export class PineconeClient {
 
     try {
       await this.retry(async () => {
-        await this.client.createIndex({
-          indexName,
-          dimension,
-          metric: "cosine",
-        });
+        try {
+          await this.client.createIndex({
+            indexName,
+            dimension,
+            metric: "cosine",
+          });
+        } catch (err) {
+          // Treat already-exists as success (idempotent create)
+          const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+          if (msg.includes("already_exists") || msg.includes("already exists") || msg.includes("409")) {
+            return;
+          }
+          throw err;
+        }
       });
 
       return indexName;

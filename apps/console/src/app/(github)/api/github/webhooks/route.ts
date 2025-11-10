@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { RepositoriesService } from "@repo/console-api-services";
+import { db } from "@db/console/client";
+import { DeusConnectedRepository, organizations, workspaces } from "@db/console/schema";
+import { eq } from "drizzle-orm";
+import { getOrCreateDefaultWorkspace } from "@db/console/utils";
+import { getWorkspaceKeyFromSlug } from "@api/console/lib/workspace-key";
 import type {
 	PushEvent,
 	InstallationEvent,
@@ -80,18 +85,29 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 
 	console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
 
-	// Resolve workspace ID from organization
-	let workspaceId = payload.repository.full_name; // Fallback
-	try {
-		// Extract owner from repository full_name (owner/repo)
-		const [owner] = payload.repository.full_name.split("/");
+    // Resolve organization -> default workspace (DB UUID) and workspaceKey from slug
+    let workspaceId = "";
+    let workspaceKey = "";
+    try {
+      const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+      if (!ownerLogin) throw new Error("Missing owner login");
 
-		// Compute workspace ID as ws_${orgSlug}
-		workspaceId = `ws_${owner}`;
-		console.log(`[Webhook] Computed workspace ID: ${workspaceId}`);
-	} catch (error) {
-		console.error(`[Webhook] Failed to compute workspace ID, using fallback:`, error);
-	}
+      const orgRow = await db.query.organizations.findFirst({
+        where: eq(organizations.githubOrgSlug, ownerLogin),
+      });
+      if (!orgRow) throw new Error(`Organization not found for ${ownerLogin}`);
+
+      const wsId = await getOrCreateDefaultWorkspace(orgRow.id);
+      const ws = await db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
+      if (!ws) throw new Error("Workspace row not found");
+
+      workspaceId = ws.id; // UUID
+      workspaceKey = getWorkspaceKeyFromSlug(ws.slug);
+      console.log(`[Webhook] Resolved workspace: id=${workspaceId} key=${workspaceKey}`);
+    } catch (error) {
+      console.error(`[Webhook] Failed to resolve workspace:`, error);
+      throw error; // Cannot proceed without workspace
+    }
 
 	// Aggregate changed files from all commits
 	const changedFiles = new Map<string, "added" | "modified" | "removed">();
@@ -101,14 +117,34 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 		commit.removed.forEach((path) => changedFiles.set(path, "removed"));
 	}
 
-	// Check if lightfast.yml was modified - trigger config re-detection
-	const configModified = Array.from(changedFiles.keys()).some((path) =>
-		["lightfast.yml", ".lightfast.yml", "lightfast.yaml", ".lightfast.yaml"].includes(path)
-	);
+    // Check if lightfast.yml was modified - trigger config re-detection (update DB status eagerly)
+    const configModified = Array.from(changedFiles.keys()).some((path) =>
+        ["lightfast.yml", ".lightfast.yml", "lightfast.yaml", ".lightfast.yaml"].includes(path)
+    );
 
-	if (configModified) {
-		console.log(`[Webhook] lightfast.yml was modified, config re-detection will be triggered by ingestion workflow`);
-	}
+    if (configModified) {
+        try {
+            const { createGitHubApp, ConfigDetectorService } = await import("@repo/console-octokit-github");
+            const app = createGitHubApp({ appId: env.GITHUB_APP_ID, privateKey: env.GITHUB_APP_PRIVATE_KEY });
+            const detector = new ConfigDetectorService(app);
+            const [owner, repo] = payload.repository.full_name.split("/");
+            const result = await detector.detectConfig(owner, repo, payload.after, payload.installation.id);
+
+            await db
+              .update(DeusConnectedRepository)
+              .set({
+                configStatus: result.exists ? "configured" : "unconfigured",
+                configPath: result.path,
+                configDetectedAt: new Date().toISOString(),
+                workspaceId, // DB UUID
+              })
+              .where(eq(DeusConnectedRepository.githubRepoId, payload.repository.id.toString()));
+
+            console.log(`[Webhook] Updated config status to ${result.exists ? "configured" : "unconfigured"} (${result.path ?? "none"})`);
+        } catch (e) {
+            console.error("[Webhook] Config re-detection failed:", e);
+        }
+    }
 
 	// Convert to array for Inngest (filtering will happen in the workflow after loading config)
 	const allFiles = Array.from(changedFiles.entries()).map(([path, status]) => ({
@@ -127,19 +163,19 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 	// Dynamic import to avoid loading Inngest in route module
 	const { inngest } = await import("@api/console/inngest");
 
-	await inngest.send({
-		name: "apps-console/docs.push",
-		data: {
-			workspaceId, // Now computed from organization slug
-			storeName: "docs", // Will be overridden by lightfast.yml if present
-			repoFullName: payload.repository.full_name,
-			githubInstallationId: payload.installation.id,
-			beforeSha: payload.before,
-			afterSha: payload.after,
-			deliveryId,
-			changedFiles: allFiles,
-		},
-	});
+    await inngest.send({
+        name: "apps-console/docs.push",
+        data: {
+            workspaceId, // DB UUID
+            workspaceKey, // external naming key
+            repoFullName: payload.repository.full_name,
+            githubInstallationId: payload.installation.id,
+            beforeSha: payload.before,
+            afterSha: payload.after,
+            deliveryId,
+            changedFiles: allFiles,
+        },
+    });
 
 	console.log(
 		`[Webhook] Triggered ingestion workflow for ${allFiles.length} files (workspace: ${workspaceId}, installation ${payload.installation.id})`

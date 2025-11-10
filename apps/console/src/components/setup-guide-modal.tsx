@@ -207,11 +207,23 @@ export function SetupGuideModal({
 					</div>
 
 					{/* Actions */}
-					<div className="flex justify-end gap-2">
-						<Button variant="outline" onClick={() => onOpenChange(false)}>
-							Close
-						</Button>
-					</div>
+                <div className="flex justify-between gap-2">
+                    <Button variant="outline" asChild>
+                        <a
+                            href={repositoryName ? `https://github.com/${repositoryName}/new/main?filename=lightfast.yml` : "https://github.com"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gap-2 inline-flex items-center"
+                        >
+                            <ExternalLink className="h-3.5 w-3.5" /> Open on GitHub
+                        </a>
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            Close
+                        </Button>
+                    </div>
+                </div>
 				</div>
 			</DialogContent>
 		</Dialog>

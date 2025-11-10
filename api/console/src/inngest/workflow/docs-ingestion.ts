@@ -34,65 +34,31 @@ export const docsIngestion = inngest.createFunction(
 	},
 	{ event: "apps-console/docs.push" },
 	async ({ event, step }) => {
-		const {
-			workspaceId,
-			storeName,
-			repoFullName,
-			githubInstallationId,
-			beforeSha,
-			afterSha,
-			deliveryId,
-			changedFiles
-		} = event.data;
+        const {
+            workspaceId,
+            workspaceKey,
+            repoFullName,
+            githubInstallationId,
+            beforeSha,
+            afterSha,
+            deliveryId,
+            changedFiles
+            } = event.data;
 
-		log.info("Starting docs ingestion", {
-			workspaceId,
-			storeName,
-			repoFullName,
-			deliveryId,
-			changedCount: changedFiles.length,
-		});
+        log.info("Starting docs ingestion", {
+            workspaceId,
+            repoFullName,
+            deliveryId,
+            changedCount: changedFiles.length,
+        });
 
-		// Step 1: Check idempotency - has this delivery already been processed?
-		const existingCommit = await step.run("check-idempotency", async () => {
-			try {
-			// First, get or create store
-			const store = await getOrCreateStore({
-				workspaceId,
-				storeName,
-				embeddingDim: 1536, // CharHash embedding dimension
-			});
-
-			// Check if we've already processed this delivery
-			const existing = await db.query.ingestionCommits.findFirst({
-					where: and(
-						eq(ingestionCommits.storeId, store.id),
-						eq(ingestionCommits.deliveryId, deliveryId)
-					),
-				});
-
-				return existing ?? null;
-			} catch (error) {
-				log.error("Failed to check idempotency", { error, deliveryId });
-				throw error;
-			}
-		});
-
-		if (existingCommit) {
-			log.info("Delivery already processed, skipping", {
-				deliveryId,
-				processedAt: existingCommit.processedAt,
-			});
-			return { status: "skipped", reason: "already_processed" };
-		}
-
-		// Step 2: Load lightfast.yml from repository
-		const configPatterns = await step.run("load-config", async () => {
-			try {
-				// Import GitHub utilities
-				const { createGitHubApp, getThrottledInstallationOctokit, GitHubContentService } = await import("@repo/console-octokit-github");
-				const { loadConfig } = await import("@repo/console-config");
-				const { env } = await import("../../env");
+		// Step 1: Load lightfast.yml from repository (before idempotency to honor configured store name)
+    const configPatterns = await step.run("load-config", async () => {
+        try {
+            // Import GitHub utilities
+            const { createGitHubApp, getThrottledInstallationOctokit, GitHubContentService } = await import("@repo/console-octokit-github");
+            const { loadConfig } = await import("@repo/console-config");
+            const { env } = await import("../../env");
 
 				log.info("Loading lightfast.yml from repository", {
 					repoFullName,
@@ -107,27 +73,37 @@ export const docsIngestion = inngest.createFunction(
 
 				const octokit = await getThrottledInstallationOctokit(app, githubInstallationId);
 
-				// Create content service and fetch lightfast.yml
-				const contentService = new GitHubContentService(octokit);
-				const [owner, repo] = repoFullName.split("/");
+            // Create content service and fetch lightfast.yml (try common variants)
+            const contentService = new GitHubContentService(octokit);
+            const [owner, repo] = repoFullName.split("/");
 
 				if (!owner || !repo) {
 					throw new Error(`Invalid repository full name: ${repoFullName}`);
 				}
 
-				const configFile = await contentService.fetchSingleFile(
-					owner,
-					repo,
-					"lightfast.yml",
-					afterSha
-				);
+            async function fetchConfigFile() {
+                const candidates = [
+                    "lightfast.yml",
+                    ".lightfast.yml",
+                    "lightfast.yaml",
+                    ".lightfast.yaml",
+                ];
+                for (const path of candidates) {
+                    const file = await contentService.fetchSingleFile(owner, repo, path, afterSha);
+                    if (file) return file;
+                }
+                return null;
+            }
 
-				if (!configFile) {
-					log.warn("No lightfast.yml found in repository, using default patterns");
-					return {
-						globs: ["docs/**/*.md", "docs/**/*.mdx"],
-					};
-				}
+            const configFile = await fetchConfigFile();
+
+            if (!configFile) {
+                log.warn("No lightfast config found in repository, using default patterns");
+                return {
+                    // Broaden defaults to include common docs locations and README
+                    globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
+                };
+            }
 
 				// Parse config (parse YAML then validate)
 				const yaml = await import("yaml");
@@ -136,12 +112,12 @@ export const docsIngestion = inngest.createFunction(
 				const parsed = yaml.parse(configFile.content);
 				const configResult = validateConfig(parsed);
 
-				if (configResult.isErr()) {
-					log.error("Invalid lightfast.yml config", { error: configResult.error });
-					return {
-						globs: ["docs/**/*.md", "docs/**/*.mdx"],
-					};
-				}
+            if (configResult.isErr()) {
+                log.error("Invalid lightfast.yml config", { error: configResult.error });
+                return {
+                    globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
+                };
+            }
 
 				const config = configResult.value;
 
@@ -150,21 +126,58 @@ export const docsIngestion = inngest.createFunction(
 					globs: config.include,
 				});
 
-				return {
-					globs: config.include,
-					store: config.store,
-				};
-			} catch (error) {
-				log.error("Failed to load config, using defaults", { error });
-				return {
-					globs: ["docs/**/*.md", "docs/**/*.mdx"],
-				};
-			}
-		});
+            return {
+                globs: config.include,
+                store: config.store,
+            };
+        } catch (error) {
+            log.error("Failed to load config, using defaults", { error });
+            return {
+                globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
+            };
+        }
+    });
 
-		// Step 3: Filter changed files by config globs
-		const filteredFiles = await step.run("filter-files", async () => {
-			const { minimatch } = await import("minimatch");
+    // Use configured store name if available; fallback to 'docs' when no config
+    const effectiveStoreName = (configPatterns as { store?: string }).store ?? "docs";
+
+    // Step 2: Check idempotency - has this delivery already been processed?
+    const existingCommit = await step.run("check-idempotency", async () => {
+        try {
+            // First, get or create store using effective name
+            const store = await getOrCreateStore({
+              workspaceId,
+              storeName: effectiveStoreName,
+              embeddingDim: 1536, // CharHash embedding dimension
+              workspaceKey,
+            });
+
+            // Check if we've already processed this delivery
+            const existing = await db.query.ingestionCommits.findFirst({
+                where: and(
+                    eq(ingestionCommits.storeId, store.id),
+                    eq(ingestionCommits.deliveryId, deliveryId)
+                ),
+            });
+
+            return existing ?? null;
+        } catch (error) {
+            log.error("Failed to check idempotency", { error, deliveryId });
+            throw error;
+        }
+    });
+
+    if (existingCommit) {
+        log.info("Delivery already processed, skipping", {
+            deliveryId,
+            processedAt: existingCommit.processedAt,
+        });
+        return { status: "skipped", reason: "already_processed" };
+    }
+
+    // Step 3: Filter changed files by config globs
+    const filteredFiles = await step.run("filter-files", async () => {
+        const { minimatch } = await import("minimatch");
 
 			const filtered = changedFiles.filter((file: { path: string; status: string }) => {
 				return configPatterns.globs.some((glob: string) =>
@@ -189,7 +202,7 @@ export const docsIngestion = inngest.createFunction(
 				const [store] = await db
 					.select()
 					.from(stores)
-					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)))
+                .where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, effectiveStoreName)))
 					.limit(1);
 
 				if (!store) {
@@ -197,52 +210,57 @@ export const docsIngestion = inngest.createFunction(
 					return;
 				}
 
-				await db.insert(ingestionCommits).values({
-					id: `${store.id}_${deliveryId}`,
-					storeId: store.id,
-					beforeSha,
-					afterSha,
-					deliveryId,
-					status: "skipped",
-				});
+				await db
+					.insert(ingestionCommits)
+					.values({
+						id: `${store.id}_${deliveryId}`,
+						storeId: store.id,
+						beforeSha,
+						afterSha,
+						deliveryId,
+						status: "skipped",
+					})
+					.onConflictDoNothing({
+						target: [ingestionCommits.storeId, ingestionCommits.afterSha],
+					});
 			});
 
 			return { status: "skipped", reason: "no_matching_files" };
 		}
 
-		// Step 4: Trigger process or delete workflows for each file
-		const processResults = await step.run("trigger-file-workflows", async () => {
-			const results: Array<{ path: string; action: string; status: string }> = [];
+    // Step 4: Trigger process or delete workflows for each file
+    const processResults = await step.run("trigger-file-workflows", async () => {
+        const results: Array<{ path: string; action: string; status: string }> = [];
 
 			for (const file of filteredFiles) {
 				try {
-					if (file.status === "removed") {
-						// Trigger delete workflow
-						await inngest.send({
-							name: "apps-console/docs.file.delete",
-							data: {
-								workspaceId,
-								storeName,
-								repoFullName,
-								filePath: file.path,
-							},
-						});
+                if (file.status === "removed") {
+                    // Trigger delete workflow
+                    await inngest.send({
+                        name: "apps-console/docs.file.delete",
+                        data: {
+                            workspaceId,
+                            storeName: effectiveStoreName,
+                            repoFullName,
+                            filePath: file.path,
+                        },
+                    });
 
 						results.push({ path: file.path, action: "delete", status: "queued" });
 					} else {
-						// Trigger process workflow
-						await inngest.send({
-							name: "apps-console/docs.file.process",
-							data: {
-								workspaceId,
-								storeName,
-								repoFullName,
-								githubInstallationId,
-								filePath: file.path,
-								commitSha: afterSha,
-								committedAt: new Date().toISOString(), // TODO: Get from commit
-							},
-						});
+                    // Trigger process workflow
+                    await inngest.send({
+                        name: "apps-console/docs.file.process",
+                        data: {
+                            workspaceId,
+                            storeName: effectiveStoreName,
+                            repoFullName,
+                            githubInstallationId,
+                            filePath: file.path,
+                            commitSha: afterSha,
+                            committedAt: new Date().toISOString(), // TODO: Get from commit
+                        },
+                    });
 
 						results.push({ path: file.path, action: "process", status: "queued" });
 					}
@@ -263,28 +281,33 @@ export const docsIngestion = inngest.createFunction(
 			return results;
 		});
 
-		// Step 5: Record commit as processed
-		await step.run("record-commit", async () => {
-			try {
-				const [store] = await db
-					.select()
-					.from(stores)
-					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)))
-					.limit(1);
+    // Step 5: Record commit as processed
+    await step.run("record-commit", async () => {
+        try {
+            const [store] = await db
+                .select()
+                .from(stores)
+                .where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, effectiveStoreName)))
+                .limit(1);
 
 				if (!store) {
 					log.error("Cannot record commit - store not found");
 					return;
 				}
 
-				await db.insert(ingestionCommits).values({
-					id: `${store.id}_${deliveryId}`,
-					storeId: store.id,
-					beforeSha,
-					afterSha,
-					deliveryId,
-					status: "processed",
-				});
+            await db
+              .insert(ingestionCommits)
+              .values({
+                id: `${store.id}_${deliveryId}`,
+                storeId: store.id,
+                beforeSha,
+                afterSha,
+                deliveryId,
+                status: "processed",
+              })
+              .onConflictDoNothing({
+                target: [ingestionCommits.storeId, ingestionCommits.afterSha],
+              });
 
 				log.info("Recorded commit", {
 					storeId: store.id,
@@ -296,10 +319,10 @@ export const docsIngestion = inngest.createFunction(
 			}
 		});
 
-		return {
-			status: "processed",
-			filesProcessed: filteredFiles.length,
-			results: processResults,
-		};
-	},
+        return {
+            status: "processed",
+            filesProcessed: filteredFiles.length,
+            results: processResults,
+        };
+    },
 );

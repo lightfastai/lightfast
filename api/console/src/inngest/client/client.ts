@@ -15,31 +15,31 @@ const eventsMap = {
 	 * Triggered when a push event occurs on a GitHub repository
 	 * Processes changed files according to lightfast.yml config
 	 */
-	"apps-console/docs.push": {
-		data: z.object({
-			/** Workspace identifier (e.g., "org/repo") */
-			workspaceId: z.string(),
-			/** Store name for this ingestion (e.g., "docs") */
-			storeName: z.string(),
-			/** Repository full name (owner/repo) */
-			repoFullName: z.string(),
-			/** GitHub installation ID */
-			githubInstallationId: z.number(),
-			/** SHA before push */
-			beforeSha: z.string(),
-			/** SHA after push */
-			afterSha: z.string(),
-			/** GitHub webhook delivery ID for tracing */
-			deliveryId: z.string(),
-			/** Changed files with their status */
-			changedFiles: z.array(
-				z.object({
-					path: z.string(),
-					status: z.enum(["added", "modified", "removed"]),
-				}),
-			),
-		}),
-	},
+    "apps-console/docs.push": {
+        data: z.object({
+            /** Workspace DB UUID */
+            workspaceId: z.string(),
+            /** Canonical external workspace key for naming (e.g., ws-<slug>) */
+            workspaceKey: z.string(),
+            /** Repository full name (owner/repo) */
+            repoFullName: z.string(),
+            /** GitHub installation ID */
+            githubInstallationId: z.number(),
+            /** SHA before push */
+            beforeSha: z.string(),
+            /** SHA after push */
+            afterSha: z.string(),
+            /** GitHub webhook delivery ID for tracing */
+            deliveryId: z.string(),
+            /** Changed files with their status */
+            changedFiles: z.array(
+                z.object({
+                    path: z.string(),
+                    status: z.enum(["added", "modified", "removed"]),
+                }),
+            ),
+        }),
+    },
 
 	/**
 	 * Process a single document file

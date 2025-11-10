@@ -20,47 +20,74 @@ import { log } from "@vendor/observability/log";
  * - Inngest docs-ingestion workflow
  */
 export async function getOrCreateStore(params: {
-	workspaceId: string;
-	storeName: string;
-	embeddingDim?: number;
+  workspaceId: string; // DB UUID
+  storeName: string;
+  embeddingDim?: number;
+  workspaceKey?: string; // canonical external key for naming, optional
 }): Promise<Store> {
-	const { workspaceId, storeName, embeddingDim = 1536 } = params;
+  const { workspaceId, storeName, embeddingDim = 1536, workspaceKey } = params;
 
-	// Check if store already exists
-	let store = await db.query.stores.findFirst({
-		where: and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)),
-	});
+  // Check if store already exists (canonical workspaceId)
+  let store = await db.query.stores.findFirst({
+    where: and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)),
+  });
 
-	if (store) {
-		return store;
-	}
+  // Fallback: try legacy workspaceId variant (underscore vs hyphen)
+  if (!store) {
+    const legacyWsId = workspaceId.includes("ws-")
+      ? workspaceId.replace(/^ws-/, "ws_")
+      : workspaceId.includes("ws_")
+        ? workspaceId.replace(/^ws_/, "ws-")
+        : undefined;
+
+    if (legacyWsId) {
+      const legacy = await db.query.stores.findFirst({
+        where: and(eq(stores.workspaceId, legacyWsId), eq(stores.name, storeName)),
+      });
+      if (legacy) {
+        log.info("Using legacy store bound to alternate workspaceId", { legacyWorkspaceId: legacyWsId, storeId: legacy.id });
+        return legacy;
+      }
+    }
+  }
+
+  if (store) {
+    return store;
+  }
 
 	// Auto-provision new store
 	log.info("Store not found, auto-provisioning", { workspaceId, storeName });
 
 	const pinecone = createPineconeClient();
-	const indexName = pinecone.resolveIndexName(workspaceId, storeName);
+	const indexName = pinecone.resolveIndexName(workspaceKey ?? workspaceId, storeName);
 
 	log.info("Creating Pinecone index", { indexName, embeddingDim });
 	await pinecone.createIndex(workspaceId, storeName, embeddingDim);
 
 	const storeId = `${workspaceId}_${storeName}`;
-	const [newStore] = await db
-		.insert(stores)
-		.values({
-			id: storeId,
-			workspaceId,
-			name: storeName,
-			indexName,
-			embeddingDim,
-		})
-		.returning();
+  const inserted = await db
+    .insert(stores)
+    .values({
+      id: storeId,
+      workspaceId,
+      name: storeName,
+      indexName,
+      embeddingDim,
+    })
+    .onConflictDoNothing()
+    .returning();
 
-	if (!newStore) {
-		throw new Error("Failed to create store record");
-	}
-
-	store = newStore;
+  if (inserted && inserted[0]) {
+    store = inserted[0];
+  } else {
+    // Another concurrent creator likely inserted; fetch the record
+    store = await db.query.stores.findFirst({
+      where: and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)),
+    });
+    if (!store) {
+      throw new Error("Failed to create or fetch store record");
+    }
+  }
 	log.info("Store auto-provisioned successfully", { storeId, indexName });
 
 	return store;
