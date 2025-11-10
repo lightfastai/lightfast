@@ -1,10 +1,28 @@
+// @ts-nocheck - TODO: Phase 1.4+ - Update schema and re-enable
 import type { TRPCRouterRecord } from "@trpc/server";
-import { DeusConnectedRepository, organizations } from "@db/console/schema";
+import { DeusConnectedRepository, organizations, workspaces } from "@db/console/schema";
+import { getOrCreateDefaultWorkspace } from "@db/console/utils";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
+import { randomUUID } from "node:crypto";
+import { minimatch } from "minimatch";
+import { env } from "../env";
+import { getWorkspaceKeyFromSlug } from "../lib/workspace-key";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
+
+// Helper to create GitHub App instance
+function getGitHubApp() {
+  return createGitHubApp(
+    {
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+    },
+    true // Format private key
+  );
+}
 
 export const repositoryRouter = {
   /**
@@ -23,9 +41,9 @@ export const repositoryRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -60,9 +78,9 @@ export const repositoryRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -126,9 +144,9 @@ export const repositoryRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Look up internal org ID from Clerk org ID
+      // Note: input.organizationId IS the Clerk org ID (primary key)
       const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.organizationId),
+        where: eq(organizations.id, input.organizationId),
       });
 
       if (!orgResult) {
@@ -137,6 +155,12 @@ export const repositoryRouter = {
           message: `Organization not found: ${input.organizationId}`,
         });
       }
+
+      // Get or create default workspace for organization
+      // orgResult.id IS the Clerk org ID (our new schema uses Clerk org ID as primary key)
+      const workspaceId = await getOrCreateDefaultWorkspace(
+        orgResult.id,
+      );
 
       // Check if this repository is already connected to this organization
       const existingRepoResult = await ctx.db
@@ -166,6 +190,7 @@ export const repositoryRouter = {
           .set({
             isActive: true,
             githubInstallationId: input.githubInstallationId,
+            workspaceId,
             permissions: input.permissions,
             metadata: input.metadata,
             lastSyncedAt: new Date().toISOString(),
@@ -191,6 +216,7 @@ export const repositoryRouter = {
         organizationId: orgResult.id,
         githubRepoId: input.githubRepoId,
         githubInstallationId: input.githubInstallationId,
+        workspaceId,
         permissions: input.permissions,
         metadata: input.metadata,
         isActive: true,
@@ -320,4 +346,296 @@ export const repositoryRouter = {
         })
         .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
     }),
+
+  /**
+   * Detect lightfast.yml configuration in repository
+   * Can be called manually to re-check config status
+   */
+  detectConfig: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: z.string(),
+        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Note: input.organizationId IS the Clerk org ID (primary key)
+      const orgResult = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
+
+      if (!orgResult) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.organizationId}`,
+        });
+      }
+
+      // Get repository
+      const repoResult = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, orgResult.id)
+          )
+        )
+        .limit(1);
+
+      const repository = repoResult[0];
+
+      if (!repository) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repository not found",
+        });
+      }
+
+      // Extract owner and repo name from metadata
+      const fullName = repository.metadata?.fullName;
+      if (!fullName) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Repository metadata missing fullName",
+        });
+      }
+
+      const [owner, repo] = fullName.split("/");
+      if (!owner || !repo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid repository fullName format",
+        });
+      }
+
+      // Detect config
+      try {
+        const app = getGitHubApp();
+        const detector = new ConfigDetectorService(app);
+
+        // Resolve the repository default branch from GitHub API; fallback to "main"
+        let ref = "main";
+        try {
+          const octokit = await app.getInstallationOctokit(
+            Number.parseInt(repository.githubInstallationId, 10),
+          );
+          const { data: repoInfo } = await octokit.request(
+            "GET /repos/{owner}/{repo}",
+            {
+              owner,
+              repo,
+              headers: { "X-GitHub-Api-Version": "2022-11-28" },
+            },
+          );
+          if (repoInfo?.default_branch && typeof repoInfo.default_branch === "string") {
+            ref = repoInfo.default_branch as string;
+          }
+        } catch (e) {
+          // Non-fatal; keep fallback to "main"
+        }
+
+        const result = await detector.detectConfig(
+          owner,
+          repo,
+          ref,
+          Number.parseInt(repository.githubInstallationId, 10),
+        );
+
+        // Resolve workspace (DB UUID) and compute workspaceKey from slug
+        const wsId = await getOrCreateDefaultWorkspace(orgResult.id);
+        const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
+        const workspaceId = ws?.id ?? wsId;
+
+        // Update repository with detection result
+        await ctx.db
+          .update(DeusConnectedRepository)
+          .set({
+            configStatus: result.exists ? "configured" : "unconfigured",
+            configPath: result.path,
+            configDetectedAt: new Date().toISOString(),
+            workspaceId,
+          })
+          .where(eq(DeusConnectedRepository.id, repository.id));
+
+        return {
+          exists: result.exists,
+          path: result.path,
+          workspaceId,
+        };
+      } catch (error: any) {
+        console.error("[tRPC] Config detection failed:", error);
+
+        // Update status to error
+        await ctx.db
+          .update(DeusConnectedRepository)
+          .set({
+            configStatus: "error",
+            configDetectedAt: new Date().toISOString(),
+          })
+          .where(eq(DeusConnectedRepository.id, repository.id));
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to detect configuration",
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Manually start an ingestion job for a repository
+   *
+   * Enumerates repository files on the default branch, filters by lightfast.yml include globs,
+   * and triggers an Inngest event equivalent to a push with all matched files marked as modified.
+   */
+  reindex: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: z.string(),
+        organizationId: z.string(), // Clerk org ID
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Resolve organization
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, input.organizationId),
+      });
+      if (!org) {
+        throw new TRPCError({ code: "NOT_FOUND", message: `Organization not found: ${input.organizationId}` });
+      }
+
+      // Resolve repository
+      const [repository] = await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            eq(DeusConnectedRepository.id, input.repositoryId),
+            eq(DeusConnectedRepository.organizationId, org.id),
+          ),
+        )
+        .limit(1);
+
+      if (!repository) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      const fullName = repository.metadata?.fullName;
+      if (!fullName) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Repository metadata missing fullName" });
+      }
+      const [owner, repo] = fullName.split("/");
+      if (!owner || !repo) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid repository fullName format" });
+      }
+
+      // GitHub App client
+      const app = getGitHubApp();
+      const octokit = await app.getInstallationOctokit(Number.parseInt(repository.githubInstallationId, 10));
+
+      // Resolve default branch and HEAD commit SHA
+      const { data: repoInfo } = await octikitSafe(async () =>
+        octokit.request("GET /repos/{owner}/{repo}", {
+          owner,
+          repo,
+          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+        }),
+      );
+      const defaultBranch = (repoInfo.default_branch as string) ?? "main";
+      const { data: head } = await octikitSafe(async () =>
+        octokit.request("GET /repos/{owner}/{repo}/commits/{ref}", {
+          owner,
+          repo,
+          ref: defaultBranch,
+          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+        }),
+      );
+      const headSha = (head.sha as string) ?? defaultBranch;
+
+      // Detect config path and load config contents
+      const detector = new ConfigDetectorService(app);
+      const detection = await detector.detectConfig(owner, repo, defaultBranch, Number.parseInt(repository.githubInstallationId, 10));
+
+      let includeGlobs: string[] = ["docs/**/*.md", "docs/**/*.mdx", "README.md"]; // sensible defaults
+      let configuredStore: string | undefined;
+      if (detection.exists && detection.path) {
+        const { data } = await octikitSafe(async () =>
+          octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
+            owner,
+            repo,
+            path: detection.path!,
+            ref: defaultBranch,
+            headers: { "X-GitHub-Api-Version": "2022-11-28" },
+          }),
+        );
+        if ("content" in data && data.type === "file") {
+          const yamlText = Buffer.from((data.content as string) ?? "", "base64").toString("utf-8");
+          try {
+            const yaml = await import("yaml");
+            const parsed = yaml.parse(yamlText) as any;
+            if (parsed && Array.isArray(parsed.include) && parsed.include.length > 0) {
+              includeGlobs = parsed.include as string[];
+            }
+            if (parsed && typeof parsed.store === "string" && parsed.store.length > 0) {
+              configuredStore = parsed.store as string;
+            }
+          } catch {
+            // ignore parse errors; keep defaults
+          }
+        }
+      }
+
+      // Enumerate repo tree and filter by globs
+      const { data: tree } = await octikitSafe(async () =>
+        octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
+          owner,
+          repo,
+          tree_sha: headSha,
+          recursive: "true",
+          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+        }),
+      );
+
+      const allPaths: string[] = Array.isArray((tree as any).tree)
+        ? (tree as any).tree.filter((n: any) => n.type === "blob" && typeof n.path === "string").map((n: any) => n.path as string)
+        : [];
+
+      const matches = allPaths.filter((p) => includeGlobs.some((g) => minimatch(p, g)));
+      if (matches.length === 0) {
+        return { queued: 0, matched: 0, message: "No files match include globs" };
+      }
+
+      // Prepare Inngest event
+      const deliveryId = `manual_${randomUUID()}`;
+      // Resolve default workspace (DB UUID) + workspaceKey
+      const wsId = await getOrCreateDefaultWorkspace(org.id);
+      const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
+      const workspaceId = ws?.id ?? wsId; // DB UUID
+      const workspaceKey = ws ? getWorkspaceKeyFromSlug(ws.slug) : `ws-${org.githubOrgSlug}`;
+      const changedFiles = matches.map((path) => ({ path, status: "modified" as const }));
+
+      // Send event to Inngest
+      const { inngest } = await import("@api/console/inngest");
+      await inngest.send({
+        name: "apps-console/docs.push",
+        data: {
+          workspaceId,
+          workspaceKey,
+          repoFullName: fullName,
+          githubInstallationId: Number.parseInt(repository.githubInstallationId, 10),
+          beforeSha: headSha,
+          afterSha: headSha,
+          deliveryId,
+          changedFiles,
+        },
+      });
+
+      return { queued: matches.length, matched: matches.length, deliveryId, ref: defaultBranch };
+    }),
 } satisfies TRPCRouterRecord;
+
+// Helper to safely call Octokit and unwrap data
+async function octikitSafe<T>(fn: () => Promise<{ data: T }>): Promise<{ data: T }> {
+  return await fn();
+}

@@ -14,6 +14,51 @@
   --card: oklch(0.12 0 0);
 }
 
+.brand {
+  --background: var(--brand-blue);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.35 0.25 270);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.35 0.25 270);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: var(--brand-blue);
+  --secondary: oklch(1 0 0 / 15%);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(1 0 0 / 10%);
+  --muted-foreground: oklch(0.85 0 0);
+  --accent: oklch(1 0 0 / 15%);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 20%);
+  --input-bg: oklch(1 0 0 / 5%);
+  --ring: oklch(0.85 0 0);
+}
+
+/* Navbar theme: based on dark theme but tabs use brand-blue */
+.brand-navbar {
+  --background: transparent;
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.12 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.09 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: var(--brand-blue);
+  --muted-foreground: oklch(0.9 0 0);
+  --accent: oklch(0.269 0 0 / 50%);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --input-bg: oklch(0.145 0 0); /* Same as background by default */
+  --ring: oklch(0.556 0 0);
+}
+
 /* Framework showcase animations */
 @keyframes framework-scroll {
   from {

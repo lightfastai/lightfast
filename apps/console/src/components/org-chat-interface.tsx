@@ -27,19 +27,17 @@ import {
 } from "@repo/ui/components/ui/select";
 import { GitBranch, Plus, ArrowUp } from "lucide-react";
 import { useTRPC } from "@repo/console-trpc/react";
-// Tabs removed
+import { useOrgAccess } from "~/hooks/use-org-access";
 
 interface OrgChatInterfaceProps {
-  orgId: number;
-  organizationId: string;
   orgSlug: string;
 }
 
 export function OrgChatInterface({
-  orgId,
-  organizationId,
   orgSlug,
 }: OrgChatInterfaceProps) {
+  // Get org data from prefetched cache
+  const { organizationId, githubOrgId } = useOrgAccess();
   const formRef = useRef<PromptInputRef | null>(null);
   const trpc = useTRPC();
   const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
@@ -73,7 +71,8 @@ export function OrgChatInterface({
     event.preventDefault();
     console.log("Submit", {
       message,
-      orgId,
+      organizationId,
+      githubOrgId,
       selectedRepoId,
       repository: repositories.find((r) => r.id === selectedRepoId),
     });

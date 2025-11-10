@@ -9,6 +9,7 @@ import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
+import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
   title: `${siteConfig.name} Auth`,
@@ -67,42 +68,42 @@ export const metadata: Metadata = createMetadata({
 });
 
 export const viewport: Viewport = {
-	themeColor: "#09090b",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<ClerkProvider
-			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			signInUrl="/sign-in"
-			signUpUrl="/sign-up"
-			signInFallbackRedirectUrl="/onboarding/choose-organization"
-			signUpFallbackRedirectUrl="/onboarding/choose-organization"
-			taskUrls={{
-				"choose-organization": "/onboarding/choose-organization",
-			}}
-			appearance={{
-				variables: {
-					colorPrimary: "#3b82f6",
-					colorBackground: "#0a0a0a",
-					colorInputBackground: "#18181b",
-					colorInputText: "#fafafa",
-				},
-			}}
-		>
-			<html lang="en" suppressHydrationWarning>
-				<head />
-				<body className={cn("bg-background dark min-h-screen", fonts)}>
-					{children}
-					<Toaster position="bottom-right" />
-					<VercelAnalytics />
-					<SpeedInsights />
-				</body>
-			</html>
-		</ClerkProvider>
-	);
+  return (
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl={consoleUrl}
+      signUpFallbackRedirectUrl={consoleUrl}
+      appearance={{
+        variables: {
+          colorPrimary: "#3b82f6",
+          colorBackground: "#0a0a0a",
+          colorInputBackground: "#18181b",
+          colorInputText: "#fafafa",
+        },
+      }}
+      taskUrls={{
+        "choose-organization": `${consoleUrl}/onboarding/claim-org`,
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body className={cn("bg-background dark min-h-screen", fonts)}>
+          {children}
+          <Toaster position="bottom-right" />
+          <VercelAnalytics />
+          <SpeedInsights />
+        </body>
+      </html>
+    </ClerkProvider>
+  );
 }

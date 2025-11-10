@@ -7,11 +7,12 @@
     "types": [],
     "paths": {
       "~/*": ["./src/*"],
+      "@/*": ["./*"],
       "@vendor/cms/*": ["../../vendor/cms/*"]
     },
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": [".", ".next/types/**/*.ts"],
+  "include": [".", ".next/types/**/*.ts", ".source/**/*"],
   "exclude": ["node_modules"]
 }

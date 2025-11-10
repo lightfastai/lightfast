@@ -3,8 +3,9 @@ import { db } from "@db/console/client";
 import { organizations } from "@db/console/schema";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { clerkClient } from "@vendor/clerk/server";
 
-import { publicProcedure } from "../trpc";
+import { publicProcedure, protectedProcedure } from "../trpc";
 
 /**
  * Organization router - internal procedures for API routes
@@ -12,6 +13,49 @@ import { publicProcedure } from "../trpc";
  * that don't have user authentication context
  */
 export const organizationRouter = {
+  /**
+   * List user's organizations with enriched data
+   * Returns Clerk orgs joined with database org records
+   */
+  listUserOrganizations: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.auth.type !== "clerk") {
+      throw new Error("Clerk authentication required");
+    }
+
+    const userId = ctx.auth.userId;
+    const clerk = await clerkClient();
+
+    // Get all organizations the user belongs to from Clerk
+    const { data: memberships } = await clerk.users.getOrganizationMembershipList({
+      userId,
+    });
+
+    // Enrich with database data
+    const enrichedOrgs = await Promise.all(
+      memberships.map(async (membership) => {
+        const clerkOrg = membership.organization;
+
+        // Find corresponding database record
+        // Note: organization.id IS the Clerk org ID in our new schema
+        const dbOrg = await db.query.organizations.findFirst({
+          where: eq(organizations.id, clerkOrg.id),
+        });
+
+        return {
+          id: clerkOrg.id,
+          slug: clerkOrg.slug,
+          name: clerkOrg.name,
+          role: membership.role,
+          imageUrl: clerkOrg.imageUrl,
+          // Database org info (null if not yet claimed in our system)
+          dbOrg: dbOrg ?? null,
+        };
+      })
+    );
+
+    return enrichedOrgs;
+  }),
+
   /**
    * Find organization by GitHub org ID (for API routes)
    */
@@ -38,12 +82,13 @@ export const organizationRouter = {
 
   /**
    * Find organization by Clerk org ID (for Clerk-authenticated requests)
+   * Note: This is now the same as findById since Clerk org ID IS the primary key
    */
   findByClerkOrgId: publicProcedure
     .input(z.object({ clerkOrgId: z.string() }))
     .query(async ({ input }) => {
       const result = await db.query.organizations.findFirst({
-        where: eq(organizations.clerkOrgId, input.clerkOrgId),
+        where: eq(organizations.id, input.clerkOrgId),
       });
       return result ?? null;
     }),
@@ -74,12 +119,12 @@ export const organizationRouter = {
 
   /**
    * Update organization with Clerk details
+   * Note: With new schema, we can only update clerkOrgSlug (id IS the Clerk org ID, immutable)
    */
   updateClerkDetails: publicProcedure
     .input(
       z.object({
-        id: z.string(),
-        clerkOrgId: z.string(),
+        id: z.string(), // This IS the Clerk org ID
         clerkOrgSlug: z.string(),
       }),
     )
@@ -87,7 +132,6 @@ export const organizationRouter = {
       await db
         .update(organizations)
         .set({
-          clerkOrgId: input.clerkOrgId,
           clerkOrgSlug: input.clerkOrgSlug,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
@@ -118,25 +162,35 @@ export const organizationRouter = {
 
   /**
    * Create new organization
+   * Note: Clerk org ID becomes the primary key (id field)
    */
   create: publicProcedure
     .input(
       z.object({
+        clerkOrgId: z.string(), // This becomes the primary key 'id'
+        clerkOrgSlug: z.string(),
         githubInstallationId: z.number(),
         githubOrgId: z.number(),
         githubOrgSlug: z.string(),
         githubOrgName: z.string(),
         githubOrgAvatarUrl: z.string().nullable(),
         claimedBy: z.string(),
-        clerkOrgId: z.string(),
-        clerkOrgSlug: z.string(),
       }),
     )
     .mutation(async ({ input }) => {
       const [newOrg] = await db
         .insert(organizations)
-        .values(input)
-        .$returningId();
+        .values({
+          id: input.clerkOrgId, // Clerk org ID is the primary key
+          clerkOrgSlug: input.clerkOrgSlug,
+          githubInstallationId: input.githubInstallationId,
+          githubOrgId: input.githubOrgId,
+          githubOrgSlug: input.githubOrgSlug,
+          githubOrgName: input.githubOrgName,
+          githubOrgAvatarUrl: input.githubOrgAvatarUrl,
+          claimedBy: input.claimedBy,
+        })
+        .returning({ id: organizations.id });
 
       if (!newOrg) {
         throw new Error("Failed to create organization");

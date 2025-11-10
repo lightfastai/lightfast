@@ -7,22 +7,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    },
-    "./organizations": {
-      "types": "./dist/organizations.d.ts",
-      "default": "./src/organizations.ts"
-    },
-    "./repositories": {
-      "types": "./dist/repositories.d.ts",
-      "default": "./src/repositories.ts"
-    },
-    "./errors": {
-      "types": "./dist/errors.d.ts",
-      "default": "./src/errors.ts"
-    },
-    "./base-service": {
-      "types": "./dist/base-service.d.ts",
-      "default": "./src/base-service.ts"
     }
   },
   "scripts": {
@@ -32,10 +16,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@api/console": "workspace:*",
+    "@clerk/nextjs": "catalog:",
+    "@db/console": "workspace:*",
+    "@repo/console-octokit-github": "workspace:*",
     "@repo/console-trpc": "workspace:*",
     "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:"
+    "@trpc/server": "catalog:",
+    "@vendor/observability": "workspace:*",
+    "@vendor/pinecone": "workspace:*",
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

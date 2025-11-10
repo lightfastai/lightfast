@@ -72,6 +72,9 @@ catalogs:
     braintrust:
       specifier: ^0.2.1
       version: 0.2.6
+    clsx:
+      specifier: ^2.1.1
+      version: 2.1.1
     drizzle-orm:
       specifier: ^0.43.1
       version: 0.43.1
@@ -120,6 +123,9 @@ catalogs:
     superjson:
       specifier: ^2.2.1
       version: 2.2.2
+    tailwind-merge:
+      specifier: ^3.3.1
+      version: 3.3.1
     turbo:
       specifier: ^2.5.5
       version: 2.5.8
@@ -257,10 +263,10 @@ importers:
         version: 3.2.0(date-fns@4.1.0)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       inngest:
         specifier: 'catalog:'
         version: 3.44.3(encoding@0.1.13)(express@5.1.0)(h3@1.15.4)(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@3.25.76)
@@ -307,6 +313,18 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
+      '@inngest/middleware-sentry':
+        specifier: 'catalog:'
+        version: 0.1.3(@sentry/core@10.20.0)(@sentry/types@10.20.0)(inngest@3.44.3(encoding@0.1.13)(express@5.1.0)(h3@1.15.4)(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@3.25.76))
+      '@repo/console-chunking':
+        specifier: workspace:*
+        version: link:../../packages/console-chunking
+      '@repo/console-config':
+        specifier: workspace:*
+        version: link:../../packages/console-config
+      '@repo/console-embed':
+        specifier: workspace:*
+        version: link:../../packages/console-embed
       '@repo/console-octokit-github':
         specifier: workspace:*
         version: link:../../packages/console-octokit-github
@@ -316,6 +334,9 @@ importers:
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
+      '@sentry/core':
+        specifier: ^10.20.0
+        version: 10.20.0
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -334,18 +355,36 @@ importers:
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../vendor/inngest
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/pinecone':
+        specifier: workspace:*
+        version: link:../../vendor/pinecone
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
+      gray-matter:
+        specifier: ^4.0.3
+        version: 4.0.3
+      inngest:
+        specifier: 'catalog:'
+        version: 3.44.3(encoding@0.1.13)(express@5.1.0)(h3@1.15.4)(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(zod@3.25.76)
+      minimatch:
+        specifier: ^10.1.1
+        version: 10.1.1
       react:
         specifier: ^19.1.1
         version: 19.2.0
       superjson:
         specifier: 'catalog:'
         version: 2.2.2
+      yaml:
+        specifier: ^2.7.0
+        version: 2.8.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -428,6 +467,9 @@ importers:
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
+      '@vercel/microfrontends':
+        specifier: ^2.0.1
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
@@ -647,7 +689,7 @@ importers:
         version: 3.2.0(date-fns@4.1.0)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       exa-js:
         specifier: 'catalog:'
         version: 1.10.2(encoding@0.1.13)(ws@8.18.3)
@@ -784,6 +826,9 @@ importers:
       '@octokit/types':
         specifier: ^15.0.0
         version: 15.0.0
+      '@repo/app-urls':
+        specifier: workspace:^
+        version: link:../../packages/app-urls
       '@repo/console-api-services':
         specifier: workspace:*
         version: link:../../packages/console-api-services
@@ -841,6 +886,12 @@ importers:
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
+      '@vercel/microfrontends':
+        specifier: ^2.0.1
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.0
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -1035,6 +1086,9 @@ importers:
 
   apps/www:
     dependencies:
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.14
+        version: 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@repo/app-urls':
         specifier: workspace:*
         version: link:../../packages/app-urls
@@ -1094,10 +1148,13 @@ importers:
         version: link:../../vendor/upstash
       '@vercel/microfrontends':
         specifier: ^2.0.1
-        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       framer-motion:
         specifier: ^11.3.19
         version: 11.18.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1134,6 +1191,9 @@ importers:
       shiki:
         specifier: ^3.9.2
         version: 3.13.0
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.3.1
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -1159,130 +1219,6 @@ importers:
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      '@types/react':
-        specifier: ^19.1.11
-        version: 19.2.2
-      '@types/react-dom':
-        specifier: ^19.1.8
-        version: 19.2.2(@types/react@19.2.2)
-      autoprefixer:
-        specifier: ^10.4.21
-        version: 10.4.21(postcss@8.5.6)
-      dotenv-cli:
-        specifier: ^8.0.0
-        version: 8.0.0
-      eslint:
-        specifier: 'catalog:'
-        version: 9.38.0(jiti@1.21.7)
-      import-in-the-middle:
-        specifier: 'catalog:'
-        version: 1.15.0
-      jiti:
-        specifier: ^1.21.6
-        version: 1.21.7
-      postcss:
-        specifier: catalog:tailwind4
-        version: 8.5.6
-      require-in-the-middle:
-        specifier: 'catalog:'
-        version: 7.5.2
-      tailwindcss:
-        specifier: catalog:tailwind4
-        version: 4.1.11
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      typescript-eslint:
-        specifier: 'catalog:'
-        version: 8.46.1(eslint@9.38.0(jiti@1.21.7))(typescript@5.9.3)
-
-  apps/www-search:
-    dependencies:
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
-      '@repo/site-config':
-        specifier: workspace:*
-        version: link:../../packages/site-config
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@repo/url-utils':
-        specifier: workspace:*
-        version: link:../../packages/url-utils
-      '@sentry/nextjs':
-        specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.1.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.102.1)
-      '@t3-oss/env-nextjs':
-        specifier: 'catalog:'
-        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/next':
-        specifier: workspace:*
-        version: link:../../vendor/next
-      '@vendor/security':
-        specifier: workspace:*
-        version: link:../../vendor/security
-      '@vendor/seo':
-        specifier: workspace:*
-        version: link:../../vendor/seo
-      '@vendor/upstash':
-        specifier: workspace:*
-        version: link:../../vendor/upstash
-      '@vercel/microfrontends':
-        specifier: ^2.0.1
-        version: 2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.0
-      framer-motion:
-        specifier: ^11.3.19
-        version: 11.18.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      geist:
-        specifier: 'catalog:'
-        version: 1.5.1(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      lucide-react:
-        specifier: 'catalog:'
-        version: 0.451.0(react@19.2.0)
-      neverthrow:
-        specifier: 'catalog:'
-        version: 8.2.0
-      next:
-        specifier: 'catalog:'
-        version: 15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react:
-        specifier: ^19.1.1
-        version: 19.2.0
-      react-confetti:
-        specifier: ^6.4.0
-        version: 6.4.0(react@19.2.0)
-      react-dom:
-        specifier: ^19.1.1
-        version: 19.2.0(react@19.2.0)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@tailwindcss/postcss':
-        specifier: catalog:tailwind4
-        version: 4.1.11
-      '@tailwindcss/typography':
-        specifier: catalog:tailwind4
-        version: 0.5.19(tailwindcss@4.1.11)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
@@ -1470,10 +1406,10 @@ importers:
         version: 5.0.15(zod@3.25.76)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -1508,6 +1444,9 @@ importers:
 
   db/console:
     dependencies:
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../../packages/console-types
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -1516,10 +1455,16 @@ importers:
         version: link:../../vendor/db
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
+      friendlier-words:
+        specifier: ^1.1.3
+        version: 1.1.3
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.7
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -2240,9 +2185,15 @@ importers:
 
   packages/console-api-services:
     dependencies:
-      '@api/console':
+      '@clerk/nextjs':
+        specifier: 'catalog:'
+        version: 6.33.5(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@db/console':
         specifier: workspace:*
-        version: link:../../api/console
+        version: link:../../db/console
+      '@repo/console-octokit-github':
+        specifier: workspace:*
+        version: link:../console-octokit-github
       '@repo/console-trpc':
         specifier: workspace:*
         version: link:../console-trpc
@@ -2252,6 +2203,15 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.6.0(typescript@5.9.3)
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
+      '@vendor/pinecone':
+        specifier: workspace:*
+        version: link:../../vendor/pinecone
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -2348,6 +2308,9 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
+      neverthrow:
+        specifier: 'catalog:'
+        version: 8.2.0
       yaml:
         specifier: ^2.7.0
         version: 2.8.1
@@ -2416,9 +2379,27 @@ importers:
       '@octokit/openapi-types':
         specifier: ^26.0.0
         version: 26.0.0
+      '@octokit/plugin-retry':
+        specifier: ^8.0.3
+        version: 8.0.3(@octokit/core@7.0.5)
+      '@octokit/plugin-throttling':
+        specifier: ^11.0.3
+        version: 11.0.3(@octokit/core@7.0.5)
+      '@octokit/webhooks-types':
+        specifier: ^7.6.1
+        version: 7.6.1
+      '@t3-oss/env-nextjs':
+        specifier: 'catalog:'
+        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
+      minimatch:
+        specifier: ^10.1.1
+        version: 10.1.1
       octokit:
         specifier: ^5.0.3
         version: 5.0.4
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -2515,9 +2496,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -3092,10 +3070,10 @@ importers:
         version: 5.0.15(zod@3.25.76)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76)
+        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -5516,6 +5494,9 @@ packages:
   '@octokit/openapi-types@26.0.0':
     resolution: {integrity: sha512-7AtcfKtpo77j7Ts73b4OWhOZHTKo/gGY8bB3bNBQz4H+GRSWqx2yvj8TXRsbdTE0eRmYmXOEY66jM7mJ7LzfsA==}
 
+  '@octokit/openapi-types@27.0.0':
+    resolution: {integrity: sha512-whrdktVs1h6gtR+09+QsNk2+FO+49j6ga1c55YZudfEG+oKJVvJLQi3zkOm5JjiUXAagWK2tI2kTGKJ2Ys7MGA==}
+
   '@octokit/openapi-webhooks-types@12.0.3':
     resolution: {integrity: sha512-90MF5LVHjBedwoHyJsgmaFhEN1uzXyBDRLEBe7jlTYx/fEhPAk3P3DAJsfZwC54m8hAIryosJOL+UuZHB3K3yA==}
 
@@ -5537,20 +5518,24 @@ packages:
     peerDependencies:
       '@octokit/core': '>=6'
 
-  '@octokit/plugin-retry@8.0.2':
-    resolution: {integrity: sha512-mVPCe77iaD8g1lIX46n9bHPUirFLzc3BfIzsZOpB7bcQh1ecS63YsAgcsyMGqvGa2ARQWKEFTrhMJX2MLJVHVw==}
+  '@octokit/plugin-retry@8.0.3':
+    resolution: {integrity: sha512-vKGx1i3MC0za53IzYBSBXcrhmd+daQDzuZfYDd52X5S0M2otf3kVZTVP8bLA3EkU0lTvd1WEC2OlNNa4G+dohA==}
     engines: {node: '>= 20'}
     peerDependencies:
       '@octokit/core': '>=7'
 
-  '@octokit/plugin-throttling@11.0.2':
-    resolution: {integrity: sha512-ntNIig4zZhQVOZF4fG9Wt8QCoz9ehb+xnlUwp74Ic2ANChCk8oKmRwV9zDDCtrvU1aERIOvtng8wsalEX7Jk5Q==}
+  '@octokit/plugin-throttling@11.0.3':
+    resolution: {integrity: sha512-34eE0RkFCKycLl2D2kq7W+LovheM/ex3AwZCYN8udpi6bxsyjZidb2McXs69hZhLmJlDqTSP8cH+jSRpiaijBg==}
     engines: {node: '>= 20'}
     peerDependencies:
       '@octokit/core': ^7.0.0
 
   '@octokit/request-error@7.0.1':
     resolution: {integrity: sha512-CZpFwV4+1uBrxu7Cw8E5NCXDWFNf18MSY23TdxCBgjw1tXXHvTrZVsXlW8hgFTOLw8RQR1BBrMvYRtuyaijHMA==}
+    engines: {node: '>= 20'}
+
+  '@octokit/request-error@7.0.2':
+    resolution: {integrity: sha512-U8piOROoQQUyExw5c6dTkU3GKxts5/ERRThIauNL7yaRoeXW0q/5bgHWT7JfWBw1UyrbK8ERId2wVkcB32n0uQ==}
     engines: {node: '>= 20'}
 
   '@octokit/request@10.0.5':
@@ -5560,9 +5545,15 @@ packages:
   '@octokit/types@15.0.0':
     resolution: {integrity: sha512-8o6yDfmoGJUIeR9OfYU0/TUJTnMPG2r68+1yEdUeG2Fdqpj8Qetg0ziKIgcBm0RW/j29H41WP37CYCEhp6GoHQ==}
 
+  '@octokit/types@16.0.0':
+    resolution: {integrity: sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg==}
+
   '@octokit/webhooks-methods@6.0.0':
     resolution: {integrity: sha512-MFlzzoDJVw/GcbfzVC1RLR36QqkTLUf79vLVO3D+xn7r0QgxnFoLZgtrzxiQErAjFUOdH6fas2KeQJ1yr/qaXQ==}
     engines: {node: '>= 20'}
+
+  '@octokit/webhooks-types@7.6.1':
+    resolution: {integrity: sha512-S8u2cJzklBC0FgTwWVLaM8tMrDuDMVE4xiTK4EYXM9GntyvrdbSoxqDQa+Fh57CCNApyIpyeqPhhFEmHPfrXgw==}
 
   '@octokit/webhooks@14.1.3':
     resolution: {integrity: sha512-gcK4FNaROM9NjA0mvyfXl0KPusk7a1BeA8ITlYEZVQCXF5gcETTd4yhAU0Kjzd8mXwYHppzJBWgdBVpIR9wUcQ==}
@@ -10416,6 +10407,9 @@ packages:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
 
+  friendlier-words@1.1.3:
+    resolution: {integrity: sha512-OVYGHh7UETIonK8WWplE0BFQTJGwI+i4GOESuA/wXchTGUBPFtb9AYuJwYGvcNY1YDRE3um4HezKdozvo2PUmw==}
+
   fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
 
@@ -12765,6 +12759,10 @@ packages:
   postgres-interval@1.2.0:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
+
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
 
   posthog-js@1.276.0:
     resolution: {integrity: sha512-FYZE1037LrAoKKeUU0pUL7u8WwNK2BVeg5TFApwquVPUdj9h7u5Z077A313hPN19Ar+7Y+VHxqYqdHc4VNsVgw==}
@@ -17203,6 +17201,8 @@ snapshots:
 
   '@octokit/openapi-types@26.0.0': {}
 
+  '@octokit/openapi-types@27.0.0': {}
+
   '@octokit/openapi-webhooks-types@12.0.3': {}
 
   '@octokit/plugin-paginate-graphql@6.0.0(@octokit/core@7.0.5)':
@@ -17219,22 +17219,26 @@ snapshots:
       '@octokit/core': 7.0.5
       '@octokit/types': 15.0.0
 
-  '@octokit/plugin-retry@8.0.2(@octokit/core@7.0.5)':
+  '@octokit/plugin-retry@8.0.3(@octokit/core@7.0.5)':
     dependencies:
       '@octokit/core': 7.0.5
-      '@octokit/request-error': 7.0.1
-      '@octokit/types': 15.0.0
+      '@octokit/request-error': 7.0.2
+      '@octokit/types': 16.0.0
       bottleneck: 2.19.5
 
-  '@octokit/plugin-throttling@11.0.2(@octokit/core@7.0.5)':
+  '@octokit/plugin-throttling@11.0.3(@octokit/core@7.0.5)':
     dependencies:
       '@octokit/core': 7.0.5
-      '@octokit/types': 15.0.0
+      '@octokit/types': 16.0.0
       bottleneck: 2.19.5
 
   '@octokit/request-error@7.0.1':
     dependencies:
       '@octokit/types': 15.0.0
+
+  '@octokit/request-error@7.0.2':
+    dependencies:
+      '@octokit/types': 16.0.0
 
   '@octokit/request@10.0.5':
     dependencies:
@@ -17248,7 +17252,13 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 26.0.0
 
+  '@octokit/types@16.0.0':
+    dependencies:
+      '@octokit/openapi-types': 27.0.0
+
   '@octokit/webhooks-methods@6.0.0': {}
+
+  '@octokit/webhooks-types@7.6.1': {}
 
   '@octokit/webhooks@14.1.3':
     dependencies:
@@ -20632,7 +20642,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))':
+  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.5.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(@vercel/speed-insights@1.2.0(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(next@15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
       '@next/env': 15.5.4
       '@types/md5': 2.3.6
@@ -22229,16 +22239,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5):
+  drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7):
     optionalDependencies:
       '@libsql/client': 0.14.0
       '@opentelemetry/api': 1.9.0
       '@planetscale/database': 1.19.0
       '@types/pg': 8.15.5
+      postgres: 3.4.7
 
-  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5))(zod@3.25.76):
+  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76):
     dependencies:
-      drizzle-orm: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)
+      drizzle-orm: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       zod: 3.25.76
 
   dunder-proto@1.0.1:
@@ -23146,6 +23157,8 @@ snapshots:
   fresh@0.5.2: {}
 
   fresh@2.0.0: {}
+
+  friendlier-words@1.1.3: {}
 
   fs-constants@1.0.0: {}
 
@@ -25650,8 +25663,8 @@ snapshots:
       '@octokit/plugin-paginate-graphql': 6.0.0(@octokit/core@7.0.5)
       '@octokit/plugin-paginate-rest': 13.2.0(@octokit/core@7.0.5)
       '@octokit/plugin-rest-endpoint-methods': 16.1.0(@octokit/core@7.0.5)
-      '@octokit/plugin-retry': 8.0.2(@octokit/core@7.0.5)
-      '@octokit/plugin-throttling': 11.0.2(@octokit/core@7.0.5)
+      '@octokit/plugin-retry': 8.0.3(@octokit/core@7.0.5)
+      '@octokit/plugin-throttling': 11.0.3(@octokit/core@7.0.5)
       '@octokit/request-error': 7.0.1
       '@octokit/types': 15.0.0
       '@octokit/webhooks': 14.1.3
@@ -26081,6 +26094,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  postgres@3.4.7: {}
 
   posthog-js@1.276.0:
     dependencies:

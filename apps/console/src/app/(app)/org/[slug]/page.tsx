@@ -1,52 +1,50 @@
-import { redirect, notFound } from "next/navigation";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-
-import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { OrgChatInterface } from "~/components/org-chat-interface";
-import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
+import { prefetch, trpc } from "@repo/console-trpc/server";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function OrgHomePage({
 	params,
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId } = await auth();
-	if (!userId) {
+	const { slug } = await params;
+	const { userId, orgId } = await auth();
+
+	// Simple auth check - middleware already protected via auth.protect()
+	// Layout already prefetched org data
+	if (!userId || !orgId) {
 		redirect("/sign-in");
 	}
 
-	const { slug } = await params;
-
-	// Verify user has access to this organization
-	let access;
-	try {
-		access = await requireOrgAccess(slug);
-	} catch {
-		notFound();
-	}
-
-	// Ensure organization has a Clerk org ID (required for API calls)
-	if (!access.org.clerkOrgId) {
-		notFound();
-	}
-
-    // Prefetch repositories for this org to avoid loading state
+	// Prefetch page-specific data using orgId from middleware
+	// This is the only data fetch needed - org data comes from layout
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId: access.org.clerkOrgId,
+			organizationId: orgId,
 		})
 	);
 
-
-
+	// Layout already wraps in HydrateClient and ErrorBoundary
 	return (
-		<HydrateClient>
-			<OrgChatInterface
-				orgId={access.org.githubOrgId}
-				organizationId={access.org.clerkOrgId}
-				orgSlug={slug}
-			/>
-		</HydrateClient>
+		<Suspense fallback={<OrgHomeSkeleton />}>
+			<OrgChatInterface orgSlug={slug} />
+		</Suspense>
+	);
+}
+
+function OrgHomeSkeleton() {
+	return (
+		<div className="flex min-h-screen flex-col bg-background text-foreground">
+			<main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 pb-16 pt-20">
+				<div className="mb-12 w-full text-center">
+					<Skeleton className="h-10 w-96 mx-auto" />
+				</div>
+				<Skeleton className="w-full max-w-4xl h-64 rounded-2xl" />
+			</main>
+		</div>
 	);
 }

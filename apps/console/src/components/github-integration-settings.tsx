@@ -3,13 +3,11 @@
 import { Github, CheckCircle2, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import type { Organization } from "@db/console/schema";
+import { useOrgAccess } from "~/hooks/use-org-access";
 
-interface GitHubIntegrationSettingsProps {
-	organization: Organization;
-}
-
-export function GitHubIntegrationSettings({ organization }: GitHubIntegrationSettingsProps) {
+export function GitHubIntegrationSettings() {
+	// Get org data from prefetched cache
+	const { org: organization } = useOrgAccess();
 	const handleReconfigure = () => {
 		// Open GitHub App configuration page
 		window.open(

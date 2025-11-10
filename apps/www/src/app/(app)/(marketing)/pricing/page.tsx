@@ -3,7 +3,7 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { PricingHero } from "~/components/pricing/pricing-hero";
 import { PricingSimple } from "~/components/pricing/pricing-simple";
 import { PricingFAQ } from "~/components/pricing/pricing-faq";
-import { JsonLd } from "@vendor/seo/json-ld";
+import { JsonLd, type SoftwareApplication, type WithContext } from "@vendor/seo/json-ld";
 import { siteConfig } from "@repo/site-config";
 
 export const metadata: Metadata = createMetadata({
@@ -30,45 +30,45 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function PricingPage() {
+  const softwareSchema: WithContext<SoftwareApplication> = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    url: siteConfig.url,
+    applicationCategory: "DeveloperApplication",
+    offers: [
+      {
+        "@type": "Offer",
+        name: "Free",
+        price: "0",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        description: "Get started with AI workflow automation",
+      },
+      {
+        "@type": "Offer",
+        name: "Pro",
+        price: "29",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        description: "Scale your workflows with unlimited integrations",
+      },
+      {
+        "@type": "Offer",
+        name: "Team",
+        price: "99",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        description: "Collaborate and build together",
+      },
+    ],
+    isAccessibleForFree: true,
+    license: "https://github.com/lightfastai/lightfast/blob/main/LICENSE",
+  };
+
   return (
     <>
-      <JsonLd
-        code={{
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: siteConfig.name,
-          url: siteConfig.url,
-          applicationCategory: "DeveloperApplication",
-          offers: [
-            {
-              "@type": "Offer",
-              name: "Free",
-              price: "0",
-              priceCurrency: "USD",
-              availability: "https://schema.org/InStock",
-              description: "Get started with AI workflow automation",
-            },
-            {
-              "@type": "Offer",
-              name: "Pro",
-              price: "29",
-              priceCurrency: "USD",
-              availability: "https://schema.org/InStock",
-              description: "Scale your workflows with unlimited integrations",
-            },
-            {
-              "@type": "Offer",
-              name: "Team",
-              price: "99",
-              priceCurrency: "USD",
-              availability: "https://schema.org/InStock",
-              description: "Collaborate and build together",
-            },
-          ],
-          isAccessibleForFree: true,
-          license: "https://github.com/lightfastai/lightfast/blob/main/LICENSE",
-        }}
-      />
+      <JsonLd code={softwareSchema} />
       <div className="min-h-screen flex flex-col gap-36">
         {/* Hero Section */}
         <section className="relative">

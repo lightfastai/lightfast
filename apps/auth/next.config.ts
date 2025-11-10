@@ -1,4 +1,5 @@
 import { NextConfig } from "next";
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 
 import "~/env";
 
@@ -31,4 +32,4 @@ if (env.VERCEL) {
 	config = withSentry(config);
 }
 
-export default config;
+export default withMicrofrontends(config, { debug: true });

@@ -64,6 +64,29 @@ export function ConnectRepositoryDialog({
 
 	const hasConnectedRepo = repositories.length > 0;
 
+	// Mutation to detect config after connection
+	const detectConfigMutation = useMutation(
+		trpc.repository.detectConfig.mutationOptions({
+			onSuccess: (data) => {
+				if (!data.exists) {
+					toast({
+						title: "Setup needed",
+						description: "No configuration found. Set up lightfast.yml to start indexing.",
+					});
+				} else {
+					toast({
+						title: "Configuration detected",
+						description: `Found ${data.path} - indexing will start on next push.`,
+					});
+				}
+			},
+			onError: (error) => {
+				console.error("Config detection failed:", error);
+				// Don't show error to user - not critical
+			},
+		})
+	);
+
 	// Connect repository mutation using tRPC with optimistic updates
 	const connectMutation = useMutation(
 		trpc.repository.connect.mutationOptions({
@@ -100,8 +123,15 @@ export function ConnectRepositoryDialog({
 								githubInstallationId: variables.githubInstallationId,
 								permissions: variables.permissions ?? null,
 								isActive: true,
+								isEnabled: true,
 								connectedAt: new Date().toISOString(),
 								lastSyncedAt: null,
+								configStatus: "pending",
+								configPath: null,
+								configDetectedAt: null,
+								workspaceId: null,
+								documentCount: 0,
+								lastIngestedAt: null,
                                 metadata: variables.metadata ?? null,
                                 createdAt: new Date().toISOString(),
                             });
@@ -129,11 +159,19 @@ export function ConnectRepositoryDialog({
 					variant: "destructive",
 				});
 			},
-			onSuccess: () => {
+			onSuccess: (data) => {
 				toast({
 					title: "Repository connected",
 					description: "Your GitHub repository has been successfully connected.",
 				});
+
+				// Trigger config detection for the newly connected repository
+				if (data?.id) {
+					detectConfigMutation.mutate({
+						repositoryId: data.id,
+						organizationId,
+					});
+				}
 
 				// Reset state and close dialog
 				setGithubRepos([]);
@@ -142,11 +180,13 @@ export function ConnectRepositoryDialog({
 			},
 			onSettled: () => {
 				// Invalidate to ensure consistency after mutation completes
+				// Use refetchType: "none" to avoid triggering Suspense boundaries
 				void queryClient.invalidateQueries({
 					queryKey: trpc.repository.list.queryKey({
 						includeInactive: false,
 						organizationId,
 					}),
+					refetchType: "none",
 				});
 			},
 		})

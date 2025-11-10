@@ -8,6 +8,7 @@
  */
 
 import { db } from "@db/console/client";
+import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -44,7 +45,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
   // Authenticate via Clerk session only
-  const clerkSession = await auth();
+  // treatPendingAsSignedOut: false allows pending users (authenticated but no org) to access tRPC procedures
+  // This is needed for onboarding flows where users claim their first organization
+  const clerkSession = await auth({ treatPendingAsSignedOut: false });
   if (clerkSession?.userId) {
     console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
     return {
@@ -77,6 +80,14 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     },
   }),
 });
+
+const sentryMiddleware = t.middleware(
+  trpcMiddleware({
+    attachRpcInput: true,
+  }),
+);
+
+export const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -127,7 +138,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -137,7 +148,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure
+export const protectedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {
@@ -163,7 +174,7 @@ export const protectedProcedure = t.procedure
  *
  * @see https://trpc.io/docs/procedures
  */
-export const clerkProtectedProcedure = t.procedure
+export const clerkProtectedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "clerk") {

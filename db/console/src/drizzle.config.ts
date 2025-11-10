@@ -4,9 +4,14 @@ import { env } from "../env";
 export default defineConfig({
   schema: "./src/schema/index.ts",
   out: "./src/migrations",
-  dialect: "mysql",
+  dialect: "postgresql",
   dbCredentials: {
-    url: `mysql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/lightfast-app?sslaccept=strict`,
+    host: env.DATABASE_HOST,
+    port: 5432, // Direct connection for migrations (not pgBouncer)
+    user: env.DATABASE_USERNAME,
+    password: env.DATABASE_PASSWORD,
+    database: "postgres",
+    ssl: true,
   },
   introspect: {
     casing: "camel",

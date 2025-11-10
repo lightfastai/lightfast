@@ -107,11 +107,11 @@ export class OrganizationsService extends DeusApiService {
   }
 
   /**
-   * Update organization with Clerk details
+   * Update organization Clerk slug
+   * Note: With new schema, Clerk org ID is immutable (it's the primary key)
    */
   async updateClerkDetails(params: {
-    id: string;
-    clerkOrgId: string;
+    id: string; // This IS the Clerk org ID
     clerkOrgSlug: string;
   }) {
     return await this.call(

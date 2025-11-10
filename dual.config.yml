@@ -4,9 +4,6 @@ services:
   www:
     path: apps/www
     envFile: apps/www/.vercel/.env.development.local
-  www-search:
-    path: apps/www-search
-    envFile: apps/www-search/.vercel/.env.development.local
   auth:
     path: apps/auth
     envFile: apps/auth/.vercel/.env.development.local
@@ -16,6 +13,9 @@ services:
   console:
     path: apps/console
     envFile: apps/console/.vercel/.env.development.local
+  docs:
+    path: apps/docs
+    envFile: apps/docs/.vercel/.env.development.local
 
 worktrees:
   path: ./worktrees

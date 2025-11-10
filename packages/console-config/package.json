@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "fast-glob": "^3.3.2",
+    "neverthrow": "catalog:",
     "yaml": "^2.7.0",
     "zod": "catalog:"
   },
