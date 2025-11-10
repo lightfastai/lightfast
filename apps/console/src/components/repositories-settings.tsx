@@ -11,13 +11,11 @@ import { RepositoryConfigStatus } from "./repository-config-status";
 import type { ConfigStatus } from "./repository-config-status";
 import { SetupGuideModal } from "./setup-guide-modal";
 import { useTRPC } from "@repo/console-trpc/react";
+import { useOrgAccess } from "~/hooks/use-org-access";
 
-interface RepositoriesSettingsProps {
-	organizationId: string;
-	githubOrgId: number;
-}
-
-export function RepositoriesSettings({ organizationId, githubOrgId }: RepositoriesSettingsProps) {
+export function RepositoriesSettings() {
+	// Get org data from prefetched cache
+	const { organizationId, githubOrgId } = useOrgAccess();
 	const [showConnectDialog, setShowConnectDialog] = useState(false);
 	const [showSetupGuide, setShowSetupGuide] = useState(false);
 	const [selectedRepoForSetup, setSelectedRepoForSetup] = useState<string>("");
@@ -49,20 +47,23 @@ export function RepositoriesSettings({ organizationId, githubOrgId }: Repositori
 						? `Found config at ${data.path}`
 						: "Set up lightfast.yml to start indexing",
 				});
-
-				// Invalidate to refetch with updated status
-				void queryClient.invalidateQueries({
-					queryKey: trpc.repository.list.queryKey({
-						includeInactive: false,
-						organizationId,
-					}),
-				});
 			},
 			onError: (error) => {
 				toast({
 					title: "Detection failed",
 					description: error.message,
 					variant: "destructive",
+				});
+			},
+			onSettled: () => {
+				// Invalidate to refetch with updated status
+				// Use refetchType: "none" to avoid triggering Suspense boundaries
+				void queryClient.invalidateQueries({
+					queryKey: trpc.repository.list.queryKey({
+						includeInactive: false,
+						organizationId,
+					}),
+					refetchType: "none",
 				});
 			},
 		})

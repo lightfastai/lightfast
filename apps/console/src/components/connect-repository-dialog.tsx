@@ -180,11 +180,13 @@ export function ConnectRepositoryDialog({
 			},
 			onSettled: () => {
 				// Invalidate to ensure consistency after mutation completes
+				// Use refetchType: "none" to avoid triggering Suspense boundaries
 				void queryClient.invalidateQueries({
 					queryKey: trpc.repository.list.queryKey({
 						includeInactive: false,
 						organizationId,
 					}),
+					refetchType: "none",
 				});
 			},
 		})

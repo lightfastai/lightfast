@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import "~/styles/globals.css";
+import "@repo/ui/globals.css";
 
 import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/sonner";
@@ -43,44 +43,36 @@ export const metadata: Metadata = createMetadata({
 });
 
 export const viewport: Viewport = {
-	themeColor: "#09090b",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<ClerkProvider
-			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			signInUrl={`${authUrl}/sign-in`}
-			signUpUrl={`${authUrl}/sign-up`}
-			signInFallbackRedirectUrl="/onboarding/claim-org"
-			signUpFallbackRedirectUrl="/onboarding/claim-org"
-			taskUrls={{
-				"choose-organization": "/onboarding/claim-org",
-			}}
-			appearance={{
-				variables: {
-					colorPrimary: "hsl(221.2 83.2% 53.3%)",
-					colorBackground: "hsl(0 0% 3.9%)",
-					colorInputBackground: "hsl(0 0% 14.9%)",
-					colorInputText: "hsl(0 0% 98%)",
-				},
-			}}
-		>
-			<html lang="en" suppressHydrationWarning>
-				<head />
-				<body
-					className={cn("dark bg-background min-h-screen antialiased", fonts)}
-				>
-					<TRPCReactProvider>
-						{children}
-						<Toaster />
-					</TRPCReactProvider>
-				</body>
-			</html>
-		</ClerkProvider>
-	);
+  return (
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl={`${authUrl}/sign-in`}
+      signUpUrl={`${authUrl}/sign-up`}
+      signInFallbackRedirectUrl="/onboarding/claim-org"
+      signUpFallbackRedirectUrl="/onboarding/claim-org"
+      taskUrls={{
+        "choose-organization": "/onboarding/claim-org",
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body
+          className={cn("dark bg-background min-h-screen antialiased", fonts)}
+        >
+          <TRPCReactProvider>
+            {children}
+            <Toaster />
+          </TRPCReactProvider>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
 }

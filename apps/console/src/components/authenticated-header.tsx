@@ -1,26 +1,21 @@
 "use client";
 
 import React from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useTRPC } from "@repo/console-trpc/react";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 import { OrgSwitcher } from "./org-switcher";
-import type { organizations } from "@db/console/schema";
 
-/**
- * Organization data from getUserOrganizations()
- */
-interface OrgData {
-	id: string; // Clerk org ID
-	name: string;
-	slug: string;
-	role: string;
-	deusOrg: typeof organizations.$inferSelect | null;
-}
+export function AuthenticatedHeader() {
+	const trpc = useTRPC();
 
-interface AuthenticatedHeaderProps {
-	organizations: OrgData[];
-}
-
-export function AuthenticatedHeader({ organizations }: AuthenticatedHeaderProps) {
+	// Use prefetched organizations from layout
+	const { data: organizations = [] } = useSuspenseQuery({
+		...trpc.organization.listUserOrganizations.queryOptions(),
+		refetchOnMount: false, // Use prefetched server data
+		refetchOnWindowFocus: false, // Don't refetch on window focus
+		staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+	});
 	return (
 		<>
 			{/* Mobile/Tablet header - relative positioning */}

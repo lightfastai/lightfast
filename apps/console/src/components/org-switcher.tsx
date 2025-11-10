@@ -27,14 +27,15 @@ import {
 import type { organizations } from "@db/console/schema";
 
 /**
- * Organization data from getUserOrganizations()
+ * Organization data from listUserOrganizations tRPC endpoint
  */
 interface OrgData {
 	id: string; // Clerk org ID
 	name: string;
 	slug: string;
 	role: string;
-	deusOrg: typeof organizations.$inferSelect | null;
+	imageUrl: string;
+	dbOrg: typeof organizations.$inferSelect | null;
 }
 
 interface OrgSwitcherProps {
@@ -48,7 +49,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 
 	// Filter to only show organizations that have been claimed in Console
 	const claimedOrgs = useMemo(() => {
-		return organizations.filter((org) => org.deusOrg !== null);
+		return organizations.filter((org) => org.dbOrg !== null);
 	}, [organizations]);
 
 	// Find current organization based on Clerk's active org
@@ -62,7 +63,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 			setOpen(false);
 
 			// Guard against unclaimed orgs (should not happen with filtering)
-			if (!org.deusOrg) {
+			if (!org.dbOrg) {
 				console.error("Cannot switch to unclaimed organization");
 				return;
 			}
@@ -89,10 +90,10 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 				>
 					<div className="flex items-center gap-2 min-w-0">
 						<Avatar className="h-5 w-5 shrink-0">
-							{currentOrg?.deusOrg?.githubOrgAvatarUrl ? (
+							{currentOrg?.dbOrg?.githubOrgAvatarUrl ? (
 								<AvatarImage
-									src={currentOrg.deusOrg.githubOrgAvatarUrl}
-									alt={currentOrg.deusOrg.githubOrgName}
+									src={currentOrg.dbOrg.githubOrgAvatarUrl}
+									alt={currentOrg.dbOrg.githubOrgName}
 								/>
 							) : (
 								<AvatarFallback className="text-[10px] bg-muted">
@@ -101,7 +102,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 							)}
 						</Avatar>
 						<span className="truncate text-sm">
-							{currentOrg?.deusOrg?.githubOrgName ?? "Select organization"}
+							{currentOrg?.dbOrg?.githubOrgName ?? "Select organization"}
 						</span>
 					</div>
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -116,16 +117,16 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 							{claimedOrgs.map((org) => (
 								<CommandItem
 									key={org.id}
-									value={org.deusOrg?.githubOrgSlug ?? org.slug}
+									value={org.dbOrg?.githubOrgSlug ?? org.slug}
 									onSelect={() => handleSelectOrg(org)}
 									className="cursor-pointer"
 								>
 									<div className="flex items-center gap-2 flex-1 min-w-0">
 										<Avatar className="h-6 w-6 shrink-0">
-											{org.deusOrg?.githubOrgAvatarUrl ? (
+											{org.dbOrg?.githubOrgAvatarUrl ? (
 												<AvatarImage
-													src={org.deusOrg.githubOrgAvatarUrl}
-													alt={org.deusOrg.githubOrgName}
+													src={org.dbOrg.githubOrgAvatarUrl}
+													alt={org.dbOrg.githubOrgName}
 												/>
 											) : (
 												<AvatarFallback className="text-[10px] bg-muted">
@@ -134,7 +135,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 											)}
 										</Avatar>
 										<span className="truncate">
-											{org.deusOrg?.githubOrgName ?? org.name}
+											{org.dbOrg?.githubOrgName ?? org.name}
 										</span>
 									</div>
 									{currentOrg?.id === org.id && (

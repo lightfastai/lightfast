@@ -1,43 +1,36 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
-import { requireOrgAccess } from "~/lib/org-access-clerk";
-import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
+import { prefetch, trpc } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function RepositoriesPage({
-	params,
+	params: _params,
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	// Note: Auth is handled by middleware (auth.protect())
-	const { slug } = await params;
+	const { userId, orgId } = await auth();
 
-	// Verify user has access to this organization
-	let access;
-	try {
-		access = await requireOrgAccess(slug);
-	} catch {
-		notFound();
+	// Simple auth check - middleware already protected via auth.protect()
+	// Org layout already prefetched org data
+	if (!userId || !orgId) {
+		redirect("/sign-in");
 	}
 
-	// Prefetch repositories to avoid loading state
+	// Prefetch page-specific data using orgId from middleware
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId: access.org.id,
+			organizationId: orgId,
 		})
 	);
 
+	// Org layout already wraps in HydrateClient and ErrorBoundary
 	return (
-		<HydrateClient>
-			<Suspense fallback={<RepositoriesSettingsSkeleton />}>
-				<RepositoriesSettings
-					organizationId={access.org.id}
-					githubOrgId={access.org.githubOrgId}
-				/>
-			</Suspense>
-		</HydrateClient>
+		<Suspense fallback={<RepositoriesSettingsSkeleton />}>
+			<RepositoriesSettings />
+		</Suspense>
 	);
 }
 
