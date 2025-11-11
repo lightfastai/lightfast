@@ -22,14 +22,24 @@ import { log } from "@vendor/observability/log";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { ensureStore } from "./ensure-store";
 import {
-	createGitHubApp,
-	getThrottledInstallationOctokit,
-	GitHubContentService,
+  createGitHubApp,
+  getThrottledInstallationOctokit,
+  GitHubContentService,
 } from "@repo/console-octokit-github";
-import { validateConfig } from "@repo/console-config";
+import { validateConfig, PRIVATE_CONFIG } from "@repo/console-config";
 import { env } from "../../env";
 import yaml from "yaml";
 import { minimatch } from "minimatch";
+import { createHash } from "node:crypto";
+
+type DispatchAction = "process" | "delete";
+
+// Inngest requires deterministic, URL-safe IDs per step/event so retries can resume
+// without re-running earlier work. We hash file metadata into a short token to keep
+// IDs stable and readable without worrying about path length or characters.
+// TODO: re-evaluate using GitHub's file/blob hash directly once it is exposed in the event payload.
+const hashToken = (value: string): string =>
+  createHash("sha1").update(value).digest("hex").slice(0, 12);
 
 /**
  * Main docs ingestion function
@@ -42,14 +52,14 @@ export const docsIngestion = inngest.createFunction(
     id: "apps-console/docs-ingestion",
     name: "Docs Ingestion",
     description: "Orchestrates document ingestion from GitHub push webhooks",
-    retries: 3,
+    retries: PRIVATE_CONFIG.workflow.retries,
 
     // Prevent duplicate processing of same webhook delivery
-    idempotency: 'event.data.deliveryId',
+    idempotency: "event.data.deliveryId",
 
     // Only process one push per repo at a time (prevent concurrent ingestion)
     singleton: {
-      key: 'event.data.repoFullName',
+      key: "event.data.repoFullName",
       mode: "skip", // Skip if already processing this repo
     },
 
@@ -139,8 +149,8 @@ export const docsIngestion = inngest.createFunction(
       if (!configFile) {
         throw new Error(
           `No lightfast.yml configuration found in repository ${repoFullName}. ` +
-          `Please add a lightfast.yml file to the root of your repository. ` +
-          `See https://docs.lightfast.ai/configuration for details.`
+            `Please add a lightfast.yml file to the root of your repository. ` +
+            `See https://docs.lightfast.ai/configuration for details.`,
         );
       }
 
@@ -151,7 +161,7 @@ export const docsIngestion = inngest.createFunction(
       if (configResult.isErr()) {
         throw new Error(
           `Invalid lightfast.yml configuration in repository ${repoFullName}: ${configResult.error}. ` +
-          `See https://docs.lightfast.ai/configuration for details.`
+            `See https://docs.lightfast.ai/configuration for details.`,
         );
       }
 
@@ -178,7 +188,7 @@ export const docsIngestion = inngest.createFunction(
       data: {
         workspaceId,
         workspaceKey,
-        storeName: effectiveStoreName,
+        storeSlug: effectiveStoreName,
         embeddingDim: targetEmbeddingDim,
         githubRepoId,
         repoFullName,
@@ -188,7 +198,7 @@ export const docsIngestion = inngest.createFunction(
     const store = storeResult.store;
     targetStore = {
       id: store.id,
-      name: store.name,
+      name: store.slug,
     };
 
     log.info("Store ensured", {
@@ -272,73 +282,98 @@ export const docsIngestion = inngest.createFunction(
     }
 
     // Step 5: Trigger process or delete workflows for each file
-    const processResults = await step.run(
-      "trigger-file-workflows",
-      async () => {
-        const results: Array<{ path: string; action: string; status: string }> =
-          [];
+    const processResults: Array<{
+      path: string;
+      action: string;
+      status: string;
+    }> = [];
 
-        for (const file of filteredFiles) {
-          try {
-            if (file.status === "removed") {
-              // Trigger delete workflow
-              await inngest.send({
-                name: "apps-console/docs.file.delete",
-                data: {
-                  workspaceId,
-                  storeName: effectiveStoreName,
-                  repoFullName,
-                  filePath: file.path,
-                },
-              });
+    const batchSize = Math.max(1, PRIVATE_CONFIG.github.ingestFileBatchSize);
+    const dispatchConcurrency = Math.max(
+      1,
+      PRIVATE_CONFIG.github.fetchConcurrency,
+    );
+    let globalIndex = 0;
 
-              results.push({
-                path: file.path,
-                action: "delete",
-                status: "queued",
-              });
-            } else {
-              // Trigger process workflow
-              await inngest.send({
-                name: "apps-console/docs.file.process",
-                data: {
-                  workspaceId,
-                  storeName: effectiveStoreName,
-                  repoFullName,
-                  githubInstallationId,
-                  filePath: file.path,
-                  commitSha: afterSha,
-                  committedAt: commitTimestamp,
-                },
-              });
+    const dispatchFile = async (
+      file: { path: string; status: string },
+      index: number,
+    ): Promise<{ path: string; action: DispatchAction; status: string }> => {
+      const action: DispatchAction =
+        file.status === "removed" ? "delete" : "process";
+      const pathFingerprint = hashToken(
+        `${workspaceId}:${effectiveStoreName}:${file.path}`,
+      );
+      const stepId = `dispatch-${action}-${index}-${pathFingerprint}`;
+      const eventId = `docs.${action}:${pathFingerprint}:${deliveryId}`;
 
-              results.push({
-                path: file.path,
-                action: "process",
-                status: "queued",
-              });
-            }
-          } catch (error) {
-            log.error("Failed to trigger workflow", {
-              path: file.path,
-              error,
-            });
-            results.push({
-              path: file.path,
-              action: file.status,
-              status: "failed",
-            });
-          }
+      try {
+        if (action === "delete") {
+          await step.sendEvent(stepId, {
+            id: eventId,
+            name: "apps-console/docs.file.delete",
+            data: {
+              workspaceId,
+              storeSlug: effectiveStoreName,
+              repoFullName,
+              filePath: file.path,
+            },
+          });
+        } else {
+          await step.sendEvent(stepId, {
+            id: eventId,
+            name: "apps-console/docs.file.process",
+            data: {
+              workspaceId,
+              storeSlug: effectiveStoreName,
+              repoFullName,
+              githubInstallationId,
+              filePath: file.path,
+              commitSha: afterSha,
+              committedAt: commitTimestamp,
+            },
+          });
         }
 
-        log.info("Triggered file workflows", {
-          total: filteredFiles.length,
-          results,
+        return {
+          path: file.path,
+          action,
+          status: "queued",
+        };
+      } catch (error) {
+        log.error("Failed to trigger workflow", {
+          path: file.path,
+          stepId,
+          error,
         });
+        return {
+          path: file.path,
+          action,
+          status: "failed",
+        };
+      }
+    };
 
-        return results;
-      },
-    );
+    for (let offset = 0; offset < filteredFiles.length; offset += batchSize) {
+      const fileBatch = filteredFiles.slice(offset, offset + batchSize);
+
+      for (
+        let cursor = 0;
+        cursor < fileBatch.length;
+        cursor += dispatchConcurrency
+      ) {
+        const group = fileBatch.slice(cursor, cursor + dispatchConcurrency);
+        const groupResults = await Promise.all(
+          group.map((file) => dispatchFile(file, globalIndex++)),
+        );
+        processResults.push(...groupResults);
+      }
+    }
+
+    log.info("Triggered file workflows", {
+      total: filteredFiles.length,
+      results: processResults,
+    });
 
     // Step 6: Record commit as processed
     await step.run("record-commit", async () => {

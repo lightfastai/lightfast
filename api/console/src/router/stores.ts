@@ -4,7 +4,7 @@ import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { protectedProcedure } from "../trpc";
 import {
 	getOrCreateStore,
-	getStoreByName,
+	getStoreBySlug,
 	listStoresByWorkspace,
 } from "../lib/stores";
 
@@ -28,7 +28,7 @@ export const storesRouter = {
 		.input(
 				z.object({
 					workspaceId: z.string(),
-					storeName: z.string(),
+					storeSlug: z.string(),
 					embeddingDim: z.number().default(storeEmbeddingDimension),
 				}),
 		)
@@ -42,11 +42,11 @@ export const storesRouter = {
 	getByName: protectedProcedure
 		.input(
 			z.object({
-				storeName: z.string(),
+				storeSlug: z.string(),
 			}),
 		)
 		.query(async ({ input }) => {
-			return getStoreByName(input.storeName);
+			return getStoreBySlug(input.storeSlug);
 		}),
 
 	/**

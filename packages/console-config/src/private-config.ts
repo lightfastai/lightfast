@@ -51,6 +51,11 @@ export const PINECONE_CONFIG = {
   region: "us-west-2" as const,
 
   /**
+   * Default deletion protection value for new indexes
+   */
+  deletionProtection: "enabled" as const,
+
+  /**
    * Batch size for vector upsert operations
    *
    * Default: 100 vectors per batch
@@ -218,6 +223,16 @@ export const GITHUB_CONFIG = {
    * @private
    */
   blobsBatchSize: 20,
+
+  /**
+   * Max number of files fetched in one docs-ingestion run
+   */
+  ingestFileBatchSize: 50,
+
+  /**
+   * Parallel request limit when fetching file contents
+   */
+  fetchConcurrency: 5,
 } as const;
 
 /**
@@ -252,6 +267,51 @@ export const WORKFLOW_CONFIG = {
     "docs/**/*.mdx",
     "README.md",
   ] as const,
+
+  /**
+   * Process document workflow tuning
+   */
+  processDoc: {
+    /**
+     * Max number of docs per batch event
+     */
+    batchSize: 25,
+    /**
+     * How long to wait for batch accumulation before running
+     */
+    batchTimeout: "5s",
+    /**
+     * Per-store concurrency limit for process-doc execution
+     */
+    perStoreConcurrency: 5,
+    /**
+     * Embedding batch size (Cohere limit is 96 texts/request)
+     */
+    embeddingBatchSize: 96,
+  },
+
+  /**
+   * Delete document workflow tuning
+   */
+  deleteDoc: {
+    perStoreConcurrency: 10,
+    timeout: {
+      start: "30s",
+      finish: "5m",
+    },
+  },
+
+  /**
+   * Ensure store workflow tuning
+   */
+  ensureStore: {
+    retries: 5,
+    singletonMode: "skip" as const,
+    timeout: {
+      start: "1m",
+      finish: "10m",
+    },
+  },
 } as const;
 
 /**

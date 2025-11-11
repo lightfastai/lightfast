@@ -65,14 +65,29 @@ export class ConsolePineconeClient {
     indexName: string,
     request: UpsertRequest<T>
   ): Promise<UpsertResponse> {
-    return this.client.upsertVectors(indexName, request);
+    return this.client.upsertVectors(
+      indexName,
+      request,
+      PINECONE_CONFIG.upsertBatchSize
+    );
   }
 
   /**
    * Delete vectors by IDs
    */
   async deleteVectors(indexName: string, vectorIds: string[]): Promise<void> {
-    return this.client.deleteVectors(indexName, vectorIds);
+    return this.client.deleteVectors(
+      indexName,
+      vectorIds,
+      PINECONE_CONFIG.deleteBatchSize
+    );
+  }
+
+  /**
+   * Delete vectors by metadata filter
+   */
+  async deleteByMetadata(indexName: string, filter: object): Promise<void> {
+    return this.client.deleteByMetadata(indexName, filter);
   }
 
   /**
@@ -85,6 +100,20 @@ export class ConsolePineconeClient {
     request: QueryRequest
   ): Promise<QueryResponse<T>> {
     return this.client.query<T>(indexName, request);
+  }
+
+  /**
+   * Configure index level settings (deletion protection, tags, etc.)
+   */
+  async configureIndex(
+    indexName: string,
+    options: {
+      deletionProtection?: "enabled" | "disabled";
+      tags?: Record<string, string>;
+      spec?: unknown;
+    }
+  ): Promise<void> {
+    return this.client.configureIndex(indexName, options);
   }
 }
 

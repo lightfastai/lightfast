@@ -5,10 +5,9 @@
  *
  * Workflow steps:
  * 1. Find document in database
- * 2. Get vector IDs from vector_entries
- * 3. Delete vectors from Pinecone
- * 4. Delete vector_entries rows
- * 5. Delete docs_documents row
+ * 2. Delete vectors from Pinecone via metadata filter
+ * 3. Delete vector_entries rows
+ * 4. Delete docs_documents row
  */
 
 import { db } from "@db/console/client";
@@ -18,6 +17,7 @@ import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
+import { PRIVATE_CONFIG } from "@repo/console-config";
 
 /**
  * Delete document function
@@ -33,24 +33,26 @@ export const deleteDoc = inngest.createFunction(
 		retries: 2, // Deletion is simpler, fewer retries needed
 
 		// Prevent duplicate deletion work
-		idempotency: 'event.data.storeName + "-" + event.data.filePath',
+		idempotency: 'event.data.storeSlug + "-" + event.data.filePath',
 
-		// Allow parallel deletions
-		concurrency: 10,
+		// Allow per-store parallel deletions while preventing noisy neighbors
+		concurrency: [
+			{
+				key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+				limit: PRIVATE_CONFIG.workflow.deleteDoc.perStoreConcurrency,
+			},
+		],
 
 		// Timeout for Pinecone deletion
-		timeouts: {
-			start: "30s", // Max queue time
-			finish: "5m", // Query + delete vectors + delete DB records
-		},
+		timeouts: PRIVATE_CONFIG.workflow.deleteDoc.timeout,
 	},
 	{ event: "apps-console/docs.file.delete" },
 	async ({ event, step }) => {
-		const { workspaceId, storeName, repoFullName, filePath } = event.data;
+		const { workspaceId, storeSlug, filePath } = event.data;
 
 		log.info("Deleting document", {
 			workspaceId,
-			storeName,
+			storeSlug,
 			filePath,
 		});
 
@@ -61,11 +63,11 @@ export const deleteDoc = inngest.createFunction(
 				const [store] = await db
 					.select()
 					.from(stores)
-					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)))
+					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.slug, storeSlug)))
 					.limit(1);
 
 				if (!store) {
-					log.warn("Store not found", { workspaceId, storeName });
+					log.warn("Store not found", { workspaceId, storeSlug });
 					return null;
 				}
 
@@ -102,50 +104,28 @@ export const deleteDoc = inngest.createFunction(
 			return { status: "skipped", reason: "not_found" };
 		}
 
-		// Step 2: Get vector IDs from vector_entries
-		const vectorIds = await step.run("get-vector-ids", async () => {
+		// Step 2: Delete vectors from Pinecone via metadata filter
+		await step.run("delete-vectors", async () => {
 			try {
-				const entries = await db
-					.select({ id: vectorEntries.id })
-					.from(vectorEntries)
-					.where(and(eq(vectorEntries.storeId, docInfo.storeId), eq(vectorEntries.docId, docInfo.docId)));
-
-				const ids = entries.map((entry) => entry.id);
-
-				log.info("Found vector entries", {
+				await pineconeClient.deleteByMetadata(docInfo.indexName, {
 					docId: docInfo.docId,
-					count: ids.length,
 				});
 
-				return ids;
+				log.info("Deleted vectors from Pinecone via metadata", {
+					indexName: docInfo.indexName,
+					docId: docInfo.docId,
+				});
 			} catch (error) {
-				log.error("Failed to get vector IDs", { error, docId: docInfo.docId });
+				log.error("Failed to delete vectors by metadata", {
+					error,
+					indexName: docInfo.indexName,
+					docId: docInfo.docId,
+				});
 				throw error;
 			}
 		});
 
-		// Step 3: Delete vectors from Pinecone
-		if (vectorIds.length > 0) {
-			await step.run("delete-vectors", async () => {
-				try {
-					await pineconeClient.deleteVectors(docInfo.indexName, vectorIds);
-
-					log.info("Deleted vectors from Pinecone", {
-						indexName: docInfo.indexName,
-						count: vectorIds.length,
-					});
-				} catch (error) {
-					log.error("Failed to delete vectors", {
-						error,
-						indexName: docInfo.indexName,
-						vectorIds,
-					});
-					throw error;
-				}
-			});
-		}
-
-		// Step 4: Delete vector_entries rows
+		// Step 3: Delete vector_entries rows
 		await step.run("delete-vector-entries", async () => {
 			try {
 				await db
@@ -164,7 +144,7 @@ export const deleteDoc = inngest.createFunction(
 			}
 		});
 
-		// Step 5: Delete docs_documents row
+		// Step 4: Delete docs_documents row
 		await step.run("delete-document", async () => {
 			try {
 				await db.delete(docsDocuments).where(eq(docsDocuments.id, docInfo.docId));
@@ -184,7 +164,6 @@ export const deleteDoc = inngest.createFunction(
 		return {
 			status: "deleted",
 			docId: docInfo.docId,
-			vectorsDeleted: vectorIds.length,
 		};
 	},
 );

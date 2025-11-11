@@ -54,7 +54,7 @@ const eventsMap = {
       /** Workspace identifier */
       workspaceId: z.string(),
       /** Store name */
-      storeName: z.string(),
+      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** GitHub installation ID */
@@ -77,7 +77,7 @@ const eventsMap = {
       /** Workspace identifier */
       workspaceId: z.string(),
       /** Store name */
-      storeName: z.string(),
+      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** File path relative to repo root */
@@ -97,7 +97,7 @@ const eventsMap = {
       /** Canonical external workspace key for naming (e.g., ws-<slug>) */
       workspaceKey: z.string().optional(),
       /** Store name */
-      storeName: z.string(),
+      storeSlug: z.string(),
       /** Embedding dimension (defaults to provider's dimension) */
       embeddingDim: z.number().optional(),
       /** GitHub repository ID to link (optional) */

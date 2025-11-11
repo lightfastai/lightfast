@@ -36,7 +36,7 @@ import { linkStoreToRepository } from "../../lib/stores";
  * - Sanitizes special characters
  * - Hashes long names to fit within limits
  */
-function resolveIndexName(workspaceKey: string, storeName: string): string {
+function resolveIndexName(workspaceKey: string, storeSlug: string): string {
 	const sanitize = (s: string) =>
 		s
 			.toLowerCase()
@@ -46,7 +46,7 @@ function resolveIndexName(workspaceKey: string, storeName: string): string {
 			.replace(/-{2,}/g, "-");
 
 	const ws = sanitize(workspaceKey);
-	const st = sanitize(storeName);
+	const st = sanitize(storeSlug);
 	let name = `${ws}-${st}`;
 
 	const MAX = 45;
@@ -81,29 +81,26 @@ export const ensureStore = inngest.createFunction(
 		id: "apps-console/ensure-store",
 		name: "Ensure Store Exists",
 		description: "Idempotently provisions store and Pinecone index",
-		retries: 5, // Pinecone API can be flaky, increase retries
+		retries: PRIVATE_CONFIG.workflow.ensureStore.retries,
 
 		// CRITICAL: Prevent duplicate store/index creation within 24hr window
-		idempotency: 'event.data.workspaceId + "-" + event.data.storeName',
+		idempotency: 'event.data.workspaceId + "-" + event.data.storeSlug',
 
 		// Ensure exclusive execution per workspace+store (prevent race conditions)
 		singleton: {
-			key: 'event.data.workspaceId + "-" + event.data.storeName',
-			mode: "skip", // If already creating, skip new request
+			key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+			mode: PRIVATE_CONFIG.workflow.ensureStore.singletonMode,
 		},
 
 		// Pinecone index creation can be slow
-		timeouts: {
-			start: "1m", // Max queue time
-			finish: "10m", // Pinecone index creation + DB write
-		},
+		timeouts: PRIVATE_CONFIG.workflow.ensureStore.timeout,
 	},
 	{ event: "apps-console/store.ensure" },
 	async ({ event, step }) => {
 		const {
 			workspaceId,
 			workspaceKey,
-			storeName,
+			storeSlug,
 			embeddingDim,
 			githubRepoId,
 			repoFullName,
@@ -114,7 +111,7 @@ export const ensureStore = inngest.createFunction(
 		log.info("Ensuring store exists", {
 			workspaceId,
 			workspaceKey,
-			storeName,
+			storeSlug,
 		});
 
 		// Resolve embedding defaults
@@ -126,7 +123,7 @@ export const ensureStore = inngest.createFunction(
 			const store = await db.query.stores.findFirst({
 				where: and(
 					eq(stores.workspaceId, workspaceId),
-					eq(stores.name, storeName),
+					eq(stores.slug, storeSlug),
 				),
 			});
 
@@ -167,11 +164,11 @@ export const ensureStore = inngest.createFunction(
 		// Step 2: Resolve Pinecone index name
 		const indexName = await step.run("resolve-index-name", async () => {
 			const nameSource = workspaceKey ?? workspaceId;
-			const name = resolveIndexName(nameSource, storeName);
+			const name = resolveIndexName(nameSource, storeSlug);
 
 			log.info("Resolved Pinecone index name", {
 				workspaceKey: nameSource,
-				storeName,
+				storeSlug,
 				indexName: name,
 			});
 
@@ -226,17 +223,37 @@ export const ensureStore = inngest.createFunction(
 			});
 		}
 
+		// Step 4b: Configure Pinecone index tags/protection
+		await step.run("configure-pinecone-index", async () => {
+			try {
+				const pinecone = createConsolePineconeClient();
+				await pinecone.configureIndex(indexName, {
+					deletionProtection: PRIVATE_CONFIG.pinecone.deletionProtection,
+					tags: {
+						workspaceId,
+						storeSlug,
+					},
+				});
+			} catch (error) {
+				log.error("Failed to configure Pinecone index", {
+					error,
+					indexName,
+				});
+				// Non-fatal: keep going so ingestion can proceed
+			}
+		});
+
 		// Step 5: Create store DB record
 		const store = await step.run("create-store-record", async () => {
 			try {
-				const storeId = `${workspaceId}_${storeName}`;
+				const storeId = `${workspaceId}_${storeSlug}`;
 
 				const inserted = await db
 					.insert(stores)
 					.values({
 						id: storeId,
 						workspaceId,
-						name: storeName,
+						slug: storeSlug,
 						indexName,
 						embeddingDim: targetDim,
 						// Hidden config fields from PRIVATE_CONFIG
@@ -263,13 +280,13 @@ export const ensureStore = inngest.createFunction(
 				const existing = await db.query.stores.findFirst({
 					where: and(
 						eq(stores.workspaceId, workspaceId),
-						eq(stores.name, storeName),
+						eq(stores.slug, storeSlug),
 					),
 				});
 
 				if (!existing) {
 					throw new Error(
-						`Failed to create or fetch store: ${workspaceId}/${storeName}`,
+						`Failed to create or fetch store: ${workspaceId}/${storeSlug}`,
 					);
 				}
 
@@ -282,7 +299,7 @@ export const ensureStore = inngest.createFunction(
 				log.error("Failed to create store DB record", {
 					error,
 					workspaceId,
-					storeName,
+					storeSlug,
 				});
 				throw error;
 			}

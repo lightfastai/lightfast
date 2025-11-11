@@ -44,15 +44,10 @@ export const workspaces = pgTable(
       .references(() => organizations.id, { onDelete: "cascade" }),
 
     /**
-     * Display name for workspace
-     * Auto-generated friendly name for default workspaces (e.g., "Robust Chicken")
+     * URL-safe workspace identifier (unique within organization)
+     * Max 20 chars, lowercase alphanumeric + hyphens
+     * Auto-generated for default workspaces (e.g., "robust-chicken")
      * User-provided for custom workspaces (Phase 2)
-     */
-    name: varchar("name", { length: 255 }).notNull(),
-
-    /**
-     * URL-friendly slug (unique within organization)
-     * Derived from name (e.g., robust-chicken)
      */
     slug: varchar("slug", { length: 191 }).notNull(),
 
@@ -127,5 +122,22 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = typeof workspaces.$inferInsert;
 
 // Zod schemas
-export const insertWorkspaceSchema = createInsertSchema(workspaces);
+export const insertWorkspaceSchema = createInsertSchema(workspaces).refine(
+  (data) => {
+    // Validate slug format (lowercase alphanumeric + hyphens, max 20 chars)
+    const slug = data.slug;
+    if (!slug) return true; // Allow empty during optional create
+
+    return (
+      /^[a-z0-9-]+$/.test(slug) && // Only lowercase alphanumeric + hyphens
+      !/^-|-$|--/.test(slug) &&    // No leading/trailing/consecutive hyphens
+      slug.length <= 20            // Max 20 chars
+    );
+  },
+  {
+    message:
+      "Workspace slug must be lowercase alphanumeric with hyphens only, no leading/trailing/consecutive hyphens, max 20 chars",
+    path: ["slug"],
+  }
+);
 export const selectWorkspaceSchema = createSelectSchema(workspaces);

@@ -9,7 +9,7 @@ import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-gi
 import { randomUUID } from "node:crypto";
 import { minimatch } from "minimatch";
 import { env } from "../env";
-import { getWorkspaceKeyFromSlug } from "../lib/workspace-key";
+import { getWorkspaceKey } from "@db/console/utils";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
@@ -612,7 +612,7 @@ export const repositoryRouter = {
       const wsId = await getOrCreateDefaultWorkspace(org.id);
       const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
       const workspaceId = ws?.id ?? wsId; // DB UUID
-      const workspaceKey = ws ? getWorkspaceKeyFromSlug(ws.slug) : `ws-${org.githubOrgSlug}`;
+      const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-${org.githubOrgSlug}`;
       const changedFiles = matches.map((path) => ({ path, status: "modified" as const }));
 
       // Send event to Inngest

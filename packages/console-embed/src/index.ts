@@ -18,6 +18,7 @@ export type {
 export {
 	resolveEmbeddingDefaults,
 	createEmbeddingProvider,
+	embedTextsInBatches,
 	type EmbeddingDefaults,
 	type EmbeddingProviderConfig,
 } from "./utils";

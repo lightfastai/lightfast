@@ -100,12 +100,12 @@ export class PineconeClient {
    */
   async upsertVectors<T extends RecordMetadata = RecordMetadata>(
     indexName: string,
-    request: UpsertRequest<T>
+    request: UpsertRequest<T>,
+    batchSize = 100
   ): Promise<UpsertResponse> {
     const index = this.client.index(indexName);
 
     try {
-      const batchSize = 100;
       for (let i = 0; i < request.ids.length; i += batchSize) {
         const ids = request.ids.slice(i, i + batchSize);
         const vectors = request.vectors.slice(i, i + batchSize);
@@ -129,17 +129,51 @@ export class PineconeClient {
   /**
    * Delete vectors by IDs
    */
-  async deleteVectors(indexName: string, vectorIds: string[]): Promise<void> {
+  async deleteVectors(indexName: string, vectorIds: string[], batchSize = 100): Promise<void> {
     if (vectorIds.length === 0) return;
 
     const index = this.client.index(indexName);
 
     try {
-      const batchSize = 100;
       for (let i = 0; i < vectorIds.length; i += batchSize) {
         const batch = vectorIds.slice(i, i + batchSize);
         await index.deleteMany(batch);
       }
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Delete vectors matching a metadata filter
+   */
+  async deleteByMetadata(indexName: string, filter: object): Promise<void> {
+    const index = this.client.index(indexName);
+
+    try {
+      await index.deleteMany(filter);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Configure index level settings (deletion protection, tags, etc.)
+   */
+  async configureIndex(
+    indexName: string,
+    options: {
+      deletionProtection?: "enabled" | "disabled";
+      tags?: Record<string, string>;
+      spec?: unknown;
+    }
+  ): Promise<void> {
+    try {
+      await this.client.configureIndex(indexName, {
+        deletionProtection: options.deletionProtection,
+        spec: options.spec as never,
+        tags: options.tags,
+      });
     } catch (error) {
       this.handleError(error);
     }

@@ -63,17 +63,17 @@ export const searchRouter = {
 					});
 				}
 
-				const storeName = storeLabel.replace("store:", "");
+				const storeSlug = storeLabel.replace("store:", "");
 
 				// Phase 1.6: Look up store to get workspaceId
 				const store = await db.query.stores.findFirst({
-					where: eq(stores.name, storeName),
+					where: eq(stores.slug, storeSlug),
 				});
 
 				if (!store) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: `Store not found: ${storeName}`,
+						message: `Store not found: ${storeSlug}`,
 					});
 				}
 
@@ -83,7 +83,7 @@ export const searchRouter = {
 				log.info("Resolved index", {
 					requestId,
 					workspaceId,
-					storeName,
+					storeSlug,
 					indexName,
 					storeId: store.id,
 				});
