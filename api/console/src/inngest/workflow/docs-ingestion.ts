@@ -21,6 +21,15 @@ import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { ensureStore } from "./ensure-store";
+import {
+	createGitHubApp,
+	getThrottledInstallationOctokit,
+	GitHubContentService,
+} from "@repo/console-octokit-github";
+import { validateConfig } from "@repo/console-config";
+import { env } from "../../env";
+import yaml from "yaml";
+import { minimatch } from "minimatch";
 
 /**
  * Main docs ingestion function
@@ -63,110 +72,87 @@ export const docsIngestion = inngest.createFunction(
 
     // Step 1: Load lightfast.yml from repository (before idempotency to honor configured store name)
     const configPatterns = await step.run("load-config", async () => {
-      try {
-        // Import GitHub utilities
-        const {
-          createGitHubApp,
-          getThrottledInstallationOctokit,
-          GitHubContentService,
-        } = await import("@repo/console-octokit-github");
-        const { loadConfig } = await import("@repo/console-config");
-        const { env } = await import("../../env");
+      log.info("Loading lightfast.yml from repository", {
+        repoFullName,
+        ref: afterSha,
+      });
 
-        log.info("Loading lightfast.yml from repository", {
-          repoFullName,
-          ref: afterSha,
-        });
+      // Create GitHub App and get installation Octokit
+      const app = createGitHubApp({
+        appId: env.GITHUB_APP_ID,
+        privateKey: env.GITHUB_APP_PRIVATE_KEY,
+      });
 
-        // Create GitHub App and get installation Octokit
-        const app = createGitHubApp({
-          appId: env.GITHUB_APP_ID,
-          privateKey: env.GITHUB_APP_PRIVATE_KEY,
-        });
+      const octokit = await getThrottledInstallationOctokit(
+        app,
+        githubInstallationId,
+      );
 
-        const octokit = await getThrottledInstallationOctokit(
-          app,
-          githubInstallationId,
-        );
+      // Create content service and fetch lightfast.yml (try common variants)
+      const contentService = new GitHubContentService(octokit);
+      const [owner, repo] = repoFullName.split("/");
 
-        // Create content service and fetch lightfast.yml (try common variants)
-        const contentService = new GitHubContentService(octokit);
-        const [owner, repo] = repoFullName.split("/");
-
-        if (!owner || !repo) {
-          throw new Error(`Invalid repository full name: ${repoFullName}`);
-        }
-
-        const repoOwner = owner;
-        const repoName = repo;
-
-        async function fetchConfigFile() {
-          const candidates = [
-            "lightfast.yml",
-            ".lightfast.yml",
-            "lightfast.yaml",
-            ".lightfast.yaml",
-          ];
-          for (const path of candidates) {
-            const file = await contentService.fetchSingleFile(
-              repoOwner,
-              repoName,
-              path,
-              afterSha,
-            );
-            if (file) return file;
-          }
-          return null;
-        }
-
-        const configFile = await fetchConfigFile();
-
-        if (!configFile) {
-          log.warn(
-            "No lightfast config found in repository, using default patterns",
-          );
-          return {
-            // Broaden defaults to include common docs locations and README
-            globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
-          };
-        }
-
-        // Parse config (parse YAML then validate)
-        const yaml = await import("yaml");
-        const { validateConfig } = await import("@repo/console-config");
-
-        const parsed = yaml.parse(configFile.content);
-        const configResult = validateConfig(parsed);
-
-        if (configResult.isErr()) {
-          log.error("Invalid lightfast.yml config", {
-            error: configResult.error,
-          });
-          return {
-            globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
-          };
-        }
-
-        const config = configResult.value;
-
-        log.info("Loaded lightfast.yml config", {
-          store: config.store,
-          globs: config.include,
-        });
-
-        return {
-          globs: config.include,
-          store: config.store,
-        };
-      } catch (error) {
-        log.error("Failed to load config, using defaults", { error });
-        return {
-          globs: ["docs/**/*.md", "docs/**/*.mdx", "README.md"],
-        };
+      if (!owner || !repo) {
+        throw new Error(`Invalid repository full name: ${repoFullName}`);
       }
+
+      const repoOwner = owner;
+      const repoName = repo;
+
+      async function fetchConfigFile() {
+        const candidates = [
+          "lightfast.yml",
+          ".lightfast.yml",
+          "lightfast.yaml",
+          ".lightfast.yaml",
+        ];
+        for (const path of candidates) {
+          const file = await contentService.fetchSingleFile(
+            repoOwner,
+            repoName,
+            path,
+            afterSha,
+          );
+          if (file) return file;
+        }
+        return null;
+      }
+
+      const configFile = await fetchConfigFile();
+
+      if (!configFile) {
+        throw new Error(
+          `No lightfast.yml configuration found in repository ${repoFullName}. ` +
+          `Please add a lightfast.yml file to the root of your repository. ` +
+          `See https://docs.lightfast.ai/configuration for details.`
+        );
+      }
+
+      // Parse config (parse YAML then validate)
+      const parsed = yaml.parse(configFile.content);
+      const configResult = validateConfig(parsed);
+
+      if (configResult.isErr()) {
+        throw new Error(
+          `Invalid lightfast.yml configuration in repository ${repoFullName}: ${configResult.error}. ` +
+          `See https://docs.lightfast.ai/configuration for details.`
+        );
+      }
+
+      const config = configResult.value;
+
+      log.info("Loaded lightfast.yml config", {
+        store: config.store,
+        globs: config.include,
+      });
+
+      return {
+        globs: config.include,
+        store: config.store,
+      };
     });
 
-    // Use configured store name if available; fallback to 'docs' when no config
+    // Use configured store name, fallback to 'docs' if not specified in config
     const effectiveStoreName =
       (configPatterns as { store?: string }).store ?? "docs";
 
@@ -224,8 +210,6 @@ export const docsIngestion = inngest.createFunction(
 
     // Step 4: Filter changed files by config globs
     const filteredFiles = await step.run("filter-files", async () => {
-      const { minimatch } = await import("minimatch");
-
       const filtered = changedFiles.filter(
         (file: { path: string; status: string }) => {
           return configPatterns.globs.some((glob: string) =>

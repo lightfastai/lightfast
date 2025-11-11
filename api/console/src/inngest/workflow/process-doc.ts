@@ -25,6 +25,13 @@ import { createEmbeddingProvider } from "@repo/console-embed";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
 import type { Chunk } from "@repo/console-chunking";
+import {
+	createGitHubApp,
+	getThrottledInstallationOctokit,
+	GitHubContentService,
+} from "@repo/console-octokit-github";
+import { env } from "../../env";
+import matter from "gray-matter";
 
 /**
  * Process document function
@@ -60,10 +67,6 @@ export const processDoc = inngest.createFunction(
 		// Step 1: Fetch file content from GitHub
 		const fileContent = await step.run("fetch-content", async () => {
 			try {
-				// Import GitHub utilities
-				const { createGitHubApp, getThrottledInstallationOctokit, GitHubContentService } = await import("@repo/console-octokit-github");
-				const { env } = await import("../../env");
-
 				log.info("Fetching file content from GitHub", {
 					filePath,
 					repoFullName,
@@ -145,8 +148,7 @@ export const processDoc = inngest.createFunction(
 
 				// Re-extract content from fileContent (parsed only has metadata)
 				// We need to strip frontmatter and chunk the body
-				const matter = await import("gray-matter");
-				const { content: body } = matter.default(fileContent);
+				const { content: body } = matter(fileContent);
 
 				// Use chunking config from store
 				const chunked = chunkText(body, {
