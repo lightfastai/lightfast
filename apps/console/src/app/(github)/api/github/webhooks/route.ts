@@ -1,16 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { RepositoriesService } from "@repo/console-api-services";
-import { db } from "@db/console/client";
-import {
-  DeusConnectedRepository,
-  organizations,
-  workspaces,
-} from "@db/console/schema";
-import { eq } from "drizzle-orm";
-import { getOrCreateDefaultWorkspace } from "@db/console/utils";
-import { getWorkspaceKeyFromSlug } from "@api/console/lib/workspace-key";
+import { RepositoriesService, WorkspacesService } from "@repo/console-api-services";
 import type {
   PushEvent,
   InstallationEvent,
@@ -89,35 +80,21 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
   console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
   const headCommitTimestamp = payload.head_commit?.timestamp ?? undefined;
 
-  // Resolve organization -> default workspace (DB UUID) and workspaceKey from slug
-  let workspaceId = "";
-  let workspaceKey = "";
-  try {
-    const ownerLogin = payload.repository.full_name
-      .split("/")[0]
-      ?.toLowerCase();
-    if (!ownerLogin) throw new Error("Missing owner login");
-
-    const orgRow = await db.query.organizations.findFirst({
-      where: eq(organizations.githubOrgSlug, ownerLogin),
-    });
-    if (!orgRow) throw new Error(`Organization not found for ${ownerLogin}`);
-
-    const wsId = await getOrCreateDefaultWorkspace(orgRow.id);
-    const ws = await db.query.workspaces.findFirst({
-      where: eq(workspaces.id, wsId),
-    });
-    if (!ws) throw new Error("Workspace row not found");
-
-    workspaceId = ws.id; // UUID
-    workspaceKey = getWorkspaceKeyFromSlug(ws.slug);
-    console.log(
-      `[Webhook] Resolved workspace: id=${workspaceId} key=${workspaceKey}`,
-    );
-  } catch (error) {
-    console.error(`[Webhook] Failed to resolve workspace:`, error);
-    throw error; // Cannot proceed without workspace
+  // Resolve workspace from GitHub org slug
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) {
+    console.error(`[Webhook] Missing owner login in ${payload.repository.full_name}`);
+    return;
   }
+
+  const workspacesService = new WorkspacesService();
+  const workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+
+  const workspaceId = workspace.workspaceId;
+  const workspaceKey = workspace.workspaceKey;
+  console.log(
+    `[Webhook] Resolved workspace: id=${workspaceId} key=${workspaceKey}`,
+  );
 
   // Aggregate changed files from all commits
   const changedFiles = new Map<string, "added" | "modified" | "removed">();
@@ -148,6 +125,12 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
       });
       const detector = new ConfigDetectorService(app);
       const [owner, repo] = payload.repository.full_name.split("/");
+
+      if (!owner || !repo) {
+        console.error(`[Webhook] Invalid repository full_name: ${payload.repository.full_name}`);
+        return;
+      }
+
       const result = await detector.detectConfig(
         owner,
         repo,
@@ -155,20 +138,13 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
         payload.installation.id,
       );
 
-      await db
-        .update(DeusConnectedRepository)
-        .set({
-          configStatus: result.exists ? "configured" : "unconfigured",
-          configPath: result.path,
-          configDetectedAt: new Date().toISOString(),
-          workspaceId, // DB UUID
-        })
-        .where(
-          eq(
-            DeusConnectedRepository.githubRepoId,
-            payload.repository.id.toString(),
-          ),
-        );
+      const repositoriesService = new RepositoriesService();
+      await repositoriesService.updateConfigStatus({
+        githubRepoId: payload.repository.id.toString(),
+        configStatus: result.exists ? "configured" : "unconfigured",
+        configPath: result.path,
+        workspaceId,
+      });
 
       console.log(
         `[Webhook] Updated config status to ${result.exists ? "configured" : "unconfigured"} (${result.path ?? "none"})`,
