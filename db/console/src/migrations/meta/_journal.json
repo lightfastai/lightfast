@@ -22,6 +22,20 @@
       "when": 1762666419122,
       "tag": "0002_blushing_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1762835206824,
+      "tag": "0003_confused_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762839122169,
+      "tag": "0004_perpetual_magma",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-embed",
+  "name": "@vendor/embed",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./provider/char-hash": "./src/provider/char-hash.ts",
+    "./provider/openai": "./src/provider/openai.ts",
+    "./provider/cohere": "./src/provider/cohere.ts",
+    "./batch": "./src/batch.ts",
+    "./env": "./src/env.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -19,9 +24,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/console-config": "workspace:*",
-    "@repo/console-types": "workspace:*",
-    "@vendor/embed": "workspace:*"
+    "@t3-oss/env-core": "catalog:",
+    "cohere-ai": "^7.19.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

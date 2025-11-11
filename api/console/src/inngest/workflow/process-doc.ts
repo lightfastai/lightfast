@@ -21,8 +21,9 @@ import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
 import { chunkText, parseMDX, hashContent, deriveSlug } from "@repo/console-chunking";
-import { createCharHashEmbedding } from "@repo/console-embed";
-import { pineconeClient } from "@vendor/pinecone";
+import { createEmbeddingProvider } from "@repo/console-embed";
+import { pineconeClient } from "@repo/console-pinecone";
+import type { VectorMetadata } from "@repo/console-pinecone";
 import type { Chunk } from "@repo/console-chunking";
 
 /**
@@ -128,22 +129,36 @@ export const processDoc = inngest.createFunction(
 			}
 		});
 
-		// Step 3: Chunk text (512 tokens, 50 overlap)
+		// Step 3: Chunk text using store configuration
 		const chunks = await step.run("chunk-text", async () => {
 			try {
+				// Get store to read chunking configuration
+				const [store] = await db
+					.select()
+					.from(stores)
+					.where(and(eq(stores.workspaceId, workspaceId), eq(stores.name, storeName)))
+					.limit(1);
+
+				if (!store) {
+					throw new Error(`Store not found: ${workspaceId}/${storeName}`);
+				}
+
 				// Re-extract content from fileContent (parsed only has metadata)
 				// We need to strip frontmatter and chunk the body
 				const matter = await import("gray-matter");
 				const { content: body } = matter.default(fileContent);
 
+				// Use chunking config from store
 				const chunked = chunkText(body, {
-					maxTokens: 512,
-					overlap: 50,
+					maxTokens: store.chunkMaxTokens,
+					overlap: store.chunkOverlap,
 				});
 
 				log.info("Chunked text", {
 					filePath,
 					chunkCount: chunked.length,
+					maxTokens: store.chunkMaxTokens,
+					overlap: store.chunkOverlap,
 				});
 
 				return chunked;
@@ -156,7 +171,9 @@ export const processDoc = inngest.createFunction(
 		// Step 4: Generate embeddings (char-hash)
 		const embeddings = await step.run("generate-embeddings", async () => {
 			try {
-				const embedding = createCharHashEmbedding();
+				const embedding = createEmbeddingProvider({
+					inputType: "search_document",
+				});
 				const texts = chunks.map((chunk: Chunk) => chunk.text);
 				const response = await embedding.embed(texts);
 
@@ -231,7 +248,7 @@ export const processDoc = inngest.createFunction(
 			try {
 				// Prepare vectors for upsert
 				const vectorIds = chunks.map((chunk: Chunk, i: number) => `${docInfo.docId}#${i}`);
-				const metadata = chunks.map((chunk: Chunk, i: number) => ({
+				const metadata: VectorMetadata[] = chunks.map((chunk: Chunk, i: number) => ({
 					docId: docInfo.docId,
 					chunkIndex: i,
 					path: filePath,
@@ -325,12 +342,6 @@ export const processDoc = inngest.createFunction(
 		// Step 8: Update vector_entries table
 		await step.run("update-vector-entries", async () => {
 			try {
-				// Get indexName from docInfo
-				const indexName = "indexName" in docInfo ? docInfo.indexName : undefined;
-				if (!indexName) {
-					throw new Error("Index name not available");
-				}
-
 				// Delete old entries for this document
 				await db
 					.delete(vectorEntries)
@@ -343,7 +354,6 @@ export const processDoc = inngest.createFunction(
 					docId: docInfo.docId,
 					chunkIndex: i,
 					contentHash: docInfo.contentHash,
-					indexName,
 				}));
 
 				await db.insert(vectorEntries).values(entries);

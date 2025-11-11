@@ -1,0 +1,282 @@
+/**
+ * Private infrastructure configuration defaults
+ *
+ * These are NOT user-configurable via lightfast.yml.
+ * They define infrastructure defaults that can be expanded to user config in the future.
+ *
+ * To make a setting user-configurable:
+ * 1. Add it to the LightfastConfigSchema in schema.ts
+ * 2. Update this file to use the user value as override
+ *
+ * @packageDocumentation
+ */
+
+/**
+ * Pinecone infrastructure configuration
+ *
+ * Controls how Pinecone indexes are created and managed.
+ * Currently private - users cannot override these settings.
+ *
+ * Future: Could be made configurable per workspace or store.
+ */
+export const PINECONE_CONFIG = {
+  /**
+   * Vector similarity metric
+   *
+   * Options: "cosine" | "euclidean" | "dotproduct"
+   * Default: "cosine" (best for normalized embeddings)
+   *
+   * @private
+   */
+  metric: "cosine" as const,
+
+  /**
+   * Cloud provider for serverless indexes
+   *
+   * Options: "aws" | "gcp" | "azure"
+   * Default: "aws"
+   *
+   * @private
+   */
+  cloud: "aws" as const,
+
+  /**
+   * AWS region for serverless indexes
+   *
+   * Options: "us-east-1" | "us-west-2" | "eu-west-1" | etc.
+   * Default: "us-west-2" (low latency for US west coast)
+   *
+   * @private
+   */
+  region: "us-west-2" as const,
+
+  /**
+   * Batch size for vector upsert operations
+   *
+   * Default: 100 vectors per batch
+   * Constraint: Pinecone API limits
+   *
+   * @private
+   */
+  upsertBatchSize: 100,
+
+  /**
+   * Batch size for vector delete operations
+   *
+   * Default: 100 vector IDs per batch
+   * Constraint: Pinecone API limits
+   *
+   * @private
+   */
+  deleteBatchSize: 100,
+
+  /**
+   * Maximum length for Pinecone index names
+   *
+   * Constraint: Pinecone platform limit
+   * Used for truncation and hashing of long names
+   *
+   * @private
+   */
+  maxIndexNameLength: 45,
+} as const;
+
+/**
+ * Embedding provider configuration
+ *
+ * Controls which embedding models are used and their parameters.
+ * Currently private - provider selection is automatic based on API keys.
+ *
+ * Future: Could allow users to specify preferred provider per store.
+ */
+export const EMBEDDING_CONFIG = {
+  /**
+   * Cohere embedding configuration
+   *
+   * Used when COHERE_API_KEY is available (production)
+   */
+  cohere: {
+    /**
+     * Model name
+     *
+     * Options: "embed-english-v3.0" | "embed-multilingual-v3.0" | etc.
+     * Default: "embed-english-v3.0"
+     *
+     * @private
+     */
+    model: "embed-english-v3.0" as const,
+
+    /**
+     * Embedding dimension
+     *
+     * Must match the model's output dimension
+     * Default: 1024 (for embed-english-v3.0)
+     *
+     * @private
+     */
+    dimension: 1024,
+  },
+
+  /**
+   * CharHash embedding configuration
+   *
+   * Used as fallback when no API keys available (development/testing)
+   */
+  charHash: {
+    /**
+     * Model identifier
+     *
+     * Default: "char-hash-1536"
+     *
+     * @private
+     */
+    model: "char-hash-1536" as const,
+
+    /**
+     * Embedding dimension
+     *
+     * Default: 1536 (matches OpenAI text-embedding-3-small)
+     *
+     * @private
+     */
+    dimension: 1536,
+  },
+
+  /**
+   * Default batch size for embedding operations
+   *
+   * Default: 100 texts per batch
+   * Used across all embedding providers
+   *
+   * @private
+   */
+  batchSize: 100,
+} as const;
+
+/**
+ * Document chunking configuration
+ *
+ * Controls how documents are split into chunks for embedding.
+ * Currently private - applied globally to all stores.
+ *
+ * Future: Could be configurable per store for different content types.
+ */
+export const CHUNKING_CONFIG = {
+  /**
+   * Maximum tokens per chunk
+   *
+   * Default: 512 tokens
+   * Affects retrieval precision vs context window
+   *
+   * Trade-offs:
+   * - Smaller chunks: More precise retrieval, less context
+   * - Larger chunks: More context, less precise retrieval
+   *
+   * @private
+   */
+  maxTokens: 512,
+
+  /**
+   * Token overlap between consecutive chunks
+   *
+   * Default: 50 tokens
+   * Preserves context across chunk boundaries
+   *
+   * @private
+   */
+  overlap: 50,
+} as const;
+
+/**
+ * GitHub integration configuration
+ *
+ * Controls how content is fetched from GitHub repositories.
+ * Currently private - optimized for GitHub API limits.
+ *
+ * Future: Could be tuned based on GitHub plan (free vs enterprise).
+ */
+export const GITHUB_CONFIG = {
+  /**
+   * Threshold for switching to Tree API
+   *
+   * Default: 20 files
+   *
+   * Logic:
+   * - < 20 files: Use Contents API (simpler, more requests)
+   * - >= 20 files: Use Tree + Blobs API (complex, fewer requests)
+   *
+   * @private
+   */
+  contentsApiThreshold: 20,
+
+  /**
+   * Batch size for parallel blob fetching
+   *
+   * Default: 20 blobs
+   * Used when fetching via Tree + Blobs API
+   *
+   * @private
+   */
+  blobsBatchSize: 20,
+} as const;
+
+/**
+ * Inngest workflow configuration
+ *
+ * Controls workflow behavior and retry policies.
+ * Currently private - applied globally to all workflows.
+ *
+ * Future: Could be configurable per workflow type.
+ */
+export const WORKFLOW_CONFIG = {
+  /**
+   * Number of retries for failed workflows
+   *
+   * Default: 3 retries
+   * Applied to: docs-ingestion, process-doc, delete-doc
+   *
+   * @private
+   */
+  retries: 3,
+
+  /**
+   * Default glob patterns for document ingestion
+   *
+   * Used when no lightfast.yml is found in repository.
+   * Covers common documentation paths.
+   *
+   * @private
+   */
+  defaultIncludePatterns: [
+    "docs/**/*.md",
+    "docs/**/*.mdx",
+    "README.md",
+  ] as const,
+} as const;
+
+/**
+ * Complete private configuration object
+ *
+ * Aggregates all infrastructure defaults in one place.
+ * Import this to access any private config setting.
+ *
+ * @example
+ * ```typescript
+ * import { PRIVATE_CONFIG } from "@repo/console-config/private";
+ *
+ * const metric = PRIVATE_CONFIG.pinecone.metric; // "cosine"
+ * const model = PRIVATE_CONFIG.embedding.cohere.model; // "embed-english-v3.0"
+ * ```
+ */
+export const PRIVATE_CONFIG = {
+  pinecone: PINECONE_CONFIG,
+  embedding: EMBEDDING_CONFIG,
+  chunking: CHUNKING_CONFIG,
+  github: GITHUB_CONFIG,
+  workflow: WORKFLOW_CONFIG,
+} as const;
+
+/**
+ * Type for the complete private configuration
+ */
+export type PrivateConfig = typeof PRIVATE_CONFIG;

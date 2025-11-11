@@ -6,11 +6,56 @@
  */
 
 import { db } from "@db/console/client";
-import { stores } from "@db/console/schema";
+import { stores, storeRepositories } from "@db/console/schema";
 import type { Store } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
-import { createPineconeClient } from "@vendor/pinecone";
+import { createConsolePineconeClient } from "@repo/console-pinecone";
 import { log } from "@vendor/observability/log";
+import { resolveEmbeddingDefaults } from "@repo/console-embed";
+import { PRIVATE_CONFIG } from "@repo/console-config";
+
+/**
+ * Resolve Pinecone index name from workspace and store
+ *
+ * Handles Pinecone naming constraints:
+ * - Max 45 characters
+ * - Only lowercase alphanumeric and hyphens
+ * - Sanitizes special characters
+ * - Hashes long names to fit within limits
+ */
+function resolveIndexName(workspaceKey: string, storeName: string): string {
+  const sanitize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "")
+      .replace(/-{2,}/g, "-");
+
+  const ws = sanitize(workspaceKey);
+  const st = sanitize(storeName);
+  let name = `${ws}-${st}`;
+
+  const MAX = 45;
+  if (name.length > MAX) {
+    const hash = shortHash(`${ws}:${st}`);
+    const base = name.slice(0, MAX - 5).replace(/-+$/, "");
+    name = `${base}-${hash}`;
+  }
+
+  return name;
+}
+
+/**
+ * Generate short hash for index name truncation
+ */
+function shortHash(input: string): string {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return (h % 0xffff).toString(16).padStart(4, "0");
+}
 
 /**
  * Get or create store with Pinecone index auto-provisioning
@@ -25,7 +70,15 @@ export async function getOrCreateStore(params: {
   embeddingDim?: number;
   workspaceKey?: string; // canonical external key for naming, optional
 }): Promise<Store> {
-  const { workspaceId, storeName, embeddingDim = 1536, workspaceKey } = params;
+  // Resolve embedding defaults at runtime
+  const embeddingDefaults = resolveEmbeddingDefaults();
+
+  const {
+    workspaceId,
+    storeName,
+    embeddingDim = embeddingDefaults.dimension,
+    workspaceKey,
+  } = params;
 
   // Check if store already exists (canonical workspaceId)
   let store = await db.query.stores.findFirst({
@@ -58,11 +111,12 @@ export async function getOrCreateStore(params: {
 	// Auto-provision new store
 	log.info("Store not found, auto-provisioning", { workspaceId, storeName });
 
-	const pinecone = createPineconeClient();
-	const indexName = pinecone.resolveIndexName(workspaceKey ?? workspaceId, storeName);
+  const pinecone = createConsolePineconeClient();
+  const nameSource = workspaceKey ?? workspaceId;
+  const indexName = resolveIndexName(nameSource, storeName);
 
-	log.info("Creating Pinecone index", { indexName, embeddingDim });
-	await pinecone.createIndex(workspaceId, storeName, embeddingDim);
+  log.info("Creating Pinecone index", { indexName, embeddingDim });
+  await pinecone.createIndex(indexName, embeddingDim);
 
 	const storeId = `${workspaceId}_${storeName}`;
   const inserted = await db
@@ -73,6 +127,15 @@ export async function getOrCreateStore(params: {
       name: storeName,
       indexName,
       embeddingDim,
+      // Hidden config fields from PRIVATE_CONFIG
+      pineconeMetric: PRIVATE_CONFIG.pinecone.metric,
+      pineconeCloud: PRIVATE_CONFIG.pinecone.cloud,
+      pineconeRegion: PRIVATE_CONFIG.pinecone.region,
+      chunkMaxTokens: PRIVATE_CONFIG.chunking.maxTokens,
+      chunkOverlap: PRIVATE_CONFIG.chunking.overlap,
+      // Embedding config from resolved defaults
+      embeddingModel: embeddingDefaults.model,
+      embeddingProvider: embeddingDefaults.model.includes("cohere") ? "cohere" : "charHash",
     })
     .onConflictDoNothing()
     .returning();
@@ -91,6 +154,36 @@ export async function getOrCreateStore(params: {
 	log.info("Store auto-provisioned successfully", { storeId, indexName });
 
 	return store;
+}
+
+/**
+ * Link a store to a GitHub repository for auditing and deduping.
+ */
+export async function linkStoreToRepository(params: {
+  storeId: string;
+  githubRepoId: number | string;
+  repoFullName: string;
+}) {
+  const repoId =
+    typeof params.githubRepoId === "string"
+      ? params.githubRepoId
+      : params.githubRepoId.toString();
+
+  await db
+    .insert(storeRepositories)
+    .values({
+      storeId: params.storeId,
+      githubRepoId: repoId,
+      repoFullName: params.repoFullName,
+    })
+    .onConflictDoUpdate({
+      target: storeRepositories.githubRepoId,
+      set: {
+        storeId: params.storeId,
+        repoFullName: params.repoFullName,
+        linkedAt: new Date(),
+      },
+    });
 }
 
 /**

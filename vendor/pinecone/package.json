@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@mastra/pinecone": "^0.1.0-alpha.57",
+    "@pinecone-database/pinecone": "^6.1.3",
     "@t3-oss/env-nextjs": "catalog:",
     "zod": "catalog:"
   },

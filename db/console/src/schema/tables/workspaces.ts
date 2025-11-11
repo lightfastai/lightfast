@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { randomUUID } from "node:crypto";
+import { organizations } from "./organizations";
 
 /**
  * Workspaces table represents isolated knowledge bases within an organization.
@@ -38,7 +39,9 @@ export const workspaces = pgTable(
     /**
      * Organization this workspace belongs to (Clerk org ID)
      */
-    organizationId: varchar("organization_id", { length: 191 }).notNull(),
+    organizationId: varchar("organization_id", { length: 191 })
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
 
     /**
      * Display name for workspace
@@ -69,12 +72,6 @@ export const workspaces = pgTable(
      * }
      */
     settings: jsonb("settings").$type<WorkspaceSettings>(),
-
-    /**
-     * Pinecone index name for this workspace
-     * Format: lightfast-{env}-{workspaceId}
-     */
-    pineconeIndex: varchar("pinecone_index", { length: 255 }),
 
     /**
      * Timestamp when workspace was created

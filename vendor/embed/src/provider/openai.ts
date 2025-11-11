@@ -6,7 +6,7 @@
  * @see docs/architecture/phase1/mastra-integration.md
  */
 
-import type { EmbeddingProvider, EmbedResponse } from "./types";
+import type { EmbeddingProvider, EmbedResponse } from "../types";
 
 /**
  * OpenAI embedding provider (Phase 2 - Not Implemented)

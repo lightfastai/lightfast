@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-embed",
+  "name": "@repo/console-pinecone",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,9 +19,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^6.1.3",
     "@repo/console-config": "workspace:*",
-    "@repo/console-types": "workspace:*",
-    "@vendor/embed": "workspace:*"
+    "@vendor/pinecone": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -17,7 +17,7 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
-import { pineconeClient } from "@vendor/pinecone";
+import { pineconeClient } from "@repo/console-pinecone";
 
 /**
  * Delete document function

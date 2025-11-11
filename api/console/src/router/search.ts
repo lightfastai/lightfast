@@ -12,8 +12,9 @@ import {
 	SearchResponseSchema,
 	type SearchResponse,
 } from "@repo/console-types/api";
-import { pineconeClient } from "@vendor/pinecone";
-import { createCharHashEmbedding } from "@repo/console-embed";
+import { pineconeClient } from "@repo/console-pinecone";
+import type { VectorMetadata } from "@repo/console-pinecone";
+import { createEmbeddingProvider } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
@@ -89,7 +90,9 @@ export const searchRouter = {
 
 				// Generate query embedding
 				const embedStart = Date.now();
-				const embedding = createCharHashEmbedding();
+				const embedding = createEmbeddingProvider({
+					inputType: "search_query",
+				});
 				const { embeddings } = await embedding.embed([input.query]);
 				const embedLatency = Date.now() - embedStart;
 
@@ -109,7 +112,7 @@ export const searchRouter = {
 
 				// Query Pinecone
 				const queryStart = Date.now();
-				const results = await pineconeClient.query(indexName, {
+				const results = await pineconeClient.query<VectorMetadata>(indexName, {
 					vector: queryVector,
 					topK: input.topK,
 					includeMetadata: true,

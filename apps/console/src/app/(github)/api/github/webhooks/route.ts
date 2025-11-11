@@ -84,6 +84,7 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 	}
 
 	console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
+	const headCommitTimestamp = payload.head_commit?.timestamp ?? undefined;
 
     // Resolve organization -> default workspace (DB UUID) and workspaceKey from slug
     let workspaceId = "";
@@ -169,10 +170,12 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
             workspaceId, // DB UUID
             workspaceKey, // external naming key
             repoFullName: payload.repository.full_name,
+            githubRepoId: payload.repository.id,
             githubInstallationId: payload.installation.id,
             beforeSha: payload.before,
             afterSha: payload.after,
             deliveryId,
+            headCommitTimestamp,
             changedFiles: allFiles,
         },
     });

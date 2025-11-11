@@ -3,9 +3,19 @@
  * Latest version state per repo-relative file path
  */
 
-import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { stores } from "./stores";
 
 export const docsDocuments = pgTable(
   "lightfast_docs_documents",
@@ -13,7 +23,9 @@ export const docsDocuments = pgTable(
     /** Unique identifier for the document */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Store ID this document belongs to */
-    storeId: varchar("store_id", { length: 191 }).notNull(),
+    storeId: varchar("store_id", { length: 191 })
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
     /** Repo-relative file path */
     path: varchar("path", { length: 512 }).notNull(),
     /** URL-friendly slug */
@@ -47,7 +59,7 @@ export const docsDocuments = pgTable(
     byStore: index("idx_docs_store").on(t.storeId),
     bySlug: index("idx_docs_store_slug").on(t.storeId, t.slug),
     uniquePath: uniqueIndex("uq_docs_store_path").on(t.storeId, t.path),
-  })
+  }),
 );
 
 // Type exports

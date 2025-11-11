@@ -3,9 +3,16 @@
  * Idempotency and audit trail for push deliveries
  */
 
-import { index, pgTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import {
+  index,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { stores } from "./stores";
 
 export const ingestionCommits = pgTable(
   "lightfast_ingestion_commits",
@@ -13,7 +20,9 @@ export const ingestionCommits = pgTable(
     /** Unique identifier for the commit record */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Store ID this commit belongs to */
-    storeId: varchar("store_id", { length: 191 }).notNull(),
+    storeId: varchar("store_id", { length: 191 })
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
     /** Git commit SHA before the push */
     beforeSha: varchar("before_sha", { length: 64 }).notNull(),
     /** Git commit SHA after the push */
@@ -31,7 +40,7 @@ export const ingestionCommits = pgTable(
     byStore: index("idx_commits_store").on(t.storeId),
     uniqAfter: uniqueIndex("uq_commit_after").on(t.storeId, t.afterSha),
     uniqDelivery: uniqueIndex("uq_commit_delivery").on(t.storeId, t.deliveryId),
-  })
+  }),
 );
 
 // Type exports
