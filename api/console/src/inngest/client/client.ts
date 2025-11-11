@@ -84,6 +84,28 @@ const eventsMap = {
       filePath: z.string(),
     }),
   },
+
+  /**
+   * Ensure store and Pinecone index exist
+   * Idempotently provisions store infrastructure
+   * Can be triggered by docs-ingestion, admin API, or reconciliation
+   */
+  "apps-console/store.ensure": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming (e.g., ws-<slug>) */
+      workspaceKey: z.string().optional(),
+      /** Store name */
+      storeName: z.string(),
+      /** Embedding dimension (defaults to provider's dimension) */
+      embeddingDim: z.number().optional(),
+      /** GitHub repository ID to link (optional) */
+      githubRepoId: z.union([z.number(), z.string()]).optional(),
+      /** Repository full name to link (optional) */
+      repoFullName: z.string().optional(),
+    }),
+  },
 };
 
 /**

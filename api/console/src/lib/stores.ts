@@ -1,8 +1,12 @@
 /**
  * Store management utilities
  *
- * Shared business logic for store provisioning that can be used by
- * both tRPC routers and Inngest workflows.
+ * Provides low-level functions for store operations.
+ *
+ * **IMPORTANT:** For store creation, use the `ensure-store` workflow instead
+ * of `getOrCreateStore` to ensure proper idempotency and Pinecone index management.
+ *
+ * The workflow approach prevents race conditions and provides better observability.
  */
 
 import { db } from "@db/console/client";
@@ -60,9 +64,23 @@ function shortHash(input: string): string {
 /**
  * Get or create store with Pinecone index auto-provisioning
  *
- * This is the shared business logic used by both:
- * - tRPC stores.getOrCreate procedure
- * - Inngest docs-ingestion workflow
+ * @deprecated Prefer using the `ensure-store` Inngest workflow for store creation.
+ * This function is kept for backwards compatibility but may have race conditions
+ * when called concurrently.
+ *
+ * **Recommended:**
+ * ```typescript
+ * await inngest.send({
+ *   name: "apps-console/store.ensure",
+ *   data: { workspaceId, storeName, ... }
+ * });
+ * ```
+ *
+ * **Legacy usage (avoid if possible):**
+ * This function is still used for:
+ * - Quick read operations (fetching existing stores)
+ * - Migration scripts
+ * - Testing/development
  */
 export async function getOrCreateStore(params: {
   workspaceId: string; // DB UUID

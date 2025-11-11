@@ -40,6 +40,16 @@ export class ConsolePineconeClient {
   }
 
   /**
+   * Check if a Pinecone index exists
+   *
+   * @param indexName - Name of the index to check
+   * @returns true if index exists, false otherwise
+   */
+  async indexExists(indexName: string): Promise<boolean> {
+    return this.client.indexExists(indexName);
+  }
+
+  /**
    * Delete a Pinecone index
    */
   async deleteIndex(indexName: string): Promise<void> {

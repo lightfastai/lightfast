@@ -5,21 +5,22 @@
  * lightfast.yml configuration.
  *
  * Workflow steps:
- * 1. Check idempotency (has this delivery been processed?)
- * 2. Load lightfast.yml from repository
- * 3. Filter changed files by config globs
- * 4. For each file: trigger process or delete workflow
- * 5. Record commit in ingestion_commits table
+ * 1. Load lightfast.yml from repository
+ * 2. Ensure store exists (via separate ensure-store workflow)
+ * 3. Check idempotency (has this delivery been processed?)
+ * 4. Filter changed files by config globs
+ * 5. For each file: trigger process or delete workflow
+ * 6. Record commit in ingestion_commits table
  */
 
 import { db } from "@db/console/client";
 import { ingestionCommits } from "@db/console/schema";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
-import { getOrCreateStore, linkStoreToRepository } from "../../lib/stores";
+import { ensureStore } from "./ensure-store";
 
 /**
  * Main docs ingestion function
@@ -169,40 +170,44 @@ export const docsIngestion = inngest.createFunction(
     const effectiveStoreName =
       (configPatterns as { store?: string }).store ?? "docs";
 
-    // Step 2: Check idempotency - has this delivery already been processed?
-    const { existingCommit } = await step.run("check-idempotency", async () => {
+    // Step 2: Ensure store exists (separate workflow for idempotency and clarity)
+    const storeResult = await step.invoke("ensure-store", {
+      function: ensureStore,
+      data: {
+        workspaceId,
+        workspaceKey,
+        storeName: effectiveStoreName,
+        embeddingDim: targetEmbeddingDim,
+        githubRepoId,
+        repoFullName,
+      },
+    });
+
+    const store = storeResult.store;
+    targetStore = {
+      id: store.id,
+      name: store.name,
+    };
+
+    log.info("Store ensured", {
+      storeId: store.id,
+      status: storeResult.status,
+      created: storeResult.created,
+    });
+
+    // Step 3: Check idempotency - has this delivery already been processed?
+    const existingCommit = await step.run("check-idempotency", async () => {
       try {
-        // First, get or create store using effective name
-        const store = await getOrCreateStore({
-          workspaceId,
-          storeName: effectiveStoreName,
-          embeddingDim: targetEmbeddingDim,
-          workspaceKey,
-        });
-
-        targetStore = {
-          id: store.id,
-          name: store.name,
-        };
-
-        await linkStoreToRepository({
-          storeId: store.id,
-          githubRepoId,
-          repoFullName,
-        });
-
         // Check if we've already processed this delivery
+        // Use deliveryId for webhook idempotency (not afterSha to allow re-processing)
         const existing = await db.query.ingestionCommits.findFirst({
           where: and(
             eq(ingestionCommits.storeId, store.id),
-            or(
-              eq(ingestionCommits.deliveryId, deliveryId),
-              eq(ingestionCommits.afterSha, afterSha),
-            ),
+            eq(ingestionCommits.deliveryId, deliveryId),
           ),
         });
 
-        return { existingCommit: existing ?? null };
+        return existing ?? null;
       } catch (error) {
         log.error("Failed to check idempotency", { error, deliveryId });
         throw error;
@@ -217,7 +222,7 @@ export const docsIngestion = inngest.createFunction(
       return { status: "skipped", reason: "already_processed" };
     }
 
-    // Step 3: Filter changed files by config globs
+    // Step 4: Filter changed files by config globs
     const filteredFiles = await step.run("filter-files", async () => {
       const { minimatch } = await import("minimatch");
 
@@ -266,7 +271,7 @@ export const docsIngestion = inngest.createFunction(
       return { status: "skipped", reason: "no_matching_files" };
     }
 
-    // Step 4: Trigger process or delete workflows for each file
+    // Step 5: Trigger process or delete workflows for each file
     const processResults = await step.run(
       "trigger-file-workflows",
       async () => {
@@ -335,7 +340,7 @@ export const docsIngestion = inngest.createFunction(
       },
     );
 
-    // Step 5: Record commit as processed
+    // Step 6: Record commit as processed
     await step.run("record-commit", async () => {
       try {
         if (!targetStore) {

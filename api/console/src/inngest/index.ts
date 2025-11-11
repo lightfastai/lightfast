@@ -7,6 +7,7 @@
 import { serve } from "inngest/next";
 import { inngest } from "./client/client";
 import { docsIngestion } from "./workflow/docs-ingestion";
+import { ensureStore } from "./workflow/ensure-store";
 import { processDoc } from "./workflow/process-doc";
 import { deleteDoc } from "./workflow/delete-doc";
 
@@ -15,6 +16,7 @@ export { inngest };
 
 // Export workflows
 export { docsIngestion };
+export { ensureStore };
 export { processDoc };
 export { deleteDoc };
 
@@ -38,7 +40,7 @@ export { deleteDoc };
 export function createInngestRouteContext() {
 	return serve({
 		client: inngest,
-		functions: [docsIngestion, processDoc, deleteDoc],
+		functions: [docsIngestion, ensureStore, processDoc, deleteDoc],
 		servePath: "/api/inngest",
 	});
 }

@@ -65,6 +65,24 @@ export class PineconeClient {
   }
 
   /**
+   * Check if an index exists
+   *
+   * @param indexName - Name of the index to check
+   * @returns true if index exists, false otherwise
+   */
+  async indexExists(indexName: string): Promise<boolean> {
+    try {
+      const indexes = await this.client.listIndexes();
+      const indexList = indexes.indexes ?? [];
+      return indexList.some(index => index.name === indexName);
+    } catch (error) {
+      // If list fails, assume index doesn't exist
+      console.warn(`Failed to check index existence: ${error}`);
+      return false;
+    }
+  }
+
+  /**
    * Delete a Pinecone index
    */
   async deleteIndex(indexName: string): Promise<void> {
