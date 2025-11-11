@@ -29,7 +29,20 @@ export const deleteDoc = inngest.createFunction(
 	{
 		id: "apps-console/delete-doc",
 		name: "Delete Document",
-		retries: 3,
+		description: "Deletes document and vectors from DB and Pinecone",
+		retries: 2, // Deletion is simpler, fewer retries needed
+
+		// Prevent duplicate deletion work
+		idempotency: 'event.data.storeName + "-" + event.data.filePath',
+
+		// Allow parallel deletions
+		concurrency: 10,
+
+		// Timeout for Pinecone deletion
+		timeouts: {
+			start: "30s", // Max queue time
+			finish: "5m", // Query + delete vectors + delete DB records
+		},
 	},
 	{ event: "apps-console/docs.file.delete" },
 	async ({ event, step }) => {

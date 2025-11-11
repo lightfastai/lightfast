@@ -41,7 +41,23 @@ export const docsIngestion = inngest.createFunction(
   {
     id: "apps-console/docs-ingestion",
     name: "Docs Ingestion",
+    description: "Orchestrates document ingestion from GitHub push webhooks",
     retries: 3,
+
+    // Prevent duplicate processing of same webhook delivery
+    idempotency: 'event.data.deliveryId',
+
+    // Only process one push per repo at a time (prevent concurrent ingestion)
+    singleton: {
+      key: 'event.data.repoFullName',
+      mode: "skip", // Skip if already processing this repo
+    },
+
+    // Timeout for GitHub API calls + file processing triggers
+    timeouts: {
+      start: "2m", // Max queue time
+      finish: "15m", // Config load + file processing triggers
+    },
   },
   { event: "apps-console/docs.push" },
   async ({ event, step }) => {

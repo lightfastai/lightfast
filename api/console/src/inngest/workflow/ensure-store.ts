@@ -80,9 +80,23 @@ export const ensureStore = inngest.createFunction(
 	{
 		id: "apps-console/ensure-store",
 		name: "Ensure Store Exists",
-		retries: 3,
-		// Idempotency: same workspace + store = same workflow instance
-		// This prevents race conditions from concurrent webhook deliveries
+		description: "Idempotently provisions store and Pinecone index",
+		retries: 5, // Pinecone API can be flaky, increase retries
+
+		// CRITICAL: Prevent duplicate store/index creation within 24hr window
+		idempotency: 'event.data.workspaceId + "-" + event.data.storeName',
+
+		// Ensure exclusive execution per workspace+store (prevent race conditions)
+		singleton: {
+			key: 'event.data.workspaceId + "-" + event.data.storeName',
+			mode: "skip", // If already creating, skip new request
+		},
+
+		// Pinecone index creation can be slow
+		timeouts: {
+			start: "1m", // Max queue time
+			finish: "10m", // Pinecone index creation + DB write
+		},
 	},
 	{ event: "apps-console/store.ensure" },
 	async ({ event, step }) => {

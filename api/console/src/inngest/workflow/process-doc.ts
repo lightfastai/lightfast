@@ -43,7 +43,20 @@ export const processDoc = inngest.createFunction(
 	{
 		id: "apps-console/process-doc",
 		name: "Process Document",
+		description: "Processes single document: fetch, parse, chunk, embed, upsert",
 		retries: 3,
+
+		// Prevent reprocessing same file at same commit
+		idempotency: 'event.data.storeName + "-" + event.data.filePath + "-" + event.data.commitSha',
+
+		// Limit parallel processing to avoid overwhelming external APIs
+		concurrency: 10, // Process max 10 docs concurrently per store
+
+		// Timeout for large files
+		timeouts: {
+			start: "1m", // Max queue time
+			finish: "10m", // Fetch + parse + chunk + embed + upsert
+		},
 	},
 	{ event: "apps-console/docs.file.process" },
 	async ({ event, step }) => {
