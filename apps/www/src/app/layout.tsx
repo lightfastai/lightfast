@@ -6,6 +6,7 @@ import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -15,6 +16,7 @@ import {
 } from "@vercel/microfrontends/next/client";
 
 import { createBaseUrl } from "~/lib/base-url";
+import { authUrl, consoleUrl } from "~/lib/related-projects";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
 
@@ -146,22 +148,30 @@ export default function RootLayout({
   } as const;
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <JsonLd code={organizationSchema} />
-        <JsonLd code={websiteSchema} />
-      </head>
-      <body className={cn("min-h-screen bg-background", fonts)}>
-        <PrefetchCrossZoneLinksProvider>
-          <PostHogProvider baseUrl={createBaseUrl()}>
-            {children}
-            <Toaster />
-            <VercelAnalytics />
-            <SpeedInsights />
-          </PostHogProvider>
-          <PrefetchCrossZoneLinks />
-        </PrefetchCrossZoneLinksProvider>
-      </body>
-    </html>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl={`${authUrl}/sign-in`}
+      signUpUrl={`${authUrl}/sign-up`}
+      signInFallbackRedirectUrl={consoleUrl}
+      signUpFallbackRedirectUrl={consoleUrl}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <JsonLd code={organizationSchema} />
+          <JsonLd code={websiteSchema} />
+        </head>
+        <body className={cn("min-h-screen bg-background", fonts)}>
+          <PrefetchCrossZoneLinksProvider>
+            <PostHogProvider baseUrl={createBaseUrl()}>
+              {children}
+              <Toaster />
+              <VercelAnalytics />
+              <SpeedInsights />
+            </PostHogProvider>
+            <PrefetchCrossZoneLinks />
+          </PrefetchCrossZoneLinksProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
