@@ -14,7 +14,7 @@ import {
 } from "@repo/console-types/api";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
-import { createEmbeddingProvider } from "@repo/console-embed";
+import { createEmbeddingProviderForStore } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
@@ -88,11 +88,18 @@ export const searchRouter = {
 					storeId: store.id,
 				});
 
-				// Generate query embedding
+				// Generate query embedding using store's embedding configuration
 				const embedStart = Date.now();
-				const embedding = createEmbeddingProvider({
-					inputType: "search_query",
-				});
+				const embedding = createEmbeddingProviderForStore(
+					{
+						id: store.id,
+						embeddingModel: store.embeddingModel,
+						embeddingDim: store.embeddingDim,
+					},
+					{
+						inputType: "search_query",
+					},
+				);
 				const { embeddings } = await embedding.embed([input.query]);
 				const embedLatency = Date.now() - embedStart;
 

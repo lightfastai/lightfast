@@ -50,8 +50,6 @@ export const contentsRouter = {
 					.select({
 						id: docsDocuments.id,
 						path: docsDocuments.path,
-						title: docsDocuments.title,
-						description: docsDocuments.description,
 						frontmatter: docsDocuments.frontmatter,
 						committedAt: docsDocuments.committedAt,
 						storeId: docsDocuments.storeId,
@@ -67,16 +65,19 @@ export const contentsRouter = {
 					requested: input.ids.length,
 				});
 
-				// Map to response format
-				const mappedDocs = documents.map((doc) => ({
-					id: doc.id,
-					path: doc.path,
-					title: doc.title || null,
-					description: doc.description || null,
-					content: "", // TODO: Phase 2 - Fetch from storage if needed
-					metadata: (doc.frontmatter as Record<string, unknown>) || {},
-					committedAt: doc.committedAt.toISOString(),
-				}));
+				// Map to response format, extracting title/description from frontmatter
+				const mappedDocs = documents.map((doc) => {
+					const frontmatter = (doc.frontmatter as Record<string, unknown>) || {};
+					return {
+						id: doc.id,
+						path: doc.path,
+						title: (frontmatter.title as string | undefined) ?? null,
+						description: (frontmatter.description as string | undefined) ?? null,
+						content: "", // TODO: Phase 2 - Fetch from storage if needed
+						metadata: frontmatter,
+						committedAt: doc.committedAt.toISOString(),
+					};
+				});
 
 				// Log any missing documents
 				const foundIds = new Set(documents.map((d) => d.id));

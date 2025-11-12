@@ -84,13 +84,14 @@ export const ensureStore = inngest.createFunction(
 		retries: PRIVATE_CONFIG.workflow.ensureStore.retries,
 
 		// CRITICAL: Prevent duplicate store/index creation within 24hr window
+		// Idempotency caches the result and replays it for concurrent/subsequent calls
 		idempotency: 'event.data.workspaceId + "-" + event.data.storeSlug',
 
-		// Ensure exclusive execution per workspace+store (prevent race conditions)
-		singleton: {
-			key: 'event.data.workspaceId + "-" + event.data.storeSlug',
-			mode: PRIVATE_CONFIG.workflow.ensureStore.singletonMode,
-		},
+		// Singleton removed: Function is naturally idempotent via:
+		// 1. Early return if store exists (line 141)
+		// 2. onConflictDoNothing() on DB insert (line 271)
+		// 3. Pinecone createIndex is idempotent (returns success if exists)
+		// This allows concurrent calls to succeed instead of throwing "rate limited" errors
 
 		// Pinecone index creation can be slow
 		timeouts: PRIVATE_CONFIG.workflow.ensureStore.timeout,
@@ -137,8 +138,42 @@ export const ensureStore = inngest.createFunction(
 			return store ?? null;
 		});
 
-		// If store exists, just ensure repository link and return
+		// If store exists, check for configuration drift and ensure repository link
 		if (existingStore) {
+			// Detect configuration drift between store and current environment
+			await step.run("check-config-drift", async () => {
+				const currentDefaults = resolveEmbeddingDefaults();
+
+				const hasDrift =
+					existingStore.embeddingModel !== currentDefaults.model ||
+					existingStore.embeddingDim !== currentDefaults.dimension;
+
+				if (hasDrift) {
+					log.warn("Store embedding configuration differs from current environment", {
+						storeId: existingStore.id,
+						storeSlug: existingStore.slug,
+						storeConfig: {
+							model: existingStore.embeddingModel,
+							dimension: existingStore.embeddingDim,
+							provider: existingStore.embeddingProvider,
+						},
+						currentDefaults: {
+							model: currentDefaults.model,
+							dimension: currentDefaults.dimension,
+						},
+						recommendation:
+							"Store will continue using its original embedding configuration. " +
+							"To use the new configuration, create a new store with a different name.",
+					});
+				} else {
+					log.info("Store embedding configuration matches current environment", {
+						storeId: existingStore.id,
+						embeddingModel: existingStore.embeddingModel,
+						embeddingDim: existingStore.embeddingDim,
+					});
+				}
+			});
+
 			if (githubRepoId && repoFullName) {
 				await step.run("ensure-repository-link", async () => {
 					await linkStoreToRepository({
@@ -264,9 +299,7 @@ export const ensureStore = inngest.createFunction(
 						chunkOverlap: PRIVATE_CONFIG.chunking.overlap,
 						// Embedding config from resolved defaults
 						embeddingModel: embeddingDefaults.model,
-						embeddingProvider: embeddingDefaults.model.includes("cohere")
-							? "cohere"
-							: "charHash",
+						embeddingProvider: embeddingDefaults.provider,
 					})
 					.onConflictDoNothing()
 					.returning();

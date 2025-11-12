@@ -303,10 +303,12 @@ export const WORKFLOW_CONFIG = {
 
   /**
    * Ensure store workflow tuning
+   *
+   * Note: Singleton removed in favor of natural function idempotency.
+   * This prevents "rate limited" errors during concurrent store creation.
    */
   ensureStore: {
     retries: 5,
-    singletonMode: "skip" as const,
     timeout: {
       start: "1m",
       finish: "10m",

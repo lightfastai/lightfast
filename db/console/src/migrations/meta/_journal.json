@@ -43,6 +43,20 @@
       "when": 1762855566576,
       "tag": "0005_loving_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762905593682,
+      "tag": "0006_broken_agent_zero",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1762907703699,
+      "tag": "0007_stiff_gateway",
+      "breakpoints": true
     }
   ]
 }

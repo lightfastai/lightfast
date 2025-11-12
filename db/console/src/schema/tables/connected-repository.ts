@@ -98,13 +98,6 @@ export const DeusConnectedRepository = pgTable(
     isActive: boolean("is_active").notNull().default(true),
 
     /**
-     * Whether this repository is enabled in its workspace (Phase 2)
-     * Phase 1: Always true
-     * Phase 2: Can be disabled at workspace level
-     */
-    isEnabled: boolean("is_enabled").notNull().default(true),
-
-    /**
      * When the repository was first connected
      */
     connectedAt: timestamp("connected_at", {
@@ -188,11 +181,10 @@ export const DeusConnectedRepository = pgTable(
       table.isActive,
     ),
 
-    // Composite index for active, enabled repositories by workspace (Phase 2)
+    // Composite index for active repositories by workspace
     workspaceActiveIdx: index("workspace_active_idx").on(
       table.workspaceId,
       table.isActive,
-      table.isEnabled,
     ),
 
     // Index for GitHub installation lookups

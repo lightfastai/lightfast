@@ -30,12 +30,10 @@ export const docsDocuments = pgTable(
     path: varchar("path", { length: 512 }).notNull(),
     /** URL-friendly slug */
     slug: varchar("slug", { length: 256 }).notNull(),
-    /** Document title */
-    title: varchar("title", { length: 256 }),
-    /** Document description */
-    description: text("description"),
     /** Content hash (SHA-256) of latest processed version */
     contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    /** Configuration hash (embedding + chunking) used when document was processed */
+    configHash: varchar("config_hash", { length: 64 }),
     /** Git commit SHA of last processed commit */
     commitSha: varchar("commit_sha", { length: 64 }).notNull(),
     /** When the commit occurred */

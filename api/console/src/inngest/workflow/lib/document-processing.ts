@@ -10,7 +10,7 @@ import { and, eq } from "drizzle-orm";
 import { chunkText, parseMDX } from "@repo/console-chunking";
 import type { Chunk } from "@repo/console-chunking";
 import {
-	createEmbeddingProvider,
+	createEmbeddingProviderForStore,
 	embedTextsInBatches,
 } from "@repo/console-embed";
 import {
@@ -24,6 +24,7 @@ import {
 	GitHubContentService,
 } from "@repo/console-octokit-github";
 import matter from "gray-matter";
+import { createHash } from "node:crypto";
 import { env } from "../../../env";
 import { PRIVATE_CONFIG } from "@repo/console-config";
 
@@ -53,8 +54,7 @@ interface ReadyDocument extends BasePrepared {
 	indexName: string;
 	slug: string;
 	contentHash: string;
-	title: string | null;
-	description: string | null;
+	configHash: string;
 	frontmatter: Record<string, unknown> | null;
 	chunks: Chunk[];
 	embeddings?: number[][];
@@ -81,6 +81,26 @@ interface DocumentProcessingOptions {
 const DEFAULT_EMBED_BATCH_SIZE =
 	PRIVATE_CONFIG.workflow.processDoc.embeddingBatchSize;
 
+/**
+ * Compute configuration hash for a store
+ *
+ * This hash captures all configuration that affects document processing:
+ * - Embedding model and dimension (affects vector space)
+ * - Chunking parameters (affects chunk boundaries)
+ *
+ * If any of these values change, documents must be re-processed.
+ */
+function computeConfigHash(store: Store): string {
+	const configData = JSON.stringify({
+		embeddingModel: store.embeddingModel,
+		embeddingDim: store.embeddingDim,
+		chunkMaxTokens: store.chunkMaxTokens,
+		chunkOverlap: store.chunkOverlap,
+	});
+
+	return createHash("sha256").update(configData).digest("hex");
+}
+
 export async function processDocumentsBatch(
 	events: ProcessDocEvent[],
 	options: DocumentProcessingOptions = {},
@@ -92,10 +112,6 @@ export async function processDocumentsBatch(
 	const app = createGitHubApp({
 		appId: env.GITHUB_APP_ID,
 		privateKey: env.GITHUB_APP_PRIVATE_KEY,
-	});
-
-	const embeddingProvider = createEmbeddingProvider({
-		inputType: "search_document",
 	});
 
 	const services = new Map<number, GitHubContentService>();
@@ -160,9 +176,14 @@ export async function processDocumentsBatch(
 					event.filePath,
 				);
 
+				// Compute current config hash for this store
+				const currentConfigHash = computeConfigHash(store);
+
+				// Skip if both content and configuration are unchanged
 				if (
 					existingDoc?.contentHash &&
-					existingDoc.contentHash === parsed.contentHash
+					existingDoc.contentHash === parsed.contentHash &&
+					existingDoc.configHash === currentConfigHash
 				) {
 						return {
 							status: "skipped",
@@ -170,6 +191,19 @@ export async function processDocumentsBatch(
 							docId,
 							reason: "content_unchanged",
 						};
+				}
+
+				// Log if re-processing due to config change
+				if (
+					existingDoc?.contentHash === parsed.contentHash &&
+					existingDoc.configHash !== currentConfigHash
+				) {
+					log.info("Re-processing document due to configuration change", {
+						docId,
+						filePath: event.filePath,
+						oldConfigHash: existingDoc.configHash,
+						newConfigHash: currentConfigHash,
+					});
 				}
 
 					return {
@@ -180,8 +214,7 @@ export async function processDocumentsBatch(
 						indexName: store.indexName,
 						slug: docSlug,
 						contentHash: parsed.contentHash,
-						title: parsed.title ?? null,
-						description: parsed.description ?? null,
+						configHash: currentConfigHash,
 						frontmatter: parsed.frontmatter ?? null,
 						chunks,
 						existingDoc: existingDoc ?? null,
@@ -200,6 +233,24 @@ export async function processDocumentsBatch(
 	const readyDocs = prepared.filter(isReadyDocument);
 
 	if (readyDocs.length > 0) {
+		// All docs in batch are from same store (batched by workspace+store)
+		// Create embedding provider bound to store's configuration
+		const firstDoc = readyDocs[0];
+		if (!firstDoc) {
+			throw new Error("No ready documents to process");
+		}
+
+		const embeddingProvider = createEmbeddingProviderForStore(
+			{
+				id: firstDoc.store.id,
+				embeddingModel: firstDoc.store.embeddingModel,
+				embeddingDim: firstDoc.store.embeddingDim,
+			},
+			{
+				inputType: "search_document",
+			},
+		);
+
 			await generateEmbeddingsForDocuments(
 				readyDocs,
 				embeddingProvider,
@@ -295,7 +346,7 @@ async function findExistingDocument(
 
 async function generateEmbeddingsForDocuments(
 	docs: ReadyDocument[],
-	embeddingProvider: ReturnType<typeof createEmbeddingProvider>,
+	embeddingProvider: ReturnType<typeof createEmbeddingProviderForStore>,
 	batchSize: number,
 ) {
 	const queue: Array<{
@@ -366,12 +417,16 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
 
 				ids.push(`${doc.docId}#${chunkIndex}`);
 				vectors.push(vector);
+
+				// Extract title from frontmatter or use file path as fallback
+				const title = (doc.frontmatter?.title as string | undefined) ?? doc.event.filePath;
+
 				metadata.push({
 					docId: doc.docId,
 					chunkIndex,
 					path: doc.event.filePath,
 					text: chunk.text,
-					title: doc.title ?? doc.event.filePath,
+					title,
 					snippet: chunk.text.substring(0, 200),
 					url: `/${doc.slug}`,
 					slug: doc.slug,
@@ -407,9 +462,8 @@ async function persistDocuments(docs: ReadyDocument[]) {
 				.update(docsDocuments)
 				.set({
 					slug: doc.slug,
-					title: doc.title,
-					description: doc.description,
 					contentHash: doc.contentHash,
+					configHash: doc.configHash,
 					commitSha: doc.event.commitSha,
 					committedAt,
 					frontmatter: doc.frontmatter,
@@ -423,9 +477,8 @@ async function persistDocuments(docs: ReadyDocument[]) {
 				storeId: doc.store.id,
 				path: doc.event.filePath,
 				slug: doc.slug,
-				title: doc.title,
-				description: doc.description,
 				contentHash: doc.contentHash,
+				configHash: doc.configHash,
 				commitSha: doc.event.commitSha,
 				committedAt,
 				frontmatter: doc.frontmatter,
