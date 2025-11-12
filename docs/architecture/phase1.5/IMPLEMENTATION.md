@@ -190,11 +190,14 @@ Generic Workflows (shared/)
 - ✅ `githubDeleteAdapter` - GitHub → Generic (delete)
 - ✅ `processDocuments` - Generic document processor
 - ✅ `deleteDocuments` - Generic document deleter
-- ✅ `extractRelationships` - Generic relationship extractor
 
 **Deprecated:**
 - ❌ `processDoc` - Replaced by `githubProcessAdapter` + `processDocuments`
 - ❌ `deleteDoc` - Replaced by `githubDeleteAdapter` + `deleteDocuments`
+
+**Deferred to Phase 2.5:**
+- ⏸️ `extractRelationships` - Moved to Phase 2.5 (needs GitHub PRs/issues first)
+- ⏸️ Relationship extraction - Requires entity ingestion from Phase 2
 
 ---
 
@@ -206,8 +209,12 @@ Generic Workflows (shared/)
 | `db/console/src/schema/tables/ingestion-events.ts` | Multi-source event tracking table |
 | `api/console/src/inngest/workflow/shared/process-documents.ts` | Generic document processor |
 | `api/console/src/inngest/workflow/shared/delete-documents.ts` | Generic document deleter |
-| `api/console/src/inngest/workflow/shared/extract-relationships.ts` | Generic relationship extractor |
 | `api/console/src/inngest/workflow/sources/github-adapter.ts` | GitHub adapter workflows |
+
+**Deferred to Phase 2.5:**
+| File | Purpose |
+|------|---------|
+| `api/console/src/inngest/workflow/shared/extract-relationships.ts` | Generic relationship extractor (moved to Phase 2.5) |
 
 ## Files Modified
 
@@ -259,6 +266,17 @@ Generic Workflows (shared/)
 
 ---
 
+## What's NOT in Phase 1.5
+
+**Relationship extraction is deferred to Phase 2.5** because:
+1. Need GitHub PRs/issues/commits as documents (Phase 2)
+2. Need entity resolution across sources (Phase 2.5)
+3. Current `extract-relationships.ts` only works on file content (limited value)
+
+**See:** `docs/architecture/phase2.5/` for full relationship extraction design.
+
+---
+
 ## Phase 2 Readiness
 
 Phase 1.5 infrastructure is ready for Phase 2 sources:
@@ -300,7 +318,9 @@ Same pattern for Notion, Sentry, Vercel, Zendesk:
 2. **Monitor Inngest dashboard for errors**
 3. **Deploy to staging**
 4. **Verify production readiness**
-5. **(Phase 2)** Implement Linear, Notion, Sentry, Vercel, Zendesk adapters
+5. **(Phase 2)** Implement GitHub PR/issue/commit ingestion
+6. **(Phase 2)** Implement Linear, Notion, Sentry, Vercel, Zendesk adapters
+7. **(Phase 2.5)** Implement relationship extraction system
 
 ---
 
