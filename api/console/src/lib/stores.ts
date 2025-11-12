@@ -10,7 +10,7 @@
  */
 
 import { db } from "@db/console/client";
-import { stores, storeRepositories } from "@db/console/schema";
+import { stores } from "@db/console/schema";
 import type { Store } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { createConsolePineconeClient } from "@repo/console-pinecone";
@@ -147,36 +147,6 @@ export async function getOrCreateStore(params: {
 	log.info("Store auto-provisioned successfully", { storeId, indexName });
 
 	return store;
-}
-
-/**
- * Link a store to a GitHub repository for auditing and deduping.
- */
-export async function linkStoreToRepository(params: {
-  storeId: string;
-  githubRepoId: number | string;
-  repoFullName: string;
-}) {
-  const repoId =
-    typeof params.githubRepoId === "string"
-      ? params.githubRepoId
-      : params.githubRepoId.toString();
-
-  await db
-    .insert(storeRepositories)
-    .values({
-      storeId: params.storeId,
-      githubRepoId: repoId,
-      repoFullName: params.repoFullName,
-    })
-    .onConflictDoUpdate({
-      target: storeRepositories.githubRepoId,
-      set: {
-        storeId: params.storeId,
-        repoFullName: params.repoFullName,
-        linkedAt: new Date(),
-      },
-    });
 }
 
 /**

@@ -25,7 +25,6 @@ import { log } from "@vendor/observability/log";
 import { createConsolePineconeClient } from "@repo/console-pinecone";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { PRIVATE_CONFIG } from "@repo/console-config";
-import { linkStoreToRepository } from "../../lib/stores";
 
 /**
  * Resolve Pinecone index name from workspace and store
@@ -173,20 +172,6 @@ export const ensureStore = inngest.createFunction(
 					});
 				}
 			});
-
-			if (githubRepoId && repoFullName) {
-				await step.run("ensure-repository-link", async () => {
-					await linkStoreToRepository({
-						storeId: existingStore.id,
-						githubRepoId,
-						repoFullName,
-					});
-					log.info("Ensured repository link", {
-						storeId: existingStore.id,
-						githubRepoId,
-					});
-				});
-			}
 
 			return {
 				status: "exists",
@@ -337,32 +322,6 @@ export const ensureStore = inngest.createFunction(
 				throw error;
 			}
 		});
-
-		// Step 6: Link to repository if provided
-		if (githubRepoId && repoFullName) {
-			await step.run("link-repository", async () => {
-				try {
-					await linkStoreToRepository({
-						storeId: store.id,
-						githubRepoId,
-						repoFullName,
-					});
-
-					log.info("Linked store to repository", {
-						storeId: store.id,
-						githubRepoId,
-						repoFullName,
-					});
-				} catch (error) {
-					log.error("Failed to link store to repository", {
-						error,
-						storeId: store.id,
-						githubRepoId,
-					});
-					// Don't fail workflow if link fails
-				}
-			});
-		}
 
 		const duration = Date.now() - startTime;
 

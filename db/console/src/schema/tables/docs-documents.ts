@@ -1,12 +1,13 @@
 /**
  * Documents table schema
- * Latest version state per repo-relative file path
+ * Multi-source document storage (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
  */
 
 import {
   index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -17,6 +18,18 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { stores } from "./stores";
 
+/**
+ * Source type enum - defines all supported integration sources
+ */
+export const sourceTypeEnum = pgEnum("source_type", [
+  "github",
+  "linear",
+  "notion",
+  "sentry",
+  "vercel",
+  "zendesk",
+]);
+
 export const docsDocuments = pgTable(
   "lightfast_docs_documents",
   {
@@ -26,24 +39,32 @@ export const docsDocuments = pgTable(
     storeId: varchar("store_id", { length: 191 })
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
-    /** Repo-relative file path */
-    path: varchar("path", { length: 512 }).notNull(),
+
+    // Source identification (discriminated union)
+    /** Source type - discriminator for union */
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    /** Source-specific identifier (e.g., issue ID, page ID, file path) */
+    sourceId: varchar("source_id", { length: 255 }).notNull(),
+    /** Source-specific metadata (JSONB for flexibility) */
+    sourceMetadata: jsonb("source_metadata").notNull(),
+
+    // Document hierarchy
+    /** Parent document ID for nested documents (e.g., comments under issue) */
+    parentDocId: varchar("parent_doc_id", { length: 191 }),
+
     /** URL-friendly slug */
     slug: varchar("slug", { length: 256 }).notNull(),
     /** Content hash (SHA-256) of latest processed version */
     contentHash: varchar("content_hash", { length: 64 }).notNull(),
     /** Configuration hash (embedding + chunking) used when document was processed */
     configHash: varchar("config_hash", { length: 64 }),
-    /** Git commit SHA of last processed commit */
-    commitSha: varchar("commit_sha", { length: 64 }).notNull(),
-    /** When the commit occurred */
-    committedAt: timestamp("committed_at", { withTimezone: false })
-      .notNull()
-      .default(sql`now()`),
-    /** Parsed frontmatter from MDX */
-    frontmatter: jsonb("frontmatter"),
     /** Number of chunks in latest version */
     chunkCount: integer("chunk_count").notNull().default(0),
+
+    // Cross-source relationships
+    /** Relationships to other documents (e.g., mentions, links) */
+    relationships: jsonb("relationships"),
+
     /** When the document was first created */
     createdAt: timestamp("created_at", { withTimezone: false })
       .notNull()
@@ -56,7 +77,13 @@ export const docsDocuments = pgTable(
   (t) => ({
     byStore: index("idx_docs_store").on(t.storeId),
     bySlug: index("idx_docs_store_slug").on(t.storeId, t.slug),
-    uniquePath: uniqueIndex("uq_docs_store_path").on(t.storeId, t.path),
+    bySourceType: index("idx_docs_source_type").on(t.sourceType),
+    bySourceId: index("idx_docs_source_id").on(t.sourceType, t.sourceId),
+    uniqueSourceDoc: uniqueIndex("uq_docs_store_source").on(
+      t.storeId,
+      t.sourceType,
+      t.sourceId
+    ),
   }),
 );
 

@@ -1,10 +1,10 @@
 import { relations } from "drizzle-orm";
 
 import { DeusConnectedRepository } from "./tables/connected-repository";
+import { connectedSources } from "./tables/connected-sources";
 import { docsDocuments } from "./tables/docs-documents";
-import { ingestionCommits } from "./tables/ingestion-commits";
+import { ingestionEvents } from "./tables/ingestion-events";
 import { organizations } from "./tables/organizations";
-import { storeRepositories } from "./tables/store-repositories";
 import { stores } from "./tables/stores";
 import { vectorEntries } from "./tables/vector-entries";
 import { workspaces } from "./tables/workspaces";
@@ -19,6 +19,7 @@ import { workspaces } from "./tables/workspaces";
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   repositories: many(DeusConnectedRepository),
   workspaces: many(workspaces),
+  connectedSources: many(connectedSources),
 }));
 
 export const deusConnectedRepositoryRelations = relations(
@@ -43,6 +44,7 @@ export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   }),
   repositories: many(DeusConnectedRepository),
   stores: many(stores),
+  connectedSources: many(connectedSources),
 }));
 
 export const storesRelations = relations(stores, ({ one, many }) => ({
@@ -52,8 +54,7 @@ export const storesRelations = relations(stores, ({ one, many }) => ({
   }),
   documents: many(docsDocuments),
   vectorEntries: many(vectorEntries),
-  ingestionCommits: many(ingestionCommits),
-  repositories: many(storeRepositories),
+  ingestionEvents: many(ingestionEvents),
 }));
 
 export const docsDocumentsRelations = relations(docsDocuments, ({ one, many }) => ({
@@ -75,16 +76,20 @@ export const vectorEntriesRelations = relations(vectorEntries, ({ one }) => ({
   }),
 }));
 
-export const ingestionCommitsRelations = relations(ingestionCommits, ({ one }) => ({
+export const ingestionEventsRelations = relations(ingestionEvents, ({ one }) => ({
   store: one(stores, {
-    fields: [ingestionCommits.storeId],
+    fields: [ingestionEvents.storeId],
     references: [stores.id],
   }),
 }));
 
-export const storeRepositoriesRelations = relations(storeRepositories, ({ one }) => ({
-  store: one(stores, {
-    fields: [storeRepositories.storeId],
-    references: [stores.id],
+export const connectedSourcesRelations = relations(connectedSources, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [connectedSources.organizationId],
+    references: [organizations.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [connectedSources.workspaceId],
+    references: [workspaces.id],
   }),
 }));

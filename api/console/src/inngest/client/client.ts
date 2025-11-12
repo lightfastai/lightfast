@@ -108,6 +108,77 @@ const eventsMap = {
       repoFullName: z.string().optional(),
     }),
   },
+
+  /**
+   * Phase 1.5: Generic document processing event
+   * Works with any source type (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+   */
+  "apps-console/documents.process": {
+    data: z.object({
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Document ID */
+      documentId: z.string(),
+      /** Source type discriminator */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Source-specific identifier */
+      sourceId: z.string(),
+      /** Source-specific metadata */
+      sourceMetadata: z.record(z.unknown()),
+      /** Document title */
+      title: z.string(),
+      /** Document content */
+      content: z.string(),
+      /** Content hash (SHA-256) */
+      contentHash: z.string(),
+      /** Parent document ID (optional, for nested documents) */
+      parentDocId: z.string().optional(),
+      /** Additional metadata (optional) */
+      metadata: z.record(z.unknown()).optional(),
+      /** Cross-source relationships (optional) */
+      relationships: z.record(z.unknown()).optional(),
+    }),
+  },
+
+  /**
+   * Phase 1.5: Generic document deletion event
+   * Works with any source type
+   */
+  "apps-console/documents.delete": {
+    data: z.object({
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Document ID */
+      documentId: z.string(),
+      /** Source type discriminator */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Source-specific identifier */
+      sourceId: z.string(),
+    }),
+  },
+
+  /**
+   * Phase 1.5: Relationship extraction event
+   * Extracts cross-source relationships from documents
+   */
+  "apps-console/relationships.extract": {
+    data: z.object({
+      /** Document ID */
+      documentId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Source type */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Relationships to extract */
+      relationships: z.record(z.unknown()),
+    }),
+  },
 };
 
 /**

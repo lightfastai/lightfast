@@ -10,11 +10,11 @@
  * 3. Check idempotency (has this delivery been processed?)
  * 4. Filter changed files by config globs
  * 5. For each file: trigger process or delete workflow
- * 6. Record commit in ingestion_commits table
+ * 6. Record event in ingestion_events table
  */
 
 import { db } from "@db/console/client";
-import { ingestionCommits } from "@db/console/schema";
+import { ingestionEvents } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { inngest } from "../client/client";
 import type { Events } from "../client/client";
@@ -209,14 +209,15 @@ export const docsIngestion = inngest.createFunction(
     });
 
     // Step 3: Check idempotency - has this delivery already been processed?
-    const existingCommit = await step.run("check-idempotency", async () => {
+    const existingEvent = await step.run("check-idempotency", async () => {
       try {
         // Check if we've already processed this delivery
         // Use deliveryId for webhook idempotency (not afterSha to allow re-processing)
-        const existing = await db.query.ingestionCommits.findFirst({
+        const existing = await db.query.ingestionEvents.findFirst({
           where: and(
-            eq(ingestionCommits.storeId, store.id),
-            eq(ingestionCommits.deliveryId, deliveryId),
+            eq(ingestionEvents.storeId, store.id),
+            eq(ingestionEvents.sourceType, "github"),
+            eq(ingestionEvents.eventKey, deliveryId),
           ),
         });
 
@@ -227,10 +228,10 @@ export const docsIngestion = inngest.createFunction(
       }
     });
 
-    if (existingCommit) {
+    if (existingEvent) {
       log.info("Delivery already processed, skipping", {
         deliveryId,
-        processedAt: existingCommit.processedAt,
+        processedAt: existingEvent.processedAt,
       });
       return { status: "skipped", reason: "already_processed" };
     }
@@ -265,18 +266,27 @@ export const docsIngestion = inngest.createFunction(
         }
 
         await db
-          .insert(ingestionCommits)
+          .insert(ingestionEvents)
           .values({
             id: `${targetStore.id}_${deliveryId}`,
             storeId: targetStore.id,
-            beforeSha,
-            afterSha,
-            deliveryId,
-            source,
+            sourceType: "github",
+            eventKey: deliveryId,
+            eventMetadata: {
+              beforeSha,
+              afterSha,
+              repoFullName,
+              changedFileCount: 0,
+            },
+            source: source as "webhook" | "backfill" | "manual" | "api",
             status: "skipped",
           })
           .onConflictDoNothing({
-            target: [ingestionCommits.storeId, ingestionCommits.afterSha],
+            target: [
+              ingestionEvents.storeId,
+              ingestionEvents.sourceType,
+              ingestionEvents.eventKey,
+            ],
           });
       });
 
@@ -377,35 +387,46 @@ export const docsIngestion = inngest.createFunction(
       results: processResults,
     });
 
-    // Step 6: Record commit as processed
-    await step.run("record-commit", async () => {
+    // Step 6: Record event as processed
+    await step.run("record-event", async () => {
       try {
         if (!targetStore) {
-          log.error("Cannot record commit - store context missing");
+          log.error("Cannot record event - store context missing");
           return;
         }
 
         await db
-          .insert(ingestionCommits)
+          .insert(ingestionEvents)
           .values({
             id: `${targetStore.id}_${deliveryId}`,
             storeId: targetStore.id,
-            beforeSha,
-            afterSha,
-            deliveryId,
-            source,
+            sourceType: "github",
+            eventKey: deliveryId,
+            eventMetadata: {
+              beforeSha,
+              afterSha,
+              repoFullName,
+              changedFileCount: filteredFiles.length,
+              processedFileCount: processResults.filter((r) => r.status === "queued")
+                .length,
+            },
+            source: source as "webhook" | "backfill" | "manual" | "api",
             status: "processed",
           })
           .onConflictDoNothing({
-            target: [ingestionCommits.storeId, ingestionCommits.afterSha],
+            target: [
+              ingestionEvents.storeId,
+              ingestionEvents.sourceType,
+              ingestionEvents.eventKey,
+            ],
           });
 
-        log.info("Recorded commit", {
+        log.info("Recorded event", {
           storeId: targetStore.id,
           deliveryId,
         });
       } catch (error) {
-        log.error("Failed to record commit", { error, deliveryId });
+        log.error("Failed to record event", { error, deliveryId });
         throw error;
       }
     });
