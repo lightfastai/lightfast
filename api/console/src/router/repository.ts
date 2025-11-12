@@ -632,7 +632,7 @@ export const repositoryRouter = {
       }
 
       // Prepare Inngest event
-      const deliveryId = `manual_${randomUUID()}`;
+      const deliveryId = randomUUID();
       // Resolve default workspace (DB UUID) + workspaceKey
       const wsId = await getOrCreateDefaultWorkspace(org.id);
       const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
@@ -652,6 +652,7 @@ export const repositoryRouter = {
           beforeSha: headSha,
           afterSha: headSha,
           deliveryId,
+          source: "manual",
           changedFiles,
         },
       });

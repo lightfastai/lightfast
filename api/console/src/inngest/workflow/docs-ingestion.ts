@@ -80,6 +80,7 @@ export const docsIngestion = inngest.createFunction(
       beforeSha,
       afterSha,
       deliveryId,
+      source,
       headCommitTimestamp,
       changedFiles,
     } = event.data;
@@ -271,6 +272,7 @@ export const docsIngestion = inngest.createFunction(
             beforeSha,
             afterSha,
             deliveryId,
+            source,
             status: "skipped",
           })
           .onConflictDoNothing({
@@ -391,6 +393,7 @@ export const docsIngestion = inngest.createFunction(
             beforeSha,
             afterSha,
             deliveryId,
+            source,
             status: "processed",
           })
           .onConflictDoNothing({

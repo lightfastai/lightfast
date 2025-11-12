@@ -27,8 +27,10 @@ export const ingestionCommits = pgTable(
     beforeSha: varchar("before_sha", { length: 64 }).notNull(),
     /** Git commit SHA after the push */
     afterSha: varchar("after_sha", { length: 64 }).notNull(),
-    /** GitHub webhook delivery ID */
+    /** Unique delivery/trigger ID for idempotency */
     deliveryId: varchar("delivery_id", { length: 191 }).notNull(),
+    /** Ingestion source: github-webhook | manual | api | scheduled */
+    source: varchar("source", { length: 32 }).notNull().default("github-webhook"),
     /** Processing status: processed | skipped | failed */
     status: varchar("status", { length: 16 }).notNull().default("processed"),
     /** When the commit was processed */
@@ -38,6 +40,7 @@ export const ingestionCommits = pgTable(
   },
   (t) => ({
     byStore: index("idx_commits_store").on(t.storeId),
+    bySource: index("idx_commits_source").on(t.source),
     uniqAfter: uniqueIndex("uq_commit_after").on(t.storeId, t.afterSha),
     uniqDelivery: uniqueIndex("uq_commit_delivery").on(t.storeId, t.deliveryId),
   }),

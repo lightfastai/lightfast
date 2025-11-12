@@ -58,9 +58,9 @@ export interface Chunk {
  */
 export interface MDXMetadata {
   /**
-   * Frontmatter key-value pairs
+   * Frontmatter key-value pairs (null if no frontmatter exists)
    */
-  frontmatter: Record<string, unknown>;
+  frontmatter: Record<string, unknown> | null;
 
   /**
    * Document title (from frontmatter or first h1)

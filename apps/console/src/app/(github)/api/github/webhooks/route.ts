@@ -182,6 +182,7 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
       beforeSha: payload.before,
       afterSha: payload.after,
       deliveryId,
+      source: "github-webhook",
       headCommitTimestamp,
       changedFiles: allFiles,
     },

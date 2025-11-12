@@ -31,8 +31,10 @@ const eventsMap = {
       beforeSha: z.string(),
       /** SHA after push */
       afterSha: z.string(),
-      /** GitHub webhook delivery ID for tracing */
+      /** Unique delivery/trigger ID for idempotency */
       deliveryId: z.string(),
+      /** Ingestion source: github-webhook | manual | api | scheduled */
+      source: z.enum(["github-webhook", "manual", "api", "scheduled"]),
       /** ISO timestamp for the head commit (if provided by GitHub) */
       headCommitTimestamp: z.string().datetime().optional(),
       /** Changed files with their status */
