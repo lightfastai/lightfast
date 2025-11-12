@@ -12,8 +12,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import type { RepositoryMetadata, RepositoryPermissions } from "@repo/console-types";
+import type {
+  RepositoryMetadata,
+  RepositoryPermissions,
+} from "@repo/console-types";
 import { randomUUID } from "node:crypto";
+import { organizations } from "./organizations";
+import { workspaces } from "./workspaces";
 
 /**
  * Configuration status enum for lightfast.yml
@@ -64,7 +69,9 @@ export const DeusConnectedRepository = pgTable(
     /**
      * Reference to the organization this repository belongs to
      */
-    organizationId: varchar("organization_id", { length: 191 }).notNull(),
+    organizationId: varchar("organization_id", { length: 191 })
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
 
     /**
      * GitHub's unique repository ID (immutable, never changes)
@@ -91,23 +98,22 @@ export const DeusConnectedRepository = pgTable(
     isActive: boolean("is_active").notNull().default(true),
 
     /**
-     * Whether this repository is enabled in its workspace (Phase 2)
-     * Phase 1: Always true
-     * Phase 2: Can be disabled at workspace level
-     */
-    isEnabled: boolean("is_enabled").notNull().default(true),
-
-    /**
      * When the repository was first connected
      */
-    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: false })
+    connectedAt: timestamp("connected_at", {
+      mode: "string",
+      withTimezone: false,
+    })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
     /**
      * Last time we successfully interacted with GitHub API for this repo
      */
-    lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: false }),
+    lastSyncedAt: timestamp("last_synced_at", {
+      mode: "string",
+      withTimezone: false,
+    }),
 
     /**
      * Configuration status for lightfast.yml
@@ -124,12 +130,20 @@ export const DeusConnectedRepository = pgTable(
     /**
      * When configuration was last detected/checked
      */
-    configDetectedAt: timestamp("config_detected_at", { mode: "string", withTimezone: false }),
+    configDetectedAt: timestamp("config_detected_at", {
+      mode: "string",
+      withTimezone: false,
+    }),
 
     /**
      * Workspace ID computed from organization (ws_${githubOrgSlug})
      */
-    workspaceId: varchar("workspace_id", { length: 191 }),
+    workspaceId: varchar("workspace_id", { length: 191 }).references(
+      () => workspaces.id,
+      {
+        onDelete: "set null",
+      },
+    ),
 
     /**
      * Total number of indexed documents
@@ -139,7 +153,10 @@ export const DeusConnectedRepository = pgTable(
     /**
      * Last successful ingestion timestamp
      */
-    lastIngestedAt: timestamp("last_ingested_at", { mode: "string", withTimezone: false }),
+    lastIngestedAt: timestamp("last_ingested_at", {
+      mode: "string",
+      withTimezone: false,
+    }),
 
     /**
      * Optional metadata cache (can be stale - don't rely on this for operations)
@@ -164,11 +181,10 @@ export const DeusConnectedRepository = pgTable(
       table.isActive,
     ),
 
-    // Composite index for active, enabled repositories by workspace (Phase 2)
+    // Composite index for active repositories by workspace
     workspaceActiveIdx: index("workspace_active_idx").on(
       table.workspaceId,
       table.isActive,
-      table.isEnabled,
     ),
 
     // Index for GitHub installation lookups
@@ -177,7 +193,8 @@ export const DeusConnectedRepository = pgTable(
 );
 
 // Type exports
-export type DeusConnectedRepository = typeof DeusConnectedRepository.$inferSelect;
+export type DeusConnectedRepository =
+  typeof DeusConnectedRepository.$inferSelect;
 export type InsertDeusConnectedRepository =
   typeof DeusConnectedRepository.$inferInsert;
 

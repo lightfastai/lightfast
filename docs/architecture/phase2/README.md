@@ -1,16 +1,16 @@
 ---
-title: Phase 2 Scope — Linear + Notion
-description: Add Linear and Notion connectors, enable memory per store, and cross-tool scenarios
+title: Phase 2 Scope — Multi-Source Integration
+description: Add Linear, Notion, Sentry, Vercel, and Zendesk connectors; enable memory per store; cross-source scenarios
 status: draft
 owner: product
 audience: internal
-last_updated: 2025-11-06
-tags: [phase2, linear, notion]
+last_updated: 2025-11-12
+tags: [phase2, linear, notion, sentry, vercel, zendesk, multi-source]
 ---
 
-# Phase 2 — Multi-Workspace + Linear + Notion
+# Phase 2 — Multi-Workspace + Multi-Source Integration
 
-Expand beyond single-workspace GitHub + Docs by adding multi-workspace management, Linear integration, and Notion integration. Enable the memory layer (observations, summaries, profiles, graph) for selected stores.
+Expand beyond single-workspace GitHub to support multiple data sources (Linear, Notion, Sentry, Vercel, Zendesk) with multi-workspace management. Enable the memory layer (observations, summaries, profiles, graph) for selected stores.
 
 ---
 
@@ -34,6 +34,9 @@ Expand beyond single-workspace GitHub + Docs by adding multi-workspace managemen
 ### 2. Integration Expansion
 - Integrate Linear (issues, projects, teams) as additional source
 - Integrate Notion (databases/pages) as additional source
+- Integrate Sentry (error tracking, issues, events) as additional source
+- Integrate Vercel (deployments, build logs) as additional source
+- Integrate Zendesk (tickets, knowledge base articles) as additional source
 - Keep DX: configure via `lightfast.yml` store entries; no IDs exposed
 
 ### 3. Memory Layer Enablement
@@ -82,7 +85,10 @@ Expand beyond single-workspace GitHub + Docs by adding multi-workspace managemen
 **New Integrations:**
 - Linear issues, projects, and teams
 - Notion databases and pages
-- Cross-tool entity relationships
+- Sentry error tracking and issues
+- Vercel deployments and build logs
+- Zendesk tickets and knowledge base articles
+- Cross-source entity relationships and temporal linking
 - Memory layer (observations, summaries, profiles, graph)
 
 ---
@@ -122,7 +128,11 @@ SET cr.workspace_id = CONCAT('ws_', o.github_org_slug),
 
 ## Navigation
 
-- Config: ./config.md
-- Scenarios: ./scenarios.md
-- Implementation Plan: ./implementation-plan.md
-- Open Questions: ./open-questions.md
+### Core Documentation
+- **[Multi-Source Integration Strategy](./multi-source-integration.md)** - Comprehensive strategy for expanding to Linear, Sentry, Vercel, Zendesk, and Notion
+- **[Database Schema](./database-schema.md)** - Clean schema design for multi-source support (no backward compatibility needed)
+- **[Sync Strategies](./sync-strategies.md)** - Webhook capabilities, polling fallbacks, and reliability patterns for each source
+- **[Config](./config.md)** - Configuration patterns for multi-workspace and multi-source
+- **[Scenarios](./scenarios.md)** - Use cases and cross-source integration examples
+- **[Implementation Plan](./implementation-plan.md)** - Phased rollout plan
+- **[Open Questions](./open-questions.md)** - Decisions pending for Phase 2

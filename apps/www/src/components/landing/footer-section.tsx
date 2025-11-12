@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { chatUrl, consoleUrl } from "~/lib/related-projects";
+import { consoleUrl } from "~/lib/related-projects";
 
 export function SiteFooter() {
   return (
@@ -26,14 +26,6 @@ export function SiteFooter() {
                   Products
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
-                  <Link
-                    href={chatUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
-                  >
-                    Chat
-                  </Link>
                   <Link
                     href={consoleUrl}
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"

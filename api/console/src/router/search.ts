@@ -12,8 +12,9 @@ import {
 	SearchResponseSchema,
 	type SearchResponse,
 } from "@repo/console-types/api";
-import { pineconeClient } from "@vendor/pinecone";
-import { createCharHashEmbedding } from "@repo/console-embed";
+import { pineconeClient } from "@repo/console-pinecone";
+import type { VectorMetadata } from "@repo/console-pinecone";
+import { createEmbeddingProviderForStore } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
@@ -62,17 +63,17 @@ export const searchRouter = {
 					});
 				}
 
-				const storeName = storeLabel.replace("store:", "");
+				const storeSlug = storeLabel.replace("store:", "");
 
 				// Phase 1.6: Look up store to get workspaceId
 				const store = await db.query.stores.findFirst({
-					where: eq(stores.name, storeName),
+					where: eq(stores.slug, storeSlug),
 				});
 
 				if (!store) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: `Store not found: ${storeName}`,
+						message: `Store not found: ${storeSlug}`,
 					});
 				}
 
@@ -82,14 +83,23 @@ export const searchRouter = {
 				log.info("Resolved index", {
 					requestId,
 					workspaceId,
-					storeName,
+					storeSlug,
 					indexName,
 					storeId: store.id,
 				});
 
-				// Generate query embedding
+				// Generate query embedding using store's embedding configuration
 				const embedStart = Date.now();
-				const embedding = createCharHashEmbedding();
+				const embedding = createEmbeddingProviderForStore(
+					{
+						id: store.id,
+						embeddingModel: store.embeddingModel,
+						embeddingDim: store.embeddingDim,
+					},
+					{
+						inputType: "search_query",
+					},
+				);
 				const { embeddings } = await embedding.embed([input.query]);
 				const embedLatency = Date.now() - embedStart;
 
@@ -109,7 +119,7 @@ export const searchRouter = {
 
 				// Query Pinecone
 				const queryStart = Date.now();
-				const results = await pineconeClient.query(indexName, {
+				const results = await pineconeClient.query<VectorMetadata>(indexName, {
 					vector: queryVector,
 					topK: input.topK,
 					includeMetadata: true,

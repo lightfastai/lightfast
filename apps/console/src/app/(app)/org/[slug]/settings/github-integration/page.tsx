@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { GitHubIntegrationSettings } from "~/components/github-integration-settings";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -11,12 +11,9 @@ export default async function GitHubIntegrationPage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId, orgId } = await auth();
-
-	// Simple auth check - middleware already protected via auth.protect()
-	// Org layout already prefetched org data
-	if (!userId || !orgId) {
-		redirect("/sign-in");
+	const { orgId } = await auth();
+	if (!orgId) {
+		notFound();
 	}
 
 	// No page-specific data prefetching needed

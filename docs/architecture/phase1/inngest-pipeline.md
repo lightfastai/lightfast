@@ -121,7 +121,7 @@ Fn: `docs_file_deleted`
 
 ## Mastra Pinecone Integration Details
 
-- Index: one Pinecone index per `(workspaceId, store)` via Mastra’s `@mastra/pinecone` client.
+- Index: one Pinecone index per `(workspaceId, store)` via the official `@pinecone-database/pinecone` SDK.
 - Index name format: `ws_${workspaceId}__store_${store}` (URL-safe); dimension=1536.
 - Vector IDs: `${docId}#${chunkIndex}` (or stable hash of path + chunkIndex) for idempotence.
 - Search: Lightfast wraps Mastra Pinecone query behind `/v1/search` (store index)

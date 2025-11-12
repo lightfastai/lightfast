@@ -8,6 +8,10 @@ last_updated: 2025-11-06
 tags: [mastra, rag]
 ---
 
+# Status
+
+> **Update:** We now run exclusively on the official `@pinecone-database/pinecone` SDK. The notes below describe the original Mastra integration for historical reference.
+
 # Mastra Pinecone Integration (v1)
 
 We use Mastra’s Pinecone client to manage vector storage (one index per store). We compute embeddings (char-hash 1536) and upsert vectors + metadata.

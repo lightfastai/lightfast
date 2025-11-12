@@ -34,9 +34,27 @@ export const LightfastConfigSchema = z.object({
   /**
    * Human-readable store name (unique per workspace)
    * Used as the store key in the system
-   * @example "docs-site"
+   *
+   * Constraints:
+   * - Max 20 characters
+   * - Only lowercase alphanumeric and hyphens
+   * - No leading/trailing hyphens
+   * - No consecutive hyphens
+   *
+   * @example "docs-site" or "api-reference"
    */
-  store: z.string().min(1, "Store name must not be empty"),
+  store: z
+    .string()
+    .min(1, "Store name must not be empty")
+    .max(20, "Store name must be 20 characters or less")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Store name must be lowercase alphanumeric with hyphens only"
+    )
+    .refine(
+      (name) => !/^-|-$|--/.test(name),
+      "Store name cannot have leading/trailing/consecutive hyphens"
+    ),
 
   /**
    * Array of glob patterns (repo-relative) for files to include in ingestion

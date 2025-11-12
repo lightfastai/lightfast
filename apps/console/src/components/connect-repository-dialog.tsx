@@ -123,7 +123,6 @@ export function ConnectRepositoryDialog({
 								githubInstallationId: variables.githubInstallationId,
 								permissions: variables.permissions ?? null,
 								isActive: true,
-								isEnabled: true,
 								connectedAt: new Date().toISOString(),
 								lastSyncedAt: null,
 								configStatus: "pending",

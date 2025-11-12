@@ -15,7 +15,7 @@ export class StoresService extends DeusApiService {
 	 */
 	async getOrCreateStore(params: {
 		workspaceId: string;
-		storeName: string;
+		storeSlug: string;
 		embeddingDim?: number;
 	}): Promise<Store> {
 		return this.call("stores.getOrCreate", async (caller) =>
@@ -26,9 +26,9 @@ export class StoresService extends DeusApiService {
 	/**
 	 * Get a store by name
 	 */
-	async getByName(storeName: string): Promise<Store> {
+	async getByName(storeSlug: string): Promise<Store> {
 		return this.call("stores.getByName", async (caller) =>
-			caller.stores.getByName({ storeName }),
+			caller.stores.getByName({ storeSlug }),
 		);
 	}
 

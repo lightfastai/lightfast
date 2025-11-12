@@ -76,8 +76,12 @@ export async function parseMDX(
   // Compute content hash (exclude frontmatter for consistent hashing)
   const contentHash = hashContent(body);
 
+  // Normalize empty frontmatter to null (gray-matter returns {} when no frontmatter exists)
+  const normalizedFrontmatter =
+    Object.keys(frontmatter).length === 0 ? null : frontmatter;
+
   return {
-    frontmatter,
+    frontmatter: normalizedFrontmatter,
     title,
     description,
     slug,

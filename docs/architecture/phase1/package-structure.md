@@ -101,7 +101,7 @@ export type * from './schema';
 
 ### `@vendor/pinecone` (NEW)
 
-**Purpose:** Type-safe wrapper around `@mastra/pinecone` client
+**Purpose:** Type-safe wrapper around `@pinecone-database/pinecone` SDK
 
 **Location:** `vendor/pinecone/`
 
@@ -118,7 +118,7 @@ vendor/pinecone/
 ```
 
 **Dependencies:**
-- `@mastra/pinecone` (catalog)
+- `@pinecone-database/pinecone` (catalog)
 - `@t3-oss/env-nextjs` (catalog)
 - `zod` (catalog)
 
@@ -1034,7 +1034,7 @@ Queries local Pinecone index for testing.
 ## Dependencies Summary
 
 ### New External Dependencies
-- `@mastra/pinecone` - Pinecone client
+- `@pinecone-database/pinecone` - Pinecone client
 - `gray-matter` - MDX frontmatter parsing
 - `js-tiktoken` - Token counting
 - `commander` - CLI framework

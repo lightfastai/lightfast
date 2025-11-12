@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
@@ -10,12 +10,9 @@ export default async function RepositoriesPage({
 }: {
 	params: Promise<{ slug: string }>;
 }) {
-	const { userId, orgId } = await auth();
-
-	// Simple auth check - middleware already protected via auth.protect()
-	// Org layout already prefetched org data
-	if (!userId || !orgId) {
-		redirect("/sign-in");
+	const { orgId } = await auth();
+	if (!orgId) {
+		notFound();
 	}
 
 	// Prefetch page-specific data using orgId from middleware

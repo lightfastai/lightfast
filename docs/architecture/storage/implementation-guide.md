@@ -25,7 +25,7 @@ pnpm add drizzle-orm drizzle-zod pg
 pnpm add -D drizzle-kit dotenv-cli
 
 # Storage / search / cache
-pnpm add @aws-sdk/client-s3 @mastra/pinecone @upstash/redis
+pnpm add @aws-sdk/client-s3 @pinecone-database/pinecone @upstash/redis
 ```
 
 Environment
@@ -66,14 +66,25 @@ We maintain one index per `(workspace, store)` for docs in Phase 1. Phase 2 may 
 
 Index naming: `ws_${workspaceId}__store_${store}` (dimension 1536 in v1).
 
-Example creation and upsert via Mastra client:
+Example creation and upsert via the official client:
 
 ```ts
-import { PineconeVector } from '@mastra/pinecone';
+import { Pinecone } from '@pinecone-database/pinecone';
 
-const store = new PineconeVector({ apiKey: process.env.PINECONE_API_KEY! });
-await store.createIndex({ indexName, dimension: 1536 });
-await store.upsert({ indexName, vectors, metadata });
+const client = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+await client.createIndex({
+  name: indexName,
+  dimension: 1536,
+  metric: 'cosine',
+  spec: { serverless: { cloud: 'aws', region: 'us-west-2' } },
+  suppressConflicts: true,
+  waitUntilReady: true,
+});
+
+const index = client.index(indexName);
+await index.upsert([
+  { id: 'doc#0', values: vectorValues, metadata: { path: 'README.md' } },
+]);
 ```
 
 Keep metadata under ~1 KB; store heavy fields in Postgres and reference IDs in index metadata.

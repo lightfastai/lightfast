@@ -4,6 +4,17 @@ import { workspaces } from "../schema";
 import { generateWorkspaceName, generateWorkspaceSlug } from "./workspace-names";
 
 /**
+ * Compute workspace key from slug
+ * Used for external naming (e.g., Pinecone index prefixes)
+ *
+ * Format: `ws-<slug>`
+ * Example: "robust-chicken" → "ws-robust-chicken"
+ */
+export function getWorkspaceKey(slug: string): string {
+  return `ws-${slug}`;
+}
+
+/**
  * Get or create default workspace for organization
  * Phase 1: Always creates/returns the default workspace with friendly auto-generated name
  *
@@ -25,7 +36,7 @@ export async function getOrCreateDefaultWorkspace(
     return existing.id;
   }
 
-  // Generate friendly workspace name (e.g., "Robust Chicken")
+  // Generate friendly workspace slug (e.g., "robust-chicken" from "Robust Chicken")
   const friendlyName = generateWorkspaceName();
   const slug = generateWorkspaceSlug(friendlyName);
 
@@ -35,7 +46,6 @@ export async function getOrCreateDefaultWorkspace(
     .values({
       // id is auto-generated UUID via $defaultFn
       organizationId,
-      name: friendlyName,
       slug,
       isDefault: true,
       settings: {},

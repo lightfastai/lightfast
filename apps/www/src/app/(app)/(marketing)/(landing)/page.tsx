@@ -31,7 +31,7 @@ export default function HomePage() {
                     </h1>
                   </div>
 
-                  <div className="max-w-xl">
+                  <div className="max-w-xl py-16">
                     <WaitlistForm />
                   </div>
                 </div>
@@ -43,7 +43,7 @@ export default function HomePage() {
 
       {/* Exa Search Visual - positioned to overlap and get cut off */}
       <div
-        className="absolute top-[60vh] md:top-[58vh] lg:top-[55vh] left-0 right-0 page-gutter"
+        className="absolute top-[60vh] md:top-[58vh] lg:top-[65vh] left-0 right-0 page-gutter"
         style={{ zIndex: 10 }}
       >
         <div className="w-full flex justify-center">

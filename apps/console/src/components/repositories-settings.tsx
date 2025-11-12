@@ -56,14 +56,16 @@ export function RepositoriesSettings() {
                 // Optimistically update repository status in the list for immediate feedback
                 queryClient.setQueryData(
                     trpc.repository.list.queryKey({ includeInactive: false, organizationId }),
-                    produce((draft: any) => {
-                        if (!draft) return;
-                        const repo = draft.find((r: any) => r.id === variables.repositoryId);
-                        if (repo) {
-                            repo.configStatus = data.exists ? "configured" : "unconfigured";
-                            repo.configPath = data.path ?? null;
-                        }
-                    }),
+                    (oldData: typeof repositories | undefined) => {
+                        if (!oldData) return oldData;
+                        return produce(oldData, (draft) => {
+                            const repo = draft.find((r) => r.id === variables.repositoryId);
+                            if (repo) {
+                                repo.configStatus = data.exists ? "configured" : "unconfigured";
+                                repo.configPath = data.path ?? null;
+                            }
+                        });
+                    },
                 );
             },
 			onError: (error) => {

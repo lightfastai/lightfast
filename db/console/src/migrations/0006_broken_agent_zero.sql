@@ -1,0 +1,1 @@
+ALTER TABLE "lightfast_docs_documents" ADD COLUMN "config_hash" varchar(64);

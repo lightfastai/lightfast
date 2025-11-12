@@ -57,7 +57,7 @@ Phase 1 (Docs)
   - docs_documents (storeId, path, slug, title, description, contentHash, commitSha, committedAt, chunkCount, frontmatter)
   - vector_entries (storeId, docId, chunkIndex, contentHash, indexName, upsertedAt)
   - ingestion_commits (storeId, beforeSha, afterSha, deliveryId, status, processedAt)
-- Vector (Mastra Pinecone via @mastra/pinecone)
+- Vector (Pinecone via @pinecone-database/pinecone)
   - Index per `(workspaceId, store)`; dimension 1536 (v1); vector metadata kept minimal
 - Object Storage (S3)
   - Not required for docs v1 (optional for large raw bodies)

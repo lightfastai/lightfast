@@ -8,7 +8,7 @@
  */
 
 import { createHash } from "node:crypto";
-import type { EmbeddingProvider, EmbedResponse } from "./types";
+import type { EmbeddingProvider, EmbedResponse } from "../types";
 
 /**
  * Character hash embedding provider
