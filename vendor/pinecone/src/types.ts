@@ -1,37 +1,29 @@
 /**
  * Type definitions for Pinecone operations
  *
- * @see docs/architecture/phase1/mastra-integration.md
+ * Generic types for vector operations. Application-specific metadata
+ * types should be defined in application packages (e.g., @repo/console-pinecone).
  */
 
-/**
- * Vector metadata stored with each embedding
- */
-export interface VectorMetadata {
-  /** Chunk text content */
-  text: string;
-  /** Document repo-relative path */
-  path: string;
-  /** URL-friendly slug */
-  slug: string;
-  /** Document content hash */
-  contentHash: string;
-  /** 0-based chunk index within document */
-  chunkIndex: number;
-  /** Additional metadata */
-  [key: string]: unknown;
-}
+import type { RecordMetadata } from "@pinecone-database/pinecone";
 
 /**
  * Request to upsert vectors into an index
+ *
+ * Generic type - use with application-specific metadata types:
+ * @example
+ * ```typescript
+ * import type { VectorMetadata } from "@repo/console-pinecone";
+ * const request: UpsertRequest<VectorMetadata> = { ... };
+ * ```
  */
-export interface UpsertRequest {
+export interface UpsertRequest<T extends RecordMetadata = RecordMetadata> {
   /** Vector IDs (stable per chunk) */
   ids: string[];
   /** Vector embeddings */
   vectors: number[][];
   /** Metadata for each vector */
-  metadata: VectorMetadata[];
+  metadata: T[];
 }
 
 /**
@@ -58,22 +50,26 @@ export interface QueryRequest {
 
 /**
  * Individual query match result
+ *
+ * Generic type - use with application-specific metadata types
  */
-export interface QueryMatch {
+export interface QueryMatch<T extends RecordMetadata = RecordMetadata> {
   /** Vector ID */
   id: string;
   /** Similarity score */
   score: number;
   /** Vector metadata (if requested) */
-  metadata?: VectorMetadata;
+  metadata?: T;
 }
 
 /**
  * Response from querying vectors
+ *
+ * Generic type - use with application-specific metadata types
  */
-export interface QueryResponse {
+export interface QueryResponse<T extends RecordMetadata = RecordMetadata> {
   /** Matching vectors */
-  matches: QueryMatch[];
+  matches: QueryMatch<T>[];
   /** Namespace queried */
   namespace?: string;
 }

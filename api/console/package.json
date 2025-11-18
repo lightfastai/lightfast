@@ -34,6 +34,7 @@
 		"@repo/console-config": "workspace:*",
 		"@repo/console-embed": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",
+		"@repo/console-pinecone": "workspace:*",
 		"@repo/console-types": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@sentry/core": "^10.20.0",

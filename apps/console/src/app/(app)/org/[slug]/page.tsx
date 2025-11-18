@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { OrgChatInterface } from "~/components/org-chat-interface";
 import { prefetch, trpc } from "@repo/console-trpc/server";
@@ -11,12 +11,11 @@ export default async function OrgHomePage({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	const { userId, orgId } = await auth();
+	const { orgId } = await auth();
 
-	// Simple auth check - middleware already protected via auth.protect()
-	// Layout already prefetched org data
-	if (!userId || !orgId) {
-		redirect("/sign-in");
+	// Layout enforces membership; this guards against edge cases
+	if (!orgId) {
+		notFound();
 	}
 
 	// Prefetch page-specific data using orgId from middleware

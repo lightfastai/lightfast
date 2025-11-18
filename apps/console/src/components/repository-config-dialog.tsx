@@ -37,8 +37,8 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
       url.searchParams.set("installationId", String(installationId));
       const res = await fetch(url.toString());
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || `HTTP ${res.status}`);
+        const data = (await res.json().catch(() => ({} as { error?: string }))) as { error?: string };
+        throw new Error(data.error ?? `HTTP ${res.status}`);
       }
       const data = (await res.json()) as { exists: boolean; path?: string; content?: string };
       setState({ status: "loaded", exists: data.exists, path: data.path, content: data.content });
@@ -51,7 +51,8 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
 
   useEffect(() => {
     if (open) void fetchConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Note: fetchConfig is not in deps because it's defined in component scope
+    // and changes on every render. We only want to fetch when these values change.
   }, [open, fullName, installationId]);
 
   const ghLink = `https://github.com/${fullName}`;

@@ -77,4 +77,23 @@ export class RepositoriesService extends DeusApiService {
       },
     );
   }
+
+  /**
+   * Update repository config status (for webhooks)
+   */
+  async updateConfigStatus(params: {
+    githubRepoId: string;
+    configStatus: "configured" | "unconfigured";
+    configPath: string | null;
+    workspaceId: string;
+  }) {
+    return await this.call(
+      "repository.updateConfigStatus",
+      (caller) => caller.repository.updateConfigStatus(params),
+      {
+        fallbackMessage: "Failed to update repository config status",
+        details: params,
+      },
+    );
+  }
 }

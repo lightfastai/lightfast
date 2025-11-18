@@ -21,3 +21,14 @@ export {
   validateGlobPatterns,
   matchesGlobs,
 } from "./glob";
+
+// Export private infrastructure configuration
+export {
+  PRIVATE_CONFIG,
+  PINECONE_CONFIG,
+  EMBEDDING_CONFIG,
+  CHUNKING_CONFIG,
+  GITHUB_CONFIG,
+  WORKFLOW_CONFIG,
+  type PrivateConfig,
+} from "./private-config";

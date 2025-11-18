@@ -1,11 +1,14 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
+import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { protectedProcedure } from "../trpc";
 import {
 	getOrCreateStore,
-	getStoreByName,
+	getStoreBySlug,
 	listStoresByWorkspace,
 } from "../lib/stores";
+
+const { dimension: storeEmbeddingDimension } = resolveEmbeddingDefaults();
 
 /**
  * Stores Router
@@ -23,11 +26,11 @@ export const storesRouter = {
 	 */
 	getOrCreate: protectedProcedure
 		.input(
-			z.object({
-				workspaceId: z.string(),
-				storeName: z.string(),
-				embeddingDim: z.number().default(1536),
-			}),
+				z.object({
+					workspaceId: z.string(),
+					storeSlug: z.string(),
+					embeddingDim: z.number().default(storeEmbeddingDimension),
+				}),
 		)
 		.mutation(async ({ input }) => {
 			return getOrCreateStore(input);
@@ -39,11 +42,11 @@ export const storesRouter = {
 	getByName: protectedProcedure
 		.input(
 			z.object({
-				storeName: z.string(),
+				storeSlug: z.string(),
 			}),
 		)
 		.query(async ({ input }) => {
-			return getStoreByName(input.storeName);
+			return getStoreBySlug(input.storeSlug);
 		}),
 
 	/**

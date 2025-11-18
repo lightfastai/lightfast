@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Phase 1.4+ - Update schema and re-enable
 import type { TRPCRouterRecord } from "@trpc/server";
 import { DeusConnectedRepository, organizations, workspaces } from "@db/console/schema";
 import { getOrCreateDefaultWorkspace } from "@db/console/utils";
@@ -8,8 +7,10 @@ import { z } from "zod";
 import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
 import { randomUUID } from "node:crypto";
 import { minimatch } from "minimatch";
+import yaml from "yaml";
+import { inngest } from "@api/console/inngest";
 import { env } from "../env";
-import { getWorkspaceKeyFromSlug } from "../lib/workspace-key";
+import { getWorkspaceKey } from "@db/console/utils";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
@@ -348,6 +349,31 @@ export const repositoryRouter = {
     }),
 
   /**
+   * Update repository config status
+   * Used by webhooks when lightfast.yml is modified
+   */
+  updateConfigStatus: publicProcedure
+    .input(
+      z.object({
+        githubRepoId: z.string(),
+        configStatus: z.enum(["configured", "unconfigured"]),
+        configPath: z.string().nullable(),
+        workspaceId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(DeusConnectedRepository)
+        .set({
+          configStatus: input.configStatus,
+          configPath: input.configPath,
+          configDetectedAt: new Date().toISOString(),
+          workspaceId: input.workspaceId,
+        })
+        .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
+    }),
+
+  /**
    * Detect lightfast.yml configuration in repository
    * Can be called manually to re-check config status
    */
@@ -572,7 +598,6 @@ export const repositoryRouter = {
         if ("content" in data && data.type === "file") {
           const yamlText = Buffer.from((data.content as string) ?? "", "base64").toString("utf-8");
           try {
-            const yaml = await import("yaml");
             const parsed = yaml.parse(yamlText) as any;
             if (parsed && Array.isArray(parsed.include) && parsed.include.length > 0) {
               includeGlobs = parsed.include as string[];
@@ -607,26 +632,27 @@ export const repositoryRouter = {
       }
 
       // Prepare Inngest event
-      const deliveryId = `manual_${randomUUID()}`;
+      const deliveryId = randomUUID();
       // Resolve default workspace (DB UUID) + workspaceKey
       const wsId = await getOrCreateDefaultWorkspace(org.id);
       const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
       const workspaceId = ws?.id ?? wsId; // DB UUID
-      const workspaceKey = ws ? getWorkspaceKeyFromSlug(ws.slug) : `ws-${org.githubOrgSlug}`;
+      const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-${org.githubOrgSlug}`;
       const changedFiles = matches.map((path) => ({ path, status: "modified" as const }));
 
       // Send event to Inngest
-      const { inngest } = await import("@api/console/inngest");
       await inngest.send({
         name: "apps-console/docs.push",
         data: {
           workspaceId,
           workspaceKey,
           repoFullName: fullName,
+          githubRepoId: Number.parseInt(repository.githubRepoId, 10),
           githubInstallationId: Number.parseInt(repository.githubInstallationId, 10),
           beforeSha: headSha,
           afterSha: headSha,
           deliveryId,
+          source: "manual",
           changedFiles,
         },
       });

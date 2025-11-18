@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
+import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 interface OrgLayoutProps {
-	children: React.ReactNode;
-	params: Promise<{ slug: string }>;
+  children: React.ReactNode;
+  params: Promise<{ slug: string }>;
 }
 
 /**
@@ -21,44 +21,45 @@ interface OrgLayoutProps {
  * Performance: Saves ~70ms per page by eliminating redundant auth() + DB calls
  */
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
-	const { slug } = await params;
-	const { userId, orgId } = await auth();
+  const { slug } = await params;
+  // Verify access once at the layout level. Middleware already enforces sign-in
+  // and syncs the active organization from the URL; this ensures the slug
+  // actually belongs to the signed-in user and avoids duplicating checks in pages.
+  let orgId: string;
+  try {
+    const { org } = await requireOrgAccess(slug);
+    orgId = org.id; // Console org.id is the Clerk org ID
+  } catch {
+    notFound();
+  }
 
-	// Defense-in-depth auth check (middleware already protected via auth.protect())
-	if (!userId || !orgId) {
-		redirect("/sign-in");
-	}
+  // Prefetch organization data by Clerk org ID for all children
+  prefetch(
+    trpc.organization.findByClerkOrgId.queryOptions({
+      clerkOrgId: orgId,
+    }),
+  );
 
-	// Prefetch organization data by Clerk org ID
-	// The orgId is set by middleware's organizationSyncOptions from the URL slug
-	// This single prefetch replaces the requireOrgAccess call that every page was doing
-	prefetch(
-		trpc.organization.findByClerkOrgId.queryOptions({
-			clerkOrgId: orgId,
-		})
-	);
+  // Optionally also prefetch by slug for components that reference it directly
+  prefetch(
+    trpc.organization.findByClerkOrgSlug.queryOptions({
+      clerkOrgSlug: slug,
+    }),
+  );
 
-	// Also prefetch by slug for consistency validation
-	// This ensures the URL slug matches the active org
-	prefetch(
-		trpc.organization.findByClerkOrgSlug.queryOptions({
-			clerkOrgSlug: slug,
-		})
-	);
-
-	return (
-		<HydrateClient>
-			<OrgPageErrorBoundary orgSlug={slug}>
-				<Suspense fallback={<OrgLayoutSkeleton />}>{children}</Suspense>
-			</OrgPageErrorBoundary>
-		</HydrateClient>
-	);
+  return (
+    <HydrateClient>
+      <OrgPageErrorBoundary orgSlug={slug}>
+        <Suspense fallback={<OrgLayoutSkeleton />}>{children}</Suspense>
+      </OrgPageErrorBoundary>
+    </HydrateClient>
+  );
 }
 
 function OrgLayoutSkeleton() {
-	return (
-		<div className="flex items-center justify-center min-h-[400px]">
-			<Skeleton className="h-32 w-96" />
-		</div>
-	);
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Skeleton className="h-32 w-96" />
+    </div>
+  );
 }

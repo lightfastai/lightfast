@@ -1,15 +1,14 @@
 /**
- * Pinecone client wrapper using Mastra
+ * Pinecone client wrapper built on the official SDK.
  *
- * Provides type-safe vector operations with automatic error handling
- * and index name resolution.
- *
- * @see docs/architecture/phase1/mastra-integration.md
+ * Provides typed vector operations and index name helpers tailored to our store model.
  */
 
-import { PineconeVector } from "@mastra/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
+import type { RecordMetadata } from "@pinecone-database/pinecone";
+
 import { env } from "../env";
-import type { DeleteRequest, QueryRequest, QueryResponse, UpsertRequest, UpsertResponse } from "./types";
+import type { QueryRequest, QueryResponse, UpsertRequest, UpsertResponse } from "./types";
 import {
   PineconeConnectionError,
   PineconeError,
@@ -18,83 +17,68 @@ import {
   PineconeRateLimitError,
 } from "./errors";
 
-/**
- * Pinecone client for vector operations
- */
 export class PineconeClient {
-  private client: PineconeVector;
+  private client: Pinecone;
 
-  constructor(apiKey?: string) {
-    this.client = new PineconeVector(apiKey ?? env.PINECONE_API_KEY);
+  constructor() {
+    this.client = new Pinecone({
+      apiKey: env.PINECONE_API_KEY,
+    });
   }
 
   /**
-   * Resolve index name from workspace and store
+   * Create a new Pinecone index (serverless)
    *
-   * Pinecone constraints: lower-case alphanumeric and '-'
-   * We sanitize both parts and join with '-'.
-   * Also clamp to a safe length and add a short hash when needed.
+   * All parameters are required - caller must provide explicit configuration.
+   * Use application-level wrapper (@repo/console-pinecone) for defaults.
+   *
+   * @param indexName - Name of the index to create
+   * @param dimension - Embedding dimension
+   * @param options - Required configuration
    */
-  resolveIndexName(workspaceId: string, storeName: string): string {
-    const sanitize = (s: string) =>
-      s
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, "-") // replace illegal chars (including underscores) with '-'
-        .replace(/^-+/, "") // trim leading '-'
-        .replace(/-+$/, "") // trim trailing '-'
-        .replace(/-{2,}/g, "-"); // collapse multiple '-'
-
-    const ws = sanitize(workspaceId);
-    const st = sanitize(storeName);
-    let name = `${ws}-${st}`;
-
-    // Pinecone index name max length is limited (commonly 45). Clamp defensively to 45.
-    const MAX = 45;
-    if (name.length > MAX) {
-      const hash = this.shortHash(`${ws}:${st}`);
-      // Reserve 5 for '-' + 4-char hash
-      const base = name.slice(0, MAX - 5).replace(/-+$/, "");
-      name = `${base}-${hash}`;
+  async createIndex(
+    indexName: string,
+    dimension: number,
+    options: {
+      metric: "cosine" | "euclidean" | "dotproduct";
+      cloud: "aws" | "gcp" | "azure";
+      region: string;
     }
-    return name;
-  }
-
-  private shortHash(input: string): string {
-    let h = 0;
-    for (let i = 0; i < input.length; i++) {
-      h = (h * 31 + input.charCodeAt(i)) >>> 0;
-    }
-    // 4 hex chars
-    return (h % 0xffff).toString(16).padStart(4, "0");
-  }
-
-  /**
-   * Create a new Pinecone index
-   */
-  async createIndex(workspaceId: string, storeName: string, dimension: number): Promise<string> {
-    const indexName = this.resolveIndexName(workspaceId, storeName);
-
+  ): Promise<void> {
     try {
-      await this.retry(async () => {
-        try {
-          await this.client.createIndex({
-            indexName,
-            dimension,
-            metric: "cosine",
-          });
-        } catch (err) {
-          // Treat already-exists as success (idempotent create)
-          const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
-          if (msg.includes("already_exists") || msg.includes("already exists") || msg.includes("409")) {
-            return;
-          }
-          throw err;
-        }
+      await this.client.createIndex({
+        name: indexName,
+        dimension,
+        metric: options.metric,
+        spec: {
+          serverless: {
+            cloud: options.cloud,
+            region: options.region,
+          },
+        },
+        suppressConflicts: true,
+        waitUntilReady: true,
       });
-
-      return indexName;
     } catch (error) {
       this.handleError(error);
+    }
+  }
+
+  /**
+   * Check if an index exists
+   *
+   * @param indexName - Name of the index to check
+   * @returns true if index exists, false otherwise
+   */
+  async indexExists(indexName: string): Promise<boolean> {
+    try {
+      const indexes = await this.client.listIndexes();
+      const indexList = indexes.indexes ?? [];
+      return indexList.some(index => index.name === indexName);
+    } catch (error) {
+      // If list fails, assume index doesn't exist
+      console.warn(`Failed to check index existence: ${error}`);
+      return false;
     }
   }
 
@@ -103,9 +87,7 @@ export class PineconeClient {
    */
   async deleteIndex(indexName: string): Promise<void> {
     try {
-      await this.retry(async () => {
-        await this.client.deleteIndex(indexName);
-      });
+      await this.client.deleteIndex(indexName);
     } catch (error) {
       this.handleError(error);
     }
@@ -113,21 +95,32 @@ export class PineconeClient {
 
   /**
    * Upsert vectors into an index
+   *
+   * Generic method - works with any metadata type extending RecordMetadata
    */
-  async upsertVectors(indexName: string, request: UpsertRequest): Promise<UpsertResponse> {
-    try {
-      await this.retry(async () => {
-        await this.client.upsert({
-          indexName,
-          vectors: request.vectors,
-          ids: request.ids,
-          metadata: request.metadata,
-        });
-      });
+  async upsertVectors<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    request: UpsertRequest<T>,
+    batchSize = 100
+  ): Promise<UpsertResponse> {
+    const index = this.client.index(indexName);
 
-      return {
-        upsertedCount: request.ids.length,
-      };
+    try {
+      for (let i = 0; i < request.ids.length; i += batchSize) {
+        const ids = request.ids.slice(i, i + batchSize);
+        const vectors = request.vectors.slice(i, i + batchSize);
+        const metadata = request.metadata.slice(i, i + batchSize);
+
+        const records = vectors.map((values, offset) => ({
+          id: ids[offset]!,
+          values,
+          metadata: metadata[offset]!,
+        }));
+
+        await index.upsert(records);
+      }
+
+      return { upsertedCount: request.ids.length };
     } catch (error) {
       this.handleError(error);
     }
@@ -136,21 +129,50 @@ export class PineconeClient {
   /**
    * Delete vectors by IDs
    */
-  async deleteVectors(indexName: string, vectorIds: string[]): Promise<void> {
+  async deleteVectors(indexName: string, vectorIds: string[], batchSize = 100): Promise<void> {
+    if (vectorIds.length === 0) return;
+
+    const index = this.client.index(indexName);
+
     try {
-      await this.retry(async () => {
-        // Mastra's Pinecone client uses filter-based deletion
-        // We'll need to delete by IDs using the underlying Pinecone client
-        // For now, implement via multiple deletes or batch
-        for (const id of vectorIds) {
-          // Note: This may need adjustment based on actual Mastra API
-          await this.client.query({
-            indexName,
-            queryVector: [], // Not querying, just using for access
-            topK: 0,
-            filter: { id: { $eq: id } },
-          });
-        }
+      for (let i = 0; i < vectorIds.length; i += batchSize) {
+        const batch = vectorIds.slice(i, i + batchSize);
+        await index.deleteMany(batch);
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Delete vectors matching a metadata filter
+   */
+  async deleteByMetadata(indexName: string, filter: object): Promise<void> {
+    const index = this.client.index(indexName);
+
+    try {
+      await index.deleteMany(filter);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Configure index level settings (deletion protection, tags, etc.)
+   */
+  async configureIndex(
+    indexName: string,
+    options: {
+      deletionProtection?: "enabled" | "disabled";
+      tags?: Record<string, string>;
+      spec?: unknown;
+    }
+  ): Promise<void> {
+    try {
+      await this.client.configureIndex(indexName, {
+        deletionProtection: options.deletionProtection,
+        spec: options.spec as never,
+        tags: options.tags,
       });
     } catch (error) {
       this.handleError(error);
@@ -159,68 +181,33 @@ export class PineconeClient {
 
   /**
    * Query similar vectors
+   *
+   * Generic method - works with any metadata type extending RecordMetadata
    */
-  async query(indexName: string, request: QueryRequest): Promise<QueryResponse> {
+  async query<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    request: QueryRequest
+  ): Promise<QueryResponse<T>> {
+    const index = this.client.index(indexName);
+
     try {
-      const results = await this.retry(async () => {
-        return await this.client.query({
-          indexName,
-          queryVector: request.vector,
-          topK: request.topK,
-          filter: request.filter,
-        });
+      const results = await index.query({
+        vector: request.vector,
+        topK: request.topK,
+        filter: request.filter,
+        includeMetadata: request.includeMetadata ?? true,
       });
 
       return {
-        matches: results.map((r) => ({
-          id: r.id,
-          score: r.score,
-          metadata: r.metadata as any,
-        })),
+        matches: results.matches?.map((match) => ({
+          id: match.id,
+          score: match.score ?? 0,
+          metadata: match.metadata as T,
+        })) ?? [],
       };
     } catch (error) {
       this.handleError(error);
     }
-  }
-
-  /**
-   * Retry logic with exponential backoff
-   */
-  private async retry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-    const delays = [1000, 2000, 4000]; // 1s, 2s, 4s
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        const isLastAttempt = attempt === maxRetries;
-        const isRetryableError = this.isRetryableError(error);
-
-        if (!isRetryableError || isLastAttempt) {
-          throw error;
-        }
-
-        // Wait before retrying
-        const delay = delays[attempt] ?? 4000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-
-    // Should never reach here
-    throw new Error("Retry logic failed unexpectedly");
-  }
-
-  /**
-   * Check if error is retryable (transient)
-   */
-  private isRetryableError(error: unknown): boolean {
-    if (error instanceof PineconeConnectionError || error instanceof PineconeRateLimitError) {
-      return true;
-    }
-
-    // Check for specific error messages
-    const message = error instanceof Error ? error.message : String(error);
-    return message.includes("timeout") || message.includes("network") || message.includes("503");
   }
 
   /**
@@ -234,7 +221,6 @@ export class PineconeClient {
     const message = error instanceof Error ? error.message : String(error);
     const lowerMessage = message.toLowerCase();
 
-    // Classify error type
     if (lowerMessage.includes("rate limit") || lowerMessage.includes("429")) {
       throw new PineconeRateLimitError("Rate limit exceeded", error);
     }
@@ -255,19 +241,12 @@ export class PineconeClient {
       throw new PineconeConnectionError("Connection error", error);
     }
 
-    // Generic error
     throw new PineconeError("Pinecone operation failed", "UNKNOWN", error);
   }
 }
 
-/**
- * Create a new Pinecone client instance
- */
-export function createPineconeClient(apiKey?: string): PineconeClient {
-  return new PineconeClient(apiKey);
+export function createPineconeClient(): PineconeClient {
+  return new PineconeClient();
 }
 
-/**
- * Default Pinecone client instance
- */
 export const pineconeClient = new PineconeClient();

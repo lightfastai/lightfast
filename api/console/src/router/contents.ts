@@ -45,15 +45,13 @@ export const contentsRouter = {
 			});
 
 			try {
-				// Phase 1.6: Fetch documents with workspace scoping via stores join
+				// Phase 1.5: Fetch documents with multi-source support
 				const documents = await db
 					.select({
 						id: docsDocuments.id,
-						path: docsDocuments.path,
-						title: docsDocuments.title,
-						description: docsDocuments.description,
-						frontmatter: docsDocuments.frontmatter,
-						committedAt: docsDocuments.committedAt,
+						sourceType: docsDocuments.sourceType,
+						sourceId: docsDocuments.sourceId,
+						sourceMetadata: docsDocuments.sourceMetadata,
 						storeId: docsDocuments.storeId,
 						workspaceId: stores.workspaceId,
 					})
@@ -67,16 +65,27 @@ export const contentsRouter = {
 					requested: input.ids.length,
 				});
 
-				// Map to response format
-				const mappedDocs = documents.map((doc) => ({
-					id: doc.id,
-					path: doc.path,
-					title: doc.title || null,
-					description: doc.description || null,
-					content: "", // TODO: Phase 2 - Fetch from storage if needed
-					metadata: (doc.frontmatter as Record<string, unknown>) || {},
-					committedAt: doc.committedAt.toISOString(),
-				}));
+				// Map to response format, extracting data from sourceMetadata
+				const mappedDocs = documents.map((doc) => {
+					const metadata = (doc.sourceMetadata as Record<string, unknown>) || {};
+					const frontmatter = (metadata.frontmatter as Record<string, unknown>) || {};
+
+					// Extract path: use sourceMetadata.path (GitHub) or sourceId (other sources)
+					const path = (metadata.path as string | undefined) ?? doc.sourceId;
+
+					// Extract committedAt from sourceMetadata or use current date
+					const committedAt = (metadata.committedAt as string | undefined) ?? new Date().toISOString();
+
+					return {
+						id: doc.id,
+						path,
+						title: (frontmatter.title as string | undefined) ?? null,
+						description: (frontmatter.description as string | undefined) ?? null,
+						content: "", // TODO: Phase 2 - Fetch from storage if needed
+						metadata: frontmatter,
+						committedAt,
+					};
+				});
 
 				// Log any missing documents
 				const foundIds = new Set(documents.map((d) => d.id));

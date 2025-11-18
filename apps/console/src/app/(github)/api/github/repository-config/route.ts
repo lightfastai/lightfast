@@ -49,14 +49,16 @@ export async function GET(request: NextRequest) {
     const contentService = new GitHubContentService(octokit);
 
     // Resolve default branch if ref not provided
-    let ref = refParam ?? undefined;
-    if (!ref) {
+    let ref: string;
+    if (refParam) {
+      ref = refParam;
+    } else {
       const { data: repoInfo } = await octokit.request("GET /repos/{owner}/{repo}", {
         owner,
         repo,
         headers: { "X-GitHub-Api-Version": "2022-11-28" },
       });
-      ref = repoInfo.default_branch as string;
+      ref = repoInfo.default_branch;
     }
 
     // Try common config file names
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
     ];
 
     for (const path of candidates) {
-      const file = await contentService.fetchSingleFile(owner, repo, path, ref!);
+      const file = await contentService.fetchSingleFile(owner, repo, path, ref);
       if (file) {
         return NextResponse.json({ exists: true, path, content: file.content, sha: file.sha });
       }
