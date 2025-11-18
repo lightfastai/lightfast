@@ -201,17 +201,43 @@ export const processDocuments = inngest.createFunction(
             const currentConfigHash = computeConfigHash(store);
 
             // Skip if both content and configuration are unchanged
+            // BUT first verify that vector_entries exist (handles partial failure recovery)
             if (
               existingDoc?.contentHash &&
               existingDoc.contentHash === event.data.contentHash &&
               existingDoc.configHash === currentConfigHash
             ) {
-              return {
-                status: "skipped",
-                event: event.data,
-                docId: event.data.documentId,
-                reason: "content_unchanged",
-              };
+              // Verify vector entries exist before skipping
+              const vectorEntriesExist = await db
+                .select({ id: vectorEntries.id })
+                .from(vectorEntries)
+                .where(
+                  and(
+                    eq(vectorEntries.storeId, store.id),
+                    eq(vectorEntries.docId, event.data.documentId),
+                  ),
+                )
+                .limit(1);
+
+              if (vectorEntriesExist.length === 0) {
+                log.warn(
+                  "Document exists but vector entries missing - reprocessing for recovery",
+                  {
+                    docId: event.data.documentId,
+                    storeId: store.id,
+                    sourceType: event.data.sourceType,
+                  },
+                );
+                // Don't skip - continue to reprocess and recreate vector entries
+              } else {
+                // All good - document and vectors exist, can safely skip
+                return {
+                  status: "skipped",
+                  event: event.data,
+                  docId: event.data.documentId,
+                  reason: "content_unchanged",
+                };
+              }
             }
 
             // Log if re-processing due to config change
