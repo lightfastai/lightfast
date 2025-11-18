@@ -6,6 +6,7 @@
 import {
   index,
   integer,
+  pgEnum,
   pgTable,
   timestamp,
   uniqueIndex,
@@ -14,6 +15,32 @@ import {
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { workspaces } from "./workspaces";
+
+/**
+ * Embedding provider enum - defines valid embedding providers
+ * SOURCE OF TRUTH for embedding provider types across the system
+ */
+export const embeddingProviderEnum = pgEnum("embedding_provider", ["cohere"]);
+
+/**
+ * Pinecone metric enum - defines valid vector similarity metrics
+ * SOURCE OF TRUTH for pinecone metric types across the system
+ */
+export const pineconeMetricEnum = pgEnum("pinecone_metric", [
+  "cosine",
+  "euclidean",
+  "dotproduct",
+]);
+
+/**
+ * Pinecone cloud enum - defines valid cloud providers
+ * SOURCE OF TRUTH for pinecone cloud types across the system
+ */
+export const pineconeCloudEnum = pgEnum("pinecone_cloud", [
+  "aws",
+  "gcp",
+  "azure",
+]);
 
 export const stores = pgTable(
   "lightfast_stores",
@@ -28,29 +55,29 @@ export const stores = pgTable(
     slug: varchar("slug", { length: 191 }).notNull(),
     /** Resolved Pinecone index name */
     indexName: varchar("index_name", { length: 191 }).notNull(),
-    /** Embedding dimension (default 1536) */
-    embeddingDim: integer("embedding_dim").notNull().default(1536),
+    /** Embedding dimension - no default, must be provided by API layer */
+    embeddingDim: integer("embedding_dim").notNull(),
 
     // Hidden config fields (not exposed in lightfast.yml yet)
     // Pinecone infrastructure configuration
-    /** Pinecone vector similarity metric */
-    pineconeMetric: varchar("pinecone_metric", { length: 20 }).notNull().default("cosine"),
-    /** Pinecone cloud provider */
-    pineconeCloud: varchar("pinecone_cloud", { length: 20 }).notNull().default("aws"),
+    /** Pinecone vector similarity metric - enum enforced at DB level */
+    pineconeMetric: pineconeMetricEnum("pinecone_metric").notNull(),
+    /** Pinecone cloud provider - enum enforced at DB level */
+    pineconeCloud: pineconeCloudEnum("pinecone_cloud").notNull(),
     /** Pinecone region */
-    pineconeRegion: varchar("pinecone_region", { length: 50 }).notNull().default("us-west-2"),
+    pineconeRegion: varchar("pinecone_region", { length: 50 }).notNull(),
 
     // Document chunking configuration
-    /** Maximum tokens per chunk */
-    chunkMaxTokens: integer("chunk_max_tokens").notNull().default(512),
-    /** Token overlap between chunks */
-    chunkOverlap: integer("chunk_overlap").notNull().default(50),
+    /** Maximum tokens per chunk - no default, must be provided by API layer */
+    chunkMaxTokens: integer("chunk_max_tokens").notNull(),
+    /** Token overlap between chunks - no default, must be provided by API layer */
+    chunkOverlap: integer("chunk_overlap").notNull(),
 
-    // Embedding provider configuration (informational)
-    /** Embedding model used */
-    embeddingModel: varchar("embedding_model", { length: 100 }).notNull().default("char-hash-1536"),
-    /** Embedding provider */
-    embeddingProvider: varchar("embedding_provider", { length: 50 }).notNull().default("charHash"),
+    // Embedding provider configuration
+    /** Embedding model used - no default, must be provided by API layer */
+    embeddingModel: varchar("embedding_model", { length: 100 }).notNull(),
+    /** Embedding provider - enum enforced at DB level */
+    embeddingProvider: embeddingProviderEnum("embedding_provider").notNull(),
 
     /** When the store was created */
     createdAt: timestamp("created_at", { withTimezone: false })

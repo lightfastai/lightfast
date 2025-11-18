@@ -2308,6 +2308,9 @@ importers:
 
   packages/console-config:
     dependencies:
+      '@db/console':
+        specifier: workspace:*
+        version: link:../../db/console
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3

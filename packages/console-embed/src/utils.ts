@@ -13,6 +13,9 @@ import { EMBEDDING_CONFIG } from "@repo/console-config";
 
 /**
  * Default embedding configuration
+ *
+ * Note: Provider is stored separately in EMBEDDING_CONFIG.cohere.provider
+ * and is validated against the database schema enum.
  */
 export interface EmbeddingDefaults {
 	/**
@@ -24,11 +27,6 @@ export interface EmbeddingDefaults {
 	 * Default model name
 	 */
 	model: string;
-
-	/**
-	 * Embedding provider name
-	 */
-	provider: "cohere";
 }
 
 /**
@@ -51,7 +49,6 @@ export function resolveEmbeddingDefaults(): EmbeddingDefaults {
 	return {
 		dimension: EMBEDDING_CONFIG.cohere.dimension,
 		model: EMBEDDING_CONFIG.cohere.model,
-		provider: "cohere",
 	};
 }
 

@@ -8,8 +8,36 @@
  * 1. Add it to the LightfastConfigSchema in schema.ts
  * 2. Update this file to use the user value as override
  *
+ * Type Safety:
+ * All enum values are type-checked against database schema enums (@db/console).
+ * This ensures config values can never violate database constraints.
+ *
  * @packageDocumentation
  */
+
+import type {
+	embeddingProviderEnum,
+	pineconeMetricEnum,
+	pineconeCloudEnum,
+} from "@db/console/schema";
+
+/**
+ * Type-safe embedding provider - extracted from database schema enum
+ * This ensures config values match what the database will accept
+ */
+type EmbeddingProvider = (typeof embeddingProviderEnum.enumValues)[number];
+
+/**
+ * Type-safe pinecone metric - extracted from database schema enum
+ * This ensures config values match what the database will accept
+ */
+type PineconeMetric = (typeof pineconeMetricEnum.enumValues)[number];
+
+/**
+ * Type-safe pinecone cloud - extracted from database schema enum
+ * This ensures config values match what the database will accept
+ */
+type PineconeCloud = (typeof pineconeCloudEnum.enumValues)[number];
 
 /**
  * Pinecone infrastructure configuration
@@ -17,33 +45,35 @@
  * Controls how Pinecone indexes are created and managed.
  * Currently private - users cannot override these settings.
  *
+ * Type Safety: metric and cloud are validated against database schema enums.
+ *
  * Future: Could be made configurable per workspace or store.
  */
 export const PINECONE_CONFIG = {
   /**
    * Vector similarity metric
    *
-   * Options: "cosine" | "euclidean" | "dotproduct"
+   * Type-safe: must match pineconeMetricEnum from database schema
    * Default: "cosine" (best for normalized embeddings)
    *
    * @private
    */
-  metric: "cosine" as const,
+  metric: "cosine" as PineconeMetric,
 
   /**
    * Cloud provider for serverless indexes
    *
-   * Options: "aws" | "gcp" | "azure"
+   * Type-safe: must match pineconeCloudEnum from database schema
    * Default: "aws"
    *
    * @private
    */
-  cloud: "aws" as const,
+  cloud: "aws" as PineconeCloud,
 
   /**
    * AWS region for serverless indexes
    *
-   * Options: "us-east-1" | "us-west-2" | "eu-west-1" | etc.
+   * Note: Not enum-validated as regions vary by cloud provider
    * Default: "us-west-2" (low latency for US west coast)
    *
    * @private
@@ -92,6 +122,8 @@ export const PINECONE_CONFIG = {
  * Controls which embedding models are used and their parameters.
  * Currently private - all stores use Cohere.
  *
+ * Type Safety: provider is validated against database schema enum.
+ *
  * Future: Could allow users to specify model version per store.
  */
 export const EMBEDDING_CONFIG = {
@@ -101,6 +133,16 @@ export const EMBEDDING_CONFIG = {
    * COHERE_API_KEY is required for all embedding operations.
    */
   cohere: {
+    /**
+     * Provider name
+     *
+     * Type-safe: literal "cohere" matches embeddingProviderEnum from database schema
+     * TypeScript will enforce this is a valid enum value at assignment time
+     *
+     * @private
+     */
+    provider: "cohere" as const,
+
     /**
      * Model name
      *
@@ -119,7 +161,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    dimension: 1024,
+    dimension: 1024 as const,
   },
 
   /**
@@ -130,8 +172,15 @@ export const EMBEDDING_CONFIG = {
    *
    * @private
    */
-  batchSize: 96,
-} as const;
+  batchSize: 96 as const,
+} satisfies {
+  cohere: {
+    provider: EmbeddingProvider;
+    model: string;
+    dimension: number;
+  };
+  batchSize: number;
+};
 
 /**
  * Document chunking configuration

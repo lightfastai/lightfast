@@ -275,16 +275,16 @@ export const ensureStore = inngest.createFunction(
 						workspaceId,
 						slug: storeSlug,
 						indexName,
+						// All config values explicitly passed from PRIVATE_CONFIG
+						// No database defaults - ensures consistency with config layer
 						embeddingDim: targetDim,
-						// Hidden config fields from PRIVATE_CONFIG
+						embeddingModel: embeddingDefaults.model,
+						embeddingProvider: PRIVATE_CONFIG.embedding.cohere.provider,
 						pineconeMetric: PRIVATE_CONFIG.pinecone.metric,
 						pineconeCloud: PRIVATE_CONFIG.pinecone.cloud,
 						pineconeRegion: PRIVATE_CONFIG.pinecone.region,
 						chunkMaxTokens: PRIVATE_CONFIG.chunking.maxTokens,
 						chunkOverlap: PRIVATE_CONFIG.chunking.overlap,
-						// Embedding config from resolved defaults
-						embeddingModel: embeddingDefaults.model,
-						embeddingProvider: embeddingDefaults.provider,
 					})
 					.onConflictDoNothing()
 					.returning();
