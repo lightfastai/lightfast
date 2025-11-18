@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@vercel/microfrontends/next/client";
+import Link from "next/link";
 import { Matrix, wave } from "@repo/ui/components/ui/matrix";
 import {
   Tooltip,
@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import { wwwUrl } from "../../lib/related-projects";
 
 /**
  * LightfastSineWaveMatrix - Animated matrix wave pattern component
@@ -35,7 +36,7 @@ export function LightfastSineWaveMatrix() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            href="/"
+            href={wwwUrl}
             className="block border border-border p-2 w-fit rounded-sm overflow-hidden text-foreground hover:opacity-80 transition-opacity"
           >
             <Matrix

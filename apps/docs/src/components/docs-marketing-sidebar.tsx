@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@vercel/microfrontends/next/client";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { PageTree } from "fumadocs-core/server";
 import { ChevronRight } from "lucide-react";
@@ -20,6 +20,7 @@ import {
 import { LightfastSineWaveMatrix } from "./shared/lightfast-sine-wave-matrix";
 import { exposureTrial } from "../lib/fonts";
 import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
+import { wwwUrl } from "../lib/related-projects";
 
 interface DocsMarketingSidebarProps {
   tree?: PageTree.Root;
@@ -65,7 +66,7 @@ export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
               className="hover:bg-black group"
               asChild
             >
-              <Link href="/">
+              <Link href={wwwUrl}>
                 <Icons.logo className="size-22 text-foreground group-hover:text-foreground transition-colors" />
               </Link>
             </Button>
@@ -91,7 +92,7 @@ export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
                   asChild
                   className="h-auto p-0 text-sm font-light bg-transparent hover:bg-transparent hover:opacity-60 justify-start"
                 >
-                  <Link href="/">← Back to Home</Link>
+                  <Link href={wwwUrl}>← Back to Home</Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -8,7 +8,7 @@ import { z } from "zod";
  */
 export const embedEnv = createEnv({
 	server: {
-		COHERE_API_KEY: z.string().min(1).optional(),
+		COHERE_API_KEY: z.string().min(1),
 		OPENAI_API_KEY: z.string().min(1).optional(),
 	},
 	runtimeEnv: {

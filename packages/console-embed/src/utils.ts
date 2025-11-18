@@ -6,7 +6,6 @@
  */
 
 import type { EmbeddingProvider } from "@vendor/embed";
-import { createCharHashEmbedding } from "@vendor/embed";
 import { createCohereEmbedding } from "@vendor/embed";
 import type { CohereInputType } from "@vendor/embed";
 import { embedEnv } from "@vendor/embed/env";
@@ -29,14 +28,14 @@ export interface EmbeddingDefaults {
 	/**
 	 * Embedding provider name
 	 */
-	provider: "cohere" | "charHash";
+	provider: "cohere";
 }
 
 /**
  * Resolve default embedding configuration
  *
- * Returns the default embedding settings based on environment.
- * Uses Cohere if API key is available, otherwise falls back to CharHash.
+ * Returns the default embedding settings for Cohere.
+ * COHERE_API_KEY is required in the environment.
  * Configuration values come from @repo/console-config.
  *
  * @returns Default embedding configuration
@@ -44,24 +43,15 @@ export interface EmbeddingDefaults {
  * @example
  * ```typescript
  * const defaults = resolveEmbeddingDefaults();
- * console.log(defaults.dimension); // 1024 (Cohere) or 1536 (CharHash)
+ * console.log(defaults.dimension); // 1024
+ * console.log(defaults.model); // "embed-english-v3.0"
  * ```
  */
 export function resolveEmbeddingDefaults(): EmbeddingDefaults {
-	if (embedEnv.COHERE_API_KEY) {
-		// Use Cohere if API key is available
-		return {
-			dimension: EMBEDDING_CONFIG.cohere.dimension,
-			model: EMBEDDING_CONFIG.cohere.model,
-			provider: "cohere",
-		};
-	}
-
-	// Fall back to CharHash for development
 	return {
-		dimension: EMBEDDING_CONFIG.charHash.dimension,
-		model: EMBEDDING_CONFIG.charHash.model,
-		provider: "charHash",
+		dimension: EMBEDDING_CONFIG.cohere.dimension,
+		model: EMBEDDING_CONFIG.cohere.model,
+		provider: "cohere",
 	};
 }
 
@@ -78,14 +68,12 @@ export interface EmbeddingProviderConfig {
 }
 
 /**
- * Create an embedding provider with automatic provider selection
+ * Create a Cohere embedding provider
  *
- * Automatically selects the best available provider:
- * 1. Cohere (if API key is available) - production quality
- * 2. CharHash (fallback) - development/testing
+ * COHERE_API_KEY is required in the environment.
  *
  * @param config - Provider configuration
- * @returns Embedding provider instance
+ * @returns Cohere embedding provider instance
  *
  * @example
  * ```typescript
@@ -103,18 +91,12 @@ export interface EmbeddingProviderConfig {
 export function createEmbeddingProvider(
 	config: EmbeddingProviderConfig,
 ): EmbeddingProvider {
-	if (embedEnv.COHERE_API_KEY) {
-		// Use Cohere with input_type optimization
-		return createCohereEmbedding({
-			apiKey: embedEnv.COHERE_API_KEY,
-			model: EMBEDDING_CONFIG.cohere.model,
-			inputType: config.inputType as CohereInputType,
-			dimension: EMBEDDING_CONFIG.cohere.dimension,
-		});
-	}
-
-	// Fall back to CharHash (no input_type differentiation)
-	return createCharHashEmbedding();
+	return createCohereEmbedding({
+		apiKey: embedEnv.COHERE_API_KEY,
+		model: EMBEDDING_CONFIG.cohere.model,
+		inputType: config.inputType as CohereInputType,
+		dimension: EMBEDDING_CONFIG.cohere.dimension,
+	});
 }
 
 /**
@@ -145,14 +127,13 @@ export interface StoreEmbeddingConfig {
  * cannot mix different models in the same semantic space.
  *
  * This function enforces store-level embedding model locking:
- * - Uses the store's configured embedding model, NOT environment defaults
- * - Throws error if required API key is missing for store's model
+ * - Uses the store's configured Cohere embedding model
+ * - All stores must use Cohere (COHERE_API_KEY required)
  * - Prevents accidental model switching that would corrupt search results
  *
  * @param store - Store configuration with embedding model settings
  * @param config - Provider configuration (input type)
- * @returns Embedding provider instance matching store's configuration
- * @throws Error if store requires an API key that is not available
+ * @returns Cohere embedding provider instance matching store's configuration
  *
  * @example
  * ```typescript
@@ -167,27 +148,12 @@ export function createEmbeddingProviderForStore(
 	store: StoreEmbeddingConfig,
 	config: EmbeddingProviderConfig,
 ): EmbeddingProvider {
-	// Check if store uses Cohere
-	if (store.embeddingModel.includes("cohere")) {
-		if (!embedEnv.COHERE_API_KEY) {
-			throw new Error(
-				`Store '${store.id}' requires Cohere embedding model (${store.embeddingModel}) ` +
-					`but COHERE_API_KEY is not set in environment. ` +
-					`Cannot switch embedding models on existing store. ` +
-					`Either set COHERE_API_KEY or create a new store.`,
-			);
-		}
-
-		return createCohereEmbedding({
-			apiKey: embedEnv.COHERE_API_KEY,
-			model: EMBEDDING_CONFIG.cohere.model,
-			inputType: config.inputType as CohereInputType,
-			dimension: store.embeddingDim, // Use store's dimension, not config default
-		});
-	}
-
-	// Use CharHash (always available, no API key required)
-	return createCharHashEmbedding();
+	return createCohereEmbedding({
+		apiKey: embedEnv.COHERE_API_KEY,
+		model: EMBEDDING_CONFIG.cohere.model,
+		inputType: config.inputType as CohereInputType,
+		dimension: store.embeddingDim, // Use store's dimension, not config default
+	});
 }
 
 /**

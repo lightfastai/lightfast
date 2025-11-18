@@ -90,15 +90,15 @@ export const PINECONE_CONFIG = {
  * Embedding provider configuration
  *
  * Controls which embedding models are used and their parameters.
- * Currently private - provider selection is automatic based on API keys.
+ * Currently private - all stores use Cohere.
  *
- * Future: Could allow users to specify preferred provider per store.
+ * Future: Could allow users to specify model version per store.
  */
 export const EMBEDDING_CONFIG = {
   /**
    * Cohere embedding configuration
    *
-   * Used when COHERE_API_KEY is available (production)
+   * COHERE_API_KEY is required for all embedding operations.
    */
   cohere: {
     /**
@@ -123,39 +123,14 @@ export const EMBEDDING_CONFIG = {
   },
 
   /**
-   * CharHash embedding configuration
-   *
-   * Used as fallback when no API keys available (development/testing)
-   */
-  charHash: {
-    /**
-     * Model identifier
-     *
-     * Default: "char-hash-1536"
-     *
-     * @private
-     */
-    model: "char-hash-1536" as const,
-
-    /**
-     * Embedding dimension
-     *
-     * Default: 1536 (matches OpenAI text-embedding-3-small)
-     *
-     * @private
-     */
-    dimension: 1536,
-  },
-
-  /**
    * Default batch size for embedding operations
    *
-   * Default: 100 texts per batch
-   * Used across all embedding providers
+   * Default: 96 texts per batch (Cohere API limit)
+   * Used across all embedding operations
    *
    * @private
    */
-  batchSize: 100,
+  batchSize: 96,
 } as const;
 
 /**
