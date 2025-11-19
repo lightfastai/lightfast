@@ -110,33 +110,9 @@ export default function NewProjectPage() {
     }
   }, [repositoriesData]);
 
-  // Check for OAuth or setup callbacks on mount
-  useEffect(() => {
-    const githubAuthStatus = searchParams.get("github_auth");
-    const setupStatus = searchParams.get("setup");
-    const installationIdFromSetup = searchParams.get("installation_id");
-
-    // OAuth callback success - refetch integration data
-    if (githubAuthStatus === "success") {
-      console.log("[NewProjectPage] OAuth success detected - refetching integration");
-      void refetchIntegration();
-      // Clean up URL after triggering refetch
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete("github_auth");
-      window.history.replaceState({}, "", newUrl.pathname + newUrl.search);
-    }
-
-    // App installation callback success - refetch integration
-    if (setupStatus === "success" && installationIdFromSetup) {
-      console.log("[NewProjectPage] GitHub App installation success - refetching integration");
-      void refetchIntegration();
-    }
-  }, [searchParams, refetchIntegration]);
-
-  // Note: We previously listened for "github-oauth-success" messages from popup,
-  // but the OAuth callback now redirects to /new?github_auth=success in the popup window,
-  // so the parent window relies on popup close polling (line 228-234) to trigger refetch.
-  // The github_auth query param handler above is a fallback for when popup is blocked.
+  // Note: OAuth flow now redirects to /github/connected success page in popup.
+  // The parent window relies on popup close polling (line ~220) to detect completion
+  // and trigger refetch of integration data.
 
   // Process integration data when it loads
   useEffect(() => {

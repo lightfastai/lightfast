@@ -136,10 +136,10 @@ export async function GET(request: NextRequest) {
 
     // Check for custom callback URL
     const customCallback = request.cookies.get("github_oauth_callback")?.value;
-    // Default to /new (console app) instead of / (www app)
+    // Default to success page that shows "You can now close this window"
     const redirectUrl = customCallback
       ? `${baseUrl}${customCallback}`
-      : `${baseUrl}/new?github_auth=success`;
+      : `${baseUrl}/github/connected`;
 
     // Redirect back to the app with success
     const response = NextResponse.redirect(redirectUrl);
