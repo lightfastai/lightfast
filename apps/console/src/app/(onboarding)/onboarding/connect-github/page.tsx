@@ -28,7 +28,7 @@ export default function ConnectGitHubPage() {
     const callbackUrl = encodeURIComponent(
       `/org/${orgSlug}/settings/github-integration`,
     );
-    window.location.href = `/api/github/auth?callback=${callbackUrl}`;
+    window.location.href = `/api/github/install?callback=${callbackUrl}`;
   };
 
   return (

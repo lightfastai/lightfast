@@ -1,27 +1,25 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { env } from "~/env";
 
 /**
  * GitHub App Setup Callback
  *
  * This route is called by GitHub after a user installs or configures the GitHub App.
- * It receives the installation_id which we can use for repository access.
+ * It receives the installation_id, then redirects to OAuth flow to get user access token.
  *
  * Flow:
- * 1. User clicks "Install" on GitHub
- * 2. GitHub shows org selector and permissions
- * 3. User confirms installation
- * 4. GitHub redirects to this Setup URL with installation_id
- * 5. We redirect user back to /new page
+ * 1. User completes GitHub App installation
+ * 2. GitHub redirects here with installation_id
+ * 3. We redirect to /api/github/auth (OAuth flow)
+ * 4. OAuth callback fetches installations and stores in database
+ * 5. User redirected back to /new page
  *
  * Query Parameters:
  * - installation_id: The GitHub App installation ID
  * - setup_action: "install" | "update"
  * - state: Optional state parameter we passed initially
- *
- * Note: We don't need to store the installation_id here.
- * It will be stored when the user actually connects a repository.
  */
 export async function GET(request: NextRequest) {
 	const searchParams = request.nextUrl.searchParams;
@@ -39,20 +37,41 @@ export async function GET(request: NextRequest) {
 		return NextResponse.redirect(new URL("/sign-in", request.url));
 	}
 
-	// Redirect back to /new page with success message
-	// Use the microfrontends proxy URL in development
+	// Get the base URL for redirects
 	const baseUrl =
-		process.env.NEXT_PUBLIC_APP_URL ??
-		(process.env.NODE_ENV === "production"
+		env.NEXT_PUBLIC_APP_URL ??
+		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
 			? "https://console.lightfast.ai"
-			: "http://localhost:3024"); // Microfrontends proxy port
+			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
+				? `https://${process.env.VERCEL_URL}`
+				: "http://localhost:3024"); // Microfrontends proxy port
 
-	const redirectUrl = new URL("/new", baseUrl);
+	// Check for custom callback from install route
+	const customCallback = request.cookies.get("github_install_callback")?.value;
+
+	// After installation, redirect to OAuth flow to get user access token
+	// This will fetch the installations and store them in the database
+	const oauthUrl = new URL("/api/github/auth", baseUrl);
+
+	// Pass callback URL to OAuth flow
+	const finalCallback = customCallback ?? "/new";
+	oauthUrl.searchParams.set("callback", finalCallback);
+
+	// Store installation_id to verify after OAuth
+	const response = NextResponse.redirect(oauthUrl.toString());
 
 	if (installationId) {
-		redirectUrl.searchParams.set("setup", "success");
-		redirectUrl.searchParams.set("installation_id", installationId);
+		response.cookies.set("github_setup_installation_id", installationId, {
+			httpOnly: true,
+			secure: env.NODE_ENV === "production",
+			sameSite: "lax",
+			maxAge: 600, // 10 minutes
+			path: "/",
+		});
 	}
 
-	return NextResponse.redirect(redirectUrl);
+	// Clear install state cookie
+	response.cookies.delete("github_install_state");
+
+	return response;
 }

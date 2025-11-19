@@ -202,11 +202,11 @@ export default function NewProjectPage() {
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    // Open GitHub OAuth flow in popup
-    // OAuth callback stores integration in database
+    // Open GitHub App installation flow in popup
+    // Flow: Install → Setup → OAuth → Callback → Database
     const popup = window.open(
-      "/api/github/auth",
-      "github-oauth",
+      "/api/github/install",
+      "github-install",
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
     );
 

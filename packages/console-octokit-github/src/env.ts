@@ -18,6 +18,11 @@ export const githubEnv = createEnv({
 		GITHUB_APP_ID: z.string().min(1),
 		GITHUB_APP_PRIVATE_KEY: z.string().min(1),
 
+		// GitHub App Slug (app name in URL)
+		// Used for: Installation URL (https://github.com/apps/{slug}/installations/new)
+		// Example: "lightfast-console" or "lightfast-console-dev"
+		GITHUB_APP_SLUG: z.string().min(1),
+
 		// GitHub OAuth (for user authorization)
 		// Used for: User authentication flow, organization installation listing
 		GITHUB_CLIENT_ID: z.string().min(1),
