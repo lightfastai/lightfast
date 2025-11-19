@@ -60,64 +60,45 @@ export default function ImportPage() {
   const [configPath, setConfigPath] = useState<string | null>(null);
   const [configContent, setConfigContent] = useState<string | null>(null);
 
-  // Detect lightfast.yml configuration
-  useEffect(() => {
-    const detectConfig = async () => {
-      if (!repoOwner || !repoName || !installationId) {
-        setConfigStatus("error");
-        return;
-      }
-
-      setConfigStatus("loading");
-
-      try {
-        const response = await fetch(
-          `/api/github/repository-config?fullName=${encodeURIComponent(
-            `${repoOwner}/${repoName}`
-          )}&installationId=${installationId}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch config");
-        }
-
-        const data = (await response.json()) as {
-          exists: boolean;
-          path?: string;
-          content?: string;
-        };
-
-        if (data.exists && data.path && data.content) {
-          setConfigStatus("found");
-          setConfigPath(data.path);
-          setConfigContent(data.content);
-
-          // Try to parse framework from config (basic YAML parsing)
-          // This is a simple implementation - can be enhanced with proper YAML parser
-          if (data.content.includes("framework:")) {
-            const frameworkMatch = data.content.match(
-              /framework:\s*["']?(\w+)["']?/
-            );
-            if (frameworkMatch?.[1]) {
-              setFramework(frameworkMatch[1].toLowerCase());
-            }
-          }
-        } else {
-          setConfigStatus("not-found");
-        }
-      } catch (error) {
-        console.error("Config detection error:", error);
-        setConfigStatus("error");
-      }
-    };
-
-    detectConfig();
-  }, [repoOwner, repoName, installationId]);
-
   // Get user's GitHub integration
   const { data: githubIntegration, isLoading: isLoadingIntegration } = useQuery(
-    trpc.integration.github.list.queryOptions({})
+    trpc.integration.github.list.queryOptions()
   );
+
+  // Detect lightfast.yml configuration using tRPC
+  const { data: configData, isLoading: isLoadingConfig, isError: isConfigError } = useQuery({
+    ...trpc.integration.github.detectConfig.queryOptions({
+      integrationId: githubIntegration?.id ?? "",
+      installationId: installationId ?? "",
+      fullName: `${repoOwner}/${repoName}`,
+    }),
+    enabled: Boolean(githubIntegration?.id && installationId && repoOwner && repoName),
+  });
+
+  // Update config status based on query result
+  useEffect(() => {
+    if (isLoadingConfig) {
+      setConfigStatus("loading");
+    } else if (isConfigError) {
+      setConfigStatus("error");
+    } else if (configData?.exists && configData.path && configData.content) {
+      setConfigStatus("found");
+      setConfigPath(configData.path);
+      setConfigContent(configData.content);
+
+      // Try to parse framework from config (basic YAML parsing)
+      if (configData.content.includes("framework:")) {
+        const frameworkMatch = configData.content.match(
+          /framework:\s*["']?(\w+)["']?/
+        );
+        if (frameworkMatch?.[1]) {
+          setFramework(frameworkMatch[1].toLowerCase());
+        }
+      }
+    } else {
+      setConfigStatus("not-found");
+    }
+  }, [configData, isLoadingConfig, isConfigError]);
 
   // Resolve workspace from organization
   const { data: workspace, isLoading: isLoadingWorkspace } = useQuery({
@@ -211,6 +192,10 @@ export default function ImportPage() {
         isPrivate: false, // TODO: fetch from GitHub API
         isArchived: false, // TODO: fetch from GitHub API
       });
+
+      if (!resource) {
+        throw new Error("Failed to create resource");
+      }
 
       // Step 2: Connect resource to workspace with sync config
       await connectWorkspaceMutation.mutateAsync({

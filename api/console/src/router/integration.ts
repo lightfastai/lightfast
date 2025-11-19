@@ -320,6 +320,153 @@ export const integrationRouter = {
       }),
 
     /**
+     * Detect repository configuration (lightfast.yml)
+     *
+     * Checks if the repository contains a lightfast.yml configuration file
+     * and returns its content if found.
+     */
+    detectConfig: protectedProcedure
+      .input(
+        z.object({
+          integrationId: z.string(),
+          installationId: z.string(),
+          fullName: z.string(), // "owner/repo"
+          ref: z.string().optional(), // branch/tag/sha (defaults to default branch)
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        // Verify ownership
+        const integration = await verifyIntegrationOwnership(
+          ctx,
+          input.integrationId
+        );
+
+        // Verify provider is GitHub
+        if (integration.provider !== "github") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Integration is not a GitHub integration",
+          });
+        }
+
+        // Verify user has access to this installation
+        const providerData = integration.providerData;
+        if (providerData.provider !== "github") {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Invalid provider data type",
+          });
+        }
+
+        const installation = providerData.installations?.find(
+          (i) => i.id === input.installationId
+        );
+
+        if (!installation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message:
+              "Installation not found or not accessible to this integration",
+          });
+        }
+
+        // Parse repository owner and name
+        const [owner, repo] = input.fullName.split("/");
+        if (!owner || !repo) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid repository name format. Expected 'owner/repo'",
+          });
+        }
+
+        try {
+          const app = getGitHubApp();
+          const installationIdNumber = Number.parseInt(
+            input.installationId,
+            10
+          );
+
+          // Get installation octokit
+          const octokit = await app.getInstallationOctokit(
+            installationIdNumber
+          );
+
+          // Resolve ref (default to repository default branch)
+          let ref = input.ref;
+          if (!ref) {
+            const { data: repoInfo } = await octokit.request(
+              "GET /repos/{owner}/{repo}",
+              {
+                owner,
+                repo,
+                headers: { "X-GitHub-Api-Version": "2022-11-28" },
+              }
+            );
+            ref = repoInfo.default_branch;
+          }
+
+          // Try common config file names
+          const candidates = [
+            "lightfast.yml",
+            ".lightfast.yml",
+            "lightfast.yaml",
+            ".lightfast.yaml",
+          ];
+
+          for (const path of candidates) {
+            try {
+              const { data } = await octokit.request(
+                "GET /repos/{owner}/{repo}/contents/{path}",
+                {
+                  owner,
+                  repo,
+                  path,
+                  ref,
+                  headers: { "X-GitHub-Api-Version": "2022-11-28" },
+                }
+              );
+
+              // Check if it's a file (not directory)
+              if ("content" in data && "type" in data && data.type === "file") {
+                const content = Buffer.from(data.content, "base64").toString(
+                  "utf-8"
+                );
+
+                return {
+                  exists: true,
+                  path,
+                  content,
+                  sha: data.sha,
+                };
+              }
+            } catch (error: any) {
+              // 404 means file doesn't exist, try next candidate
+              if (error.status === 404) {
+                continue;
+              }
+              // Other errors: log and continue
+              console.error(
+                `[tRPC] Error checking ${path} in ${owner}/${repo}:`,
+                error
+              );
+              continue;
+            }
+          }
+
+          // No config found
+          return { exists: false };
+        } catch (error: any) {
+          console.error("[tRPC] Failed to detect config:", error);
+
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to detect repository configuration",
+            cause: error,
+          });
+        }
+      }),
+
+    /**
      * Store OAuth result (called from OAuth callback route)
      * Creates or updates integration with access token and installations
      */
