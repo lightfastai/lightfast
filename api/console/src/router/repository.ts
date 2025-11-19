@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { DeusConnectedRepository, organizations, workspaces } from "@db/console/schema";
+import { DeusConnectedRepository, workspaces } from "@db/console/schema";
 import { getOrCreateDefaultWorkspace } from "@db/console/utils";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -38,24 +38,12 @@ export const repositoryRouter = {
     .input(
       z.object({
         includeInactive: z.boolean().default(false),
-        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Note: input.organizationId IS the Clerk org ID (primary key)
-      const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
-      });
-
-      if (!orgResult) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.organizationId}`,
-        });
-      }
-
       const whereConditions = [
-        eq(DeusConnectedRepository.organizationId, orgResult.id),
+        eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
       ];
 
       if (!input.includeInactive) {
@@ -75,29 +63,17 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Note: input.organizationId IS the Clerk org ID (primary key)
-      const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
-      });
-
-      if (!orgResult) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.organizationId}`,
-        });
-      }
-
       const result = await ctx.db
         .select()
         .from(DeusConnectedRepository)
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, orgResult.id),
+            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
           ),
         )
         .limit(1);
@@ -120,18 +96,18 @@ export const repositoryRouter = {
    * GITHUB APP FLOW:
    * - Organization has GitHub App installed
    * - We use installation ID to get installation access tokens
-   * - Frontend calls this endpoint with: organizationId, githubRepoId, githubInstallationId
+   * - Frontend calls this endpoint with: clerkOrgId, githubRepoId, githubInstallationId
    * - We store minimal immutable data only
    *
    * SIMPLIFIED APPROACH:
-   * - Store only immutable data: organizationId, githubRepoId, githubInstallationId
+   * - Store only immutable data: clerkOrgId, githubRepoId, githubInstallationId
    * - Optionally cache metadata for UI display (can be stale)
    * - Fetch fresh repo details from GitHub API when needed
    */
   connect: protectedProcedure
     .input(
       z.object({
-        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
         githubRepoId: z.string(),
         githubInstallationId: z.string(),
         permissions: z
@@ -145,22 +121,9 @@ export const repositoryRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Note: input.organizationId IS the Clerk org ID (primary key)
-      const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
-      });
-
-      if (!orgResult) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.organizationId}`,
-        });
-      }
-
       // Get or create default workspace for organization
-      // orgResult.id IS the Clerk org ID (our new schema uses Clerk org ID as primary key)
       const workspaceId = await getOrCreateDefaultWorkspace(
-        orgResult.id,
+        input.clerkOrgId,
       );
 
       // Check if this repository is already connected to this organization
@@ -170,7 +133,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.organizationId, orgResult.id),
+            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
           ),
         )
         .limit(1);
@@ -214,7 +177,7 @@ export const repositoryRouter = {
       // Create new connection
       await ctx.db.insert(DeusConnectedRepository).values({
         id,
-        organizationId: orgResult.id,
+        clerkOrgId: input.clerkOrgId,
         githubRepoId: input.githubRepoId,
         githubInstallationId: input.githubInstallationId,
         workspaceId,
@@ -381,22 +344,10 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        organizationId: z.string(), // Accepts Clerk org ID (org_xxx)
+        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Note: input.organizationId IS the Clerk org ID (primary key)
-      const orgResult = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
-      });
-
-      if (!orgResult) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.organizationId}`,
-        });
-      }
-
       // Get repository
       const repoResult = await ctx.db
         .select()
@@ -404,7 +355,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, orgResult.id)
+            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId)
           )
         )
         .limit(1);
@@ -469,7 +420,7 @@ export const repositoryRouter = {
         );
 
         // Resolve workspace (DB UUID) and compute workspaceKey from slug
-        const wsId = await getOrCreateDefaultWorkspace(orgResult.id);
+        const wsId = await getOrCreateDefaultWorkspace(input.clerkOrgId);
         const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
         const workspaceId = ws?.id ?? wsId;
 
@@ -519,18 +470,10 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        organizationId: z.string(), // Clerk org ID
+        clerkOrgId: z.string(), // Clerk org ID
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Resolve organization
-      const org = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, input.organizationId),
-      });
-      if (!org) {
-        throw new TRPCError({ code: "NOT_FOUND", message: `Organization not found: ${input.organizationId}` });
-      }
-
       // Resolve repository
       const [repository] = await ctx.db
         .select()
@@ -538,7 +481,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.organizationId, org.id),
+            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
           ),
         )
         .limit(1);
@@ -634,10 +577,10 @@ export const repositoryRouter = {
       // Prepare Inngest event
       const deliveryId = randomUUID();
       // Resolve default workspace (DB UUID) + workspaceKey
-      const wsId = await getOrCreateDefaultWorkspace(org.id);
+      const wsId = await getOrCreateDefaultWorkspace(input.clerkOrgId);
       const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
       const workspaceId = ws?.id ?? wsId; // DB UUID
-      const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-${org.githubOrgSlug}`;
+      const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-default`;
       const changedFiles = matches.map((path) => ({ path, status: "modified" as const }));
 
       // Send event to Inngest

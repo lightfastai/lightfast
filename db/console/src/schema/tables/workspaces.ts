@@ -8,8 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { randomUUID } from "node:crypto";
-import { organizations } from "./organizations";
+import { nanoid } from "@repo/lib";
 
 /**
  * Workspaces table represents isolated knowledge bases within an organization.
@@ -29,19 +28,18 @@ export const workspaces = pgTable(
   "lightfast_workspaces",
   {
     /**
-     * Unique workspace identifier (UUID)
+     * Unique workspace identifier (nanoid)
      */
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => randomUUID()),
+      .$defaultFn(() => nanoid()),
 
     /**
-     * Organization this workspace belongs to (Clerk org ID)
+     * Clerk organization ID (no FK - Clerk is source of truth)
      */
-    organizationId: varchar("organization_id", { length: 191 })
-      .notNull()
-      .references(() => organizations.id, { onDelete: "cascade" }),
+    clerkOrgId: varchar("clerk_org_id", { length: 191 })
+      .notNull(),
 
     /**
      * URL-safe workspace identifier (unique within organization)
@@ -83,18 +81,18 @@ export const workspaces = pgTable(
       .notNull(),
   },
   (table) => ({
-    // Index for finding all workspaces in an organization
-    orgIdIdx: index("workspace_org_id_idx").on(table.organizationId),
+    // Index for finding all workspaces in a Clerk organization
+    clerkOrgIdIdx: index("workspace_clerk_org_id_idx").on(table.clerkOrgId),
 
     // Composite index for finding default workspace
     orgDefaultIdx: index("workspace_org_default_idx").on(
-      table.organizationId,
+      table.clerkOrgId,
       table.isDefault,
     ),
 
     // Unique constraint: one slug per organization
     orgSlugIdx: index("workspace_org_slug_idx").on(
-      table.organizationId,
+      table.clerkOrgId,
       table.slug,
     ),
   }),

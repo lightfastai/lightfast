@@ -9,8 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { randomUUID } from "node:crypto";
-import { organizations } from "./organizations";
+import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
 import { sourceTypeEnum } from "./docs-documents";
 
@@ -21,7 +20,7 @@ import { sourceTypeEnum } from "./docs-documents";
  * DESIGN PRINCIPLE: Multi-source via discriminated union
  *
  * What we STORE:
- * - organizationId: Which org this source belongs to ✅
+ * - clerkOrgId: Which org this source belongs to (Clerk org ID) ✅
  * - workspaceId: Which workspace this source belongs to ✅
  * - sourceType: Discriminator (github | linear | notion | sentry | vercel | zendesk) ✅
  * - sourceMetadata: Source-specific data (JSONB) ✅
@@ -34,19 +33,18 @@ export const connectedSources = pgTable(
   "lightfast_connected_sources",
   {
     /**
-     * Unique identifier for the connected source
+     * Unique identifier for the connected source (nanoid)
      */
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => randomUUID()),
+      .$defaultFn(() => nanoid()),
 
     /**
-     * Reference to the organization this source belongs to
+     * Clerk organization ID (no FK - Clerk is source of truth)
      */
-    organizationId: varchar("organization_id", { length: 191 })
-      .notNull()
-      .references(() => organizations.id, { onDelete: "cascade" }),
+    clerkOrgId: varchar("clerk_org_id", { length: 191 })
+      .notNull(),
 
     /**
      * Reference to the workspace this source belongs to (optional for org-level sources)
@@ -133,11 +131,11 @@ export const connectedSources = pgTable(
   },
   (table) => ({
     // Index for organization lookups
-    orgIdIdx: index("connected_sources_org_id_idx").on(table.organizationId),
+    clerkOrgIdIdx: index("connected_sources_clerk_org_id_idx").on(table.clerkOrgId),
 
     // Composite index for active sources by organization
     orgActiveIdx: index("connected_sources_org_active_idx").on(
-      table.organizationId,
+      table.clerkOrgId,
       table.isActive,
     ),
 
@@ -154,7 +152,7 @@ export const connectedSources = pgTable(
 
     // Composite index for org + source type
     orgSourceTypeIdx: index("connected_sources_org_source_type_idx").on(
-      table.organizationId,
+      table.clerkOrgId,
       table.sourceType,
     ),
   }),

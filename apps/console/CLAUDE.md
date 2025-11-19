@@ -174,13 +174,17 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **GitHub App Name:** `Lightfast Console App Connector Dev`
 
-**Homepage URL:** `http://localhost:4104`
+**Homepage URL:** `http://localhost:3024`
 
-**Callback URL:** `http://localhost:4104/api/github/callback`
+**Callback URL:** `http://localhost:3024/api/github/callback`
+
+**Setup URL:** `http://localhost:3024/api/github/setup`
 
 **Webhook URL:** `https://your-ngrok-url.ngrok.io/api/github/webhooks`
 
 **Installation:** Only on this account (for testing)
+
+**Note:** Port 3024 is the Vercel microfrontends proxy that routes to the console app (port 4107).
 
 ### Production Setup
 

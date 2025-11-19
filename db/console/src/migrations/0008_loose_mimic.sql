@@ -1,2 +1,0 @@
-ALTER TABLE "lightfast_ingestion_commits" ADD COLUMN "source" varchar(32) DEFAULT 'github-webhook' NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_commits_source" ON "lightfast_ingestion_commits" USING btree ("source");

@@ -37,7 +37,7 @@ function getQueryClient() {
 function defaultGetBaseUrl() {
   if (typeof window !== "undefined") return window.location.origin;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 4107}`;
+  return `http://localhost:${process.env.PORT ?? 4104}`;
 }
 
 export function TRPCReactProvider({

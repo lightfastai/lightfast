@@ -4,7 +4,6 @@ import { DeusConnectedRepository } from "./tables/connected-repository";
 import { connectedSources } from "./tables/connected-sources";
 import { docsDocuments } from "./tables/docs-documents";
 import { ingestionEvents } from "./tables/ingestion-events";
-import { organizations } from "./tables/organizations";
 import { stores } from "./tables/stores";
 import { vectorEntries } from "./tables/vector-entries";
 import { workspaces } from "./tables/workspaces";
@@ -13,22 +12,13 @@ import { workspaces } from "./tables/workspaces";
 /**
  * Define relations between tables for Drizzle ORM queries
  *
- * Note: Organization memberships are managed by Clerk, not in our database.
+ * Note: Organizations are managed by Clerk, not in our database.
+ * Tables reference Clerk org IDs via clerkOrgId fields (no FK constraints).
  */
-
-export const organizationsRelations = relations(organizations, ({ many }) => ({
-  repositories: many(DeusConnectedRepository),
-  workspaces: many(workspaces),
-  connectedSources: many(connectedSources),
-}));
 
 export const deusConnectedRepositoryRelations = relations(
   DeusConnectedRepository,
   ({ one }) => ({
-    organization: one(organizations, {
-      fields: [DeusConnectedRepository.organizationId],
-      references: [organizations.id],
-    }),
     workspace: one(workspaces, {
       fields: [DeusConnectedRepository.workspaceId],
       references: [workspaces.id],
@@ -37,11 +27,7 @@ export const deusConnectedRepositoryRelations = relations(
   }),
 );
 
-export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [workspaces.organizationId],
-    references: [organizations.id],
-  }),
+export const workspacesRelations = relations(workspaces, ({ many }) => ({
   repositories: many(DeusConnectedRepository),
   stores: many(stores),
   connectedSources: many(connectedSources),
@@ -84,10 +70,6 @@ export const ingestionEventsRelations = relations(ingestionEvents, ({ one }) => 
 }));
 
 export const connectedSourcesRelations = relations(connectedSources, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [connectedSources.organizationId],
-    references: [organizations.id],
-  }),
   workspace: one(workspaces, {
     fields: [connectedSources.workspaceId],
     references: [workspaces.id],

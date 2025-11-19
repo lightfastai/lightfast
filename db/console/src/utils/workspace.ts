@@ -18,16 +18,16 @@ export function getWorkspaceKey(slug: string): string {
  * Get or create default workspace for organization
  * Phase 1: Always creates/returns the default workspace with friendly auto-generated name
  *
- * @param organizationId - Clerk organization ID (this is the primary key in organizations table)
+ * @param clerkOrgId - Clerk organization ID
  * @returns Workspace ID (UUID)
  */
 export async function getOrCreateDefaultWorkspace(
-  organizationId: string,
+  clerkOrgId: string,
 ): Promise<string> {
   // Check if default workspace exists
   const existing = await db.query.workspaces.findFirst({
     where: and(
-      eq(workspaces.organizationId, organizationId),
+      eq(workspaces.clerkOrgId, clerkOrgId),
       eq(workspaces.isDefault, true),
     ),
   });
@@ -45,7 +45,7 @@ export async function getOrCreateDefaultWorkspace(
     .insert(workspaces)
     .values({
       // id is auto-generated UUID via $defaultFn
-      organizationId,
+      clerkOrgId,
       slug,
       isDefault: true,
       settings: {},

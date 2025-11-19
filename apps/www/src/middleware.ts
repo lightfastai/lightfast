@@ -3,16 +3,49 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { consoleUrl, authUrl } from "~/lib/related-projects";
 
-// Public routes that don't require authentication checks
+/**
+ * Public routes that don't require authentication.
+ * The www app is a public marketing site, so all routes are accessible.
+ * However, authenticated users will be redirected to the console app.
+ */
 const isPublicRoute = createRouteMatcher([
+  // Marketing pages
   "/",
+  "/features(.*)",
+  "/pricing(.*)",
+  "/blog(.*)",
+  "/changelog(.*)",
+  "/integrations(.*)",
+  "/use-cases(.*)",
+  "/early-access(.*)",
+  "/search(.*)",
+
+  // Legal pages (accessible even when authenticated)
+  "/legal(.*)",
+
+  // API routes
   "/api/health(.*)",
   "/api/inngest(.*)",
   "/api/early-access(.*)",
+
+  // Static files
   "/robots.txt",
   "/sitemap(.*)",
+  "/favicon.ico",
+  "/manifest.json",
+]);
+
+/**
+ * Routes that authenticated users can still access
+ * (won't trigger redirect to console)
+ */
+const isAllowedForAuthenticatedUsers = createRouteMatcher([
   "/legal(.*)",
-  "/(.*)",  // Allow all routes on www (it's a marketing site)
+  "/api(.*)",
+  "/robots.txt",
+  "/sitemap(.*)",
+  "/favicon.ico",
+  "/manifest.json",
 ]);
 
 export default clerkMiddleware(
@@ -26,8 +59,11 @@ export default clerkMiddleware(
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("Referrer-Policy", "origin-when-cross-origin");
 
-    // If user is authenticated and not on a public API route, redirect to console
-    if (userId && !req.nextUrl.pathname.startsWith("/api/")) {
+    /**
+     * Redirect authenticated users to console app
+     * Exception: legal pages and API routes
+     */
+    if (userId && !isAllowedForAuthenticatedUsers(req)) {
       return NextResponse.redirect(new URL(consoleUrl));
     }
 

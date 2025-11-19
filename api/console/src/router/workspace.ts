@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { organizations, workspaces } from "@db/console/schema";
+import { workspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
@@ -13,33 +13,24 @@ import { publicProcedure } from "../trpc";
  */
 export const workspaceRouter = {
   /**
-   * Resolve workspace ID and key from GitHub organization slug
-   * Used by webhooks to map GitHub events to workspaces
+   * Resolve workspace ID and key from Clerk organization ID
+   * Used by API routes to map organizations to their workspaces
    *
    * Returns:
    * - workspaceId: Database UUID for internal operations
    * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
    */
-  resolveFromGithubOrgSlug: publicProcedure
+  resolveFromClerkOrgId: publicProcedure
     .input(
       z.object({
-        githubOrgSlug: z.string(),
+        clerkOrgId: z.string(),
       }),
     )
     .query(async ({ input }) => {
-      // Find organization by GitHub slug
-      const org = await db.query.organizations.findFirst({
-        where: eq(organizations.githubOrgSlug, input.githubOrgSlug),
-      });
-
-      if (!org) {
-        throw new Error(
-          `Organization not found for GitHub slug: ${input.githubOrgSlug}`,
-        );
-      }
-
-      // Get or create default workspace for this organization
-      const workspaceId = await getOrCreateDefaultWorkspace(org.id);
+      // Get or create default workspace for this Clerk organization
+      const workspaceId = await getOrCreateDefaultWorkspace(
+        input.clerkOrgId,
+      );
 
       // Fetch workspace to get slug
       const workspace = await db.query.workspaces.findFirst({

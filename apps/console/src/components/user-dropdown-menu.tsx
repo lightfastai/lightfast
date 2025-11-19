@@ -110,15 +110,15 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
       <SignedIn>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className={className}>
-              <Avatar className="h-5 w-5">
+            <Button variant="ghost" className={`p-0 rounded-full h-8 w-8 ${className}`}>
+              <Avatar className="h-8 w-8">
                 {user?.imageUrl ? (
                   <AvatarImage
                     src={user.imageUrl}
                     alt={displayName || "User avatar"}
                   />
                 ) : (
-                  <AvatarFallback className="text-[10px] bg-blue-300 text-white">
+                  <AvatarFallback className="text-sm bg-blue-300 text-white">
                     {initials}
                   </AvatarFallback>
                 )}
@@ -127,7 +127,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <div className="px-2 py-1.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {emailAddress || "User"}
               </p>
             </div>
@@ -136,7 +136,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
               <Link
                 href={settingsHref}
                 prefetch={true}
-                className="cursor-pointer"
+                className="cursor-pointer text-sm"
               >
                 <Settings className="mr-2 h-3 w-3" />
                 Settings
@@ -145,7 +145,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="cursor-pointer"
+              className="cursor-pointer text-sm"
             >
               Sign out
             </DropdownMenuItem>

@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@repo/console-types": "workspace:*",
+    "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",

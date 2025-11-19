@@ -1,101 +1,91 @@
 "use client";
 
-import { Github, Lock, Shield, TriangleAlert } from "lucide-react";
+import { useOrganization } from "@clerk/nextjs";
+import { Github, GitlabIcon as GitLab } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@repo/ui/components/ui/card";
+import Link from "next/link";
 
 /**
- * GitHub Connection Onboarding Page
+ * Onboarding Step 2: Connect Git Provider
  *
- * First step in onboarding: Connect GitHub account.
- * After successful connection, user is redirected to claim-org page.
+ * User connects their GitHub account via OAuth.
+ * After successful connection, redirects to repository selection.
+ *
+ * Design: Clean provider selection following Vercel's integration style.
  */
 export default function ConnectGitHubPage() {
-	const handleConnectGitHub = () => {
-		// Redirect to GitHub OAuth with callback to claim-org page
-		const callbackUrl = encodeURIComponent("/onboarding/claim-org");
-		window.location.href = `/api/github/auth?callback=${callbackUrl}`;
-	};
+  const { organization } = useOrganization();
 
-	return (
-		<div className="flex min-h-screen items-center justify-center bg-background px-4">
-			<Card className="w-full max-w-md border-0 shadow-none">
-				<CardHeader className="text-center">
-					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-						<Github className="h-6 w-6 text-primary" />
-					</div>
-					<CardTitle>Connect GitHub</CardTitle>
-					<CardDescription>
-						Connect your GitHub account to get started with Console
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{/* Permission notices */}
-					<div className="space-y-3 rounded-lg border border-border/60 bg-muted/5 p-4">
-						<div className="flex items-start gap-3">
-							<div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-								<Lock className="h-3 w-3 text-primary" />
-							</div>
-							<div className="flex-1">
-								<p className="text-sm font-medium">
-									Permissions always respected
-								</p>
-								<p className="mt-1 text-xs text-muted-foreground">
-									Console is strictly limited to permissions you've explicitly set.
-								</p>
-							</div>
-						</div>
+  const handleConnectGitHub = () => {
+    // Get org slug for redirect after GitHub auth
+    const orgSlug = organization?.slug;
+    if (!orgSlug) {
+      console.error("No organization found in session");
+      return;
+    }
 
-						<div className="flex items-start gap-3">
-							<div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-								<Shield className="h-3 w-3 text-primary" />
-							</div>
-							<div className="flex-1">
-								<p className="text-sm font-medium">You're in control</p>
-								<p className="mt-1 text-xs text-muted-foreground">
-									Console always respects your training data preferences, and is
-									limited to permissions you've explicitly set.
-								</p>
-							</div>
-						</div>
+    // Redirect to GitHub OAuth - callback will redirect to repository selection
+    const callbackUrl = encodeURIComponent(
+      `/org/${orgSlug}/settings/github-integration`,
+    );
+    window.location.href = `/api/github/auth?callback=${callbackUrl}`;
+  };
 
-						<div className="flex items-start gap-3">
-							<div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-								<TriangleAlert className="h-3 w-3 text-amber-500" />
-							</div>
-							<div className="flex-1">
-								<p className="text-sm font-medium">
-									Connectors may introduce risk
-								</p>
-								<p className="mt-1 text-xs text-muted-foreground">
-									Connectors are designed to respect your privacy, but sites may
-									attempt to steal your data.{" "}
-								</p>
-							</div>
-						</div>
-					</div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-md space-y-8">
+        {/* Title */}
+        <h1 className="text-center text-4xl font-bold tracking-tight">
+          Let's connect
+          <br />
+          your Git provider
+        </h1>
 
-					<Button
-						onClick={handleConnectGitHub}
-						className="w-full gap-2"
-						size="lg"
-					>
-						<Github className="h-4 w-4" />
-						Continue to GitHub
-					</Button>
+        {/* Provider Buttons */}
+        <div className="space-y-3">
+          {/* GitHub - Active */}
+          <Button
+            onClick={handleConnectGitHub}
+            className="w-full justify-center gap-3 bg-[#24292e] text-white hover:bg-[#1a1e22] text-base font-medium"
+            size="xl"
+          >
+            <Github className="h-5 w-5" />
+            Continue with GitHub
+          </Button>
 
-					<p className="text-xs text-center text-muted-foreground">
-						You'll be redirected to GitHub to authorize access. We only request
-						the minimum permissions needed.
-					</p>
-				</CardContent>
-			</Card>
-		</div>
-	);
+          {/* GitLab - Disabled */}
+          <Button
+            disabled
+            className="w-full justify-center gap-3 bg-[#6e49cb] text-white opacity-40 text-base font-medium"
+            size="xl"
+          >
+            <GitLab className="h-5 w-5" />
+            Continue with GitLab
+          </Button>
+
+          {/* Bitbucket - Disabled */}
+          <Button
+            disabled
+            className="w-full justify-center gap-3 bg-[#0052cc] text-white opacity-40 text-base font-medium"
+            size="xl"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M.778 1.213a.768.768 0 00-.768.892l3.263 19.81c.084.5.515.868 1.022.873H19.95a.772.772 0 00.77-.646l3.27-20.03a.768.768 0 00-.768-.891zM14.52 15.53H9.522L8.17 8.466h7.561z" />
+            </svg>
+            Continue with Bitbucket
+          </Button>
+        </div>
+
+        {/* Skip link */}
+        <div className="text-center">
+          <Link
+            href={organization?.slug ? `/org/${organization.slug}` : "/"}
+            className="text-sm text-blue-500 hover:text-blue-600 transition-colors inline-flex items-center gap-1"
+          >
+            Skip →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }

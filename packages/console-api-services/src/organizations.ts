@@ -139,23 +139,78 @@ export class OrganizationsService extends DeusApiService {
   }
 
   /**
-   * Create new organization
+   * Find organization by native slug
+   */
+  async findBySlug(slug: string) {
+    return await this.call(
+      "organization.findBySlug",
+      (caller) => caller.organization.findBySlug({ slug }),
+      {
+        fallbackMessage: "Failed to find organization by slug",
+        details: { slug },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
+   * Create new organization (WITHOUT GitHub connection)
    */
   async create(params: {
-    githubInstallationId: number;
-    githubOrgId: number;
-    githubOrgSlug: string;
-    githubOrgName: string;
-    githubOrgAvatarUrl: string | null;
-    claimedBy: string;
     clerkOrgId: string;
     clerkOrgSlug: string;
+    name: string;
+    slug: string;
+    workspaceId: string;
+    createdBy: string;
   }) {
     return await this.call(
       "organization.create",
       (caller) => caller.organization.create(params),
       {
         fallbackMessage: "Failed to create organization",
+        details: params,
+      },
+    );
+  }
+
+  /**
+   * Connect GitHub to existing organization
+   */
+  async connectGitHub(params: {
+    organizationId: string;
+    githubInstallationId: number;
+    githubOrgId: number;
+    githubOrgSlug: string;
+    githubOrgName: string;
+    githubOrgAvatarUrl: string | null;
+    connectedBy: string;
+  }) {
+    return await this.call(
+      "organization.connectGitHub",
+      (caller) => caller.organization.connectGitHub(params),
+      {
+        fallbackMessage: "Failed to connect GitHub to organization",
+        details: params,
+      },
+    );
+  }
+
+  /**
+   * Disconnect GitHub from organization
+   */
+  async disconnectGitHub(params: { organizationId: string }) {
+    return await this.call(
+      "organization.disconnectGitHub",
+      (caller) => caller.organization.disconnectGitHub(params),
+      {
+        fallbackMessage: "Failed to disconnect GitHub from organization",
         details: params,
       },
     );

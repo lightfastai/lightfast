@@ -1450,6 +1450,9 @@ importers:
       '@repo/console-types':
         specifier: workspace:*
         version: link:../../packages/console-types
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)

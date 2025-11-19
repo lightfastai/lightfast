@@ -16,8 +16,7 @@ import type {
   RepositoryMetadata,
   RepositoryPermissions,
 } from "@repo/console-types";
-import { randomUUID } from "node:crypto";
-import { organizations } from "./organizations";
+import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
 
 /**
@@ -42,7 +41,7 @@ export const configStatusEnum = pgEnum("config_status", [
  * - Repositories are scoped to the organization
  *
  * What we STORE:
- * - organizationId: Which Deus org this repo belongs to ✅
+ * - clerkOrgId: Which Lightfast org this repo belongs to (Clerk org ID) ✅
  * - githubRepoId: GitHub's internal ID (NEVER changes, even on rename/transfer) ✅
  * - githubInstallationId: GitHub App installation ID for API access ✅
  * - permissions: What we're allowed to do ✅
@@ -59,19 +58,18 @@ export const DeusConnectedRepository = pgTable(
   "lightfast_connected_repository",
   {
     /**
-     * Unique identifier for the connected repository
+     * Unique identifier for the connected repository (nanoid)
      */
     id: varchar("id", { length: 191 })
       .notNull()
       .primaryKey()
-      .$defaultFn(() => randomUUID()),
+      .$defaultFn(() => nanoid()),
 
     /**
-     * Reference to the organization this repository belongs to
+     * Clerk organization ID (no FK - Clerk is source of truth)
      */
-    organizationId: varchar("organization_id", { length: 191 })
-      .notNull()
-      .references(() => organizations.id, { onDelete: "cascade" }),
+    clerkOrgId: varchar("clerk_org_id", { length: 191 })
+      .notNull(),
 
     /**
      * GitHub's unique repository ID (immutable, never changes)
@@ -173,11 +171,11 @@ export const DeusConnectedRepository = pgTable(
   },
   (table) => ({
     // Index for fast organization repository lookups
-    orgIdIdx: index("org_id_idx").on(table.organizationId),
+    clerkOrgIdIdx: index("clerk_org_id_idx").on(table.clerkOrgId),
 
     // Composite index for active repositories by organization (most common query)
     orgActiveIdx: index("org_active_idx").on(
-      table.organizationId,
+      table.clerkOrgId,
       table.isActive,
     ),
 

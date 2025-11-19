@@ -92,7 +92,7 @@ export default function RootLayout({
         },
       }}
       taskUrls={{
-        "choose-organization": `${consoleUrl}/onboarding/claim-org`,
+        "choose-organization": `${consoleUrl}/onboarding`,
       }}
     >
       <html lang="en" suppressHydrationWarning>

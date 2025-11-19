@@ -56,10 +56,10 @@ export default function RootLayout({
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl={`${authUrl}/sign-in`}
       signUpUrl={`${authUrl}/sign-up`}
-      signInFallbackRedirectUrl="/onboarding/claim-org"
-      signUpFallbackRedirectUrl="/onboarding/claim-org"
+      signInFallbackRedirectUrl="/onboarding"
+      signUpFallbackRedirectUrl="/onboarding"
       taskUrls={{
-        "choose-organization": "/onboarding/claim-org",
+        "choose-organization": "/onboarding",
       }}
     >
       <html lang="en" suppressHydrationWarning>

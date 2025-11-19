@@ -15,6 +15,7 @@ const isPublicRoute = createRouteMatcher([
 // Includes both page routes and API routes used during onboarding
 const isOnboardingRoute = createRouteMatcher([
   "/onboarding(.*)",
+  "/new(.*)", // Repository connection flow
   "/api/github(.*)",
   "/api/organizations(.*)",
 ]);
@@ -32,7 +33,7 @@ export default clerkMiddleware(
 
     // Redirect pending users to onboarding (unless already there or on public route)
     if (isPending && !isOnboardingRoute(req) && !isPublicRoute(req)) {
-      return NextResponse.redirect(new URL("/onboarding/claim-org", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
 
     // Protect all routes except public and onboarding routes
@@ -47,9 +48,9 @@ export default clerkMiddleware(
     // Redirect to auth app for sign-in/sign-up
     signInUrl: `${authUrl}/sign-in`,
     signUpUrl: `${authUrl}/sign-up`,
-    // Post-authentication redirects - always to onboarding which handles org selection
-    afterSignInUrl: "/onboarding/claim-org",
-    afterSignUpUrl: "/onboarding/claim-org",
+    // Post-authentication redirects - always to onboarding which handles org creation
+    afterSignInUrl: "/onboarding",
+    afterSignUpUrl: "/onboarding",
     // Sync Clerk organization state for /org/:slug routes
     organizationSyncOptions: {
       organizationPatterns: ["/org/:slug", "/org/:slug/(.*)"],

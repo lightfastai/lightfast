@@ -150,10 +150,18 @@ export default function RootLayout({
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      // Delegate sign-in/sign-up to auth app
       signInUrl={`${authUrl}/sign-in`}
       signUpUrl={`${authUrl}/sign-up`}
+      // After authentication, redirect to console app
+      afterSignInUrl={consoleUrl}
+      afterSignUpUrl={consoleUrl}
       signInFallbackRedirectUrl={consoleUrl}
       signUpFallbackRedirectUrl={consoleUrl}
+      // Multi-step onboarding task URLs
+      taskUrls={{
+        "choose-organization": `${consoleUrl}/onboarding`,
+      }}
     >
       <html lang="en" suppressHydrationWarning>
         <head>

@@ -29,6 +29,8 @@
         {
           "group": "console",
           "paths": [
+            "/new",
+            "/new/:path",
             "/org",
             "/org/:path*",
             "/onboarding",

@@ -24,10 +24,8 @@ import {
 	AvatarFallback,
 	AvatarImage,
 } from "@repo/ui/components/ui/avatar";
-import type { organizations } from "@db/console/schema";
-
 /**
- * Organization data from listUserOrganizations tRPC endpoint
+ * Organization data from Clerk
  */
 interface OrgData {
 	id: string; // Clerk org ID
@@ -35,7 +33,6 @@ interface OrgData {
 	slug: string;
 	role: string;
 	imageUrl: string;
-	dbOrg: typeof organizations.$inferSelect | null;
 }
 
 interface OrgSwitcherProps {
@@ -47,36 +44,24 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 	const router = useRouter();
 	const { organization: activeOrg } = useOrganization();
 
-	// Filter to only show organizations that have been claimed in Console
-	const claimedOrgs = useMemo(() => {
-		return organizations.filter((org) => org.dbOrg !== null);
-	}, [organizations]);
-
 	// Find current organization based on Clerk's active org
 	const currentOrg = useMemo(() => {
 		if (!activeOrg) return null;
-		return claimedOrgs.find((org) => org.id === activeOrg.id);
-	}, [activeOrg, claimedOrgs]);
+		return organizations.find((org) => org.id === activeOrg.id);
+	}, [activeOrg, organizations]);
 
 	const handleSelectOrg = useCallback(
 		(org: OrgData) => {
 			setOpen(false);
-
-			// Guard against unclaimed orgs (should not happen with filtering)
-			if (!org.dbOrg) {
-				console.error("Cannot switch to unclaimed organization");
-				return;
-			}
-
 			// Navigate to org page - Clerk middleware will set active org from URL
 			router.push(`/org/${org.slug}`);
 		},
 		[router],
 	);
 
-	const handleClaimOrg = useCallback(() => {
+	const handleCreateOrg = useCallback(() => {
 		setOpen(false);
-		router.push("/onboarding/claim-org");
+		router.push("/onboarding");
 	}, [router]);
 
 	return (
@@ -90,10 +75,10 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 				>
 					<div className="flex items-center gap-2 min-w-0">
 						<Avatar className="h-5 w-5 shrink-0">
-							{currentOrg?.dbOrg?.githubOrgAvatarUrl ? (
+							{currentOrg?.imageUrl ? (
 								<AvatarImage
-									src={currentOrg.dbOrg.githubOrgAvatarUrl}
-									alt={currentOrg.dbOrg.githubOrgName}
+									src={currentOrg.imageUrl}
+									alt={currentOrg.name}
 								/>
 							) : (
 								<AvatarFallback className="text-[10px] bg-muted">
@@ -102,7 +87,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 							)}
 						</Avatar>
 						<span className="truncate text-sm">
-							{currentOrg?.dbOrg?.githubOrgName ?? "Select organization"}
+							{currentOrg?.name ?? "Select team"}
 						</span>
 					</div>
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -112,21 +97,21 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 				<Command>
 					<CommandInput placeholder="Search organizations..." />
 					<CommandList>
-						<CommandEmpty>No organizations found.</CommandEmpty>
+						<CommandEmpty>No teams found.</CommandEmpty>
 						<CommandGroup>
-							{claimedOrgs.map((org) => (
+							{organizations.map((org) => (
 								<CommandItem
 									key={org.id}
-									value={org.dbOrg?.githubOrgSlug ?? org.slug}
+									value={org.slug}
 									onSelect={() => handleSelectOrg(org)}
 									className="cursor-pointer"
 								>
 									<div className="flex items-center gap-2 flex-1 min-w-0">
 										<Avatar className="h-6 w-6 shrink-0">
-											{org.dbOrg?.githubOrgAvatarUrl ? (
+											{org.imageUrl ? (
 												<AvatarImage
-													src={org.dbOrg.githubOrgAvatarUrl}
-													alt={org.dbOrg.githubOrgName}
+													src={org.imageUrl}
+													alt={org.name}
 												/>
 											) : (
 												<AvatarFallback className="text-[10px] bg-muted">
@@ -135,7 +120,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 											)}
 										</Avatar>
 										<span className="truncate">
-											{org.dbOrg?.githubOrgName ?? org.name}
+											{org.name}
 										</span>
 									</div>
 									{currentOrg?.id === org.id && (
@@ -146,9 +131,9 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 						</CommandGroup>
 						<CommandSeparator />
 						<CommandGroup>
-							<CommandItem onSelect={handleClaimOrg} className="cursor-pointer">
+							<CommandItem onSelect={handleCreateOrg} className="cursor-pointer">
 								<Plus className="mr-2 h-4 w-4" />
-								Claim organization
+								Create team
 							</CommandItem>
 						</CommandGroup>
 					</CommandList>
