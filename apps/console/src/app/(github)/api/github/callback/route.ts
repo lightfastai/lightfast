@@ -112,7 +112,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Store integration in database
+    /**
+     * Store integration in database
+     *
+     * NOTE: This uses direct DB access (not tRPC/service layer) because:
+     * - OAuth callbacks are infrastructure concerns, not business logic
+     * - Consistent with other auth flows (see /api/organizations/create)
+     * - Avoids unnecessary abstraction for internal-only operations
+     */
     try {
       // Check if integration already exists for this user
       const existingIntegration = await db
