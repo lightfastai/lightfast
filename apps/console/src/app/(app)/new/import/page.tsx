@@ -4,35 +4,20 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useOrganization } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Github, ChevronRight, Loader2 } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@repo/ui/components/ui/collapsible";
 
 /**
  * Import Configuration Page
  *
  * After user selects a repository to import, they land here to configure:
- * - Project name
+ * - Workspace name
  * - Team/organization
- * - Framework preset (detect from lightfast.yml)
- * - Root directory
- * - Build settings
- * - Environment variables
+ * - Config detection (lightfast.yml)
  */
 
 export default function ImportPage() {
@@ -51,9 +36,7 @@ export default function ImportPage() {
   const repoUrl = searchParams.get("s");
 
   // Form state
-  const [projectName, setProjectName] = useState(searchParams.get("project-name") || "");
-  const [framework, setFramework] = useState("other");
-  const [rootDirectory, setRootDirectory] = useState("./");
+  const [workspaceName, setWorkspaceName] = useState(searchParams.get("workspace-name") || "");
   const [configStatus, setConfigStatus] = useState<
     "loading" | "found" | "not-found" | "error"
   >("loading");
@@ -86,15 +69,6 @@ export default function ImportPage() {
       setConfigPath(configData.path);
       setConfigContent(configData.content);
 
-      // Try to parse framework from config (basic YAML parsing)
-      if (configData.content.includes("framework:")) {
-        const frameworkMatch = configData.content.match(
-          /framework:\s*["']?(\w+)["']?/
-        );
-        if (frameworkMatch?.[1]) {
-          setFramework(frameworkMatch[1].toLowerCase());
-        }
-      }
     } else {
       setConfigStatus("not-found");
     }
@@ -218,7 +192,7 @@ export default function ImportPage() {
     <div className="min-h-screen bg-background py-16">
       <div className="mx-auto max-w-2xl px-4">
         {/* Header */}
-        <h1 className="mb-8 text-3xl font-bold">New Project</h1>
+        <h1 className="mb-8 text-3xl font-bold">New Workspace</h1>
 
         {/* Importing from GitHub */}
         <div className="mb-8 rounded-lg border bg-card p-6">
@@ -256,92 +230,31 @@ export default function ImportPage() {
         {/* Configuration Form */}
         <div className="space-y-6">
           <p className="text-sm">
-            Choose where you want to create the project and give it a name.
+            Choose your team and give your workspace a name.
           </p>
 
-          {/* Team & Project Name */}
+          {/* Team & Workspace Name */}
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="team">Vercel Team</Label>
-              <Input id="team" value={teamSlug || ""} disabled />
+              <Label htmlFor="team">Team</Label>
+              <Input id="team" value={organization?.name || teamSlug || ""} disabled />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name</Label>
+              <Label htmlFor="workspace-name">Workspace Name</Label>
               <Input
-                id="project-name"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="my-project"
+                id="workspace-name"
+                value={workspaceName}
+                onChange={(e) => setWorkspaceName(e.target.value)}
+                placeholder="my-workspace"
               />
             </div>
           </div>
-
-          {/* Framework Preset */}
-          <div className="space-y-2">
-            <Label htmlFor="framework">Framework Preset</Label>
-            <Select value={framework} onValueChange={setFramework}>
-              <SelectTrigger id="framework">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="other">Other</SelectItem>
-                <SelectItem value="nextjs">Next.js</SelectItem>
-                <SelectItem value="react">React</SelectItem>
-                <SelectItem value="vue">Vue</SelectItem>
-                <SelectItem value="vite">Vite</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Root Directory */}
-          <div className="space-y-2">
-            <Label htmlFor="root-dir">Root Directory</Label>
-            <div className="flex gap-2">
-              <Input
-                id="root-dir"
-                value={rootDirectory}
-                onChange={(e) => setRootDirectory(e.target.value)}
-                className="flex-1"
-              />
-              <Button variant="outline">Edit</Button>
-            </div>
-          </div>
-
-          {/* Build and Output Settings */}
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start">
-                <ChevronRight className="mr-2 h-4 w-4" />
-                Build and Output Settings
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4 space-y-4 pl-6">
-              <p className="text-sm text-muted-foreground">
-                Configure build settings here (coming soon)
-              </p>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Environment Variables */}
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start">
-                <ChevronRight className="mr-2 h-4 w-4" />
-                Environment Variables
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4 space-y-4 pl-6">
-              <p className="text-sm text-muted-foreground">
-                Add environment variables here (coming soon)
-              </p>
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Import Button */}
           <Button
             onClick={handleImport}
             disabled={
-              !projectName ||
+              !workspaceName ||
               createResourceMutation.isPending ||
               connectWorkspaceMutation.isPending ||
               isLoadingIntegration ||
