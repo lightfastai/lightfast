@@ -4,3 +4,4 @@ export { ClerkIntegrationService } from "./clerk-integration";
 export { OrganizationsService } from "./organizations";
 export { RepositoriesService } from "./repositories";
 export { WorkspacesService } from "./workspaces";
+export { IntegrationsService } from "./integrations";
