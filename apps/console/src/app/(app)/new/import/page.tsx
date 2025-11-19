@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useOrganization } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Github, Loader2 } from "lucide-react";
+import { Github, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
