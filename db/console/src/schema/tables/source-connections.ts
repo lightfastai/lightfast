@@ -44,7 +44,17 @@ export const integrations = pgTable(
     providerData: jsonb("provider_data").$type<
       | {
           provider: "github";
-          // OAuth returns NO repo/org data - just the token
+          // Stores GitHub App installations (fetched after OAuth)
+          installations?: {
+            id: string;                    // GitHub installation ID
+            accountId: string;             // GitHub account/org ID
+            accountLogin: string;          // "acme-corp" or username
+            accountType: "User" | "Organization";
+            avatarUrl: string;
+            permissions: Record<string, string>;
+            installedAt: string;           // ISO timestamp
+            lastValidatedAt: string;       // ISO timestamp
+          }[];
         }
       | {
           provider: "notion";
@@ -160,6 +170,7 @@ export const integrationResources = pgTable(
       | {
           provider: "github";
           type: "repository";
+          installationId: string;        // GitHub App installation ID
           repoId: string;
           repoName: string;
           repoFullName: string;

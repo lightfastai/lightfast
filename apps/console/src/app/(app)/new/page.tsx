@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
+import { useTRPC } from "@repo/console-trpc/react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 /**
  * New Project Page
@@ -21,122 +23,168 @@ import {
  * 2. Connected: Shows repository picker with org dropdown and search
  *
  * OAuth flow happens in popup window for better UX
+ *
+ * Data flow:
+ * - After OAuth, integration data is stored in database
+ * - This page fetches from database using tRPC (no GitHub API calls)
+ * - Auto-validates installations if lastSyncAt > 24h old
  */
 
-type ConnectionState = "disconnected" | "connecting" | "connected";
+type ConnectionState = "disconnected" | "connecting" | "connected" | "loading";
 
 interface GitHubInstallation {
-  id: number;
-  account: {
-    login: string;
-    avatar_url: string;
-    type: string;
-  };
+  id: string;
+  accountId: string;
+  accountLogin: string;
+  accountType: "User" | "Organization";
+  avatarUrl: string;
+  permissions: Record<string, string>;
+  installedAt: string;
+  lastValidatedAt: string;
 }
 
 interface Repository {
-  id: number;
+  id: string;
   name: string;
-  full_name: string;
-  private: boolean;
-  updated_at: string;
-  description?: string;
+  fullName: string;
+  owner: string;
+  description: string | null;
+  defaultBranch: string;
+  isPrivate: boolean;
+  isArchived: boolean;
+  url: string;
+  language: string | null;
+  stargazersCount: number;
+  updatedAt: string;
 }
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function NewProjectPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const teamSlug = searchParams.get("teamSlug");
+  const trpc = useTRPC();
 
   const [connectionState, setConnectionState] =
-    useState<ConnectionState>("disconnected");
+    useState<ConnectionState>("loading");
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
-  const [selectedOrgLogin, setSelectedOrgLogin] = useState<string>("");
+  const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [integrationId, setIntegrationId] = useState<string | null>(null);
 
-  // Check for setup callback or existing installations on mount
+  // Fetch GitHub integration from database
+  const { data: integration, isLoading: isLoadingIntegration, refetch: refetchIntegration } = useQuery({
+    ...trpc.integration.github.list.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Validate installations mutation (calls GitHub API to refresh)
+  const validateMutation = useMutation(
+    trpc.integration.github.validate.mutationOptions({
+      onSuccess: () => {
+        // Refetch integration after validation
+        void refetchIntegration();
+      },
+    })
+  );
+
+  // Fetch repositories for selected installation
+  const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
+    ...trpc.integration.github.repositories.queryOptions({
+      integrationId: integrationId ?? "",
+      installationId: selectedInstallation?.id ?? "",
+    }),
+    enabled: Boolean(integrationId && selectedInstallation),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Update repositories when data changes
   useEffect(() => {
-    // Check if we're returning from GitHub App setup
+    if (repositoriesData) {
+      setRepositories(repositoriesData);
+    }
+  }, [repositoriesData]);
+
+  // Check for setup callback on mount
+  useEffect(() => {
     const setupStatus = searchParams.get("setup");
     const installationIdFromSetup = searchParams.get("installation_id");
 
     if (setupStatus === "success" && installationIdFromSetup) {
-      // User just installed the app - fetch installations to show their repos
-      fetchInstallations();
-    } else {
-      // Normal page load - check for existing installations
-      fetchInstallations();
+      // User just installed the app - refetch integration
+      void refetchIntegration();
     }
-  }, [searchParams]);
+  }, [searchParams, refetchIntegration]);
 
   // Listen for OAuth success message from popup
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === "github-oauth-success") {
         setConnectionState("connected");
-        fetchInstallations();
+        void refetchIntegration();
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [refetchIntegration]);
 
-  // Fetch GitHub installations
-  const fetchInstallations = async () => {
-    try {
-      const response = await fetch("/api/github/installations");
-      if (!response.ok) throw new Error("Failed to fetch installations");
+  // Process integration data when it loads
+  useEffect(() => {
+    if (isLoadingIntegration) {
+      setConnectionState("loading");
+      return;
+    }
 
-      const data = (await response.json()) as {
-        installations: GitHubInstallation[];
-      };
-      setInstallations(data.installations);
-
-      // Set connection state based on installations
-      if (data.installations.length > 0) {
-        setConnectionState("connected");
-        // Auto-select first installation
-        const firstOrg = data.installations[0]!.account.login;
-        setSelectedOrgLogin(firstOrg);
-        fetchRepositories(data.installations[0]!.id);
-      } else {
-        setConnectionState("disconnected");
-      }
-    } catch (error) {
-      console.error("Failed to fetch installations:", error);
+    if (!integration) {
       setConnectionState("disconnected");
+      setInstallations([]);
+      setIntegrationId(null);
+      return;
     }
-  };
 
-  // Fetch repositories for selected installation
-  const fetchRepositories = useCallback(async (installationId: number) => {
-    setIsLoadingRepos(true);
-    try {
-      const response = await fetch(
-        `/api/github/repositories?installationId=${installationId}`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch repositories");
+    // Store integration ID
+    setIntegrationId(integration.id);
 
-      const data = (await response.json()) as { repositories: Repository[] };
-      setRepositories(data.repositories);
-    } catch (error) {
-      console.error("Failed to fetch repositories:", error);
-    } finally {
-      setIsLoadingRepos(false);
+    // Extract installations from database
+    const installs = integration.installations ?? [];
+    setInstallations(installs);
+
+    if (installs.length === 0) {
+      setConnectionState("disconnected");
+      return;
     }
-  }, []);
+
+    setConnectionState("connected");
+
+    // Auto-select first installation if none selected
+    if (!selectedInstallation && installs.length > 0) {
+      setSelectedInstallation(installs[0]!);
+    }
+
+    // Auto-validate if lastSyncAt is > 24 hours old
+    if (integration.isActive && integration.connectedAt) {
+      const lastSync = integration.connectedAt;
+      const timeSinceSync = Date.now() - new Date(lastSync).getTime();
+
+      if (timeSinceSync > ONE_DAY_MS && !validateMutation.isPending) {
+        console.log("[NewProjectPage] Auto-validating installations (>24h old)");
+        validateMutation.mutate();
+      }
+    }
+  }, [integration, isLoadingIntegration, selectedInstallation, validateMutation]);
 
   // Handle org selection change
-  const handleOrgChange = (orgLogin: string) => {
-    setSelectedOrgLogin(orgLogin);
+  const handleOrgChange = (accountLogin: string) => {
     const installation = installations.find(
-      (inst) => inst.account.login === orgLogin,
+      (inst) => inst.accountLogin === accountLogin,
     );
     if (installation) {
-      fetchRepositories(installation.id);
+      setSelectedInstallation(installation);
     }
   };
 
@@ -150,7 +198,7 @@ export default function NewProjectPage() {
     const top = window.screen.height / 2 - height / 2;
 
     // Open GitHub OAuth flow in popup
-    // This gets a short-lived user token to list installations
+    // OAuth callback stores integration in database
     const popup = window.open(
       "/api/github/auth",
       "github-oauth",
@@ -164,12 +212,12 @@ export default function NewProjectPage() {
       return;
     }
 
-    // Poll for popup close to fetch installations
+    // Poll for popup close to refetch integration
     const pollTimer = setInterval(() => {
       if (popup?.closed) {
         clearInterval(pollTimer);
-        // Fetch installations after OAuth completes
-        fetchInstallations();
+        // Refetch integration after OAuth completes
+        void refetchIntegration();
       }
     }, 500);
   };
@@ -183,25 +231,21 @@ export default function NewProjectPage() {
 
   // Handle repository import - redirect to configuration page
   const handleImport = (repo: Repository) => {
-    const installation = installations.find(
-      (inst) => inst.account.login === selectedOrgLogin,
-    );
-
-    if (!installation) {
-      console.error("No installation found for selected org");
+    if (!selectedInstallation) {
+      console.error("No installation selected");
       return;
     }
 
     // Build query params similar to Vercel
     const params = new URLSearchParams({
-      id: repo.id.toString(),
+      id: repo.id,
       name: repo.name,
-      owner: selectedOrgLogin,
+      owner: repo.owner,
       provider: "github",
-      installationId: installation.id.toString(),
-      teamSlug: teamSlug || selectedOrgLogin,
+      installationId: selectedInstallation.id,
+      teamSlug: teamSlug || selectedInstallation.accountLogin,
       "project-name": repo.name,
-      s: `https://github.com/${repo.full_name}`,
+      s: repo.url,
     });
 
     // Redirect to import configuration page
@@ -225,8 +269,8 @@ export default function NewProjectPage() {
     const pollTimer = setInterval(() => {
       if (popup?.closed) {
         clearInterval(pollTimer);
-        // Refresh installations after user updates permissions
-        fetchInstallations();
+        // Validate and refresh installations after user updates permissions
+        validateMutation.mutate();
       }
     }, 500);
   };
@@ -253,6 +297,16 @@ export default function NewProjectPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-16">
+        {/* Loading State */}
+        {connectionState === "loading" && (
+          <div className="mx-auto max-w-xl text-center">
+            <h1 className="mb-12 text-4xl font-bold tracking-tight">
+              Let's build something new
+            </h1>
+            <p className="text-muted-foreground">Loading integrations...</p>
+          </div>
+        )}
+
         {/* Disconnected State: Git Provider Selector */}
         {connectionState === "disconnected" && (
           <div className="mx-auto max-w-xl">
@@ -329,7 +383,10 @@ export default function NewProjectPage() {
 
             {/* Org Selector & Search */}
             <div className="mb-6 flex gap-4 items-center">
-              <Select value={selectedOrgLogin} onValueChange={handleOrgChange}>
+              <Select
+                value={selectedInstallation?.accountLogin}
+                onValueChange={handleOrgChange}
+              >
                 <SelectTrigger className="w-[300px]">
                   <div className="flex items-center gap-2">
                     <Github className="h-5 w-5" />
@@ -340,9 +397,9 @@ export default function NewProjectPage() {
                   {installations.map((installation) => (
                     <SelectItem
                       key={installation.id}
-                      value={installation.account.login}
+                      value={installation.accountLogin}
                     >
-                      {installation.account.login}
+                      {installation.accountLogin}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -404,14 +461,14 @@ export default function NewProjectPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{repo.name}</span>
-                            {repo.private && (
+                            {repo.isPrivate && (
                               <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded">
                                 Private
                               </span>
                             )}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {formatRelativeTime(repo.updated_at)}
+                            {formatRelativeTime(repo.updatedAt)}
                           </div>
                         </div>
                       </div>

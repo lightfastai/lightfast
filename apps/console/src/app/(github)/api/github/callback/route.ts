@@ -1,5 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { getUserInstallations } from "@repo/console-octokit-github";
+import { db } from "@db/console/client";
+import { integrations } from "@db/console/schema";
+import { eq, and } from "drizzle-orm";
+import { encrypt } from "@repo/lib";
 import { env } from "~/env";
 
 /**
@@ -89,6 +95,88 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/?github_error=no_access_token`);
     }
 
+    // Get Clerk userId
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return NextResponse.redirect(`${baseUrl}/?github_error=unauthorized`);
+    }
+
+    // Fetch user's GitHub App installations
+    let installationsData: Awaited<ReturnType<typeof getUserInstallations>>;
+    try {
+      installationsData = await getUserInstallations(accessToken);
+    } catch (installError) {
+      console.error("Failed to fetch GitHub installations:", installError);
+      return NextResponse.redirect(
+        `${baseUrl}/?github_error=installations_fetch_failed`,
+      );
+    }
+
+    // Store integration in database
+    try {
+      // Check if integration already exists for this user
+      const existingIntegration = await db
+        .select()
+        .from(integrations)
+        .where(
+          and(
+            eq(integrations.userId, clerkUserId),
+            eq(integrations.provider, "github"),
+          ),
+        )
+        .limit(1);
+
+      const now = new Date();
+      const installationsForDb = installationsData.installations.map((i) => ({
+        id: String(i.id),
+        accountId: String(i.account?.id ?? ""),
+        accountLogin: i.account?.login ?? "",
+        accountType: (i.account?.type as "User" | "Organization") ?? "User",
+        avatarUrl: i.account?.avatar_url ?? "",
+        permissions: (i.permissions ?? {}) as Record<string, string>,
+        installedAt: now.toISOString(),
+        lastValidatedAt: now.toISOString(),
+      }));
+
+      // Encrypt access token before storing
+      const encryptedToken = encrypt(accessToken, env.ENCRYPTION_KEY);
+
+      if (existingIntegration.length > 0) {
+        // Update existing integration
+        await db
+          .update(integrations)
+          .set({
+            accessToken: encryptedToken,
+            providerData: {
+              provider: "github" as const,
+              installations: installationsForDb,
+            },
+            isActive: true,
+            connectedAt: now,
+            updatedAt: now,
+          })
+          .where(eq(integrations.id, existingIntegration[0]!.id));
+      } else {
+        // Create new integration
+        await db.insert(integrations).values({
+          userId: clerkUserId,
+          provider: "github",
+          accessToken: encryptedToken,
+          providerData: {
+            provider: "github" as const,
+            installations: installationsForDb,
+          },
+          isActive: true,
+          connectedAt: now,
+        });
+      }
+    } catch (dbError) {
+      console.error("Failed to store integration in database:", dbError);
+      return NextResponse.redirect(
+        `${baseUrl}/?github_error=database_error`,
+      );
+    }
+
     // Check for custom callback URL
     const customCallback = request.cookies.get("github_oauth_callback")?.value;
     // Default to /new (console app) instead of / (www app)
@@ -97,7 +185,6 @@ export async function GET(request: NextRequest) {
       : `${baseUrl}/new?github_auth=success`;
 
     // Redirect back to the app with success
-    // The user access token allows us to fetch installations
     const response = NextResponse.redirect(redirectUrl);
 
     // Store user access token in a secure, httpOnly cookie

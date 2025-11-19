@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useOrganization } from "@clerk/nextjs";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Github, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -114,9 +114,35 @@ export default function ImportPage() {
     detectConfig();
   }, [repoOwner, repoName, installationId]);
 
-  // Repository connection mutation
-  const connectMutation = useMutation(
-    trpc.repository.connect.mutationOptions({
+  // Get user's GitHub integration
+  const { data: githubIntegration, isLoading: isLoadingIntegration } = useQuery(
+    trpc.integration.github.list.queryOptions({})
+  );
+
+  // Resolve workspace from organization
+  const { data: workspace, isLoading: isLoadingWorkspace } = useQuery({
+    ...trpc.workspace.resolveFromClerkOrgId.queryOptions({
+      clerkOrgId: organization?.id ?? "",
+    }),
+    enabled: Boolean(organization?.id),
+  });
+
+  // Create integration resource mutation
+  const createResourceMutation = useMutation(
+    trpc.integration.resources.create.mutationOptions({
+      onError: (error) => {
+        toast({
+          title: "Failed to create resource",
+          description: error.message ?? "Failed to create integration resource. Please try again.",
+          variant: "destructive",
+        });
+      },
+    })
+  );
+
+  // Connect resource to workspace mutation
+  const connectWorkspaceMutation = useMutation(
+    trpc.integration.workspace.connect.mutationOptions({
       onSuccess: (data) => {
         toast({
           title: "Repository connected!",
@@ -155,17 +181,52 @@ export default function ImportPage() {
       return;
     }
 
-    // Connect repository using tRPC
-    connectMutation.mutate({
-      clerkOrgId: organization.id,
-      githubRepoId: repoId,
-      githubInstallationId: installationId,
-      metadata: {
-        fullName: `${repoOwner}/${repoName}`,
-        name: repoName,
-        owner: repoOwner,
-      },
-    });
+    if (!githubIntegration?.id) {
+      toast({
+        title: "GitHub not connected",
+        description: "Please connect your GitHub account first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!workspace?.workspaceId) {
+      toast({
+        title: "Workspace not found",
+        description: "Failed to resolve workspace for this organization.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Step 1: Create integration resource
+      const resource = await createResourceMutation.mutateAsync({
+        integrationId: githubIntegration.id,
+        installationId: installationId,
+        repoId: repoId,
+        repoName: repoName,
+        repoFullName: `${repoOwner}/${repoName}`,
+        defaultBranch: "main", // TODO: fetch from GitHub API or config detection
+        isPrivate: false, // TODO: fetch from GitHub API
+        isArchived: false, // TODO: fetch from GitHub API
+      });
+
+      // Step 2: Connect resource to workspace with sync config
+      await connectWorkspaceMutation.mutateAsync({
+        workspaceId: workspace.workspaceId,
+        resourceId: resource.id,
+        syncConfig: {
+          branches: ["main"], // Default to main branch
+          paths: ["**/*"], // Default to all files
+          events: [], // TODO: configure events if needed
+          autoSync: true,
+        },
+      });
+    } catch (error) {
+      console.error("Import failed:", error);
+      // Error handling is done in mutation callbacks
+    }
   };
 
   return (
@@ -294,14 +355,20 @@ export default function ImportPage() {
           {/* Import Button */}
           <Button
             onClick={handleImport}
-            disabled={!projectName || connectMutation.isPending}
+            disabled={
+              !projectName ||
+              createResourceMutation.isPending ||
+              connectWorkspaceMutation.isPending ||
+              isLoadingIntegration ||
+              isLoadingWorkspace
+            }
             className="w-full"
             size="lg"
           >
-            {connectMutation.isPending ? (
+            {createResourceMutation.isPending || connectWorkspaceMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importing...
+                {createResourceMutation.isPending ? "Creating resource..." : "Connecting to workspace..."}
               </>
             ) : (
               "Import"
