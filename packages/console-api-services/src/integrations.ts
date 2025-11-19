@@ -36,6 +36,35 @@ export class IntegrationsService extends DeusApiService {
   }
 
   /**
+   * Store OAuth result (access token + installations)
+   * Called from OAuth callback route
+   */
+  async storeOAuthResult(params: {
+    accessToken: string;
+    refreshToken?: string;
+    tokenExpiresAt?: string;
+    installations: Array<{
+      id: string;
+      accountId: string;
+      accountLogin: string;
+      accountType: "User" | "Organization";
+      avatarUrl: string;
+      permissions: Record<string, string>;
+      installedAt: string;
+      lastValidatedAt: string;
+    }>;
+  }) {
+    return await this.call(
+      "integration.github.storeOAuthResult",
+      (caller) => caller.integration.github.storeOAuthResult(params),
+      {
+        fallbackMessage: "Failed to store OAuth result",
+        details: { installationCount: params.installations.length },
+      },
+    );
+  }
+
+  /**
    * Get repositories for a GitHub installation
    */
   async getRepositories(params: { integrationId: string; installationId: string }) {

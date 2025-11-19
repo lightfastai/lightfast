@@ -2,9 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserInstallations } from "@repo/console-octokit-github";
-import { db } from "@db/console/client";
-import { integrations } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { IntegrationsService } from "@repo/console-api-services";
 import { encrypt } from "@repo/lib";
 import { env } from "~/env";
 
@@ -113,75 +111,27 @@ export async function GET(request: NextRequest) {
     }
 
     /**
-     * Store integration in database
-     *
-     * NOTE: This uses direct DB access (not tRPC/service layer) because:
-     * - OAuth callbacks are infrastructure concerns, not business logic
-     * - Consistent with other auth flows (see /api/organizations/create)
-     * - Avoids unnecessary abstraction for internal-only operations
+     * Store integration in database via service layer
      */
     try {
-      // Check if integration already exists for this user
-      const existingIntegration = await db
-        .select()
-        .from(integrations)
-        .where(
-          and(
-            eq(integrations.userId, clerkUserId),
-            eq(integrations.provider, "github"),
-          ),
-        )
-        .limit(1);
+      const integrationsService = new IntegrationsService();
 
-      const now = new Date();
-      const installationsForDb = installationsData.installations.map((i) => ({
-        id: String(i.id),
-        accountId: String(i.account?.id ?? ""),
-        accountLogin: i.account?.login ?? "",
-        accountType: (i.account?.type as "User" | "Organization") ?? "User",
-        avatarUrl: i.account?.avatar_url ?? "",
-        permissions: (i.permissions ?? {}) as Record<string, string>,
-        installedAt: now.toISOString(),
-        lastValidatedAt: now.toISOString(),
-      }));
-
-      // Encrypt access token before storing
-      const encryptedToken = encrypt(accessToken, env.ENCRYPTION_KEY);
-
-      if (existingIntegration.length > 0) {
-        // Update existing integration
-        await db
-          .update(integrations)
-          .set({
-            accessToken: encryptedToken,
-            providerData: {
-              provider: "github" as const,
-              installations: installationsForDb,
-            },
-            isActive: true,
-            connectedAt: now,
-            updatedAt: now,
-          })
-          .where(eq(integrations.id, existingIntegration[0]!.id));
-      } else {
-        // Create new integration
-        await db.insert(integrations).values({
-          userId: clerkUserId,
-          provider: "github",
-          accessToken: encryptedToken,
-          providerData: {
-            provider: "github" as const,
-            installations: installationsForDb,
-          },
-          isActive: true,
-          connectedAt: now,
-        });
-      }
-    } catch (dbError) {
-      console.error("Failed to store integration in database:", dbError);
-      return NextResponse.redirect(
-        `${baseUrl}/?github_error=database_error`,
-      );
+      await integrationsService.storeOAuthResult({
+        accessToken: encrypt(accessToken, env.ENCRYPTION_KEY),
+        installations: installationsData.installations.map((i) => ({
+          id: String(i.id),
+          accountId: String(i.account?.id ?? ""),
+          accountLogin: i.account?.login ?? "",
+          accountType: i.account?.type === "Organization" ? "Organization" : "User",
+          avatarUrl: i.account?.avatar_url ?? "",
+          permissions: (i.permissions ?? {}) as Record<string, string>,
+          installedAt: new Date().toISOString(),
+          lastValidatedAt: new Date().toISOString(),
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to store integration:", error);
+      return NextResponse.redirect(`${baseUrl}/?github_error=database_error`);
     }
 
     // Check for custom callback URL

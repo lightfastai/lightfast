@@ -318,6 +318,86 @@ export const integrationRouter = {
           });
         }
       }),
+
+    /**
+     * Store OAuth result (called from OAuth callback route)
+     * Creates or updates integration with access token and installations
+     */
+    storeOAuthResult: protectedProcedure
+      .input(
+        z.object({
+          accessToken: z.string(),
+          refreshToken: z.string().optional(),
+          tokenExpiresAt: z.string().optional(),
+          installations: z.array(
+            z.object({
+              id: z.string(),
+              accountId: z.string(),
+              accountLogin: z.string(),
+              accountType: z.enum(["User", "Organization"]),
+              avatarUrl: z.string(),
+              permissions: z.record(z.string()),
+              installedAt: z.string(),
+              lastValidatedAt: z.string(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const now = new Date();
+
+        // Check if integration already exists for this user
+        const existingIntegration = await ctx.db
+          .select()
+          .from(integrations)
+          .where(
+            and(
+              eq(integrations.userId, ctx.auth.userId),
+              eq(integrations.provider, "github")
+            )
+          )
+          .limit(1);
+
+        if (existingIntegration[0]) {
+          // Update existing integration
+          await ctx.db
+            .update(integrations)
+            .set({
+              accessToken: input.accessToken,
+              refreshToken: input.refreshToken ?? null,
+              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
+              providerData: {
+                provider: "github" as const,
+                installations: input.installations,
+              },
+              isActive: true,
+              lastSyncAt: now,
+            })
+            .where(eq(integrations.id, existingIntegration[0].id));
+
+          return { id: existingIntegration[0].id, created: false };
+        } else {
+          // Create new integration
+          const result = await ctx.db
+            .insert(integrations)
+            .values({
+              userId: ctx.auth.userId,
+              provider: "github",
+              accessToken: input.accessToken,
+              refreshToken: input.refreshToken ?? null,
+              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
+              providerData: {
+                provider: "github" as const,
+                installations: input.installations,
+              },
+              isActive: true,
+              connectedAt: now,
+            })
+            .returning({ id: integrations.id });
+
+          return { id: result[0]!.id, created: true };
+        }
+      }),
   },
 
   /**
