@@ -899,21 +899,73 @@ API key management allows creation, revoke, and delete, but:
 - No expiration enforcement (keys can be used indefinitely if `expiresAt` is null)
 - No rotation mechanism (replacing old key with new)
 - No usage tracking (lastUsedAt is stored but never updated)
+- Uses local utility functions instead of the dedicated `@packages/console-api-key` package
+
+**Current Implementation Issues:**
+```typescript
+// Lines 22-34: Local implementation
+function hashApiKey(key: string): string {
+  return crypto.createHash("sha256").update(key).digest("hex");
+}
+
+function generateApiKey(): string {
+  const randomBytes = crypto.randomBytes(24);
+  const randomString = randomBytes.toString("base64url");
+  return `lf_${randomString}`;  // No format validation
+}
+
+// Line 200: No proper preview extraction
+const keyPreview = apiKey.slice(-8); // Should use extractKeyPreview()
+```
+
+**Existing Package Available:**
+There is already a well-designed `@packages/console-api-key` package with:
+- `generateApiKey()` - format `console_sk_<32 nanoid chars>`
+- `hashApiKey()` - async SHA-256 via Web Crypto API
+- `extractKeyPreview()` - proper last-4-chars preview
+- `isValidApiKeyFormat()` - format validation
 
 **Impact:**
 - Compromised keys remain valid forever
 - No way to force key rotation for security compliance
 - Difficult to audit key usage
+- Missing format validation allows invalid keys
+- Inconsistent key format across codebase
 
 **Recommended Fix:**
 
+**Step 1: Migrate to existing package**
 ```typescript
-// 1. Add key rotation mutation
+// api/console/src/router/account.ts
+import {
+  generateApiKey,
+  hashApiKey,
+  extractKeyPreview,
+  isValidApiKeyFormat,
+} from "@packages/console-api-key";
+
+// Remove local functions (lines 22-34)
+
+// Update create mutation (line 189)
+create: protectedProcedure
+  .input(...)
+  .mutation(async ({ ctx, input }) => {
+    // Generate API key using package
+    const apiKey = generateApiKey();
+    const keyHash = await hashApiKey(apiKey); // Now async
+    const keyPreview = extractKeyPreview(apiKey); // Proper preview
+
+    // ... rest of mutation
+  }),
+```
+
+**Step 2: Add key rotation mutation**
+```typescript
 rotate: protectedProcedure
   .input(z.object({ keyId: z.string() }))
   .mutation(async ({ ctx, input }) => {
     // Verify ownership
-    const oldKey = await ctx.db.select()
+    const [oldKey] = await ctx.db.select()
       .from(apiKeys)
       .where(and(
         eq(apiKeys.id, input.keyId),
@@ -921,13 +973,14 @@ rotate: protectedProcedure
       ))
       .limit(1);
 
-    if (!oldKey[0]) {
+    if (!oldKey) {
       throw new TRPCError({ code: "NOT_FOUND" });
     }
 
     // Create new key with same settings
     const newApiKey = generateApiKey();
-    const newKeyHash = hashApiKey(newApiKey);
+    const newKeyHash = await hashApiKey(newApiKey);
+    const newKeyPreview = extractKeyPreview(newApiKey);
 
     await ctx.db.transaction(async (tx) => {
       // Revoke old key
@@ -938,33 +991,37 @@ rotate: protectedProcedure
       // Create new key
       await tx.insert(apiKeys).values({
         userId: ctx.auth.userId,
-        name: oldKey[0].name,
+        name: oldKey.name,
         keyHash: newKeyHash,
-        keyPreview: newApiKey.slice(-8),
+        keyPreview: newKeyPreview,
         isActive: true,
-        expiresAt: oldKey[0].expiresAt,
+        expiresAt: oldKey.expiresAt,
       });
     });
 
     return { key: newApiKey };
   }),
+```
 
-// 2. Add expiration check middleware
+**Step 3: Add expiration enforcement middleware**
+```typescript
 const apiKeyMiddleware = publicProcedure.use(async ({ ctx, next }) => {
-  const keyHash = ctx.headers.get('x-api-key');
-  if (!keyHash) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+  const apiKey = ctx.headers.get('x-api-key');
+
+  if (!apiKey || !isValidApiKeyFormat(apiKey)) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid API key format" });
   }
 
+  const keyHash = await hashApiKey(apiKey);
   const key = await ctx.db.query.apiKeys.findFirst({
     where: and(
-      eq(apiKeys.keyHash, hashApiKey(keyHash)),
+      eq(apiKeys.keyHash, keyHash),
       eq(apiKeys.isActive, true)
     )
   });
 
   if (!key) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid API key" });
   }
 
   // Check expiration
@@ -975,8 +1032,8 @@ const apiKeyMiddleware = publicProcedure.use(async ({ ctx, next }) => {
     });
   }
 
-  // Update lastUsedAt
-  await ctx.db.update(apiKeys)
+  // Update lastUsedAt (fire-and-forget)
+  void ctx.db.update(apiKeys)
     .set({ lastUsedAt: new Date().toISOString() })
     .where(eq(apiKeys.id, key.id));
 
@@ -988,6 +1045,13 @@ const apiKeyMiddleware = publicProcedure.use(async ({ ctx, next }) => {
   });
 });
 ```
+
+**Benefits of using `@packages/console-api-key`:**
+- ✅ Consistent key format across codebase (`console_sk_` prefix)
+- ✅ Proper format validation before hashing
+- ✅ Collision-resistant nanoid (vs base64url)
+- ✅ Reusable in CLI, SDK, and other packages
+- ✅ Web Crypto API (portable, browser-compatible if needed)
 
 ---
 
