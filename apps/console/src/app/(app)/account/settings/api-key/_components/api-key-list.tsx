@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	useSuspenseQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -20,7 +24,18 @@ import { toast } from "sonner";
 import { Key, Copy, Trash2, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-export function ApiKeySettingsContent() {
+/**
+ * API Key List (Client Component)
+ *
+ * Displays the list of API keys with interactive controls:
+ * - Create new API keys
+ * - Copy API keys to clipboard
+ * - Revoke active keys
+ * - Delete keys
+ *
+ * Uses useSuspenseQuery to consume server-prefetched data without client-side fetch.
+ */
+export function ApiKeyList() {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 
@@ -28,6 +43,7 @@ export function ApiKeySettingsContent() {
 	const [newKeyName, setNewKeyName] = useState("");
 	const [createdKey, setCreatedKey] = useState<string | null>(null);
 
+	// Use prefetched data from server (no client-side fetch)
 	const { data: apiKeys } = useSuspenseQuery({
 		...trpc.account.apiKeys.list.queryOptions(),
 		refetchOnMount: false,
@@ -119,6 +135,7 @@ export function ApiKeySettingsContent() {
 
 	return (
 		<div className="space-y-8">
+			{/* Header with Create Button */}
 			<div className="flex items-center justify-between">
 				<div>
 					<h2 className="text-2xl font-semibold text-foreground">API Keys</h2>
@@ -162,8 +179,8 @@ export function ApiKeySettingsContent() {
 									</div>
 								</div>
 								<p className="text-sm text-muted-foreground">
-									⚠️ Make sure to copy your API key now. You won't be able to see it
-									again!
+									⚠️ Make sure to copy your API key now. You won't be able to see
+									it again!
 								</p>
 							</div>
 						) : (
@@ -299,19 +316,6 @@ export function ApiKeySettingsContent() {
 					</div>
 				</div>
 			)}
-
-			{/* Security Notice */}
-			<div className="p-4 bg-muted/50 border border-border rounded-lg">
-				<h3 className="text-sm font-medium text-foreground mb-2">
-					Security Best Practices
-				</h3>
-				<ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-					<li>Never share your API keys publicly or commit them to version control</li>
-					<li>Rotate your keys regularly and revoke unused keys</li>
-					<li>Use different keys for different environments (dev, staging, production)</li>
-					<li>Store keys securely using environment variables or secret management tools</li>
-				</ul>
-			</div>
 		</div>
 	);
 }

@@ -40,9 +40,9 @@ export default clerkMiddleware(
 
 		// UX improvement: redirect authenticated users away from auth pages
 		if ((isPending || isActive) && isAuthRoute(req)) {
-			// Pending users → onboarding to create org
+			// Pending users → team creation to create org
 			if (isPending) {
-				return NextResponse.redirect(new URL("/onboarding", consoleUrl));
+				return NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
 			}
 			// Active users → their org dashboard
 			if (isActive && orgSlug) {
@@ -57,8 +57,8 @@ export default clerkMiddleware(
 				return NextResponse.redirect(new URL("/sign-in", req.url));
 			}
 			if (isPending) {
-				// Signed in but no org → onboarding
-				return NextResponse.redirect(new URL("/onboarding", consoleUrl));
+				// Signed in but no org → team creation
+				return NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
 			}
 			if (isActive && orgSlug) {
 				// Signed in with org → org dashboard

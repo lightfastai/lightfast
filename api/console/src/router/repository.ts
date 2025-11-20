@@ -27,7 +27,83 @@ function getGitHubApp() {
 
 export const repositoryRouter = {
   /**
-   * List organization's connected repositories
+   * List organization's connected repositories (by slug)
+   * Returns all active repositories for the specified organization
+   *
+   * Note: This returns minimal data from our DB. Frontend should fetch
+   * fresh repo details (name, owner, description, etc.) from GitHub API
+   * using the githubRepoId.
+   *
+   * IMPORTANT: This procedure verifies the user has access to the org from the URL.
+   * No need for blocking access checks in layouts/pages - let this handle it.
+   */
+  listByClerkOrgSlug: protectedProcedure
+    .input(
+      z.object({
+        clerkOrgSlug: z.string(),
+        includeInactive: z.boolean().default(false),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.auth.type !== "clerk") {
+        throw new Error("Clerk authentication required");
+      }
+
+      // Get org by slug from URL
+      const { clerkClient } = await import("@vendor/clerk/server");
+      const clerk = await clerkClient();
+
+      let clerkOrg;
+      try {
+        clerkOrg = await clerk.organizations.getOrganization({
+          slug: input.clerkOrgSlug,
+        });
+      } catch {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      if (!clerkOrg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      // Verify user has access to this organization
+      const membership = await clerk.organizations.getOrganizationMembershipList({
+        organizationId: clerkOrg.id,
+      });
+
+      const userMembership = membership.data.find(
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
+      );
+
+      if (!userMembership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Access denied to this organization",
+        });
+      }
+
+      const whereConditions = [
+        eq(DeusConnectedRepository.clerkOrgId, clerkOrg.id),
+      ];
+
+      if (!input.includeInactive) {
+        whereConditions.push(eq(DeusConnectedRepository.isActive, true));
+      }
+
+      return await ctx.db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(and(...whereConditions));
+    }),
+
+  /**
+   * List organization's connected repositories (by ID)
    * Returns all active repositories for the specified organization
    *
    * Note: This returns minimal data from our DB. Frontend should fetch

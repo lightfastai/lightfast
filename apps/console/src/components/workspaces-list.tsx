@@ -18,20 +18,10 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
 	const trpc = useTRPC();
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// Fetch organization to get clerkOrgId
-	const { data: org } = useSuspenseQuery({
-		...trpc.organization.findByClerkOrgSlug.queryOptions({
-			clerkOrgSlug: orgSlug,
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-		staleTime: 5 * 60 * 1000,
-	});
-
-	// Fetch workspaces for this organization
+	// Fetch workspaces for this organization (prefetched in layout)
 	const { data: workspaces = [] } = useSuspenseQuery({
-		...trpc.workspace.listByClerkOrgId.queryOptions({
-			clerkOrgId: org.id,
+		...trpc.workspace.listByClerkOrgSlug.queryOptions({
+			clerkOrgSlug: orgSlug,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
@@ -56,9 +46,11 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
 						className="pl-9"
 					/>
 				</div>
-				<Button disabled className="gap-2">
-					<Plus className="h-4 w-4" />
-					New workspace
+				<Button className="gap-2" asChild>
+					<Link href={`/new?teamSlug=${orgSlug}`}>
+						<Plus className="h-4 w-4" />
+						New workspace
+					</Link>
 				</Button>
 			</div>
 

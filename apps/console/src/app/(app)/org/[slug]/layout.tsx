@@ -1,10 +1,8 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
-import { requireOrgAccess } from "~/lib/org-access-clerk";
 import { AppSidebar } from "~/components/app-sidebar";
 
 interface OrgLayoutProps {
@@ -13,46 +11,25 @@ interface OrgLayoutProps {
 }
 
 /**
- * Organization layout - handles auth and prefetches org data once for all child pages
+ * Organization layout - prefetches org data with zero blocking calls
  *
- * This layout eliminates redundant auth checks and DB queries on every page by:
- * 1. Using middleware's organizationSyncOptions (sets orgId from URL)
- * 2. Prefetching org data once in layout (not per page)
- * 3. Child pages use prefetched data via useOrgAccess hook
+ * Flow:
+ * 1. Middleware's organizationSyncOptions syncs org from URL (best effort, non-blocking)
+ * 2. Layout prefetches queries (non-blocking)
+ * 3. tRPC procedures verify access when executing
+ * 4. Success → data hydrated → fast render
+ * 5. Failure → error boundary catches → proper error UI
  *
- * Performance: Saves ~70ms per page by eliminating redundant auth() + DB calls
+ * No blocking access checks - queries verify access independently
  */
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
-  // Verify access once at the layout level. Middleware already enforces sign-in
-  // and syncs the active organization from the URL; this ensures the slug
-  // actually belongs to the signed-in user and avoids duplicating checks in pages.
-  let orgId: string;
-  try {
-    const { org } = await requireOrgAccess(slug);
-    orgId = org.id; // Console org.id is the Clerk org ID
-  } catch {
-    notFound();
-  }
 
-  // Prefetch organization data by Clerk org ID for all children
+  // Prefetch workspace list - tRPC procedure will verify org access
+  // No blocking access check here - let queries handle verification
   prefetch(
-    trpc.organization.findByClerkOrgId.queryOptions({
-      clerkOrgId: orgId,
-    }),
-  );
-
-  // Optionally also prefetch by slug for components that reference it directly
-  prefetch(
-    trpc.organization.findByClerkOrgSlug.queryOptions({
+    trpc.workspace.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: slug,
-    }),
-  );
-
-  // Prefetch workspace data for the org (used by org home page)
-  prefetch(
-    trpc.workspace.resolveFromClerkOrgId.queryOptions({
-      clerkOrgId: orgId,
     })
   );
 

@@ -16,30 +16,29 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 interface WorkspaceDashboardProps {
 	orgSlug: string;
 	workspaceSlug: string;
-	clerkOrgId: string;
 }
 
 export function WorkspaceDashboard({
 	orgSlug,
 	workspaceSlug,
-	clerkOrgId,
 }: WorkspaceDashboardProps) {
 	const trpc = useTRPC();
 
-	// Resolve workspace from Clerk org (already prefetched in layout)
+	// Resolve workspace from org slug (URL source of truth)
+	// This query verifies org access
 	const { data: workspace } = useSuspenseQuery({
-		...trpc.workspace.resolveFromClerkOrgId.queryOptions({
-			clerkOrgId,
+		...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
+			clerkOrgSlug: orgSlug,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	});
 
-	// Fetch workspace statistics
+	// Fetch workspace statistics (using clerkOrgId from resolved workspace)
 	const { data: stats } = useSuspenseQuery({
 		...trpc.workspace.statistics.queryOptions({
 			workspaceId: workspace.workspaceId,
-			clerkOrgId,
+			clerkOrgId: workspace.clerkOrgId,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,

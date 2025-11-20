@@ -3,6 +3,7 @@ import {
   integrations,
   integrationResources,
   workspaceIntegrations,
+  workspaces,
   type Integration,
 } from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
@@ -15,6 +16,8 @@ import {
   type GitHubInstallation,
 } from "@repo/console-octokit-github";
 import { decrypt } from "@repo/lib";
+import { getWorkspaceKey } from "@db/console/utils";
+import { inngest } from "@api/console/inngest";
 import { env } from "../env";
 
 import { protectedProcedure } from "../trpc";
@@ -795,6 +798,48 @@ export const integrationRouter = {
             });
           }
 
+          // Trigger sync if needed (failed or pending or never synced)
+          const shouldTriggerSync =
+            !updatedConnection.lastSyncStatus ||
+            updatedConnection.lastSyncStatus === "failed" ||
+            updatedConnection.lastSyncStatus === "pending";
+
+          if (shouldTriggerSync) {
+            try {
+              // Get workspace for workspaceKey
+              const workspaceResult = await ctx.db
+                .select()
+                .from(workspaces)
+                .where(eq(workspaces.id, input.workspaceId))
+                .limit(1);
+
+              const workspace = workspaceResult[0];
+
+              if (workspace && resource.resourceData.provider === "github" && resource.resourceData.type === "repository") {
+                const resourceData = resource.resourceData;
+
+                await inngest.send({
+                  name: "apps-console/repository.connected",
+                  data: {
+                    workspaceId: input.workspaceId,
+                    workspaceKey: getWorkspaceKey(workspace.slug),
+                    resourceId: input.resourceId,
+                    repoFullName: resourceData.repoFullName,
+                    defaultBranch: resourceData.defaultBranch,
+                    installationId: resourceData.installationId,
+                    integrationId: resource.integrationId,
+                    isPrivate: resourceData.isPrivate,
+                  },
+                });
+
+                console.log(`[integration.workspace.connect] Triggered sync retry for ${resourceData.repoFullName}`);
+              }
+            } catch (inngestError) {
+              // Log but don't fail the connection - sync can be retried
+              console.error("[integration.workspace.connect] Failed to trigger sync retry:", inngestError);
+            }
+          }
+
           return updatedConnection;
         }
 
@@ -817,7 +862,46 @@ export const integrationRouter = {
           .where(eq(workspaceIntegrations.id, connectionId))
           .limit(1);
 
-        return createdResult[0];
+        const createdConnection = createdResult[0];
+
+        // Trigger initial sync via Inngest
+        if (createdConnection) {
+          try {
+            // Get workspace for workspaceKey
+            const workspaceResult = await ctx.db
+              .select()
+              .from(workspaces)
+              .where(eq(workspaces.id, input.workspaceId))
+              .limit(1);
+
+            const workspace = workspaceResult[0];
+
+            if (workspace && resource.resourceData.provider === "github" && resource.resourceData.type === "repository") {
+              const resourceData = resource.resourceData;
+
+              await inngest.send({
+                name: "apps-console/repository.connected",
+                data: {
+                  workspaceId: input.workspaceId,
+                  workspaceKey: getWorkspaceKey(workspace.slug),
+                  resourceId: input.resourceId,
+                  repoFullName: resourceData.repoFullName,
+                  defaultBranch: resourceData.defaultBranch,
+                  installationId: resourceData.installationId,
+                  integrationId: resource.integrationId,
+                  isPrivate: resourceData.isPrivate,
+                },
+              });
+
+              console.log(`[integration.workspace.connect] Triggered initial sync for ${resourceData.repoFullName}`);
+            }
+          } catch (inngestError) {
+            // Log but don't fail the connection - sync can be retried
+            console.error("[integration.workspace.connect] Failed to trigger initial sync:", inngestError);
+          }
+        }
+
+        return createdConnection;
       }),
 
     /**

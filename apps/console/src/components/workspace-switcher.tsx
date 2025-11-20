@@ -1,24 +1,26 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOrganization } from "@clerk/nextjs";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { RouterOutputs } from "@repo/console-trpc/types";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, Plus } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 
 /**
  * Workspace data
  */
-type WorkspaceData = RouterOutputs["workspace"]["listByClerkOrgId"][number];
+type WorkspaceData = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
 
 interface WorkspaceSwitcherProps {
 	workspaceSlug: string;
@@ -44,14 +46,15 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 		return organizations.find((org) => org.id === activeOrg.id);
 	}, [activeOrg, organizations]);
 
-	// Fetch workspaces for current org
+	// Fetch workspaces for current org by slug
 	const { data: workspaces = [] } = useSuspenseQuery({
-		...trpc.workspace.listByClerkOrgId.queryOptions({
-			clerkOrgId: currentOrg?.id ?? "",
+		...trpc.workspace.listByClerkOrgSlug.queryOptions({
+			clerkOrgSlug: currentOrg?.slug ?? "",
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 		staleTime: 5 * 60 * 1000,
+		enabled: Boolean(currentOrg?.slug),
 	});
 
 	// Find current workspace
@@ -71,12 +74,10 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 	);
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
+		<DropdownMenu open={open} onOpenChange={setOpen}>
+			<DropdownMenuTrigger asChild>
 				<Button
 					variant="ghost"
-					role="combobox"
-					aria-expanded={open}
 					className="justify-between px-2 h-9 hover:bg-accent min-w-0"
 				>
 					<span className="text-sm font-medium truncate">
@@ -84,35 +85,45 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 					</span>
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
-			</PopoverTrigger>
-			<PopoverContent className="w-[280px] p-0 bg-background" align="start">
-				<div className="p-2">
-					<div className="px-2 py-1.5">
-						<p className="text-xs font-medium text-muted-foreground">
-							Workspaces
-						</p>
-					</div>
-					<div className="space-y-0.5">
-						{workspaces.map((workspace) => (
-							<button
-								key={workspace.id}
-								onClick={() => handleSelectWorkspace(workspace)}
-								className={cn(
-									"w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted/80 transition-colors",
-									currentWorkspace?.id === workspace.id && "bg-muted/50",
-								)}
-							>
-								<span className="truncate flex-1 text-left">
-									{workspace.slug}
-								</span>
-								{currentWorkspace?.id === workspace.id && (
-									<Check className="h-4 w-4 shrink-0 text-foreground" />
-								)}
-							</button>
-						))}
-					</div>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent className="w-[280px] space-y-1" align="start">
+				<div className="px-2 py-1.5">
+					<p className="text-xs font-medium text-muted-foreground">
+						Workspaces
+					</p>
 				</div>
-			</PopoverContent>
-		</Popover>
+				{workspaces.map((workspace) => (
+					<DropdownMenuItem
+						key={workspace.id}
+						onClick={() => handleSelectWorkspace(workspace)}
+						className={cn(
+							"cursor-pointer",
+							currentWorkspace?.id === workspace.id && "bg-muted/50",
+						)}
+					>
+						<span className="truncate flex-1 text-left">
+							{workspace.slug}
+						</span>
+						{currentWorkspace?.id === workspace.id && (
+							<Check className="h-4 w-4 shrink-0 text-foreground" />
+						)}
+					</DropdownMenuItem>
+				))}
+
+				{/* Create Workspace */}
+				<DropdownMenuItem asChild>
+					<Link
+						href="/new"
+						prefetch={true}
+						className="w-full flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
+					>
+						<div className="flex items-center justify-center h-5 w-5 rounded-full border border-dashed border-muted-foreground/50">
+							<Plus className="h-3 w-3" />
+						</div>
+						<span>Create Workspace</span>
+					</Link>
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

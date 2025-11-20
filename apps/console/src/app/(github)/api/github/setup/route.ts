@@ -14,7 +14,7 @@ import { env } from "~/env";
  * 2. GitHub redirects here with installation_id
  * 3. We redirect to /api/github/auth (OAuth flow)
  * 4. OAuth callback fetches installations and stores in database
- * 5. User redirected back to /new page
+ * 5. User redirected back to /account/teams/new page
  *
  * Query Parameters:
  * - installation_id: The GitHub App installation ID
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 	const oauthUrl = new URL("/api/github/auth", baseUrl);
 
 	// Pass callback URL to OAuth flow
-	const finalCallback = customCallback ?? "/new";
+	const finalCallback = customCallback ?? "/account/teams/new";
 	oauthUrl.searchParams.set("callback", finalCallback);
 
 	// Store installation_id to verify after OAuth

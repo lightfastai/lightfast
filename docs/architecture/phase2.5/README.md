@@ -242,6 +242,7 @@ Detailed designs moved to Phase 2.5:
 - `cross-source-relationships.md` - Cross-source extraction strategies
 - `semantic-relationship-extraction.md` - Vector search + LLM approach
 - `llm-cost-analysis.md` - Cost estimation and optimization
+- `activity-tracking-architecture.md` - Unified activity feed and relationship-aware tracking
 
 ---
 

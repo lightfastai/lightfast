@@ -21,16 +21,71 @@ export const workspaceRouter = {
   /**
    * List workspaces for a Clerk organization
    * Used by the org/workspace switcher to show available workspaces
+   *
+   * Automatically creates a default workspace if none exist for the organization
+   *
+   * IMPORTANT: This procedure verifies the user has access to the org from the URL.
+   * No need for blocking access checks in layouts - let this handle it.
    */
-  listByClerkOrgId: protectedProcedure
+  listByClerkOrgSlug: protectedProcedure
     .input(
       z.object({
-        clerkOrgId: z.string(),
+        clerkOrgSlug: z.string(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (ctx.auth.type !== "clerk") {
+        throw new Error("Clerk authentication required");
+      }
+
+      // Get org by slug from URL
+      const { clerkClient } = await import("@vendor/clerk/server");
+      const { TRPCError } = await import("@trpc/server");
+      const clerk = await clerkClient();
+
+      let clerkOrg;
+      try {
+        clerkOrg = await clerk.organizations.getOrganization({
+          slug: input.clerkOrgSlug,
+        });
+      } catch {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      if (!clerkOrg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      // Verify user has access to this organization
+      const membership = await clerk.organizations.getOrganizationMembershipList({
+        organizationId: clerkOrg.id,
+      });
+
+      const userMembership = membership.data.find(
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
+      );
+
+      if (!userMembership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Access denied to this organization",
+        });
+      }
+
+      const clerkOrgId = clerkOrg.id;
+
+      // First, ensure a default workspace exists for this organization
+      await getOrCreateDefaultWorkspace(clerkOrgId);
+
+      // Then fetch all workspaces
       const orgWorkspaces = await db.query.workspaces.findMany({
-        where: eq(workspaces.clerkOrgId, input.clerkOrgId),
+        where: eq(workspaces.clerkOrgId, clerkOrgId),
       });
 
       return orgWorkspaces.map((workspace) => ({
@@ -39,6 +94,95 @@ export const workspaceRouter = {
         isDefault: workspace.isDefault,
         createdAt: workspace.createdAt,
       }));
+    }),
+
+  /**
+   * Resolve workspace ID and key from Clerk organization slug
+   * Used by UI components that have the org slug from URL params
+   *
+   * Returns:
+   * - workspaceId: Database UUID for internal operations
+   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
+   *
+   * IMPORTANT: This procedure verifies the user has access to the org from the URL.
+   */
+  resolveFromClerkOrgSlug: protectedProcedure
+    .input(
+      z.object({
+        clerkOrgSlug: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.auth.type !== "clerk") {
+        throw new Error("Clerk authentication required");
+      }
+
+      // Get org by slug from URL
+      const { clerkClient } = await import("@vendor/clerk/server");
+      const { TRPCError } = await import("@trpc/server");
+      const clerk = await clerkClient();
+
+      let clerkOrg;
+      try {
+        clerkOrg = await clerk.organizations.getOrganization({
+          slug: input.clerkOrgSlug,
+        });
+      } catch {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      if (!clerkOrg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Organization not found: ${input.clerkOrgSlug}`,
+        });
+      }
+
+      // Verify user has access to this organization
+      const membership = await clerk.organizations.getOrganizationMembershipList({
+        organizationId: clerkOrg.id,
+      });
+
+      const userMembership = membership.data.find(
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
+      );
+
+      if (!userMembership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Access denied to this organization",
+        });
+      }
+
+      const clerkOrgId = clerkOrg.id;
+
+      // Get or create default workspace for this Clerk organization
+      const workspaceId = await getOrCreateDefaultWorkspace(clerkOrgId);
+
+      // Fetch workspace to get slug
+      const workspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.id, workspaceId),
+      });
+
+      if (!workspace) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Workspace not found for ID: ${workspaceId}`,
+        });
+      }
+
+      // Compute workspace key from slug
+      const workspaceKey = getWorkspaceKey(workspace.slug);
+
+      return {
+        workspaceId,
+        workspaceKey,
+        workspaceSlug: workspace.slug,
+        clerkOrgId, // Include orgId for downstream queries
+      };
     }),
 
   /**

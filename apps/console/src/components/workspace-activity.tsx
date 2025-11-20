@@ -313,7 +313,7 @@ export function WorkspaceActivity({
 									Connect a GitHub repository to start building your workspace memory
 								</p>
 								<Button variant="default" size="sm" asChild>
-									<a href="/new">Connect Source</a>
+									<a href="/account/teams/new">Connect Source</a>
 								</Button>
 							</div>
 						) : (

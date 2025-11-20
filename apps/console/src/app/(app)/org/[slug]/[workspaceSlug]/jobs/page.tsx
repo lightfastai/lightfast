@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { JobsTableWrapper } from "~/components/jobs-table";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { AppBreadcrumb } from "~/components/app-breadcrumb";
@@ -11,14 +10,9 @@ export default async function JobsPage({
 	params: Promise<{ slug: string; workspaceSlug: string }>;
 }) {
 	const { slug, workspaceSlug } = await params;
-	const { orgId: clerkOrgId } = await auth();
 
-	if (!clerkOrgId) {
-		throw new Error("Not authenticated");
-	}
-
-	// Note: workspace resolution and job prefetching will happen in JobsTableWrapper
-	// which is a client component that can use trpc.workspace.resolveFromClerkOrgId
+	// No blocking access check - JobsTableWrapper queries will verify access
+	// workspace resolution and job prefetching happen in JobsTableWrapper
 
 	return (
 		<div className="flex flex-1 flex-col h-full overflow-auto">
@@ -39,7 +33,7 @@ export default async function JobsPage({
 							</p>
 						</div>
 						<Suspense fallback={<JobsPageSkeleton />}>
-							<JobsTableWrapper clerkOrgId={clerkOrgId} />
+							<JobsTableWrapper clerkOrgSlug={slug} />
 						</Suspense>
 					</div>
 				</div>

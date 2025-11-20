@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
+import { HydrateClient } from "@repo/console-trpc/server";
 import { WorkspacesList } from "~/components/workspaces-list";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
@@ -10,12 +10,7 @@ export default async function OrgHomePage({
 }) {
   const { slug } = await params;
 
-  // Prefetch organization to get clerkOrgId
-  prefetch(
-    trpc.organization.findByClerkOrgSlug.queryOptions({
-      clerkOrgSlug: slug,
-    }),
-  );
+  // Data is already prefetched in layout - no need to duplicate here
 
   return (
     <HydrateClient>

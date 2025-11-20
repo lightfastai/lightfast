@@ -1,8 +1,6 @@
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { RepositoriesSettings } from "~/components/repositories-settings";
-import { prefetch, trpc } from "@repo/console-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { AppBreadcrumb } from "~/components/app-breadcrumb";
 
@@ -12,42 +10,40 @@ export default async function RepositoriesPage({
 	params: Promise<{ slug: string; workspaceSlug: string }>;
 }) {
 	const { slug, workspaceSlug } = await params;
-	const { orgId } = await auth();
-	if (!orgId) {
-		notFound();
-	}
 
-	// Prefetch repositories for this workspace
-	// TODO: Update to filter by workspaceSlug when backend supports it
+	// Prefetch repositories - tRPC procedure will verify org access
+	// No blocking access check here - let query handle verification
 	prefetch(
-		trpc.repository.list.queryOptions({
+		trpc.repository.listByClerkOrgSlug.queryOptions({
+			clerkOrgSlug: slug,
 			includeInactive: false,
-			clerkOrgId: orgId,
 		})
 	);
 
 	return (
 		<div className="flex flex-1 flex-col h-full overflow-auto">
-			<div className="flex flex-col gap-6 p-6">
-				<AppBreadcrumb
-					items={[
-						{ label: slug, href: `/org/${slug}` },
-						{ label: workspaceSlug, href: `/org/${slug}/${workspaceSlug}` },
-						{ label: "Repositories" },
-					]}
-				/>
-				<div className="flex flex-col gap-6">
-					<div>
-						<h1 className="text-2xl font-semibold tracking-tight">Repositories</h1>
-						<p className="text-sm text-muted-foreground mt-1">
-							Manage GitHub repositories connected to this workspace
-						</p>
+			<HydrateClient>
+				<div className="flex flex-col gap-6 p-6">
+					<AppBreadcrumb
+						items={[
+							{ label: slug, href: `/org/${slug}` },
+							{ label: workspaceSlug, href: `/org/${slug}/${workspaceSlug}` },
+							{ label: "Repositories" },
+						]}
+					/>
+					<div className="flex flex-col gap-6">
+						<div>
+							<h1 className="text-2xl font-semibold tracking-tight">Repositories</h1>
+							<p className="text-sm text-muted-foreground mt-1">
+								Manage GitHub repositories connected to this workspace
+							</p>
+						</div>
+						<Suspense fallback={<RepositoriesSettingsSkeleton />}>
+							<RepositoriesSettings />
+						</Suspense>
 					</div>
-					<Suspense fallback={<RepositoriesSettingsSkeleton />}>
-						<RepositoriesSettings />
-					</Suspense>
 				</div>
-			</div>
+			</HydrateClient>
 		</div>
 	);
 }

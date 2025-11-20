@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { Building2 } from "lucide-react";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
 
 export default async function SettingsPage({
 	params,
@@ -30,54 +30,67 @@ async function GeneralSettings({ slug }: { slug: string }) {
 	// const org = await trpc.organization.getBySlug.query({ slug });
 
 	return (
-		<div className="space-y-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Building2 className="h-5 w-5" />
-						General Settings
-					</CardTitle>
-					<CardDescription>
-						Manage your organization's basic information
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-6">
-					<div className="space-y-4">
-						<div>
-							<h3 className="text-sm font-medium mb-2">Organization Name</h3>
-							<p className="text-sm text-muted-foreground">{slug}</p>
-						</div>
+		<div className="space-y-8">
+			{/* Organization Name Section */}
+			<div className="space-y-4">
+				<div>
+					<h2 className="text-xl font-semibold text-foreground">Workspace Name</h2>
+					<p className="text-sm text-muted-foreground mt-1">
+						This is your workspace's visible name within Lightfast.
+					</p>
+				</div>
 
-						<div className="pt-4 border-t">
-							<p className="text-sm text-muted-foreground">
-								Additional organization settings coming soon...
-							</p>
-						</div>
+				<div className="w-full space-y-4">
+					<div>
+						<Input
+							type="text"
+							value={slug}
+							disabled
+							className="bg-muted/50"
+						/>
 					</div>
-				</CardContent>
-			</Card>
+
+					<p className="text-sm text-muted-foreground">
+						Please use 32 characters at maximum.
+					</p>
+
+					<div className="flex justify-end">
+						<Button disabled variant="secondary">
+							Save
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			{/* Additional Settings */}
+			<div className="space-y-4">
+				<div>
+					<h2 className="text-xl font-semibold text-foreground">Additional Settings</h2>
+					<p className="text-sm text-muted-foreground mt-1">
+						More workspace configuration options coming soon.
+					</p>
+				</div>
+			</div>
 		</div>
 	);
 }
 
 function GeneralSettingsSkeleton() {
 	return (
-		<div className="space-y-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Building2 className="h-5 w-5" />
-						General Settings
-					</CardTitle>
-					<CardDescription>
-						Manage your organization's basic information
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-6">
-					<Skeleton className="h-20 w-full" />
-					<Skeleton className="h-16 w-full" />
-				</CardContent>
-			</Card>
+		<div className="space-y-8">
+			<div className="space-y-4">
+				<div>
+					<Skeleton className="h-7 w-48" />
+					<Skeleton className="h-4 w-72 mt-2" />
+				</div>
+				<div className="w-full space-y-4">
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-4 w-56" />
+					<div className="flex justify-end">
+						<Skeleton className="h-9 w-16" />
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

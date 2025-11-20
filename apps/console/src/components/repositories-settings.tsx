@@ -25,8 +25,8 @@ import { useOrgAccess } from "~/hooks/use-org-access";
 import { formatDistanceToNow } from "date-fns";
 
 export function RepositoriesSettings() {
-	// Get org data from prefetched cache
-	const { clerkOrgId } = useOrgAccess();
+	// Get org data from Clerk
+	const { slug: clerkOrgSlug, clerkOrgId } = useOrgAccess();
 	const [showConnectDialog, setShowConnectDialog] = useState(false);
 	const [showSetupGuide, setShowSetupGuide] = useState(false);
 	const [selectedRepoForSetup, setSelectedRepoForSetup] = useState<string>("");
@@ -38,12 +38,12 @@ export function RepositoriesSettings() {
 	const queryClient = useQueryClient();
 	const { toast } = useToast();
 
-	// Query to fetch organization's connected repositories
+	// Query to fetch organization's connected repositories (prefetched in page)
 	// Using useSuspenseQuery for better loading UX with Suspense boundaries
 	const { data: repositories = [] } = useSuspenseQuery({
-		...trpc.repository.list.queryOptions({
+		...trpc.repository.listByClerkOrgSlug.queryOptions({
+			clerkOrgSlug,
 			includeInactive: false,
-			clerkOrgId
 		}),
 		refetchOnMount: false, // Use prefetched server data
 		refetchOnWindowFocus: false, // Don't refetch on window focus
@@ -76,7 +76,7 @@ export function RepositoriesSettings() {
 
 				// Optimistically update repository status in the list for immediate feedback
 				queryClient.setQueryData(
-					trpc.repository.list.queryKey({ includeInactive: false, clerkOrgId }),
+					trpc.repository.listByClerkOrgSlug.queryKey({ clerkOrgSlug, includeInactive: false }),
 					(oldData: typeof repositories | undefined) => {
 						if (!oldData) return oldData;
 						return produce(oldData, (draft) => {
@@ -100,9 +100,9 @@ export function RepositoriesSettings() {
 				// Invalidate to refetch with updated status
 				// Use refetchType: "none" to avoid triggering Suspense boundaries
 				void queryClient.invalidateQueries({
-					queryKey: trpc.repository.list.queryKey({
+					queryKey: trpc.repository.listByClerkOrgSlug.queryKey({
 						includeInactive: false,
-						clerkOrgId,
+						clerkOrgSlug,
 					}),
 					refetchType: "none",
 				});

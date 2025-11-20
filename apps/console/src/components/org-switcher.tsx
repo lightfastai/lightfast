@@ -61,7 +61,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 
 	const handleCreateOrg = useCallback(() => {
 		setOpen(false);
-		router.push("/onboarding");
+		router.push("/account/teams/new");
 	}, [router]);
 
 	return (

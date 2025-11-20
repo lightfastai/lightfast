@@ -38,6 +38,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { cn } from "@repo/ui/lib/utils";
+import { useOrgAccess } from "~/hooks/use-org-access";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 type JobTrigger = "manual" | "scheduled" | "webhook" | "automatic";
@@ -53,30 +54,29 @@ interface Job {
 }
 
 interface JobsTableWrapperProps {
-	clerkOrgId: string;
+	clerkOrgSlug: string;
 }
 
 interface JobsTableProps {
 	workspaceId: string;
-	clerkOrgId: string;
 }
 
 /**
  * Wrapper component that resolves workspace before showing JobsTable
  */
-export function JobsTableWrapper({ clerkOrgId }: JobsTableWrapperProps) {
+export function JobsTableWrapper({ clerkOrgSlug }: JobsTableWrapperProps) {
 	const trpc = useTRPC();
 
-	// Resolve workspace from Clerk org (already prefetched in parent layout)
+	// Resolve workspace from Clerk org slug
 	const { data: workspace } = useSuspenseQuery({
-		...trpc.workspace.resolveFromClerkOrgId.queryOptions({
-			clerkOrgId,
+		...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
+			clerkOrgSlug,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	});
 
-	return <JobsTable workspaceId={workspace.workspaceId} clerkOrgId={clerkOrgId} />;
+	return <JobsTable workspaceId={workspace.workspaceId} />;
 }
 
 
@@ -244,9 +244,10 @@ function EmptyState({ filter }: { filter: string }) {
 	);
 }
 
-function JobsTable({ workspaceId, clerkOrgId }: JobsTableProps) {
+function JobsTable({ workspaceId }: JobsTableProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
+	const { clerkOrgId } = useOrgAccess();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [activeTab, setActiveTab] = useState("all");
 

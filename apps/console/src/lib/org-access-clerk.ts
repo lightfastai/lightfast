@@ -100,32 +100,47 @@ export async function getActiveOrg(): Promise<
  * Require access to a specific organization by Clerk org slug
  *
  * @param slug - Clerk organization slug from URL params
- * @throws Error if user doesn't have access or org doesn't match
+ * @throws Error if user doesn't have access
  * @returns Organization and user's role
+ *
+ * Note: We fetch the org by slug and verify the user has access to it.
+ * We don't check if it matches auth().orgSlug because middleware's
+ * organizationSyncOptions may not have synced yet during RSC fetches.
  */
 export async function requireOrgAccess(
 	slug: string,
 ): Promise<OrgWithAccess> {
-	const { orgId: clerkOrgId, orgRole, orgSlug } = await auth();
+	const { userId, orgRole } = await auth();
 
-	// User must have an active organization in Clerk
-	if (!clerkOrgId || !orgSlug) {
-		throw new Error("No active organization. Please select an organization.");
+	// User must be authenticated
+	if (!userId) {
+		throw new Error("Authentication required.");
 	}
 
-	// Verify slug matches active org
-	if (orgSlug !== slug) {
-		throw new Error(
-			"Access denied. Your active organization does not match the requested organization.",
-		);
-	}
-
-	// Get organization details from Clerk
+	// Get organization by slug from URL
 	const clerk = await clerkClient();
-	const clerkOrg = await clerk.organizations.getOrganization({ organizationId: clerkOrgId });
+	let clerkOrg;
+	try {
+		clerkOrg = await clerk.organizations.getOrganization({ slug });
+	} catch {
+		throw new Error(`Organization not found: ${slug}`);
+	}
 
 	if (!clerkOrg) {
 		throw new Error(`Organization not found: ${slug}`);
+	}
+
+	// Verify user has access to this organization
+	const membership = await clerk.organizations.getOrganizationMembershipList({
+		organizationId: clerkOrg.id,
+	});
+
+	const userMembership = membership.data.find(
+		(m) => m.publicUserData?.userId === userId,
+	);
+
+	if (!userMembership) {
+		throw new Error("Access denied to this organization.");
 	}
 
 	return {
@@ -135,7 +150,7 @@ export async function requireOrgAccess(
 			slug: clerkOrg.slug ?? slug,
 			imageUrl: clerkOrg.imageUrl,
 		},
-		role: orgRole ?? "org:member",
+		role: userMembership.role,
 	};
 }
 

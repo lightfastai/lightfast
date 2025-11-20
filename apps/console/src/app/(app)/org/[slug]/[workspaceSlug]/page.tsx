@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import {
   WorkspaceDashboard,
   WorkspaceDashboardSkeleton,
 } from "~/components/workspace-dashboard";
-import { prefetch, HydrateClient } from "@repo/console-trpc/server";
+import { HydrateClient } from "@repo/console-trpc/server";
 
 export default async function WorkspacePage({
   params,
@@ -12,14 +11,9 @@ export default async function WorkspacePage({
   params: Promise<{ slug: string; workspaceSlug: string }>;
 }) {
   const { slug, workspaceSlug } = await params;
-  const { orgId: clerkOrgId } = await auth();
 
-  if (!clerkOrgId) {
-    throw new Error("Not authenticated");
-  }
-
-  // Note: workspace is already prefetched in parent layout
-  // We just need the clerkOrgId to pass to the client component which will resolve the workspace
+  // No blocking access check - WorkspaceDashboard will use slug to resolve org
+  // This ensures we always use the org from URL, not from potentially stale auth() state
 
   return (
     <div className="flex flex-1 flex-col h-full overflow-auto">
@@ -29,7 +23,6 @@ export default async function WorkspacePage({
             <WorkspaceDashboard
               orgSlug={slug}
               workspaceSlug={workspaceSlug}
-              clerkOrgId={clerkOrgId}
             />
           </Suspense>
         </div>

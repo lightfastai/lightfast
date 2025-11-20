@@ -216,7 +216,7 @@ export function ConnectedSourcesOverview({ connections, sources, orgSlug }: Conn
                 Connect your first source to start building your workspace memory.
               </p>
               <Link
-                href="/new"
+                href="/account/teams/new"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Connect Source
@@ -298,7 +298,7 @@ export function ConnectedSourcesOverview({ connections, sources, orgSlug }: Conn
               Connect your first source to start building your workspace memory.
             </p>
             <Link
-              href="/new"
+              href="/account/teams/new"
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Connect Source

@@ -19,19 +19,16 @@ export default async function SettingsLayout({
 	}
 
 	return (
-		<div className="flex flex-1 flex-col h-full overflow-auto">
-			<div className="flex flex-col gap-6 p-6">
+		<div className="w-full pb-16">
+			<div className="mx-auto max-w-7xl px-6 lg:px-8">
 				{/* Header */}
-				<div>
+				<div className="py-8">
 					<h1 className="text-3xl font-semibold tracking-tight text-foreground">
 						Settings
 					</h1>
-					<p className="mt-2 text-muted-foreground">
-						Manage your workspace and connected sources
-					</p>
 				</div>
 
-				<div className="flex gap-8">
+				<div className="flex gap-12">
 					{/* Left Sidebar Navigation */}
 					<SettingsSidebar slug={slug} />
 

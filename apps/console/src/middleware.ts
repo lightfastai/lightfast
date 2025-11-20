@@ -11,18 +11,18 @@ const isPublicRoute = createRouteMatcher([
   "/sitemap(.*)",
 ]);
 
-// Onboarding routes - accessible to pending users (authenticated but no org claimed)
-// Includes both page routes and API routes used during onboarding
-const isOnboardingRoute = createRouteMatcher([
-  "/onboarding(.*)",
-  "/new(.*)", // Repository connection flow
+// Team creation routes - accessible to pending users (authenticated but no org claimed)
+// Includes both page routes and API routes used during team/workspace creation
+const isTeamCreationRoute = createRouteMatcher([
+  "/account/teams/new", // Team/org creation flow
+  "/new(.*)", // Workspace creation flow
   "/api/github(.*)",
   "/api/organizations(.*)",
 ]);
 
 // Protected routes (not listed above) include:
 // - /org/:slug/* - Organization-specific pages (settings, repositories, etc.)
-// - /account/* - Personal account settings (profile, integrations, API keys)
+// - /account/settings/* - Personal account settings (profile, integrations, API keys)
 // - /api/trpc/* - tRPC API routes
 export default clerkMiddleware(
   async (auth, req: NextRequest) => {
@@ -36,14 +36,14 @@ export default clerkMiddleware(
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("Referrer-Policy", "origin-when-cross-origin");
 
-    // Redirect pending users to onboarding (unless already there or on public route)
-    if (isPending && !isOnboardingRoute(req) && !isPublicRoute(req)) {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
+    // Redirect pending users to team creation (unless already there or on public route)
+    if (isPending && !isTeamCreationRoute(req) && !isPublicRoute(req)) {
+      return NextResponse.redirect(new URL("/account/teams/new", req.url));
     }
 
-    // Protect all routes except public and onboarding routes
+    // Protect all routes except public and team creation routes
     // This requires active authentication (pending users will be redirected to sign-in)
-    if (!isPublicRoute(req) && !isOnboardingRoute(req)) {
+    if (!isPublicRoute(req) && !isTeamCreationRoute(req)) {
       await auth.protect();
     }
 
@@ -53,15 +53,15 @@ export default clerkMiddleware(
     // Redirect to auth app for sign-in/sign-up
     signInUrl: `${authUrl}/sign-in`,
     signUpUrl: `${authUrl}/sign-up`,
-    // Post-authentication redirects - always to onboarding which handles org creation
-    afterSignInUrl: "/onboarding",
-    afterSignUpUrl: "/onboarding",
+    // Post-authentication redirects - always to team creation which handles org creation
+    afterSignInUrl: "/account/teams/new",
+    afterSignUpUrl: "/account/teams/new",
     // Sync Clerk organization state for /org/:slug routes
     organizationSyncOptions: {
       organizationPatterns: ["/org/:slug", "/org/:slug/(.*)"],
     },
     // Enable debug logging in development
-    debug: process.env.NODE_ENV === "development",
+    //    debug: process.env.NODE_ENV === "development",
   },
 );
 

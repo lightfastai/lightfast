@@ -1,32 +1,12 @@
-"use client";
-
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/console-trpc/react";
-import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "@repo/ui/components/ui/avatar";
-import { Input } from "@repo/ui/components/ui/input";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Button } from "@repo/ui/components/ui/button";
-import { Label } from "@repo/ui/components/ui/label";
+import { Input } from "@repo/ui/components/ui/input";
 
-export function GeneralSettingsContent() {
-	const trpc = useTRPC();
-
-	const { data: profile } = useSuspenseQuery({
-		...trpc.account.profile.get.queryOptions(),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
-
-	// Get initials for avatar fallback
-	const initials = profile.fullName
-		? profile.fullName
-				.split(" ")
-				.map((n) => n[0])
-				.join("")
-				.toUpperCase()
-				.slice(0, 2)
-		: profile.username?.slice(0, 2).toUpperCase() || "U";
-
+/**
+ * Loading skeleton for profile data
+ * Matches the exact layout of ProfileDataDisplay
+ */
+export function ProfileDataLoading() {
 	return (
 		<div className="space-y-8">
 			{/* Avatar Section */}
@@ -42,12 +22,7 @@ export function GeneralSettingsContent() {
 				</div>
 
 				<div className="flex items-center gap-4">
-					<Avatar className="h-20 w-20">
-						<AvatarImage src={profile.imageUrl || undefined} alt={profile.fullName || "User"} />
-						<AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
-							{initials}
-						</AvatarFallback>
-					</Avatar>
+					<Skeleton className="h-20 w-20 rounded-full" />
 				</div>
 
 				<p className="text-sm text-muted-foreground">
@@ -66,12 +41,7 @@ export function GeneralSettingsContent() {
 
 				<div className="w-full space-y-4">
 					<div>
-						<Input
-							type="text"
-							value={profile.fullName || ""}
-							disabled
-							className="bg-muted/50"
-						/>
+						<Skeleton className="h-10 w-full" />
 					</div>
 
 					<p className="text-sm text-muted-foreground">
@@ -98,12 +68,7 @@ export function GeneralSettingsContent() {
 				<div className="w-full space-y-4">
 					<div className="flex items-center gap-2">
 						<span className="text-sm text-muted-foreground">lightfast.com/</span>
-						<Input
-							type="text"
-							value={profile.username || ""}
-							disabled
-							className="bg-muted/50"
-						/>
+						<Skeleton className="h-10 flex-1" />
 					</div>
 
 					<p className="text-sm text-muted-foreground">
@@ -118,25 +83,17 @@ export function GeneralSettingsContent() {
 				</div>
 			</div>
 
-			{/* Email Section (Read-only) */}
+			{/* Email Section */}
 			<div className="space-y-4">
 				<div>
 					<h2 className="text-xl font-semibold text-foreground">Email</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Your primary email address. Manage emails in your{" "}
-						<Link href="/account/settings/sources" className="text-foreground hover:underline">
-							sources settings
-						</Link>.
+						Your primary email address. Manage emails in your sources settings.
 					</p>
 				</div>
 
 				<div className="w-full">
-					<Input
-						type="email"
-						value={profile.primaryEmailAddress || ""}
-						disabled
-						className="bg-muted/50"
-					/>
+					<Skeleton className="h-10 w-full" />
 				</div>
 			</div>
 		</div>

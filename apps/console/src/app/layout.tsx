@@ -9,6 +9,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { authUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
@@ -56,10 +57,10 @@ export default function RootLayout({
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl={`${authUrl}/sign-in`}
       signUpUrl={`${authUrl}/sign-up`}
-      signInFallbackRedirectUrl="/onboarding"
-      signUpFallbackRedirectUrl="/onboarding"
+      signInFallbackRedirectUrl="/account/teams/new"
+      signUpFallbackRedirectUrl="/account/teams/new"
       taskUrls={{
-        "choose-organization": "/onboarding",
+        "choose-organization": "/account/teams/new",
       }}
     >
       <html lang="en" suppressHydrationWarning>
@@ -67,10 +68,12 @@ export default function RootLayout({
         <body
           className={cn("dark bg-background min-h-screen antialiased", fonts)}
         >
-          <TRPCReactProvider>
-            {children}
-            <Toaster />
-          </TRPCReactProvider>
+          <NuqsAdapter>
+            <TRPCReactProvider>
+              {children}
+              <Toaster />
+            </TRPCReactProvider>
+          </NuqsAdapter>
         </body>
       </html>
     </ClerkProvider>

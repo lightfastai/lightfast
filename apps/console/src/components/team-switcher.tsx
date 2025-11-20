@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useOrganization } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { RouterOutputs } from "@repo/console-trpc/types";
 import { ChevronsUpDown, Plus, Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -22,11 +22,21 @@ import { cn } from "@repo/ui/lib/utils";
  */
 type OrgData = RouterOutputs["organization"]["listUserOrganizations"][number];
 
-export function TeamSwitcher() {
+type TeamSwitcherMode = "organization" | "account";
+
+interface TeamSwitcherProps {
+  /**
+   * Mode determines what is displayed:
+   * - "organization": Shows current organization name
+   * - "account": Shows "My Account" but allows switching to organizations
+   */
+  mode?: TeamSwitcherMode;
+}
+
+export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
   const trpc = useTRPC();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { organization: activeOrg } = useOrganization();
+  const pathname = usePathname();
 
   // Fetch organizations
   const { data: organizations = [] } = useSuspenseQuery({
@@ -36,20 +46,22 @@ export function TeamSwitcher() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Find current organization
-  const currentOrg = useMemo(() => {
-    if (!activeOrg) return null;
-    return organizations.find((org) => org.id === activeOrg.id);
-  }, [activeOrg, organizations]);
+  // Extract org slug from pathname (e.g., /org/someteam/... -> someteam)
+  // Use URL as source of truth instead of Clerk's useOrganization() to avoid race conditions
+  const currentOrgSlug = useMemo(() => {
+    if (mode === "account") return null;
+    const pathParts = pathname?.split("/").filter(Boolean) ?? [];
+    if (pathParts[0] === "org" && pathParts[1]) {
+      return pathParts[1];
+    }
+    return null;
+  }, [pathname, mode]);
 
-  const handleSelectOrg = useCallback(
-    (org: OrgData) => {
-      setOpen(false);
-      // Navigate to org page which shows the workspace dashboard
-      router.push(`/org/${org.slug}`);
-    },
-    [router],
-  );
+  // Find current organization by slug from URL
+  const currentOrg = useMemo(() => {
+    if (!currentOrgSlug) return null;
+    return organizations.find((org) => org.slug === currentOrgSlug);
+  }, [currentOrgSlug, organizations]);
 
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -61,41 +73,48 @@ export function TeamSwitcher() {
       .slice(0, 2);
   };
 
+  // Determine display text and avatar based on mode
+  const displayText =
+    mode === "account" ? "My Account" : (currentOrg?.name ?? "Select team");
+  const displayInitials =
+    mode === "account" ? "MA" : currentOrg ? getInitials(currentOrg.name) : "?";
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          role="combobox"
-          aria-expanded={open}
           className="justify-between px-2 h-9 hover:bg-accent min-w-0"
         >
           <div className="flex items-center gap-2 -ml-1 min-w-0">
             <Avatar className="size-6">
               <AvatarFallback className="text-[10px] bg-foreground text-background">
-                {currentOrg ? getInitials(currentOrg.name) : "?"}
+                {displayInitials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium truncate">
-              {currentOrg?.name ?? "Select team"}
-            </span>
+            <span className="text-sm font-medium truncate">{displayText}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0 bg-background" align="start">
-        <div className="p-2">
-          <div className="px-2 py-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Teams</p>
-          </div>
-          <div className="space-y-0.5">
-            {organizations.map((org) => (
-              <button
-                key={org.id}
-                onClick={() => handleSelectOrg(org)}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[280px] space-y-1" align="start">
+        <div className="px-2 py-1.5">
+          <p className="text-xs font-medium text-muted-foreground">Teams</p>
+        </div>
+        {organizations.map((org) => {
+          // In account mode, no org is selected (no checkmark)
+          // In organization mode, show checkmark for active org
+          const isSelected =
+            mode === "organization" && currentOrg?.id === org.id;
+
+          return (
+            <DropdownMenuItem key={org.id} asChild>
+              <Link
+                href={`/org/${org.slug}`}
+                prefetch={true}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted/80 transition-colors",
-                  currentOrg?.id === org.id && "bg-muted/50",
+                  "w-full flex items-center gap-2 cursor-pointer",
+                  isSelected && "bg-muted/50",
                 )}
               >
                 <Avatar className="h-5 w-5 shrink-0">
@@ -104,26 +123,28 @@ export function TeamSwitcher() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="truncate flex-1 text-left">{org.name}</span>
-                {currentOrg?.id === org.id && (
+                {isSelected && (
                   <Check className="h-4 w-4 shrink-0 text-foreground" />
                 )}
-              </button>
-            ))}
-          </div>
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
 
-          {/* Create Team */}
+        {/* Create Team */}
+        <DropdownMenuItem asChild>
           <Link
-            href="/onboarding"
-            className="w-full flex items-center gap-2 px-2 py-1.5 mt-2 rounded-md text-sm text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
-            onClick={() => setOpen(false)}
+            href="/account/teams/new"
+            prefetch={true}
+            className="w-full flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
           >
             <div className="flex items-center justify-center h-5 w-5 rounded-full border border-dashed border-muted-foreground/50">
               <Plus className="h-3 w-3" />
             </div>
             <span>Create Team</span>
           </Link>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

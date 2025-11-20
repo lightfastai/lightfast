@@ -2,20 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 const settingsNavigation = [
 	{
 		name: "General",
 		path: "",
-	},
-	{
-		name: "GitHub Integration",
-		path: "github-integration",
-	},
-	{
-		name: "Repositories",
-		path: "repositories",
 	},
 ];
 
@@ -27,7 +20,7 @@ export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 	const pathname = usePathname();
 
 	return (
-		<aside className="w-64 flex-shrink-0">
+		<aside className="w-48 flex-shrink-0">
 			<nav className="space-y-0.5">
 				{settingsNavigation.map((item) => {
 					const href = item.path
@@ -36,19 +29,22 @@ export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 					const isActive = pathname === href;
 
 					return (
-						<Link
+						<Button
 							key={item.name}
-							href={href}
-							prefetch={true}
+							variant="ghost"
+							size="sm"
+							asChild
 							className={cn(
-								"block rounded-md px-0 py-2 text-sm font-medium transition-colors",
+								"w-full justify-start font-normal",
 								isActive
-									? "bg-foreground/10 text-foreground"
-									: "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
+									? "bg-accent text-accent-foreground"
+									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
-							{item.name}
-						</Link>
+							<Link href={href} prefetch={true}>
+								{item.name}
+							</Link>
+						</Button>
 					);
 				})}
 			</nav>

@@ -97,7 +97,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => {
-                const isActive = pathname === item.href;
+                // For Settings, match any settings subpage
+                const isActive = item.title === "Settings"
+                  ? pathname?.startsWith(item.href) ?? false
+                  : pathname === item.href;
 
                 return (
                   <SidebarMenuItem key={item.title}>

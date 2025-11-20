@@ -28,8 +28,8 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
 
-  // Always link to personal account settings
-  const settingsHref = "/account/settings";
+  // Always link to personal account settings (general page)
+  const settingsHref = "/account/settings/general";
 
   const displayName = useMemo(() => {
     if (!user) {
@@ -135,15 +135,31 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </SignedIn>
-      {!isSignedIn && (
-        <SignedOut>
-          <SignInButton mode="modal">
-            <Button variant="outline" size="sm" className={className}>
-              Sign in
+      <SignedOut>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={`p-0 rounded-full size-8 ${className}`}
+            >
+              <Avatar className="size-6">
+                <AvatarFallback className="text-[10px] bg-foreground text-background">
+                  LF
+                </AvatarFallback>
+              </Avatar>
             </Button>
-          </SignInButton>
-        </SignedOut>
-      )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuItem asChild>
+              <SignInButton mode="modal">
+                <button className="w-full cursor-pointer text-sm text-left">
+                  Sign in
+                </button>
+              </SignInButton>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SignedOut>
     </>
   );
 }
