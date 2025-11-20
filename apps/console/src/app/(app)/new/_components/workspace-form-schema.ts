@@ -1,28 +1,25 @@
 import { z } from "zod";
+import {
+  WORKSPACE_NAME,
+  NAMING_ERRORS,
+} from "@db/console/constants/naming";
 
 /**
  * Workspace Creation Form Schema
  *
  * Validation rules:
  * - Organization: Required
- * - Workspace name: 3-50 chars, lowercase alphanumeric + hyphens only
+ * - Workspace name: 3-20 chars (Pinecone index constraint)
+ * - Letters, numbers, and hyphens only (mixed case allowed)
  * - Repository: Optional (handled separately in GitHub connector)
  */
 export const workspaceFormSchema = z.object({
   organizationId: z.string().min(1, "Please select an organization"),
   workspaceName: z
     .string()
-    .min(3, "Workspace name must be at least 3 characters")
-    .max(50, "Workspace name must be less than 50 characters")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Only lowercase letters, numbers, and hyphens are allowed"
-    )
-    .regex(/^[a-z0-9]/, "Must start with a letter or number")
-    .regex(/[a-z0-9]$/, "Must end with a letter or number")
-    .refine((val) => !val.includes("--"), {
-      message: "Cannot contain consecutive hyphens",
-    }),
+    .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
+    .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
+    .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN),
 });
 
 export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;

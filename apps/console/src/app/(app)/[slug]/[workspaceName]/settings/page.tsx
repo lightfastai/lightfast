@@ -3,41 +3,46 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { prefetch, HydrateClient, trpc } from "@repo/console-trpc/server";
-import { TeamGeneralSettingsClient } from "./_components/team-general-settings-client";
+import { WorkspaceGeneralSettingsClient } from "./_components/workspace-general-settings-client";
 
-export default async function SettingsPage({
+export default async function WorkspaceSettingsPage({
 	params,
 }: {
-	params: Promise<{ slug: string }>;
+	params: Promise<{ slug: string; workspaceName: string }>;
 }) {
 	// Parent org layout handles membership; settings layout handles admin role
-	const { slug } = await params;
+	const { slug, workspaceName } = await params;
 	const { orgId } = await auth();
 
 	if (!orgId) {
 		notFound();
 	}
 
-	// Prefetch organization details for instant loading
+	// Prefetch workspace details for instant loading
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
 	prefetch(
-		trpc.organization.findByClerkOrgSlug.queryOptions({
+		trpc.workspace.getByName.queryOptions({
 			clerkOrgSlug: slug,
+			workspaceName,
 		}),
 	);
 
 	return (
 		<HydrateClient>
-			<Suspense fallback={<GeneralSettingsSkeleton />}>
-				<TeamGeneralSettingsClient slug={slug} organizationId={orgId} />
+			<Suspense fallback={<WorkspaceGeneralSettingsSkeleton />}>
+				<WorkspaceGeneralSettingsClient
+					slug={slug}
+					workspaceName={workspaceName}
+				/>
 			</Suspense>
 		</HydrateClient>
 	);
 }
 
-function GeneralSettingsSkeleton() {
+function WorkspaceGeneralSettingsSkeleton() {
 	return (
 		<div className="space-y-8">
+			{/* Workspace Name Section */}
 			<div className="space-y-4">
 				<div>
 					<Skeleton className="h-7 w-48" />
@@ -50,6 +55,15 @@ function GeneralSettingsSkeleton() {
 						<Skeleton className="h-9 w-16" />
 					</div>
 				</div>
+			</div>
+
+			{/* Workspace Slug Section */}
+			<div className="space-y-4">
+				<div>
+					<Skeleton className="h-7 w-40" />
+					<Skeleton className="h-4 w-64 mt-2" />
+				</div>
+				<Skeleton className="h-10 w-full" />
 			</div>
 		</div>
 	);

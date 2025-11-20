@@ -15,6 +15,20 @@
       "when": 1763528411027,
       "tag": "0001_moaning_tyger_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763619068053,
+      "tag": "0002_gigantic_argent",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763624589541,
+      "tag": "0003_gifted_sleepwalker",
+      "breakpoints": true
     }
   ]
 }

@@ -269,15 +269,72 @@ export async function verifyOrgAccessAndResolve(params: {
 }
 
 /**
- * Helper: Resolve workspace by slug within an org
+ * Helper: Resolve workspace by name within an org (user-facing)
  *
  * This centralizes the pattern of:
  * 1. Verifying org access (via verifyOrgAccessAndResolve)
- * 2. Fetching workspace by slug within that org
- * 3. Returning workspace ID for database queries
+ * 2. Fetching workspace by name within that org (name is user-facing, used in URLs)
+ * 3. Returning workspace ID and internal slug for database queries
  *
- * Use this in procedures that need to work with workspace-scoped data
+ * Use this in procedures that need to work with workspace-scoped data from URL params
  * (jobs, stores, documents, etc.)
+ *
+ * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
+ * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
+ */
+export async function resolveWorkspaceByName(params: {
+  clerkOrgSlug: string;
+  workspaceName: string;
+  userId: string;
+}): Promise<{ workspaceId: string; workspaceName: string; workspaceSlug: string; clerkOrgId: string }> {
+  // 1. Verify org access first
+  const { clerkOrgId } = await verifyOrgAccessAndResolve({
+    clerkOrgSlug: params.clerkOrgSlug,
+    userId: params.userId,
+  });
+
+  // 2. Fetch workspace by name within this org
+  const { workspaces } = await import("@db/console/schema");
+  const { eq, and } = await import("drizzle-orm");
+
+  const workspace = await db.query.workspaces.findFirst({
+    where: and(
+      eq(workspaces.clerkOrgId, clerkOrgId),
+      eq(workspaces.name, params.workspaceName)
+    ),
+  });
+
+  if (!workspace) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Workspace not found: ${params.workspaceName}`,
+    });
+  }
+
+  // 3. Return workspace ID, name, and internal slug for database queries
+  return {
+    workspaceId: workspace.id,
+    workspaceName: params.workspaceName,
+    workspaceSlug: workspace.slug,  // Internal slug for Pinecone operations
+    clerkOrgId,
+  };
+}
+
+/**
+ * Helper: Resolve workspace by slug within an org (internal use)
+ *
+ * ⚠️ INTERNAL USE ONLY - DO NOT USE IN USER-FACING ROUTES
+ *
+ * This helper queries by the internal `slug` field (e.g., "robust-chicken"),
+ * which is used for Pinecone namespace naming and other internal operations.
+ *
+ * For user-facing URLs, ALWAYS use `resolveWorkspaceByName` instead,
+ * which queries by the user-provided `name` field (e.g., "My Cool Project").
+ *
+ * This centralizes the pattern of:
+ * 1. Verifying org access (via verifyOrgAccessAndResolve)
+ * 2. Fetching workspace by internal slug within that org
+ * 3. Returning workspace ID for database queries
  *
  * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
  * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
@@ -307,7 +364,7 @@ export async function resolveWorkspaceBySlug(params: {
   if (!workspace) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: `Workspace not found: ${params.workspaceSlug}`,
+      message: `Workspace not found (internal slug): ${params.workspaceSlug}`,
     });
   }
 

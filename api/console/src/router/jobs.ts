@@ -5,7 +5,7 @@ import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
-import { protectedProcedure, resolveWorkspaceBySlug } from "../trpc";
+import { protectedProcedure, resolveWorkspaceByName } from "../trpc";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -19,7 +19,7 @@ export const jobsRouter = {
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
-				workspaceSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
 				status: z
 					.enum(["queued", "running", "completed", "failed", "cancelled"])
 					.optional(),
@@ -29,10 +29,10 @@ export const jobsRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve workspace from slugs
-			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
-				workspaceSlug: input.workspaceSlug,
+				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 
@@ -88,14 +88,14 @@ export const jobsRouter = {
 			z.object({
 				jobId: z.string(),
 				clerkOrgSlug: z.string(),
-				workspaceSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve workspace from slugs
-			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
-				workspaceSlug: input.workspaceSlug,
+				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 
@@ -125,15 +125,15 @@ export const jobsRouter = {
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
-				workspaceSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
 				limit: z.number().min(1).max(50).default(10),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve workspace from slugs
-			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
-				workspaceSlug: input.workspaceSlug,
+				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 
@@ -160,15 +160,15 @@ export const jobsRouter = {
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
-				workspaceSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
 				hours: z.number().default(24), // Time window for stats
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve workspace from slugs
-			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
-				workspaceSlug: input.workspaceSlug,
+				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 
@@ -239,14 +239,14 @@ export const jobsRouter = {
 			z.object({
 				jobId: z.string(),
 				clerkOrgSlug: z.string(),
-				workspaceSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Resolve workspace from slugs
-			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
-				workspaceSlug: input.workspaceSlug,
+				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 

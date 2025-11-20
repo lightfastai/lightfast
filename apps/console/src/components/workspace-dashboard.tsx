@@ -15,12 +15,12 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 interface WorkspaceDashboardProps {
 	orgSlug: string;
-	workspaceSlug: string;
+	workspaceName: string;
 }
 
 export function WorkspaceDashboard({
 	orgSlug,
-	workspaceSlug,
+	workspaceName,
 }: WorkspaceDashboardProps) {
 	const trpc = useTRPC();
 
@@ -37,7 +37,7 @@ export function WorkspaceDashboard({
 	const { data: stats } = useSuspenseQuery({
 		...trpc.workspace.statistics.queryOptions({
 			clerkOrgSlug: orgSlug,
-			workspaceSlug: workspaceSlug,
+			workspaceName: workspaceName,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
@@ -47,8 +47,8 @@ export function WorkspaceDashboard({
 		<div className="space-y-6">
 			{/* Header - Full Width */}
 			<WorkspaceHeader
-				workspaceName={workspaceSlug.charAt(0).toUpperCase() + workspaceSlug.slice(1)}
-				workspaceSlug={workspaceSlug}
+				workspaceName={workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)}
+				workspaceUrlName={workspaceName}
 				sourcesConnected={stats.sources.total}
 				orgSlug={orgSlug}
 			/>
@@ -58,7 +58,7 @@ export function WorkspaceDashboard({
 				{/* Left: Lightfast Config (like VTGates) */}
 				<LightfastConfigOverview
 					workspaceId={workspace.workspaceId}
-					workspaceName={workspaceSlug.charAt(0).toUpperCase() + workspaceSlug.slice(1)}
+					workspaceName={workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)}
 					stores={stats.stores.list}
 				/>
 

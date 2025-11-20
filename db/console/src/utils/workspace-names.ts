@@ -1,4 +1,5 @@
 import { friendlyWords } from "friendlier-words";
+import { WORKSPACE_NAME, STORE_NAME } from "../constants/naming";
 
 /**
  * Generate a friendly workspace name
@@ -18,28 +19,23 @@ export function generateWorkspaceName(): string {
 }
 
 /**
- * Pinecone index naming constraints:
- * - Max 45 characters (we reserve space for "ws-" prefix and store suffix)
- * - Only lowercase alphanumeric and hyphens
- * - No leading/trailing hyphens
- * - No consecutive hyphens
- */
-const MAX_SLUG_LENGTH = 20; // Leave room for "ws-" prefix (3) + "-store-name" (20) = 44 chars total
-
-/**
- * Generate a Pinecone-compliant slug from a workspace name
+ * Generate internal slug from workspace name
+ *
+ * Converts to lowercase and sanitizes to alphanumeric + hyphens only.
+ * Used for Pinecone index naming: ws-{slug}-{store}
  *
  * Examples:
  * - "Robust Chicken" → "robust-chicken"
- * - "Happy Cat!" → "happy-cat"
- * - "My @ Workspace" → "my-workspace"
+ * - "My-Awesome-Workspace" → "my-awesome-workspace"
+ * - "api.v2" → "api-v2"
+ * - "my_project" → "my-project"
  *
- * Throws if resulting slug exceeds length limit.
+ * Throws if resulting slug exceeds length limit (20 chars for Pinecone).
  */
 export function generateWorkspaceSlug(name: string): string {
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-") // Only alphanumeric + hyphens
+    .replace(/[^a-z0-9-]+/g, "-") // Convert everything except alphanumeric and hyphens to hyphens
     .replace(/^-+/, "")            // No leading hyphens
     .replace(/-+$/, "")            // No trailing hyphens
     .replace(/-{2,}/g, "-");       // No consecutive hyphens
@@ -48,21 +44,18 @@ export function generateWorkspaceSlug(name: string): string {
     throw new Error("Workspace slug cannot be empty after sanitization");
   }
 
-  if (slug.length > MAX_SLUG_LENGTH) {
-    throw new Error(
-      `Workspace slug too long (${slug.length} chars). Max: ${MAX_SLUG_LENGTH}`
-    );
-  }
+  // Truncate to 20 chars for Pinecone constraint: ws-{20}-{20} = 44 chars total
+  const truncated = slug.substring(0, 20);
 
-  return slug;
+  return truncated;
 }
 
 /**
- * Validate a workspace slug meets Pinecone constraints
- * Used for custom slugs provided by users (Phase 2)
+ * Validate internal workspace slug meets Pinecone constraints
+ * Note: This is for internal validation only. User-facing names are validated separately.
  */
 export function validateWorkspaceSlug(slug: string): boolean {
-  if (slug.length === 0 || slug.length > MAX_SLUG_LENGTH) {
+  if (slug.length === 0 || slug.length > 20) {
     return false;
   }
 
@@ -72,21 +65,12 @@ export function validateWorkspaceSlug(slug: string): boolean {
   }
 
   // No leading/trailing/consecutive hyphens
-  if (/^-|-$|--/.test(slug)) {
+  if (/--/.test(slug) || /^-|-$/.test(slug)) {
     return false;
   }
 
   return true;
 }
-
-/**
- * Store slug constraints (for Pinecone index naming)
- * - Max 20 characters (balanced with workspace key)
- * - Only lowercase alphanumeric and hyphens
- * - No leading/trailing hyphens
- * - No consecutive hyphens
- */
-const MAX_STORE_SLUG_LENGTH = 20;
 
 /**
  * Generate a Pinecone-compliant store slug
@@ -104,9 +88,9 @@ export function generateStoreSlug(name: string): string {
     throw new Error("Store slug cannot be empty after sanitization");
   }
 
-  if (storeSlug.length > MAX_STORE_SLUG_LENGTH) {
+  if (storeSlug.length > STORE_NAME.MAX_LENGTH) {
     throw new Error(
-      `Store slug too long (${storeSlug.length} chars). Max: ${MAX_STORE_SLUG_LENGTH}`
+      `Store slug too long (${storeSlug.length} chars). Max: ${STORE_NAME.MAX_LENGTH}`
     );
   }
 
@@ -117,17 +101,17 @@ export function generateStoreSlug(name: string): string {
  * Validate a store slug meets Pinecone constraints
  */
 export function validateStoreSlug(slug: string): boolean {
-  if (slug.length === 0 || slug.length > MAX_STORE_SLUG_LENGTH) {
+  if (slug.length === 0 || slug.length > STORE_NAME.MAX_LENGTH) {
     return false;
   }
 
   // Must be lowercase alphanumeric + hyphens only
-  if (!/^[a-z0-9-]+$/.test(slug)) {
+  if (!STORE_NAME.PATTERN.test(slug)) {
     return false;
   }
 
   // No leading/trailing/consecutive hyphens
-  if (/^-|-$|--/.test(slug)) {
+  if (STORE_NAME.NO_CONSECUTIVE_HYPHENS.test(slug) || /^-|-$/.test(slug)) {
     return false;
   }
 

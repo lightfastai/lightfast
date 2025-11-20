@@ -8,6 +8,7 @@ import { WorkspaceNameInput } from "./_components/workspace-name-input";
 import { GitHubConnector } from "./_components/github-connector";
 import { GitHubConnectorLoading } from "./_components/github-connector-loading";
 import { CreateWorkspaceButton } from "./_components/create-workspace-button";
+import { getOrgBySlug, getUserOrganizations } from "~/lib/org-access-clerk";
 
 /**
  * Workspace Creation Page
@@ -43,6 +44,25 @@ export default async function NewWorkspacePage({
   const params = await searchParams;
   const initialWorkspaceName = params.workspaceName || "";
 
+  // Determine initial organization ID
+  let initialOrgId: string | undefined;
+
+  if (params.teamSlug) {
+    // Try to use the provided teamSlug
+    const org = await getOrgBySlug(params.teamSlug);
+    if (org) {
+      initialOrgId = org.id;
+    }
+  }
+
+  // Fallback: If no valid teamSlug, pick the latest organization
+  if (!initialOrgId) {
+    const userOrgs = await getUserOrganizations();
+    if (userOrgs.length > 0) {
+      initialOrgId = userOrgs[0].id; // Most recent org
+    }
+  }
+
   return (
     <div className="flex-1 overflow-y-auto bg-background">
       <div className="min-h-full flex items-start justify-center py-12">
@@ -52,7 +72,10 @@ export default async function NewWorkspacePage({
 
           {/* Form with Client Islands */}
           <HydrateClient>
-            <WorkspaceFormProvider initialWorkspaceName={initialWorkspaceName}>
+            <WorkspaceFormProvider
+              initialOrgId={initialOrgId}
+              initialWorkspaceName={initialWorkspaceName}
+            >
               <div className="space-y-8">
                 {/* Section 1: General */}
                 <div className="flex gap-6">

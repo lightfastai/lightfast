@@ -48,14 +48,14 @@ interface WorkspaceActivityProps {
 	recentJobs: Job[];
 	sources: Source[];
 	orgSlug: string;
-	workspaceSlug: string;
+	workspaceName: string;
 }
 
 export function WorkspaceActivity({
 	recentJobs,
 	sources,
 	orgSlug,
-	workspaceSlug,
+	workspaceName,
 }: WorkspaceActivityProps) {
 	// Filter state
 	const [statusFilter, setStatusFilter] = useState<string>("all");

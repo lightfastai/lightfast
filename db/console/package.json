@@ -9,6 +9,7 @@
       "default": "./src/index.ts"
     },
     "./schema": "./src/schema/index.ts",
+    "./constants/naming": "./src/constants/naming.ts",
     "./client": "./src/client.ts",
     "./utils": "./src/utils/workspace.ts",
     "./env": {

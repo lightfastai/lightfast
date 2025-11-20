@@ -26,20 +26,24 @@ interface NavItem {
  */
 function getWorkspaceNavItems(
   orgSlug: string,
-  workspaceSlug: string,
+  workspaceName: string,
 ): NavItem[] {
   return [
     {
       title: "Dashboard",
-      href: `/${orgSlug}/${workspaceSlug}`,
+      href: `/${orgSlug}/${workspaceName}`,
     },
     {
-      title: "Repositories",
-      href: `/${orgSlug}/${workspaceSlug}/repositories`,
+      title: "Sources",
+      href: `/${orgSlug}/${workspaceName}/sources`,
     },
     {
       title: "Jobs",
-      href: `/${orgSlug}/${workspaceSlug}/jobs`,
+      href: `/${orgSlug}/${workspaceName}/jobs`,
+    },
+    {
+      title: "Settings",
+      href: `/${orgSlug}/${workspaceName}/settings`,
     },
   ];
 }
@@ -66,23 +70,26 @@ function getOrgNavItems(orgSlug: string): NavItem[] {
 export function AppSidebar() {
   const pathname = usePathname();
 
-  // Extract orgSlug and workspaceSlug from pathname
-  // Pathname format: /[slug]/[workspaceSlug]/...
+  // Extract orgSlug and workspaceName from pathname
+  // Pathname format: /[slug]/[workspaceName]/...
   const pathParts = pathname?.split("/").filter(Boolean) ?? [];
   const orgSlug = pathParts[0] ?? ""; // [slug]
-  const workspaceSlug = pathParts[1] ?? ""; // [workspaceSlug]
+  const workspaceName = pathParts[1] ?? ""; // [workspaceName]
 
   // Determine the current context
   const isInOrgSettings = pathname?.startsWith(`/${orgSlug}/settings`);
+  const isInWorkspaceSettings = pathname?.startsWith(
+    `/${orgSlug}/${workspaceName}/settings`,
+  );
   const isInWorkspace =
-    workspaceSlug && workspaceSlug !== "settings" && !isInOrgSettings;
+    workspaceName && workspaceName !== "settings" && !isInOrgSettings;
 
   // Build navigation items based on context
   let mainNavItems: NavItem[] = [];
 
   if (isInWorkspace) {
     // Workspace level: show workspace nav items only
-    mainNavItems = getWorkspaceNavItems(orgSlug, workspaceSlug);
+    mainNavItems = getWorkspaceNavItems(orgSlug, workspaceName);
   } else {
     // Org level (root or settings): show org nav items (Workspaces + Settings link)
     // Settings pages have their own SettingsSidebar
@@ -97,15 +104,16 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => {
-                // For Settings, match any settings subpage
-                const isActive = item.title === "Settings"
-                  ? pathname?.startsWith(item.href) ?? false
-                  : pathname === item.href;
+                // For Settings, match any settings subpage (org or workspace level)
+                const isActive =
+                  item.title === "Settings"
+                    ? (pathname?.startsWith(item.href) ?? false)
+                    : pathname === item.href;
 
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.href}>
+                      <Link href={item.href} prefetch={true}>
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>

@@ -517,7 +517,7 @@ export const repositoryRouter = {
         );
 
         // Resolve workspace (DB UUID) and compute workspaceKey from slug
-        const wsId = await getOrCreateDefaultWorkspace(input.clerkOrgId);
+        const wsId = await getOrCreateDefaultWorkspace(clerkOrgId);
         const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
         const workspaceId = ws?.id ?? wsId;
 
@@ -681,7 +681,7 @@ export const repositoryRouter = {
       // Prepare Inngest event
       const deliveryId = randomUUID();
       // Resolve default workspace (DB UUID) + workspaceKey
-      const wsId = await getOrCreateDefaultWorkspace(input.clerkOrgId);
+      const wsId = await getOrCreateDefaultWorkspace(clerkOrgId);
       const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
       const workspaceId = ws?.id ?? wsId; // DB UUID
       const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-default`;

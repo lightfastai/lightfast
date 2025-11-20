@@ -6,10 +6,12 @@ import {
   stores,
   docsDocuments,
   jobs,
+  DeusConnectedRepository,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
+import { WORKSPACE_NAME, NAMING_ERRORS } from "@db/console/constants/naming";
 
 import { publicProcedure, protectedProcedure } from "../trpc";
 
@@ -83,17 +85,59 @@ export const workspaceRouter = {
       // First, ensure a default workspace exists for this organization
       await getOrCreateDefaultWorkspace(clerkOrgId);
 
-      // Then fetch all workspaces
+      // Then fetch all workspaces with repository information
       const orgWorkspaces = await db.query.workspaces.findMany({
         where: eq(workspaces.clerkOrgId, clerkOrgId),
       });
 
-      return orgWorkspaces.map((workspace) => ({
-        id: workspace.id,
-        slug: workspace.slug,
-        isDefault: workspace.isDefault,
-        createdAt: workspace.createdAt,
-      }));
+      // For each workspace, get connected repositories
+      const workspacesWithRepos = await Promise.all(
+        orgWorkspaces.map(async (workspace) => {
+          // Get repositories for this workspace
+          const repos = await db
+            .select()
+            .from(DeusConnectedRepository)
+            .where(
+              and(
+                eq(DeusConnectedRepository.workspaceId, workspace.id),
+                eq(DeusConnectedRepository.isActive, true),
+              ),
+            )
+            .limit(3); // Get up to 3 repos to show
+
+          // Get document count for this workspace
+          const [docCount] = await db
+            .select({ count: count() })
+            .from(docsDocuments)
+            .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
+            .where(eq(stores.workspaceId, workspace.id));
+
+          // Get recent job for activity status
+          const recentJob = await db.query.jobs.findFirst({
+            where: eq(jobs.workspaceId, workspace.id),
+            orderBy: [desc(jobs.createdAt)],
+          });
+
+          return {
+            id: workspace.id,
+            name: workspace.name,                // User-facing name, used in URLs
+            slug: workspace.slug,                // Internal slug for Pinecone
+            isDefault: workspace.isDefault,
+            createdAt: workspace.createdAt,
+            repositories: repos.map((repo) => ({
+              id: repo.id,
+              configStatus: repo.configStatus,
+              metadata: repo.metadata,
+              lastSyncedAt: repo.lastSyncedAt,
+              documentCount: repo.documentCount,
+            })),
+            totalDocuments: docCount?.count || 0,
+            lastActivity: recentJob?.createdAt || workspace.createdAt,
+          };
+        }),
+      );
+
+      return workspacesWithRepos;
     }),
 
   /**
@@ -225,6 +269,140 @@ export const workspaceRouter = {
     }),
 
   /**
+   * Get workspace details by name (user-facing)
+   * Used by workspace settings and detail pages
+   *
+   * Returns:
+   * - Full workspace record with id, name, slug, settings, etc.
+   */
+  getByName: protectedProcedure
+    .input(
+      z.object({
+        clerkOrgSlug: z.string(),
+        workspaceName: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
+      // Fetch full workspace details
+      const workspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.id, workspaceId),
+      });
+
+      if (!workspace) {
+        const { TRPCError } = await import("@trpc/server");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+
+      return {
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        isDefault: workspace.isDefault,
+        settings: workspace.settings,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+        clerkOrgId: workspace.clerkOrgId,
+      };
+    }),
+
+  /**
+   * Create a custom workspace with user-provided name
+   * Used by workspace creation form
+   *
+   * Returns:
+   * - workspaceId: Database UUID for internal operations
+   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
+   * - workspaceSlug: URL-safe identifier
+   */
+  create: protectedProcedure
+    .input(
+      z.object({
+        clerkOrgId: z.string(),
+        workspaceName: z
+          .string()
+          .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
+          .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
+          .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.auth.type !== "clerk") {
+        throw new Error("Clerk authentication required");
+      }
+
+      // Verify user has access to this organization
+      const { clerkClient } = await import("@vendor/clerk/server");
+      const { TRPCError } = await import("@trpc/server");
+      const clerk = await clerkClient();
+
+      const membership = await clerk.organizations.getOrganizationMembershipList({
+        organizationId: input.clerkOrgId,
+      });
+
+      const userMembership = membership.data.find(
+        (m) => m.publicUserData?.userId === ctx.auth.userId,
+      );
+
+      if (!userMembership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Access denied to this organization",
+        });
+      }
+
+      // Create custom workspace with user-provided name
+      const { createCustomWorkspace } = await import("@db/console/utils");
+
+      try {
+        const workspaceId = await createCustomWorkspace(
+          input.clerkOrgId,
+          input.workspaceName,
+        );
+
+        // Fetch workspace to get slug
+        const workspace = await db.query.workspaces.findFirst({
+          where: eq(workspaces.id, workspaceId),
+        });
+
+        if (!workspace) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch created workspace",
+          });
+        }
+
+        // Compute workspace key from slug
+        const workspaceKey = getWorkspaceKey(workspace.slug);
+
+        return {
+          workspaceId,
+          workspaceKey,
+          workspaceSlug: workspace.slug,  // Internal slug for Pinecone
+          workspaceName: workspace.name,  // User-facing name for URLs
+        };
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("already exists")) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: error.message,
+          });
+        }
+        throw error;
+      }
+    }),
+
+  /**
    * Get workspace statistics for dashboard
    * Returns overview metrics: sources, stores, documents, jobs
    */
@@ -232,15 +410,15 @@ export const workspaceRouter = {
     .input(
       z.object({
         clerkOrgSlug: z.string(),
-        workspaceSlug: z.string(),
+        workspaceName: z.string(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Resolve workspace from slugs
-      const { resolveWorkspaceBySlug } = await import("../trpc");
-      const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+      // Resolve workspace from name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
         clerkOrgSlug: input.clerkOrgSlug,
-        workspaceSlug: input.workspaceSlug,
+        workspaceName: input.workspaceName,
         userId: ctx.auth.userId,
       });
 
@@ -779,6 +957,182 @@ export const workspaceRouter = {
         sourcesCount: sourcesData.length,
         totalJobs24h: recentJobs.length,
         stores: storesWithSources,
+      };
+    }),
+
+  /**
+   * Workspace integrations sub-router
+   */
+  integrations: {
+    /**
+     * List integrations for a workspace
+     * Returns all connected sources/integrations for the workspace
+     */
+    list: protectedProcedure
+      .input(
+        z.object({
+          clerkOrgSlug: z.string(),
+          workspaceName: z.string(),
+        }),
+      )
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get all connected sources for this workspace
+        const sources = await db.query.connectedSources.findMany({
+          where: eq(connectedSources.workspaceId, workspaceId),
+          orderBy: [desc(connectedSources.connectedAt)],
+        });
+
+        return sources.map((source) => ({
+          id: source.id,
+          provider: source.sourceType,
+          isActive: source.isActive,
+          connectedAt: source.connectedAt,
+          lastSyncAt: source.lastSyncedAt,
+          isBilledViaVercel: false, // TODO: Determine from metadata
+          metadata: source.sourceMetadata,
+        }));
+      }),
+
+    /**
+     * Disconnect/remove an integration from a workspace
+     * Note: Only requires integrationId - workspace access is verified through the integration
+     */
+    disconnect: protectedProcedure
+      .input(
+        z.object({
+          integrationId: z.string(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Verify the integration belongs to a workspace the user has access to
+        const source = await db.query.connectedSources.findFirst({
+          where: eq(connectedSources.id, input.integrationId),
+        });
+
+        if (!source) {
+          const { TRPCError } = await import("@trpc/server");
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Integration not found",
+          });
+        }
+
+        // Get workspace to verify access
+        if (!source.workspaceId) {
+          const { TRPCError } = await import("@trpc/server");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Integration has no associated workspace",
+          });
+        }
+
+        const workspace = await db.query.workspaces.findFirst({
+          where: eq(workspaces.id, source.workspaceId),
+        });
+
+        if (!workspace) {
+          const { TRPCError } = await import("@trpc/server");
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
+        }
+
+        // Verify user has access to the org
+        const { clerkClient } = await import("@vendor/clerk/server");
+        const { TRPCError } = await import("@trpc/server");
+        const clerk = await clerkClient();
+
+        const membership = await clerk.organizations.getOrganizationMembershipList({
+          organizationId: workspace.clerkOrgId,
+        });
+
+        const userMembership = membership.data.find(
+          (m) => m.publicUserData?.userId === ctx.auth.userId,
+        );
+
+        if (!userMembership) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Access denied to this workspace",
+          });
+        }
+
+        // Mark integration as inactive instead of deleting
+        await db
+          .update(connectedSources)
+          .set({
+            isActive: false,
+            lastSyncedAt: new Date().toISOString(),
+          })
+          .where(eq(connectedSources.id, input.integrationId));
+
+        return { success: true };
+      }),
+  },
+
+  /**
+   * Update workspace name
+   * Used by workspace settings page to update the user-facing name
+   */
+  updateName: protectedProcedure
+    .input(
+      z.object({
+        clerkOrgSlug: z.string(),
+        workspaceName: z.string(), // Current workspace name
+        newWorkspaceName: z
+          .string()
+          .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
+          .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
+          .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Resolve workspace from current name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
+      const { TRPCError } = await import("@trpc/server");
+
+      // Check if new name already exists in this organization
+      const existingWorkspace = await db.query.workspaces.findFirst({
+        where: and(
+          eq(workspaces.clerkOrgId, clerkOrgId),
+          eq(workspaces.name, input.newWorkspaceName),
+        ),
+      });
+
+      if (existingWorkspace && existingWorkspace.id !== workspaceId) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `A workspace with the name "${input.newWorkspaceName}" already exists in this organization`,
+        });
+      }
+
+      // Update workspace name
+      await db
+        .update(workspaces)
+        .set({
+          name: input.newWorkspaceName,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(workspaces.id, workspaceId));
+
+      return {
+        success: true,
+        newWorkspaceName: input.newWorkspaceName,
       };
     }),
 } satisfies TRPCRouterRecord;

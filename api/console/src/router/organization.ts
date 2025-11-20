@@ -180,4 +180,99 @@ export const organizationRouter = {
 				});
 			}
 		}),
+
+	/**
+	 * Update organization name
+	 * Used by team settings page to update the organization name/slug in Clerk
+	 *
+	 * Only organization admins can update the organization name
+	 */
+	updateName: protectedProcedure
+		.input(
+			z.object({
+				organizationId: z.string().min(1, "Organization ID is required"),
+				name: z
+					.string()
+					.min(3, "Team name must be at least 3 characters")
+					.max(39, "Team name must be less than 39 characters")
+					.regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens are allowed")
+					.regex(/^[a-z0-9]/, "Must start with a letter or number")
+					.regex(/[a-z0-9]$/, "Must end with a letter or number")
+					.refine((val) => !/-{2,}/.test(val), {
+						message: "Cannot contain consecutive hyphens",
+					}),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (ctx.auth.type !== "clerk") {
+				throw new Error("Clerk authentication required");
+			}
+
+			const clerk = await clerkClient();
+
+			try {
+				// Verify user has admin access to the organization
+				const membership = await clerk.organizations.getOrganizationMembershipList({
+					organizationId: input.organizationId,
+				});
+
+				const userMembership = membership.data.find(
+					(m) => m.publicUserData?.userId === ctx.auth.userId,
+				);
+
+				if (!userMembership) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Access denied to this organization",
+					});
+				}
+
+				// Only admins can update org name
+				if (userMembership.role !== "org:admin") {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Only administrators can update organization settings",
+					});
+				}
+
+				// Update organization in Clerk
+				await clerk.organizations.updateOrganization(input.organizationId, {
+					name: input.name,
+					slug: input.name, // Clerk uses slug for URL-safe names
+				});
+
+				return {
+					success: true,
+					name: input.name,
+				};
+			} catch (error: unknown) {
+				// Re-throw TRPCError as-is
+				if (error instanceof TRPCError) {
+					throw error;
+				}
+
+				// Check for specific Clerk errors
+				if (error && typeof error === "object" && "errors" in error) {
+					const clerkError = error as {
+						errors?: Array<{ code: string; message: string }>;
+					};
+
+					if (
+						clerkError.errors?.[0]?.code === "duplicate_record" ||
+						clerkError.errors?.[0]?.message?.includes("already exists")
+					) {
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: `An organization with the name "${input.name}" already exists`,
+						});
+					}
+				}
+
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to update organization",
+					cause: error,
+				});
+			}
+		}),
 } satisfies TRPCRouterRecord;

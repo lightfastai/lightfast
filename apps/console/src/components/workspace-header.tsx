@@ -9,14 +9,14 @@ import { DashboardSettings } from "./dashboard-settings";
 
 interface WorkspaceHeaderProps {
 	workspaceName: string;
-	workspaceSlug: string;
+	workspaceUrlName: string;
 	sourcesConnected: number;
 	orgSlug: string;
 }
 
 export function WorkspaceHeader({
 	workspaceName,
-	workspaceSlug,
+	workspaceUrlName,
 	sourcesConnected,
 	orgSlug,
 }: WorkspaceHeaderProps) {
@@ -47,7 +47,7 @@ export function WorkspaceHeader({
 					<DashboardSettings />
 					{/* Workspace Settings */}
 					<Button variant="ghost" size="sm" asChild>
-						<a href={`/${orgSlug}/${workspaceSlug}/settings`}>
+						<a href={`/${orgSlug}/${workspaceUrlName}/settings`}>
 							<Settings className="h-4 w-4 mr-2" />
 							Settings
 						</a>

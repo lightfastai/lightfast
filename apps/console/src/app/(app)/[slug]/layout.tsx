@@ -1,9 +1,12 @@
 import { Suspense } from "react";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+} from "@repo/ui/components/ui/sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { AppSidebar } from "~/components/app-sidebar";
+import { Loader2 } from "lucide-react";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -30,31 +33,31 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   prefetch(
     trpc.workspace.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: slug,
-    })
+    }),
   );
 
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <Suspense fallback={<OrgLayoutSkeleton />}>
-          <SidebarProvider className="h-full min-h-0">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 border-l border-muted/30">
-              <div className="flex-1 overflow-auto">
-                {children}
+        <SidebarProvider className="h-full min-h-0">
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex-1 overflow-auto">
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
               </div>
             </div>
-          </SidebarProvider>
-        </Suspense>
+          </SidebarInset>
+        </SidebarProvider>
       </OrgPageErrorBoundary>
     </HydrateClient>
   );
 }
 
-function OrgLayoutSkeleton() {
+function PageLoadingSkeleton() {
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <Skeleton className="h-32 w-96" />
+    <div className="flex items-center justify-center h-full w-full">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   );
 }

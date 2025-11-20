@@ -92,12 +92,11 @@ export function WorkspaceNameInput() {
                 field.onBlur();
                 handleBlur();
               }}
-              placeholder="my-awesome-workspace"
-              className="font-mono"
+              placeholder="My-Awesome-Workspace"
             />
           </FormControl>
           <FormDescription>
-            Great workspace names are short and memorable
+            Use letters, numbers, and hyphens. No spaces or special characters.
           </FormDescription>
           <FormMessage />
         </FormItem>

@@ -13,6 +13,9 @@ import {
 	Eye,
 	Calendar,
 	Zap,
+	ChevronDown,
+	ChevronRight,
+	FileText,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,8 +39,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { cn } from "@repo/ui/lib/utils";
+import { useJobFilters } from "./use-job-filters";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 type JobTrigger = "manual" | "scheduled" | "webhook" | "automatic";
@@ -50,23 +53,42 @@ interface Job {
 	startedAt: string | null;
 	createdAt: string;
 	durationMs?: string | null;
+	error?: string | null;
+	logs?: string | null;
+	output?: string | null;
 }
 
 interface JobsTableWrapperProps {
 	clerkOrgSlug: string;
-	workspaceSlug: string;
+	workspaceName: string;
+	initialStatus?: string;
+	initialSearch?: string;
 }
 
 interface JobsTableProps {
 	clerkOrgSlug: string;
-	workspaceSlug: string;
+	workspaceName: string;
+	initialStatus?: string;
+	initialSearch?: string;
 }
 
 /**
  * Wrapper component for JobsTable
  */
-export function JobsTableWrapper({ clerkOrgSlug, workspaceSlug }: JobsTableWrapperProps) {
-	return <JobsTable clerkOrgSlug={clerkOrgSlug} workspaceSlug={workspaceSlug} />;
+export function JobsTableWrapper({
+	clerkOrgSlug,
+	workspaceName,
+	initialStatus,
+	initialSearch,
+}: JobsTableWrapperProps) {
+	return (
+		<JobsTable
+			clerkOrgSlug={clerkOrgSlug}
+			workspaceName={workspaceName}
+			initialStatus={initialStatus}
+			initialSearch={initialSearch}
+		/>
+	);
 }
 
 
@@ -120,136 +142,232 @@ function TriggerBadge({ trigger }: { trigger: JobTrigger }) {
 }
 
 function JobRow({ job }: { job: Job }) {
-	const handleViewDetails = () => {
-		console.log("View details for job:", job.id);
-		// TODO: Navigate to job detail page or open modal
-	};
+	const [isExpanded, setIsExpanded] = useState(false);
 
-	const handleRetry = () => {
+	const handleRetry = (e: React.MouseEvent) => {
+		e.stopPropagation();
 		console.log("Retry job:", job.id);
 		// TODO: Call tRPC mutation to retry job
 	};
 
-	const handleCancel = () => {
+	const handleCancel = (e: React.MouseEvent) => {
+		e.stopPropagation();
 		console.log("Cancel job:", job.id);
 		// TODO: Call tRPC mutation to cancel job
 	};
 
+	const hasDetails = job.error || job.logs || job.output;
+
 	return (
-		<TableRow className="cursor-pointer hover:bg-muted/5" onClick={handleViewDetails}>
-			<TableCell className="font-medium">
-				<div className="flex items-center gap-2">
-					<StatusBadge status={job.status} />
-					<span className="text-sm">{job.name}</span>
-				</div>
-			</TableCell>
-			<TableCell>
-				<TriggerBadge trigger={job.trigger} />
-			</TableCell>
-			<TableCell className="text-sm text-muted-foreground">
-				{job.startedAt
-					? formatDistanceToNow(new Date(job.startedAt), { addSuffix: true })
-					: formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}
-			</TableCell>
-			<TableCell className="text-sm text-muted-foreground">
-				{job.durationMs !== null && job.durationMs !== undefined ? (
-					formatDuration(Number.parseInt(job.durationMs, 10))
-				) : job.status === "running" ? (
-					<span className="flex items-center gap-1.5">
-						<Loader2 className="h-3 w-3 animate-spin" />
-						In progress
-					</span>
-				) : (
-					"—"
+		<>
+			<TableRow
+				className={cn(
+					"cursor-pointer hover:bg-muted/5",
+					isExpanded && "border-b-0"
 				)}
-			</TableCell>
-			<TableCell onClick={(e) => e.stopPropagation()}>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-							<MoreHorizontal className="h-4 w-4" />
-							<span className="sr-only">Open menu</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={handleViewDetails}>
-							<Eye className="mr-2 h-4 w-4" />
-							View details
-						</DropdownMenuItem>
-						{job.status === "failed" && (
-							<>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={handleRetry}>
-									<RotateCcw className="mr-2 h-4 w-4" />
-									Retry
-								</DropdownMenuItem>
-							</>
+				onClick={() => hasDetails && setIsExpanded(!isExpanded)}
+			>
+				<TableCell className="font-medium">
+					<div className="flex items-center gap-2">
+						{hasDetails ? (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 w-6 p-0 hover:bg-transparent"
+								onClick={(e) => {
+									e.stopPropagation();
+									setIsExpanded(!isExpanded);
+								}}
+							>
+								{isExpanded ? (
+									<ChevronDown className="h-4 w-4 text-muted-foreground" />
+								) : (
+									<ChevronRight className="h-4 w-4 text-muted-foreground" />
+								)}
+							</Button>
+						) : (
+							<div className="w-6" />
 						)}
-						{job.status === "running" && (
-							<>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={handleCancel} className="text-destructive">
-									<StopCircle className="mr-2 h-4 w-4" />
-									Cancel
+						<StatusBadge status={job.status} />
+						<span className="text-sm">{job.name}</span>
+					</div>
+				</TableCell>
+				<TableCell>
+					<TriggerBadge trigger={job.trigger} />
+				</TableCell>
+				<TableCell className="text-sm text-muted-foreground">
+					{job.startedAt
+						? formatDistanceToNow(new Date(job.startedAt), { addSuffix: true })
+						: formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}
+				</TableCell>
+				<TableCell className="text-sm text-muted-foreground">
+					{job.durationMs !== null && job.durationMs !== undefined ? (
+						formatDuration(Number.parseInt(job.durationMs, 10))
+					) : job.status === "running" ? (
+						<span className="flex items-center gap-1.5">
+							<Loader2 className="h-3 w-3 animate-spin" />
+							In progress
+						</span>
+					) : (
+						"—"
+					)}
+				</TableCell>
+				<TableCell onClick={(e) => e.stopPropagation()}>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+								<MoreHorizontal className="h-4 w-4" />
+								<span className="sr-only">Open menu</span>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{hasDetails && (
+								<DropdownMenuItem onClick={() => setIsExpanded(!isExpanded)}>
+									<FileText className="mr-2 h-4 w-4" />
+									{isExpanded ? "Hide" : "View"} details
 								</DropdownMenuItem>
-							</>
-						)}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</TableCell>
-		</TableRow>
+							)}
+							{job.status === "failed" && (
+								<>
+									{hasDetails && <DropdownMenuSeparator />}
+									<DropdownMenuItem onClick={handleRetry}>
+										<RotateCcw className="mr-2 h-4 w-4" />
+										Retry
+									</DropdownMenuItem>
+								</>
+							)}
+							{job.status === "running" && (
+								<>
+									{hasDetails && <DropdownMenuSeparator />}
+									<DropdownMenuItem onClick={handleCancel} className="text-destructive">
+										<StopCircle className="mr-2 h-4 w-4" />
+										Cancel
+									</DropdownMenuItem>
+								</>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</TableCell>
+			</TableRow>
+			{isExpanded && hasDetails && (
+				<TableRow>
+					<TableCell colSpan={5} className="bg-muted/20 p-6">
+						<div className="space-y-4">
+							{job.error && (
+								<div>
+									<h4 className="text-sm font-medium text-destructive mb-2 flex items-center gap-2">
+										<XCircle className="h-4 w-4" />
+										Error
+									</h4>
+									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto">
+										{job.error}
+									</pre>
+								</div>
+							)}
+							{job.logs && (
+								<div>
+									<h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+										<FileText className="h-4 w-4" />
+										Logs
+									</h4>
+									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
+										{job.logs}
+									</pre>
+								</div>
+							)}
+							{job.output && (
+								<div>
+									<h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+										<CheckCircle2 className="h-4 w-4 text-green-500" />
+										Output
+									</h4>
+									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
+										{job.output}
+									</pre>
+								</div>
+							)}
+						</div>
+					</TableCell>
+				</TableRow>
+			)}
+		</>
 	);
 }
 
 function EmptyState({ filter }: { filter: string }) {
-	const messages: Record<string, { title: string; description: string }> = {
+	const messages: Record<
+		string,
+		{ icon: typeof Loader2; title: string; description: string; showCTA: boolean }
+	> = {
 		all: {
-			title: "No jobs found",
-			description: "No workflow executions have been triggered yet.",
+			icon: PlayCircle,
+			title: "No jobs yet",
+			description: "Workflow executions will appear here once they're triggered.",
+			showCTA: true,
 		},
 		running: {
+			icon: Clock,
 			title: "No running jobs",
 			description: "There are currently no jobs in progress.",
+			showCTA: false,
 		},
 		completed: {
+			icon: CheckCircle2,
 			title: "No completed jobs",
-			description: "No jobs have finished successfully yet.",
+			description: "Successfully completed jobs will appear here.",
+			showCTA: false,
 		},
 		failed: {
+			icon: CheckCircle2,
 			title: "No failed jobs",
 			description: "Great! You have no failed jobs.",
+			showCTA: false,
 		},
 	};
 
 	const message = (filter in messages ? messages[filter] : messages.all)!;
+	const Icon = message.icon;
 
 	return (
 		<div className="flex flex-col items-center justify-center py-16 text-center">
 			<div className="rounded-full bg-muted/20 p-3 mb-4">
-				<Loader2 className="h-8 w-8 text-muted-foreground" />
+				<Icon className="h-8 w-8 text-muted-foreground" />
 			</div>
-			<h3 className="text-sm font-medium mb-1">{message.title}</h3>
-			<p className="text-xs text-muted-foreground max-w-sm">{message.description}</p>
+			<h3 className="text-sm font-semibold mb-1">{message.title}</h3>
+			<p className="text-sm text-muted-foreground max-w-sm mb-6">{message.description}</p>
+			{message.showCTA && (
+				<div className="flex flex-col gap-3">
+					<Button variant="outline" size="sm">
+						<FileText className="mr-2 h-4 w-4" />
+						View documentation
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }
 
-function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
+function JobsTable({ clerkOrgSlug, workspaceName, initialStatus, initialSearch }: JobsTableProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const [searchQuery, setSearchQuery] = useState("");
-	const [activeTab, setActiveTab] = useState("all");
+	const {
+		status: activeTab,
+		setStatus: setActiveTab,
+		search: searchQuery,
+		setSearch: setSearchQuery,
+	} = useJobFilters(initialStatus, initialSearch);
 
 	// Fetch jobs list
 	const { data: jobsData } = useSuspenseQuery({
 		...trpc.jobs.list.queryOptions({
 			clerkOrgSlug,
-			workspaceSlug,
+			workspaceName,
 			status: activeTab === "all" ? undefined : (activeTab as JobStatus),
 			limit: 50,
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
+		refetchType: "none", // Prevent Suspense boundary from triggering on refetch
 	});
 
 	const jobs = jobsData.items;
@@ -264,7 +382,7 @@ function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
 			queryClient.invalidateQueries({
 				queryKey: trpc.jobs.list.queryOptions({
 					clerkOrgSlug,
-					workspaceSlug,
+					workspaceName,
 					status: activeTab === "all" ? undefined : (activeTab as JobStatus),
 					limit: 50,
 				}).queryKey,
@@ -272,7 +390,7 @@ function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
 		}, 5000);
 
 		return () => clearInterval(interval);
-	}, [jobs, queryClient, trpc, clerkOrgSlug, workspaceSlug, activeTab]);
+	}, [jobs, queryClient, trpc, clerkOrgSlug, workspaceName, activeTab]);
 
 	// Filter jobs based on search
 	const filteredJobs = jobs.filter((job) => {
@@ -284,26 +402,11 @@ function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
 	const failedCount = jobs.filter((j) => j.status === "failed").length;
 
 	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-center justify-between">
-					<div>
-						<CardTitle>Workflow Jobs</CardTitle>
-						<CardDescription>Monitor and manage your workflow executions</CardDescription>
-					</div>
-					<div className="flex items-center gap-3">
-						<Input
-							placeholder="Search jobs..."
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-64"
-						/>
-					</div>
-				</div>
-			</CardHeader>
-			<CardContent>
-				<Tabs value={activeTab} onValueChange={setActiveTab}>
-					<TabsList className="mb-4">
+		<div className="space-y-4">
+			{/* Filters bar */}
+			<div className="flex items-center justify-between gap-4">
+				<Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+					<TabsList>
 						<TabsTrigger value="all">All ({jobs.length})</TabsTrigger>
 						<TabsTrigger value="running">
 							Running ({runningCount})
@@ -314,35 +417,40 @@ function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
 						<TabsTrigger value="completed">Completed ({completedCount})</TabsTrigger>
 						<TabsTrigger value="failed">Failed ({failedCount})</TabsTrigger>
 					</TabsList>
-
-					<TabsContent value={activeTab} className="mt-0">
-						{filteredJobs.length > 0 ? (
-							<div className="rounded-lg border border-border/60">
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead>Job Name</TableHead>
-											<TableHead>Trigger</TableHead>
-											<TableHead>Started</TableHead>
-											<TableHead>Duration</TableHead>
-											<TableHead className="w-[60px]">
-												<span className="sr-only">Actions</span>
-											</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{filteredJobs.map((job) => (
-											<JobRow key={job.id} job={job} />
-										))}
-									</TableBody>
-								</Table>
-							</div>
-						) : (
-							<EmptyState filter={activeTab} />
-						)}
-					</TabsContent>
 				</Tabs>
-			</CardContent>
-		</Card>
+				<Input
+					placeholder="Search jobs..."
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					className="w-64"
+				/>
+			</div>
+
+			{/* Jobs table */}
+			{filteredJobs.length > 0 ? (
+				<div className="rounded-lg border border-border/60 overflow-hidden">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Job Name</TableHead>
+								<TableHead>Trigger</TableHead>
+								<TableHead>Started</TableHead>
+								<TableHead>Duration</TableHead>
+								<TableHead className="w-[60px]">
+									<span className="sr-only">Actions</span>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{filteredJobs.map((job) => (
+								<JobRow key={job.id} job={job} />
+							))}
+						</TableBody>
+					</Table>
+				</div>
+			) : (
+				<EmptyState filter={activeTab} />
+			)}
+		</div>
 	);
 }

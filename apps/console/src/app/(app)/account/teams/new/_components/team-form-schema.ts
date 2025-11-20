@@ -1,26 +1,28 @@
 import { z } from "zod";
+import {
+  CLERK_ORG_SLUG,
+  NAMING_ERRORS,
+} from "@db/console/constants/naming";
 
 /**
  * Team Creation Form Schema
  *
- * Validation rules:
- * - Team name: 3-50 chars, lowercase alphanumeric + hyphens only
+ * Validation rules (Clerk organization slug):
+ * - Min 3 chars, max 39 chars (matches GitHub org limit)
+ * - Lowercase alphanumeric + hyphens only
  * - Must start and end with letter or number
  * - Cannot contain consecutive hyphens
  */
 export const teamFormSchema = z.object({
   teamName: z
     .string()
-    .min(3, "Team name must be at least 3 characters")
-    .max(50, "Team name must be less than 50 characters")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Only lowercase letters, numbers, and hyphens are allowed"
-    )
-    .regex(/^[a-z0-9]/, "Must start with a letter or number")
-    .regex(/[a-z0-9]$/, "Must end with a letter or number")
-    .refine((val) => !val.includes("--"), {
-      message: "Cannot contain consecutive hyphens",
+    .min(CLERK_ORG_SLUG.MIN_LENGTH, NAMING_ERRORS.ORG_MIN_LENGTH)
+    .max(CLERK_ORG_SLUG.MAX_LENGTH, NAMING_ERRORS.ORG_MAX_LENGTH)
+    .regex(CLERK_ORG_SLUG.PATTERN, NAMING_ERRORS.ORG_PATTERN)
+    .regex(CLERK_ORG_SLUG.START_PATTERN, NAMING_ERRORS.ORG_START)
+    .regex(CLERK_ORG_SLUG.END_PATTERN, NAMING_ERRORS.ORG_END)
+    .refine((val) => !CLERK_ORG_SLUG.NO_CONSECUTIVE_HYPHENS.test(val), {
+      message: NAMING_ERRORS.ORG_CONSECUTIVE,
     }),
 });
 

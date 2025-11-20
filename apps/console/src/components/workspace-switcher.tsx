@@ -3,8 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOrganization } from "@clerk/nextjs";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { RouterOutputs } from "@repo/console-trpc/types";
 import { ChevronsUpDown, Check, Plus } from "lucide-react";
@@ -23,14 +22,14 @@ import { cn } from "@repo/ui/lib/utils";
 type WorkspaceData = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
 
 interface WorkspaceSwitcherProps {
-	workspaceSlug: string;
+	orgSlug: string;
+	workspaceName: string;
 }
 
-export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
+export function WorkspaceSwitcher({ orgSlug, workspaceName }: WorkspaceSwitcherProps) {
 	const trpc = useTRPC();
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
-	const { organization: activeOrg } = useOrganization();
 
 	// Fetch organizations to get current org
 	const { data: organizations = [] } = useSuspenseQuery({
@@ -40,14 +39,14 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 		staleTime: 5 * 60 * 1000,
 	});
 
-	// Find current organization
+	// Find current organization by slug from URL (not Clerk's active org)
 	const currentOrg = useMemo(() => {
-		if (!activeOrg) return null;
-		return organizations.find((org) => org.id === activeOrg.id);
-	}, [activeOrg, organizations]);
+		if (!orgSlug) return null;
+		return organizations.find((org) => org.slug === orgSlug);
+	}, [orgSlug, organizations]);
 
 	// Fetch workspaces for current org by slug
-	const { data: workspaces = [] } = useSuspenseQuery({
+	const { data: workspaces = [], isLoading: isLoadingWorkspaces } = useQuery({
 		...trpc.workspace.listByClerkOrgSlug.queryOptions({
 			clerkOrgSlug: currentOrg?.slug ?? "",
 		}),
@@ -57,21 +56,26 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 		enabled: Boolean(currentOrg?.slug),
 	});
 
-	// Find current workspace
+	// Find current workspace by name (name is used in URLs)
 	const currentWorkspace = useMemo(() => {
-		if (!workspaceSlug) return null;
-		return workspaces.find((ws) => ws.slug === workspaceSlug);
-	}, [workspaceSlug, workspaces]);
+		if (!workspaceName) return null;
+		return workspaces.find((ws) => ws.name === workspaceName);
+	}, [workspaceName, workspaces]);
 
 	const handleSelectWorkspace = useCallback(
 		(workspace: WorkspaceData) => {
 			setOpen(false);
 			if (currentOrg) {
-				router.push(`/${currentOrg.slug}/${workspace.slug}`);
+				router.push(`/${currentOrg.slug}/${workspace.name}`);
 			}
 		},
 		[router, currentOrg],
 	);
+
+	// Hide component until data is ready (after all hooks are called)
+	if (!currentOrg || isLoadingWorkspaces) {
+		return null;
+	}
 
 	return (
 		<DropdownMenu open={open} onOpenChange={setOpen}>
@@ -81,7 +85,7 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 					className="justify-between px-2 h-9 hover:bg-accent min-w-0"
 				>
 					<span className="text-sm font-medium truncate">
-						{currentWorkspace?.slug ?? workspaceSlug}
+						{currentWorkspace?.name ?? workspaceName}
 					</span>
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
@@ -102,7 +106,7 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 						)}
 					>
 						<span className="truncate flex-1 text-left">
-							{workspace.slug}
+							{workspace.name}
 						</span>
 						{currentWorkspace?.id === workspace.id && (
 							<Check className="h-4 w-4 shrink-0 text-foreground" />

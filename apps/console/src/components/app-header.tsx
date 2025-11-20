@@ -21,18 +21,19 @@ export function AppHeader() {
 		? "account"
 		: "organization";
 
-	const workspaceSlug =
-		typeof params.workspaceSlug === "string" ? params.workspaceSlug : undefined;
+	const workspaceName =
+		typeof params.workspaceName === "string" ? params.workspaceName : undefined;
+	const orgSlug = typeof params.slug === "string" ? params.slug : undefined;
 
 	return (
 		<header className="flex items-center justify-between py-2 px-2 bg-background">
 			{/* Left side - Team/Workspace Switchers */}
 			<div className="flex items-center gap-1">
 				<TeamSwitcher mode={mode} />
-				{workspaceSlug && (
+				{workspaceName && orgSlug && (
 					<>
 						<span className="text-muted-foreground/40 text-sm">/</span>
-						<WorkspaceSwitcher workspaceSlug={workspaceSlug} />
+						<WorkspaceSwitcher orgSlug={orgSlug} workspaceName={workspaceName} />
 					</>
 				)}
 			</div>

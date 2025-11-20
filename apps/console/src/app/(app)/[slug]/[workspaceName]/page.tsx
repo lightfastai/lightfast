@@ -8,9 +8,9 @@ import { HydrateClient } from "@repo/console-trpc/server";
 export default async function WorkspacePage({
   params,
 }: {
-  params: Promise<{ slug: string; workspaceSlug: string }>;
+  params: Promise<{ slug: string; workspaceName: string }>;
 }) {
-  const { slug, workspaceSlug } = await params;
+  const { slug, workspaceName } = await params;
 
   // No blocking access check - WorkspaceDashboard will use slug to resolve org
   // This ensures we always use the org from URL, not from potentially stale auth() state
@@ -22,7 +22,7 @@ export default async function WorkspacePage({
           <Suspense fallback={<WorkspaceDashboardSkeleton />}>
             <WorkspaceDashboard
               orgSlug={slug}
-              workspaceSlug={workspaceSlug}
+              workspaceName={workspaceName}
             />
           </Suspense>
         </div>

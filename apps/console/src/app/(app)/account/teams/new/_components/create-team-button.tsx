@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useToast } from "@repo/ui/hooks/use-toast";
+import { useTRPC } from "@repo/console-trpc/react";
 import type { TeamFormValues } from "./team-form-schema";
 
 /**
@@ -22,6 +25,8 @@ import type { TeamFormValues } from "./team-form-schema";
  */
 export function CreateTeamButton() {
   const router = useRouter();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { setActive } = useClerk();
   const form = useFormContext<TeamFormValues>();
@@ -42,6 +47,17 @@ export function CreateTeamButton() {
     }
 
     setIsCreating(true);
+
+    // Cancel outgoing queries to prevent race conditions
+    await queryClient.cancelQueries({
+      queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
+    });
+
+    // Snapshot previous data for rollback
+    const previousOrgs = queryClient.getQueryData(
+      trpc.organization.listUserOrganizations.queryOptions().queryKey,
+    );
+
     try {
       const response = await fetch("/api/organizations/create", {
         method: "POST",
@@ -69,6 +85,23 @@ export function CreateTeamButton() {
         workspaceId: string;
       };
 
+      // Optimistically update the organization list
+      if (previousOrgs) {
+        queryClient.setQueryData(
+          trpc.organization.listUserOrganizations.queryOptions().queryKey,
+          produce(previousOrgs, (draft) => {
+            // Add the new organization to the list
+            draft.unshift({
+              id: data.organizationId,
+              name: teamName,
+              slug: data.slug,
+              role: "admin",
+              imageUrl: "",
+            });
+          }),
+        );
+      }
+
       // Set the created organization as active in Clerk session
       await setActive({
         organization: data.organizationId,
@@ -79,9 +112,22 @@ export function CreateTeamButton() {
         description: `Successfully created ${teamName}`,
       });
 
+      // Invalidate to ensure consistency with server
+      void queryClient.invalidateQueries({
+        queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
+      });
+
       // Redirect to new workspace page with teamSlug
       router.push(`/new?teamSlug=${data.slug}`);
     } catch (error) {
+      // Rollback on error
+      if (previousOrgs) {
+        queryClient.setQueryData(
+          trpc.organization.listUserOrganizations.queryOptions().queryKey,
+          previousOrgs,
+        );
+      }
+
       toast({
         title: "Failed to create team",
         description:
