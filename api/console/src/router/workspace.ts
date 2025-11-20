@@ -269,6 +269,59 @@ export const workspaceRouter = {
     }),
 
   /**
+   * Resolve workspace ID and key from GitHub organization slug
+   * Used by webhooks to map GitHub events to workspaces
+   *
+   * Returns:
+   * - workspaceId: Database UUID for internal operations
+   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
+   * - workspaceSlug: Internal slug identifier
+   */
+  resolveFromGithubOrgSlug: publicProcedure
+    .input(
+      z.object({
+        githubOrgSlug: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      // Find connected GitHub source by organization slug
+      // GitHub installations store accountLogin in sourceMetadata
+      const githubSource = await db.query.connectedSources.findFirst({
+        where: and(
+          eq(connectedSources.sourceType, "github"),
+          eq(connectedSources.isActive, true),
+          sql`${connectedSources.sourceMetadata}->>'accountLogin' = ${input.githubOrgSlug}`,
+        ),
+      });
+
+      if (!githubSource || !githubSource.workspaceId) {
+        throw new Error(
+          `No active GitHub installation found for organization: ${input.githubOrgSlug}`,
+        );
+      }
+
+      // Fetch workspace details
+      const workspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.id, githubSource.workspaceId),
+      });
+
+      if (!workspace) {
+        throw new Error(
+          `Workspace not found for ID: ${githubSource.workspaceId}`,
+        );
+      }
+
+      // Compute workspace key from slug
+      const workspaceKey = getWorkspaceKey(workspace.slug);
+
+      return {
+        workspaceId: workspace.id,
+        workspaceKey,
+        workspaceSlug: workspace.slug,
+      };
+    }),
+
+  /**
    * Get workspace details by name (user-facing)
    * Used by workspace settings and detail pages
    *

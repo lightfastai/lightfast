@@ -197,7 +197,7 @@ export const repositoryRouter = {
   connect: protectedProcedure
     .input(
       z.object({
-        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
+        clerkOrgSlug: z.string(), // Clerk org slug from URL
         githubRepoId: z.string(),
         githubInstallationId: z.string(),
         permissions: z
@@ -211,10 +211,15 @@ export const repositoryRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify org access and resolve org ID
+      const { verifyOrgAccessAndResolve } = await import("../trpc");
+      const { clerkOrgId } = await verifyOrgAccessAndResolve({
+        clerkOrgSlug: input.clerkOrgSlug,
+        userId: ctx.auth.userId,
+      });
+
       // Get or create default workspace for organization
-      const workspaceId = await getOrCreateDefaultWorkspace(
-        input.clerkOrgId,
-      );
+      const workspaceId = await getOrCreateDefaultWorkspace(clerkOrgId);
 
       // Check if this repository is already connected to this organization
       const existingRepoResult = await ctx.db
@@ -223,7 +228,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
+            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
           ),
         )
         .limit(1);
@@ -267,7 +272,7 @@ export const repositoryRouter = {
       // Create new connection
       await ctx.db.insert(DeusConnectedRepository).values({
         id,
-        clerkOrgId: input.clerkOrgId,
+        clerkOrgId,
         githubRepoId: input.githubRepoId,
         githubInstallationId: input.githubInstallationId,
         workspaceId,

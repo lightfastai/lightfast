@@ -99,7 +99,7 @@ export function InstalledSources({
 				`Are you sure you want to disconnect ${providerNames[provider]}? This will remove access to all resources connected through this integration.`,
 			)
 		) {
-			disconnectMutation.mutate({ integrationId, workspaceName });
+			disconnectMutation.mutate({ integrationId });
 		}
 	};
 

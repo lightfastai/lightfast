@@ -41,6 +41,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 import { useJobFilters } from "./use-job-filters";
+import type { JobOutput } from "@db/console/schema";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 type JobTrigger = "manual" | "scheduled" | "webhook" | "automatic";
@@ -55,7 +56,7 @@ interface Job {
 	durationMs?: string | null;
 	error?: string | null;
 	logs?: string | null;
-	output?: string | null;
+	output?: JobOutput | null;
 }
 
 interface JobsTableWrapperProps {
@@ -282,7 +283,7 @@ function JobRow({ job }: { job: Job }) {
 										Output
 									</h4>
 									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
-										{job.output}
+										{JSON.stringify(job.output, null, 2)}
 									</pre>
 								</div>
 							)}
@@ -367,7 +368,6 @@ function JobsTable({ clerkOrgSlug, workspaceName, initialStatus, initialSearch }
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
-		refetchType: "none", // Prevent Suspense boundary from triggering on refetch
 	});
 
 	const jobs = jobsData.items;

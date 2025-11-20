@@ -118,16 +118,27 @@ export async function GET(request: NextRequest) {
 
       await integrationsService.storeOAuthResult({
         accessToken: encrypt(accessToken, env.ENCRYPTION_KEY),
-        installations: installationsData.installations.map((i) => ({
-          id: String(i.id),
-          accountId: String(i.account?.id ?? ""),
-          accountLogin: i.account?.login ?? "",
-          accountType: i.account?.type === "Organization" ? "Organization" : "User",
-          avatarUrl: i.account?.avatar_url ?? "",
-          permissions: (i.permissions ?? {}) as Record<string, string>,
-          installedAt: new Date().toISOString(),
-          lastValidatedAt: new Date().toISOString(),
-        })),
+        installations: installationsData.installations.map((i) => {
+          const account = i.account;
+          // Check if it's an Organization (has 'slug') or User (has 'login')
+          const isOrganization = account && "slug" in account;
+
+          return {
+            id: String(i.id),
+            accountId: String(account?.id ?? ""),
+            // For organizations, use 'slug', for users use 'login'
+            accountLogin: isOrganization
+              ? (account as { slug: string }).slug
+              : account && "login" in account
+                ? (account as { login: string }).login
+                : "",
+            accountType: isOrganization ? "Organization" : "User",
+            avatarUrl: account?.avatar_url ?? "",
+            permissions: (i.permissions ?? {}) as Record<string, string>,
+            installedAt: new Date().toISOString(),
+            lastValidatedAt: new Date().toISOString(),
+          };
+        }),
       });
     } catch (error) {
       console.error("Failed to store integration:", error);

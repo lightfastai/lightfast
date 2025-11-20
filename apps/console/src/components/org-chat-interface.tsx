@@ -47,7 +47,7 @@ export function OrgChatInterface({
   const { data: repositories = [] } = useSuspenseQuery({
     ...trpc.repository.list.queryOptions({
       includeInactive: false,
-      clerkOrgId,
+      clerkOrgSlug: orgSlug,
     }),
     refetchOnMount: false, // Use prefetched server data
     refetchOnWindowFocus: false, // Don't refetch on window focus

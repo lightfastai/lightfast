@@ -58,8 +58,9 @@ export default async function NewWorkspacePage({
   // Fallback: If no valid teamSlug, pick the latest organization
   if (!initialOrgId) {
     const userOrgs = await getUserOrganizations();
-    if (userOrgs.length > 0) {
-      initialOrgId = userOrgs[0].id; // Most recent org
+    const firstOrg = userOrgs[0];
+    if (firstOrg) {
+      initialOrgId = firstOrg.id; // Most recent org
     }
   }
 
