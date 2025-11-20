@@ -1003,6 +1003,358 @@ const apiKeyMiddleware = publicProcedure.use(async ({ ctx, next }) => {
 
 ---
 
+## Proposed Solutions Using Clerk M2M Authentication
+
+### Overview: Hybrid Authentication Architecture
+
+Implement a three-tier authentication model:
+
+1. **User Procedures** - Existing `protectedProcedure` (Clerk user sessions)
+2. **Service Procedures** - NEW using Clerk M2M tokens (internal services)
+3. **Webhook Procedures** - HMAC signature verification (external services like GitHub)
+
+**Key principle:** Use Clerk M2M for services **we control**, not external webhooks.
+
+---
+
+### Issue #1: Missing Authorization on Repository Mutations (CRITICAL)
+
+**Current problem:** Repository mutations (`markInactive`, `updateMetadata`, etc.) use `publicProcedure` with no auth.
+
+**Solution:** Create internal webhook proxy service with Clerk M2M authentication.
+
+#### Architecture
+
+```
+GitHub Webhooks → [Webhook Proxy Service] → Console API
+                  (verifies HMAC)          (Clerk M2M token)
+```
+
+#### Implementation
+
+**Step 1: Create Webhook Proxy Service**
+
+```typescript
+// New service: services/webhook-proxy/src/handlers/github.ts
+import { Webhook } from "@octokit/webhooks";
+import { clerkClient } from "@clerk/nextjs/server";
+
+const webhooks = new Webhook({
+  secret: env.GITHUB_WEBHOOK_SECRET,
+});
+
+export async function handleGithubWebhook(request: Request) {
+  const body = await request.text();
+  const signature = request.headers.get("x-hub-signature-256");
+
+  // 1. Verify GitHub HMAC signature
+  if (!signature || !webhooks.verify(body, signature)) {
+    return new Response("Invalid signature", { status: 401 });
+  }
+
+  const event = JSON.parse(body);
+
+  // 2. Get M2M token from Clerk
+  const m2mToken = await clerkClient.getToken({
+    template: "console-webhook-service"
+  });
+
+  // 3. Forward to Console API with M2M auth
+  const response = await fetch(`${env.CONSOLE_API_URL}/api/trpc/repository.markInactive`, {
+    method: "POST",
+    headers: {
+      "authorization": `Bearer ${m2mToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      githubRepoId: event.repository.id,
+      reason: event.action,
+    }),
+  });
+
+  return response;
+}
+```
+
+**Step 2: Create Service Procedure in Console API**
+
+```typescript
+// api/console/src/trpc.ts
+
+// Add service authentication middleware
+const serviceProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  const token = ctx.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Missing service token" });
+  }
+
+  try {
+    // Verify Clerk M2M token
+    const verified = await clerkClient.verifyToken(token, {
+      authorizedParties: ["console-webhook-service"],
+    });
+
+    if (!verified.sub) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid service token" });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        service: {
+          id: verified.sub,
+          type: verified.template as "console-webhook-service" | "inngest-job" | "cron-task",
+        },
+      },
+    });
+  } catch (error) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Service token verification failed" });
+  }
+});
+
+export { serviceProcedure };
+```
+
+**Step 3: Update Repository Router**
+
+```typescript
+// api/console/src/router/repository.ts
+
+import { serviceProcedure } from "../trpc";
+
+export const repositoryRouter = {
+  // Change from publicProcedure to serviceProcedure
+  markInactive: serviceProcedure
+    .input(z.object({
+      githubRepoId: z.number(),
+      reason: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Now authenticated via M2M token
+      await ctx.db.update(DeusConnectedRepository)
+        .set({ isActive: false, inactiveReason: input.reason })
+        .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
+
+      return { success: true };
+    }),
+
+  updateMetadata: serviceProcedure.input(...).mutation(...),
+  markDeleted: serviceProcedure.input(...).mutation(...),
+  updateConfigStatus: serviceProcedure.input(...).mutation(...),
+} satisfies TRPCRouterRecord;
+```
+
+**Benefits:**
+- GitHub webhook signatures verified in proxy (external auth)
+- Console API protected by Clerk M2M (internal auth)
+- Audit trail: know which service made each mutation
+- Easy to rotate: change M2M token template in Clerk dashboard
+- Separation of concerns: webhook logic separate from API
+
+---
+
+### Issue #7: Missing Rate Limiting on Expensive Operations (HIGH)
+
+**Current problem:** No rate limiting on `reindex` mutation - can overwhelm Inngest/GitHub API.
+
+**Solution:** Use Arcjet with service-aware rate limiting.
+
+#### Implementation
+
+```typescript
+// api/console/src/router/repository.ts
+
+import arcjet, { tokenBucket } from "@arcjet/next";
+
+const aj = arcjet({
+  key: env.ARCJET_KEY,
+  rules: [
+    tokenBucket({
+      mode: "LIVE",
+      match: async (req) => {
+        // Rate limit by service identity OR user ID
+        const authHeader = req.headers.get("authorization");
+
+        if (authHeader?.startsWith("Bearer ")) {
+          // M2M token - extract service ID
+          try {
+            const token = authHeader.replace("Bearer ", "");
+            const verified = await clerkClient.verifyToken(token);
+            return `service:${verified.sub}`; // e.g., "service:console-webhook-service"
+          } catch {
+            // Invalid token, let auth middleware handle it
+            return "unknown";
+          }
+        }
+
+        // User token - extract user ID
+        return `user:${req.userId ?? "anonymous"}`;
+      },
+      refillRate: 10, // 10 requests per interval
+      interval: 60, // per minute
+      capacity: 20, // burst capacity
+    }),
+  ],
+});
+
+export const repositoryRouter = {
+  reindex: protectedProcedure
+    .input(z.object({
+      repositoryId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Apply rate limiting
+      const decision = await aj.protect(ctx.req, {
+        requested: 1,
+      });
+
+      if (decision.isDenied()) {
+        if (decision.reason.isRateLimit()) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: "Rate limit exceeded. Please try again later.",
+          });
+        }
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      // 2. Check last reindex time (additional safeguard)
+      const [repository] = await ctx.db.select()
+        .from(DeusConnectedRepository)
+        .where(eq(DeusConnectedRepository.id, input.repositoryId))
+        .limit(1);
+
+      if (!repository) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      // Enforce 5-minute cooldown per repository
+      const cooldown = 5 * 60 * 1000;
+      if (repository.lastReindexedAt) {
+        const timeSinceReindex = Date.now() - new Date(repository.lastReindexedAt).getTime();
+        if (timeSinceReindex < cooldown) {
+          const waitSeconds = Math.ceil((cooldown - timeSinceReindex) / 1000);
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: `Please wait ${waitSeconds} seconds before reindexing again.`,
+          });
+        }
+      }
+
+      // 3. Update timestamp before triggering job (prevent concurrent reindexes)
+      await ctx.db.update(DeusConnectedRepository)
+        .set({ lastReindexedAt: new Date().toISOString() })
+        .where(eq(DeusConnectedRepository.id, input.repositoryId));
+
+      // 4. Trigger reindex job
+      // ... existing reindex logic
+
+      return { success: true };
+    }),
+} satisfies TRPCRouterRecord;
+```
+
+**Rate Limiting Strategy:**
+
+| Identity Type | Rate Limit | Use Case |
+|--------------|------------|----------|
+| `service:console-webhook-service` | 100/min | GitHub webhooks |
+| `service:inngest-job` | 50/min | Background jobs |
+| `user:{userId}` | 10/min | Manual reindex from UI |
+| `anonymous` | 1/min | Unauthenticated (should be blocked anyway) |
+
+**Benefits:**
+- Prevents DoS via repeated reindex requests
+- Service-aware limits (internal services get higher quotas)
+- Per-repository cooldown prevents duplicate work
+- Timestamp update before job prevents race conditions
+- User-friendly error messages with retry timing
+
+---
+
+### Implementation Checklist
+
+#### Phase 1: Clerk M2M Setup (Day 1)
+- [ ] Create M2M application in Clerk dashboard
+- [ ] Create token template: `console-webhook-service`
+- [ ] Add authorized parties to template
+- [ ] Store M2M credentials in environment variables
+- [ ] Test token generation and verification
+
+#### Phase 2: Webhook Proxy Service (Days 2-3)
+- [ ] Create new service: `services/webhook-proxy`
+- [ ] Implement GitHub webhook HMAC verification
+- [ ] Implement M2M token acquisition from Clerk
+- [ ] Add forwarding logic to Console API
+- [ ] Add error handling and retries
+- [ ] Deploy to Vercel/Fly.io
+- [ ] Update GitHub App webhook URL to proxy
+
+#### Phase 3: Console API Updates (Days 4-5)
+- [ ] Create `serviceProcedure` middleware in `api/console/src/trpc.ts`
+- [ ] Update repository router procedures to use `serviceProcedure`
+- [ ] Add service context type definitions
+- [ ] Add unit tests for service authentication
+- [ ] Add integration tests for webhook flows
+
+#### Phase 4: Rate Limiting (Day 6)
+- [ ] Add Arcjet SDK to `api/console`
+- [ ] Implement service-aware rate limiting in `reindex` mutation
+- [ ] Add per-repository cooldown logic
+- [ ] Add rate limit error handling
+- [ ] Test with different service identities
+
+#### Phase 5: Testing & Monitoring (Day 7)
+- [ ] End-to-end test: GitHub webhook → Proxy → API
+- [ ] Load test: verify rate limits work as expected
+- [ ] Add monitoring: track M2M token usage
+- [ ] Add alerts: failed webhook authentications
+- [ ] Document new architecture in `apps/console/CLAUDE.md`
+
+---
+
+### Environment Variables Required
+
+```bash
+# Clerk M2M (add to .env)
+CLERK_M2M_CLIENT_ID=client_xxx
+CLERK_M2M_CLIENT_SECRET=secret_xxx
+CLERK_M2M_DOMAIN=clerk.your-domain.com
+
+# Webhook Proxy Service
+CONSOLE_API_URL=https://console.lightfast.ai
+GITHUB_WEBHOOK_SECRET=your-existing-secret
+
+# Arcjet (existing)
+ARCJET_KEY=your-existing-key
+```
+
+---
+
+### Why This Approach?
+
+**For Issue #1 (Webhook Auth):**
+- ✅ External webhooks verified with HMAC (GitHub's standard)
+- ✅ Internal API calls authenticated with Clerk M2M (centralized auth)
+- ✅ Clear separation: proxy handles external auth, API handles internal auth
+- ✅ Audit trail: every mutation tagged with service ID
+- ✅ Easy rotation: change M2M template in Clerk, no code changes
+
+**For Issue #7 (Rate Limiting):**
+- ✅ Arcjet already in use (no new dependency)
+- ✅ Service-aware limits prevent DoS from internal services
+- ✅ Per-repository cooldown prevents duplicate work
+- ✅ User-friendly error messages with retry timing
+- ✅ Works with both user auth and M2M auth
+
+**Why NOT use M2M for everything:**
+- ❌ GitHub webhooks don't support Clerk tokens (must use HMAC)
+- ❌ User OAuth flows need state validation (M2M is for services, not users)
+- ❌ Authorization checks still needed (M2M proves identity, not permissions)
+
+---
+
 ## Immediate Actions Required
 
 ### Priority 1 (Critical - Fix within 24 hours)
