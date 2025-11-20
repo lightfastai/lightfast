@@ -21,12 +21,13 @@ import { RepositoryConfigDialog } from "./repository-config-dialog";
 import type { ConfigStatus } from "./repository-config-status";
 import { SetupGuideModal } from "./setup-guide-modal";
 import { useTRPC } from "@repo/console-trpc/react";
-import { useOrgAccess } from "~/hooks/use-org-access";
 import { formatDistanceToNow } from "date-fns";
 
-export function RepositoriesSettings() {
-	// Get org data from Clerk
-	const { slug: clerkOrgSlug, clerkOrgId } = useOrgAccess();
+interface RepositoriesSettingsProps {
+	clerkOrgSlug: string;
+}
+
+export function RepositoriesSettings({ clerkOrgSlug }: RepositoriesSettingsProps) {
 	const [showConnectDialog, setShowConnectDialog] = useState(false);
 	const [showSetupGuide, setShowSetupGuide] = useState(false);
 	const [selectedRepoForSetup, setSelectedRepoForSetup] = useState<string>("");
@@ -118,7 +119,7 @@ export function RepositoriesSettings() {
 	const handleRetryConfig = (repositoryId: string) => {
 		detectConfigMutation.mutate({
 			repositoryId,
-			clerkOrgId,
+			clerkOrgSlug,
 		});
 	};
 
@@ -140,7 +141,7 @@ export function RepositoriesSettings() {
 	);
 
 	const handleStartIndexing = (repositoryId: string) => {
-		reindexMutation.mutate({ repositoryId, clerkOrgId });
+		reindexMutation.mutate({ repositoryId, clerkOrgSlug });
 	};
 
 	const handleViewConfig = (fullName?: string, installationId?: string | number) => {
@@ -362,7 +363,7 @@ export function RepositoriesSettings() {
 			<ConnectRepositoryDialog
 				open={showConnectDialog}
 				onOpenChange={setShowConnectDialog}
-				clerkOrgId={clerkOrgId}
+				clerkOrgSlug={clerkOrgSlug}
 			/>
 
 			<SetupGuideModal

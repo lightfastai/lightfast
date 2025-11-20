@@ -38,7 +38,6 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { cn } from "@repo/ui/lib/utils";
-import { useOrgAccess } from "~/hooks/use-org-access";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 type JobTrigger = "manual" | "scheduled" | "webhook" | "automatic";
@@ -55,28 +54,19 @@ interface Job {
 
 interface JobsTableWrapperProps {
 	clerkOrgSlug: string;
+	workspaceSlug: string;
 }
 
 interface JobsTableProps {
-	workspaceId: string;
+	clerkOrgSlug: string;
+	workspaceSlug: string;
 }
 
 /**
- * Wrapper component that resolves workspace before showing JobsTable
+ * Wrapper component for JobsTable
  */
-export function JobsTableWrapper({ clerkOrgSlug }: JobsTableWrapperProps) {
-	const trpc = useTRPC();
-
-	// Resolve workspace from Clerk org slug
-	const { data: workspace } = useSuspenseQuery({
-		...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
-			clerkOrgSlug,
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
-
-	return <JobsTable workspaceId={workspace.workspaceId} />;
+export function JobsTableWrapper({ clerkOrgSlug, workspaceSlug }: JobsTableWrapperProps) {
+	return <JobsTable clerkOrgSlug={clerkOrgSlug} workspaceSlug={workspaceSlug} />;
 }
 
 
@@ -244,18 +234,17 @@ function EmptyState({ filter }: { filter: string }) {
 	);
 }
 
-function JobsTable({ workspaceId }: JobsTableProps) {
+function JobsTable({ clerkOrgSlug, workspaceSlug }: JobsTableProps) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const { clerkOrgId } = useOrgAccess();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [activeTab, setActiveTab] = useState("all");
 
 	// Fetch jobs list
 	const { data: jobsData } = useSuspenseQuery({
 		...trpc.jobs.list.queryOptions({
-			workspaceId,
-			clerkOrgId,
+			clerkOrgSlug,
+			workspaceSlug,
 			status: activeTab === "all" ? undefined : (activeTab as JobStatus),
 			limit: 50,
 		}),
@@ -274,8 +263,8 @@ function JobsTable({ workspaceId }: JobsTableProps) {
 			// Invalidate and refetch jobs list
 			queryClient.invalidateQueries({
 				queryKey: trpc.jobs.list.queryOptions({
-					workspaceId,
-					clerkOrgId,
+					clerkOrgSlug,
+					workspaceSlug,
 					status: activeTab === "all" ? undefined : (activeTab as JobStatus),
 					limit: 50,
 				}).queryKey,
@@ -283,7 +272,7 @@ function JobsTable({ workspaceId }: JobsTableProps) {
 		}, 5000);
 
 		return () => clearInterval(interval);
-	}, [jobs, queryClient, trpc, workspaceId, clerkOrgId, activeTab]);
+	}, [jobs, queryClient, trpc, clerkOrgSlug, workspaceSlug, activeTab]);
 
 	// Filter jobs based on search
 	const filteredJobs = jobs.filter((job) => {

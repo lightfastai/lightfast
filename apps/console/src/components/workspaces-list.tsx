@@ -77,7 +77,7 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
 						{filteredWorkspaces.map((workspace) => (
 							<Link
 								key={workspace.id}
-								href={`/org/${orgSlug}/${workspace.slug}`}
+								href={`/${orgSlug}/${workspace.slug}`}
 								className="group"
 							>
 								<Card className="h-full transition-colors hover:bg-accent/50 border-border/60">

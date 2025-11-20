@@ -31,15 +31,15 @@ function getWorkspaceNavItems(
   return [
     {
       title: "Dashboard",
-      href: `/org/${orgSlug}/${workspaceSlug}`,
+      href: `/${orgSlug}/${workspaceSlug}`,
     },
     {
       title: "Repositories",
-      href: `/org/${orgSlug}/${workspaceSlug}/repositories`,
+      href: `/${orgSlug}/${workspaceSlug}/repositories`,
     },
     {
       title: "Jobs",
-      href: `/org/${orgSlug}/${workspaceSlug}/jobs`,
+      href: `/${orgSlug}/${workspaceSlug}/jobs`,
     },
   ];
 }
@@ -51,11 +51,11 @@ function getOrgNavItems(orgSlug: string): NavItem[] {
   return [
     {
       title: "Workspaces",
-      href: `/org/${orgSlug}`,
+      href: `/${orgSlug}`,
     },
     {
       title: "Settings",
-      href: `/org/${orgSlug}/settings`,
+      href: `/${orgSlug}/settings`,
     },
   ];
 }
@@ -67,13 +67,13 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   // Extract orgSlug and workspaceSlug from pathname
-  // Pathname format: /org/[slug]/[workspaceSlug]/...
+  // Pathname format: /[slug]/[workspaceSlug]/...
   const pathParts = pathname?.split("/").filter(Boolean) ?? [];
-  const orgSlug = pathParts[1] ?? ""; // org/[slug]
-  const workspaceSlug = pathParts[2] ?? ""; // [workspaceSlug]
+  const orgSlug = pathParts[0] ?? ""; // [slug]
+  const workspaceSlug = pathParts[1] ?? ""; // [workspaceSlug]
 
   // Determine the current context
-  const isInOrgSettings = pathname?.startsWith(`/org/${orgSlug}/settings`);
+  const isInOrgSettings = pathname?.startsWith(`/${orgSlug}/settings`);
   const isInWorkspace =
     workspaceSlug && workspaceSlug !== "settings" && !isInOrgSettings;
 

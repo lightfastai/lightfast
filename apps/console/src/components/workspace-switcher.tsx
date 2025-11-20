@@ -67,7 +67,7 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
 		(workspace: WorkspaceData) => {
 			setOpen(false);
 			if (currentOrg) {
-				router.push(`/org/${currentOrg.slug}/${workspace.slug}`);
+				router.push(`/${currentOrg.slug}/${workspace.slug}`);
 			}
 		},
 		[router, currentOrg],

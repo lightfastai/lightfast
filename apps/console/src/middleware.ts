@@ -21,7 +21,7 @@ const isTeamCreationRoute = createRouteMatcher([
 ]);
 
 // Protected routes (not listed above) include:
-// - /org/:slug/* - Organization-specific pages (settings, repositories, etc.)
+// - /:slug/* - Organization-specific pages (settings, repositories, etc.)
 // - /account/settings/* - Personal account settings (profile, integrations, API keys)
 // - /api/trpc/* - tRPC API routes
 export default clerkMiddleware(
@@ -56,9 +56,9 @@ export default clerkMiddleware(
     // Post-authentication redirects - always to team creation which handles org creation
     afterSignInUrl: "/account/teams/new",
     afterSignUpUrl: "/account/teams/new",
-    // Sync Clerk organization state for /org/:slug routes
+    // Sync Clerk organization state for /:slug routes
     organizationSyncOptions: {
-      organizationPatterns: ["/org/:slug", "/org/:slug/(.*)"],
+      organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
     // Enable debug logging in development
     //    debug: process.env.NODE_ENV === "development",

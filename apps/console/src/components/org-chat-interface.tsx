@@ -147,7 +147,7 @@ export function OrgChatInterface({
                     asChild
                   >
                     <Link
-                      href={`/org/${orgSlug}/settings/repositories`}
+                      href={`/${orgSlug}/settings/repositories`}
                       prefetch={true}
                     >
                       <GitBranch className="h-4 w-4" />

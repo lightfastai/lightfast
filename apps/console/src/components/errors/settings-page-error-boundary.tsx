@@ -57,12 +57,12 @@ export class SettingsPageErrorBoundary extends Component<Props, State> {
                   Retry
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/org/${this.props.orgSlug}/settings`}>
+                  <Link href={`/${this.props.orgSlug}/settings`}>
                     Back to settings
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/org/${this.props.orgSlug}`}>
+                  <Link href={`/${this.props.orgSlug}`}>
                     Go to org home
                   </Link>
                 </Button>

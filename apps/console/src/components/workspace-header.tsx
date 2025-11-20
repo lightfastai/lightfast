@@ -47,7 +47,7 @@ export function WorkspaceHeader({
 					<DashboardSettings />
 					{/* Workspace Settings */}
 					<Button variant="ghost" size="sm" asChild>
-						<a href={`/org/${orgSlug}/${workspaceSlug}/settings`}>
+						<a href={`/${orgSlug}/${workspaceSlug}/settings`}>
 							<Settings className="h-4 w-4 mr-2" />
 							Settings
 						</a>

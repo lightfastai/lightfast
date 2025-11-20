@@ -10,7 +10,7 @@ import { UserDropdownMenu } from "./user-dropdown-menu";
  *
  * Determines header mode based on current route:
  * - /account/* and /new pages show "My Account" mode
- * - /org/* pages show organization mode with workspace switcher
+ * - Organization pages show organization mode with workspace switcher
  */
 export function AppHeader() {
 	const pathname = usePathname();

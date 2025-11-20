@@ -20,8 +20,8 @@ export default async function JobsPage({
 				<div className="flex flex-col gap-6 p-6">
 					<AppBreadcrumb
 						items={[
-							{ label: slug, href: `/org/${slug}` },
-							{ label: workspaceSlug, href: `/org/${slug}/${workspaceSlug}` },
+							{ label: slug, href: `/${slug}` },
+							{ label: workspaceSlug, href: `/${slug}/${workspaceSlug}` },
 							{ label: "Jobs" },
 						]}
 					/>
@@ -33,7 +33,7 @@ export default async function JobsPage({
 							</p>
 						</div>
 						<Suspense fallback={<JobsPageSkeleton />}>
-							<JobsTableWrapper clerkOrgSlug={slug} />
+							<JobsTableWrapper clerkOrgSlug={slug} workspaceSlug={workspaceSlug} />
 						</Suspense>
 					</div>
 				</div>

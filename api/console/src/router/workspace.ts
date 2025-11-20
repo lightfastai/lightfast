@@ -231,12 +231,18 @@ export const workspaceRouter = {
   statistics: protectedProcedure
     .input(
       z.object({
-        workspaceId: z.string(),
-        clerkOrgId: z.string(),
+        clerkOrgSlug: z.string(),
+        workspaceSlug: z.string(),
       }),
     )
-    .query(async ({ input }) => {
-      const { workspaceId, clerkOrgId } = input;
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from slugs
+      const { resolveWorkspaceBySlug } = await import("../trpc");
+      const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceSlug: input.workspaceSlug,
+        userId: ctx.auth.userId,
+      });
 
       // Get connected sources count and list
       const sources = await db.query.connectedSources.findMany({

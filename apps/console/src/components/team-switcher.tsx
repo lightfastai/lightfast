@@ -46,13 +46,15 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Extract org slug from pathname (e.g., /org/someteam/... -> someteam)
+  // Extract org slug from pathname (e.g., /someteam/... -> someteam)
   // Use URL as source of truth instead of Clerk's useOrganization() to avoid race conditions
   const currentOrgSlug = useMemo(() => {
     if (mode === "account") return null;
     const pathParts = pathname?.split("/").filter(Boolean) ?? [];
-    if (pathParts[0] === "org" && pathParts[1]) {
-      return pathParts[1];
+    // First path part is the org slug (unless it's a reserved route like /new, /account, /api)
+    const reservedRoutes = ["new", "account", "api", "sign-in", "sign-up"];
+    if (pathParts[0] && !reservedRoutes.includes(pathParts[0])) {
+      return pathParts[0];
     }
     return null;
   }, [pathname, mode]);
@@ -110,7 +112,7 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
           return (
             <DropdownMenuItem key={org.id} asChild>
               <Link
-                href={`/org/${org.slug}`}
+                href={`/${org.slug}`}
                 prefetch={true}
                 className={cn(
                   "w-full flex items-center gap-2 cursor-pointer",

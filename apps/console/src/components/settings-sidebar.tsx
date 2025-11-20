@@ -24,8 +24,8 @@ export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 			<nav className="space-y-0.5">
 				{settingsNavigation.map((item) => {
 					const href = item.path
-						? `/org/${slug}/settings/${item.path}`
-						: `/org/${slug}/settings`;
+						? `/${slug}/settings/${item.path}`
+						: `/${slug}/settings`;
 					const isActive = pathname === href;
 
 					return (

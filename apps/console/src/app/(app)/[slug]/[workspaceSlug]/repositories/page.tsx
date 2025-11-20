@@ -26,8 +26,8 @@ export default async function RepositoriesPage({
 				<div className="flex flex-col gap-6 p-6">
 					<AppBreadcrumb
 						items={[
-							{ label: slug, href: `/org/${slug}` },
-							{ label: workspaceSlug, href: `/org/${slug}/${workspaceSlug}` },
+							{ label: slug, href: `/${slug}` },
+							{ label: workspaceSlug, href: `/${slug}/${workspaceSlug}` },
 							{ label: "Repositories" },
 						]}
 					/>
@@ -39,7 +39,7 @@ export default async function RepositoriesPage({
 							</p>
 						</div>
 						<Suspense fallback={<RepositoriesSettingsSkeleton />}>
-							<RepositoriesSettings />
+							<RepositoriesSettings clerkOrgSlug={slug} />
 						</Suspense>
 					</div>
 				</div>

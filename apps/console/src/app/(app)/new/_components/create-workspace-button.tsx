@@ -77,7 +77,7 @@ export function CreateWorkspaceButton() {
         // Redirect to specific workspace page
         const orgSlug = selectedOrg?.organization.slug;
         const wsSlug = workspace?.workspaceSlug;
-        router.push(`/org/${orgSlug}/${wsSlug}`);
+        router.push(`/${orgSlug}/${wsSlug}`);
       },
       onError: (error) => {
         toast({
@@ -124,7 +124,7 @@ export function CreateWorkspaceButton() {
       });
       const orgSlug = selectedOrg?.organization.slug;
       const wsSlug = workspace?.workspaceSlug;
-      router.push(`/org/${orgSlug}/${wsSlug}`);
+      router.push(`/${orgSlug}/${wsSlug}`);
       return;
     }
 

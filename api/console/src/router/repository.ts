@@ -114,12 +114,19 @@ export const repositoryRouter = {
     .input(
       z.object({
         includeInactive: z.boolean().default(false),
-        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
+        clerkOrgSlug: z.string(), // Clerk org slug from URL
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Verify org access and resolve org ID
+      const { verifyOrgAccessAndResolve } = await import("../trpc");
+      const { clerkOrgId } = await verifyOrgAccessAndResolve({
+        clerkOrgSlug: input.clerkOrgSlug,
+        userId: ctx.auth.userId,
+      });
+
       const whereConditions = [
-        eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
+        eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
       ];
 
       if (!input.includeInactive) {
@@ -139,17 +146,24 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
+        clerkOrgSlug: z.string(), // Clerk org slug from URL
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Verify org access and resolve org ID
+      const { verifyOrgAccessAndResolve } = await import("../trpc");
+      const { clerkOrgId } = await verifyOrgAccessAndResolve({
+        clerkOrgSlug: input.clerkOrgSlug,
+        userId: ctx.auth.userId,
+      });
+
       const result = await ctx.db
         .select()
         .from(DeusConnectedRepository)
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
+            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
           ),
         )
         .limit(1);
@@ -420,10 +434,17 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        clerkOrgId: z.string(), // Clerk org ID (org_xxx)
+        clerkOrgSlug: z.string(), // Clerk org slug from URL
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify org access and resolve org ID
+      const { verifyOrgAccessAndResolve } = await import("../trpc");
+      const { clerkOrgId } = await verifyOrgAccessAndResolve({
+        clerkOrgSlug: input.clerkOrgSlug,
+        userId: ctx.auth.userId,
+      });
+
       // Get repository
       const repoResult = await ctx.db
         .select()
@@ -431,7 +452,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId)
+            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId)
           )
         )
         .limit(1);
@@ -546,10 +567,17 @@ export const repositoryRouter = {
     .input(
       z.object({
         repositoryId: z.string(),
-        clerkOrgId: z.string(), // Clerk org ID
+        clerkOrgSlug: z.string(), // Clerk org slug from URL
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify org access and resolve org ID
+      const { verifyOrgAccessAndResolve } = await import("../trpc");
+      const { clerkOrgId } = await verifyOrgAccessAndResolve({
+        clerkOrgSlug: input.clerkOrgSlug,
+        userId: ctx.auth.userId,
+      });
+
       // Resolve repository
       const [repository] = await ctx.db
         .select()
@@ -557,7 +585,7 @@ export const repositoryRouter = {
         .where(
           and(
             eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, input.clerkOrgId),
+            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
           ),
         )
         .limit(1);

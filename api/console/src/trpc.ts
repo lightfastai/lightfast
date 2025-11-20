@@ -204,5 +204,120 @@ export const clerkProtectedProcedure = sentrifiedProcedure
  * @see https://trpc.io/docs/procedures
  */
 
+/**
+ * Helper: Verify org access and resolve org ID from slug
+ *
+ * This centralizes the pattern of:
+ * 1. Fetching org by slug from Clerk
+ * 2. Verifying user has access to the org
+ * 3. Returning the org ID for database queries
+ *
+ * Use this in procedures that need to work with organization-scoped data
+ * (repositories, integrations, etc.)
+ *
+ * @throws {TRPCError} NOT_FOUND if org doesn't exist
+ * @throws {TRPCError} FORBIDDEN if user doesn't have access
+ */
+export async function verifyOrgAccessAndResolve(params: {
+  clerkOrgSlug: string;
+  userId: string;
+}): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
+  const { clerkClient } = await import("@vendor/clerk/server");
+  const clerk = await clerkClient();
+
+  // 1. Fetch org by slug
+  let clerkOrg;
+  try {
+    clerkOrg = await clerk.organizations.getOrganization({
+      slug: params.clerkOrgSlug,
+    });
+  } catch {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Organization not found: ${params.clerkOrgSlug}`,
+    });
+  }
+
+  if (!clerkOrg) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Organization not found: ${params.clerkOrgSlug}`,
+    });
+  }
+
+  // 2. Verify user has access
+  const membership = await clerk.organizations.getOrganizationMembershipList({
+    organizationId: clerkOrg.id,
+  });
+
+  const userMembership = membership.data.find(
+    (m) => m.publicUserData?.userId === params.userId,
+  );
+
+  if (!userMembership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Access denied to this organization",
+    });
+  }
+
+  // 3. Return org ID for database queries
+  return {
+    clerkOrgId: clerkOrg.id,
+    clerkOrgSlug: params.clerkOrgSlug,
+  };
+}
+
+/**
+ * Helper: Resolve workspace by slug within an org
+ *
+ * This centralizes the pattern of:
+ * 1. Verifying org access (via verifyOrgAccessAndResolve)
+ * 2. Fetching workspace by slug within that org
+ * 3. Returning workspace ID for database queries
+ *
+ * Use this in procedures that need to work with workspace-scoped data
+ * (jobs, stores, documents, etc.)
+ *
+ * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
+ * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
+ */
+export async function resolveWorkspaceBySlug(params: {
+  clerkOrgSlug: string;
+  workspaceSlug: string;
+  userId: string;
+}): Promise<{ workspaceId: string; workspaceSlug: string; clerkOrgId: string }> {
+  // 1. Verify org access first
+  const { clerkOrgId } = await verifyOrgAccessAndResolve({
+    clerkOrgSlug: params.clerkOrgSlug,
+    userId: params.userId,
+  });
+
+  // 2. Fetch workspace by slug within this org
+  const { workspaces } = await import("@db/console/schema");
+  const { eq, and } = await import("drizzle-orm");
+
+  const workspace = await db.query.workspaces.findFirst({
+    where: and(
+      eq(workspaces.clerkOrgId, clerkOrgId),
+      eq(workspaces.slug, params.workspaceSlug)
+    ),
+  });
+
+  if (!workspace) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Workspace not found: ${params.workspaceSlug}`,
+    });
+  }
+
+  // 3. Return workspace ID for database queries
+  return {
+    workspaceId: workspace.id,
+    workspaceSlug: params.workspaceSlug,
+    clerkOrgId,
+  };
+}
+
 // Re-export for convenience
 export { TRPCError } from "@trpc/server";

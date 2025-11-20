@@ -5,7 +5,7 @@ import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
-import { protectedProcedure } from "../trpc";
+import { protectedProcedure, resolveWorkspaceBySlug } from "../trpc";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -18,8 +18,8 @@ export const jobsRouter = {
 	list: protectedProcedure
 		.input(
 			z.object({
-				workspaceId: z.string(),
-				clerkOrgId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceSlug: z.string(),
 				status: z
 					.enum(["queued", "running", "completed", "failed", "cancelled"])
 					.optional(),
@@ -28,9 +28,15 @@ export const jobsRouter = {
 				cursor: z.string().optional(), // createdAt timestamp for cursor pagination
 			}),
 		)
-		.query(async ({ input }) => {
-			const { workspaceId, clerkOrgId, status, repositoryId, limit, cursor } =
-				input;
+		.query(async ({ ctx, input }) => {
+			// Resolve workspace from slugs
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceSlug: input.workspaceSlug,
+				userId: ctx.auth.userId,
+			});
+
+			const { status, repositoryId, limit, cursor } = input;
 
 			// Build where conditions
 			const conditions = [
@@ -81,14 +87,23 @@ export const jobsRouter = {
 		.input(
 			z.object({
 				jobId: z.string(),
-				clerkOrgId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceSlug: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
+		.query(async ({ ctx, input }) => {
+			// Resolve workspace from slugs
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceSlug: input.workspaceSlug,
+				userId: ctx.auth.userId,
+			});
+
 			const job = await db.query.jobs.findFirst({
 				where: and(
 					eq(jobs.id, input.jobId),
-					eq(jobs.clerkOrgId, input.clerkOrgId),
+					eq(jobs.workspaceId, workspaceId),
+					eq(jobs.clerkOrgId, clerkOrgId),
 				),
 			});
 
@@ -109,19 +124,26 @@ export const jobsRouter = {
 	recent: protectedProcedure
 		.input(
 			z.object({
-				workspaceId: z.string(),
-				clerkOrgId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceSlug: z.string(),
 				limit: z.number().min(1).max(50).default(10),
 			}),
 		)
-		.query(async ({ input }) => {
+		.query(async ({ ctx, input }) => {
+			// Resolve workspace from slugs
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceSlug: input.workspaceSlug,
+				userId: ctx.auth.userId,
+			});
+
 			const recentJobs = await db
 				.select()
 				.from(jobs)
 				.where(
 					and(
-						eq(jobs.workspaceId, input.workspaceId),
-						eq(jobs.clerkOrgId, input.clerkOrgId),
+						eq(jobs.workspaceId, workspaceId),
+						eq(jobs.clerkOrgId, clerkOrgId),
 					),
 				)
 				.orderBy(desc(jobs.createdAt))
@@ -137,13 +159,20 @@ export const jobsRouter = {
 	statistics: protectedProcedure
 		.input(
 			z.object({
-				workspaceId: z.string(),
-				clerkOrgId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceSlug: z.string(),
 				hours: z.number().default(24), // Time window for stats
 			}),
 		)
-		.query(async ({ input }) => {
-			const { workspaceId, clerkOrgId, hours } = input;
+		.query(async ({ ctx, input }) => {
+			// Resolve workspace from slugs
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceSlug: input.workspaceSlug,
+				userId: ctx.auth.userId,
+			});
+
+			const { hours } = input;
 
 			// Calculate timestamp for time window
 			const since = new Date(Date.now() - hours * 60 * 60 * 1000)
@@ -209,15 +238,24 @@ export const jobsRouter = {
 		.input(
 			z.object({
 				jobId: z.string(),
-				clerkOrgId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceSlug: z.string(),
 			}),
 		)
-		.mutation(async ({ input }) => {
-			// Verify job exists and belongs to user's organization
+		.mutation(async ({ ctx, input }) => {
+			// Resolve workspace from slugs
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceBySlug({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceSlug: input.workspaceSlug,
+				userId: ctx.auth.userId,
+			});
+
+			// Verify job exists and belongs to user's workspace
 			const job = await db.query.jobs.findFirst({
 				where: and(
 					eq(jobs.id, input.jobId),
-					eq(jobs.clerkOrgId, input.clerkOrgId),
+					eq(jobs.workspaceId, workspaceId),
+					eq(jobs.clerkOrgId, clerkOrgId),
 				),
 			});
 

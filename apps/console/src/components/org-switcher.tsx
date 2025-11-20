@@ -54,7 +54,7 @@ export function OrgSwitcher({ organizations }: OrgSwitcherProps) {
 		(org: OrgData) => {
 			setOpen(false);
 			// Navigate to org page - Clerk middleware will set active org from URL
-			router.push(`/org/${org.slug}`);
+			router.push(`/${org.slug}`);
 		},
 		[router],
 	);
