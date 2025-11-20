@@ -37,7 +37,7 @@ export function OrgChatInterface({
   orgSlug,
 }: OrgChatInterfaceProps) {
   // Get org data from prefetched cache
-  const { organizationId, githubOrgId } = useOrgAccess();
+  const { clerkOrgId } = useOrgAccess();
   const formRef = useRef<PromptInputRef | null>(null);
   const trpc = useTRPC();
   const [selectedRepoId, setSelectedRepoId] = useState<string | undefined>();
@@ -47,7 +47,7 @@ export function OrgChatInterface({
   const { data: repositories = [] } = useSuspenseQuery({
     ...trpc.repository.list.queryOptions({
       includeInactive: false,
-      organizationId,
+      clerkOrgId,
     }),
     refetchOnMount: false, // Use prefetched server data
     refetchOnWindowFocus: false, // Don't refetch on window focus
@@ -71,8 +71,7 @@ export function OrgChatInterface({
     event.preventDefault();
     console.log("Submit", {
       message,
-      organizationId,
-      githubOrgId,
+      clerkOrgId,
       selectedRepoId,
       repository: repositories.find((r) => r.id === selectedRepoId),
     });

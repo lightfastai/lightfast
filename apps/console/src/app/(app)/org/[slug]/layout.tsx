@@ -2,8 +2,10 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
+import { AppSidebar } from "~/components/app-sidebar";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -47,10 +49,26 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     }),
   );
 
+  // Prefetch workspace data for the org (used by org home page)
+  prefetch(
+    trpc.workspace.resolveFromClerkOrgId.queryOptions({
+      clerkOrgId: orgId,
+    })
+  );
+
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <Suspense fallback={<OrgLayoutSkeleton />}>{children}</Suspense>
+        <Suspense fallback={<OrgLayoutSkeleton />}>
+          <SidebarProvider className="h-full min-h-0">
+            <AppSidebar />
+            <div className="flex flex-col flex-1 min-w-0 border-l border-muted/30">
+              <div className="flex-1 overflow-auto">
+                {children}
+              </div>
+            </div>
+          </SidebarProvider>
+        </Suspense>
       </OrgPageErrorBoundary>
     </HydrateClient>
   );

@@ -1,0 +1,118 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@repo/ui/components/ui/sidebar";
+
+/**
+ * Navigation item types
+ */
+interface NavItem {
+  title: string;
+  href: string;
+}
+
+/**
+ * Build navigation items for workspace-level pages
+ */
+function getWorkspaceNavItems(
+  orgSlug: string,
+  workspaceSlug: string,
+): NavItem[] {
+  return [
+    {
+      title: "Dashboard",
+      href: `/org/${orgSlug}/${workspaceSlug}`,
+    },
+    {
+      title: "Repositories",
+      href: `/org/${orgSlug}/${workspaceSlug}/repositories`,
+    },
+    {
+      title: "Jobs",
+      href: `/org/${orgSlug}/${workspaceSlug}/jobs`,
+    },
+  ];
+}
+
+/**
+ * Build org-level navigation items
+ */
+function getOrgNavItems(orgSlug: string): NavItem[] {
+  return [
+    {
+      title: "Workspaces",
+      href: `/org/${orgSlug}`,
+    },
+    {
+      title: "Settings",
+      href: `/org/${orgSlug}/settings`,
+    },
+  ];
+}
+
+/**
+ * PlanetScale-style sidebar component for the Console app
+ */
+export function AppSidebar() {
+  const pathname = usePathname();
+
+  // Extract orgSlug and workspaceSlug from pathname
+  // Pathname format: /org/[slug]/[workspaceSlug]/...
+  const pathParts = pathname?.split("/").filter(Boolean) ?? [];
+  const orgSlug = pathParts[1] ?? ""; // org/[slug]
+  const workspaceSlug = pathParts[2] ?? ""; // [workspaceSlug]
+
+  // Determine the current context
+  const isInOrgSettings = pathname?.startsWith(`/org/${orgSlug}/settings`);
+  const isInWorkspace =
+    workspaceSlug && workspaceSlug !== "settings" && !isInOrgSettings;
+
+  // Build navigation items based on context
+  let mainNavItems: NavItem[] = [];
+
+  if (isInWorkspace) {
+    // Workspace level: show workspace nav items only
+    mainNavItems = getWorkspaceNavItems(orgSlug, workspaceSlug);
+  } else {
+    // Org level (root or settings): show org nav items (Workspaces + Settings link)
+    // Settings pages have their own SettingsSidebar
+    mainNavItems = getOrgNavItems(orgSlug);
+  }
+
+  return (
+    <Sidebar variant="inset" collapsible="none">
+      <SidebarContent>
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainNavItems.map((item) => {
+                const isActive = pathname === item.href;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.href}>
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}

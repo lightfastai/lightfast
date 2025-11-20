@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
-import { AuthenticatedHeader } from "~/components/authenticated-header";
+import { WorkspaceAwareHeader } from "~/components/workspace-aware-header";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 
@@ -24,9 +24,11 @@ export default async function AppLayout({
     <HydrateClient>
       <PageErrorBoundary fallbackTitle="Failed to load application">
         <Suspense fallback={<AppLayoutSkeleton />}>
-          <div className="dark">
-            <AuthenticatedHeader />
-            {children}
+          <div className="dark h-screen flex flex-col overflow-hidden">
+            <WorkspaceAwareHeader />
+            <div className="flex-1 flex overflow-hidden">
+              {children}
+            </div>
           </div>
         </Suspense>
       </PageErrorBoundary>

@@ -15,10 +15,21 @@ import { useTRPC } from "@repo/console-trpc/react";
  * Import Configuration Page
  *
  * After user selects a repository to import, they land here to configure:
- * - Workspace name
+ * - Review workspace assignment
  * - Team/organization
  * - Config detection (lightfast.yml)
  */
+
+/**
+ * Convert slug to friendly display name
+ * Example: "robust-chicken" → "Robust Chicken"
+ */
+function slugToFriendlyName(slug: string): string {
+  return slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 export default function ImportPage() {
   const searchParams = useSearchParams();
@@ -34,9 +45,23 @@ export default function ImportPage() {
   const installationId = searchParams.get("installationId");
   const teamSlug = searchParams.get("teamSlug");
   const repoUrl = searchParams.get("s");
+  const defaultBranch = searchParams.get("defaultBranch") || "main";
+  const isPrivate = searchParams.get("isPrivate") === "true";
+  const isArchived = searchParams.get("isArchived") === "true";
+
+  // Validate required query parameters
+  useEffect(() => {
+    if (!repoId || !installationId || !repoName || !repoOwner) {
+      toast({
+        title: "Missing information",
+        description: "Invalid repository selection. Redirecting...",
+        variant: "destructive",
+      });
+      router.push("/new");
+    }
+  }, [repoId, installationId, repoName, repoOwner, router, toast]);
 
   // Form state
-  const [workspaceName, setWorkspaceName] = useState(searchParams.get("workspace-name") || "");
   const [configStatus, setConfigStatus] = useState<
     "loading" | "found" | "not-found" | "error"
   >("loading");
@@ -100,11 +125,11 @@ export default function ImportPage() {
     trpc.integration.workspace.connect.mutationOptions({
       onSuccess: (data) => {
         toast({
-          title: "Repository connected!",
-          description: `${repoName} has been successfully connected.`,
+          title: "Source connected!",
+          description: `${repoName} has been added to your workspace and is syncing.`,
         });
 
-        // Redirect to organization dashboard
+        // Redirect to workspace dashboard
         router.push(`/org/${organization?.slug ?? teamSlug}`);
       },
       onError: (error) => {
@@ -162,9 +187,9 @@ export default function ImportPage() {
         repoId: repoId,
         repoName: repoName,
         repoFullName: `${repoOwner}/${repoName}`,
-        defaultBranch: "main", // TODO: fetch from GitHub API or config detection
-        isPrivate: false, // TODO: fetch from GitHub API
-        isArchived: false, // TODO: fetch from GitHub API
+        defaultBranch: defaultBranch,
+        isPrivate: isPrivate,
+        isArchived: isArchived,
       });
 
       if (!resource) {
@@ -172,16 +197,57 @@ export default function ImportPage() {
       }
 
       // Step 2: Connect resource to workspace with sync config
-      await connectWorkspaceMutation.mutateAsync({
+      const connection = await connectWorkspaceMutation.mutateAsync({
         workspaceId: workspace.workspaceId,
         resourceId: resource.id,
         syncConfig: {
-          branches: ["main"], // Default to main branch
+          branches: [defaultBranch], // Use actual default branch
           paths: ["**/*"], // Default to all files
           events: [], // TODO: configure events if needed
           autoSync: true,
         },
       });
+
+      // Step 3: Trigger background sync job via Inngest
+      // Only trigger if not already syncing
+      const shouldTriggerSync = !connection?.lastSyncStatus ||
+        connection.lastSyncStatus === "failed" ||
+        connection.lastSyncStatus === "pending";
+
+      if (shouldTriggerSync) {
+        try {
+          const inngestResponse = await fetch("/api/inngest", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: "apps-console/repository.connected",
+              data: {
+                workspaceId: workspace.workspaceId,
+                workspaceKey: workspace.workspaceKey,
+                resourceId: resource.id,
+                repoFullName: `${repoOwner}/${repoName}`,
+                defaultBranch: defaultBranch,
+                installationId: installationId,
+                integrationId: githubIntegration.id,
+                isPrivate: isPrivate,
+              },
+            }),
+          });
+
+          if (!inngestResponse.ok) {
+            console.error("Failed to trigger background sync:", await inngestResponse.text());
+            // Don't fail the whole import if background job fails
+            // User will see sync status in workspace
+          }
+        } catch (inngestError) {
+          console.error("Error triggering background sync:", inngestError);
+          // Don't fail the whole import
+        }
+      } else {
+        console.log("Skipping sync trigger - repository already syncing or synced");
+      }
     } catch (error) {
       console.error("Import failed:", error);
       // Error handling is done in mutation callbacks
@@ -201,7 +267,12 @@ export default function ImportPage() {
             <Github className="h-5 w-5" />
             <span className="font-medium">{repoOwner}/{repoName}</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">main</span>
+            <span className="text-sm text-muted-foreground">{defaultBranch}</span>
+            {isPrivate && (
+              <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded ml-2">
+                Private
+              </span>
+            )}
           </div>
 
           {/* Config Detection Status */}
@@ -229,36 +300,66 @@ export default function ImportPage() {
 
         {/* Configuration Form */}
         <div className="space-y-6">
-          <p className="text-sm">
-            Choose your team and give your workspace a name.
-          </p>
+          {/* Workspace Information - Read-only */}
+          <div className="rounded-lg border bg-card p-6">
+            <h3 className="mb-3 text-lg font-semibold">Workspace</h3>
 
-          {/* Team & Workspace Name */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="team">Team</Label>
-              <Input id="team" value={organization?.name || teamSlug || ""} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name">Workspace Name</Label>
-              <Input
-                id="workspace-name"
-                value={workspaceName}
-                onChange={(e) => setWorkspaceName(e.target.value)}
-                placeholder="my-workspace"
-              />
-            </div>
+            {isLoadingWorkspace ? (
+              <p className="text-sm text-muted-foreground">Loading workspace...</p>
+            ) : workspace?.workspaceId ? (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-sm text-muted-foreground min-w-[80px]">Name:</span>
+                  <span className="font-mono bg-muted px-2 py-1 rounded text-sm">
+                    {slugToFriendlyName(workspace.workspaceSlug)}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm text-muted-foreground min-w-[80px]">Slug:</span>
+                  <span className="font-mono bg-muted px-2 py-1 rounded text-sm">
+                    {workspace.workspaceSlug}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm text-muted-foreground min-w-[80px]">Key:</span>
+                  <span className="font-mono bg-muted px-2 py-1 rounded text-sm text-xs">
+                    {workspace.workspaceKey}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4 bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                  Repository will be added to this workspace
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                A new workspace will be created for this repository
+              </p>
+            )}
+          </div>
+
+          {/* Team/Organization */}
+          <div className="space-y-2">
+            <Label htmlFor="team">Organization</Label>
+            <Input
+              id="team"
+              value={organization?.name || teamSlug || ""}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Your Clerk organization
+            </p>
           </div>
 
           {/* Import Button */}
           <Button
             onClick={handleImport}
             disabled={
-              !workspaceName ||
               createResourceMutation.isPending ||
               connectWorkspaceMutation.isPending ||
               isLoadingIntegration ||
-              isLoadingWorkspace
+              isLoadingWorkspace ||
+              !workspace?.workspaceId
             }
             className="w-full"
             size="lg"

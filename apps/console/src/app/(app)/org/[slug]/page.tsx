@@ -1,49 +1,54 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { OrgChatInterface } from "~/components/org-chat-interface";
-import { prefetch, trpc } from "@repo/console-trpc/server";
+import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
+import { WorkspacesList } from "~/components/workspaces-list";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function OrgHomePage({
-	params,
+  params,
 }: {
-	params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-	const { slug } = await params;
-	const { orgId } = await auth();
+  const { slug } = await params;
 
-	// Layout enforces membership; this guards against edge cases
-	if (!orgId) {
-		notFound();
-	}
+  // Prefetch organization to get clerkOrgId
+  prefetch(
+    trpc.organization.findByClerkOrgSlug.queryOptions({
+      clerkOrgSlug: slug,
+    }),
+  );
 
-	// Prefetch page-specific data using orgId from middleware
-	// This is the only data fetch needed - org data comes from layout
-	prefetch(
-		trpc.repository.list.queryOptions({
-			includeInactive: false,
-			organizationId: orgId,
-		})
-	);
-
-	// Layout already wraps in HydrateClient and ErrorBoundary
-	return (
-		<Suspense fallback={<OrgHomeSkeleton />}>
-			<OrgChatInterface orgSlug={slug} />
-		</Suspense>
-	);
+  return (
+    <HydrateClient>
+      <div className="flex flex-1 flex-col h-full overflow-auto">
+        <div className="flex flex-col gap-6 p-6">
+          <Suspense fallback={<WorkspacesListSkeleton />}>
+            <WorkspacesList orgSlug={slug} />
+          </Suspense>
+        </div>
+      </div>
+    </HydrateClient>
+  );
 }
 
-function OrgHomeSkeleton() {
-	return (
-		<div className="flex min-h-screen flex-col bg-background text-foreground">
-			<main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 pb-16 pt-20">
-				<div className="mb-12 w-full text-center">
-					<Skeleton className="h-10 w-96 mx-auto" />
-				</div>
-				<Skeleton className="w-full max-w-4xl h-64 rounded-2xl" />
-			</main>
-		</div>
-	);
+function WorkspacesListSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-40" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="rounded-lg border border-border/60 p-6">
+            <Skeleton className="h-16 w-full mb-4" />
+            <Skeleton className="h-6 w-32 mb-4" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

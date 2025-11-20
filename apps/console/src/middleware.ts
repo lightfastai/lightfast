@@ -19,6 +19,11 @@ const isOnboardingRoute = createRouteMatcher([
   "/api/github(.*)",
   "/api/organizations(.*)",
 ]);
+
+// Protected routes (not listed above) include:
+// - /org/:slug/* - Organization-specific pages (settings, repositories, etc.)
+// - /account/* - Personal account settings (profile, integrations, API keys)
+// - /api/trpc/* - tRPC API routes
 export default clerkMiddleware(
   async (auth, req: NextRequest) => {
     // Single auth check - detect both pending and active users

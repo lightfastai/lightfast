@@ -46,19 +46,17 @@ export function useOrgAccess() {
 	}
 
 	return {
-		/** Full organization record from database */
+		/** Full organization record from Clerk */
 		org,
 		/** User's role in the organization (e.g., "org:admin", "org:member") */
 		role: orgRole || "org:member",
-		/** Organization ID (Clerk org ID - primary key) */
-		organizationId: org.id,
-		/** GitHub organization ID */
-		githubOrgId: org.githubOrgId,
-		/** GitHub organization slug */
-		githubOrgSlug: org.githubOrgSlug,
-		/** GitHub organization name */
-		githubOrgName: org.githubOrgName,
-		/** Clerk organization slug */
-		clerkOrgSlug: org.clerkOrgSlug,
+		/** Clerk organization ID (org_xxx) - use this for all tRPC calls */
+		clerkOrgId: org.id,
+		/** Organization slug */
+		slug: org.slug,
+		/** Organization name */
+		name: org.name,
+		/** Organization image URL */
+		imageUrl: org.imageUrl,
 	};
 }

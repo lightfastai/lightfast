@@ -10,6 +10,7 @@ import { serve } from "inngest/next";
 import { inngest } from "./client/client";
 import { docsIngestion } from "./workflow/docs-ingestion";
 import { ensureStore } from "./workflow/ensure-store";
+import { repositoryInitialSync } from "./workflow/repository-initial-sync";
 
 // Phase 1.5: GitHub adapters (bridge to generic workflows)
 import {
@@ -28,6 +29,7 @@ export { inngest };
 // Export core workflows
 export { docsIngestion };
 export { ensureStore };
+export { repositoryInitialSync };
 
 // Export GitHub adapters
 export { githubProcessAdapter, githubDeleteAdapter };
@@ -68,6 +70,7 @@ export function createInngestRouteContext() {
 			// Core ingestion
 			docsIngestion,
 			ensureStore,
+			repositoryInitialSync,
 
 			// Phase 1.5: GitHub adapters
 			githubProcessAdapter,

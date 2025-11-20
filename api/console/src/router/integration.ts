@@ -603,10 +603,10 @@ export const integrationRouter = {
         });
 
         if (duplicateResource) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "This repository is already added as a resource",
-          });
+          // Idempotent: Return existing resource instead of throwing error
+          // This allows re-importing the same repository without errors
+          console.log(`[integration.resources.create] Repository ${input.repoFullName} already exists, returning existing resource`);
+          return duplicateResource;
         }
 
         // Create resource
@@ -664,6 +664,52 @@ export const integrationRouter = {
    */
   workspace: {
     /**
+     * Get workspace integration status for a repository
+     *
+     * Returns sync status, last sync time, and error information
+     */
+    getStatus: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.string(),
+          repoFullName: z.string(), // "owner/repo"
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        // Find resource by repo full name
+        const resources = await ctx.db
+          .select()
+          .from(integrationResources)
+          .where(eq(integrationResources.integrationId, ctx.auth.userId));
+
+        const resource = resources.find((r) => {
+          const data = r.resourceData;
+          return (
+            data.provider === "github" &&
+            data.type === "repository" &&
+            data.repoFullName === input.repoFullName
+          );
+        });
+
+        if (!resource) {
+          return null;
+        }
+
+        // Get workspace integration
+        const connections = await ctx.db
+          .select()
+          .from(workspaceIntegrations)
+          .where(
+            and(
+              eq(workspaceIntegrations.workspaceId, input.workspaceId),
+              eq(workspaceIntegrations.resourceId, resource.id)
+            )
+          );
+
+        return connections[0] ?? null;
+      }),
+
+    /**
      * Connect a resource to a workspace
      *
      * Creates a workspaceIntegrations record linking a resource
@@ -715,10 +761,41 @@ export const integrationRouter = {
           .limit(1);
 
         if (existingResult.length > 0) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "This resource is already connected to the workspace",
-          });
+          // Idempotent: Update existing connection with new sync config and return
+          const existingConnection = existingResult[0];
+          if (!existingConnection) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to retrieve existing connection",
+            });
+          }
+
+          console.log(`[integration.workspace.connect] Resource already connected, updating sync config`);
+
+          await ctx.db
+            .update(workspaceIntegrations)
+            .set({
+              syncConfig: input.syncConfig,
+              isActive: true, // Ensure it's active
+            })
+            .where(eq(workspaceIntegrations.id, existingConnection.id));
+
+          // Return updated connection
+          const updatedResult = await ctx.db
+            .select()
+            .from(workspaceIntegrations)
+            .where(eq(workspaceIntegrations.id, existingConnection.id))
+            .limit(1);
+
+          const updatedConnection = updatedResult[0];
+          if (!updatedConnection) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to retrieve updated connection",
+            });
+          }
+
+          return updatedConnection;
         }
 
         // Create workspace integration
@@ -753,8 +830,8 @@ export const integrationRouter = {
         })
       )
       .query(async ({ ctx, input }) => {
-        // Fetch workspace integrations
-        return await ctx.db
+        // Fetch workspace integrations with resource data
+        const connections = await ctx.db
           .select()
           .from(workspaceIntegrations)
           .where(
@@ -763,6 +840,24 @@ export const integrationRouter = {
               eq(workspaceIntegrations.isActive, true)
             )
           );
+
+        // Enrich with resource data
+        const enrichedConnections = await Promise.all(
+          connections.map(async (connection) => {
+            const resource = await ctx.db
+              .select()
+              .from(integrationResources)
+              .where(eq(integrationResources.id, connection.resourceId))
+              .limit(1);
+
+            return {
+              ...connection,
+              resource: resource[0] ?? null,
+            };
+          })
+        );
+
+        return enrichedConnections;
       }),
   },
 } satisfies TRPCRouterRecord;

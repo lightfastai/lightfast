@@ -1,0 +1,304 @@
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { clerkClient } from "@clerk/nextjs/server";
+import { eq, and } from "drizzle-orm";
+import crypto from "node:crypto";
+import { apiKeys, integrations } from "@db/console/schema";
+import { protectedProcedure } from "../trpc";
+
+/**
+ * Account Router
+ *
+ * Manages user account settings including:
+ * - User profile information (from Clerk)
+ * - Personal integrations (GitHub, etc.)
+ * - API key management
+ */
+
+/**
+ * Hash an API key using SHA-256
+ */
+function hashApiKey(key: string): string {
+	return crypto.createHash("sha256").update(key).digest("hex");
+}
+
+/**
+ * Generate a secure random API key
+ * Format: lf_<random_32_chars>
+ */
+function generateApiKey(): string {
+	const randomBytes = crypto.randomBytes(24);
+	const randomString = randomBytes.toString("base64url");
+	return `lf_${randomString}`;
+}
+
+export const accountRouter = {
+	/**
+	 * Profile: Get user profile information
+	 *
+	 * Returns user data from Clerk including:
+	 * - Full name
+	 * - Email addresses
+	 * - Username
+	 * - Profile image
+	 */
+	profile: {
+		get: protectedProcedure.query(async ({ ctx }) => {
+			try {
+				const clerk = await clerkClient();
+				const user = await clerk.users.getUser(ctx.auth.userId);
+
+				return {
+					id: user.id,
+					firstName: user.firstName,
+					lastName: user.lastName,
+					fullName:
+						user.firstName && user.lastName
+							? `${user.firstName} ${user.lastName}`
+							: user.firstName || user.lastName || null,
+					username: user.username,
+					primaryEmailAddress: user.primaryEmailAddress?.emailAddress || null,
+					imageUrl: user.imageUrl,
+					createdAt: new Date(user.createdAt).toISOString(),
+				};
+			} catch (error: unknown) {
+				console.error("[tRPC] Failed to fetch user profile:", error);
+
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to fetch user profile",
+					cause: error,
+				});
+			}
+		}),
+	},
+
+	/**
+	 * Integrations: List user's personal integrations
+	 *
+	 * Returns all OAuth integrations connected by the user
+	 * (GitHub, Notion, Linear, Sentry, etc.)
+	 */
+	integrations: {
+		list: protectedProcedure.query(async ({ ctx }) => {
+			try {
+				const userIntegrations = await ctx.db
+					.select()
+					.from(integrations)
+					.where(eq(integrations.userId, ctx.auth.userId));
+
+				return userIntegrations.map((integration) => ({
+					id: integration.id,
+					provider: integration.provider,
+					isActive: integration.isActive,
+					connectedAt: integration.connectedAt,
+					lastSyncAt: integration.lastSyncAt,
+				}));
+			} catch (error: unknown) {
+				console.error("[tRPC] Failed to fetch integrations:", error);
+
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to fetch integrations",
+					cause: error,
+				});
+			}
+		}),
+
+		/**
+		 * Disconnect an integration
+		 */
+		disconnect: protectedProcedure
+			.input(
+				z.object({
+					integrationId: z.string(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				// Verify ownership
+				const result = await ctx.db
+					.select()
+					.from(integrations)
+					.where(
+						and(
+							eq(integrations.id, input.integrationId),
+							eq(integrations.userId, ctx.auth.userId),
+						),
+					)
+					.limit(1);
+
+				if (!result[0]) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Integration not found or access denied",
+					});
+				}
+
+				// Soft delete (mark as inactive)
+				await ctx.db
+					.update(integrations)
+					.set({ isActive: false })
+					.where(eq(integrations.id, input.integrationId));
+
+				return { success: true };
+			}),
+	},
+
+	/**
+	 * API Keys: Manage user API keys
+	 */
+	apiKeys: {
+		/**
+		 * List user's API keys
+		 * Does NOT return the actual key values, only metadata
+		 */
+		list: protectedProcedure.query(async ({ ctx }) => {
+			try {
+				const userKeys = await ctx.db
+					.select()
+					.from(apiKeys)
+					.where(eq(apiKeys.userId, ctx.auth.userId));
+
+				return userKeys.map((key) => ({
+					id: key.id,
+					name: key.name,
+					keyPreview: key.keyPreview,
+					isActive: key.isActive,
+					expiresAt: key.expiresAt,
+					lastUsedAt: key.lastUsedAt,
+					createdAt: key.createdAt,
+				}));
+			} catch (error: unknown) {
+				console.error("[tRPC] Failed to fetch API keys:", error);
+
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to fetch API keys",
+					cause: error,
+				});
+			}
+		}),
+
+		/**
+		 * Create a new API key
+		 *
+		 * Returns the generated key ONLY ONCE - it cannot be retrieved again.
+		 * The key is hashed before storage.
+		 */
+		create: protectedProcedure
+			.input(
+				z.object({
+					name: z.string().min(1).max(100),
+					expiresAt: z.string().optional(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				// Generate API key
+				const apiKey = generateApiKey();
+				const keyHash = hashApiKey(apiKey);
+				const keyPreview = apiKey.slice(-8); // Last 8 chars for display
+
+				try {
+					// Store hashed key
+					const result = await ctx.db
+						.insert(apiKeys)
+						.values({
+							userId: ctx.auth.userId,
+							name: input.name,
+							keyHash,
+							keyPreview,
+							isActive: true,
+							expiresAt: input.expiresAt || null,
+						})
+						.returning({
+							id: apiKeys.id,
+							name: apiKeys.name,
+							keyPreview: apiKeys.keyPreview,
+							createdAt: apiKeys.createdAt,
+						});
+
+					// Return the plaintext key ONLY THIS ONCE
+					return {
+						...result[0],
+						key: apiKey, // ⚠️ Only returned on creation
+					};
+				} catch (error: unknown) {
+					console.error("[tRPC] Failed to create API key:", error);
+
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to create API key",
+						cause: error,
+					});
+				}
+			}),
+
+		/**
+		 * Revoke an API key
+		 */
+		revoke: protectedProcedure
+			.input(
+				z.object({
+					keyId: z.string(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				// Verify ownership
+				const result = await ctx.db
+					.select()
+					.from(apiKeys)
+					.where(
+						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+					)
+					.limit(1);
+
+				if (!result[0]) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "API key not found or access denied",
+					});
+				}
+
+				// Soft delete (mark as inactive)
+				await ctx.db
+					.update(apiKeys)
+					.set({ isActive: false })
+					.where(eq(apiKeys.id, input.keyId));
+
+				return { success: true };
+			}),
+
+		/**
+		 * Delete an API key permanently
+		 */
+		delete: protectedProcedure
+			.input(
+				z.object({
+					keyId: z.string(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				// Verify ownership
+				const result = await ctx.db
+					.select()
+					.from(apiKeys)
+					.where(
+						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+					)
+					.limit(1);
+
+				if (!result[0]) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "API key not found or access denied",
+					});
+				}
+
+				// Hard delete
+				await ctx.db.delete(apiKeys).where(eq(apiKeys.id, input.keyId));
+
+				return { success: true };
+			}),
+	},
+} satisfies TRPCRouterRecord;

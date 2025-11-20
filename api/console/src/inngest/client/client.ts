@@ -179,6 +179,43 @@ const eventsMap = {
       relationships: z.record(z.unknown()),
     }),
   },
+
+  /**
+   * Repository connected event
+   * Triggered when a repository is connected to a workspace
+   * Initiates initial sync and indexing
+   */
+  "apps-console/repository.connected": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming (e.g., ws-<slug>) */
+      workspaceKey: z.string(),
+      /** Integration resource ID */
+      resourceId: z.string(),
+      /** Repository full name (owner/repo) */
+      repoFullName: z.string(),
+      /** Default branch */
+      defaultBranch: z.string(),
+      /** GitHub installation ID */
+      installationId: z.string(),
+      /** Integration ID */
+      integrationId: z.string(),
+      /** Whether repository is private */
+      isPrivate: z.boolean(),
+    }),
+  },
+
+  /**
+   * Triggered when a repository is disconnected from a workspace
+   * Cancels any ongoing sync workflows
+   */
+  "apps-console/repository.disconnected": {
+    data: z.object({
+      /** Integration resource ID */
+      resourceId: z.string(),
+    }),
+  },
 };
 
 /**

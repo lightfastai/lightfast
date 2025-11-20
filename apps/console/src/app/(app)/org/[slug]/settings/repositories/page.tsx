@@ -19,7 +19,7 @@ export default async function RepositoriesPage({
 	prefetch(
 		trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId: orgId,
+			clerkOrgId: orgId,
 		})
 	);
 

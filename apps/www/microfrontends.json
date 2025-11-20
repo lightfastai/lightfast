@@ -33,6 +33,8 @@
             "/new/:path",
             "/org",
             "/org/:path*",
+            "/account",
+            "/account/:path*",
             "/onboarding",
             "/onboarding/:path*",
             "/api/github",

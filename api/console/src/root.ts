@@ -17,6 +17,8 @@ import { clerkRouter } from "./router/clerk";
 import { workspaceRouter } from "./router/workspace";
 import { organizationRouter } from "./router/organization";
 import { integrationRouter } from "./router/integration";
+import { accountRouter } from "./router/account";
+import { jobsRouter } from "./router/jobs";
 
 /**
  * Primary console app router
@@ -35,6 +37,8 @@ export const consoleAppRouter = createTRPCRouter({
   workspace: workspaceRouter,
   organization: organizationRouter,
   integration: integrationRouter,
+  account: accountRouter,
+  jobs: jobsRouter,
 });
 
 // Export type for use in client

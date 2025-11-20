@@ -19,14 +19,15 @@ export default async function SettingsLayout({
 	}
 
 	return (
-		<div className="pt-14 lg:pt-20 px-6 pb-16">
+		<div className="flex flex-1 flex-col h-full overflow-auto">
+			<div className="flex flex-col gap-6 p-6">
 				{/* Header */}
-				<div className="mb-8 pt-6">
+				<div>
 					<h1 className="text-3xl font-semibold tracking-tight text-foreground">
 						Settings
 					</h1>
 					<p className="mt-2 text-muted-foreground">
-						Manage your account and repository connections
+						Manage your workspace and connected sources
 					</p>
 				</div>
 
@@ -38,5 +39,6 @@ export default async function SettingsLayout({
 					<div className="flex-1 min-w-0">{children}</div>
 				</div>
 			</div>
+		</div>
 	);
 }

@@ -6,6 +6,10 @@ import { cn } from "@repo/ui/lib/utils";
 
 const settingsNavigation = [
 	{
+		name: "General",
+		path: "",
+	},
+	{
 		name: "GitHub Integration",
 		path: "github-integration",
 	},
@@ -24,9 +28,11 @@ export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 
 	return (
 		<aside className="w-64 flex-shrink-0">
-			<nav className="space-y-1">
+			<nav className="space-y-0.5">
 				{settingsNavigation.map((item) => {
-					const href = `/org/${slug}/settings/${item.path}`;
+					const href = item.path
+						? `/org/${slug}/settings/${item.path}`
+						: `/org/${slug}/settings`;
 					const isActive = pathname === href;
 
 					return (
@@ -35,7 +41,7 @@ export function SettingsSidebar({ slug }: SettingsSidebarProps) {
 							href={href}
 							prefetch={true}
 							className={cn(
-								"block rounded-md px-3 py-2 text-sm font-medium transition-colors",
+								"block rounded-md px-0 py-2 text-sm font-medium transition-colors",
 								isActive
 									? "bg-foreground/10 text-foreground"
 									: "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",

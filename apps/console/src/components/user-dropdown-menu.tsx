@@ -8,7 +8,6 @@ import {
   useClerk,
   useUser,
 } from "@clerk/nextjs";
-import { useParams } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -17,11 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@repo/ui/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -32,17 +27,9 @@ interface UserDropdownMenuProps {
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
-  const params = useParams();
 
-  const settingsHref = useMemo(() => {
-    const slug = params.slug;
-    if (slug) {
-      // Ensure slug is a string (it could be string | string[] from params)
-      const slugStr = Array.isArray(slug) ? slug[0] : slug;
-      return `/org/${slugStr}/settings`;
-    }
-    return "/settings"; // Fallback for non-org pages
-  }, [params.slug]);
+  // Always link to personal account settings
+  const settingsHref = "/account/settings";
 
   const displayName = useMemo(() => {
     if (!user) {
@@ -110,18 +97,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
       <SignedIn>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className={`p-0 rounded-full h-8 w-8 ${className}`}>
-              <Avatar className="h-8 w-8">
-                {user?.imageUrl ? (
-                  <AvatarImage
-                    src={user.imageUrl}
-                    alt={displayName || "User avatar"}
-                  />
-                ) : (
-                  <AvatarFallback className="text-sm bg-blue-300 text-white">
-                    {initials}
-                  </AvatarFallback>
-                )}
+            <Button
+              variant="ghost"
+              className={`p-0 rounded-full size-8 ${className}`}
+            >
+              <Avatar className="size-6">
+                <AvatarFallback className="text-[10px] bg-foreground text-background">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

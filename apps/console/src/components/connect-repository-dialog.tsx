@@ -22,7 +22,7 @@ interface ConnectRepositoryDialogProps {
 	children?: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	organizationId: string;
+	clerkOrgId: string;
 	githubOrgId?: number;
 }
 
@@ -37,7 +37,7 @@ export function ConnectRepositoryDialog({
 	children,
 	open: controlledOpen,
 	onOpenChange,
-	organizationId,
+	clerkOrgId,
 	githubOrgId,
 }: ConnectRepositoryDialogProps) {
 	const [internalOpen, setInternalOpen] = useState(false);
@@ -57,7 +57,7 @@ export function ConnectRepositoryDialog({
 	const { data: repositories = [] } = useQuery({
 		...trpc.repository.list.queryOptions({
 			includeInactive: false,
-			organizationId,
+			clerkOrgId,
 		}),
 		enabled: open,
 	});
@@ -95,7 +95,7 @@ export function ConnectRepositoryDialog({
 				await queryClient.cancelQueries({
 					queryKey: trpc.repository.list.queryKey({
 						includeInactive: false,
-						organizationId,
+						clerkOrgId,
 					}),
 				});
 
@@ -103,7 +103,7 @@ export function ConnectRepositoryDialog({
 				const previousRepositories = queryClient.getQueryData(
 					trpc.repository.list.queryKey({
 						includeInactive: false,
-						organizationId,
+						clerkOrgId,
 					})
 				);
 
@@ -111,14 +111,14 @@ export function ConnectRepositoryDialog({
 				queryClient.setQueryData(
 					trpc.repository.list.queryKey({
 						includeInactive: false,
-						organizationId,
+						clerkOrgId,
 					}),
 					produce(previousRepositories, (draft) => {
 						if (draft) {
 							// Add the new repository to the list optimistically
 							draft.unshift({
 								id: crypto.randomUUID(), // Temporary ID
-								organizationId: variables.organizationId,
+								clerkOrgId: variables.clerkOrgId,
 								githubRepoId: variables.githubRepoId,
 								githubInstallationId: variables.githubInstallationId,
 								permissions: variables.permissions ?? null,
@@ -146,7 +146,7 @@ export function ConnectRepositoryDialog({
 					queryClient.setQueryData(
 						trpc.repository.list.queryKey({
 							includeInactive: false,
-							organizationId,
+							clerkOrgId,
 						}),
 						context.previousRepositories
 					);
@@ -168,7 +168,7 @@ export function ConnectRepositoryDialog({
 				if (data?.id) {
 					detectConfigMutation.mutate({
 						repositoryId: data.id,
-						organizationId,
+						clerkOrgId,
 					});
 				}
 
@@ -183,7 +183,7 @@ export function ConnectRepositoryDialog({
 				void queryClient.invalidateQueries({
 					queryKey: trpc.repository.list.queryKey({
 						includeInactive: false,
-						organizationId,
+						clerkOrgId,
 					}),
 					refetchType: "none",
 				});
@@ -202,7 +202,7 @@ export function ConnectRepositoryDialog({
 		}
 
 		connectMutation.mutate({
-			organizationId,
+			clerkOrgId,
 			githubRepoId: repo.id.toString(),
 			githubInstallationId: installationId.toString(),
 			permissions: repo.permissions ?? { admin: true, push: true, pull: true },

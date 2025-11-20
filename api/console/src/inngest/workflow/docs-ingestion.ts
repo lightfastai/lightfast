@@ -31,6 +31,7 @@ import { env } from "../../env";
 import yaml from "yaml";
 import { minimatch } from "minimatch";
 import { createHash } from "node:crypto";
+import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../lib/jobs";
 
 type DispatchAction = "process" | "delete";
 
@@ -70,7 +71,7 @@ export const docsIngestion = inngest.createFunction(
     },
   },
   { event: "apps-console/docs.push" },
-  async ({ event, step }) => {
+  async ({ event, step, runId }) => {
     const {
       workspaceId,
       workspaceKey,
@@ -95,6 +96,49 @@ export const docsIngestion = inngest.createFunction(
       repoFullName,
       deliveryId,
       changedCount: changedFiles.length,
+    });
+
+    // Step 0: Create job record for tracking
+    const jobId = await step.run("create-job", async () => {
+      // Get workspace to retrieve clerkOrgId
+      const workspace = await db.query.workspaces.findFirst({
+        where: (workspaces, { eq }) => eq(workspaces.id, workspaceId),
+      });
+
+      if (!workspace) {
+        throw new Error(`Workspace not found: ${workspaceId}`);
+      }
+
+      // Find repository ID if we have the GitHub repo ID
+      let repositoryId: string | null = null;
+      if (githubRepoId) {
+        const repo = await db.query.DeusConnectedRepository.findFirst({
+          where: (repos, { eq }) => eq(repos.githubRepoId, String(githubRepoId)),
+        });
+        repositoryId = repo?.id ?? null;
+      }
+
+      const trigger = source === "manual" ? "manual" : source === "scheduled" ? "scheduled" : "webhook";
+
+      return await createJob({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        repositoryId,
+        inngestRunId: runId,
+        inngestFunctionId: "apps-console/docs-ingestion",
+        name: `Docs Ingestion: ${repoFullName}`,
+        trigger,
+        input: {
+          repoFullName,
+          deliveryId,
+          changedFileCount: changedFiles.length,
+        },
+      });
+    });
+
+    // Update job to running status
+    await step.run("update-job-running", async () => {
+      await updateJobStatus(jobId, "running");
     });
 
     // Step 1: Load lightfast.yml from repository (before idempotency to honor configured store name)
@@ -233,6 +277,18 @@ export const docsIngestion = inngest.createFunction(
         deliveryId,
         processedAt: existingEvent.processedAt,
       });
+
+      // Complete job as cancelled since delivery was already processed
+      await step.run("complete-job-skipped", async () => {
+        await completeJob({
+          jobId,
+          status: "cancelled",
+          output: {
+            reason: "already_processed",
+          },
+        });
+      });
+
       return { status: "skipped", reason: "already_processed" };
     }
 
@@ -288,6 +344,19 @@ export const docsIngestion = inngest.createFunction(
               ingestionEvents.eventKey,
             ],
           });
+      });
+
+      // Complete job as completed with 0 documents processed
+      await step.run("complete-job-no-files", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            documentsProcessed: 0,
+            totalFilesProcessed: 0,
+            reason: "no_matching_files",
+          },
+        });
       });
 
       return { status: "skipped", reason: "no_matching_files" };
@@ -428,6 +497,38 @@ export const docsIngestion = inngest.createFunction(
       } catch (error) {
         log.error("Failed to record event", { error, deliveryId });
         throw error;
+      }
+    });
+
+    // Step 7: Complete job successfully
+    await step.run("complete-job", async () => {
+      await completeJob({
+        jobId,
+        status: "completed",
+        output: {
+          documentsProcessed: processResults.filter((r) => r.status === "queued").length,
+          totalFilesProcessed: filteredFiles.length,
+          totalChangedFiles: changedFiles.length,
+        },
+      });
+
+      // Record documents indexed metric
+      const workspace = await db.query.workspaces.findFirst({
+        where: (workspaces, { eq }) => eq(workspaces.id, workspaceId),
+      });
+
+      if (workspace) {
+        await recordJobMetric({
+          clerkOrgId: workspace.clerkOrgId,
+          workspaceId,
+          type: "documents_indexed",
+          value: processResults.filter((r) => r.status === "queued").length,
+          unit: "count",
+          tags: {
+            repoFullName,
+            source,
+          },
+        });
       }
     });
 

@@ -217,7 +217,7 @@ export default function NewProjectPage() {
       return;
     }
 
-    // Build query params similar to Vercel
+    // Build query params with complete repository metadata
     const params = new URLSearchParams({
       id: repo.id,
       name: repo.name,
@@ -227,6 +227,10 @@ export default function NewProjectPage() {
       teamSlug: teamSlug || selectedInstallation.accountLogin,
       "project-name": repo.name,
       s: repo.url,
+      // Add actual repository metadata
+      defaultBranch: repo.defaultBranch,
+      isPrivate: repo.isPrivate.toString(),
+      isArchived: repo.isArchived.toString(),
     });
 
     // Redirect to import configuration page
