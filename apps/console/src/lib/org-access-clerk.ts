@@ -80,16 +80,12 @@ export async function getActiveOrg(): Promise<
 	const clerk = await clerkClient();
 	const clerkOrg = await clerk.organizations.getOrganization({ organizationId: orgId });
 
-	if (!clerkOrg) {
-		return { hasOrg: false, reason: "org_not_found_in_clerk", clerkOrgId: orgId };
-	}
-
 	return {
 		hasOrg: true,
 		org: {
 			id: clerkOrg.id,
 			name: clerkOrg.name,
-			slug: clerkOrg.slug ?? orgSlug,
+			slug: clerkOrg.slug,
 			imageUrl: clerkOrg.imageUrl,
 		},
 		role: orgRole ?? "org:member",
@@ -110,7 +106,7 @@ export async function getActiveOrg(): Promise<
 export async function requireOrgAccess(
 	slug: string,
 ): Promise<OrgWithAccess> {
-	const { userId, orgRole } = await auth();
+	const { userId } = await auth();
 
 	// User must be authenticated
 	if (!userId) {
@@ -123,10 +119,6 @@ export async function requireOrgAccess(
 	try {
 		clerkOrg = await clerk.organizations.getOrganization({ slug });
 	} catch {
-		throw new Error(`Organization not found: ${slug}`);
-	}
-
-	if (!clerkOrg) {
 		throw new Error(`Organization not found: ${slug}`);
 	}
 
@@ -147,7 +139,7 @@ export async function requireOrgAccess(
 		org: {
 			id: clerkOrg.id,
 			name: clerkOrg.name,
-			slug: clerkOrg.slug ?? slug,
+			slug: clerkOrg.slug,
 			imageUrl: clerkOrg.imageUrl,
 		},
 		role: userMembership.role,
@@ -202,7 +194,7 @@ export async function getUserOrganizations(): Promise<ClerkOrgData[]> {
 		return {
 			id: clerkOrg.id,
 			name: clerkOrg.name,
-			slug: clerkOrg.slug ?? clerkOrg.id,
+			slug: clerkOrg.slug,
 			imageUrl: clerkOrg.imageUrl,
 			role: membership.role,
 		};
@@ -222,12 +214,11 @@ export async function getOrgBySlug(
 
 	try {
 		const org = await clerk.organizations.getOrganization({ slug });
-		if (!org) return undefined;
 
 		return {
 			id: org.id,
 			name: org.name,
-			slug: org.slug ?? slug,
+			slug: org.slug,
 			imageUrl: org.imageUrl,
 		};
 	} catch {

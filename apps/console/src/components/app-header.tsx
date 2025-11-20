@@ -17,7 +17,7 @@ export function AppHeader() {
 	const params = useParams();
 
 	// Determine mode based on pathname
-	const mode = pathname?.startsWith("/account") || pathname?.startsWith("/new")
+	const mode = pathname.startsWith("/account") || pathname.startsWith("/new")
 		? "account"
 		: "organization";
 

@@ -33,7 +33,7 @@ export default async function CreateTeamPage({
 }) {
   // Read search params for initial form state
   const params = await searchParams;
-  const initialTeamName = params.teamName || "";
+  const initialTeamName = params.teamName ?? "";
 
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-8 w-full overflow-y-auto">

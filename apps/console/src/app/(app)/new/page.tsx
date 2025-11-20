@@ -42,7 +42,7 @@ export default async function NewWorkspacePage({
 
   // Read search params for initial form state
   const params = await searchParams;
-  const initialWorkspaceName = params.workspaceName || "";
+  const initialWorkspaceName = params.workspaceName ?? "";
 
   // Determine initial organization ID
   let initialOrgId: string | undefined;

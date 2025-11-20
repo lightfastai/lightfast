@@ -13,7 +13,7 @@ export default async function JobsLayout({
 
 	// Prefetch jobs for all common status filters
 	// This prevents loading skeletons when switching between tabs
-	const statusFilters: Array<JobStatus | undefined> = [
+	const statusFilters: (JobStatus | undefined)[] = [
 		undefined, // "all"
 		"running",
 		"completed",

@@ -54,7 +54,7 @@ export function ProfileDataDisplay() {
 
 				<div className="flex items-center gap-4">
 					<Avatar className="h-20 w-20">
-						<AvatarImage src={profile.imageUrl || undefined} alt={profile.fullName || "User"} />
+						<AvatarImage src={profile.imageUrl} alt={profile.fullName ?? "User"} />
 						<AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
 							{initials}
 						</AvatarFallback>
@@ -79,7 +79,7 @@ export function ProfileDataDisplay() {
 					<div>
 						<Input
 							type="text"
-							value={profile.fullName || ""}
+							value={profile.fullName ?? ""}
 							disabled
 							className="bg-muted/50"
 						/>
@@ -112,7 +112,7 @@ export function ProfileDataDisplay() {
 				<div className="w-full">
 					<Input
 						type="email"
-						value={profile.primaryEmailAddress || ""}
+						value={profile.primaryEmailAddress ?? ""}
 						disabled
 						className="bg-muted/50"
 					/>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import type { RouterOutputs } from "@repo/console-trpc/types";
 import { ChevronsUpDown, Plus, Check } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -16,11 +15,6 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
-
-/**
- * Organization data from Clerk
- */
-type OrgData = RouterOutputs["organization"]["listUserOrganizations"][number];
 
 type TeamSwitcherMode = "organization" | "account";
 
@@ -50,7 +44,7 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
   // Use URL as source of truth instead of Clerk's useOrganization() to avoid race conditions
   const currentOrgSlug = useMemo(() => {
     if (mode === "account") return null;
-    const pathParts = pathname?.split("/").filter(Boolean) ?? [];
+    const pathParts = pathname.split("/").filter(Boolean);
     // First path part is the org slug (unless it's a reserved route like /new, /account, /api)
     const reservedRoutes = ["new", "account", "api", "sign-in", "sign-up"];
     if (pathParts[0] && !reservedRoutes.includes(pathParts[0])) {

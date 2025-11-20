@@ -1,10 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@repo/ui/components/ui/form";
-import { workspaceFormSchema, type WorkspaceFormValues } from "./workspace-form-schema";
+import type { WorkspaceFormValues } from "./workspace-form-schema";
+import { workspaceFormSchema } from "./workspace-form-schema";
 
 /**
  * Workspace Form State
@@ -63,8 +65,8 @@ export function WorkspaceFormProvider({
   const form = useForm<WorkspaceFormValues>({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
-      organizationId: initialOrgId || "",
-      workspaceName: initialWorkspaceName || "",
+      organizationId: initialOrgId ?? "",
+      workspaceName: initialWorkspaceName ?? "",
     },
     mode: "onChange", // Validate on change for real-time feedback
   });

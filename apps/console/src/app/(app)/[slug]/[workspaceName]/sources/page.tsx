@@ -73,7 +73,7 @@ function InstalledSourcesSkeleton() {
       {/* Sources list skeleton */}
       <div className="rounded-lg border border-border/60 overflow-hidden">
         <div className="divide-y divide-border">
-          {[...Array(3)].map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4">
               <Skeleton className="h-10 w-10 rounded-lg" />
               <div className="flex-1 space-y-2">

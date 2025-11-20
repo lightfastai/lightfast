@@ -41,7 +41,7 @@ export function OrganizationSelector() {
 
   // Auto-select organization from URL teamSlug or current organization
   useEffect(() => {
-    if (!selectedOrgId && userMemberships?.data) {
+    if (!selectedOrgId && userMemberships.data) {
       // Priority 1: Use teamSlug from URL
       if (teamSlug) {
         const orgFromSlug = userMemberships.data.find(
@@ -63,17 +63,17 @@ export function OrganizationSelector() {
     selectedOrgId,
     form,
     teamSlug,
-    userMemberships?.data,
+    userMemberships.data,
   ]);
 
   // Update URL when organization changes
   const handleOrgChange = (orgId: string) => {
     // Find the org slug and update URL
-    const selectedOrg = userMemberships?.data?.find(
+    const selectedOrg = userMemberships.data?.find(
       (membership) => membership.organization.id === orgId
     );
     if (selectedOrg) {
-      void setTeamSlug(selectedOrg.organization.slug || "");
+      void setTeamSlug(selectedOrg.organization.slug ?? "");
     }
   };
 
@@ -97,7 +97,7 @@ export function OrganizationSelector() {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {userMemberships?.data?.map((membership) => (
+              {userMemberships.data?.map((membership) => (
                 <SelectItem
                   key={membership.organization.id}
                   value={membership.organization.id}

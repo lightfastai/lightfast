@@ -22,7 +22,7 @@ import { SecurityNotice } from "./_components/security-notice";
  * - No client-side fetch on mount (prevents UNAUTHORIZED errors)
  * - Suspense boundary provides granular loading state
  */
-export default async function ApiKeySettingsPage() {
+export default function ApiKeySettingsPage() {
 	// Prefetch API keys for instant loading
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
 	prefetch(trpc.account.apiKeys.list.queryOptions());

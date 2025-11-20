@@ -129,12 +129,12 @@ export async function GET(request: NextRequest) {
             // For organizations, use 'slug', for users use 'login'
             accountLogin: isOrganization
               ? (account as { slug: string }).slug
-              : account && "login" in account
+              : (account && "login" in account)
                 ? (account as { login: string }).login
                 : "",
             accountType: isOrganization ? "Organization" : "User",
             avatarUrl: account?.avatar_url ?? "",
-            permissions: (i.permissions ?? {}) as Record<string, string>,
+            permissions: i.permissions as Record<string, string>,
             installedAt: new Date().toISOString(),
             lastValidatedAt: new Date().toISOString(),
           };

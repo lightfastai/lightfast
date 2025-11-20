@@ -6,8 +6,9 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import type { TooltipProps } from "recharts";
 import { Clock, TrendingUp } from "lucide-react";
-import { formatDuration, formatPercentileLabel } from "../lib/performance-utils";
+import { formatDuration } from "../lib/performance-utils";
 
 interface PerformanceMetricsProps {
 	workspaceId: string;
@@ -52,10 +53,10 @@ export function PerformanceMetrics({
 	}, [timeSeries]);
 
 	// Custom tooltip for the chart
-	const CustomTooltip = ({ active, payload }: any) => {
-		if (!active || !payload || !payload[0]) return null;
+	const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+		if (!active || !payload?.[0]) return null;
 
-		const data = payload[0].payload;
+		const data = payload[0].payload as { hour: string; jobs: number; avgDuration: number };
 		return (
 			<div className="rounded-lg border bg-background p-3 shadow-md">
 				<p className="text-xs font-medium text-muted-foreground mb-2">

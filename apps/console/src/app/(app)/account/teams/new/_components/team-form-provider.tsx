@@ -1,10 +1,11 @@
 "use client";
 
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@repo/ui/components/ui/form";
-import { teamFormSchema, type TeamFormValues } from "./team-form-schema";
+import { teamFormSchema } from "./team-form-schema";
+import type { TeamFormValues } from "./team-form-schema";
 
 /**
  * Team Form Provider
@@ -26,7 +27,7 @@ export function TeamFormProvider({
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
     defaultValues: {
-      teamName: initialTeamName || "",
+      teamName: initialTeamName ?? "",
     },
     mode: "onChange", // Validate on change for real-time feedback
   });

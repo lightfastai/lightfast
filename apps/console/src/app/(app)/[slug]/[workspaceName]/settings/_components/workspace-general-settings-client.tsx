@@ -20,10 +20,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import {
-	workspaceSettingsFormSchema,
-	type WorkspaceSettingsFormValues,
-} from "../_schemas/workspace-settings-form-schema";
+import { workspaceSettingsFormSchema } from "../_schemas/workspace-settings-form-schema";
+import type { WorkspaceSettingsFormValues } from "../_schemas/workspace-settings-form-schema";
 
 interface WorkspaceGeneralSettingsClientProps {
 	slug: string;
@@ -116,8 +114,8 @@ export function WorkspaceGeneralSettingsClient({
 						}).queryKey,
 						produce(previousList, (draft) => {
 							const workspaceIndex = draft.findIndex((w) => w.id === workspace.id);
-							if (workspaceIndex !== -1) {
-								draft[workspaceIndex]!.name = variables.newWorkspaceName;
+							if (workspaceIndex !== -1 && draft[workspaceIndex]) {
+								draft[workspaceIndex].name = variables.newWorkspaceName;
 							}
 						}),
 					);

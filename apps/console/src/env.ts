@@ -41,7 +41,7 @@ export const env = createEnv({
 						"ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
 				},
 			)
-			.superRefine((key, ctx) => {
+			.superRefine((key) => {
 				// Warn in development if using a weak key
 				if (process.env.NODE_ENV === "development") {
 					if (

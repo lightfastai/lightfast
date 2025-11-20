@@ -10,7 +10,6 @@ import {
 	MoreHorizontal,
 	RotateCcw,
 	StopCircle,
-	Eye,
 	Calendar,
 	Zap,
 	ChevronDown,
@@ -23,7 +22,7 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Input } from "@repo/ui/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
 	Table,
 	TableBody,
@@ -157,7 +156,7 @@ function JobRow({ job }: { job: Job }) {
 		// TODO: Call tRPC mutation to cancel job
 	};
 
-	const hasDetails = job.error || job.logs || job.output;
+	const hasDetails = job.error ?? job.logs ?? job.output;
 
 	return (
 		<>
@@ -296,10 +295,7 @@ function JobRow({ job }: { job: Job }) {
 }
 
 function EmptyState({ filter }: { filter: string }) {
-	const messages: Record<
-		string,
-		{ icon: typeof Loader2; title: string; description: string; showCTA: boolean }
-	> = {
+	const messages = {
 		all: {
 			icon: PlayCircle,
 			title: "No jobs yet",
@@ -326,7 +322,12 @@ function EmptyState({ filter }: { filter: string }) {
 		},
 	};
 
-	const message = (filter in messages ? messages[filter] : messages.all)!;
+	type MessageConfig = (typeof messages)[keyof typeof messages];
+
+	const message: MessageConfig =
+		filter in messages
+			? messages[filter as keyof typeof messages]
+			: messages.all;
 	const Icon = message.icon;
 
 	return (
@@ -379,7 +380,7 @@ function JobsTable({ clerkOrgSlug, workspaceName, initialStatus, initialSearch }
 
 		const interval = setInterval(() => {
 			// Invalidate and refetch jobs list
-			queryClient.invalidateQueries({
+			void queryClient.invalidateQueries({
 				queryKey: trpc.jobs.list.queryOptions({
 					clerkOrgSlug,
 					workspaceName,

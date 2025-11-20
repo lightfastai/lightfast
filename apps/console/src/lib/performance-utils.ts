@@ -20,11 +20,11 @@ export function calculatePercentile(
 	const upper = Math.ceil(index);
 
 	// If exact index, return that value
-	if (lower === upper) return sorted[lower] || 0;
+	if (lower === upper) return sorted[lower] ?? 0;
 
 	// Otherwise, interpolate between values
-	const lowerValue = sorted[lower] || 0;
-	const upperValue = sorted[upper] || 0;
+	const lowerValue = sorted[lower] ?? 0;
+	const upperValue = sorted[upper] ?? 0;
 	const fraction = index - lower;
 
 	return lowerValue + (upperValue - lowerValue) * fraction;
@@ -49,7 +49,7 @@ export interface Job {
  */
 export function groupByHour(jobs: Job[]): TimeSeriesPoint[] {
 	const now = new Date();
-	const hours: Map<string, Job[]> = new Map();
+	const hours = new Map<string, Job[]>();
 
 	// Create 24 hour buckets (current hour back to 24 hours ago)
 	for (let i = 0; i < 24; i++) {
@@ -82,7 +82,7 @@ export function groupByHour(jobs: Job[]): TimeSeriesPoint[] {
 		const avgDuration =
 			completedJobs.length > 0
 				? completedJobs.reduce(
-						(sum, j) => sum + Number.parseInt(j.durationMs || "0", 10),
+						(sum, j) => sum + Number.parseInt(j.durationMs ?? "0", 10),
 						0,
 					) / completedJobs.length
 				: 0;

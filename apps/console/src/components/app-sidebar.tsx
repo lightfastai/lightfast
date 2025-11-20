@@ -72,13 +72,13 @@ export function AppSidebar() {
 
   // Extract orgSlug and workspaceName from pathname
   // Pathname format: /[slug]/[workspaceName]/...
-  const pathParts = pathname?.split("/").filter(Boolean) ?? [];
+  const pathParts = pathname.split("/").filter(Boolean);
   const orgSlug = pathParts[0] ?? ""; // [slug]
   const workspaceName = pathParts[1] ?? ""; // [workspaceName]
 
   // Determine the current context
-  const isInOrgSettings = pathname?.startsWith(`/${orgSlug}/settings`);
-  const isInWorkspaceSettings = pathname?.startsWith(
+  const isInOrgSettings = pathname.startsWith(`/${orgSlug}/settings`);
+  const _isInWorkspaceSettings = pathname.startsWith(
     `/${orgSlug}/${workspaceName}/settings`,
   );
   const isInWorkspace =
@@ -107,7 +107,7 @@ export function AppSidebar() {
                 // For Settings, match any settings subpage (org or workspace level)
                 const isActive =
                   item.title === "Settings"
-                    ? (pathname?.startsWith(item.href) ?? false)
+                    ? pathname.startsWith(item.href)
                     : pathname === item.href;
 
                 return (

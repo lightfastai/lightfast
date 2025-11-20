@@ -2,9 +2,7 @@
 
 import { useMemo } from "react";
 import {
-  SignInButton,
   SignedIn,
-  SignedOut,
   useClerk,
   useUser,
 } from "@clerk/nextjs";
@@ -26,12 +24,12 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   const { signOut } = useClerk();
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded, user } = useUser();
 
   // Always link to personal account settings (general page)
   const settingsHref = "/account/settings/general";
 
-  const displayName = useMemo(() => {
+  const _displayName = useMemo(() => {
     if (!user) {
       return "";
     }

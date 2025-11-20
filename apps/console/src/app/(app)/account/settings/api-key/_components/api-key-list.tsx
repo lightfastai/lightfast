@@ -102,8 +102,8 @@ export function ApiKeyList() {
 		createMutation.mutate({ name: newKeyName.trim() });
 	};
 
-	const handleCopyKey = (key: string) => {
-		navigator.clipboard.writeText(key);
+	const handleCopyKey = async (key: string) => {
+		await navigator.clipboard.writeText(key);
 		toast.success("API key copied to clipboard");
 	};
 

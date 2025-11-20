@@ -2,7 +2,6 @@
 
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import type { RouterOutputs } from "@repo/console-trpc/types";
 import { WorkspaceInfo } from "./workspace-info";
 import { ConnectedSourcesOverview } from "./connected-sources-overview";
 import { OrgChatInterface } from "./org-chat-interface";
@@ -46,7 +45,7 @@ export function OrgWorkspaceDashboard({ orgSlug, orgId }: OrgWorkspaceDashboardP
     ...trpc.integration.workspace.list.queryOptions({
       workspaceId: workspace.workspaceId,
     }),
-    enabled: Boolean(workspace?.workspaceId),
+    enabled: Boolean(workspace.workspaceId),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -60,12 +59,12 @@ export function OrgWorkspaceDashboard({ orgSlug, orgId }: OrgWorkspaceDashboardP
           organization={{
             name: organization.name,
             slug: organization.slug,
-            imageUrl: organization.imageUrl ?? undefined,
+            imageUrl: organization.imageUrl,
           }}
         />
 
         {/* Connected Sources Overview */}
-        <ConnectedSourcesOverview connections={connections} orgSlug={orgSlug} />
+        <ConnectedSourcesOverview connections={connections} />
 
         {/* Search Interface */}
         <div className="mt-8">

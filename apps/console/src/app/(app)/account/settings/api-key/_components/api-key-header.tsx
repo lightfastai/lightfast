@@ -1,15 +1,8 @@
-import { Plus } from "lucide-react";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-	Dialog,
-	DialogTrigger,
-} from "@repo/ui/components/ui/dialog";
-
 /**
  * API Key Settings Header (Server Component)
  *
- * Static header with title, description, and Create API Key button trigger.
- * The dialog content is rendered in the client component.
+ * Static header with title, description.
+ * The Create API Key button is rendered in the client component.
  */
 export function ApiKeyHeader() {
 	return (

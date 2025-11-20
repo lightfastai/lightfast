@@ -1,6 +1,5 @@
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
 
 /**
  * Loading skeleton for profile data

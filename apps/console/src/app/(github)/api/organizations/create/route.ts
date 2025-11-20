@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
 			return NextResponse.json({
 				organizationId: clerkOrg.id,
-				slug: clerkOrg.slug ?? slug,
+				slug: clerkOrg.slug || slug,
 				workspaceId,
 			});
 		} catch (error) {

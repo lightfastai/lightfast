@@ -23,15 +23,6 @@ import { env } from "~/env";
 export function GET(request: NextRequest) {
 	const appSlug = env.GITHUB_APP_SLUG;
 
-	// Get the base URL for redirect_uri
-	const baseUrl =
-		env.NEXT_PUBLIC_APP_URL ??
-		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
-			? "https://console.lightfast.ai"
-			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-				? `https://${process.env.VERCEL_URL}`
-				: "http://localhost:3024"); // Microfrontends proxy port
-
 	// GitHub App installation URL
 	// This shows the org selector and permissions page
 	const installUrl = new URL(

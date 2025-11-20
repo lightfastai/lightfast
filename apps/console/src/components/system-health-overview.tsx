@@ -200,12 +200,16 @@ function HealthIndicator({
 
 function SourceIcon({ type }: { type: string }) {
 	// Map source types to icons
-	const iconMap: Record<string, any> = {
+	const iconMap = {
 		github: Github,
 		default: Database,
 	};
 
-	const Icon = iconMap[type.toLowerCase()] || iconMap.default;
+	const lowerType = type.toLowerCase();
+	const Icon: typeof Database =
+		lowerType in iconMap
+			? iconMap[lowerType as keyof typeof iconMap]
+			: iconMap.default;
 
 	return <Icon className="h-4 w-4 text-muted-foreground shrink-0" />;
 }

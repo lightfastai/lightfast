@@ -20,10 +20,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import {
-	teamSettingsFormSchema,
-	type TeamSettingsFormValues,
-} from "../_schemas/team-settings-form-schema";
+import { teamSettingsFormSchema } from "../_schemas/team-settings-form-schema";
+import type { TeamSettingsFormValues } from "../_schemas/team-settings-form-schema";
 
 interface TeamGeneralSettingsClientProps {
 	slug: string;
@@ -107,9 +105,9 @@ export function TeamGeneralSettingsClient({
 						trpc.organization.listUserOrganizations.queryOptions().queryKey,
 						produce(previousList, (draft) => {
 							const orgIndex = draft.findIndex((o) => o.id === organizationId);
-							if (orgIndex !== -1) {
-								draft[orgIndex]!.name = variables.name;
-								draft[orgIndex]!.slug = variables.name;
+							if (orgIndex !== -1 && draft[orgIndex]) {
+								draft[orgIndex].name = variables.name;
+								draft[orgIndex].slug = variables.name;
 							}
 						}),
 					);

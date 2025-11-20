@@ -20,7 +20,6 @@ interface Source {
 interface ConnectedSourcesOverviewProps {
   connections?: EnrichedConnection[];
   sources?: Source[];
-  orgSlug?: string;
 }
 
 /**
@@ -54,7 +53,11 @@ function getStatusConfig(status: string | null) {
     },
   };
 
-  return statusMap[status as keyof typeof statusMap] ?? {
+  const mappedStatus = status as keyof typeof statusMap;
+  if (mappedStatus in statusMap) {
+    return statusMap[mappedStatus];
+  }
+  return {
     icon: Clock,
     color: "text-gray-600 dark:text-gray-400",
     bgColor: "bg-gray-50 dark:bg-gray-950/20",
@@ -75,18 +78,17 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
 
   // Get display info based on provider
   let displayName = "";
-  let providerIcon = Github;
   let detailsUrl = "";
 
-  if (resourceData.provider === "github" && resourceData.type === "repository") {
+  if (resourceData.provider === "github") {
     displayName = resourceData.repoFullName;
-    providerIcon = Github;
     detailsUrl = `https://github.com/${resourceData.repoFullName}`;
-  } else if (resourceData.provider === "linear" && resourceData.type === "team") {
+  } else if (resourceData.provider === "linear") {
     displayName = resourceData.teamName;
   } else if (resourceData.provider === "notion") {
     displayName = resourceData.pageName;
-  } else if (resourceData.provider === "sentry" && resourceData.type === "project") {
+  } else {
+    // sentry or other providers
     displayName = `${resourceData.orgSlug}/${resourceData.projectSlug}`;
   }
 
@@ -114,7 +116,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
             <Badge variant="secondary" className="text-xs">
               {resourceData.provider}
             </Badge>
-            {resourceData.provider === "github" && resourceData.type === "repository" && (
+            {resourceData.provider === "github" && (
               <Badge variant="outline" className="text-xs">
                 {resourceData.defaultBranch}
               </Badge>
@@ -190,7 +192,7 @@ function SimpleSourceItem({ source }: { source: Source }) {
  *
  * Displays all connected sources grouped by provider with sync status.
  */
-export function ConnectedSourcesOverview({ connections, sources, orgSlug }: ConnectedSourcesOverviewProps) {
+export function ConnectedSourcesOverview({ connections, sources }: ConnectedSourcesOverviewProps) {
   // If sources prop is provided (from workspace.statistics), use simple layout
   if (sources) {
     const totalSources = sources.length;
@@ -240,10 +242,11 @@ export function ConnectedSourcesOverview({ connections, sources, orgSlug }: Conn
   // Group by provider
   const groupedByProvider = connections.reduce(
     (acc, connection) => {
-      const provider = connection.resource?.resourceData?.provider ?? "unknown";
-      if (!acc[provider]) {
-        acc[provider] = [];
+      if (!connection.resource?.resourceData) {
+        return acc;
       }
+      const provider = connection.resource.resourceData.provider;
+      acc[provider] ??= [];
       acc[provider].push(connection);
       return acc;
     },
@@ -306,7 +309,7 @@ export function ConnectedSourcesOverview({ connections, sources, orgSlug }: Conn
           </div>
         ) : (
           <div className="space-y-4">
-            {(Object.entries(groupedByProvider) as [string, EnrichedConnection[]][]).map(([provider, sources]) => (
+            {Object.entries(groupedByProvider).map(([provider, sources]) => (
               <div key={provider}>
                 <h4 className="text-sm font-semibold mb-2 capitalize flex items-center gap-2">
                   <Github className="h-4 w-4" />

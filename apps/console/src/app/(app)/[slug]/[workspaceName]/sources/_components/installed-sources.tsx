@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType, SVGProps } from "react";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -12,8 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
-import { toast } from "sonner";
-import { Search, MoreVertical, Circle, ChevronDown } from "lucide-react";
+import { Search, Circle, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 
@@ -53,7 +52,6 @@ export function InstalledSources({
 	initialStatus = "all",
 }: InstalledSourcesProps) {
 	const trpc = useTRPC();
-	const queryClient = useQueryClient();
 
 	// Use nuqs for URL-based state management with server-side initial values
 	const [filters, setFilters] = useQueryStates(
@@ -76,41 +74,16 @@ export function InstalledSources({
 		refetchOnWindowFocus: false,
 	});
 
-	const disconnectMutation = useMutation(
-		trpc.workspace.integrations.disconnect.mutationOptions({
-			onSuccess: () => {
-				toast.success("Integration disconnected successfully");
-				void queryClient.invalidateQueries({
-					queryKey: trpc.workspace.integrations.list.queryOptions({
-						clerkOrgSlug,
-						workspaceName,
-					}).queryKey,
-				});
-			},
-			onError: (error) => {
-				toast.error(error.message || "Failed to disconnect integration");
-			},
-		}),
-	);
-
-	const handleDisconnect = (integrationId: string, provider: string) => {
-		if (
-			window.confirm(
-				`Are you sure you want to disconnect ${providerNames[provider]}? This will remove access to all resources connected through this integration.`,
-			)
-		) {
-			disconnectMutation.mutate({ integrationId });
-		}
-	};
-
 	// Filter integrations
 	const filteredIntegrations = integrations.filter((integration) => {
+		// Type-safe metadata access for GitHub integrations
+		const metadata = integration.metadata as { repoFullName?: string } | null | undefined;
 		const displayName = integration.provider === "github"
-			? (integration.metadata as any)?.repoFullName || providerNames[integration.provider]
+			? metadata?.repoFullName ?? providerNames[integration.provider]
 			: providerNames[integration.provider];
 
 		const matchesSearch =
-			displayName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+			(displayName?.toLowerCase().includes(filters.search.toLowerCase()) ?? false) ||
 			integration.provider.toLowerCase().includes(filters.search.toLowerCase());
 
 		const matchesStatus =
@@ -173,12 +146,20 @@ export function InstalledSources({
 				<div className="rounded-sm border border-border/60 overflow-hidden bg-card">
 					{filteredIntegrations.map((integration, index) => {
 						const IconComponent = providerIcons[integration.provider];
-						const name = integration.provider === "github"
-							? (integration.metadata as any)?.repoFullName || providerNames[integration.provider]
-							: providerNames[integration.provider] || integration.provider;
+
+						// Type-safe metadata access for GitHub integrations
+						const metadata = integration.metadata as {
+							repoFullName?: string;
+							documentCount?: number;
+							isPrivate?: boolean;
+						} | null | undefined;
+
+						const name =
+							integration.provider === "github"
+								? metadata?.repoFullName ?? providerNames[integration.provider]
+								: providerNames[integration.provider];
 
 						// Get additional metadata for GitHub
-						const metadata = integration.metadata as any;
 						const documentCount = metadata?.documentCount;
 						const isPrivate = metadata?.isPrivate;
 
@@ -228,7 +209,7 @@ export function InstalledSources({
 											<p className="text-sm text-muted-foreground">
 												Synced{" "}
 												{formatDistanceToNow(
-													new Date(integration.lastSyncAt || integration.connectedAt),
+													new Date(integration.lastSyncAt ?? integration.connectedAt),
 													{ addSuffix: true },
 												)}
 											</p>

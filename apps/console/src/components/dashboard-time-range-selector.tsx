@@ -1,7 +1,8 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { timeRangeAtom, type TimeRange } from "../stores/dashboard-preferences";
+import type { TimeRange } from "../stores/dashboard-preferences";
+import { timeRangeAtom } from "../stores/dashboard-preferences";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Clock } from "lucide-react";
 

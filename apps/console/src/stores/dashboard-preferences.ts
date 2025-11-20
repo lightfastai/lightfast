@@ -48,20 +48,26 @@ export const dashboardPreferencesAtom = atomWithStorage<DashboardPreferences>(
  * Current time range atom (session state, not persisted)
  * Initialized from preferences
  */
-export const currentTimeRangeAtom = atom<TimeRange>((get) => {
-	const prefs = get(dashboardPreferencesAtom);
-	return prefs.defaultTimeRange;
-});
+const _currentTimeRangeAtom = atom<TimeRange | null>(null);
 
-/**
- * Writable time range atom
- */
-export const timeRangeAtom = atom(
-	(get) => get(currentTimeRangeAtom),
+export const currentTimeRangeAtom = atom(
+	(get) => {
+		const current = get(_currentTimeRangeAtom);
+		if (current !== null) {
+			return current;
+		}
+		const prefs = get(dashboardPreferencesAtom);
+		return prefs.defaultTimeRange;
+	},
 	(_get, set, newRange: TimeRange) => {
-		set(currentTimeRangeAtom, newRange);
+		set(_currentTimeRangeAtom, newRange);
 	}
 );
+
+/**
+ * Writable time range atom (alias for backward compatibility)
+ */
+export const timeRangeAtom = currentTimeRangeAtom;
 
 /**
  * Helper to get time range in milliseconds

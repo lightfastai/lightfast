@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useOrganizationList } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -40,7 +40,7 @@ export function CreateWorkspaceButton() {
   } = useWorkspaceForm();
 
   // Find the organization by ID
-  const selectedOrg = userMemberships?.data?.find(
+  const selectedOrg = userMemberships.data?.find(
     (membership) => membership.organization.id === selectedOrgId,
   );
 
@@ -95,7 +95,7 @@ export function CreateWorkspaceButton() {
       },
       onError: (err, variables, context) => {
         // Rollback on error
-        if (context?.previous && context?.orgSlug) {
+        if (context?.previous && context.orgSlug) {
           queryClient.setQueryData(
             trpc.workspace.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
@@ -124,7 +124,7 @@ export function CreateWorkspaceButton() {
         toast({
           title: "Failed to create resource",
           description:
-            error.message ??
+            error.message ||
             "Failed to create integration resource. Please try again.",
           variant: "destructive",
         });
@@ -139,7 +139,7 @@ export function CreateWorkspaceButton() {
         toast({
           title: "Creation failed",
           description:
-            error.message ?? "Failed to create workspace. Please try again.",
+            error.message || "Failed to create workspace. Please try again.",
           variant: "destructive",
         });
       },

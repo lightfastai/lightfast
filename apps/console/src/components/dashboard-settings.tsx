@@ -1,7 +1,8 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { dashboardPreferencesAtom, type TimeRange } from "../stores/dashboard-preferences";
+import type { TimeRange } from "../stores/dashboard-preferences";
+import { dashboardPreferencesAtom } from "../stores/dashboard-preferences";
 import {
 	Dialog,
 	DialogContent,

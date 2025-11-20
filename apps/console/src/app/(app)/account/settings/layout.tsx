@@ -1,6 +1,6 @@
 import { AccountSettingsSidebar } from "~/components/account-settings-sidebar";
 
-export default async function AccountSettingsLayout({
+export default function AccountSettingsLayout({
   children,
 }: {
   children: React.ReactNode;

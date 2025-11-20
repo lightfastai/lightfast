@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
 interface MetricCardProps {
@@ -43,7 +44,6 @@ export function MetricCard({
 		if (!trend) return null;
 
 		const isPositive = trend.isPositive ?? trend.value > 0;
-		const isNegative = trend.value < 0;
 		const isNeutral = trend.value === 0;
 
 		if (isNeutral) {

@@ -118,7 +118,7 @@ export function SourcesList() {
 						<div className="flex items-center gap-4 flex-1">
 							{/* Icon */}
 							<div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted shrink-0">
-								{Icon && <Icon className="h-5 w-5" />}
+								<Icon className="h-5 w-5" />
 							</div>
 
 							{/* Name and Status */}
@@ -141,7 +141,7 @@ export function SourcesList() {
 									<span className="text-sm text-muted-foreground mr-2">
 										Last used{" "}
 										{formatDistanceToNow(
-											new Date(source.integration.lastSyncAt || source.integration.connectedAt),
+											new Date(source.integration.lastSyncAt ?? source.integration.connectedAt),
 											{ addSuffix: true }
 										).replace(" ago", "")}
 									</span>
@@ -153,9 +153,11 @@ export function SourcesList() {
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
 											<DropdownMenuItem
-												onClick={() =>
-													handleDisconnect(source.integration!.id, source.provider)
-												}
+												onClick={() => {
+													if (source.integration) {
+														handleDisconnect(source.integration.id, source.provider);
+													}
+												}}
 												disabled={disconnectMutation.isPending}
 												className="text-destructive cursor-pointer"
 											>

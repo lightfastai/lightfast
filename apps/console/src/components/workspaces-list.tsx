@@ -85,10 +85,8 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredWorkspaces.map((workspace) => {
               const primaryRepo = workspace.repositories[0];
-              const repoFullName = primaryRepo?.metadata?.fullName as
-                | string
-                | undefined;
-              const configStatus = primaryRepo?.configStatus || "unconfigured";
+              const repoFullName = primaryRepo?.metadata?.fullName;
+              const configStatus = primaryRepo?.configStatus ?? "unconfigured";
 
               return (
                 <Link
@@ -199,7 +197,7 @@ function ConfigStatusBadge({ status }: { status: string }) {
       label: "Pending",
       className: "bg-gray-500/10 text-gray-600 border-gray-500/20",
     },
-  }[status] || {
+  }[status] ?? {
     icon: AlertCircle,
     label: "Unknown",
     className: "bg-gray-500/10 text-gray-600 border-gray-500/20",

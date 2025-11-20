@@ -24,7 +24,7 @@ import { SourcesListLoading } from "./_components/sources-list-loading";
  * 3. useSuspenseQuery in client finds data in cache (no fetch!)
  * 4. Suspense shows loading state during hydration
  */
-export default async function SourcesSettingsPage() {
+export default function SourcesSettingsPage() {
 	// Prefetch user's personal integrations
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
 	prefetch(trpc.account.integrations.list.queryOptions());

@@ -3,7 +3,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { WorkspaceHeader } from "./workspace-header";
-import { KeyMetricsStrip } from "./key-metrics-strip";
 import { MetricsSidebar } from "./metrics-sidebar";
 import { ActivityTimeline } from "./activity-timeline";
 import { StoresOverview } from "./stores-overview";
@@ -59,7 +58,10 @@ export function WorkspaceDashboard({
 				<LightfastConfigOverview
 					workspaceId={workspace.workspaceId}
 					workspaceName={workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)}
-					stores={stats.stores.list}
+					stores={stats.stores.list.map((store) => ({
+				...store,
+				name: store.slug,
+			}))}
 				/>
 
 				{/* Right: Metrics Sidebar (like Vitess stats) */}
@@ -102,7 +104,10 @@ export function WorkspaceDashboard({
 
 			{/* Stores Overview - Full Width, Collapsible (can be removed since it's now in config) */}
 			<StoresOverview
-				stores={stats.stores.list}
+				stores={stats.stores.list.map((store) => ({
+				...store,
+				name: store.slug,
+			}))}
 				totalStores={stats.stores.total}
 			/>
 		</div>

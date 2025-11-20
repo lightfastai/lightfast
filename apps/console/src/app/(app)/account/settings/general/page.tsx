@@ -21,7 +21,7 @@ import { ProfileDataLoading } from "./_components/profile-data-loading";
  * - No client-side fetch on mount (prevents UNAUTHORIZED errors)
  * - refetchOnMount/refetchOnWindowFocus disabled
  */
-export default async function GeneralSettingsPage() {
+export default function GeneralSettingsPage() {
 	// CRITICAL: Prefetch BEFORE HydrateClient wrapping
 	prefetch(trpc.account.profile.get.queryOptions());
 

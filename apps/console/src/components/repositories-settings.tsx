@@ -263,7 +263,7 @@ export function RepositoriesSettings({ clerkOrgSlug }: RepositoriesSettingsProps
 										</TableCell>
 										<TableCell>
 											<span className="text-sm">
-												{repo.documentCount !== undefined && repo.documentCount > 0
+												{repo.documentCount > 0
 													? repo.documentCount.toLocaleString()
 													: "—"}
 											</span>

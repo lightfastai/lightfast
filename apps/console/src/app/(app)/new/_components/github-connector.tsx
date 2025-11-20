@@ -35,10 +35,13 @@ export function GitHubConnector() {
   useEffect(() => {
     if (githubIntegration) {
       setIntegrationId(githubIntegration.id);
-      const installs = githubIntegration.installations ?? [];
+      const installs = githubIntegration.installations;
       setInstallations(installs);
       if (installs.length > 0 && !selectedInstallation) {
-        setSelectedInstallation(installs[0]!);
+        const firstInstall = installs[0];
+        if (firstInstall) {
+          setSelectedInstallation(firstInstall);
+        }
       }
     }
   }, [githubIntegration, selectedInstallation, setIntegrationId, setInstallations, setSelectedInstallation]);
@@ -63,7 +66,7 @@ export function GitHubConnector() {
 
     // Poll for popup close to refetch integration
     const pollTimer = setInterval(() => {
-      if (popup?.closed) {
+      if (popup.closed) {
         clearInterval(pollTimer);
         void refetchIntegration();
       }

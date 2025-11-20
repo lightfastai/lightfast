@@ -8,12 +8,12 @@ import { codeToHtml } from "shiki";
 interface LightfastConfigOverviewProps {
 	workspaceId: string;
 	workspaceName: string;
-	stores: Array<{
+	stores: {
 		id: string;
 		name: string;
 		embeddingDim: number;
 		documentCount?: number;
-	}>;
+	}[];
 }
 
 export function LightfastConfigOverview({
