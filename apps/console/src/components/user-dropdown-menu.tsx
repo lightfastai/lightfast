@@ -119,7 +119,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
               <Link
                 href={settingsHref}
                 prefetch={true}
-                className="cursor-pointer text-sm"
+                className="cursor-pointer"
               >
                 <Settings className="mr-2 h-3 w-3" />
                 Settings
@@ -135,31 +135,6 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </SignedIn>
-      <SignedOut>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`p-0 rounded-full size-8 ${className}`}
-            >
-              <Avatar className="size-6">
-                <AvatarFallback className="text-[10px] bg-foreground text-background">
-                  LF
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuItem asChild>
-              <SignInButton mode="modal">
-                <button className="w-full cursor-pointer text-sm text-left">
-                  Sign in
-                </button>
-              </SignInButton>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SignedOut>
     </>
   );
 }

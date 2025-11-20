@@ -24,7 +24,16 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
 	const trpc = useTRPC();
 
-	// Fetch workspace statistics (resolves workspace internally)
+	// Resolve workspace to get IDs for child components
+	const { data: workspace } = useSuspenseQuery({
+		...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
+			clerkOrgSlug: orgSlug,
+		}),
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+	});
+
+	// Fetch workspace statistics
 	const { data: stats } = useSuspenseQuery({
 		...trpc.workspace.statistics.queryOptions({
 			clerkOrgSlug: orgSlug,
@@ -48,8 +57,7 @@ export function WorkspaceDashboard({
 			<div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
 				{/* Left: Lightfast Config (like VTGates) */}
 				<LightfastConfigOverview
-					clerkOrgSlug={orgSlug}
-					workspaceSlug={workspaceSlug}
+					workspaceId={workspace.workspaceId}
 					workspaceName={workspaceSlug.charAt(0).toUpperCase() + workspaceSlug.slice(1)}
 					stores={stats.stores.list}
 				/>
@@ -71,12 +79,14 @@ export function WorkspaceDashboard({
 				<div className="space-y-6">
 					{/* System Health Overview - Hierarchical Status */}
 					<SystemHealthOverview
-						clerkOrgSlug={orgSlug}
+						workspaceId={workspace.workspaceId}
+						clerkOrgId={workspace.clerkOrgId}
 					/>
 
 					{/* Performance Metrics - Percentiles & Time Series Charts */}
 					<PerformanceMetrics
-						clerkOrgSlug={orgSlug}
+						workspaceId={workspace.workspaceId}
+						clerkOrgId={workspace.clerkOrgId}
 					/>
 				</div>
 
