@@ -131,56 +131,182 @@
 
 ---
 
-## 🎯 Type Usage Decision Matrix
+## 🎯 Type Architecture & Decision Matrix
 
-### When to Use Database Schema Types
+### ✅ Centralized Type Management
 
-✅ **Use:** `import type { Job } from "@db/console/schema"`
+**All types should be centralized in a single file:**
 
-**Scenarios:**
-- tRPC returns raw, untransformed database rows
-- Mutation inputs that validate against DB schema
-- Internal utilities processing raw DB data
-- Type narrowing for specific DB fields
-
-**Examples:**
-```typescript
-// tRPC procedures that return raw DB types
-- jobs.list (returns Job[])
-- jobs.get (returns Job)
-- jobs.recent (returns Job[])
+```
+apps/console/src/types/index.ts
 ```
 
-### When to Use RouterOutputs
+**Why Single File?**
+- ✅ Single source of truth for all console app types
+- ✅ Easy to find any type (no guessing which file)
+- ✅ Simple imports: `import type { Job, JobStatus } from "~/types"`
+- ✅ No barrel export complexity
+- ✅ Zero direct DB dependencies in app code
 
-✅ **Use:** `import type { RouterOutputs } from "@repo/console-trpc/types"`
+### Architecture Layers
 
-**Scenarios:**
-- tRPC adds computed fields (joins, aggregations)
-- tRPC enriches data with additional information
-- tRPC returns paginated wrapper structures
-- tRPC transforms/reshapes data structure
+```
+apps/console (Frontend Components)
+    ↓ imports from
+apps/console/src/types/index.ts (Centralized Types)
+    ↓ extracts from
+@repo/console-trpc/types (RouterOutputs)
+    ↓ infers from
+@api/console (tRPC Router)
+    ↓ uses
+@db/console/schema (Database)
+```
 
-**Examples:**
+**Key Principle:** Frontend never directly imports from `@db/console/schema`
+
+### Type Extraction Patterns
+
+#### Pattern 1: Extract from RouterOutputs (Primary)
+
+✅ **Use when:** tRPC returns data (raw or transformed)
+
 ```typescript
-// tRPC procedures that transform data
-- workspace.listByClerkOrgSlug (adds repositories, totalDocuments, lastActivity)
-- workspace.statistics (complex aggregation)
-- integration.workspace.list (enriches with resource object)
-- jobs.list (returns { items, nextCursor, hasMore })
+// apps/console/src/types/index.ts
+import type { RouterOutputs, RouterInputs } from "@repo/console-trpc/types";
+
+// Extract from tRPC procedures
+export type Job = RouterOutputs["jobs"]["list"]["items"][number];
+export type JobStatus = Job["status"];
+export type JobTrigger = Job["trigger"];
+
+export type Workspace = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
+export type WorkspaceStats = RouterOutputs["workspace"]["statistics"];
+
+export type Source = RouterOutputs["workspace"]["statistics"]["sources"]["list"][number];
+export type Store = RouterOutputs["workspace"]["statistics"]["stores"]["list"][number];
+```
+
+#### Pattern 2: Utility Types
+
+```typescript
+// Derive utility types from base types
+export type RunningJob = Job & { status: "running" };
+export type CompletedJob = Job & { status: "completed" };
+export type FailedJob = Job & { status: "failed" };
+
+// Pick subsets when needed
+export type JobSummary = Pick<Job, "id" | "name" | "status" | "createdAt">;
+```
+
+#### Pattern 3: Re-export for Convenience
+
+```typescript
+// Re-export RouterOutputs and RouterInputs for advanced usage
+export type { RouterOutputs, RouterInputs };
+```
+
+### Usage in Components
+
+```typescript
+// ✅ CORRECT - Import from centralized types
+import type { Job, JobStatus, WorkspaceStats } from "~/types";
+
+interface JobsTableProps {
+  jobs: Job[];
+  onStatusChange: (status: JobStatus) => void;
+}
+```
+
+```typescript
+// ❌ WRONG - Never import DB schema directly
+import type { Job } from "@db/console/schema";  // ❌ NO!
+
+// ❌ WRONG - Don't define manual interfaces
+interface Job { id: string; name: string; }  // ❌ NO!
 ```
 
 ---
 
 ## 🔧 Implementation Plan
 
-### Phase 1: Critical Bug Fixes (P0) - Day 1
+### Phase 1: Setup Type Infrastructure (P0) - Day 1
+
+#### Task 0: Create Centralized Types File
+**File:** `apps/console/src/types/index.ts` (NEW FILE)
+
+**Create:**
+```typescript
+/**
+ * Centralized type definitions for Console app
+ *
+ * All types extracted from tRPC RouterOutputs - never import from @db/console/schema directly!
+ */
+
+import type { RouterOutputs, RouterInputs } from "@repo/console-trpc/types";
+
+// ============================================================================
+// Jobs
+// ============================================================================
+
+export type JobsListResponse = RouterOutputs["jobs"]["list"];
+export type Job = JobsListResponse["items"][number];
+export type JobStatus = Job["status"];
+export type JobTrigger = Job["trigger"];
+
+// Job utility types
+export type RunningJob = Job & { status: "running" };
+export type CompletedJob = Job & { status: "completed" };
+export type FailedJob = Job & { status: "failed" };
+
+// ============================================================================
+// Workspace
+// ============================================================================
+
+export type Workspace = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
+export type WorkspaceResolution = RouterOutputs["workspace"]["resolveFromClerkOrgSlug"];
+export type WorkspaceStats = RouterOutputs["workspace"]["statistics"];
+
+// ============================================================================
+// Sources & Stores (from workspace.statistics)
+// ============================================================================
+
+export type Source = WorkspaceStats["sources"]["list"][number];
+export type Store = WorkspaceStats["stores"]["list"][number];
+
+// ============================================================================
+// Integration
+// ============================================================================
+
+export type EnrichedConnection = RouterOutputs["integration"]["workspace"]["list"][number];
+export type GitHubIntegration = RouterOutputs["integration"]["github"]["list"];
+
+// ============================================================================
+// Organization
+// ============================================================================
+
+export type Organization = RouterOutputs["organization"]["listUserOrganizations"][number];
+export type OrganizationDetail = RouterOutputs["organization"]["findByClerkOrgSlug"];
+
+// ============================================================================
+// Re-exports (for advanced usage)
+// ============================================================================
+
+export type { RouterOutputs, RouterInputs };
+```
+
+**Impact:** Single source of truth, zero DB dependencies in app code
+
+---
+
+### Phase 2: Critical Bug Fixes (P0) - Day 1
 
 #### Task 1.1: Fix jobs-table.tsx Field Name Bug
 **File:** `apps/console/src/components/jobs-table.tsx`
 
 **Current (WRONG):**
 ```typescript
+import type { JobOutput } from "@db/console/schema";  // ❌ Direct DB import
+
 interface Job {
   error?: string | null;  // ❌ Wrong field name
   logs?: string | null;   // ❌ Non-existent field
@@ -190,11 +316,15 @@ interface Job {
 **Fix:**
 ```typescript
 // Remove lines 45-59 entirely
-import type { Job } from "@db/console/schema";
-// Now use Job type directly - has correct 'errorMessage' field
+import type { Job } from "~/types";
+
+// Now use Job type from centralized types
+// - Has correct 'errorMessage' field (not 'error')
+// - No non-existent 'logs' field
+// - All 18 fields from DB available
 ```
 
-**Impact:** Fixes 2 critical bugs, exposes all 18 DB fields
+**Impact:** Fixes 2 critical bugs, proper abstraction, exposes all 18 DB fields
 
 ---
 
@@ -213,13 +343,13 @@ export interface Job {
 **Fix:**
 ```typescript
 // Remove lines 41-45
-import type { Job } from "@db/console/schema";
+import type { Job } from "~/types";
 
 // Use Pick for minimal subset
 export type PerformanceJob = Pick<Job, "createdAt" | "durationMs" | "status">;
 ```
 
-**Impact:** Correct type safety, no Date conversion needed
+**Impact:** Correct type safety, no Date conversion needed, proper abstraction
 
 ---
 
@@ -241,10 +371,7 @@ interface Source {
 
 **Fix:**
 ```typescript
-import type { Job } from "@db/console/schema";
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type Source = RouterOutputs["workspace"]["statistics"]["sources"]["list"][number];
+import type { Job, Source } from "~/types";
 
 interface WorkspaceActivityProps {
   recentJobs: Job[];
@@ -268,7 +395,7 @@ interface Job {
 
 **Fix:**
 ```typescript
-import type { Job } from "@db/console/schema";
+import type { Job } from "~/types";
 
 interface ActivityTimelineProps {
   jobs: Job[];
@@ -282,7 +409,7 @@ interface ActivityTimelineProps {
 
 **Current (PARTIAL):**
 ```typescript
-// Line 9: ✅ Already correct
+// Line 9: RouterOutputs used but can be cleaner
 type EnrichedConnection = RouterOutputs["integration"]["workspace"]["list"][number];
 
 // Line 11-18: ❌ Manual Source interface
@@ -298,10 +425,7 @@ interface Source {
 
 **Fix:**
 ```typescript
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type EnrichedConnection = RouterOutputs["integration"]["workspace"]["list"][number];
-type Source = RouterOutputs["workspace"]["statistics"]["sources"]["list"][number];
+import type { EnrichedConnection, Source } from "~/types";
 
 interface ConnectedSourcesOverviewProps {
   connections?: EnrichedConnection[];
@@ -328,12 +452,10 @@ interface Store {
 
 **Fix:**
 ```typescript
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type StoreWithCount = RouterOutputs["workspace"]["statistics"]["stores"]["list"][number];
+import type { Store } from "~/types";
 
 interface StoresOverviewProps {
-  stores: StoreWithCount[];
+  stores: Store[];
 }
 ```
 
@@ -352,13 +474,16 @@ const { data: workspaces = [] } = useSuspenseQuery({
 
 **Fix:**
 ```typescript
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type Workspace = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
+import type { Workspace } from "~/types";
 
 interface WorkspacesListProps {
   orgSlug: string;
 }
+
+// Now workspace data is properly typed
+const { data: workspaces = [] } = useSuspenseQuery({
+  ...trpc.workspace.listByClerkOrgSlug.queryOptions({ clerkOrgSlug: orgSlug }),
+}); // workspaces is Workspace[]
 ```
 
 ---
@@ -379,15 +504,16 @@ const { data: stats } = useSuspenseQuery({
 
 **Fix:**
 ```typescript
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type WorkspaceData = RouterOutputs["workspace"]["resolveFromClerkOrgSlug"];
-type WorkspaceStats = RouterOutputs["workspace"]["statistics"];
+import type { WorkspaceResolution, WorkspaceStats } from "~/types";
 
 interface WorkspaceDashboardProps {
   orgSlug: string;
   workspaceName: string;
 }
+
+// Properly typed data
+const { data: workspace } = useSuspenseQuery({...}); // workspace is WorkspaceResolution
+const { data: stats } = useSuspenseQuery({...}); // stats is WorkspaceStats
 ```
 
 ---
