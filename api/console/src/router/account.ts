@@ -288,5 +288,91 @@ export const accountRouter = {
 
 				return { success: true };
 			}),
+
+		/**
+		 * Rotate an API key
+		 *
+		 * Replaces an existing API key with a new one atomically.
+		 * The old key is immediately revoked and the new key inherits
+		 * the same name and expiration settings.
+		 *
+		 * This is the recommended way to replace a potentially compromised key
+		 * while maintaining the same key identity and settings.
+		 *
+		 * ⚠️ The new key is returned ONLY ONCE and cannot be retrieved again.
+		 */
+		rotate: protectedProcedure
+			.input(
+				z.object({
+					keyId: z.string(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				// 1. Verify ownership and get old key
+				const [oldKey] = await ctx.db
+					.select()
+					.from(apiKeys)
+					.where(
+						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+					)
+					.limit(1);
+
+				if (!oldKey) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "API key not found or access denied",
+					});
+				}
+
+				// 2. Generate new key with same prefix as old key
+				const newApiKey = generateApiKey(LIGHTFAST_API_KEY_PREFIX);
+				const newKeyHash = await hashApiKey(newApiKey);
+				const newKeyPreview = extractKeyPreview(newApiKey);
+
+				try {
+					// 3. Atomically swap keys in transaction
+					const result = await ctx.db.transaction(async (tx) => {
+						// Revoke old key
+						await tx
+							.update(apiKeys)
+							.set({ isActive: false })
+							.where(eq(apiKeys.id, input.keyId));
+
+						// Create new key with same settings
+						const [created] = await tx
+							.insert(apiKeys)
+							.values({
+								userId: ctx.auth.userId,
+								name: oldKey.name, // Same name
+								keyHash: newKeyHash,
+								keyPreview: newKeyPreview,
+								isActive: true,
+								expiresAt: oldKey.expiresAt, // Same expiration
+							})
+							.returning({
+								id: apiKeys.id,
+								name: apiKeys.name,
+								keyPreview: apiKeys.keyPreview,
+								createdAt: apiKeys.createdAt,
+							});
+
+						return created;
+					});
+
+					// 4. Return new key ONLY THIS ONCE
+					return {
+						...result,
+						key: newApiKey, // ⚠️ Only returned on rotation
+					};
+				} catch (error: unknown) {
+					console.error("[tRPC] Failed to rotate API key:", error);
+
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to rotate API key",
+						cause: error,
+					});
+				}
+			}),
 	},
 } satisfies TRPCRouterRecord;

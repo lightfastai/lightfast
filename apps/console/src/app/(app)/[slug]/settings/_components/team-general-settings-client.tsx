@@ -20,7 +20,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import { teamSettingsFormSchema, type TeamSettingsFormValues } from "@repo/console-validation/forms";
+import { teamSettingsFormSchema } from "@repo/console-validation/forms";
+import type { TeamSettingsFormValues } from "@repo/console-validation/forms";
 
 interface TeamGeneralSettingsClientProps {
 	slug: string;

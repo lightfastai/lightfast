@@ -24,7 +24,7 @@ export const env = createEnv({
 		 *
 		 * Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 		 *
-		 * REQUIRED in production, optional in development (will log warning)
+		 * ⚠️ REQUIRED in all environments - no weak defaults allowed
 		 */
 		ENCRYPTION_KEY: z
 			.string()
@@ -41,24 +41,22 @@ export const env = createEnv({
 						"ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
 				},
 			)
-			.superRefine((key) => {
-				// Warn in development if using a weak key
-				if (process.env.NODE_ENV === "development") {
-					if (
-						key ===
-						"0000000000000000000000000000000000000000000000000000000000000000"
-					) {
-						console.warn(
-							"⚠️  WARNING: Using default ENCRYPTION_KEY in development. Generate a secure key for production!",
+			.refine(
+				(key) => {
+					// Reject weak default key (all zeros)
+					const weakKey =
+						"0000000000000000000000000000000000000000000000000000000000000000";
+					if (key === weakKey) {
+						throw new Error(
+							'Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
 						);
 					}
-				}
-			})
-			.default(
-				// Only allow default in development
-				process.env.NODE_ENV === "development"
-					? "0000000000000000000000000000000000000000000000000000000000000000"
-					: "",
+					return true;
+				},
+				{
+					message:
+						"ENCRYPTION_KEY must be a cryptographically secure random value",
+				},
 			),
 	},
 	client: {

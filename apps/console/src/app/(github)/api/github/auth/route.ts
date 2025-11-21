@@ -15,7 +15,7 @@ import { env } from "~/env";
  * 3. User selects organization and repository
  * 4. App uses installation ID to access repositories
  */
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest) {
 	const clientId = env.GITHUB_CLIENT_ID;
 
 	// Get the base URL for callback
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 	const customCallback = searchParams.get("callback");
 
 	// Generate secure OAuth state with @repo/console-oauth
-	const { state, encoded } = await generateOAuthState({
+	const { state, encoded } = generateOAuthState({
 		redirectPath: customCallback ?? undefined,
 	});
 

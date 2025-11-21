@@ -9,7 +9,9 @@
 
 ## Executive Summary
 
-This report provides a comprehensive security analysis of the `/apps/console` application and its tRPC API (`/api/console`). The review identified **17 security findings** across multiple severity levels, with **3 critical**, **5 high**, **6 medium**, and **3 low** severity issues.
+This report provides a comprehensive security analysis of the `/apps/console` application and its tRPC API (`/api/console`). The review identified **7 remaining security findings** across multiple severity levels, with **3 critical**, **3 high**, and **1 medium** severity issues.
+
+**Completed Issues (10):** #4, #6, #9, #11, #12, #13, #14, #15, #16, #17
 
 ---
 
@@ -164,51 +166,9 @@ export async function POST(request: NextRequest) {
 
 ---
 
-## High Severity Issues (5)
+## High Severity Issues (3)
 
-### 4. SQL Injection via Raw SQL Expressions
-
-**File:** `/api/console/src/router/workspace.ts`
-**Lines:** 293, 527-528, 631-632, 651, 750-751
-**Severity:** HIGH
-
-**Description:**
-Multiple procedures use raw SQL with user-controlled input without proper parameterization:
-
-```typescript
-// Line 293 - User input in JSON operator
-sql`${connectedSources.sourceMetadata}->>'accountLogin' = ${input.githubOrgSlug}`
-
-// Lines 527-528 - Date calculation uses string interpolation
-const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-  .toISOString().slice(0, 19).replace("T", " ");
-sql`${jobs.createdAt} >= ${oneDayAgo}`
-```
-
-**Impact:**
-While Drizzle's `sql` tagged template should parameterize values, the mixing of column references and values creates risk of SQL injection if the implementation changes or if there are edge cases.
-
-**Recommended Fix:**
-Use Drizzle's type-safe query builder instead of raw SQL:
-
-```typescript
-// Replace line 293
-where: and(
-  eq(connectedSources.sourceType, "github"),
-  eq(connectedSources.isActive, true),
-  eq(sql`${connectedSources.sourceMetadata}->>'accountLogin'`, input.githubOrgSlug)
-)
-
-// Replace date comparisons with Drizzle's gte
-where: and(
-  eq(jobs.workspaceId, workspaceId),
-  gte(jobs.createdAt, oneDayAgo)
-)
-```
-
----
-
-### 5. Authorization Bypass - Missing Workspace Ownership Validation
+### 4. Authorization Bypass - Missing Workspace Ownership Validation
 
 **File:** `/api/console/src/router/workspace.ts`
 **Lines:** 605-716 (statisticsComparison procedure)
@@ -268,58 +228,7 @@ statisticsComparison: protectedProcedure
 
 ---
 
-### 6. Insecure Token Storage - GitHub Access Token in Cookie
-
-**File:** `/apps/console/src/app/(github)/api/github/callback/route.ts`
-**Lines:** 161-167
-**Severity:** HIGH
-
-**Description:**
-The GitHub access token is stored in a cookie with insufficient security:
-
-```typescript
-response.cookies.set("github_user_token", accessToken, {
-  httpOnly: true,
-  secure: env.NODE_ENV === "production", // Not secure in dev!
-  sameSite: "lax", // Should be 'strict'
-  maxAge: 300, // 5 minutes
-  path: "/",
-});
-```
-
-**Issues:**
-1. `secure: env.NODE_ENV === "production"` - allows HTTP in development (attacker can MitM local dev)
-2. `sameSite: "lax"` - should be 'strict' for OAuth tokens
-3. Token is stored in plaintext in cookie (even if httpOnly)
-4. 5-minute window is still exploitable
-
-**Impact:**
-- Token theft via network sniffing in development
-- CSRF attacks due to lax SameSite policy
-- Cookie theft if XSS vulnerability exists elsewhere
-
-**Recommended Fix:**
-
-```typescript
-// 1. Encrypt the token before storing
-const encryptedToken = encrypt(accessToken, env.ENCRYPTION_KEY);
-
-response.cookies.set("github_user_token", encryptedToken, {
-  httpOnly: true,
-  secure: true, // Always secure, even in dev (use HTTPS locally)
-  sameSite: "strict", // Prevent CSRF
-  maxAge: 180, // Reduce to 3 minutes
-  path: "/api/github", // Restrict to specific path
-});
-
-// 2. Decrypt when reading
-const encryptedToken = request.cookies.get("github_user_token")?.value;
-const accessToken = decrypt(encryptedToken, env.ENCRYPTION_KEY);
-```
-
----
-
-### 7. Missing Rate Limiting on Expensive Operations
+### 5. Missing Rate Limiting on Expensive Operations
 
 **File:** `/api/console/src/router/repository.ts`
 **Lines:** 571-713 (reindex procedure)
@@ -375,7 +284,7 @@ reindex: protectedProcedure
 
 ---
 
-### 8. Authorization Bypass - Integration Resource Access
+### 6. Authorization Bypass - Integration Resource Access
 
 **File:** `/api/console/src/router/integration.ts`
 **Lines:** 674-713 (workspace.getStatus procedure)
@@ -474,58 +383,9 @@ getStatus: protectedProcedure
 
 ---
 
-## Medium Severity Issues (6)
+## Medium Severity Issues (1)
 
-### 9. XSS via dangerouslySetInnerHTML - Syntax Highlighting
-
-**File:** `/apps/console/src/components/lightfast-config-overview.tsx`
-**Lines:** 84-87
-**Severity:** MEDIUM
-
-**Description:**
-The component uses `dangerouslySetInnerHTML` to render syntax-highlighted code from Shiki:
-
-```typescript
-<div
-  className="..."
-  dangerouslySetInnerHTML={{ __html: highlightedCode }}
-/>
-```
-
-While Shiki is a trusted library, the input data (`workspaceId`, `workspaceName`, `stores`) comes from user-controlled database records.
-
-**Impact:**
-If workspace names or store names contain malicious payloads that bypass Shiki's escaping, XSS is possible.
-
-**Recommended Fix:**
-
-```typescript
-// 1. Sanitize input before passing to Shiki
-import DOMPurify from 'isomorphic-dompurify';
-
-const yamlConfig = `# Lightfast Configuration
-workspace:
-  id: ${workspaceId}
-  name: ${DOMPurify.sanitize(workspaceName)}
-
-stores:
-${stores
-  .map((store) => `  - name: ${DOMPurify.sanitize(store.name)}
-    embedding_dim: ${store.embeddingDim}`)
-  .join("\n\n")}
-...`;
-
-// 2. Sanitize Shiki output as well
-const html = await codeToHtml(yamlConfig, {
-  lang: "yaml",
-  theme: "github-dark",
-});
-setHighlightedCode(DOMPurify.sanitize(html));
-```
-
----
-
-### 10. Information Disclosure - Verbose Error Messages
+### 7. Information Disclosure - Verbose Error Messages
 
 **File:** Multiple tRPC routers
 **Severity:** MEDIUM
@@ -576,444 +436,27 @@ throw new TRPCError({
 
 ---
 
-### 11. Weak Encryption Key in Development
-
-**File:** `/api/console/src/env.ts` and `/apps/console/src/env.ts`
-**Lines:** 34-36 (api), 59-60 (app)
-**Severity:** MEDIUM
-
-**Description:**
-Both environment files use a weak default encryption key in development:
-
-```typescript
-.default(
-  process.env.NODE_ENV === "development"
-    ? "0000000000000000000000000000000000000000000000000000000000000000"
-    : ""
-)
-```
-
-**Impact:**
-- OAuth tokens encrypted with this key in dev can be easily decrypted
-- If dev database is shared or leaked, all tokens are compromised
-- Developers may accidentally deploy with default key
-
-**Recommended Fix:**
-
-```typescript
-// 1. Fail if encryption key is not set, even in dev
-ENCRYPTION_KEY: z.string().min(44).refine(
-  (key) => {
-    const hexPattern = /^[0-9a-f]{64}$/i;
-    const base64Pattern = /^[A-Za-z0-9+/]{43}=$/;
-    const isValid = hexPattern.test(key) || base64Pattern.test(key);
-
-    // Reject weak default key
-    if (key === "0000000000000000000000000000000000000000000000000000000000000000") {
-      throw new Error("Default ENCRYPTION_KEY is not allowed. Generate a secure key.");
-    }
-
-    return isValid;
-  },
-  { message: "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)" }
-),
-
-// 2. Add startup validation
-if (process.env.NODE_ENV === "development") {
-  console.warn("=".repeat(80));
-  console.warn("DEVELOPMENT MODE: Ensure ENCRYPTION_KEY is set in .env");
-  console.warn("Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"");
-  console.warn("=".repeat(80));
-}
-```
-
----
-
-### 12. Missing Input Validation - File Path Traversal
-
-**File:** `/api/console/src/router/integration.ts`
-**Lines:** 411-456 (detectConfig procedure)
-**Severity:** MEDIUM
-
-**Description:**
-The config detection tries multiple file paths but doesn't validate the repository structure:
-
-```typescript
-const candidates = [
-  "lightfast.yml",
-  ".lightfast.yml",
-  "lightfast.yaml",
-  ".lightfast.yaml",
-];
-
-for (const path of candidates) {
-  const { data } = await octokit.request(
-    "GET /repos/{owner}/{repo}/contents/{path}",
-    { owner, repo, path, ref }
-  );
-}
-```
-
-**Impact:**
-While GitHub API prevents path traversal, the code doesn't validate:
-- The ref parameter could point to arbitrary branches/tags
-- No size limit on config file (could be malicious large file)
-- No validation of YAML content before parsing
-
-**Recommended Fix:**
-
-```typescript
-// 1. Validate ref parameter
-if (input.ref && !/^[a-zA-Z0-9._/-]+$/.test(input.ref)) {
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: "Invalid ref format"
-  });
-}
-
-// 2. Add size limit
-if ("content" in data && "size" in data) {
-  const maxSize = 50 * 1024; // 50KB max
-  if (data.size > maxSize) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Config file too large"
-    });
-  }
-}
-
-// 3. Validate YAML before returning
-try {
-  yaml.parse(content);
-} catch (e) {
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: "Invalid YAML format"
-  });
-}
-```
-
----
-
-### 13. Race Condition - Concurrent Workspace Creation
-
-**File:** `/api/console/src/router/workspace.ts`
-**Lines:** 381-456 (create procedure)
-**Severity:** MEDIUM
-
-**Description:**
-The workspace creation checks for duplicates then inserts, creating a TOCTOU (Time-of-Check-Time-of-Use) race condition:
-
-```typescript
-// Check if new name already exists
-const existingWorkspace = await db.query.workspaces.findFirst({
-  where: and(
-    eq(workspaces.clerkOrgId, clerkOrgId),
-    eq(workspaces.name, input.newWorkspaceName),
-  ),
-});
-
-if (existingWorkspace && existingWorkspace.id !== workspaceId) {
-  throw new TRPCError({ code: "CONFLICT" });
-}
-
-// Later: insert without transaction
-await db.insert(workspaces).values({ name: input.newWorkspaceName });
-```
-
-**Impact:**
-Two concurrent requests with the same workspace name can both pass the check and create duplicates.
-
-**Recommended Fix:**
-
-```typescript
-// 1. Add unique constraint to database schema
-// db/console/schema/workspaces.ts
-export const workspaces = sqliteTable("workspaces", {
-  // ...
-}, (table) => ({
-  uniqueOrgWorkspace: unique().on(table.clerkOrgId, table.name),
-}));
-
-// 2. Use database transaction
-await db.transaction(async (tx) => {
-  const existing = await tx.query.workspaces.findFirst({
-    where: and(
-      eq(workspaces.clerkOrgId, clerkOrgId),
-      eq(workspaces.name, input.workspaceName)
-    ),
-  });
-
-  if (existing) {
-    throw new TRPCError({ code: "CONFLICT" });
-  }
-
-  const result = await tx.insert(workspaces).values({
-    clerkOrgId,
-    name: input.workspaceName,
-    // ...
-  }).returning();
-
-  return result[0];
-});
-```
-
----
-
-### 14. Insufficient CORS Configuration
-
-**File:** `/apps/console/src/app/(trpc)/api/trpc/[trpc]/route.ts`
-**Lines:** 18-48
-**Severity:** MEDIUM
-
-**Description:**
-CORS configuration allows all origins in non-production environments:
-
-```typescript
-const allowOrigin = !isProductionDeploy
-  ? "*" // Allows ANY origin in dev/preview!
-  : originHeader && productionOrigins.has(originHeader)
-    ? originHeader
-    : null;
-```
-
-**Impact:**
-- In preview deployments, any website can call the API
-- Credentials are sent with wildcard origin in dev
-- Preview branches are vulnerable to CSRF from malicious sites
-
-**Recommended Fix:**
-
-```typescript
-// 1. Define allowed origins for each environment
-const allowedOrigins = new Set([
-  "https://console.lightfast.ai", // Production
-  ...(env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-    ? [`https://${env.VERCEL_URL}`] // Only current preview
-    : []),
-  ...(env.NODE_ENV === "development"
-    ? ["http://localhost:4107", "http://localhost:3024"] // Only known dev ports
-    : []),
-]);
-
-// 2. Never use wildcard
-const allowOrigin = originHeader && allowedOrigins.has(originHeader)
-  ? originHeader
-  : null;
-
-if (!allowOrigin) {
-  return new Response("Forbidden", { status: 403 });
-}
-```
-
----
-
-## Low Severity Issues (3)
-
-### 15. Missing Security Headers
-
-**File:** `/apps/console/src/middleware.ts`
-**Lines:** 33-37
-**Severity:** LOW
-
-**Description:**
-Middleware sets some security headers but is missing critical ones:
-
-```typescript
-response.headers.set("X-Frame-Options", "DENY");
-response.headers.set("X-Content-Type-Options", "nosniff");
-response.headers.set("Referrer-Policy", "origin-when-cross-origin");
-// Missing: CSP, Permissions-Policy, HSTS, etc.
-```
-
-**Recommended Fix:**
-
-```typescript
-// Add comprehensive security headers
-response.headers.set("X-Frame-Options", "DENY");
-response.headers.set("X-Content-Type-Options", "nosniff");
-response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-response.headers.set("X-XSS-Protection", "1; mode=block");
-response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
-
-// Content Security Policy
-response.headers.set(
-  "Content-Security-Policy",
-  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
-);
-
-// HSTS (only in production with HTTPS)
-if (env.NODE_ENV === "production") {
-  response.headers.set(
-    "Strict-Transport-Security",
-    "max-age=31536000; includeSubDomains; preload"
-  );
-}
-```
-
----
-
-### 16. Logging Sensitive Data
-
-**File:** `/api/console/src/trpc.ts`
-**Lines:** 52
-**Severity:** LOW
-
-**Description:**
-The tRPC context logs user IDs for every request:
-
-```typescript
-console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
-```
-
-**Impact:**
-- User IDs in logs could be correlated for tracking
-- Logs may be sent to third-party services (Sentry, etc.)
-- Violates privacy best practices (GDPR, CCPA)
-
-**Recommended Fix:**
-
-```typescript
-// Hash or truncate user IDs in logs
-import crypto from 'crypto';
-
-const hashedUserId = crypto
-  .createHash('sha256')
-  .update(clerkSession.userId)
-  .digest('hex')
-  .substring(0, 8);
-
-console.info(`>>> tRPC Request from ${source} by user:${hashedUserId}`);
-```
-
----
-
-### 17. Missing API Key Rotation Mechanism
-
-**File:** `/api/console/src/router/account.ts`
-**Lines:** 148-303 (apiKeys procedures)
-**Severity:** LOW
-
-**Description:**
-API key management allows creation, revoke, and delete, but:
-- No expiration enforcement (keys can be used indefinitely if `expiresAt` is null)
-- No rotation mechanism (replacing old key with new)
-- No usage tracking (lastUsedAt is stored but never updated)
-
-✅ **COMPLETED:** Migrated account router to use `@repo/console-api-key` package with configurable `lf_` prefix support
-
-**Impact:**
-- Compromised keys remain valid forever
-- No way to force key rotation for security compliance
-- Difficult to audit key usage
-
-**Remaining Work:**
-
-**Step 1: Add key rotation mutation**
-```typescript
-rotate: protectedProcedure
-  .input(z.object({ keyId: z.string() }))
-  .mutation(async ({ ctx, input }) => {
-    // Verify ownership
-    const [oldKey] = await ctx.db.select()
-      .from(apiKeys)
-      .where(and(
-        eq(apiKeys.id, input.keyId),
-        eq(apiKeys.userId, ctx.auth.userId)
-      ))
-      .limit(1);
-
-    if (!oldKey) {
-      throw new TRPCError({ code: "NOT_FOUND" });
-    }
-
-    // Create new key with same settings
-    const newApiKey = generateApiKey();
-    const newKeyHash = await hashApiKey(newApiKey);
-    const newKeyPreview = extractKeyPreview(newApiKey);
-
-    await ctx.db.transaction(async (tx) => {
-      // Revoke old key
-      await tx.update(apiKeys)
-        .set({ isActive: false })
-        .where(eq(apiKeys.id, input.keyId));
-
-      // Create new key
-      await tx.insert(apiKeys).values({
-        userId: ctx.auth.userId,
-        name: oldKey.name,
-        keyHash: newKeyHash,
-        keyPreview: newKeyPreview,
-        isActive: true,
-        expiresAt: oldKey.expiresAt,
-      });
-    });
-
-    return { key: newApiKey };
-  }),
-```
-
-**Step 3: Add expiration enforcement middleware**
-```typescript
-const apiKeyMiddleware = publicProcedure.use(async ({ ctx, next }) => {
-  const apiKey = ctx.headers.get('x-api-key');
-
-  if (!apiKey || !isValidApiKeyFormat(apiKey)) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid API key format" });
-  }
-
-  const keyHash = await hashApiKey(apiKey);
-  const key = await ctx.db.query.apiKeys.findFirst({
-    where: and(
-      eq(apiKeys.keyHash, keyHash),
-      eq(apiKeys.isActive, true)
-    )
-  });
-
-  if (!key) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid API key" });
-  }
-
-  // Check expiration
-  if (key.expiresAt && new Date(key.expiresAt) < new Date()) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "API key has expired"
-    });
-  }
-
-  // Update lastUsedAt (fire-and-forget)
-  void ctx.db.update(apiKeys)
-    .set({ lastUsedAt: new Date().toISOString() })
-    .where(eq(apiKeys.id, key.id));
-
-  return next({
-    ctx: {
-      ...ctx,
-      apiKey: key
-    }
-  });
-});
-```
-
-**Benefits of using `@packages/console-api-key`:**
-- ✅ Consistent key format across codebase (`console_sk_` prefix)
-- ✅ Proper format validation before hashing
-- ✅ Collision-resistant nanoid (vs base64url)
-- ✅ Reusable in CLI, SDK, and other packages
-- ✅ Web Crypto API (portable, browser-compatible if needed)
-
----
-
 ## Summary of Findings
 
 | Severity | Count | Issues |
 |----------|-------|--------|
 | **Critical** | 3 | Unauthenticated repository mutations, OAuth CSRF, Webhook signature bypass |
-| **High** | 5 | SQL injection, Authorization bypass (multiple), Token storage, Missing rate limiting |
-| **Medium** | 6 | XSS, Error disclosure, Weak encryption, Path traversal, Race condition, CORS |
-| **Low** | 3 | Missing headers, Logging sensitive data, API key rotation |
-| **Total** | **17** | |
+| **High** | 3 | Authorization bypass (workspace stats, integration resources), Missing rate limiting |
+| **Medium** | 1 | Error disclosure |
+| **Low** | 0 | - |
+| **Total** | **7** | |
+
+### Completed Issues (10)
+- ✅ Issue #4 (HIGH): SQL Injection - Fixed with Drizzle query builder
+- ✅ Issue #6 (HIGH): Token Storage - Implemented AES-256-GCM encryption
+- ✅ Issue #9 (MEDIUM): XSS - Added DOMPurify sanitization
+- ✅ Issue #11 (MEDIUM): Weak Encryption Key - Enforced strong key validation
+- ✅ Issue #12 (MEDIUM): Input Validation - Added ref, size, and YAML validation
+- ✅ Issue #13 (MEDIUM): Race Condition - Wrapped in database transaction
+- ✅ Issue #14 (MEDIUM): CORS Configuration - Strict origin whitelist per environment
+- ✅ Issue #15 (LOW): Security Headers - Implemented Nosecone for comprehensive headers
+- ✅ Issue #16 (LOW): Logging Sensitive Data - Reverted (user feedback)
+- ✅ Issue #17 (LOW): API Key Rotation - Added rotation mutation
 
 ---
 
@@ -1428,8 +871,8 @@ export async function acquireM2MToken(
 **REMAINING PACKAGES:**
 | Package | Addresses Issues | Priority | Impact | Effort |
 |---------|-----------------|----------|--------|--------|
-| `console-errors` | #10 (MEDIUM) | P2 | Medium | Medium |
-| `console-rate-limiting` | #7 (HIGH) - Deferred | P3 | Low | Medium |
+| `console-errors` | #7 (MEDIUM) | P2 | Medium | Medium |
+| `console-rate-limiting` | #5 (HIGH) - Deferred | P3 | Low | Medium |
 | `console-m2m-auth` | #1 (CRITICAL) - After M2M | P3 | Medium | Low |
 
 **Recommendation:** Implement remaining packages to complete the security infrastructure.
@@ -1439,26 +882,17 @@ export async function acquireM2MToken(
 ## Immediate Actions Required
 
 ### Priority 1 (Critical - Fix within 24 hours)
-1. Add webhook signature verification middleware to repository mutation procedures
-2. Implement proper OAuth state validation with expiration
-3. Fix webhook signature verification timing and ordering
+1. **Issue #1**: Add webhook signature verification middleware to repository mutation procedures
+2. **Issue #2**: Implement proper OAuth state validation with expiration
+3. **Issue #3**: Fix webhook signature verification timing and ordering
 
 ### Priority 2 (High - Fix within 1 week)
-4. Fix authorization bypass in workspace statistics procedures
-5. Add rate limiting to reindex operations
-6. Secure GitHub token storage with encryption
-7. Replace raw SQL with type-safe Drizzle queries
+4. **Issue #4**: Fix authorization bypass in workspace statistics procedures
+5. **Issue #5**: Add rate limiting to reindex operations
+6. **Issue #6**: Fix authorization bypass in integration resource access
 
 ### Priority 3 (Medium - Fix within 2 weeks)
-8. Add input sanitization for user-generated content in React components
-9. Implement generic error messages for production
-10. Remove default encryption key, require strong keys
-11. Add CORS whitelist for all environments
-
-### Priority 4 (Low - Fix within 1 month)
-12. Add comprehensive security headers
-13. Implement API key rotation and expiration enforcement
-14. Hash user IDs in logs
+7. **Issue #7**: Implement generic error messages for production
 
 ---
 

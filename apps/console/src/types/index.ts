@@ -52,14 +52,14 @@ export type Store = WorkspaceStats["stores"]["list"][number];
  * Helper types for extracting specific metrics from WorkspaceStats
  * Used by presentational components that receive individual stat fields
  */
-export type WorkspaceMetricsSummary = {
+export interface WorkspaceMetricsSummary {
   sourcesCount: WorkspaceStats["sources"]["total"];
   totalDocuments: WorkspaceStats["documents"]["total"];
   totalChunks: WorkspaceStats["documents"]["chunks"];
   successRate: WorkspaceStats["jobs"]["successRate"];
   avgDurationMs: WorkspaceStats["jobs"]["avgDurationMs"];
   recentJobsCount: WorkspaceStats["jobs"]["total"];
-};
+}
 
 // ============================================================================
 // Integration

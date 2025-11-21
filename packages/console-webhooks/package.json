@@ -6,23 +6,23 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./github": {
       "types": "./dist/github.d.ts",
-      "default": "./src/github.ts"
+      "default": "./dist/github.js"
     },
     "./linear": {
       "types": "./dist/linear.d.ts",
-      "default": "./src/linear.ts"
+      "default": "./dist/linear.js"
     },
     "./common": {
       "types": "./dist/common.d.ts",
-      "default": "./src/common.ts"
+      "default": "./dist/common.js"
     },
     "./types": {
       "types": "./dist/types.d.ts",
-      "default": "./src/types.ts"
+      "default": "./dist/types.js"
     }
   },
   "scripts": {

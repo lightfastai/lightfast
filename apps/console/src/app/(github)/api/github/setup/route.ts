@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
 	if (installationId) {
 		response.cookies.set("github_setup_installation_id", installationId, {
 			httpOnly: true,
-			secure: env.NODE_ENV === "production",
-			sameSite: "lax",
+			secure: true, // Always secure (use HTTPS in dev)
+			sameSite: "strict", // Prevent CSRF
 			maxAge: 600, // 10 minutes
-			path: "/",
+			path: "/api/github", // Restrict to GitHub paths
 		});
 	}
 

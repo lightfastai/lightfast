@@ -18,7 +18,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { cn } from "@repo/ui/lib/utils";
-import type { Workspace } from "~/types";
 
 interface WorkspacesListProps {
   orgSlug: string;

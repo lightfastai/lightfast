@@ -8,7 +8,7 @@ import {
   jobs,
   DeusConnectedRepository,
 } from "@db/console/schema";
-import { eq, and, desc, count, sql, inArray, sum, avg } from "drizzle-orm";
+import { eq, and, desc, count, sql, inArray, sum, avg, gte, lte } from "drizzle-orm";
 import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
 import {
   workspaceListInputSchema,
@@ -326,11 +326,15 @@ export const workspaceRouter = {
     .query(async ({ input }) => {
       // Find connected GitHub source by organization slug
       // GitHub installations store accountLogin in sourceMetadata
+      // Use type-safe JSON extraction instead of raw SQL interpolation
       const githubSource = await db.query.connectedSources.findFirst({
         where: and(
           eq(connectedSources.sourceType, "github"),
           eq(connectedSources.isActive, true),
-          sql`${connectedSources.sourceMetadata}->>'accountLogin' = ${input.githubOrgSlug}`,
+          eq(
+            sql`${connectedSources.sourceMetadata}->>'accountLogin'`,
+            input.githubOrgSlug
+          ),
         ),
       });
 
@@ -537,10 +541,8 @@ export const workspaceRouter = {
         .where(eq(stores.workspaceId, workspaceId));
 
       // Get recent jobs (last 24 hours)
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace("T", " ");
+      // Use Date object with gte operator instead of raw SQL string comparison
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
       // Get job statistics with SQL aggregation (single query)
       const [jobStats] = await db
@@ -557,7 +559,7 @@ export const workspaceRouter = {
         .where(
           and(
             eq(jobs.workspaceId, workspaceId),
-            sql`${jobs.createdAt} >= ${oneDayAgo}`,
+            gte(jobs.createdAt, oneDayAgo),
           ),
         );
 
@@ -565,7 +567,7 @@ export const workspaceRouter = {
       const recentJobs = await db.query.jobs.findMany({
         where: and(
           eq(jobs.workspaceId, workspaceId),
-          sql`${jobs.createdAt} >= ${oneDayAgo}`,
+          gte(jobs.createdAt, oneDayAgo),
         ),
         orderBy: [desc(jobs.createdAt)],
         limit: 5,
@@ -664,8 +666,8 @@ export const workspaceRouter = {
           .where(
             and(
               eq(jobs.workspaceId, workspaceId),
-              sql`${jobs.createdAt} >= ${start}`,
-              sql`${jobs.createdAt} <= ${end}`,
+              gte(jobs.createdAt, start),
+              lte(jobs.createdAt, end),
             ),
           );
 
@@ -777,7 +779,7 @@ export const workspaceRouter = {
         where: and(
           eq(jobs.workspaceId, workspaceId),
           eq(jobs.status, "completed"),
-          sql`${jobs.createdAt} >= ${startTime}`,
+          gte(jobs.createdAt, startTime),
           sql`${jobs.durationMs} IS NOT NULL`,
         ),
         columns: {
@@ -851,7 +853,7 @@ export const workspaceRouter = {
       const recentJobs = await db.query.jobs.findMany({
         where: and(
           eq(jobs.workspaceId, workspaceId),
-          sql`${jobs.createdAt} >= ${startTime}`,
+          gte(jobs.createdAt, startTime),
         ),
         columns: {
           createdAt: true,
@@ -960,15 +962,13 @@ export const workspaceRouter = {
       });
 
       // Get recent jobs for health calculation (last 24h)
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace("T", " ");
+      // Use Date object with gte operator instead of raw SQL string comparison
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
       const recentJobs = await db.query.jobs.findMany({
         where: and(
           eq(jobs.workspaceId, workspaceId),
-          sql`${jobs.createdAt} >= ${oneDayAgo}`,
+          gte(jobs.createdAt, oneDayAgo),
         ),
         columns: {
           status: true,

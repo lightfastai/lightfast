@@ -74,6 +74,10 @@ export async function getOrCreateDefaultWorkspace(
  * - name: User-provided (e.g., "my-project", "api.v2"), must be unique per org
  * - slug: Auto-generated from name for internal use (Pinecone)
  *
+ * Concurrency Safety:
+ * - Wrapped in transaction to prevent race conditions
+ * - Unique constraint on (clerkOrgId, name) enforced at database level
+ *
  * @param clerkOrgId - Clerk organization ID
  * @param name - User-provided workspace name (must follow GitHub repo naming rules)
  * @returns Workspace ID (nanoid)
@@ -85,34 +89,38 @@ export async function createCustomWorkspace(
   // Generate internal slug from user-provided name
   const internalSlug = generateWorkspaceSlug(name);
 
-  // Check if name already exists in this organization (names must be unique)
-  const existing = await db.query.workspaces.findFirst({
-    where: and(
-      eq(workspaces.clerkOrgId, clerkOrgId),
-      eq(workspaces.name, name),
-    ),
+  // Wrap in transaction to prevent race conditions
+  return await db.transaction(async (tx) => {
+    // Check if name already exists in this organization (names must be unique)
+    const existing = await tx.query.workspaces.findFirst({
+      where: and(
+        eq(workspaces.clerkOrgId, clerkOrgId),
+        eq(workspaces.name, name),
+      ),
+    });
+
+    if (existing) {
+      throw new Error(`Workspace with name "${name}" already exists`);
+    }
+
+    // Create custom workspace with nanoid
+    // Database unique constraint (workspace_org_name_idx) will catch duplicates
+    const [newWorkspace] = await tx
+      .insert(workspaces)
+      .values({
+        // id is auto-generated nanoid via $defaultFn
+        clerkOrgId,
+        name,                // User-facing, used in URLs
+        slug: internalSlug,  // Internal, used for Pinecone
+        isDefault: false,
+        settings: {},
+      })
+      .returning({ id: workspaces.id });
+
+    if (!newWorkspace) {
+      throw new Error("Failed to create workspace");
+    }
+
+    return newWorkspace.id;
   });
-
-  if (existing) {
-    throw new Error(`Workspace with name "${name}" already exists`);
-  }
-
-  // Create custom workspace with nanoid
-  const [newWorkspace] = await db
-    .insert(workspaces)
-    .values({
-      // id is auto-generated nanoid via $defaultFn
-      clerkOrgId,
-      name,                // User-facing, used in URLs
-      slug: internalSlug,  // Internal, used for Pinecone
-      isDefault: false,
-      settings: {},
-    })
-    .returning({ id: workspaces.id });
-
-  if (!newWorkspace) {
-    throw new Error("Failed to create workspace");
-  }
-
-  return newWorkspace.id;
 }

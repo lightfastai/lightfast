@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import DOMPurify from "isomorphic-dompurify";
 import { FileCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
@@ -30,20 +31,30 @@ export function LightfastConfigOverview({
 }: LightfastConfigOverviewProps) {
 	const [highlightedCode, setHighlightedCode] = useState<string>("");
 
-	// Generate lightfast.yml config
+	// Generate lightfast.yml config with sanitized user input
+	// Sanitize all user-provided data to prevent XSS
+	const sanitizedWorkspaceName = DOMPurify.sanitize(workspaceName, {
+		ALLOWED_TAGS: [],
+		ALLOWED_ATTR: [],
+	});
+
 	const yamlConfig = `# Lightfast Configuration
 workspace:
   id: ${workspaceId}
-  name: ${workspaceName}
+  name: ${sanitizedWorkspaceName}
 
 stores:
 ${stores
-	.map(
-		(store) => `  - name: ${store.name}
+	.map((store) => {
+		const sanitizedStoreName = DOMPurify.sanitize(store.name, {
+			ALLOWED_TAGS: [],
+			ALLOWED_ATTR: [],
+		});
+		return `  - name: ${sanitizedStoreName}
     embedding_dim: ${store.embeddingDim}
     vector_db: pinecone
-    index_type: hnsw`,
-	)
+    index_type: hnsw`;
+	})
 	.join("\n\n")}
 
 indexing:
@@ -63,11 +74,20 @@ retrieval:
 					lang: "yaml",
 					theme: "github-dark",
 				});
-				setHighlightedCode(html);
+				// Sanitize Shiki output as additional layer of defense
+				const sanitizedHtml = DOMPurify.sanitize(html, {
+					ALLOWED_TAGS: ["pre", "code", "span", "div"],
+					ALLOWED_ATTR: ["class", "style"],
+				});
+				setHighlightedCode(sanitizedHtml);
 			} catch (error) {
 				console.error("Failed to highlight code:", error);
-				// Fallback to plain text
-				setHighlightedCode(`<pre><code>${yamlConfig}</code></pre>`);
+				// Fallback to plain text (sanitized)
+				const sanitizedYaml = DOMPurify.sanitize(yamlConfig, {
+					ALLOWED_TAGS: [],
+					ALLOWED_ATTR: [],
+				});
+				setHighlightedCode(`<pre><code>${sanitizedYaml}</code></pre>`);
 			}
 		}
 

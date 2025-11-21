@@ -185,7 +185,7 @@ function JobRow({ job }: { job: Job }) {
 						: formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}
 				</TableCell>
 				<TableCell className="text-sm text-muted-foreground">
-					{job.durationMs !== null && job.durationMs !== undefined ? (
+					{job.durationMs !== null ? (
 						formatDuration(Number.parseInt(job.durationMs, 10))
 					) : job.status === "running" ? (
 						<span className="flex items-center gap-1.5">

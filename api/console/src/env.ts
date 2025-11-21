@@ -13,6 +13,10 @@ export const env = createEnv({
     /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/console to encrypt tokens
+     *
+     * Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+     *
+     * ⚠️ REQUIRED in all environments - no weak defaults allowed
      */
     ENCRYPTION_KEY: z
       .string()
@@ -29,11 +33,22 @@ export const env = createEnv({
             "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
         },
       )
-      .default(
-        // Only allow default in development
-        process.env.NODE_ENV === "development"
-          ? "0000000000000000000000000000000000000000000000000000000000000000"
-          : "",
+      .refine(
+        (key) => {
+          // Reject weak default key (all zeros)
+          const weakKey =
+            "0000000000000000000000000000000000000000000000000000000000000000";
+          if (key === weakKey) {
+            throw new Error(
+              'Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+            );
+          }
+          return true;
+        },
+        {
+          message:
+            "ENCRYPTION_KEY must be a cryptographically secure random value",
+        },
       ),
   },
   client: {},

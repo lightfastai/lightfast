@@ -408,6 +408,15 @@ export const integrationRouter = {
             ref = repoInfo.default_branch;
           }
 
+          // Validate ref format to prevent injection attacks
+          // Allow: alphanumeric, dots, dashes, slashes, underscores
+          if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Invalid ref format. Only alphanumeric characters, dots, dashes, slashes, and underscores are allowed.",
+            });
+          }
+
           // Try common config file names
           const candidates = [
             "lightfast.yml",
@@ -431,9 +440,31 @@ export const integrationRouter = {
 
               // Check if it's a file (not directory)
               if ("content" in data && "type" in data && data.type === "file") {
+                // Validate file size (max 50KB to prevent abuse)
+                const maxSize = 50 * 1024; // 50KB
+                if ("size" in data && typeof data.size === "number") {
+                  if (data.size > maxSize) {
+                    throw new TRPCError({
+                      code: "BAD_REQUEST",
+                      message: `Config file too large. Maximum size is ${maxSize / 1024}KB.`,
+                    });
+                  }
+                }
+
                 const content = Buffer.from(data.content, "base64").toString(
                   "utf-8"
                 );
+
+                // Validate YAML format before returning
+                try {
+                  const yaml = await import("yaml");
+                  yaml.parse(content);
+                } catch (yamlError) {
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Invalid YAML format in config file.",
+                  });
+                }
 
                 return {
                   exists: true,

@@ -11,7 +11,6 @@ import { PerformanceMetrics } from "./performance-metrics";
 import { SystemHealthOverview } from "./system-health-overview";
 import { LightfastConfigOverview } from "./lightfast-config-overview";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import type { WorkspaceResolution, WorkspaceStats } from "~/types";
 
 interface WorkspaceDashboardProps {
   orgSlug: string;

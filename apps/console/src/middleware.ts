@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { nosecone, defaults } from "@nosecone/next";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authUrl } from "~/lib/related-projects";
@@ -30,21 +31,29 @@ export default clerkMiddleware(
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
-    // Security headers
-    const response = NextResponse.next();
-    response.headers.set("X-Frame-Options", "DENY");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+    // Create base response
+    let response = NextResponse.next();
 
     // Redirect pending users to team creation (unless already there or on public route)
     if (isPending && !isTeamCreationRoute(req) && !isPublicRoute(req)) {
-      return NextResponse.redirect(new URL("/account/teams/new", req.url));
+      response = NextResponse.redirect(new URL("/account/teams/new", req.url));
     }
 
     // Protect all routes except public and team creation routes
     // This requires active authentication (pending users will be redirected to sign-in)
     if (!isPublicRoute(req) && !isTeamCreationRoute(req)) {
       await auth.protect();
+    }
+
+    // Apply comprehensive security headers via Nosecone
+    // Nosecone provides: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, etc.
+    const secureHeaders = nosecone({
+      ...defaults,
+    });
+
+    // Apply security headers to response
+    for (const [key, value] of secureHeaders.entries()) {
+      response.headers.set(key, value);
     }
 
     return response;

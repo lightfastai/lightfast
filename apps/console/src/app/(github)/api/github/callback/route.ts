@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/?github_error=invalid_state`);
   }
 
-  const stateValidation = await validateOAuthState(state, storedStateEncoded);
+  const stateValidation = validateOAuthState(state, storedStateEncoded);
   if (!stateValidation.valid) {
     const errorParam = stateValidation.error === "expired"
       ? "state_expired"

@@ -20,7 +20,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import { workspaceSettingsFormSchema, type WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
+import { workspaceSettingsFormSchema } from "@repo/console-validation/forms";
+import type { WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
 
 interface WorkspaceGeneralSettingsClientProps {
 	slug: string;

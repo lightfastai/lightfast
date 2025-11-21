@@ -8,26 +8,50 @@ import { env } from "~/env";
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
 
-const isProductionDeploy = env.VERCEL_ENV === "production";
-
 /**
- * Configure CORS headers:
- * - Production: restrict to known origins
- * - Other environments: allow all origins for easier local/preview development
+ * Configure CORS headers with strict origin control
+ *
+ * Security: Never use wildcard origins to prevent CSRF attacks
+ * - Production: Only allow lightfast.ai (all microfrontends served from main domain)
+ * - Preview: Only allow the specific Vercel preview URL
+ * - Development: Only allow known local dev ports
+ *
+ * Note: Console app is a microfrontend served from lightfast.ai
+ * See: apps/console/microfrontends.json
  */
-const productionOrigins = new Set(["https://console.lightfast.ai"]);
+const getAllowedOrigins = (): Set<string> => {
+	const origins = new Set<string>();
+
+	// Production origins (all microfrontends served from lightfast.ai)
+	if (env.VERCEL_ENV === "production") {
+		origins.add("https://lightfast.ai");
+	}
+
+	// Preview deployment origins (Vercel preview URLs)
+	if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
+		origins.add(`https://${env.VERCEL_URL}`);
+	}
+
+	// Development origins (known local ports from microfrontends.json)
+	if (env.NODE_ENV === "development") {
+		origins.add("http://localhost:4107"); // Console app (local dev)
+		origins.add("http://localhost:3024"); // Microfrontends proxy
+		origins.add("http://localhost:4101"); // WWW app
+		origins.add("http://localhost:4104"); // Auth app
+	}
+
+	return origins;
+};
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
 	const originHeader = req.headers.get("origin");
-	const requestOrigin = req.nextUrl.origin;
+	const allowedOrigins = getAllowedOrigins();
 
-	const allowOrigin = !isProductionDeploy
-		? "*"
-		: originHeader &&
-				(productionOrigins.has(originHeader) || originHeader === requestOrigin)
-			? originHeader
-			: null;
+	// Check if origin is in allowed list
+	const allowOrigin =
+		originHeader && allowedOrigins.has(originHeader) ? originHeader : null;
 
+	// Reject requests from unauthorized origins
 	if (!allowOrigin) {
 		return res;
 	}
@@ -38,11 +62,8 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
 		"Access-Control-Allow-Headers",
 		"content-type,authorization,x-trpc-source",
 	);
-
-	if (allowOrigin !== "*") {
-		res.headers.set("Vary", "Origin");
-		res.headers.set("Access-Control-Allow-Credentials", "true");
-	}
+	res.headers.set("Vary", "Origin");
+	res.headers.set("Access-Control-Allow-Credentials", "true");
 
 	return res;
 };
