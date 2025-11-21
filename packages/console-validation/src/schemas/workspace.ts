@@ -261,8 +261,8 @@ export type WorkspaceResolveFromGithubOrgSlugInput = z.infer<
  * - tRPC workspace.statisticsComparison procedure
  */
 export const workspaceStatisticsComparisonInputSchema = z.object({
-  workspaceId: insertWorkspaceSchemaBase.shape.id,
-  clerkOrgId: insertWorkspaceSchemaBase.shape.clerkOrgId,
+  clerkOrgSlug: clerkOrgSlugSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
   currentStart: z.string(), // ISO datetime
   currentEnd: z.string(), // ISO datetime
   previousStart: z.string(), // ISO datetime

@@ -12,7 +12,7 @@ import { inngest } from "@api/console/inngest";
 import { env } from "../env";
 import { getWorkspaceKey } from "@db/console/utils";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure, webhookProcedure } from "../trpc";
 
 // Helper to create GitHub App instance
 function getGitHubApp() {
@@ -216,15 +216,16 @@ export const repositoryRouter = {
     }),
 
   /**
-   * Internal procedures for webhooks (PUBLIC - no auth needed)
-   * These are used by GitHub webhooks to manage repository state
+   * Internal procedures for webhooks (WEBHOOK-AUTHENTICATED)
+   * These are only accessible from verified webhook handlers
+   * See: apps/console/src/app/(github)/api/github/webhooks/route.ts
    */
 
   /**
    * Find active repository by GitHub repo ID
    * Used by webhooks to lookup repositories
    */
-  findActiveByGithubRepoId: publicProcedure
+  findActiveByGithubRepoId: webhookProcedure
     .input(z.object({ githubRepoId: z.string() }))
     .query(async ({ ctx, input }) => {
       const result = await ctx.db
@@ -244,7 +245,7 @@ export const repositoryRouter = {
    * Mark repository as inactive
    * Used by webhooks when repository is disconnected or deleted
    */
-  markInactive: publicProcedure
+  markInactive: webhookProcedure
     .input(
       z.object({
         githubRepoId: z.string(),
@@ -273,7 +274,7 @@ export const repositoryRouter = {
    * Mark all repositories for an installation as inactive
    * Used by webhooks when GitHub App is uninstalled
    */
-  markInstallationInactive: publicProcedure
+  markInstallationInactive: webhookProcedure
     .input(z.object({ githubInstallationId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
@@ -291,7 +292,7 @@ export const repositoryRouter = {
    * Update repository metadata
    * Used by webhooks to keep cached metadata fresh
    */
-  updateMetadata: publicProcedure
+  updateMetadata: webhookProcedure
     .input(
       z.object({
         githubRepoId: z.string(),
@@ -318,7 +319,7 @@ export const repositoryRouter = {
    * Mark repository as deleted
    * Used by webhooks when repository is deleted on GitHub
    */
-  markDeleted: publicProcedure
+  markDeleted: webhookProcedure
     .input(z.object({ githubRepoId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
@@ -334,7 +335,7 @@ export const repositoryRouter = {
    * Update repository config status
    * Used by webhooks when lightfast.yml is modified
    */
-  updateConfigStatus: publicProcedure
+  updateConfigStatus: webhookProcedure
     .input(
       z.object({
         githubRepoId: z.string(),

@@ -637,20 +637,21 @@ export const workspaceRouter = {
    */
   statisticsComparison: protectedProcedure
     .input(workspaceStatisticsComparisonInputSchema)
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name (user-facing) and verify access
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
       const {
-        workspaceId: inputWorkspaceId,
         currentStart,
         currentEnd,
         previousStart,
         previousEnd,
       } = input;
-
-      // Ensure workspaceId is defined (required by schema but typed as optional due to $defaultFn)
-      if (!inputWorkspaceId) {
-        throw new Error("Workspace ID is required");
-      }
-      const workspaceId: string = inputWorkspaceId;
 
       // Helper to get stats for a period
       const getStatsForPeriod = async (start: string, end: string) => {

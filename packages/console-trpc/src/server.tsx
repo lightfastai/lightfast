@@ -24,6 +24,20 @@ const createContext = cache(async () => {
   });
 });
 
+/**
+ * Create context for internal webhook calls
+ * Sets x-webhook-source header to identify server-side calls from webhook handlers
+ */
+const createWebhookContext = cache(async () => {
+  const heads = new Headers();
+  heads.set("x-trpc-source", "webhook-service");
+  heads.set("x-webhook-source", "internal");
+
+  return createTRPCContext({
+    headers: heads,
+  });
+});
+
 export const getQueryClient = cache(createQueryClient);
 
 export const trpc: TRPCOptionsProxy<ConsoleAppRouter> = createTRPCOptionsProxy({
@@ -32,8 +46,13 @@ export const trpc: TRPCOptionsProxy<ConsoleAppRouter> = createTRPCOptionsProxy({
   queryClient: getQueryClient,
 });
 
+/**
+ * Create a server-side tRPC caller for webhook handlers
+ * This caller is authenticated as an internal webhook source
+ * and should only be used by verified webhook handlers (after signature verification)
+ */
 export const createCaller = cache(async () => {
-  const ctx = await createContext();
+  const ctx = await createWebhookContext();
   return consoleAppRouter.createCaller(ctx);
 });
 

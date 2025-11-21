@@ -705,16 +705,43 @@ export const integrationRouter = {
     getStatus: protectedProcedure
       .input(
         z.object({
-          workspaceId: z.string(),
+          clerkOrgSlug: z.string(),
+          workspaceName: z.string(),
           repoFullName: z.string(), // "owner/repo"
         })
       )
       .query(async ({ ctx, input }) => {
-        // Find resource by repo full name
+        // Resolve workspace from name (user-facing) and verify access
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get user's GitHub integration first
+        const userIntegrationResult = await ctx.db
+          .select()
+          .from(integrations)
+          .where(
+            and(
+              eq(integrations.userId, ctx.auth.userId),
+              eq(integrations.provider, "github")
+            )
+          )
+          .limit(1);
+
+        const userIntegration = userIntegrationResult[0];
+
+        if (!userIntegration) {
+          return null;
+        }
+
+        // Find resource by repo full name using the correct integrationId
         const resources = await ctx.db
           .select()
           .from(integrationResources)
-          .where(eq(integrationResources.integrationId, ctx.auth.userId));
+          .where(eq(integrationResources.integrationId, userIntegration.id));
 
         const resource = resources.find((r) => {
           const data = r.resourceData;
@@ -735,7 +762,7 @@ export const integrationRouter = {
           .from(workspaceIntegrations)
           .where(
             and(
-              eq(workspaceIntegrations.workspaceId, input.workspaceId),
+              eq(workspaceIntegrations.workspaceId, workspaceId),
               eq(workspaceIntegrations.resourceId, resource.id)
             )
           );

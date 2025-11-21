@@ -25,6 +25,10 @@ export type AuthContext =
       userId: string;
     }
   | {
+      type: "webhook";
+      source: "internal";
+    }
+  | {
       type: "unauthenticated";
     };
 
@@ -43,6 +47,18 @@ export type AuthContext =
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
+
+  // Check for internal webhook calls (server-side only)
+  // This header is set by our webhook service layer and cannot be spoofed via HTTP
+  // because it's only added by server-side createCaller, not the HTTP handler
+  const webhookSource = opts.headers.get("x-webhook-source");
+  if (webhookSource === "internal") {
+    console.info(`>>> tRPC Request from ${source} - internal webhook`);
+    return {
+      auth: { type: "webhook" as const, source: "internal" as const },
+      db,
+    };
+  }
 
   // Authenticate via Clerk session only
   // treatPendingAsSignedOut: false allows pending users (authenticated but no org) to access tRPC procedures
@@ -189,6 +205,40 @@ export const clerkProtectedProcedure = sentrifiedProcedure
         ...ctx,
         // Type-safe clerk auth (guaranteed to be type "clerk")
         auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
+      },
+    });
+  });
+
+/**
+ * Webhook Protected procedure
+ *
+ * If you want a query or mutation to ONLY be accessible from verified webhook handlers, use this.
+ * This is used by repository mutation procedures that should only be called after webhook signature verification.
+ *
+ * Verifies that the call is from an internal webhook source (server-side only) and guarantees `ctx.auth` is of type "webhook".
+ *
+ * Security:
+ * - The x-webhook-source header is only set by our server-side createCaller
+ * - Cannot be spoofed via HTTP requests (not passed through by fetchRequestHandler)
+ * - Webhook handlers verify GitHub signatures before calling these procedures
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const webhookProcedure = sentrifiedProcedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (ctx.auth.type !== "webhook") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "This endpoint can only be called by verified webhook handlers",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        // Type-safe webhook auth (guaranteed to be type "webhook")
+        auth: ctx.auth as Extract<AuthContext, { type: "webhook" }>,
       },
     });
   });
