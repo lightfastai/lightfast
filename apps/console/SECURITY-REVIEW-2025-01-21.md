@@ -899,67 +899,17 @@ API key management allows creation, revoke, and delete, but:
 - No expiration enforcement (keys can be used indefinitely if `expiresAt` is null)
 - No rotation mechanism (replacing old key with new)
 - No usage tracking (lastUsedAt is stored but never updated)
-- Uses local utility functions instead of the dedicated `@packages/console-api-key` package
 
-**Current Implementation Issues:**
-```typescript
-// Lines 22-34: Local implementation
-function hashApiKey(key: string): string {
-  return crypto.createHash("sha256").update(key).digest("hex");
-}
-
-function generateApiKey(): string {
-  const randomBytes = crypto.randomBytes(24);
-  const randomString = randomBytes.toString("base64url");
-  return `lf_${randomString}`;  // No format validation
-}
-
-// Line 200: No proper preview extraction
-const keyPreview = apiKey.slice(-8); // Should use extractKeyPreview()
-```
-
-**Existing Package Available:**
-There is already a well-designed `@packages/console-api-key` package with:
-- `generateApiKey()` - format `console_sk_<32 nanoid chars>`
-- `hashApiKey()` - async SHA-256 via Web Crypto API
-- `extractKeyPreview()` - proper last-4-chars preview
-- `isValidApiKeyFormat()` - format validation
+✅ **COMPLETED:** Migrated account router to use `@repo/console-api-key` package with configurable `lf_` prefix support
 
 **Impact:**
 - Compromised keys remain valid forever
 - No way to force key rotation for security compliance
 - Difficult to audit key usage
-- Missing format validation allows invalid keys
-- Inconsistent key format across codebase
 
-**Recommended Fix:**
+**Remaining Work:**
 
-**Step 1: Migrate to existing package**
-```typescript
-// api/console/src/router/account.ts
-import {
-  generateApiKey,
-  hashApiKey,
-  extractKeyPreview,
-  isValidApiKeyFormat,
-} from "@packages/console-api-key";
-
-// Remove local functions (lines 22-34)
-
-// Update create mutation (line 189)
-create: protectedProcedure
-  .input(...)
-  .mutation(async ({ ctx, input }) => {
-    // Generate API key using package
-    const apiKey = generateApiKey();
-    const keyHash = await hashApiKey(apiKey); // Now async
-    const keyPreview = extractKeyPreview(apiKey); // Proper preview
-
-    // ... rest of mutation
-  }),
-```
-
-**Step 2: Add key rotation mutation**
+**Step 1: Add key rotation mutation**
 ```typescript
 rotate: protectedProcedure
   .input(z.object({ keyId: z.string() }))
@@ -1307,269 +1257,17 @@ Following the successful pattern of `@packages/console-api-key`, extract securit
 
 ### Phase 1: Security-Critical Packages (Week 1)
 
-#### 1. `@packages/console-webhooks` ⭐ (Highest Priority)
-
-**Addresses:** Issues #1 (CRITICAL), #3 (CRITICAL)
-
-**Current Problem:**
-- Webhook signature verification scattered across routes
-- Timing attack vulnerabilities in signature comparison
-- No standardized event parsing
-- Each provider reimplements verification logic
-
-**Extract from:**
-- `apps/console/src/app/(github)/api/github/webhooks/route.ts`
-- Future: Linear, Slack, Discord webhook handlers
-
-**Package Structure:**
-```typescript
-// packages/console-webhooks/src/github.ts
-export interface GitHubWebhookVerificationResult {
-  verified: boolean;
-  event?: GitHubWebhookEvent;
-  error?: string;
-}
-
-export async function verifyGitHubWebhook(
-  payload: string,
-  signature: string,
-  secret: string
-): Promise<GitHubWebhookVerificationResult>;
-
-// packages/console-webhooks/src/linear.ts
-export async function verifyLinearWebhook(
-  payload: string,
-  signature: string,
-  secret: string
-): Promise<LinearWebhookVerificationResult>;
-
-// packages/console-webhooks/src/common.ts
-export function validateWebhookTimestamp(
-  timestamp: string,
-  maxAgeSeconds: number = 300
-): boolean;
-
-export function safeCompareSignatures(
-  received: string,
-  expected: string
-): boolean; // Timing-attack resistant
-```
-
-**Benefits:**
-- ✅ Reusable in webhook proxy service + console API
-- ✅ Single place to fix timing attacks
-- ✅ Consistent event type definitions
-- ✅ Easy to test signature verification in isolation
-- ✅ Simple to add new providers (Notion, Airtable, etc.)
-
-**Migration Impact:** Medium - Update 1 route initially, reuse in webhook proxy
-
----
-
-#### 2. `@packages/console-oauth`
-
-**Addresses:** Issue #2 (CRITICAL)
-
-**Current Problem:**
-- OAuth state validation lacks expiration
-- No one-time-use enforcement (replay attacks possible)
-- State generation uses basic randomBytes (no structured format)
-- No PKCE support for OAuth 2.1 compliance
-
-**Extract from:**
-- `apps/console/src/app/(github)/api/github/auth/route.ts`
-- `apps/console/src/app/(github)/api/github/callback/route.ts`
-
-**Package Structure:**
-```typescript
-// packages/console-oauth/src/state.ts
-export interface OAuthState {
-  token: string;           // Random token
-  timestamp: number;       // Generation time
-  nonce: string;          // One-time-use nonce
-  redirectPath?: string;  // Post-auth redirect
-}
-
-export function generateOAuthState(): {
-  state: OAuthState;
-  encoded: string; // Base64URL-encoded for cookie
-};
-
-export function validateOAuthState(
-  receivedEncoded: string,
-  storedEncoded: string,
-  maxAgeMs?: number // Default 10 minutes
-): {
-  valid: boolean;
-  error?: "expired" | "mismatch" | "invalid_format" | "already_used";
-  state?: OAuthState;
-};
-
-// packages/console-oauth/src/pkce.ts
-export interface PKCEChallenge {
-  codeVerifier: string;
-  codeChallenge: string;
-  codeChallengeMethod: "S256";
-}
-
-export function generatePKCEChallenge(): PKCEChallenge;
-
-export function verifyPKCEChallenge(
-  codeVerifier: string,
-  codeChallenge: string
-): boolean;
-
-// packages/console-oauth/src/tokens.ts
-export async function encryptOAuthToken(
-  token: string,
-  encryptionKey: string
-): Promise<string>;
-
-export async function decryptOAuthToken(
-  encryptedToken: string,
-  encryptionKey: string
-): Promise<string>;
-```
-
-**Benefits:**
-- ✅ Reusable for GitHub, Linear, Notion OAuth flows
-- ✅ PKCE support for future OAuth 2.1 migration
-- ✅ Consistent state format across all providers
-- ✅ Easy to audit crypto implementation
-- ✅ Prevents state replay attacks
-
-**Migration Impact:** Medium - Update 2 GitHub OAuth routes initially
-
----
-
-#### 3. `@packages/console-auth-middleware`
-
-**Addresses:** Issues #5 (HIGH), #8 (HIGH)
-
-**Current Problem:**
-- Authorization checks scattered across tRPC procedures
-- Inconsistent workspace ownership validation
-- Sometimes missing, sometimes duplicated
-- No central tenant isolation helper
-
-**Extract from:**
-- `api/console/src/router/workspace.ts` (scattered checks)
-- `api/console/src/router/integration.ts` (ownership validation)
-- `api/console/src/lib/org-access-clerk.ts` (partial helpers)
-
-**Package Structure:**
-```typescript
-// packages/console-auth-middleware/src/workspace.ts
-export interface WorkspaceAccessContext {
-  userId: string;
-  workspaceId?: string;
-  clerkOrgId?: string;
-  clerkOrgSlug?: string;
-}
-
-export interface WorkspaceAccessResult {
-  workspaceId: string;
-  clerkOrgId: string;
-  workspaceName: string;
-  userRole: string; // org:admin, org:member, etc.
-}
-
-export async function verifyWorkspaceAccess(
-  ctx: WorkspaceAccessContext,
-  db: DbClient
-): Promise<WorkspaceAccessResult>;
-
-export async function resolveWorkspaceBySlug(
-  clerkOrgSlug: string,
-  workspaceName: string,
-  userId: string,
-  db: DbClient
-): Promise<WorkspaceAccessResult>;
-
-// packages/console-auth-middleware/src/resources.ts
-export async function verifyResourceOwnership(
-  userId: string,
-  resourceId: string,
-  resourceType: "integration" | "apiKey" | "repository",
-  db: DbClient
-): Promise<{ authorized: boolean; resource?: any }>;
-
-// packages/console-auth-middleware/src/tenant.ts
-export function createTenantFilter(
-  clerkOrgId: string
-): { clerkOrgId: string }; // Helper for Drizzle queries
-```
-
-**Benefits:**
-- ✅ Single source of truth for authorization
-- ✅ Prevents authorization bypass bugs (Issues #5, #8)
-- ✅ Consistent error messages across API
-- ✅ Easy to add RBAC later
-- ✅ Clear separation: authentication vs authorization
-
-**Migration Impact:** High - Update ~10 tRPC procedures, but prevents future bugs
+✅ **COMPLETED:**
+- `@packages/console-webhooks` - Webhook signature verification (Issues #1, #3)
+- `@packages/console-oauth` - OAuth state validation and PKCE (Issue #2)
+- `@packages/console-auth-middleware` - Authorization and tenant isolation (Issues #5, #8)
+- `@packages/console-validation` - Input validation for git refs, workspaces, config (Issue #12)
 
 ---
 
 ### Phase 2: Security Improvements (Week 2)
 
-#### 4. `@packages/console-validation`
-
-**Addresses:** Issue #12 (MEDIUM)
-
-**Current Problem:**
-- Missing input validation on git refs, file paths
-- No config file size limits
-- Workspace name validation inconsistent
-
-**Extract from:**
-- `api/console/src/router/integration.ts` (config detection)
-- `api/console/src/router/workspace.ts` (workspace creation)
-
-**Package Structure:**
-```typescript
-// packages/console-validation/src/workspace.ts
-export interface WorkspaceNameValidation {
-  valid: boolean;
-  error?: string;
-}
-
-export function validateWorkspaceName(
-  name: string
-): WorkspaceNameValidation;
-
-// packages/console-validation/src/git.ts
-export function validateGitRef(ref: string): boolean;
-export function validateRepoPath(path: string): boolean;
-
-// packages/console-validation/src/config.ts
-export interface ConfigValidationResult {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
-  parsedConfig?: LightfastConfig;
-}
-
-export async function validateLightfastConfig(
-  content: string,
-  options?: {
-    maxSizeBytes?: number; // Default 50KB
-    allowedStoreTypes?: string[];
-  }
-): Promise<ConfigValidationResult>;
-```
-
-**Benefits:**
-- ✅ Consistent validation across API + CLI
-- ✅ Reusable regex patterns
-- ✅ Clear, user-friendly error messages
-- ✅ Easy to add new validators
-
-**Migration Impact:** Low - Add to existing procedures, no breaking changes
-
----
-
-#### 5. `@packages/console-errors`
+#### 1. `@packages/console-errors`
 
 **Addresses:** Issue #10 (MEDIUM)
 
@@ -1628,7 +1326,7 @@ export function logErrorWithContext(
 
 ### Phase 3: Feature Enhancement (Week 3+)
 
-#### 6. `@packages/console-rate-limiting` (Future)
+#### 2. `@packages/console-rate-limiting` (Future)
 
 **Addresses:** Issue #7 (HIGH) - Deferred
 
@@ -1676,7 +1374,7 @@ export async function recordAction(
 
 ---
 
-#### 7. `@packages/console-m2m-auth` (After M2M Implementation)
+#### 3. `@packages/console-m2m-auth` (After M2M Implementation)
 
 **Addresses:** Issue #1 (CRITICAL) - Clerk M2M Solution
 
@@ -1719,17 +1417,22 @@ export async function acquireM2MToken(
 
 ## Implementation Priority Summary
 
+✅ **COMPLETED PACKAGES:**
+| Package | Addresses Issues | Status |
+|---------|-----------------|--------|
+| `console-webhooks` | #1, #3 (CRITICAL) | ✅ Implemented |
+| `console-oauth` | #2 (CRITICAL) | ✅ Implemented |
+| `console-auth-middleware` | #5, #8 (HIGH) | ✅ Implemented |
+| `console-validation` | #12 (MEDIUM) | ✅ Implemented |
+
+**REMAINING PACKAGES:**
 | Package | Addresses Issues | Priority | Impact | Effort |
 |---------|-----------------|----------|--------|--------|
-| `console-webhooks` | #1, #3 (CRITICAL) | P0 | High | Medium |
-| `console-oauth` | #2 (CRITICAL) | P0 | High | Medium |
-| `console-auth-middleware` | #5, #8 (HIGH) | P1 | Very High | High |
-| `console-validation` | #12 (MEDIUM) | P2 | Medium | Low |
 | `console-errors` | #10 (MEDIUM) | P2 | Medium | Medium |
 | `console-rate-limiting` | #7 (HIGH) - Deferred | P3 | Low | Medium |
 | `console-m2m-auth` | #1 (CRITICAL) - After M2M | P3 | Medium | Low |
 
-**Recommendation:** Implement Phases 1-2 before addressing other security issues. These packages provide foundational infrastructure that makes all other fixes easier and more consistent.
+**Recommendation:** Implement remaining packages to complete the security infrastructure.
 
 ---
 
