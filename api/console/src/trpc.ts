@@ -265,12 +265,12 @@ export async function resolveWorkspaceByName(params: {
 }): Promise<{ workspaceId: string; workspaceName: string; workspaceSlug: string; clerkOrgId: string }> {
   const { resolveWorkspaceByName: resolveWorkspace } = await import("@repo/console-auth-middleware");
 
-  const result = await resolveWorkspace(
-    params.clerkOrgSlug,
-    params.workspaceName,
-    params.userId,
-    db
-  );
+  const result = await resolveWorkspace({
+    clerkOrgSlug: params.clerkOrgSlug,
+    workspaceName: params.workspaceName,
+    userId: params.userId,
+    db,
+  });
 
   if (!result.success) {
     throw new TRPCError({
@@ -313,12 +313,12 @@ export async function resolveWorkspaceBySlug(params: {
 }): Promise<{ workspaceId: string; workspaceSlug: string; clerkOrgId: string }> {
   const { resolveWorkspaceBySlug: resolveWorkspace } = await import("@repo/console-auth-middleware");
 
-  const result = await resolveWorkspace(
-    params.clerkOrgSlug,
-    params.workspaceSlug,
-    params.userId,
-    db
-  );
+  const result = await resolveWorkspace({
+    clerkOrgSlug: params.clerkOrgSlug,
+    workspaceSlug: params.workspaceSlug,
+    userId: params.userId,
+    db,
+  });
 
   if (!result.success) {
     throw new TRPCError({
