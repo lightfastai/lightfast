@@ -1287,6 +1287,452 @@ GITHUB_WEBHOOK_SECRET=your-existing-secret
 
 ---
 
+## Recommended Utility Packages for Code Isolation
+
+### Overview: Domain-Specific Utility Pattern
+
+Following the successful pattern of `@packages/console-api-key`, extract security-sensitive logic into isolated utility packages with:
+
+✅ **Domain-specific logic** - not general-purpose utils
+✅ **Reusable across apps** - console, CLI, SDK, webhook proxy
+✅ **Security-sensitive** - crypto, auth, validation
+✅ **Type-safe contracts** - clear interfaces, good DX
+✅ **Zero app dependencies** - only depends on vendors
+✅ **Easy to test** - pure functions, mockable I/O
+✅ **Single responsibility** - does one thing well
+
+❌ **Avoid:** Generic utils (lodash-style), tightly coupled to app context, mixing multiple concerns
+
+---
+
+### Phase 1: Security-Critical Packages (Week 1)
+
+#### 1. `@packages/console-webhooks` ⭐ (Highest Priority)
+
+**Addresses:** Issues #1 (CRITICAL), #3 (CRITICAL)
+
+**Current Problem:**
+- Webhook signature verification scattered across routes
+- Timing attack vulnerabilities in signature comparison
+- No standardized event parsing
+- Each provider reimplements verification logic
+
+**Extract from:**
+- `apps/console/src/app/(github)/api/github/webhooks/route.ts`
+- Future: Linear, Slack, Discord webhook handlers
+
+**Package Structure:**
+```typescript
+// packages/console-webhooks/src/github.ts
+export interface GitHubWebhookVerificationResult {
+  verified: boolean;
+  event?: GitHubWebhookEvent;
+  error?: string;
+}
+
+export async function verifyGitHubWebhook(
+  payload: string,
+  signature: string,
+  secret: string
+): Promise<GitHubWebhookVerificationResult>;
+
+// packages/console-webhooks/src/linear.ts
+export async function verifyLinearWebhook(
+  payload: string,
+  signature: string,
+  secret: string
+): Promise<LinearWebhookVerificationResult>;
+
+// packages/console-webhooks/src/common.ts
+export function validateWebhookTimestamp(
+  timestamp: string,
+  maxAgeSeconds: number = 300
+): boolean;
+
+export function safeCompareSignatures(
+  received: string,
+  expected: string
+): boolean; // Timing-attack resistant
+```
+
+**Benefits:**
+- ✅ Reusable in webhook proxy service + console API
+- ✅ Single place to fix timing attacks
+- ✅ Consistent event type definitions
+- ✅ Easy to test signature verification in isolation
+- ✅ Simple to add new providers (Notion, Airtable, etc.)
+
+**Migration Impact:** Medium - Update 1 route initially, reuse in webhook proxy
+
+---
+
+#### 2. `@packages/console-oauth`
+
+**Addresses:** Issue #2 (CRITICAL)
+
+**Current Problem:**
+- OAuth state validation lacks expiration
+- No one-time-use enforcement (replay attacks possible)
+- State generation uses basic randomBytes (no structured format)
+- No PKCE support for OAuth 2.1 compliance
+
+**Extract from:**
+- `apps/console/src/app/(github)/api/github/auth/route.ts`
+- `apps/console/src/app/(github)/api/github/callback/route.ts`
+
+**Package Structure:**
+```typescript
+// packages/console-oauth/src/state.ts
+export interface OAuthState {
+  token: string;           // Random token
+  timestamp: number;       // Generation time
+  nonce: string;          // One-time-use nonce
+  redirectPath?: string;  // Post-auth redirect
+}
+
+export function generateOAuthState(): {
+  state: OAuthState;
+  encoded: string; // Base64URL-encoded for cookie
+};
+
+export function validateOAuthState(
+  receivedEncoded: string,
+  storedEncoded: string,
+  maxAgeMs?: number // Default 10 minutes
+): {
+  valid: boolean;
+  error?: "expired" | "mismatch" | "invalid_format" | "already_used";
+  state?: OAuthState;
+};
+
+// packages/console-oauth/src/pkce.ts
+export interface PKCEChallenge {
+  codeVerifier: string;
+  codeChallenge: string;
+  codeChallengeMethod: "S256";
+}
+
+export function generatePKCEChallenge(): PKCEChallenge;
+
+export function verifyPKCEChallenge(
+  codeVerifier: string,
+  codeChallenge: string
+): boolean;
+
+// packages/console-oauth/src/tokens.ts
+export async function encryptOAuthToken(
+  token: string,
+  encryptionKey: string
+): Promise<string>;
+
+export async function decryptOAuthToken(
+  encryptedToken: string,
+  encryptionKey: string
+): Promise<string>;
+```
+
+**Benefits:**
+- ✅ Reusable for GitHub, Linear, Notion OAuth flows
+- ✅ PKCE support for future OAuth 2.1 migration
+- ✅ Consistent state format across all providers
+- ✅ Easy to audit crypto implementation
+- ✅ Prevents state replay attacks
+
+**Migration Impact:** Medium - Update 2 GitHub OAuth routes initially
+
+---
+
+#### 3. `@packages/console-auth-middleware`
+
+**Addresses:** Issues #5 (HIGH), #8 (HIGH)
+
+**Current Problem:**
+- Authorization checks scattered across tRPC procedures
+- Inconsistent workspace ownership validation
+- Sometimes missing, sometimes duplicated
+- No central tenant isolation helper
+
+**Extract from:**
+- `api/console/src/router/workspace.ts` (scattered checks)
+- `api/console/src/router/integration.ts` (ownership validation)
+- `api/console/src/lib/org-access-clerk.ts` (partial helpers)
+
+**Package Structure:**
+```typescript
+// packages/console-auth-middleware/src/workspace.ts
+export interface WorkspaceAccessContext {
+  userId: string;
+  workspaceId?: string;
+  clerkOrgId?: string;
+  clerkOrgSlug?: string;
+}
+
+export interface WorkspaceAccessResult {
+  workspaceId: string;
+  clerkOrgId: string;
+  workspaceName: string;
+  userRole: string; // org:admin, org:member, etc.
+}
+
+export async function verifyWorkspaceAccess(
+  ctx: WorkspaceAccessContext,
+  db: DbClient
+): Promise<WorkspaceAccessResult>;
+
+export async function resolveWorkspaceBySlug(
+  clerkOrgSlug: string,
+  workspaceName: string,
+  userId: string,
+  db: DbClient
+): Promise<WorkspaceAccessResult>;
+
+// packages/console-auth-middleware/src/resources.ts
+export async function verifyResourceOwnership(
+  userId: string,
+  resourceId: string,
+  resourceType: "integration" | "apiKey" | "repository",
+  db: DbClient
+): Promise<{ authorized: boolean; resource?: any }>;
+
+// packages/console-auth-middleware/src/tenant.ts
+export function createTenantFilter(
+  clerkOrgId: string
+): { clerkOrgId: string }; // Helper for Drizzle queries
+```
+
+**Benefits:**
+- ✅ Single source of truth for authorization
+- ✅ Prevents authorization bypass bugs (Issues #5, #8)
+- ✅ Consistent error messages across API
+- ✅ Easy to add RBAC later
+- ✅ Clear separation: authentication vs authorization
+
+**Migration Impact:** High - Update ~10 tRPC procedures, but prevents future bugs
+
+---
+
+### Phase 2: Security Improvements (Week 2)
+
+#### 4. `@packages/console-validation`
+
+**Addresses:** Issue #12 (MEDIUM)
+
+**Current Problem:**
+- Missing input validation on git refs, file paths
+- No config file size limits
+- Workspace name validation inconsistent
+
+**Extract from:**
+- `api/console/src/router/integration.ts` (config detection)
+- `api/console/src/router/workspace.ts` (workspace creation)
+
+**Package Structure:**
+```typescript
+// packages/console-validation/src/workspace.ts
+export interface WorkspaceNameValidation {
+  valid: boolean;
+  error?: string;
+}
+
+export function validateWorkspaceName(
+  name: string
+): WorkspaceNameValidation;
+
+// packages/console-validation/src/git.ts
+export function validateGitRef(ref: string): boolean;
+export function validateRepoPath(path: string): boolean;
+
+// packages/console-validation/src/config.ts
+export interface ConfigValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  parsedConfig?: LightfastConfig;
+}
+
+export async function validateLightfastConfig(
+  content: string,
+  options?: {
+    maxSizeBytes?: number; // Default 50KB
+    allowedStoreTypes?: string[];
+  }
+): Promise<ConfigValidationResult>;
+```
+
+**Benefits:**
+- ✅ Consistent validation across API + CLI
+- ✅ Reusable regex patterns
+- ✅ Clear, user-friendly error messages
+- ✅ Easy to add new validators
+
+**Migration Impact:** Low - Add to existing procedures, no breaking changes
+
+---
+
+#### 5. `@packages/console-errors`
+
+**Addresses:** Issue #10 (MEDIUM)
+
+**Current Problem:**
+- Verbose error messages leak internal IDs, stack traces
+- No consistent mapping: internal error → user message
+- Development and production errors not differentiated
+
+**Extract from:**
+- All tRPC routers (currently inline TRPCError creation)
+- Add new error formatting layer
+
+**Package Structure:**
+```typescript
+// packages/console-errors/src/trpc.ts
+export function createUserFacingError(
+  internalError: Error,
+  errorCode: keyof typeof ErrorMessages,
+  context?: Record<string, unknown>
+): TRPCError;
+
+// packages/console-errors/src/messages.ts
+export const ErrorMessages = {
+  WORKSPACE_NOT_FOUND: "Workspace not found",
+  UNAUTHORIZED_WORKSPACE_ACCESS: "You don't have access to this workspace",
+  INTEGRATION_NOT_FOUND: "Integration not found",
+  REPOSITORY_NOT_FOUND: "Repository not found",
+  API_KEY_EXPIRED: "API key has expired",
+  // ... all user-facing messages
+} as const;
+
+// packages/console-errors/src/logger.ts
+export interface ErrorContext {
+  userId?: string;
+  workspaceId?: string;
+  requestId?: string;
+  [key: string]: unknown;
+}
+
+export function logErrorWithContext(
+  error: Error,
+  context: ErrorContext
+): void; // Logs full details server-side only
+```
+
+**Benefits:**
+- ✅ No implementation details leaked to users
+- ✅ Consistent error messages across API
+- ✅ Proper server-side logging with context
+- ✅ Development mode shows full stack traces
+- ✅ Easy to integrate with Sentry
+
+**Migration Impact:** Medium - Wrap existing TRPCError creation
+
+---
+
+### Phase 3: Feature Enhancement (Week 3+)
+
+#### 6. `@packages/console-rate-limiting` (Future)
+
+**Addresses:** Issue #7 (HIGH) - Deferred
+
+**Current Problem:**
+- No rate limiting on expensive operations (reindex, etc.)
+- No per-repository cooldown tracking
+- Can't differentiate rate limits by identity type
+
+**Package Structure:**
+```typescript
+// packages/console-rate-limiting/src/keys.ts
+export function getRateLimitKey(
+  identityType: "user" | "service" | "apiKey",
+  identityId: string
+): string;
+
+// packages/console-rate-limiting/src/cooldown.ts
+export interface CooldownCheck {
+  allowed: boolean;
+  waitSeconds?: number;
+  lastActionAt?: Date;
+}
+
+export async function checkCooldown(
+  resourceId: string,
+  resourceType: "repository" | "workspace",
+  cooldownMs: number,
+  db: DbClient
+): Promise<CooldownCheck>;
+
+export async function recordAction(
+  resourceId: string,
+  resourceType: "repository" | "workspace",
+  db: DbClient
+): Promise<void>;
+```
+
+**Benefits:**
+- ✅ Works with Arcjet for distributed rate limiting
+- ✅ Per-resource cooldown prevents duplicate work
+- ✅ Service-aware identity keys
+- ✅ Reusable across all expensive operations
+
+**Migration Impact:** Low - Add to specific procedures as needed
+
+---
+
+#### 7. `@packages/console-m2m-auth` (After M2M Implementation)
+
+**Addresses:** Issue #1 (CRITICAL) - Clerk M2M Solution
+
+**Current Problem:**
+- Will need M2M token verification in multiple places
+- Service identity extraction logic will be duplicated
+
+**Package Structure:**
+```typescript
+// packages/console-m2m-auth/src/verify.ts
+export interface ServiceIdentity {
+  id: string;
+  type: "console-webhook-service" | "inngest-job" | "cron-task";
+  template: string;
+}
+
+export async function verifyM2MToken(
+  token: string,
+  allowedTemplates: string[]
+): Promise<ServiceIdentity>;
+
+// packages/console-m2m-auth/src/acquire.ts
+export async function acquireM2MToken(
+  template: string,
+  options?: {
+    ttl?: number; // Token lifetime
+  }
+): Promise<string>;
+```
+
+**Benefits:**
+- ✅ Reusable in webhook proxy + console API + Inngest jobs
+- ✅ Consistent service identity extraction
+- ✅ Easy to mock in tests
+- ✅ Centralized Clerk M2M configuration
+
+**Migration Impact:** Low - Create when implementing M2M solution
+
+---
+
+## Implementation Priority Summary
+
+| Package | Addresses Issues | Priority | Impact | Effort |
+|---------|-----------------|----------|--------|--------|
+| `console-webhooks` | #1, #3 (CRITICAL) | P0 | High | Medium |
+| `console-oauth` | #2 (CRITICAL) | P0 | High | Medium |
+| `console-auth-middleware` | #5, #8 (HIGH) | P1 | Very High | High |
+| `console-validation` | #12 (MEDIUM) | P2 | Medium | Low |
+| `console-errors` | #10 (MEDIUM) | P2 | Medium | Medium |
+| `console-rate-limiting` | #7 (HIGH) - Deferred | P3 | Low | Medium |
+| `console-m2m-auth` | #1 (CRITICAL) - After M2M | P3 | Medium | Low |
+
+**Recommendation:** Implement Phases 1-2 before addressing other security issues. These packages provide foundational infrastructure that makes all other fixes easier and more consistent.
+
+---
+
 ## Immediate Actions Required
 
 ### Priority 1 (Critical - Fix within 24 hours)
