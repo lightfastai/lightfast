@@ -32,6 +32,11 @@ export type WorkspaceResolution = RouterOutputs["workspace"]["resolveFromClerkOr
 export type WorkspaceResolutionFromOrgId = RouterOutputs["workspace"]["resolveFromClerkOrgId"];
 export type WorkspaceStats = RouterOutputs["workspace"]["statistics"];
 
+// Workspace performance metrics
+export type JobPercentiles = RouterOutputs["workspace"]["jobPercentiles"];
+export type PerformanceTimeSeries = RouterOutputs["workspace"]["performanceTimeSeries"];
+export type PerformanceTimeSeriesPoint = PerformanceTimeSeries[number];
+
 // ============================================================================
 // Sources & Stores (from workspace.statistics)
 // ============================================================================

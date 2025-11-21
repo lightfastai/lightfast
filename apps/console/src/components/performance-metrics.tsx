@@ -7,23 +7,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { TooltipProps } from "recharts";
 import { Clock, TrendingUp } from "lucide-react";
 import { formatDuration } from "../lib/performance-utils";
+import type { JobPercentiles, PerformanceTimeSeries } from "~/types";
 
 interface PerformanceMetricsProps {
-	percentiles: {
-		hasData: boolean;
-		p50: number;
-		p95: number;
-		p99: number;
-		max: number;
-		sampleSize: number;
-	};
-	timeSeries: Array<{
-		timestamp: string;
-		hour: string;
-		jobCount: number;
-		avgDuration: number;
-		successRate: number;
-	}>;
+	percentiles: JobPercentiles;
+	timeSeries: PerformanceTimeSeries;
 }
 
 export function PerformanceMetrics({
