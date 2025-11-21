@@ -5,12 +5,19 @@ import { FileCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
+/**
+ * Lightfast Config Overview Component
+ *
+ * Note: Uses a simplified Store shape for display in YAML config.
+ * The `name` field is mapped from Store.slug in the parent component.
+ * This is intentional for better readability in the generated config file.
+ */
 interface LightfastConfigOverviewProps {
 	workspaceId: string;
 	workspaceName: string;
 	stores: {
 		id: string;
-		name: string;
+		name: string; // Mapped from Store.slug for display
 		embeddingDim: number;
 		documentCount?: number;
 	}[];

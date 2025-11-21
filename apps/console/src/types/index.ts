@@ -45,6 +45,23 @@ export type Source = WorkspaceStats["sources"]["list"][number];
 export type Store = WorkspaceStats["stores"]["list"][number];
 
 // ============================================================================
+// Workspace Statistics Helpers (for component props)
+// ============================================================================
+
+/**
+ * Helper types for extracting specific metrics from WorkspaceStats
+ * Used by presentational components that receive individual stat fields
+ */
+export type WorkspaceMetricsSummary = {
+  sourcesCount: WorkspaceStats["sources"]["total"];
+  totalDocuments: WorkspaceStats["documents"]["total"];
+  totalChunks: WorkspaceStats["documents"]["chunks"];
+  successRate: WorkspaceStats["jobs"]["successRate"];
+  avgDurationMs: WorkspaceStats["jobs"]["avgDurationMs"];
+  recentJobsCount: WorkspaceStats["jobs"]["total"];
+};
+
+// ============================================================================
 // Integration
 // ============================================================================
 

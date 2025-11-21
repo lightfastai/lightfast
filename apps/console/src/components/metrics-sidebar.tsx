@@ -10,15 +10,13 @@ import {
 	Clock,
 	Activity,
 } from "lucide-react";
+import type { WorkspaceMetricsSummary } from "~/types";
 
-interface MetricsSidebarProps {
-	sourcesCount: number;
-	totalDocuments: number;
-	totalChunks: number;
-	successRate: number;
-	avgDurationMs: number;
-	recentJobsCount: number;
-}
+/**
+ * Props derived from WorkspaceStats (workspace.statistics tRPC endpoint)
+ * Individual fields are extracted in parent component for flexibility
+ */
+type MetricsSidebarProps = WorkspaceMetricsSummary;
 
 export function MetricsSidebar({
 	sourcesCount,
