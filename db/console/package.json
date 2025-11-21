@@ -9,7 +9,6 @@
       "default": "./src/index.ts"
     },
     "./schema": "./src/schema/index.ts",
-    "./constants/naming": "./src/constants/naming.ts",
     "./client": "./src/client.ts",
     "./utils": "./src/utils/workspace.ts",
     "./env": {
@@ -38,7 +37,6 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
-    "drizzle-zod": "catalog:",
     "friendlier-words": "^1.1.3",
     "postgres": "^3.4.5",
     "zod": "catalog:"

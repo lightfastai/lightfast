@@ -20,8 +20,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import { workspaceSettingsFormSchema } from "../_schemas/workspace-settings-form-schema";
-import type { WorkspaceSettingsFormValues } from "../_schemas/workspace-settings-form-schema";
+import { workspaceSettingsFormSchema, type WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
 
 interface WorkspaceGeneralSettingsClientProps {
 	slug: string;
@@ -101,7 +100,7 @@ export function WorkspaceGeneralSettingsClient({
 							workspaceName,
 						}).queryKey,
 						produce(previousWorkspace, (draft) => {
-							draft.name = variables.newWorkspaceName;
+							draft.name = variables.newName;
 						}),
 					);
 				}
@@ -115,7 +114,7 @@ export function WorkspaceGeneralSettingsClient({
 						produce(previousList, (draft) => {
 							const workspaceIndex = draft.findIndex((w) => w.id === workspace.id);
 							if (workspaceIndex !== -1 && draft[workspaceIndex]) {
-								draft[workspaceIndex].name = variables.newWorkspaceName;
+								draft[workspaceIndex].name = variables.newName;
 							}
 						}),
 					);
@@ -191,8 +190,8 @@ export function WorkspaceGeneralSettingsClient({
 
 		updateNameMutation.mutate({
 			clerkOrgSlug: slug,
-			workspaceName: workspace.name,
-			newWorkspaceName: values.workspaceName,
+			currentName: workspace.name,
+			newName: values.workspaceName,
 		});
 	};
 

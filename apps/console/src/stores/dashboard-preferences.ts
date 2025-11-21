@@ -1,7 +1,7 @@
 "use client";
 
-import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 /**
  * Time range options for dashboard metrics
@@ -37,37 +37,85 @@ const defaultPreferences: DashboardPreferences = {
 };
 
 /**
- * Dashboard preferences atom (persisted to localStorage)
+ * Dashboard preferences store with persistence
  */
-export const dashboardPreferencesAtom = atomWithStorage<DashboardPreferences>(
-	"lightfast-console-dashboard-preferences",
-	defaultPreferences
-);
+interface DashboardPreferencesStore extends DashboardPreferences {
+	// Session state (not persisted)
+	currentTimeRange: TimeRange | null;
+
+	// Actions
+	setAutoRefreshInterval: (interval: number) => void;
+	setDefaultTimeRange: (range: TimeRange) => void;
+	setCurrentTimeRange: (range: TimeRange) => void;
+	toggleVisibleSection: (
+		section: keyof DashboardPreferences["visibleSections"]
+	) => void;
+	setVisibleSection: (
+		section: keyof DashboardPreferences["visibleSections"],
+		visible: boolean
+	) => void;
+	resetPreferences: () => void;
+
+	// Computed getter for current time range
+	getCurrentTimeRange: () => TimeRange;
+}
 
 /**
- * Current time range atom (session state, not persisted)
- * Initialized from preferences
+ * Dashboard preferences store (persisted to localStorage)
  */
-const _currentTimeRangeAtom = atom<TimeRange | null>(null);
+export const useDashboardPreferences = create<DashboardPreferencesStore>()(
+	persist(
+		(set, get) => ({
+			// Initial state from defaults
+			...defaultPreferences,
+			currentTimeRange: null,
 
-export const currentTimeRangeAtom = atom(
-	(get) => {
-		const current = get(_currentTimeRangeAtom);
-		if (current !== null) {
-			return current;
+			// Actions
+			setAutoRefreshInterval: (interval) =>
+				set({ autoRefreshInterval: interval }),
+
+			setDefaultTimeRange: (range) => set({ defaultTimeRange: range }),
+
+			setCurrentTimeRange: (range) => set({ currentTimeRange: range }),
+
+			toggleVisibleSection: (section) =>
+				set((state) => ({
+					visibleSections: {
+						...state.visibleSections,
+						[section]: !state.visibleSections[section],
+					},
+				})),
+
+			setVisibleSection: (section, visible) =>
+				set((state) => ({
+					visibleSections: {
+						...state.visibleSections,
+						[section]: visible,
+					},
+				})),
+
+			resetPreferences: () =>
+				set({
+					...defaultPreferences,
+					currentTimeRange: null,
+				}),
+
+			getCurrentTimeRange: () => {
+				const state = get();
+				return state.currentTimeRange ?? state.defaultTimeRange;
+			},
+		}),
+		{
+			name: "lightfast-console-dashboard-preferences",
+			// Only persist preferences, not session state
+			partialize: (state) => ({
+				autoRefreshInterval: state.autoRefreshInterval,
+				defaultTimeRange: state.defaultTimeRange,
+				visibleSections: state.visibleSections,
+			}),
 		}
-		const prefs = get(dashboardPreferencesAtom);
-		return prefs.defaultTimeRange;
-	},
-	(_get, set, newRange: TimeRange) => {
-		set(_currentTimeRangeAtom, newRange);
-	}
+	)
 );
-
-/**
- * Writable time range atom (alias for backward compatibility)
- */
-export const timeRangeAtom = currentTimeRangeAtom;
 
 /**
  * Helper to get time range in milliseconds

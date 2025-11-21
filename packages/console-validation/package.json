@@ -27,6 +27,10 @@
     "./constants": {
       "types": "./dist/constants/index.d.ts",
       "default": "./src/constants/index.ts"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./src/utils/index.ts"
     }
   },
   "scripts": {
@@ -38,6 +42,7 @@
   "dependencies": {
     "@db/console": "workspace:*",
     "drizzle-zod": "catalog:",
+    "friendlier-words": "^1.1.3",
     "zod": "catalog:"
   },
   "devDependencies": {

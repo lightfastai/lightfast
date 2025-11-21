@@ -2,6 +2,7 @@
  * Workspace Validation Schemas
  *
  * Domain-specific validation for workspace-related operations.
+ * Derived from database schemas (insertWorkspaceSchema) for consistency.
  * Used in tRPC procedures and client-side forms.
  */
 
@@ -11,10 +12,14 @@ import {
   clerkUserIdSchema,
   nanoidSchema,
 } from "../primitives/ids";
-import { workspaceNameSchema, workspaceSlugSchema, clerkOrgSlugSchema } from "../primitives/slugs";
+import { clerkOrgSlugSchema } from "../primitives/slugs";
+import { insertWorkspaceSchemaBase } from "../database";
 
 /**
  * Workspace Creation Input Schema
+ *
+ * Derived from insertWorkspaceSchema - picks only fields needed for creation.
+ * All database validation rules (name format, slug format) automatically apply.
  *
  * Used in:
  * - tRPC workspace.create procedure
@@ -28,15 +33,23 @@ import { workspaceNameSchema, workspaceSlugSchema, clerkOrgSlugSchema } from "..
  * });
  * ```
  */
-export const workspaceCreateInputSchema = z.object({
-  clerkOrgId: clerkOrgIdSchema,
-  workspaceName: workspaceNameSchema,
-});
+export const workspaceCreateInputSchema = insertWorkspaceSchemaBase
+  .pick({
+    clerkOrgId: true,
+    name: true,
+  })
+  .extend({
+    // Rename 'name' to 'workspaceName' for API clarity
+    workspaceName: insertWorkspaceSchemaBase.shape.name,
+  })
+  .omit({ name: true });
 
 export type WorkspaceCreateInput = z.infer<typeof workspaceCreateInputSchema>;
 
 /**
  * Workspace Update Name Input Schema
+ *
+ * Derived from insertWorkspaceSchema - uses name validation from database.
  *
  * Used in:
  * - tRPC workspace.updateName procedure
@@ -53,8 +66,8 @@ export type WorkspaceCreateInput = z.infer<typeof workspaceCreateInputSchema>;
  */
 export const workspaceUpdateNameInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  currentName: workspaceNameSchema,
-  newName: workspaceNameSchema,
+  currentName: insertWorkspaceSchemaBase.shape.name,
+  newName: insertWorkspaceSchemaBase.shape.name,
 });
 
 export type WorkspaceUpdateNameInput = z.infer<
@@ -79,7 +92,7 @@ export type WorkspaceUpdateNameInput = z.infer<
  */
 export const workspaceResolutionInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: workspaceNameSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
   userId: clerkUserIdSchema,
 });
 
@@ -122,7 +135,7 @@ export type WorkspaceListInput = z.infer<typeof workspaceListInputSchema>;
  */
 export const workspaceStatisticsInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: workspaceNameSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
 });
 
 export type WorkspaceStatisticsInput = z.infer<
@@ -147,15 +160,15 @@ export type TimeRange = z.infer<typeof timeRangeSchema>;
  * @example
  * ```typescript
  * const input = workspaceJobPercentilesInputSchema.parse({
- *   workspaceId: "V1StGXR8_Z5jdHi6B-myT",
- *   clerkOrgId: "org_2abcdef123",
+ *   clerkOrgSlug: "lightfast-ai",
+ *   workspaceName: "my-workspace",
  *   timeRange: "7d",
  * });
  * ```
  */
 export const workspaceJobPercentilesInputSchema = z.object({
-  workspaceId: nanoidSchema,
-  clerkOrgId: clerkOrgIdSchema,
+  clerkOrgSlug: clerkOrgSlugSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
   timeRange: timeRangeSchema,
 });
 
@@ -172,15 +185,15 @@ export type WorkspaceJobPercentilesInput = z.infer<
  * @example
  * ```typescript
  * const input = workspacePerformanceTimeSeriesInputSchema.parse({
- *   workspaceId: "V1StGXR8_Z5jdHi6B-myT",
- *   clerkOrgId: "org_2abcdef123",
+ *   clerkOrgSlug: "lightfast-ai",
+ *   workspaceName: "my-workspace",
  *   timeRange: "30d",
  * });
  * ```
  */
 export const workspacePerformanceTimeSeriesInputSchema = z.object({
-  workspaceId: nanoidSchema,
-  clerkOrgId: clerkOrgIdSchema,
+  clerkOrgSlug: clerkOrgSlugSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
   timeRange: timeRangeSchema,
 });
 
@@ -207,4 +220,78 @@ export const workspaceIntegrationDisconnectInputSchema = z.object({
 
 export type WorkspaceIntegrationDisconnectInput = z.infer<
   typeof workspaceIntegrationDisconnectInputSchema
+>;
+
+/**
+ * Workspace Resolve from Clerk Org ID Input Schema
+ *
+ * Derived from insertWorkspaceSchema for ID validation.
+ *
+ * Used in:
+ * - tRPC workspace.resolveFromClerkOrgId procedure (public, used by API routes)
+ */
+export const workspaceResolveFromClerkOrgIdInputSchema = z.object({
+  clerkOrgId: insertWorkspaceSchemaBase.shape.clerkOrgId,
+});
+
+export type WorkspaceResolveFromClerkOrgIdInput = z.infer<
+  typeof workspaceResolveFromClerkOrgIdInputSchema
+>;
+
+/**
+ * Workspace Resolve from GitHub Org Slug Input Schema
+ *
+ * Used in:
+ * - tRPC workspace.resolveFromGithubOrgSlug procedure (public, used by webhooks)
+ */
+export const workspaceResolveFromGithubOrgSlugInputSchema = z.object({
+  githubOrgSlug: z.string().min(1, "GitHub organization slug must not be empty"),
+});
+
+export type WorkspaceResolveFromGithubOrgSlugInput = z.infer<
+  typeof workspaceResolveFromGithubOrgSlugInputSchema
+>;
+
+/**
+ * Workspace Statistics Comparison Input Schema
+ *
+ * Derived from insertWorkspaceSchema for ID validation.
+ *
+ * Used in:
+ * - tRPC workspace.statisticsComparison procedure
+ */
+export const workspaceStatisticsComparisonInputSchema = z.object({
+  workspaceId: insertWorkspaceSchemaBase.shape.id,
+  clerkOrgId: insertWorkspaceSchemaBase.shape.clerkOrgId,
+  currentStart: z.string(), // ISO datetime
+  currentEnd: z.string(), // ISO datetime
+  previousStart: z.string(), // ISO datetime
+  previousEnd: z.string(), // ISO datetime
+});
+
+export type WorkspaceStatisticsComparisonInput = z.infer<
+  typeof workspaceStatisticsComparisonInputSchema
+>;
+
+/**
+ * Workspace System Health Input Schema
+ *
+ * Used in:
+ * - tRPC workspace.systemHealth procedure
+ *
+ * @example
+ * ```typescript
+ * const input = workspaceSystemHealthInputSchema.parse({
+ *   clerkOrgSlug: "lightfast-ai",
+ *   workspaceName: "my-workspace",
+ * });
+ * ```
+ */
+export const workspaceSystemHealthInputSchema = z.object({
+  clerkOrgSlug: clerkOrgSlugSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
+});
+
+export type WorkspaceSystemHealthInput = z.infer<
+  typeof workspaceSystemHealthInputSchema
 >;

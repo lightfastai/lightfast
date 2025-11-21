@@ -2,12 +2,13 @@
  * Workspace Form Schemas
  *
  * Client-side validation schemas for workspace-related forms.
+ * Derived from database schemas for consistency.
  * Used with React Hook Form + zodResolver.
  */
 
 import { z } from "zod";
-import { workspaceCreateInputSchema, workspaceUpdateNameInputSchema } from "../schemas/workspace";
-import { workspaceNameSchema } from "../primitives/slugs";
+import { workspaceCreateInputSchema } from "../schemas/workspace";
+import { insertWorkspaceSchemaBase } from "../database";
 
 /**
  * Workspace Creation Form Schema
@@ -33,6 +34,8 @@ export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 /**
  * Workspace Settings Form Schema
  *
+ * Derived from insertWorkspaceSchema - uses database name validation.
+ *
  * Used in:
  * - /apps/console/src/app/(app)/[slug]/[workspaceName]/settings/page.tsx
  *
@@ -47,7 +50,7 @@ export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
  * ```
  */
 export const workspaceSettingsFormSchema = z.object({
-  workspaceName: workspaceNameSchema,
+  workspaceName: insertWorkspaceSchemaBase.shape.name,
 });
 
 export type WorkspaceSettingsFormValues = z.infer<

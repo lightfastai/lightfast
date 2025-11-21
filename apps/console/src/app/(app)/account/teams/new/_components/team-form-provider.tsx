@@ -4,8 +4,7 @@ import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@repo/ui/components/ui/form";
-import { teamFormSchema } from "./team-form-schema";
-import type { TeamFormValues } from "./team-form-schema";
+import { teamFormSchema, type TeamFormValues } from "@repo/console-validation/forms";
 
 /**
  * Team Form Provider

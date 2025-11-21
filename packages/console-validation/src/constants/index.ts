@@ -1,8 +1,8 @@
 /**
  * Naming Constants and Validation Helpers
  *
- * Re-exported from @db/console for convenience.
- * These are the single source of truth for all naming rules.
+ * This is the single source of truth for all naming rules.
+ * Exported from this package, used across console app and API.
  */
 
 export {
@@ -22,4 +22,4 @@ export {
   validateOrgSlug,
   validateWorkspaceName,
   validateStoreName,
-} from "@db/console/constants/naming";
+} from "./naming";

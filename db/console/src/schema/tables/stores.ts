@@ -13,7 +13,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { workspaces } from "./workspaces";
 
 /**
@@ -97,24 +96,3 @@ export const stores = pgTable(
 // Type exports
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = typeof stores.$inferInsert;
-
-// Zod schema exports
-export const insertStoreSchema = createInsertSchema(stores).refine(
-  (data) => {
-    // Validate store slug format (lowercase alphanumeric + hyphens, max 20 chars)
-    const slug = data.slug;
-    if (!slug) return true; // Allow empty during optional create
-
-    return (
-      /^[a-z0-9-]+$/.test(slug) && // Only lowercase alphanumeric + hyphens
-      !/^-|-$|--/.test(slug) &&    // No leading/trailing/consecutive hyphens
-      slug.length <= 20            // Max 20 chars
-    );
-  },
-  {
-    message:
-      "Store slug must be lowercase alphanumeric with hyphens only, no leading/trailing/consecutive hyphens, max 20 chars",
-    path: ["slug"],
-  }
-);
-export const selectStoreSchema = createSelectSchema(stores);

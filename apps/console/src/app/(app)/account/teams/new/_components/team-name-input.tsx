@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useTeamSearchParams } from "./use-team-search-params";
-import type { TeamFormValues } from "./team-form-schema";
+import type { TeamFormValues } from "@repo/console-validation/forms";
 
 /**
  * Team Name Input

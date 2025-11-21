@@ -15,7 +15,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { stores } from "./stores";
 
 /**
@@ -92,5 +91,3 @@ export type DocsDocument = typeof docsDocuments.$inferSelect;
 export type InsertDocsDocument = typeof docsDocuments.$inferInsert;
 
 // Zod schema exports
-export const insertDocsDocumentSchema = createInsertSchema(docsDocuments);
-export const selectDocsDocumentSchema = createSelectSchema(docsDocuments);

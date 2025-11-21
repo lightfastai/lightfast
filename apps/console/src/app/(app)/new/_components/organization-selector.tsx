@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
-import type { WorkspaceFormValues } from "./workspace-form-schema";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Organization Selector

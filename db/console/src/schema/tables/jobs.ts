@@ -6,7 +6,6 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { nanoid } from "@repo/lib";
 
 /**
@@ -200,7 +199,3 @@ export interface JobOutput {
 // Type exports
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
-
-// Zod schemas
-export const insertJobSchema = createInsertSchema(jobs);
-export const selectJobSchema = createSelectSchema(jobs);

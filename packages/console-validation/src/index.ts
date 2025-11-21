@@ -29,7 +29,7 @@
  * ```
  */
 
-// Constants (re-export from @db/console)
+// Constants
 export * from "./constants";
 
 // Primitives
@@ -43,3 +43,6 @@ export * from "./forms";
 
 // Database Integration
 export * from "./database";
+
+// Utilities
+export * from "./utils";

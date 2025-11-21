@@ -1,8 +1,7 @@
 "use client";
 
-import { useAtom } from "jotai";
 import type { TimeRange } from "../stores/dashboard-preferences";
-import { timeRangeAtom } from "../stores/dashboard-preferences";
+import { useDashboardPreferences } from "../stores/dashboard-preferences";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Clock } from "lucide-react";
 
@@ -13,7 +12,12 @@ import { Clock } from "lucide-react";
  * for dashboard metrics. Updates global state that affects all dashboard queries.
  */
 export function DashboardTimeRangeSelector() {
-	const [timeRange, setTimeRange] = useAtom(timeRangeAtom);
+	const timeRange = useDashboardPreferences((state) =>
+		state.getCurrentTimeRange()
+	);
+	const setTimeRange = useDashboardPreferences(
+		(state) => state.setCurrentTimeRange
+	);
 
 	const handleValueChange = (value: string) => {
 		setTimeRange(value as TimeRange);

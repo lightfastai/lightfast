@@ -5,6 +5,8 @@
  * - URL compatibility
  * - External system constraints (Pinecone, GitHub, Clerk)
  * - Consistent validation across frontend and backend
+ *
+ * **This is the single source of truth for all naming rules.**
  */
 
 /**

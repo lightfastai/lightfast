@@ -3,7 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { clerkClient } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
-import crypto from "node:crypto";
+import {
+	generateApiKey,
+	hashApiKey,
+	extractKeyPreview,
+	LIGHTFAST_API_KEY_PREFIX,
+} from "@repo/console-api-key";
 import { apiKeys, integrations } from "@db/console/schema";
 import { protectedProcedure } from "../trpc";
 
@@ -15,23 +20,6 @@ import { protectedProcedure } from "../trpc";
  * - Personal integrations (GitHub, etc.)
  * - API key management
  */
-
-/**
- * Hash an API key using SHA-256
- */
-function hashApiKey(key: string): string {
-	return crypto.createHash("sha256").update(key).digest("hex");
-}
-
-/**
- * Generate a secure random API key
- * Format: lf_<random_32_chars>
- */
-function generateApiKey(): string {
-	const randomBytes = crypto.randomBytes(24);
-	const randomString = randomBytes.toString("base64url");
-	return `lf_${randomString}`;
-}
 
 export const accountRouter = {
 	/**
@@ -194,10 +182,10 @@ export const accountRouter = {
 				}),
 			)
 			.mutation(async ({ ctx, input }) => {
-				// Generate API key
-				const apiKey = generateApiKey();
-				const keyHash = hashApiKey(apiKey);
-				const keyPreview = apiKey.slice(-8); // Last 8 chars for display
+				// Generate API key with lf_ prefix
+				const apiKey = generateApiKey(LIGHTFAST_API_KEY_PREFIX);
+				const keyHash = await hashApiKey(apiKey);
+				const keyPreview = extractKeyPreview(apiKey);
 
 				try {
 					// Store hashed key

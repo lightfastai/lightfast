@@ -1,11 +1,5 @@
 import { friendlyWords } from "friendlier-words";
-
-/**
- * Minimal constants for workspace/store slug generation
- * Full validation constants are in @repo/console-validation
- */
-const WORKSPACE_SLUG_MAX_LENGTH = 20; // Pinecone constraint
-const STORE_SLUG_MAX_LENGTH = 20;     // Pinecone constraint
+import { WORKSPACE_NAME, STORE_NAME } from "../constants/naming";
 
 /**
  * Generate a friendly workspace name
@@ -50,8 +44,8 @@ export function generateWorkspaceSlug(name: string): string {
     throw new Error("Workspace slug cannot be empty after sanitization");
   }
 
-  // Truncate to max length for Pinecone constraint: ws-{20}-{20} = 44 chars total
-  const truncated = slug.substring(0, WORKSPACE_SLUG_MAX_LENGTH);
+  // Truncate to 20 chars for Pinecone constraint: ws-{20}-{20} = 44 chars total
+  const truncated = slug.substring(0, 20);
 
   return truncated;
 }
@@ -61,7 +55,7 @@ export function generateWorkspaceSlug(name: string): string {
  * Note: This is for internal validation only. User-facing names are validated separately.
  */
 export function validateWorkspaceSlug(slug: string): boolean {
-  if (slug.length === 0 || slug.length > WORKSPACE_SLUG_MAX_LENGTH) {
+  if (slug.length === 0 || slug.length > 20) {
     return false;
   }
 
@@ -94,9 +88,9 @@ export function generateStoreSlug(name: string): string {
     throw new Error("Store slug cannot be empty after sanitization");
   }
 
-  if (storeSlug.length > STORE_SLUG_MAX_LENGTH) {
+  if (storeSlug.length > STORE_NAME.MAX_LENGTH) {
     throw new Error(
-      `Store slug too long (${storeSlug.length} chars). Max: ${STORE_SLUG_MAX_LENGTH}`
+      `Store slug too long (${storeSlug.length} chars). Max: ${STORE_NAME.MAX_LENGTH}`
     );
   }
 
@@ -107,17 +101,17 @@ export function generateStoreSlug(name: string): string {
  * Validate a store slug meets Pinecone constraints
  */
 export function validateStoreSlug(slug: string): boolean {
-  if (slug.length === 0 || slug.length > STORE_SLUG_MAX_LENGTH) {
+  if (slug.length === 0 || slug.length > STORE_NAME.MAX_LENGTH) {
     return false;
   }
 
   // Must be lowercase alphanumeric + hyphens only
-  if (!/^[a-z0-9-]+$/.test(slug)) {
+  if (!STORE_NAME.PATTERN.test(slug)) {
     return false;
   }
 
   // No leading/trailing/consecutive hyphens
-  if (/--/.test(slug) || /^-|-$/.test(slug)) {
+  if (STORE_NAME.NO_CONSECUTIVE_HYPHENS.test(slug) || /^-|-$/.test(slug)) {
     return false;
   }
 

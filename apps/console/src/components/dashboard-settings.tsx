@@ -1,8 +1,7 @@
 "use client";
 
-import { useAtom } from "jotai";
 import type { TimeRange } from "../stores/dashboard-preferences";
-import { dashboardPreferencesAtom } from "../stores/dashboard-preferences";
+import { useDashboardPreferences } from "../stores/dashboard-preferences";
 import {
 	Dialog,
 	DialogContent,
@@ -32,49 +31,44 @@ import { Separator } from "@repo/ui/components/ui/separator";
  * - Default time range
  * - Visible sections
  *
- * Settings are persisted to localStorage via Jotai.
+ * Settings are persisted to localStorage via Zustand.
  */
 export function DashboardSettings() {
-	const [preferences, setPreferences] = useAtom(dashboardPreferencesAtom);
+	const autoRefreshInterval = useDashboardPreferences(
+		(state) => state.autoRefreshInterval
+	);
+	const defaultTimeRange = useDashboardPreferences(
+		(state) => state.defaultTimeRange
+	);
+	const visibleSections = useDashboardPreferences(
+		(state) => state.visibleSections
+	);
+	const setAutoRefreshInterval = useDashboardPreferences(
+		(state) => state.setAutoRefreshInterval
+	);
+	const setDefaultTimeRange = useDashboardPreferences(
+		(state) => state.setDefaultTimeRange
+	);
+	const setVisibleSection = useDashboardPreferences(
+		(state) => state.setVisibleSection
+	);
+	const resetPreferences = useDashboardPreferences(
+		(state) => state.resetPreferences
+	);
 
 	const handleAutoRefreshChange = (value: string) => {
-		setPreferences({
-			...preferences,
-			autoRefreshInterval: Number.parseInt(value, 10),
-		});
+		setAutoRefreshInterval(Number.parseInt(value, 10));
 	};
 
 	const handleDefaultTimeRangeChange = (value: string) => {
-		setPreferences({
-			...preferences,
-			defaultTimeRange: value as TimeRange,
-		});
+		setDefaultTimeRange(value as TimeRange);
 	};
 
 	const handleVisibilitySectionToggle = (
-		section: keyof typeof preferences.visibleSections,
+		section: keyof typeof visibleSections,
 		enabled: boolean
 	) => {
-		setPreferences({
-			...preferences,
-			visibleSections: {
-				...preferences.visibleSections,
-				[section]: enabled,
-			},
-		});
-	};
-
-	const resetToDefaults = () => {
-		setPreferences({
-			autoRefreshInterval: 30,
-			defaultTimeRange: "24h",
-			visibleSections: {
-				metrics: true,
-				activity: true,
-				sources: true,
-				stores: true,
-			},
-		});
+		setVisibleSection(section, enabled);
 	};
 
 	return (
@@ -103,7 +97,7 @@ export function DashboardSettings() {
 							</Label>
 						</div>
 						<Select
-							value={preferences.autoRefreshInterval.toString()}
+							value={autoRefreshInterval.toString()}
 							onValueChange={handleAutoRefreshChange}
 						>
 							<SelectTrigger id="auto-refresh">
@@ -133,7 +127,7 @@ export function DashboardSettings() {
 							</Label>
 						</div>
 						<Select
-							value={preferences.defaultTimeRange}
+							value={defaultTimeRange}
 							onValueChange={handleDefaultTimeRangeChange}
 						>
 							<SelectTrigger id="default-range">
@@ -170,7 +164,7 @@ export function DashboardSettings() {
 								</div>
 								<Switch
 									id="section-metrics"
-									checked={preferences.visibleSections.metrics}
+									checked={visibleSections.metrics}
 									onCheckedChange={(checked) =>
 										handleVisibilitySectionToggle("metrics", checked)
 									}
@@ -187,7 +181,7 @@ export function DashboardSettings() {
 								</div>
 								<Switch
 									id="section-activity"
-									checked={preferences.visibleSections.activity}
+									checked={visibleSections.activity}
 									onCheckedChange={(checked) =>
 										handleVisibilitySectionToggle("activity", checked)
 									}
@@ -204,7 +198,7 @@ export function DashboardSettings() {
 								</div>
 								<Switch
 									id="section-sources"
-									checked={preferences.visibleSections.sources}
+									checked={visibleSections.sources}
 									onCheckedChange={(checked) =>
 										handleVisibilitySectionToggle("sources", checked)
 									}
@@ -221,7 +215,7 @@ export function DashboardSettings() {
 								</div>
 								<Switch
 									id="section-stores"
-									checked={preferences.visibleSections.stores}
+									checked={visibleSections.stores}
 									onCheckedChange={(checked) =>
 										handleVisibilitySectionToggle("stores", checked)
 									}
@@ -235,7 +229,7 @@ export function DashboardSettings() {
 					{/* Reset Button */}
 					<Button
 						variant="outline"
-						onClick={resetToDefaults}
+						onClick={resetPreferences}
 						className="w-full"
 					>
 						Reset to Defaults

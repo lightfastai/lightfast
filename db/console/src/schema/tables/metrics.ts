@@ -7,7 +7,6 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { nanoid } from "@repo/lib";
 
 /**
@@ -153,5 +152,3 @@ export type Metric = typeof metrics.$inferSelect;
 export type InsertMetric = typeof metrics.$inferInsert;
 
 // Zod schemas
-export const insertMetricSchema = createInsertSchema(metrics);
-export const selectMetricSchema = createSelectSchema(metrics);

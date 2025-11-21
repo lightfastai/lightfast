@@ -8,7 +8,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
 import { sourceTypeEnum } from "./docs-documents";
@@ -161,9 +160,3 @@ export const connectedSources = pgTable(
 // Type exports
 export type ConnectedSource = typeof connectedSources.$inferSelect;
 export type InsertConnectedSource = typeof connectedSources.$inferInsert;
-
-// Zod Schema exports for validation
-export const insertConnectedSourceSchema =
-  createInsertSchema(connectedSources);
-export const selectConnectedSourceSchema =
-  createSelectSchema(connectedSources);

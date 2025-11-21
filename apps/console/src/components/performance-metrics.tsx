@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/console-trpc/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -11,37 +9,27 @@ import { Clock, TrendingUp } from "lucide-react";
 import { formatDuration } from "../lib/performance-utils";
 
 interface PerformanceMetricsProps {
-	workspaceId: string;
-	clerkOrgId: string;
+	percentiles: {
+		hasData: boolean;
+		p50: number;
+		p95: number;
+		p99: number;
+		max: number;
+		sampleSize: number;
+	};
+	timeSeries: Array<{
+		timestamp: string;
+		hour: string;
+		jobCount: number;
+		avgDuration: number;
+		successRate: number;
+	}>;
 }
 
 export function PerformanceMetrics({
-	workspaceId,
-	clerkOrgId,
+	percentiles,
+	timeSeries,
 }: PerformanceMetricsProps) {
-	const trpc = useTRPC();
-
-	// Fetch job percentiles (last 24h)
-	const { data: percentiles } = useSuspenseQuery({
-		...trpc.workspace.jobPercentiles.queryOptions({
-			workspaceId,
-			clerkOrgId,
-			timeRange: "24h",
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
-
-	// Fetch time series data (last 24h)
-	const { data: timeSeries } = useSuspenseQuery({
-		...trpc.workspace.performanceTimeSeries.queryOptions({
-			workspaceId,
-			clerkOrgId,
-			timeRange: "24h",
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
 
 	// Prepare chart data
 	const chartData = useMemo(() => {

@@ -7,7 +7,6 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { nanoid } from "@repo/lib";
 
 /**
@@ -116,18 +115,3 @@ export const apiKeys = pgTable(
 // Type exports
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = typeof apiKeys.$inferInsert;
-
-// Zod schemas
-export const insertApiKeySchema = createInsertSchema(apiKeys).refine(
-	(data) => {
-		// Validate name is not empty and reasonable length
-		const name = data.name;
-		return name && name.length >= 1 && name.length <= 100;
-	},
-	{
-		message: "API key name must be between 1 and 100 characters",
-		path: ["name"],
-	},
-);
-
-export const selectApiKeySchema = createSelectSchema(apiKeys);

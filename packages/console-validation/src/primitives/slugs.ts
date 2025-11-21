@@ -11,7 +11,7 @@ import {
   WORKSPACE_NAME,
   STORE_NAME,
   NAMING_ERRORS,
-} from "../constants";
+} from "../constants/naming";
 
 /**
  * Clerk Organization Slug Schema

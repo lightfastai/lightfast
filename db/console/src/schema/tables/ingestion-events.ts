@@ -12,7 +12,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { stores } from "./stores";
 import { sourceTypeEnum } from "./docs-documents";
 
@@ -76,5 +75,3 @@ export type IngestionEvent = typeof ingestionEvents.$inferSelect;
 export type InsertIngestionEvent = typeof ingestionEvents.$inferInsert;
 
 // Zod schema exports
-export const insertIngestionEventSchema = createInsertSchema(ingestionEvents);
-export const selectIngestionEventSchema = createSelectSchema(ingestionEvents);

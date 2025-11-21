@@ -9,9 +9,20 @@ import {
   DeusConnectedRepository,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql } from "drizzle-orm";
-import { z } from "zod";
 import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
-import { WORKSPACE_NAME, NAMING_ERRORS } from "@db/console/constants/naming";
+import {
+  workspaceListInputSchema,
+  workspaceCreateInputSchema,
+  workspaceStatisticsInputSchema,
+  workspaceUpdateNameInputSchema,
+  workspaceResolveFromClerkOrgIdInputSchema,
+  workspaceResolveFromGithubOrgSlugInputSchema,
+  workspaceStatisticsComparisonInputSchema,
+  workspaceJobPercentilesInputSchema,
+  workspacePerformanceTimeSeriesInputSchema,
+  workspaceSystemHealthInputSchema,
+  workspaceIntegrationDisconnectInputSchema,
+} from "@repo/console-validation/schemas";
 
 import { publicProcedure, protectedProcedure } from "../trpc";
 
@@ -30,11 +41,7 @@ export const workspaceRouter = {
    * No need for blocking access checks in layouts - let this handle it.
    */
   listByClerkOrgSlug: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-      }),
-    )
+    .input(workspaceListInputSchema)
     .query(async ({ ctx, input }) => {
       if (ctx.auth.type !== "clerk") {
         throw new Error("Clerk authentication required");
@@ -151,11 +158,7 @@ export const workspaceRouter = {
    * IMPORTANT: This procedure verifies the user has access to the org from the URL.
    */
   resolveFromClerkOrgSlug: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-      }),
-    )
+    .input(workspaceListInputSchema)
     .query(async ({ ctx, input }) => {
       if (ctx.auth.type !== "clerk") {
         throw new Error("Clerk authentication required");
@@ -238,11 +241,7 @@ export const workspaceRouter = {
    * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
    */
   resolveFromClerkOrgId: publicProcedure
-    .input(
-      z.object({
-        clerkOrgId: z.string(),
-      }),
-    )
+    .input(workspaceResolveFromClerkOrgIdInputSchema)
     .query(async ({ input }) => {
       // Get or create default workspace for this Clerk organization
       const workspaceId = await getOrCreateDefaultWorkspace(
@@ -278,11 +277,7 @@ export const workspaceRouter = {
    * - workspaceSlug: Internal slug identifier
    */
   resolveFromGithubOrgSlug: publicProcedure
-    .input(
-      z.object({
-        githubOrgSlug: z.string(),
-      }),
-    )
+    .input(workspaceResolveFromGithubOrgSlugInputSchema)
     .query(async ({ input }) => {
       // Find connected GitHub source by organization slug
       // GitHub installations store accountLogin in sourceMetadata
@@ -329,12 +324,7 @@ export const workspaceRouter = {
    * - Full workspace record with id, name, slug, settings, etc.
    */
   getByName: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-        workspaceName: z.string(),
-      }),
-    )
+    .input(workspaceStatisticsInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
       const { resolveWorkspaceByName } = await import("../trpc");
@@ -379,16 +369,7 @@ export const workspaceRouter = {
    * - workspaceSlug: URL-safe identifier
    */
   create: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgId: z.string(),
-        workspaceName: z
-          .string()
-          .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
-          .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
-          .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN),
-      }),
-    )
+    .input(workspaceCreateInputSchema)
     .mutation(async ({ ctx, input }) => {
       if (ctx.auth.type !== "clerk") {
         throw new Error("Clerk authentication required");
@@ -460,12 +441,7 @@ export const workspaceRouter = {
    * Returns overview metrics: sources, stores, documents, jobs
    */
   statistics: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-        workspaceName: z.string(),
-      }),
-    )
+    .input(workspaceStatisticsInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
       const { resolveWorkspaceByName } = await import("../trpc");
@@ -603,16 +579,7 @@ export const workspaceRouter = {
    * Returns current period stats vs previous period for percentage change calculation
    */
   statisticsComparison: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        clerkOrgId: z.string(),
-        currentStart: z.string(), // ISO datetime
-        currentEnd: z.string(), // ISO datetime
-        previousStart: z.string(), // ISO datetime
-        previousEnd: z.string(), // ISO datetime
-      }),
-    )
+    .input(workspaceStatisticsComparisonInputSchema)
     .query(async ({ input }) => {
       const {
         workspaceId,
@@ -720,15 +687,17 @@ export const workspaceRouter = {
    * Returns p50, p95, p99, and max duration metrics
    */
   jobPercentiles: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        clerkOrgId: z.string(),
-        timeRange: z.enum(["24h", "7d", "30d"]).default("24h"),
-      }),
-    )
-    .query(async ({ input }) => {
-      const { workspaceId, timeRange } = input;
+    .input(workspaceJobPercentilesInputSchema)
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
+      const { timeRange } = input;
 
       // Calculate time range
       const rangeHours = {
@@ -793,15 +762,17 @@ export const workspaceRouter = {
    * Returns hourly aggregated job metrics
    */
   performanceTimeSeries: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        clerkOrgId: z.string(),
-        timeRange: z.enum(["24h", "7d", "30d"]).default("24h"),
-      }),
-    )
-    .query(async ({ input }) => {
-      const { workspaceId, timeRange } = input;
+    .input(workspacePerformanceTimeSeriesInputSchema)
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
+      const { timeRange } = input;
 
       // Calculate time range
       const rangeHours = {
@@ -896,14 +867,15 @@ export const workspaceRouter = {
    * Returns workspace → stores → sources with health indicators
    */
   systemHealth: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        clerkOrgId: z.string(),
-      }),
-    )
-    .query(async ({ input }) => {
-      const { workspaceId } = input;
+    .input(workspaceSystemHealthInputSchema)
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name (user-facing)
+      const { resolveWorkspaceByName } = await import("../trpc");
+      const { workspaceId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
 
       // Get stores with document counts
       const storesData = await db
@@ -1022,12 +994,7 @@ export const workspaceRouter = {
      * Returns all connected sources/integrations for the workspace
      */
     list: protectedProcedure
-      .input(
-        z.object({
-          clerkOrgSlug: z.string(),
-          workspaceName: z.string(),
-        }),
-      )
+      .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
         const { resolveWorkspaceByName } = await import("../trpc");
@@ -1059,11 +1026,7 @@ export const workspaceRouter = {
      * Note: Only requires integrationId - workspace access is verified through the integration
      */
     disconnect: protectedProcedure
-      .input(
-        z.object({
-          integrationId: z.string(),
-        }),
-      )
+      .input(workspaceIntegrationDisconnectInputSchema)
       .mutation(async ({ ctx, input }) => {
         // Verify the integration belongs to a workspace the user has access to
         const source = await db.query.connectedSources.findFirst({
@@ -1137,23 +1100,13 @@ export const workspaceRouter = {
    * Used by workspace settings page to update the user-facing name
    */
   updateName: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-        workspaceName: z.string(), // Current workspace name
-        newWorkspaceName: z
-          .string()
-          .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
-          .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
-          .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN),
-      }),
-    )
+    .input(workspaceUpdateNameInputSchema)
     .mutation(async ({ ctx, input }) => {
       // Resolve workspace from current name (user-facing)
       const { resolveWorkspaceByName } = await import("../trpc");
       const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
         clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
+        workspaceName: input.currentName,
         userId: ctx.auth.userId,
       });
 
@@ -1163,14 +1116,14 @@ export const workspaceRouter = {
       const existingWorkspace = await db.query.workspaces.findFirst({
         where: and(
           eq(workspaces.clerkOrgId, clerkOrgId),
-          eq(workspaces.name, input.newWorkspaceName),
+          eq(workspaces.name, input.newName),
         ),
       });
 
       if (existingWorkspace && existingWorkspace.id !== workspaceId) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: `A workspace with the name "${input.newWorkspaceName}" already exists in this organization`,
+          message: `A workspace with the name "${input.newName}" already exists in this organization`,
         });
       }
 
@@ -1178,14 +1131,14 @@ export const workspaceRouter = {
       await db
         .update(workspaces)
         .set({
-          name: input.newWorkspaceName,
+          name: input.newName,
           updatedAt: new Date().toISOString(),
         })
         .where(eq(workspaces.id, workspaceId));
 
       return {
         success: true,
-        newWorkspaceName: input.newWorkspaceName,
+        newWorkspaceName: input.newName,
       };
     }),
 } satisfies TRPCRouterRecord;

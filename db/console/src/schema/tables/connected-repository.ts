@@ -10,7 +10,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import type {
   RepositoryMetadata,
@@ -195,13 +194,5 @@ export type DeusConnectedRepository =
   typeof DeusConnectedRepository.$inferSelect;
 export type InsertDeusConnectedRepository =
   typeof DeusConnectedRepository.$inferInsert;
-
-// Zod Schema exports for validation
-export const insertDeusConnectedRepositorySchema = createInsertSchema(
-  DeusConnectedRepository,
-);
-export const selectDeusConnectedRepositorySchema = createSelectSchema(
-  DeusConnectedRepository,
-);
 
 export type { RepositoryMetadata, RepositoryPermissions };

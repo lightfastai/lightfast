@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/console-trpc/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
@@ -19,25 +17,33 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 interface SystemHealthOverviewProps {
-	workspaceId: string;
-	clerkOrgId: string;
+	health: {
+		workspaceHealth: "healthy" | "degraded" | "down";
+		storesCount: number;
+		sourcesCount: number;
+		totalJobs24h: number;
+		stores: Array<{
+			id: string;
+			name: string;
+			embeddingDim: number;
+			documentCount: number;
+			successRate: number;
+			health: "healthy" | "degraded" | "down";
+			sources: Array<{
+				id: string;
+				type: string;
+				displayName: string;
+				documentCount: number;
+				lastSyncedAt: string | null;
+				health: "healthy" | "degraded" | "down";
+			}>;
+		}>;
+	};
 }
 
 export function SystemHealthOverview({
-	workspaceId,
-	clerkOrgId,
+	health,
 }: SystemHealthOverviewProps) {
-	const trpc = useTRPC();
-
-	// Fetch system health data
-	const { data: health } = useSuspenseQuery({
-		...trpc.workspace.systemHealth.queryOptions({
-			workspaceId,
-			clerkOrgId,
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
 
 	const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set());
 

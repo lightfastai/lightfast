@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { WorkspaceHeader } from "./workspace-header";
 import { MetricsSidebar } from "./metrics-sidebar";
@@ -13,136 +13,171 @@ import { LightfastConfigOverview } from "./lightfast-config-overview";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 interface WorkspaceDashboardProps {
-	orgSlug: string;
-	workspaceName: string;
+  orgSlug: string;
+  workspaceName: string;
 }
 
 export function WorkspaceDashboard({
-	orgSlug,
-	workspaceName,
+  orgSlug,
+  workspaceName,
 }: WorkspaceDashboardProps) {
-	const trpc = useTRPC();
+  const trpc = useTRPC();
 
-	// Resolve workspace to get IDs for child components
-	const { data: workspace } = useSuspenseQuery({
-		...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
-			clerkOrgSlug: orgSlug,
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
+  // Fetch all queries in parallel (5 total)
+  const [
+    { data: workspace },
+    { data: stats },
+    { data: percentiles },
+    { data: timeSeries },
+    { data: health },
+  ] = useSuspenseQueries({
+    queries: [
+      {
+        ...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
+          clerkOrgSlug: orgSlug,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+      {
+        ...trpc.workspace.statistics.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+      {
+        ...trpc.workspace.jobPercentiles.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+          timeRange: "24h",
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+      {
+        ...trpc.workspace.performanceTimeSeries.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+          timeRange: "24h",
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+      {
+        ...trpc.workspace.systemHealth.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+    ],
+  });
 
-	// Fetch workspace statistics
-	const { data: stats } = useSuspenseQuery({
-		...trpc.workspace.statistics.queryOptions({
-			clerkOrgSlug: orgSlug,
-			workspaceName: workspaceName,
-		}),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-	});
+  return (
+    <div className="space-y-6">
+      {/* Header - Full Width */}
+      <WorkspaceHeader
+        workspaceName={
+          workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
+        }
+        workspaceUrlName={workspaceName}
+        sourcesConnected={stats.sources.total}
+        orgSlug={orgSlug}
+      />
 
-	return (
-		<div className="space-y-6">
-			{/* Header - Full Width */}
-			<WorkspaceHeader
-				workspaceName={workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)}
-				workspaceUrlName={workspaceName}
-				sourcesConnected={stats.sources.total}
-				orgSlug={orgSlug}
-			/>
+      {/* First Section - Config + Metrics Grid (like PlanetScale VTGates + Vitess) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+        {/* Left: Lightfast Config (like VTGates) */}
+        <LightfastConfigOverview
+          workspaceId={workspace.workspaceId}
+          workspaceName={
+            workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
+          }
+          stores={stats.stores.list.map((store) => ({
+            ...store,
+            name: store.slug,
+          }))}
+        />
 
-			{/* First Section - Config + Metrics Grid (like PlanetScale VTGates + Vitess) */}
-			<div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-				{/* Left: Lightfast Config (like VTGates) */}
-				<LightfastConfigOverview
-					workspaceId={workspace.workspaceId}
-					workspaceName={workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)}
-					stores={stats.stores.list.map((store) => ({
-				...store,
-				name: store.slug,
-			}))}
-				/>
+        {/* Right: Metrics Sidebar (like Vitess stats) */}
+        <MetricsSidebar
+          sourcesCount={stats.sources.total}
+          totalDocuments={stats.documents.total}
+          totalChunks={stats.documents.chunks}
+          successRate={stats.jobs.successRate}
+          avgDurationMs={stats.jobs.avgDurationMs}
+          recentJobsCount={stats.jobs.total}
+        />
+      </div>
 
-				{/* Right: Metrics Sidebar (like Vitess stats) */}
-				<MetricsSidebar
-					sourcesCount={stats.sources.total}
-					totalDocuments={stats.documents.total}
-					totalChunks={stats.documents.chunks}
-					successRate={stats.jobs.successRate}
-					avgDurationMs={stats.jobs.avgDurationMs}
-					recentJobsCount={stats.jobs.total}
-				/>
-			</div>
+      {/* Main Grid Layout - 2 columns (65% / 35%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+        {/* Left Column - Main Content */}
+        <div className="space-y-6">
+          {/* System Health Overview - Hierarchical Status */}
+          <SystemHealthOverview health={health} />
 
-			{/* Main Grid Layout - 2 columns (65% / 35%) */}
-			<div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-				{/* Left Column - Main Content */}
-				<div className="space-y-6">
-					{/* System Health Overview - Hierarchical Status */}
-					<SystemHealthOverview
-						workspaceId={workspace.workspaceId}
-						clerkOrgId={workspace.clerkOrgId}
-					/>
+          {/* Performance Metrics - Percentiles & Time Series Charts */}
+          <PerformanceMetrics
+            percentiles={percentiles}
+            timeSeries={timeSeries}
+          />
+        </div>
 
-					{/* Performance Metrics - Percentiles & Time Series Charts */}
-					<PerformanceMetrics
-						workspaceId={workspace.workspaceId}
-						clerkOrgId={workspace.clerkOrgId}
-					/>
-				</div>
+        {/* Right Column - Activity Sidebar */}
+        <div className="space-y-6">
+          {/* Activity Timeline - Timeline-style layout */}
+          <ActivityTimeline recentJobs={stats.jobs.recent} />
+        </div>
+      </div>
 
-				{/* Right Column - Activity Sidebar */}
-				<div className="space-y-6">
-					{/* Activity Timeline - Timeline-style layout */}
-					<ActivityTimeline recentJobs={stats.jobs.recent} />
-				</div>
-			</div>
+      {/* Bottom Section - Full Width */}
+      <ConnectedSourcesOverview sources={stats.sources.list} />
 
-			{/* Bottom Section - Full Width */}
-			<ConnectedSourcesOverview sources={stats.sources.list} />
-
-			{/* Stores Overview - Full Width, Collapsible (can be removed since it's now in config) */}
-			<StoresOverview
-				stores={stats.stores.list.map((store) => ({
-				...store,
-				name: store.slug,
-			}))}
-				totalStores={stats.stores.total}
-			/>
-		</div>
-	);
+      {/* Stores Overview - Full Width, Collapsible (can be removed since it's now in config) */}
+      <StoresOverview
+        stores={stats.stores.list.map((store) => ({
+          ...store,
+          name: store.slug,
+        }))}
+        totalStores={stats.stores.total}
+      />
+    </div>
+  );
 }
 
 export function WorkspaceDashboardSkeleton() {
-	return (
-		<div className="space-y-6">
-			{/* Header Skeleton */}
-			<Skeleton className="h-20 w-full" />
+  return (
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <Skeleton className="h-20 w-full" />
 
-			{/* First Section - Config + Metrics Skeleton */}
-			<div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-				<Skeleton className="h-[400px] w-full" />
-				<Skeleton className="h-[400px] w-full" />
-			</div>
+      {/* First Section - Config + Metrics Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
 
-			{/* Main Grid Skeleton - 2 columns */}
-			<div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-				{/* Left Column */}
-				<div className="space-y-6">
-					<Skeleton className="h-64 w-full" />
-					<Skeleton className="h-80 w-full" />
-				</div>
+      {/* Main Grid Skeleton - 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
 
-				{/* Right Column */}
-				<div className="space-y-6">
-					<Skeleton className="h-[600px] w-full" />
-				</div>
-			</div>
+        {/* Right Column */}
+        <div className="space-y-6">
+          <Skeleton className="h-[600px] w-full" />
+        </div>
+      </div>
 
-			{/* Bottom Sections */}
-			<Skeleton className="h-48 w-full" />
-			<Skeleton className="h-32 w-full" />
-		</div>
-	);
+      {/* Bottom Sections */}
+      <Skeleton className="h-48 w-full" />
+      <Skeleton className="h-32 w-full" />
+    </div>
+  );
 }

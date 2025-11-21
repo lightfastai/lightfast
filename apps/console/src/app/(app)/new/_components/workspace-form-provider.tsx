@@ -5,8 +5,8 @@ import { createContext, useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@repo/ui/components/ui/form";
-import type { WorkspaceFormValues } from "./workspace-form-schema";
-import { workspaceFormSchema } from "./workspace-form-schema";
+
+import { workspaceFormSchema, type WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Workspace Form State

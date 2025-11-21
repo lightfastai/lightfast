@@ -8,7 +8,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { nanoid } from "@repo/lib";
 
 /**
@@ -139,43 +138,3 @@ export interface WorkspaceSettings {
 // Type exports
 export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = typeof workspaces.$inferInsert;
-
-// Zod schemas
-export const insertWorkspaceSchema = createInsertSchema(workspaces)
-  .refine(
-    (data) => {
-      // Validate name format (GitHub repo naming rules)
-      const name = data.name;
-      if (!name) return true; // Allow empty during optional create
-
-      return (
-        /^[A-Za-z0-9_.-]+$/.test(name) && // Alphanumeric + hyphens/periods/underscores
-        name.length >= 1 &&                // Min 1 char
-        name.length <= 100                 // Max 100 chars
-      );
-    },
-    {
-      message:
-        "Workspace name must contain only letters, numbers, hyphens, periods, and underscores (1-100 chars)",
-      path: ["name"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Validate slug format (internal identifier for Pinecone)
-      const slug = data.slug;
-      if (!slug) return true; // Allow empty during optional create
-
-      return (
-        /^[a-z0-9-]+$/.test(slug) && // Only lowercase alphanumeric + hyphens
-        !/^-|-$|--/.test(slug) &&    // No leading/trailing/consecutive hyphens
-        slug.length <= 20            // Max 20 chars
-      );
-    },
-    {
-      message:
-        "Workspace slug must be lowercase alphanumeric with hyphens only, no leading/trailing/consecutive hyphens, max 20 chars",
-      path: ["slug"],
-    }
-  );
-export const selectWorkspaceSchema = createSelectSchema(workspaces);

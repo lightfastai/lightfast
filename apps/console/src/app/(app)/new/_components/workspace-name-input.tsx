@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
-import type { WorkspaceFormValues } from "./workspace-form-schema";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Workspace Name Input

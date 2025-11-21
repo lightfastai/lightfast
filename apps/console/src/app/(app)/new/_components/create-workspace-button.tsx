@@ -10,7 +10,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
-import type { WorkspaceFormValues } from "./workspace-form-schema";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Create Workspace Button

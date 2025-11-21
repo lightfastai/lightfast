@@ -30,6 +30,7 @@
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-trpc": "workspace:^",
     "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:^",
     "@repo/console-webhooks": "workspace:^",
     "@repo/lib": "workspace:*",
     "@repo/site-config": "workspace:*",
@@ -50,7 +51,6 @@
     "@vercel/related-projects": "catalog:",
     "date-fns": "^4.1.0",
     "immer": "^10.1.1",
-    "jotai": "^2.12.3",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "nuqs": "^2.8.0",
@@ -63,7 +63,8 @@
     "shiki": "^3.9.2",
     "sonner": "^2.0.6",
     "superjson": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

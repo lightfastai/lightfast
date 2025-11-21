@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
-import type { TeamFormValues } from "./team-form-schema";
+import type { TeamFormValues } from "@repo/console-validation/forms";
 
 /**
  * Create Team Button
