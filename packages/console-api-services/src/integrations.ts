@@ -119,7 +119,8 @@ export class IntegrationsService extends DeusApiService {
    * Connect integration resource to workspace
    */
   async connectToWorkspace(params: {
-    workspaceId: string;
+    clerkOrgSlug: string;
+    workspaceName: string;
     resourceId: string;
     syncConfig: {
       branches?: string[];

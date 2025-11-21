@@ -234,8 +234,14 @@ export function CreateWorkspaceButton() {
 
       // Step 3: Connect resource to workspace
       // Note: Background sync is now triggered server-side in the mutation
+      const orgSlug = selectedOrg?.organization.slug;
+      if (!orgSlug) {
+        throw new Error("Organization slug not found");
+      }
+
       await connectWorkspaceMutation.mutateAsync({
-        workspaceId: workspace.workspaceId,
+        clerkOrgSlug: orgSlug,
+        workspaceName: workspace.workspaceName,
         resourceId: resource.id,
         syncConfig: {
           branches: [selectedRepository.defaultBranch],
@@ -251,9 +257,7 @@ export function CreateWorkspaceButton() {
         description: `${workspaceName} has been created and is syncing.`,
       });
 
-      const orgSlug = selectedOrg?.organization.slug;
-      const wsName = workspace.workspaceName;
-      router.push(`/${orgSlug}/${wsName}`);
+      router.push(`/${orgSlug}/${workspace.workspaceName}`);
     } catch (error) {
       console.error("Workspace creation failed:", error);
       // Error toast is shown by mutation onError handlers

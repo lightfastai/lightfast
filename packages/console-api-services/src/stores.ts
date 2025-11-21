@@ -14,7 +14,8 @@ export class StoresService extends DeusApiService {
 	 * Auto-provisions Pinecone index if store doesn't exist.
 	 */
 	async getOrCreateStore(params: {
-		workspaceId: string;
+		clerkOrgSlug: string;
+		workspaceName: string;
 		storeSlug: string;
 		embeddingDim?: number;
 	}): Promise<Store> {
@@ -26,18 +27,25 @@ export class StoresService extends DeusApiService {
 	/**
 	 * Get a store by name
 	 */
-	async getByName(storeSlug: string): Promise<Store> {
+	async getByName(params: {
+		clerkOrgSlug: string;
+		workspaceName: string;
+		storeSlug: string;
+	}): Promise<Store> {
 		return this.call("stores.getByName", async (caller) =>
-			caller.stores.getByName({ storeSlug }),
+			caller.stores.getByName(params),
 		);
 	}
 
 	/**
 	 * List all stores for a workspace
 	 */
-	async listByWorkspace(workspaceId: string): Promise<Store[]> {
+	async listByWorkspace(params: {
+		clerkOrgSlug: string;
+		workspaceName: string;
+	}): Promise<Store[]> {
 		return this.call("stores.listByWorkspace", async (caller) =>
-			caller.stores.listByWorkspace({ workspaceId }),
+			caller.stores.listByWorkspace(params),
 		);
 	}
 }
