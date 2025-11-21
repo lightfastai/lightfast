@@ -6,7 +6,7 @@
 
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure } from "../trpc";
+import { apiKeyProcedure } from "../trpc";
 import {
 	ContentsRequestSchema,
 	ContentsResponseSchema,
@@ -14,12 +14,12 @@ import {
 } from "@repo/console-types/api";
 import { db } from "@db/console/client";
 import { docsDocuments, stores } from "@db/console/schema";
-import { inArray, eq } from "drizzle-orm";
+import { inArray, eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 
 /**
- * Contents router - public procedures for document content endpoints
+ * Contents router - API key protected procedures for document content endpoints
  */
 export const contentsRouter = {
 	/**
@@ -32,14 +32,16 @@ export const contentsRouter = {
 	 * });
 	 * ```
 	 */
-	fetch: publicProcedure
+	fetch: apiKeyProcedure
 		.input(ContentsRequestSchema)
 		.output(ContentsResponseSchema)
-		.query(async ({ input }): Promise<ContentsResponse> => {
+		.query(async ({ ctx, input }): Promise<ContentsResponse> => {
 			const requestId = randomUUID();
 
 			log.info("Fetching contents", {
 				requestId,
+				workspaceId: ctx.auth.workspaceId,
+				userId: ctx.auth.userId,
 				ids: input.ids,
 				count: input.ids.length,
 			});
@@ -57,10 +59,17 @@ export const contentsRouter = {
 					})
 					.from(docsDocuments)
 					.innerJoin(stores, eq(docsDocuments.storeId, stores.id))
-					.where(inArray(docsDocuments.id, input.ids));
+					.where(
+						and(
+							inArray(docsDocuments.id, input.ids),
+							eq(stores.workspaceId, ctx.auth.workspaceId)
+						)
+					);
 
 				log.info("Documents fetched", {
 					requestId,
+					workspaceId: ctx.auth.workspaceId,
+					userId: ctx.auth.userId,
 					found: documents.length,
 					requested: input.ids.length,
 				});

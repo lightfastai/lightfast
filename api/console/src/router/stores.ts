@@ -1,7 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
-import { protectedProcedure } from "../trpc";
+import { protectedProcedure, resolveWorkspaceByName } from "../trpc";
 import {
 	getOrCreateStore,
 	getStoreBySlug,
@@ -26,14 +27,26 @@ export const storesRouter = {
 	 */
 	getOrCreate: protectedProcedure
 		.input(
-				z.object({
-					workspaceId: z.string(),
-					storeSlug: z.string(),
-					embeddingDim: z.number().default(storeEmbeddingDimension),
-				}),
+			z.object({
+				clerkOrgSlug: z.string(),
+				workspaceName: z.string(),
+				storeSlug: z.string(),
+				embeddingDim: z.number().default(storeEmbeddingDimension),
+			}),
 		)
-		.mutation(async ({ input }) => {
-			return getOrCreateStore(input);
+		.mutation(async ({ ctx, input }) => {
+			// Verify workspace access via helper
+			const { workspaceId } = await resolveWorkspaceByName({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceName: input.workspaceName,
+				userId: ctx.auth.userId,
+			});
+
+			return getOrCreateStore({
+				workspaceId,
+				storeSlug: input.storeSlug,
+				embeddingDim: input.embeddingDim,
+			});
 		}),
 
 	/**
@@ -42,11 +55,30 @@ export const storesRouter = {
 	getByName: protectedProcedure
 		.input(
 			z.object({
+				clerkOrgSlug: z.string(),
+				workspaceName: z.string(),
 				storeSlug: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
-			return getStoreBySlug(input.storeSlug);
+		.query(async ({ ctx, input }) => {
+			// Verify workspace access via helper
+			const { workspaceId } = await resolveWorkspaceByName({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceName: input.workspaceName,
+				userId: ctx.auth.userId,
+			});
+
+			// Get store and verify it belongs to workspace
+			const store = await getStoreBySlug(input.storeSlug);
+
+			if (store.workspaceId !== workspaceId) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Store not found or access denied",
+				});
+			}
+
+			return store;
 		}),
 
 	/**
@@ -55,10 +87,18 @@ export const storesRouter = {
 	listByWorkspace: protectedProcedure
 		.input(
 			z.object({
-				workspaceId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceName: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
-			return listStoresByWorkspace(input.workspaceId);
+		.query(async ({ ctx, input }) => {
+			// Verify workspace access via helper
+			const { workspaceId } = await resolveWorkspaceByName({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceName: input.workspaceName,
+				userId: ctx.auth.userId,
+			});
+
+			return listStoresByWorkspace(workspaceId);
 		}),
 } satisfies TRPCRouterRecord;

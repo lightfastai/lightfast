@@ -60,17 +60,18 @@ export type OrganizationFindBySlugInput = z.infer<
  * Used in:
  * - tRPC clerk.createOrGetOrganization procedure
  *
+ * Note: userId is obtained from authenticated context (ctx.auth.userId),
+ * not from user input, to prevent authorization bypasses.
+ *
  * @example
  * ```typescript
  * const input = organizationCreateOrGetInputSchema.parse({
- *   userId: "user_2abcdef123",
  *   orgName: "Lightfast AI",
  *   orgSlug: "lightfast-ai",
  * });
  * ```
  */
 export const organizationCreateOrGetInputSchema = z.object({
-  userId: clerkUserIdSchema,
   orgName: z.string().min(1, "Organization name must not be empty"),
   orgSlug: clerkOrgSlugSchema,
 });

@@ -3,7 +3,7 @@ import { clerkClient } from "@vendor/clerk/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { protectedProcedure } from "../trpc";
+import { protectedProcedure, verifyOrgMembership } from "../trpc";
 
 /**
  * Organization router - Clerk-based organization management
@@ -47,7 +47,74 @@ export const organizationRouter = {
 	}),
 
 	/**
+	 * Find organization by Clerk organization ID or slug
+	 *
+	 * Unified procedure that replaces findByClerkOrgId and findByClerkOrgSlug.
+	 * Returns organization data from Clerk.
+	 * Used by org layout and pages.
+	 */
+	find: protectedProcedure
+		.input(
+			z
+				.object({
+					clerkOrgId: z.string().optional(),
+					clerkOrgSlug: z.string().optional(),
+				})
+				.refine((data) => data.clerkOrgId || data.clerkOrgSlug, {
+					message: "Either clerkOrgId or clerkOrgSlug is required",
+				}),
+		)
+		.query(async ({ ctx, input }) => {
+			if (ctx.auth.type !== "clerk") {
+				throw new Error("Clerk authentication required");
+			}
+
+			const clerk = await clerkClient();
+
+			try {
+				// Get organization by ID or slug
+				const clerkOrg = await clerk.organizations.getOrganization(
+					input.clerkOrgId
+						? { organizationId: input.clerkOrgId }
+						: { slug: input.clerkOrgSlug! },
+				);
+
+				if (!clerkOrg) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Organization not found",
+					});
+				}
+
+				// Verify user has access to this organization
+				const membership = await verifyOrgMembership({
+					clerkOrgId: clerkOrg.id,
+					userId: ctx.auth.userId,
+				});
+
+				return {
+					id: clerkOrg.id,
+					slug: clerkOrg.slug ?? clerkOrg.id,
+					name: clerkOrg.name,
+					imageUrl: clerkOrg.imageUrl,
+					role: membership.role,
+				};
+			} catch (error) {
+				if (error instanceof TRPCError) {
+					throw error;
+				}
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to fetch organization",
+					cause: error,
+				});
+			}
+		}),
+
+	/**
 	 * Find organization by Clerk organization ID
+	 *
+	 * @deprecated Use `find` procedure instead with `{ clerkOrgId }` parameter
 	 *
 	 * Returns organization data from Clerk.
 	 * Used by org layout to prefetch org data.
@@ -78,28 +145,17 @@ export const organizationRouter = {
 				}
 
 				// Verify user has access to this organization
-				const userId = ctx.auth.userId;
-				const membership = await clerk.organizations.getOrganizationMembershipList({
-					organizationId: input.clerkOrgId,
+				const membership = await verifyOrgMembership({
+					clerkOrgId: input.clerkOrgId,
+					userId: ctx.auth.userId,
 				});
-
-				const userMembership = membership.data.find(
-					(m) => m.publicUserData?.userId === userId
-				);
-
-				if (!userMembership) {
-					throw new TRPCError({
-						code: "FORBIDDEN",
-						message: "Access denied to this organization",
-					});
-				}
 
 				return {
 					id: clerkOrg.id,
 					slug: clerkOrg.slug ?? clerkOrg.id,
 					name: clerkOrg.name,
 					imageUrl: clerkOrg.imageUrl,
-					role: userMembership.role,
+					role: membership.role,
 				};
 			} catch (error) {
 				if (error instanceof TRPCError) {
@@ -115,6 +171,8 @@ export const organizationRouter = {
 
 	/**
 	 * Find organization by Clerk organization slug
+	 *
+	 * @deprecated Use `find` procedure instead with `{ clerkOrgSlug }` parameter
 	 *
 	 * Returns organization data from Clerk.
 	 * Used by org pages that reference slug.
@@ -146,28 +204,17 @@ export const organizationRouter = {
 				}
 
 				// Verify user has access to this organization
-				const userId = ctx.auth.userId;
-				const membership = await clerk.organizations.getOrganizationMembershipList({
-					organizationId: clerkOrg.id,
+				const membership = await verifyOrgMembership({
+					clerkOrgId: clerkOrg.id,
+					userId: ctx.auth.userId,
 				});
-
-				const userMembership = membership.data.find(
-					(m) => m.publicUserData?.userId === userId
-				);
-
-				if (!userMembership) {
-					throw new TRPCError({
-						code: "FORBIDDEN",
-						message: "Access denied to this organization",
-					});
-				}
 
 				return {
 					id: clerkOrg.id,
 					slug: clerkOrg.slug ?? clerkOrg.id,
 					name: clerkOrg.name,
 					imageUrl: clerkOrg.imageUrl,
-					role: userMembership.role,
+					role: membership.role,
 				};
 			} catch (error) {
 				if (error instanceof TRPCError) {
@@ -277,28 +324,11 @@ export const organizationRouter = {
 
 			try {
 				// Verify user has admin access to the organization
-				const membership = await clerk.organizations.getOrganizationMembershipList({
-					organizationId: input.organizationId,
+				await verifyOrgMembership({
+					clerkOrgId: input.organizationId,
+					userId: ctx.auth.userId,
+					requireAdmin: true,
 				});
-
-				const userMembership = membership.data.find(
-					(m) => m.publicUserData?.userId === ctx.auth.userId,
-				);
-
-				if (!userMembership) {
-					throw new TRPCError({
-						code: "FORBIDDEN",
-						message: "Access denied to this organization",
-					});
-				}
-
-				// Only admins can update org name
-				if (userMembership.role !== "org:admin") {
-					throw new TRPCError({
-						code: "FORBIDDEN",
-						message: "Only administrators can update organization settings",
-					});
-				}
 
 				// Update organization in Clerk
 				await clerk.organizations.updateOrganization(input.organizationId, {

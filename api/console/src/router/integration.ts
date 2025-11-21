@@ -20,7 +20,7 @@ import { getWorkspaceKey } from "@db/console/utils";
 import { inngest } from "@api/console/inngest";
 import { env } from "../env";
 
-import { protectedProcedure } from "../trpc";
+import { protectedProcedure, resolveWorkspaceByName } from "../trpc";
 
 /**
  * Integration Router
@@ -779,7 +779,8 @@ export const integrationRouter = {
     connect: protectedProcedure
       .input(
         z.object({
-          workspaceId: z.string(),
+          clerkOrgSlug: z.string(),
+          workspaceName: z.string(),
           resourceId: z.string(),
           syncConfig: z.object({
             branches: z.array(z.string()).optional(),
@@ -790,6 +791,13 @@ export const integrationRouter = {
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // Verify workspace access
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
         // Verify resource exists and user has access
         const resourceResult = await ctx.db
           .select()
@@ -815,7 +823,7 @@ export const integrationRouter = {
           .from(workspaceIntegrations)
           .where(
             and(
-              eq(workspaceIntegrations.workspaceId, input.workspaceId),
+              eq(workspaceIntegrations.workspaceId, workspaceId),
               eq(workspaceIntegrations.resourceId, input.resourceId)
             )
           )
@@ -868,7 +876,7 @@ export const integrationRouter = {
               const workspaceResult = await ctx.db
                 .select()
                 .from(workspaces)
-                .where(eq(workspaces.id, input.workspaceId))
+                .where(eq(workspaces.id, workspaceId))
                 .limit(1);
 
               const workspace = workspaceResult[0];
@@ -879,7 +887,7 @@ export const integrationRouter = {
                 await inngest.send({
                   name: "apps-console/repository.connected",
                   data: {
-                    workspaceId: input.workspaceId,
+                    workspaceId: workspaceId,
                     workspaceKey: getWorkspaceKey(workspace.slug),
                     resourceId: input.resourceId,
                     repoFullName: resourceData.repoFullName,
@@ -906,7 +914,7 @@ export const integrationRouter = {
 
         await ctx.db.insert(workspaceIntegrations).values({
           id: connectionId,
-          workspaceId: input.workspaceId,
+          workspaceId: workspaceId,
           resourceId: input.resourceId,
           connectedByUserId: ctx.auth.userId,
           syncConfig: input.syncConfig,
@@ -929,7 +937,7 @@ export const integrationRouter = {
             const workspaceResult = await ctx.db
               .select()
               .from(workspaces)
-              .where(eq(workspaces.id, input.workspaceId))
+              .where(eq(workspaces.id, workspaceId))
               .limit(1);
 
             const workspace = workspaceResult[0];
@@ -940,7 +948,7 @@ export const integrationRouter = {
               await inngest.send({
                 name: "apps-console/repository.connected",
                 data: {
-                  workspaceId: input.workspaceId,
+                  workspaceId: workspaceId,
                   workspaceKey: getWorkspaceKey(workspace.slug),
                   resourceId: input.resourceId,
                   repoFullName: resourceData.repoFullName,

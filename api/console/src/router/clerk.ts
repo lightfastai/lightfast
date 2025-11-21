@@ -24,20 +24,19 @@ export const clerkRouter = {
 	createOrGetOrganization: protectedProcedure
 		.input(
 			z.object({
-				userId: z.string(),
 				orgName: z.string(),
 				orgSlug: z.string(),
 			}),
 		)
-		.mutation(async ({ input }) => {
-			const { userId, orgName, orgSlug } = input;
+		.mutation(async ({ ctx, input }) => {
+			const { orgName, orgSlug } = input;
 
 			try {
 				const clerk = await clerkClient();
 				const clerkOrg = await clerk.organizations.createOrganization({
 					name: orgName,
 					slug: orgSlug,
-					createdBy: userId,
+					createdBy: ctx.auth.userId,
 				});
 
 				return {
@@ -52,7 +51,7 @@ export const clerkRouter = {
 					const clerkOrg = await clerk.organizations.createOrganization({
 						name: orgName,
 						slug: uniqueSlug,
-						createdBy: userId,
+						createdBy: ctx.auth.userId,
 					});
 
 					return {
@@ -112,19 +111,6 @@ export const clerkRouter = {
 			});
 
 			return { role: membership.role };
-		}),
-
-	/**
-	 * Map GitHub role to Clerk role
-	 */
-	mapRole: protectedProcedure
-		.input(
-			z.object({
-				githubRole: z.enum(["admin", "member"]),
-			}),
-		)
-		.query(({ input }) => {
-			return mapGitHubRoleToClerkRole(input.githubRole as OrgMembershipRole);
 		}),
 } satisfies TRPCRouterRecord;
 

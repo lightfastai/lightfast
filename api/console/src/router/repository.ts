@@ -12,7 +12,7 @@ import { inngest } from "@api/console/inngest";
 import { env } from "../env";
 import { getWorkspaceKey } from "@db/console/utils";
 
-import { protectedProcedure, webhookProcedure } from "../trpc";
+import { protectedProcedure, webhookProcedure, verifyOrgAccessAndResolve, verifyOrgMembership } from "../trpc";
 
 // Helper to create GitHub App instance
 function getGitHubApp() {
@@ -502,10 +502,16 @@ export const repositoryRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       // Verify org access and resolve org ID
-      const { verifyOrgAccessAndResolve } = await import("../trpc");
       const { clerkOrgId } = await verifyOrgAccessAndResolve({
         clerkOrgSlug: input.clerkOrgSlug,
         userId: ctx.auth.userId,
+      });
+
+      // Verify admin access - only admins can trigger expensive reindex operations
+      await verifyOrgMembership({
+        clerkOrgId,
+        userId: ctx.auth.userId,
+        requireAdmin: true,
       });
 
       // Resolve repository
@@ -524,6 +530,26 @@ export const repositoryRouter = {
         throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
       }
 
+      // Check for existing reindex job to prevent spam and duplicate work
+      const { jobs } = await import("@db/console/schema");
+      const { inArray } = await import("drizzle-orm");
+
+      const existingJob = await ctx.db.query.jobs.findFirst({
+        where: and(
+          eq(jobs.repositoryId, input.repositoryId),
+          eq(jobs.name, "reindex"),
+          inArray(jobs.status, ["queued", "running"]),
+        ),
+      });
+
+      if (existingJob) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Reindex already in progress",
+          cause: { jobId: existingJob.id, status: existingJob.status },
+        });
+      }
+
       const fullName = repository.metadata?.fullName;
       if (!fullName) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Repository metadata missing fullName" });
@@ -538,22 +564,18 @@ export const repositoryRouter = {
       const octokit = await app.getInstallationOctokit(Number.parseInt(repository.githubInstallationId, 10));
 
       // Resolve default branch and HEAD commit SHA
-      const { data: repoInfo } = await octikitSafe(async () =>
-        octokit.request("GET /repos/{owner}/{repo}", {
-          owner,
-          repo,
-          headers: { "X-GitHub-Api-Version": "2022-11-28" },
-        }),
-      );
+      const { data: repoInfo } = await octokit.request("GET /repos/{owner}/{repo}", {
+        owner,
+        repo,
+        headers: { "X-GitHub-Api-Version": "2022-11-28" },
+      });
       const defaultBranch = (repoInfo.default_branch as string) ?? "main";
-      const { data: head } = await octikitSafe(async () =>
-        octokit.request("GET /repos/{owner}/{repo}/commits/{ref}", {
-          owner,
-          repo,
-          ref: defaultBranch,
-          headers: { "X-GitHub-Api-Version": "2022-11-28" },
-        }),
-      );
+      const { data: head } = await octokit.request("GET /repos/{owner}/{repo}/commits/{ref}", {
+        owner,
+        repo,
+        ref: defaultBranch,
+        headers: { "X-GitHub-Api-Version": "2022-11-28" },
+      });
       const headSha = (head.sha as string) ?? defaultBranch;
 
       // Detect config path and load config contents
@@ -563,15 +585,13 @@ export const repositoryRouter = {
       let includeGlobs: string[] = ["docs/**/*.md", "docs/**/*.mdx", "README.md"]; // sensible defaults
       let configuredStore: string | undefined;
       if (detection.exists && detection.path) {
-        const { data } = await octikitSafe(async () =>
-          octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
-            owner,
-            repo,
-            path: detection.path!,
-            ref: defaultBranch,
-            headers: { "X-GitHub-Api-Version": "2022-11-28" },
-          }),
-        );
+        const { data } = await octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
+          owner,
+          repo,
+          path: detection.path!,
+          ref: defaultBranch,
+          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+        });
         if ("content" in data && data.type === "file") {
           const yamlText = Buffer.from((data.content as string) ?? "", "base64").toString("utf-8");
           try {
@@ -589,15 +609,13 @@ export const repositoryRouter = {
       }
 
       // Enumerate repo tree and filter by globs
-      const { data: tree } = await octikitSafe(async () =>
-        octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
-          owner,
-          repo,
-          tree_sha: headSha,
-          recursive: "true",
-          headers: { "X-GitHub-Api-Version": "2022-11-28" },
-        }),
-      );
+      const { data: tree } = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
+        owner,
+        repo,
+        tree_sha: headSha,
+        recursive: "true",
+        headers: { "X-GitHub-Api-Version": "2022-11-28" },
+      });
 
       const allPaths: string[] = Array.isArray((tree as any).tree)
         ? (tree as any).tree.filter((n: any) => n.type === "blob" && typeof n.path === "string").map((n: any) => n.path as string)
@@ -637,8 +655,3 @@ export const repositoryRouter = {
       return { queued: matches.length, matched: matches.length, deliveryId, ref: defaultBranch };
     }),
 } satisfies TRPCRouterRecord;
-
-// Helper to safely call Octokit and unwrap data
-async function octikitSafe<T>(fn: () => Promise<{ data: T }>): Promise<{ data: T }> {
-  return await fn();
-}

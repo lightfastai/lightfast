@@ -6,7 +6,7 @@
 
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure } from "../trpc";
+import { apiKeyProcedure } from "../trpc";
 import {
 	SearchRequestSchema,
 	SearchResponseSchema,
@@ -22,7 +22,7 @@ import { stores } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
- * Search router - public procedures for search endpoints
+ * Search router - API key protected procedures for search endpoints
  */
 export const searchRouter = {
 	/**
@@ -39,15 +39,17 @@ export const searchRouter = {
 	 * });
 	 * ```
 	 */
-	query: publicProcedure
+	query: apiKeyProcedure
 		.input(SearchRequestSchema)
 		.output(SearchResponseSchema)
-		.query(async ({ input }): Promise<SearchResponse> => {
+		.query(async ({ ctx, input }): Promise<SearchResponse> => {
 			const startTime = Date.now();
 			const requestId = randomUUID();
 
 			log.info("Search query", {
 				requestId,
+				workspaceId: ctx.auth.workspaceId,
+				userId: ctx.auth.userId,
 				query: input.query,
 				topK: input.topK,
 				filters: input.filters,
@@ -65,24 +67,27 @@ export const searchRouter = {
 
 				const storeSlug = storeLabel.replace("store:", "");
 
-				// Phase 1.6: Look up store to get workspaceId
+				// Phase 1.6: Look up store and verify workspace access
 				const store = await db.query.stores.findFirst({
-					where: eq(stores.slug, storeSlug),
+					where: and(
+						eq(stores.slug, storeSlug),
+						eq(stores.workspaceId, ctx.auth.workspaceId)
+					),
 				});
 
 				if (!store) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: `Store not found: ${storeSlug}`,
+						message: `Store not found or access denied: ${storeSlug}`,
 					});
 				}
 
-				const workspaceId = store.workspaceId;
 				const indexName = store.indexName;
 
 				log.info("Resolved index", {
 					requestId,
-					workspaceId,
+					workspaceId: ctx.auth.workspaceId,
+					userId: ctx.auth.userId,
 					storeSlug,
 					indexName,
 					storeId: store.id,

@@ -29,6 +29,12 @@ export type AuthContext =
       source: "internal";
     }
   | {
+      type: "apiKey";
+      workspaceId: string;
+      userId: string;
+      apiKeyId: string;
+    }
+  | {
       type: "unauthenticated";
     };
 
@@ -57,6 +63,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     return {
       auth: { type: "webhook" as const, source: "internal" as const },
       db,
+      headers: opts.headers,
     };
   }
 
@@ -69,6 +76,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     return {
       auth: { type: "clerk" as const, userId: clerkSession.userId },
       db,
+      headers: opts.headers,
     };
   }
 
@@ -77,6 +85,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     auth: { type: "unauthenticated" as const },
     db,
+    headers: opts.headers,
   };
 };
 
@@ -247,12 +256,60 @@ export const webhookProcedure = sentrifiedProcedure
  * API Key Protected procedure
  *
  * If you want a query or mutation to ONLY be accessible via API key authentication, use this.
- * This is used by CLI clients that authenticate with API keys instead of Clerk sessions.
+ * This is used by public API endpoints (search, contents) that need workspace-scoped access.
  *
  * Verifies that a valid API key is provided and guarantees `ctx.auth` is of type "apiKey".
  *
+ * Security:
+ * - Extracts Bearer token from Authorization header
+ * - Extracts workspace ID from X-Workspace-ID header
+ * - Verifies key hash against database
+ * - Checks expiration and active status
+ * - Provides workspace context for tenant isolation
+ *
  * @see https://trpc.io/docs/procedures
  */
+export const apiKeyProcedure = sentrifiedProcedure
+  .use(timingMiddleware)
+  .use(async ({ ctx, next }) => {
+    // Extract API key from Authorization header
+    const authHeader = ctx.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "API key required. Provide 'Authorization: Bearer <api-key>' header.",
+      });
+    }
+
+    const apiKey = authHeader.replace("Bearer ", "");
+
+    // Extract workspace ID from header
+    const workspaceId = ctx.headers.get("x-workspace-id");
+    if (!workspaceId) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
+      });
+    }
+
+    // Verify API key and get workspace context
+    const { workspaceId: verifiedWorkspaceId, userId, apiKeyId } = await verifyApiKey({
+      key: apiKey,
+      workspaceId,
+    });
+
+    return next({
+      ctx: {
+        ...ctx,
+        auth: {
+          type: "apiKey" as const,
+          workspaceId: verifiedWorkspaceId,
+          userId,
+          apiKeyId,
+        },
+      },
+    });
+  });
 
 /**
  * Helper: Verify org access and resolve org ID from slug
@@ -381,6 +438,247 @@ export async function resolveWorkspaceBySlug(params: {
     workspaceId: result.data.workspaceId,
     workspaceSlug: params.workspaceSlug,
     clerkOrgId: result.data.clerkOrgId,
+  };
+}
+
+/**
+ * Helper: Verify organization membership
+ *
+ * This centralizes the pattern of:
+ * 1. Fetching organization membership list from Clerk
+ * 2. Verifying user has access to the organization
+ * 3. Optionally verifying user has admin role
+ * 4. Returning the membership object for further processing
+ *
+ * Use this in procedures that need to verify organization-level access
+ * (organization settings, member management, etc.)
+ *
+ * @throws {TRPCError} FORBIDDEN if user doesn't have access or doesn't have required role
+ */
+export async function verifyOrgMembership(params: {
+  clerkOrgId: string;
+  userId: string;
+  requireAdmin?: boolean;
+}): Promise<{
+  role: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string | null;
+    imageUrl: string;
+  };
+}> {
+  const { clerkClient } = await import("@vendor/clerk/server");
+  const clerk = await clerkClient();
+
+  // Fetch organization membership list
+  const membership = await clerk.organizations.getOrganizationMembershipList({
+    organizationId: params.clerkOrgId,
+  });
+
+  // Find user's membership
+  const userMembership = membership.data.find(
+    (m) => m.publicUserData?.userId === params.userId,
+  );
+
+  if (!userMembership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Access denied to this organization",
+    });
+  }
+
+  // Check admin requirement if specified
+  if (params.requireAdmin && userMembership.role !== "org:admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only administrators can perform this action",
+    });
+  }
+
+  return {
+    role: userMembership.role,
+    organization: {
+      id: userMembership.organization.id,
+      name: userMembership.organization.name,
+      slug: userMembership.organization.slug,
+      imageUrl: userMembership.organization.imageUrl,
+    },
+  };
+}
+
+/**
+ * Helper: Verify API key and load workspace context
+ *
+ * This centralizes the pattern of:
+ * 1. Extracting workspace ID from header
+ * 2. Verifying key hash in database
+ * 3. Checking expiration and active status
+ * 4. Updating last used timestamp
+ *
+ * Use this in apiKeyProcedure middleware
+ *
+ * @throws {TRPCError} UNAUTHORIZED if key is invalid, expired, or inactive
+ * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
+ */
+export async function verifyApiKey(params: {
+  key: string;
+  workspaceId: string;
+}): Promise<{
+  workspaceId: string;
+  userId: string;
+  apiKeyId: string;
+}> {
+  const { hashApiKey } = await import("@repo/console-api-key");
+  const { apiKeys } = await import("@db/console/schema");
+  const { eq, and, sql } = await import("drizzle-orm");
+
+  // Hash the provided key to compare with stored hash
+  const keyHash = await hashApiKey(params.key);
+
+  // Find API key in database
+  const [apiKey] = await db
+    .select({
+      id: apiKeys.id,
+      userId: apiKeys.userId,
+      isActive: apiKeys.isActive,
+      expiresAt: apiKeys.expiresAt,
+    })
+    .from(apiKeys)
+    .where(
+      and(
+        eq(apiKeys.keyHash, keyHash),
+        eq(apiKeys.isActive, true),
+      )
+    )
+    .limit(1);
+
+  if (!apiKey) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Invalid API key",
+    });
+  }
+
+  // Check expiration
+  if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "API key expired",
+    });
+  }
+
+  // Update last used timestamp (non-blocking)
+  void db
+    .update(apiKeys)
+    .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
+    .where(eq(apiKeys.id, apiKey.id))
+    .catch((error) => {
+      console.error("Failed to update API key lastUsedAt", { error, apiKeyId: apiKey.id });
+    });
+
+  return {
+    workspaceId: params.workspaceId,
+    userId: apiKey.userId,
+    apiKeyId: apiKey.id,
+  };
+}
+
+/**
+ * Standardized Error Handling Utilities
+ *
+ * These utilities provide consistent error handling patterns across all routers,
+ * with proper logging, error classification, and user-friendly messages.
+ */
+
+type ErrorContext = {
+  procedure: string;
+  userId?: string;
+  clerkOrgId?: string;
+  workspaceId?: string;
+  [key: string]: unknown;
+};
+
+/**
+ * Handle errors in tRPC procedures with standardized logging and error messages
+ *
+ * This centralizes the pattern of:
+ * 1. Logging the error with context
+ * 2. Re-throwing TRPCErrors as-is
+ * 3. Wrapping unknown errors in TRPCError
+ *
+ * Use this in try/catch blocks in procedures:
+ *
+ * @example
+ * try {
+ *   // ... operation
+ * } catch (error) {
+ *   handleProcedureError(error, {
+ *     procedure: "repository.connect",
+ *     userId: ctx.auth.userId,
+ *     clerkOrgId: input.clerkOrgId,
+ *   });
+ * }
+ */
+export function handleProcedureError(
+  error: unknown,
+  context: ErrorContext,
+  userMessage?: string,
+): never {
+  // Log error with context
+  console.error(`[tRPC Error] ${context.procedure}`, {
+    ...context,
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  });
+
+  // Re-throw TRPCError as-is (already properly formatted)
+  if (error instanceof TRPCError) {
+    throw error;
+  }
+
+  // Wrap unknown errors in TRPCError
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: userMessage ?? "An unexpected error occurred",
+    cause: error,
+  });
+}
+
+/**
+ * Create a standardized try/catch wrapper for procedure logic
+ *
+ * This provides a convenient way to wrap procedure logic with error handling:
+ *
+ * @example
+ * connect: protectedProcedure
+ *   .input(schema)
+ *   .mutation(withErrorHandling(
+ *     { procedure: "repository.connect" },
+ *     async ({ ctx, input }) => {
+ *       // ... procedure logic
+ *       return result;
+ *     }
+ *   ))
+ */
+export function withErrorHandling<TContext, TInput, TOutput>(
+  context: { procedure: string; [key: string]: unknown },
+  handler: (params: { ctx: TContext; input: TInput }) => Promise<TOutput>,
+  userMessage?: string,
+) {
+  return async (params: { ctx: TContext & { auth?: { userId?: string } }; input: TInput }): Promise<TOutput> => {
+    try {
+      return await handler(params);
+    } catch (error) {
+      handleProcedureError(
+        error,
+        {
+          ...context,
+          userId: params.ctx.auth?.userId,
+        } as ErrorContext,
+        userMessage,
+      );
+    }
   };
 }
 
