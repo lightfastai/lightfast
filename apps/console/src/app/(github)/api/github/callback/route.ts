@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { validateOAuthState } from "@repo/console-oauth/state";
+import { encryptOAuthTokenToCookie } from "@repo/console-oauth/tokens";
 import { getUserInstallations } from "@repo/console-octokit-github";
 import { IntegrationsService } from "@repo/console-api-services";
 import { encrypt } from "@repo/lib";
@@ -46,10 +48,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Validate state parameter
-  const storedState = request.cookies.get("github_oauth_state")?.value;
-  if (!state || !storedState || state !== storedState) {
+  // Validate state parameter with @repo/console-oauth
+  const storedStateEncoded = request.cookies.get("github_oauth_state")?.value;
+  if (!state || !storedStateEncoded) {
     return NextResponse.redirect(`${baseUrl}/?github_error=invalid_state`);
+  }
+
+  const stateValidation = await validateOAuthState(state, storedStateEncoded);
+  if (!stateValidation.valid) {
+    const errorParam = stateValidation.error === "expired"
+      ? "state_expired"
+      : "invalid_state";
+    return NextResponse.redirect(`${baseUrl}/?github_error=${errorParam}`);
   }
 
   // Exchange code for access token
@@ -145,8 +155,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/?github_error=database_error`);
     }
 
-    // Check for custom callback URL
-    const customCallback = request.cookies.get("github_oauth_callback")?.value;
+    // Get custom callback URL from validated state (if provided during auth)
+    const customCallback = stateValidation.state?.redirectPath;
     // Default to success page that shows "You can now close this window"
     const redirectUrl = customCallback
       ? `${baseUrl}${customCallback}`
@@ -155,20 +165,23 @@ export async function GET(request: NextRequest) {
     // Redirect back to the app with success
     const response = NextResponse.redirect(redirectUrl);
 
-    // Store user access token in a secure, httpOnly cookie
+    // Store user access token in a secure, httpOnly cookie with encryption
     // SHORT-LIVED: Only 5 minutes - just enough to list installations once
     // We don't need long-term token storage - installation_id is stored in DB
-    response.cookies.set("github_user_token", accessToken, {
+    const encryptedToken = await encryptOAuthTokenToCookie(
+      accessToken,
+      env.ENCRYPTION_KEY,
+    );
+    response.cookies.set("github_user_token", encryptedToken, {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 300, // 5 minutes (reduced from 24 hours)
-      path: "/",
+      secure: true, // Always secure (use HTTPS in dev)
+      sameSite: "strict", // Prevent CSRF
+      maxAge: 300, // 5 minutes
+      path: "/api/github", // Restrict to GitHub API paths
     });
 
-    // Clear the state and callback cookies
+    // Clear the state cookie (nonce prevents replay)
     response.cookies.delete("github_oauth_state");
-    response.cookies.delete("github_oauth_callback");
 
     return response;
   } catch (err) {

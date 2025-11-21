@@ -17,7 +17,7 @@ import { CreateTeamButton } from "./_components/create-team-button";
  * User Flow:
  * 1. Enter team name (auto-normalized to lowercase alphanumeric + hyphens)
  * 2. Real-time validation with inline error messages
- * 3. Create team via /api/organizations/create
+ * 3. Create team via tRPC organization.create mutation (Clerk org only, no workspace)
  * 4. Set active organization in Clerk session
  * 5. Redirect to /new?teamSlug={slug} for workspace creation
  *

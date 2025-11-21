@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { generateOAuthState } from "@repo/console-oauth/state";
 import { env } from "~/env";
 
 /**
@@ -14,7 +15,7 @@ import { env } from "~/env";
  * 3. User selects organization and repository
  * 4. App uses installation ID to access repositories
  */
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
 	const clientId = env.GITHUB_CLIENT_ID;
 
 	// Get the base URL for callback
@@ -30,38 +31,29 @@ export function GET(request: NextRequest) {
 
 	const redirectUri = `${baseUrl}/api/github/callback`;
 
-	// Generate a random state parameter to prevent CSRF attacks
-	const state = crypto.randomUUID();
-
 	// Support custom callback URL via query parameter
 	const searchParams = request.nextUrl.searchParams;
 	const customCallback = searchParams.get("callback");
 
+	// Generate secure OAuth state with @repo/console-oauth
+	const { state, encoded } = await generateOAuthState({
+		redirectPath: customCallback ?? undefined,
+	});
+
 	// For GitHub Apps, we still use OAuth to get a user access token
 	// This token allows us to fetch the user's installations
 	const response = NextResponse.redirect(
-		`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`,
+		`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state.token}`,
 	);
 
-	// Set state cookie that expires in 10 minutes
-	response.cookies.set("github_oauth_state", state, {
+	// Set state cookie with encoded state (includes timestamp, nonce, redirectPath)
+	response.cookies.set("github_oauth_state", encoded, {
 		httpOnly: true,
-		secure: env.NODE_ENV === "production",
-		sameSite: "lax",
+		secure: true, // Always secure (use HTTPS in dev)
+		sameSite: "strict", // Prevent CSRF
 		maxAge: 600, // 10 minutes
-		path: "/",
+		path: "/api/github", // Restrict to GitHub OAuth paths
 	});
-
-	// Store custom callback if provided
-	if (customCallback) {
-		response.cookies.set("github_oauth_callback", customCallback, {
-			httpOnly: true,
-			secure: env.NODE_ENV === "production",
-			sameSite: "lax",
-			maxAge: 600, // 10 minutes
-			path: "/",
-		});
-	}
 
 	return response;
 }

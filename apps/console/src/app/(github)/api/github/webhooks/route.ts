@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createHmac, timingSafeEqual } from "crypto";
+import { verifyGitHubWebhookFromHeaders } from "@repo/console-webhooks/github";
 import { RepositoriesService, WorkspacesService } from "@repo/console-api-services";
 import type {
   PushEvent,
@@ -12,22 +12,6 @@ import type {
 import { env } from "~/env";
 
 export const runtime = "nodejs";
-
-/**
- * Verify GitHub webhook signature
- * https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
- */
-function verifySignature(payload: string, signature: string): boolean {
-  const hmac = createHmac("sha256", env.GITHUB_WEBHOOK_SECRET);
-  const digest = `sha256=${hmac.update(payload).digest("hex")}`;
-
-  // Prevent timing attacks with constant-time comparison
-  if (signature.length !== digest.length) {
-    return false;
-  }
-
-  return timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
-}
 
 /**
  * Handle installation_repositories webhook events
@@ -199,15 +183,16 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify signature
-    const signature = request.headers.get("x-hub-signature-256");
-    if (!signature) {
-      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
-    }
-
+    // Verify signature using @repo/console-webhooks
     const payload = await request.text();
-    if (!verifySignature(payload, signature)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    const result = await verifyGitHubWebhookFromHeaders(
+      payload,
+      request.headers,
+      env.GITHUB_WEBHOOK_SECRET,
+    );
+
+    if (!result.verified) {
+      return NextResponse.json({ error: result.error }, { status: 401 });
     }
 
     // Parse event type

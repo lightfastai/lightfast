@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,7 +17,8 @@ import type { TeamFormValues } from "./team-form-schema";
  *
  * Features:
  * - Form validation before submission
- * - API call to create Clerk organization
+ * - tRPC mutation to create Clerk organization
+ * - Optimistic updates with rollback on error
  * - Sets active organization in Clerk session
  * - Redirects to workspace creation with teamSlug
  * - Toast notifications for success/error states
@@ -30,9 +30,81 @@ export function CreateTeamButton() {
   const { toast } = useToast();
   const { setActive } = useClerk();
   const form = useFormContext<TeamFormValues>();
-  const [isCreating, setIsCreating] = useState(false);
 
   const teamName = form.watch("teamName");
+
+  // Create organization mutation with optimistic updates
+  const createOrgMutation = useMutation(
+    trpc.organization.create.mutationOptions({
+      onMutate: async (variables) => {
+        // Cancel outgoing queries to prevent race conditions
+        await queryClient.cancelQueries({
+          queryKey: trpc.organization.listUserOrganizations.queryOptions()
+            .queryKey,
+        });
+
+        // Snapshot previous data for rollback
+        const previousOrgs = queryClient.getQueryData(
+          trpc.organization.listUserOrganizations.queryOptions().queryKey,
+        );
+
+        // Optimistically update the organization list
+        if (previousOrgs) {
+          queryClient.setQueryData(
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
+            produce(previousOrgs, (draft) => {
+              // Add the new organization to the list
+              draft.unshift({
+                id: "temp-" + Date.now(), // Temporary ID
+                name: variables.slug,
+                slug: variables.slug,
+                role: "org:admin",
+                imageUrl: "",
+              });
+            }),
+          );
+        }
+
+        return { previousOrgs };
+      },
+      onError: (err, variables, context) => {
+        // Rollback on error
+        if (context?.previousOrgs) {
+          queryClient.setQueryData(
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
+            context.previousOrgs,
+          );
+        }
+
+        toast({
+          title: "Failed to create team",
+          description: err.message || "Please try again.",
+          variant: "destructive",
+        });
+      },
+      onSuccess: async (data) => {
+        // Set the created organization as active in Clerk session
+        await setActive({
+          organization: data.organizationId,
+        });
+
+        toast({
+          title: "Team created!",
+          description: `Successfully created ${teamName}`,
+        });
+
+        // Redirect to new workspace page with teamSlug
+        router.push(`/new?teamSlug=${data.slug}`);
+      },
+      onSettled: () => {
+        // Invalidate to ensure consistency with server
+        void queryClient.invalidateQueries({
+          queryKey: trpc.organization.listUserOrganizations.queryOptions()
+            .queryKey,
+        });
+      },
+    }),
+  );
 
   const handleCreateTeam = async () => {
     // Trigger form validation
@@ -46,99 +118,13 @@ export function CreateTeamButton() {
       return;
     }
 
-    setIsCreating(true);
-
-    // Cancel outgoing queries to prevent race conditions
-    await queryClient.cancelQueries({
-      queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
+    // Call tRPC mutation
+    createOrgMutation.mutate({
+      slug: teamName,
     });
-
-    // Snapshot previous data for rollback
-    const previousOrgs = queryClient.getQueryData(
-      trpc.organization.listUserOrganizations.queryOptions().queryKey,
-    );
-
-    try {
-      const response = await fetch("/api/organizations/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          slug: teamName,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = (await response.json()) as {
-          error?: string;
-          message?: string;
-        };
-        throw new Error(
-          error.message ?? error.error ?? "Failed to create team"
-        );
-      }
-
-      const data = (await response.json()) as {
-        organizationId: string;
-        slug: string;
-        workspaceId: string;
-      };
-
-      // Optimistically update the organization list
-      if (previousOrgs) {
-        queryClient.setQueryData(
-          trpc.organization.listUserOrganizations.queryOptions().queryKey,
-          produce(previousOrgs, (draft) => {
-            // Add the new organization to the list
-            draft.unshift({
-              id: data.organizationId,
-              name: teamName,
-              slug: data.slug,
-              role: "admin",
-              imageUrl: "",
-            });
-          }),
-        );
-      }
-
-      // Set the created organization as active in Clerk session
-      await setActive({
-        organization: data.organizationId,
-      });
-
-      toast({
-        title: "Team created!",
-        description: `Successfully created ${teamName}`,
-      });
-
-      // Invalidate to ensure consistency with server
-      void queryClient.invalidateQueries({
-        queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
-      });
-
-      // Redirect to new workspace page with teamSlug
-      router.push(`/new?teamSlug=${data.slug}`);
-    } catch (error) {
-      // Rollback on error
-      if (previousOrgs) {
-        queryClient.setQueryData(
-          trpc.organization.listUserOrganizations.queryOptions().queryKey,
-          previousOrgs,
-        );
-      }
-
-      toast({
-        title: "Failed to create team",
-        description:
-          error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
-      setIsCreating(false);
-    }
   };
 
-  const isDisabled = !form.formState.isValid || isCreating;
+  const isDisabled = !form.formState.isValid || createOrgMutation.isPending;
 
   return (
     <Button
@@ -146,7 +132,7 @@ export function CreateTeamButton() {
       className="h-12 w-full text-base font-medium"
       disabled={isDisabled}
     >
-      {isCreating ? (
+      {createOrgMutation.isPending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Creating...

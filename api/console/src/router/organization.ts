@@ -182,6 +182,71 @@ export const organizationRouter = {
 		}),
 
 	/**
+	 * Create organization
+	 * Creates a new Clerk organization with the user as admin
+	 *
+	 * Used by team creation flow at /account/teams/new
+	 * Does NOT create a default workspace - user creates workspace separately at /new
+	 */
+	create: protectedProcedure
+		.input(
+			z.object({
+				slug: z
+					.string()
+					.min(3, "Team name must be at least 3 characters")
+					.max(39, "Team name must be less than 39 characters")
+					.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
+						message:
+							"Only lowercase letters, numbers, and hyphens allowed. No leading/trailing/consecutive hyphens.",
+					}),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (ctx.auth.type !== "clerk") {
+				throw new Error("Clerk authentication required");
+			}
+
+			const clerk = await clerkClient();
+
+			try {
+				// Create Clerk organization (slug used for both name and slug)
+				const clerkOrg = await clerk.organizations.createOrganization({
+					name: input.slug,
+					slug: input.slug,
+					createdBy: ctx.auth.userId,
+				});
+
+				return {
+					organizationId: clerkOrg.id,
+					slug: clerkOrg.slug || input.slug,
+				};
+			} catch (error: unknown) {
+				// Check for specific Clerk errors
+				if (error && typeof error === "object" && "errors" in error) {
+					const clerkError = error as {
+						errors?: Array<{ code: string; message: string }>;
+					};
+
+					if (
+						clerkError.errors?.[0]?.code === "duplicate_record" ||
+						clerkError.errors?.[0]?.message?.includes("already exists")
+					) {
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: `An organization with the name "${input.slug}" already exists`,
+						});
+					}
+				}
+
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to create organization",
+					cause: error,
+				});
+			}
+		}),
+
+	/**
 	 * Update organization name
 	 * Used by team settings page to update the organization name/slug in Clerk
 	 *
