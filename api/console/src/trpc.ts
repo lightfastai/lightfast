@@ -215,6 +215,8 @@ export const clerkProtectedProcedure = sentrifiedProcedure
  * Use this in procedures that need to work with organization-scoped data
  * (repositories, integrations, etc.)
  *
+ * Uses @repo/console-auth-middleware for authorization logic
+ *
  * @throws {TRPCError} NOT_FOUND if org doesn't exist
  * @throws {TRPCError} FORBIDDEN if user doesn't have access
  */
@@ -222,48 +224,22 @@ export async function verifyOrgAccessAndResolve(params: {
   clerkOrgSlug: string;
   userId: string;
 }): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
-  const { clerkClient } = await import("@vendor/clerk/server");
-  const clerk = await clerkClient();
+  const { verifyOrgAccess } = await import("@repo/console-auth-middleware");
 
-  // 1. Fetch org by slug
-  let clerkOrg;
-  try {
-    clerkOrg = await clerk.organizations.getOrganization({
-      slug: params.clerkOrgSlug,
-    });
-  } catch {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `Organization not found: ${params.clerkOrgSlug}`,
-    });
-  }
-
-  if (!clerkOrg) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `Organization not found: ${params.clerkOrgSlug}`,
-    });
-  }
-
-  // 2. Verify user has access
-  const membership = await clerk.organizations.getOrganizationMembershipList({
-    organizationId: clerkOrg.id,
+  const result = await verifyOrgAccess({
+    userId: params.userId,
+    clerkOrgSlug: params.clerkOrgSlug,
   });
 
-  const userMembership = membership.data.find(
-    (m) => m.publicUserData?.userId === params.userId,
-  );
-
-  if (!userMembership) {
+  if (!result.success) {
     throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Access denied to this organization",
+      code: result.errorCode ?? "FORBIDDEN",
+      message: result.error ?? "Access denied",
     });
   }
 
-  // 3. Return org ID for database queries
   return {
-    clerkOrgId: clerkOrg.id,
+    clerkOrgId: result.data.clerkOrgId,
     clerkOrgSlug: params.clerkOrgSlug,
   };
 }
@@ -287,36 +263,27 @@ export async function resolveWorkspaceByName(params: {
   workspaceName: string;
   userId: string;
 }): Promise<{ workspaceId: string; workspaceName: string; workspaceSlug: string; clerkOrgId: string }> {
-  // 1. Verify org access first
-  const { clerkOrgId } = await verifyOrgAccessAndResolve({
-    clerkOrgSlug: params.clerkOrgSlug,
-    userId: params.userId,
-  });
+  const { resolveWorkspaceByName: resolveWorkspace } = await import("@repo/console-auth-middleware");
 
-  // 2. Fetch workspace by name within this org
-  const { workspaces } = await import("@db/console/schema");
-  const { eq, and } = await import("drizzle-orm");
+  const result = await resolveWorkspace(
+    params.clerkOrgSlug,
+    params.workspaceName,
+    params.userId,
+    db
+  );
 
-  const workspace = await db.query.workspaces.findFirst({
-    where: and(
-      eq(workspaces.clerkOrgId, clerkOrgId),
-      eq(workspaces.name, params.workspaceName)
-    ),
-  });
-
-  if (!workspace) {
+  if (!result.success) {
     throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `Workspace not found: ${params.workspaceName}`,
+      code: result.errorCode ?? "NOT_FOUND",
+      message: result.error ?? "Workspace not found",
     });
   }
 
-  // 3. Return workspace ID, name, and internal slug for database queries
   return {
-    workspaceId: workspace.id,
+    workspaceId: result.data.workspaceId,
     workspaceName: params.workspaceName,
-    workspaceSlug: workspace.slug,  // Internal slug for Pinecone operations
-    clerkOrgId,
+    workspaceSlug: result.data.workspaceSlug,
+    clerkOrgId: result.data.clerkOrgId,
   };
 }
 
@@ -344,35 +311,26 @@ export async function resolveWorkspaceBySlug(params: {
   workspaceSlug: string;
   userId: string;
 }): Promise<{ workspaceId: string; workspaceSlug: string; clerkOrgId: string }> {
-  // 1. Verify org access first
-  const { clerkOrgId } = await verifyOrgAccessAndResolve({
-    clerkOrgSlug: params.clerkOrgSlug,
-    userId: params.userId,
-  });
+  const { resolveWorkspaceBySlug: resolveWorkspace } = await import("@repo/console-auth-middleware");
 
-  // 2. Fetch workspace by slug within this org
-  const { workspaces } = await import("@db/console/schema");
-  const { eq, and } = await import("drizzle-orm");
+  const result = await resolveWorkspace(
+    params.clerkOrgSlug,
+    params.workspaceSlug,
+    params.userId,
+    db
+  );
 
-  const workspace = await db.query.workspaces.findFirst({
-    where: and(
-      eq(workspaces.clerkOrgId, clerkOrgId),
-      eq(workspaces.slug, params.workspaceSlug)
-    ),
-  });
-
-  if (!workspace) {
+  if (!result.success) {
     throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `Workspace not found (internal slug): ${params.workspaceSlug}`,
+      code: result.errorCode ?? "NOT_FOUND",
+      message: result.error ?? "Workspace not found",
     });
   }
 
-  // 3. Return workspace ID for database queries
   return {
-    workspaceId: workspace.id,
+    workspaceId: result.data.workspaceId,
     workspaceSlug: params.workspaceSlug,
-    clerkOrgId,
+    clerkOrgId: result.data.clerkOrgId,
   };
 }
 
