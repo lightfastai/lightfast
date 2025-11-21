@@ -21,26 +21,16 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@repo/ui/components/ui/collapsible";
-
-interface Job {
-	id: string;
-	name: string;
-	status: "queued" | "running" | "completed" | "failed" | "cancelled";
-	trigger: "manual" | "scheduled" | "webhook" | "automatic";
-	createdAt: string;
-	completedAt: string | null;
-	durationMs: string | null;
-	errorMessage: string | null;
-}
+import type { RecentJob } from "~/types";
 
 interface ActivityTimelineProps {
-	recentJobs: Job[];
+	recentJobs: RecentJob[];
 }
 
 export function ActivityTimeline({ recentJobs }: ActivityTimelineProps) {
 	const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
-	const getStatusIcon = (status: Job["status"]) => {
+	const getStatusIcon = (status: RecentJob["status"]) => {
 		switch (status) {
 			case "completed":
 				return (
@@ -75,7 +65,7 @@ export function ActivityTimeline({ recentJobs }: ActivityTimelineProps) {
 		}
 	};
 
-	const getStatusBadge = (status: Job["status"]) => {
+	const getStatusBadge = (status: RecentJob["status"]) => {
 		switch (status) {
 			case "completed":
 				return (
@@ -110,7 +100,7 @@ export function ActivityTimeline({ recentJobs }: ActivityTimelineProps) {
 		}
 	};
 
-	const getTriggerIcon = (trigger: Job["trigger"]) => {
+	const getTriggerIcon = (trigger: RecentJob["trigger"]) => {
 		switch (trigger) {
 			case "webhook":
 				return <GitBranch className="h-3 w-3" />;

@@ -4,18 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Github, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import type { RouterOutputs } from "@repo/console-trpc/types";
-
-type EnrichedConnection = RouterOutputs["integration"]["workspace"]["list"][number];
-
-interface Source {
-	id: string;
-	type: string;
-	displayName: string;
-	documentCount: number;
-	lastSyncedAt: string | null;
-	lastIngestedAt: string | null;
-}
+import type { EnrichedConnection, Source } from "~/types";
 
 interface ConnectedSourcesOverviewProps {
   connections?: EnrichedConnection[];

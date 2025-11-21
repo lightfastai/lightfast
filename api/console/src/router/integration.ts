@@ -7,7 +7,7 @@ import {
   type Integration,
 } from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   getUserInstallations,
@@ -925,23 +925,26 @@ export const integrationRouter = {
             )
           );
 
-        // Enrich with resource data
-        const enrichedConnections = await Promise.all(
-          connections.map(async (connection) => {
-            const resource = await ctx.db
-              .select()
-              .from(integrationResources)
-              .where(eq(integrationResources.id, connection.resourceId))
-              .limit(1);
+        // Early return if no connections
+        if (connections.length === 0) {
+          return [];
+        }
 
-            return {
-              ...connection,
-              resource: resource[0] ?? null,
-            };
-          })
-        );
+        // Batch fetch all resources in a single query
+        const resourceIds = connections.map((c) => c.resourceId);
+        const resources = await ctx.db
+          .select()
+          .from(integrationResources)
+          .where(inArray(integrationResources.id, resourceIds));
 
-        return enrichedConnections;
+        // Create lookup map for O(1) access
+        const resourceMap = new Map(resources.map((r) => [r.id, r]));
+
+        // Enrich connections in memory
+        return connections.map((connection) => ({
+          ...connection,
+          resource: resourceMap.get(connection.resourceId) ?? null,
+        }));
       }),
   },
 } satisfies TRPCRouterRecord;

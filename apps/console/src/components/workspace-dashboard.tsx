@@ -11,6 +11,7 @@ import { PerformanceMetrics } from "./performance-metrics";
 import { SystemHealthOverview } from "./system-health-overview";
 import { LightfastConfigOverview } from "./lightfast-config-overview";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import type { WorkspaceResolution, WorkspaceStats } from "~/types";
 
 interface WorkspaceDashboardProps {
   orgSlug: string;
@@ -38,6 +39,7 @@ export function WorkspaceDashboard({
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        staleTime: 2 * 60 * 1000, // 2 minutes - workspace metadata rarely changes
       },
       {
         ...trpc.workspace.statistics.queryOptions({
@@ -46,6 +48,7 @@ export function WorkspaceDashboard({
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - statistics change frequently
       },
       {
         ...trpc.workspace.jobPercentiles.queryOptions({
@@ -55,6 +58,7 @@ export function WorkspaceDashboard({
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - performance metrics change frequently
       },
       {
         ...trpc.workspace.performanceTimeSeries.queryOptions({
@@ -64,6 +68,7 @@ export function WorkspaceDashboard({
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - time series data changes frequently
       },
       {
         ...trpc.workspace.systemHealth.queryOptions({
@@ -72,6 +77,7 @@ export function WorkspaceDashboard({
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - health status changes frequently
       },
     ],
   });

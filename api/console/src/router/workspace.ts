@@ -8,7 +8,7 @@ import {
   jobs,
   DeusConnectedRepository,
 } from "@db/console/schema";
-import { eq, and, desc, count, sql } from "drizzle-orm";
+import { eq, and, desc, count, sql, inArray, sum, avg } from "drizzle-orm";
 import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
 import {
   workspaceListInputSchema,
@@ -97,52 +97,97 @@ export const workspaceRouter = {
         where: eq(workspaces.clerkOrgId, clerkOrgId),
       });
 
-      // For each workspace, get connected repositories
-      const workspacesWithRepos = await Promise.all(
-        orgWorkspaces.map(async (workspace) => {
-          // Get repositories for this workspace
-          const repos = await db
-            .select()
-            .from(DeusConnectedRepository)
-            .where(
-              and(
-                eq(DeusConnectedRepository.workspaceId, workspace.id),
-                eq(DeusConnectedRepository.isActive, true),
-              ),
-            )
-            .limit(3); // Get up to 3 repos to show
+      // Return early if no workspaces (should not happen due to getOrCreateDefaultWorkspace)
+      if (orgWorkspaces.length === 0) {
+        return [];
+      }
 
-          // Get document count for this workspace
-          const [docCount] = await db
-            .select({ count: count() })
-            .from(docsDocuments)
-            .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-            .where(eq(stores.workspaceId, workspace.id));
+      // Collect all workspace IDs for batch queries
+      const workspaceIds = orgWorkspaces.map((w) => w.id);
 
-          // Get recent job for activity status
-          const recentJob = await db.query.jobs.findFirst({
-            where: eq(jobs.workspaceId, workspace.id),
-            orderBy: [desc(jobs.createdAt)],
-          });
+      // Batch query 1: Get all repositories for all workspaces
+      const allRepos = await db
+        .select()
+        .from(DeusConnectedRepository)
+        .where(
+          and(
+            inArray(DeusConnectedRepository.workspaceId, workspaceIds),
+            eq(DeusConnectedRepository.isActive, true),
+          ),
+        );
 
-          return {
-            id: workspace.id,
-            name: workspace.name,                // User-facing name, used in URLs
-            slug: workspace.slug,                // Internal slug for Pinecone
-            isDefault: workspace.isDefault,
-            createdAt: workspace.createdAt,
-            repositories: repos.map((repo) => ({
-              id: repo.id,
-              configStatus: repo.configStatus,
-              metadata: repo.metadata,
-              lastSyncedAt: repo.lastSyncedAt,
-              documentCount: repo.documentCount,
-            })),
-            totalDocuments: docCount?.count || 0,
-            lastActivity: recentJob?.createdAt || workspace.createdAt,
-          };
-        }),
+      // Batch query 2: Get document counts for all workspaces
+      const docCounts = await db
+        .select({
+          workspaceId: stores.workspaceId,
+          count: count(docsDocuments.id),
+        })
+        .from(stores)
+        .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
+        .where(inArray(stores.workspaceId, workspaceIds))
+        .groupBy(stores.workspaceId);
+
+      // Batch query 3: Get most recent job per workspace
+      // Use DISTINCT ON for PostgreSQL-style deduplication (PlanetScale supports this)
+      const recentJobs = await db.execute<{
+        workspaceId: string;
+        createdAt: string;
+      }>(sql`
+        SELECT DISTINCT ON (workspace_id)
+          workspace_id as workspaceId,
+          created_at as createdAt
+        FROM ${jobs}
+        WHERE workspace_id IN ${workspaceIds}
+        ORDER BY workspace_id, created_at DESC
+      `);
+
+      // Group repositories by workspace ID (limit to 3 per workspace)
+      const reposByWorkspace = new Map<string, (typeof allRepos)[number][]>();
+      for (const repo of allRepos) {
+        if (!repo.workspaceId) continue;
+        const workspaceRepos = reposByWorkspace.get(repo.workspaceId) ?? [];
+        if (workspaceRepos.length < 3) {
+          workspaceRepos.push(repo);
+          reposByWorkspace.set(repo.workspaceId, workspaceRepos);
+        }
+      }
+
+      // Build document count lookup
+      const docCountsByWorkspace = new Map(
+        docCounts.map((dc) => [dc.workspaceId, dc.count] as const),
       );
+
+      // Build recent job lookup
+      const recentJobsByWorkspace = new Map(
+        recentJobs.map((job: { workspaceId: string; createdAt: string }) => [
+          job.workspaceId,
+          job.createdAt,
+        ] as const),
+      );
+
+      // Combine all data in memory
+      const workspacesWithRepos = orgWorkspaces.map((workspace) => {
+        const repos = reposByWorkspace.get(workspace.id) ?? [];
+        const docCount = docCountsByWorkspace.get(workspace.id) ?? 0;
+        const recentJobDate = recentJobsByWorkspace.get(workspace.id);
+
+        return {
+          id: workspace.id,
+          name: workspace.name, // User-facing name, used in URLs
+          slug: workspace.slug, // Internal slug for Pinecone
+          isDefault: workspace.isDefault,
+          createdAt: workspace.createdAt,
+          repositories: repos.map((repo) => ({
+            id: repo.id,
+            configStatus: repo.configStatus,
+            metadata: repo.metadata,
+            lastSyncedAt: repo.lastSyncedAt,
+            documentCount: repo.documentCount,
+          })),
+          totalDocuments: docCount,
+          lastActivity: recentJobDate ?? workspace.createdAt,
+        };
+      });
 
       return workspacesWithRepos;
     }),
@@ -497,24 +542,34 @@ export const workspaceRouter = {
         .slice(0, 19)
         .replace("T", " ");
 
+      // Get job statistics with SQL aggregation (single query)
+      const [jobStats] = await db
+        .select({
+          total: count(),
+          queued: sum(sql<number>`CASE WHEN ${jobs.status} = 'queued' THEN 1 ELSE 0 END`),
+          running: sum(sql<number>`CASE WHEN ${jobs.status} = 'running' THEN 1 ELSE 0 END`),
+          completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
+          failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
+          cancelled: sum(sql<number>`CASE WHEN ${jobs.status} = 'cancelled' THEN 1 ELSE 0 END`),
+          avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
+        })
+        .from(jobs)
+        .where(
+          and(
+            eq(jobs.workspaceId, workspaceId),
+            sql`${jobs.createdAt} >= ${oneDayAgo}`,
+          ),
+        );
+
+      // Get recent jobs for the list (only 5 needed for display)
       const recentJobs = await db.query.jobs.findMany({
         where: and(
           eq(jobs.workspaceId, workspaceId),
           sql`${jobs.createdAt} >= ${oneDayAgo}`,
         ),
         orderBy: [desc(jobs.createdAt)],
-        limit: 10,
+        limit: 5,
       });
-
-      // Calculate job statistics
-      const completedJobs = recentJobs.filter((j) => j.status === "completed");
-      const failedJobs = recentJobs.filter((j) => j.status === "failed");
-      const avgDurationMs = completedJobs.length
-        ? completedJobs.reduce(
-            (sum, j) => sum + (Number.parseInt(j.durationMs || "0", 10) || 0),
-            0,
-          ) / completedJobs.length
-        : 0;
 
       return {
         sources: {
@@ -552,15 +607,15 @@ export const workspaceRouter = {
           chunks: Number(chunkCountResult?.total) || 0,
         },
         jobs: {
-          total: recentJobs.length,
-          completed: completedJobs.length,
-          failed: failedJobs.length,
+          total: jobStats?.total || 0,
+          completed: Number(jobStats?.completed) || 0,
+          failed: Number(jobStats?.failed) || 0,
           successRate:
-            recentJobs.length > 0
-              ? (completedJobs.length / recentJobs.length) * 100
+            (jobStats?.total || 0) > 0
+              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total || 0)) * 100
               : 0,
-          avgDurationMs: Math.round(avgDurationMs),
-          recent: recentJobs.slice(0, 5).map((j) => ({
+          avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
+          recent: recentJobs.map((j) => ({
             id: j.id,
             name: j.name,
             status: j.status,
@@ -582,32 +637,37 @@ export const workspaceRouter = {
     .input(workspaceStatisticsComparisonInputSchema)
     .query(async ({ input }) => {
       const {
-        workspaceId,
+        workspaceId: inputWorkspaceId,
         currentStart,
         currentEnd,
         previousStart,
         previousEnd,
       } = input;
 
+      // Ensure workspaceId is defined (required by schema but typed as optional due to $defaultFn)
+      if (!inputWorkspaceId) {
+        throw new Error("Workspace ID is required");
+      }
+      const workspaceId: string = inputWorkspaceId;
+
       // Helper to get stats for a period
       const getStatsForPeriod = async (start: string, end: string) => {
-        // Get jobs in period
-        const periodJobs = await db.query.jobs.findMany({
-          where: and(
-            eq(jobs.workspaceId, workspaceId),
-            sql`${jobs.createdAt} >= ${start}`,
-            sql`${jobs.createdAt} <= ${end}`,
-          ),
-        });
-
-        const completedJobs = periodJobs.filter((j) => j.status === "completed");
-        const failedJobs = periodJobs.filter((j) => j.status === "failed");
-        const avgDurationMs = completedJobs.length
-          ? completedJobs.reduce(
-              (sum, j) => sum + (Number.parseInt(j.durationMs || "0", 10) || 0),
-              0,
-            ) / completedJobs.length
-          : 0;
+        // Get job statistics with SQL aggregation (single query)
+        const [jobStats] = await db
+          .select({
+            total: count(),
+            completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
+            failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
+            avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
+          })
+          .from(jobs)
+          .where(
+            and(
+              eq(jobs.workspaceId, workspaceId),
+              sql`${jobs.createdAt} >= ${start}`,
+              sql`${jobs.createdAt} <= ${end}`,
+            ),
+          );
 
         // Get document count at end of period (approximate with total)
         const [docCount] = await db
@@ -631,16 +691,17 @@ export const workspaceRouter = {
             sql`${docsDocuments.createdAt} <= ${end}`,
           ));
 
+        const total = jobStats?.total || 0;
+        const completed = Number(jobStats?.completed) || 0;
+        const failed = Number(jobStats?.failed) || 0;
+
         return {
           jobs: {
-            total: periodJobs.length,
-            completed: completedJobs.length,
-            failed: failedJobs.length,
-            successRate:
-              periodJobs.length > 0
-                ? (completedJobs.length / periodJobs.length) * 100
-                : 0,
-            avgDurationMs: Math.round(avgDurationMs),
+            total,
+            completed,
+            failed,
+            successRate: total > 0 ? (completed / total) * 100 : 0,
+            avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
           },
           documents: {
             total: docCount?.count || 0,

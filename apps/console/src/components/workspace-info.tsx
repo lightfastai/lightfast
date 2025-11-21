@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Database, Key, Tag } from "lucide-react";
-import type { RouterOutputs } from "@repo/console-trpc/types";
+import type { WorkspaceResolutionFromOrgId, OrganizationDetailFromOrgId } from "~/types";
 
 /**
  * Convert slug to friendly display name
@@ -17,8 +17,8 @@ function slugToFriendlyName(slug: string): string {
 }
 
 interface WorkspaceInfoProps {
-  workspace: RouterOutputs["workspace"]["resolveFromClerkOrgId"];
-  organization?: Pick<RouterOutputs["organization"]["findByClerkOrgId"], "name" | "slug" | "imageUrl">;
+  workspace: WorkspaceResolutionFromOrgId;
+  organization?: Pick<OrganizationDetailFromOrgId, "name" | "slug" | "imageUrl">;
 }
 
 /**

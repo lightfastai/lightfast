@@ -48,6 +48,7 @@ export function ApiKeyList() {
 		...trpc.account.apiKeys.list.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
+		staleTime: 5 * 60 * 1000, // 5 minutes - API keys rarely change
 	});
 
 	const createMutation = useMutation(

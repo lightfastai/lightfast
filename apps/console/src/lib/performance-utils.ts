@@ -2,6 +2,8 @@
  * Performance utility functions for job metrics and time-series data
  */
 
+import type { Job } from "~/types";
+
 /**
  * Calculate percentile from sorted array of values
  */
@@ -38,18 +40,17 @@ export interface TimeSeriesPoint {
 	successRate: number;
 }
 
-export interface Job {
-	createdAt: string | Date;
-	durationMs: string | null;
-	status: "queued" | "running" | "completed" | "failed" | "cancelled";
-}
+/**
+ * Minimal Job type for performance calculations
+ */
+export type PerformanceJob = Pick<Job, "createdAt" | "durationMs" | "status">;
 
 /**
  * Group jobs by hour and calculate metrics
  */
-export function groupByHour(jobs: Job[]): TimeSeriesPoint[] {
+export function groupByHour(jobs: PerformanceJob[]): TimeSeriesPoint[] {
 	const now = new Date();
-	const hours = new Map<string, Job[]>();
+	const hours = new Map<string, PerformanceJob[]>();
 
 	// Create 24 hour buckets (current hour back to 24 hours ago)
 	for (let i = 0; i < 24; i++) {

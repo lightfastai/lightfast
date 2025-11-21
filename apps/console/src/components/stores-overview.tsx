@@ -17,15 +17,7 @@ import {
 	CollapsibleTrigger,
 } from "@repo/ui/components/ui/collapsible";
 import { Database, FileText, Settings, ChevronDown } from "lucide-react";
-
-interface Store {
-	id: string;
-	slug: string;
-	indexName: string;
-	embeddingDim: number;
-	documentCount: number;
-	createdAt: string | Date;
-}
+import type { Store } from "~/types";
 
 interface StoresOverviewProps {
 	stores: Store[];

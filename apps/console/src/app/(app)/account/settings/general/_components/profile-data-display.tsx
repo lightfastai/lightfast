@@ -26,6 +26,7 @@ export function ProfileDataDisplay() {
 		...trpc.account.profile.get.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
+		staleTime: 10 * 60 * 1000, // 10 minutes - user profile rarely changes
 	});
 
 	// Get initials for avatar fallback

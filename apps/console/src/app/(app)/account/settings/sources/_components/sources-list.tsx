@@ -54,6 +54,7 @@ export function SourcesList() {
 		...trpc.account.integrations.list.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
+		staleTime: 5 * 60 * 1000, // 5 minutes - integrations rarely change
 	});
 
 	const disconnectMutation = useMutation(

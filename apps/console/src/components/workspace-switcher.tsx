@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import type { RouterOutputs } from "@repo/console-trpc/types";
 import { ChevronsUpDown, Check, Plus } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -15,11 +14,7 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
-
-/**
- * Workspace data
- */
-type WorkspaceData = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
+import type { Workspace } from "~/types";
 
 interface WorkspaceSwitcherProps {
 	orgSlug: string;
@@ -63,7 +58,7 @@ export function WorkspaceSwitcher({ orgSlug, workspaceName }: WorkspaceSwitcherP
 	}, [workspaceName, workspaces]);
 
 	const handleSelectWorkspace = useCallback(
-		(workspace: WorkspaceData) => {
+		(workspace: Workspace) => {
 			setOpen(false);
 			if (currentOrg) {
 				router.push(`/${currentOrg.slug}/${workspace.name}`);

@@ -15,30 +15,10 @@ import {
 	Github,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import type { SystemHealth } from "~/types";
 
 interface SystemHealthOverviewProps {
-	health: {
-		workspaceHealth: "healthy" | "degraded" | "down";
-		storesCount: number;
-		sourcesCount: number;
-		totalJobs24h: number;
-		stores: Array<{
-			id: string;
-			name: string;
-			embeddingDim: number;
-			documentCount: number;
-			successRate: number;
-			health: "healthy" | "degraded" | "down";
-			sources: Array<{
-				id: string;
-				type: string;
-				displayName: string;
-				documentCount: number;
-				lastSyncedAt: string | null;
-				health: "healthy" | "degraded" | "down";
-			}>;
-		}>;
-	};
+	health: SystemHealth;
 }
 
 export function SystemHealthOverview({

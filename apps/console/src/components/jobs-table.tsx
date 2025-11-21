@@ -40,23 +40,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 import { useJobFilters } from "./use-job-filters";
-import type { JobOutput } from "@db/console/schema";
-
-type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
-type JobTrigger = "manual" | "scheduled" | "webhook" | "automatic";
-
-interface Job {
-	id: string;
-	name: string;
-	status: JobStatus;
-	trigger: JobTrigger;
-	startedAt: string | null;
-	createdAt: string;
-	durationMs?: string | null;
-	error?: string | null;
-	logs?: string | null;
-	output?: JobOutput | null;
-}
+import type { Job, JobStatus, JobTrigger } from "~/types";
 
 interface JobsTableWrapperProps {
 	clerkOrgSlug: string;
@@ -156,7 +140,7 @@ function JobRow({ job }: { job: Job }) {
 		// TODO: Call tRPC mutation to cancel job
 	};
 
-	const hasDetails = job.error ?? job.logs ?? job.output;
+	const hasDetails = job.errorMessage ?? job.output;
 
 	return (
 		<>
@@ -253,25 +237,14 @@ function JobRow({ job }: { job: Job }) {
 				<TableRow>
 					<TableCell colSpan={5} className="bg-muted/20 p-6">
 						<div className="space-y-4">
-							{job.error && (
+							{job.errorMessage && (
 								<div>
 									<h4 className="text-sm font-medium text-destructive mb-2 flex items-center gap-2">
 										<XCircle className="h-4 w-4" />
 										Error
 									</h4>
 									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto">
-										{job.error}
-									</pre>
-								</div>
-							)}
-							{job.logs && (
-								<div>
-									<h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-										<FileText className="h-4 w-4" />
-										Logs
-									</h4>
-									<pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
-										{job.logs}
+										{job.errorMessage}
 									</pre>
 								</div>
 							)}
@@ -369,6 +342,7 @@ function JobsTable({ clerkOrgSlug, workspaceName, initialStatus, initialSearch }
 		}),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
+		staleTime: 10 * 1000, // 10 seconds - jobs are real-time sensitive
 	});
 
 	const jobs = jobsData.items;

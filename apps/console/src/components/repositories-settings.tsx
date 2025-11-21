@@ -42,7 +42,7 @@ export function RepositoriesSettings({ clerkOrgSlug }: RepositoriesSettingsProps
 	// Query to fetch organization's connected repositories (prefetched in page)
 	// Using useSuspenseQuery for better loading UX with Suspense boundaries
 	const { data: repositories = [] } = useSuspenseQuery({
-		...trpc.repository.listByClerkOrgSlug.queryOptions({
+		...trpc.repository.list.queryOptions({
 			clerkOrgSlug,
 			includeInactive: false,
 		}),
@@ -77,7 +77,7 @@ export function RepositoriesSettings({ clerkOrgSlug }: RepositoriesSettingsProps
 
 				// Optimistically update repository status in the list for immediate feedback
 				queryClient.setQueryData(
-					trpc.repository.listByClerkOrgSlug.queryKey({ clerkOrgSlug, includeInactive: false }),
+					trpc.repository.list.queryKey({ clerkOrgSlug, includeInactive: false }),
 					(oldData: typeof repositories | undefined) => {
 						if (!oldData) return oldData;
 						return produce(oldData, (draft) => {
@@ -101,7 +101,7 @@ export function RepositoriesSettings({ clerkOrgSlug }: RepositoriesSettingsProps
 				// Invalidate to refetch with updated status
 				// Use refetchType: "none" to avoid triggering Suspense boundaries
 				void queryClient.invalidateQueries({
-					queryKey: trpc.repository.listByClerkOrgSlug.queryKey({
+					queryKey: trpc.repository.list.queryKey({
 						includeInactive: false,
 						clerkOrgSlug,
 					}),
