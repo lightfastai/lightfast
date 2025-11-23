@@ -22,6 +22,7 @@ const config: NextConfig = withBetterStack(
     experimental: {
       optimizeCss: true,
       optimizePackageImports: ["@repo/ui", "lucide-react"],
+      turbopackScopeHoisting: false,
     },
     async rewrites() {
       return [];

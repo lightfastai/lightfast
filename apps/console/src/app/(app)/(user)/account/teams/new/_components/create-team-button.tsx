@@ -35,23 +35,23 @@ export function CreateTeamButton() {
 
   // Create organization mutation with optimistic updates
   const createOrgMutation = useMutation(
-    userTrpc.organization.create.mutationOptions({
+    trpc.organization.create.mutationOptions({
       onMutate: async (variables) => {
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
-          queryKey: userTrpc.organization.listUserOrganizations.queryOptions()
+          queryKey: trpc.organization.listUserOrganizations.queryOptions()
             .queryKey,
         });
 
         // Snapshot previous data for rollback
         const previousOrgs = queryClient.getQueryData(
-          userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+          trpc.organization.listUserOrganizations.queryOptions().queryKey,
         );
 
         // Optimistically update the organization list
         if (previousOrgs) {
           queryClient.setQueryData(
-            userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
             produce(previousOrgs, (draft) => {
               // Add the new organization to the list
               draft.unshift({
@@ -71,7 +71,7 @@ export function CreateTeamButton() {
         // Rollback on error
         if (context?.previousOrgs) {
           queryClient.setQueryData(
-            userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
             context.previousOrgs,
           );
         }
@@ -96,7 +96,7 @@ export function CreateTeamButton() {
       onSettled: () => {
         // Invalidate to ensure consistency with server
         void queryClient.invalidateQueries({
-          queryKey: userTrpc.organization.listUserOrganizations.queryOptions()
+          queryKey: trpc.organization.listUserOrganizations.queryOptions()
             .queryKey,
         });
       },

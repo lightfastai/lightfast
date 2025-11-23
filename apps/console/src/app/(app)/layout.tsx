@@ -1,10 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { prefetch, HydrateClient, userTrpc, orgTrpc } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
 import { AppHeader } from "~/components/app-header";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 
-export default async function AppLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;

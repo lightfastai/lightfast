@@ -37,7 +37,7 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
   // Fetch repositories for selected installation
   // Note: Still uses old integrationId parameter for backwards compatibility with API
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
-    ...orgTrpc.integration.github.repositories.queryOptions({
+    ...trpc.integration.github.repositories.queryOptions({
       integrationId: userSourceId ?? "",
       installationId: selectedInstallation?.id ?? "",
     }),

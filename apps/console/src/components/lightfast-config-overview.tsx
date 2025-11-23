@@ -32,7 +32,7 @@ export function LightfastConfigOverview({
 	// Escape YAML special characters in user input
 	const escapeYaml = (str: string) => {
 		// If string contains special YAML characters, quote it
-		if (/[:\{\}\[\],&*#?|\-<>=!%@`]/.test(str)) {
+		if (/[:{}[\],&*#?|\-<>=!%@`]/.test(str)) {
 			return `"${str.replace(/"/g, '\\"')}"`;
 		}
 		return str;

@@ -37,7 +37,7 @@ export function NewWorkspaceInitializer({
   // Read cached organization list (prefetched in app layout)
   // This works even for users who just created their first org (optimistic update)
   const { data: organizations } = useSuspenseQuery({
-    ...userTrpc.organization.listUserOrganizations.queryOptions(),
+    ...trpc.organization.listUserOrganizations.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

@@ -28,7 +28,7 @@ export function CreateWorkspaceButton() {
 
   // Read cached organization list
   const { data: organizations } = useSuspenseQuery({
-    ...userTrpc.organization.listUserOrganizations.queryOptions(),
+    ...trpc.organization.listUserOrganizations.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -46,7 +46,7 @@ export function CreateWorkspaceButton() {
 
   // Create workspace mutation with optimistic updates
   const createWorkspaceMutation = useMutation(
-    orgTrpc.workspace.create.mutationOptions({
+    trpc.workspace.create.mutationOptions({
       onMutate: async (variables) => {
         // Only proceed with optimistic update if we have an org slug
         if (!selectedOrg?.slug) {
@@ -57,14 +57,14 @@ export function CreateWorkspaceButton() {
 
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
-          queryKey: orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+          queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
           }).queryKey,
         });
 
         // Snapshot previous data for rollback
         const previous = queryClient.getQueryData(
-          orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+          trpc.workspace.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
           }).queryKey,
         );
@@ -72,7 +72,7 @@ export function CreateWorkspaceButton() {
         // Optimistically add new workspace to the list
         if (previous) {
           queryClient.setQueryData(
-            orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+            trpc.workspace.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: orgSlug,
             }).queryKey,
             produce(previous, (draft) => {
@@ -95,7 +95,7 @@ export function CreateWorkspaceButton() {
         // Rollback on error
         if (context?.previous && context.orgSlug) {
           queryClient.setQueryData(
-            orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+            trpc.workspace.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
             }).queryKey,
             context.previous,
@@ -106,7 +106,7 @@ export function CreateWorkspaceButton() {
         // Always invalidate to ensure consistency with server
         if (context?.orgSlug) {
           void queryClient.invalidateQueries({
-            queryKey: orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+            queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
             }).queryKey,
           });
@@ -117,7 +117,7 @@ export function CreateWorkspaceButton() {
 
   // Connect repository directly to workspace (NEW simplified 2-table API)
   const connectDirectMutation = useMutation(
-    orgTrpc.integration.workspace.connectDirect.mutationOptions({
+    trpc.integration.workspace.connectDirect.mutationOptions({
       onError: (error) => {
         const message = error instanceof Error ? error.message : null;
         toast({
@@ -132,7 +132,7 @@ export function CreateWorkspaceButton() {
         const orgSlug = selectedOrg?.slug;
         if (orgSlug) {
           void queryClient.invalidateQueries({
-            queryKey: orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+            queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: orgSlug,
             }).queryKey,
           });

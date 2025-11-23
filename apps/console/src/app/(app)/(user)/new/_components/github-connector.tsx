@@ -27,7 +27,7 @@ export function GitHubConnector() {
 
   // Fetch GitHub user source (client-side only via useQuery)
   const { data: githubUserSource, refetch: refetchIntegration } = useQuery({
-    ...orgTrpc.integration.github.list.queryOptions(),
+    ...trpc.integration.github.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 

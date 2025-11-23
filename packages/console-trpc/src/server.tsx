@@ -1,13 +1,8 @@
 import type { TRPCQueryOptions } from "@trpc/tanstack-react-query";
 import { cache } from "react";
 import { headers } from "next/headers";
-import {
-  dehydrate,
-  HydrationBoundary,
-} from "@tanstack/react-query";
-import {
-  createTRPCOptionsProxy,
-} from "@trpc/tanstack-react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { UserRouter, OrgRouter } from "@api/console";
@@ -15,7 +10,7 @@ import {
   userRouter,
   orgRouter,
   createUserTRPCContext,
-  createOrgTRPCContext
+  createOrgTRPCContext,
 } from "@api/console";
 import { getM2MToken } from "@repo/console-clerk-m2m";
 
@@ -137,7 +132,10 @@ export function prefetch(
   queryOptions: ReturnType<TRPCQueryOptions<any>>,
 ) {
   const queryClient = getQueryClient();
-  if ((queryOptions.queryKey[1] as { type?: string } | undefined)?.type === "infinite") {
+  if (
+    (queryOptions.queryKey[1] as { type?: string } | undefined)?.type ===
+    "infinite"
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     void queryClient.prefetchInfiniteQuery(queryOptions as any);
   } else {

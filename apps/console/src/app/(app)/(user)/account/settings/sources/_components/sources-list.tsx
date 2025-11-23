@@ -51,18 +51,18 @@ export function SourcesList() {
 	const queryClient = useQueryClient();
 
 	const { data: integrations } = useSuspenseQuery({
-		...userTrpc.account.integrations.list.queryOptions(),
+		...trpc.account.integrations.list.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 		staleTime: 5 * 60 * 1000, // 5 minutes - integrations rarely change
 	});
 
 	const disconnectMutation = useMutation(
-		userTrpc.account.integrations.disconnect.mutationOptions({
+		trpc.account.integrations.disconnect.mutationOptions({
 			onSuccess: () => {
 				toast.success("Integration disconnected successfully");
 				void queryClient.invalidateQueries({
-					queryKey: userTrpc.account.integrations.list.queryOptions().queryKey,
+					queryKey: trpc.account.integrations.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { prefetch, userTrpc, HydrateClient } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
 import { ProfileDataDisplay } from "./_components/profile-data-display";
 import { ProfileDataLoading } from "./_components/profile-data-loading";
 

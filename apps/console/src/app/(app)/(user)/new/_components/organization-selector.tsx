@@ -36,7 +36,7 @@ export function OrganizationSelector() {
 
   // Read cached organization list (already prefetched in app layout)
   const { data: organizations } = useSuspenseQuery({
-    ...userTrpc.organization.listUserOrganizations.queryOptions(),
+    ...trpc.organization.listUserOrganizations.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
