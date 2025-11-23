@@ -1557,3 +1557,16 @@ turbo daemon status
 # View Turbo logs
 cat .turbo/turbo-*.log
 ```
+
+# For Inngest & Upstash Workflow
+
+  1. Use npx with @latest for both CLI tools to avoid local package
+   corruption
+  2. Turbo persistent tasks properly handle long-running dev
+  servers
+  3. No local dependencies needed - npx downloads and caches
+  automatically
+  4. Clear npx cache (rm -rf ~/.npm/_npx) if you encounter issues
+
+  Next Steps:
+

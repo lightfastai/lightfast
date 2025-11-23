@@ -15,14 +15,33 @@ export default async function WorkspacePage({
   // No blocking access check - WorkspaceDashboard will use slug to resolve org
   // This ensures we always use the org from URL, not from potentially stale auth() state
 
-  // Prefetch all 5 queries in parallel on the server
+  // Prefetch all 8 queries in parallel on the server (granular for better caching)
   prefetch(
-    trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
+    trpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
+      workspaceName: workspaceName,
     })
   );
   prefetch(
-    trpc.workspace.statistics.queryOptions({
+    trpc.workspace.stores.list.queryOptions({
+      clerkOrgSlug: slug,
+      workspaceName: workspaceName,
+    })
+  );
+  prefetch(
+    trpc.workspace.documents.stats.queryOptions({
+      clerkOrgSlug: slug,
+      workspaceName: workspaceName,
+    })
+  );
+  prefetch(
+    trpc.workspace.jobs.stats.queryOptions({
+      clerkOrgSlug: slug,
+      workspaceName: workspaceName,
+    })
+  );
+  prefetch(
+    trpc.workspace.jobs.recent.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
     })
@@ -42,7 +61,7 @@ export default async function WorkspacePage({
     })
   );
   prefetch(
-    trpc.workspace.systemHealth.queryOptions({
+    trpc.workspace.health.overview.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
     })

@@ -126,7 +126,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
 }
 
 /**
- * Simple Source Item for workspace.statistics sources
+ * Simple Source Item for workspace.sources.list
  */
 function SimpleSourceItem({ source }: { source: Source }) {
   const getSourceIcon = (type: string) => {
@@ -180,7 +180,7 @@ function SimpleSourceItem({ source }: { source: Source }) {
  * Displays all connected sources grouped by provider with sync status.
  */
 export function ConnectedSourcesOverview({ connections, sources }: ConnectedSourcesOverviewProps) {
-  // If sources prop is provided (from workspace.statistics), use simple layout
+  // If sources prop is provided (from workspace.sources.list), use simple layout
   if (sources) {
     const totalSources = sources.length;
 

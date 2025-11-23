@@ -84,9 +84,6 @@ export function CreateWorkspaceButton() {
                   .toLowerCase()
                   .replace(/\s+/g, "-"), // Internal slug
                 createdAt: new Date().toISOString(),
-                repositories: [],
-                totalDocuments: 0,
-                lastActivity: new Date().toISOString(),
               });
             }),
           );

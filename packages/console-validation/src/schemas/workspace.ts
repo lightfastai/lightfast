@@ -223,22 +223,6 @@ export type WorkspaceIntegrationDisconnectInput = z.infer<
 >;
 
 /**
- * Workspace Resolve from Clerk Org ID Input Schema
- *
- * Derived from insertWorkspaceSchema for ID validation.
- *
- * Used in:
- * - tRPC workspace.resolveFromClerkOrgId procedure (public, used by API routes)
- */
-export const workspaceResolveFromClerkOrgIdInputSchema = z.object({
-  clerkOrgId: insertWorkspaceSchemaBase.shape.clerkOrgId,
-});
-
-export type WorkspaceResolveFromClerkOrgIdInput = z.infer<
-  typeof workspaceResolveFromClerkOrgIdInputSchema
->;
-
-/**
  * Workspace Resolve from GitHub Org Slug Input Schema
  *
  * Used in:

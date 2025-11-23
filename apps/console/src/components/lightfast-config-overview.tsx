@@ -14,7 +14,6 @@ import { codeToHtml } from "shiki";
  * This is intentional for better readability in the generated config file.
  */
 interface LightfastConfigOverviewProps {
-	workspaceId: string;
 	workspaceName: string;
 	stores: {
 		id: string;
@@ -25,7 +24,6 @@ interface LightfastConfigOverviewProps {
 }
 
 export function LightfastConfigOverview({
-	workspaceId,
 	workspaceName,
 	stores,
 }: LightfastConfigOverviewProps) {
@@ -40,7 +38,6 @@ export function LightfastConfigOverview({
 
 	const yamlConfig = `# Lightfast Configuration
 workspace:
-  id: ${workspaceId}
   name: ${sanitizedWorkspaceName}
 
 stores:

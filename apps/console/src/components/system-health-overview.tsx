@@ -15,15 +15,51 @@ import {
 	Github,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import type { SystemHealth } from "~/types";
+interface HealthData {
+	workspaceHealth: "healthy" | "degraded" | "down";
+	totalJobs24h: number;
+	successRate: number;
+	completedJobs: number;
+	failedJobs: number;
+}
+
+interface Store {
+	id: string;
+	slug: string;
+	embeddingDim: number;
+	documentCount: number;
+}
+
+interface Source {
+	id: string;
+	type: string;
+	displayName: string;
+	documentCount: number;
+	lastSyncedAt: string | null;
+}
 
 interface SystemHealthOverviewProps {
-	health: SystemHealth;
+	health: HealthData;
+	stores: Store[];
+	sources: Source[];
 }
 
 export function SystemHealthOverview({
 	health,
+	stores,
+	sources,
 }: SystemHealthOverviewProps) {
+	// Map stores with their sources (simplified - all sources shown for each store)
+	const storesWithHealth = stores.map((store) => ({
+		...store,
+		name: store.slug,
+		health: health.workspaceHealth, // Use workspace health as proxy for store health
+		successRate: health.successRate,
+		sources: sources.map((source) => ({
+			...source,
+			health: health.workspaceHealth, // Use workspace health as proxy for source health
+		})),
+	}));
 
 	const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set());
 
@@ -56,7 +92,7 @@ export function SystemHealthOverview({
 						<div className="flex-1">
 							<p className="text-sm font-medium">Workspace</p>
 							<p className="text-xs text-muted-foreground">
-								{health.storesCount} stores, {health.sourcesCount} sources
+								{stores.length} stores, {sources.length} sources
 							</p>
 						</div>
 						<Badge variant="outline" className="text-xs">
@@ -65,7 +101,7 @@ export function SystemHealthOverview({
 					</div>
 
 					{/* Stores Level */}
-					{health.stores.map((store) => {
+					{storesWithHealth.map((store) => {
 						const isExpanded = expandedStores.has(store.id);
 						return (
 							<div key={store.id} className="space-y-2 pl-6 border-l-2 border-border/50">
@@ -147,7 +183,7 @@ export function SystemHealthOverview({
 						);
 					})}
 
-					{health.stores.length === 0 && (
+					{storesWithHealth.length === 0 && (
 						<div className="text-center py-8 text-sm text-muted-foreground">
 							<Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
 							<p>No stores configured yet</p>

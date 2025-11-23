@@ -15,7 +15,6 @@ import {
   workspaceCreateInputSchema,
   workspaceStatisticsInputSchema,
   workspaceUpdateNameInputSchema,
-  workspaceResolveFromClerkOrgIdInputSchema,
   workspaceResolveFromGithubOrgSlugInputSchema,
   workspaceStatisticsComparisonInputSchema,
   workspaceJobPercentilesInputSchema,
@@ -36,10 +35,12 @@ export const workspaceRouter = {
    * List workspaces for a Clerk organization
    * Used by the org/workspace switcher to show available workspaces
    *
-   * Automatically creates a default workspace if none exist for the organization
+   * Returns basic workspace info only. Use granular endpoints for detailed data:
+   * - workspace.sources.list
+   * - workspace.stores.list
+   * - workspace.jobs.stats
    *
    * IMPORTANT: This procedure verifies the user has access to the org from the URL.
-   * No need for blocking access checks in layouts - let this handle it.
    */
   listByClerkOrgSlug: protectedProcedure
     .input(workspaceListInputSchema)
@@ -88,222 +89,18 @@ export const workspaceRouter = {
         });
       }
 
-      const clerkOrgId = clerkOrg.id;
-
-      // Fetch all workspaces for this organization
-      // No longer auto-creates - user must explicitly create workspace at /new
+      // Fetch all workspaces for this organization (basic info only)
       const orgWorkspaces = await db.query.workspaces.findMany({
-        where: eq(workspaces.clerkOrgId, clerkOrgId),
+        where: eq(workspaces.clerkOrgId, clerkOrg.id),
+        orderBy: [desc(workspaces.createdAt)],
       });
 
-      // Return empty list if no workspaces exist yet
-      if (orgWorkspaces.length === 0) {
-        return [];
-      }
-
-      // Collect all workspace IDs for batch queries
-      const workspaceIds = orgWorkspaces.map((w) => w.id);
-
-      // Batch query 1: Get all repositories for all workspaces
-      const allRepos = await db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            inArray(DeusConnectedRepository.workspaceId, workspaceIds),
-            eq(DeusConnectedRepository.isActive, true),
-          ),
-        );
-
-      // Batch query 2: Get document counts for all workspaces
-      const docCounts = await db
-        .select({
-          workspaceId: stores.workspaceId,
-          count: count(docsDocuments.id),
-        })
-        .from(stores)
-        .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
-        .where(inArray(stores.workspaceId, workspaceIds))
-        .groupBy(stores.workspaceId);
-
-      // Batch query 3: Get most recent job per workspace
-      // Use DISTINCT ON for PostgreSQL-style deduplication (PlanetScale supports this)
-      const recentJobs = await db.execute<{
-        workspaceId: string;
-        createdAt: string;
-      }>(sql`
-        SELECT DISTINCT ON (workspace_id)
-          workspace_id as workspaceId,
-          created_at as createdAt
-        FROM ${jobs}
-        WHERE workspace_id IN ${workspaceIds}
-        ORDER BY workspace_id, created_at DESC
-      `);
-
-      // Group repositories by workspace ID (limit to 3 per workspace)
-      const reposByWorkspace = new Map<string, (typeof allRepos)[number][]>();
-      for (const repo of allRepos) {
-        if (!repo.workspaceId) continue;
-        const workspaceRepos = reposByWorkspace.get(repo.workspaceId) ?? [];
-        if (workspaceRepos.length < 3) {
-          workspaceRepos.push(repo);
-          reposByWorkspace.set(repo.workspaceId, workspaceRepos);
-        }
-      }
-
-      // Build document count lookup
-      const docCountsByWorkspace = new Map(
-        docCounts.map((dc) => [dc.workspaceId, dc.count] as const),
-      );
-
-      // Build recent job lookup
-      const recentJobsByWorkspace = new Map(
-        recentJobs.map((job: { workspaceId: string; createdAt: string }) => [
-          job.workspaceId,
-          job.createdAt,
-        ] as const),
-      );
-
-      // Combine all data in memory
-      const workspacesWithRepos = orgWorkspaces.map((workspace) => {
-        const repos = reposByWorkspace.get(workspace.id) ?? [];
-        const docCount = docCountsByWorkspace.get(workspace.id) ?? 0;
-        const recentJobDate = recentJobsByWorkspace.get(workspace.id);
-
-        return {
-          id: workspace.id,
-          name: workspace.name, // User-facing name, used in URLs
-          slug: workspace.slug, // Internal slug for Pinecone
-          createdAt: workspace.createdAt,
-          repositories: repos.map((repo) => ({
-            id: repo.id,
-            configStatus: repo.configStatus,
-            metadata: repo.metadata,
-            lastSyncedAt: repo.lastSyncedAt,
-            documentCount: repo.documentCount,
-          })),
-          totalDocuments: docCount,
-          lastActivity: recentJobDate ?? workspace.createdAt,
-        };
-      });
-
-      return workspacesWithRepos;
-    }),
-
-  /**
-   * Resolve workspace ID and key from Clerk organization slug
-   * Used by UI components that have the org slug from URL params
-   *
-   * Returns:
-   * - workspaceId: Database UUID for internal operations
-   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
-   *
-   * IMPORTANT: This procedure verifies the user has access to the org from the URL.
-   */
-  resolveFromClerkOrgSlug: protectedProcedure
-    .input(workspaceListInputSchema)
-    .query(async ({ ctx, input }) => {
-      if (ctx.auth.type !== "clerk") {
-        throw new Error("Clerk authentication required");
-      }
-
-      // Get org by slug from URL
-      const { clerkClient } = await import("@vendor/clerk/server");
-      const { TRPCError } = await import("@trpc/server");
-      const clerk = await clerkClient();
-
-      let clerkOrg;
-      try {
-        clerkOrg = await clerk.organizations.getOrganization({
-          slug: input.clerkOrgSlug,
-        });
-      } catch {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.clerkOrgSlug}`,
-        });
-      }
-
-      if (!clerkOrg) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.clerkOrgSlug}`,
-        });
-      }
-
-      // Verify user has access to this organization
-      const membership = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: clerkOrg.id,
-      });
-
-      const userMembership = membership.data.find(
-        (m) => m.publicUserData?.userId === ctx.auth.userId,
-      );
-
-      if (!userMembership) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Access denied to this organization",
-        });
-      }
-
-      const clerkOrgId = clerkOrg.id;
-
-      // Find first workspace for this Clerk organization
-      // Returns first workspace (by creation date) if multiple exist
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.clerkOrgId, clerkOrgId),
-        orderBy: (workspaces, { asc }) => [asc(workspaces.createdAt)],
-      });
-
-      if (!workspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `No workspace found for organization. Please create a workspace first.`,
-        });
-      }
-
-      // Compute workspace key from slug
-      const workspaceKey = getWorkspaceKey(workspace.slug);
-
-      return {
-        workspaceId: workspace.id,
-        workspaceKey,
-        workspaceSlug: workspace.slug,
-        clerkOrgId, // Include orgId for downstream queries
-      };
-    }),
-
-  /**
-   * Resolve workspace ID and key from Clerk organization ID
-   * Used by API routes to map organizations to their workspaces
-   *
-   * Returns:
-   * - workspaceId: Database UUID for internal operations
-   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
-   */
-  resolveFromClerkOrgId: publicProcedure
-    .input(workspaceResolveFromClerkOrgIdInputSchema)
-    .query(async ({ input }) => {
-      // Find first workspace for this Clerk organization
-      // Returns first workspace (by creation date) if multiple exist
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.clerkOrgId, input.clerkOrgId),
-        orderBy: (workspaces, { asc }) => [asc(workspaces.createdAt)],
-      });
-
-      if (!workspace) {
-        throw new Error(`No workspace found for organization ${input.clerkOrgId}. Please create a workspace first.`);
-      }
-
-      // Compute workspace key from slug
-      const workspaceKey = getWorkspaceKey(workspace.slug);
-
-      return {
-        workspaceId: workspace.id,
-        workspaceKey,
-        workspaceSlug: workspace.slug,
-      };
+      return orgWorkspaces.map((workspace) => ({
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        createdAt: workspace.createdAt,
+      }));
     }),
 
   /**
@@ -476,267 +273,6 @@ export const workspaceRouter = {
         }
         throw error;
       }
-    }),
-
-  /**
-   * Get workspace statistics for dashboard
-   * Returns overview metrics: sources, stores, documents, jobs
-   */
-  statistics: protectedProcedure
-    .input(workspaceStatisticsInputSchema)
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name (user-facing)
-      const { resolveWorkspaceByName } = await import("../trpc");
-      const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      // Get connected sources count and list
-      const sources = await db.query.connectedSources.findMany({
-        where: and(
-          eq(connectedSources.workspaceId, workspaceId),
-          eq(connectedSources.isActive, true),
-        ),
-        orderBy: [desc(connectedSources.connectedAt)],
-      });
-
-      // Get stores with document counts
-      const storesWithCounts = await db
-        .select({
-          id: stores.id,
-          slug: stores.slug,
-          indexName: stores.indexName,
-          embeddingDim: stores.embeddingDim,
-          createdAt: stores.createdAt,
-          documentCount: count(docsDocuments.id),
-        })
-        .from(stores)
-        .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
-        .where(eq(stores.workspaceId, workspaceId))
-        .groupBy(stores.id);
-
-      // Get total document count
-      const [docCountResult] = await db
-        .select({ count: count() })
-        .from(docsDocuments)
-        .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-        .where(eq(stores.workspaceId, workspaceId));
-
-      // Get total chunk count (sum of all chunkCounts)
-      const [chunkCountResult] = await db
-        .select({
-          total: sql<number>`COALESCE(SUM(${docsDocuments.chunkCount}), 0)`,
-        })
-        .from(docsDocuments)
-        .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-        .where(eq(stores.workspaceId, workspaceId));
-
-      // Get recent jobs (last 24 hours)
-      // Use Date object with gte operator instead of raw SQL string comparison
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-      // Get job statistics with SQL aggregation (single query)
-      const [jobStats] = await db
-        .select({
-          total: count(),
-          queued: sum(sql<number>`CASE WHEN ${jobs.status} = 'queued' THEN 1 ELSE 0 END`),
-          running: sum(sql<number>`CASE WHEN ${jobs.status} = 'running' THEN 1 ELSE 0 END`),
-          completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
-          failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
-          cancelled: sum(sql<number>`CASE WHEN ${jobs.status} = 'cancelled' THEN 1 ELSE 0 END`),
-          avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
-        })
-        .from(jobs)
-        .where(
-          and(
-            eq(jobs.workspaceId, workspaceId),
-            gte(jobs.createdAt, oneDayAgo),
-          ),
-        );
-
-      // Get recent jobs for the list (only 5 needed for display)
-      const recentJobs = await db.query.jobs.findMany({
-        where: and(
-          eq(jobs.workspaceId, workspaceId),
-          gte(jobs.createdAt, oneDayAgo),
-        ),
-        orderBy: [desc(jobs.createdAt)],
-        limit: 5,
-      });
-
-      return {
-        sources: {
-          total: sources.length,
-          byType: sources.reduce(
-            (acc, s) => {
-              acc[s.sourceType] = (acc[s.sourceType] || 0) + 1;
-              return acc;
-            },
-            {} as Record<string, number>,
-          ),
-          list: sources.map((s) => ({
-            id: s.id,
-            type: s.sourceType,
-            displayName: s.displayName,
-            documentCount: s.documentCount,
-            lastSyncedAt: s.lastSyncedAt,
-            lastIngestedAt: s.lastIngestedAt,
-            metadata: s.sourceMetadata,
-          })),
-        },
-        stores: {
-          total: storesWithCounts.length,
-          list: storesWithCounts.map((s) => ({
-            id: s.id,
-            slug: s.slug,
-            indexName: s.indexName,
-            embeddingDim: s.embeddingDim,
-            documentCount: s.documentCount,
-            createdAt: s.createdAt,
-          })),
-        },
-        documents: {
-          total: docCountResult?.count || 0,
-          chunks: Number(chunkCountResult?.total) || 0,
-        },
-        jobs: {
-          total: jobStats?.total || 0,
-          completed: Number(jobStats?.completed) || 0,
-          failed: Number(jobStats?.failed) || 0,
-          successRate:
-            (jobStats?.total || 0) > 0
-              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total || 0)) * 100
-              : 0,
-          avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
-          recent: recentJobs.map((j) => ({
-            id: j.id,
-            name: j.name,
-            status: j.status,
-            trigger: j.trigger,
-            createdAt: j.createdAt,
-            completedAt: j.completedAt,
-            durationMs: j.durationMs,
-            errorMessage: j.errorMessage,
-          })),
-        },
-      };
-    }),
-
-  /**
-   * Get workspace statistics comparison for trends
-   * Returns current period stats vs previous period for percentage change calculation
-   */
-  statisticsComparison: protectedProcedure
-    .input(workspaceStatisticsComparisonInputSchema)
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name (user-facing) and verify access
-      const { resolveWorkspaceByName } = await import("../trpc");
-      const { workspaceId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      const {
-        currentStart,
-        currentEnd,
-        previousStart,
-        previousEnd,
-      } = input;
-
-      // Helper to get stats for a period
-      const getStatsForPeriod = async (start: string, end: string) => {
-        // Get job statistics with SQL aggregation (single query)
-        const [jobStats] = await db
-          .select({
-            total: count(),
-            completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
-            failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
-            avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
-          })
-          .from(jobs)
-          .where(
-            and(
-              eq(jobs.workspaceId, workspaceId),
-              gte(jobs.createdAt, start),
-              lte(jobs.createdAt, end),
-            ),
-          );
-
-        // Get document count at end of period (approximate with total)
-        const [docCount] = await db
-          .select({ count: count() })
-          .from(docsDocuments)
-          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-          .where(and(
-            eq(stores.workspaceId, workspaceId),
-            sql`${docsDocuments.createdAt} <= ${end}`,
-          ));
-
-        // Get chunk count at end of period
-        const [chunkCount] = await db
-          .select({
-            total: sql<number>`COALESCE(SUM(${docsDocuments.chunkCount}), 0)`,
-          })
-          .from(docsDocuments)
-          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-          .where(and(
-            eq(stores.workspaceId, workspaceId),
-            sql`${docsDocuments.createdAt} <= ${end}`,
-          ));
-
-        const total = jobStats?.total || 0;
-        const completed = Number(jobStats?.completed) || 0;
-        const failed = Number(jobStats?.failed) || 0;
-
-        return {
-          jobs: {
-            total,
-            completed,
-            failed,
-            successRate: total > 0 ? (completed / total) * 100 : 0,
-            avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
-          },
-          documents: {
-            total: docCount?.count || 0,
-            chunks: Number(chunkCount?.total) || 0,
-          },
-        };
-      };
-
-      // Get stats for both periods
-      const [current, previous] = await Promise.all([
-        getStatsForPeriod(currentStart, currentEnd),
-        getStatsForPeriod(previousStart, previousEnd),
-      ]);
-
-      // Calculate percentage changes
-      const calculateChange = (current: number, previous: number): number => {
-        if (previous === 0) return current > 0 ? 100 : 0;
-        return ((current - previous) / previous) * 100;
-      };
-
-      const changes = {
-        documents: {
-          total: calculateChange(current.documents.total, previous.documents.total),
-          chunks: calculateChange(current.documents.chunks, previous.documents.chunks),
-        },
-        jobs: {
-          total: calculateChange(current.jobs.total, previous.jobs.total),
-          completed: calculateChange(current.jobs.completed, previous.jobs.completed),
-          failed: calculateChange(current.jobs.failed, previous.jobs.failed),
-          successRate: current.jobs.successRate - previous.jobs.successRate, // Absolute difference for percentage
-          avgDurationMs: calculateChange(current.jobs.avgDurationMs, previous.jobs.avgDurationMs),
-        },
-      };
-
-      return {
-        current,
-        previous,
-        changes,
-      };
     }),
 
   /**
@@ -917,127 +453,6 @@ export const workspaceRouter = {
         .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
       return points;
-    }),
-
-  /**
-   * Get system health hierarchy
-   * Returns workspace → stores → sources with health indicators
-   */
-  systemHealth: protectedProcedure
-    .input(workspaceSystemHealthInputSchema)
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name (user-facing)
-      const { resolveWorkspaceByName } = await import("../trpc");
-      const { workspaceId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      // Get stores with document counts
-      const storesData = await db
-        .select({
-          id: stores.id,
-          slug: stores.slug,
-          embeddingDim: stores.embeddingDim,
-          documentCount: count(docsDocuments.id),
-        })
-        .from(stores)
-        .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
-        .where(eq(stores.workspaceId, workspaceId))
-        .groupBy(stores.id);
-
-      // Get sources
-      const sourcesData = await db.query.connectedSources.findMany({
-        where: and(
-          eq(connectedSources.workspaceId, workspaceId),
-          eq(connectedSources.isActive, true),
-        ),
-      });
-
-      // Get recent jobs for health calculation (last 24h)
-      // Use Date object with gte operator instead of raw SQL string comparison
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-      const recentJobs = await db.query.jobs.findMany({
-        where: and(
-          eq(jobs.workspaceId, workspaceId),
-          gte(jobs.createdAt, oneDayAgo),
-        ),
-        columns: {
-          status: true,
-          repositoryId: true,
-        },
-      });
-
-      // Calculate health status
-      const getHealthStatus = (
-        successRate: number,
-      ): "healthy" | "degraded" | "down" => {
-        if (successRate >= 95) return "healthy";
-        if (successRate >= 80) return "degraded";
-        return "down";
-      };
-
-      // Calculate overall workspace health
-      const completedJobs = recentJobs.filter((j) => j.status === "completed");
-      const workspaceSuccessRate =
-        recentJobs.length > 0
-          ? (completedJobs.length / recentJobs.length) * 100
-          : 100;
-
-      // Build store hierarchy
-      const storesWithSources = storesData.map((store) => {
-        // Find sources for this store (simplified - using workspace sources)
-        const storeSources = sourcesData.map((source) => {
-          // Calculate source-level health based on jobs
-          const sourceJobs = recentJobs.filter(
-            (j) => j.repositoryId === source.id,
-          );
-          const sourceCompleted = sourceJobs.filter(
-            (j) => j.status === "completed",
-          );
-          const sourceSuccessRate =
-            sourceJobs.length > 0
-              ? (sourceCompleted.length / sourceJobs.length) * 100
-              : 100;
-
-          return {
-            id: source.id,
-            type: source.sourceType,
-            displayName: source.displayName,
-            documentCount: source.documentCount,
-            lastSyncedAt: source.lastSyncedAt,
-            health: getHealthStatus(sourceSuccessRate),
-          };
-        });
-
-        // Calculate store-level health
-        const storeJobs = recentJobs; // Simplified - using all jobs
-        const storeCompleted = storeJobs.filter((j) => j.status === "completed");
-        const storeSuccessRate =
-          storeJobs.length > 0
-            ? (storeCompleted.length / storeJobs.length) * 100
-            : 100;
-
-        return {
-          id: store.id,
-          name: store.slug,
-          embeddingDim: store.embeddingDim,
-          documentCount: store.documentCount,
-          successRate: storeSuccessRate,
-          health: getHealthStatus(storeSuccessRate),
-          sources: storeSources,
-        };
-      });
-
-      return {
-        workspaceHealth: getHealthStatus(workspaceSuccessRate),
-        storesCount: storesData.length,
-        sourcesCount: sourcesData.length,
-        totalJobs24h: recentJobs.length,
-        stores: storesWithSources,
-      };
     }),
 
   /**
@@ -1234,6 +649,304 @@ export const workspaceRouter = {
         newWorkspaceName: input.newName,
       };
     }),
+
+  // ============================================================================
+  // Granular Data Queries (New API - preferred over monolithic statistics)
+  // ============================================================================
+
+  /**
+   * Sources sub-router
+   */
+  sources: {
+    /**
+     * List connected sources for a workspace
+     * Replaces the sources portion of the old statistics procedure
+     */
+    list: protectedProcedure
+      .input(workspaceStatisticsInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get connected sources
+        const sources = await db.query.connectedSources.findMany({
+          where: and(
+            eq(connectedSources.workspaceId, workspaceId),
+            eq(connectedSources.isActive, true),
+          ),
+          orderBy: [desc(connectedSources.connectedAt)],
+        });
+
+        return {
+          total: sources.length,
+          byType: sources.reduce(
+            (acc, s) => {
+              acc[s.sourceType] = (acc[s.sourceType] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>,
+          ),
+          list: sources.map((s) => ({
+            id: s.id,
+            type: s.sourceType,
+            displayName: s.displayName,
+            documentCount: s.documentCount,
+            lastSyncedAt: s.lastSyncedAt,
+            lastIngestedAt: s.lastIngestedAt,
+            metadata: s.sourceMetadata,
+          })),
+        };
+      }),
+  },
+
+  /**
+   * Stores sub-router
+   */
+  stores: {
+    /**
+     * List stores with document counts
+     * Replaces the stores portion of the old statistics procedure
+     */
+    list: protectedProcedure
+      .input(workspaceStatisticsInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get stores with document counts
+        const storesWithCounts = await db
+          .select({
+            id: stores.id,
+            slug: stores.slug,
+            indexName: stores.indexName,
+            embeddingDim: stores.embeddingDim,
+            createdAt: stores.createdAt,
+            documentCount: count(docsDocuments.id),
+          })
+          .from(stores)
+          .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
+          .where(eq(stores.workspaceId, workspaceId))
+          .groupBy(stores.id);
+
+        return {
+          total: storesWithCounts.length,
+          list: storesWithCounts.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            indexName: s.indexName,
+            embeddingDim: s.embeddingDim,
+            documentCount: s.documentCount,
+            createdAt: s.createdAt,
+          })),
+        };
+      }),
+  },
+
+  /**
+   * Documents sub-router
+   */
+  documents: {
+    /**
+     * Get document statistics (total count and chunks)
+     * Replaces the documents portion of the old statistics procedure
+     */
+    stats: protectedProcedure
+      .input(workspaceStatisticsInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get total document count
+        const [docCountResult] = await db
+          .select({ count: count() })
+          .from(docsDocuments)
+          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
+          .where(eq(stores.workspaceId, workspaceId));
+
+        // Get total chunk count (sum of all chunkCounts)
+        const [chunkCountResult] = await db
+          .select({
+            total: sql<number>`COALESCE(SUM(${docsDocuments.chunkCount}), 0)`,
+          })
+          .from(docsDocuments)
+          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
+          .where(eq(stores.workspaceId, workspaceId));
+
+        return {
+          total: docCountResult?.count || 0,
+          chunks: Number(chunkCountResult?.total) || 0,
+        };
+      }),
+  },
+
+  /**
+   * Jobs sub-router
+   */
+  jobs: {
+    /**
+     * Get job statistics (aggregated metrics)
+     * Replaces the job stats portion of the old statistics procedure
+     */
+    stats: protectedProcedure
+      .input(workspaceStatisticsInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get recent jobs (last 24 hours)
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+        // Get job statistics with SQL aggregation (single query)
+        const [jobStats] = await db
+          .select({
+            total: count(),
+            queued: sum(sql<number>`CASE WHEN ${jobs.status} = 'queued' THEN 1 ELSE 0 END`),
+            running: sum(sql<number>`CASE WHEN ${jobs.status} = 'running' THEN 1 ELSE 0 END`),
+            completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
+            failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
+            cancelled: sum(sql<number>`CASE WHEN ${jobs.status} = 'cancelled' THEN 1 ELSE 0 END`),
+            avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
+          })
+          .from(jobs)
+          .where(
+            and(
+              eq(jobs.workspaceId, workspaceId),
+              gte(jobs.createdAt, oneDayAgo),
+            ),
+          );
+
+        return {
+          total: jobStats?.total || 0,
+          completed: Number(jobStats?.completed) || 0,
+          failed: Number(jobStats?.failed) || 0,
+          successRate:
+            (jobStats?.total || 0) > 0
+              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total || 0)) * 100
+              : 0,
+          avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
+        };
+      }),
+
+    /**
+     * Get recent jobs list
+     * Replaces the recent jobs portion of the old statistics procedure
+     */
+    recent: protectedProcedure
+      .input(workspaceStatisticsInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get recent jobs (last 24 hours)
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+        const recentJobs = await db.query.jobs.findMany({
+          where: and(
+            eq(jobs.workspaceId, workspaceId),
+            gte(jobs.createdAt, oneDayAgo),
+          ),
+          orderBy: [desc(jobs.createdAt)],
+          limit: 5,
+        });
+
+        return recentJobs.map((j) => ({
+          id: j.id,
+          name: j.name,
+          status: j.status,
+          trigger: j.trigger,
+          createdAt: j.createdAt,
+          completedAt: j.completedAt,
+          durationMs: j.durationMs,
+          errorMessage: j.errorMessage,
+        }));
+      }),
+  },
+
+  /**
+   * Health sub-router
+   */
+  health: {
+    /**
+     * Get system health overview
+     * Refactored to avoid duplicate queries - expects sources/stores data from cache
+     */
+    overview: protectedProcedure
+      .input(workspaceSystemHealthInputSchema)
+      .query(async ({ ctx, input }) => {
+        // Resolve workspace from name (user-facing)
+        const { resolveWorkspaceByName } = await import("../trpc");
+        const { workspaceId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        // Get recent jobs for health calculation (last 24h)
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+        const recentJobs = await db.query.jobs.findMany({
+          where: and(
+            eq(jobs.workspaceId, workspaceId),
+            gte(jobs.createdAt, oneDayAgo),
+          ),
+          columns: {
+            status: true,
+            repositoryId: true,
+          },
+        });
+
+        // Calculate health status helper
+        const getHealthStatus = (
+          successRate: number,
+        ): "healthy" | "degraded" | "down" => {
+          if (successRate >= 95) return "healthy";
+          if (successRate >= 80) return "degraded";
+          return "down";
+        };
+
+        // Calculate overall workspace health
+        const completedJobs = recentJobs.filter((j) => j.status === "completed");
+        const workspaceSuccessRate =
+          recentJobs.length > 0
+            ? (completedJobs.length / recentJobs.length) * 100
+            : 100;
+
+        // Note: Store and source details should be fetched separately via
+        // workspace.stores.list and workspace.sources.list for better caching
+        return {
+          workspaceHealth: getHealthStatus(workspaceSuccessRate),
+          totalJobs24h: recentJobs.length,
+          successRate: workspaceSuccessRate,
+          completedJobs: completedJobs.length,
+          failedJobs: recentJobs.filter((j) => j.status === "failed").length,
+        };
+      }),
+  },
 
   // ============================================================================
   // Inngest M2M Procedures

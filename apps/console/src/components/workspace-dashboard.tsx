@@ -23,31 +23,62 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
   const trpc = useTRPC();
 
-  // Fetch all queries in parallel (5 total)
+  // Fetch all queries in parallel (8 total - granular for better caching)
   const [
-    { data: workspace },
-    { data: stats },
+    { data: sources },
+    { data: stores },
+    { data: documents },
+    { data: jobStats },
+    { data: recentJobs },
     { data: percentiles },
     { data: timeSeries },
     { data: health },
   ] = useSuspenseQueries({
     queries: [
       {
-        ...trpc.workspace.resolveFromClerkOrgSlug.queryOptions({
-          clerkOrgSlug: orgSlug,
-        }),
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        staleTime: 2 * 60 * 1000, // 2 minutes - workspace metadata rarely changes
-      },
-      {
-        ...trpc.workspace.statistics.queryOptions({
+        ...trpc.workspace.sources.list.queryOptions({
           clerkOrgSlug: orgSlug,
           workspaceName: workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        staleTime: 30 * 1000, // 30 seconds - statistics change frequently
+        staleTime: 5 * 60 * 1000, // 5 minutes - sources change infrequently
+      },
+      {
+        ...trpc.workspace.stores.list.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes - stores change infrequently
+      },
+      {
+        ...trpc.workspace.documents.stats.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        staleTime: 1 * 60 * 1000, // 1 minute - document counts change moderately
+      },
+      {
+        ...trpc.workspace.jobs.stats.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - job stats change frequently
+      },
+      {
+        ...trpc.workspace.jobs.recent.queryOptions({
+          clerkOrgSlug: orgSlug,
+          workspaceName: workspaceName,
+        }),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        staleTime: 30 * 1000, // 30 seconds - recent jobs change frequently
       },
       {
         ...trpc.workspace.jobPercentiles.queryOptions({
@@ -70,7 +101,7 @@ export function WorkspaceDashboard({
         staleTime: 30 * 1000, // 30 seconds - time series data changes frequently
       },
       {
-        ...trpc.workspace.systemHealth.queryOptions({
+        ...trpc.workspace.health.overview.queryOptions({
           clerkOrgSlug: orgSlug,
           workspaceName: workspaceName,
         }),
@@ -89,7 +120,7 @@ export function WorkspaceDashboard({
           workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
         }
         workspaceUrlName={workspaceName}
-        sourcesConnected={stats.sources.total}
+        sourcesConnected={sources.total}
         orgSlug={orgSlug}
       />
 
@@ -97,11 +128,10 @@ export function WorkspaceDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
         {/* Left: Lightfast Config (like VTGates) */}
         <LightfastConfigOverview
-          workspaceId={workspace.workspaceId}
           workspaceName={
             workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
           }
-          stores={stats.stores.list.map((store) => ({
+          stores={stores.list.map((store) => ({
             ...store,
             name: store.slug,
           }))}
@@ -109,12 +139,12 @@ export function WorkspaceDashboard({
 
         {/* Right: Metrics Sidebar (like Vitess stats) */}
         <MetricsSidebar
-          sourcesCount={stats.sources.total}
-          totalDocuments={stats.documents.total}
-          totalChunks={stats.documents.chunks}
-          successRate={stats.jobs.successRate}
-          avgDurationMs={stats.jobs.avgDurationMs}
-          recentJobsCount={stats.jobs.total}
+          sourcesCount={sources.total}
+          totalDocuments={documents.total}
+          totalChunks={documents.chunks}
+          successRate={jobStats.successRate}
+          avgDurationMs={jobStats.avgDurationMs}
+          recentJobsCount={jobStats.total}
         />
       </div>
 
@@ -123,7 +153,11 @@ export function WorkspaceDashboard({
         {/* Left Column - Main Content */}
         <div className="space-y-6">
           {/* System Health Overview - Hierarchical Status */}
-          <SystemHealthOverview health={health} />
+          <SystemHealthOverview
+            health={health}
+            stores={stores.list}
+            sources={sources.list}
+          />
 
           {/* Performance Metrics - Percentiles & Time Series Charts */}
           <PerformanceMetrics
@@ -135,20 +169,20 @@ export function WorkspaceDashboard({
         {/* Right Column - Activity Sidebar */}
         <div className="space-y-6">
           {/* Activity Timeline - Timeline-style layout */}
-          <ActivityTimeline recentJobs={stats.jobs.recent} />
+          <ActivityTimeline recentJobs={recentJobs} />
         </div>
       </div>
 
       {/* Bottom Section - Full Width */}
-      <ConnectedSourcesOverview sources={stats.sources.list} />
+      <ConnectedSourcesOverview sources={sources.list} />
 
       {/* Stores Overview - Full Width, Collapsible (can be removed since it's now in config) */}
       <StoresOverview
-        stores={stats.stores.list.map((store) => ({
+        stores={stores.list.map((store) => ({
           ...store,
           name: store.slug,
         }))}
-        totalStores={stats.stores.total}
+        totalStores={stores.total}
       />
     </div>
   );

@@ -13,7 +13,10 @@ import {
 import type { WorkspaceMetricsSummary } from "~/types";
 
 /**
- * Props derived from WorkspaceStats (workspace.statistics tRPC endpoint)
+ * Props derived from granular workspace endpoints:
+ * - workspace.sources.list (sourcesCount)
+ * - workspace.documents.stats (totalDocuments, totalChunks)
+ * - workspace.jobs.stats (successRate, avgDurationMs, recentJobsCount)
  * Individual fields are extracted in parent component for flexibility
  */
 type MetricsSidebarProps = WorkspaceMetricsSummary;
