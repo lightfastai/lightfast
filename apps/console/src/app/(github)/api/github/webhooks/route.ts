@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyGitHubWebhookFromHeaders } from "@repo/console-webhooks/github";
-import { RepositoriesService, WorkspacesService } from "@repo/console-api-services";
+import { SourcesService, WorkspacesService } from "@repo/console-api-services";
 import type {
   PushEvent,
   InstallationEvent,
@@ -28,10 +28,10 @@ async function handleInstallationRepositoriesEvent(
     `[Webhook] Repositories removed from installation ${payload.installation.id}`,
   );
 
-  const repositoriesService = new RepositoriesService();
+  const sourcesService = new SourcesService();
 
   for (const repo of payload.repositories_removed) {
-    await repositoriesService.markInactive({
+    await sourcesService.markInactive({
       githubRepoId: repo.id.toString(),
       githubInstallationId: payload.installation.id.toString(),
     });
@@ -122,8 +122,8 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
         payload.installation.id,
       );
 
-      const repositoriesService = new RepositoriesService();
-      await repositoriesService.updateConfigStatus({
+      const sourcesService = new SourcesService();
+      await sourcesService.updateConfigStatus({
         githubRepoId: payload.repository.id.toString(),
         configStatus: result.exists ? "configured" : "unconfigured",
         configPath: result.path,
@@ -232,8 +232,8 @@ export async function POST(request: NextRequest) {
             `[Webhook] Installation ${installationPayload.installation.id} deleted`,
           );
           // Mark all repositories from this installation as inactive
-          const repositoriesService = new RepositoriesService();
-          await repositoriesService.markInstallationInactive(
+          const sourcesService = new SourcesService();
+          await sourcesService.markInstallationInactive(
             installationPayload.installation.id.toString(),
           );
         }
@@ -247,8 +247,8 @@ export async function POST(request: NextRequest) {
             `[Webhook] Repository ${repositoryPayload.repository.id} deleted`,
           );
           // Mark repository as inactive and update metadata
-          const repositoriesService = new RepositoriesService();
-          await repositoriesService.markDeleted(
+          const sourcesService = new SourcesService();
+          await sourcesService.markDeleted(
             repositoryPayload.repository.id.toString(),
           );
         } else if (repositoryPayload.action === "renamed") {
@@ -256,8 +256,8 @@ export async function POST(request: NextRequest) {
             `[Webhook] Repository renamed to ${repositoryPayload.repository.full_name}`,
           );
           // Update cached repository name
-          const repositoriesService = new RepositoriesService();
-          await repositoriesService.updateMetadata(
+          const sourcesService = new SourcesService();
+          await sourcesService.updateMetadata(
             repositoryPayload.repository.id.toString(),
             { fullName: repositoryPayload.repository.full_name },
           );

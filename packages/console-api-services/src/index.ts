@@ -1,5 +1,5 @@
 // tRPC service wrappers
 export { StoresService } from "./stores";
-export { RepositoriesService } from "./repositories";
+export { SourcesService } from "./sources";
 export { WorkspacesService } from "./workspaces";
 export { IntegrationsService } from "./integrations";

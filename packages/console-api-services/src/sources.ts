@@ -1,6 +1,14 @@
 import { DeusApiService } from "./base-service";
 
-export class RepositoriesService extends DeusApiService {
+/**
+ * Sources Service
+ *
+ * Service wrapper for workspace source operations across all providers.
+ * Currently supports GitHub repository operations for webhooks.
+ *
+ * Future: Will include Linear, Notion, Sentry source operations.
+ */
+export class SourcesService extends DeusApiService {
   /**
    * Find active repository by GitHub repo ID (for webhooks)
    */
