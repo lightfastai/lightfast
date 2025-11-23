@@ -6,8 +6,8 @@ export class RepositoriesService extends DeusApiService {
    */
   async findActiveByGithubRepoId(githubRepoId: string) {
     return await this.call(
-      "repository.findByGithubRepoId",
-      (caller) => caller.repository.findByGithubRepoId({ githubRepoId }),
+      "sources.findByGithubRepoId",
+      (caller) => caller.sources.findByGithubRepoId({ githubRepoId }),
       {
         fallbackMessage: "Failed to find active repository",
         details: { githubRepoId },
@@ -27,9 +27,9 @@ export class RepositoriesService extends DeusApiService {
    */
   async markInactive(params: { githubRepoId: string; reason?: string }) {
     return await this.call(
-      "repository.updateSyncStatus",
+      "sources.updateGithubSyncStatus",
       (caller) =>
-        caller.repository.updateSyncStatus({
+        caller.sources.updateGithubSyncStatus({
           githubRepoId: params.githubRepoId,
           isActive: false,
           reason: params.reason,
@@ -46,8 +46,8 @@ export class RepositoriesService extends DeusApiService {
    */
   async markInstallationInactive(githubInstallationId: string) {
     return await this.call(
-      "repository.markInstallationInactive",
-      (caller) => caller.repository.markInstallationInactive({ githubInstallationId }),
+      "sources.markGithubInstallationInactive",
+      (caller) => caller.sources.markGithubInstallationInactive({ githubInstallationId }),
       {
         fallbackMessage: "Failed to mark installation repositories inactive",
         details: { githubInstallationId },
@@ -64,8 +64,8 @@ export class RepositoriesService extends DeusApiService {
     configPath: string | null;
   }) {
     return await this.call(
-      "repository.updateConfigStatus",
-      (caller) => caller.repository.updateConfigStatus(params),
+      "sources.updateGithubConfigStatus",
+      (caller) => caller.sources.updateGithubConfigStatus(params),
       {
         fallbackMessage: "Failed to update repository config status",
         details: params,

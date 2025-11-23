@@ -7,15 +7,18 @@ import { z } from "zod";
 import { publicProcedure } from "../trpc";
 
 /**
- * Repository Router
+ * Sources Router
  *
- * Handles repository-related operations for GitHub webhook processing.
+ * Handles workspace source operations for all providers.
  * Uses the new 2-table system with workspaceSources.
  *
- * Key Operations:
+ * GitHub Operations:
  * - Find repositories by GitHub repo ID (for webhooks)
- * - Update sync status (mark active/inactive)
- * - Update config status (lightfast.yml detection)
+ * - Update GitHub sync status (mark active/inactive)
+ * - Update GitHub config status (lightfast.yml detection)
+ * - Mark GitHub installation inactive
+ *
+ * Future: Linear, Notion, Sentry operations will be added here
  */
 
 /**
@@ -25,26 +28,28 @@ const findByGithubRepoIdSchema = z.object({
   githubRepoId: z.string(),
 });
 
-const updateSyncStatusSchema = z.object({
+const updateGithubSyncStatusSchema = z.object({
   githubRepoId: z.string(),
   isActive: z.boolean(),
   reason: z.string().optional(),
 });
 
-const updateConfigStatusSchema = z.object({
+const updateGithubConfigStatusSchema = z.object({
   githubRepoId: z.string(),
   configStatus: z.enum(["configured", "unconfigured"]),
   configPath: z.string().nullable(),
 });
 
-const markInstallationInactiveSchema = z.object({
+const markGithubInstallationInactiveSchema = z.object({
   githubInstallationId: z.string(),
 });
 
 /**
- * Repository router - PUBLIC procedures for webhook/API route usage
+ * Sources router - PUBLIC procedures for webhook/API route usage
+ *
+ * All procedures are provider-specific and prefixed accordingly.
  */
-export const repositoryRouter = {
+export const sourcesRouter = {
   /**
    * Find workspace source by GitHub repo ID
    *
@@ -78,9 +83,9 @@ export const repositoryRouter = {
     }),
 
   /**
-   * Update sync status for a repository
+   * Update GitHub sync status for a repository
    *
-   * Used by webhooks to mark repositories as active/inactive when:
+   * Used by GitHub webhooks to mark repositories as active/inactive when:
    * - Repository is removed from installation
    * - Repository access is revoked
    * - Installation is suspended/deleted
@@ -90,8 +95,8 @@ export const repositoryRouter = {
    * - lastSyncedAt timestamp
    * - lastSyncError message (if reason provided)
    */
-  updateSyncStatus: publicProcedure
-    .input(updateSyncStatusSchema)
+  updateGithubSyncStatus: publicProcedure
+    .input(updateGithubSyncStatusSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first
       const sources = await db
@@ -130,9 +135,9 @@ export const repositoryRouter = {
     }),
 
   /**
-   * Update config status for a repository
+   * Update GitHub config status for a repository
    *
-   * Used by webhooks to track lightfast.yml configuration:
+   * Used by GitHub webhooks to track lightfast.yml configuration:
    * - When push event includes config file changes
    * - When repository is added and we check for config
    *
@@ -141,8 +146,8 @@ export const repositoryRouter = {
    * - configPath: path to the config file (e.g., ".lightfast.yml")
    * - lastConfigCheck: timestamp of last check
    */
-  updateConfigStatus: publicProcedure
-    .input(updateConfigStatusSchema)
+  updateGithubConfigStatus: publicProcedure
+    .input(updateGithubConfigStatusSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first
       const sources = await db
@@ -193,17 +198,17 @@ export const repositoryRouter = {
     }),
 
   /**
-   * Mark all repositories for an installation as inactive
+   * Mark all repositories for a GitHub installation as inactive
    *
-   * Used by webhooks when:
+   * Used by GitHub webhooks when:
    * - Installation is deleted
    * - Installation is suspended
    * - All repository access is revoked
    *
    * This is a bulk operation that marks all sources for the installation.
    */
-  markInstallationInactive: publicProcedure
-    .input(markInstallationInactiveSchema)
+  markGithubInstallationInactive: publicProcedure
+    .input(markGithubInstallationInactiveSchema)
     .mutation(async ({ ctx, input }) => {
       // Find all sources for this installation
       const sources = await db

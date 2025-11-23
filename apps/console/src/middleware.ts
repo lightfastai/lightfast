@@ -2,6 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { nosecone, defaults } from "@nosecone/next";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getClerkFrontendApi } from "@vendor/clerk/env";
 import { authUrl } from "~/lib/related-projects";
 
 // Public routes that don't require authentication
@@ -48,7 +49,7 @@ export default clerkMiddleware(
     // Apply comprehensive security headers via Nosecone
     // Nosecone provides: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, etc.
     // Configure CSP to allow Clerk authentication
-    const clerkFrontendApi = "https://charmed-shark-52.clerk.accounts.dev";
+    const clerkFrontendApi = getClerkFrontendApi();
     const secureHeaders = nosecone({
       ...defaults,
       contentSecurityPolicy: {

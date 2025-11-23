@@ -16,7 +16,7 @@ import { organizationRouter } from "./router/organization";
 import { integrationRouter } from "./router/integration";
 import { accountRouter } from "./router/account";
 import { jobsRouter } from "./router/jobs";
-import { repositoryRouter } from "./router/repository";
+import { sourcesRouter } from "./router/sources";
 
 /**
  * Primary console app router
@@ -34,7 +34,7 @@ export const consoleAppRouter = createTRPCRouter({
   integration: integrationRouter,
   account: accountRouter,
   jobs: jobsRouter,
-  repository: repositoryRouter,
+  sources: sourcesRouter,
 });
 
 // Export type for use in client
