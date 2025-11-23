@@ -1013,6 +1013,9 @@ importers:
       import-in-the-middle:
         specifier: 'catalog:'
         version: 1.15.0
+      inngest-cli:
+        specifier: ^1.14.0
+        version: 1.14.0(encoding@0.1.13)
       nosecone:
         specifier: 1.0.0-beta.15
         version: 1.0.0-beta.15
@@ -8863,6 +8866,10 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  adm-zip@0.5.16:
+    resolution: {integrity: sha512-TGw5yVi4saajsSEgz25grObGHEUaDrniwvA2qwSC060KfqGPdglhvPMA2lPIoxs3PQIItj2iag35fONcQqgUaQ==}
+    engines: {node: '>=12.0'}
+
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
@@ -11274,6 +11281,10 @@ packages:
 
   inline-style-parser@0.2.4:
     resolution: {integrity: sha512-0aO8FkhNZlj/ZIbNi7Lxxr12obT7cL1moPfE4tg1LkX7LlLfC6DeX4l2ZEud1ukP9jNQyNnfzQVqwbwmAATY4Q==}
+
+  inngest-cli@1.14.0:
+    resolution: {integrity: sha512-ECZIZiDUFam+qoabip73kv3k/T9CZQHvGrv7127oTnbiNv5AdNDpvjvJJun7itf3Oi7BaBT4y+INWg6rqxKmEA==}
+    hasBin: true
 
   inngest@3.32.5:
     resolution: {integrity: sha512-jBxILtxhsO1FuU+RwnhzPGRiAIQv/IUcOnIM+3TbGAr+6+p5jjHK0tNw1sAlRo/UKNUwQ1wDodqNhljxSejhsA==}
@@ -21190,6 +21201,8 @@ snapshots:
 
   acorn@8.15.0: {}
 
+  adm-zip@0.5.16: {}
+
   agent-base@6.0.2:
     dependencies:
       debug: 4.4.3
@@ -24184,6 +24197,16 @@ snapshots:
   ini@1.3.8: {}
 
   inline-style-parser@0.2.4: {}
+
+  inngest-cli@1.14.0(encoding@0.1.13):
+    dependencies:
+      adm-zip: 0.5.16
+      debug: 4.4.3
+      node-fetch: 2.7.0(encoding@0.1.13)
+      tar: 6.2.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   inngest@3.32.5(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3):
     dependencies:

@@ -23,8 +23,9 @@ import {
   workspaceSystemHealthInputSchema,
   workspaceIntegrationDisconnectInputSchema,
 } from "@repo/console-validation/schemas";
+import { z } from "zod";
 
-import { publicProcedure, protectedProcedure } from "../trpc";
+import { publicProcedure, protectedProcedure, inngestM2MProcedure } from "../trpc";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -1231,6 +1232,40 @@ export const workspaceRouter = {
       return {
         success: true,
         newWorkspaceName: input.newName,
+      };
+    }),
+
+  // ============================================================================
+  // Inngest M2M Procedures
+  // ============================================================================
+
+  /**
+   * Get workspace by ID (Inngest workflows)
+   *
+   * Used by workflows to fetch workspace details (especially clerkOrgId).
+   */
+  getForInngest: inngestM2MProcedure
+    .input(z.object({ workspaceId: z.string() }))
+    .query(async ({ input }) => {
+      const workspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.id, input.workspaceId),
+      });
+
+      if (!workspace) {
+        const { TRPCError } = await import("@trpc/server");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Workspace not found: ${input.workspaceId}`,
+        });
+      }
+
+      return {
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        clerkOrgId: workspace.clerkOrgId,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
       };
     }),
 } satisfies TRPCRouterRecord;

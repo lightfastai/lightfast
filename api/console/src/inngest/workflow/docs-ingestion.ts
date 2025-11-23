@@ -31,7 +31,7 @@ import { env } from "../../env";
 import yaml from "yaml";
 import { minimatch } from "minimatch";
 import { createHash } from "node:crypto";
-import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../lib/jobs";
+import { createInngestCaller } from "../lib";
 
 type DispatchAction = "process" | "delete";
 
@@ -98,16 +98,13 @@ export const docsIngestion = inngest.createFunction(
       changedCount: changedFiles.length,
     });
 
+    // Create tRPC caller for database operations
+    const trpc = await createInngestCaller();
+
     // Step 0: Create job record for tracking
     const jobId = await step.run("create-job", async () => {
       // Get workspace to retrieve clerkOrgId
-      const workspace = await db.query.workspaces.findFirst({
-        where: (workspaces, { eq }) => eq(workspaces.id, workspaceId),
-      });
-
-      if (!workspace) {
-        throw new Error(`Workspace not found: ${workspaceId}`);
-      }
+      const workspace = await trpc.workspace.getForInngest({ workspaceId });
 
       // Find repository ID if we have the GitHub repo ID
       let repositoryId: string | null = null;
@@ -120,7 +117,7 @@ export const docsIngestion = inngest.createFunction(
 
       const trigger = source === "manual" ? "manual" : source === "scheduled" ? "scheduled" : "webhook";
 
-      return await createJob({
+      return await trpc.jobs.createForInngest({
         clerkOrgId: workspace.clerkOrgId,
         workspaceId,
         repositoryId,
@@ -133,12 +130,15 @@ export const docsIngestion = inngest.createFunction(
           deliveryId,
           changedFileCount: changedFiles.length,
         },
-      });
+      }).then(result => result.jobId);
     });
 
     // Update job to running status
     await step.run("update-job-running", async () => {
-      await updateJobStatus(jobId, "running");
+      await trpc.jobs.updateStatusForInngest({
+        jobId,
+        status: "running",
+      });
     });
 
     // Step 1: Load lightfast.yml from repository (before idempotency to honor configured store name)
@@ -280,7 +280,7 @@ export const docsIngestion = inngest.createFunction(
 
       // Complete job as cancelled since delivery was already processed
       await step.run("complete-job-skipped", async () => {
-        await completeJob({
+        await trpc.jobs.completeForInngest({
           jobId,
           status: "cancelled",
           output: {
@@ -348,7 +348,7 @@ export const docsIngestion = inngest.createFunction(
 
       // Complete job as completed with 0 documents processed
       await step.run("complete-job-no-files", async () => {
-        await completeJob({
+        await trpc.jobs.completeForInngest({
           jobId,
           status: "completed",
           output: {
@@ -502,7 +502,7 @@ export const docsIngestion = inngest.createFunction(
 
     // Step 7: Complete job successfully
     await step.run("complete-job", async () => {
-      await completeJob({
+      await trpc.jobs.completeForInngest({
         jobId,
         status: "completed",
         output: {
@@ -513,23 +513,19 @@ export const docsIngestion = inngest.createFunction(
       });
 
       // Record documents indexed metric
-      const workspace = await db.query.workspaces.findFirst({
-        where: (workspaces, { eq }) => eq(workspaces.id, workspaceId),
-      });
+      const workspace = await trpc.workspace.getForInngest({ workspaceId });
 
-      if (workspace) {
-        await recordJobMetric({
-          clerkOrgId: workspace.clerkOrgId,
-          workspaceId,
-          type: "documents_indexed",
-          value: processResults.filter((r) => r.status === "queued").length,
-          unit: "count",
-          tags: {
-            repoFullName,
-            source,
-          },
-        });
-      }
+      await trpc.jobs.recordMetricForInngest({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "documents_indexed",
+        value: processResults.filter((r) => r.status === "queued").length,
+        unit: "count",
+        tags: {
+          repoFullName,
+          source,
+        },
+      });
     });
 
     return {

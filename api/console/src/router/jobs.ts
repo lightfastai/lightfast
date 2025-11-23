@@ -5,7 +5,14 @@ import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
-import { protectedProcedure, resolveWorkspaceByName } from "../trpc";
+import { protectedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../trpc";
+import {
+	createJob,
+	updateJobStatus,
+	completeJob,
+	recordJobMetric,
+	getJob,
+} from "../lib/jobs";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -301,5 +308,114 @@ export const jobsRouter = {
 			// });
 
 			return { success: true };
+		}),
+
+	// ============================================================================
+	// Inngest M2M Procedures
+	// ============================================================================
+
+	/**
+	 * Create job (Inngest workflows)
+	 *
+	 * Used by workflows to create job records at workflow start.
+	 * Handles idempotency via inngestRunId.
+	 */
+	createForInngest: inngestM2MProcedure
+		.input(
+			z.object({
+				clerkOrgId: z.string(),
+				workspaceId: z.string(),
+				repositoryId: z.string().nullable().optional(),
+				inngestRunId: z.string(),
+				inngestFunctionId: z.string(),
+				name: z.string(),
+				trigger: z.enum(["manual", "scheduled", "webhook", "automatic"]),
+				triggeredBy: z.string().nullable().optional(),
+				input: z.record(z.unknown()).nullable().optional(),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			const jobId = await createJob({
+				...input,
+				repositoryId: input.repositoryId ?? null,
+				triggeredBy: input.triggeredBy ?? null,
+				input: input.input ?? undefined,
+			});
+			return { jobId };
+		}),
+
+	/**
+	 * Update job status (Inngest workflows)
+	 *
+	 * Used by workflows to update status during execution.
+	 */
+	updateStatusForInngest: inngestM2MProcedure
+		.input(
+			z.object({
+				jobId: z.string(),
+				status: z.enum(["running", "queued", "completed", "failed", "cancelled"]),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			await updateJobStatus(input.jobId, input.status);
+			return { success: true };
+		}),
+
+	/**
+	 * Complete job (Inngest workflows)
+	 *
+	 * Used by workflows to mark job as completed/failed with output.
+	 */
+	completeForInngest: inngestM2MProcedure
+		.input(
+			z.object({
+				jobId: z.string(),
+				status: z.enum(["completed", "failed", "cancelled"]),
+				output: z.record(z.unknown()).nullable().optional(),
+				errorMessage: z.string().nullable().optional(),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			await completeJob({
+				jobId: input.jobId,
+				status: input.status,
+				output: input.output ?? undefined,
+				errorMessage: input.errorMessage ?? undefined,
+			});
+			return { success: true };
+		}),
+
+	/**
+	 * Record metric (Inngest workflows)
+	 *
+	 * Used by workflows to record performance metrics.
+	 */
+	recordMetricForInngest: inngestM2MProcedure
+		.input(
+			z.object({
+				clerkOrgId: z.string(),
+				workspaceId: z.string(),
+				repositoryId: z.string().optional(),
+				type: z.enum(["job_duration", "documents_indexed", "errors"]),
+				value: z.number(),
+				unit: z.string().optional(),
+				tags: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			await recordJobMetric(input);
+			return { success: true };
+		}),
+
+	/**
+	 * Get job by ID (Inngest workflows)
+	 *
+	 * Used by workflows to fetch job details.
+	 */
+	getForInngest: inngestM2MProcedure
+		.input(z.object({ jobId: z.string() }))
+		.query(async ({ input }) => {
+			const job = await getJob(input.jobId);
+			return job;
 		}),
 } satisfies TRPCRouterRecord;

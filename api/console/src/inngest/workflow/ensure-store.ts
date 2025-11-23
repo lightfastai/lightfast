@@ -15,16 +15,14 @@
  * 5. Link to repository if provided (idempotent)
  */
 
-import { db } from "@db/console/client";
-import { stores } from "@db/console/schema";
 import type { Store } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
 import { inngest } from "../client/client";
 import type { Events } from "../client/client";
 import { log } from "@vendor/observability/log";
 import { createConsolePineconeClient } from "@repo/console-pinecone";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { PRIVATE_CONFIG } from "@repo/console-config";
+import { createInngestCaller } from "../lib";
 
 /**
  * Resolve Pinecone index name from workspace and store
@@ -114,17 +112,18 @@ export const ensureStore = inngest.createFunction(
 			storeSlug,
 		});
 
+		// Create tRPC caller for database operations
+		const trpc = await createInngestCaller();
+
 		// Resolve embedding defaults
 		const embeddingDefaults = resolveEmbeddingDefaults();
 		const targetDim = embeddingDim ?? embeddingDefaults.dimension;
 
 		// Step 1: Check if store already exists in DB
 		const existingStore = await step.run("check-store-exists", async () => {
-			const store = await db.query.stores.findFirst({
-				where: and(
-					eq(stores.workspaceId, workspaceId),
-					eq(stores.slug, storeSlug),
-				),
+			const store = await trpc.stores.getForInngest({
+				workspaceId,
+				storeSlug,
 			});
 
 			if (store) {
@@ -265,62 +264,35 @@ export const ensureStore = inngest.createFunction(
 
 		// Step 5: Create store DB record
 		const store = await step.run("create-store-record", async () => {
-			try {
-				const storeId = `${workspaceId}_${storeSlug}`;
+			const storeId = `${workspaceId}_${storeSlug}`;
 
-				const inserted = await db
-					.insert(stores)
-					.values({
-						id: storeId,
-						workspaceId,
-						slug: storeSlug,
-						indexName,
-						// All config values explicitly passed from PRIVATE_CONFIG
-						// No database defaults - ensures consistency with config layer
-						embeddingDim: targetDim,
-						embeddingModel: embeddingDefaults.model,
-						embeddingProvider: PRIVATE_CONFIG.embedding.cohere.provider,
-						pineconeMetric: PRIVATE_CONFIG.pinecone.metric,
-						pineconeCloud: PRIVATE_CONFIG.pinecone.cloud,
-						pineconeRegion: PRIVATE_CONFIG.pinecone.region,
-						chunkMaxTokens: PRIVATE_CONFIG.chunking.maxTokens,
-						chunkOverlap: PRIVATE_CONFIG.chunking.overlap,
-					})
-					.onConflictDoNothing()
-					.returning();
+			// Create store via tRPC (handles idempotent insert + fallback fetch)
+			const result = await trpc.stores.createForInngest({
+				id: storeId,
+				workspaceId,
+				slug: storeSlug,
+				indexName,
+				// All config values explicitly passed from PRIVATE_CONFIG
+				// No database defaults - ensures consistency with config layer
+				embeddingDim: targetDim,
+				embeddingModel: embeddingDefaults.model,
+				embeddingProvider: PRIVATE_CONFIG.embedding.cohere.provider,
+				pineconeMetric: PRIVATE_CONFIG.pinecone.metric,
+				pineconeCloud: PRIVATE_CONFIG.pinecone.cloud,
+				pineconeRegion: PRIVATE_CONFIG.pinecone.region,
+				chunkMaxTokens: PRIVATE_CONFIG.chunking.maxTokens,
+				chunkOverlap: PRIVATE_CONFIG.chunking.overlap,
+			});
 
-				if (inserted?.[0]) {
-					log.info("Created store DB record", { storeId: inserted[0].id });
-					return inserted[0];
-				}
-
-				// Concurrent creation succeeded, fetch the record
-				const existing = await db.query.stores.findFirst({
-					where: and(
-						eq(stores.workspaceId, workspaceId),
-						eq(stores.slug, storeSlug),
-					),
-				});
-
-				if (!existing) {
-					throw new Error(
-						`Failed to create or fetch store: ${workspaceId}/${storeSlug}`,
-					);
-				}
-
+			if (result.created) {
+				log.info("Created store DB record", { storeId: result.store.id });
+			} else {
 				log.info("Store created concurrently, fetched existing record", {
-					storeId: existing.id,
+					storeId: result.store.id,
 				});
-
-				return existing;
-			} catch (error) {
-				log.error("Failed to create store DB record", {
-					error,
-					workspaceId,
-					storeSlug,
-				});
-				throw error;
 			}
+
+			return result.store;
 		});
 
 		const duration = Date.now() - startTime;
