@@ -38,14 +38,19 @@ export function TeamGeneralSettingsClient({
 	const { toast } = useToast();
 	const [isUpdating, setIsUpdating] = useState(false);
 
-	// Use prefetched data from server (no client-side fetch on mount)
-	const { data: organization } = useSuspenseQuery({
-		...trpc.organization.findByClerkOrgSlug.queryOptions({
-			clerkOrgSlug: slug,
-		}),
+	// Use cached organization list from app layout (avoids Clerk 404 timing issues)
+	const { data: organizations } = useSuspenseQuery({
+		...trpc.organization.listUserOrganizations.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	});
+
+	// Find current organization from cached list by slug
+	const organization = organizations.find((org) => org.slug === slug);
+
+	if (!organization) {
+		throw new Error(`Organization not found: ${slug}`);
+	}
 
 	// Initialize form with current organization name
 	const form = useForm<TeamSettingsFormValues>({
@@ -64,42 +69,17 @@ export function TeamGeneralSettingsClient({
 	const updateNameMutation = useMutation(
 		trpc.organization.updateName.mutationOptions({
 			onMutate: async (variables) => {
-				// Cancel outgoing queries
-				await queryClient.cancelQueries({
-					queryKey: trpc.organization.findByClerkOrgSlug.queryOptions({
-						clerkOrgSlug: slug,
-					}).queryKey,
-				});
-
+				// Cancel outgoing queries to prevent race conditions
 				await queryClient.cancelQueries({
 					queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
 				});
 
-				// Snapshot previous data
-				const previousOrg = queryClient.getQueryData(
-					trpc.organization.findByClerkOrgSlug.queryOptions({
-						clerkOrgSlug: slug,
-					}).queryKey,
-				);
-
+				// Snapshot previous data for rollback
 				const previousList = queryClient.getQueryData(
 					trpc.organization.listUserOrganizations.queryOptions().queryKey,
 				);
 
-				// Optimistically update organization details
-				if (previousOrg) {
-					queryClient.setQueryData(
-						trpc.organization.findByClerkOrgSlug.queryOptions({
-							clerkOrgSlug: slug,
-						}).queryKey,
-						produce(previousOrg, (draft) => {
-							draft.name = variables.name;
-							draft.slug = variables.name;
-						}),
-					);
-				}
-
-				// Optimistically update organization list
+				// Optimistically update organization list cache
 				if (previousList) {
 					queryClient.setQueryData(
 						trpc.organization.listUserOrganizations.queryOptions().queryKey,
@@ -113,20 +93,11 @@ export function TeamGeneralSettingsClient({
 					);
 				}
 
-				return { previousOrg, previousList };
+				return { previousList };
 			},
 
 			onError: (err, _vars, context) => {
 				// Rollback on error
-				if (context?.previousOrg) {
-					queryClient.setQueryData(
-						trpc.organization.findByClerkOrgSlug.queryOptions({
-							clerkOrgSlug: slug,
-						}).queryKey,
-						context.previousOrg,
-					);
-				}
-
 				if (context?.previousList) {
 					queryClient.setQueryData(
 						trpc.organization.listUserOrganizations.queryOptions().queryKey,
@@ -152,15 +123,9 @@ export function TeamGeneralSettingsClient({
 			},
 
 			onSettled: () => {
-				// Invalidate to ensure consistency
+				// Invalidate to ensure consistency with server
 				void queryClient.invalidateQueries({
 					queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
-				});
-
-				void queryClient.invalidateQueries({
-					queryKey: trpc.organization.findByClerkOrgSlug.queryOptions({
-						clerkOrgSlug: slug,
-					}).queryKey,
 				});
 
 				setIsUpdating(false);

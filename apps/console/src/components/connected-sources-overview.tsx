@@ -75,7 +75,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   } else if (resourceData.provider === "linear") {
     displayName = resourceData.teamName;
   } else if (resourceData.provider === "notion") {
-    displayName = resourceData.pageName;
+    displayName = resourceData.pageName || resourceData.databaseName || "Notion Resource";
   } else {
     // sentry or other providers
     displayName = `${resourceData.orgSlug}/${resourceData.projectSlug}`;

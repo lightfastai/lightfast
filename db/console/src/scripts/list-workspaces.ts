@@ -24,8 +24,8 @@ async function listWorkspaces() {
     for (const workspace of allWorkspaces) {
       console.log(`Workspace: ${workspace.slug}`);
       console.log(`  ID: ${workspace.id}`);
+      console.log(`  Name: ${workspace.name}`);
       console.log(`  Clerk Org ID: ${workspace.clerkOrgId}`);
-      console.log(`  Is Default: ${workspace.isDefault}`);
       console.log(`  Created: ${workspace.createdAt}`);
       console.log("");
     }

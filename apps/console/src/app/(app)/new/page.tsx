@@ -1,14 +1,12 @@
 import { Suspense } from "react";
-import { prefetch, HydrateClient } from "@repo/console-trpc/server";
-import { trpc } from "@repo/console-trpc/server";
+import { HydrateClient } from "@repo/console-trpc/server";
 import { WorkspaceHeader } from "./_components/workspace-header";
-import { WorkspaceFormProvider } from "./_components/workspace-form-provider";
 import { OrganizationSelector } from "./_components/organization-selector";
 import { WorkspaceNameInput } from "./_components/workspace-name-input";
 import { GitHubConnector } from "./_components/github-connector";
 import { GitHubConnectorLoading } from "./_components/github-connector-loading";
 import { CreateWorkspaceButton } from "./_components/create-workspace-button";
-import { getOrgBySlug, getUserOrganizations } from "~/lib/org-access-clerk";
+import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer";
 
 /**
  * Workspace Creation Page
@@ -22,47 +20,37 @@ import { getOrgBySlug, getUserOrganizations } from "~/lib/org-access-clerk";
  * - URL persistence: teamSlug and workspaceName synced via nuqs
  *
  * Performance pattern:
- * - Server-side prefetch of GitHub integration (30-90x faster)
- * - HydrateClient for server-to-client state transfer
- * - Client components use prefetched data via useSuspenseQuery
- * - No client-side fetch on mount (prevents UNAUTHORIZED errors)
+ * - No server-side data fetching needed
+ * - Uses cached organization.listUserOrganizations from (app)/layout.tsx
+ * - Client components (NewWorkspaceInitializer) handle form initialization
+ * - HydrateClient provides server-cached data to client
  *
  * URL Parameters:
- * - teamSlug: Pre-select organization (e.g., ?teamSlug=lightfast)
- * - workspaceName: Pre-fill workspace name (e.g., ?workspaceName=my-workspace)
+ * - teamSlug: Hint for which org to pre-select
+ * - workspaceName: Pre-fill workspace name
+ *
+ * Data Flow:
+ * 1. (app)/layout.tsx prefetches organization.listUserOrganizations (user-scoped, no org needed)
+ * 2. This page passes through to client components via HydrateClient
+ * 3. NewWorkspaceInitializer reads cache + URL params to set initial form state
+ * 4. OrganizationSelector uses cached orgs for dropdown
+ * 5. GitHubConnector fetches org-scoped data AFTER user selects org
+ *
+ * This pattern:
+ * - ✅ Uses tRPC consistently (no mixing with Clerk server APIs)
+ * - ✅ Works for authenticated users without active org
+ * - ✅ Handles timing issues (cache updated optimistically on org creation)
+ * - ✅ No unnecessary server-side data fetching
  */
 export default async function NewWorkspacePage({
   searchParams,
 }: {
   searchParams: Promise<{ teamSlug?: string; workspaceName?: string }>;
 }) {
-  // Prefetch GitHub integration for instant loading
-  // CRITICAL: This must happen BEFORE HydrateClient wrapping
-  prefetch(trpc.integration.github.list.queryOptions());
-
-  // Read search params for initial form state
+  // Read search params - pass to client for initialization
   const params = await searchParams;
+  const teamSlugHint = params.teamSlug;
   const initialWorkspaceName = params.workspaceName ?? "";
-
-  // Determine initial organization ID
-  let initialOrgId: string | undefined;
-
-  if (params.teamSlug) {
-    // Try to use the provided teamSlug
-    const org = await getOrgBySlug(params.teamSlug);
-    if (org) {
-      initialOrgId = org.id;
-    }
-  }
-
-  // Fallback: If no valid teamSlug, pick the latest organization
-  if (!initialOrgId) {
-    const userOrgs = await getUserOrganizations();
-    const firstOrg = userOrgs[0];
-    if (firstOrg) {
-      initialOrgId = firstOrg.id; // Most recent org
-    }
-  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
@@ -73,8 +61,9 @@ export default async function NewWorkspacePage({
 
           {/* Form with Client Islands */}
           <HydrateClient>
-            <WorkspaceFormProvider
-              initialOrgId={initialOrgId}
+            {/* Client component handles initialization from cache + URL params */}
+            <NewWorkspaceInitializer
+              teamSlugHint={teamSlugHint}
               initialWorkspaceName={initialWorkspaceName}
             >
               <div className="space-y-8">
@@ -123,7 +112,7 @@ export default async function NewWorkspacePage({
 
               {/* Client Island: Create Button */}
               <CreateWorkspaceButton />
-            </WorkspaceFormProvider>
+            </NewWorkspaceInitializer>
           </HydrateClient>
         </div>
       </div>

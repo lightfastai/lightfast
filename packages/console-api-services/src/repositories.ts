@@ -6,8 +6,8 @@ export class RepositoriesService extends DeusApiService {
    */
   async findActiveByGithubRepoId(githubRepoId: string) {
     return await this.call(
-      "repository.findActiveByGithubRepoId",
-      (caller) => caller.repository.findActiveByGithubRepoId({ githubRepoId }),
+      "repository.findByGithubRepoId",
+      (caller) => caller.repository.findByGithubRepoId({ githubRepoId }),
       {
         fallbackMessage: "Failed to find active repository",
         details: { githubRepoId },
@@ -25,10 +25,15 @@ export class RepositoriesService extends DeusApiService {
   /**
    * Mark repository as inactive (for webhooks)
    */
-  async markInactive(params: { githubRepoId: string; githubInstallationId?: string }) {
+  async markInactive(params: { githubRepoId: string; reason?: string }) {
     return await this.call(
-      "repository.markInactive",
-      (caller) => caller.repository.markInactive(params),
+      "repository.updateSyncStatus",
+      (caller) =>
+        caller.repository.updateSyncStatus({
+          githubRepoId: params.githubRepoId,
+          isActive: false,
+          reason: params.reason,
+        }),
       {
         fallbackMessage: "Failed to mark repository inactive",
         details: params,
@@ -51,41 +56,12 @@ export class RepositoriesService extends DeusApiService {
   }
 
   /**
-   * Update repository metadata (for webhooks)
-   */
-  async updateMetadata(githubRepoId: string, metadata: Record<string, unknown>) {
-    return await this.call(
-      "repository.updateMetadata",
-      (caller) => caller.repository.updateMetadata({ githubRepoId, metadata }),
-      {
-        fallbackMessage: "Failed to update repository metadata",
-        details: { githubRepoId, metadata },
-      },
-    );
-  }
-
-  /**
-   * Mark repository as deleted (for webhooks)
-   */
-  async markDeleted(githubRepoId: string) {
-    return await this.call(
-      "repository.markDeleted",
-      (caller) => caller.repository.markDeleted({ githubRepoId }),
-      {
-        fallbackMessage: "Failed to mark repository as deleted",
-        details: { githubRepoId },
-      },
-    );
-  }
-
-  /**
    * Update repository config status (for webhooks)
    */
   async updateConfigStatus(params: {
     githubRepoId: string;
     configStatus: "configured" | "unconfigured";
     configPath: string | null;
-    workspaceId: string;
   }) {
     return await this.call(
       "repository.updateConfigStatus",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -11,31 +11,31 @@ import { RepositoryPicker } from "./repository-picker";
 /**
  * GitHub Connector
  * Client island for GitHub OAuth connection and installation management
+ *
+ * Note: Uses useQuery (not useSuspenseQuery) to fetch client-side only.
  */
 export function GitHubConnector() {
   const trpc = useTRPC();
   const {
-    integrationId,
-    setIntegrationId,
+    userSourceId,
+    setUserSourceId,
     installations,
     setInstallations,
     selectedInstallation,
     setSelectedInstallation,
   } = useWorkspaceForm();
 
-  // Fetch GitHub integration (prefetched server-side)
-  const { data: githubIntegration, refetch: refetchIntegration } = useSuspenseQuery({
+  // Fetch GitHub user source (client-side only via useQuery)
+  const { data: githubUserSource, refetch: refetchIntegration } = useQuery({
     ...trpc.integration.github.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
   });
 
-  // Process integration data
+  // Process user source data
   useEffect(() => {
-    if (githubIntegration) {
-      setIntegrationId(githubIntegration.id);
-      const installs = githubIntegration.installations;
+    if (githubUserSource) {
+      setUserSourceId(githubUserSource.id);
+      const installs = githubUserSource.installations;
       setInstallations(installs);
       if (installs.length > 0 && !selectedInstallation) {
         const firstInstall = installs[0];
@@ -44,7 +44,13 @@ export function GitHubConnector() {
         }
       }
     }
-  }, [githubIntegration, selectedInstallation, setIntegrationId, setInstallations, setSelectedInstallation]);
+  }, [
+    githubUserSource,
+    selectedInstallation,
+    setUserSourceId,
+    setInstallations,
+    setSelectedInstallation,
+  ]);
 
   // Handle GitHub OAuth in popup
   const handleConnectGitHub = () => {
@@ -73,7 +79,9 @@ export function GitHubConnector() {
     }, 500);
   };
 
-  const hasGitHubConnection = Boolean(githubIntegration && installations.length > 0);
+  const hasGitHubConnection = Boolean(
+    githubUserSource && installations.length > 0,
+  );
 
   if (!hasGitHubConnection) {
     return (
@@ -82,10 +90,7 @@ export function GitHubConnector() {
         <p className="text-sm text-muted-foreground mb-4">
           Connect GitHub to select a repository
         </p>
-        <Button
-          onClick={handleConnectGitHub}
-          className="bg-[#24292e] text-white hover:bg-[#1a1e22]"
-        >
+        <Button onClick={handleConnectGitHub}>
           <Github className="h-5 w-5 mr-2" />
           Connect GitHub
         </Button>
@@ -95,7 +100,7 @@ export function GitHubConnector() {
 
   return (
     <RepositoryPicker
-      integrationId={integrationId}
+      userSourceId={userSourceId}
       refetchIntegration={refetchIntegration}
     />
   );

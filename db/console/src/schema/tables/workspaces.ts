@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean,
   index,
   jsonb,
   pgTable,
@@ -12,9 +11,6 @@ import { nanoid } from "@repo/lib";
 
 /**
  * Workspaces table represents isolated knowledge bases within an organization.
- *
- * PHASE 1: One default workspace per organization with auto-generated friendly name
- * PHASE 2: Multiple workspaces per organization (user can create custom workspaces)
  *
  * Architecture:
  * - **name**: User-facing identifier used in URLs (e.g., "my-project", "api.v2")
@@ -30,8 +26,7 @@ import { nanoid } from "@repo/lib";
  * - Each workspace is a separate Pinecone index/namespace
  * - Repositories can be assigned to workspaces
  * - Search/contents queries are scoped to workspace
- * - Default workspace is auto-created with friendly name (e.g., "Robust-Chicken")
- * - Custom workspaces use user-provided name (e.g., "my-awesome-project")
+ * - All workspaces are explicitly created by users at /new
  */
 export const workspaces = pgTable(
   "lightfast_workspaces",
@@ -67,12 +62,6 @@ export const workspaces = pgTable(
     slug: varchar("slug", { length: 191 }).notNull(),
 
     /**
-     * Whether this is the default workspace for the organization
-     * Only one default workspace per organization
-     */
-    isDefault: boolean("is_default").notNull().default(false),
-
-    /**
      * Workspace-level settings and configuration
      * Structure (Phase 2):
      * {
@@ -100,12 +89,6 @@ export const workspaces = pgTable(
   (table) => ({
     // Index for finding all workspaces in a Clerk organization
     clerkOrgIdIdx: index("workspace_clerk_org_id_idx").on(table.clerkOrgId),
-
-    // Composite index for finding default workspace
-    orgDefaultIdx: index("workspace_org_default_idx").on(
-      table.clerkOrgId,
-      table.isDefault,
-    ),
 
     // Unique constraint: one name per organization (names are user-facing)
     orgNameIdx: uniqueIndex("workspace_org_name_idx").on(

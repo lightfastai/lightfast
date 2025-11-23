@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useOrganization, useOrganizationList } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
-import { Building2 } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useTRPC } from "@repo/console-trpc/react";
 import {
   FormControl,
   FormDescription,
@@ -19,62 +18,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Organization Selector
- * Client island for organization selection with Clerk integration
+ * Client island for organization selection using tRPC cached data
  * Syncs with URL teamSlug parameter and provides form validation
+ *
+ * Uses organization.listUserOrganizations cache from (app)/layout.tsx
  */
 export function OrganizationSelector() {
-  const { organization } = useOrganization();
-  const { userMemberships } = useOrganizationList({
-    userMemberships: {
-      infinite: true,
-    },
-  });
+  const trpc = useTRPC();
   const form = useFormContext<WorkspaceFormValues>();
-  const { teamSlug, setTeamSlug } = useWorkspaceSearchParams();
+  const { setTeamSlug } = useWorkspaceSearchParams();
 
-  const selectedOrgId = form.watch("organizationId");
-
-  // Auto-select organization from URL teamSlug or current organization
-  useEffect(() => {
-    if (!selectedOrgId && userMemberships.data) {
-      // Priority 1: Use teamSlug from URL
-      if (teamSlug) {
-        const orgFromSlug = userMemberships.data.find(
-          (membership) => membership.organization.slug === teamSlug
-        );
-        if (orgFromSlug) {
-          form.setValue("organizationId", orgFromSlug.organization.id);
-          return;
-        }
-      }
-
-      // Priority 2: Use current organization
-      if (organization?.id) {
-        form.setValue("organizationId", organization.id);
-      }
-    }
-  }, [
-    organization?.id,
-    selectedOrgId,
-    form,
-    teamSlug,
-    userMemberships.data,
-  ]);
+  // Read cached organization list (already prefetched in app layout)
+  const { data: organizations } = useSuspenseQuery({
+    ...trpc.organization.listUserOrganizations.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
   // Update URL when organization changes
   const handleOrgChange = (orgId: string) => {
     // Find the org slug and update URL
-    const selectedOrg = userMemberships.data?.find(
-      (membership) => membership.organization.id === orgId
-    );
+    const selectedOrg = organizations.find((org) => org.id === orgId);
     if (selectedOrg) {
-      void setTeamSlug(selectedOrg.organization.slug ?? "");
+      void setTeamSlug(selectedOrg.slug);
     }
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -97,22 +80,15 @@ export function OrganizationSelector() {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {userMemberships.data?.map((membership) => (
-                <SelectItem
-                  key={membership.organization.id}
-                  value={membership.organization.id}
-                >
+              {organizations.map((org) => (
+                <SelectItem key={org.id} value={org.id}>
                   <div className="flex items-center gap-2">
-                    {membership.organization.imageUrl ? (
-                      <img
-                        src={membership.organization.imageUrl}
-                        alt={membership.organization.name}
-                        className="h-5 w-5 rounded"
-                      />
-                    ) : (
-                      <Building2 className="h-5 w-5" />
-                    )}
-                    <span>{membership.organization.name}</span>
+                    <Avatar className="size-5">
+                      <AvatarFallback className="text-[10px] bg-foreground text-background">
+                        {getInitials(org.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{org.name}</span>
                   </div>
                 </SelectItem>
               ))}

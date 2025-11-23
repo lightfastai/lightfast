@@ -1,7 +1,6 @@
-import { and, eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaces } from "../schema";
-import { generateWorkspaceName, generateWorkspaceSlug } from "./workspace-names";
+import { generateWorkspaceSlug } from "./workspace-names";
 
 /**
  * Compute workspace key from slug
@@ -15,60 +14,7 @@ export function getWorkspaceKey(slug: string): string {
 }
 
 /**
- * Get or create default workspace for organization
- * Phase 1: Always creates/returns the default workspace with friendly auto-generated name
- *
- * Architecture:
- * - name: User-facing (e.g., "Robust-Chicken"), used in URLs
- * - slug: Internal identifier (e.g., "robust-chicken"), used for Pinecone
- *
- * @param clerkOrgId - Clerk organization ID
- * @returns Workspace ID (nanoid)
- */
-export async function getOrCreateDefaultWorkspace(
-  clerkOrgId: string,
-): Promise<string> {
-  // Check if default workspace exists
-  const existing = await db.query.workspaces.findFirst({
-    where: and(
-      eq(workspaces.clerkOrgId, clerkOrgId),
-      eq(workspaces.isDefault, true),
-    ),
-  });
-
-  if (existing) {
-    return existing.id;
-  }
-
-  // Generate friendly workspace name (e.g., "Robust-Chicken")
-  const friendlyName = generateWorkspaceName();
-
-  // Generate internal slug for Pinecone (e.g., "robust-chicken")
-  const internalSlug = generateWorkspaceSlug(friendlyName);
-
-  // Create default workspace with nanoid
-  const [newWorkspace] = await db
-    .insert(workspaces)
-    .values({
-      // id is auto-generated nanoid via $defaultFn
-      clerkOrgId,
-      name: friendlyName,           // User-facing, used in URLs
-      slug: internalSlug,            // Internal, used for Pinecone
-      isDefault: true,
-      settings: {},
-    })
-    .returning({ id: workspaces.id });
-
-  if (!newWorkspace) {
-    throw new Error("Failed to create default workspace");
-  }
-
-  return newWorkspace.id;
-}
-
-/**
- * Create a custom workspace with user-provided name
- * Phase 2: User can create multiple workspaces with custom names
+ * Create a workspace with user-provided name
  *
  * Architecture:
  * - name: User-provided (e.g., "my-project", "api.v2"), must be unique per org
@@ -92,6 +38,8 @@ export async function createCustomWorkspace(
   // Wrap in transaction to prevent race conditions
   return await db.transaction(async (tx) => {
     // Check if name already exists in this organization (names must be unique)
+    const { and, eq } = await import("drizzle-orm");
+
     const existing = await tx.query.workspaces.findFirst({
       where: and(
         eq(workspaces.clerkOrgId, clerkOrgId),
@@ -103,7 +51,7 @@ export async function createCustomWorkspace(
       throw new Error(`Workspace with name "${name}" already exists`);
     }
 
-    // Create custom workspace with nanoid
+    // Create workspace with nanoid
     // Database unique constraint (workspace_org_name_idx) will catch duplicates
     const [newWorkspace] = await tx
       .insert(workspaces)
@@ -112,7 +60,6 @@ export async function createCustomWorkspace(
         clerkOrgId,
         name,                // User-facing, used in URLs
         slug: internalSlug,  // Internal, used for Pinecone
-        isDefault: false,
         settings: {},
       })
       .returning({ id: workspaces.id });

@@ -19,11 +19,11 @@ import { useWorkspaceForm } from "./workspace-form-provider";
  * Client island for repository selection with installation filtering and search
  */
 interface RepositoryPickerProps {
-  integrationId: string | null;
+  userSourceId: string | null;
   refetchIntegration: () => void;
 }
 
-export function RepositoryPicker({ integrationId, refetchIntegration }: RepositoryPickerProps) {
+export function RepositoryPicker({ userSourceId, refetchIntegration }: RepositoryPickerProps) {
   const trpc = useTRPC();
   const [searchQuery, setSearchQuery] = useState("");
   const {
@@ -35,12 +35,13 @@ export function RepositoryPicker({ integrationId, refetchIntegration }: Reposito
   } = useWorkspaceForm();
 
   // Fetch repositories for selected installation
+  // Note: Still uses old integrationId parameter for backwards compatibility with API
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
     ...trpc.integration.github.repositories.queryOptions({
-      integrationId: integrationId ?? "",
+      integrationId: userSourceId ?? "",
       installationId: selectedInstallation?.id ?? "",
     }),
-    enabled: Boolean(integrationId && selectedInstallation),
+    enabled: Boolean(userSourceId && selectedInstallation),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

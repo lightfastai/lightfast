@@ -1,9 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useOrganizationList } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -22,10 +21,12 @@ export function CreateWorkspaceButton() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const form = useFormContext<WorkspaceFormValues>();
-  const { userMemberships } = useOrganizationList({
-    userMemberships: {
-      infinite: true,
-    },
+
+  // Read cached organization list
+  const { data: organizations } = useSuspenseQuery({
+    ...trpc.organization.listUserOrganizations.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Get form values
@@ -35,25 +36,23 @@ export function CreateWorkspaceButton() {
   // Get GitHub-related state from context
   const {
     selectedRepository,
-    integrationId,
+    userSourceId,
     selectedInstallation,
   } = useWorkspaceForm();
 
-  // Find the organization by ID
-  const selectedOrg = userMemberships.data?.find(
-    (membership) => membership.organization.id === selectedOrgId,
-  );
+  // Find the organization by ID from tRPC cache
+  const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
 
   // Create workspace mutation with optimistic updates
   const createWorkspaceMutation = useMutation(
     trpc.workspace.create.mutationOptions({
       onMutate: async (variables) => {
         // Only proceed with optimistic update if we have an org slug
-        if (!selectedOrg?.organization.slug) {
+        if (!selectedOrg?.slug) {
           return { previous: undefined };
         }
 
-        const orgSlug = selectedOrg.organization.slug;
+        const orgSlug = selectedOrg.slug;
 
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
@@ -81,7 +80,6 @@ export function CreateWorkspaceButton() {
                 id: "temp-" + Date.now(),
                 name: variables.workspaceName,  // User-facing name used in URLs
                 slug: variables.workspaceName.toLowerCase().replace(/\s+/g, "-"),  // Internal slug
-                isDefault: false,
                 createdAt: new Date().toISOString(),
                 repositories: [],
                 totalDocuments: 0,
@@ -117,35 +115,20 @@ export function CreateWorkspaceButton() {
     }),
   );
 
-  // Create integration resource mutation
-  const createResourceMutation = useMutation(
-    trpc.integration.resources.create.mutationOptions({
-      onError: (error) => {
+  // Connect repository directly to workspace (NEW simplified 2-table API)
+  const connectDirectMutation = useMutation(
+    trpc.integration.workspace.connectDirect.mutationOptions({
+      onError: (error: any) => {
         toast({
-          title: "Failed to create resource",
+          title: "Connection failed",
           description:
-            error.message ||
-            "Failed to create integration resource. Please try again.",
-          variant: "destructive",
-        });
-      },
-    }),
-  );
-
-  // Connect resource to workspace mutation (with Inngest trigger moved to server)
-  const connectWorkspaceMutation = useMutation(
-    trpc.integration.workspace.connect.mutationOptions({
-      onError: (error) => {
-        toast({
-          title: "Creation failed",
-          description:
-            error.message || "Failed to create workspace. Please try again.",
+            error.message || "Failed to connect repository. Please try again.",
           variant: "destructive",
         });
       },
       onSettled: () => {
         // Invalidate workspace list to ensure it's up to date
-        const orgSlug = selectedOrg?.organization.slug;
+        const orgSlug = selectedOrg?.slug;
         if (orgSlug) {
           void queryClient.invalidateQueries({
             queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
@@ -200,14 +183,14 @@ export function CreateWorkspaceButton() {
           title: "Workspace created!",
           description: `${workspaceName} workspace is ready. Add sources to get started.`,
         });
-        const orgSlug = selectedOrg?.organization.slug;
+        const orgSlug = selectedOrg?.slug;
         const wsName = workspace.workspaceName;
         router.push(`/${orgSlug}/${wsName}`);
         return;
       }
 
       // Validate repository-specific requirements
-      if (!integrationId || !selectedInstallation) {
+      if (!userSourceId || !selectedInstallation) {
         toast({
           title: "GitHub not connected",
           description: "Please connect your GitHub account first.",
@@ -216,9 +199,16 @@ export function CreateWorkspaceButton() {
         return;
       }
 
-      // Step 2: Create integration resource
-      const resource = await createResourceMutation.mutateAsync({
-        integrationId,
+      // Step 2: Connect repository directly to workspace (NEW simplified API)
+      const orgSlug = selectedOrg?.slug;
+      if (!orgSlug) {
+        throw new Error("Organization slug not found");
+      }
+
+      await connectDirectMutation.mutateAsync({
+        clerkOrgSlug: orgSlug,
+        workspaceName: workspace.workspaceName,
+        userSourceId,
         installationId: selectedInstallation.id,
         repoId: selectedRepository.id,
         repoName: selectedRepository.name,
@@ -226,23 +216,6 @@ export function CreateWorkspaceButton() {
         defaultBranch: selectedRepository.defaultBranch,
         isPrivate: selectedRepository.isPrivate,
         isArchived: selectedRepository.isArchived,
-      });
-
-      if (!resource) {
-        throw new Error("Failed to create resource");
-      }
-
-      // Step 3: Connect resource to workspace
-      // Note: Background sync is now triggered server-side in the mutation
-      const orgSlug = selectedOrg?.organization.slug;
-      if (!orgSlug) {
-        throw new Error("Organization slug not found");
-      }
-
-      await connectWorkspaceMutation.mutateAsync({
-        clerkOrgSlug: orgSlug,
-        workspaceName: workspace.workspaceName,
-        resourceId: resource.id,
         syncConfig: {
           branches: [selectedRepository.defaultBranch],
           paths: ["**/*"],
@@ -267,13 +240,11 @@ export function CreateWorkspaceButton() {
   const isDisabled =
     !form.formState.isValid ||
     createWorkspaceMutation.isPending ||
-    createResourceMutation.isPending ||
-    connectWorkspaceMutation.isPending;
+    connectDirectMutation.isPending;
 
   const isLoading =
     createWorkspaceMutation.isPending ||
-    createResourceMutation.isPending ||
-    connectWorkspaceMutation.isPending;
+    connectDirectMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">
@@ -283,9 +254,7 @@ export function CreateWorkspaceButton() {
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             {createWorkspaceMutation.isPending
               ? "Creating workspace..."
-              : createResourceMutation.isPending
-                ? "Setting up repository..."
-                : "Connecting..."}
+              : "Connecting repository..."}
           </>
         ) : (
           "Create workspace"

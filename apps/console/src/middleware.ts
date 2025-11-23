@@ -47,8 +47,47 @@ export default clerkMiddleware(
 
     // Apply comprehensive security headers via Nosecone
     // Nosecone provides: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, etc.
+    // Configure CSP to allow Clerk authentication
+    const clerkFrontendApi = "https://charmed-shark-52.clerk.accounts.dev";
     const secureHeaders = nosecone({
       ...defaults,
+      contentSecurityPolicy: {
+        ...defaults.contentSecurityPolicy,
+        directives: {
+          ...defaults.contentSecurityPolicy?.directives,
+          // Allow scripts from Clerk and Cloudflare bot protection
+          scriptSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.scriptSrc ?? []),
+            clerkFrontendApi,
+            "https://challenges.cloudflare.com",
+          ],
+          // Allow connections to Clerk API
+          connectSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.connectSrc ?? []),
+            clerkFrontendApi,
+          ],
+          // Allow images from Clerk CDN
+          imgSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.imgSrc ?? []),
+            "https://img.clerk.com",
+          ],
+          // Allow inline styles for Clerk's CSS-in-JS
+          styleSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.styleSrc ?? []),
+            "'unsafe-inline'",
+          ],
+          // Allow Cloudflare bot protection frames
+          frameSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.frameSrc ?? []),
+            "https://challenges.cloudflare.com",
+          ],
+          // Allow blob workers for Clerk
+          workerSrc: [
+            ...(defaults.contentSecurityPolicy?.directives?.workerSrc ?? []),
+            "blob:",
+          ],
+        },
+      },
     });
 
     // Apply security headers to response

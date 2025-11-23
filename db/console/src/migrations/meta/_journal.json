@@ -29,6 +29,27 @@
       "when": 1763624589541,
       "tag": "0003_gifted_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763777137865,
+      "tag": "0004_green_saracen",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763777279768,
+      "tag": "0005_gigantic_starhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763797920745,
+      "tag": "0006_migrate_to_unified_source_config",
+      "breakpoints": true
     }
   ]
 }

@@ -79,10 +79,12 @@ export class IntegrationsService extends DeusApiService {
   }
 
   /**
-   * Create integration resource (repository, team, etc.)
+   * Connect repository directly to workspace (NEW simplified 2-table API)
    */
-  async createResource(params: {
-    integrationId: string;
+  async connectDirectToWorkspace(params: {
+    clerkOrgSlug: string;
+    workspaceName: string;
+    userSourceId: string;
     installationId: string;
     repoId: string;
     repoName: string;
@@ -90,38 +92,6 @@ export class IntegrationsService extends DeusApiService {
     defaultBranch: string;
     isPrivate: boolean;
     isArchived: boolean;
-  }) {
-    return await this.call(
-      "integration.resources.create",
-      (caller) => caller.integration.resources.create(params),
-      {
-        fallbackMessage: "Failed to create integration resource",
-        details: params,
-      },
-    );
-  }
-
-  /**
-   * List all resources for an integration
-   */
-  async listResources(integrationId: string) {
-    return await this.call(
-      "integration.resources.list",
-      (caller) => caller.integration.resources.list({ integrationId }),
-      {
-        fallbackMessage: "Failed to list integration resources",
-        details: { integrationId },
-      },
-    );
-  }
-
-  /**
-   * Connect integration resource to workspace
-   */
-  async connectToWorkspace(params: {
-    clerkOrgSlug: string;
-    workspaceName: string;
-    resourceId: string;
     syncConfig: {
       branches?: string[];
       paths?: string[];
@@ -130,25 +100,11 @@ export class IntegrationsService extends DeusApiService {
     };
   }) {
     return await this.call(
-      "integration.workspace.connect",
-      (caller) => caller.integration.workspace.connect(params),
+      "integration.workspace.connectDirect",
+      (caller) => caller.integration.workspace.connectDirect(params),
       {
-        fallbackMessage: "Failed to connect resource to workspace",
+        fallbackMessage: "Failed to connect repository to workspace",
         details: params,
-      },
-    );
-  }
-
-  /**
-   * List workspace integrations
-   */
-  async listWorkspaceConnections(workspaceId: string) {
-    return await this.call(
-      "integration.workspace.list",
-      (caller) => caller.integration.workspace.list({ workspaceId }),
-      {
-        fallbackMessage: "Failed to list workspace integrations",
-        details: { workspaceId },
       },
     );
   }

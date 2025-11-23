@@ -42,8 +42,8 @@ interface WorkspaceFormState {
   // Repository selection (not in react-hook-form)
   selectedRepository: Repository | null;
   setSelectedRepository: (repo: Repository | null) => void;
-  integrationId: string | null;
-  setIntegrationId: (id: string | null) => void;
+  userSourceId: string | null;
+  setUserSourceId: (id: string | null) => void;
   installations: GitHubInstallation[];
   setInstallations: (installations: GitHubInstallation[]) => void;
   selectedInstallation: GitHubInstallation | null;
@@ -73,7 +73,7 @@ export function WorkspaceFormProvider({
 
   // Additional state for GitHub integration (not validated by form schema)
   const [selectedRepository, setSelectedRepository] = useState<Repository | null>(null);
-  const [integrationId, setIntegrationId] = useState<string | null>(null);
+  const [userSourceId, setUserSourceId] = useState<string | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
   const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
 
@@ -83,8 +83,8 @@ export function WorkspaceFormProvider({
         value={{
           selectedRepository,
           setSelectedRepository,
-          integrationId,
-          setIntegrationId,
+          userSourceId,
+          setUserSourceId,
           installations,
           setInstallations,
           selectedInstallation,

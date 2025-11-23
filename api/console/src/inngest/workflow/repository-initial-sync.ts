@@ -13,7 +13,10 @@
 
 import { inngest } from "../client/client";
 import { db } from "@db/console/client";
-import { workspaceIntegrations, integrationResources } from "@db/console/schema";
+import {
+  workspaceSources,
+  userSources,
+} from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../lib/jobs";
 
@@ -64,14 +67,15 @@ export const repositoryInitialSync = inngest.createFunction(
         throw new Error(`Workspace not found: ${workspaceId}`);
       }
 
-      // Find repository ID
+      // Find repository ID from workspaceSources
       let repositoryId: string | null = null;
-      const resource = await db.query.integrationResources.findFirst({
-        where: eq(integrationResources.id, resourceId),
+
+      const workspaceSource = await db.query.workspaceSources.findFirst({
+        where: eq(workspaceSources.id, resourceId),
       });
 
-      if (resource?.resourceData && resource.resourceData.provider === "github") {
-        const githubData = resource.resourceData;
+      if (workspaceSource?.sourceConfig && workspaceSource.sourceConfig.provider === "github") {
+        const githubData = workspaceSource.sourceConfig;
         const repo = await db.query.DeusConnectedRepository.findFirst({
           where: (repos, { eq }) => eq(repos.githubRepoId, String(githubData.repoId)),
         });
@@ -120,35 +124,27 @@ export const repositoryInitialSync = inngest.createFunction(
       return slug;
     });
 
-    // Step 2: Update workspace integration status
+    // Step 2: Update workspace source sync status
     await step.run("update-sync-status-started", async () => {
       await db
-        .update(workspaceIntegrations)
+        .update(workspaceSources)
         .set({
           lastSyncStatus: "in_progress",
         })
-        .where(eq(workspaceIntegrations.resourceId, resourceId));
+        .where(eq(workspaceSources.id, resourceId));
     });
 
-    // Step 3: Fetch repository metadata from GitHub
+    // Step 3: Fetch repository metadata
     const repoMetadata = await step.run("fetch-repo-metadata", async () => {
-      // Get integration to access installation credentials
-      const resource = await db.query.integrationResources.findFirst({
-        where: eq(integrationResources.id, resourceId),
-        with: {
-          integration: true,
-        },
+      const wsSource = await db.query.workspaceSources.findFirst({
+        where: eq(workspaceSources.id, resourceId),
       });
 
-      if (!resource) {
-        throw new Error(`Integration resource not found: ${resourceId}`);
+      if (!wsSource) {
+        throw new Error(`Resource not found: ${resourceId}`);
       }
 
-      // For now, return basic metadata
-      // In a full implementation, you would:
-      // 1. Get installation token from GitHub App
-      // 2. Fetch repository details via GitHub API
-      // 3. Detect languages, frameworks, etc.
+      // Metadata already available in workspaceSources
       return {
         fullName: repoFullName,
         defaultBranch,
@@ -159,16 +155,18 @@ export const repositoryInitialSync = inngest.createFunction(
     // Step 4: Trigger initial document ingestion
     // This will process all files in the default branch according to lightfast.yml
     await step.run("trigger-initial-ingestion", async () => {
-      // Get integration resource to access GitHub installation ID
-      const resource = await db.query.integrationResources.findFirst({
-        where: eq(integrationResources.id, resourceId),
+      const wsSource = await db.query.workspaceSources.findFirst({
+        where: eq(workspaceSources.id, resourceId),
       });
 
-      if (!resource?.resourceData || resource.resourceData.provider !== "github") {
+      if (!wsSource?.sourceConfig || wsSource.sourceConfig.provider !== "github") {
         throw new Error("Invalid GitHub resource");
       }
 
-      const githubData = resource.resourceData;
+      const githubData = {
+        repoId: wsSource.sourceConfig.repoId,
+        installationId: wsSource.sourceConfig.installationId,
+      };
 
       // Trigger docs ingestion workflow
       // This workflow will:
@@ -196,13 +194,12 @@ export const repositoryInitialSync = inngest.createFunction(
     // Step 5: Update final status
     await step.run("update-sync-status-completed", async () => {
       await db
-        .update(workspaceIntegrations)
+        .update(workspaceSources)
         .set({
           lastSyncedAt: new Date(),
           lastSyncStatus: "completed",
-          lastSyncError: null,
         })
-        .where(eq(workspaceIntegrations.resourceId, resourceId));
+        .where(eq(workspaceSources.id, resourceId));
     });
 
     // Step 6: Complete job successfully

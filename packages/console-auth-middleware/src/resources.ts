@@ -36,7 +36,11 @@
  */
 
 import { eq } from "drizzle-orm";
-import { integrations, apiKeys, integrationResources } from "@db/console/schema";
+import {
+  apiKeys,
+  userSources,
+  workspaceSources,
+} from "@db/console/schema";
 import type {
   ResourceOwnershipContext,
   ResourceOwnershipResult,
@@ -59,11 +63,11 @@ async function verifyIntegrationOwnership(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    const integration = await db.query.integrations.findFirst({
-      where: eq(integrations.id, integrationId),
+    const userSource = await db.query.userSources.findFirst({
+      where: eq(userSources.id, integrationId),
     });
 
-    if (!integration) {
+    if (!userSource) {
       return {
         success: true,
         data: {
@@ -73,13 +77,13 @@ async function verifyIntegrationOwnership(
     }
 
     // Check if user owns this integration
-    const authorized = integration.userId === userId;
+    const authorized = userSource.userId === userId;
 
     return {
       success: true,
       data: {
         authorized,
-        resource: authorized ? integration : undefined,
+        resource: authorized ? userSource : undefined,
       },
     };
   } catch (error) {
@@ -142,13 +146,13 @@ async function verifyApiKeyOwnership(
 /**
  * Verify user owns a repository (via integration)
  *
- * Repositories are integration resources, so ownership is verified by:
- * 1. Finding the integration resource
- * 2. Finding the parent integration
- * 3. Checking if the user owns the parent integration
+ * Repositories are workspace sources, so ownership is verified by:
+ * 1. Finding the workspace source
+ * 2. Finding the parent user source
+ * 3. Checking if the user owns the parent user source
  *
  * @param userId - User ID to check ownership
- * @param resourceId - Integration resource ID to verify
+ * @param resourceId - Workspace source ID to verify
  * @param db - Database client instance
  * @returns Result with authorization status and resource
  */
@@ -158,12 +162,12 @@ async function verifyRepositoryOwnership(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    // Find the integration resource
-    const resource = await db.query.integrationResources.findFirst({
-      where: eq(integrationResources.id, resourceId),
+    // Find the workspace source
+    const source = await db.query.workspaceSources.findFirst({
+      where: eq(workspaceSources.id, resourceId),
     });
 
-    if (!resource) {
+    if (!source) {
       return {
         success: true,
         data: {
@@ -172,12 +176,12 @@ async function verifyRepositoryOwnership(
       };
     }
 
-    // Find the parent integration
-    const integration = await db.query.integrations.findFirst({
-      where: eq(integrations.id, resource.integrationId),
+    // Find the parent user source
+    const userSource = await db.query.userSources.findFirst({
+      where: eq(userSources.id, source.userSourceId),
     });
 
-    if (!integration) {
+    if (!userSource) {
       return {
         success: true,
         data: {
@@ -186,20 +190,69 @@ async function verifyRepositoryOwnership(
       };
     }
 
-    // Check if user owns the parent integration
-    const authorized = integration.userId === userId;
+    // Check if user owns the parent user source
+    const authorized = userSource.userId === userId;
 
     return {
       success: true,
       data: {
         authorized,
-        resource: authorized ? resource : undefined,
+        resource: authorized ? source : undefined,
       },
     };
   } catch (error) {
     return {
       success: false,
       error: `Failed to verify repository ownership: ${error instanceof Error ? error.message : "Unknown error"}`,
+      errorCode: "INTERNAL_SERVER_ERROR",
+    };
+  }
+}
+
+/**
+ * Verify user owns a user source (NEW 2-table system)
+ *
+ * User sources are personal OAuth connections (GitHub, Notion, etc.)
+ * that are tied to a specific user.
+ *
+ * @param userId - User ID to check ownership
+ * @param userSourceId - User source ID to verify
+ * @param db - Database client instance
+ * @returns Result with authorization status and resource
+ */
+async function verifyUserSourceOwnership(
+  userId: string,
+  userSourceId: string,
+  db: ResourceOwnershipContext["db"]
+): Promise<ResourceOwnershipResult> {
+  try {
+    const userSource = await db.query.userSources.findFirst({
+      where: eq(userSources.id, userSourceId),
+    });
+
+    if (!userSource) {
+      return {
+        success: true,
+        data: {
+          authorized: false,
+        },
+      };
+    }
+
+    // Check if user owns this user source
+    const authorized = userSource.userId === userId;
+
+    return {
+      success: true,
+      data: {
+        authorized,
+        resource: authorized ? userSource : undefined,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to verify user source ownership: ${error instanceof Error ? error.message : "Unknown error"}`,
       errorCode: "INTERNAL_SERVER_ERROR",
     };
   }
@@ -267,6 +320,9 @@ export async function verifyResourceOwnership(
 
     case "repository":
       return verifyRepositoryOwnership(userId, resourceId, db);
+
+    case "userSource":
+      return verifyUserSourceOwnership(userId, resourceId, db);
 
     default:
       return {

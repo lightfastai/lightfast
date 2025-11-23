@@ -9,7 +9,7 @@ import {
   DeusConnectedRepository,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, lte } from "drizzle-orm";
-import { getOrCreateDefaultWorkspace, getWorkspaceKey } from "@db/console/utils";
+import { getWorkspaceKey } from "@db/console/utils";
 import {
   workspaceListInputSchema,
   workspaceCreateInputSchema,
@@ -89,15 +89,13 @@ export const workspaceRouter = {
 
       const clerkOrgId = clerkOrg.id;
 
-      // First, ensure a default workspace exists for this organization
-      await getOrCreateDefaultWorkspace(clerkOrgId);
-
-      // Then fetch all workspaces with repository information
+      // Fetch all workspaces for this organization
+      // No longer auto-creates - user must explicitly create workspace at /new
       const orgWorkspaces = await db.query.workspaces.findMany({
         where: eq(workspaces.clerkOrgId, clerkOrgId),
       });
 
-      // Return early if no workspaces (should not happen due to getOrCreateDefaultWorkspace)
+      // Return empty list if no workspaces exist yet
       if (orgWorkspaces.length === 0) {
         return [];
       }
@@ -175,7 +173,6 @@ export const workspaceRouter = {
           id: workspace.id,
           name: workspace.name, // User-facing name, used in URLs
           slug: workspace.slug, // Internal slug for Pinecone
-          isDefault: workspace.isDefault,
           createdAt: workspace.createdAt,
           repositories: repos.map((repo) => ({
             id: repo.id,
@@ -251,18 +248,17 @@ export const workspaceRouter = {
 
       const clerkOrgId = clerkOrg.id;
 
-      // Get or create default workspace for this Clerk organization
-      const workspaceId = await getOrCreateDefaultWorkspace(clerkOrgId);
-
-      // Fetch workspace to get slug
+      // Find first workspace for this Clerk organization
+      // Returns first workspace (by creation date) if multiple exist
       const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+        where: eq(workspaces.clerkOrgId, clerkOrgId),
+        orderBy: (workspaces, { asc }) => [asc(workspaces.createdAt)],
       });
 
       if (!workspace) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Workspace not found for ID: ${workspaceId}`,
+          code: "NOT_FOUND",
+          message: `No workspace found for organization. Please create a workspace first.`,
         });
       }
 
@@ -270,7 +266,7 @@ export const workspaceRouter = {
       const workspaceKey = getWorkspaceKey(workspace.slug);
 
       return {
-        workspaceId,
+        workspaceId: workspace.id,
         workspaceKey,
         workspaceSlug: workspace.slug,
         clerkOrgId, // Include orgId for downstream queries
@@ -288,25 +284,22 @@ export const workspaceRouter = {
   resolveFromClerkOrgId: publicProcedure
     .input(workspaceResolveFromClerkOrgIdInputSchema)
     .query(async ({ input }) => {
-      // Get or create default workspace for this Clerk organization
-      const workspaceId = await getOrCreateDefaultWorkspace(
-        input.clerkOrgId,
-      );
-
-      // Fetch workspace to get slug
+      // Find first workspace for this Clerk organization
+      // Returns first workspace (by creation date) if multiple exist
       const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+        where: eq(workspaces.clerkOrgId, input.clerkOrgId),
+        orderBy: (workspaces, { asc }) => [asc(workspaces.createdAt)],
       });
 
       if (!workspace) {
-        throw new Error(`Workspace not found for ID: ${workspaceId}`);
+        throw new Error(`No workspace found for organization ${input.clerkOrgId}. Please create a workspace first.`);
       }
 
       // Compute workspace key from slug
       const workspaceKey = getWorkspaceKey(workspace.slug);
 
       return {
-        workspaceId,
+        workspaceId: workspace.id,
         workspaceKey,
         workspaceSlug: workspace.slug,
       };
@@ -400,7 +393,6 @@ export const workspaceRouter = {
         id: workspace.id,
         name: workspace.name,
         slug: workspace.slug,
-        isDefault: workspace.isDefault,
         settings: workspace.settings,
         createdAt: workspace.createdAt,
         updatedAt: workspace.updatedAt,
@@ -1066,52 +1058,90 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get all connected sources for this workspace
-        const sources = await db.query.connectedSources.findMany({
-          where: eq(connectedSources.workspaceId, workspaceId),
-          orderBy: [desc(connectedSources.connectedAt)],
-        });
+        // Get all workspace sources (simplified 2-table model)
+        const { workspaceSources, userSources } = await import("@db/console/schema");
 
-        return sources.map((source) => ({
-          id: source.id,
-          provider: source.sourceType,
-          isActive: source.isActive,
-          connectedAt: source.connectedAt,
-          lastSyncAt: source.lastSyncedAt,
-          isBilledViaVercel: false, // TODO: Determine from metadata
-          metadata: source.sourceMetadata,
-        }));
+        const sources = await db
+          .select({
+            // From workspaceSources
+            id: workspaceSources.id,
+            isActive: workspaceSources.isActive,
+            connectedAt: workspaceSources.connectedAt,
+            lastSyncedAt: workspaceSources.lastSyncedAt,
+            lastSyncStatus: workspaceSources.lastSyncStatus,
+            sourceConfig: workspaceSources.sourceConfig,
+            documentCount: workspaceSources.documentCount,
+            // From userSources
+            provider: userSources.provider,
+          })
+          .from(workspaceSources)
+          .innerJoin(
+            userSources,
+            eq(workspaceSources.userSourceId, userSources.id)
+          )
+          .where(eq(workspaceSources.workspaceId, workspaceId))
+          .orderBy(desc(workspaceSources.connectedAt));
+
+        return sources.map((source) => {
+          // Extract metadata based on provider
+          let metadata: Record<string, any> = {};
+
+          if (
+            source.provider === "github" &&
+            source.sourceConfig.provider === "github" &&
+            source.sourceConfig.type === "repository"
+          ) {
+            metadata = {
+              repoFullName: source.sourceConfig.repoFullName,
+              repoName: source.sourceConfig.repoName,
+              defaultBranch: source.sourceConfig.defaultBranch,
+              isPrivate: source.sourceConfig.isPrivate,
+              isArchived: source.sourceConfig.isArchived,
+              documentCount: source.documentCount,
+            };
+          }
+
+          return {
+            id: source.id,
+            provider: source.provider,
+            isActive: source.isActive,
+            connectedAt: source.connectedAt,
+            lastSyncAt: source.lastSyncedAt,
+            lastSyncStatus: source.lastSyncStatus,
+            isBilledViaVercel: false, // TODO: Determine from metadata
+            metadata,
+            // For backward compatibility with frontend components that expect resource.resourceData
+            resource: {
+              id: source.id,
+              resourceData: source.sourceConfig,
+            },
+          };
+        });
       }),
 
     /**
-     * Disconnect/remove an integration from a workspace
-     * Note: Only requires integrationId - workspace access is verified through the integration
+     * Disconnect/remove a source from a workspace
+     * Note: Only requires integrationId - workspace access is verified through the source
      */
     disconnect: protectedProcedure
       .input(workspaceIntegrationDisconnectInputSchema)
       .mutation(async ({ ctx, input }) => {
-        // Verify the integration belongs to a workspace the user has access to
-        const source = await db.query.connectedSources.findFirst({
-          where: eq(connectedSources.id, input.integrationId),
+        // Get workspace source (simplified 2-table model)
+        const { workspaceSources } = await import("@db/console/schema");
+
+        const source = await db.query.workspaceSources.findFirst({
+          where: eq(workspaceSources.id, input.integrationId),
         });
 
         if (!source) {
           const { TRPCError } = await import("@trpc/server");
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Integration not found",
+            message: "Source not found",
           });
         }
 
         // Get workspace to verify access
-        if (!source.workspaceId) {
-          const { TRPCError } = await import("@trpc/server");
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Integration has no associated workspace",
-          });
-        }
-
         const workspace = await db.query.workspaces.findFirst({
           where: eq(workspaces.id, source.workspaceId),
         });
@@ -1144,14 +1174,14 @@ export const workspaceRouter = {
           });
         }
 
-        // Mark integration as inactive instead of deleting
+        // Mark source as inactive instead of deleting
         await db
-          .update(connectedSources)
+          .update(workspaceSources)
           .set({
             isActive: false,
-            lastSyncedAt: new Date().toISOString(),
+            lastSyncedAt: new Date(),
           })
-          .where(eq(connectedSources.id, input.integrationId));
+          .where(eq(workspaceSources.id, input.integrationId));
 
         return { success: true };
       }),

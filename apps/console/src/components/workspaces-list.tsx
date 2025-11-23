@@ -102,14 +102,6 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
                           <h3 className="font-semibold text-base group-hover:text-primary transition-colors truncate">
                             {workspace.name}
                           </h3>
-                          {workspace.isDefault && (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs h-5 mt-1"
-                            >
-                              Default
-                            </Badge>
-                          )}
                         </div>
                         <ConfigStatusBadge status={configStatus} />
                       </div>

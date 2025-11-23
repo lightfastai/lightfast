@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
 import { useFormContext } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
@@ -13,22 +12,23 @@ import type { TeamFormValues } from "@repo/console-validation/forms";
 
 /**
  * Create Team Button
- * Client island for team creation mutation and navigation
+ * Client island for team creation mutation
  *
  * Features:
  * - Form validation before submission
  * - tRPC mutation to create Clerk organization
  * - Optimistic updates with rollback on error
- * - Sets active organization in Clerk session
- * - Redirects to workspace creation with teamSlug
+ * - Client-side navigation to workspace creation
  * - Toast notifications for success/error states
+ *
+ * Note: No setActive() call needed - user can select org from dropdown.
+ * The middleware will activate the org when they navigate to /:slug routes.
  */
 export function CreateTeamButton() {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { setActive } = useClerk();
   const form = useFormContext<TeamFormValues>();
 
   const teamName = form.watch("teamName");
@@ -82,18 +82,15 @@ export function CreateTeamButton() {
           variant: "destructive",
         });
       },
-      onSuccess: async (data) => {
-        // Set the created organization as active in Clerk session
-        await setActive({
-          organization: data.organizationId,
-        });
-
+      onSuccess: (data) => {
         toast({
           title: "Team created!",
           description: `Successfully created ${teamName}`,
         });
 
-        // Redirect to new workspace page with teamSlug
+        // Navigate to workspace creation
+        // The org is already in the cache (optimistic update)
+        // and will be available in getUserOrganizations() on the /new page
         router.push(`/new?teamSlug=${data.slug}`);
       },
       onSettled: () => {

@@ -9,7 +9,7 @@ import {
 	extractKeyPreview,
 	LIGHTFAST_API_KEY_PREFIX,
 } from "@repo/console-api-key";
-import { apiKeys, integrations } from "@db/console/schema";
+import { apiKeys, userSources } from "@db/console/schema";
 import { protectedProcedure } from "../trpc";
 
 /**
@@ -71,17 +71,17 @@ export const accountRouter = {
 	integrations: {
 		list: protectedProcedure.query(async ({ ctx }) => {
 			try {
-				const userIntegrations = await ctx.db
+				const sources = await ctx.db
 					.select()
-					.from(integrations)
-					.where(eq(integrations.userId, ctx.auth.userId));
+					.from(userSources)
+					.where(eq(userSources.userId, ctx.auth.userId));
 
-				return userIntegrations.map((integration) => ({
-					id: integration.id,
-					provider: integration.provider,
-					isActive: integration.isActive,
-					connectedAt: integration.connectedAt,
-					lastSyncAt: integration.lastSyncAt,
+				return sources.map((source) => ({
+					id: source.id,
+					provider: source.provider,
+					isActive: source.isActive,
+					connectedAt: source.connectedAt,
+					lastSyncAt: source.lastSyncAt,
 				}));
 			} catch (error: unknown) {
 				console.error("[tRPC] Failed to fetch integrations:", error);
@@ -107,11 +107,11 @@ export const accountRouter = {
 				// Verify ownership
 				const result = await ctx.db
 					.select()
-					.from(integrations)
+					.from(userSources)
 					.where(
 						and(
-							eq(integrations.id, input.integrationId),
-							eq(integrations.userId, ctx.auth.userId),
+							eq(userSources.id, input.integrationId),
+							eq(userSources.userId, ctx.auth.userId),
 						),
 					)
 					.limit(1);
@@ -125,9 +125,9 @@ export const accountRouter = {
 
 				// Soft delete (mark as inactive)
 				await ctx.db
-					.update(integrations)
+					.update(userSources)
 					.set({ isActive: false })
-					.where(eq(integrations.id, input.integrationId));
+					.where(eq(userSources.id, input.integrationId));
 
 				return { success: true };
 			}),

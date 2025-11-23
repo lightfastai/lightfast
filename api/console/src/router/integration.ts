@@ -1,13 +1,14 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import {
-  integrations,
-  integrationResources,
-  workspaceIntegrations,
+  // New 2-table system
+  userSources,
+  workspaceSources,
+  type UserSource,
+  // Common
   workspaces,
-  type Integration,
 } from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
   getUserInstallations,
@@ -23,16 +24,15 @@ import { env } from "../env";
 import { protectedProcedure, resolveWorkspaceByName } from "../trpc";
 
 /**
- * Integration Router
+ * Integration Router (Simplified 2-Table Model)
  *
- * Manages personal OAuth integrations (user-level connections to GitHub, Notion, etc.)
- * and their authorization for use in workspaces.
+ * Manages user OAuth connections and workspace sources.
  *
- * Flow:
- * 1. User completes OAuth (handled in /api/github/callback) → creates integration record
- * 2. Integration stores access token + provider data (installations)
- * 3. User selects specific resources (repos, teams) → creates integrationResources
- * 4. User connects resources to workspaces → creates workspaceIntegrations
+ * New Flow:
+ * 1. User completes OAuth → creates userSource (personal connection)
+ * 2. User picks repo/team → creates workspaceSource (directly links to workspace)
+ *
+ * No more intermediate integrationResources table!
  */
 
 /**
@@ -49,78 +49,78 @@ function getGitHubApp() {
 }
 
 /**
- * Helper: Verify user owns integration
+ * Helper: Verify user owns source
  */
-async function verifyIntegrationOwnership(
+async function verifyUserSourceOwnership(
   ctx: any,
-  integrationId: string
-): Promise<Integration> {
+  userSourceId: string
+): Promise<UserSource> {
   const result = await ctx.db
     .select()
-    .from(integrations)
+    .from(userSources)
     .where(
       and(
-        eq(integrations.id, integrationId),
-        eq(integrations.userId, ctx.auth.userId)
+        eq(userSources.id, userSourceId),
+        eq(userSources.userId, ctx.auth.userId)
       )
     )
     .limit(1);
 
-  const integration = result[0];
+  const userSource = result[0];
 
-  if (!integration) {
+  if (!userSource) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Integration not found or access denied",
+      message: "User source not found or access denied",
     });
   }
 
-  return integration;
+  return userSource;
 }
 
 export const integrationRouter = {
   /**
-   * GitHub: List user's GitHub integration with installations
+   * GitHub: List user's GitHub source with installations
    *
    * Returns the user's personal GitHub OAuth connection including
    * all GitHub App installations they have access to.
    */
   github: {
     list: protectedProcedure.query(async ({ ctx }) => {
-      // Get user's GitHub integration
+      // Get user's GitHub source
       const result = await ctx.db
         .select()
-        .from(integrations)
+        .from(userSources)
         .where(
           and(
-            eq(integrations.userId, ctx.auth.userId),
-            eq(integrations.provider, "github")
+            eq(userSources.userId, ctx.auth.userId),
+            eq(userSources.provider, "github")
           )
         )
         .limit(1);
 
-      const integration = result[0];
+      const userSource = result[0];
 
-      if (!integration) {
+      if (!userSource) {
         return null;
       }
 
-      // Return integration with installations from providerData
-      const providerData = integration.providerData;
-      if (providerData.provider !== "github") {
+      // Return user source with installations from providerMetadata
+      const providerMetadata = userSource.providerMetadata;
+      if (providerMetadata.provider !== "github") {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Invalid provider data type",
+          message: "Invalid provider metadata type",
         });
       }
 
       return {
-        id: integration.id,
-        userId: integration.userId,
-        provider: integration.provider,
-        connectedAt: integration.connectedAt,
-        isActive: integration.isActive,
-        installations: providerData.installations ?? [],
+        id: userSource.id,
+        userId: userSource.userId,
+        provider: userSource.provider,
+        connectedAt: userSource.connectedAt,
+        isActive: userSource.isActive,
+        installations: providerMetadata.installations ?? [],
       };
     }),
 
@@ -136,18 +136,18 @@ export const integrationRouter = {
       // Get user's GitHub integration
       const result = await ctx.db
         .select()
-        .from(integrations)
+        .from(userSources)
         .where(
           and(
-            eq(integrations.userId, ctx.auth.userId),
-            eq(integrations.provider, "github")
+            eq(userSources.userId, ctx.auth.userId),
+            eq(userSources.provider, "github")
           )
         )
         .limit(1);
 
-      const integration = result[0];
+      const userSource = result[0];
 
-      if (!integration) {
+      if (!userSource) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "GitHub integration not found. Please connect GitHub first.",
@@ -157,28 +157,28 @@ export const integrationRouter = {
       // Fetch fresh installations from GitHub
       try {
         // Decrypt access token before use
-        const accessToken = decrypt(integration.accessToken, env.ENCRYPTION_KEY);
+        const accessToken = decrypt(userSource.accessToken, env.ENCRYPTION_KEY);
 
         const { installations: githubInstallations } =
           await getUserInstallations(accessToken);
 
-        // Get current installations from providerData
-        const providerData = integration.providerData;
-        if (providerData.provider !== "github") {
+        // Get current installations from providerMetadata
+        const providerMetadata = userSource.providerMetadata;
+        if (providerMetadata.provider !== "github") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Invalid provider data type",
           });
         }
 
-        const currentInstallations = providerData.installations ?? [];
+        const currentInstallations = providerMetadata.installations ?? [];
         const currentIds = new Set(
-          currentInstallations.map((i) => i.id.toString())
+          currentInstallations.map((i: any) => i.id.toString())
         );
 
         // Map GitHub installations to our format
         const now = new Date().toISOString();
-        const newInstallations = githubInstallations.map((install) => {
+        const newInstallations = githubInstallations.map((install: any) => {
           const account = install.account;
           // Handle both User and Organization account types
           const accountLogin =
@@ -200,23 +200,23 @@ export const integrationRouter = {
           };
         });
 
-        const newIds = new Set(newInstallations.map((i) => i.id));
+        const newIds = new Set(newInstallations.map((i: any) => i.id));
 
         // Calculate changes
-        const added = newInstallations.filter((i) => !currentIds.has(i.id));
-        const removed = currentInstallations.filter((i) => !newIds.has(i.id));
+        const added = newInstallations.filter((i: any) => !currentIds.has(i.id));
+        const removed = currentInstallations.filter((i: any) => !newIds.has(i.id));
 
-        // Update providerData with fresh installations
+        // Update providerMetadata with fresh installations
         await ctx.db
-          .update(integrations)
+          .update(userSources)
           .set({
-            providerData: {
+            providerMetadata: {
               provider: "github" as const,
               installations: newInstallations,
             },
             lastSyncAt: new Date(),
           })
-          .where(eq(integrations.id, integration.id));
+          .where(eq(userSources.id, userSource.id));
 
         return {
           added: added.length,
@@ -243,43 +243,33 @@ export const integrationRouter = {
     repositories: protectedProcedure
       .input(
         z.object({
-          integrationId: z.string(),
+          integrationId: z.string(), // userSource.id
           installationId: z.string(),
         })
       )
       .query(async ({ ctx, input }) => {
-        // Verify ownership
-        const integration = await verifyIntegrationOwnership(
-          ctx,
-          input.integrationId
-        );
+        // Verify user owns this userSource
+        const userSource = await verifyUserSourceOwnership(ctx, input.integrationId);
 
         // Verify provider is GitHub
-        if (integration.provider !== "github") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Integration is not a GitHub integration",
-          });
-        }
-
-        // Verify user has access to this installation
-        const providerData = integration.providerData;
-        if (providerData.provider !== "github") {
+        const providerMetadata = userSource.providerMetadata;
+        if (providerMetadata.provider !== "github") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider data type",
+            message: "Invalid provider metadata type",
           });
         }
 
-        const installation = providerData.installations?.find(
+        // Find the installation
+        const installations = providerMetadata.installations ?? [];
+        const installation = installations.find(
           (i) => i.id === input.installationId
         );
 
         if (!installation) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message:
-              "Installation not found or not accessible to this integration",
+            message: "Installation not found or not accessible to this source",
           });
         }
 
@@ -331,45 +321,34 @@ export const integrationRouter = {
     detectConfig: protectedProcedure
       .input(
         z.object({
-          integrationId: z.string(),
+          integrationId: z.string(), // userSource.id
           installationId: z.string(),
           fullName: z.string(), // "owner/repo"
           ref: z.string().optional(), // branch/tag/sha (defaults to default branch)
         })
       )
       .query(async ({ ctx, input }) => {
-        // Verify ownership
-        const integration = await verifyIntegrationOwnership(
-          ctx,
-          input.integrationId
-        );
+        // Verify user owns this userSource
+        const userSource = await verifyUserSourceOwnership(ctx, input.integrationId);
 
         // Verify provider is GitHub
-        if (integration.provider !== "github") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Integration is not a GitHub integration",
-          });
-        }
-
-        // Verify user has access to this installation
-        const providerData = integration.providerData;
-        if (providerData.provider !== "github") {
+        const providerMetadata = userSource.providerMetadata;
+        if (providerMetadata.provider !== "github") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider data type",
+            message: "Invalid provider metadata type",
           });
         }
 
-        const installation = providerData.installations?.find(
+        // Find the installation
+        const installation = providerMetadata.installations?.find(
           (i) => i.id === input.installationId
         );
 
         if (!installation) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message:
-              "Installation not found or not accessible to this integration",
+            message: "Installation not found or not accessible to this source",
           });
         }
 
@@ -527,74 +506,82 @@ export const integrationRouter = {
       .mutation(async ({ ctx, input }) => {
         const now = new Date();
 
-        // Check if integration already exists for this user
-        const existingIntegration = await ctx.db
+        // Check if userSource already exists for this user
+        const existingUserSource = await ctx.db
           .select()
-          .from(integrations)
+          .from(userSources)
           .where(
             and(
-              eq(integrations.userId, ctx.auth.userId),
-              eq(integrations.provider, "github")
+              eq(userSources.userId, ctx.auth.userId),
+              eq(userSources.provider, "github")
             )
           )
           .limit(1);
 
-        if (existingIntegration[0]) {
-          // Update existing integration
+        if (existingUserSource[0]) {
+          // Update existing userSource
           await ctx.db
-            .update(integrations)
+            .update(userSources)
             .set({
               accessToken: input.accessToken,
               refreshToken: input.refreshToken ?? null,
               tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
-              providerData: {
+              providerMetadata: {
                 provider: "github" as const,
                 installations: input.installations,
               },
               isActive: true,
               lastSyncAt: now,
             })
-            .where(eq(integrations.id, existingIntegration[0].id));
+            .where(eq(userSources.id, existingUserSource[0].id));
 
-          return { id: existingIntegration[0].id, created: false };
+          return { id: existingUserSource[0].id, created: false };
         } else {
-          // Create new integration
+          // Create new userSource
           const result = await ctx.db
-            .insert(integrations)
+            .insert(userSources)
             .values({
               userId: ctx.auth.userId,
               provider: "github",
               accessToken: input.accessToken,
               refreshToken: input.refreshToken ?? null,
               tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
-              providerData: {
+              providerMetadata: {
                 provider: "github" as const,
                 installations: input.installations,
               },
               isActive: true,
               connectedAt: now,
             })
-            .returning({ id: integrations.id });
+            .returning({ id: userSources.id });
 
           return { id: result[0]!.id, created: true };
         }
       }),
   },
 
+
   /**
-   * Resources: Manage integration resources (repos, teams, projects)
+   * Workspace: Connect resources to workspaces (NEW 2-Table System)
    */
-  resources: {
+  workspace: {
+
     /**
-     * Create a new integration resource
+     * Connect a repository directly to a workspace (Simplified 2-Table Model)
      *
-     * Stores a specific resource (e.g., GitHub repo) that can be
-     * connected to workspaces.
+     * This is the new simplified API that replaces the 2-step process:
+     * OLD: resources.create → workspace.connect
+     * NEW: workspace.connectDirect (single call)
+     *
+     * Creates a workspaceSource directly without intermediate integrationResource.
      */
-    create: protectedProcedure
+    connectDirect: protectedProcedure
       .input(
         z.object({
-          integrationId: z.string(),
+          clerkOrgSlug: z.string(),
+          workspaceName: z.string(),
+          userSourceId: z.string(), // User's GitHub connection
+          // Repository data
           installationId: z.string(),
           repoId: z.string(),
           repoName: z.string(),
@@ -602,186 +589,7 @@ export const integrationRouter = {
           defaultBranch: z.string(),
           isPrivate: z.boolean(),
           isArchived: z.boolean(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        // Verify ownership
-        const integration = await verifyIntegrationOwnership(
-          ctx,
-          input.integrationId
-        );
-
-        // Verify provider is GitHub
-        if (integration.provider !== "github") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Only GitHub integrations are currently supported",
-          });
-        }
-
-        // Check if resource already exists for this integration
-        // We need to fetch all resources and check the resourceData manually
-        // since we can't query JSONB fields directly with Drizzle
-        const existingResources = await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(eq(integrationResources.integrationId, input.integrationId));
-
-        const duplicateResource = existingResources.find((resource) => {
-          const data = resource.resourceData;
-          return (
-            data.provider === "github" &&
-            data.type === "repository" &&
-            data.repoId === input.repoId
-          );
-        });
-
-        if (duplicateResource) {
-          // Idempotent: Return existing resource instead of throwing error
-          // This allows re-importing the same repository without errors
-          console.log(`[integration.resources.create] Repository ${input.repoFullName} already exists, returning existing resource`);
-          return duplicateResource;
-        }
-
-        // Create resource
-        const resourceId = crypto.randomUUID();
-
-        await ctx.db.insert(integrationResources).values({
-          id: resourceId,
-          integrationId: input.integrationId,
-          resourceData: {
-            provider: "github" as const,
-            type: "repository" as const,
-            installationId: input.installationId,
-            repoId: input.repoId,
-            repoName: input.repoName,
-            repoFullName: input.repoFullName,
-            defaultBranch: input.defaultBranch,
-            isPrivate: input.isPrivate,
-            isArchived: input.isArchived,
-          },
-        });
-
-        // Return created resource
-        const createdResult = await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(eq(integrationResources.id, resourceId))
-          .limit(1);
-
-        return createdResult[0];
-      }),
-
-    /**
-     * List resources for an integration
-     */
-    list: protectedProcedure
-      .input(
-        z.object({
-          integrationId: z.string(),
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // Verify ownership
-        await verifyIntegrationOwnership(ctx, input.integrationId);
-
-        // Fetch resources
-        return await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(eq(integrationResources.integrationId, input.integrationId));
-      }),
-  },
-
-  /**
-   * Workspace: Connect resources to workspaces
-   */
-  workspace: {
-    /**
-     * Get workspace integration status for a repository
-     *
-     * Returns sync status, last sync time, and error information
-     */
-    getStatus: protectedProcedure
-      .input(
-        z.object({
-          clerkOrgSlug: z.string(),
-          workspaceName: z.string(),
-          repoFullName: z.string(), // "owner/repo"
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing) and verify access
-        const { resolveWorkspaceByName } = await import("../trpc");
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get user's GitHub integration first
-        const userIntegrationResult = await ctx.db
-          .select()
-          .from(integrations)
-          .where(
-            and(
-              eq(integrations.userId, ctx.auth.userId),
-              eq(integrations.provider, "github")
-            )
-          )
-          .limit(1);
-
-        const userIntegration = userIntegrationResult[0];
-
-        if (!userIntegration) {
-          return null;
-        }
-
-        // Find resource by repo full name using the correct integrationId
-        const resources = await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(eq(integrationResources.integrationId, userIntegration.id));
-
-        const resource = resources.find((r) => {
-          const data = r.resourceData;
-          return (
-            data.provider === "github" &&
-            data.type === "repository" &&
-            data.repoFullName === input.repoFullName
-          );
-        });
-
-        if (!resource) {
-          return null;
-        }
-
-        // Get workspace integration
-        const connections = await ctx.db
-          .select()
-          .from(workspaceIntegrations)
-          .where(
-            and(
-              eq(workspaceIntegrations.workspaceId, workspaceId),
-              eq(workspaceIntegrations.resourceId, resource.id)
-            )
-          );
-
-        return connections[0] ?? null;
-      }),
-
-    /**
-     * Connect a resource to a workspace
-     *
-     * Creates a workspaceIntegrations record linking a resource
-     * (e.g., GitHub repo) to a Lightfast workspace with sync config.
-     */
-    connect: protectedProcedure
-      .input(
-        z.object({
-          clerkOrgSlug: z.string(),
-          workspaceName: z.string(),
-          resourceId: z.string(),
+          // Sync config
           syncConfig: z.object({
             branches: z.array(z.string()).optional(),
             paths: z.array(z.string()).optional(),
@@ -791,149 +599,99 @@ export const integrationRouter = {
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // Verify workspace access
+        // 1. Verify workspace access
         const { workspaceId } = await resolveWorkspaceByName({
           clerkOrgSlug: input.clerkOrgSlug,
           workspaceName: input.workspaceName,
           userId: ctx.auth.userId,
         });
 
-        // Verify resource exists and user has access
-        const resourceResult = await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(eq(integrationResources.id, input.resourceId))
-          .limit(1);
+        // 2. Verify user owns the userSource
+        await verifyUserSourceOwnership(ctx, input.userSourceId);
 
-        const resource = resourceResult[0];
-
-        if (!resource) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Resource not found",
-          });
-        }
-
-        // Verify user owns the integration
-        await verifyIntegrationOwnership(ctx, resource.integrationId);
-
-        // Check if already connected
+        // 3. Check if this repo is already connected to this workspace
         const existingResult = await ctx.db
           .select()
-          .from(workspaceIntegrations)
+          .from(workspaceSources)
           .where(
             and(
-              eq(workspaceIntegrations.workspaceId, workspaceId),
-              eq(workspaceIntegrations.resourceId, input.resourceId)
+              eq(workspaceSources.workspaceId, workspaceId),
+              eq(workspaceSources.userSourceId, input.userSourceId)
             )
-          )
-          .limit(1);
+          );
 
-        if (existingResult.length > 0) {
-          // Idempotent: Update existing connection with new sync config and return
-          const existingConnection = existingResult[0];
-          if (!existingConnection) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to retrieve existing connection",
-            });
+        const existing = existingResult.find((ws) => {
+          const data = ws.sourceConfig;
+          return (
+            data.provider === "github" &&
+            data.type === "repository" &&
+            data.repoId === input.repoId
+          );
+        });
+
+        if (existing) {
+          // Idempotent: Update existing with new sync config
+          console.log(`[integration.workspace.connectDirect] Repository ${input.repoFullName} already connected, updating sync config`);
+
+          // Get current sourceConfig and merge with new sync settings
+          const currentConfig = existing.sourceConfig;
+          if (currentConfig.provider === "github" && currentConfig.type === "repository") {
+            await ctx.db
+              .update(workspaceSources)
+              .set({
+                sourceConfig: {
+                  ...currentConfig,
+                  sync: input.syncConfig,
+                },
+                isActive: true,
+              })
+              .where(eq(workspaceSources.id, existing.id));
           }
 
-          console.log(`[integration.workspace.connect] Resource already connected, updating sync config`);
-
-          await ctx.db
-            .update(workspaceIntegrations)
-            .set({
-              syncConfig: input.syncConfig,
-              isActive: true, // Ensure it's active
-            })
-            .where(eq(workspaceIntegrations.id, existingConnection.id));
-
-          // Return updated connection
-          const updatedResult = await ctx.db
+          const updated = await ctx.db
             .select()
-            .from(workspaceIntegrations)
-            .where(eq(workspaceIntegrations.id, existingConnection.id))
+            .from(workspaceSources)
+            .where(eq(workspaceSources.id, existing.id))
             .limit(1);
 
-          const updatedConnection = updatedResult[0];
-          if (!updatedConnection) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to retrieve updated connection",
-            });
-          }
-
-          // Trigger sync if needed (failed or pending or never synced)
-          const shouldTriggerSync =
-            !updatedConnection.lastSyncStatus ||
-            updatedConnection.lastSyncStatus === "failed" ||
-            updatedConnection.lastSyncStatus === "pending";
-
-          if (shouldTriggerSync) {
-            try {
-              // Get workspace for workspaceKey
-              const workspaceResult = await ctx.db
-                .select()
-                .from(workspaces)
-                .where(eq(workspaces.id, workspaceId))
-                .limit(1);
-
-              const workspace = workspaceResult[0];
-
-              if (workspace && resource.resourceData.provider === "github" && resource.resourceData.type === "repository") {
-                const resourceData = resource.resourceData;
-
-                await inngest.send({
-                  name: "apps-console/repository.connected",
-                  data: {
-                    workspaceId: workspaceId,
-                    workspaceKey: getWorkspaceKey(workspace.slug),
-                    resourceId: input.resourceId,
-                    repoFullName: resourceData.repoFullName,
-                    defaultBranch: resourceData.defaultBranch,
-                    installationId: resourceData.installationId,
-                    integrationId: resource.integrationId,
-                    isPrivate: resourceData.isPrivate,
-                  },
-                });
-
-                console.log(`[integration.workspace.connect] Triggered sync retry for ${resourceData.repoFullName}`);
-              }
-            } catch (inngestError) {
-              // Log but don't fail the connection - sync can be retried
-              console.error("[integration.workspace.connect] Failed to trigger sync retry:", inngestError);
-            }
-          }
-
-          return updatedConnection;
+          return updated[0];
         }
 
-        // Create workspace integration
-        const connectionId = crypto.randomUUID();
+        // 4. Create new workspaceSource
+        const workspaceSourceId = crypto.randomUUID();
 
-        await ctx.db.insert(workspaceIntegrations).values({
-          id: connectionId,
-          workspaceId: workspaceId,
-          resourceId: input.resourceId,
-          connectedByUserId: ctx.auth.userId,
-          syncConfig: input.syncConfig,
+        await ctx.db.insert(workspaceSources).values({
+          id: workspaceSourceId,
+          workspaceId,
+          userSourceId: input.userSourceId,
+          connectedBy: ctx.auth.userId,
+          sourceConfig: {
+            provider: "github" as const,
+            type: "repository" as const,
+            installationId: input.installationId,
+            repoId: input.repoId,
+            repoName: input.repoName,
+            repoFullName: input.repoFullName,
+            defaultBranch: input.defaultBranch,
+            isPrivate: input.isPrivate,
+            isArchived: input.isArchived,
+            sync: input.syncConfig,
+          },
+          providerResourceId: input.repoId,
           isActive: true,
         });
 
-        // Return created connection
-        const createdResult = await ctx.db
+        const created = await ctx.db
           .select()
-          .from(workspaceIntegrations)
-          .where(eq(workspaceIntegrations.id, connectionId))
+          .from(workspaceSources)
+          .where(eq(workspaceSources.id, workspaceSourceId))
           .limit(1);
 
-        const createdConnection = createdResult[0];
+        const workspaceSource = created[0];
 
-        // Trigger initial sync via Inngest
-        if (createdConnection) {
+        // 5. Trigger initial sync via Inngest
+        if (workspaceSource) {
           try {
-            // Get workspace for workspaceKey
             const workspaceResult = await ctx.db
               .select()
               .from(workspaces)
@@ -942,75 +700,29 @@ export const integrationRouter = {
 
             const workspace = workspaceResult[0];
 
-            if (workspace && resource.resourceData.provider === "github" && resource.resourceData.type === "repository") {
-              const resourceData = resource.resourceData;
-
+            if (workspace) {
               await inngest.send({
                 name: "apps-console/repository.connected",
                 data: {
-                  workspaceId: workspaceId,
+                  workspaceId,
                   workspaceKey: getWorkspaceKey(workspace.slug),
-                  resourceId: input.resourceId,
-                  repoFullName: resourceData.repoFullName,
-                  defaultBranch: resourceData.defaultBranch,
-                  installationId: resourceData.installationId,
-                  integrationId: resource.integrationId,
-                  isPrivate: resourceData.isPrivate,
+                  resourceId: workspaceSourceId,
+                  repoFullName: input.repoFullName,
+                  defaultBranch: input.defaultBranch,
+                  installationId: input.installationId,
+                  integrationId: input.userSourceId, // Use userSourceId
+                  isPrivate: input.isPrivate,
                 },
               });
 
-              console.log(`[integration.workspace.connect] Triggered initial sync for ${resourceData.repoFullName}`);
+              console.log(`[integration.workspace.connectDirect] Triggered initial sync for ${input.repoFullName}`);
             }
           } catch (inngestError) {
-            // Log but don't fail the connection - sync can be retried
-            console.error("[integration.workspace.connect] Failed to trigger initial sync:", inngestError);
+            console.error("[integration.workspace.connectDirect] Failed to trigger initial sync:", inngestError);
           }
         }
 
-        return createdConnection;
-      }),
-
-    /**
-     * List workspace connections for a resource
-     */
-    list: protectedProcedure
-      .input(
-        z.object({
-          workspaceId: z.string(),
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // Fetch workspace integrations with resource data
-        const connections = await ctx.db
-          .select()
-          .from(workspaceIntegrations)
-          .where(
-            and(
-              eq(workspaceIntegrations.workspaceId, input.workspaceId),
-              eq(workspaceIntegrations.isActive, true)
-            )
-          );
-
-        // Early return if no connections
-        if (connections.length === 0) {
-          return [];
-        }
-
-        // Batch fetch all resources in a single query
-        const resourceIds = connections.map((c) => c.resourceId);
-        const resources = await ctx.db
-          .select()
-          .from(integrationResources)
-          .where(inArray(integrationResources.id, resourceIds));
-
-        // Create lookup map for O(1) access
-        const resourceMap = new Map(resources.map((r) => [r.id, r]));
-
-        // Enrich connections in memory
-        return connections.map((connection) => ({
-          ...connection,
-          resource: resourceMap.get(connection.resourceId) ?? null,
-        }));
+        return workspaceSource;
       }),
   },
 } satisfies TRPCRouterRecord;

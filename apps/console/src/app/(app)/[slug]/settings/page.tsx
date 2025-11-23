@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { prefetch, HydrateClient, trpc } from "@repo/console-trpc/server";
+import { HydrateClient } from "@repo/console-trpc/server";
 import { TeamGeneralSettingsClient } from "./_components/team-general-settings-client";
 
 export default async function SettingsPage({
@@ -18,13 +18,9 @@ export default async function SettingsPage({
 		notFound();
 	}
 
-	// Prefetch organization details for instant loading
-	// CRITICAL: This must happen BEFORE HydrateClient wrapping
-	prefetch(
-		trpc.organization.findByClerkOrgSlug.queryOptions({
-			clerkOrgSlug: slug,
-		}),
-	);
+	// Note: We rely on listUserOrganizations cache from (app)/layout.tsx
+	// No separate prefetch needed - avoids Clerk propagation timing issues
+	// The client component will find the org from the cached list by slug
 
 	return (
 		<HydrateClient>

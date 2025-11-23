@@ -1,657 +1,250 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { DeusConnectedRepository, workspaces } from "@db/console/schema";
-import { getOrCreateDefaultWorkspace } from "@db/console/utils";
+import { db } from "@db/console/client";
+import { workspaceSources, type WorkspaceSource } from "@db/console/schema";
+import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
-import { randomUUID } from "node:crypto";
-import { minimatch } from "minimatch";
-import yaml from "yaml";
-import { inngest } from "@api/console/inngest";
-import { env } from "../env";
-import { getWorkspaceKey } from "@db/console/utils";
+import { publicProcedure } from "../trpc";
 
-import { protectedProcedure, webhookProcedure, verifyOrgAccessAndResolve, verifyOrgMembership } from "../trpc";
+/**
+ * Repository Router
+ *
+ * Handles repository-related operations for GitHub webhook processing.
+ * Uses the new 2-table system with workspaceSources.
+ *
+ * Key Operations:
+ * - Find repositories by GitHub repo ID (for webhooks)
+ * - Update sync status (mark active/inactive)
+ * - Update config status (lightfast.yml detection)
+ */
 
-// Helper to create GitHub App instance
-function getGitHubApp() {
-  return createGitHubApp(
-    {
-      appId: env.GITHUB_APP_ID,
-      privateKey: env.GITHUB_APP_PRIVATE_KEY,
-    },
-    true // Format private key
-  );
-}
+/**
+ * Input Schemas
+ */
+const findByGithubRepoIdSchema = z.object({
+  githubRepoId: z.string(),
+});
 
+const updateSyncStatusSchema = z.object({
+  githubRepoId: z.string(),
+  isActive: z.boolean(),
+  reason: z.string().optional(),
+});
+
+const updateConfigStatusSchema = z.object({
+  githubRepoId: z.string(),
+  configStatus: z.enum(["configured", "unconfigured"]),
+  configPath: z.string().nullable(),
+});
+
+const markInstallationInactiveSchema = z.object({
+  githubInstallationId: z.string(),
+});
+
+/**
+ * Repository router - PUBLIC procedures for webhook/API route usage
+ */
 export const repositoryRouter = {
   /**
-   * List organization's connected repositories
-   * Returns all active repositories for the specified organization
+   * Find workspace source by GitHub repo ID
    *
-   * Note: This returns minimal data from our DB. Frontend should fetch
-   * fresh repo details (name, owner, description, etc.) from GitHub API
-   * using the githubRepoId.
-   */
-  list: protectedProcedure
-    .input(
-      z.object({
-        includeInactive: z.boolean().default(false),
-        clerkOrgSlug: z.string(), // Clerk org slug from URL
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      // Verify org access and resolve org ID
-      const { verifyOrgAccessAndResolve } = await import("../trpc");
-      const { clerkOrgId } = await verifyOrgAccessAndResolve({
-        clerkOrgSlug: input.clerkOrgSlug,
-        userId: ctx.auth.userId,
-      });
-
-      const whereConditions = [
-        eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
-      ];
-
-      if (!input.includeInactive) {
-        whereConditions.push(eq(DeusConnectedRepository.isActive, true));
-      }
-
-      return await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(and(...whereConditions));
-    }),
-
-  /**
-   * Get a single repository by ID
-   */
-  get: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-        clerkOrgSlug: z.string(), // Clerk org slug from URL
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      // Verify org access and resolve org ID
-      const { verifyOrgAccessAndResolve } = await import("../trpc");
-      const { clerkOrgId } = await verifyOrgAccessAndResolve({
-        clerkOrgSlug: input.clerkOrgSlug,
-        userId: ctx.auth.userId,
-      });
-
-      const result = await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
-          ),
-        )
-        .limit(1);
-
-      const repository = result[0];
-
-      if (!repository) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Repository not found",
-        });
-      }
-
-      return repository;
-    }),
-
-  /**
-   * Connect a new repository
+   * Uses the indexed providerResourceId field for fast lookups.
+   * Returns the first matching active GitHub repository source.
    *
-   * GITHUB APP FLOW:
-   * - Organization has GitHub App installed
-   * - We use installation ID to get installation access tokens
-   * - Frontend calls this endpoint with: clerkOrgId, githubRepoId, githubInstallationId
-   * - We store minimal immutable data only
-   *
-   * SIMPLIFIED APPROACH:
-   * - Store only immutable data: clerkOrgId, githubRepoId, githubInstallationId
-   * - Optionally cache metadata for UI display (can be stale)
-   * - Fetch fresh repo details from GitHub API when needed
+   * Used by webhooks to find which workspace a repo belongs to.
    */
-  connect: protectedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(), // Clerk org slug from URL
-        githubRepoId: z.string(),
-        githubInstallationId: z.string(),
-        permissions: z
-          .object({
-            admin: z.boolean(),
-            push: z.boolean(),
-            pull: z.boolean(),
-          })
-          .optional(),
-        metadata: z.record(z.unknown()).optional(), // Optional cache (fullName, description, etc.)
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify org access and resolve org ID
-      const { verifyOrgAccessAndResolve } = await import("../trpc");
-      const { clerkOrgId } = await verifyOrgAccessAndResolve({
-        clerkOrgSlug: input.clerkOrgSlug,
-        userId: ctx.auth.userId,
-      });
-
-      // Get or create default workspace for organization
-      const workspaceId = await getOrCreateDefaultWorkspace(clerkOrgId);
-
-      // Check if this repository is already connected to this organization
-      const existingRepoResult = await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
-          ),
-        )
-        .limit(1);
-
-      const existingRepo = existingRepoResult[0];
-
-      if (existingRepo?.isActive) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "This repository is already connected to this organization.",
-        });
-      }
-
-      if (existingRepo) {
-        // Reactivate previous connection
-        await ctx.db
-          .update(DeusConnectedRepository)
-          .set({
-            isActive: true,
-            githubInstallationId: input.githubInstallationId,
-            workspaceId,
-            permissions: input.permissions,
-            metadata: input.metadata,
-            lastSyncedAt: new Date().toISOString(),
-          })
-          .where(eq(DeusConnectedRepository.id, existingRepo.id));
-
-        // Return the updated repository
-        const updatedResult = await ctx.db
-          .select()
-          .from(DeusConnectedRepository)
-          .where(eq(DeusConnectedRepository.id, existingRepo.id))
-          .limit(1);
-
-        return updatedResult[0];
-      }
-
-      // Generate a new UUID for the repository
-      const id = crypto.randomUUID();
-
-      // Create new connection
-      await ctx.db.insert(DeusConnectedRepository).values({
-        id,
-        clerkOrgId,
-        githubRepoId: input.githubRepoId,
-        githubInstallationId: input.githubInstallationId,
-        workspaceId,
-        permissions: input.permissions,
-        metadata: input.metadata,
-        isActive: true,
-      });
-
-      // Return the created repository
-      const createdResult = await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.id, id))
-        .limit(1);
-
-      return createdResult[0];
-    }),
-
-  /**
-   * Internal procedures for webhooks (WEBHOOK-AUTHENTICATED)
-   * These are only accessible from verified webhook handlers
-   * See: apps/console/src/app/(github)/api/github/webhooks/route.ts
-   */
-
-  /**
-   * Find active repository by GitHub repo ID
-   * Used by webhooks to lookup repositories
-   */
-  findActiveByGithubRepoId: webhookProcedure
-    .input(z.object({ githubRepoId: z.string() }))
+  findByGithubRepoId: publicProcedure
+    .input(findByGithubRepoIdSchema)
     .query(async ({ ctx, input }) => {
-      const result = await ctx.db
-        .select({ id: DeusConnectedRepository.id })
-        .from(DeusConnectedRepository)
+      const result = await db
+        .select()
+        .from(workspaceSources)
         .where(
           and(
-            eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-            eq(DeusConnectedRepository.isActive, true),
-          ),
-        )
-        .limit(1);
-      return result[0] ?? null;
-    }),
-
-  /**
-   * Mark repository as inactive
-   * Used by webhooks when repository is disconnected or deleted
-   */
-  markInactive: webhookProcedure
-    .input(
-      z.object({
-        githubRepoId: z.string(),
-        githubInstallationId: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const whereConditions = [
-        eq(DeusConnectedRepository.githubRepoId, input.githubRepoId),
-      ];
-      if (input.githubInstallationId) {
-        whereConditions.push(
-          eq(
-            DeusConnectedRepository.githubInstallationId,
-            input.githubInstallationId,
-          ),
-        );
-      }
-      await ctx.db
-        .update(DeusConnectedRepository)
-        .set({ isActive: false })
-        .where(and(...whereConditions));
-    }),
-
-  /**
-   * Mark all repositories for an installation as inactive
-   * Used by webhooks when GitHub App is uninstalled
-   */
-  markInstallationInactive: webhookProcedure
-    .input(z.object({ githubInstallationId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(DeusConnectedRepository)
-        .set({ isActive: false })
-        .where(
-          eq(
-            DeusConnectedRepository.githubInstallationId,
-            input.githubInstallationId,
-          ),
-        );
-    }),
-
-  /**
-   * Update repository metadata
-   * Used by webhooks to keep cached metadata fresh
-   */
-  updateMetadata: webhookProcedure
-    .input(
-      z.object({
-        githubRepoId: z.string(),
-        metadata: z.record(z.unknown()),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const repos = await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
-
-      for (const repo of repos) {
-        await ctx.db
-          .update(DeusConnectedRepository)
-          .set({
-            metadata: { ...repo.metadata, ...input.metadata },
-          })
-          .where(eq(DeusConnectedRepository.id, repo.id));
-      }
-    }),
-
-  /**
-   * Mark repository as deleted
-   * Used by webhooks when repository is deleted on GitHub
-   */
-  markDeleted: webhookProcedure
-    .input(z.object({ githubRepoId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(DeusConnectedRepository)
-        .set({
-          isActive: false,
-          metadata: { deleted: true, deletedAt: new Date().toISOString() },
-        })
-        .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
-    }),
-
-  /**
-   * Update repository config status
-   * Used by webhooks when lightfast.yml is modified
-   */
-  updateConfigStatus: webhookProcedure
-    .input(
-      z.object({
-        githubRepoId: z.string(),
-        configStatus: z.enum(["configured", "unconfigured"]),
-        configPath: z.string().nullable(),
-        workspaceId: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(DeusConnectedRepository)
-        .set({
-          configStatus: input.configStatus,
-          configPath: input.configPath,
-          configDetectedAt: new Date().toISOString(),
-          workspaceId: input.workspaceId,
-        })
-        .where(eq(DeusConnectedRepository.githubRepoId, input.githubRepoId));
-    }),
-
-  /**
-   * Detect lightfast.yml configuration in repository
-   * Can be called manually to re-check config status
-   */
-  detectConfig: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-        clerkOrgSlug: z.string(), // Clerk org slug from URL
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify org access and resolve org ID
-      const { verifyOrgAccessAndResolve } = await import("../trpc");
-      const { clerkOrgId } = await verifyOrgAccessAndResolve({
-        clerkOrgSlug: input.clerkOrgSlug,
-        userId: ctx.auth.userId,
-      });
-
-      // Get repository
-      const repoResult = await ctx.db
-        .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId)
+            eq(workspaceSources.providerResourceId, input.githubRepoId),
+            eq(workspaceSources.isActive, true)
           )
         )
         .limit(1);
 
-      const repository = repoResult[0];
+      const source = result[0];
 
-      if (!repository) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Repository not found",
-        });
+      // Verify it's actually a GitHub repository
+      if (source && source.sourceConfig.provider !== "github") {
+        return null;
       }
 
-      // Extract owner and repo name from metadata
-      const fullName = repository.metadata?.fullName;
-      if (!fullName) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Repository metadata missing fullName",
-        });
-      }
-
-      const [owner, repo] = fullName.split("/");
-      if (!owner || !repo) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid repository fullName format",
-        });
-      }
-
-      // Detect config
-      try {
-        const app = getGitHubApp();
-        const detector = new ConfigDetectorService(app);
-
-        // Resolve the repository default branch from GitHub API; fallback to "main"
-        let ref = "main";
-        try {
-          const octokit = await app.getInstallationOctokit(
-            Number.parseInt(repository.githubInstallationId, 10),
-          );
-          const { data: repoInfo } = await octokit.request(
-            "GET /repos/{owner}/{repo}",
-            {
-              owner,
-              repo,
-              headers: { "X-GitHub-Api-Version": "2022-11-28" },
-            },
-          );
-          if (repoInfo?.default_branch && typeof repoInfo.default_branch === "string") {
-            ref = repoInfo.default_branch as string;
-          }
-        } catch (e) {
-          // Non-fatal; keep fallback to "main"
-        }
-
-        const result = await detector.detectConfig(
-          owner,
-          repo,
-          ref,
-          Number.parseInt(repository.githubInstallationId, 10),
-        );
-
-        // Resolve workspace (DB UUID) and compute workspaceKey from slug
-        const wsId = await getOrCreateDefaultWorkspace(clerkOrgId);
-        const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
-        const workspaceId = ws?.id ?? wsId;
-
-        // Update repository with detection result
-        await ctx.db
-          .update(DeusConnectedRepository)
-          .set({
-            configStatus: result.exists ? "configured" : "unconfigured",
-            configPath: result.path,
-            configDetectedAt: new Date().toISOString(),
-            workspaceId,
-          })
-          .where(eq(DeusConnectedRepository.id, repository.id));
-
-        return {
-          exists: result.exists,
-          path: result.path,
-          workspaceId,
-        };
-      } catch (error: any) {
-        console.error("[tRPC] Config detection failed:", error);
-
-        // Update status to error
-        await ctx.db
-          .update(DeusConnectedRepository)
-          .set({
-            configStatus: "error",
-            configDetectedAt: new Date().toISOString(),
-          })
-          .where(eq(DeusConnectedRepository.id, repository.id));
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to detect configuration",
-          cause: error,
-        });
-      }
+      return source ?? null;
     }),
 
   /**
-   * Manually start an ingestion job for a repository
+   * Update sync status for a repository
    *
-   * Enumerates repository files on the default branch, filters by lightfast.yml include globs,
-   * and triggers an Inngest event equivalent to a push with all matched files marked as modified.
+   * Used by webhooks to mark repositories as active/inactive when:
+   * - Repository is removed from installation
+   * - Repository access is revoked
+   * - Installation is suspended/deleted
+   *
+   * Updates:
+   * - isActive status
+   * - lastSyncedAt timestamp
+   * - lastSyncError message (if reason provided)
    */
-  reindex: protectedProcedure
-    .input(
-      z.object({
-        repositoryId: z.string(),
-        clerkOrgSlug: z.string(), // Clerk org slug from URL
-      })
-    )
+  updateSyncStatus: publicProcedure
+    .input(updateSyncStatusSchema)
     .mutation(async ({ ctx, input }) => {
-      // Verify org access and resolve org ID
-      const { clerkOrgId } = await verifyOrgAccessAndResolve({
-        clerkOrgSlug: input.clerkOrgSlug,
-        userId: ctx.auth.userId,
-      });
-
-      // Verify admin access - only admins can trigger expensive reindex operations
-      await verifyOrgMembership({
-        clerkOrgId,
-        userId: ctx.auth.userId,
-        requireAdmin: true,
-      });
-
-      // Resolve repository
-      const [repository] = await ctx.db
+      // Find the source first
+      const sources = await db
         .select()
-        .from(DeusConnectedRepository)
-        .where(
-          and(
-            eq(DeusConnectedRepository.id, input.repositoryId),
-            eq(DeusConnectedRepository.clerkOrgId, clerkOrgId),
-          ),
-        )
-        .limit(1);
+        .from(workspaceSources)
+        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
 
-      if (!repository) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
-      }
-
-      // Check for existing reindex job to prevent spam and duplicate work
-      const { jobs } = await import("@db/console/schema");
-      const { inArray } = await import("drizzle-orm");
-
-      const existingJob = await ctx.db.query.jobs.findFirst({
-        where: and(
-          eq(jobs.repositoryId, input.repositoryId),
-          eq(jobs.name, "reindex"),
-          inArray(jobs.status, ["queued", "running"]),
-        ),
-      });
-
-      if (existingJob) {
+      if (sources.length === 0) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Reindex already in progress",
-          cause: { jobId: existingJob.id, status: existingJob.status },
+          code: "NOT_FOUND",
+          message: `Repository not found: ${input.githubRepoId}`,
         });
       }
 
-      const fullName = repository.metadata?.fullName;
-      if (!fullName) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Repository metadata missing fullName" });
-      }
-      const [owner, repo] = fullName.split("/");
-      if (!owner || !repo) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid repository fullName format" });
-      }
+      // Update all matching sources (there might be multiple workspaces using same repo)
+      const now = new Date();
+      const updates = await Promise.all(
+        sources.map((source) =>
+          db
+            .update(workspaceSources)
+            .set({
+              isActive: input.isActive,
+              lastSyncedAt: now,
+              lastSyncStatus: input.isActive ? "success" : "failed",
+              lastSyncError: input.reason ?? null,
+              updatedAt: now,
+            })
+            .where(eq(workspaceSources.id, source.id))
+        )
+      );
 
-      // GitHub App client
-      const app = getGitHubApp();
-      const octokit = await app.getInstallationOctokit(Number.parseInt(repository.githubInstallationId, 10));
+      return {
+        success: true,
+        updated: updates.length,
+      };
+    }),
 
-      // Resolve default branch and HEAD commit SHA
-      const { data: repoInfo } = await octokit.request("GET /repos/{owner}/{repo}", {
-        owner,
-        repo,
-        headers: { "X-GitHub-Api-Version": "2022-11-28" },
-      });
-      const defaultBranch = (repoInfo.default_branch as string) ?? "main";
-      const { data: head } = await octokit.request("GET /repos/{owner}/{repo}/commits/{ref}", {
-        owner,
-        repo,
-        ref: defaultBranch,
-        headers: { "X-GitHub-Api-Version": "2022-11-28" },
-      });
-      const headSha = (head.sha as string) ?? defaultBranch;
+  /**
+   * Update config status for a repository
+   *
+   * Used by webhooks to track lightfast.yml configuration:
+   * - When push event includes config file changes
+   * - When repository is added and we check for config
+   *
+   * Updates the sourceConfig.status field with:
+   * - configStatus: "configured" | "unconfigured"
+   * - configPath: path to the config file (e.g., ".lightfast.yml")
+   * - lastConfigCheck: timestamp of last check
+   */
+  updateConfigStatus: publicProcedure
+    .input(updateConfigStatusSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Find the source first
+      const sources = await db
+        .select()
+        .from(workspaceSources)
+        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
 
-      // Detect config path and load config contents
-      const detector = new ConfigDetectorService(app);
-      const detection = await detector.detectConfig(owner, repo, defaultBranch, Number.parseInt(repository.githubInstallationId, 10));
-
-      let includeGlobs: string[] = ["docs/**/*.md", "docs/**/*.mdx", "README.md"]; // sensible defaults
-      let configuredStore: string | undefined;
-      if (detection.exists && detection.path) {
-        const { data } = await octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
-          owner,
-          repo,
-          path: detection.path!,
-          ref: defaultBranch,
-          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+      if (sources.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Repository not found: ${input.githubRepoId}`,
         });
-        if ("content" in data && data.type === "file") {
-          const yamlText = Buffer.from((data.content as string) ?? "", "base64").toString("utf-8");
-          try {
-            const parsed = yaml.parse(yamlText) as any;
-            if (parsed && Array.isArray(parsed.include) && parsed.include.length > 0) {
-              includeGlobs = parsed.include as string[];
-            }
-            if (parsed && typeof parsed.store === "string" && parsed.store.length > 0) {
-              configuredStore = parsed.store as string;
-            }
-          } catch {
-            // ignore parse errors; keep defaults
+      }
+
+      // Update all matching sources
+      const now = new Date();
+      const updates = await Promise.all(
+        sources.map((source) => {
+          // Type guard to ensure we're working with GitHub config
+          if (source.sourceConfig.provider !== "github") {
+            return Promise.resolve(null);
           }
-        }
+
+          // Create updated config with new status
+          const updatedConfig = {
+            ...source.sourceConfig,
+            status: {
+              configStatus: input.configStatus,
+              configPath: input.configPath ?? undefined,
+              lastConfigCheck: now.toISOString(),
+            },
+          };
+
+          return db
+            .update(workspaceSources)
+            .set({
+              sourceConfig: updatedConfig,
+              updatedAt: now,
+            })
+            .where(eq(workspaceSources.id, source.id));
+        })
+      );
+
+      return {
+        success: true,
+        updated: updates.filter((u) => u !== null).length,
+      };
+    }),
+
+  /**
+   * Mark all repositories for an installation as inactive
+   *
+   * Used by webhooks when:
+   * - Installation is deleted
+   * - Installation is suspended
+   * - All repository access is revoked
+   *
+   * This is a bulk operation that marks all sources for the installation.
+   */
+  markInstallationInactive: publicProcedure
+    .input(markInstallationInactiveSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Find all sources for this installation
+      const sources = await db
+        .select()
+        .from(workspaceSources)
+        .where(eq(workspaceSources.isActive, true));
+
+      // Filter to GitHub sources with matching installationId
+      const installationSources = sources.filter(
+        (source) =>
+          source.sourceConfig.provider === "github" &&
+          source.sourceConfig.installationId === input.githubInstallationId
+      );
+
+      if (installationSources.length === 0) {
+        return {
+          success: true,
+          updated: 0,
+        };
       }
 
-      // Enumerate repo tree and filter by globs
-      const { data: tree } = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
-        owner,
-        repo,
-        tree_sha: headSha,
-        recursive: "true",
-        headers: { "X-GitHub-Api-Version": "2022-11-28" },
-      });
+      // Update all matching sources
+      const now = new Date();
+      const updates = await Promise.all(
+        installationSources.map((source) =>
+          db
+            .update(workspaceSources)
+            .set({
+              isActive: false,
+              lastSyncedAt: now,
+              lastSyncStatus: "failed",
+              lastSyncError: "GitHub installation removed or suspended",
+              updatedAt: now,
+            })
+            .where(eq(workspaceSources.id, source.id))
+        )
+      );
 
-      const allPaths: string[] = Array.isArray((tree as any).tree)
-        ? (tree as any).tree.filter((n: any) => n.type === "blob" && typeof n.path === "string").map((n: any) => n.path as string)
-        : [];
-
-      const matches = allPaths.filter((p) => includeGlobs.some((g) => minimatch(p, g)));
-      if (matches.length === 0) {
-        return { queued: 0, matched: 0, message: "No files match include globs" };
-      }
-
-      // Prepare Inngest event
-      const deliveryId = randomUUID();
-      // Resolve default workspace (DB UUID) + workspaceKey
-      const wsId = await getOrCreateDefaultWorkspace(clerkOrgId);
-      const ws = await ctx.db.query.workspaces.findFirst({ where: eq(workspaces.id, wsId) });
-      const workspaceId = ws?.id ?? wsId; // DB UUID
-      const workspaceKey = ws ? getWorkspaceKey(ws.slug) : `ws-default`;
-      const changedFiles = matches.map((path) => ({ path, status: "modified" as const }));
-
-      // Send event to Inngest
-      await inngest.send({
-        name: "apps-console/docs.push",
-        data: {
-          workspaceId,
-          workspaceKey,
-          repoFullName: fullName,
-          githubRepoId: Number.parseInt(repository.githubRepoId, 10),
-          githubInstallationId: Number.parseInt(repository.githubInstallationId, 10),
-          beforeSha: headSha,
-          afterSha: headSha,
-          deliveryId,
-          source: "manual",
-          changedFiles,
-        },
-      });
-
-      return { queued: matches.length, matched: matches.length, deliveryId, ref: defaultBranch };
+      return {
+        success: true,
+        updated: updates.length,
+      };
     }),
 } satisfies TRPCRouterRecord;
