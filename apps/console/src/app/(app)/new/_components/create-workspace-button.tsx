@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useFormContext } from "react-hook-form";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -34,11 +38,8 @@ export function CreateWorkspaceButton() {
   const selectedOrgId = form.watch("organizationId");
 
   // Get GitHub-related state from context
-  const {
-    selectedRepository,
-    userSourceId,
-    selectedInstallation,
-  } = useWorkspaceForm();
+  const { selectedRepository, userSourceId, selectedInstallation } =
+    useWorkspaceForm();
 
   // Find the organization by ID from tRPC cache
   const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
@@ -78,8 +79,10 @@ export function CreateWorkspaceButton() {
               // Add optimistic workspace (will be replaced by server data)
               draft.push({
                 id: "temp-" + Date.now(),
-                name: variables.workspaceName,  // User-facing name used in URLs
-                slug: variables.workspaceName.toLowerCase().replace(/\s+/g, "-"),  // Internal slug
+                name: variables.workspaceName, // User-facing name used in URLs
+                slug: variables.workspaceName
+                  .toLowerCase()
+                  .replace(/\s+/g, "-"), // Internal slug
                 createdAt: new Date().toISOString(),
                 repositories: [],
                 totalDocuments: 0,
@@ -118,11 +121,12 @@ export function CreateWorkspaceButton() {
   // Connect repository directly to workspace (NEW simplified 2-table API)
   const connectDirectMutation = useMutation(
     trpc.integration.workspace.connectDirect.mutationOptions({
-      onError: (error: any) => {
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : null;
         toast({
           title: "Connection failed",
           description:
-            error.message || "Failed to connect repository. Please try again.",
+            message ?? "Failed to connect repository. Please try again.",
           variant: "destructive",
         });
       },
@@ -243,8 +247,7 @@ export function CreateWorkspaceButton() {
     connectDirectMutation.isPending;
 
   const isLoading =
-    createWorkspaceMutation.isPending ||
-    connectDirectMutation.isPending;
+    createWorkspaceMutation.isPending || connectDirectMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">

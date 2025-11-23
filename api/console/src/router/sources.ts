@@ -4,7 +4,7 @@ import { workspaceSources, type WorkspaceSource } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { publicProcedure } from "../trpc";
+import { webhookM2MProcedure } from "../trpc";
 
 /**
  * Sources Router
@@ -59,7 +59,15 @@ const updateGithubMetadataSchema = z.object({
 });
 
 /**
- * Sources router - PUBLIC procedures for webhook/API route usage
+ * Sources router - Webhook M2M procedures
+ *
+ * All procedures require webhook M2M authentication (Clerk token or legacy webhook header).
+ * Used by GitHub webhook handlers to update repository state after webhook events.
+ *
+ * Security:
+ * - Requires webhook service M2M token (CLERK_M2M_WEBHOOK_CLIENT_ID)
+ * - Legacy webhook auth (x-webhook-source: internal) accepted during migration
+ * - Validates token client ID matches webhook service
  *
  * All procedures are provider-specific and prefixed accordingly.
  */
@@ -72,7 +80,7 @@ export const sourcesRouter = {
    *
    * Used by webhooks to find which workspace a repo belongs to.
    */
-  findByGithubRepoId: publicProcedure
+  findByGithubRepoId: webhookM2MProcedure
     .input(findByGithubRepoIdSchema)
     .query(async ({ ctx, input }) => {
       const result = await db
@@ -109,7 +117,7 @@ export const sourcesRouter = {
    * - lastSyncedAt timestamp
    * - lastSyncError message (if reason provided)
    */
-  updateGithubSyncStatus: publicProcedure
+  updateGithubSyncStatus: webhookM2MProcedure
     .input(updateGithubSyncStatusSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first
@@ -160,7 +168,7 @@ export const sourcesRouter = {
    * - configPath: path to the config file (e.g., ".lightfast.yml")
    * - lastConfigCheck: timestamp of last check
    */
-  updateGithubConfigStatus: publicProcedure
+  updateGithubConfigStatus: webhookM2MProcedure
     .input(updateGithubConfigStatusSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first
@@ -221,7 +229,7 @@ export const sourcesRouter = {
    *
    * This is a bulk operation that marks all sources for the installation.
    */
-  markGithubInstallationInactive: publicProcedure
+  markGithubInstallationInactive: webhookM2MProcedure
     .input(markGithubInstallationInactiveSchema)
     .mutation(async ({ ctx, input }) => {
       // Find all sources for this installation
@@ -273,7 +281,7 @@ export const sourcesRouter = {
    * Used by GitHub webhooks when a repository is deleted.
    * Marks the repository as inactive and updates metadata to reflect deletion.
    */
-  markGithubDeleted: publicProcedure
+  markGithubDeleted: webhookM2MProcedure
     .input(markGithubDeletedSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first
@@ -334,7 +342,7 @@ export const sourcesRouter = {
    * - Privacy settings changed
    * - Archive status changed
    */
-  updateGithubMetadata: publicProcedure
+  updateGithubMetadata: webhookM2MProcedure
     .input(updateGithubMetadataSchema)
     .mutation(async ({ ctx, input }) => {
       // Find the source first

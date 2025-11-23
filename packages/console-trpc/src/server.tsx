@@ -25,13 +25,33 @@ const createContext = cache(async () => {
 });
 
 /**
- * Create context for internal webhook calls
- * Sets x-webhook-source header to identify server-side calls from webhook handlers
+ * Create context for webhook M2M calls
+ * Uses long-lived Clerk M2M token for webhook service
  */
 const createWebhookContext = cache(async () => {
+  const { getM2MToken } = await import("@repo/console-clerk-m2m");
+  const token = getM2MToken("webhook");
+
   const heads = new Headers();
   heads.set("x-trpc-source", "webhook-service");
-  heads.set("x-webhook-source", "internal");
+  heads.set("authorization", `Bearer ${token}`);
+
+  return createTRPCContext({
+    headers: heads,
+  });
+});
+
+/**
+ * Create context for Inngest M2M calls
+ * Uses long-lived Clerk M2M token for Inngest service
+ */
+const createInngestContext = cache(async () => {
+  const { getM2MToken } = await import("@repo/console-clerk-m2m");
+  const token = getM2MToken("inngest");
+
+  const heads = new Headers();
+  heads.set("x-trpc-source", "inngest-workflow");
+  heads.set("authorization", `Bearer ${token}`);
 
   return createTRPCContext({
     headers: heads,
@@ -48,11 +68,21 @@ export const trpc: TRPCOptionsProxy<ConsoleAppRouter> = createTRPCOptionsProxy({
 
 /**
  * Create a server-side tRPC caller for webhook handlers
- * This caller is authenticated as an internal webhook source
- * and should only be used by verified webhook handlers (after signature verification)
+ * This caller is authenticated with webhook M2M token
+ * Should only be used by verified webhook handlers (after signature verification)
  */
 export const createCaller = cache(async () => {
   const ctx = await createWebhookContext();
+  return consoleAppRouter.createCaller(ctx);
+});
+
+/**
+ * Create a server-side tRPC caller for Inngest workflows
+ * This caller is authenticated with Inngest M2M token
+ * Should only be used by Inngest background workflows
+ */
+export const createInngestCaller = cache(async () => {
+  const ctx = await createInngestContext();
   return consoleAppRouter.createCaller(ctx);
 });
 

@@ -59,8 +59,6 @@ function getStatusConfig(status: string | null) {
  */
 function SourceItem({ connection }: { connection: EnrichedConnection }) {
   const resource = connection.resource;
-  if (!resource) return null;
-
   const resourceData = resource.resourceData;
   const statusConfig = getStatusConfig(connection.lastSyncStatus);
   const StatusIcon = statusConfig.icon;
@@ -75,7 +73,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   } else if (resourceData.provider === "linear") {
     displayName = resourceData.teamName;
   } else if (resourceData.provider === "notion") {
-    displayName = resourceData.pageName || resourceData.databaseName || "Notion Resource";
+    displayName = resourceData.pageName ?? resourceData.databaseName ?? "Notion Resource";
   } else {
     // sentry or other providers
     displayName = `${resourceData.orgSlug}/${resourceData.projectSlug}`;
@@ -231,9 +229,6 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   // Group by provider
   const groupedByProvider = connections.reduce(
     (acc, connection) => {
-      if (!connection.resource?.resourceData) {
-        return acc;
-      }
       const provider = connection.resource.resourceData.provider;
       acc[provider] ??= [];
       acc[provider].push(connection);

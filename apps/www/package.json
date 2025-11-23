@@ -26,6 +26,7 @@
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
+    "@rescale/nemo": "^2.0.2",
     "@sentry/nextjs": "^10.20.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/analytics": "workspace:*",

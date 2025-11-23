@@ -29,6 +29,10 @@ export type AuthContext =
       source: "internal";
     }
   | {
+      type: "m2m";
+      machineId: string; // Machine ID that created the token (webhook or inngest machine)
+    }
+  | {
       type: "apiKey";
       workspaceId: string;
       userId: string;
@@ -54,12 +58,46 @@ export type AuthContext =
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
+  // Check for M2M Bearer token (highest priority - server-to-server auth)
+  const authHeader = opts.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "");
+
+    try {
+      const { verifyM2MToken } = await import("@repo/console-clerk-m2m");
+
+      // Verify using tRPC machine secret (works for all sender machines)
+      const verified = await verifyM2MToken(token);
+
+      if (!verified.expired && !verified.revoked) {
+        console.info(
+          `>>> tRPC Request from ${source} - M2M token (machine: ${verified.subject})`
+        );
+        return {
+          auth: {
+            type: "m2m" as const,
+            machineId: verified.subject,  // Webhook or Inngest machine ID
+          },
+          db,
+          headers: opts.headers,
+        };
+      } else {
+        console.warn("[M2M Auth] Token is expired or revoked");
+      }
+    } catch (error) {
+      // Token verification failed - log but continue to other auth methods
+      console.warn("[M2M Auth] Token verification error:", error);
+      // Fall through to other auth methods
+    }
+  }
+
   // Check for internal webhook calls (server-side only)
   // This header is set by our webhook service layer and cannot be spoofed via HTTP
   // because it's only added by server-side createCaller, not the HTTP handler
+  // NOTE: This is legacy - prefer M2M authentication above
   const webhookSource = opts.headers.get("x-webhook-source");
   if (webhookSource === "internal") {
-    console.info(`>>> tRPC Request from ${source} - internal webhook`);
+    console.info(`>>> tRPC Request from ${source} - internal webhook (legacy)`);
     return {
       auth: { type: "webhook" as const, source: "internal" as const },
       db,
@@ -219,35 +257,126 @@ export const clerkProtectedProcedure = sentrifiedProcedure
   });
 
 /**
- * Webhook Protected procedure
+ * M2M (Machine-to-Machine) Protected procedure
  *
- * If you want a query or mutation to ONLY be accessible from verified webhook handlers, use this.
- * This is used by repository mutation procedures that should only be called after webhook signature verification.
+ * Generic M2M procedure that accepts tokens from ANY M2M service.
+ * For service-specific procedures, use webhookM2MProcedure or inngestM2MProcedure.
  *
- * Verifies that the call is from an internal webhook source (server-side only) and guarantees `ctx.auth` is of type "webhook".
+ * Requires valid Clerk M2M access token in Authorization header.
  *
  * Security:
- * - The x-webhook-source header is only set by our server-side createCaller
- * - Cannot be spoofed via HTTP requests (not passed through by fetchRequestHandler)
- * - Webhook handlers verify GitHub signatures before calling these procedures
+ * - Token verified with Clerk using OAuth 2.0
+ * - Token contains client_id (azp claim) for audit trail
+ * - Tokens can be revoked via Clerk dashboard
+ * - Industry-standard authentication
  *
+ * @see https://clerk.com/docs/authentication/m2m
  * @see https://trpc.io/docs/procedures
  */
-export const webhookProcedure = sentrifiedProcedure
+export const m2mProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "webhook") {
+    if (ctx.auth.type !== "m2m") {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "This endpoint can only be called by verified webhook handlers",
+        message:
+          "M2M token required. This endpoint is for internal services only. " +
+          "Provide 'Authorization: Bearer <token>' header with valid Clerk M2M token.",
       });
     }
 
     return next({
       ctx: {
         ...ctx,
-        // Type-safe webhook auth (guaranteed to be type "webhook")
-        auth: ctx.auth as Extract<AuthContext, { type: "webhook" }>,
+        auth: ctx.auth as Extract<AuthContext, { type: "m2m" }>,
+      },
+    });
+  });
+
+/**
+ * Webhook M2M Protected procedure
+ *
+ * For GitHub webhook handlers ONLY.
+ * Validates that the M2M token was created by the webhook machine.
+ *
+ * This provides:
+ * - Service-specific audit trail (know webhook handler made the call)
+ * - Granular access control (revoke webhook tokens without affecting Inngest)
+ * - Better security (separate credentials for separate services)
+ *
+ * @see https://clerk.com/docs/machine-auth/m2m-tokens
+ */
+export const webhookM2MProcedure = sentrifiedProcedure
+  .use(timingMiddleware)
+  .use(async ({ ctx, next }) => {
+    // Require M2M token
+    if (ctx.auth.type !== "m2m") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message:
+          "Webhook M2M token required. This endpoint is for GitHub webhook handlers only.",
+      });
+    }
+
+    // Validate it's from the webhook machine
+    const { getExpectedMachineId } = await import("@repo/console-clerk-m2m");
+    const expectedMachineId = getExpectedMachineId("webhook");
+
+    if (ctx.auth.machineId !== expectedMachineId) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `This endpoint requires webhook machine token, got machine: ${ctx.auth.machineId}`,
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        auth: ctx.auth as Extract<AuthContext, { type: "m2m" }>,
+      },
+    });
+  });
+
+/**
+ * Inngest M2M Protected procedure
+ *
+ * For Inngest background workflows ONLY.
+ * Validates that the M2M token was created by the Inngest machine.
+ *
+ * This provides:
+ * - Service-specific audit trail (know Inngest workflow made the call)
+ * - Granular access control (revoke Inngest tokens without affecting webhooks)
+ * - Better security (separate credentials for separate services)
+ *
+ * @see https://clerk.com/docs/machine-auth/m2m-tokens
+ */
+export const inngestM2MProcedure = sentrifiedProcedure
+  .use(timingMiddleware)
+  .use(async ({ ctx, next }) => {
+    // Require M2M token (no legacy fallback for Inngest)
+    if (ctx.auth.type !== "m2m") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message:
+          "Inngest M2M token required. This endpoint is for Inngest workflows only.",
+      });
+    }
+
+    // Validate it's from the Inngest machine
+    const { getExpectedMachineId } = await import("@repo/console-clerk-m2m");
+    const expectedMachineId = getExpectedMachineId("inngest");
+
+    if (ctx.auth.machineId !== expectedMachineId) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `This endpoint requires Inngest machine token, got machine: ${ctx.auth.machineId}`,
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        auth: ctx.auth as Extract<AuthContext, { type: "m2m" }>,
       },
     });
   });

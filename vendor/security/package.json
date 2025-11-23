@@ -10,6 +10,7 @@
     },
     "./env": "./env.ts",
     "./middleware": "./src/middleware.ts",
+    "./clerk-nosecone": "./src/clerk-nosecone.ts",
     "./requests/constants": "./src/requests/constants.ts"
   },
   "license": "MIT",
@@ -28,6 +29,7 @@
     "@types/js-cookie": "^3.0.6",
     "@types/react": "19.2.2",
     "eslint": "catalog:",
+    "nosecone": "1.0.0-beta.15",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
@@ -37,7 +39,7 @@
     "@arcjet/next": "1.0.0-beta.10",
     "@nosecone/next": "1.0.0-beta.15",
     "@t3-oss/env-nextjs": "catalog:",
-    "@vendor/clerk": "workspace:*",
+    "@vendor/clerk": "workspace:^",
     "js-cookie": "^3.0.5",
     "react": "19.2.0",
     "zod": "catalog:"

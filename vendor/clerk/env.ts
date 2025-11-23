@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-// Base Clerk environment variables (without webhook secret)
+// Base Clerk environment variables
 export const clerkEnvBase = createEnv({
   shared: {},
   server: {

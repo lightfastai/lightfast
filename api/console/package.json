@@ -33,6 +33,7 @@
 		"@repo/console-api-key": "workspace:*",
 		"@repo/console-auth-middleware": "workspace:^",
 		"@repo/console-chunking": "workspace:*",
+		"@repo/console-clerk-m2m": "workspace:*",
 		"@repo/console-config": "workspace:*",
 		"@repo/console-embed": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",

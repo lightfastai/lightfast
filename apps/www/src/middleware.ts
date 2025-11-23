@@ -1,43 +1,41 @@
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
+import { createClerkNoseconeOptions } from "@vendor/security/clerk-nosecone";
+import { securityMiddleware } from "@vendor/security/middleware";
+import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { consoleUrl, authUrl } from "~/lib/related-projects";
 
+// Security headers with Clerk CSP configuration
+const securityHeaders = securityMiddleware(createClerkNoseconeOptions());
+
 /**
- * Public routes that don't require authentication.
- * The www app is a public marketing site, so all routes are accessible.
- * However, authenticated users will be redirected to the console app.
+ * Custom middleware for www-specific logic
+ * Can be extended with analytics, rate limiting, etc.
  */
-const isPublicRoute = createRouteMatcher([
-  // Marketing pages
-  "/",
-  "/features(.*)",
-  "/pricing(.*)",
-  "/blog(.*)",
-  "/changelog(.*)",
-  "/integrations(.*)",
-  "/use-cases(.*)",
-  "/early-access(.*)",
-  "/search(.*)",
+const wwwMiddleware = (_request: NextRequest) => {
+  // Future: Add www-specific middleware here
+  // - Analytics tracking for marketing pages
+  // - A/B testing
+  // - Custom redirects
+  return NextResponse.next();
+};
 
-  // Legal pages (accessible even when authenticated)
-  "/legal(.*)",
-
-  // API routes
-  "/api/health(.*)",
-  "/api/inngest(.*)",
-  "/api/early-access(.*)",
-
-  // Static files
-  "/robots.txt",
-  "/sitemap(.*)",
-  "/favicon.ico",
-  "/manifest.json",
-]);
+/**
+ * Compose middleware with NEMO
+ * Execution order: wwwMiddleware runs before the auth check
+ */
+const composedMiddleware = createNEMO(
+  {},
+  {
+    before: [wwwMiddleware],
+  }
+);
 
 /**
  * Routes that authenticated users can still access
  * (won't trigger redirect to console)
+ * All other routes redirect authenticated users to the console app
  */
 const isAllowedForAuthenticatedUsers = createRouteMatcher([
   "/legal(.*)",
@@ -49,32 +47,41 @@ const isAllowedForAuthenticatedUsers = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(
-  async (auth, req: NextRequest) => {
+  async (auth, req: NextRequest, event) => {
     // Check if user is authenticated
     const { userId } = await auth();
 
-    // Security headers
-    const response = NextResponse.next();
-    response.headers.set("X-Frame-Options", "DENY");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+    // Create base response
+    let response = NextResponse.next();
 
     /**
      * Redirect authenticated users to console app
      * Exception: legal pages and API routes
      */
     if (userId && !isAllowedForAuthenticatedUsers(req)) {
-      return NextResponse.redirect(new URL(consoleUrl));
+      response = NextResponse.redirect(new URL(consoleUrl));
     }
 
-    return response;
+    // Run security headers first
+    const headersResponse = await securityHeaders();
+
+    // Then run composed middleware
+    const middlewareResponse = await composedMiddleware(req, event);
+
+    // Apply security headers to final response
+    const finalResponse = middlewareResponse ?? response;
+    for (const [key, value] of headersResponse.headers.entries()) {
+      finalResponse.headers.set(key, value);
+    }
+
+    return finalResponse;
   },
   {
     // Point to auth app for sign-in/sign-up
     signInUrl: `${authUrl}/sign-in`,
     signUpUrl: `${authUrl}/sign-up`,
     // Enable debug logging in development
-    debug: process.env.NODE_ENV === "development",
+    //    debug: process.env.NODE_ENV === "development",
   },
 );
 

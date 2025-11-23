@@ -1,8 +1,37 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
+import { createClerkNoseconeOptions } from "@vendor/security/clerk-nosecone";
+import { securityMiddleware } from "@vendor/security/middleware";
+import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { consoleUrl } from "~/lib/related-projects";
+
+// Security headers with Clerk CSP configuration
+const securityHeaders = securityMiddleware(createClerkNoseconeOptions());
+
+/**
+ * Custom middleware for auth-specific logic
+ * Handles CORS for cross-origin authentication
+ */
+const authMiddleware = (_request: NextRequest) => {
+  // Future: Add auth-specific middleware here
+  // - Rate limiting for sign-in attempts
+  // - Custom analytics for auth events
+  // - Fraud detection
+  return NextResponse.next();
+};
+
+/**
+ * Compose middleware with NEMO
+ * Execution order: authMiddleware runs before the auth check
+ */
+const composedMiddleware = createNEMO(
+  {},
+  {
+    before: [authMiddleware],
+  }
+);
 
 
 // Define public routes that don't need authentication
@@ -26,7 +55,7 @@ const isAuthRoute = createRouteMatcher([
 const isRootPath = createRouteMatcher(["/"]);
 
 export default clerkMiddleware(
-	async (auth, req: NextRequest) => {
+	async (auth, req: NextRequest, event) => {
 		// Handle CORS preflight requests
 		const preflightResponse = handleCorsPreflightRequest(req);
 		if (preflightResponse) return preflightResponse;
@@ -38,15 +67,18 @@ export default clerkMiddleware(
 		const isPending = Boolean(userId && !orgId);
 		const isActive = Boolean(userId && orgId);
 
+		// Create base response
+		let response = NextResponse.next();
+
 		// UX improvement: redirect authenticated users away from auth pages
 		if ((isPending || isActive) && isAuthRoute(req)) {
 			// Pending users → team creation to create org
 			if (isPending) {
-				return NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
+				response = NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
 			}
 			// Active users → their org dashboard
-			if (isActive && orgSlug) {
-				return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
+			else if (isActive && orgSlug) {
+				response = NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
 			}
 		}
 
@@ -54,15 +86,15 @@ export default clerkMiddleware(
 		if (isRootPath(req)) {
 			if (!userId) {
 				// Not signed in → sign-in page
-				return NextResponse.redirect(new URL("/sign-in", req.url));
+				response = NextResponse.redirect(new URL("/sign-in", req.url));
 			}
-			if (isPending) {
+			else if (isPending) {
 				// Signed in but no org → team creation
-				return NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
+				response = NextResponse.redirect(new URL("/account/teams/new", consoleUrl));
 			}
-			if (isActive && orgSlug) {
+			else if (isActive && orgSlug) {
 				// Signed in with org → org dashboard
-				return NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
+				response = NextResponse.redirect(new URL(`/org/${orgSlug}`, consoleUrl));
 			}
 		}
 
@@ -71,7 +103,21 @@ export default clerkMiddleware(
 			await auth.protect();
 		}
 
-		return applyCorsHeaders(NextResponse.next(), req);
+		// Run security headers first
+		const headersResponse = await securityHeaders();
+
+		// Then run composed middleware
+		const middlewareResponse = await composedMiddleware(req, event);
+
+		// Apply CORS headers to final response
+		const finalResponse = applyCorsHeaders(middlewareResponse ?? response, req);
+
+		// Apply security headers to final response
+		for (const [key, value] of headersResponse.headers.entries()) {
+			finalResponse.headers.set(key, value);
+		}
+
+		return finalResponse;
 	},
 	{
 		// Enable debug logging in development

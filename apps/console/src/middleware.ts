@@ -1,9 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { nosecone } from "@nosecone/next";
+import { createClerkNoseconeOptions } from "@vendor/security/clerk-nosecone";
+import { securityMiddleware } from "@vendor/security/middleware";
+import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { noseconeOptionsWithClerk } from "@vendor/security/middleware";
 import { authUrl } from "~/lib/related-projects";
+
+// Security headers with Clerk CSP configuration
+const securityHeaders = securityMiddleware(createClerkNoseconeOptions());
 
 // Public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -22,12 +26,35 @@ const isTeamCreationRoute = createRouteMatcher([
   "/api/organizations(.*)",
 ]);
 
+/**
+ * Custom middleware for console-specific logic
+ * Can be extended with rate limiting, analytics, logging, etc.
+ */
+const consoleMiddleware = (_request: NextRequest) => {
+  // Future: Add console-specific middleware here
+  // - Rate limiting for API routes
+  // - Analytics tracking
+  // - Custom logging
+  return NextResponse.next();
+};
+
+/**
+ * Compose middleware with NEMO
+ * Execution order: consoleMiddleware runs before the auth check
+ */
+const composedMiddleware = createNEMO(
+  {},
+  {
+    before: [consoleMiddleware],
+  }
+);
+
 // Protected routes (not listed above) include:
 // - /:slug/* - Organization-specific pages (settings, repositories, etc.)
 // - /account/settings/* - Personal account settings (profile, integrations, API keys)
 // - /api/trpc/* - tRPC API routes
 export default clerkMiddleware(
-  async (auth, req: NextRequest) => {
+  async (auth, req: NextRequest, event) => {
     // Single auth check - detect both pending and active users
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
@@ -46,15 +73,19 @@ export default clerkMiddleware(
       await auth.protect();
     }
 
-    // Apply security headers configured for Clerk authentication
-    const secureHeaders = nosecone(noseconeOptionsWithClerk);
+    // Run security headers first
+    const headersResponse = await securityHeaders();
 
-    // Apply security headers to response
-    for (const [key, value] of secureHeaders.entries()) {
-      response.headers.set(key, value);
+    // Then run composed middleware
+    const middlewareResponse = await composedMiddleware(req, event);
+
+    // Apply security headers to final response
+    const finalResponse = middlewareResponse ?? response;
+    for (const [key, value] of headersResponse.headers.entries()) {
+      finalResponse.headers.set(key, value);
     }
 
-    return response;
+    return finalResponse;
   },
   {
     // Redirect to auth app for sign-in/sign-up
