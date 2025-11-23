@@ -13,10 +13,8 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/sign-in"], // Allow indexing of public auth pages (sign-up is dev-only)
       disallow: [
         "/api/", // Protect API routes
-        "/_next/", // Protect Next.js internal files  
-        "/onboarding/", // Protect onboarding flow
+        "/_next/", // Protect Next.js internal files
         "/sso-callback/", // Protect SSO callbacks
-        "/choose-organization/", // Protect org selection
         "/sign-up/", // Protect dev-only sign-up page
         "/**/error", // Don't index error pages
       ],

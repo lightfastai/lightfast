@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import DOMPurify from "isomorphic-dompurify";
 import { FileCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
@@ -29,25 +28,24 @@ export function LightfastConfigOverview({
 }: LightfastConfigOverviewProps) {
 	const [highlightedCode, setHighlightedCode] = useState<string>("");
 
-	// Generate lightfast.yml config with sanitized user input
-	// Sanitize all user-provided data to prevent XSS
-	const sanitizedWorkspaceName = DOMPurify.sanitize(workspaceName, {
-		ALLOWED_TAGS: [],
-		ALLOWED_ATTR: [],
-	});
+	// Generate lightfast.yml config
+	// Escape YAML special characters in user input
+	const escapeYaml = (str: string) => {
+		// If string contains special YAML characters, quote it
+		if (/[:\{\}\[\],&*#?|\-<>=!%@`]/.test(str)) {
+			return `"${str.replace(/"/g, '\\"')}"`;
+		}
+		return str;
+	};
 
 	const yamlConfig = `# Lightfast Configuration
 workspace:
-  name: ${sanitizedWorkspaceName}
+  name: ${escapeYaml(workspaceName)}
 
 stores:
 ${stores
 	.map((store) => {
-		const sanitizedStoreName = DOMPurify.sanitize(store.name, {
-			ALLOWED_TAGS: [],
-			ALLOWED_ATTR: [],
-		});
-		return `  - name: ${sanitizedStoreName}
+		return `  - name: ${escapeYaml(store.name)}
     embedding_dim: ${store.embeddingDim}
     vector_db: pinecone
     index_type: hnsw`;
@@ -71,20 +69,15 @@ retrieval:
 					lang: "yaml",
 					theme: "github-dark",
 				});
-				// Sanitize Shiki output as additional layer of defense
-				const sanitizedHtml = DOMPurify.sanitize(html, {
-					ALLOWED_TAGS: ["pre", "code", "span", "div"],
-					ALLOWED_ATTR: ["class", "style"],
-				});
-				setHighlightedCode(sanitizedHtml);
+				setHighlightedCode(html);
 			} catch (error) {
 				console.error("Failed to highlight code:", error);
-				// Fallback to plain text (sanitized)
-				const sanitizedYaml = DOMPurify.sanitize(yamlConfig, {
-					ALLOWED_TAGS: [],
-					ALLOWED_ATTR: [],
-				});
-				setHighlightedCode(`<pre><code>${sanitizedYaml}</code></pre>`);
+				// Fallback to plain text with HTML-escaped content
+				const escapedYaml = yamlConfig
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;");
+				setHighlightedCode(`<pre><code>${escapedYaml}</code></pre>`);
 			}
 		}
 

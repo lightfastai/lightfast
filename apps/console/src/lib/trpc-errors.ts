@@ -1,6 +1,9 @@
 import type { TRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
-import type { ConsoleAppRouter } from "@api/console";
+import type { UserRouter, OrgRouter } from "@api/console";
+
+// Union type for split routers
+type ConsoleRouters = UserRouter & OrgRouter;
 
 /**
  * TRPC error codes that can be returned from the server
@@ -50,7 +53,7 @@ export const ERROR_MESSAGES: Record<TRPCErrorCode, string> = {
  */
 export function isTRPCClientError(
 	error: unknown
-): error is TRPCClientError<ConsoleAppRouter> {
+): error is TRPCClientError<ConsoleRouters> {
 	return error instanceof Error && error.name === "TRPCClientError";
 }
 

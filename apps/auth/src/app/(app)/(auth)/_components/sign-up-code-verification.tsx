@@ -52,9 +52,9 @@ export function SignUpCodeVerification({
 				// Sign-up successful, set the active session
 				setIsRedirecting(true);
 				await setActive({ session: result.createdSessionId });
-				
-				// Redirect to organization selection for the auth flow
-				window.location.href = `/onboarding/choose-organization?redirect_url=${consoleUrl}/`;
+
+				// Redirect to team creation in console app
+				window.location.href = `${consoleUrl}/account/teams/new`;
 			} else {
 				// Log unexpected status for debugging
 				log.warn('[SignUpCodeVerification] Unexpected sign-up status', {

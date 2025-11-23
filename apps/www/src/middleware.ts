@@ -1,13 +1,24 @@
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
-import { createClerkNoseconeOptions } from "@vendor/security/clerk-nosecone";
+import {
+  composeCspOptions,
+  createClerkCspDirectives,
+  createAnalyticsCspDirectives,
+  createSentryCspDirectives,
+} from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
 import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { consoleUrl, authUrl } from "~/lib/related-projects";
 
-// Security headers with Clerk CSP configuration
-const securityHeaders = securityMiddleware(createClerkNoseconeOptions());
+// Security headers with composable CSP configuration
+const securityHeaders = securityMiddleware(
+  composeCspOptions(
+    createClerkCspDirectives(),
+    createAnalyticsCspDirectives(),
+    createSentryCspDirectives(),
+  ),
+);
 
 /**
  * Custom middleware for www-specific logic

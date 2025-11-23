@@ -5,7 +5,12 @@
  */
 
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { ConsoleAppRouter } from "@api/console";
+import type { UserRouter, OrgRouter } from "@api/console";
+
+/**
+ * Combined router type for split user/org routers
+ */
+type ConsoleRouters = UserRouter & OrgRouter;
 
 /**
  * Inferred output types for all tRPC procedures
@@ -18,7 +23,7 @@ import type { ConsoleAppRouter } from "@api/console";
  * type Connection = RouterOutputs["integration"]["workspace"]["list"][number];
  * ```
  */
-export type RouterOutputs = inferRouterOutputs<ConsoleAppRouter>;
+export type RouterOutputs = inferRouterOutputs<ConsoleRouters>;
 
 /**
  * Inferred input types for all tRPC procedures
@@ -30,4 +35,4 @@ export type RouterOutputs = inferRouterOutputs<ConsoleAppRouter>;
  * type CreateResourceInput = RouterInputs["integration"]["resources"]["create"];
  * ```
  */
-export type RouterInputs = inferRouterInputs<ConsoleAppRouter>;
+export type RouterInputs = inferRouterInputs<ConsoleRouters>;

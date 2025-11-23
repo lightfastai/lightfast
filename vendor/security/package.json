@@ -11,6 +11,7 @@
     "./env": "./env.ts",
     "./middleware": "./src/middleware.ts",
     "./clerk-nosecone": "./src/clerk-nosecone.ts",
+    "./csp": "./src/csp/index.ts",
     "./requests/constants": "./src/requests/constants.ts"
   },
   "license": "MIT",

@@ -22,28 +22,29 @@
  * ```
  */
 
-import type { ConsoleAppRouter } from "../../root";
-import { consoleAppRouter } from "../../root";
-import { createTRPCContext } from "../../trpc";
+import type { OrgRouter } from "../../root";
+import { orgRouter } from "../../root";
+import { createOrgTRPCContext } from "../../trpc";
 import { getM2MToken } from "@repo/console-clerk-m2m";
 
 /**
  * Create a tRPC caller authenticated with Inngest M2M token
  *
- * This caller has access to all procedures marked with `inngestM2MProcedure`.
+ * This caller has access to org-scoped procedures marked with `inngestM2MProcedure`.
  * The token is validated to ensure it comes from the Inngest machine.
  *
- * @returns Typed tRPC caller instance
+ * M2M operations are always org-scoped - they operate on workspaces, stores, jobs, etc.
+ * There are no user-scoped M2M procedures.
+ *
+ * @returns Typed tRPC caller instance for org-scoped procedures
  */
-export async function createInngestCaller(): Promise<
-	ReturnType<ConsoleAppRouter["createCaller"]>
-> {
+export async function createInngestCaller(): Promise<ReturnType<typeof orgRouter.createCaller>> {
 	const token = getM2MToken("inngest");
 
 	const headers = new Headers();
 	headers.set("x-trpc-source", "inngest-workflow");
 	headers.set("authorization", `Bearer ${token}`);
 
-	const ctx = await createTRPCContext({ headers });
-	return consoleAppRouter.createCaller(ctx);
+	const ctx = await createOrgTRPCContext({ headers });
+	return orgRouter.createCaller(ctx);
 }

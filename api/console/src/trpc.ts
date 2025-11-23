@@ -21,12 +21,17 @@ import { auth } from "@vendor/clerk/server";
  */
 export type AuthContext =
   | {
-      type: "clerk";
+      type: "clerk-pending";
       userId: string;
+      // Authenticated but hasn't claimed an organization yet
+      // Only allowed for onboarding procedures in PENDING_USER_ALLOWED_PROCEDURES
     }
   | {
-      type: "webhook";
-      source: "internal";
+      type: "clerk-active";
+      userId: string;
+      orgId: string;
+      // Authenticated and has claimed an organization
+      // Can access all org-scoped resources
     }
   | {
       type: "m2m";
@@ -55,71 +60,160 @@ export type AuthContext =
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+
+/**
+ * Create context for user-scoped procedures
+ *
+ * Used by /api/trpc/user/* endpoint
+ * Allows both pending users (no org) and active users (has org)
+ *
+ * Procedures accessible:
+ * - organization.* (create, list, update)
+ * - account.* (profile, API keys, personal integrations)
+ */
+export const createUserTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  // Check for M2M Bearer token (highest priority - server-to-server auth)
+  // Check for M2M Bearer token (highest priority)
   const authHeader = opts.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.replace("Bearer ", "");
 
     try {
       const { verifyM2MToken } = await import("@repo/console-clerk-m2m");
-
-      // Verify using tRPC machine secret (works for all sender machines)
       const verified = await verifyM2MToken(token);
 
       if (!verified.expired && !verified.revoked) {
         console.info(
-          `>>> tRPC Request from ${source} - M2M token (machine: ${verified.subject})`
+          `>>> tRPC User Request from ${source} - M2M token (machine: ${verified.subject})`,
         );
         return {
           auth: {
             type: "m2m" as const,
-            machineId: verified.subject,  // Webhook or Inngest machine ID
+            machineId: verified.subject,
           },
           db,
           headers: opts.headers,
         };
-      } else {
-        console.warn("[M2M Auth] Token is expired or revoked");
       }
     } catch (error) {
-      // Token verification failed - log but continue to other auth methods
       console.warn("[M2M Auth] Token verification error:", error);
-      // Fall through to other auth methods
     }
   }
 
-  // Check for internal webhook calls (server-side only)
-  // This header is set by our webhook service layer and cannot be spoofed via HTTP
-  // because it's only added by server-side createCaller, not the HTTP handler
-  // NOTE: This is legacy - prefer M2M authentication above
-  const webhookSource = opts.headers.get("x-webhook-source");
-  if (webhookSource === "internal") {
-    console.info(`>>> tRPC Request from ${source} - internal webhook (legacy)`);
-    return {
-      auth: { type: "webhook" as const, source: "internal" as const },
-      db,
-      headers: opts.headers,
-    };
-  }
+  // Authenticate via Clerk - ALWAYS allow pending users for user-scoped endpoint
+  const clerkSession = await auth({
+    treatPendingAsSignedOut: false, // Allow pending users
+  });
 
-  // Authenticate via Clerk session only
-  // treatPendingAsSignedOut: false allows pending users (authenticated but no org) to access tRPC procedures
-  // This is needed for onboarding flows where users claim their first organization
-  const clerkSession = await auth({ treatPendingAsSignedOut: false });
   if (clerkSession?.userId) {
-    console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId}`);
-    return {
-      auth: { type: "clerk" as const, userId: clerkSession.userId },
-      db,
-      headers: opts.headers,
-    };
+    const isPending = !clerkSession.orgId;
+    const authType = isPending ? "clerk-pending" : "clerk-active";
+
+    console.info(
+      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (${authType})`,
+    );
+
+    if (isPending) {
+      return {
+        auth: {
+          type: "clerk-pending" as const,
+          userId: clerkSession.userId,
+        },
+        db,
+        headers: opts.headers,
+      };
+    } else {
+      return {
+        auth: {
+          type: "clerk-active" as const,
+          userId: clerkSession.userId,
+          orgId: clerkSession.orgId!,
+        },
+        db,
+        headers: opts.headers,
+      };
+    }
   }
 
   // No authentication
-  console.info(`>>> tRPC Request from ${source} - unauthenticated`);
+  console.info(`>>> tRPC User Request from ${source} - unauthenticated`);
+  return {
+    auth: { type: "unauthenticated" as const },
+    db,
+    headers: opts.headers,
+  };
+};
+
+/**
+ * Create context for org-scoped procedures
+ *
+ * Used by /api/trpc/org/* endpoint
+ * Only allows active users (authenticated + has org)
+ * Pending users are treated as unauthenticated
+ *
+ * Procedures accessible:
+ * - workspace.* (management, jobs, stats)
+ * - integration.* (GitHub, connections)
+ * - stores.* (vector stores)
+ * - jobs.* (background jobs)
+ * - sources.* (data sources)
+ * - clerk.* (org utilities)
+ * - search.*, contents.* (semantic search)
+ */
+export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
+  const source = opts.headers.get("x-trpc-source") ?? "unknown";
+
+  // Check for M2M Bearer token (highest priority)
+  const authHeader = opts.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "");
+
+    try {
+      const { verifyM2MToken } = await import("@repo/console-clerk-m2m");
+      const verified = await verifyM2MToken(token);
+
+      if (!verified.expired && !verified.revoked) {
+        console.info(
+          `>>> tRPC Org Request from ${source} - M2M token (machine: ${verified.subject})`,
+        );
+        return {
+          auth: {
+            type: "m2m" as const,
+            machineId: verified.subject,
+          },
+          db,
+          headers: opts.headers,
+        };
+      }
+    } catch (error) {
+      console.warn("[M2M Auth] Token verification error:", error);
+    }
+  }
+
+  // Authenticate via Clerk - REQUIRE active org for org-scoped endpoint
+  const clerkSession = await auth({
+    treatPendingAsSignedOut: true, // Pending users blocked
+  });
+
+  if (clerkSession?.userId && clerkSession.orgId) {
+    console.info(
+      `>>> tRPC Org Request from ${source} by ${clerkSession.userId} (clerk-active)`,
+    );
+
+    return {
+      auth: {
+        type: "clerk-active" as const,
+        userId: clerkSession.userId,
+        orgId: clerkSession.orgId,
+      },
+      db,
+      headers: opts.headers,
+    };
+  }
+
+  // No authentication or pending user
+  console.info(`>>> tRPC Org Request from ${source} - unauthenticated`);
   return {
     auth: { type: "unauthenticated" as const },
     db,
@@ -132,8 +226,12 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  *
  * This is where the trpc api is initialized, connecting the context and
  * transformer
+ *
+ * Note: Using createUserTRPCContext as the type reference since both
+ * createUserTRPCContext and createOrgTRPCContext return the same context shape.
+ * They only differ in auth validation (user-scoped vs org-scoped).
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const t = initTRPC.context<typeof createUserTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => ({
     ...shape,
@@ -204,43 +302,118 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 
 /**
- * Protected (authenticated) procedure
+ * User-Scoped Procedure
  *
- * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid (either Clerk or API key) and guarantees authentication.
+ * For user-level operations: account settings, profile, list orgs, create org.
+ * Accepts both clerk-pending (no org) and clerk-active (has org) users.
+ *
+ * Use cases:
+ * - User profile and settings
+ * - List user's organizations
+ * - Create new organization
+ * - User-level integrations (GitHub account connection)
+ *
+ * For org-scoped operations (workspaces, repos), use `orgScopedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = sentrifiedProcedure
+export const userScopedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required. Please sign in.",
+      });
+    }
+
+    // Allow both clerk-pending and clerk-active
+    if (ctx.auth.type !== "clerk-pending" && ctx.auth.type !== "clerk-active") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Clerk authentication required",
+      });
     }
 
     return next({
       ctx: {
         ...ctx,
-        // After check above, auth is clerk
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
+        // Type-safe: either clerk-pending or clerk-active
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk-pending" | "clerk-active" }>,
       },
     });
   });
 
 /**
+ * @deprecated Use `userScopedProcedure` instead for clarity
+ */
+export const protectedProcedure = userScopedProcedure;
+
+/**
+ * Org-Scoped Procedure
+ *
+ * For org-level operations: workspaces, repositories, members, integrations.
+ * Only accepts clerk-active users (authenticated + has claimed org).
+ *
+ * Type-safe: `ctx.auth.orgId` is guaranteed to exist.
+ *
+ * Use cases:
+ * - Workspaces (list, create, update)
+ * - Repositories (connect, sync)
+ * - Org members (invite, remove)
+ * - Org integrations (GitHub org, Slack workspace)
+ * - Org settings
+ *
+ * For user-level operations (profile, create org), use `userScopedProcedure`.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const orgScopedProcedure = sentrifiedProcedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (ctx.auth.type === "unauthenticated") {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required. Please sign in.",
+      });
+    }
+
+    // Only allow clerk-active (has org)
+    if (ctx.auth.type !== "clerk-active") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Organization required. Please create or join an organization first.",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        // Type-safe: orgId is guaranteed to exist
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk-active" }>,
+      },
+    });
+  });
+
+/**
+ * @deprecated Use `orgScopedProcedure` instead for clarity
+ */
+export const requiresOrgProcedure = orgScopedProcedure;
+
+/**
  * Clerk Protected procedure
  *
- * If you want a query or mutation to ONLY be accessible via Clerk session, use this.
- * This is used by web UI that needs to verify Clerk organization membership.
+ * Accepts both clerk-pending and clerk-active users.
+ * Use when you need Clerk authentication but don't care about org status.
  *
- * Verifies that a valid Clerk session exists and guarantees `ctx.auth` is of type "clerk".
+ * @deprecated Prefer `protectedProcedure` or `requiresOrgProcedure` for clarity.
  *
  * @see https://trpc.io/docs/procedures
  */
 export const clerkProtectedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "clerk") {
+    if (ctx.auth.type !== "clerk-pending" && ctx.auth.type !== "clerk-active") {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "Clerk session required. Please sign in.",
@@ -250,8 +423,8 @@ export const clerkProtectedProcedure = sentrifiedProcedure
     return next({
       ctx: {
         ...ctx,
-        // Type-safe clerk auth (guaranteed to be type "clerk")
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk" }>,
+        // Type-safe clerk auth (either pending or active)
+        auth: ctx.auth as Extract<AuthContext, { type: "clerk-pending" | "clerk-active" }>,
       },
     });
   });
@@ -406,7 +579,8 @@ export const apiKeyProcedure = sentrifiedProcedure
     if (!authHeader?.startsWith("Bearer ")) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "API key required. Provide 'Authorization: Bearer <api-key>' header.",
+        message:
+          "API key required. Provide 'Authorization: Bearer <api-key>' header.",
       });
     }
 
@@ -417,12 +591,17 @@ export const apiKeyProcedure = sentrifiedProcedure
     if (!workspaceId) {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
+        message:
+          "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
       });
     }
 
     // Verify API key and get workspace context
-    const { workspaceId: verifiedWorkspaceId, userId, apiKeyId } = await verifyApiKey({
+    const {
+      workspaceId: verifiedWorkspaceId,
+      userId,
+      apiKeyId,
+    } = await verifyApiKey({
       key: apiKey,
       workspaceId,
     });
@@ -498,8 +677,15 @@ export async function resolveWorkspaceByName(params: {
   clerkOrgSlug: string;
   workspaceName: string;
   userId: string;
-}): Promise<{ workspaceId: string; workspaceName: string; workspaceSlug: string; clerkOrgId: string }> {
-  const { resolveWorkspaceByName: resolveWorkspace } = await import("@repo/console-auth-middleware");
+}): Promise<{
+  workspaceId: string;
+  workspaceName: string;
+  workspaceSlug: string;
+  clerkOrgId: string;
+}> {
+  const { resolveWorkspaceByName: resolveWorkspace } = await import(
+    "@repo/console-auth-middleware"
+  );
 
   const result = await resolveWorkspace({
     clerkOrgSlug: params.clerkOrgSlug,
@@ -526,7 +712,7 @@ export async function resolveWorkspaceByName(params: {
 /**
  * Helper: Resolve workspace by slug within an org (internal use)
  *
- * ⚠️ INTERNAL USE ONLY - DO NOT USE IN USER-FACING ROUTES
+ * ! INTERNAL USE ONLY - DO NOT USE IN USER-FACING ROUTES
  *
  * This helper queries by the internal `slug` field (e.g., "robust-chicken"),
  * which is used for Pinecone namespace naming and other internal operations.
@@ -546,8 +732,14 @@ export async function resolveWorkspaceBySlug(params: {
   clerkOrgSlug: string;
   workspaceSlug: string;
   userId: string;
-}): Promise<{ workspaceId: string; workspaceSlug: string; clerkOrgId: string }> {
-  const { resolveWorkspaceBySlug: resolveWorkspace } = await import("@repo/console-auth-middleware");
+}): Promise<{
+  workspaceId: string;
+  workspaceSlug: string;
+  clerkOrgId: string;
+}> {
+  const { resolveWorkspaceBySlug: resolveWorkspace } = await import(
+    "@repo/console-auth-middleware"
+  );
 
   const result = await resolveWorkspace({
     clerkOrgSlug: params.clerkOrgSlug,
@@ -674,12 +866,7 @@ export async function verifyApiKey(params: {
       expiresAt: apiKeys.expiresAt,
     })
     .from(apiKeys)
-    .where(
-      and(
-        eq(apiKeys.keyHash, keyHash),
-        eq(apiKeys.isActive, true),
-      )
-    )
+    .where(and(eq(apiKeys.keyHash, keyHash), eq(apiKeys.isActive, true)))
     .limit(1);
 
   if (!apiKey) {
@@ -703,7 +890,10 @@ export async function verifyApiKey(params: {
     .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
     .where(eq(apiKeys.id, apiKey.id))
     .catch((error) => {
-      console.error("Failed to update API key lastUsedAt", { error, apiKeyId: apiKey.id });
+      console.error("Failed to update API key lastUsedAt", {
+        error,
+        apiKeyId: apiKey.id,
+      });
     });
 
   return {
@@ -795,7 +985,10 @@ export function withErrorHandling<TContext, TInput, TOutput>(
   handler: (params: { ctx: TContext; input: TInput }) => Promise<TOutput>,
   userMessage?: string,
 ) {
-  return async (params: { ctx: TContext & { auth?: { userId?: string } }; input: TInput }): Promise<TOutput> => {
+  return async (params: {
+    ctx: TContext & { auth?: { userId?: string } };
+    input: TInput;
+  }): Promise<TOutput> => {
     try {
       return await handler(params);
     } catch (error) {

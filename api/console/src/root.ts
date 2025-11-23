@@ -1,27 +1,58 @@
 /**
  * Console application root router
  * This is the main router that combines all console-specific routers
+ *
+ * Split into two routers for authentication boundary:
+ * - userRouter: Procedures that allow pending users (no org required)
+ * - orgRouter: Procedures that require active org membership
  */
 
-// Phase 1.3: Docs ingestion and search routers
-import { searchRouter } from "./router/search";
-import { contentsRouter } from "./router/contents";
 import { createTRPCRouter } from "./trpc";
 
-// Phase 1.6: Stores, Clerk integration, and Workspaces
-import { storesRouter } from "./router/stores";
-import { clerkRouter } from "./router/clerk";
-import { workspaceRouter } from "./router/workspace";
-import { organizationRouter } from "./router/organization";
-import { integrationRouter } from "./router/integration";
-import { accountRouter } from "./router/account";
-import { jobsRouter } from "./router/jobs";
-import { sourcesRouter } from "./router/sources";
+// User-scoped routers (no org required)
+import { organizationRouter } from "./router/user/organization";
+import { accountRouter } from "./router/user/account";
+
+// Org-scoped routers (active org required)
+import { searchRouter } from "./router/org/search";
+import { contentsRouter } from "./router/org/contents";
+import { storesRouter } from "./router/org/stores";
+import { clerkRouter } from "./router/org/clerk";
+import { workspaceRouter } from "./router/org/workspace";
+import { integrationRouter } from "./router/org/integration";
+import { jobsRouter } from "./router/org/jobs";
+import { sourcesRouter } from "./router/org/sources";
 
 /**
- * Primary console app router
-*/
-export const consoleAppRouter = createTRPCRouter({
+ * User-scoped router
+ * Allows both pending users (no org) and active users (has org)
+ * Accessible via /api/trpc/user/*
+ *
+ * Procedures:
+ * - organization.*: Create/list/update organizations
+ * - account.*: User profile, API keys, personal integrations
+ */
+export const userRouter = createTRPCRouter({
+  organization: organizationRouter,
+  account: accountRouter,
+});
+
+/**
+ * Org-scoped router
+ * Requires active org membership (pending users blocked)
+ * Accessible via /api/trpc/org/*
+ *
+ * Procedures:
+ * - workspace.*: Workspace management
+ * - integration.*: Integration connections (GitHub, etc.)
+ * - stores.*: Vector store management
+ * - jobs.*: Background job management
+ * - sources.*: Data source management
+ * - clerk.*: Clerk organization utilities
+ * - search.*: Semantic search
+ * - contents.*: Document retrieval
+ */
+export const orgRouter = createTRPCRouter({
   // Phase 1.3: Docs search
   search: searchRouter,
   contents: contentsRouter,
@@ -30,12 +61,11 @@ export const consoleAppRouter = createTRPCRouter({
   stores: storesRouter,
   clerk: clerkRouter,
   workspace: workspaceRouter,
-  organization: organizationRouter,
   integration: integrationRouter,
-  account: accountRouter,
   jobs: jobsRouter,
   sources: sourcesRouter,
 });
 
-// Export type for use in client
-export type ConsoleAppRouter = typeof consoleAppRouter;
+// Export types for client usage
+export type UserRouter = typeof userRouter;
+export type OrgRouter = typeof orgRouter;

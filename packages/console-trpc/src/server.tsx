@@ -10,22 +10,44 @@ import {
 } from "@trpc/tanstack-react-query";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import type { ConsoleAppRouter } from "@api/console";
-import { consoleAppRouter, createTRPCContext } from "@api/console";
+import type { UserRouter, OrgRouter } from "@api/console";
+import {
+  userRouter,
+  orgRouter,
+  createUserTRPCContext,
+  createOrgTRPCContext
+} from "@api/console";
 
 import { createQueryClient } from "./client";
 
-const createContext = cache(async () => {
+/**
+ * Create context for user-scoped RSC calls
+ * Allows both pending and active users
+ */
+const createUserContext = cache(async () => {
   const heads = new Headers(await headers());
   heads.set("x-trpc-source", "rsc");
 
-  return createTRPCContext({
+  return createUserTRPCContext({
     headers: heads,
   });
 });
 
 /**
- * Create context for webhook M2M calls
+ * Create context for org-scoped RSC calls
+ * Requires active org membership
+ */
+const createOrgContext = cache(async () => {
+  const heads = new Headers(await headers());
+  heads.set("x-trpc-source", "rsc");
+
+  return createOrgTRPCContext({
+    headers: heads,
+  });
+});
+
+/**
+ * Create context for webhook M2M calls (org-scoped)
  * Uses long-lived Clerk M2M token for webhook service
  */
 const createWebhookContext = cache(async () => {
@@ -36,13 +58,13 @@ const createWebhookContext = cache(async () => {
   heads.set("x-trpc-source", "webhook-service");
   heads.set("authorization", `Bearer ${token}`);
 
-  return createTRPCContext({
+  return createOrgTRPCContext({
     headers: heads,
   });
 });
 
 /**
- * Create context for Inngest M2M calls
+ * Create context for Inngest M2M calls (org-scoped)
  * Uses long-lived Clerk M2M token for Inngest service
  */
 const createInngestContext = cache(async () => {
@@ -53,37 +75,53 @@ const createInngestContext = cache(async () => {
   heads.set("x-trpc-source", "inngest-workflow");
   heads.set("authorization", `Bearer ${token}`);
 
-  return createTRPCContext({
+  return createOrgTRPCContext({
     headers: heads,
   });
 });
 
 export const getQueryClient = cache(createQueryClient);
 
-export const trpc: TRPCOptionsProxy<ConsoleAppRouter> = createTRPCOptionsProxy({
-  router: consoleAppRouter,
-  ctx: createContext,
+/**
+ * User-scoped tRPC proxy for RSC
+ * Use for: organization.*, account.*
+ * Allows both pending and active users
+ */
+export const userTrpc: TRPCOptionsProxy<UserRouter> = createTRPCOptionsProxy({
+  router: userRouter,
+  ctx: createUserContext,
   queryClient: getQueryClient,
 });
 
 /**
- * Create a server-side tRPC caller for webhook handlers
+ * Org-scoped tRPC proxy for RSC
+ * Use for: workspace.*, integration.*, jobs.*, stores.*, sources.*, clerk.*, search.*, contents.*
+ * Requires active org membership
+ */
+export const orgTrpc: TRPCOptionsProxy<OrgRouter> = createTRPCOptionsProxy({
+  router: orgRouter,
+  ctx: createOrgContext,
+  queryClient: getQueryClient,
+});
+
+/**
+ * Create a server-side org-scoped caller for webhook handlers
  * This caller is authenticated with webhook M2M token
  * Should only be used by verified webhook handlers (after signature verification)
  */
 export const createCaller = cache(async () => {
   const ctx = await createWebhookContext();
-  return consoleAppRouter.createCaller(ctx);
+  return orgRouter.createCaller(ctx);
 });
 
 /**
- * Create a server-side tRPC caller for Inngest workflows
+ * Create a server-side org-scoped caller for Inngest workflows
  * This caller is authenticated with Inngest M2M token
  * Should only be used by Inngest background workflows
  */
 export const createInngestCaller = cache(async () => {
   const ctx = await createInngestContext();
-  return consoleAppRouter.createCaller(ctx);
+  return orgRouter.createCaller(ctx);
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {

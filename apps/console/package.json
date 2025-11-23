@@ -56,7 +56,6 @@
     "@vercel/related-projects": "catalog:",
     "date-fns": "^4.1.0",
     "immer": "^10.1.1",
-    "isomorphic-dompurify": "^2.26.0",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "nuqs": "^2.8.0",

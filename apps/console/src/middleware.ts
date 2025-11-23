@@ -1,13 +1,24 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { createClerkNoseconeOptions } from "@vendor/security/clerk-nosecone";
+import {
+  composeCspOptions,
+  createClerkCspDirectives,
+  createAnalyticsCspDirectives,
+  createSentryCspDirectives,
+} from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
 import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authUrl } from "~/lib/related-projects";
 
-// Security headers with Clerk CSP configuration
-const securityHeaders = securityMiddleware(createClerkNoseconeOptions());
+// Security headers with composable CSP configuration
+const securityHeaders = securityMiddleware(
+  composeCspOptions(
+    createClerkCspDirectives(),
+    createAnalyticsCspDirectives(),
+    createSentryCspDirectives(),
+  ),
+);
 
 // Public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -24,6 +35,16 @@ const isTeamCreationRoute = createRouteMatcher([
   "/new(.*)", // Workspace creation flow
   "/api/github(.*)",
   "/api/organizations(.*)",
+]);
+
+// User-scoped tRPC endpoint - accessible to pending users
+const isUserScopedRoute = createRouteMatcher([
+  "/api/trpc/user(.*)",  // All procedures under /api/trpc/user/*
+]);
+
+// Org-scoped tRPC endpoint - requires active org
+const isOrgScopedRoute = createRouteMatcher([
+  "/api/trpc/org(.*)",   // All procedures under /api/trpc/org/*
 ]);
 
 /**
@@ -46,7 +67,7 @@ const composedMiddleware = createNEMO(
   {},
   {
     before: [consoleMiddleware],
-  }
+  },
 );
 
 // Protected routes (not listed above) include:
@@ -59,17 +80,48 @@ export default clerkMiddleware(
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
-    // Create base response
-    let response = NextResponse.next();
+    // Helper to apply headers and return redirect
+    const createRedirectResponse = async (url: URL) => {
+      const redirectResponse = NextResponse.redirect(url);
+      const headersResponse = await securityHeaders();
 
-    // Redirect pending users to team creation (unless already there or on public route)
-    if (isPending && !isTeamCreationRoute(req) && !isPublicRoute(req)) {
-      response = NextResponse.redirect(new URL("/account/teams/new", req.url));
+      // Apply security headers to redirect
+      for (const [key, value] of headersResponse.headers.entries()) {
+        redirectResponse.headers.set(key, value);
+      }
+
+      return redirectResponse;
+    };
+
+    // User-scoped tRPC routes: allow both pending and active users
+    if (isUserScopedRoute(req)) {
+      const { userId } = await auth({ treatPendingAsSignedOut: false });
+      if (!userId) {
+        // Unauthenticated - the tRPC procedure will handle this
+        // Let request through to get proper tRPC error
+      }
+      // Allow both pending and active users to proceed
+      // Authorization happens at procedure level
     }
-
-    // Protect all routes except public and team creation routes
-    // This requires active authentication (pending users will be redirected to sign-in)
-    if (!isPublicRoute(req) && !isTeamCreationRoute(req)) {
+    // Org-scoped tRPC routes: require active org
+    else if (isOrgScopedRoute(req)) {
+      await auth.protect(); // Requires active org
+    }
+    // Redirect pending users to team creation (unless on allowed routes)
+    else if (
+      isPending &&
+      !isTeamCreationRoute(req) &&
+      !isPublicRoute(req)
+    ) {
+      return await createRedirectResponse(
+        new URL("/account/teams/new", req.url),
+      );
+    }
+    // Protect all other routes except public and team creation
+    else if (
+      !isPublicRoute(req) &&
+      !isTeamCreationRoute(req)
+    ) {
       await auth.protect();
     }
 
@@ -80,7 +132,7 @@ export default clerkMiddleware(
     const middlewareResponse = await composedMiddleware(req, event);
 
     // Apply security headers to final response
-    const finalResponse = middlewareResponse ?? response;
+    const finalResponse = middlewareResponse ?? NextResponse.next();
     for (const [key, value] of headersResponse.headers.entries()) {
       finalResponse.headers.set(key, value);
     }

@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { prefetch, trpc, HydrateClient } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, userTrpc, orgTrpc } from "@repo/console-trpc/server";
 import { AppHeader } from "~/components/app-header";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 
@@ -9,14 +9,8 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
   // Prefetch user's organizations for the org switcher (shared across all authenticated pages)
-  prefetch(trpc.organization.listUserOrganizations.queryOptions());
+  prefetch(userTrpc.organization.listUserOrganizations.queryOptions());
 
   return (
     <PageErrorBoundary fallbackTitle="Failed to load application">
