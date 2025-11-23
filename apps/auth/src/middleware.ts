@@ -133,8 +133,13 @@ export default clerkMiddleware(
     // Then run composed middleware
     const middlewareResponse = await composedMiddleware(req, event);
 
+    // Use NextResponse.next() if middleware doesn't return a response
+    const response = middlewareResponse instanceof NextResponse
+      ? middlewareResponse
+      : NextResponse.next();
+
     // Apply CORS headers to final response
-    const finalResponse = applyCorsHeaders(middlewareResponse, req);
+    const finalResponse = applyCorsHeaders(response, req);
 
     // Apply security headers to final response
     for (const [key, value] of headersResponse.headers.entries()) {
