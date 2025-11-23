@@ -47,6 +47,7 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/security": "workspace:^",
     "@vendor/seo": "workspace:*",
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",

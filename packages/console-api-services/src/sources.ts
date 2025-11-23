@@ -80,4 +80,49 @@ export class SourcesService extends DeusApiService {
       },
     );
   }
+
+  /**
+   * Mark repository as deleted (for webhooks)
+   */
+  async markDeleted(githubRepoId: string) {
+    return await this.call(
+      "sources.markGithubDeleted",
+      (caller) => caller.sources.markGithubDeleted({ githubRepoId }),
+      {
+        fallbackMessage: "Failed to mark repository as deleted",
+        details: { githubRepoId },
+      },
+    );
+  }
+
+  /**
+   * Update repository metadata (for webhooks)
+   */
+  async updateMetadata(
+    githubRepoId: string,
+    metadata: {
+      fullName?: string;
+      defaultBranch?: string;
+      isPrivate?: boolean;
+      isArchived?: boolean;
+    }
+  ) {
+    return await this.call(
+      "sources.updateGithubMetadata",
+      (caller) =>
+        caller.sources.updateGithubMetadata({
+          githubRepoId,
+          metadata: {
+            repoFullName: metadata.fullName,
+            defaultBranch: metadata.defaultBranch,
+            isPrivate: metadata.isPrivate,
+            isArchived: metadata.isArchived,
+          },
+        }),
+      {
+        fallbackMessage: "Failed to update repository metadata",
+        details: { githubRepoId, metadata },
+      },
+    );
+  }
 }

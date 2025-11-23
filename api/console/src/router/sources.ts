@@ -44,6 +44,20 @@ const markGithubInstallationInactiveSchema = z.object({
   githubInstallationId: z.string(),
 });
 
+const markGithubDeletedSchema = z.object({
+  githubRepoId: z.string(),
+});
+
+const updateGithubMetadataSchema = z.object({
+  githubRepoId: z.string(),
+  metadata: z.object({
+    repoFullName: z.string().optional(),
+    defaultBranch: z.string().optional(),
+    isPrivate: z.boolean().optional(),
+    isArchived: z.boolean().optional(),
+  }),
+});
+
 /**
  * Sources router - PUBLIC procedures for webhook/API route usage
  *
@@ -250,6 +264,132 @@ export const sourcesRouter = {
       return {
         success: true,
         updated: updates.length,
+      };
+    }),
+
+  /**
+   * Mark a GitHub repository as deleted
+   *
+   * Used by GitHub webhooks when a repository is deleted.
+   * Marks the repository as inactive and updates metadata to reflect deletion.
+   */
+  markGithubDeleted: publicProcedure
+    .input(markGithubDeletedSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Find the source first
+      const sources = await db
+        .select()
+        .from(workspaceSources)
+        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+
+      if (sources.length === 0) {
+        // Repository not found - already deleted or never existed
+        return {
+          success: true,
+          updated: 0,
+        };
+      }
+
+      // Update all matching sources
+      const now = new Date();
+      const updates = await Promise.all(
+        sources.map((source) => {
+          // Type guard to ensure we're working with GitHub config
+          if (source.sourceConfig.provider !== "github") {
+            return Promise.resolve(null);
+          }
+
+          // Create updated config marking as archived/deleted
+          const updatedConfig = {
+            ...source.sourceConfig,
+            isArchived: true,
+          };
+
+          return db
+            .update(workspaceSources)
+            .set({
+              isActive: false,
+              sourceConfig: updatedConfig,
+              lastSyncedAt: now,
+              lastSyncStatus: "failed",
+              lastSyncError: "Repository deleted on GitHub",
+              updatedAt: now,
+            })
+            .where(eq(workspaceSources.id, source.id));
+        })
+      );
+
+      return {
+        success: true,
+        updated: updates.filter((u) => u !== null).length,
+      };
+    }),
+
+  /**
+   * Update GitHub repository metadata
+   *
+   * Used by GitHub webhooks when repository metadata changes:
+   * - Repository renamed (full_name changed)
+   * - Default branch changed
+   * - Privacy settings changed
+   * - Archive status changed
+   */
+  updateGithubMetadata: publicProcedure
+    .input(updateGithubMetadataSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Find the source first
+      const sources = await db
+        .select()
+        .from(workspaceSources)
+        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+
+      if (sources.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Repository not found: ${input.githubRepoId}`,
+        });
+      }
+
+      // Update all matching sources
+      const now = new Date();
+      const updates = await Promise.all(
+        sources.map((source) => {
+          // Type guard to ensure we're working with GitHub config
+          if (source.sourceConfig.provider !== "github") {
+            return Promise.resolve(null);
+          }
+
+          // Merge metadata updates with existing config
+          const updatedConfig = {
+            ...source.sourceConfig,
+            ...(input.metadata.repoFullName && {
+              repoFullName: input.metadata.repoFullName,
+              repoName: input.metadata.repoFullName.split("/")[1] ?? source.sourceConfig.repoName,
+            }),
+            ...(input.metadata.defaultBranch && {
+              defaultBranch: input.metadata.defaultBranch,
+            }),
+            ...(input.metadata.isPrivate !== undefined && {
+              isPrivate: input.metadata.isPrivate,
+            }),
+            ...(input.metadata.isArchived !== undefined && {
+              isArchived: input.metadata.isArchived,
+            }),
+          };
+
+          return db
+            .update(workspaceSources)
+            .set({
+              sourceConfig: updatedConfig,
+              updatedAt: now,
+            })
+            .where(eq(workspaceSources.id, source.id));
+        })
+      );
+
+      return {
+        success: true,
+        updated: updates.filter((u) => u !== null).length,
       };
     }),
 } satisfies TRPCRouterRecord;

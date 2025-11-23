@@ -910,6 +910,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/security':
+        specifier: workspace:^
+        version: link:../../vendor/security
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
@@ -3581,9 +3584,15 @@ importers:
       '@arcjet/next':
         specifier: 1.0.0-beta.10
         version: 1.0.0-beta.10(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+      '@nosecone/next':
+        specifier: 1.0.0-beta.15
+        version: 1.0.0-beta.15(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../clerk
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
@@ -17267,6 +17276,11 @@ snapshots:
   '@nosecone/next@1.0.0-beta.15(next@15.5.5(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
     dependencies:
       next: 15.5.5(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      nosecone: 1.0.0-beta.15
+
+  '@nosecone/next@1.0.0-beta.15(next@16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+    dependencies:
+      next: 16.0.0(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       nosecone: 1.0.0-beta.15
 
   '@octokit/app@16.1.1':

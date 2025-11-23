@@ -33,7 +33,7 @@ async function handleInstallationRepositoriesEvent(
   for (const repo of payload.repositories_removed) {
     await sourcesService.markInactive({
       githubRepoId: repo.id.toString(),
-      githubInstallationId: payload.installation.id.toString(),
+      reason: "Repository removed from installation",
     });
 
     console.log(`[Webhook] Marked repository ${repo.full_name} as inactive`);
@@ -127,7 +127,6 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
         githubRepoId: payload.repository.id.toString(),
         configStatus: result.exists ? "configured" : "unconfigured",
         configPath: result.path,
-        workspaceId,
       });
 
       console.log(

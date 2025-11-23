@@ -9,6 +9,7 @@
       "default": "./src/index.ts"
     },
     "./env": "./env.ts",
+    "./middleware": "./src/middleware.ts",
     "./requests/constants": "./src/requests/constants.ts"
   },
   "license": "MIT",
@@ -34,7 +35,9 @@
   "dependencies": {
     "@arcjet/decorate": "1.0.0-beta.10",
     "@arcjet/next": "1.0.0-beta.10",
+    "@nosecone/next": "1.0.0-beta.15",
     "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/clerk": "workspace:*",
     "js-cookie": "^3.0.5",
     "react": "19.2.0",
     "zod": "catalog:"
