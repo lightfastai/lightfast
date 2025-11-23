@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { prefetch, HydrateClient, userTrpc, orgTrpc } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import { WorkspaceGeneralSettingsClient } from "./_components/workspace-general-settings-client";
 
 export default async function WorkspaceSettingsPage({

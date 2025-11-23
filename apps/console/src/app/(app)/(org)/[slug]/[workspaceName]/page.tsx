@@ -3,7 +3,7 @@ import {
   WorkspaceDashboard,
   WorkspaceDashboardSkeleton,
 } from "~/components/workspace-dashboard";
-import { HydrateClient, prefetch, userTrpc, orgTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 
 export default async function WorkspacePage({
   params,

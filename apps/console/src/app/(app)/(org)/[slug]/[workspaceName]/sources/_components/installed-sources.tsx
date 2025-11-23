@@ -66,7 +66,7 @@ export function InstalledSources({
 	);
 
 	const { data: integrations = [] } = useSuspenseQuery({
-		...orgTrpc.workspace.integrations.list.queryOptions({
+		...trpc.workspace.integrations.list.queryOptions({
 			clerkOrgSlug,
 			workspaceName,
 		}),

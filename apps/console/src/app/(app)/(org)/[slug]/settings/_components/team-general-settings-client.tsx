@@ -40,7 +40,7 @@ export function TeamGeneralSettingsClient({
 
 	// Use cached organization list from app layout (avoids Clerk 404 timing issues)
 	const { data: organizations } = useSuspenseQuery({
-		...userTrpc.organization.listUserOrganizations.queryOptions(),
+		...trpc.organization.listUserOrganizations.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	});
@@ -67,22 +67,22 @@ export function TeamGeneralSettingsClient({
 
 	// Update organization name mutation
 	const updateNameMutation = useMutation(
-		userTrpc.organization.updateName.mutationOptions({
+		trpc.organization.updateName.mutationOptions({
 			onMutate: async (variables) => {
 				// Cancel outgoing queries to prevent race conditions
 				await queryClient.cancelQueries({
-					queryKey: userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+					queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
 				});
 
 				// Snapshot previous data for rollback
 				const previousList = queryClient.getQueryData(
-					userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+					trpc.organization.listUserOrganizations.queryOptions().queryKey,
 				);
 
 				// Optimistically update organization list cache
 				if (previousList) {
 					queryClient.setQueryData(
-						userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+						trpc.organization.listUserOrganizations.queryOptions().queryKey,
 						produce(previousList, (draft) => {
 							const orgIndex = draft.findIndex((o) => o.id === organizationId);
 							if (orgIndex !== -1 && draft[orgIndex]) {
@@ -100,7 +100,7 @@ export function TeamGeneralSettingsClient({
 				// Rollback on error
 				if (context?.previousList) {
 					queryClient.setQueryData(
-						userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+						trpc.organization.listUserOrganizations.queryOptions().queryKey,
 						context.previousList,
 					);
 				}
@@ -125,7 +125,7 @@ export function TeamGeneralSettingsClient({
 			onSettled: () => {
 				// Invalidate to ensure consistency with server
 				void queryClient.invalidateQueries({
-					queryKey: userTrpc.organization.listUserOrganizations.queryOptions().queryKey,
+					queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
 				});
 
 				setIsUpdating(false);

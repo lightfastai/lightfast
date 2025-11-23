@@ -40,7 +40,7 @@ export function WorkspaceGeneralSettingsClient({
 
 	// Use prefetched data from server (no client-side fetch on mount)
 	const { data: workspace } = useSuspenseQuery({
-		...orgTrpc.workspace.getByName.queryOptions({
+		...trpc.workspace.getByName.queryOptions({
 			clerkOrgSlug: slug,
 			workspaceName,
 		}),
@@ -63,32 +63,32 @@ export function WorkspaceGeneralSettingsClient({
 
 	// Update workspace name mutation
 	const updateNameMutation = useMutation(
-		orgTrpc.workspace.updateName.mutationOptions({
+		trpc.workspace.updateName.mutationOptions({
 			onMutate: async (variables) => {
 				// Cancel outgoing queries
 				await queryClient.cancelQueries({
-					queryKey: orgTrpc.workspace.getByName.queryOptions({
+					queryKey: trpc.workspace.getByName.queryOptions({
 						clerkOrgSlug: slug,
 						workspaceName,
 					}).queryKey,
 				});
 
 				await queryClient.cancelQueries({
-					queryKey: orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+					queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
 						clerkOrgSlug: slug,
 					}).queryKey,
 				});
 
 				// Snapshot previous data
 				const previousWorkspace = queryClient.getQueryData(
-					orgTrpc.workspace.getByName.queryOptions({
+					trpc.workspace.getByName.queryOptions({
 						clerkOrgSlug: slug,
 						workspaceName,
 					}).queryKey,
 				);
 
 				const previousList = queryClient.getQueryData(
-					orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+					trpc.workspace.listByClerkOrgSlug.queryOptions({
 						clerkOrgSlug: slug,
 					}).queryKey,
 				);
@@ -96,7 +96,7 @@ export function WorkspaceGeneralSettingsClient({
 				// Optimistically update workspace details
 				if (previousWorkspace) {
 					queryClient.setQueryData(
-						orgTrpc.workspace.getByName.queryOptions({
+						trpc.workspace.getByName.queryOptions({
 							clerkOrgSlug: slug,
 							workspaceName,
 						}).queryKey,
@@ -109,7 +109,7 @@ export function WorkspaceGeneralSettingsClient({
 				// Optimistically update workspace list
 				if (previousList) {
 					queryClient.setQueryData(
-						orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+						trpc.workspace.listByClerkOrgSlug.queryOptions({
 							clerkOrgSlug: slug,
 						}).queryKey,
 						produce(previousList, (draft) => {
@@ -128,7 +128,7 @@ export function WorkspaceGeneralSettingsClient({
 				// Rollback on error
 				if (context?.previousWorkspace) {
 					queryClient.setQueryData(
-						orgTrpc.workspace.getByName.queryOptions({
+						trpc.workspace.getByName.queryOptions({
 							clerkOrgSlug: slug,
 							workspaceName,
 						}).queryKey,
@@ -138,7 +138,7 @@ export function WorkspaceGeneralSettingsClient({
 
 				if (context?.previousList) {
 					queryClient.setQueryData(
-						orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+						trpc.workspace.listByClerkOrgSlug.queryOptions({
 							clerkOrgSlug: slug,
 						}).queryKey,
 						context.previousList,
@@ -165,7 +165,7 @@ export function WorkspaceGeneralSettingsClient({
 			onSettled: () => {
 				// Invalidate to ensure consistency
 				void queryClient.invalidateQueries({
-					queryKey: orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+					queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
 						clerkOrgSlug: slug,
 					}).queryKey,
 				});

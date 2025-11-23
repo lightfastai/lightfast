@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { prefetch, HydrateClient, userTrpc, orgTrpc } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { InstalledSources } from "./_components/installed-sources";
 import { LatestIntegrations } from "./_components/latest-integrations";

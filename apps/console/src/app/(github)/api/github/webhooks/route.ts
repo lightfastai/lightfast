@@ -9,6 +9,8 @@ import type {
   RepositoryEvent,
   WebhookEvent,
 } from "@repo/console-octokit-github";
+import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
+import { inngest } from "@api/console/inngest";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
@@ -100,9 +102,6 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 
   if (configModified) {
     try {
-      const { createGitHubApp, ConfigDetectorService } = await import(
-        "@repo/console-octokit-github"
-      );
       const app = createGitHubApp({
         appId: env.GITHUB_APP_ID,
         privateKey: env.GITHUB_APP_PRIVATE_KEY,
@@ -151,9 +150,6 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
   console.log(`[Webhook] Found ${allFiles.length} changed files`);
 
   // Trigger Inngest workflow
-  // Dynamic import to avoid loading Inngest in route module
-  const { inngest } = await import("@api/console/inngest");
-
   await inngest.send({
     name: "apps-console/docs.push",
     data: {

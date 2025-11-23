@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { prefetch, HydrateClient, userTrpc, orgTrpc } from "@repo/console-trpc/server";
+import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import {
   SidebarProvider,
   SidebarInset,

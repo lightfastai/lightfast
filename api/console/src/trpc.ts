@@ -12,8 +12,17 @@ import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { eq, and, sql } from "drizzle-orm";
 
-import { auth } from "@vendor/clerk/server";
+import { auth, clerkClient } from "@vendor/clerk/server";
+import { verifyM2MToken, getExpectedMachineId } from "@repo/console-clerk-m2m";
+import {
+  verifyOrgAccess,
+  resolveWorkspaceByName as resolveWorkspace,
+  resolveWorkspaceBySlug as resolveWorkspaceBySlugFn,
+} from "@repo/console-auth-middleware";
+import { hashApiKey } from "@repo/console-api-key";
+import { apiKeys } from "@db/console/schema";
 
 /**
  * Authentication Context - Discriminated Union
@@ -80,7 +89,6 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
     const token = authHeader.replace("Bearer ", "");
 
     try {
-      const { verifyM2MToken } = await import("@repo/console-clerk-m2m");
       const verified = await verifyM2MToken(token);
 
       if (!verified.expired && !verified.revoked) {
@@ -170,7 +178,6 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
     const token = authHeader.replace("Bearer ", "");
 
     try {
-      const { verifyM2MToken } = await import("@repo/console-clerk-m2m");
       const verified = await verifyM2MToken(token);
 
       if (!verified.expired && !verified.revoked) {
@@ -492,7 +499,6 @@ export const webhookM2MProcedure = sentrifiedProcedure
     }
 
     // Validate it's from the webhook machine
-    const { getExpectedMachineId } = await import("@repo/console-clerk-m2m");
     const expectedMachineId = getExpectedMachineId("webhook");
 
     if (ctx.auth.machineId !== expectedMachineId) {
@@ -536,7 +542,6 @@ export const inngestM2MProcedure = sentrifiedProcedure
     }
 
     // Validate it's from the Inngest machine
-    const { getExpectedMachineId } = await import("@repo/console-clerk-m2m");
     const expectedMachineId = getExpectedMachineId("inngest");
 
     if (ctx.auth.machineId !== expectedMachineId) {
@@ -639,8 +644,6 @@ export async function verifyOrgAccessAndResolve(params: {
   clerkOrgSlug: string;
   userId: string;
 }): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
-  const { verifyOrgAccess } = await import("@repo/console-auth-middleware");
-
   const result = await verifyOrgAccess({
     userId: params.userId,
     clerkOrgSlug: params.clerkOrgSlug,
@@ -683,10 +686,6 @@ export async function resolveWorkspaceByName(params: {
   workspaceSlug: string;
   clerkOrgId: string;
 }> {
-  const { resolveWorkspaceByName: resolveWorkspace } = await import(
-    "@repo/console-auth-middleware"
-  );
-
   const result = await resolveWorkspace({
     clerkOrgSlug: params.clerkOrgSlug,
     workspaceName: params.workspaceName,
@@ -737,11 +736,7 @@ export async function resolveWorkspaceBySlug(params: {
   workspaceSlug: string;
   clerkOrgId: string;
 }> {
-  const { resolveWorkspaceBySlug: resolveWorkspace } = await import(
-    "@repo/console-auth-middleware"
-  );
-
-  const result = await resolveWorkspace({
+  const result = await resolveWorkspaceBySlugFn({
     clerkOrgSlug: params.clerkOrgSlug,
     workspaceSlug: params.workspaceSlug,
     userId: params.userId,
@@ -789,7 +784,6 @@ export async function verifyOrgMembership(params: {
     imageUrl: string;
   };
 }> {
-  const { clerkClient } = await import("@vendor/clerk/server");
   const clerk = await clerkClient();
 
   // Fetch organization membership list
@@ -850,10 +844,6 @@ export async function verifyApiKey(params: {
   userId: string;
   apiKeyId: string;
 }> {
-  const { hashApiKey } = await import("@repo/console-api-key");
-  const { apiKeys } = await import("@db/console/schema");
-  const { eq, and, sql } = await import("drizzle-orm");
-
   // Hash the provided key to compare with stored hash
   const keyHash = await hashApiKey(params.key);
 
