@@ -12,13 +12,13 @@ import { mergeNextConfig } from "@vendor/next/merge-config";
 const config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     reactStrictMode: true,
-  transpilePackages: [
-    "@repo/ui",
-    "@repo/site-config",
-    "@vendor/seo",
-    "@vendor/observability",
-    "@vendor/next",
-  ],
+    transpilePackages: [
+      "@repo/ui",
+      "@repo/site-config",
+      "@vendor/seo",
+      "@vendor/observability",
+      "@vendor/next",
+    ],
     experimental: {
       optimizeCss: true,
       optimizePackageImports: ["@repo/ui", "lucide-react"],
@@ -27,7 +27,7 @@ const config: NextConfig = withBetterStack(
     async rewrites() {
       return [];
     },
-  })
+  }),
 );
 
 export default withMicrofrontends(config, { debug: true });

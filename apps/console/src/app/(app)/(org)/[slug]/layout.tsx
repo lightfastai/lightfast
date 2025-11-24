@@ -1,12 +1,11 @@
 import { Suspense } from "react";
-import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
-import {
-  SidebarProvider,
-  SidebarInset,
-} from "@repo/ui/components/ui/sidebar";
+import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
+import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { AppSidebar } from "~/components/app-sidebar";
 import { Loader2 } from "lucide-react";
+import { notFound } from "next/navigation";
+import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -14,24 +13,38 @@ interface OrgLayoutProps {
 }
 
 /**
- * Organization layout - prefetches org data with zero blocking calls
+ * Organization layout - prefetches org data using user-scoped endpoint
  *
  * Flow:
- * 1. Middleware's organizationSyncOptions syncs org from URL (best effort, non-blocking)
- * 2. Layout prefetches queries (non-blocking)
- * 3. tRPC procedures verify access when executing
- * 4. Success → data hydrated → fast render
- * 5. Failure → error boundary catches → proper error UI
+ * 1. Layout verifies org access via requireOrgAccess (fetches org directly from Clerk by slug)
+ * 2. Prefetches workspace list via user-scoped endpoint (allows pending users)
+ * 3. Procedure manually verifies user has access to the org
+ * 4. Middleware's organizationSyncOptions syncs org from URL (happens in parallel)
+ * 5. Data is hydrated to client → fast render
+ * 6. Failure → error boundary catches → proper error UI
  *
- * No blocking access checks - queries verify access independently
+ * Why we use requireOrgAccess instead of auth().orgSlug:
+ * - After org name changes, setActive() updates cookies but there's propagation delay
+ * - auth().orgSlug might return old slug or null during RSC request
+ * - requireOrgAccess fetches org directly from Clerk by slug and verifies membership
+ * - This avoids race conditions with Clerk cookie propagation
  */
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
 
-  // Prefetch workspace list - tRPC procedure will verify org access
-  // No blocking access check here - let queries handle verification
+  // Verify user has access to this organization
+  // This fetches the org directly from Clerk by slug and verifies membership
+  // Independent of auth().orgSlug to avoid race conditions
+  try {
+    await requireOrgAccess(slug);
+  } catch {
+    notFound();
+  }
+
+  // Prefetch workspace list - uses user-scoped endpoint that allows pending users
+  // The procedure manually verifies the user has access to this org
   prefetch(
-    orgTrpc.workspace.listByClerkOrgSlug.queryOptions({
+    userTrpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: slug,
     }),
   );
@@ -44,7 +57,9 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
           <SidebarInset>
             <div className="flex-1 overflow-auto">
               <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
+                <Suspense fallback={<PageLoadingSkeleton />}>
+                  {children}
+                </Suspense>
               </div>
             </div>
           </SidebarInset>

@@ -97,7 +97,7 @@ export default clerkMiddleware(
       }
       if (isActive && orgSlug) {
         return await createRedirectResponse(
-          new URL(`/org/${orgSlug}`, consoleUrl),
+          new URL(`/${orgSlug}`, consoleUrl),
         );
       }
     }
@@ -117,7 +117,7 @@ export default clerkMiddleware(
       if (isActive && orgSlug) {
         // Signed in with org → org dashboard
         return await createRedirectResponse(
-          new URL(`/org/${orgSlug}`, consoleUrl),
+          new URL(`/${orgSlug}`, consoleUrl),
         );
       }
     }

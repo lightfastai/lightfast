@@ -48,9 +48,9 @@ const isOrgScopedRoute = createRouteMatcher([
 ]);
 
 // Organization page routes - requires active org
-// Matches /:slug and /:slug/* patterns (excluding reserved routes)
+// Matches /org/:slug and /org/:slug/* patterns
 // organizationSyncOptions activates org from URL, then auth.protect verifies access
-const isOrgPageRoute = createRouteMatcher(["/:slug(.)"]);
+const isOrgPageRoute = createRouteMatcher(["/org/:slug(.)"]);
 
 /**
  * Custom middleware for console-specific logic
@@ -82,11 +82,11 @@ const composedMiddleware = createNEMO(
  * 2. Team creation routes (/account/teams/new, /new) → pending users allowed
  * 3. User-scoped tRPC (/api/trpc/user/*) → pending + active users allowed
  * 4. Org-scoped tRPC (/api/trpc/org/*) → active org required (auth.protect)
- * 5. Org page routes (/:slug, /:slug/*) → active org required (auth.protect)
+ * 5. Org page routes (/org/:slug, /org/:slug/*) → active org required (auth.protect)
  *    - organizationSyncOptions activates org from URL BEFORE auth.protect runs
  * 6. All other routes → protected or redirect pending users to team creation
  *
- * Key: organizationSyncOptions handles syncing org from /:slug pattern in URL.
+ * Key: organizationSyncOptions handles syncing org from /org/:slug pattern in URL.
  * auth.protect() then verifies the user has access to that activated org.
  */
 export default clerkMiddleware(
@@ -114,10 +114,12 @@ export default clerkMiddleware(
     }
     // Team creation routes - allow pending users
     else if (isTeamCreationRoute(req)) {
+      console.log("team-scoped");
       // Allow both pending and active users
     }
     // User-scoped tRPC routes: allow both pending and active users
     else if (isUserScopedRoute(req)) {
+      console.log("user-scoped");
       const { userId } = await auth({ treatPendingAsSignedOut: false });
       if (!userId) {
         // Unauthenticated - the tRPC procedure will handle this
@@ -128,21 +130,37 @@ export default clerkMiddleware(
     }
     // Org-scoped tRPC routes: require active org
     else if (isOrgScopedRoute(req)) {
+      console.log("org-scope");
       await auth.protect(); // Requires active org
     }
-    // Organization page routes (/:slug, /:slug/*): require active org
+    // Organization page routes (/org/:slug, /org/:slug/*): require active org
     // organizationSyncOptions activates org from URL before auth.protect() runs
     else if (isOrgPageRoute(req)) {
+      const { orgId, orgSlug } = await auth();
+      const secFetchDest = req.headers.get("sec-fetch-dest");
+      const accept = req.headers.get("accept");
+      const rscHeader = req.headers.get("rsc");
+      console.log("[Middleware] org-route | URL:", req.nextUrl.pathname);
+      console.log("  → Clerk orgSlug:", orgSlug, "| orgId:", orgId);
+      console.log(
+        "  → sec-fetch-dest:",
+        secFetchDest,
+        "| accept:",
+        accept?.substring(0, 50),
+      );
+      console.log("  → rsc:", rscHeader, "| isRSC:", !!rscHeader);
       await auth.protect(); // Requires active org
     }
     // Redirect pending users to team creation
     else if (isPending) {
+      console.log("isPending");
       return await createRedirectResponse(
         new URL("/account/teams/new", req.url),
       );
     }
     // Protect all other routes
     else {
+      console.log("else");
       await auth.protect();
     }
 
@@ -167,9 +185,9 @@ export default clerkMiddleware(
     // Post-authentication redirects - always to team creation which handles org creation
     afterSignInUrl: "/account/teams/new",
     afterSignUpUrl: "/account/teams/new",
-    // Sync Clerk organization state for /:slug routes
+    // Sync Clerk organization state for /org/:slug routes
     organizationSyncOptions: {
-      organizationPatterns: ["/:slug", "/:slug/(.*)"],
+      organizationPatterns: ["/org/:slug", "/org/:slug/(.*)"],
     },
     // Enable debug logging in development
     // debug: process.env.NODE_ENV === "development",

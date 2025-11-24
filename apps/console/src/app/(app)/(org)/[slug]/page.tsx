@@ -7,6 +7,7 @@ export default async function OrgHomePage({
 }) {
   const { slug } = await params;
 
+  // Access verification handled in [slug]/layout.tsx
   // Data is already prefetched in layout - no need to duplicate here
 
   return (

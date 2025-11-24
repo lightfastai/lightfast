@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrganizationList } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
@@ -25,16 +25,15 @@ import type { TeamSettingsFormValues } from "@repo/console-validation/forms";
 
 interface TeamGeneralSettingsClientProps {
 	slug: string;
-	organizationId: string;
 }
 
 export function TeamGeneralSettingsClient({
 	slug,
-	organizationId,
 }: TeamGeneralSettingsClientProps) {
 	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
+	const { setActive } = useOrganizationList();
 	const { toast } = useToast();
 	const [isUpdating, setIsUpdating] = useState(false);
 
@@ -68,43 +67,7 @@ export function TeamGeneralSettingsClient({
 	// Update organization name mutation
 	const updateNameMutation = useMutation(
 		trpc.organization.updateName.mutationOptions({
-			onMutate: async (variables) => {
-				// Cancel outgoing queries to prevent race conditions
-				await queryClient.cancelQueries({
-					queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
-				});
-
-				// Snapshot previous data for rollback
-				const previousList = queryClient.getQueryData(
-					trpc.organization.listUserOrganizations.queryOptions().queryKey,
-				);
-
-				// Optimistically update organization list cache
-				if (previousList) {
-					queryClient.setQueryData(
-						trpc.organization.listUserOrganizations.queryOptions().queryKey,
-						produce(previousList, (draft) => {
-							const orgIndex = draft.findIndex((o) => o.id === organizationId);
-							if (orgIndex !== -1 && draft[orgIndex]) {
-								draft[orgIndex].name = variables.name;
-								draft[orgIndex].slug = variables.name;
-							}
-						}),
-					);
-				}
-
-				return { previousList };
-			},
-
-			onError: (err, _vars, context) => {
-				// Rollback on error
-				if (context?.previousList) {
-					queryClient.setQueryData(
-						trpc.organization.listUserOrganizations.queryOptions().queryKey,
-						context.previousList,
-					);
-				}
-
+			onError: (err) => {
 				toast({
 					title: "Failed to update team name",
 					description: err.message || "Please try again.",
@@ -112,14 +75,27 @@ export function TeamGeneralSettingsClient({
 				});
 			},
 
-			onSuccess: (data) => {
+			onSuccess: async (data) => {
 				toast({
 					title: "Team updated!",
 					description: `Team name changed to "${data.name}"`,
 				});
 
-				// Redirect to new URL with updated team slug
-				router.push(`/${data.name}/settings`);
+				// Update Clerk's active organization before navigation
+				// This ensures cookies are updated before the RSC request
+				try {
+					await setActive({ organization: data.id });
+
+					// Refresh router cache to clear any stale RSC data
+					router.refresh();
+
+					// Navigate with updated cookies (client-side navigation)
+					router.push(`/${data.name}/settings`);
+				} catch (error) {
+					console.error("Failed to set active organization:", error);
+					// Still navigate, but may cause temporary mismatch
+					router.push(`/${data.name}/settings`);
+				}
 			},
 
 			onSettled: () => {
@@ -148,7 +124,7 @@ export function TeamGeneralSettingsClient({
 		setIsUpdating(true);
 
 		updateNameMutation.mutate({
-			organizationId,
+			slug,
 			name: values.teamName,
 		});
 	};

@@ -21,9 +21,9 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
   const trpc = useTRPC();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch workspaces for this organization (prefetched in layout)
+  // Fetch workspaces for this organization (prefetched in layout via user endpoint)
   const { data: workspaces = [] } = useSuspenseQuery({
-    ...trpc.workspace.listByClerkOrgSlug.queryOptions({
+    ...trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: orgSlug,
     }),
     refetchOnMount: false,

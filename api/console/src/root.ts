@@ -12,6 +12,7 @@ import { createTRPCRouter } from "./trpc";
 // User-scoped routers (no org required)
 import { organizationRouter } from "./router/user/organization";
 import { accountRouter } from "./router/user/account";
+import { workspaceAccessRouter } from "./router/user/workspace";
 
 // Org-scoped routers (active org required)
 import { searchRouter } from "./router/org/search";
@@ -31,10 +32,12 @@ import { sourcesRouter } from "./router/org/sources";
  * Procedures:
  * - organization.*: Create/list/update organizations
  * - account.*: User profile, API keys, personal integrations
+ * - workspaceAccess.*: Workspace queries that verify access manually (listByClerkOrgSlug)
  */
 export const userRouter = createTRPCRouter({
   organization: organizationRouter,
   account: accountRouter,
+  workspaceAccess: workspaceAccessRouter,
 });
 
 /**

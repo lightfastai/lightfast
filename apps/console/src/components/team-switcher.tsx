@@ -15,6 +15,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { cn } from "@repo/ui/lib/utils";
+import { TeamSwitcherLink } from "./team-switcher-link";
 
 type TeamSwitcherMode = "organization" | "account";
 
@@ -77,12 +78,23 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="justify-between px-2 h-9 hover:bg-accent min-w-0"
-        >
-          <div className="flex items-center gap-2 -ml-1 min-w-0">
+      <div className="flex items-center gap-1">
+        {/* Clickable area - navigates to org (no styling) */}
+        {mode === "organization" && currentOrg ? (
+          <TeamSwitcherLink
+            orgId={currentOrg.id}
+            orgSlug={currentOrg.slug}
+            className="flex items-center gap-2 min-w-0"
+          >
+            <Avatar className="size-6">
+              <AvatarFallback className="text-[10px] bg-foreground text-background">
+                {displayInitials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium truncate">{displayText}</span>
+          </TeamSwitcherLink>
+        ) : (
+          <div className="flex items-center gap-2 min-w-0">
             <Avatar className="size-6">
               <AvatarFallback className="text-[10px] bg-foreground text-background">
                 {displayInitials}
@@ -90,9 +102,19 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
             </Avatar>
             <span className="text-sm font-medium truncate">{displayText}</span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </DropdownMenuTrigger>
+        )}
+
+        {/* Dropdown chevron trigger - shadcn ghost button */}
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+          >
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+      </div>
       <DropdownMenuContent className="w-[280px] space-y-1" align="start">
         <div className="px-2 py-1.5">
           <p className="text-xs font-medium text-muted-foreground">Teams</p>
@@ -104,12 +126,13 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
             mode === "organization" && currentOrg?.id === org.id;
 
           return (
-            <DropdownMenuItem key={org.id} asChild>
-              <Link
-                href={`/${org.slug}`}
-                prefetch={true}
+            <DropdownMenuItem key={org.id} asChild className="p-0">
+              <TeamSwitcherLink
+                orgId={org.id}
+                orgSlug={org.slug}
+                onSwitch={() => setOpen(false)}
                 className={cn(
-                  "w-full flex items-center gap-2 cursor-pointer",
+                  "w-full flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-sm hover:bg-accent focus:bg-accent",
                   isSelected && "bg-muted/50",
                 )}
               >
@@ -122,17 +145,17 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
                 {isSelected && (
                   <Check className="h-4 w-4 shrink-0 text-foreground" />
                 )}
-              </Link>
+              </TeamSwitcherLink>
             </DropdownMenuItem>
           );
         })}
 
         {/* Create Team */}
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild className="p-0">
           <Link
             href="/account/teams/new"
             prefetch={true}
-            className="w-full flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
+            className="w-full flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent focus:bg-accent"
           >
             <div className="flex items-center justify-center h-5 w-5 rounded-full border border-dashed border-muted-foreground/50">
               <Plus className="h-3 w-3" />

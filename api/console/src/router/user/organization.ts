@@ -309,7 +309,7 @@ export const organizationRouter = {
 	updateName: userScopedProcedure
 		.input(
 			z.object({
-				organizationId: z.string().min(1, "Organization ID is required"),
+				slug: z.string().min(1, "Organization slug is required"),
 				name: z
 					.string()
 					.min(3, "Team name must be at least 3 characters")
@@ -327,21 +327,27 @@ export const organizationRouter = {
 			const clerk = await clerkClient();
 
 			try {
+				// Get organization by slug
+				const org = await clerk.organizations.getOrganization({
+					slug: input.slug,
+				});
+
 				// Verify user has admin access to the organization
 				await verifyOrgMembership({
-					clerkOrgId: input.organizationId,
+					clerkOrgId: org.id,
 					userId: ctx.auth.userId,
 					requireAdmin: true,
 				});
 
 				// Update organization in Clerk
-				await clerk.organizations.updateOrganization(input.organizationId, {
+				await clerk.organizations.updateOrganization(org.id, {
 					name: input.name,
 					slug: input.name, // Clerk uses slug for URL-safe names
 				});
 
 				return {
 					success: true,
+					id: org.id, // Return org ID for setActive calls
 					name: input.name,
 				};
 			} catch (error: unknown) {
