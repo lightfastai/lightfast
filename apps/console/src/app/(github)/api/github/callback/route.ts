@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { validateOAuthState } from "@repo/console-oauth/state";
 import { encryptOAuthTokenToCookie } from "@repo/console-oauth/tokens";
 import { getUserInstallations } from "@repo/console-octokit-github";
-import { IntegrationsService } from "@repo/console-api-services";
+import { createOrgTRPCContext, orgRouter } from "@api/console";
 import { encrypt } from "@repo/lib";
 import { env } from "~/env";
 
@@ -50,12 +50,25 @@ export async function GET(request: NextRequest) {
 
   // Validate state parameter with @repo/console-oauth
   const storedStateEncoded = request.cookies.get("github_oauth_state")?.value;
+
+  // Debug logging
+  console.log("GitHub OAuth Callback Debug:", {
+    receivedState: state,
+    storedStateEncoded,
+    hasReceivedState: !!state,
+    hasStoredState: !!storedStateEncoded,
+  });
+
   if (!state || !storedStateEncoded) {
+    console.log("Missing state or cookie");
     return NextResponse.redirect(`${baseUrl}/?github_error=invalid_state`);
   }
 
   const stateValidation = validateOAuthState(state, storedStateEncoded);
+  console.log("State validation result:", stateValidation);
+
   if (!stateValidation.valid) {
+    console.log("State validation failed:", stateValidation.error);
     const errorParam = stateValidation.error === "expired"
       ? "state_expired"
       : "invalid_state";
@@ -121,12 +134,19 @@ export async function GET(request: NextRequest) {
     }
 
     /**
-     * Store integration in database via service layer
+     * Store integration in database via tRPC caller
+     * Use direct caller with user auth context instead of service layer
      */
     try {
-      const integrationsService = new IntegrationsService();
+      // Create tRPC context with user authentication from request headers
+      const ctx = await createOrgTRPCContext({
+        headers: request.headers,
+      });
 
-      await integrationsService.storeOAuthResult({
+      // Create caller with user's auth context
+      const caller = orgRouter.createCaller(ctx);
+
+      await caller.integration.github.storeOAuthResult({
         accessToken: encrypt(accessToken, env.ENCRYPTION_KEY),
         installations: installationsData.installations.map((i) => {
           const account = i.account;
@@ -174,10 +194,10 @@ export async function GET(request: NextRequest) {
     );
     response.cookies.set("github_user_token", encryptedToken, {
       httpOnly: true,
-      secure: true, // Always secure (use HTTPS in dev)
-      sameSite: "strict", // Prevent CSRF
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // Allow cookie on redirects
       maxAge: 300, // 5 minutes
-      path: "/api/github", // Restrict to GitHub API paths
+      path: "/", // Make available to all routes
     });
 
     // Clear the state cookie (nonce prevents replay)

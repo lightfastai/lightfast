@@ -31,6 +31,35 @@ export class SourcesService extends DeusApiService {
   }
 
   /**
+   * Get workspace source ID by GitHub repo ID
+   * Used by webhooks to resolve sourceId for new event architecture
+   */
+  async getSourceIdByGithubRepoId(
+    workspaceId: string,
+    githubRepoId: string
+  ): Promise<string | null> {
+    return await this.call(
+      "sources.getSourceIdByGithubRepoId",
+      (caller) =>
+        caller.sources.getSourceIdByGithubRepoId({
+          workspaceId,
+          githubRepoId,
+        }),
+      {
+        fallbackMessage: "Failed to get source ID",
+        details: { workspaceId, githubRepoId },
+        suppressCodes: ["NOT_FOUND"],
+        recover: (error) => {
+          if (error.code === "NOT_FOUND") {
+            return null;
+          }
+          throw error;
+        },
+      },
+    );
+  }
+
+  /**
    * Mark repository as inactive (for webhooks)
    */
   async markInactive(params: { githubRepoId: string; reason?: string }) {

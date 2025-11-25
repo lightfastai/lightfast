@@ -285,6 +285,63 @@ export class GitHubContentService {
 	}
 
 	/**
+	 * List all files in a repository
+	 *
+	 * Uses the Git Tree API to recursively list all files in the repository.
+	 * This is useful for full syncs where we need to discover all files.
+	 *
+	 * @param owner - Repository owner
+	 * @param repo - Repository name
+	 * @param ref - Git reference (branch, tag, or commit SHA)
+	 * @returns Array of file paths
+	 */
+	async listAllFiles(
+		owner: string,
+		repo: string,
+		ref: string
+	): Promise<Array<{ path: string; sha: string }>> {
+		console.log(
+			`[GitHubContentService] Listing all files in ${owner}/${repo} at ${ref}`
+		);
+
+		try {
+			// Fetch the tree recursively
+			const { data: tree } = await this.octokit.request(
+				"GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
+				{
+					owner,
+					repo,
+					tree_sha: ref,
+					recursive: "true",
+					headers: {
+						"X-GitHub-Api-Version": "2022-11-28",
+					},
+				}
+			);
+
+			// Filter to only include blobs (files, not directories or submodules)
+			const files = tree.tree
+				.filter((item) => item.type === "blob" && item.path && item.sha)
+				.map((item) => ({
+					path: item.path!,
+					sha: item.sha!,
+				}));
+
+			console.log(
+				`[GitHubContentService] Found ${files.length} files in ${owner}/${repo}`
+			);
+
+			return files;
+		} catch (error: any) {
+			console.error(
+				`[GitHubContentService] Failed to list files in ${owner}/${repo}:`,
+				error
+			);
+			throw error;
+		}
+	}
+
+	/**
 	 * Check if a file exists in the repository
 	 *
 	 * @param owner - Repository owner

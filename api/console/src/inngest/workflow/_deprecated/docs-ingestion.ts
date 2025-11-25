@@ -16,8 +16,8 @@
 import { db } from "@db/console/client";
 import { ingestionEvents } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
-import { inngest } from "../client/client";
-import type { Events } from "../client/client";
+import { inngest } from "../../client/client";
+import type { Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { ensureStore } from "./ensure-store";

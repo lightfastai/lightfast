@@ -8,7 +8,7 @@
 
 import { z } from "zod";
 import { workspaceCreateInputSchema } from "../schemas/workspace";
-import { insertWorkspaceSchemaBase } from "../database";
+import { workspaceNameSchema } from "../primitives/slugs";
 
 /**
  * Workspace Creation Form Schema
@@ -50,7 +50,7 @@ export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
  * ```
  */
 export const workspaceSettingsFormSchema = z.object({
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
 });
 
 export type WorkspaceSettingsFormValues = z.infer<

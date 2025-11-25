@@ -10,6 +10,7 @@ import { jobs, metrics } from "@db/console/schema";
 import type { Job, JobInput, JobOutput, InsertJob } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import type { JobTrigger } from "@repo/console-validation";
 
 /**
  * Create a new job record at workflow start
@@ -27,7 +28,7 @@ export async function createJob(params: {
 	inngestRunId: string;
 	inngestFunctionId: string;
 	name: string;
-	trigger: "manual" | "scheduled" | "webhook" | "automatic";
+	trigger: JobTrigger;
 	triggeredBy?: string | null;
 	input?: JobInput;
 }): Promise<string> {

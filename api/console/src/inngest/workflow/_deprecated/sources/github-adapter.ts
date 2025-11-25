@@ -8,7 +8,7 @@
  * while maintaining GitHub-only implementation for Phase 1.5
  */
 
-import { inngest } from "../../client/client";
+import { inngest } from "../../../client/client";
 import { log } from "@vendor/observability/log";
 import {
   createGitHubApp,
@@ -42,7 +42,7 @@ export const githubProcessAdapter = inngest.createFunction(
     },
   },
   { event: "apps-console/docs.file.process" },
-  async ({ event, step }) => {
+  async ({ event, step }: { event: any; step: any }) => {
     const {
       workspaceId,
       storeSlug,
@@ -200,7 +200,7 @@ export const githubDeleteAdapter = inngest.createFunction(
     },
   },
   { event: "apps-console/docs.file.delete" },
-  async ({ event, step }) => {
+  async ({ event, step }: { event: any; step: any }) => {
     const { workspaceId, storeSlug, repoFullName, filePath } = event.data;
 
     log.info("GitHub delete adapter", {

@@ -11,14 +11,13 @@
  * 4. Update workspace integration sync status
  */
 
-import { inngest } from "../client/client";
+import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceSources,
   userSources,
 } from "@db/console/schema";
 import { eq } from "drizzle-orm";
-import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../lib/jobs";
 
 /**
  * Repository Initial Sync Function
@@ -44,7 +43,7 @@ export const repositoryInitialSync = inngest.createFunction(
     retries: 3,
   },
   { event: "apps-console/repository.connected" },
-  async ({ event, step, runId }) => {
+  async ({ event, step, runId }: { event: any; step: any; runId: any }) => {
     const {
       workspaceId,
       workspaceKey,

@@ -14,7 +14,6 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 import { TeamSwitcherLink } from "./team-switcher-link";
-import type { Workspace } from "~/types";
 
 interface WorkspaceSwitcherProps {
 	orgSlug: string;
@@ -23,7 +22,6 @@ interface WorkspaceSwitcherProps {
 
 export function WorkspaceSwitcher({ orgSlug, workspaceName }: WorkspaceSwitcherProps) {
 	const trpc = useTRPC();
-	const router = useRouter();
 	const [open, setOpen] = useState(false);
 
 	// Fetch organizations to get current org
@@ -68,7 +66,7 @@ export function WorkspaceSwitcher({ orgSlug, workspaceName }: WorkspaceSwitcherP
 		<DropdownMenu open={open} onOpenChange={setOpen}>
 			<div className="flex items-center gap-1">
 				{/* Clickable area - navigates to workspace (no styling) */}
-				{currentWorkspace && currentOrg ? (
+				{currentWorkspace ? (
 					<TeamSwitcherLink
 						orgId={currentOrg.id}
 						orgSlug={currentOrg.slug}

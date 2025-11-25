@@ -9,35 +9,17 @@
  * 2. Update this file to use the user value as override
  *
  * Type Safety:
- * All enum values are type-checked against database schema enums (@db/console).
+ * All enum values are type-checked against validation schemas (@repo/console-validation).
  * This ensures config values can never violate database constraints.
  *
  * @packageDocumentation
  */
 
 import type {
-	embeddingProviderEnum,
-	pineconeMetricEnum,
-	pineconeCloudEnum,
-} from "@db/console/schema";
-
-/**
- * Type-safe embedding provider - extracted from database schema enum
- * This ensures config values match what the database will accept
- */
-type EmbeddingProvider = (typeof embeddingProviderEnum.enumValues)[number];
-
-/**
- * Type-safe pinecone metric - extracted from database schema enum
- * This ensures config values match what the database will accept
- */
-type PineconeMetric = (typeof pineconeMetricEnum.enumValues)[number];
-
-/**
- * Type-safe pinecone cloud - extracted from database schema enum
- * This ensures config values match what the database will accept
- */
-type PineconeCloud = (typeof pineconeCloudEnum.enumValues)[number];
+	EmbeddingProvider,
+	PineconeMetric,
+	PineconeCloud,
+} from "@repo/console-validation";
 
 /**
  * Pinecone infrastructure configuration
@@ -45,7 +27,7 @@ type PineconeCloud = (typeof pineconeCloudEnum.enumValues)[number];
  * Controls how Pinecone indexes are created and managed.
  * Currently private - users cannot override these settings.
  *
- * Type Safety: metric and cloud are validated against database schema enums.
+ * Type Safety: metric and cloud are validated against validation schemas.
  *
  * Future: Could be made configurable per workspace or store.
  */
@@ -53,7 +35,7 @@ export const PINECONE_CONFIG = {
   /**
    * Vector similarity metric
    *
-   * Type-safe: must match pineconeMetricEnum from database schema
+   * Type-safe: must match PineconeMetric from validation schemas
    * Default: "cosine" (best for normalized embeddings)
    *
    * @private
@@ -63,7 +45,7 @@ export const PINECONE_CONFIG = {
   /**
    * Cloud provider for serverless indexes
    *
-   * Type-safe: must match pineconeCloudEnum from database schema
+   * Type-safe: must match PineconeCloud from validation schemas
    * Default: "aws"
    *
    * @private
@@ -74,11 +56,11 @@ export const PINECONE_CONFIG = {
    * AWS region for serverless indexes
    *
    * Note: Not enum-validated as regions vary by cloud provider
-   * Default: "us-west-2" (low latency for US west coast)
+   * Default: "us-east-1" (primary AWS region)
    *
    * @private
    */
-  region: "us-west-2" as const,
+  region: "us-east-1" as const,
 
   /**
    * Default deletion protection value for new indexes
@@ -122,7 +104,7 @@ export const PINECONE_CONFIG = {
  * Controls which embedding models are used and their parameters.
  * Currently private - all stores use Cohere.
  *
- * Type Safety: provider is validated against database schema enum.
+ * Type Safety: provider is validated against validation schemas.
  *
  * Future: Could allow users to specify model version per store.
  */
@@ -136,7 +118,7 @@ export const EMBEDDING_CONFIG = {
     /**
      * Provider name
      *
-     * Type-safe: literal "cohere" matches embeddingProviderEnum from database schema
+     * Type-safe: literal "cohere" matches EmbeddingProvider from validation schemas
      * TypeScript will enforce this is a valid enum value at assignment time
      *
      * @private

@@ -13,7 +13,7 @@ import {
   nanoidSchema,
 } from "../primitives/ids";
 import { clerkOrgSlugSchema } from "../primitives/slugs";
-import { insertWorkspaceSchemaBase } from "../database";
+import { workspaceNameSchema } from "../primitives/slugs";
 
 /**
  * Workspace Creation Input Schema
@@ -33,16 +33,10 @@ import { insertWorkspaceSchemaBase } from "../database";
  * });
  * ```
  */
-export const workspaceCreateInputSchema = insertWorkspaceSchemaBase
-  .pick({
-    clerkOrgId: true,
-    name: true,
-  })
-  .extend({
-    // Rename 'name' to 'workspaceName' for API clarity
-    workspaceName: insertWorkspaceSchemaBase.shape.name,
-  })
-  .omit({ name: true });
+export const workspaceCreateInputSchema = z.object({
+  clerkOrgId: clerkOrgIdSchema,
+  workspaceName: workspaceNameSchema,
+});
 
 export type WorkspaceCreateInput = z.infer<typeof workspaceCreateInputSchema>;
 
@@ -66,8 +60,8 @@ export type WorkspaceCreateInput = z.infer<typeof workspaceCreateInputSchema>;
  */
 export const workspaceUpdateNameInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  currentName: insertWorkspaceSchemaBase.shape.name,
-  newName: insertWorkspaceSchemaBase.shape.name,
+  currentName: workspaceNameSchema,
+  newName: workspaceNameSchema,
 });
 
 export type WorkspaceUpdateNameInput = z.infer<
@@ -92,7 +86,7 @@ export type WorkspaceUpdateNameInput = z.infer<
  */
 export const workspaceResolutionInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
   userId: clerkUserIdSchema,
 });
 
@@ -135,7 +129,7 @@ export type WorkspaceListInput = z.infer<typeof workspaceListInputSchema>;
  */
 export const workspaceStatisticsInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
 });
 
 export type WorkspaceStatisticsInput = z.infer<
@@ -168,7 +162,7 @@ export type TimeRange = z.infer<typeof timeRangeSchema>;
  */
 export const workspaceJobPercentilesInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
   timeRange: timeRangeSchema,
 });
 
@@ -193,7 +187,7 @@ export type WorkspaceJobPercentilesInput = z.infer<
  */
 export const workspacePerformanceTimeSeriesInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
   timeRange: timeRangeSchema,
 });
 
@@ -246,7 +240,7 @@ export type WorkspaceResolveFromGithubOrgSlugInput = z.infer<
  */
 export const workspaceStatisticsComparisonInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
   currentStart: z.string(), // ISO datetime
   currentEnd: z.string(), // ISO datetime
   previousStart: z.string(), // ISO datetime
@@ -273,7 +267,7 @@ export type WorkspaceStatisticsComparisonInput = z.infer<
  */
 export const workspaceSystemHealthInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: insertWorkspaceSchemaBase.shape.name,
+  workspaceName: workspaceNameSchema,
 });
 
 export type WorkspaceSystemHealthInput = z.infer<

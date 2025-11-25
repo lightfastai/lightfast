@@ -17,8 +17,9 @@ import {
 	FileText,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
+import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Input } from "@repo/ui/components/ui/input";
@@ -125,13 +126,48 @@ function TriggerBadge({ trigger }: { trigger: JobTrigger }) {
 	);
 }
 
-function JobRow({ job }: { job: Job }) {
+interface JobRowProps {
+	job: Job;
+	clerkOrgSlug: string;
+	workspaceName: string;
+}
+
+function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
+
+	// Restart mutation
+	const restartMutation = useMutation(
+		trpc.jobs.restart.mutationOptions({
+			onSuccess: () => {
+				toast.success("Job restart triggered", {
+					description: "A new sync has been queued.",
+				});
+				// Invalidate jobs list to show the new job
+				void queryClient.invalidateQueries({
+					queryKey: trpc.jobs.list.queryOptions({
+						clerkOrgSlug,
+						workspaceName,
+						limit: 50,
+					}).queryKey,
+				});
+			},
+			onError: (error) => {
+				toast.error("Failed to restart job", {
+					description: error.message,
+				});
+			},
+		})
+	);
 
 	const handleRetry = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		console.log("Retry job:", job.id);
-		// TODO: Call tRPC mutation to retry job
+		restartMutation.mutate({
+			jobId: job.id,
+			clerkOrgSlug,
+			workspaceName,
+		});
 	};
 
 	const handleCancel = (e: React.MouseEvent) => {
@@ -211,16 +247,22 @@ function JobRow({ job }: { job: Job }) {
 									{isExpanded ? "Hide" : "View"} details
 								</DropdownMenuItem>
 							)}
-							{job.status === "failed" && (
+							{(job.status === "completed" || job.status === "failed" || job.status === "cancelled") && (
 								<>
 									{hasDetails && <DropdownMenuSeparator />}
-									<DropdownMenuItem onClick={handleRetry}>
-										<RotateCcw className="mr-2 h-4 w-4" />
-										Retry
+									<DropdownMenuItem
+										onClick={handleRetry}
+										disabled={restartMutation.isPending}
+									>
+										<RotateCcw className={cn(
+											"mr-2 h-4 w-4",
+											restartMutation.isPending && "animate-spin"
+										)} />
+										{restartMutation.isPending ? "Restarting..." : "Restart"}
 									</DropdownMenuItem>
 								</>
 							)}
-							{job.status === "running" && (
+							{(job.status === "running" || job.status === "queued") && (
 								<>
 									{hasDetails && <DropdownMenuSeparator />}
 									<DropdownMenuItem onClick={handleCancel} className="text-destructive">
@@ -418,7 +460,12 @@ function JobsTable({ clerkOrgSlug, workspaceName, initialStatus, initialSearch }
 						</TableHeader>
 						<TableBody>
 							{filteredJobs.map((job) => (
-								<JobRow key={job.id} job={job} />
+								<JobRow
+									key={job.id}
+									job={job}
+									clerkOrgSlug={clerkOrgSlug}
+									workspaceName={workspaceName}
+								/>
 							))}
 						</TableBody>
 					</Table>

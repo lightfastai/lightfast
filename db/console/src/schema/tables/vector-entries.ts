@@ -33,7 +33,7 @@ export const vectorEntries = pgTable(
     /** Content hash of document version */
     contentHash: varchar("content_hash", { length: 64 }).notNull(),
     /** When the vector was upserted */
-    upsertedAt: timestamp("upserted_at", { withTimezone: false })
+    upsertedAt: timestamp("upserted_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
   },

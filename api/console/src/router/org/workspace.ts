@@ -574,7 +574,7 @@ export const workspaceRouter = {
           .update(workspaceSources)
           .set({
             isActive: false,
-            lastSyncedAt: new Date(),
+            lastSyncedAt: new Date().toISOString(),
           })
           .where(eq(workspaceSources.id, input.integrationId));
 

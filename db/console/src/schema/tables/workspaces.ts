@@ -75,14 +75,14 @@ export const workspaces = pgTable(
     /**
      * Timestamp when workspace was created
      */
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
     /**
      * Timestamp when workspace was last updated
      */
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: false })
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },

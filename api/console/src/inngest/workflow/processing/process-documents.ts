@@ -18,7 +18,6 @@ import {
   vectorEntries,
   type DocsDocument,
   type Store,
-  sourceTypeEnum,
 } from "@db/console/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";

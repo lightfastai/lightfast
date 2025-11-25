@@ -4,23 +4,105 @@ import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
+import { syncTriggerSchema } from "@repo/console-validation";
 
 /**
  * Inngest event schemas for console application
  *
- * Defines typed events for docs ingestion workflows
+ * Organized by:
+ * 1. Source Management Events (provider-agnostic)
+ * 2. GitHub-Specific Events
+ * 3. Generic Document Processing Events
+ * 4. Infrastructure Events
  */
 const eventsMap = {
+  // ============================================================================
+  // SOURCE MANAGEMENT EVENTS (Provider-agnostic)
+  // ============================================================================
+
   /**
-   * Triggered when a push event occurs on a GitHub repository
-   * Processes changed files according to lightfast.yml config
+   * Triggered when ANY source is connected to a workspace
+   * Initiates full sync for that source type
+   *
+   * Replaces: apps-console/repository.connected (now GitHub-specific via source.sync)
    */
-  "apps-console/docs.push": {
+  "apps-console/source.connected": {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
       /** Canonical external workspace key for naming (e.g., ws-<slug>) */
       workspaceKey: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Source provider type */
+      sourceType: z.enum(["github", "linear", "notion", "sentry"]),
+      /** Provider-specific metadata (flexible for different source types) */
+      sourceMetadata: z.record(z.unknown()),
+      /** How the connection was initiated */
+      trigger: z.enum(["user", "api", "automation"]),
+    }),
+  },
+
+  /**
+   * Triggered when a source is disconnected from workspace
+   * Cancels ongoing syncs and optionally deletes indexed data
+   */
+  "apps-console/source.disconnected": {
+    data: z.object({
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Whether to delete all indexed data from this source */
+      deleteData: z.boolean().default(false),
+    }),
+  },
+
+  /**
+   * Generic sync trigger for any source type
+   * Supports both full and incremental sync modes
+   *
+   * Used by:
+   * - Manual restart (user clicks "Restart" on job)
+   * - Scheduled syncs
+   * - Config change detection (triggers full re-sync)
+   * - Webhook events (routed through provider-specific handlers)
+   */
+  "apps-console/source.sync": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming */
+      workspaceKey: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Source provider type */
+      sourceType: z.enum(["github", "linear", "notion", "sentry"]),
+      /** Sync mode: full = all documents, incremental = changed only */
+      syncMode: z.enum(["full", "incremental"]),
+      /** What triggered this sync */
+      trigger: syncTriggerSchema,
+      /** Provider-specific sync parameters (e.g., changedFiles for GitHub) */
+      syncParams: z.record(z.unknown()).optional(),
+    }),
+  },
+
+  // ============================================================================
+  // GITHUB-SPECIFIC EVENTS
+  // ============================================================================
+
+  /**
+   * GitHub push webhook event
+   * Triggers incremental sync for changed files
+   *
+   * Replaces: apps-console/docs.push (renamed for clarity)
+   */
+  "apps-console/github.push": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming */
+      workspaceKey: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** Immutable GitHub repository ID */
@@ -31,11 +113,11 @@ const eventsMap = {
       beforeSha: z.string(),
       /** SHA after push */
       afterSha: z.string(),
-      /** Unique delivery/trigger ID for idempotency */
+      /** Branch name (e.g., "main") */
+      branch: z.string(),
+      /** Unique delivery ID for idempotency */
       deliveryId: z.string(),
-      /** Ingestion source: github-webhook | manual | api | scheduled */
-      source: z.enum(["github-webhook", "manual", "api", "scheduled"]),
-      /** ISO timestamp for the head commit (if provided by GitHub) */
+      /** ISO timestamp for the head commit */
       headCommitTimestamp: z.string().datetime().optional(),
       /** Changed files with their status */
       changedFiles: z.array(
@@ -48,8 +130,57 @@ const eventsMap = {
   },
 
   /**
-   * Process a single document file
+   * GitHub config file (lightfast.yml) changed
+   * Triggers full re-sync with new configuration
+   *
+   * NEW: Explicit handling for config changes
+   */
+  "apps-console/github.config-changed": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Repository full name (owner/repo) */
+      repoFullName: z.string(),
+      /** Path to config file that changed */
+      configPath: z.string(),
+      /** Commit SHA where config changed */
+      commitSha: z.string(),
+    }),
+  },
+
+  /**
+   * GitHub-specific sync workflow
+   * Handles both full and incremental repository sync
+   *
+   * Internal event (not exposed via webhook)
+   */
+  "apps-console/github.sync": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming */
+      workspaceKey: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Sync mode */
+      syncMode: z.enum(["full", "incremental"]),
+      /** What triggered this sync */
+      trigger: syncTriggerSchema,
+      /** Job ID from orchestration layer */
+      jobId: z.string(),
+      /** Provider-specific sync parameters */
+      syncParams: z.record(z.unknown()),
+    }),
+  },
+
+  /**
+   * Process a single GitHub file
    * Chunks text, generates embeddings, and upserts to Pinecone
+   *
+   * DEPRECATED: Will be replaced by apps-console/documents.process
+   * Kept for backward compatibility during migration
    */
   "apps-console/docs.file.process": {
     data: z.object({
@@ -71,8 +202,10 @@ const eventsMap = {
   },
 
   /**
-   * Delete a document and its vectors
-   * Removes from both database and Pinecone
+   * Delete a GitHub document and its vectors
+   *
+   * DEPRECATED: Will be replaced by apps-console/documents.delete
+   * Kept for backward compatibility during migration
    */
   "apps-console/docs.file.delete": {
     data: z.object({
@@ -87,31 +220,15 @@ const eventsMap = {
     }),
   },
 
-  /**
-   * Ensure store and Pinecone index exist
-   * Idempotently provisions store infrastructure
-   * Can be triggered by docs-ingestion, admin API, or reconciliation
-   */
-  "apps-console/store.ensure": {
-    data: z.object({
-      /** Workspace DB UUID */
-      workspaceId: z.string(),
-      /** Canonical external workspace key for naming (e.g., ws-<slug>) */
-      workspaceKey: z.string().optional(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Embedding dimension (defaults to provider's dimension) */
-      embeddingDim: z.number().optional(),
-      /** GitHub repository ID to link (optional) */
-      githubRepoId: z.union([z.number(), z.string()]).optional(),
-      /** Repository full name to link (optional) */
-      repoFullName: z.string().optional(),
-    }),
-  },
+  // ============================================================================
+  // GENERIC DOCUMENT PROCESSING EVENTS
+  // ============================================================================
 
   /**
-   * Phase 1.5: Generic document processing event
-   * Works with any source type (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+   * Generic document processing event
+   * Works with any source type (GitHub, Linear, Notion, Sentry)
+   *
+   * This is the target event for all provider adapters to emit
    */
   "apps-console/documents.process": {
     data: z.object({
@@ -143,8 +260,10 @@ const eventsMap = {
   },
 
   /**
-   * Phase 1.5: Generic document deletion event
+   * Generic document deletion event
    * Works with any source type
+   *
+   * This is the target event for all provider adapters to emit
    */
   "apps-console/documents.delete": {
     data: z.object({
@@ -162,7 +281,7 @@ const eventsMap = {
   },
 
   /**
-   * Phase 1.5: Relationship extraction event
+   * Relationship extraction event
    * Extracts cross-source relationships from documents
    */
   "apps-console/relationships.extract": {
@@ -180,10 +299,42 @@ const eventsMap = {
     }),
   },
 
+  // ============================================================================
+  // INFRASTRUCTURE EVENTS
+  // ============================================================================
+
   /**
-   * Repository connected event
-   * Triggered when a repository is connected to a workspace
-   * Initiates initial sync and indexing
+   * Ensure store and Pinecone index exist
+   * Idempotently provisions store infrastructure
+   * Can be triggered by sync workflows, admin API, or reconciliation
+   */
+  "apps-console/store.ensure": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming (e.g., ws-<slug>) */
+      workspaceKey: z.string().optional(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Embedding dimension (defaults to provider's dimension) */
+      embeddingDim: z.number().optional(),
+      /** GitHub repository ID to link (optional) */
+      githubRepoId: z.union([z.number(), z.string()]).optional(),
+      /** Repository full name to link (optional) */
+      repoFullName: z.string().optional(),
+    }),
+  },
+
+  // ============================================================================
+  // BACKWARD COMPATIBILITY EVENTS (Will be removed in Phase 2)
+  // ============================================================================
+
+  /**
+   * @deprecated Use apps-console/source.connected instead
+   *
+   * Legacy event for repository connection
+   * Kept for backward compatibility during migration
+   * Will route to source.connected internally
    */
   "apps-console/repository.connected": {
     data: z.object({
@@ -207,13 +358,54 @@ const eventsMap = {
   },
 
   /**
-   * Triggered when a repository is disconnected from a workspace
-   * Cancels any ongoing sync workflows
+   * @deprecated Use apps-console/source.disconnected instead
+   *
+   * Legacy event for repository disconnection
+   * Kept for backward compatibility during migration
    */
   "apps-console/repository.disconnected": {
     data: z.object({
       /** Integration resource ID */
       resourceId: z.string(),
+    }),
+  },
+
+  /**
+   * @deprecated Use apps-console/github.push instead
+   *
+   * Legacy GitHub push event
+   * Kept for backward compatibility during migration
+   * Will route to github.push internally
+   */
+  "apps-console/docs.push": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming (e.g., ws-<slug>) */
+      workspaceKey: z.string(),
+      /** Repository full name (owner/repo) */
+      repoFullName: z.string(),
+      /** Immutable GitHub repository ID */
+      githubRepoId: z.number(),
+      /** GitHub installation ID */
+      githubInstallationId: z.number(),
+      /** SHA before push */
+      beforeSha: z.string(),
+      /** SHA after push */
+      afterSha: z.string(),
+      /** Unique delivery/trigger ID for idempotency */
+      deliveryId: z.string(),
+      /** Ingestion source: github-webhook | manual | api | scheduled */
+      source: z.enum(["github-webhook", "manual", "api", "scheduled"]),
+      /** ISO timestamp for the head commit (if provided by GitHub) */
+      headCommitTimestamp: z.string().datetime().optional(),
+      /** Changed files with their status */
+      changedFiles: z.array(
+        z.object({
+          path: z.string(),
+          status: z.enum(["added", "modified", "removed"]),
+        }),
+      ),
     }),
   },
 };

@@ -58,6 +58,11 @@ const updateGithubMetadataSchema = z.object({
   }),
 });
 
+const getSourceIdByGithubRepoIdSchema = z.object({
+  workspaceId: z.string(),
+  githubRepoId: z.string(),
+});
+
 /**
  * Sources router - Webhook M2M procedures
  *
@@ -105,6 +110,45 @@ export const sourcesRouter = {
     }),
 
   /**
+   * Get workspace source ID by GitHub repo ID
+   *
+   * Returns just the sourceId (workspaceSource.id) for a given GitHub repo.
+   * Used by webhooks to resolve sourceId for new event architecture.
+   *
+   * Scoped to a specific workspace to prevent cross-workspace access.
+   */
+  getSourceIdByGithubRepoId: webhookM2MProcedure
+    .input(getSourceIdByGithubRepoIdSchema)
+    .query(async ({ ctx, input }) => {
+      const result = await db
+        .select({ id: workspaceSources.id })
+        .from(workspaceSources)
+        .where(
+          and(
+            eq(workspaceSources.workspaceId, input.workspaceId),
+            eq(workspaceSources.providerResourceId, input.githubRepoId),
+            eq(workspaceSources.isActive, true)
+          )
+        )
+        .limit(1);
+
+      const source = result[0];
+
+      // Verify it's actually a GitHub repository
+      if (source) {
+        const fullSource = await db.query.workspaceSources.findFirst({
+          where: eq(workspaceSources.id, source.id),
+        });
+
+        if (fullSource?.sourceConfig.provider !== "github") {
+          return null;
+        }
+      }
+
+      return source?.id ?? null;
+    }),
+
+  /**
    * Update GitHub sync status for a repository
    *
    * Used by GitHub webhooks to mark repositories as active/inactive when:
@@ -134,7 +178,7 @@ export const sourcesRouter = {
       }
 
       // Update all matching sources (there might be multiple workspaces using same repo)
-      const now = new Date();
+      const now = new Date().toISOString();
       const updates = await Promise.all(
         sources.map((source) =>
           db
@@ -185,7 +229,7 @@ export const sourcesRouter = {
       }
 
       // Update all matching sources
-      const now = new Date();
+      const now = new Date().toISOString();
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config
@@ -199,7 +243,7 @@ export const sourcesRouter = {
             status: {
               configStatus: input.configStatus,
               configPath: input.configPath ?? undefined,
-              lastConfigCheck: now.toISOString(),
+              lastConfigCheck: now,
             },
           };
 
@@ -253,7 +297,7 @@ export const sourcesRouter = {
       }
 
       // Update all matching sources
-      const now = new Date();
+      const now = new Date().toISOString();
       const updates = await Promise.all(
         installationSources.map((source) =>
           db
@@ -299,7 +343,7 @@ export const sourcesRouter = {
       }
 
       // Update all matching sources
-      const now = new Date();
+      const now = new Date().toISOString();
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config
@@ -359,7 +403,7 @@ export const sourcesRouter = {
       }
 
       // Update all matching sources
-      const now = new Date();
+      const now = new Date().toISOString();
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config

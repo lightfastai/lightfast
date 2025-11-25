@@ -163,7 +163,7 @@ export const workspaceSources = pgTable(
     isActive: boolean("is_active").notNull().default(true),
 
     // Sync tracking
-    lastSyncedAt: timestamp("last_synced_at"),
+    lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: true }),
     lastSyncStatus: varchar("last_sync_status", { length: 50 }), // "success" | "failed" | "pending"
     lastSyncError: text("last_sync_error"),
 
@@ -171,9 +171,9 @@ export const workspaceSources = pgTable(
     documentCount: integer("document_count").notNull().default(0),
 
     // Timestamps
-    connectedAt: timestamp("connected_at").notNull().defaultNow(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
     workspaceIdIdx: index("workspace_source_workspace_id_idx").on(table.workspaceId),

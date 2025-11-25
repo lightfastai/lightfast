@@ -10,6 +10,7 @@ import { createCohereEmbedding } from "@vendor/embed";
 import type { CohereInputType } from "@vendor/embed";
 import { embedEnv } from "@vendor/embed/env";
 import { EMBEDDING_CONFIG } from "@repo/console-config";
+import type { CohereEmbeddingModel } from "@repo/console-validation";
 
 /**
  * Default embedding configuration
@@ -24,9 +25,9 @@ export interface EmbeddingDefaults {
 	dimension: number;
 
 	/**
-	 * Default model name
+	 * Default Cohere embedding model (strongly typed)
 	 */
-	model: string;
+	model: CohereEmbeddingModel;
 }
 
 /**

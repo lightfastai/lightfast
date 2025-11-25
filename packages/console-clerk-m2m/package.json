@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/backend": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:*",
     "zod": "catalog:"

@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { stores } from "./stores";
-import { sourceTypeEnum } from "./docs-documents";
+import type { SourceType } from "@repo/console-validation";
 
 export const ingestionEvents = pgTable(
   "lightfast_ingestion_events",
@@ -25,7 +25,7 @@ export const ingestionEvents = pgTable(
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
     /** Source type that triggered this event */
-    sourceType: sourceTypeEnum("source_type").notNull(),
+    sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
     /**
      * Unique event key for idempotency (source-specific format)
      *
@@ -53,7 +53,7 @@ export const ingestionEvents = pgTable(
     /** Processing status: processed | skipped | failed */
     status: varchar("status", { length: 16 }).notNull().default("processed"),
     /** When the event was processed */
-    processedAt: timestamp("processed_at", { withTimezone: false })
+    processedAt: timestamp("processed_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
   },

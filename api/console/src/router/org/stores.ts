@@ -11,6 +11,16 @@ import {
 import { db } from "@db/console/client";
 import { stores } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
+import { getWorkspaceKey } from "@db/console/utils";
+import {
+	embeddingModelSchema,
+	embeddingProviderSchema,
+	pineconeMetricSchema,
+	pineconeCloudSchema,
+	pineconeRegionSchema,
+	chunkMaxTokensSchema,
+	chunkOverlapSchema,
+} from "@repo/console-validation";
 
 const { dimension: storeEmbeddingDimension } = resolveEmbeddingDefaults();
 
@@ -39,16 +49,20 @@ export const storesRouter = {
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Verify workspace access via helper
-			const { workspaceId } = await resolveWorkspaceByName({
+			const { workspaceId, workspaceSlug } = await resolveWorkspaceByName({
 				clerkOrgSlug: input.clerkOrgSlug,
 				workspaceName: input.workspaceName,
 				userId: ctx.auth.userId,
 			});
 
+			// Generate workspace key from slug for Pinecone index naming
+			const workspaceKey = getWorkspaceKey(workspaceSlug);
+
 			return getOrCreateStore({
 				workspaceId,
 				storeSlug: input.storeSlug,
 				embeddingDim: input.embeddingDim,
+				workspaceKey,
 			});
 		}),
 
@@ -147,13 +161,13 @@ export const storesRouter = {
 				slug: z.string(),
 				indexName: z.string(),
 				embeddingDim: z.number(),
-				embeddingModel: z.string(),
-				embeddingProvider: z.enum(["cohere"]),
-				pineconeMetric: z.enum(["cosine", "euclidean", "dotproduct"]),
-				pineconeCloud: z.enum(["aws", "gcp", "azure"]),
-				pineconeRegion: z.string(),
-				chunkMaxTokens: z.number(),
-				chunkOverlap: z.number(),
+				embeddingModel: embeddingModelSchema,
+				embeddingProvider: embeddingProviderSchema,
+				pineconeMetric: pineconeMetricSchema,
+				pineconeCloud: pineconeCloudSchema,
+				pineconeRegion: pineconeRegionSchema,
+				chunkMaxTokens: chunkMaxTokensSchema,
+				chunkOverlap: chunkOverlapSchema,
 			}),
 		)
 		.mutation(async ({ input }) => {

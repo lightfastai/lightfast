@@ -40,19 +40,30 @@ export function GET(request: NextRequest) {
 		redirectPath: customCallback ?? undefined,
 	});
 
+	// Debug logging
+	console.log("GitHub OAuth Auth Debug:", {
+		generatedToken: state.token,
+		encodedState: encoded,
+		customCallback,
+	});
+
 	// For GitHub Apps, we still use OAuth to get a user access token
 	// This token allows us to fetch the user's installations
+	// IMPORTANT: Send the FULL encoded state to GitHub, not just the token
+	// GitHub will return exactly what we send, and we validate against the full encoded state
 	const response = NextResponse.redirect(
-		`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state.token}`,
+		`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encoded}`,
 	);
 
 	// Set state cookie with encoded state (includes timestamp, nonce, redirectPath)
+	// IMPORTANT: Use sameSite: "lax" instead of "strict" because GitHub (external domain)
+	// redirects back to our callback. "strict" blocks cookies on external redirects.
 	response.cookies.set("github_oauth_state", encoded, {
 		httpOnly: true,
-		secure: true, // Always secure (use HTTPS in dev)
-		sameSite: "strict", // Prevent CSRF
+		secure: process.env.NODE_ENV === "production", // Only secure in production (localhost doesn't use HTTPS)
+		sameSite: "lax", // Allow cookie on top-level navigation from GitHub
 		maxAge: 600, // 10 minutes
-		path: "/api/github", // Restrict to GitHub OAuth paths
+		path: "/", // Make available to all routes (not just /api/github)
 	});
 
 	return response;

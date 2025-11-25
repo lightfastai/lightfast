@@ -7,6 +7,7 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import type { JobStatus, JobTrigger } from "@repo/console-validation";
 
 /**
  * Jobs table tracks Inngest workflow executions
@@ -73,7 +74,7 @@ export const jobs = pgTable(
 		status: varchar("status", { length: 50 })
 			.notNull()
 			.default("queued")
-			.$type<"queued" | "running" | "completed" | "failed" | "cancelled">(),
+			.$type<JobStatus>(),
 
 		/**
 		 * Job trigger type
@@ -84,7 +85,7 @@ export const jobs = pgTable(
 		 */
 		trigger: varchar("trigger", { length: 50 })
 			.notNull()
-			.$type<"manual" | "scheduled" | "webhook" | "automatic">(),
+			.$type<JobTrigger>(),
 
 		/**
 		 * User ID who triggered the job (if manual)
@@ -125,7 +126,7 @@ export const jobs = pgTable(
 		 */
 		startedAt: timestamp("started_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		}),
 
 		/**
@@ -133,7 +134,7 @@ export const jobs = pgTable(
 		 */
 		completedAt: timestamp("completed_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		}),
 
 		/**
@@ -144,14 +145,14 @@ export const jobs = pgTable(
 		/**
 		 * Timestamp when job was created (queued)
 		 */
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
 
 		/**
 		 * Timestamp when job record was last updated
 		 */
-		updatedAt: timestamp("updated_at", { mode: "string", withTimezone: false })
+		updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
 	},

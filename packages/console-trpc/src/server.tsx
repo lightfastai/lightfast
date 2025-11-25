@@ -12,7 +12,7 @@ import {
   createUserTRPCContext,
   createOrgTRPCContext,
 } from "@api/console";
-import { getM2MToken } from "@repo/console-clerk-m2m";
+import { createM2MToken } from "@repo/console-clerk-m2m";
 
 import { createQueryClient } from "./client";
 
@@ -44,10 +44,10 @@ const createOrgContext = cache(async () => {
 
 /**
  * Create context for webhook M2M calls (org-scoped)
- * Uses long-lived Clerk M2M token for webhook service
+ * Creates token on-demand following Clerk's recommended pattern
  */
 const createWebhookContext = cache(async () => {
-  const token = getM2MToken("webhook");
+  const { token } = await createM2MToken("webhook");
 
   const heads = new Headers();
   heads.set("x-trpc-source", "webhook-service");
@@ -60,10 +60,10 @@ const createWebhookContext = cache(async () => {
 
 /**
  * Create context for Inngest M2M calls (org-scoped)
- * Uses long-lived Clerk M2M token for Inngest service
+ * Creates token on-demand following Clerk's recommended pattern
  */
 const createInngestContext = cache(async () => {
-  const token = getM2MToken("inngest");
+  const { token } = await createM2MToken("inngest");
 
   const heads = new Headers();
   heads.set("x-trpc-source", "inngest-workflow");

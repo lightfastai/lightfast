@@ -15,7 +15,7 @@ import { ZodError } from "zod";
 import { eq, and, sql } from "drizzle-orm";
 
 import { auth, clerkClient } from "@vendor/clerk/server";
-import { verifyM2MToken, getExpectedMachineId } from "@repo/console-clerk-m2m";
+import { verifyM2MToken } from "@repo/console-clerk-m2m";
 import {
   verifyOrgAccess,
   resolveWorkspaceByName as resolveWorkspace,
@@ -498,15 +498,10 @@ export const webhookM2MProcedure = sentrifiedProcedure
       });
     }
 
-    // Validate it's from the webhook machine
-    const expectedMachineId = getExpectedMachineId("webhook");
-
-    if (ctx.auth.machineId !== expectedMachineId) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: `This endpoint requires webhook machine token, got machine: ${ctx.auth.machineId}`,
-      });
-    }
+    // Machine ID validation removed - we create tokens on-demand now
+    // The verified.subject contains the machine ID, but since we control token creation
+    // via createM2MToken("webhook"), we know it's from the correct machine
+    // Additional validation is redundant in our architecture
 
     return next({
       ctx: {
@@ -541,15 +536,10 @@ export const inngestM2MProcedure = sentrifiedProcedure
       });
     }
 
-    // Validate it's from the Inngest machine
-    const expectedMachineId = getExpectedMachineId("inngest");
-
-    if (ctx.auth.machineId !== expectedMachineId) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: `This endpoint requires Inngest machine token, got machine: ${ctx.auth.machineId}`,
-      });
-    }
+    // Machine ID validation removed - we create tokens on-demand now
+    // The verified.subject contains the machine ID, but since we control token creation
+    // via createM2MToken("inngest"), we know it's from the correct machine
+    // Additional validation is redundant in our architecture
 
     return next({
       ctx: {

@@ -66,7 +66,7 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
   console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
   const headCommitTimestamp = payload.head_commit?.timestamp ?? undefined;
 
-  // Resolve workspace from GitHub org slug
+  // Resolve workspace and source from GitHub org slug
   const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
   if (!ownerLogin) {
     console.error(`[Webhook] Missing owner login in ${payload.repository.full_name}`);
@@ -81,6 +81,22 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
   console.log(
     `[Webhook] Resolved workspace: id=${workspaceId} key=${workspaceKey}`,
   );
+
+  // Resolve sourceId (workspaceSource.id) from GitHub repository ID
+  const sourcesService = new SourcesService();
+  const sourceId = await sourcesService.getSourceIdByGithubRepoId(
+    workspaceId,
+    payload.repository.id.toString()
+  );
+
+  if (!sourceId) {
+    console.error(
+      `[Webhook] No workspace source found for repo ${payload.repository.full_name} in workspace ${workspaceId}`
+    );
+    return;
+  }
+
+  console.log(`[Webhook] Resolved sourceId: ${sourceId}`);
 
   // Aggregate changed files from all commits
   const changedFiles = new Map<string, "added" | "modified" | "removed">();
@@ -149,26 +165,27 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 
   console.log(`[Webhook] Found ${allFiles.length} changed files`);
 
-  // Trigger Inngest workflow
+  // Trigger Inngest workflow (NEW: apps-console/github.push)
   await inngest.send({
-    name: "apps-console/docs.push",
+    name: "apps-console/github.push",
     data: {
-      workspaceId, // DB UUID
-      workspaceKey, // external naming key
+      workspaceId,
+      workspaceKey,
+      sourceId, // NEW: workspaceSource.id
       repoFullName: payload.repository.full_name,
       githubRepoId: payload.repository.id,
       githubInstallationId: payload.installation.id,
       beforeSha: payload.before,
       afterSha: payload.after,
+      branch, // NEW: branch name
       deliveryId,
-      source: "github-webhook",
       headCommitTimestamp,
       changedFiles: allFiles,
     },
   });
 
   console.log(
-    `[Webhook] Triggered ingestion workflow for ${allFiles.length} files (workspace: ${workspaceId}, installation ${payload.installation.id})`,
+    `[Webhook] Triggered github.push workflow for ${allFiles.length} files (sourceId: ${sourceId}, workspace: ${workspaceId})`,
   );
 }
 

@@ -1507,6 +1507,9 @@ importers:
       '@repo/console-types':
         specifier: workspace:*
         version: link:../../packages/console-types
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../../packages/console-validation
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -2405,6 +2408,9 @@ importers:
 
   packages/console-clerk-m2m:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 2.18.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -2442,6 +2448,9 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../console-validation
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
@@ -2488,6 +2497,9 @@ importers:
       '@repo/console-types':
         specifier: workspace:*
         version: link:../console-types
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../console-validation
       '@vendor/embed':
         specifier: workspace:*
         version: link:../../vendor/embed
@@ -2719,12 +2731,6 @@ importers:
 
   packages/console-validation:
     dependencies:
-      '@db/console':
-        specifier: workspace:*
-        version: link:../../db/console
-      drizzle-zod:
-        specifier: 'catalog:'
-        version: 0.7.1(drizzle-orm@0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7))(zod@3.25.76)
       friendlier-words:
         specifier: ^1.1.3
         version: 1.1.3

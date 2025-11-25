@@ -20,10 +20,6 @@
       "types": "./dist/forms/index.d.ts",
       "default": "./src/forms/index.ts"
     },
-    "./database": {
-      "types": "./dist/database/index.d.ts",
-      "default": "./src/database/index.ts"
-    },
     "./constants": {
       "types": "./dist/constants/index.d.ts",
       "default": "./src/constants/index.ts"
@@ -40,8 +36,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
-    "drizzle-zod": "catalog:",
     "friendlier-words": "^1.1.3",
     "zod": "catalog:"
   },

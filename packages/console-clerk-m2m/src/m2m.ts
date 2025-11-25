@@ -33,65 +33,83 @@
  * @see https://clerk.com/docs/machine-auth/m2m-tokens
  */
 
+import { createClerkClient } from "@clerk/backend";
 import { consoleM2MEnv } from "./env";
 
 /**
  * Service types for M2M authentication
- * Each sender service has its own long-lived token
+ * Each sender service creates tokens on-demand
  */
 export type M2MService = "webhook" | "inngest";
 
 /**
- * Get M2M token for a specific service
+ * Get machine secret key for a specific service
+ * Helper function to retrieve the correct secret key based on service type
  *
- * Returns the long-lived token from environment variables.
- * These tokens are created once in Clerk Dashboard with 365-day expiration.
+ * @param service - Which service to get the key for
+ * @returns The machine secret key for the service
+ * @throws {Error} If service is unknown
+ */
+function getMachineSecretKey(service: M2MService): string {
+  if (service === "webhook") {
+    return consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_WEBHOOK;
+  } else if (service === "inngest") {
+    return consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_INNGEST;
+  } else {
+    throw new Error(`Unknown M2M service: ${service}`);
+  }
+}
+
+/**
+ * Create M2M token on-demand for a specific service
  *
- * @param service - Which service's token to get
- * @returns The M2M token for Authorization header
+ * Creates a short-lived token (30 seconds) for security.
+ * Follows Clerk's recommended pattern of creating tokens per request.
+ *
+ * @param service - Which service is creating the token
+ * @returns The M2M token object with token and expiration
  *
  * @example
  * ```typescript
  * // For webhook handlers
- * const token = getM2MToken("webhook");
+ * const { token } = await createM2MToken("webhook");
  * headers.set("authorization", `Bearer ${token}`);
  *
  * // For Inngest workflows
- * const token = getM2MToken("inngest");
+ * const { token } = await createM2MToken("inngest");
  * headers.set("authorization", `Bearer ${token}`);
  * ```
  */
-export function getM2MToken(service: M2MService): string {
-  if (service === "webhook") {
-    return consoleM2MEnv.CLERK_M2M_TOKEN_WEBHOOK;
+export async function createM2MToken(service: M2MService): Promise<{
+  token: string;
+  expiration: number;
+}> {
+  // Get the machine secret key for this service
+  const machineSecretKey = getMachineSecretKey(service);
+
+  console.log(`[M2M] Creating token for ${service} with secret: ${machineSecretKey.substring(0, 10)}...`);
+
+  // Create a Clerk client with this machine's secret key
+  const clerk = createClerkClient({
+    secretKey: machineSecretKey,
+  });
+
+  // Create a short-lived token (30 seconds)
+  // This is more secure than long-lived tokens
+  const m2mObject = await clerk.m2m.createToken({
+    secondsUntilExpiration: 30,
+  });
+
+  if (!m2mObject.token) {
+    throw new Error(`[M2M] Failed to create token for ${service}: token is undefined`);
   }
 
-  if (service === "inngest") {
-    return consoleM2MEnv.CLERK_M2M_TOKEN_INNGEST;
-  }
+  console.log(`[M2M] Created token: ${m2mObject.token.substring(0, 10)}... (expires in 30s)`);
 
-  throw new Error(`Unknown M2M service: ${service}`);
-}
-
-/**
- * Get expected machine ID for a specific service
- *
- * Returns the machine ID that we expect tokens from this service to have.
- * Used to validate the `subject` field from verified tokens.
- *
- * @param service - Which service's machine ID to get
- * @returns The expected machine ID (mch_xxx)
- */
-export function getExpectedMachineId(service: M2MService): string {
-  if (service === "webhook") {
-    return consoleM2MEnv.CLERK_M2M_MACHINE_ID_WEBHOOK;
-  }
-
-  if (service === "inngest") {
-    return consoleM2MEnv.CLERK_M2M_MACHINE_ID_INNGEST;
-  }
-
-  throw new Error(`Unknown M2M service: ${service}`);
+  return {
+    token: m2mObject.token,
+    expiration: m2mObject.expiration ?? 0,
+  };
 }
 
 /**
@@ -133,26 +151,32 @@ export async function verifyM2MToken(token: string): Promise<{
   expired: boolean;
   expiration: number | null;
 }> {
-  const { clerkClient } = await import("@vendor/clerk/server");
-  const clerk = await clerkClient();
-
   // Use the tRPC machine secret to verify ALL incoming tokens
+  // Following Clerk's example pattern exactly
   const machineSecretKey = consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
 
   console.log(`[M2M] Verifying token with tRPC machine secret`);
+  console.log(`[M2M] Token prefix: ${token.substring(0, 10)}...`);
+  console.log(`[M2M] Machine secret prefix: ${machineSecretKey.substring(0, 10)}...`);
+
+  // Create a Clerk client with the tRPC machine's secret key
+  // This allows it to verify tokens created by webhook/inngest machines
+  const clerk = createClerkClient({
+    secretKey: machineSecretKey,
+  });
 
   // Verify token using Clerk's M2M API
+  // No need to pass machineSecretKey - it's already in the client
   const verified = await clerk.m2m.verifyToken({
     token,
-    machineSecretKey,
   });
 
   console.log(`[M2M] Token verified. Created by machine: ${verified.subject}`);
 
   return {
     id: verified.id,
-    subject: verified.subject,
-    scopes: verified.scopes,
+    subject: verified.subject, // Machine ID that created the token
+    scopes: verified.scopes, // Allowed machine IDs
     claims: verified.claims,
     revoked: verified.revoked,
     expired: verified.expired,
@@ -165,11 +189,11 @@ export async function verifyM2MToken(token: string): Promise<{
  * Useful for conditional logic or graceful degradation
  *
  * Checks:
- * - Service has a token to send (CLERK_M2M_TOKEN_WEBHOOK or CLERK_M2M_TOKEN_INNGEST)
+ * - Service has a machine secret key (CLERK_MACHINE_SECRET_KEY_WEBHOOK or CLERK_MACHINE_SECRET_KEY_INNGEST)
  * - tRPC has machine secret to verify (CLERK_MACHINE_SECRET_KEY_TRPC)
  *
  * @param service - Which service to check
- * @returns true if service token and tRPC machine secret are configured
+ * @returns true if service secret key and tRPC machine secret are configured
  *
  * @example
  * ```typescript
@@ -182,9 +206,9 @@ export async function verifyM2MToken(token: string): Promise<{
  */
 export function isM2MConfigured(service: M2MService): boolean {
   try {
-    const token = getM2MToken(service);
+    const secretKey = getMachineSecretKey(service);
     const trpcSecretKey = consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
-    return !!token && token.startsWith("mt_") && !!trpcSecretKey && trpcSecretKey.startsWith("ak_");
+    return !!secretKey && secretKey.startsWith("ak_") && !!trpcSecretKey && trpcSecretKey.startsWith("ak_");
   } catch {
     return false;
   }

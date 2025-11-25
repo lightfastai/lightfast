@@ -25,35 +25,27 @@ export function generateWorkspaceName(): string {
 }
 
 /**
- * Generate internal slug from workspace name
+ * Generate a random workspace slug
  *
- * Converts to lowercase and sanitizes to alphanumeric + hyphens only.
- * Used for Pinecone index naming: ws-{slug}-{store}
+ * Creates a random adjective-animal combination in lowercase with hyphen.
+ * Used for internal Pinecone index naming when user provides their own workspace name.
  *
  * Examples:
- * - "Robust Chicken" → "robust-chicken"
- * - "My-Awesome-Workspace" → "my-awesome-workspace"
- * - "api.v2" → "api-v2"
- * - "my_project" → "my-project"
- *
- * Throws if resulting slug exceeds length limit (20 chars for Pinecone).
+ * - "robust-chicken"
+ * - "happy-cat"
+ * - "modest-pear"
  */
-export function generateWorkspaceSlug(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-") // Convert everything except alphanumeric and hyphens to hyphens
-    .replace(/^-+/, "")            // No leading hyphens
-    .replace(/-+$/, "")            // No trailing hyphens
-    .replace(/-{2,}/g, "-");       // No consecutive hyphens
+export function generateRandomSlug(): string {
+  // friendlyWords() returns format like "robust-chicken"
+  const slug = friendlyWords();
 
-  if (slug.length === 0) {
-    throw new Error("Workspace slug cannot be empty after sanitization");
+  // Ensure it meets constraints (should already be valid, but verify)
+  if (slug.length > WORKSPACE_SLUG_MAX_LENGTH) {
+    // Truncate if needed
+    return slug.substring(0, WORKSPACE_SLUG_MAX_LENGTH);
   }
 
-  // Truncate to max length for Pinecone constraint: ws-{20}-{20} = 44 chars total
-  const truncated = slug.substring(0, WORKSPACE_SLUG_MAX_LENGTH);
-
-  return truncated;
+  return slug;
 }
 
 /**

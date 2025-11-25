@@ -1,16 +1,7 @@
-import { pgTable, varchar, timestamp, text, boolean, index, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, text, boolean, index, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
-
-/**
- * Integration Provider Enum
- */
-export const integrationProviderEnum = pgEnum("integration_provider", [
-  "github",
-  "notion",
-  "linear",
-  "sentry",
-]);
+import type { IntegrationProvider } from "@repo/console-validation";
 
 /**
  * User Sources
@@ -38,12 +29,12 @@ export const userSources = pgTable(
     userId: varchar("user_id", { length: 191 }).notNull(),
 
     // Provider type (github, notion, linear, sentry)
-    provider: integrationProviderEnum("provider").notNull(),
+    provider: varchar("provider", { length: 50 }).notNull().$type<IntegrationProvider>(),
 
     // OAuth credentials (MUST be encrypted at application layer)
     accessToken: text("access_token").notNull(),
     refreshToken: text("refresh_token"),
-    tokenExpiresAt: timestamp("token_expires_at"),
+    tokenExpiresAt: timestamp("token_expires_at", { mode: "string", withTimezone: true }),
     scopes: text("scopes").array(),
 
     // Provider-specific metadata from OAuth
@@ -86,10 +77,10 @@ export const userSources = pgTable(
     isActive: boolean("is_active").notNull().default(true),
 
     // Timestamps
-    connectedAt: timestamp("connected_at").notNull().defaultNow(),
-    lastSyncAt: timestamp("last_sync_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    lastSyncAt: timestamp("last_sync_at", { mode: "string", withTimezone: true }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
     userIdIdx: index("user_source_user_id_idx").on(table.userId),

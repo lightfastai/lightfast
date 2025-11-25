@@ -62,7 +62,9 @@ export function TeamSwitcherLink({
 
     try {
       // Set active organization in Clerk
-      await setActive({ organization: orgId });
+      if (setActive) {
+        await setActive({ organization: orgId });
+      }
 
       // Navigate with updated cookies (client-side navigation)
       router.push(targetUrl);

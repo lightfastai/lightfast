@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
-import { sourceTypeEnum } from "./docs-documents";
+import type { SourceType } from "@repo/console-validation";
 
 /**
  * ConnectedSources table represents external sources connected to the platform.
@@ -58,7 +58,7 @@ export const connectedSources = pgTable(
     /**
      * Source type discriminator
      */
-    sourceType: sourceTypeEnum("source_type").notNull(),
+    sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
 
     /**
      * Human-readable display name for this source
@@ -93,7 +93,7 @@ export const connectedSources = pgTable(
      */
     lastIngestedAt: timestamp("last_ingested_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     }),
 
     /**
@@ -101,7 +101,7 @@ export const connectedSources = pgTable(
      */
     lastSyncedAt: timestamp("last_synced_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     }),
 
     /**
@@ -109,7 +109,7 @@ export const connectedSources = pgTable(
      */
     connectedAt: timestamp("connected_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -117,14 +117,14 @@ export const connectedSources = pgTable(
     /**
      * Timestamp when record was created
      */
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
     /**
      * Timestamp when record was last updated
      */
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: false })
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },

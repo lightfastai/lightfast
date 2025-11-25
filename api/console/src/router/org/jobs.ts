@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { jobs } from "@db/console/schema";
+import { jobs, workspaces, type JobInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -13,6 +13,10 @@ import {
 	recordJobMetric,
 	getJob,
 } from "../../lib/jobs";
+import { inngest } from "@api/console/inngest";
+import { workspaceSources } from "@db/console/schema";
+import { getWorkspaceKey } from "@db/console/utils";
+import { jobTriggerSchema } from "@repo/console-validation";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -310,6 +314,231 @@ export const jobsRouter = {
 			return { success: true };
 		}),
 
+	/**
+	 * Restart a job
+	 * Triggers a new sync workflow based on the original job's parameters
+	 */
+	restart: protectedProcedure
+		.input(
+			z.object({
+				jobId: z.string(),
+				clerkOrgSlug: z.string(),
+				workspaceName: z.string(), // User-facing workspace name from URL
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Resolve workspace from user-facing name
+			const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
+				clerkOrgSlug: input.clerkOrgSlug,
+				workspaceName: input.workspaceName,
+				userId: ctx.auth.userId,
+			});
+
+			// Verify job exists and belongs to user's workspace
+			const job = await db.query.jobs.findFirst({
+				where: and(
+					eq(jobs.id, input.jobId),
+					eq(jobs.workspaceId, workspaceId),
+					eq(jobs.clerkOrgId, clerkOrgId),
+				),
+			});
+
+			if (!job) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Job not found",
+				});
+			}
+
+			// Only allow restarting jobs that are completed, failed, or cancelled
+			if (job.status === "queued" || job.status === "running") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `Cannot restart job with status: ${job.status}. Wait for it to complete first.`,
+				});
+			}
+
+			// Determine job type and extract necessary parameters from job.input
+			const jobInput = job.input as JobInput;
+
+			// Get workspace slug for workspaceKey
+			const workspace = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, workspaceId),
+			});
+
+			if (!workspace) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Workspace not found",
+				});
+			}
+
+			const workspaceKey = getWorkspaceKey(workspace.slug);
+
+			// Route based on job function ID
+			switch (job.inngestFunctionId) {
+				case "source-connected":
+				case "source-sync": {
+					// Extract sourceId from job input
+					const sourceId = jobInput.sourceId as string | undefined;
+
+					if (!sourceId) {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Job input missing sourceId - cannot restart",
+						});
+					}
+
+					// Fetch workspace source to determine provider type
+					const source = await db.query.workspaceSources.findFirst({
+						where: eq(workspaceSources.id, sourceId),
+					});
+
+					if (!source) {
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Source not found: ${sourceId}`,
+						});
+					}
+
+					// Determine source type from sourceConfig
+					const sourceType = source.sourceConfig.provider;
+
+					// Trigger new full sync
+					await inngest.send({
+						name: "apps-console/source.sync",
+						data: {
+							workspaceId,
+							workspaceKey,
+							sourceId,
+							sourceType,
+							syncMode: "full" as const,
+							trigger: "manual" as const,
+							syncParams: (jobInput.sourceMetadata as Record<string, unknown>) ?? undefined,
+						},
+					});
+					break;
+				}
+
+				case "apps-console/github-sync": {
+					// GitHub-specific sync restart
+					const sourceId = jobInput.sourceId as string | undefined;
+
+					if (!sourceId) {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Job input missing sourceId - cannot restart",
+						});
+					}
+
+					// Trigger new full sync
+					await inngest.send({
+						name: "apps-console/source.sync",
+						data: {
+							workspaceId,
+							workspaceKey,
+							sourceId,
+							sourceType: "github" as const,
+							syncMode: "full" as const,
+							trigger: "manual" as const,
+							syncParams: {
+								repoFullName: jobInput.repoFullName,
+								...jobInput,
+							},
+						},
+					});
+					break;
+				}
+
+				// DEPRECATED: Support for old job types created before refactoring
+				case "repository-initial-sync": {
+					// Old GitHub initial sync jobs
+					// Try to extract repoId from job input to find the workspace source
+					const repoId = jobInput.repoId as string | undefined;
+					const repoFullName = jobInput.repoFullName as string | undefined;
+
+					if (!repoId && !repoFullName) {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Deprecated job missing repository information - cannot restart",
+						});
+					}
+
+					// Find workspace source by GitHub repo ID (stored in providerResourceId)
+					let source = null;
+					if (repoId) {
+						source = await db.query.workspaceSources.findFirst({
+							where: and(
+								eq(workspaceSources.workspaceId, workspaceId),
+								eq(workspaceSources.providerResourceId, repoId),
+								eq(workspaceSources.isActive, true),
+							),
+						});
+					}
+
+					// Fallback: try to find by repoFullName in sourceConfig
+					if (!source && repoFullName) {
+						const allSources = await db.query.workspaceSources.findMany({
+							where: and(
+								eq(workspaceSources.workspaceId, workspaceId),
+								eq(workspaceSources.isActive, true),
+							),
+						});
+
+						source = allSources.find(s =>
+							s.sourceConfig.provider === "github" &&
+							s.sourceConfig.repoFullName === repoFullName
+						) ?? null;
+					}
+
+					if (!source) {
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Cannot find active source for repository - it may have been disconnected`,
+						});
+					}
+
+					// Verify it's a GitHub source
+					if (source.sourceConfig.provider !== "github") {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Source is not a GitHub repository",
+						});
+					}
+
+					// Trigger new full sync
+					await inngest.send({
+						name: "apps-console/source.sync",
+						data: {
+							workspaceId,
+							workspaceKey,
+							sourceId: source.id,
+							sourceType: "github" as const,
+							syncMode: "full" as const,
+							trigger: "manual" as const,
+							syncParams: {
+								repoFullName: source.sourceConfig.repoFullName,
+								defaultBranch: source.sourceConfig.defaultBranch,
+								...jobInput,
+							},
+						},
+					});
+					break;
+				}
+
+				default:
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: `Cannot restart job of type: ${job.inngestFunctionId}. This job type may no longer be supported.`,
+					});
+			}
+
+			return {
+				success: true,
+				message: "Job restart triggered successfully",
+			};
+		}),
+
 	// ============================================================================
 	// Inngest M2M Procedures
 	// ============================================================================
@@ -329,7 +558,7 @@ export const jobsRouter = {
 				inngestRunId: z.string(),
 				inngestFunctionId: z.string(),
 				name: z.string(),
-				trigger: z.enum(["manual", "scheduled", "webhook", "automatic"]),
+				trigger: jobTriggerSchema,
 				triggeredBy: z.string().nullable().optional(),
 				input: z.record(z.unknown()).nullable().optional(),
 			}),

@@ -21,6 +21,7 @@
   "dependencies": {
     "@repo/console-config": "workspace:*",
     "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@vendor/embed": "workspace:*"
   },
   "devDependencies": {

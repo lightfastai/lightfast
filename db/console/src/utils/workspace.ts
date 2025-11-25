@@ -1,6 +1,6 @@
 import { db } from "../client";
 import { workspaces } from "../schema";
-import { generateWorkspaceSlug } from "./workspace-names";
+import { generateRandomSlug } from "./workspace-names";
 
 /**
  * Compute workspace key from slug
@@ -32,8 +32,10 @@ export async function createCustomWorkspace(
   clerkOrgId: string,
   name: string,
 ): Promise<string> {
-  // Generate internal slug from user-provided name
-  const internalSlug = generateWorkspaceSlug(name);
+  // Generate random slug for Pinecone index naming
+  // This decouples user-facing name from internal identifier
+  // Slug examples: "robust-chicken", "happy-cat", "modest-pear"
+  const slug = generateRandomSlug();
 
   // Wrap in transaction to prevent race conditions
   return await db.transaction(async (tx) => {
@@ -58,8 +60,8 @@ export async function createCustomWorkspace(
       .values({
         // id is auto-generated nanoid via $defaultFn
         clerkOrgId,
-        name,                // User-facing, used in URLs
-        slug: internalSlug,  // Internal, used for Pinecone
+        name,      // User-facing name (e.g., "My-Awesome-Workspace")
+        slug,      // Random slug for Pinecone (e.g., "robust-chicken")
         settings: {},
       })
       .returning({ id: workspaces.id });

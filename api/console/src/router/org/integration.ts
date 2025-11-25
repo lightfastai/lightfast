@@ -215,7 +215,7 @@ export const integrationRouter = {
               provider: "github" as const,
               installations: newInstallations,
             },
-            lastSyncAt: new Date(),
+            lastSyncAt: new Date().toISOString(),
           })
           .where(eq(userSources.id, userSource.id));
 
@@ -504,7 +504,7 @@ export const integrationRouter = {
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const now = new Date();
+        const now = new Date().toISOString();
 
         // Check if userSource already exists for this user
         const existingUserSource = await ctx.db
@@ -525,7 +525,7 @@ export const integrationRouter = {
             .set({
               accessToken: input.accessToken,
               refreshToken: input.refreshToken ?? null,
-              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
+              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt).toISOString() : null,
               providerMetadata: {
                 provider: "github" as const,
                 installations: input.installations,
@@ -545,7 +545,7 @@ export const integrationRouter = {
               provider: "github",
               accessToken: input.accessToken,
               refreshToken: input.refreshToken ?? null,
-              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt) : null,
+              tokenExpiresAt: input.tokenExpiresAt ? new Date(input.tokenExpiresAt).toISOString() : null,
               providerMetadata: {
                 provider: "github" as const,
                 installations: input.installations,
@@ -701,21 +701,26 @@ export const integrationRouter = {
             const workspace = workspaceResult[0];
 
             if (workspace) {
+              // Trigger source.connected event (new architecture)
               await inngest.send({
-                name: "apps-console/repository.connected",
+                name: "apps-console/source.connected",
                 data: {
                   workspaceId,
                   workspaceKey: getWorkspaceKey(workspace.slug),
-                  resourceId: workspaceSourceId,
-                  repoFullName: input.repoFullName,
-                  defaultBranch: input.defaultBranch,
-                  installationId: input.installationId,
-                  integrationId: input.userSourceId, // Use userSourceId
-                  isPrivate: input.isPrivate,
+                  sourceId: workspaceSourceId,
+                  sourceType: "github",
+                  sourceMetadata: {
+                    repoFullName: input.repoFullName,
+                    repoId: input.repoId,
+                    defaultBranch: input.defaultBranch,
+                    installationId: input.installationId,
+                    isPrivate: input.isPrivate,
+                  },
+                  trigger: "user",
                 },
               });
 
-              console.log(`[integration.workspace.connectDirect] Triggered initial sync for ${input.repoFullName}`);
+              console.log(`[integration.workspace.connectDirect] Triggered source.connected for ${input.repoFullName}`);
             }
           } catch (inngestError) {
             console.error("[integration.workspace.connectDirect] Failed to trigger initial sync:", inngestError);

@@ -102,14 +102,14 @@ export const metrics = pgTable(
 		 * Timestamp when metric was recorded
 		 * Used for time-series queries and aggregation
 		 */
-		timestamp: timestamp("timestamp", { mode: "string", withTimezone: false })
+		timestamp: timestamp("timestamp", { mode: "string", withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
 
 		/**
 		 * Timestamp when metric record was created (usually same as timestamp)
 		 */
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
 	},

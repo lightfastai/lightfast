@@ -44,10 +44,10 @@ export function GET(request: NextRequest) {
 
 	response.cookies.set("github_install_state", state, {
 		httpOnly: true,
-		secure: true, // Always secure (use HTTPS in dev)
-		sameSite: "strict", // Prevent CSRF
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "lax", // Allow cookie on redirects
 		maxAge: 600, // 10 minutes
-		path: "/api/github", // Restrict to GitHub paths
+		path: "/", // Make available to all routes
 	});
 
 	// Store custom callback if provided
@@ -55,10 +55,10 @@ export function GET(request: NextRequest) {
 	if (customCallback) {
 		response.cookies.set("github_install_callback", customCallback, {
 			httpOnly: true,
-			secure: true, // Always secure (use HTTPS in dev)
-			sameSite: "strict", // Prevent CSRF
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax", // Allow cookie on redirects
 			maxAge: 600, // 10 minutes
-			path: "/api/github", // Restrict to GitHub paths
+			path: "/", // Make available to all routes
 		});
 	}
 

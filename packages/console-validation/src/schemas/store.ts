@@ -88,15 +88,126 @@ export type PineconeCloud = z.infer<typeof pineconeCloudSchema>;
 
 /**
  * Embedding Provider Enum
+ *
+ * Defines supported embedding providers.
+ * Values can be extended without database migration.
  */
 export const embeddingProviderSchema = z.enum(["cohere", "openai", "anthropic"]);
 
 export type EmbeddingProvider = z.infer<typeof embeddingProviderSchema>;
 
 /**
+ * Cohere Embedding Models
+ *
+ * Supported Cohere embedding models with their dimensions.
+ * See: https://docs.cohere.com/docs/cohere-embed
+ */
+export const cohereEmbeddingModelSchema = z.enum([
+  "embed-english-v3.0",
+  "embed-multilingual-v3.0",
+  "embed-english-light-v3.0",
+  "embed-multilingual-light-v3.0",
+  "embed-english-v2.0",
+  "embed-multilingual-v2.0",
+]);
+
+export type CohereEmbeddingModel = z.infer<typeof cohereEmbeddingModelSchema>;
+
+/**
+ * Embedding Model Schema (Union Type)
+ *
+ * Currently supports Cohere models. Will be extended to union type
+ * when OpenAI/Anthropic embedding support is added.
+ *
+ * @example
+ * ```typescript
+ * // Current: Cohere only
+ * const model = embeddingModelSchema.parse("embed-english-v3.0");
+ *
+ * // Future: Union of all providers
+ * const model = embeddingModelSchema.parse("text-embedding-3-large"); // OpenAI
+ * ```
+ */
+export const embeddingModelSchema = cohereEmbeddingModelSchema;
+
+export type EmbeddingModel = z.infer<typeof embeddingModelSchema>;
+
+/**
+ * Pinecone Region Schema
+ *
+ * Validates Pinecone region format (provider-region-zone).
+ * Examples: us-east-1, eu-west-1, gcp-starter
+ *
+ * Pattern allows for:
+ * - Cloud provider prefix (aws, gcp, azure)
+ * - Region name (east, west, central, etc.)
+ * - Zone number (1, 2, etc.)
+ * - Special regions (starter, free, etc.)
+ */
+export const pineconeRegionSchema = z
+  .string()
+  .min(1, "Pinecone region must not be empty")
+  .regex(
+    /^[a-z]+-[a-z]+-\d+$|^[a-z]+-[a-z]+$/,
+    "Pinecone region must match format: provider-region-zone (e.g., us-east-1, gcp-starter)"
+  );
+
+export type PineconeRegion = z.infer<typeof pineconeRegionSchema>;
+
+/**
+ * Chunk Max Tokens Schema
+ *
+ * Maximum number of tokens per chunk for document processing.
+ *
+ * Constraints:
+ * - Minimum: 64 tokens (practical lower bound for meaningful chunks)
+ * - Maximum: 4096 tokens (common context window limit)
+ * - Common values: 256, 512, 1024, 2048
+ *
+ * @example
+ * ```typescript
+ * const tokens = chunkMaxTokensSchema.parse(512); // ✅ Valid
+ * const tokens = chunkMaxTokensSchema.parse(32);  // ❌ Too small
+ * const tokens = chunkMaxTokensSchema.parse(8192); // ❌ Too large
+ * ```
+ */
+export const chunkMaxTokensSchema = z
+  .number()
+  .int("Chunk max tokens must be an integer")
+  .min(64, "Chunk max tokens must be at least 64")
+  .max(4096, "Chunk max tokens must not exceed 4096");
+
+export type ChunkMaxTokens = z.infer<typeof chunkMaxTokensSchema>;
+
+/**
+ * Chunk Overlap Schema
+ *
+ * Number of tokens to overlap between consecutive chunks.
+ * Ensures context continuity across chunk boundaries.
+ *
+ * Constraints:
+ * - Minimum: 0 tokens (no overlap)
+ * - Maximum: 1024 tokens (reasonable upper bound)
+ * - Should be less than chunkMaxTokens (validated at usage site)
+ *
+ * @example
+ * ```typescript
+ * const overlap = chunkOverlapSchema.parse(50); // ✅ Valid
+ * const overlap = chunkOverlapSchema.parse(-10); // ❌ Negative not allowed
+ * ```
+ */
+export const chunkOverlapSchema = z
+  .number()
+  .int("Chunk overlap must be an integer")
+  .min(0, "Chunk overlap must be non-negative")
+  .max(1024, "Chunk overlap must not exceed 1024");
+
+export type ChunkOverlap = z.infer<typeof chunkOverlapSchema>;
+
+/**
  * Store Configuration Schema
  *
- * Complete store configuration for creation/update
+ * Complete store configuration for creation/update with cross-field validation.
  *
  * @example
  * ```typescript
@@ -113,16 +224,21 @@ export type EmbeddingProvider = z.infer<typeof embeddingProviderSchema>;
  * });
  * ```
  */
-export const storeConfigurationSchema = z.object({
-  slug: storeSlugSchema,
-  embeddingDim: z.number().int().positive(),
-  pineconeMetric: pineconeMetricSchema,
-  pineconeCloud: pineconeCloudSchema,
-  pineconeRegion: z.string().min(1, "Pinecone region must not be empty"),
-  chunkMaxTokens: z.number().int().positive(),
-  chunkOverlap: z.number().int().nonnegative(),
-  embeddingModel: z.string().min(1, "Embedding model must not be empty"),
-  embeddingProvider: embeddingProviderSchema,
-});
+export const storeConfigurationSchema = z
+  .object({
+    slug: storeSlugSchema,
+    embeddingDim: z.number().int().positive(),
+    pineconeMetric: pineconeMetricSchema,
+    pineconeCloud: pineconeCloudSchema,
+    pineconeRegion: pineconeRegionSchema,
+    chunkMaxTokens: chunkMaxTokensSchema,
+    chunkOverlap: chunkOverlapSchema,
+    embeddingModel: embeddingModelSchema,
+    embeddingProvider: embeddingProviderSchema,
+  })
+  .refine((data) => data.chunkOverlap < data.chunkMaxTokens, {
+    message: "Chunk overlap must be less than chunk max tokens",
+    path: ["chunkOverlap"],
+  });
 
 export type StoreConfiguration = z.infer<typeof storeConfigurationSchema>;

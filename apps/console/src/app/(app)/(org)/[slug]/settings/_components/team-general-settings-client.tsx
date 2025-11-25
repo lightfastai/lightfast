@@ -84,7 +84,9 @@ export function TeamGeneralSettingsClient({
 				// Update Clerk's active organization before navigation
 				// This ensures cookies are updated before the RSC request
 				try {
-					await setActive({ organization: data.id });
+					if (setActive) {
+						await setActive({ organization: data.id });
+					}
 
 					// Refresh router cache to clear any stale RSC data
 					router.refresh();

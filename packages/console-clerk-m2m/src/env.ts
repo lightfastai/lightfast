@@ -7,15 +7,18 @@ import { z } from "zod";
  * Setup (one-time in Clerk Dashboard):
  * 1. Create 3 machines: "tRPC API", "Webhook Handler", "Inngest Workflows"
  * 2. Configure scopes: webhook→tRPC, inngest→tRPC, tRPC→both
- * 3. Generate long-lived tokens (365 days) from webhook and inngest machines
+ * 3. Copy each machine's secret key (ak_xxx)
  *
- * Architecture:
- * - tRPC Machine (receiver): Verifies ALL incoming M2M tokens using its secret
- * - Webhook Machine (sender): Sends pre-created token to authenticate with tRPC
- * - Inngest Machine (sender): Sends pre-created token to authenticate with tRPC
+ * Architecture (Following Clerk's Pattern):
+ * - Webhook Machine: Creates tokens on-demand with CLERK_MACHINE_SECRET_KEY_WEBHOOK
+ * - Inngest Machine: Creates tokens on-demand with CLERK_MACHINE_SECRET_KEY_INNGEST
+ * - tRPC Machine: Verifies incoming tokens with CLERK_MACHINE_SECRET_KEY_TRPC
  *
- * The tRPC machine verifies tokens and checks the `subject` field
- * to identify which sender machine created the token
+ * Token Flow:
+ * 1. Sender (webhook/inngest) creates short-lived token (30s) using its secret
+ * 2. Sender sends token in Authorization header
+ * 3. Receiver (tRPC) verifies token using its secret
+ * 4. Verified token's `subject` field identifies which machine sent it
  */
 export const consoleM2MEnv = createEnv({
   shared: {},
@@ -23,13 +26,11 @@ export const consoleM2MEnv = createEnv({
     // tRPC Machine - Secret key to VERIFY all incoming M2M tokens
     CLERK_MACHINE_SECRET_KEY_TRPC: z.string().min(1).startsWith("ak_"),
 
-    // Webhook Machine - Pre-created long-lived token (365 days)
-    CLERK_M2M_TOKEN_WEBHOOK: z.string().min(1).startsWith("mt_"),
-    CLERK_M2M_MACHINE_ID_WEBHOOK: z.string().min(1).startsWith("mch_"),
+    // Webhook Machine - Secret key to CREATE tokens
+    CLERK_MACHINE_SECRET_KEY_WEBHOOK: z.string().min(1).startsWith("ak_"),
 
-    // Inngest Machine - Pre-created long-lived token (365 days)
-    CLERK_M2M_TOKEN_INNGEST: z.string().min(1).startsWith("mt_"),
-    CLERK_M2M_MACHINE_ID_INNGEST: z.string().min(1).startsWith("mch_"),
+    // Inngest Machine - Secret key to CREATE tokens
+    CLERK_MACHINE_SECRET_KEY_INNGEST: z.string().min(1).startsWith("ak_"),
   },
   client: {},
   experimental__runtimeEnv: {

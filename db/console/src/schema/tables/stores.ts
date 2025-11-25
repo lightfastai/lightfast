@@ -6,7 +6,6 @@
 import {
   index,
   integer,
-  pgEnum,
   pgTable,
   timestamp,
   uniqueIndex,
@@ -14,32 +13,15 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { workspaces } from "./workspaces";
-
-/**
- * Embedding provider enum - defines valid embedding providers
- * SOURCE OF TRUTH for embedding provider types across the system
- */
-export const embeddingProviderEnum = pgEnum("embedding_provider", ["cohere"]);
-
-/**
- * Pinecone metric enum - defines valid vector similarity metrics
- * SOURCE OF TRUTH for pinecone metric types across the system
- */
-export const pineconeMetricEnum = pgEnum("pinecone_metric", [
-  "cosine",
-  "euclidean",
-  "dotproduct",
-]);
-
-/**
- * Pinecone cloud enum - defines valid cloud providers
- * SOURCE OF TRUTH for pinecone cloud types across the system
- */
-export const pineconeCloudEnum = pgEnum("pinecone_cloud", [
-  "aws",
-  "gcp",
-  "azure",
-]);
+import type {
+  EmbeddingProvider,
+  PineconeMetric,
+  PineconeCloud,
+  PineconeRegion,
+  ChunkMaxTokens,
+  ChunkOverlap,
+  EmbeddingModel,
+} from "@repo/console-validation";
 
 export const stores = pgTable(
   "lightfast_stores",
@@ -59,31 +41,31 @@ export const stores = pgTable(
 
     // Hidden config fields (not exposed in lightfast.yml yet)
     // Pinecone infrastructure configuration
-    /** Pinecone vector similarity metric - enum enforced at DB level */
-    pineconeMetric: pineconeMetricEnum("pinecone_metric").notNull(),
-    /** Pinecone cloud provider - enum enforced at DB level */
-    pineconeCloud: pineconeCloudEnum("pinecone_cloud").notNull(),
-    /** Pinecone region */
-    pineconeRegion: varchar("pinecone_region", { length: 50 }).notNull(),
+    /** Pinecone vector similarity metric */
+    pineconeMetric: varchar("pinecone_metric", { length: 50 }).notNull().$type<PineconeMetric>(),
+    /** Pinecone cloud provider */
+    pineconeCloud: varchar("pinecone_cloud", { length: 50 }).notNull().$type<PineconeCloud>(),
+    /** Pinecone region (validated format: provider-region-zone, e.g., us-east-1) */
+    pineconeRegion: varchar("pinecone_region", { length: 50 }).notNull().$type<PineconeRegion>(),
 
     // Document chunking configuration
-    /** Maximum tokens per chunk - no default, must be provided by API layer */
-    chunkMaxTokens: integer("chunk_max_tokens").notNull(),
-    /** Token overlap between chunks - no default, must be provided by API layer */
-    chunkOverlap: integer("chunk_overlap").notNull(),
+    /** Maximum tokens per chunk (64-4096, no default, must be provided by API layer) */
+    chunkMaxTokens: integer("chunk_max_tokens").notNull().$type<ChunkMaxTokens>(),
+    /** Token overlap between chunks (0-1024, must be < chunkMaxTokens, no default) */
+    chunkOverlap: integer("chunk_overlap").notNull().$type<ChunkOverlap>(),
 
     // Embedding provider configuration
-    /** Embedding model used - no default, must be provided by API layer */
-    embeddingModel: varchar("embedding_model", { length: 100 }).notNull(),
-    /** Embedding provider - enum enforced at DB level */
-    embeddingProvider: embeddingProviderEnum("embedding_provider").notNull(),
+    /** Embedding model used (validated against provider, no default) */
+    embeddingModel: varchar("embedding_model", { length: 100 }).notNull().$type<EmbeddingModel>(),
+    /** Embedding provider */
+    embeddingProvider: varchar("embedding_provider", { length: 50 }).notNull().$type<EmbeddingProvider>(),
 
     /** When the store was created */
-    createdAt: timestamp("created_at", { withTimezone: false })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
     /** When the store was last updated */
-    updatedAt: timestamp("updated_at", { withTimezone: false })
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
   },

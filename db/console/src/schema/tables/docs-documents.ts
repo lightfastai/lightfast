@@ -7,7 +7,6 @@ import {
   index,
   integer,
   jsonb,
-  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -16,18 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { stores } from "./stores";
-
-/**
- * Source type enum - defines all supported integration sources
- */
-export const sourceTypeEnum = pgEnum("source_type", [
-  "github",
-  "linear",
-  "notion",
-  "sentry",
-  "vercel",
-  "zendesk",
-]);
+import type { SourceType } from "@repo/console-validation";
 
 export const docsDocuments = pgTable(
   "lightfast_docs_documents",
@@ -41,7 +29,7 @@ export const docsDocuments = pgTable(
 
     // Source identification (discriminated union)
     /** Source type - discriminator for union */
-    sourceType: sourceTypeEnum("source_type").notNull(),
+    sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
     /** Source-specific identifier (e.g., issue ID, page ID, file path) */
     sourceId: varchar("source_id", { length: 255 }).notNull(),
     /** Source-specific metadata (JSONB for flexibility) */
@@ -65,11 +53,11 @@ export const docsDocuments = pgTable(
     relationships: jsonb("relationships"),
 
     /** When the document was first created */
-    createdAt: timestamp("created_at", { withTimezone: false })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
     /** When the document was last updated */
-    updatedAt: timestamp("updated_at", { withTimezone: false })
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
   },

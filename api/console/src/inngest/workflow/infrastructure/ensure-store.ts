@@ -16,13 +16,13 @@
  */
 
 import type { Store } from "@db/console/schema";
-import { inngest } from "../client/client";
-import type { Events } from "../client/client";
+import { inngest } from "../../client/client";
+import type { Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { createConsolePineconeClient } from "@repo/console-pinecone";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
 import { PRIVATE_CONFIG } from "@repo/console-config";
-import { createInngestCaller } from "../lib";
+import { createInngestCaller } from "../../lib";
 
 /**
  * Resolve Pinecone index name from workspace and store
@@ -94,7 +94,7 @@ export const ensureStore = inngest.createFunction(
 		timeouts: PRIVATE_CONFIG.workflow.ensureStore.timeout,
 	},
 	{ event: "apps-console/store.ensure" },
-	async ({ event, step }) => {
+	async ({ event, step }: { event: any; step: any }) => {
 		const {
 			workspaceId,
 			workspaceKey,

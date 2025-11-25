@@ -28,11 +28,41 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
 /**
  * Job Trigger Type Enum
  *
- * How the job was initiated
+ * Represents how a job was initiated and recorded in the database.
+ *
+ * - manual: User explicitly clicked "Restart" or "Re-sync" button
+ * - scheduled: Triggered by a scheduled/cron job
+ * - webhook: Triggered by external webhook (GitHub push, etc.)
+ * - automatic: System-initiated (workspace creation, initial connection)
  */
-export const jobTriggerSchema = z.enum(["manual", "schedule", "webhook"]);
+export const jobTriggerSchema = z.enum([
+  "manual",
+  "scheduled",
+  "webhook",
+  "automatic",
+]);
 
 export type JobTrigger = z.infer<typeof jobTriggerSchema>;
+
+/**
+ * Sync Trigger Type Enum
+ *
+ * Represents what triggered a sync workflow event.
+ * Used in Inngest events (source.sync, github.sync, etc.)
+ *
+ * - manual: User explicitly requested sync/restart
+ * - scheduled: Triggered by scheduled/cron job
+ * - webhook: Triggered by external webhook (GitHub push, etc.)
+ * - config-change: Triggered by configuration file changes (lightfast.yml)
+ */
+export const syncTriggerSchema = z.enum([
+  "manual",
+  "scheduled",
+  "webhook",
+  "config-change",
+]);
+
+export type SyncTrigger = z.infer<typeof syncTriggerSchema>;
 
 /**
  * Job List Input Schema

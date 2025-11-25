@@ -4,7 +4,6 @@ import {
   index,
   integer,
   jsonb,
-  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -17,17 +16,7 @@ import type {
 } from "@repo/console-types";
 import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
-
-/**
- * Configuration status enum for lightfast.yml
- */
-export const configStatusEnum = pgEnum("config_status", [
-  "configured",
-  "unconfigured",
-  "ingesting",
-  "error",
-  "pending",
-]);
+import type { ConfigStatus } from "@repo/console-validation";
 
 /**
  * DeusConnectedRepository table represents GitHub repositories connected to Deus.
@@ -99,7 +88,7 @@ export const DeusConnectedRepository = pgTable(
      */
     connectedAt: timestamp("connected_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -109,15 +98,16 @@ export const DeusConnectedRepository = pgTable(
      */
     lastSyncedAt: timestamp("last_synced_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     }),
 
     /**
      * Configuration status for lightfast.yml
      */
-    configStatus: configStatusEnum("config_status")
+    configStatus: varchar("config_status", { length: 50 })
       .notNull()
-      .default("pending"),
+      .default("pending")
+      .$type<ConfigStatus>(),
 
     /**
      * Path to lightfast.yml config file (e.g., 'lightfast.yml' or '.lightfast.yml')
@@ -129,7 +119,7 @@ export const DeusConnectedRepository = pgTable(
      */
     configDetectedAt: timestamp("config_detected_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     }),
 
     /**
@@ -152,7 +142,7 @@ export const DeusConnectedRepository = pgTable(
      */
     lastIngestedAt: timestamp("last_ingested_at", {
       mode: "string",
-      withTimezone: false,
+      withTimezone: true,
     }),
 
     /**
@@ -164,7 +154,7 @@ export const DeusConnectedRepository = pgTable(
     /**
      * Timestamp when record was created
      */
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: false })
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },

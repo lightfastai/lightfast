@@ -68,7 +68,7 @@ export const apiKeys = pgTable(
 		 */
 		expiresAt: timestamp("expires_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		}),
 
 		/**
@@ -77,7 +77,7 @@ export const apiKeys = pgTable(
 		 */
 		lastUsedAt: timestamp("last_used_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		}),
 
 		/**
@@ -85,7 +85,7 @@ export const apiKeys = pgTable(
 		 */
 		createdAt: timestamp("created_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		})
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
@@ -95,7 +95,7 @@ export const apiKeys = pgTable(
 		 */
 		updatedAt: timestamp("updated_at", {
 			mode: "string",
-			withTimezone: false,
+			withTimezone: true,
 		})
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
