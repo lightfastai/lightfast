@@ -14,10 +14,10 @@ export default async function SourcesPage({
   const { slug, workspaceName } = await params;
   const { search = "", status = "all" } = await searchParams;
 
-  // Prefetch workspace integrations - tRPC procedure will verify org access
+  // Prefetch workspace sources - tRPC procedure will verify org access
   // No blocking access check here - let query handle verification
   prefetch(
-    orgTrpc.workspace.integrations.list.queryOptions({
+    orgTrpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     }),

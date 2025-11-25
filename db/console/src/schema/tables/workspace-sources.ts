@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { workspaces } from "./workspaces";
 import { userSources } from "./user-sources";
+import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
 /**
  * Workspace Sources
@@ -37,7 +38,7 @@ export const workspaceSources = pgTable(
       .references(() => userSources.id, { onDelete: "cascade" }),
 
     // Who connected this source to the workspace
-    connectedBy: varchar("connected_by", { length: 191 }).notNull(),
+    connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
      * Unified source configuration containing all provider-specific data and sync settings.
@@ -157,14 +158,14 @@ export const workspaceSources = pgTable(
      * - Notion: databaseId or pageId (e.g., "xyz-123-456")
      * - Sentry: projectId (e.g., "proj-789")
      */
-    providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull(),
+    providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull().$type<SourceIdentifier>(),
 
     // Status
     isActive: boolean("is_active").notNull().default(true),
 
     // Sync tracking
     lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: true }),
-    lastSyncStatus: varchar("last_sync_status", { length: 50 }), // "success" | "failed" | "pending"
+    lastSyncStatus: varchar("last_sync_status", { length: 50 }).$type<SyncStatus>(), // "success" | "failed" | "pending"
     lastSyncError: text("last_sync_error"),
 
     // Document count (denormalized for performance)

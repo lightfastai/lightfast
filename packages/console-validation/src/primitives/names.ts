@@ -115,6 +115,8 @@ export const sourceIdentifierSchema = z
   .min(1, "Source identifier must not be empty")
   .max(255, "Source identifier must be 255 characters or less");
 
+export type SourceIdentifier = z.infer<typeof sourceIdentifierSchema>;
+
 /**
  * Content Hash Schema
  *
@@ -135,6 +137,8 @@ export const contentHashSchema = z
   .string()
   .length(64, "Content hash must be exactly 64 characters (SHA-256)")
   .regex(/^[a-f0-9]{64}$/, "Content hash must be hexadecimal");
+
+export type ContentHash = z.infer<typeof contentHashSchema>;
 
 /**
  * Document Slug Schema
@@ -162,3 +166,5 @@ export const documentSlugSchema = z
     "Document slug can only contain alphanumeric, hyphens, underscores, periods, and slashes"
   )
   .trim();
+
+export type DocumentSlug = z.infer<typeof documentSlugSchema>;

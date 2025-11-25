@@ -65,8 +65,8 @@ export function InstalledSources({
 		}
 	);
 
-	const { data: integrations = [] } = useSuspenseQuery({
-		...trpc.workspace.integrations.list.queryOptions({
+	const { data: sourcesData } = useSuspenseQuery({
+		...trpc.workspace.sources.list.queryOptions({
 			clerkOrgSlug,
 			workspaceName,
 		}),
@@ -74,22 +74,24 @@ export function InstalledSources({
 		refetchOnWindowFocus: false,
 	});
 
+	const integrations = sourcesData?.list ?? [];
+
 	// Filter integrations
 	const filteredIntegrations = integrations.filter((integration) => {
 		// Type-safe metadata access for GitHub integrations
 		const metadata = integration.metadata as { repoFullName?: string } | null | undefined;
-		const displayName = integration.provider === "github"
-			? metadata?.repoFullName ?? providerNames[integration.provider]
-			: providerNames[integration.provider];
+		const displayName = integration.type === "github"
+			? metadata?.repoFullName ?? providerNames[integration.type]
+			: providerNames[integration.type];
 
 		const matchesSearch =
 			(displayName?.toLowerCase().includes(filters.search.toLowerCase()) ?? false) ||
-			integration.provider.toLowerCase().includes(filters.search.toLowerCase());
+			integration.type.toLowerCase().includes(filters.search.toLowerCase());
 
 		const matchesStatus =
 			filters.status === "all" ||
-			(filters.status === "active" && integration.isActive) ||
-			(filters.status === "inactive" && !integration.isActive);
+			(filters.status === "active") || // All sources are active by default
+			(filters.status === "inactive" && false); // No inactive sources in new model
 
 		return matchesSearch && matchesStatus;
 	});
@@ -145,7 +147,7 @@ export function InstalledSources({
 			) : (
 				<div className="rounded-sm border border-border/60 overflow-hidden bg-card">
 					{filteredIntegrations.map((integration, index) => {
-						const IconComponent = providerIcons[integration.provider];
+						const IconComponent = providerIcons[integration.type];
 
 						// Type-safe metadata access for GitHub integrations
 						const metadata = integration.metadata as {
@@ -155,12 +157,12 @@ export function InstalledSources({
 						} | null | undefined;
 
 						const name =
-							integration.provider === "github"
-								? metadata?.repoFullName ?? providerNames[integration.provider]
-								: providerNames[integration.provider];
+							integration.type === "github"
+								? metadata?.repoFullName ?? providerNames[integration.type]
+								: providerNames[integration.type];
 
 						// Get additional metadata for GitHub
-						const documentCount = metadata?.documentCount;
+						const documentCount = integration.documentCount || metadata?.documentCount;
 						const isPrivate = metadata?.isPrivate;
 
 						return (
@@ -186,7 +188,7 @@ export function InstalledSources({
 									<div className="flex-1 min-w-0">
 										<div className="flex items-center gap-2">
 											<p className="font-medium text-foreground">{name}</p>
-											{integration.provider === "github" && isPrivate && (
+											{integration.type === "github" && isPrivate && (
 												<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
 													Private
 												</span>
@@ -194,26 +196,19 @@ export function InstalledSources({
 										</div>
 										<div className="flex items-center gap-3 mt-1">
 											<div className="flex items-center gap-2">
-												<Circle
-													className={`h-2 w-2 fill-current ${
-														integration.isActive
-															? "text-green-500"
-															: "text-muted-foreground"
-													}`}
-												/>
-												<p className="text-sm text-muted-foreground">
-													{integration.isActive ? "Active" : "Inactive"}
-												</p>
+												<Circle className="h-2 w-2 fill-current text-green-500" />
+												<p className="text-sm text-muted-foreground">Active</p>
 											</div>
 											<span className="text-muted-foreground">•</span>
 											<p className="text-sm text-muted-foreground">
 												Synced{" "}
-												{formatDistanceToNow(
-													new Date(integration.lastSyncAt ?? integration.connectedAt),
-													{ addSuffix: true },
-												)}
+												{integration.lastSyncedAt
+													? formatDistanceToNow(new Date(integration.lastSyncedAt), {
+															addSuffix: true,
+													  })
+													: "never"}
 											</p>
-											{documentCount && (
+											{documentCount && documentCount > 0 && (
 												<>
 													<span className="text-muted-foreground">•</span>
 													<p className="text-sm text-muted-foreground">

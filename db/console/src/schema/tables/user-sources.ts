@@ -1,7 +1,7 @@
 import { pgTable, varchar, timestamp, text, boolean, index, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
-import type { IntegrationProvider } from "@repo/console-validation";
+import type { IntegrationProvider, ClerkUserId } from "@repo/console-validation";
 
 /**
  * User Sources
@@ -26,7 +26,7 @@ export const userSources = pgTable(
       .$defaultFn(() => nanoid()),
 
     // User who owns this personal connection
-    userId: varchar("user_id", { length: 191 }).notNull(),
+    userId: varchar("user_id", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     // Provider type (github, notion, linear, sentry)
     provider: varchar("provider", { length: 50 }).notNull().$type<IntegrationProvider>(),

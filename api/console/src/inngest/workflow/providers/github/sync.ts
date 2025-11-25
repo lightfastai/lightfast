@@ -141,7 +141,7 @@ export const githubSync = inngest.createFunction(
       await db
         .update(workspaceSources)
         .set({
-          lastSyncStatus: "in_progress",
+          lastSyncStatus: "pending",
         })
         .where(eq(workspaceSources.id, sourceId));
     });
@@ -348,7 +348,7 @@ export const githubSync = inngest.createFunction(
         .update(workspaceSources)
         .set({
           lastSyncedAt: new Date().toISOString(),
-          lastSyncStatus: "completed",
+          lastSyncStatus: "success",
         })
         .where(eq(workspaceSources.id, sourceId));
     });

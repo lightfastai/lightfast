@@ -14,6 +14,7 @@ import {
 import { sql } from "drizzle-orm";
 import { stores } from "./stores";
 import { docsDocuments } from "./docs-documents";
+import type { ContentHash } from "@repo/console-validation";
 
 export const vectorEntries = pgTable(
   "lightfast_vector_entries",
@@ -31,7 +32,7 @@ export const vectorEntries = pgTable(
     /** 0-based chunk index within document */
     chunkIndex: integer("chunk_index").notNull(),
     /** Content hash of document version */
-    contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    contentHash: varchar("content_hash", { length: 64 }).notNull().$type<ContentHash>(),
     /** When the vector was upserted */
     upsertedAt: timestamp("upserted_at", { withTimezone: true })
       .notNull()

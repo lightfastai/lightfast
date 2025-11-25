@@ -10,3 +10,5 @@ export * from "./organization";
 export * from "./store";
 export * from "./job";
 export * from "./sources";
+export * from "./ingestion";
+export * from "./metrics";

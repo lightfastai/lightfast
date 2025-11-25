@@ -218,7 +218,7 @@ export async function recordJobMetric(params: {
 	repositoryId?: string;
 	type: "job_duration" | "documents_indexed" | "errors";
 	value: number;
-	unit?: string;
+	unit?: "ms" | "count" | "percent" | "bytes";
 	tags?: Record<string, string | number | boolean>;
 }): Promise<void> {
 	try {

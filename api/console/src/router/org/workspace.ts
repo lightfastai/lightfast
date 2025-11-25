@@ -3,11 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
 import {
   workspaces,
-  connectedSources,
   stores,
   docsDocuments,
   jobs,
-  DeusConnectedRepository,
   workspaceSources,
   userSources,
 } from "@db/console/schema";
@@ -114,34 +112,47 @@ export const workspaceRouter = {
   resolveFromGithubOrgSlug: publicProcedure
     .input(workspaceResolveFromGithubOrgSlugInputSchema)
     .query(async ({ input }) => {
-      // Find connected GitHub source by organization slug
-      // GitHub installations store accountLogin in sourceMetadata
-      // Use type-safe JSON extraction instead of raw SQL interpolation
-      const githubSource = await db.query.connectedSources.findFirst({
+      // Find GitHub user source with matching installation
+      // GitHub installations are stored in providerMetadata.installations
+      const userSource = await db.query.userSources.findFirst({
         where: and(
-          eq(connectedSources.sourceType, "github"),
-          eq(connectedSources.isActive, true),
-          eq(
-            sql`${connectedSources.sourceMetadata}->>'accountLogin'`,
-            input.githubOrgSlug
-          ),
+          eq(userSources.provider, "github"),
+          eq(userSources.isActive, true),
+          sql`EXISTS (
+            SELECT 1 FROM jsonb_array_elements(${userSources.providerMetadata}->'installations') AS inst
+            WHERE inst->>'accountLogin' = ${input.githubOrgSlug}
+          )`
         ),
       });
 
-      if (!githubSource || !githubSource.workspaceId) {
+      if (!userSource) {
         throw new Error(
           `No active GitHub installation found for organization: ${input.githubOrgSlug}`,
         );
       }
 
+      // Find workspace source connected to this user source
+      const workspaceSource = await db.query.workspaceSources.findFirst({
+        where: and(
+          eq(workspaceSources.userSourceId, userSource.id),
+          eq(workspaceSources.isActive, true),
+        ),
+      });
+
+      if (!workspaceSource) {
+        throw new Error(
+          `No workspace connected to GitHub organization: ${input.githubOrgSlug}`,
+        );
+      }
+
       // Fetch workspace details
       const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, githubSource.workspaceId),
+        where: eq(workspaces.id, workspaceSource.workspaceId),
       });
 
       if (!workspace) {
         throw new Error(
-          `Workspace not found for ID: ${githubSource.workspaceId}`,
+          `Workspace not found for ID: ${workspaceSource.workspaceId}`,
         );
       }
 
@@ -443,144 +454,6 @@ export const workspaceRouter = {
       return points;
     }),
 
-  /**
-   * Workspace integrations sub-router
-   */
-  integrations: {
-    /**
-     * List integrations for a workspace
-     * Returns all connected sources/integrations for the workspace
-     */
-    list: protectedProcedure
-      .input(workspaceStatisticsInputSchema)
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing)
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get all workspace sources (simplified 2-table model)
-        const sources = await db
-          .select({
-            // From workspaceSources
-            id: workspaceSources.id,
-            isActive: workspaceSources.isActive,
-            connectedAt: workspaceSources.connectedAt,
-            lastSyncedAt: workspaceSources.lastSyncedAt,
-            lastSyncStatus: workspaceSources.lastSyncStatus,
-            sourceConfig: workspaceSources.sourceConfig,
-            documentCount: workspaceSources.documentCount,
-            // From userSources
-            provider: userSources.provider,
-          })
-          .from(workspaceSources)
-          .innerJoin(
-            userSources,
-            eq(workspaceSources.userSourceId, userSources.id)
-          )
-          .where(eq(workspaceSources.workspaceId, workspaceId))
-          .orderBy(desc(workspaceSources.connectedAt));
-
-        return sources.map((source) => {
-          // Extract metadata based on provider
-          let metadata: Record<string, any> = {};
-
-          if (
-            source.provider === "github" &&
-            source.sourceConfig.provider === "github" &&
-            source.sourceConfig.type === "repository"
-          ) {
-            metadata = {
-              repoFullName: source.sourceConfig.repoFullName,
-              repoName: source.sourceConfig.repoName,
-              defaultBranch: source.sourceConfig.defaultBranch,
-              isPrivate: source.sourceConfig.isPrivate,
-              isArchived: source.sourceConfig.isArchived,
-              documentCount: source.documentCount,
-            };
-          }
-
-          return {
-            id: source.id,
-            provider: source.provider,
-            isActive: source.isActive,
-            connectedAt: source.connectedAt,
-            lastSyncAt: source.lastSyncedAt,
-            lastSyncStatus: source.lastSyncStatus,
-            isBilledViaVercel: false, // TODO: Determine from metadata
-            metadata,
-            // For backward compatibility with frontend components that expect resource.resourceData
-            resource: {
-              id: source.id,
-              resourceData: source.sourceConfig,
-            },
-          };
-        });
-      }),
-
-    /**
-     * Disconnect/remove a source from a workspace
-     * Note: Only requires integrationId - workspace access is verified through the source
-     */
-    disconnect: protectedProcedure
-      .input(workspaceIntegrationDisconnectInputSchema)
-      .mutation(async ({ ctx, input }) => {
-        // Get workspace source (simplified 2-table model)
-        const source = await db.query.workspaceSources.findFirst({
-          where: eq(workspaceSources.id, input.integrationId),
-        });
-
-        if (!source) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Source not found",
-          });
-        }
-
-        // Get workspace to verify access
-        const workspace = await db.query.workspaces.findFirst({
-          where: eq(workspaces.id, source.workspaceId),
-        });
-
-        if (!workspace) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Workspace not found",
-          });
-        }
-
-        // Verify user has access to the org
-        const clerk = await clerkClient();
-
-        const membership = await clerk.organizations.getOrganizationMembershipList({
-          organizationId: workspace.clerkOrgId,
-        });
-
-        const userMembership = membership.data.find(
-          (m) => m.publicUserData?.userId === ctx.auth.userId,
-        );
-
-        if (!userMembership) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Access denied to this workspace",
-          });
-        }
-
-        // Mark source as inactive instead of deleting
-        await db
-          .update(workspaceSources)
-          .set({
-            isActive: false,
-            lastSyncedAt: new Date().toISOString(),
-          })
-          .where(eq(workspaceSources.id, input.integrationId));
-
-        return { success: true };
-      }),
-  },
 
   /**
    * Update workspace name
@@ -632,11 +505,12 @@ export const workspaceRouter = {
 
   /**
    * Sources sub-router
+   * Alias for workspace.integrations.list for backward compatibility
    */
   sources: {
     /**
      * List connected sources for a workspace
-     * Replaces the sources portion of the old statistics procedure
+     * This is an alias - use workspace.integrations.list for new code
      */
     list: protectedProcedure
       .input(workspaceStatisticsInputSchema)
@@ -648,32 +522,58 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get connected sources
-        const sources = await db.query.connectedSources.findMany({
-          where: and(
-            eq(connectedSources.workspaceId, workspaceId),
-            eq(connectedSources.isActive, true),
-          ),
-          orderBy: [desc(connectedSources.connectedAt)],
-        });
+        // Get all workspace sources (new 2-table model)
+        const sources = await db
+          .select({
+            id: workspaceSources.id,
+            provider: userSources.provider,
+            isActive: workspaceSources.isActive,
+            connectedAt: workspaceSources.connectedAt,
+            lastSyncedAt: workspaceSources.lastSyncedAt,
+            lastSyncStatus: workspaceSources.lastSyncStatus,
+            documentCount: workspaceSources.documentCount,
+            sourceConfig: workspaceSources.sourceConfig,
+          })
+          .from(workspaceSources)
+          .innerJoin(
+            userSources,
+            eq(workspaceSources.userSourceId, userSources.id)
+          )
+          .where(and(
+            eq(workspaceSources.workspaceId, workspaceId),
+            eq(workspaceSources.isActive, true),
+          ))
+          .orderBy(desc(workspaceSources.connectedAt));
 
+        // Format for compatibility with old interface
         return {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              acc[s.sourceType] = (acc[s.sourceType] || 0) + 1;
+              acc[s.provider] = (acc[s.provider] || 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
           ),
           list: sources.map((s) => ({
             id: s.id,
-            type: s.sourceType,
-            displayName: s.displayName,
+            type: s.provider,
+            provider: s.provider, // For UI compatibility
+            displayName: s.sourceConfig.provider === "github" && s.sourceConfig.type === "repository"
+              ? s.sourceConfig.repoFullName
+              : s.provider,
             documentCount: s.documentCount,
+            isActive: s.isActive, // For UI compatibility
+            connectedAt: s.connectedAt, // For UI compatibility
             lastSyncedAt: s.lastSyncedAt,
-            lastIngestedAt: s.lastIngestedAt,
-            metadata: s.sourceMetadata,
+            lastIngestedAt: s.lastSyncedAt,
+            lastSyncAt: s.lastSyncedAt, // Alias for UI compatibility
+            lastSyncStatus: s.lastSyncStatus, // For UI compatibility
+            metadata: s.sourceConfig,
+            resource: { // For backward compatibility
+              id: s.id,
+              resourceData: s.sourceConfig,
+            },
           })),
         };
       }),

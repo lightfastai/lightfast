@@ -8,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import type { ClerkOrgId } from "@repo/console-validation";
 
 /**
  * Workspaces table represents isolated knowledge bases within an organization.
@@ -43,7 +44,8 @@ export const workspaces = pgTable(
      * Clerk organization ID (no FK - Clerk is source of truth)
      */
     clerkOrgId: varchar("clerk_org_id", { length: 191 })
-      .notNull(),
+      .notNull()
+      .$type<ClerkOrgId>(),
 
     /**
      * User-facing workspace name (used in URLs)

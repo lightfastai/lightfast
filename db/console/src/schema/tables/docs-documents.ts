@@ -15,7 +15,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { stores } from "./stores";
-import type { SourceType } from "@repo/console-validation";
+import type {
+  SourceType,
+  DocumentSlug,
+  ContentHash,
+} from "@repo/console-validation";
 
 export const docsDocuments = pgTable(
   "lightfast_docs_documents",
@@ -40,11 +44,11 @@ export const docsDocuments = pgTable(
     parentDocId: varchar("parent_doc_id", { length: 191 }),
 
     /** URL-friendly slug */
-    slug: varchar("slug", { length: 256 }).notNull(),
+    slug: varchar("slug", { length: 256 }).notNull().$type<DocumentSlug>(),
     /** Content hash (SHA-256) of latest processed version */
-    contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    contentHash: varchar("content_hash", { length: 64 }).notNull().$type<ContentHash>(),
     /** Configuration hash (embedding + chunking) used when document was processed */
-    configHash: varchar("config_hash", { length: 64 }),
+    configHash: varchar("config_hash", { length: 64 }).$type<ContentHash>(),
     /** Number of chunks in latest version */
     chunkCount: integer("chunk_count").notNull().default(0),
 

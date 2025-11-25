@@ -21,6 +21,7 @@ import type {
   ChunkMaxTokens,
   ChunkOverlap,
   EmbeddingModel,
+  PineconeIndexName,
 } from "@repo/console-validation";
 
 export const stores = pgTable(
@@ -35,7 +36,7 @@ export const stores = pgTable(
     /** URL-safe store identifier (max 20 chars, lowercase alphanumeric + hyphens) */
     slug: varchar("slug", { length: 191 }).notNull(),
     /** Resolved Pinecone index name */
-    indexName: varchar("index_name", { length: 191 }).notNull(),
+    indexName: varchar("index_name", { length: 191 }).notNull().$type<PineconeIndexName>(),
     /** Embedding dimension - no default, must be provided by API layer */
     embeddingDim: integer("embedding_dim").notNull(),
 

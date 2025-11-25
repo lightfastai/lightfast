@@ -54,3 +54,28 @@ export const configStatusSchema = z.enum([
 ]);
 
 export type ConfigStatus = z.infer<typeof configStatusSchema>;
+
+/**
+ * Sync Status Type
+ *
+ * Tracks the status of the most recent sync operation for a workspace source.
+ * Used in workspace_sources table to indicate sync health.
+ *
+ * - success: Last sync completed successfully
+ * - failed: Last sync failed with an error
+ * - pending: Sync is currently in progress or queued
+ *
+ * @example
+ * ```typescript
+ * syncStatusSchema.parse("success"); // ✅ Valid
+ * syncStatusSchema.parse("failed"); // ✅ Valid
+ * syncStatusSchema.parse("running"); // ❌ Not in enum
+ * ```
+ */
+export const syncStatusSchema = z.enum([
+  "success",
+  "failed",
+  "pending",
+]);
+
+export type SyncStatus = z.infer<typeof syncStatusSchema>;

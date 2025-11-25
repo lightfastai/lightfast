@@ -16,7 +16,7 @@ import {
 import { inngest } from "@api/console/inngest";
 import { workspaceSources } from "@db/console/schema";
 import { getWorkspaceKey } from "@db/console/utils";
-import { jobTriggerSchema } from "@repo/console-validation";
+import { jobTriggerSchema, metricUnitSchema } from "@repo/console-validation";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -627,7 +627,7 @@ export const jobsRouter = {
 				repositoryId: z.string().optional(),
 				type: z.enum(["job_duration", "documents_indexed", "errors"]),
 				value: z.number(),
-				unit: z.string().optional(),
+				unit: metricUnitSchema.optional(),
 				tags: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
 			}),
 		)

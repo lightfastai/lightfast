@@ -38,6 +38,8 @@ export const clerkUserIdSchema = z
   .string()
   .startsWith("user_", "Invalid user ID format");
 
+export type ClerkUserId = z.infer<typeof clerkUserIdSchema>;
+
 /**
  * Clerk Organization ID Schema
  *
@@ -52,6 +54,8 @@ export const clerkUserIdSchema = z
 export const clerkOrgIdSchema = z
   .string()
   .startsWith("org_", "Invalid organization ID format");
+
+export type ClerkOrgId = z.infer<typeof clerkOrgIdSchema>;
 
 /**
  * GitHub Installation ID Schema

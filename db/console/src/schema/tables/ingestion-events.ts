@@ -13,7 +13,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { stores } from "./stores";
-import type { SourceType } from "@repo/console-validation";
+import type {
+  SourceType,
+  IngestionSource,
+  IngestionStatus,
+} from "@repo/console-validation";
 
 export const ingestionEvents = pgTable(
   "lightfast_ingestion_events",
@@ -49,9 +53,9 @@ export const ingestionEvents = pgTable(
      */
     eventMetadata: jsonb("event_metadata").notNull(),
     /** Ingestion source: webhook | backfill | manual | api */
-    source: varchar("source", { length: 32 }).notNull().default("webhook"),
+    source: varchar("source", { length: 32 }).notNull().default("webhook").$type<IngestionSource>(),
     /** Processing status: processed | skipped | failed */
-    status: varchar("status", { length: 16 }).notNull().default("processed"),
+    status: varchar("status", { length: 16 }).notNull().default("processed").$type<IngestionStatus>(),
     /** When the event was processed */
     processedAt: timestamp("processed_at", { withTimezone: true })
       .notNull()

@@ -205,6 +205,43 @@ export const chunkOverlapSchema = z
 export type ChunkOverlap = z.infer<typeof chunkOverlapSchema>;
 
 /**
+ * Pinecone Index Name Schema
+ *
+ * Validates Pinecone index names according to Pinecone naming constraints.
+ *
+ * Constraints:
+ * - 1-45 characters (Pinecone limit)
+ * - Lowercase alphanumeric + hyphens only
+ * - Must not start or end with a hyphen
+ * - No consecutive hyphens
+ *
+ * Format: ws-{workspaceSlug}-{storeSlug}
+ *
+ * @example
+ * ```typescript
+ * pineconeIndexNameSchema.parse("ws-my-workspace-docs"); // ✅ Valid
+ * pineconeIndexNameSchema.parse("ws-robust-chicken-kb"); // ✅ Valid
+ * pineconeIndexNameSchema.parse("UPPERCASE"); // ❌ Must be lowercase
+ * pineconeIndexNameSchema.parse("-invalid"); // ❌ Cannot start with hyphen
+ * pineconeIndexNameSchema.parse("test--index"); // ❌ No consecutive hyphens
+ * ```
+ */
+export const pineconeIndexNameSchema = z
+  .string()
+  .min(1, "Pinecone index name must not be empty")
+  .max(45, "Pinecone index name must be 45 characters or less")
+  .regex(
+    /^[a-z0-9-]+$/,
+    "Pinecone index name must be lowercase alphanumeric with hyphens"
+  )
+  .refine(
+    (name) => !/^-|-$|--/.test(name),
+    "Pinecone index name cannot have leading/trailing/consecutive hyphens"
+  );
+
+export type PineconeIndexName = z.infer<typeof pineconeIndexNameSchema>;
+
+/**
  * Store Configuration Schema
  *
  * Complete store configuration for creation/update with cross-field validation.
