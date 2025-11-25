@@ -16,7 +16,12 @@ import {
 import { inngest } from "@api/console/inngest";
 import { workspaceIntegrations } from "@db/console/schema";
 import { getWorkspaceKey } from "@db/console/utils";
-import { jobTriggerSchema, metricUnitSchema } from "@repo/console-validation";
+import {
+	jobTriggerSchema,
+	operationMetricTypeSchema,
+	operationMetricUnitSchema,
+	operationMetricSchema,
+} from "@repo/console-validation";
 import { recordActivity } from "../../lib/activity";
 
 /**
@@ -651,18 +656,57 @@ export const jobsRouter = {
 	 * Record metric (Inngest workflows)
 	 *
 	 * Used by workflows to record performance metrics.
+	 * Uses discriminated union for type-safe metric recording.
 	 */
 	recordMetricForInngest: inngestM2MProcedure
 		.input(
-			z.object({
-				clerkOrgId: z.string(),
-				workspaceId: z.string(),
-				repositoryId: z.string().optional(),
-				type: z.enum(["job_duration", "documents_indexed", "errors"]),
-				value: z.number(),
-				unit: metricUnitSchema.optional(),
-				tags: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
-			}),
+			z.discriminatedUnion("type", [
+				// job_duration metric
+				z.object({
+					clerkOrgId: z.string(),
+					workspaceId: z.string(),
+					repositoryId: z.string().optional(),
+					type: z.literal("job_duration"),
+					value: z.number().int().positive(),
+					unit: z.literal("ms"),
+					tags: z.object({
+						jobType: z.string(),
+						trigger: jobTriggerSchema,
+						syncMode: z.enum(["full", "incremental"]).optional(),
+						sourceType: z.string().optional(),
+					}),
+				}),
+				// documents_indexed metric
+				z.object({
+					clerkOrgId: z.string(),
+					workspaceId: z.string(),
+					repositoryId: z.string().optional(),
+					type: z.literal("documents_indexed"),
+					value: z.number().int().nonnegative(),
+					unit: z.literal("count"),
+					tags: z.object({
+						jobType: z.string(),
+						sourceType: z.string(),
+						syncMode: z.enum(["full", "incremental"]).optional(),
+						filesProcessed: z.number().int().optional(),
+					}),
+				}),
+				// errors metric
+				z.object({
+					clerkOrgId: z.string(),
+					workspaceId: z.string(),
+					repositoryId: z.string().optional(),
+					type: z.literal("errors"),
+					value: z.literal(1),
+					unit: z.literal("count"),
+					tags: z.object({
+						jobType: z.string(),
+						errorType: z.string(),
+						trigger: jobTriggerSchema.optional(),
+						sourceType: z.string().optional(),
+					}),
+				}),
+			]),
 		)
 		.mutation(async ({ input }) => {
 			await recordJobMetric(input);

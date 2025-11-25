@@ -1,66 +1,130 @@
 /**
- * Metrics Validation Schemas
+ * Operations Metrics Validation Schemas
  *
- * Type definitions for performance and usage metrics tracking.
- * Used in metrics table for time-series analytics and dashboards.
+ * Type definitions for internal operations metrics tracking.
+ * Used in operations_metrics table for system health monitoring.
+ *
+ * NOTE: This file only contains schemas for INTERNAL operations metrics.
+ * For external API metrics (query_latency, queries_count, api_calls),
+ * we will create a separate validation schema when implementing the
+ * lightfast_api_metrics table.
  */
 
 import { z } from "zod";
+import { jobTriggerSchema } from "./job";
 
 /**
- * Metric Type Enum
+ * Operation Metric Type Enum
  *
- * Defines all supported metric types for time-series tracking.
- * Used in metrics table to categorize performance and usage data.
+ * Defines supported metric types for internal operations tracking.
  *
- * - query_latency: Search query response time (milliseconds)
- * - queries_count: Number of search/contents queries executed
- * - documents_indexed: Count of documents successfully indexed
- * - api_calls: Total API calls made (internal or external)
- * - errors: Error occurrences by type
  * - job_duration: Background job execution time (milliseconds)
- *
- * @example
- * ```typescript
- * metricTypeSchema.parse("query_latency"); // ✅ Valid
- * metricTypeSchema.parse("documents_indexed"); // ✅ Valid
- * metricTypeSchema.parse("invalid_metric"); // ❌ Not in enum
- * ```
+ * - documents_indexed: Count of documents successfully indexed
+ * - errors: Error occurrences by type
  */
-export const metricTypeSchema = z.enum([
-  "query_latency",
-  "queries_count",
-  "documents_indexed",
-  "api_calls",
-  "errors",
+export const operationMetricTypeSchema = z.enum([
   "job_duration",
+  "documents_indexed",
+  "errors",
 ]);
 
-export type MetricType = z.infer<typeof metricTypeSchema>;
+export type OperationMetricType = z.infer<typeof operationMetricTypeSchema>;
 
 /**
- * Metric Unit Enum
- *
- * Defines standard units for metric values.
- * Used in metrics table to provide context for numeric values.
- *
- * - ms: Milliseconds (for latency, duration)
- * - count: Integer count (for queries, documents, errors)
- * - percent: Percentage value (0-100)
- * - bytes: Data size in bytes
- *
- * @example
- * ```typescript
- * metricUnitSchema.parse("ms"); // ✅ Valid
- * metricUnitSchema.parse("count"); // ✅ Valid
- * metricUnitSchema.parse("seconds"); // ❌ Not in enum
- * ```
+ * Operation Metric Unit Enum
  */
-export const metricUnitSchema = z.enum([
-  "ms",
-  "count",
-  "percent",
-  "bytes",
+export const operationMetricUnitSchema = z.enum(["ms", "count"]);
+
+export type OperationMetricUnit = z.infer<typeof operationMetricUnitSchema>;
+
+/**
+ * Discriminated Union: Operation Metric with Type-Specific Tags
+ *
+ * This ensures that each metric type has appropriate, type-safe tags.
+ * The discriminator is the `type` field.
+ */
+
+// Job Duration Metric
+export const jobDurationMetricSchema = z.object({
+  type: z.literal("job_duration"),
+  value: z.number().int().positive(), // milliseconds
+  unit: z.literal("ms"),
+  tags: z
+    .object({
+      jobType: z.string(), // Inngest function ID (e.g., "apps-console/github-sync")
+      trigger: jobTriggerSchema,
+      syncMode: z.enum(["full", "incremental"]).optional(),
+      sourceType: z.string().optional(), // "github", "linear", "notion"
+    })
+    .optional(),
+});
+
+// Documents Indexed Metric
+export const documentsIndexedMetricSchema = z.object({
+  type: z.literal("documents_indexed"),
+  value: z.number().int().nonnegative(), // count
+  unit: z.literal("count"),
+  tags: z
+    .object({
+      jobType: z.string(), // Workflow that indexed the documents
+      sourceType: z.string(), // "github", "linear", "notion"
+      syncMode: z.enum(["full", "incremental"]).optional(),
+      filesProcessed: z.number().int().optional(), // Total files in the job
+    })
+    .optional(),
+});
+
+// Error Metric
+export const errorMetricSchema = z.object({
+  type: z.literal("errors"),
+  value: z.literal(1), // Always 1 per error occurrence
+  unit: z.literal("count"),
+  tags: z
+    .object({
+      jobType: z.string(), // Job that failed
+      errorType: z.string(), // Error classification (e.g., "job_failure", "api_timeout")
+      trigger: jobTriggerSchema.optional(),
+      sourceType: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Union of all operation metric types
+ *
+ * This discriminated union ensures type safety:
+ * - job_duration must have jobType and trigger tags
+ * - documents_indexed must have sourceType
+ * - errors must have errorType
+ */
+export const operationMetricSchema = z.discriminatedUnion("type", [
+  jobDurationMetricSchema,
+  documentsIndexedMetricSchema,
+  errorMetricSchema,
 ]);
 
-export type MetricUnit = z.infer<typeof metricUnitSchema>;
+export type OperationMetric =
+  | z.infer<typeof jobDurationMetricSchema>
+  | z.infer<typeof documentsIndexedMetricSchema>
+  | z.infer<typeof errorMetricSchema>;
+
+// Legacy exports (deprecated - use operation-specific schemas above)
+/**
+ * @deprecated Use operationMetricTypeSchema instead
+ */
+export const metricTypeSchema = operationMetricTypeSchema;
+
+/**
+ * @deprecated Use OperationMetricType instead
+ */
+export type MetricType = OperationMetricType;
+
+/**
+ * @deprecated Use operationMetricUnitSchema instead
+ */
+export const metricUnitSchema = operationMetricUnitSchema;
+
+/**
+ * @deprecated Use OperationMetricUnit instead
+ */
+export type MetricUnit = OperationMetricUnit;

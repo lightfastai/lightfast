@@ -6,11 +6,11 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, workspaceMetrics } from "@db/console/schema";
+import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/schema";
 import type { WorkspaceWorkflowRun, JobInput, JobOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import type { JobTrigger } from "@repo/console-validation";
+import type { JobTrigger, OperationMetricType, OperationMetricUnit } from "@repo/console-validation";
 
 /**
  * Create a new job record at workflow start
@@ -210,19 +210,54 @@ export async function completeJob(params: {
 /**
  * Record a job performance metric
  *
- * @param params Metric parameters
+ * Uses discriminated union for type-safe metric recording.
+ * Each metric type has specific required/optional tags.
+ *
+ * @param params Metric parameters (discriminated by type)
  */
-export async function recordJobMetric(params: {
-	clerkOrgId: string;
-	workspaceId: string;
-	repositoryId?: string;
-	type: "job_duration" | "documents_indexed" | "errors";
-	value: number;
-	unit?: "ms" | "count" | "percent" | "bytes";
-	tags?: Record<string, string | number | boolean>;
-}): Promise<void> {
+export async function recordJobMetric(
+	params: (
+		| {
+				type: "job_duration";
+				value: number;
+				unit: "ms";
+				tags: {
+					jobType: string;
+					trigger: JobTrigger;
+					syncMode?: "full" | "incremental";
+					sourceType?: string;
+				};
+		  }
+		| {
+				type: "documents_indexed";
+				value: number;
+				unit: "count";
+				tags: {
+					jobType: string;
+					sourceType: string;
+					syncMode?: "full" | "incremental";
+					filesProcessed?: number;
+				};
+		  }
+		| {
+				type: "errors";
+				value: 1;
+				unit: "count";
+				tags: {
+					jobType: string;
+					errorType: string;
+					trigger?: JobTrigger;
+					sourceType?: string;
+				};
+		  }
+	) & {
+		clerkOrgId: string;
+		workspaceId: string;
+		repositoryId?: string;
+	},
+): Promise<void> {
 	try {
-		await db.insert(workspaceMetrics).values({
+		await db.insert(workspaceOperationsMetrics).values({
 			clerkOrgId: params.clerkOrgId,
 			workspaceId: params.workspaceId,
 			repositoryId: params.repositoryId ?? null,
