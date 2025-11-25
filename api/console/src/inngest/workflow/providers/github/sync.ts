@@ -58,6 +58,13 @@ export const githubSync = inngest.createFunction(
     description: "Syncs GitHub repository content (full or incremental)",
     retries: PRIVATE_CONFIG.workflow.retries,
 
+    // Only one sync per source at a time
+    // Subsequent syncs will be skipped if one is already running
+    singleton: {
+      key: "event.data.sourceId",
+      mode: "skip",
+    },
+
     // Cancel if source is disconnected
     cancelOn: [
       {

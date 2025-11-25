@@ -12,12 +12,12 @@
  */
 
 import { inngest } from "../../../client/client";
-import type { Events } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
+import { workspaceIntegrations } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import { getWorkspaceKey } from "@db/console/utils";
+import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
+import { env } from "../../../../env";
 
 // Config file names to watch for
 const CONFIG_FILE_NAMES = [
@@ -44,11 +44,11 @@ export const githubPushHandler = inngest.createFunction(
     // Prevent duplicate processing of same webhook delivery
     idempotency: "event.data.deliveryId",
 
-    // Only process one push per source at a time
-    // Skip if already processing (prevents concurrent updates)
+    // Latest push always wins - cancel current sync to process new one
+    // This ensures config changes are never skipped
     singleton: {
       key: "event.data.sourceId",
-      mode: "skip",
+      mode: "cancel",
     },
   },
   { event: "apps-console/github.push" },
@@ -100,7 +100,7 @@ export const githubPushHandler = inngest.createFunction(
       }
     });
 
-    // Step 2: Check if lightfast.yml was modified
+    // Step 2: Check if lightfast.yml was modified and update DB status
     const configChanged = await step.run("check-config-changed", async () => {
       const hasConfigChange = changedFiles.some((file) =>
         CONFIG_FILE_NAMES.includes(file.path)
@@ -113,6 +113,70 @@ export const githubPushHandler = inngest.createFunction(
             .filter((f) => CONFIG_FILE_NAMES.includes(f.path))
             .map((f) => f.path),
         });
+
+        // Re-detect config and update DB status (moved from webhook handler)
+        try {
+          const app = createGitHubApp({
+            appId: env.GITHUB_APP_ID,
+            privateKey: env.GITHUB_APP_PRIVATE_KEY,
+          });
+          const detector = new ConfigDetectorService(app);
+          const [owner, repo] = repoFullName.split("/");
+
+          if (!owner || !repo) {
+            log.error("Invalid repository full name", { repoFullName });
+            return hasConfigChange;
+          }
+
+          const result = await detector.detectConfig(
+            owner,
+            repo,
+            afterSha,
+            githubInstallationId,
+          );
+
+          // Update config status directly in database
+          const sources = await db
+            .select()
+            .from(workspaceIntegrations)
+            .where(eq(workspaceIntegrations.providerResourceId, githubRepoId.toString()));
+
+          if (sources.length > 0) {
+            const now = new Date().toISOString();
+            await Promise.all(
+              sources.map((source) => {
+                if (source.sourceConfig.provider !== "github") {
+                  return Promise.resolve(null);
+                }
+
+                const updatedConfig = {
+                  ...source.sourceConfig,
+                  status: {
+                    configStatus: result.exists ? "configured" as const : "unconfigured" as const,
+                    configPath: result.path ?? undefined,
+                    lastConfigCheck: now,
+                  },
+                };
+
+                return db
+                  .update(workspaceIntegrations)
+                  .set({
+                    sourceConfig: updatedConfig,
+                    updatedAt: now,
+                  })
+                  .where(eq(workspaceIntegrations.id, source.id));
+              })
+            );
+
+            log.info("Updated config status", {
+              configStatus: result.exists ? "configured" : "unconfigured",
+              configPath: result.path,
+            });
+          }
+        } catch (e) {
+          log.error("Config re-detection failed", { error: e });
+          // Non-fatal: continue with sync even if config detection fails
+        }
       }
 
       return hasConfigChange;

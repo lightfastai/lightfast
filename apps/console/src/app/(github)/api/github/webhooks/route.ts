@@ -9,7 +9,6 @@ import type {
   RepositoryEvent,
   WebhookEvent,
 } from "@repo/console-octokit-github";
-import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
 import { inngest } from "@api/console/inngest";
 import { env } from "~/env";
 
@@ -104,52 +103,6 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
     commit.added.forEach((path) => changedFiles.set(path, "added"));
     commit.modified.forEach((path) => changedFiles.set(path, "modified"));
     commit.removed.forEach((path) => changedFiles.set(path, "removed"));
-  }
-
-  // Check if lightfast.yml was modified - trigger config re-detection (update DB status eagerly)
-  const configModified = Array.from(changedFiles.keys()).some((path) =>
-    [
-      "lightfast.yml",
-      ".lightfast.yml",
-      "lightfast.yaml",
-      ".lightfast.yaml",
-    ].includes(path),
-  );
-
-  if (configModified) {
-    try {
-      const app = createGitHubApp({
-        appId: env.GITHUB_APP_ID,
-        privateKey: env.GITHUB_APP_PRIVATE_KEY,
-      });
-      const detector = new ConfigDetectorService(app);
-      const [owner, repo] = payload.repository.full_name.split("/");
-
-      if (!owner || !repo) {
-        console.error(`[Webhook] Invalid repository full_name: ${payload.repository.full_name}`);
-        return;
-      }
-
-      const result = await detector.detectConfig(
-        owner,
-        repo,
-        payload.after,
-        payload.installation.id,
-      );
-
-      const sourcesService = new SourcesService();
-      await sourcesService.updateConfigStatus({
-        githubRepoId: payload.repository.id.toString(),
-        configStatus: result.exists ? "configured" : "unconfigured",
-        configPath: result.path,
-      });
-
-      console.log(
-        `[Webhook] Updated config status to ${result.exists ? "configured" : "unconfigured"} (${result.path ?? "none"})`,
-      );
-    } catch (e) {
-      console.error("[Webhook] Config re-detection failed:", e);
-    }
   }
 
   // Convert to array for Inngest (filtering will happen in the workflow after loading config)
