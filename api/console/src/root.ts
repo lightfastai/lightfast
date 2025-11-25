@@ -25,6 +25,7 @@ import { workspaceRouter } from "./router/org/workspace";
 import { integrationRouter } from "./router/org/integration";
 import { jobsRouter } from "./router/org/jobs";
 import { sourcesRouter } from "./router/org/sources";
+import { activitiesRouter } from "./router/org/activities";
 
 /**
  * User-scoped router
@@ -73,6 +74,7 @@ export const orgRouter = createTRPCRouter({
   integration: integrationRouter,
   jobs: jobsRouter,
   sources: sourcesRouter,
+  activities: activitiesRouter,
 });
 
 // Export types for client usage

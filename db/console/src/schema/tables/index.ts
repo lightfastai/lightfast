@@ -14,4 +14,4 @@ export * from "./workspace-knowledge-vector-chunks";
 export * from "./workspace-integrations";
 export * from "./workspace-workflow-runs";
 export * from "./workspace-metrics";
-export * from "./workspace-sync-events";
+export * from "./workspace-user-activities";

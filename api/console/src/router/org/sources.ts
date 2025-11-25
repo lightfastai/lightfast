@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { webhookM2MProcedure } from "../../trpc";
+import { recordSystemActivity } from "../../lib/activity";
 
 /**
  * Sources Router
@@ -194,6 +195,24 @@ export const sourcesRouter = {
         )
       );
 
+      // Record activity for each updated source (Tier 3: Fire-and-forget)
+      sources.forEach((source) => {
+        recordSystemActivity({
+          workspaceId: source.workspaceId,
+          actorType: "webhook",
+          category: "integration",
+          action: "integration.status_updated",
+          entityType: "integration",
+          entityId: source.id,
+          metadata: {
+            provider: "github",
+            isActive: input.isActive,
+            reason: input.reason,
+            githubRepoId: input.githubRepoId,
+          },
+        });
+      });
+
       return {
         success: true,
         updated: updates.length,
@@ -257,6 +276,26 @@ export const sourcesRouter = {
         })
       );
 
+      // Record activity for each updated source (Tier 3: Fire-and-forget)
+      sources.forEach((source) => {
+        if (source.sourceConfig.provider === "github") {
+          recordSystemActivity({
+            workspaceId: source.workspaceId,
+            actorType: "webhook",
+            category: "integration",
+            action: "integration.config_updated",
+            entityType: "integration",
+            entityId: source.id,
+            metadata: {
+              provider: "github",
+              configStatus: input.configStatus,
+              configPath: input.configPath,
+              githubRepoId: input.githubRepoId,
+            },
+          });
+        }
+      });
+
       return {
         success: true,
         updated: updates.filter((u) => u !== null).length,
@@ -312,6 +351,23 @@ export const sourcesRouter = {
             .where(eq(workspaceIntegrations.id, source.id))
         )
       );
+
+      // Record activity for each disconnected source (Tier 3: Fire-and-forget)
+      installationSources.forEach((source) => {
+        recordSystemActivity({
+          workspaceId: source.workspaceId,
+          actorType: "webhook",
+          category: "integration",
+          action: "integration.disconnected",
+          entityType: "integration",
+          entityId: source.id,
+          metadata: {
+            provider: "github",
+            reason: "installation_removed",
+            githubInstallationId: input.githubInstallationId,
+          },
+        });
+      });
 
       return {
         success: true,
@@ -370,6 +426,25 @@ export const sourcesRouter = {
             .where(eq(workspaceIntegrations.id, source.id));
         })
       );
+
+      // Record activity for each deleted source (Tier 3: Fire-and-forget)
+      sources.forEach((source) => {
+        if (source.sourceConfig.provider === "github") {
+          recordSystemActivity({
+            workspaceId: source.workspaceId,
+            actorType: "webhook",
+            category: "integration",
+            action: "integration.deleted",
+            entityType: "integration",
+            entityId: source.id,
+            metadata: {
+              provider: "github",
+              reason: "repository_deleted",
+              githubRepoId: input.githubRepoId,
+            },
+          });
+        }
+      });
 
       return {
         success: true,
@@ -438,6 +513,25 @@ export const sourcesRouter = {
             .where(eq(workspaceIntegrations.id, source.id));
         })
       );
+
+      // Record activity for each metadata update (Tier 3: Fire-and-forget)
+      sources.forEach((source) => {
+        if (source.sourceConfig.provider === "github") {
+          recordSystemActivity({
+            workspaceId: source.workspaceId,
+            actorType: "webhook",
+            category: "integration",
+            action: "integration.metadata_updated",
+            entityType: "integration",
+            entityId: source.id,
+            metadata: {
+              provider: "github",
+              updates: input.metadata,
+              githubRepoId: input.githubRepoId,
+            },
+          });
+        }
+      });
 
       return {
         success: true,

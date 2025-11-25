@@ -27,6 +27,7 @@ import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 
 import { publicProcedure, protectedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
+import { recordActivity } from "../../lib/activity";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -258,6 +259,22 @@ export const workspaceRouter = {
 
         // Compute workspace key from slug
         const workspaceKey = getWorkspaceKey(workspace.slug);
+
+        // Record activity (Tier 2: Queue-based)
+        await recordActivity({
+          workspaceId,
+          actorType: "user",
+          actorUserId: ctx.auth.userId,
+          category: "workspace",
+          action: "workspace.created",
+          entityType: "workspace",
+          entityId: workspaceId,
+          metadata: {
+            workspaceName: input.workspaceName,
+            workspaceSlug: workspace.slug,
+            clerkOrgId: input.clerkOrgId,
+          },
+        });
 
         return {
           workspaceId,
@@ -492,6 +509,25 @@ export const workspaceRouter = {
           updatedAt: new Date().toISOString(),
         })
         .where(eq(orgWorkspaces.id, workspaceId));
+
+      // Record activity (Tier 2: Queue-based)
+      await recordActivity({
+        workspaceId,
+        actorType: "user",
+        actorUserId: ctx.auth.userId,
+        category: "workspace",
+        action: "workspace.updated",
+        entityType: "workspace",
+        entityId: workspaceId,
+        metadata: {
+          changes: {
+            name: {
+              from: input.currentName,
+              to: input.newName,
+            },
+          },
+        },
+      });
 
       return {
         success: true,

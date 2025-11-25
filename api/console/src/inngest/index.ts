@@ -28,6 +28,7 @@ import { extractRelationships } from "./workflow/processing/extract-relationship
 
 // Infrastructure workflows
 import { ensureStore } from "./workflow/infrastructure/ensure-store";
+import { recordActivity } from "./workflow/infrastructure/record-activity";
 
 // Backward compatibility - GitHub adapters (deprecated, will be removed)
 // TODO: Fix import paths and dependencies before uncommenting
@@ -49,7 +50,7 @@ export { githubSync, githubPushHandler };
 export { processDocuments, deleteDocuments, extractRelationships };
 
 // Export infrastructure workflows
-export { ensureStore };
+export { ensureStore, recordActivity };
 
 // Backward compatibility exports (deprecated)
 // export { githubProcessAdapter, githubDeleteAdapter };
@@ -112,6 +113,7 @@ export function createInngestRouteContext() {
 
 			// Infrastructure
 			ensureStore,
+			recordActivity,
 
 			// Backward compatibility (deprecated)
 			// TODO: Fix and re-enable deprecated adapters

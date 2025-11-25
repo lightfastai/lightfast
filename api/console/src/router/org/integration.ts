@@ -23,6 +23,7 @@ import { env } from "../../env";
 import yaml from "yaml";
 
 import { protectedProcedure, resolveWorkspaceByName } from "../../trpc";
+import { recordActivity } from "../../lib/activity";
 
 /**
  * Integration Router (Simplified 2-Table Model)
@@ -218,6 +219,11 @@ export const integrationRouter = {
             lastSyncAt: new Date().toISOString(),
           })
           .where(eq(userSources.id, userSource.id));
+
+        // Record activity (Tier 2: Queue-based)
+        // Note: Integration validation is a user action but doesn't have a workspace context
+        // For now, we'll skip activity tracking for user-level integrations
+        // TODO: Add user-level activity tracking when user activities table is implemented
 
         return {
           added: added.length,
@@ -725,6 +731,24 @@ export const integrationRouter = {
           } catch (inngestError) {
             console.error("[integration.workspace.connectDirect] Failed to trigger initial sync:", inngestError);
           }
+
+          // Record activity (Tier 2: Queue-based)
+          await recordActivity({
+            workspaceId,
+            actorType: "user",
+            actorUserId: ctx.auth.userId,
+            category: "integration",
+            action: "integration.connected",
+            entityType: "integration",
+            entityId: workspaceSourceId,
+            metadata: {
+              provider: "github",
+              repoFullName: input.repoFullName,
+              repoId: input.repoId,
+              isPrivate: input.isPrivate,
+              syncConfig: input.syncConfig,
+            },
+          });
         }
 
         return workspaceSource;

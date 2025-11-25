@@ -326,6 +326,55 @@ const eventsMap = {
   },
 
   // ============================================================================
+  // USER ACTIVITY TRACKING EVENTS
+  // ============================================================================
+
+  /**
+   * Record user activity in batch
+   * Batches multiple activity records for efficient insertion
+   *
+   * Triggered by: Tier 2 user actions (workspace edits, integration changes, etc.)
+   * Processing: Batched inserts (up to 100 events, 10s timeout per workspace)
+   */
+  "apps-console/activity.record": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Actor type */
+      actorType: z.enum(["user", "system", "webhook", "api"]),
+      /** Actor user ID (if actorType is user) */
+      actorUserId: z.string().optional(),
+      /** Actor email (denormalized for privacy) */
+      actorEmail: z.string().optional(),
+      /** Activity category */
+      category: z.enum([
+        "auth",
+        "workspace",
+        "integration",
+        "store",
+        "job",
+        "search",
+        "document",
+        "permission",
+        "api_key",
+        "settings",
+      ]),
+      /** Action performed */
+      action: z.string(),
+      /** Entity type (e.g., "workspace", "integration", "api_key") */
+      entityType: z.string(),
+      /** Entity ID */
+      entityId: z.string(),
+      /** Additional metadata */
+      metadata: z.record(z.unknown()).optional(),
+      /** Related activity ID (for grouping related actions) */
+      relatedActivityId: z.string().optional(),
+      /** Timestamp of the activity (ISO string) */
+      timestamp: z.string().datetime(),
+    }),
+  },
+
+  // ============================================================================
   // BACKWARD COMPATIBILITY EVENTS (Will be removed in Phase 2)
   // ============================================================================
 

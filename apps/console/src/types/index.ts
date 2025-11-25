@@ -89,6 +89,17 @@ export type OrganizationDetailFromOrgId = RouterOutputs["organization"]["find"];
 export type HealthOverview = RouterOutputs["workspace"]["health"]["overview"];
 
 // ============================================================================
+// Activities
+// ============================================================================
+
+export type ActivitiesListResponse = RouterOutputs["activities"]["list"];
+export type WorkspaceActivity = ActivitiesListResponse["activities"][number];
+export type ActivityCategory = WorkspaceActivity["category"];
+export type ActorType = WorkspaceActivity["actorType"];
+
+export type ActivitiesStats = RouterOutputs["activities"]["stats"];
+
+// ============================================================================
 // Re-exports (for advanced usage)
 // ============================================================================
 

@@ -1,9 +1,9 @@
 import { relations } from "drizzle-orm";
 
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
-import { workspaceSyncEvents } from "./tables/workspace-sync-events";
 import { workspaceStores } from "./tables/workspace-stores";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
+import { workspaceUserActivities } from "./tables/workspace-user-activities";
 import { orgWorkspaces } from "./tables/org-workspaces";
 
 /**
@@ -24,7 +24,6 @@ export const workspaceStoresRelations = relations(workspaceStores, ({ one, many 
   }),
   documents: many(workspaceKnowledgeDocuments),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
-  syncEvents: many(workspaceSyncEvents),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
@@ -46,9 +45,13 @@ export const workspaceKnowledgeVectorChunksRelations = relations(workspaceKnowle
   }),
 }));
 
-export const workspaceSyncEventsRelations = relations(workspaceSyncEvents, ({ one }) => ({
-  store: one(workspaceStores, {
-    fields: [workspaceSyncEvents.storeId],
-    references: [workspaceStores.id],
+export const workspaceUserActivitiesRelations = relations(workspaceUserActivities, ({ one }) => ({
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceUserActivities.workspaceId],
+    references: [orgWorkspaces.id],
+  }),
+  relatedActivity: one(workspaceUserActivities, {
+    fields: [workspaceUserActivities.relatedActivityId],
+    references: [workspaceUserActivities.id],
   }),
 }));

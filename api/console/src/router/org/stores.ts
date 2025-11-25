@@ -21,6 +21,7 @@ import {
 	chunkMaxTokensSchema,
 	chunkOverlapSchema,
 } from "@repo/console-validation";
+import { recordActivity } from "../../lib/activity";
 
 const { dimension: storeEmbeddingDimension } = resolveEmbeddingDefaults();
 
@@ -58,12 +59,30 @@ export const storesRouter = {
 			// Generate workspace key from slug for Pinecone index naming
 			const workspaceKey = getWorkspaceKey(workspaceSlug);
 
-			return getOrCreateStore({
+			const store = await getOrCreateStore({
 				workspaceId,
 				storeSlug: input.storeSlug,
 				embeddingDim: input.embeddingDim,
 				workspaceKey,
 			});
+
+			// Record activity (Tier 2: Queue-based)
+			await recordActivity({
+				workspaceId,
+				actorType: "user",
+				actorUserId: ctx.auth.userId,
+				category: "store",
+				action: "store.created",
+				entityType: "store",
+				entityId: store.id,
+				metadata: {
+					storeSlug: input.storeSlug,
+					embeddingDim: input.embeddingDim,
+					indexName: store.indexName,
+				},
+			});
+
+			return store;
 		}),
 
 	/**

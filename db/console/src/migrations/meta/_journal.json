@@ -64,6 +64,13 @@
       "when": 1764051690856,
       "tag": "0008_curly_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1764069020155,
+      "tag": "0009_square_william_stryker",
+      "breakpoints": true
     }
   ]
 }

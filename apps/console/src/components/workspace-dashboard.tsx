@@ -23,13 +23,13 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
   const trpc = useTRPC();
 
-  // Fetch all queries in parallel (8 total - granular for better caching)
+  // Fetch all queries in parallel (9 total - granular for better caching)
   const [
     { data: sources },
     { data: stores },
     { data: documents },
     { data: jobStats },
-    { data: recentJobs },
+    { data: activities },
     { data: percentiles },
     { data: timeSeries },
     { data: health },
@@ -72,13 +72,14 @@ export function WorkspaceDashboard({
         staleTime: 30 * 1000, // 30 seconds - job stats change frequently
       },
       {
-        ...trpc.workspace.jobs.recent.queryOptions({
+        ...trpc.activities.list.queryOptions({
           clerkOrgSlug: orgSlug,
           workspaceName: workspaceName,
+          limit: 20,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        staleTime: 30 * 1000, // 30 seconds - recent jobs change frequently
+        staleTime: 30 * 1000, // 30 seconds - activities change frequently
       },
       {
         ...trpc.workspace.jobPercentiles.queryOptions({
@@ -169,7 +170,7 @@ export function WorkspaceDashboard({
         {/* Right Column - Activity Sidebar */}
         <div className="space-y-6">
           {/* Activity Timeline - Timeline-style layout */}
-          <ActivityTimeline recentJobs={recentJobs} />
+          <ActivityTimeline activities={activities.activities} />
         </div>
       </div>
 

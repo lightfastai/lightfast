@@ -12,3 +12,4 @@ export * from "./job";
 export * from "./sources";
 export * from "./ingestion";
 export * from "./metrics";
+export * from "./activities";

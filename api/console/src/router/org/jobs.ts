@@ -17,6 +17,7 @@ import { inngest } from "@api/console/inngest";
 import { workspaceIntegrations } from "@db/console/schema";
 import { getWorkspaceKey } from "@db/console/utils";
 import { jobTriggerSchema, metricUnitSchema } from "@repo/console-validation";
+import { recordActivity } from "../../lib/activity";
 
 /**
  * Jobs router - procedures for querying and managing workflow jobs
@@ -305,6 +306,22 @@ export const jobsRouter = {
 				})
 				.where(eq(workspaceWorkflowRuns.id, input.jobId));
 
+			// Record activity (Tier 2: Queue-based)
+			await recordActivity({
+				workspaceId,
+				actorType: "user",
+				actorUserId: ctx.auth.userId,
+				category: "job",
+				action: "job.cancelled",
+				entityType: "job",
+				entityId: input.jobId,
+				metadata: {
+					jobName: job.name,
+					previousStatus: job.status,
+					inngestFunctionId: job.inngestFunctionId,
+				},
+			});
+
 			// TODO: Send Inngest cancellation event
 			// await inngest.send({
 			//   name: "apps-console/job.cancel",
@@ -532,6 +549,22 @@ export const jobsRouter = {
 						message: `Cannot restart job of type: ${job.inngestFunctionId}. This job type may no longer be supported.`,
 					});
 			}
+
+			// Record activity (Tier 2: Queue-based)
+			await recordActivity({
+				workspaceId,
+				actorType: "user",
+				actorUserId: ctx.auth.userId,
+				category: "job",
+				action: "job.restarted",
+				entityType: "job",
+				entityId: input.jobId,
+				metadata: {
+					jobName: job.name,
+					originalStatus: job.status,
+					inngestFunctionId: job.inngestFunctionId,
+				},
+			});
 
 			return {
 				success: true,
