@@ -74,24 +74,22 @@ export function InstalledSources({
 		refetchOnWindowFocus: false,
 	});
 
-	const integrations = sourcesData?.list ?? [];
+	const integrations = sourcesData.list;
 
 	// Filter integrations
 	const filteredIntegrations = integrations.filter((integration) => {
 		// Type-safe metadata access for GitHub integrations
 		const metadata = integration.metadata as { repoFullName?: string } | null | undefined;
 		const displayName = integration.type === "github"
-			? metadata?.repoFullName ?? providerNames[integration.type]
-			: providerNames[integration.type];
+			? metadata?.repoFullName ?? providerNames[integration.type] ?? integration.type
+			: providerNames[integration.type] ?? integration.type;
 
 		const matchesSearch =
-			(displayName?.toLowerCase().includes(filters.search.toLowerCase()) ?? false) ||
+			displayName.toLowerCase().includes(filters.search.toLowerCase()) ||
 			integration.type.toLowerCase().includes(filters.search.toLowerCase());
 
-		const matchesStatus =
-			filters.status === "all" ||
-			(filters.status === "active") || // All sources are active by default
-			(filters.status === "inactive" && false); // No inactive sources in new model
+		// All sources are active by default in the new model
+		const matchesStatus = filters.status === "all" || filters.status === "active";
 
 		return matchesSearch && matchesStatus;
 	});
@@ -158,8 +156,8 @@ export function InstalledSources({
 
 						const name =
 							integration.type === "github"
-								? metadata?.repoFullName ?? providerNames[integration.type]
-								: providerNames[integration.type];
+								? metadata?.repoFullName ?? providerNames[integration.type] ?? integration.type
+								: providerNames[integration.type] ?? integration.type;
 
 						// Get additional metadata for GitHub
 						const documentCount = integration.documentCount || metadata?.documentCount;

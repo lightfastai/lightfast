@@ -45,20 +45,20 @@ export function ApiKeyList() {
 
 	// Use prefetched data from server (no client-side fetch)
 	const { data: apiKeys } = useSuspenseQuery({
-		...trpc.account.apiKeys.list.queryOptions(),
+		...trpc.userApiKeys.list.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 		staleTime: 5 * 60 * 1000, // 5 minutes - API keys rarely change
 	});
 
 	const createMutation = useMutation(
-		trpc.account.apiKeys.create.mutationOptions({
+		trpc.userApiKeys.create.mutationOptions({
 			onSuccess: (data) => {
 				setCreatedKey(data.key);
 				setNewKeyName("");
 				toast.success("API key created successfully");
 				void queryClient.invalidateQueries({
-					queryKey: trpc.account.apiKeys.list.queryOptions().queryKey,
+					queryKey: trpc.userApiKeys.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {
@@ -68,11 +68,11 @@ export function ApiKeyList() {
 	);
 
 	const revokeMutation = useMutation(
-		trpc.account.apiKeys.revoke.mutationOptions({
+		trpc.userApiKeys.revoke.mutationOptions({
 			onSuccess: () => {
 				toast.success("API key revoked successfully");
 				void queryClient.invalidateQueries({
-					queryKey: trpc.account.apiKeys.list.queryOptions().queryKey,
+					queryKey: trpc.userApiKeys.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {
@@ -82,11 +82,11 @@ export function ApiKeyList() {
 	);
 
 	const deleteMutation = useMutation(
-		trpc.account.apiKeys.delete.mutationOptions({
+		trpc.userApiKeys.delete.mutationOptions({
 			onSuccess: () => {
 				toast.success("API key deleted successfully");
 				void queryClient.invalidateQueries({
-					queryKey: trpc.account.apiKeys.list.queryOptions().queryKey,
+					queryKey: trpc.userApiKeys.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {

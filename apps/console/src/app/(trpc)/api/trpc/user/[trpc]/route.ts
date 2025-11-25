@@ -78,7 +78,7 @@ export const OPTIONS = (req: NextRequest) => {
 /**
  * User-scoped tRPC endpoint
  * Handles procedures that allow pending users (no org required)
- * Examples: organization.create, account.profile.get
+ * Examples: organization.create, account.get
  */
 const handler = async (req: NextRequest) => {
 	const response = await fetchRequestHandler({

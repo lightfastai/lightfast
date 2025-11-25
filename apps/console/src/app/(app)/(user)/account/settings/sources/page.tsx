@@ -27,7 +27,7 @@ import { SourcesListLoading } from "./_components/sources-list-loading";
 export default function SourcesSettingsPage() {
 	// Prefetch user's personal integrations
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
-	prefetch(userTrpc.account.integrations.list.queryOptions());
+	prefetch(userTrpc.userSources.list.queryOptions());
 
 	return (
 		<div className="space-y-6">

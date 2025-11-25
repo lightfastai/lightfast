@@ -23,7 +23,7 @@ import { ProfileDataLoading } from "./_components/profile-data-loading";
  */
 export default function GeneralSettingsPage() {
 	// CRITICAL: Prefetch BEFORE HydrateClient wrapping
-	prefetch(userTrpc.account.profile.get.queryOptions());
+	prefetch(userTrpc.account.get.queryOptions());
 
 	return (
 		<HydrateClient>

@@ -1,4 +1,4 @@
-import type { Store } from "@db/console/schema";
+import type { WorkspaceStore } from "@db/console/schema";
 import { DeusApiService } from "./base-service";
 
 /**
@@ -18,7 +18,7 @@ export class StoresService extends DeusApiService {
 		workspaceName: string;
 		storeSlug: string;
 		embeddingDim?: number;
-	}): Promise<Store> {
+	}): Promise<WorkspaceStore> {
 		return this.call("stores.getOrCreate", async (caller) =>
 			caller.stores.getOrCreate(params),
 		);
@@ -31,7 +31,7 @@ export class StoresService extends DeusApiService {
 		clerkOrgSlug: string;
 		workspaceName: string;
 		storeSlug: string;
-	}): Promise<Store> {
+	}): Promise<WorkspaceStore> {
 		return this.call("stores.getByName", async (caller) =>
 			caller.stores.getByName(params),
 		);
@@ -43,7 +43,7 @@ export class StoresService extends DeusApiService {
 	async listByWorkspace(params: {
 		clerkOrgSlug: string;
 		workspaceName: string;
-	}): Promise<Store[]> {
+	}): Promise<WorkspaceStore[]> {
 		return this.call("stores.listByWorkspace", async (caller) =>
 			caller.stores.listByWorkspace(params),
 		);

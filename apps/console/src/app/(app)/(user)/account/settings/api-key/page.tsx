@@ -24,7 +24,7 @@ import { SecurityNotice } from "./_components/security-notice";
 export default function ApiKeySettingsPage() {
 	// Prefetch API keys for instant loading
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
-	prefetch(userTrpc.account.apiKeys.list.queryOptions());
+	prefetch(userTrpc.userApiKeys.list.queryOptions());
 
 	return (
 		<div className="space-y-8">
