@@ -18,7 +18,7 @@ import { createEmbeddingProviderForStore } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
-import { stores } from "@db/console/schema";
+import { workspaceStores } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -68,10 +68,10 @@ export const searchRouter = {
 				const storeSlug = storeLabel.replace("store:", "");
 
 				// Phase 1.6: Look up store and verify workspace access
-				const store = await db.query.stores.findFirst({
+				const store = await db.query.workspaceStores.findFirst({
 					where: and(
-						eq(stores.slug, storeSlug),
-						eq(stores.workspaceId, ctx.auth.workspaceId)
+						eq(workspaceStores.slug, storeSlug),
+						eq(workspaceStores.workspaceId, ctx.auth.workspaceId)
 					),
 				});
 

@@ -14,7 +14,7 @@
 import { inngest } from "../../../client/client";
 import type { Events } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaceSources, workspaces } from "@db/console/schema";
+import { workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { getWorkspaceKey } from "@db/console/utils";
@@ -79,8 +79,8 @@ export const githubPushHandler = inngest.createFunction(
 
     // Step 1: Validate source exists
     await step.run("validate-source", async () => {
-      const source = await db.query.workspaceSources.findFirst({
-        where: eq(workspaceSources.id, sourceId),
+      const source = await db.query.workspaceIntegrations.findFirst({
+        where: eq(workspaceIntegrations.id, sourceId),
       });
 
       if (!source) {

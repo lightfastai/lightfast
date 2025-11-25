@@ -25,8 +25,8 @@ import type { MetricType, MetricUnit } from "@repo/console-validation";
  * - api: General API call
  * - error: Error occurrence
  */
-export const metrics = pgTable(
-  "lightfast_metrics",
+export const workspaceMetrics = pgTable(
+  "lightfast_workspace_metrics",
   {
     /**
      * Unique metric identifier (nanoid)
@@ -142,7 +142,7 @@ export interface MetricTags {
 }
 
 // Type exports
-export type Metric = typeof metrics.$inferSelect;
-export type InsertMetric = typeof metrics.$inferInsert;
+export type WorkspaceMetric = typeof workspaceMetrics.$inferSelect;
+export type InsertWorkspaceMetric = typeof workspaceMetrics.$inferInsert;
 
 // Zod schemas

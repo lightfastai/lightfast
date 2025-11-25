@@ -2,11 +2,11 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
 import {
-  workspaces,
-  stores,
-  docsDocuments,
-  jobs,
-  workspaceSources,
+  orgWorkspaces,
+  workspaceStores,
+  workspaceKnowledgeDocuments,
+  workspaceWorkflowRuns,
+  workspaceIntegrations,
   userSources,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, lte } from "drizzle-orm";
@@ -87,12 +87,12 @@ export const workspaceRouter = {
       }
 
       // Fetch all workspaces for this organization (basic info only)
-      const orgWorkspaces = await db.query.workspaces.findMany({
-        where: eq(workspaces.clerkOrgId, clerkOrg.id),
-        orderBy: [desc(workspaces.createdAt)],
+      const orgWorkspacesData = await db.query.orgWorkspaces.findMany({
+        where: eq(orgWorkspaces.clerkOrgId, clerkOrg.id),
+        orderBy: [desc(orgWorkspaces.createdAt)],
       });
 
-      return orgWorkspaces.map((workspace) => ({
+      return orgWorkspacesData.map((workspace) => ({
         id: workspace.id,
         name: workspace.name,
         slug: workspace.slug,
@@ -132,10 +132,10 @@ export const workspaceRouter = {
       }
 
       // Find workspace source connected to this user source
-      const workspaceSource = await db.query.workspaceSources.findFirst({
+      const workspaceSource = await db.query.workspaceIntegrations.findFirst({
         where: and(
-          eq(workspaceSources.userSourceId, userSource.id),
-          eq(workspaceSources.isActive, true),
+          eq(workspaceIntegrations.userSourceId, userSource.id),
+          eq(workspaceIntegrations.isActive, true),
         ),
       });
 
@@ -146,8 +146,8 @@ export const workspaceRouter = {
       }
 
       // Fetch workspace details
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceSource.workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceSource.workspaceId),
       });
 
       if (!workspace) {
@@ -184,8 +184,8 @@ export const workspaceRouter = {
       });
 
       // Fetch full workspace details
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
       });
 
       if (!workspace) {
@@ -245,8 +245,8 @@ export const workspaceRouter = {
         );
 
         // Fetch workspace to get slug
-        const workspace = await db.query.workspaces.findFirst({
-          where: eq(workspaces.id, workspaceId),
+        const workspace = await db.query.orgWorkspaces.findFirst({
+          where: eq(orgWorkspaces.id, workspaceId),
         });
 
         if (!workspace) {
@@ -305,12 +305,12 @@ export const workspaceRouter = {
         .replace("T", " ");
 
       // Get completed jobs with durations
-      const completedJobs = await db.query.jobs.findMany({
+      const completedJobs = await db.query.workspaceWorkflowRuns.findMany({
         where: and(
-          eq(jobs.workspaceId, workspaceId),
-          eq(jobs.status, "completed"),
-          gte(jobs.createdAt, startTime),
-          sql`${jobs.durationMs} IS NOT NULL`,
+          eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+          eq(workspaceWorkflowRuns.status, "completed"),
+          gte(workspaceWorkflowRuns.createdAt, startTime),
+          sql`${workspaceWorkflowRuns.durationMs} IS NOT NULL`,
         ),
         columns: {
           durationMs: true,
@@ -379,17 +379,17 @@ export const workspaceRouter = {
         .replace("T", " ");
 
       // Get all jobs in time range
-      const recentJobs = await db.query.jobs.findMany({
+      const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
         where: and(
-          eq(jobs.workspaceId, workspaceId),
-          gte(jobs.createdAt, startTime),
+          eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+          gte(workspaceWorkflowRuns.createdAt, startTime),
         ),
         columns: {
           createdAt: true,
           durationMs: true,
           status: true,
         },
-        orderBy: [desc(jobs.createdAt)],
+        orderBy: [desc(workspaceWorkflowRuns.createdAt)],
       });
 
       // Group by hour
@@ -470,10 +470,10 @@ export const workspaceRouter = {
       });
 
       // Check if new name already exists in this organization
-      const existingWorkspace = await db.query.workspaces.findFirst({
+      const existingWorkspace = await db.query.orgWorkspaces.findFirst({
         where: and(
-          eq(workspaces.clerkOrgId, clerkOrgId),
-          eq(workspaces.name, input.newName),
+          eq(orgWorkspaces.clerkOrgId, clerkOrgId),
+          eq(orgWorkspaces.name, input.newName),
         ),
       });
 
@@ -486,12 +486,12 @@ export const workspaceRouter = {
 
       // Update workspace name
       await db
-        .update(workspaces)
+        .update(orgWorkspaces)
         .set({
           name: input.newName,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(workspaces.id, workspaceId));
+        .where(eq(orgWorkspaces.id, workspaceId));
 
       return {
         success: true,
@@ -525,25 +525,25 @@ export const workspaceRouter = {
         // Get all workspace sources (new 2-table model)
         const sources = await db
           .select({
-            id: workspaceSources.id,
+            id: workspaceIntegrations.id,
             provider: userSources.provider,
-            isActive: workspaceSources.isActive,
-            connectedAt: workspaceSources.connectedAt,
-            lastSyncedAt: workspaceSources.lastSyncedAt,
-            lastSyncStatus: workspaceSources.lastSyncStatus,
-            documentCount: workspaceSources.documentCount,
-            sourceConfig: workspaceSources.sourceConfig,
+            isActive: workspaceIntegrations.isActive,
+            connectedAt: workspaceIntegrations.connectedAt,
+            lastSyncedAt: workspaceIntegrations.lastSyncedAt,
+            lastSyncStatus: workspaceIntegrations.lastSyncStatus,
+            documentCount: workspaceIntegrations.documentCount,
+            sourceConfig: workspaceIntegrations.sourceConfig,
           })
-          .from(workspaceSources)
+          .from(workspaceIntegrations)
           .innerJoin(
             userSources,
-            eq(workspaceSources.userSourceId, userSources.id)
+            eq(workspaceIntegrations.userSourceId, userSources.id)
           )
           .where(and(
-            eq(workspaceSources.workspaceId, workspaceId),
-            eq(workspaceSources.isActive, true),
+            eq(workspaceIntegrations.workspaceId, workspaceId),
+            eq(workspaceIntegrations.isActive, true),
           ))
-          .orderBy(desc(workspaceSources.connectedAt));
+          .orderBy(desc(workspaceIntegrations.connectedAt));
 
         // Format for compatibility with old interface
         return {
@@ -600,17 +600,17 @@ export const workspaceRouter = {
         // Get stores with document counts
         const storesWithCounts = await db
           .select({
-            id: stores.id,
-            slug: stores.slug,
-            indexName: stores.indexName,
-            embeddingDim: stores.embeddingDim,
-            createdAt: stores.createdAt,
-            documentCount: count(docsDocuments.id),
+            id: workspaceStores.id,
+            slug: workspaceStores.slug,
+            indexName: workspaceStores.indexName,
+            embeddingDim: workspaceStores.embeddingDim,
+            createdAt: workspaceStores.createdAt,
+            documentCount: count(workspaceKnowledgeDocuments.id),
           })
-          .from(stores)
-          .leftJoin(docsDocuments, eq(stores.id, docsDocuments.storeId))
-          .where(eq(stores.workspaceId, workspaceId))
-          .groupBy(stores.id);
+          .from(workspaceStores)
+          .leftJoin(workspaceKnowledgeDocuments, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
+          .where(eq(workspaceStores.workspaceId, workspaceId))
+          .groupBy(workspaceStores.id);
 
         return {
           total: storesWithCounts.length,
@@ -647,18 +647,18 @@ export const workspaceRouter = {
         // Get total document count
         const [docCountResult] = await db
           .select({ count: count() })
-          .from(docsDocuments)
-          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-          .where(eq(stores.workspaceId, workspaceId));
+          .from(workspaceKnowledgeDocuments)
+          .innerJoin(workspaceStores, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
+          .where(eq(workspaceStores.workspaceId, workspaceId));
 
         // Get total chunk count (sum of all chunkCounts)
         const [chunkCountResult] = await db
           .select({
-            total: sql<number>`COALESCE(SUM(${docsDocuments.chunkCount}), 0)`,
+            total: sql<number>`COALESCE(SUM(${workspaceKnowledgeDocuments.chunkCount}), 0)`,
           })
-          .from(docsDocuments)
-          .innerJoin(stores, eq(stores.id, docsDocuments.storeId))
-          .where(eq(stores.workspaceId, workspaceId));
+          .from(workspaceKnowledgeDocuments)
+          .innerJoin(workspaceStores, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
+          .where(eq(workspaceStores.workspaceId, workspaceId));
 
         return {
           total: docCountResult?.count || 0,
@@ -692,18 +692,18 @@ export const workspaceRouter = {
         const [jobStats] = await db
           .select({
             total: count(),
-            queued: sum(sql<number>`CASE WHEN ${jobs.status} = 'queued' THEN 1 ELSE 0 END`),
-            running: sum(sql<number>`CASE WHEN ${jobs.status} = 'running' THEN 1 ELSE 0 END`),
-            completed: sum(sql<number>`CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END`),
-            failed: sum(sql<number>`CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END`),
-            cancelled: sum(sql<number>`CASE WHEN ${jobs.status} = 'cancelled' THEN 1 ELSE 0 END`),
-            avgDurationMs: avg(sql<number>`CAST(${jobs.durationMs} AS BIGINT)`),
+            queued: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'queued' THEN 1 ELSE 0 END`),
+            running: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'running' THEN 1 ELSE 0 END`),
+            completed: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN 1 ELSE 0 END`),
+            failed: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'failed' THEN 1 ELSE 0 END`),
+            cancelled: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'cancelled' THEN 1 ELSE 0 END`),
+            avgDurationMs: avg(sql<number>`CAST(${workspaceWorkflowRuns.durationMs} AS BIGINT)`),
           })
-          .from(jobs)
+          .from(workspaceWorkflowRuns)
           .where(
             and(
-              eq(jobs.workspaceId, workspaceId),
-              gte(jobs.createdAt, oneDayAgo),
+              eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+              gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
             ),
           );
 
@@ -736,12 +736,12 @@ export const workspaceRouter = {
         // Get recent jobs (last 24 hours)
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-        const recentJobs = await db.query.jobs.findMany({
+        const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
           where: and(
-            eq(jobs.workspaceId, workspaceId),
-            gte(jobs.createdAt, oneDayAgo),
+            eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+            gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
           ),
-          orderBy: [desc(jobs.createdAt)],
+          orderBy: [desc(workspaceWorkflowRuns.createdAt)],
           limit: 5,
         });
 
@@ -779,10 +779,10 @@ export const workspaceRouter = {
         // Get recent jobs for health calculation (last 24h)
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-        const recentJobs = await db.query.jobs.findMany({
+        const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
           where: and(
-            eq(jobs.workspaceId, workspaceId),
-            gte(jobs.createdAt, oneDayAgo),
+            eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+            gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
           ),
           columns: {
             status: true,
@@ -830,8 +830,8 @@ export const workspaceRouter = {
   getForInngest: inngestM2MProcedure
     .input(z.object({ workspaceId: z.string() }))
     .query(async ({ input }) => {
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, input.workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, input.workspaceId),
       });
 
       if (!workspace) {

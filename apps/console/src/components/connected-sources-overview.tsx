@@ -114,7 +114,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
       <div className="flex items-center gap-2">
         <div className={`rounded-full p-1 ${statusConfig.bgColor}`}>
           <StatusIcon
-            className={`h-3 w-3 ${statusConfig.color} ${connection.lastSyncStatus === "in_progress" ? "animate-spin" : ""}`}
+            className={`h-3 w-3 ${statusConfig.color} ${connection.lastSyncStatus === "pending" ? "animate-spin" : ""}`}
           />
         </div>
         <span className={`text-xs font-medium ${statusConfig.color}`}>
@@ -239,9 +239,9 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
 
   // Calculate stats
   const totalSources = connections.length;
-  const syncedCount = connections.filter((c) => c.lastSyncStatus === "completed").length;
+  const syncedCount = connections.filter((c) => c.lastSyncStatus === "success").length;
   const syncingCount = connections.filter((c) =>
-    ["pending", "in_progress"].includes(c.lastSyncStatus ?? "")
+    c.lastSyncStatus === "pending"
   ).length;
   const failedCount = connections.filter((c) => c.lastSyncStatus === "failed").length;
 

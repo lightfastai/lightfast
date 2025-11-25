@@ -34,7 +34,7 @@
  */
 
 import { eq, and } from "drizzle-orm";
-import { workspaces } from "@db/console/schema";
+import { orgWorkspaces } from "@db/console/schema";
 import type {
   DbClient,
   WorkspaceAccessContext,
@@ -190,10 +190,10 @@ export async function resolveWorkspaceByName(
     const { clerkOrgId } = orgResult.data;
 
     // 2. Fetch workspace by name within this org
-    const workspace = await params.db.query.workspaces.findFirst({
+    const workspace = await params.db.query.orgWorkspaces.findFirst({
       where: and(
-        eq(workspaces.clerkOrgId, clerkOrgId),
-        eq(workspaces.name, params.workspaceName)
+        eq(orgWorkspaces.clerkOrgId, clerkOrgId),
+        eq(orgWorkspaces.name, params.workspaceName)
       ),
     });
 
@@ -270,10 +270,10 @@ export async function resolveWorkspaceBySlug(
     const { clerkOrgId } = orgResult.data;
 
     // 2. Fetch workspace by slug within this org
-    const workspace = await params.db.query.workspaces.findFirst({
+    const workspace = await params.db.query.orgWorkspaces.findFirst({
       where: and(
-        eq(workspaces.clerkOrgId, clerkOrgId),
-        eq(workspaces.slug, params.workspaceSlug)
+        eq(orgWorkspaces.clerkOrgId, clerkOrgId),
+        eq(orgWorkspaces.slug, params.workspaceSlug)
       ),
     });
 
@@ -396,10 +396,10 @@ export async function verifyWorkspaceAccess(
     const userRole = userMembership.role;
 
     // 2. Fetch workspace by name within this org
-    const workspace = await params.db.query.workspaces.findFirst({
+    const workspace = await params.db.query.orgWorkspaces.findFirst({
       where: and(
-        eq(workspaces.clerkOrgId, clerkOrgId),
-        eq(workspaces.name, params.workspaceName)
+        eq(orgWorkspaces.clerkOrgId, clerkOrgId),
+        eq(orgWorkspaces.name, params.workspaceName)
       ),
     });
 

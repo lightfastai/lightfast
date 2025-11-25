@@ -1,10 +1,10 @@
 import { relations } from "drizzle-orm";
 
-import { docsDocuments } from "./tables/docs-documents";
-import { ingestionEvents } from "./tables/ingestion-events";
-import { stores } from "./tables/stores";
-import { vectorEntries } from "./tables/vector-entries";
-import { workspaces } from "./tables/workspaces";
+import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
+import { workspaceSyncEvents } from "./tables/workspace-sync-events";
+import { workspaceStores } from "./tables/workspace-stores";
+import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
+import { orgWorkspaces } from "./tables/org-workspaces";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -13,42 +13,42 @@ import { workspaces } from "./tables/workspaces";
  * Tables reference Clerk org IDs via clerkOrgId fields (no FK constraints).
  */
 
-export const workspacesRelations = relations(workspaces, ({ many }) => ({
-  stores: many(stores),
+export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
+  stores: many(workspaceStores),
 }));
 
-export const storesRelations = relations(stores, ({ one, many }) => ({
-  workspace: one(workspaces, {
-    fields: [stores.workspaceId],
-    references: [workspaces.id],
+export const workspaceStoresRelations = relations(workspaceStores, ({ one, many }) => ({
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceStores.workspaceId],
+    references: [orgWorkspaces.id],
   }),
-  documents: many(docsDocuments),
-  vectorEntries: many(vectorEntries),
-  ingestionEvents: many(ingestionEvents),
+  documents: many(workspaceKnowledgeDocuments),
+  vectorChunks: many(workspaceKnowledgeVectorChunks),
+  syncEvents: many(workspaceSyncEvents),
 }));
 
-export const docsDocumentsRelations = relations(docsDocuments, ({ one, many }) => ({
-  store: one(stores, {
-    fields: [docsDocuments.storeId],
-    references: [stores.id],
+export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
+  store: one(workspaceStores, {
+    fields: [workspaceKnowledgeDocuments.storeId],
+    references: [workspaceStores.id],
   }),
-  vectorEntries: many(vectorEntries),
+  vectorChunks: many(workspaceKnowledgeVectorChunks),
 }));
 
-export const vectorEntriesRelations = relations(vectorEntries, ({ one }) => ({
-  store: one(stores, {
-    fields: [vectorEntries.storeId],
-    references: [stores.id],
+export const workspaceKnowledgeVectorChunksRelations = relations(workspaceKnowledgeVectorChunks, ({ one }) => ({
+  store: one(workspaceStores, {
+    fields: [workspaceKnowledgeVectorChunks.storeId],
+    references: [workspaceStores.id],
   }),
-  document: one(docsDocuments, {
-    fields: [vectorEntries.docId],
-    references: [docsDocuments.id],
+  document: one(workspaceKnowledgeDocuments, {
+    fields: [workspaceKnowledgeVectorChunks.docId],
+    references: [workspaceKnowledgeDocuments.id],
   }),
 }));
 
-export const ingestionEventsRelations = relations(ingestionEvents, ({ one }) => ({
-  store: one(stores, {
-    fields: [ingestionEvents.storeId],
-    references: [stores.id],
+export const workspaceSyncEventsRelations = relations(workspaceSyncEvents, ({ one }) => ({
+  store: one(workspaceStores, {
+    fields: [workspaceSyncEvents.storeId],
+    references: [workspaceStores.id],
   }),
 }));

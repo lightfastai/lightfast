@@ -6,7 +6,7 @@ import type { IntegrationProvider, ClerkUserId } from "@repo/console-validation"
 /**
  * User Sources
  *
- * User's personal OAuth connections to external providers (GitHub, Notion, etc.)
+ * User-scoped: Personal OAuth connections to external providers (GitHub, Notion, etc.)
  * This is where we store the authentication credentials.
  *
  * Flow:
@@ -93,7 +93,7 @@ export const userSources = pgTable(
 
 // Type exports
 export type UserSource = typeof userSources.$inferSelect;
-export type NewUserSource = typeof userSources.$inferInsert;
+export type InsertUserSource = typeof userSources.$inferInsert;
 
 // Discriminated union helpers
 export type GitHubUserSource = UserSource & { provider: "github" };

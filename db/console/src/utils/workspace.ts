@@ -1,5 +1,5 @@
 import { db } from "../client";
-import { workspaces } from "../schema";
+import { orgWorkspaces } from "../schema";
 import { generateRandomSlug } from "./workspace-names";
 
 /**
@@ -42,10 +42,10 @@ export async function createCustomWorkspace(
     // Check if name already exists in this organization (names must be unique)
     const { and, eq } = await import("drizzle-orm");
 
-    const existing = await tx.query.workspaces.findFirst({
+    const existing = await tx.query.orgWorkspaces.findFirst({
       where: and(
-        eq(workspaces.clerkOrgId, clerkOrgId),
-        eq(workspaces.name, name),
+        eq(orgWorkspaces.clerkOrgId, clerkOrgId),
+        eq(orgWorkspaces.name, name),
       ),
     });
 
@@ -56,7 +56,7 @@ export async function createCustomWorkspace(
     // Create workspace with nanoid
     // Database unique constraint (workspace_org_name_idx) will catch duplicates
     const [newWorkspace] = await tx
-      .insert(workspaces)
+      .insert(orgWorkspaces)
       .values({
         // id is auto-generated nanoid via $defaultFn
         clerkOrgId,
@@ -64,7 +64,7 @@ export async function createCustomWorkspace(
         slug,      // Random slug for Pinecone (e.g., "robust-chicken")
         settings: {},
       })
-      .returning({ id: workspaces.id });
+      .returning({ id: orgWorkspaces.id });
 
     if (!newWorkspace) {
       throw new Error("Failed to create workspace");

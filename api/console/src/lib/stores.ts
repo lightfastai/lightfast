@@ -10,8 +10,8 @@
  */
 
 import { db } from "@db/console/client";
-import { stores } from "@db/console/schema";
-import type { Store } from "@db/console/schema";
+import { workspaceStores } from "@db/console/schema";
+import type { WorkspaceStore } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { createConsolePineconeClient } from "@repo/console-pinecone";
 import { log } from "@vendor/observability/log";
@@ -67,7 +67,7 @@ export async function getOrCreateStore(params: {
   storeSlug: string;
   embeddingDim?: number;
   workspaceKey?: string; // canonical external key for naming, optional
-}): Promise<Store> {
+}): Promise<WorkspaceStore> {
   // Resolve embedding defaults at runtime
   const embeddingDefaults = resolveEmbeddingDefaults();
 
@@ -79,8 +79,8 @@ export async function getOrCreateStore(params: {
   } = params;
 
   // Check if store already exists
-  let store = await db.query.stores.findFirst({
-    where: and(eq(stores.workspaceId, workspaceId), eq(stores.slug, storeSlug)),
+  let store = await db.query.workspaceStores.findFirst({
+    where: and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
   });
 
   if (store) {
@@ -112,13 +112,18 @@ export async function getOrCreateStore(params: {
   }
 
 	const storeId = `${workspaceId}_${storeSlug}`;
+	// DEPRECATED: This function uses per-store indexes instead of namespaces
+	// For new stores, use the ensure-store workflow which supports namespaces
+	const namespaceName = `legacy:${storeId}`;
+
   const inserted = await db
-    .insert(stores)
+    .insert(workspaceStores)
     .values({
       id: storeId,
       workspaceId,
       slug: storeSlug,
       indexName,
+      namespaceName,
       // All config values explicitly passed from PRIVATE_CONFIG
       // No database defaults - ensures consistency with config layer
       embeddingDim,
@@ -137,8 +142,8 @@ export async function getOrCreateStore(params: {
     store = inserted[0];
   } else {
     // Another concurrent creator likely inserted; fetch the record
-    store = await db.query.stores.findFirst({
-      where: and(eq(stores.workspaceId, workspaceId), eq(stores.slug, storeSlug)),
+    store = await db.query.workspaceStores.findFirst({
+      where: and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
     });
     if (!store) {
       throw new Error("Failed to create or fetch store record");
@@ -152,9 +157,9 @@ export async function getOrCreateStore(params: {
 /**
  * Get a store by slug
  */
-export async function getStoreBySlug(storeSlug: string): Promise<Store> {
-	const store = await db.query.stores.findFirst({
-		where: eq(stores.slug, storeSlug),
+export async function getStoreBySlug(storeSlug: string): Promise<WorkspaceStore> {
+	const store = await db.query.workspaceStores.findFirst({
+		where: eq(workspaceStores.slug, storeSlug),
 	});
 
 	if (!store) {
@@ -169,8 +174,8 @@ export async function getStoreBySlug(storeSlug: string): Promise<Store> {
  */
 export async function listStoresByWorkspace(
 	workspaceId: string,
-): Promise<Store[]> {
-	return db.query.stores.findMany({
-		where: eq(stores.workspaceId, workspaceId),
+): Promise<WorkspaceStore[]> {
+	return db.query.workspaceStores.findMany({
+		where: eq(workspaceStores.workspaceId, workspaceId),
 	});
 }

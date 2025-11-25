@@ -1,6 +1,9 @@
 /**
- * Vector entries table schema
+ * Workspace Knowledge Vector Chunks table schema
  * Mapping of doc chunks to vector IDs for idempotent upsert/delete
+ *
+ * Workspace-scoped: Vector chunks within a knowledge store.
+ * Hierarchy: Workspace → Knowledge Store → Documents → Vector Chunks
  */
 
 import {
@@ -12,23 +15,23 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { stores } from "./stores";
-import { docsDocuments } from "./docs-documents";
+import { workspaceStores } from "./workspace-stores";
+import { workspaceKnowledgeDocuments } from "./workspace-knowledge-documents";
 import type { ContentHash } from "@repo/console-validation";
 
-export const vectorEntries = pgTable(
-  "lightfast_vector_entries",
+export const workspaceKnowledgeVectorChunks = pgTable(
+  "lightfast_workspace_knowledge_vector_chunks",
   {
     /** Vector ID used in Pinecone index (e.g., ${docId}#${chunkIndex}) */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Store ID this vector belongs to */
     storeId: varchar("store_id", { length: 191 })
       .notNull()
-      .references(() => stores.id, { onDelete: "cascade" }),
+      .references(() => workspaceStores.id, { onDelete: "cascade" }),
     /** Document ID this chunk belongs to */
     docId: varchar("doc_id", { length: 191 })
       .notNull()
-      .references(() => docsDocuments.id, { onDelete: "cascade" }),
+      .references(() => workspaceKnowledgeDocuments.id, { onDelete: "cascade" }),
     /** 0-based chunk index within document */
     chunkIndex: integer("chunk_index").notNull(),
     /** Content hash of document version */
@@ -50,7 +53,7 @@ export const vectorEntries = pgTable(
 );
 
 // Type exports
-export type VectorEntry = typeof vectorEntries.$inferSelect;
-export type InsertVectorEntry = typeof vectorEntries.$inferInsert;
+export type WorkspaceKnowledgeVectorChunk = typeof workspaceKnowledgeVectorChunks.$inferSelect;
+export type InsertWorkspaceKnowledgeVectorChunk = typeof workspaceKnowledgeVectorChunks.$inferInsert;
 
 // Zod schema exports

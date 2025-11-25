@@ -11,7 +11,9 @@ import { nanoid } from "@repo/lib";
 import type { ClerkOrgId } from "@repo/console-validation";
 
 /**
- * Workspaces table represents isolated knowledge bases within an organization.
+ * Organization Workspaces table represents isolated knowledge bases within an organization.
+ *
+ * Org-scoped: Each workspace belongs to a Clerk organization.
  *
  * Architecture:
  * - **name**: User-facing identifier used in URLs (e.g., "my-project", "api.v2")
@@ -29,8 +31,8 @@ import type { ClerkOrgId } from "@repo/console-validation";
  * - Search/contents queries are scoped to workspace
  * - All workspaces are explicitly created by users at /new
  */
-export const workspaces = pgTable(
-  "lightfast_workspaces",
+export const orgWorkspaces = pgTable(
+  "lightfast_org_workspaces",
   {
     /**
      * Unique workspace identifier (nanoid)
@@ -121,5 +123,5 @@ export interface WorkspaceSettings {
 }
 
 // Type exports
-export type Workspace = typeof workspaces.$inferSelect;
-export type InsertWorkspace = typeof workspaces.$inferInsert;
+export type OrgWorkspace = typeof orgWorkspaces.$inferSelect;
+export type InsertOrgWorkspace = typeof orgWorkspaces.$inferInsert;

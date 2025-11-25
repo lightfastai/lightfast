@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { jobs, workspaces, type JobInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces, type JobInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -14,7 +14,7 @@ import {
 	getJob,
 } from "../../lib/jobs";
 import { inngest } from "@api/console/inngest";
-import { workspaceSources } from "@db/console/schema";
+import { workspaceIntegrations } from "@db/console/schema";
 import { getWorkspaceKey } from "@db/console/utils";
 import { jobTriggerSchema, metricUnitSchema } from "@repo/console-validation";
 
@@ -51,29 +51,29 @@ export const jobsRouter = {
 
 			// Build where conditions
 			const conditions = [
-				eq(jobs.workspaceId, workspaceId),
-				eq(jobs.clerkOrgId, clerkOrgId),
+				eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+				eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 			];
 
 			if (status) {
-				conditions.push(eq(jobs.status, status));
+				conditions.push(eq(workspaceWorkflowRuns.status, status));
 			}
 
 			if (repositoryId) {
-				conditions.push(eq(jobs.repositoryId, repositoryId));
+				conditions.push(eq(workspaceWorkflowRuns.repositoryId, repositoryId));
 			}
 
 			// Add cursor condition if provided
 			if (cursor) {
-				conditions.push(sql`${jobs.createdAt} < ${cursor}`);
+				conditions.push(sql`${workspaceWorkflowRuns.createdAt} < ${cursor}`);
 			}
 
 			// Query jobs with limit + 1 to determine if there are more
 			const jobsList = await db
 				.select()
-				.from(jobs)
+				.from(workspaceWorkflowRuns)
 				.where(and(...conditions))
-				.orderBy(desc(jobs.createdAt))
+				.orderBy(desc(workspaceWorkflowRuns.createdAt))
 				.limit(limit + 1);
 
 			// Determine if there are more results
@@ -110,11 +110,11 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
-			const job = await db.query.jobs.findFirst({
+			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(jobs.id, input.jobId),
-					eq(jobs.workspaceId, workspaceId),
-					eq(jobs.clerkOrgId, clerkOrgId),
+					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
 			});
 
@@ -150,14 +150,14 @@ export const jobsRouter = {
 
 			const recentJobs = await db
 				.select()
-				.from(jobs)
+				.from(workspaceWorkflowRuns)
 				.where(
 					and(
-						eq(jobs.workspaceId, workspaceId),
-						eq(jobs.clerkOrgId, clerkOrgId),
+						eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+						eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 					),
 				)
-				.orderBy(desc(jobs.createdAt))
+				.orderBy(desc(workspaceWorkflowRuns.createdAt))
 				.limit(input.limit);
 
 			return recentJobs;
@@ -196,20 +196,20 @@ export const jobsRouter = {
 			const [stats] = await db
 				.select({
 					total: sql<number>`COUNT(*)`,
-					queued: sql<number>`SUM(CASE WHEN ${jobs.status} = 'queued' THEN 1 ELSE 0 END)`,
-					running: sql<number>`SUM(CASE WHEN ${jobs.status} = 'running' THEN 1 ELSE 0 END)`,
-					completed: sql<number>`SUM(CASE WHEN ${jobs.status} = 'completed' THEN 1 ELSE 0 END)`,
-					failed: sql<number>`SUM(CASE WHEN ${jobs.status} = 'failed' THEN 1 ELSE 0 END)`,
-					cancelled: sql<number>`SUM(CASE WHEN ${jobs.status} = 'cancelled' THEN 1 ELSE 0 END)`,
+					queued: sql<number>`SUM(CASE WHEN ${workspaceWorkflowRuns.status} = 'queued' THEN 1 ELSE 0 END)`,
+					running: sql<number>`SUM(CASE WHEN ${workspaceWorkflowRuns.status} = 'running' THEN 1 ELSE 0 END)`,
+					completed: sql<number>`SUM(CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN 1 ELSE 0 END)`,
+					failed: sql<number>`SUM(CASE WHEN ${workspaceWorkflowRuns.status} = 'failed' THEN 1 ELSE 0 END)`,
+					cancelled: sql<number>`SUM(CASE WHEN ${workspaceWorkflowRuns.status} = 'cancelled' THEN 1 ELSE 0 END)`,
 					// Average duration for completed jobs only
-					avgDurationMs: sql<number>`AVG(CASE WHEN ${jobs.status} = 'completed' THEN CAST(${jobs.durationMs} AS BIGINT) ELSE NULL END)`,
+					avgDurationMs: sql<number>`AVG(CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN CAST(${workspaceWorkflowRuns.durationMs} AS BIGINT) ELSE NULL END)`,
 				})
-				.from(jobs)
+				.from(workspaceWorkflowRuns)
 				.where(
 					and(
-						eq(jobs.workspaceId, workspaceId),
-						eq(jobs.clerkOrgId, clerkOrgId),
-						gte(jobs.createdAt, since),
+						eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+						eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
+						gte(workspaceWorkflowRuns.createdAt, since),
 					),
 				);
 
@@ -273,11 +273,11 @@ export const jobsRouter = {
 			});
 
 			// Verify job exists and belongs to user's workspace
-			const job = await db.query.jobs.findFirst({
+			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(jobs.id, input.jobId),
-					eq(jobs.workspaceId, workspaceId),
-					eq(jobs.clerkOrgId, clerkOrgId),
+					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
 			});
 
@@ -298,12 +298,12 @@ export const jobsRouter = {
 
 			// Update job status to cancelled
 			await db
-				.update(jobs)
+				.update(workspaceWorkflowRuns)
 				.set({
 					status: "cancelled",
 					completedAt: new Date().toISOString(),
 				})
-				.where(eq(jobs.id, input.jobId));
+				.where(eq(workspaceWorkflowRuns.id, input.jobId));
 
 			// TODO: Send Inngest cancellation event
 			// await inngest.send({
@@ -335,11 +335,11 @@ export const jobsRouter = {
 			});
 
 			// Verify job exists and belongs to user's workspace
-			const job = await db.query.jobs.findFirst({
+			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(jobs.id, input.jobId),
-					eq(jobs.workspaceId, workspaceId),
-					eq(jobs.clerkOrgId, clerkOrgId),
+					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
+					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
 			});
 
@@ -362,8 +362,8 @@ export const jobsRouter = {
 			const jobInput = job.input as JobInput;
 
 			// Get workspace slug for workspaceKey
-			const workspace = await db.query.workspaces.findFirst({
-				where: eq(workspaces.id, workspaceId),
+			const workspace = await db.query.orgWorkspaces.findFirst({
+				where: eq(orgWorkspaces.id, workspaceId),
 			});
 
 			if (!workspace) {
@@ -390,8 +390,8 @@ export const jobsRouter = {
 					}
 
 					// Fetch workspace source to determine provider type
-					const source = await db.query.workspaceSources.findFirst({
-						where: eq(workspaceSources.id, sourceId),
+					const source = await db.query.workspaceIntegrations.findFirst({
+						where: eq(workspaceIntegrations.id, sourceId),
 					});
 
 					if (!source) {
@@ -467,21 +467,21 @@ export const jobsRouter = {
 					// Find workspace source by GitHub repo ID (stored in providerResourceId)
 					let source = null;
 					if (repoId) {
-						source = await db.query.workspaceSources.findFirst({
+						source = await db.query.workspaceIntegrations.findFirst({
 							where: and(
-								eq(workspaceSources.workspaceId, workspaceId),
-								eq(workspaceSources.providerResourceId, repoId),
-								eq(workspaceSources.isActive, true),
+								eq(workspaceIntegrations.workspaceId, workspaceId),
+								eq(workspaceIntegrations.providerResourceId, repoId),
+								eq(workspaceIntegrations.isActive, true),
 							),
 						});
 					}
 
 					// Fallback: try to find by repoFullName in sourceConfig
 					if (!source && repoFullName) {
-						const allSources = await db.query.workspaceSources.findMany({
+						const allSources = await db.query.workspaceIntegrations.findMany({
 							where: and(
-								eq(workspaceSources.workspaceId, workspaceId),
-								eq(workspaceSources.isActive, true),
+								eq(workspaceIntegrations.workspaceId, workspaceId),
+								eq(workspaceIntegrations.isActive, true),
 							),
 						});
 

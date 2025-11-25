@@ -1,7 +1,7 @@
 import { pgTable, varchar, timestamp, text, boolean, index, jsonb, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
-import { workspaces } from "./workspaces";
+import { orgWorkspaces } from "./org-workspaces";
 import { userSources } from "./user-sources";
 import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
@@ -19,8 +19,8 @@ import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-va
  *
  * Example: "acme/frontend repo syncing to Production workspace"
  */
-export const workspaceSources = pgTable(
-  "lightfast_workspace_sources",
+export const workspaceIntegrations = pgTable(
+  "lightfast_workspace_integrations",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -30,7 +30,7 @@ export const workspaceSources = pgTable(
     // Which workspace this is connected to
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     // Which user connection to use for syncing
     userSourceId: varchar("user_source_id", { length: 191 })
@@ -187,5 +187,5 @@ export const workspaceSources = pgTable(
 );
 
 // Type exports
-export type WorkspaceSource = typeof workspaceSources.$inferSelect;
-export type NewWorkspaceSource = typeof workspaceSources.$inferInsert;
+export type WorkspaceIntegration = typeof workspaceIntegrations.$inferSelect;
+export type InsertWorkspaceIntegration = typeof workspaceIntegrations.$inferInsert;

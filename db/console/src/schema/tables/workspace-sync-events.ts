@@ -12,22 +12,22 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { stores } from "./stores";
+import { workspaceStores } from "./workspace-stores";
 import type {
   SourceType,
   IngestionSource,
   IngestionStatus,
 } from "@repo/console-validation";
 
-export const ingestionEvents = pgTable(
-  "lightfast_ingestion_events",
+export const workspaceSyncEvents = pgTable(
+  "lightfast_workspace_sync_events",
   {
     /** Unique identifier for the event record */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Store ID this event belongs to */
     storeId: varchar("store_id", { length: 191 })
       .notNull()
-      .references(() => stores.id, { onDelete: "cascade" }),
+      .references(() => workspaceStores.id, { onDelete: "cascade" }),
     /** Source type that triggered this event */
     sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
     /**
@@ -75,7 +75,7 @@ export const ingestionEvents = pgTable(
 );
 
 // Type exports
-export type IngestionEvent = typeof ingestionEvents.$inferSelect;
-export type InsertIngestionEvent = typeof ingestionEvents.$inferInsert;
+export type WorkspaceSyncEvent = typeof workspaceSyncEvents.$inferSelect;
+export type InsertWorkspaceSyncEvent = typeof workspaceSyncEvents.$inferInsert;
 
 // Zod schema exports

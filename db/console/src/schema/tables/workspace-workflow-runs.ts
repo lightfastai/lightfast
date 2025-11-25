@@ -21,8 +21,8 @@ import type { JobStatus, JobTrigger } from "@repo/console-validation";
  * Status flow:
  * - queued → running → completed/failed/cancelled
  */
-export const jobs = pgTable(
-	"lightfast_jobs",
+export const workspaceWorkflowRuns = pgTable(
+	"lightfast_workspace_workflow_runs",
 	{
 		/**
 		 * Unique job identifier (nanoid)
@@ -198,5 +198,5 @@ export interface JobOutput {
 }
 
 // Type exports
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
+export type WorkspaceWorkflowRun = typeof workspaceWorkflowRuns.$inferSelect;
+export type InsertWorkspaceWorkflowRun = typeof workspaceWorkflowRuns.$inferInsert;

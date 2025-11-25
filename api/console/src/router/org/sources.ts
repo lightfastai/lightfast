@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceSources, type WorkspaceSource } from "@db/console/schema";
+import { workspaceIntegrations, type WorkspaceIntegration } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -90,11 +90,11 @@ export const sourcesRouter = {
     .query(async ({ ctx, input }) => {
       const result = await db
         .select()
-        .from(workspaceSources)
+        .from(workspaceIntegrations)
         .where(
           and(
-            eq(workspaceSources.providerResourceId, input.githubRepoId),
-            eq(workspaceSources.isActive, true)
+            eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
+            eq(workspaceIntegrations.isActive, true)
           )
         )
         .limit(1);
@@ -121,13 +121,13 @@ export const sourcesRouter = {
     .input(getSourceIdByGithubRepoIdSchema)
     .query(async ({ ctx, input }) => {
       const result = await db
-        .select({ id: workspaceSources.id })
-        .from(workspaceSources)
+        .select({ id: workspaceIntegrations.id })
+        .from(workspaceIntegrations)
         .where(
           and(
-            eq(workspaceSources.workspaceId, input.workspaceId),
-            eq(workspaceSources.providerResourceId, input.githubRepoId),
-            eq(workspaceSources.isActive, true)
+            eq(workspaceIntegrations.workspaceId, input.workspaceId),
+            eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
+            eq(workspaceIntegrations.isActive, true)
           )
         )
         .limit(1);
@@ -136,8 +136,8 @@ export const sourcesRouter = {
 
       // Verify it's actually a GitHub repository
       if (source) {
-        const fullSource = await db.query.workspaceSources.findFirst({
-          where: eq(workspaceSources.id, source.id),
+        const fullSource = await db.query.workspaceIntegrations.findFirst({
+          where: eq(workspaceIntegrations.id, source.id),
         });
 
         if (fullSource?.sourceConfig.provider !== "github") {
@@ -167,8 +167,8 @@ export const sourcesRouter = {
       // Find the source first
       const sources = await db
         .select()
-        .from(workspaceSources)
-        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+        .from(workspaceIntegrations)
+        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
 
       if (sources.length === 0) {
         throw new TRPCError({
@@ -182,7 +182,7 @@ export const sourcesRouter = {
       const updates = await Promise.all(
         sources.map((source) =>
           db
-            .update(workspaceSources)
+            .update(workspaceIntegrations)
             .set({
               isActive: input.isActive,
               lastSyncedAt: now,
@@ -190,7 +190,7 @@ export const sourcesRouter = {
               lastSyncError: input.reason ?? null,
               updatedAt: now,
             })
-            .where(eq(workspaceSources.id, source.id))
+            .where(eq(workspaceIntegrations.id, source.id))
         )
       );
 
@@ -218,8 +218,8 @@ export const sourcesRouter = {
       // Find the source first
       const sources = await db
         .select()
-        .from(workspaceSources)
-        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+        .from(workspaceIntegrations)
+        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
 
       if (sources.length === 0) {
         throw new TRPCError({
@@ -248,12 +248,12 @@ export const sourcesRouter = {
           };
 
           return db
-            .update(workspaceSources)
+            .update(workspaceIntegrations)
             .set({
               sourceConfig: updatedConfig,
               updatedAt: now,
             })
-            .where(eq(workspaceSources.id, source.id));
+            .where(eq(workspaceIntegrations.id, source.id));
         })
       );
 
@@ -279,8 +279,8 @@ export const sourcesRouter = {
       // Find all sources for this installation
       const sources = await db
         .select()
-        .from(workspaceSources)
-        .where(eq(workspaceSources.isActive, true));
+        .from(workspaceIntegrations)
+        .where(eq(workspaceIntegrations.isActive, true));
 
       // Filter to GitHub sources with matching installationId
       const installationSources = sources.filter(
@@ -301,7 +301,7 @@ export const sourcesRouter = {
       const updates = await Promise.all(
         installationSources.map((source) =>
           db
-            .update(workspaceSources)
+            .update(workspaceIntegrations)
             .set({
               isActive: false,
               lastSyncedAt: now,
@@ -309,7 +309,7 @@ export const sourcesRouter = {
               lastSyncError: "GitHub installation removed or suspended",
               updatedAt: now,
             })
-            .where(eq(workspaceSources.id, source.id))
+            .where(eq(workspaceIntegrations.id, source.id))
         )
       );
 
@@ -331,8 +331,8 @@ export const sourcesRouter = {
       // Find the source first
       const sources = await db
         .select()
-        .from(workspaceSources)
-        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+        .from(workspaceIntegrations)
+        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
 
       if (sources.length === 0) {
         // Repository not found - already deleted or never existed
@@ -358,7 +358,7 @@ export const sourcesRouter = {
           };
 
           return db
-            .update(workspaceSources)
+            .update(workspaceIntegrations)
             .set({
               isActive: false,
               sourceConfig: updatedConfig,
@@ -367,7 +367,7 @@ export const sourcesRouter = {
               lastSyncError: "Repository deleted on GitHub",
               updatedAt: now,
             })
-            .where(eq(workspaceSources.id, source.id));
+            .where(eq(workspaceIntegrations.id, source.id));
         })
       );
 
@@ -392,8 +392,8 @@ export const sourcesRouter = {
       // Find the source first
       const sources = await db
         .select()
-        .from(workspaceSources)
-        .where(eq(workspaceSources.providerResourceId, input.githubRepoId));
+        .from(workspaceIntegrations)
+        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
 
       if (sources.length === 0) {
         throw new TRPCError({
@@ -430,12 +430,12 @@ export const sourcesRouter = {
           };
 
           return db
-            .update(workspaceSources)
+            .update(workspaceIntegrations)
             .set({
               sourceConfig: updatedConfig,
               updatedAt: now,
             })
-            .where(eq(workspaceSources.id, source.id));
+            .where(eq(workspaceIntegrations.id, source.id));
         })
       );
 

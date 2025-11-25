@@ -1,6 +1,13 @@
 /**
  * Store table schema
  * Identity and config per (workspaceId, store)
+ * Workspace-scoped: Each store belongs to a workspace.
+ *
+ * Architecture Change:
+ * - OLD: Each store gets its own Pinecone index (indexName was unique per store)
+ * - NEW: All stores share indexes from PRIVATE_CONFIG, each store is a namespace
+ * - indexName now references shared index (e.g., "lightfast-production-v1")
+ * - namespaceName is the unique hierarchical identifier per store
  */
 
 import {
@@ -12,7 +19,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { workspaces } from "./workspaces";
+import { orgWorkspaces } from "./org-workspaces";
 import type {
   EmbeddingProvider,
   PineconeMetric,
@@ -24,19 +31,33 @@ import type {
   PineconeIndexName,
 } from "@repo/console-validation";
 
-export const stores = pgTable(
-  "lightfast_stores",
+export const workspaceStores = pgTable(
+  "lightfast_workspace_stores",
   {
     /** Unique identifier for the store */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Workspace ID this store belongs to */
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
     /** URL-safe store identifier (max 20 chars, lowercase alphanumeric + hyphens) */
     slug: varchar("slug", { length: 191 }).notNull(),
-    /** Resolved Pinecone index name */
+
+    /**
+     * Shared Pinecone index name (references PRIVATE_CONFIG.pinecone.indexes)
+     * NEW: Points to shared index like "lightfast-production-v1"
+     * OLD: Was unique per store like "workspace-slug-store-slug"
+     */
     indexName: varchar("index_name", { length: 191 }).notNull().$type<PineconeIndexName>(),
+
+    /**
+     * Hierarchical namespace name within the shared index
+     * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+     * Example: "org_org123:ws_abc456:store_docs"
+     * This is what actually identifies the store's data in Pinecone
+     */
+    namespaceName: varchar("namespace_name", { length: 191 }).notNull(),
+
     /** Embedding dimension - no default, must be provided by API layer */
     embeddingDim: integer("embedding_dim").notNull(),
 
@@ -77,5 +98,5 @@ export const stores = pgTable(
 );
 
 // Type exports
-export type Store = typeof stores.$inferSelect;
-export type InsertStore = typeof stores.$inferInsert;
+export type WorkspaceStore = typeof workspaceStores.$inferSelect;
+export type InsertWorkspaceStore = typeof workspaceStores.$inferInsert;

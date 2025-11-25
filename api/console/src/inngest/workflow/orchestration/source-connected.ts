@@ -14,7 +14,7 @@
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
-import { workspaces, workspaceSources } from "@db/console/schema";
+import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
@@ -63,16 +63,16 @@ export const sourceConnected = inngest.createFunction(
 
     // Step 1: Fetch workspace and source metadata
     const metadata = await step.run("fetch-metadata", async () => {
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
       });
 
       if (!workspace) {
         throw new Error(`Workspace not found: ${workspaceId}`);
       }
 
-      const source = await db.query.workspaceSources.findFirst({
-        where: eq(workspaceSources.id, sourceId),
+      const source = await db.query.workspaceIntegrations.findFirst({
+        where: eq(workspaceIntegrations.id, sourceId),
       });
 
       if (!source) {

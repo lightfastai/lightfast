@@ -23,7 +23,7 @@
 import { inngest } from "../../../client/client";
 import type { Events } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaces, workspaceSources } from "@db/console/schema";
+import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { completeJob, updateJobStatus } from "../../../../lib/jobs";
 import { log } from "@vendor/observability/log";
@@ -93,16 +93,16 @@ export const githubSync = inngest.createFunction(
 
     // Step 1: Fetch workspace source
     const sourceData = await step.run("fetch-source", async () => {
-      const source = await db.query.workspaceSources.findFirst({
-        where: eq(workspaceSources.id, sourceId),
+      const source = await db.query.workspaceIntegrations.findFirst({
+        where: eq(workspaceIntegrations.id, sourceId),
       });
 
       if (!source || source.sourceConfig.provider !== "github") {
         throw new Error("Invalid GitHub workspace source");
       }
 
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
       });
 
       if (!workspace) {
@@ -139,11 +139,11 @@ export const githubSync = inngest.createFunction(
     // Step 3: Update workspace source sync status
     await step.run("update-sync-status-started", async () => {
       await db
-        .update(workspaceSources)
+        .update(workspaceIntegrations)
         .set({
           lastSyncStatus: "pending",
         })
-        .where(eq(workspaceSources.id, sourceId));
+        .where(eq(workspaceIntegrations.id, sourceId));
     });
 
     // Step 4: Fetch and validate lightfast.yml config
@@ -345,12 +345,12 @@ export const githubSync = inngest.createFunction(
     // Step 7: Update workspace source sync status
     await step.run("update-sync-status-completed", async () => {
       await db
-        .update(workspaceSources)
+        .update(workspaceIntegrations)
         .set({
           lastSyncedAt: new Date().toISOString(),
           lastSyncStatus: "success",
         })
-        .where(eq(workspaceSources.id, sourceId));
+        .where(eq(workspaceIntegrations.id, sourceId));
     });
 
     // Step 8: Complete job

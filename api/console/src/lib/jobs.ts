@@ -6,8 +6,8 @@
  */
 
 import { db } from "@db/console/client";
-import { jobs, metrics } from "@db/console/schema";
-import type { Job, JobInput, JobOutput, InsertJob } from "@db/console/schema";
+import { workspaceWorkflowRuns, workspaceMetrics } from "@db/console/schema";
+import type { WorkspaceWorkflowRun, JobInput, JobOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import type { JobTrigger } from "@repo/console-validation";
@@ -34,8 +34,8 @@ export async function createJob(params: {
 }): Promise<string> {
 	try {
 		// Check for existing job with same inngestRunId (idempotency)
-		const existing = await db.query.jobs.findFirst({
-			where: eq(jobs.inngestRunId, params.inngestRunId),
+		const existing = await db.query.workspaceWorkflowRuns.findFirst({
+			where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
 		});
 
 		if (existing) {
@@ -48,7 +48,7 @@ export async function createJob(params: {
 
 		// Create new job record
 		const [job] = await db
-			.insert(jobs)
+			.insert(workspaceWorkflowRuns)
 			.values({
 				clerkOrgId: params.clerkOrgId,
 				workspaceId: params.workspaceId,
@@ -95,7 +95,7 @@ export async function updateJobStatus(
 	status: "running" | "queued" | "completed" | "failed" | "cancelled",
 ): Promise<void> {
 	try {
-		const updates: Partial<InsertJob> = {
+		const updates: Partial<InsertWorkspaceWorkflowRun> = {
 			status,
 		};
 
@@ -104,7 +104,7 @@ export async function updateJobStatus(
 			updates.startedAt = new Date().toISOString();
 		}
 
-		await db.update(jobs).set(updates).where(eq(jobs.id, jobId));
+		await db.update(workspaceWorkflowRuns).set(updates).where(eq(workspaceWorkflowRuns.id, jobId));
 
 		log.info("Updated job status", { jobId, status });
 	} catch (error) {
@@ -129,8 +129,8 @@ export async function completeJob(params: {
 }): Promise<void> {
 	try {
 		// Fetch job to calculate duration
-		const job = await db.query.jobs.findFirst({
-			where: eq(jobs.id, params.jobId),
+		const job = await db.query.workspaceWorkflowRuns.findFirst({
+			where: eq(workspaceWorkflowRuns.id, params.jobId),
 		});
 
 		if (!job) {
@@ -150,7 +150,7 @@ export async function completeJob(params: {
 
 		// Update job record
 		await db
-			.update(jobs)
+			.update(workspaceWorkflowRuns)
 			.set({
 				status: params.status,
 				output: params.output ?? null,
@@ -158,7 +158,7 @@ export async function completeJob(params: {
 				completedAt,
 				durationMs,
 			})
-			.where(eq(jobs.id, params.jobId));
+			.where(eq(workspaceWorkflowRuns.id, params.jobId));
 
 		log.info("Completed job", {
 			jobId: params.jobId,
@@ -222,7 +222,7 @@ export async function recordJobMetric(params: {
 	tags?: Record<string, string | number | boolean>;
 }): Promise<void> {
 	try {
-		await db.insert(metrics).values({
+		await db.insert(workspaceMetrics).values({
 			clerkOrgId: params.clerkOrgId,
 			workspaceId: params.workspaceId,
 			repositoryId: params.repositoryId ?? null,
@@ -253,10 +253,10 @@ export async function recordJobMetric(params: {
  * @param jobId Job ID
  * @returns Job or null if not found
  */
-export async function getJob(jobId: string): Promise<Job | null> {
+export async function getJob(jobId: string): Promise<WorkspaceWorkflowRun | null> {
 	try {
-		const job = await db.query.jobs.findFirst({
-			where: eq(jobs.id, jobId),
+		const job = await db.query.workspaceWorkflowRuns.findFirst({
+			where: eq(workspaceWorkflowRuns.id, jobId),
 		});
 
 		return job ?? null;
@@ -274,10 +274,10 @@ export async function getJob(jobId: string): Promise<Job | null> {
  */
 export async function getJobByInngestRunId(
 	inngestRunId: string,
-): Promise<Job | null> {
+): Promise<WorkspaceWorkflowRun | null> {
 	try {
-		const job = await db.query.jobs.findFirst({
-			where: eq(jobs.inngestRunId, inngestRunId),
+		const job = await db.query.workspaceWorkflowRuns.findFirst({
+			where: eq(workspaceWorkflowRuns.inngestRunId, inngestRunId),
 		});
 
 		return job ?? null;

@@ -33,6 +33,32 @@ import type {
  */
 export const PINECONE_CONFIG = {
   /**
+   * Shared Pinecone indexes (platform-level resources)
+   *
+   * NEW ARCHITECTURE: One shared index per environment instead of one-index-per-store
+   * - Massive cost savings: $50/month vs $7,500+/month for 3000 stores
+   * - Scales to 25,000 namespaces per index (Standard plan)
+   * - Physical isolation via Pinecone's serverless architecture
+   *
+   * Each store gets a hierarchical namespace within the shared index:
+   * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+   */
+  indexes: {
+    production: {
+      name: "lightfast-production-v1",
+      embeddingDim: 1024,
+      embeddingModel: "embed-english-v3.0",
+      embeddingProvider: "cohere" as const,
+    },
+    staging: {
+      name: "lightfast-staging-v1",
+      embeddingDim: 1024,
+      embeddingModel: "embed-english-v3.0",
+      embeddingProvider: "cohere" as const,
+    },
+  },
+
+  /**
    * Vector similarity metric
    *
    * Type-safe: must match PineconeMetric from validation schemas
@@ -348,3 +374,19 @@ export const PRIVATE_CONFIG = {
  * Type for the complete private configuration
  */
 export type PrivateConfig = typeof PRIVATE_CONFIG;
+
+/**
+ * Helper to get Pinecone index configuration by environment
+ *
+ * @param environment - "production" or "staging"
+ * @returns Index configuration with name, dimension, model, and provider
+ *
+ * @example
+ * ```typescript
+ * const indexConfig = getPineconeIndexConfig("production");
+ * // Returns: { name: "lightfast-production-v1", embeddingDim: 1024, ... }
+ * ```
+ */
+export function getPineconeIndexConfig(environment: "production" | "staging") {
+  return PRIVATE_CONFIG.pinecone.indexes[environment];
+}

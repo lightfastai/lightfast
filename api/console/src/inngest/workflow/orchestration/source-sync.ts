@@ -19,7 +19,7 @@
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
-import { workspaces, workspaceSources } from "@db/console/schema";
+import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { createJob, updateJobStatus } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
@@ -70,8 +70,8 @@ export const sourceSync = inngest.createFunction(
 
     // Step 1: Fetch and validate workspace source
     const sourceData = await step.run("fetch-source", async () => {
-      const source = await db.query.workspaceSources.findFirst({
-        where: eq(workspaceSources.id, sourceId),
+      const source = await db.query.workspaceIntegrations.findFirst({
+        where: eq(workspaceIntegrations.id, sourceId),
       });
 
       if (!source) {
@@ -89,8 +89,8 @@ export const sourceSync = inngest.createFunction(
         );
       }
 
-      const workspace = await db.query.workspaces.findFirst({
-        where: eq(workspaces.id, workspaceId),
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
       });
 
       if (!workspace) {

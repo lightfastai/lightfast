@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaces } from "@db/console/schema";
+import { orgWorkspaces } from "@db/console/schema";
 import { eq, desc } from "drizzle-orm";
 import { workspaceListInputSchema } from "@repo/console-validation/schemas";
 import { clerkClient } from "@vendor/clerk/server";
@@ -65,12 +65,12 @@ export const workspaceAccessRouter = {
       }
 
       // Fetch all workspaces for this organization (basic info only)
-      const orgWorkspaces = await db.query.workspaces.findMany({
-        where: eq(workspaces.clerkOrgId, clerkOrg.id),
-        orderBy: [desc(workspaces.createdAt)],
+      const orgWorkspacesData = await db.query.orgWorkspaces.findMany({
+        where: eq(orgWorkspaces.clerkOrgId, clerkOrg.id),
+        orderBy: [desc(orgWorkspaces.createdAt)],
       });
 
-      return orgWorkspaces.map((workspace) => ({
+      return orgWorkspacesData.map((workspace) => ({
         id: workspace.id,
         name: workspace.name,
         slug: workspace.slug,

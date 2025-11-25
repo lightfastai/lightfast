@@ -1,7 +1,7 @@
 /**
  * Ensure store exists workflow
  *
- * Idempotent store and Pinecone index provisioning.
+ * Idempotent store and Pinecone namespace provisioning.
  * Can be triggered by:
  * - docs-ingestion workflow
  * - Admin API (manual store creation)
@@ -9,13 +9,12 @@
  *
  * Workflow steps:
  * 1. Check if store exists in DB
- * 2. If not, resolve index name and check Pinecone
- * 3. Create Pinecone index if needed (idempotent)
- * 4. Create store DB record (idempotent)
- * 5. Link to repository if provided (idempotent)
+ * 2. If not, resolve namespace name and check shared Pinecone index
+ * 3. Ensure shared Pinecone index exists (idempotent)
+ * 4. Create store DB record with namespace reference (idempotent)
  */
 
-import type { Store } from "@db/console/schema";
+import type { WorkspaceStore } from "@db/console/schema";
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
@@ -25,35 +24,26 @@ import { PRIVATE_CONFIG } from "@repo/console-config";
 import { createInngestCaller } from "../../lib";
 
 /**
- * Resolve Pinecone index name from workspace and store
+ * Resolve hierarchical namespace name for a store
  *
- * Handles Pinecone naming constraints:
- * - Max 45 characters
- * - Only lowercase alphanumeric and hyphens
- * - Sanitizes special characters
- * - Hashes long names to fit within limits
+ * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+ * Example: "org_org123:ws_abc456:store_docs"
+ *
+ * This replaces per-store index names with namespaces within shared indexes.
+ * All stores now share indexes from PRIVATE_CONFIG.pinecone.indexes.
  */
-function resolveIndexName(workspaceKey: string, storeSlug: string): string {
+function resolveNamespaceName(
+	clerkOrgId: string,
+	workspaceId: string,
+	storeSlug: string,
+): string {
 	const sanitize = (s: string) =>
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9-]+/g, "-")
-			.replace(/^-+/, "")
-			.replace(/-+$/, "")
-			.replace(/-{2,}/g, "-");
+			.replace(/[^a-z0-9_-]+/g, "")
+			.slice(0, 50); // Safety limit for namespace names
 
-	const ws = sanitize(workspaceKey);
-	const st = sanitize(storeSlug);
-	let name = `${ws}-${st}`;
-
-	const MAX = 45;
-	if (name.length > MAX) {
-		const hash = shortHash(`${ws}:${st}`);
-		const base = name.slice(0, MAX - 5).replace(/-+$/, "");
-		name = `${base}-${hash}`;
-	}
-
-	return name;
+	return `org_${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}:store_${sanitize(storeSlug)}`;
 }
 
 /**
@@ -70,23 +60,23 @@ function shortHash(input: string): string {
 /**
  * Ensure store exists workflow
  *
- * Idempotently provisions store and Pinecone index.
+ * Idempotently provisions store and Pinecone namespace.
  * Uses Inngest's built-in idempotency to prevent concurrent creation.
  */
 export const ensureStore = inngest.createFunction(
 	{
 		id: "apps-console/ensure-store",
 		name: "Ensure Store Exists",
-		description: "Idempotently provisions store and Pinecone index",
+		description: "Idempotently provisions store and Pinecone namespace",
 		retries: PRIVATE_CONFIG.workflow.ensureStore.retries,
 
-		// CRITICAL: Prevent duplicate store/index creation within 24hr window
+		// CRITICAL: Prevent duplicate store creation within 24hr window
 		// Idempotency caches the result and replays it for concurrent/subsequent calls
 		idempotency: 'event.data.workspaceId + "-" + event.data.storeSlug',
 
 		// Singleton removed: Function is naturally idempotent via:
 		// 1. Early return if store exists (line 141)
-		// 2. onConflictDoNothing() on DB insert (line 271)
+		// 2. onConflictDoNothing() on DB insert
 		// 3. Pinecone createIndex is idempotent (returns success if exists)
 		// This allows concurrent calls to succeed instead of throwing "rate limited" errors
 
@@ -130,13 +120,14 @@ export const ensureStore = inngest.createFunction(
 				log.info("Store already exists in DB", {
 					storeId: store.id,
 					indexName: store.indexName,
+					namespaceName: store.namespaceName,
 				});
 			}
 
 			return store ?? null;
 		});
 
-		// If store exists, check for configuration drift and ensure repository link
+		// If store exists, check for configuration drift
 		if (existingStore) {
 			// Detect configuration drift between store and current environment
 			await step.run("check-config-drift", async () => {
@@ -180,83 +171,100 @@ export const ensureStore = inngest.createFunction(
 			};
 		}
 
-		// Step 2: Resolve Pinecone index name
-		const indexName = await step.run("resolve-index-name", async () => {
-			const nameSource = workspaceKey ?? workspaceId;
-			const name = resolveIndexName(nameSource, storeSlug);
+		// Step 2: Fetch workspace and resolve namespace name
+		const { namespaceName, sharedIndexName } = await step.run(
+			"resolve-namespace",
+			async () => {
+				// Fetch workspace to get clerkOrgId
+				const workspace = await trpc.workspace.getForInngest({
+					workspaceId,
+				});
 
-			log.info("Resolved Pinecone index name", {
-				workspaceKey: nameSource,
-				storeSlug,
-				indexName: name,
-			});
+				// Generate hierarchical namespace name
+				const namespaceName = resolveNamespaceName(
+					workspace.clerkOrgId,
+					workspaceId,
+					storeSlug,
+				);
 
-			return name;
-		});
+				// Use shared production index from PRIVATE_CONFIG
+				const sharedIndexName = PRIVATE_CONFIG.pinecone.indexes.production.name;
 
-		// Step 3: Check if Pinecone index exists
-		const indexExists = await step.run("check-pinecone-index", async () => {
+				log.info("Resolved namespace for store", {
+					clerkOrgId: workspace.clerkOrgId,
+					workspaceId,
+					storeSlug,
+					namespaceName,
+					sharedIndexName,
+				});
+
+				return { namespaceName, sharedIndexName };
+			},
+		);
+
+		// Step 3: Check if shared Pinecone index exists
+		const indexExists = await step.run("check-shared-index", async () => {
 			try {
 				const pinecone = createConsolePineconeClient();
-				const exists = await pinecone.indexExists(indexName);
+				const exists = await pinecone.indexExists(sharedIndexName);
 
-				log.info("Checked Pinecone index existence", {
-					indexName,
+				log.info("Checked shared Pinecone index existence", {
+					indexName: sharedIndexName,
 					exists,
 				});
 
 				return exists;
 			} catch (error) {
-				log.error("Failed to check Pinecone index existence", {
+				log.error("Failed to check shared Pinecone index existence", {
 					error,
-					indexName,
+					indexName: sharedIndexName,
 				});
 				// Assume doesn't exist and try to create
 				return false;
 			}
 		});
 
-		// Step 4: Create Pinecone index if needed
+		// Step 4: Create shared Pinecone index if needed (rare - usually exists)
 		if (!indexExists) {
-			await step.run("create-pinecone-index", async () => {
+			await step.run("create-shared-index", async () => {
 				try {
 					const pinecone = createConsolePineconeClient();
-					await pinecone.createIndex(indexName, targetDim);
+					await pinecone.createIndex(sharedIndexName, targetDim);
 
-					log.info("Created Pinecone index", {
-						indexName,
+					log.info("Created shared Pinecone index", {
+						indexName: sharedIndexName,
 						dimension: targetDim,
 					});
 				} catch (error) {
-					log.error("Failed to create Pinecone index", {
+					log.error("Failed to create shared Pinecone index", {
 						error,
-						indexName,
+						indexName: sharedIndexName,
 						dimension: targetDim,
 					});
 					throw error;
 				}
 			});
 		} else {
-			log.info("Pinecone index already exists, skipping creation", {
-				indexName,
+			log.info("Shared Pinecone index already exists", {
+				indexName: sharedIndexName,
 			});
 		}
 
-		// Step 4b: Configure Pinecone index tags/protection
-		await step.run("configure-pinecone-index", async () => {
+		// Step 4b: Configure shared Pinecone index tags/protection
+		await step.run("configure-shared-index", async () => {
 			try {
 				const pinecone = createConsolePineconeClient();
-				await pinecone.configureIndex(indexName, {
+				await pinecone.configureIndex(sharedIndexName, {
 					deletionProtection: PRIVATE_CONFIG.pinecone.deletionProtection,
 					tags: {
-						workspaceId,
-						storeSlug,
+						environment: "production",
+						managedBy: "lightfast-console",
 					},
 				});
 			} catch (error) {
-				log.error("Failed to configure Pinecone index", {
+				log.error("Failed to configure shared Pinecone index", {
 					error,
-					indexName,
+					indexName: sharedIndexName,
 				});
 				// Non-fatal: keep going so ingestion can proceed
 			}
@@ -271,7 +279,8 @@ export const ensureStore = inngest.createFunction(
 				id: storeId,
 				workspaceId,
 				slug: storeSlug,
-				indexName,
+				indexName: sharedIndexName,
+				namespaceName: namespaceName,
 				// All config values explicitly passed from PRIVATE_CONFIG
 				// No database defaults - ensures consistency with config layer
 				embeddingDim: targetDim,
@@ -300,6 +309,7 @@ export const ensureStore = inngest.createFunction(
 		log.info("Store provisioned successfully", {
 			storeId: store.id,
 			indexName: store.indexName,
+			namespaceName: store.namespaceName,
 			duration,
 		});
 

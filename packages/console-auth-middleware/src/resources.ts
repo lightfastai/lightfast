@@ -37,9 +37,9 @@
 
 import { eq } from "drizzle-orm";
 import {
-  apiKeys,
+  userApiKeys,
   userSources,
-  workspaceSources,
+  workspaceIntegrations,
 } from "@db/console/schema";
 import type {
   ResourceOwnershipContext,
@@ -111,8 +111,8 @@ async function verifyApiKeyOwnership(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    const apiKey = await db.query.apiKeys.findFirst({
-      where: eq(apiKeys.id, apiKeyId),
+    const apiKey = await db.query.userApiKeys.findFirst({
+      where: eq(userApiKeys.id, apiKeyId),
     });
 
     if (!apiKey) {
@@ -163,8 +163,8 @@ async function verifyRepositoryOwnership(
 ): Promise<ResourceOwnershipResult> {
   try {
     // Find the workspace source
-    const source = await db.query.workspaceSources.findFirst({
-      where: eq(workspaceSources.id, resourceId),
+    const source = await db.query.workspaceIntegrations.findFirst({
+      where: eq(workspaceIntegrations.id, resourceId),
     });
 
     if (!source) {

@@ -13,11 +13,11 @@
 
 import { db } from "@db/console/client";
 import {
-  docsDocuments,
-  stores,
-  vectorEntries,
-  type DocsDocument,
-  type Store,
+  workspaceKnowledgeDocuments,
+  workspaceStores,
+  workspaceKnowledgeVectorChunks,
+  type WorkspaceKnowledgeDocument,
+  type WorkspaceStore,
 } from "@db/console/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
@@ -70,7 +70,7 @@ interface BasePrepared {
 
 interface ReadyDocument extends BasePrepared {
   status: "ready";
-  store: Store;
+  store: WorkspaceStore;
   docId: string;
   indexName: string;
   slug: string;
@@ -78,7 +78,7 @@ interface ReadyDocument extends BasePrepared {
   configHash: string;
   chunks: Chunk[];
   embeddings?: number[][];
-  existingDoc?: DocsDocument | null;
+  existingDoc?: WorkspaceKnowledgeDocument | null;
 }
 
 interface SkippedDocument extends BasePrepared {
@@ -97,7 +97,7 @@ export interface ProcessedDocumentResult {
 /**
  * Compute configuration hash for a store
  */
-function computeConfigHash(store: Store): string {
+function computeConfigHash(store: WorkspaceStore): string {
   const configData = JSON.stringify({
     embeddingModel: store.embeddingModel,
     embeddingDim: store.embeddingDim,
@@ -158,7 +158,7 @@ export const processDocuments = inngest.createFunction(
     });
 
     const results = await step.run("process-documents-batch", async () => {
-      const storeCache = new Map<string, Store>();
+      const storeCache = new Map<string, WorkspaceStore>();
 
       const prepared: PreparedDocument[] = await Promise.all(
         events.map(async (event): Promise<PreparedDocument> => {
@@ -208,12 +208,12 @@ export const processDocuments = inngest.createFunction(
             ) {
               // Verify vector entries exist before skipping
               const vectorEntriesExist = await db
-                .select({ id: vectorEntries.id })
-                .from(vectorEntries)
+                .select({ id: workspaceKnowledgeVectorChunks.id })
+                .from(workspaceKnowledgeVectorChunks)
                 .where(
                   and(
-                    eq(vectorEntries.storeId, store.id),
-                    eq(vectorEntries.docId, event.data.documentId),
+                    eq(workspaceKnowledgeVectorChunks.storeId, store.id),
+                    eq(workspaceKnowledgeVectorChunks.docId, event.data.documentId),
                   ),
                 )
                 .limit(1);
@@ -369,17 +369,17 @@ export const processDocuments = inngest.createFunction(
 );
 
 async function getStore(
-  cache: Map<string, Store>,
+  cache: Map<string, WorkspaceStore>,
   workspaceId: string,
   storeSlug: string,
-): Promise<Store> {
+): Promise<WorkspaceStore> {
   const key = `${workspaceId}:${storeSlug}`;
   if (cache.has(key)) {
     return cache.get(key)!;
   }
 
-  const store = await db.query.stores.findFirst({
-    where: and(eq(stores.workspaceId, workspaceId), eq(stores.slug, storeSlug)),
+  const store = await db.query.workspaceStores.findFirst({
+    where: and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
   });
 
   if (!store) {
@@ -396,15 +396,15 @@ async function findExistingDocument(
   storeId: string,
   sourceType: string,
   sourceId: string,
-): Promise<DocsDocument | undefined> {
+): Promise<WorkspaceKnowledgeDocument | undefined> {
   const [existingDoc] = await db
     .select()
-    .from(docsDocuments)
+    .from(workspaceKnowledgeDocuments)
     .where(
       and(
-        eq(docsDocuments.storeId, storeId),
-        eq(docsDocuments.sourceType, sourceType as any),
-        eq(docsDocuments.sourceId, sourceId),
+        eq(workspaceKnowledgeDocuments.storeId, storeId),
+        eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
+        eq(workspaceKnowledgeDocuments.sourceId, sourceId),
       ),
     )
     .limit(1);
@@ -530,7 +530,7 @@ async function persistDocuments(docs: ReadyDocument[]) {
   for (const doc of docs) {
     if (doc.existingDoc) {
       await db
-        .update(docsDocuments)
+        .update(workspaceKnowledgeDocuments)
         .set({
           slug: doc.slug,
           contentHash: doc.contentHash,
@@ -541,9 +541,9 @@ async function persistDocuments(docs: ReadyDocument[]) {
           chunkCount: doc.chunks.length,
           updatedAt: new Date(),
         })
-        .where(eq(docsDocuments.id, doc.existingDoc.id));
+        .where(eq(workspaceKnowledgeDocuments.id, doc.existingDoc.id));
     } else {
-      await db.insert(docsDocuments).values({
+      await db.insert(workspaceKnowledgeDocuments).values({
         id: doc.docId,
         storeId: doc.store.id,
         sourceType: doc.event.sourceType,
@@ -564,11 +564,11 @@ async function persistDocuments(docs: ReadyDocument[]) {
 
 async function refreshVectorEntries(doc: ReadyDocument) {
   await db
-    .delete(vectorEntries)
+    .delete(workspaceKnowledgeVectorChunks)
     .where(
       and(
-        eq(vectorEntries.storeId, doc.store.id),
-        eq(vectorEntries.docId, doc.docId),
+        eq(workspaceKnowledgeVectorChunks.storeId, doc.store.id),
+        eq(workspaceKnowledgeVectorChunks.docId, doc.docId),
       ),
     );
 
@@ -581,7 +581,7 @@ async function refreshVectorEntries(doc: ReadyDocument) {
   }));
 
   if (entries.length > 0) {
-    await db.insert(vectorEntries).values(entries);
+    await db.insert(workspaceKnowledgeVectorChunks).values(entries);
   }
 }
 

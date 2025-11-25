@@ -10,7 +10,7 @@
  */
 
 import { db } from "@db/console/client";
-import { docsDocuments, stores, vectorEntries } from "@db/console/schema";
+import { workspaceKnowledgeDocuments, workspaceStores, workspaceKnowledgeVectorChunks } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
@@ -73,9 +73,9 @@ export const deleteDocuments = inngest.createFunction(
         // Get store
         const [store] = await db
           .select()
-          .from(stores)
+          .from(workspaceStores)
           .where(
-            and(eq(stores.workspaceId, workspaceId), eq(stores.slug, storeSlug)),
+            and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
           )
           .limit(1);
 
@@ -87,11 +87,11 @@ export const deleteDocuments = inngest.createFunction(
         // Find document by documentId OR by sourceType+sourceId
         const [doc] = await db
           .select()
-          .from(docsDocuments)
+          .from(workspaceKnowledgeDocuments)
           .where(
             and(
-              eq(docsDocuments.storeId, store.id),
-              eq(docsDocuments.id, documentId),
+              eq(workspaceKnowledgeDocuments.storeId, store.id),
+              eq(workspaceKnowledgeDocuments.id, documentId),
             ),
           )
           .limit(1);
@@ -100,12 +100,12 @@ export const deleteDocuments = inngest.createFunction(
           // Try finding by sourceType + sourceId as fallback
           const [docBySource] = await db
             .select()
-            .from(docsDocuments)
+            .from(workspaceKnowledgeDocuments)
             .where(
               and(
-                eq(docsDocuments.storeId, store.id),
-                eq(docsDocuments.sourceType, sourceType as any),
-                eq(docsDocuments.sourceId, sourceId),
+                eq(workspaceKnowledgeDocuments.storeId, store.id),
+                eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
+                eq(workspaceKnowledgeDocuments.sourceId, sourceId),
               ),
             )
             .limit(1);
@@ -185,11 +185,11 @@ export const deleteDocuments = inngest.createFunction(
     await step.run("delete-vector-entries", async () => {
       try {
         await db
-          .delete(vectorEntries)
+          .delete(workspaceKnowledgeVectorChunks)
           .where(
             and(
-              eq(vectorEntries.storeId, docInfo.storeId),
-              eq(vectorEntries.docId, docInfo.docId),
+              eq(workspaceKnowledgeVectorChunks.storeId, docInfo.storeId),
+              eq(workspaceKnowledgeVectorChunks.docId, docInfo.docId),
             ),
           );
 
@@ -208,7 +208,7 @@ export const deleteDocuments = inngest.createFunction(
     // Step 4: Delete docs_documents row
     await step.run("delete-document", async () => {
       try {
-        await db.delete(docsDocuments).where(eq(docsDocuments.id, docInfo.docId));
+        await db.delete(workspaceKnowledgeDocuments).where(eq(workspaceKnowledgeDocuments.id, docInfo.docId));
 
         log.info("Deleted document (multi-source)", {
           docId: docInfo.docId,

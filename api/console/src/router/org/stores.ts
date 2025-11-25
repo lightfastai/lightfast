@@ -9,7 +9,7 @@ import {
 	listStoresByWorkspace,
 } from "../../lib/stores";
 import { db } from "@db/console/client";
-import { stores } from "@db/console/schema";
+import { workspaceStores } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { getWorkspaceKey } from "@db/console/utils";
 import {
@@ -137,10 +137,10 @@ export const storesRouter = {
 			}),
 		)
 		.query(async ({ input }) => {
-			const store = await db.query.stores.findFirst({
+			const store = await db.query.workspaceStores.findFirst({
 				where: and(
-					eq(stores.workspaceId, input.workspaceId),
-					eq(stores.slug, input.storeSlug),
+					eq(workspaceStores.workspaceId, input.workspaceId),
+					eq(workspaceStores.slug, input.storeSlug),
 				),
 			});
 
@@ -160,6 +160,7 @@ export const storesRouter = {
 				workspaceId: z.string(),
 				slug: z.string(),
 				indexName: z.string(),
+				namespaceName: z.string(), // NEW: Hierarchical namespace within shared index
 				embeddingDim: z.number(),
 				embeddingModel: embeddingModelSchema,
 				embeddingProvider: embeddingProviderSchema,
@@ -172,7 +173,7 @@ export const storesRouter = {
 		)
 		.mutation(async ({ input }) => {
 			const inserted = await db
-				.insert(stores)
+				.insert(workspaceStores)
 				.values(input)
 				.onConflictDoNothing()
 				.returning();
@@ -182,10 +183,10 @@ export const storesRouter = {
 			}
 
 			// Concurrent creation succeeded, fetch the record
-			const existing = await db.query.stores.findFirst({
+			const existing = await db.query.workspaceStores.findFirst({
 				where: and(
-					eq(stores.workspaceId, input.workspaceId),
-					eq(stores.slug, input.slug),
+					eq(workspaceStores.workspaceId, input.workspaceId),
+					eq(workspaceStores.slug, input.slug),
 				),
 			});
 

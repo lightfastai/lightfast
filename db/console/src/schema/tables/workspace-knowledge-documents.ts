@@ -1,6 +1,9 @@
 /**
- * Documents table schema
+ * Workspace Knowledge Documents table schema
  * Multi-source document storage (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+ *
+ * Workspace-scoped: Documents within a knowledge store.
+ * Hierarchy: Workspace → Knowledge Store → Documents
  */
 
 import {
@@ -14,22 +17,22 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { stores } from "./stores";
+import { workspaceStores } from "./workspace-stores";
 import type {
   SourceType,
   DocumentSlug,
   ContentHash,
 } from "@repo/console-validation";
 
-export const docsDocuments = pgTable(
-  "lightfast_docs_documents",
+export const workspaceKnowledgeDocuments = pgTable(
+  "lightfast_workspace_knowledge_documents",
   {
     /** Unique identifier for the document */
     id: varchar("id", { length: 191 }).primaryKey(),
     /** Store ID this document belongs to */
     storeId: varchar("store_id", { length: 191 })
       .notNull()
-      .references(() => stores.id, { onDelete: "cascade" }),
+      .references(() => workspaceStores.id, { onDelete: "cascade" }),
 
     // Source identification (discriminated union)
     /** Source type - discriminator for union */
@@ -79,7 +82,7 @@ export const docsDocuments = pgTable(
 );
 
 // Type exports
-export type DocsDocument = typeof docsDocuments.$inferSelect;
-export type InsertDocsDocument = typeof docsDocuments.$inferInsert;
+export type WorkspaceKnowledgeDocument = typeof workspaceKnowledgeDocuments.$inferSelect;
+export type InsertWorkspaceKnowledgeDocument = typeof workspaceKnowledgeDocuments.$inferInsert;
 
 // Zod schema exports

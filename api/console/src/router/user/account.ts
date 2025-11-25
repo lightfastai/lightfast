@@ -9,7 +9,7 @@ import {
 	extractKeyPreview,
 	LIGHTFAST_API_KEY_PREFIX,
 } from "@repo/console-api-key";
-import { apiKeys, userSources } from "@db/console/schema";
+import { userApiKeys, userSources } from "@db/console/schema";
 import { protectedProcedure } from "../../trpc";
 
 /**
@@ -145,8 +145,8 @@ export const accountRouter = {
 			try {
 				const userKeys = await ctx.db
 					.select()
-					.from(apiKeys)
-					.where(eq(apiKeys.userId, ctx.auth.userId));
+					.from(userApiKeys)
+					.where(eq(userApiKeys.userId, ctx.auth.userId));
 
 				return userKeys.map((key) => ({
 					id: key.id,
@@ -190,7 +190,7 @@ export const accountRouter = {
 				try {
 					// Store hashed key
 					const result = await ctx.db
-						.insert(apiKeys)
+						.insert(userApiKeys)
 						.values({
 							userId: ctx.auth.userId,
 							name: input.name,
@@ -200,10 +200,10 @@ export const accountRouter = {
 							expiresAt: input.expiresAt || null,
 						})
 						.returning({
-							id: apiKeys.id,
-							name: apiKeys.name,
-							keyPreview: apiKeys.keyPreview,
-							createdAt: apiKeys.createdAt,
+							id: userApiKeys.id,
+							name: userApiKeys.name,
+							keyPreview: userApiKeys.keyPreview,
+							createdAt: userApiKeys.createdAt,
 						});
 
 					// Return the plaintext key ONLY THIS ONCE
@@ -235,9 +235,9 @@ export const accountRouter = {
 				// Verify ownership
 				const result = await ctx.db
 					.select()
-					.from(apiKeys)
+					.from(userApiKeys)
 					.where(
-						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+						and(eq(userApiKeys.id, input.keyId), eq(userApiKeys.userId, ctx.auth.userId)),
 					)
 					.limit(1);
 
@@ -250,9 +250,9 @@ export const accountRouter = {
 
 				// Soft delete (mark as inactive)
 				await ctx.db
-					.update(apiKeys)
+					.update(userApiKeys)
 					.set({ isActive: false })
-					.where(eq(apiKeys.id, input.keyId));
+					.where(eq(userApiKeys.id, input.keyId));
 
 				return { success: true };
 			}),
@@ -270,9 +270,9 @@ export const accountRouter = {
 				// Verify ownership
 				const result = await ctx.db
 					.select()
-					.from(apiKeys)
+					.from(userApiKeys)
 					.where(
-						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+						and(eq(userApiKeys.id, input.keyId), eq(userApiKeys.userId, ctx.auth.userId)),
 					)
 					.limit(1);
 
@@ -284,7 +284,7 @@ export const accountRouter = {
 				}
 
 				// Hard delete
-				await ctx.db.delete(apiKeys).where(eq(apiKeys.id, input.keyId));
+				await ctx.db.delete(userApiKeys).where(eq(userApiKeys.id, input.keyId));
 
 				return { success: true };
 			}),
@@ -311,9 +311,9 @@ export const accountRouter = {
 				// 1. Verify ownership and get old key
 				const [oldKey] = await ctx.db
 					.select()
-					.from(apiKeys)
+					.from(userApiKeys)
 					.where(
-						and(eq(apiKeys.id, input.keyId), eq(apiKeys.userId, ctx.auth.userId)),
+						and(eq(userApiKeys.id, input.keyId), eq(userApiKeys.userId, ctx.auth.userId)),
 					)
 					.limit(1);
 
@@ -334,13 +334,13 @@ export const accountRouter = {
 					const result = await ctx.db.transaction(async (tx) => {
 						// Revoke old key
 						await tx
-							.update(apiKeys)
+							.update(userApiKeys)
 							.set({ isActive: false })
-							.where(eq(apiKeys.id, input.keyId));
+							.where(eq(userApiKeys.id, input.keyId));
 
 						// Create new key with same settings
 						const [created] = await tx
-							.insert(apiKeys)
+							.insert(userApiKeys)
 							.values({
 								userId: ctx.auth.userId,
 								name: oldKey.name, // Same name
@@ -350,10 +350,10 @@ export const accountRouter = {
 								expiresAt: oldKey.expiresAt, // Same expiration
 							})
 							.returning({
-								id: apiKeys.id,
-								name: apiKeys.name,
-								keyPreview: apiKeys.keyPreview,
-								createdAt: apiKeys.createdAt,
+								id: userApiKeys.id,
+								name: userApiKeys.name,
+								keyPreview: userApiKeys.keyPreview,
+								createdAt: userApiKeys.createdAt,
 							});
 
 						return created;

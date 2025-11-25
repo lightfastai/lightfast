@@ -10,7 +10,9 @@ import {
 import { nanoid } from "@repo/lib";
 
 /**
- * API Keys table for user authentication tokens
+ * User API Keys table for user authentication tokens
+ *
+ * User-scoped: Each key belongs to a specific Clerk user.
  *
  * Allows users to create API keys for programmatic access to Lightfast services.
  * Keys are hashed for security and can be scoped to specific permissions.
@@ -22,8 +24,8 @@ import { nanoid } from "@repo/lib";
  * - Support key expiration and revocation
  * - Track last used timestamp for security auditing
  */
-export const apiKeys = pgTable(
-	"lightfast_api_keys",
+export const userApiKeys = pgTable(
+	"lightfast_user_api_keys",
 	{
 		/**
 		 * Unique API key identifier (nanoid)
@@ -113,5 +115,5 @@ export const apiKeys = pgTable(
 );
 
 // Type exports
-export type ApiKey = typeof apiKeys.$inferSelect;
-export type InsertApiKey = typeof apiKeys.$inferInsert;
+export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type InsertUserApiKey = typeof userApiKeys.$inferInsert;

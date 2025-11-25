@@ -13,7 +13,7 @@ import {
 	type ContentsResponse,
 } from "@repo/console-types/api";
 import { db } from "@db/console/client";
-import { docsDocuments, stores } from "@db/console/schema";
+import { workspaceKnowledgeDocuments, workspaceStores } from "@db/console/schema";
 import { inArray, eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
@@ -50,19 +50,19 @@ export const contentsRouter = {
 				// Phase 1.5: Fetch documents with multi-source support
 				const documents = await db
 					.select({
-						id: docsDocuments.id,
-						sourceType: docsDocuments.sourceType,
-						sourceId: docsDocuments.sourceId,
-						sourceMetadata: docsDocuments.sourceMetadata,
-						storeId: docsDocuments.storeId,
-						workspaceId: stores.workspaceId,
+						id: workspaceKnowledgeDocuments.id,
+						sourceType: workspaceKnowledgeDocuments.sourceType,
+						sourceId: workspaceKnowledgeDocuments.sourceId,
+						sourceMetadata: workspaceKnowledgeDocuments.sourceMetadata,
+						storeId: workspaceKnowledgeDocuments.storeId,
+						workspaceId: workspaceStores.workspaceId,
 					})
-					.from(docsDocuments)
-					.innerJoin(stores, eq(docsDocuments.storeId, stores.id))
+					.from(workspaceKnowledgeDocuments)
+					.innerJoin(workspaceStores, eq(workspaceKnowledgeDocuments.storeId, workspaceStores.id))
 					.where(
 						and(
-							inArray(docsDocuments.id, input.ids),
-							eq(stores.workspaceId, ctx.auth.workspaceId)
+							inArray(workspaceKnowledgeDocuments.id, input.ids),
+							eq(workspaceStores.workspaceId, ctx.auth.workspaceId)
 						)
 					);
 

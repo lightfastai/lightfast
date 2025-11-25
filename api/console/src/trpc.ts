@@ -22,7 +22,7 @@ import {
   resolveWorkspaceBySlug as resolveWorkspaceBySlugFn,
 } from "@repo/console-auth-middleware";
 import { hashApiKey } from "@repo/console-api-key";
-import { apiKeys } from "@db/console/schema";
+import { userApiKeys } from "@db/console/schema";
 
 /**
  * Authentication Context - Discriminated Union
@@ -840,13 +840,13 @@ export async function verifyApiKey(params: {
   // Find API key in database
   const [apiKey] = await db
     .select({
-      id: apiKeys.id,
-      userId: apiKeys.userId,
-      isActive: apiKeys.isActive,
-      expiresAt: apiKeys.expiresAt,
+      id: userApiKeys.id,
+      userId: userApiKeys.userId,
+      isActive: userApiKeys.isActive,
+      expiresAt: userApiKeys.expiresAt,
     })
-    .from(apiKeys)
-    .where(and(eq(apiKeys.keyHash, keyHash), eq(apiKeys.isActive, true)))
+    .from(userApiKeys)
+    .where(and(eq(userApiKeys.keyHash, keyHash), eq(userApiKeys.isActive, true)))
     .limit(1);
 
   if (!apiKey) {
@@ -866,9 +866,9 @@ export async function verifyApiKey(params: {
 
   // Update last used timestamp (non-blocking)
   void db
-    .update(apiKeys)
+    .update(userApiKeys)
     .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-    .where(eq(apiKeys.id, apiKey.id))
+    .where(eq(userApiKeys.id, apiKey.id))
     .catch((error) => {
       console.error("Failed to update API key lastUsedAt", {
         error,

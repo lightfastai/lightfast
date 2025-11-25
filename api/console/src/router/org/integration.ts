@@ -2,10 +2,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import {
   // New 2-table system
   userSources,
-  workspaceSources,
+  workspaceIntegrations,
   type UserSource,
   // Common
-  workspaces,
+  orgWorkspaces,
 } from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -612,11 +612,11 @@ export const integrationRouter = {
         // 3. Check if this repo is already connected to this workspace
         const existingResult = await ctx.db
           .select()
-          .from(workspaceSources)
+          .from(workspaceIntegrations)
           .where(
             and(
-              eq(workspaceSources.workspaceId, workspaceId),
-              eq(workspaceSources.userSourceId, input.userSourceId)
+              eq(workspaceIntegrations.workspaceId, workspaceId),
+              eq(workspaceIntegrations.userSourceId, input.userSourceId)
             )
           );
 
@@ -637,7 +637,7 @@ export const integrationRouter = {
           const currentConfig = existing.sourceConfig;
           if (currentConfig.provider === "github" && currentConfig.type === "repository") {
             await ctx.db
-              .update(workspaceSources)
+              .update(workspaceIntegrations)
               .set({
                 sourceConfig: {
                   ...currentConfig,
@@ -645,13 +645,13 @@ export const integrationRouter = {
                 },
                 isActive: true,
               })
-              .where(eq(workspaceSources.id, existing.id));
+              .where(eq(workspaceIntegrations.id, existing.id));
           }
 
           const updated = await ctx.db
             .select()
-            .from(workspaceSources)
-            .where(eq(workspaceSources.id, existing.id))
+            .from(workspaceIntegrations)
+            .where(eq(workspaceIntegrations.id, existing.id))
             .limit(1);
 
           return updated[0];
@@ -660,7 +660,7 @@ export const integrationRouter = {
         // 4. Create new workspaceSource
         const workspaceSourceId = crypto.randomUUID();
 
-        await ctx.db.insert(workspaceSources).values({
+        await ctx.db.insert(workspaceIntegrations).values({
           id: workspaceSourceId,
           workspaceId,
           userSourceId: input.userSourceId,
@@ -683,8 +683,8 @@ export const integrationRouter = {
 
         const created = await ctx.db
           .select()
-          .from(workspaceSources)
-          .where(eq(workspaceSources.id, workspaceSourceId))
+          .from(workspaceIntegrations)
+          .where(eq(workspaceIntegrations.id, workspaceSourceId))
           .limit(1);
 
         const workspaceSource = created[0];
@@ -694,8 +694,8 @@ export const integrationRouter = {
           try {
             const workspaceResult = await ctx.db
               .select()
-              .from(workspaces)
-              .where(eq(workspaces.id, workspaceId))
+              .from(orgWorkspaces)
+              .where(eq(orgWorkspaces.id, workspaceId))
               .limit(1);
 
             const workspace = workspaceResult[0];

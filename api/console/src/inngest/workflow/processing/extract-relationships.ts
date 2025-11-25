@@ -11,7 +11,7 @@
  */
 
 import { db } from "@db/console/client";
-import { docsDocuments } from "@db/console/schema";
+import { workspaceKnowledgeDocuments } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
@@ -130,7 +130,7 @@ export const extractRelationships = inngest.createFunction(
     await step.run("store-relationships", async () => {
       try {
         await db
-          .update(docsDocuments)
+          .update(workspaceKnowledgeDocuments)
           .set({
             relationships: {
               extracted: extractedRelationships,
@@ -138,7 +138,7 @@ export const extractRelationships = inngest.createFunction(
             },
             updatedAt: new Date(),
           })
-          .where(eq(docsDocuments.id, documentId));
+          .where(eq(workspaceKnowledgeDocuments.id, documentId));
 
         log.info("Stored relationships", {
           documentId,
