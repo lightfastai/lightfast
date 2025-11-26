@@ -24,7 +24,11 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import type { ActivityCategory, ActorType } from "@repo/console-validation";
+import type {
+  ActivityCategory,
+  ActorType,
+  ActivityMetadata,
+} from "@repo/console-validation";
 
 export const workspaceUserActivities = pgTable(
   "lightfast_workspace_user_activities",
@@ -116,16 +120,18 @@ export const workspaceUserActivities = pgTable(
 
     /**
      * Activity Metadata
-     * Flexible JSON for activity-specific context
-     * Structure varies by category and action
+     * Strongly-typed JSON for activity-specific context
+     * Structure is validated and varies by action type
      *
      * Examples:
-     * - workspace.created: { clerkOrgId, slug }
-     * - integration.connected: { provider, repositories }
-     * - job.triggered: { jobType, trigger }
-     * - search.executed: { query, resultCount, filters }
+     * - workspace.created: { workspaceName, workspaceSlug, clerkOrgId }
+     * - integration.connected: { provider, repoFullName, repoId, isPrivate, syncConfig }
+     * - job.cancelled: { jobName, previousStatus, inngestFunctionId }
+     * - store.created: { storeSlug, embeddingDim, indexName }
+     *
+     * REQUIRED: Every activity MUST have corresponding metadata
      */
-    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    metadata: jsonb("metadata").$type<ActivityMetadata>().notNull(),
 
     /**
      * Request ID

@@ -17,6 +17,7 @@ import { db } from "@db/console/client";
 import { workspaceUserActivities } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { log } from "@vendor/observability/log";
+import type { ActivityMetadata } from "@repo/console-validation";
 
 /**
  * Record Activity Workflow
@@ -69,7 +70,9 @@ export const recordActivity = inngest.createFunction(
           action: data.action,
           entityType: data.entityType,
           entityId: data.entityId,
-          metadata: data.metadata ?? null,
+          // Cast metadata to preserve type safety after deserialization
+          // Metadata is REQUIRED for all activities
+          metadata: data.metadata as ActivityMetadata,
           relatedActivityId: data.relatedActivityId ?? null,
         };
       });

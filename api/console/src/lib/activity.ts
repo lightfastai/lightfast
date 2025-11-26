@@ -127,7 +127,7 @@ export async function recordCriticalActivity<T extends keyof ActivityMetadataMap
       action: data.action,
       entityType: data.entityType,
       entityId: data.entityId,
-      metadata: data.metadata ?? null,
+      metadata: data.metadata,
       relatedActivityId: data.relatedActivityId ?? null,
     }).returning({ id: workspaceUserActivities.id });
 
