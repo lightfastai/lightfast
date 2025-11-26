@@ -10,10 +10,6 @@ import {
   MoreHorizontal,
   RotateCcw,
   StopCircle,
-  Calendar,
-  Zap,
-  ChevronDown,
-  ChevronRight,
   FileText,
   GitBranch,
   GitCommit,
@@ -27,7 +23,6 @@ import {
 import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
-import { Badge } from "@repo/ui/components/ui/badge";
 import { Input } from "@repo/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
@@ -39,7 +34,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 import { useJobFilters } from "./use-job-filters";
-import type { Job, JobStatus, JobTrigger } from "~/types";
+import type { Job, JobStatus } from "~/types";
 
 interface JobsTableWrapperProps {
   clerkOrgSlug: string;
@@ -74,61 +69,12 @@ export function JobsTableWrapper({
   );
 }
 
-const statusConfig: Record<
-  JobStatus,
-  {
-    icon: typeof CheckCircle2;
-    label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-  }
-> = {
-  queued: { icon: Clock, label: "Queued", variant: "secondary" },
-  running: { icon: Loader2, label: "Running", variant: "default" },
-  completed: { icon: CheckCircle2, label: "Completed", variant: "outline" },
-  failed: { icon: XCircle, label: "Failed", variant: "destructive" },
-  cancelled: { icon: StopCircle, label: "Cancelled", variant: "outline" },
-};
-
-const triggerConfig: Record<
-  JobTrigger,
-  { icon: typeof PlayCircle; label: string }
-> = {
-  manual: { icon: PlayCircle, label: "Manual" },
-  scheduled: { icon: Clock, label: "Scheduled" },
-  webhook: { icon: Zap, label: "Webhook" },
-  automatic: { icon: Calendar, label: "Automatic" },
-};
-
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
   if (ms < 3600000)
     return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
   return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
-}
-
-function StatusBadge({ status }: { status: JobStatus }) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
-
-  return (
-    <Badge variant={config.variant} className="gap-1.5">
-      <Icon className={cn("h-3 w-3", status === "running" && "animate-spin")} />
-      {config.label}
-    </Badge>
-  );
-}
-
-function TriggerBadge({ trigger }: { trigger: JobTrigger }) {
-  const config = triggerConfig[trigger];
-  const Icon = config.icon;
-
-  return (
-    <Badge variant="outline" className="gap-1.5">
-      <Icon className="h-3 w-3" />
-      {config.label}
-    </Badge>
-  );
 }
 
 interface JobRowProps {
@@ -142,10 +88,10 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  // Extract commit data from job input
-  const commitSha = job.input?.afterSha;
-  const commitMessage = job.input?.commitMessage;
-  const branch = job.input?.branch;
+  // Extract commit data from job input (safely handle discriminated union)
+  const commitSha: string | undefined = job.input && "afterSha" in job.input ? String(job.input.afterSha) : undefined;
+  const commitMessage: string | undefined = job.input && "commitMessage" in job.input ? String(job.input.commitMessage) : undefined;
+  const branch: string | undefined = job.input && "branch" in job.input ? String(job.input.branch) : undefined;
   // Store slug comes from the joined workspaceStores table
   const storeSlug = job.storeSlug;
 
@@ -203,10 +149,10 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
           {/* Left: Commit SHA + Store slug */}
           <div className="flex flex-col gap-1 w-[120px] flex-shrink-0">
             <span className="font-mono text-sm">
-              {commitSha ? commitSha.substring(0, 8) : job.id.substring(0, 8)}
+              {commitSha?.substring(0, 8) ?? job.id.substring(0, 8)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {storeSlug || "—"}
+              {storeSlug ?? "—"}
             </span>
           </div>
 
@@ -244,16 +190,16 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
             {/* Branch */}
             <div className="flex items-center gap-2">
               <GitBranch className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm">{branch || "main"}</span>
+              <span className="text-sm">{branch ?? "main"}</span>
             </div>
             {/* Commit */}
             <div className="flex items-center gap-2">
               <GitCommit className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
               <span className="font-mono text-xs text-muted-foreground">
-                {commitSha ? commitSha.substring(0, 7) : ""}
+                {commitSha?.substring(0, 7) ?? ""}
               </span>
               <span className="text-xs text-muted-foreground truncate">
-                {commitMessage || job.name}
+                {commitMessage ?? job.name}
               </span>
             </div>
           </div>

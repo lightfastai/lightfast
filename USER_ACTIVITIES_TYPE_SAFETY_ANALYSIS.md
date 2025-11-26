@@ -96,7 +96,7 @@ const activityMetadataSchema = z.union([
   workspaceUpdatedMetadataSchema,
   // ... more specific schemas
 
-  // Backward compatibility fallback
+  // Note: Remove Backward compatibility fallback
   z.record(z.unknown()),
 ]).optional();
 ```

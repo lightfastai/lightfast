@@ -21,6 +21,7 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
+    "dev:studio": "pnpm db:studio",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",

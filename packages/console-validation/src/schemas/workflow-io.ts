@@ -173,7 +173,10 @@ const sourceSyncLinearOutputFailureSchema = z.object({
 // DISCRIMINATED UNION - ALL OUTPUTS
 // =============================================================================
 
-export const workflowOutputSchema = z.discriminatedUnion("status", [
+// We can't use a single discriminatedUnion because both inngestFunctionId and status
+// have duplicate values across schemas. Instead, use a regular union.
+// TypeScript will still narrow properly when you check both fields.
+export const workflowOutputSchema = z.union([
   sourceConnectedGitHubOutputSuccessSchema,
   sourceConnectedGitHubOutputFailureSchema,
   sourceSyncGitHubOutputSuccessSchema,
