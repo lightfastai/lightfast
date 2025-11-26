@@ -1,4 +1,3 @@
 // tRPC service wrappers
-export { StoresService } from "./stores";
 export { SourcesService } from "./sources";
 export { WorkspacesService } from "./workspaces";

@@ -18,27 +18,27 @@
  * import { createInngestCaller } from "../lib/caller";
  *
  * const trpc = await createInngestCaller();
- * const workspace = await trpc.workspace.getForInngest({ workspaceId });
+ * const workspace = await trpc.m2m.workspace.get({ workspaceId });
  * ```
  */
 
-import type { OrgRouter } from "../../root";
-import { orgRouter } from "../../root";
+import type { M2MRouter } from "../../root";
+import { m2mRouter } from "../../root";
 import { createOrgTRPCContext } from "../../trpc";
 import { createM2MToken } from "@repo/console-clerk-m2m";
 
 /**
  * Create a tRPC caller authenticated with Inngest M2M token
  *
- * This caller has access to org-scoped procedures marked with `inngestM2MProcedure`.
+ * This caller has access to M2M procedures marked with `inngestM2MProcedure`.
  * The token is created on-demand (30s expiration) following Clerk's recommended pattern.
  *
- * M2M operations are always org-scoped - they operate on workspaces, stores, jobs, etc.
- * There are no user-scoped M2M procedures.
+ * M2M operations operate on workspaces, stores, jobs, etc.
+ * These procedures are isolated from user-facing operations.
  *
- * @returns Typed tRPC caller instance for org-scoped procedures
+ * @returns Typed tRPC caller instance for M2M procedures
  */
-export async function createInngestCaller(): Promise<ReturnType<typeof orgRouter.createCaller>> {
+export async function createInngestCaller(): Promise<ReturnType<typeof m2mRouter.createCaller>> {
 	const { token } = await createM2MToken("inngest");
 
 	const headers = new Headers();
@@ -46,5 +46,5 @@ export async function createInngestCaller(): Promise<ReturnType<typeof orgRouter
 	headers.set("authorization", `Bearer ${token}`);
 
 	const ctx = await createOrgTRPCContext({ headers });
-	return orgRouter.createCaller(ctx);
+	return m2mRouter.createCaller(ctx);
 }

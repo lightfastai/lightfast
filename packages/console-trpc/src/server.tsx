@@ -5,10 +5,11 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import type { UserRouter, OrgRouter } from "@api/console";
+import type { UserRouter, OrgRouter, M2MRouter } from "@api/console";
 import {
   userRouter,
   orgRouter,
+  m2mRouter,
   createUserTRPCContext,
   createOrgTRPCContext,
 } from "@api/console";
@@ -102,10 +103,23 @@ export const orgTrpc: TRPCOptionsProxy<OrgRouter> = createTRPCOptionsProxy({
  * Create a server-side org-scoped caller for webhook handlers
  * This caller is authenticated with webhook M2M token
  * Should only be used by verified webhook handlers (after signature verification)
+ *
+ * NOTE: Returns orgRouter for backward compatibility with WorkspacesService.
+ * For M2M-specific operations, use createM2MCaller() instead.
  */
 export const createCaller = cache(async () => {
   const ctx = await createWebhookContext();
   return orgRouter.createCaller(ctx);
+});
+
+/**
+ * Create a server-side M2M caller for webhook handlers
+ * This caller is authenticated with webhook M2M token and provides access to M2M procedures only
+ * Should only be used by verified webhook handlers that need M2M-specific operations
+ */
+export const createM2MCaller = cache(async () => {
+  const ctx = await createWebhookContext();
+  return m2mRouter.createCaller(ctx);
 });
 
 /**

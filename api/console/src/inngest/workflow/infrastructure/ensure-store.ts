@@ -132,7 +132,7 @@ export const ensureStore = inngest.createFunction(
 
 		// Step 1: Check if store already exists in DB
 		const existingStore = await step.run("check-store-exists", async () => {
-			const store = await trpc.stores.getForInngest({
+			const store = await trpc.stores.get({
 				workspaceId,
 				storeSlug,
 			});
@@ -197,7 +197,7 @@ export const ensureStore = inngest.createFunction(
 			"resolve-namespace",
 			async () => {
 				// Fetch workspace to get clerkOrgId
-				const workspace = await trpc.workspace.getForInngest({
+				const workspace = await trpc.workspace.get({
 					workspaceId,
 				});
 
@@ -296,7 +296,7 @@ export const ensureStore = inngest.createFunction(
 			const storeId = `${workspaceId}_${storeSlug}`;
 
 			// Create store via tRPC (handles idempotent insert + fallback fetch)
-			const result = await trpc.stores.createForInngest({
+			const result = await trpc.stores.create({
 				id: storeId,
 				workspaceId,
 				slug: storeSlug,

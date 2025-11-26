@@ -1,20 +1,20 @@
-import { DeusApiService } from "./base-service";
+import { DeusApiM2MService } from "./base-service";
 
 /**
  * Sources Service
  *
- * Service wrapper for workspace source operations across all providers.
+ * Service wrapper for workspace source M2M operations across all providers.
  * Currently supports GitHub repository operations for webhooks.
  *
  * Future: Will include Linear, Notion, Sentry source operations.
  */
-export class SourcesService extends DeusApiService {
+export class SourcesService extends DeusApiM2MService {
   /**
    * Find active repository by GitHub repo ID (for webhooks)
    */
   async findActiveByGithubRepoId(githubRepoId: string) {
     return await this.call(
-      "sources.findByGithubRepoId",
+      "m2m.sources.findByGithubRepoId",
       (caller) => caller.sources.findByGithubRepoId({ githubRepoId }),
       {
         fallbackMessage: "Failed to find active repository",
@@ -39,7 +39,7 @@ export class SourcesService extends DeusApiService {
     githubRepoId: string
   ): Promise<string | null> {
     return await this.call(
-      "sources.getSourceIdByGithubRepoId",
+      "m2m.sources.getSourceIdByGithubRepoId",
       (caller) =>
         caller.sources.getSourceIdByGithubRepoId({
           workspaceId,
@@ -64,7 +64,7 @@ export class SourcesService extends DeusApiService {
    */
   async markInactive(params: { githubRepoId: string; reason?: string }) {
     return await this.call(
-      "sources.updateGithubSyncStatus",
+      "m2m.sources.updateGithubSyncStatus",
       (caller) =>
         caller.sources.updateGithubSyncStatus({
           githubRepoId: params.githubRepoId,
@@ -83,7 +83,7 @@ export class SourcesService extends DeusApiService {
    */
   async markInstallationInactive(githubInstallationId: string) {
     return await this.call(
-      "sources.markGithubInstallationInactive",
+      "m2m.sources.markGithubInstallationInactive",
       (caller) => caller.sources.markGithubInstallationInactive({ githubInstallationId }),
       {
         fallbackMessage: "Failed to mark installation repositories inactive",
@@ -101,7 +101,7 @@ export class SourcesService extends DeusApiService {
     configPath: string | null;
   }) {
     return await this.call(
-      "sources.updateGithubConfigStatus",
+      "m2m.sources.updateGithubConfigStatus",
       (caller) => caller.sources.updateGithubConfigStatus(params),
       {
         fallbackMessage: "Failed to update repository config status",
@@ -115,7 +115,7 @@ export class SourcesService extends DeusApiService {
    */
   async markDeleted(githubRepoId: string) {
     return await this.call(
-      "sources.markGithubDeleted",
+      "m2m.sources.markGithubDeleted",
       (caller) => caller.sources.markGithubDeleted({ githubRepoId }),
       {
         fallbackMessage: "Failed to mark repository as deleted",
@@ -137,7 +137,7 @@ export class SourcesService extends DeusApiService {
     }
   ) {
     return await this.call(
-      "sources.updateGithubMetadata",
+      "m2m.sources.updateGithubMetadata",
       (caller) =>
         caller.sources.updateGithubMetadata({
           githubRepoId,

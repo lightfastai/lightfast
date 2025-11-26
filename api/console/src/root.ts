@@ -2,9 +2,10 @@
  * Console application root router
  * This is the main router that combines all console-specific routers
  *
- * Split into two routers for authentication boundary:
+ * Split into three routers for authentication boundary:
  * - userRouter: Procedures that allow pending users (no org required)
  * - orgRouter: Procedures that require active org membership
+ * - m2mRouter: Machine-to-machine procedures for internal services (Inngest, webhooks)
  */
 
 import { createTRPCRouter } from "./trpc";
@@ -26,6 +27,12 @@ import { integrationRouter } from "./router/org/integration";
 import { jobsRouter } from "./router/org/jobs";
 import { sourcesRouter } from "./router/org/sources";
 import { activitiesRouter } from "./router/org/activities";
+
+// M2M routers (internal services only)
+import { storesM2MRouter } from "./router/m2m/stores";
+import { jobsM2MRouter } from "./router/m2m/jobs";
+import { sourcesM2MRouter } from "./router/m2m/sources";
+import { workspaceM2MRouter } from "./router/m2m/workspace";
 
 /**
  * User-scoped router
@@ -55,9 +62,9 @@ export const userRouter = createTRPCRouter({
  * Procedures:
  * - workspace.*: Workspace management
  * - integration.*: Integration connections (GitHub, etc.)
- * - stores.*: Vector store management
+ * - stores.*: DEPRECATED (empty - kept for backward compatibility)
  * - jobs.*: Background job management
- * - sources.*: Data source management
+ * - sources.*: DEPRECATED (empty - kept for backward compatibility)
  * - clerk.*: Clerk organization utilities
  * - search.*: Semantic search
  * - contents.*: Document retrieval
@@ -68,15 +75,38 @@ export const orgRouter = createTRPCRouter({
   contents: contentsRouter,
 
   // Phase 1.6: Stores, Clerk integration, and Workspaces
-  stores: storesRouter,
+  stores: storesRouter, // DEPRECATED: empty - M2M moved to m2mRouter
   clerk: clerkRouter,
   workspace: workspaceRouter,
   integration: integrationRouter,
   jobs: jobsRouter,
-  sources: sourcesRouter,
+  sources: sourcesRouter, // DEPRECATED: empty - M2M moved to m2mRouter
   activities: activitiesRouter,
+});
+
+/**
+ * M2M router
+ * Machine-to-machine procedures for internal services only
+ * Accessible via /api/trpc/m2m/*
+ *
+ * Security:
+ * - Inngest procedures: Require Inngest M2M token (CLERK_M2M_INNGEST_CLIENT_ID)
+ * - Webhook procedures: Require webhook M2M token (CLERK_M2M_WEBHOOK_CLIENT_ID)
+ *
+ * Procedures:
+ * - stores.*: Store management for Inngest workflows
+ * - jobs.*: Job lifecycle management for Inngest workflows
+ * - sources.*: Source management for GitHub webhooks
+ * - workspace.*: Workspace queries for Inngest workflows
+ */
+export const m2mRouter = createTRPCRouter({
+  stores: storesM2MRouter,
+  jobs: jobsM2MRouter,
+  sources: sourcesM2MRouter,
+  workspace: workspaceM2MRouter,
 });
 
 // Export types for client usage
 export type UserRouter = typeof userRouter;
 export type OrgRouter = typeof orgRouter;
+export type M2MRouter = typeof m2mRouter;

@@ -26,7 +26,7 @@ import {
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 
-import { publicProcedure, orgScopedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
+import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 
 /**
@@ -853,37 +853,4 @@ export const workspaceRouter = {
         };
       }),
   },
-
-  // ============================================================================
-  // Inngest M2M Procedures
-  // ============================================================================
-
-  /**
-   * Get workspace by ID (Inngest workflows)
-   *
-   * Used by workflows to fetch workspace details (especially clerkOrgId).
-   */
-  getForInngest: inngestM2MProcedure
-    .input(z.object({ workspaceId: z.string() }))
-    .query(async ({ input }) => {
-      const workspace = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, input.workspaceId),
-      });
-
-      if (!workspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Workspace not found: ${input.workspaceId}`,
-        });
-      }
-
-      return {
-        id: workspace.id,
-        name: workspace.name,
-        slug: workspace.slug,
-        clerkOrgId: workspace.clerkOrgId,
-        createdAt: workspace.createdAt,
-        updatedAt: workspace.updatedAt,
-      };
-    }),
 } satisfies TRPCRouterRecord;

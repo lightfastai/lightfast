@@ -2,9 +2,10 @@ import type { TRPC_ERROR_CODE_KEY } from "@trpc/server/rpc";
 import { TRPCError } from "@trpc/server";
 import { TRPC_ERROR_CODES_BY_KEY } from "@trpc/server/rpc";
 
-import { createCaller } from "@repo/console-trpc/server";
+import { createCaller, createM2MCaller } from "@repo/console-trpc/server";
 
 export type DeusApiCaller = Awaited<ReturnType<typeof createCaller>>;
+export type DeusApiM2MCaller = Awaited<ReturnType<typeof createM2MCaller>>;
 
 export interface DeusApiErrorParams {
   code: TRPC_ERROR_CODE_KEY;
@@ -43,6 +44,10 @@ type CallOptions<T> = {
 const DEFAULT_MESSAGE = "Deus API request failed";
 const DEFAULT_CODE: TRPC_ERROR_CODE_KEY = "INTERNAL_SERVER_ERROR";
 
+/**
+ * Base class for org-scoped API services
+ * Uses orgRouter which includes public and org-scoped procedures
+ */
 export abstract class DeusApiService {
   protected async getCaller(): Promise<DeusApiCaller> {
     return createCaller();
@@ -184,5 +189,153 @@ export abstract class DeusApiService {
     }
 
     console.error("[DeusApiService]", payload);
+  }
+}
+
+/**
+ * M2M-specific API service base class
+ * Use this for services that need access to M2M procedures only
+ */
+export abstract class DeusApiM2MService {
+  protected async getCaller(): Promise<DeusApiM2MCaller> {
+    return createM2MCaller();
+  }
+
+  protected async call<T>(
+    operation: string,
+    fn: (caller: DeusApiM2MCaller) => Promise<T>,
+    options: CallOptions<T> = {},
+  ): Promise<T> {
+    const {
+      fallbackMessage = DEFAULT_MESSAGE,
+      fallbackCode = DEFAULT_CODE,
+      details,
+      suppressCodes = [],
+      recover,
+    } = options;
+
+    try {
+      const caller = await this.getCaller();
+      return await fn(caller);
+    } catch (caughtError) {
+      let normalized = this.normalizeError(
+        caughtError,
+        fallbackMessage,
+        fallbackCode,
+        details,
+      );
+      let originalError: unknown = caughtError;
+
+      if (recover) {
+        try {
+          return recover(normalized);
+        } catch (recoverError) {
+          originalError = recoverError;
+          normalized = this.normalizeError(
+            recoverError,
+            fallbackMessage,
+            fallbackCode,
+            details,
+          );
+        }
+      }
+
+      if (!suppressCodes.includes(normalized.code)) {
+        this.logError(operation, normalized, details, originalError);
+      }
+
+      throw normalized;
+    }
+  }
+
+  private normalizeError(
+    error: unknown,
+    fallbackMessage: string,
+    fallbackCode: TRPC_ERROR_CODE_KEY,
+    details?: Record<string, unknown>,
+  ): DeusApiError {
+    if (error instanceof DeusApiError) {
+      if (details && !error.details) {
+        return new DeusApiError({
+          code: error.code,
+          message: error.message,
+          cause: (error as Error & { cause?: unknown }).cause,
+          status: error.status,
+          details,
+        });
+      }
+      return error;
+    }
+
+    if (error instanceof TRPCError) {
+      return new DeusApiError({
+        code: error.code,
+        message: error.message || fallbackMessage,
+        cause: error,
+        details,
+      });
+    }
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      typeof (error as { code: unknown }).code === "string" &&
+      (error as { code: string }).code in TRPC_ERROR_CODES_BY_KEY
+    ) {
+      const { code } = error as { code: TRPC_ERROR_CODE_KEY; message?: string };
+      const message =
+        (error as { message?: string }).message ?? fallbackMessage;
+      return new DeusApiError({
+        code,
+        message,
+        cause: error instanceof Error ? error : undefined,
+        details,
+      });
+    }
+
+    if (error instanceof Error) {
+      return new DeusApiError({
+        code: fallbackCode,
+        message: error.message || fallbackMessage,
+        cause: error,
+        details,
+      });
+    }
+
+    return new DeusApiError({
+      code: fallbackCode,
+      message: fallbackMessage,
+      details,
+    });
+  }
+
+  protected logError(
+    operation: string,
+    error: DeusApiError,
+    details?: Record<string, unknown>,
+    originalError?: unknown,
+  ): void {
+    const payload: Record<string, unknown> = {
+      code: error.code,
+      message: error.message,
+      service: this.constructor.name,
+      operation,
+    };
+
+    if (error.details || details) {
+      payload.details = {
+        ...(details ?? {}),
+        ...(error.details ?? {}),
+      };
+    }
+
+    if (originalError instanceof Error && originalError.stack) {
+      payload.cause = originalError.stack;
+    } else if (originalError !== undefined) {
+      payload.cause = originalError;
+    }
+
+    console.error("[DeusApiM2MService]", payload);
   }
 }
