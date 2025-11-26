@@ -185,62 +185,64 @@ export const githubPushHandler = inngest.createFunction(
     // Step 3: Route to appropriate sync workflow
     if (configChanged) {
       // Config changed → trigger FULL sync
-      await step.run("trigger-full-sync", async () => {
-        await inngest.send({
-          name: "apps-console/source.sync",
-          data: {
-            workspaceId,
-            workspaceKey,
-            sourceId,
-            sourceType: "github",
-            syncMode: "full",
-            trigger: "config-change",
-            syncParams: {
-              repoFullName,
-              githubRepoId,
-              githubInstallationId,
-              branch,
-              commitSha: afterSha,
-              reason: "lightfast.yml modified",
-            },
+      const eventIds = await step.sendEvent("trigger-full-sync", {
+        name: "apps-console/source.sync",
+        data: {
+          workspaceId,
+          workspaceKey,
+          sourceId,
+          sourceType: "github",
+          syncMode: "full",
+          trigger: "config-change",
+          syncParams: {
+            repoFullName,
+            githubRepoId,
+            githubInstallationId,
+            branch,
+            commitSha: afterSha,
+            reason: "lightfast.yml modified",
           },
-        });
+        },
+      });
 
+      await step.run("log-full-sync-dispatch", async () => {
         log.info("Triggered full sync (config changed)", {
           sourceId,
           repoFullName,
+          eventId: eventIds.ids[0],
         });
       });
     } else {
       // Normal push → trigger INCREMENTAL sync
-      await step.run("trigger-incremental-sync", async () => {
-        await inngest.send({
-          name: "apps-console/source.sync",
-          data: {
-            workspaceId,
-            workspaceKey,
-            sourceId,
-            sourceType: "github",
-            syncMode: "incremental",
-            trigger: "webhook",
-            syncParams: {
-              repoFullName,
-              githubRepoId,
-              githubInstallationId,
-              branch,
-              beforeSha,
-              afterSha,
-              deliveryId,
-              headCommitTimestamp,
-              changedFiles,
-            },
+      const eventIds = await step.sendEvent("trigger-incremental-sync", {
+        name: "apps-console/source.sync",
+        data: {
+          workspaceId,
+          workspaceKey,
+          sourceId,
+          sourceType: "github",
+          syncMode: "incremental",
+          trigger: "webhook",
+          syncParams: {
+            repoFullName,
+            githubRepoId,
+            githubInstallationId,
+            branch,
+            beforeSha,
+            afterSha,
+            deliveryId,
+            headCommitTimestamp,
+            changedFiles,
           },
-        });
+        },
+      });
 
+      await step.run("log-incremental-sync-dispatch", async () => {
         log.info("Triggered incremental sync (normal push)", {
           sourceId,
           repoFullName,
           changedCount: changedFiles.length,
+          eventId: eventIds.ids[0],
         });
       });
     }

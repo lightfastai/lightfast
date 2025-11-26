@@ -83,13 +83,15 @@ export const searchRouter = {
 				}
 
 				const indexName = store.indexName;
+				const namespaceName = store.namespaceName;
 
-				log.info("Resolved index", {
+				log.info("Resolved index and namespace", {
 					requestId,
 					workspaceId: ctx.auth.workspaceId,
 					userId: ctx.auth.userId,
 					storeSlug,
 					indexName,
+					namespaceName,
 					storeId: store.id,
 				});
 
@@ -124,15 +126,20 @@ export const searchRouter = {
 
 				// Query Pinecone
 				const queryStart = Date.now();
-				const results = await pineconeClient.query<VectorMetadata>(indexName, {
-					vector: queryVector,
-					topK: input.topK,
-					includeMetadata: true,
-				});
+				const results = await pineconeClient.query<VectorMetadata>(
+					indexName,
+					{
+						vector: queryVector,
+						topK: input.topK,
+						includeMetadata: true,
+					},
+					namespaceName,
+				);
 				const queryLatency = Date.now() - queryStart;
 
 				log.info("Pinecone query complete", {
 					requestId,
+					namespaceName,
 					queryLatency,
 					matchCount: results.matches.length,
 				});

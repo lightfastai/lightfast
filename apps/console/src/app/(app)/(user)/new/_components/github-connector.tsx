@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -10,49 +10,71 @@ import { RepositoryPicker } from "./repository-picker";
 
 /**
  * GitHub Connector
- * Client island for GitHub OAuth connection and installation management
+ * Client island for GitHub App installation management
  *
- * Note: Uses useQuery (not useSuspenseQuery) to fetch client-side only.
+ * Uses useSuspenseQuery with prefetched data from parent RSC.
+ * Prevents client-side fetch waterfall and improves perceived performance.
  */
 export function GitHubConnector() {
   const trpc = useTRPC();
   const {
     userSourceId,
     setUserSourceId,
-    installations,
     setInstallations,
     selectedInstallation,
     setSelectedInstallation,
   } = useWorkspaceForm();
 
-  // Fetch GitHub user source (client-side only via useQuery)
-  const { data: githubUserSource, refetch: refetchIntegration } = useQuery({
-    ...trpc.integration.github.list.queryOptions(),
-    staleTime: 5 * 60 * 1000,
-  });
+  // Fetch GitHub user source (prefetched in parent RSC)
+  // Use user router endpoint (not org router) to support pending users
+  const { data: githubUserSource, refetch: refetchIntegration } =
+    useSuspenseQuery({
+      ...trpc.userSources.github.get.queryOptions(),
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    });
 
-  // Process user source data
+  // Derive installations directly from query data (no intermediate state for this)
+  const installations = githubUserSource?.installations ?? [];
+
+  // Effect 1: Sync userSourceId to context (only when ID value changes, not object reference)
   useEffect(() => {
-    if (githubUserSource) {
-      setUserSourceId(githubUserSource.id);
-      const installs = githubUserSource.installations;
-      setInstallations(installs);
-      if (installs.length > 0 && !selectedInstallation) {
-        const firstInstall = installs[0];
+    const id = githubUserSource?.id ?? null;
+    setUserSourceId(id);
+  }, [githubUserSource?.id, setUserSourceId]);
+
+  // Effect 2: Sync installations array to context (for RepositoryPicker)
+  useEffect(() => {
+    setInstallations(installations);
+  }, [installations, setInstallations]);
+
+  // Effect 3: Handle installation selection with proper reset logic
+  // - Initial mount: Select first installation if none selected
+  // - Reconnection: Validate current selection still exists, reset to first if not
+  // - No installations: Clear selection
+  useEffect(() => {
+    if (installations.length === 0) {
+      // No installations available, clear selection
+      if (selectedInstallation !== null) {
+        setSelectedInstallation(null);
+      }
+    } else {
+      // Check if current selection is still valid
+      const currentSelectionStillExists = selectedInstallation
+        ? installations.some((inst) => inst.id === selectedInstallation.id)
+        : false;
+
+      if (!currentSelectionStillExists) {
+        // Either no selection or selection became invalid, select first
+        const firstInstall = installations[0];
         if (firstInstall) {
           setSelectedInstallation(firstInstall);
         }
       }
     }
-  }, [
-    githubUserSource,
-    selectedInstallation,
-    setUserSourceId,
-    setInstallations,
-    setSelectedInstallation,
-  ]);
+  }, [installations, selectedInstallation, setSelectedInstallation]);
 
-  // Handle GitHub OAuth in popup
+  // Handle GitHub App installation in popup
   const handleConnectGitHub = () => {
     const width = 600;
     const height = 800;
@@ -60,7 +82,7 @@ export function GitHubConnector() {
     const top = window.screen.height / 2 - height / 2;
 
     const popup = window.open(
-      "/api/github/install",
+      "/api/github/install-app",
       "github-install",
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
     );

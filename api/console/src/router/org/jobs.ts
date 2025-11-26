@@ -5,7 +5,7 @@ import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
-import { protectedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
+import { orgScopedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
 import {
 	createJob,
 	updateJobStatus,
@@ -32,7 +32,7 @@ export const jobsRouter = {
 	 * List jobs with filters and pagination
 	 * Returns jobs for a specific workspace with optional filters
 	 */
-	list: protectedProcedure
+	list: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
@@ -100,7 +100,7 @@ export const jobsRouter = {
 	 * Get single job by ID
 	 * Returns full job details including input/output
 	 */
-	get: protectedProcedure
+	get: orgScopedProcedure
 		.input(
 			z.object({
 				jobId: z.string(),
@@ -138,7 +138,7 @@ export const jobsRouter = {
 	 * Get recent jobs for dashboard
 	 * Returns last N jobs (default 10) for quick overview
 	 */
-	recent: protectedProcedure
+	recent: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
@@ -174,7 +174,7 @@ export const jobsRouter = {
 	 * Returns aggregated metrics for dashboard
 	 * Optimized with SQL aggregation for 50x performance improvement
 	 */
-	statistics: protectedProcedure
+	statistics: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
@@ -262,7 +262,7 @@ export const jobsRouter = {
 	 * Cancel a running job
 	 * Sends cancellation event to Inngest
 	 */
-	cancel: protectedProcedure
+	cancel: orgScopedProcedure
 		.input(
 			z.object({
 				jobId: z.string(),
@@ -340,7 +340,7 @@ export const jobsRouter = {
 	 * Restart a job
 	 * Triggers a new sync workflow based on the original job's parameters
 	 */
-	restart: protectedProcedure
+	restart: orgScopedProcedure
 		.input(
 			z.object({
 				jobId: z.string(),

@@ -26,7 +26,7 @@ import {
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 
-import { publicProcedure, protectedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
+import { publicProcedure, orgScopedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 
 /**
@@ -45,7 +45,7 @@ export const workspaceRouter = {
    *
    * IMPORTANT: This procedure verifies the user has access to the org from the URL.
    */
-  listByClerkOrgSlug: protectedProcedure
+  listByClerkOrgSlug: orgScopedProcedure
     .input(workspaceListInputSchema)
     .query(async ({ ctx, input }) => {
 
@@ -174,7 +174,7 @@ export const workspaceRouter = {
    * Returns:
    * - Full workspace record with id, name, slug, settings, etc.
    */
-  getByName: protectedProcedure
+  getByName: orgScopedProcedure
     .input(workspaceStatisticsInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
@@ -216,7 +216,7 @@ export const workspaceRouter = {
    * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
    * - workspaceSlug: URL-safe identifier
    */
-  create: protectedProcedure
+  create: orgScopedProcedure
     .input(workspaceCreateInputSchema)
     .mutation(async ({ ctx, input }) => {
 
@@ -297,7 +297,7 @@ export const workspaceRouter = {
    * Get job performance percentiles
    * Returns p50, p95, p99, and max duration metrics
    */
-  jobPercentiles: protectedProcedure
+  jobPercentiles: orgScopedProcedure
     .input(workspaceJobPercentilesInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
@@ -371,7 +371,7 @@ export const workspaceRouter = {
    * Get performance time series data
    * Returns hourly aggregated job metrics
    */
-  performanceTimeSeries: protectedProcedure
+  performanceTimeSeries: orgScopedProcedure
     .input(workspacePerformanceTimeSeriesInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
@@ -476,7 +476,7 @@ export const workspaceRouter = {
    * Update workspace name
    * Used by workspace settings page to update the user-facing name
    */
-  updateName: protectedProcedure
+  updateName: orgScopedProcedure
     .input(workspaceUpdateNameInputSchema)
     .mutation(async ({ ctx, input }) => {
       // Resolve workspace from current name (user-facing)
@@ -548,7 +548,7 @@ export const workspaceRouter = {
      * List connected sources for a workspace
      * This is an alias - use workspace.integrations.list for new code
      */
-    list: protectedProcedure
+    list: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -623,7 +623,7 @@ export const workspaceRouter = {
      * List stores with document counts
      * Replaces the stores portion of the old statistics procedure
      */
-    list: protectedProcedure
+    list: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -670,7 +670,7 @@ export const workspaceRouter = {
      * Get document statistics (total count and chunks)
      * Replaces the documents portion of the old statistics procedure
      */
-    stats: protectedProcedure
+    stats: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -711,7 +711,7 @@ export const workspaceRouter = {
      * Get job statistics (aggregated metrics)
      * Replaces the job stats portion of the old statistics procedure
      */
-    stats: protectedProcedure
+    stats: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -759,7 +759,7 @@ export const workspaceRouter = {
      * Get recent jobs list
      * Replaces the recent jobs portion of the old statistics procedure
      */
-    recent: protectedProcedure
+    recent: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -802,7 +802,7 @@ export const workspaceRouter = {
      * Get system health overview
      * Refactored to avoid duplicate queries - expects sources/stores data from cache
      */
-    overview: protectedProcedure
+    overview: orgScopedProcedure
       .input(workspaceSystemHealthInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)

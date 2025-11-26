@@ -60,46 +60,74 @@ export class ConsolePineconeClient {
    * Upsert vectors with automatic batching based on console config
    *
    * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Upsert request with vectors and metadata
+   * @param namespace - Optional namespace for data isolation
    */
   async upsertVectors<T extends RecordMetadata = RecordMetadata>(
     indexName: string,
-    request: UpsertRequest<T>
+    request: UpsertRequest<T>,
+    namespace?: string
   ): Promise<UpsertResponse> {
     return this.client.upsertVectors(
       indexName,
       request,
-      PINECONE_CONFIG.upsertBatchSize
+      PINECONE_CONFIG.upsertBatchSize,
+      namespace
     );
   }
 
   /**
    * Delete vectors by IDs
+   *
+   * @param indexName - Name of the index
+   * @param vectorIds - Array of vector IDs to delete
+   * @param namespace - Optional namespace for data isolation
    */
-  async deleteVectors(indexName: string, vectorIds: string[]): Promise<void> {
+  async deleteVectors(
+    indexName: string,
+    vectorIds: string[],
+    namespace?: string
+  ): Promise<void> {
     return this.client.deleteVectors(
       indexName,
       vectorIds,
-      PINECONE_CONFIG.deleteBatchSize
+      PINECONE_CONFIG.deleteBatchSize,
+      namespace
     );
   }
 
   /**
    * Delete vectors by metadata filter
+   *
+   * @param indexName - Name of the index
+   * @param filter - Metadata filter object
+   * @param namespace - Optional namespace for data isolation
    */
-  async deleteByMetadata(indexName: string, filter: object): Promise<void> {
-    return this.client.deleteByMetadata(indexName, filter);
+  async deleteByMetadata(
+    indexName: string,
+    filter: object,
+    namespace?: string
+  ): Promise<void> {
+    return this.client.deleteByMetadata(indexName, filter, namespace);
   }
 
   /**
    * Query similar vectors
    *
    * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Query request with vector and filters
+   * @param namespace - Optional namespace for data isolation
    */
   async query<T extends RecordMetadata = RecordMetadata>(
     indexName: string,
-    request: QueryRequest
+    request: QueryRequest,
+    namespace?: string
   ): Promise<QueryResponse<T>> {
-    return this.client.query<T>(indexName, request);
+    return this.client.query<T>(indexName, request, namespace);
   }
 
   /**

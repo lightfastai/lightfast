@@ -13,12 +13,12 @@ import { env } from "~/env";
  * After installation, GitHub redirects to the Setup URL with installation_id
  *
  * Flow:
- * 1. User clicks "Connect GitHub" → /api/github/install
+ * 1. User clicks "Connect GitHub" → /api/github/install-app
  * 2. Redirect to GitHub App installation page
  * 3. User selects org and repositories
- * 4. GitHub redirects to /api/github/setup with installation_id
- * 5. Setup route triggers OAuth flow to get user access token
- * 6. OAuth callback fetches installations and stores in database
+ * 4. GitHub redirects to /api/github/app-installed with installation_id
+ * 5. App-installed route triggers user OAuth flow to get access token
+ * 6. User-authorized callback fetches installations and stores in database
  */
 export function GET(request: NextRequest) {
 	const appSlug = env.GITHUB_APP_SLUG;
@@ -32,6 +32,8 @@ export function GET(request: NextRequest) {
 	// Optional: Pre-select a specific organization
 	const searchParams = request.nextUrl.searchParams;
 	const suggestedTargetId = searchParams.get("target_id");
+	const customCallback = searchParams.get("callback");
+
 	if (suggestedTargetId) {
 		installUrl.searchParams.set("target_id", suggestedTargetId);
 	}
@@ -42,24 +44,19 @@ export function GET(request: NextRequest) {
 	// Store state in cookie for validation in setup route
 	const response = NextResponse.redirect(installUrl.toString());
 
-	response.cookies.set("github_install_state", state, {
+	const cookieOptions = {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "lax", // Allow cookie on redirects
+		sameSite: "lax" as const, // Allow cookie on redirects
 		maxAge: 600, // 10 minutes
 		path: "/", // Make available to all routes
-	});
+	};
+
+	response.cookies.set("github_install_state", state, cookieOptions);
 
 	// Store custom callback if provided
-	const customCallback = searchParams.get("callback");
 	if (customCallback) {
-		response.cookies.set("github_install_callback", customCallback, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "lax", // Allow cookie on redirects
-			maxAge: 600, // 10 minutes
-			path: "/", // Make available to all routes
-		});
+		response.cookies.set("github_install_callback", customCallback, cookieOptions);
 	}
 
 	return response;

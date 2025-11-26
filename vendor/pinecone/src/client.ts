@@ -97,13 +97,20 @@ export class PineconeClient {
    * Upsert vectors into an index
    *
    * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Upsert request with vectors and metadata
+   * @param batchSize - Number of vectors to upsert per batch
+   * @param namespace - Optional namespace for data isolation
    */
   async upsertVectors<T extends RecordMetadata = RecordMetadata>(
     indexName: string,
     request: UpsertRequest<T>,
-    batchSize = 100
+    batchSize = 100,
+    namespace?: string
   ): Promise<UpsertResponse> {
     const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
 
     try {
       for (let i = 0; i < request.ids.length; i += batchSize) {
@@ -117,7 +124,7 @@ export class PineconeClient {
           metadata: metadata[offset]!,
         }));
 
-        await index.upsert(records);
+        await targetNamespace.upsert(records);
       }
 
       return { upsertedCount: request.ids.length };
@@ -128,16 +135,27 @@ export class PineconeClient {
 
   /**
    * Delete vectors by IDs
+   *
+   * @param indexName - Name of the index
+   * @param vectorIds - Array of vector IDs to delete
+   * @param batchSize - Number of vectors to delete per batch
+   * @param namespace - Optional namespace for data isolation
    */
-  async deleteVectors(indexName: string, vectorIds: string[], batchSize = 100): Promise<void> {
+  async deleteVectors(
+    indexName: string,
+    vectorIds: string[],
+    batchSize = 100,
+    namespace?: string
+  ): Promise<void> {
     if (vectorIds.length === 0) return;
 
     const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
 
     try {
       for (let i = 0; i < vectorIds.length; i += batchSize) {
         const batch = vectorIds.slice(i, i + batchSize);
-        await index.deleteMany(batch);
+        await targetNamespace.deleteMany(batch);
       }
     } catch (error) {
       this.handleError(error);
@@ -146,12 +164,21 @@ export class PineconeClient {
 
   /**
    * Delete vectors matching a metadata filter
+   *
+   * @param indexName - Name of the index
+   * @param filter - Metadata filter object
+   * @param namespace - Optional namespace for data isolation
    */
-  async deleteByMetadata(indexName: string, filter: object): Promise<void> {
+  async deleteByMetadata(
+    indexName: string,
+    filter: object,
+    namespace?: string
+  ): Promise<void> {
     const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
 
     try {
-      await index.deleteMany(filter);
+      await targetNamespace.deleteMany(filter);
     } catch (error) {
       this.handleError(error);
     }
@@ -183,15 +210,21 @@ export class PineconeClient {
    * Query similar vectors
    *
    * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Query request with vector and filters
+   * @param namespace - Optional namespace for data isolation
    */
   async query<T extends RecordMetadata = RecordMetadata>(
     indexName: string,
-    request: QueryRequest
+    request: QueryRequest,
+    namespace?: string
   ): Promise<QueryResponse<T>> {
     const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
 
     try {
-      const results = await index.query({
+      const results = await targetNamespace.query({
         vector: request.vector,
         topK: request.topK,
         filter: request.filter,

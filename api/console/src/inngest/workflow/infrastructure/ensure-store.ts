@@ -1,6 +1,17 @@
 /**
  * Ensure store exists workflow
  *
+ * TERMINOLOGY:
+ * - "Store" = User-facing concept (what developers configure in lightfast.yml)
+ * - "Namespace" = Pinecone implementation detail (how we isolate data physically)
+ * - Relationship: 1 store = 1 Pinecone namespace (1:1 mapping)
+ *
+ * ARCHITECTURE:
+ * - All stores share Pinecone indexes from PRIVATE_CONFIG (cost optimization)
+ * - Each store gets a unique hierarchical namespace within the shared index
+ * - Format: {clerkOrgId}:ws_{workspaceSlug}:store_{storeSlug}
+ * - Example: org_123abc:ws_robustchicken:store_default
+ *
  * Idempotent store and Pinecone namespace provisioning.
  * Can be triggered by:
  * - docs-ingestion workflow
@@ -26,11 +37,19 @@ import { createInngestCaller } from "../../lib";
 /**
  * Resolve hierarchical namespace name for a store
  *
- * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
- * Example: "org_org123:ws_abc456:store_docs"
+ * Format: {clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+ * Example: "org_123abc:ws_0iu9we9itb2ez17bh5cji:store_default"
+ *
+ * Note: clerkOrgId already contains "org_" prefix (e.g., "org_123abc")
+ * workspaceId is the stable UUID identifier
  *
  * This replaces per-store index names with namespaces within shared indexes.
  * All stores now share indexes from PRIVATE_CONFIG.pinecone.indexes.
+ *
+ * Pinecone namespace constraints:
+ * - Max length: 2048 characters ✅
+ * - Allowed characters: Alphanumeric, hyphens, underscores
+ * - Auto-created on first upsert
  */
 function resolveNamespaceName(
 	clerkOrgId: string,
@@ -41,9 +60,11 @@ function resolveNamespaceName(
 		s
 			.toLowerCase()
 			.replace(/[^a-z0-9_-]+/g, "")
-			.slice(0, 50); // Safety limit for namespace names
+			.slice(0, 50); // Safety limit for namespace segment
 
-	return `org_${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}:store_${sanitize(storeSlug)}`;
+	// clerkOrgId already has "org_" prefix (e.g., "org_35ztohqbmqsscw67jwbywlg2l51")
+	// Sanitize preserves underscores, so we get clean namespace names
+	return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}:store_${sanitize(storeSlug)}`;
 }
 
 /**
@@ -180,7 +201,7 @@ export const ensureStore = inngest.createFunction(
 					workspaceId,
 				});
 
-				// Generate hierarchical namespace name
+				// Generate hierarchical namespace name using workspaceId (stable UUID)
 				const namespaceName = resolveNamespaceName(
 					workspace.clerkOrgId,
 					workspaceId,

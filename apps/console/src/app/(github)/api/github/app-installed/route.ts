@@ -4,17 +4,17 @@ import { auth } from "@clerk/nextjs/server";
 import { env } from "~/env";
 
 /**
- * GitHub App Setup Callback
+ * GitHub App Installation Callback
  *
  * This route is called by GitHub after a user installs or configures the GitHub App.
- * It receives the installation_id, then redirects to OAuth flow to get user access token.
+ * It receives the installation_id, then redirects to user OAuth flow to get access token.
  *
  * Flow:
  * 1. User completes GitHub App installation
  * 2. GitHub redirects here with installation_id
- * 3. We redirect to /api/github/auth (OAuth flow)
- * 4. OAuth callback fetches installations and stores in database
- * 5. User redirected back to /account/teams/new page
+ * 3. We redirect to /api/github/authorize-user (user OAuth flow)
+ * 4. User-authorized callback fetches installations and stores in database
+ * 5. User redirected back to application
  *
  * Query Parameters:
  * - installation_id: The GitHub App installation ID
@@ -24,15 +24,12 @@ import { env } from "~/env";
 export async function GET(request: NextRequest) {
 	const searchParams = request.nextUrl.searchParams;
 	const installationId = searchParams.get("installation_id");
-	const setupAction = searchParams.get("setup_action");
-
-	console.log("GitHub App setup callback:", {
-		installationId,
-		setupAction,
-	});
 
 	// Verify user is authenticated
-	const { userId } = await auth();
+	// IMPORTANT: Use treatPendingAsSignedOut: false to allow pending users (users without org)
+	// Pending users are in the process of creating their first org/workspace
+	const { userId } = await auth({ treatPendingAsSignedOut: false });
+
 	if (!userId) {
 		return NextResponse.redirect(new URL("/sign-in", request.url));
 	}
@@ -49,9 +46,9 @@ export async function GET(request: NextRequest) {
 	// Check for custom callback from install route
 	const customCallback = request.cookies.get("github_install_callback")?.value;
 
-	// After installation, redirect to OAuth flow to get user access token
+	// After installation, redirect to user OAuth flow to get user access token
 	// This will fetch the installations and store them in the database
-	const oauthUrl = new URL("/api/github/auth", baseUrl);
+	const oauthUrl = new URL("/api/github/authorize-user", baseUrl);
 
 	// Pass callback URL to OAuth flow
 	const finalCallback = customCallback ?? "/account/teams/new";

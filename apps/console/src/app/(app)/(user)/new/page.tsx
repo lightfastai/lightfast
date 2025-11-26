@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { HydrateClient } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
 import { WorkspaceHeader } from "./_components/workspace-header";
 import { OrganizationSelector } from "./_components/organization-selector";
 import { WorkspaceNameInput } from "./_components/workspace-name-input";
@@ -31,16 +31,17 @@ import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer
  *
  * Data Flow:
  * 1. (app)/layout.tsx prefetches organization.listUserOrganizations (user-scoped, no org needed)
- * 2. This page passes through to client components via HydrateClient
- * 3. NewWorkspaceInitializer reads cache + URL params to set initial form state
- * 4. OrganizationSelector uses cached orgs for dropdown
- * 5. GitHubConnector fetches org-scoped data AFTER user selects org
+ * 2. This page prefetches userSources.github.get (user-scoped, GitHub connection status)
+ * 3. Data passed through to client components via HydrateClient
+ * 4. NewWorkspaceInitializer reads cache + URL params to set initial form state
+ * 5. OrganizationSelector uses cached orgs for dropdown
+ * 6. GitHubConnector uses prefetched GitHub connection status (no client-side fetch!)
  *
  * This pattern:
  * - ✅ Uses tRPC consistently (no mixing with Clerk server APIs)
  * - ✅ Works for authenticated users without active org
  * - ✅ Handles timing issues (cache updated optimistically on org creation)
- * - ✅ No unnecessary server-side data fetching
+ * - ✅ Prefetches all user-scoped data for instant page load
  */
 export default async function NewWorkspacePage({
   searchParams,
@@ -51,6 +52,10 @@ export default async function NewWorkspacePage({
   const params = await searchParams;
   const teamSlugHint = params.teamSlug;
   const initialWorkspaceName = params.workspaceName ?? "";
+
+  // Prefetch GitHub user source (user-scoped data, no org needed)
+  // This prevents client-side fetch waterfall in GitHubConnector
+  prefetch(userTrpc.userSources.github.get.queryOptions());
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">

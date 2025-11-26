@@ -127,20 +127,16 @@ export const githubSync = inngest.createFunction(
       sourceData.githubConfig;
 
     // Step 2: Ensure store exists
-    const storeSlug = await step.run("ensure-store", async () => {
-      const slug = "default";
+    const storeSlug = "default";
 
-      await inngest.send({
-        name: "apps-console/store.ensure",
-        data: {
-          workspaceId,
-          workspaceKey,
-          storeSlug: slug,
-          repoFullName,
-        },
-      });
-
-      return slug;
+    await step.sendEvent("ensure-store", {
+      name: "apps-console/store.ensure",
+      data: {
+        workspaceId,
+        workspaceKey,
+        storeSlug,
+        repoFullName,
+      },
     });
 
     // Step 3: Update workspace source sync status
@@ -307,29 +303,32 @@ export const githubSync = inngest.createFunction(
     });
 
     // Step 6: Trigger file processing for each file
-    await step.run("trigger-file-processing", async () => {
-      const commitSha = (syncParams.afterSha as string) || "HEAD";
-      const committedAt =
-        (syncParams.headCommitTimestamp as string) || new Date().toISOString();
-
-      for (const file of filesToProcess) {
-        const fileHash = hashToken(`${file.path}-${commitSha}`);
+    // These GitHub-specific events are handled by adapters that:
+    // 1. Fetch file content from GitHub
+    // 2. Transform to generic document events
+    // 3. Send to generic processors
+    const eventIds = await step.sendEvent(
+      "trigger-file-processing",
+      filesToProcess.map((file) => {
+        const commitSha = (syncParams.afterSha as string) || "HEAD";
+        const committedAt =
+          (syncParams.headCommitTimestamp as string) || new Date().toISOString();
 
         if (file.status === "removed") {
-          // Delete file
-          await inngest.send({
-            name: "apps-console/docs.file.delete",
+          // Adapter: githubDeleteAdapter → documents.delete
+          return {
+            name: "apps-console/docs.file.delete" as const,
             data: {
               workspaceId,
               storeSlug,
               repoFullName,
               filePath: file.path,
             },
-          });
+          };
         } else {
-          // Process file (added or modified)
-          await inngest.send({
-            name: "apps-console/docs.file.process",
+          // Adapter: githubProcessAdapter → documents.process
+          return {
+            name: "apps-console/docs.file.process" as const,
             data: {
               workspaceId,
               storeSlug,
@@ -339,13 +338,16 @@ export const githubSync = inngest.createFunction(
               commitSha,
               committedAt,
             },
-          });
+          };
         }
-      }
+      })
+    );
 
+    await step.run("log-event-dispatch", async () => {
       log.info("Triggered file processing", {
         count: filesToProcess.length,
         syncMode,
+        eventIds: eventIds.ids.length,
       });
     });
 

@@ -176,9 +176,9 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **Homepage URL:** `http://localhost:3024`
 
-**Callback URL:** `http://localhost:3024/api/github/callback`
+**Callback URL:** `http://localhost:3024/api/github/user-authorized`
 
-**Setup URL:** `http://localhost:3024/api/github/setup`
+**Setup URL:** `http://localhost:3024/api/github/app-installed`
 
 **Webhook URL:** `https://your-ngrok-url.ngrok.io/api/github/webhooks`
 
@@ -192,7 +192,7 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **Homepage URL:** `https://console.lightfast.com`
 
-**Callback URL:** `https://console.lightfast.com/api/github/callback`
+**Callback URL:** `https://console.lightfast.com/api/github/user-authorized`
 
 **Webhook URL:** `https://console.lightfast.com/api/github/webhooks`
 

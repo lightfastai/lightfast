@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure } from "../../trpc";
+import { userScopedProcedure } from "../../trpc";
 import { clerkClient } from "@clerk/nextjs/server";
 import {
 	getOrganizationMembership,
@@ -21,7 +21,7 @@ export const clerkRouter = {
 	 *
 	 * Handles slug collisions by appending timestamp.
 	 */
-	createOrGetOrganization: protectedProcedure
+	createOrGetOrganization: userScopedProcedure
 		.input(
 			z.object({
 				orgName: z.string(),
@@ -69,7 +69,7 @@ export const clerkRouter = {
 	 *
 	 * Verifies GitHub membership and maps role to Clerk.
 	 */
-	addUserToOrganization: protectedProcedure
+	addUserToOrganization: userScopedProcedure
 		.input(
 			z.object({
 				clerkOrgId: z.string(),

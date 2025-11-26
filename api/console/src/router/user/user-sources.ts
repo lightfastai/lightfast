@@ -3,13 +3,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { userSources, type UserSource } from "@db/console/schema";
-import { protectedProcedure } from "../../trpc";
+import { userScopedProcedure } from "../../trpc";
 import {
 	getUserInstallations,
 	createGitHubApp,
+	getInstallationRepositories,
 } from "@repo/console-octokit-github";
 import { decrypt } from "@repo/lib";
 import { env } from "../../env";
+import yaml from "yaml";
 
 /**
  * User Sources Router
@@ -41,7 +43,7 @@ export const userSourcesRouter = {
 	 * Returns all OAuth integrations connected by the user
 	 * (GitHub, Notion, Linear, Sentry, etc.)
 	 */
-	list: protectedProcedure.query(async ({ ctx }) => {
+	list: userScopedProcedure.query(async ({ ctx }) => {
 		try {
 			const sources = await ctx.db
 				.select()
@@ -69,7 +71,7 @@ export const userSourcesRouter = {
 	/**
 	 * Disconnect an integration
 	 */
-	disconnect: protectedProcedure
+	disconnect: userScopedProcedure
 		.input(
 			z.object({
 				integrationId: z.string(),
@@ -114,7 +116,7 @@ export const userSourcesRouter = {
 		 * Returns the user's personal GitHub OAuth connection including
 		 * all GitHub App installations they have access to.
 		 */
-		get: protectedProcedure.query(async ({ ctx }) => {
+		get: userScopedProcedure.query(async ({ ctx }) => {
 			// Get user's GitHub source
 			const result = await ctx.db
 				.select()
@@ -160,7 +162,7 @@ export const userSourcesRouter = {
 		 *
 		 * Returns counts of added/removed installations.
 		 */
-		validate: protectedProcedure.mutation(async ({ ctx }) => {
+		validate: userScopedProcedure.mutation(async ({ ctx }) => {
 			// Get user's GitHub integration
 			const result = await ctx.db
 				.select()
@@ -265,10 +267,14 @@ export const userSourcesRouter = {
 		}),
 
 		/**
-		 * Store OAuth result (called from OAuth callback route)
-		 * Creates or updates integration with access token and installations
+		 * Store GitHub OAuth result (called from OAuth callback route)
+		 * Stores user's GitHub connection with access token and installations
+		 *
+		 * This is user-level data - the user's personal GitHub OAuth connection.
+		 * Later, when creating a workspace, we'll create workspaceIntegrations
+		 * that link specific repos from this userSource to workspaces.
 		 */
-		storeOAuthResult: protectedProcedure
+		storeOAuthResult: userScopedProcedure
 			.input(
 				z.object({
 					accessToken: z.string(),
@@ -289,9 +295,20 @@ export const userSourcesRouter = {
 				}),
 			)
 			.mutation(async ({ ctx, input }) => {
+				console.log("[tRPC userSources.github.storeOAuthResult] ========== Starting ==========");
+				console.log("[tRPC userSources.github.storeOAuthResult] User ID:", ctx.auth.userId);
+				console.log("[tRPC userSources.github.storeOAuthResult] Auth type:", ctx.auth.type);
+				console.log("[tRPC userSources.github.storeOAuthResult] Installations count:", input.installations.length);
+				console.log("[tRPC userSources.github.storeOAuthResult] Installations:", input.installations.map(i => ({
+					id: i.id,
+					accountLogin: i.accountLogin,
+					accountType: i.accountType,
+				})));
+
 				const now = new Date().toISOString();
 
 				// Check if userSource already exists for this user
+				console.log("[tRPC userSources.github.storeOAuthResult] Checking for existing userSource...");
 				const existingUserSource = await ctx.db
 					.select()
 					.from(userSources)
@@ -303,8 +320,11 @@ export const userSourcesRouter = {
 					)
 					.limit(1);
 
+				console.log("[tRPC userSources.github.storeOAuthResult] Existing userSource found:", !!existingUserSource[0]);
+
 				if (existingUserSource[0]) {
 					// Update existing userSource
+					console.log("[tRPC userSources.github.storeOAuthResult] Updating existing userSource:", existingUserSource[0].id);
 					await ctx.db
 						.update(userSources)
 						.set({
@@ -322,9 +342,11 @@ export const userSourcesRouter = {
 						})
 						.where(eq(userSources.id, existingUserSource[0].id));
 
+					console.log("[tRPC userSources.github.storeOAuthResult] ========== Updated Successfully ==========");
 					return { id: existingUserSource[0].id, created: false };
 				} else {
 					// Create new userSource
+					console.log("[tRPC userSources.github.storeOAuthResult] Creating new userSource...");
 					const result = await ctx.db
 						.insert(userSources)
 						.values({
@@ -344,7 +366,289 @@ export const userSourcesRouter = {
 						})
 						.returning({ id: userSources.id });
 
+					console.log("[tRPC userSources.github.storeOAuthResult] ========== Created Successfully ==========", result[0]!.id);
 					return { id: result[0]!.id, created: true };
+				}
+			}),
+
+		/**
+		 * Get repositories for a GitHub App installation
+		 *
+		 * Validates user owns the installation, then fetches repositories
+		 * using a GitHub App installation token.
+		 */
+		repositories: userScopedProcedure
+			.input(
+				z.object({
+					integrationId: z.string(), // userSource.id
+					installationId: z.string(),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// Verify user owns this userSource
+				const result = await ctx.db
+					.select()
+					.from(userSources)
+					.where(
+						and(
+							eq(userSources.id, input.integrationId),
+							eq(userSources.userId, ctx.auth.userId),
+						),
+					)
+					.limit(1);
+
+				const userSource = result[0];
+
+				if (!userSource) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "User source not found or access denied",
+					});
+				}
+
+				// Verify provider is GitHub
+				const providerMetadata = userSource.providerMetadata;
+				if (providerMetadata.provider !== "github") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider metadata type",
+					});
+				}
+
+				// Find the installation
+				const installations = providerMetadata.installations ?? [];
+				const installation = installations.find(
+					(i) => i.id === input.installationId,
+				);
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Installation not found or not accessible to this source",
+					});
+				}
+
+				// Fetch repositories using GitHub App
+				try {
+					const app = getGitHubApp();
+					const installationIdNumber = Number.parseInt(
+						input.installationId,
+						10,
+					);
+
+					const { repositories } = await getInstallationRepositories(
+						app,
+						installationIdNumber,
+					);
+
+					// Return repository data
+					return repositories.map((repo) => ({
+						id: repo.id.toString(),
+						name: repo.name,
+						fullName: repo.full_name,
+						owner: repo.owner?.login ?? "",
+						description: repo.description ?? null,
+						defaultBranch: repo.default_branch ?? "main",
+						isPrivate: repo.private ?? false,
+						isArchived: repo.archived ?? false,
+						url: repo.html_url ?? "",
+						language: repo.language ?? null,
+						stargazersCount: repo.stargazers_count ?? 0,
+						updatedAt: repo.updated_at ?? new Date().toISOString(),
+					}));
+				} catch (error: any) {
+					console.error("[tRPC userSources.github.repositories] Failed to fetch repositories:", error);
+
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch repositories from GitHub",
+						cause: error,
+					});
+				}
+			}),
+
+		/**
+		 * Detect repository configuration (lightfast.yml)
+		 *
+		 * Checks if the repository contains a lightfast.yml configuration file
+		 * and returns its content if found.
+		 */
+		detectConfig: userScopedProcedure
+			.input(
+				z.object({
+					integrationId: z.string(), // userSource.id
+					installationId: z.string(),
+					fullName: z.string(), // "owner/repo"
+					ref: z.string().optional(), // branch/tag/sha (defaults to default branch)
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// Verify user owns this userSource
+				const result = await ctx.db
+					.select()
+					.from(userSources)
+					.where(
+						and(
+							eq(userSources.id, input.integrationId),
+							eq(userSources.userId, ctx.auth.userId),
+						),
+					)
+					.limit(1);
+
+				const userSource = result[0];
+
+				if (!userSource) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "User source not found or access denied",
+					});
+				}
+
+				// Verify provider is GitHub
+				const providerMetadata = userSource.providerMetadata;
+				if (providerMetadata.provider !== "github") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider metadata type",
+					});
+				}
+
+				// Find the installation
+				const installation = providerMetadata.installations?.find(
+					(i) => i.id === input.installationId,
+				);
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Installation not found or not accessible to this source",
+					});
+				}
+
+				// Parse repository owner and name
+				const [owner, repo] = input.fullName.split("/");
+				if (!owner || !repo) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Invalid repository name format. Expected 'owner/repo'",
+					});
+				}
+
+				try {
+					const app = getGitHubApp();
+					const installationIdNumber = Number.parseInt(
+						input.installationId,
+						10,
+					);
+
+					// Get installation octokit
+					const octokit = await app.getInstallationOctokit(
+						installationIdNumber,
+					);
+
+					// Resolve ref (default to repository default branch)
+					let ref = input.ref;
+					if (!ref) {
+						const { data: repoInfo } = await octokit.request(
+							"GET /repos/{owner}/{repo}",
+							{
+								owner,
+								repo,
+								headers: { "X-GitHub-Api-Version": "2022-11-28" },
+							},
+						);
+						ref = repoInfo.default_branch;
+					}
+
+					// Validate ref format to prevent injection attacks
+					// Allow: alphanumeric, dots, dashes, slashes, underscores
+					if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message:
+								"Invalid ref format. Only alphanumeric characters, dots, dashes, slashes, and underscores are allowed.",
+						});
+					}
+
+					// Try common config file names
+					const candidates = [
+						"lightfast.yml",
+						".lightfast.yml",
+						"lightfast.yaml",
+						".lightfast.yaml",
+					];
+
+					for (const path of candidates) {
+						try {
+							const { data } = await octokit.request(
+								"GET /repos/{owner}/{repo}/contents/{path}",
+								{
+									owner,
+									repo,
+									path,
+									ref,
+									headers: { "X-GitHub-Api-Version": "2022-11-28" },
+								},
+							);
+
+							// Check if it's a file (not directory)
+							if ("content" in data && "type" in data && data.type === "file") {
+								// Validate file size (max 50KB to prevent abuse)
+								const maxSize = 50 * 1024; // 50KB
+								if ("size" in data && typeof data.size === "number") {
+									if (data.size > maxSize) {
+										throw new TRPCError({
+											code: "BAD_REQUEST",
+											message: `Config file too large. Maximum size is ${maxSize / 1024}KB.`,
+										});
+									}
+								}
+
+								const content = Buffer.from(data.content, "base64").toString(
+									"utf-8",
+								);
+
+								// Validate YAML format before returning
+								try {
+									yaml.parse(content);
+								} catch (yamlError) {
+									throw new TRPCError({
+										code: "BAD_REQUEST",
+										message: "Invalid YAML format in config file.",
+									});
+								}
+
+								return {
+									exists: true,
+									path,
+									content,
+									sha: data.sha,
+								};
+							}
+						} catch (error: any) {
+							// 404 means file doesn't exist, try next candidate
+							if (error.status === 404) {
+								continue;
+							}
+							// Other errors: log and continue
+							console.error(
+								`[tRPC userSources.github.detectConfig] Error checking ${path} in ${owner}/${repo}:`,
+								error,
+							);
+							continue;
+						}
+					}
+
+					// No config found
+					return { exists: false };
+				} catch (error: any) {
+					console.error("[tRPC userSources.github.detectConfig] Failed to detect config:", error);
+
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to detect repository configuration",
+						cause: error,
+					});
 				}
 			}),
 	},

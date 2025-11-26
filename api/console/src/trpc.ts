@@ -352,11 +352,6 @@ export const userScopedProcedure = sentrifiedProcedure
   });
 
 /**
- * @deprecated Use `userScopedProcedure` instead for clarity
- */
-export const protectedProcedure = userScopedProcedure;
-
-/**
  * Org-Scoped Procedure
  *
  * For org-level operations: workspaces, repositories, members, integrations.
@@ -398,40 +393,6 @@ export const orgScopedProcedure = sentrifiedProcedure
         ...ctx,
         // Type-safe: orgId is guaranteed to exist
         auth: ctx.auth as Extract<AuthContext, { type: "clerk-active" }>,
-      },
-    });
-  });
-
-/**
- * @deprecated Use `orgScopedProcedure` instead for clarity
- */
-export const requiresOrgProcedure = orgScopedProcedure;
-
-/**
- * Clerk Protected procedure
- *
- * Accepts both clerk-pending and clerk-active users.
- * Use when you need Clerk authentication but don't care about org status.
- *
- * @deprecated Prefer `protectedProcedure` or `requiresOrgProcedure` for clarity.
- *
- * @see https://trpc.io/docs/procedures
- */
-export const clerkProtectedProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "clerk-pending" && ctx.auth.type !== "clerk-active") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Clerk session required. Please sign in.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        // Type-safe clerk auth (either pending or active)
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk-pending" | "clerk-active" }>,
       },
     });
   });

@@ -130,6 +130,7 @@ export const deleteDocuments = inngest.createFunction(
             docId: docBySource.id,
             storeId: store.id,
             indexName: store.indexName,
+            namespaceName: store.namespaceName,
           };
         }
 
@@ -143,6 +144,7 @@ export const deleteDocuments = inngest.createFunction(
           docId: doc.id,
           storeId: store.id,
           indexName: store.indexName,
+          namespaceName: store.namespaceName,
         };
       } catch (error) {
         log.error("Failed to find document", {
@@ -163,12 +165,17 @@ export const deleteDocuments = inngest.createFunction(
     // Step 2: Delete vectors from Pinecone via metadata filter
     await step.run("delete-vectors", async () => {
       try {
-        await pineconeClient.deleteByMetadata(docInfo.indexName, {
-          docId: docInfo.docId,
-        });
+        await pineconeClient.deleteByMetadata(
+          docInfo.indexName,
+          {
+            docId: docInfo.docId,
+          },
+          docInfo.namespaceName,
+        );
 
         log.info("Deleted vectors from Pinecone via metadata (multi-source)", {
           indexName: docInfo.indexName,
+          namespaceName: docInfo.namespaceName,
           docId: docInfo.docId,
         });
       } catch (error) {

@@ -95,8 +95,20 @@ export default clerkMiddleware(
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
+    // Log middleware flow for GitHub routes
+    if (req.nextUrl.pathname.startsWith('/api/github')) {
+      console.log("[Middleware] GitHub route detected:", {
+        path: req.nextUrl.pathname,
+        userId,
+        orgId,
+        isPending,
+        isTeamCreationRoute: isTeamCreationRoute(req),
+      });
+    }
+
     // Helper to apply headers and return redirect
     const createRedirectResponse = async (url: URL) => {
+      console.log("[Middleware] Creating redirect response to:", url.toString());
       const redirectResponse = NextResponse.redirect(url);
       const headersResponse = await securityHeaders();
 
@@ -115,6 +127,9 @@ export default clerkMiddleware(
     // Team creation routes - allow pending users
     else if (isTeamCreationRoute(req)) {
       // Allow both pending and active users
+      if (req.nextUrl.pathname.startsWith('/api/github')) {
+        console.log("[Middleware] Allowing GitHub route (team creation)");
+      }
     }
     // User-scoped tRPC routes: allow both pending and active users
     else if (isUserScopedRoute(req)) {

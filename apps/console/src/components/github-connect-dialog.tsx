@@ -76,7 +76,7 @@ export function GitHubConnectDialog({
 
 	const handleGitHubAuth = () => {
 		// Redirect to GitHub App installation
-		window.location.href = "/api/github/install";
+		window.location.href = "/api/github/install-app";
 	};
 
 	return (

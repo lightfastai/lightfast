@@ -70,7 +70,7 @@ export interface WorkspaceMetricsSummary {
 // ============================================================================
 
 export type EnrichedConnection = RouterOutputs["workspace"]["sources"]["list"]["list"][number];
-export type GitHubIntegration = RouterOutputs["integration"]["github"]["list"];
+export type GitHubIntegration = RouterOutputs["userSources"]["github"]["get"];
 
 // ============================================================================
 // Organization
@@ -78,9 +78,6 @@ export type GitHubIntegration = RouterOutputs["integration"]["github"]["list"];
 
 export type Organization = RouterOutputs["organization"]["listUserOrganizations"][number];
 export type OrganizationDetail = RouterOutputs["organization"]["find"];
-// Deprecated: Use OrganizationDetail instead
-/** @deprecated Use OrganizationDetail instead - unified find procedure handles both ID and slug */
-export type OrganizationDetailFromOrgId = RouterOutputs["organization"]["find"];
 
 // ============================================================================
 // System Health

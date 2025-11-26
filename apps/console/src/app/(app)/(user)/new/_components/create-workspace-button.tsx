@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useToast } from "@repo/ui/hooks/use-toast";
 import { useTRPC } from "@repo/console-trpc/react";
+import { useOrganizationList } from "@clerk/nextjs";
 import { useWorkspaceForm } from "./workspace-form-provider";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
@@ -24,6 +25,7 @@ export function CreateWorkspaceButton() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { setActive } = useOrganizationList();
   const form = useFormContext<WorkspaceFormValues>();
 
   // Read cached organization list
@@ -45,8 +47,10 @@ export function CreateWorkspaceButton() {
   const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
 
   // Create workspace mutation with optimistic updates
+  // Use workspaceAccess (user router) for pending user support
+  // Optionally connects GitHub repository atomically (prevents race conditions)
   const createWorkspaceMutation = useMutation(
-    trpc.workspace.create.mutationOptions({
+    trpc.workspaceAccess.create.mutationOptions({
       onMutate: async (variables) => {
         // Only proceed with optimistic update if we have an org slug
         if (!selectedOrg?.slug) {
@@ -56,15 +60,16 @@ export function CreateWorkspaceButton() {
         const orgSlug = selectedOrg.slug;
 
         // Cancel outgoing queries to prevent race conditions
+        // Use workspaceAccess (user router) instead of workspace (org router) for pending users
         await queryClient.cancelQueries({
-          queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
+          queryKey: trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
           }).queryKey,
         });
 
         // Snapshot previous data for rollback
         const previous = queryClient.getQueryData(
-          trpc.workspace.listByClerkOrgSlug.queryOptions({
+          trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
           }).queryKey,
         );
@@ -72,7 +77,7 @@ export function CreateWorkspaceButton() {
         // Optimistically add new workspace to the list
         if (previous) {
           queryClient.setQueryData(
-            trpc.workspace.listByClerkOrgSlug.queryOptions({
+            trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: orgSlug,
             }).queryKey,
             produce(previous, (draft) => {
@@ -95,7 +100,7 @@ export function CreateWorkspaceButton() {
         // Rollback on error
         if (context?.previous && context.orgSlug) {
           queryClient.setQueryData(
-            trpc.workspace.listByClerkOrgSlug.queryOptions({
+            trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
             }).queryKey,
             context.previous,
@@ -106,34 +111,8 @@ export function CreateWorkspaceButton() {
         // Always invalidate to ensure consistency with server
         if (context?.orgSlug) {
           void queryClient.invalidateQueries({
-            queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
+            queryKey: trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
-            }).queryKey,
-          });
-        }
-      },
-    }),
-  );
-
-  // Connect repository directly to workspace (NEW simplified 2-table API)
-  const connectDirectMutation = useMutation(
-    trpc.integration.workspace.connectDirect.mutationOptions({
-      onError: (error) => {
-        const message = error instanceof Error ? error.message : null;
-        toast({
-          title: "Connection failed",
-          description:
-            message ?? "Failed to connect repository. Please try again.",
-          variant: "destructive",
-        });
-      },
-      onSettled: () => {
-        // Invalidate workspace list to ensure it's up to date
-        const orgSlug = selectedOrg?.slug;
-        if (orgSlug) {
-          void queryClient.invalidateQueries({
-            queryKey: trpc.workspace.listByClerkOrgSlug.queryOptions({
-              clerkOrgSlug: orgSlug,
             }).queryKey,
           });
         }
@@ -172,79 +151,67 @@ export function CreateWorkspaceButton() {
     }
 
     try {
-      // Step 1: Create workspace with user-provided name
+      // Build repository connection data if repository is selected
+      let githubRepository = undefined;
+      if (selectedRepository && userSourceId && selectedInstallation) {
+        githubRepository = {
+          userSourceId,
+          installationId: selectedInstallation.id,
+          repoId: selectedRepository.id,
+          repoName: selectedRepository.name,
+          repoFullName: selectedRepository.fullName,
+          defaultBranch: selectedRepository.defaultBranch,
+          isPrivate: selectedRepository.isPrivate,
+          isArchived: selectedRepository.isArchived,
+          syncConfig: {
+            branches: [selectedRepository.defaultBranch],
+            paths: ["**/*"],
+            events: [],
+            autoSync: true,
+          },
+        };
+      }
+
+      // Create workspace (and optionally connect repository atomically)
       const workspace = await createWorkspaceMutation.mutateAsync({
         clerkOrgId: selectedOrgId,
         workspaceName,
+        githubRepository,
       });
 
-      // If no repository selected, just redirect to workspace
-      if (!selectedRepository) {
-        toast({
-          title: "Workspace created!",
-          description: `${workspaceName} workspace is ready. Add sources to get started.`,
-        });
-        const orgSlug = selectedOrg?.slug;
-        const wsName = workspace.workspaceName;
-        router.push(`/${orgSlug}/${wsName}`);
-        return;
-      }
-
-      // Validate repository-specific requirements
-      if (!userSourceId || !selectedInstallation) {
-        toast({
-          title: "GitHub not connected",
-          description: "Please connect your GitHub account first.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Step 2: Connect repository directly to workspace (NEW simplified API)
-      const orgSlug = selectedOrg?.slug;
-      if (!orgSlug) {
-        throw new Error("Organization slug not found");
-      }
-
-      await connectDirectMutation.mutateAsync({
-        clerkOrgSlug: orgSlug,
-        workspaceName: workspace.workspaceName,
-        userSourceId,
-        installationId: selectedInstallation.id,
-        repoId: selectedRepository.id,
-        repoName: selectedRepository.name,
-        repoFullName: selectedRepository.fullName,
-        defaultBranch: selectedRepository.defaultBranch,
-        isPrivate: selectedRepository.isPrivate,
-        isArchived: selectedRepository.isArchived,
-        syncConfig: {
-          branches: [selectedRepository.defaultBranch],
-          paths: ["**/*"],
-          events: [],
-          autoSync: true,
-        },
-      });
-
-      // Show success toast and redirect
+      // Show success toast
+      const hasRepository = Boolean(githubRepository);
       toast({
         title: "Workspace created!",
-        description: `${workspaceName} has been created and is syncing.`,
+        description: hasRepository
+          ? `${workspaceName} has been created and is syncing.`
+          : `${workspaceName} workspace is ready. Add sources to get started.`,
       });
 
-      router.push(`/${orgSlug}/${workspace.workspaceName}`);
+      // Set active organization before navigation (prevents race conditions)
+      // Ensures Clerk cookies are updated before RSC request
+      if (setActive) {
+        await setActive({ organization: selectedOrgId });
+      }
+
+      // Redirect to workspace
+      const orgSlug = selectedOrg?.slug;
+      const wsName = workspace.workspaceName;
+      router.push(`/${orgSlug}/${wsName}`);
     } catch (error) {
       console.error("Workspace creation failed:", error);
-      // Error toast is shown by mutation onError handlers
+      toast({
+        title: "Creation failed",
+        description: error instanceof Error ? error.message : "Failed to create workspace. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const isDisabled =
-    !form.formState.isValid ||
-    createWorkspaceMutation.isPending ||
-    connectDirectMutation.isPending;
+    !form.formState.isValid || createWorkspaceMutation.isPending;
 
-  const isLoading =
-    createWorkspaceMutation.isPending || connectDirectMutation.isPending;
+  const isLoading = createWorkspaceMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">
@@ -252,9 +219,7 @@ export function CreateWorkspaceButton() {
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {createWorkspaceMutation.isPending
-              ? "Creating workspace..."
-              : "Connecting repository..."}
+            Creating workspace...
           </>
         ) : (
           "Create workspace"

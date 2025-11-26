@@ -9,7 +9,7 @@ import {
 	LIGHTFAST_API_KEY_PREFIX,
 } from "@repo/console-api-key";
 import { userApiKeys } from "@db/console/schema";
-import { protectedProcedure } from "../../trpc";
+import { userScopedProcedure } from "../../trpc";
 
 /**
  * User API Keys Router
@@ -25,7 +25,7 @@ export const userApiKeysRouter = {
 	 * List user's API keys
 	 * Does NOT return the actual key values, only metadata
 	 */
-	list: protectedProcedure.query(async ({ ctx }) => {
+	list: userScopedProcedure.query(async ({ ctx }) => {
 		try {
 			const userKeys = await ctx.db
 				.select()
@@ -58,7 +58,7 @@ export const userApiKeysRouter = {
 	 * Returns the generated key ONLY ONCE - it cannot be retrieved again.
 	 * The key is hashed before storage.
 	 */
-	create: protectedProcedure
+	create: userScopedProcedure
 		.input(
 			z.object({
 				name: z.string().min(1).max(100),
@@ -109,7 +109,7 @@ export const userApiKeysRouter = {
 	/**
 	 * Revoke an API key
 	 */
-	revoke: protectedProcedure
+	revoke: userScopedProcedure
 		.input(
 			z.object({
 				keyId: z.string(),
@@ -144,7 +144,7 @@ export const userApiKeysRouter = {
 	/**
 	 * Delete an API key permanently
 	 */
-	delete: protectedProcedure
+	delete: userScopedProcedure
 		.input(
 			z.object({
 				keyId: z.string(),
@@ -185,7 +185,7 @@ export const userApiKeysRouter = {
 	 *
 	 * ⚠️ The new key is returned ONLY ONCE and cannot be retrieved again.
 	 */
-	rotate: protectedProcedure
+	rotate: userScopedProcedure
 		.input(
 			z.object({
 				keyId: z.string(),

@@ -325,31 +325,33 @@ export const processDocuments = inngest.createFunction(
     // Trigger relationship extraction for processed documents
     const processedDocs = results.filter((r) => r.status === "processed");
     if (processedDocs.length > 0) {
-      await step.run("trigger-relationship-extraction", async () => {
-        const eventsToSend = events
-          .filter((e) =>
-            processedDocs.some(
-              (p) => p.docId === e.data.documentId && e.data.relationships,
-            ),
-          )
-          .map((e) => ({
-            name: "apps-console/relationships.extract" as const,
-            data: {
-              documentId: e.data.documentId,
-              storeSlug: e.data.storeSlug,
-              workspaceId: e.data.workspaceId,
-              sourceType: e.data.sourceType,
-              relationships: e.data.relationships!,
-            },
-          }));
+      const eventsToSend = events
+        .filter((e) =>
+          processedDocs.some(
+            (p) => p.docId === e.data.documentId && e.data.relationships,
+          ),
+        )
+        .map((e) => ({
+          name: "apps-console/relationships.extract" as const,
+          data: {
+            documentId: e.data.documentId,
+            storeSlug: e.data.storeSlug,
+            workspaceId: e.data.workspaceId,
+            sourceType: e.data.sourceType,
+            relationships: e.data.relationships!,
+          },
+        }));
 
-        if (eventsToSend.length > 0) {
-          await inngest.send(eventsToSend);
+      if (eventsToSend.length > 0) {
+        const eventIds = await step.sendEvent("trigger-relationship-extraction", eventsToSend);
+
+        await step.run("log-relationship-extraction", async () => {
           log.info("Triggered relationship extraction", {
             count: eventsToSend.length,
+            eventIds: eventIds.ids.length,
           });
-        }
-      });
+        });
+      }
     }
 
     const processed = results.filter((r) => r.status === "processed");
@@ -513,14 +515,22 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
       continue;
     }
 
-    await pineconeClient.upsertVectors(indexName, {
-      ids,
-      vectors,
-      metadata,
-    });
+    // Get namespace from first doc in bucket (all share same namespace)
+    const namespaceName = bucket[0]!.store.namespaceName;
+
+    await pineconeClient.upsertVectors(
+      indexName,
+      {
+        ids,
+        vectors,
+        metadata,
+      },
+      namespaceName,
+    );
 
     log.info("Upserted vectors to Pinecone (multi-source)", {
       indexName,
+      namespaceName,
       count: ids.length,
     });
   }

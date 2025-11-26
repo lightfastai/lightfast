@@ -118,24 +118,25 @@ export const sourceConnected = inngest.createFunction(
     });
 
     // Step 4: Trigger provider-specific full sync
-    await step.run("trigger-provider-sync", async () => {
-      await inngest.send({
-        name: "apps-console/source.sync",
-        data: {
-          workspaceId,
-          workspaceKey,
-          sourceId,
-          sourceType,
-          syncMode: "full",
-          trigger: "config-change", // Initial connection = first-time config detection
-          syncParams: sourceMetadata,
-        },
-      });
+    const eventIds = await step.sendEvent("trigger-provider-sync", {
+      name: "apps-console/source.sync",
+      data: {
+        workspaceId,
+        workspaceKey,
+        sourceId,
+        sourceType,
+        syncMode: "full",
+        trigger: "config-change", // Initial connection = first-time config detection
+        syncParams: sourceMetadata,
+      },
+    });
 
+    await step.run("log-sync-dispatch", async () => {
       log.info("Triggered provider sync", {
         sourceId,
         sourceType,
         syncMode: "full",
+        eventId: eventIds.ids[0],
       });
     });
 

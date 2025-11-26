@@ -71,9 +71,13 @@ export function TRPCReactProvider({
           condition: (op) => {
             // User-scoped procedures: organization.*, account.*, workspaceAccess.*
             const path = op.path;
-            return path.startsWith('organization.') ||
-                   path.startsWith('account.') ||
-                   path.startsWith('workspaceAccess.');
+            return (
+              path.startsWith("organization.") ||
+              path.startsWith("account.") ||
+              path.startsWith("workspaceAccess.") ||
+              path.startsWith("userSources.") ||
+              path.startsWith("userApiKeys.")
+            );
           },
           // True branch: user-scoped endpoint
           true: httpBatchStreamLink({

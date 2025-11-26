@@ -30,12 +30,11 @@ import { extractRelationships } from "./workflow/processing/extract-relationship
 import { ensureStore } from "./workflow/infrastructure/ensure-store";
 import { recordActivity } from "./workflow/infrastructure/record-activity";
 
-// Backward compatibility - GitHub adapters (deprecated, will be removed)
-// TODO: Fix import paths and dependencies before uncommenting
-// import {
-// 	githubProcessAdapter,
-// 	githubDeleteAdapter,
-// } from "./workflow/_deprecated/sources/github-adapter";
+// GitHub adapters (transform GitHub-specific events to generic document events)
+import {
+  githubProcessAdapter,
+  githubDeleteAdapter,
+} from "./workflow/adapters/github-adapter";
 
 // Export Inngest client
 export { inngest };
@@ -52,8 +51,8 @@ export { processDocuments, deleteDocuments, extractRelationships };
 // Export infrastructure workflows
 export { ensureStore, recordActivity };
 
-// Backward compatibility exports (deprecated)
-// export { githubProcessAdapter, githubDeleteAdapter };
+// Export GitHub adapters
+export { githubProcessAdapter, githubDeleteAdapter };
 
 /**
  * Create the route context for Next.js API routes
@@ -106,6 +105,10 @@ export function createInngestRouteContext() {
 			githubPushHandler,
 			githubSync,
 
+			// GitHub adapters (fetch content, transform to generic events)
+			githubProcessAdapter,
+			githubDeleteAdapter,
+
 			// Generic processing
 			processDocuments,
 			deleteDocuments,
@@ -114,11 +117,6 @@ export function createInngestRouteContext() {
 			// Infrastructure
 			ensureStore,
 			recordActivity,
-
-			// Backward compatibility (deprecated)
-			// TODO: Fix and re-enable deprecated adapters
-			// githubProcessAdapter,
-			// githubDeleteAdapter,
 		],
 		servePath: "/api/inngest",
 	});

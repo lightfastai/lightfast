@@ -4,7 +4,7 @@ import { workspaceUserActivities } from "@db/console/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 
-import { protectedProcedure, resolveWorkspaceByName } from "../../trpc";
+import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 
 /**
  * Activities Router
@@ -17,7 +17,7 @@ export const activitiesRouter = {
    * Get recent activities for workspace timeline
    * Returns paginated activities with filtering options
    */
-  list: protectedProcedure
+  list: orgScopedProcedure
     .input(
       z.object({
         clerkOrgSlug: z.string(),
@@ -102,7 +102,7 @@ export const activitiesRouter = {
    * Get activity statistics for the workspace
    * Returns counts by category for the last 24 hours
    */
-  stats: protectedProcedure
+  stats: orgScopedProcedure
     .input(
       z.object({
         clerkOrgSlug: z.string(),

@@ -136,11 +136,11 @@ export const sourceSync = inngest.createFunction(
     });
 
     // Step 4: Route to provider-specific sync workflow
-    await step.run("route-to-provider", async () => {
+    const eventIds = await (async () => {
       switch (sourceType) {
         case "github":
           // Trigger GitHub-specific sync
-          await inngest.send({
+          return await step.sendEvent("route-to-github", {
             name: "apps-console/github.sync",
             data: {
               workspaceId,
@@ -152,7 +152,6 @@ export const sourceSync = inngest.createFunction(
               syncParams: syncParams || {},
             },
           });
-          break;
 
         case "linear":
           // TODO: Trigger Linear-specific sync
@@ -169,12 +168,15 @@ export const sourceSync = inngest.createFunction(
         default:
           throw new Error(`Unsupported source type: ${sourceType}`);
       }
+    })();
 
+    await step.run("log-provider-dispatch", async () => {
       log.info("Routed to provider sync", {
         sourceId,
         sourceType,
         syncMode,
         jobId,
+        eventId: eventIds.ids[0],
       });
     });
 

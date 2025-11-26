@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { resolveEmbeddingDefaults } from "@repo/console-embed";
-import { protectedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
+import { orgScopedProcedure, inngestM2MProcedure, resolveWorkspaceByName } from "../../trpc";
 import {
 	getOrCreateStore,
 	getStoreBySlug,
@@ -39,7 +39,7 @@ export const storesRouter = {
 	 *
 	 * Auto-provisions Pinecone index if store doesn't exist.
 	 */
-	getOrCreate: protectedProcedure
+	getOrCreate: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
@@ -88,7 +88,7 @@ export const storesRouter = {
 	/**
 	 * Get a store by name
 	 */
-	getByName: protectedProcedure
+	getByName: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),
@@ -120,7 +120,7 @@ export const storesRouter = {
 	/**
 	 * List all stores for a workspace
 	 */
-	listByWorkspace: protectedProcedure
+	listByWorkspace: orgScopedProcedure
 		.input(
 			z.object({
 				clerkOrgSlug: z.string(),

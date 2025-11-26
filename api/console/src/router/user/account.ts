@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@clerk/nextjs/server";
-import { protectedProcedure } from "../../trpc";
+import { userScopedProcedure } from "../../trpc";
 
 /**
  * Account Router
@@ -24,7 +24,7 @@ export const accountRouter = {
 	 * - Username
 	 * - Profile image
 	 */
-	get: protectedProcedure.query(async ({ ctx }) => {
+	get: userScopedProcedure.query(async ({ ctx }) => {
 		try {
 			const clerk = await clerkClient();
 			const user = await clerk.users.getUser(ctx.auth.userId);
