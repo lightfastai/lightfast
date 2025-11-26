@@ -153,7 +153,7 @@ export const integrationConnectedMetadataSchema = z
   .object({
     provider: z.string(),
     repoFullName: z.string(),
-    repoId: z.number(),
+    repoId: z.string(),
     isPrivate: z.boolean(),
     syncConfig: z.record(z.unknown()),
   })
@@ -167,7 +167,7 @@ export const integrationStatusUpdatedMetadataSchema = z
     provider: z.string(),
     isActive: z.boolean(),
     reason: z.string().optional(),
-    githubRepoId: z.number(),
+    githubRepoId: z.string(),
   })
   .passthrough();
 
@@ -178,8 +178,8 @@ export const integrationConfigUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
     configStatus: z.string(),
-    configPath: z.string().optional(),
-    githubRepoId: z.number(),
+    configPath: z.string().nullable().optional(),
+    githubRepoId: z.string(),
   })
   .passthrough();
 
@@ -190,7 +190,7 @@ export const integrationDisconnectedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
-    githubInstallationId: z.number(),
+    githubInstallationId: z.string(),
   })
   .passthrough();
 
@@ -201,7 +201,7 @@ export const integrationDeletedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
-    githubRepoId: z.number(),
+    githubRepoId: z.string(),
   })
   .passthrough();
 
@@ -212,7 +212,7 @@ export const integrationMetadataUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
     updates: z.record(z.unknown()),
-    githubRepoId: z.number(),
+    githubRepoId: z.string(),
   })
   .passthrough();
 
@@ -264,11 +264,8 @@ export const jobRestartedMetadataSchema = z
 /**
  * Activity Metadata Schema
  *
- * Union of all activity metadata types for runtime validation.
- *
- * For backward compatibility with existing records, we also accept:
- * - Generic record type for activities not yet strongly typed
- * - Optional metadata (undefined)
+ * Discriminated union of all activity metadata types for runtime validation.
+ * Each activity type must have a corresponding metadata schema defined.
  */
 export const activityMetadataSchema = z.union([
   // Workspace activities
@@ -289,10 +286,7 @@ export const activityMetadataSchema = z.union([
   // Job activities
   jobCancelledMetadataSchema,
   jobRestartedMetadataSchema,
-
-  // Backward compatibility
-  z.record(z.unknown()),
-]).optional();
+]);
 
 export type ActivityMetadata = z.infer<typeof activityMetadataSchema>;
 

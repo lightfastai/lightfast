@@ -31,12 +31,32 @@ import type {
   ActivityCategory,
   ActorType,
   InsertActivity,
+  ActivityMetadataMap,
 } from "@repo/console-validation";
 
 /**
- * Base activity data interface
+ * Type-safe activity data interface with discriminated union on action
+ *
+ * Use this to ensure metadata matches the action type at compile time.
+ *
+ * @example
+ * ```typescript
+ * const data: ActivityData<"workspace.created"> = {
+ *   workspaceId: "ws_123",
+ *   actorType: "user",
+ *   category: "workspace",
+ *   action: "workspace.created",
+ *   entityType: "workspace",
+ *   entityId: "ws_123",
+ *   metadata: {
+ *     workspaceName: "My Workspace",
+ *     workspaceSlug: "my-workspace",
+ *     clerkOrgId: "org_123",
+ *   },
+ * };
+ * ```
  */
-export interface ActivityData {
+export interface ActivityData<T extends keyof ActivityMetadataMap> {
   /** Workspace ID */
   workspaceId: string;
   /** Actor type (user, system, webhook, api) */
@@ -48,13 +68,13 @@ export interface ActivityData {
   /** Activity category */
   category: ActivityCategory;
   /** Action performed */
-  action: string;
+  action: T;
   /** Entity type */
   entityType: string;
   /** Entity ID */
   entityId: string;
-  /** Additional metadata */
-  metadata?: Record<string, unknown>;
+  /** Strongly-typed metadata based on action */
+  metadata: ActivityMetadataMap[T];
   /** Related activity ID (for grouping) */
   relatedActivityId?: string;
 }
@@ -82,16 +102,20 @@ export interface ActivityData {
  *   workspaceId: ctx.session.workspaceId,
  *   actorType: "user",
  *   actorUserId: ctx.session.userId,
- *   category: "api_key",
- *   action: "api_key.created",
- *   entityType: "api_key",
- *   entityId: apiKey.id,
- *   metadata: { name: apiKey.name, scopes: apiKey.scopes },
+ *   category: "workspace",
+ *   action: "workspace.created",
+ *   entityType: "workspace",
+ *   entityId: workspace.id,
+ *   metadata: {
+ *     workspaceName: workspace.name,
+ *     workspaceSlug: workspace.slug,
+ *     clerkOrgId: workspace.clerkOrgId,
+ *   },
  * });
  * ```
  */
-export async function recordCriticalActivity(
-  data: ActivityData
+export async function recordCriticalActivity<T extends keyof ActivityMetadataMap>(
+  data: ActivityData<T>
 ): Promise<{ success: true; activityId: string } | { success: false; error: string }> {
   try {
     const [result] = await db.insert(workspaceUserActivities).values({
@@ -159,12 +183,16 @@ export async function recordCriticalActivity(
  *   action: "workspace.updated",
  *   entityType: "workspace",
  *   entityId: workspaceId,
- *   metadata: { changes: { name: "New Name" } },
+ *   metadata: {
+ *     changes: {
+ *       name: { from: "Old Name", to: "New Name" },
+ *     },
+ *   },
  * });
  * ```
  */
-export async function recordActivity(
-  data: ActivityData
+export async function recordActivity<T extends keyof ActivityMetadataMap>(
+  data: ActivityData<T>
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
     await inngest.send({
@@ -229,15 +257,21 @@ export async function recordActivity(
  * recordSystemActivity({
  *   workspaceId: workspaceId,
  *   actorType: "system",
- *   category: "document",
- *   action: "document.processed",
- *   entityType: "document",
- *   entityId: documentId,
- *   metadata: { source: "github", chunks: 42 },
+ *   category: "job",
+ *   action: "job.cancelled",
+ *   entityType: "job",
+ *   entityId: jobId,
+ *   metadata: {
+ *     jobName: "sync-github-repo",
+ *     previousStatus: "running",
+ *     inngestFunctionId: "github-sync",
+ *   },
  * });
  * ```
  */
-export function recordSystemActivity(data: ActivityData): void {
+export function recordSystemActivity<T extends keyof ActivityMetadataMap>(
+  data: ActivityData<T>
+): void {
   // Fire-and-forget: don't await, don't block
   inngest
     .send({
