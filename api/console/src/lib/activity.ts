@@ -23,27 +23,30 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceUserActivities } from "@db/console/schema";
+import { workspaceUserActivities, type InsertWorkspaceUserActivity } from "@db/console/schema";
 import { inngest } from "../inngest/client/client";
 import { nanoid } from "@repo/lib";
 import { log } from "@vendor/observability/log";
 import type {
   ActivityCategory,
   ActorType,
-  InsertActivity,
-  ActivityMetadataMap,
+  ActivityType,
+  ActivityMetadata,
 } from "@repo/console-validation";
+import { activityTypeSchema } from "@repo/console-validation";
 
 /**
- * Type-safe activity data interface with discriminated union on action
+ * Activity data interface with validated type information
  *
- * Use this to ensure metadata matches the action type at compile time.
+ * Combines the validated ActivityType fields with additional context
+ * needed for recording activities (workspace, actor, entity information).
  *
  * @example
  * ```typescript
- * const data: ActivityData<"workspace.created"> = {
+ * const data: ActivityData = {
  *   workspaceId: "ws_123",
  *   actorType: "user",
+ *   actorUserId: ctx.session.userId,
  *   category: "workspace",
  *   action: "workspace.created",
  *   entityType: "workspace",
@@ -56,7 +59,7 @@ import type {
  * };
  * ```
  */
-export interface ActivityData<T extends keyof ActivityMetadataMap> {
+export interface ActivityData {
   /** Workspace ID */
   workspaceId: string;
   /** Actor type (user, system, webhook, api) */
@@ -67,14 +70,14 @@ export interface ActivityData<T extends keyof ActivityMetadataMap> {
   actorEmail?: string;
   /** Activity category */
   category: ActivityCategory;
-  /** Action performed */
-  action: T;
+  /** Action performed - must match one of the defined activity types */
+  action: ActivityType["action"];
   /** Entity type */
   entityType: string;
   /** Entity ID */
   entityId: string;
-  /** Strongly-typed metadata based on action */
-  metadata: ActivityMetadataMap[T];
+  /** Activity metadata - validated based on action type */
+  metadata: ActivityMetadata;
   /** Related activity ID (for grouping) */
   relatedActivityId?: string;
 }
@@ -114,10 +117,29 @@ export interface ActivityData<T extends keyof ActivityMetadataMap> {
  * });
  * ```
  */
-export async function recordCriticalActivity<T extends keyof ActivityMetadataMap>(
-  data: ActivityData<T>
+export async function recordCriticalActivity(
+  data: ActivityData
 ): Promise<{ success: true; activityId: string } | { success: false; error: string }> {
   try {
+    // Validate activity type (action, category, metadata)
+    const validation = activityTypeSchema.safeParse({
+      action: data.action,
+      category: data.category,
+      metadata: data.metadata,
+    });
+
+    if (!validation.success) {
+      log.error("Invalid activity data", {
+        workspaceId: data.workspaceId,
+        action: data.action,
+        errors: validation.error.flatten(),
+      });
+      return {
+        success: false,
+        error: `Invalid activity data: ${validation.error.errors.map(e => e.message).join(", ")}`,
+      };
+    }
+
     const [result] = await db.insert(workspaceUserActivities).values({
       workspaceId: data.workspaceId,
       actorType: data.actorType,
@@ -191,10 +213,29 @@ export async function recordCriticalActivity<T extends keyof ActivityMetadataMap
  * });
  * ```
  */
-export async function recordActivity<T extends keyof ActivityMetadataMap>(
-  data: ActivityData<T>
+export async function recordActivity(
+  data: ActivityData
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
+    // Validate activity type (action, category, metadata)
+    const validation = activityTypeSchema.safeParse({
+      action: data.action,
+      category: data.category,
+      metadata: data.metadata,
+    });
+
+    if (!validation.success) {
+      log.error("Invalid activity data", {
+        workspaceId: data.workspaceId,
+        action: data.action,
+        errors: validation.error.flatten(),
+      });
+      return {
+        success: false,
+        error: `Invalid activity data: ${validation.error.errors.map(e => e.message).join(", ")}`,
+      };
+    }
+
     await inngest.send({
       name: "apps-console/activity.record",
       data: {
@@ -269,9 +310,25 @@ export async function recordActivity<T extends keyof ActivityMetadataMap>(
  * });
  * ```
  */
-export function recordSystemActivity<T extends keyof ActivityMetadataMap>(
-  data: ActivityData<T>
+export function recordSystemActivity(
+  data: ActivityData
 ): void {
+  // Validate activity type (action, category, metadata)
+  const validation = activityTypeSchema.safeParse({
+    action: data.action,
+    category: data.category,
+    metadata: data.metadata,
+  });
+
+  if (!validation.success) {
+    log.error("Invalid system activity data", {
+      workspaceId: data.workspaceId,
+      action: data.action,
+      errors: validation.error.flatten(),
+    });
+    return; // Fire-and-forget: don't throw, just log and return
+  }
+
   // Fire-and-forget: don't await, don't block
   inngest
     .send({
@@ -315,7 +372,7 @@ export function recordSystemActivity<T extends keyof ActivityMetadataMap>(
  * @internal
  */
 export async function batchRecordActivities(
-  activities: InsertActivity[]
+  activities: InsertWorkspaceUserActivity[]
 ): Promise<{ success: boolean; insertedCount: number; error?: string }> {
   try {
     const result = await db

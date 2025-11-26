@@ -258,37 +258,144 @@ export const jobRestartedMetadataSchema = z
   .passthrough();
 
 // ============================================================================
-// Union Type for Runtime Validation
+// Discriminated Union for Runtime Validation
 // ============================================================================
 
 /**
- * Activity Metadata Schema
- *
- * Discriminated union of all activity metadata types for runtime validation.
- * Each activity type must have a corresponding metadata schema defined.
+ * Workspace Created Activity
  */
-export const activityMetadataSchema = z.union([
-  // Workspace activities
-  workspaceCreatedMetadataSchema,
-  workspaceUpdatedMetadataSchema,
+export const workspaceCreatedActivitySchema = z.object({
+  category: z.literal("workspace"),
+  action: z.literal("workspace.created"),
+  metadata: workspaceCreatedMetadataSchema,
+});
 
-  // Integration activities
-  integrationConnectedMetadataSchema,
-  integrationStatusUpdatedMetadataSchema,
-  integrationConfigUpdatedMetadataSchema,
-  integrationDisconnectedMetadataSchema,
-  integrationDeletedMetadataSchema,
-  integrationMetadataUpdatedMetadataSchema,
+/**
+ * Workspace Updated Activity
+ */
+export const workspaceUpdatedActivitySchema = z.object({
+  category: z.literal("workspace"),
+  action: z.literal("workspace.updated"),
+  metadata: workspaceUpdatedMetadataSchema,
+});
 
-  // Store activities
-  storeCreatedMetadataSchema,
+/**
+ * Integration Connected Activity
+ */
+export const integrationConnectedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.connected"),
+  metadata: integrationConnectedMetadataSchema,
+});
 
-  // Job activities
-  jobCancelledMetadataSchema,
-  jobRestartedMetadataSchema,
+/**
+ * Integration Status Updated Activity
+ */
+export const integrationStatusUpdatedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.status_updated"),
+  metadata: integrationStatusUpdatedMetadataSchema,
+});
+
+/**
+ * Integration Config Updated Activity
+ */
+export const integrationConfigUpdatedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.config_updated"),
+  metadata: integrationConfigUpdatedMetadataSchema,
+});
+
+/**
+ * Integration Disconnected Activity
+ */
+export const integrationDisconnectedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.disconnected"),
+  metadata: integrationDisconnectedMetadataSchema,
+});
+
+/**
+ * Integration Deleted Activity
+ */
+export const integrationDeletedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.deleted"),
+  metadata: integrationDeletedMetadataSchema,
+});
+
+/**
+ * Integration Metadata Updated Activity
+ */
+export const integrationMetadataUpdatedActivitySchema = z.object({
+  category: z.literal("integration"),
+  action: z.literal("integration.metadata_updated"),
+  metadata: integrationMetadataUpdatedMetadataSchema,
+});
+
+/**
+ * Store Created Activity
+ */
+export const storeCreatedActivitySchema = z.object({
+  category: z.literal("store"),
+  action: z.literal("store.created"),
+  metadata: storeCreatedMetadataSchema,
+});
+
+/**
+ * Job Cancelled Activity
+ */
+export const jobCancelledActivitySchema = z.object({
+  category: z.literal("job"),
+  action: z.literal("job.cancelled"),
+  metadata: jobCancelledMetadataSchema,
+});
+
+/**
+ * Job Restarted Activity
+ */
+export const jobRestartedActivitySchema = z.object({
+  category: z.literal("job"),
+  action: z.literal("job.restarted"),
+  metadata: jobRestartedMetadataSchema,
+});
+
+/**
+ * Discriminated Union of All Activity Types
+ *
+ * This discriminated union ensures type safety and runtime validation:
+ * - The discriminator is the 'action' field
+ * - Each action has its corresponding metadata structure
+ * - Category is enforced to match the action type
+ * - Zod will validate both structure and content at runtime
+ *
+ * Usage:
+ * ```typescript
+ * const result = activityTypeSchema.safeParse({
+ *   action: "workspace.created",
+ *   category: "workspace",
+ *   metadata: { workspaceName, workspaceSlug, clerkOrgId }
+ * });
+ * ```
+ */
+export const activityTypeSchema = z.discriminatedUnion("action", [
+  workspaceCreatedActivitySchema,
+  workspaceUpdatedActivitySchema,
+  integrationConnectedActivitySchema,
+  integrationStatusUpdatedActivitySchema,
+  integrationConfigUpdatedActivitySchema,
+  integrationDisconnectedActivitySchema,
+  integrationDeletedActivitySchema,
+  integrationMetadataUpdatedActivitySchema,
+  storeCreatedActivitySchema,
+  jobCancelledActivitySchema,
+  jobRestartedActivitySchema,
 ]);
 
-export type ActivityMetadata = z.infer<typeof activityMetadataSchema>;
+export type ActivityType = z.infer<typeof activityTypeSchema>;
+
+// For backward compatibility with database schema
+export type ActivityMetadata = ActivityType["metadata"];
 
 // ============================================================================
 // Individual Metadata Types (for type-safe usage in code)
@@ -306,64 +413,6 @@ export type StoreCreatedMetadata = z.infer<typeof storeCreatedMetadataSchema>;
 export type JobCancelledMetadata = z.infer<typeof jobCancelledMetadataSchema>;
 export type JobRestartedMetadata = z.infer<typeof jobRestartedMetadataSchema>;
 
-// ============================================================================
-// Activity Metadata Map (for compile-time type checking by action)
-// ============================================================================
-
-/**
- * Map of action names to their metadata types.
- * Use this for type-safe metadata based on the action field.
- *
- * Example usage:
- * ```typescript
- * type MyMetadata = ActivityMetadataMap["workspace.created"];
- * // MyMetadata is WorkspaceCreatedMetadata
- *
- * function trackActivity<T extends keyof ActivityMetadataMap>(
- *   action: T,
- *   metadata: ActivityMetadataMap[T]
- * ) {
- *   // TypeScript will enforce correct metadata type based on action
- * }
- * ```
- */
-export type ActivityMetadataMap = {
-  "workspace.created": WorkspaceCreatedMetadata;
-  "workspace.updated": WorkspaceUpdatedMetadata;
-  "integration.connected": IntegrationConnectedMetadata;
-  "integration.status_updated": IntegrationStatusUpdatedMetadata;
-  "integration.config_updated": IntegrationConfigUpdatedMetadata;
-  "integration.disconnected": IntegrationDisconnectedMetadata;
-  "integration.deleted": IntegrationDeletedMetadata;
-  "integration.metadata_updated": IntegrationMetadataUpdatedMetadata;
-  "store.created": StoreCreatedMetadata;
-  "job.cancelled": JobCancelledMetadata;
-  "job.restarted": JobRestartedMetadata;
-};
-
-/**
- * Schema map for validating metadata by action at runtime.
- *
- * Example usage:
- * ```typescript
- * const action = "workspace.created";
- * const schema = activityMetadataSchemaMap[action];
- * const result = schema.safeParse(metadata);
- * ```
- */
-export const activityMetadataSchemaMap = {
-  "workspace.created": workspaceCreatedMetadataSchema,
-  "workspace.updated": workspaceUpdatedMetadataSchema,
-  "integration.connected": integrationConnectedMetadataSchema,
-  "integration.status_updated": integrationStatusUpdatedMetadataSchema,
-  "integration.config_updated": integrationConfigUpdatedMetadataSchema,
-  "integration.disconnected": integrationDisconnectedMetadataSchema,
-  "integration.deleted": integrationDeletedMetadataSchema,
-  "integration.metadata_updated": integrationMetadataUpdatedMetadataSchema,
-  "store.created": storeCreatedMetadataSchema,
-  "job.cancelled": jobCancelledMetadataSchema,
-  "job.restarted": jobRestartedMetadataSchema,
-} as const;
 
 /**
  * Insert Activity Schema
@@ -388,8 +437,8 @@ export const insertActivitySchema = z.object({
   entityId: z.string().min(1).max(191),
   entityName: z.string().max(500).optional(),
 
-  // Context
-  metadata: activityMetadataSchema,
+  // Context - metadata is strongly typed based on activity type
+  metadata: z.custom<ActivityMetadata>(),
 
   // Request context
   requestId: z.string().optional(),
