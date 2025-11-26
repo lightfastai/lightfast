@@ -1,38 +1,40 @@
 /**
- * Source Connected Orchestration Workflow
+ * Source Connected Orchestration Workflow (GitHub)
  *
- * Generic orchestrator for when ANY source is connected to a workspace.
- * Routes to provider-specific sync workflows based on sourceType.
+ * Orchestrator for when a GitHub repository is connected to a workspace.
+ * Triggers a full sync of the repository.
  *
- * Triggered by: User connecting a source via UI (GitHub, Linear, Notion, etc.)
- * Emits: apps-console/source.sync (routed to provider-specific sync)
- *
- * This replaces the old repository-initial-sync workflow with a
- * provider-agnostic orchestration layer.
+ * Triggered by: User connecting a GitHub repository via UI
+ * Emits: apps-console/source.sync.github (triggers GitHub sync workflow)
  */
 
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceIntegrations, workspaceStores } from "@db/console/schema";
+import type {
+  SourceConnectedGitHubInput,
+  SourceConnectedGitHubOutputSuccess,
+  SourceConnectedGitHubOutputFailure,
+} from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
 import { getWorkspaceKey } from "@db/console/utils";
 
 /**
- * Source Connected Handler
+ * GitHub Source Connected Handler
  *
  * High-level orchestrator that:
  * 1. Creates job record for tracking
- * 2. Validates source exists and is active
- * 3. Routes to provider-specific sync workflow
+ * 2. Validates GitHub source exists and is active
+ * 3. Triggers full GitHub sync workflow
  */
 export const sourceConnected = inngest.createFunction(
   {
     id: "apps-console/source-connected",
-    name: "Source Connected",
-    description: "Orchestrates initial sync when a source is connected to workspace",
+    name: "GitHub Source Connected",
+    description: "Orchestrates initial sync when a GitHub repository is connected",
     retries: 3,
 
     // Cancel if source is disconnected before sync completes
@@ -48,7 +50,7 @@ export const sourceConnected = inngest.createFunction(
       finish: "50m", // Increased to accommodate source-sync completion wait
     },
   },
-  { event: "apps-console/source.connected" },
+  { event: "apps-console/source.connected.github" },
   async ({ event, step, runId }) => {
     const {
       workspaceId,
@@ -110,9 +112,14 @@ export const sourceConnected = inngest.createFunction(
 
     // Step 2: Create job record
     const jobId = await step.run("job.create", async () => {
-      const jobName = sourceType === "github"
-        ? `GitHub Sync: ${(sourceMetadata as any).repoFullName || "Unknown"}`
-        : `${sourceType} Sync`;
+      const jobName = `GitHub Sync: ${sourceMetadata.repoFullName}`;
+
+      const input: SourceConnectedGitHubInput = {
+        inngestFunctionId: "source-connected",
+        sourceId,
+        sourceType: "github",
+        sourceMetadata,
+      };
 
       return await createJob({
         clerkOrgId: metadata.clerkOrgId,
@@ -123,11 +130,7 @@ export const sourceConnected = inngest.createFunction(
         inngestFunctionId: "source-connected",
         name: jobName,
         trigger: "automatic", // Initial connection is always automatic
-        input: {
-          sourceId,
-          sourceType,
-          sourceMetadata,
-        },
+        input,
       });
     });
 
@@ -138,16 +141,16 @@ export const sourceConnected = inngest.createFunction(
 
     // Step 4: Trigger provider-specific full sync
     const eventIds = await step.sendEvent("sync.trigger-provider", {
-      name: "apps-console/source.sync",
+      name: "apps-console/source.sync.github",
       data: {
         workspaceId,
         workspaceKey,
         sourceId,
         storeId: metadata.storeId,
-        sourceType,
+        sourceType: "github",
         syncMode: "full",
         trigger: "config-change", // Initial connection = first-time config detection
-        syncParams: sourceMetadata,
+        syncParams: {},
       },
     });
 
@@ -172,28 +175,42 @@ export const sourceConnected = inngest.createFunction(
     await step.run("job.complete", async () => {
       if (syncCompletion === null) {
         // Timeout - mark job as failed
+        const output: SourceConnectedGitHubOutputFailure = {
+          inngestFunctionId: "source-connected",
+          status: "failure",
+          sourceId,
+          sourceType: "github",
+          repoFullName: sourceMetadata.repoFullName,
+          syncTriggered: true,
+          filesProcessed: 0,
+          filesFailed: 0,
+          storeSlug: "default",
+          error: "Sync timed out after 45 minutes",
+        };
+
         await completeJob({
           jobId,
           status: "failed",
-          output: {
-            sourceId,
-            sourceType,
-            syncTriggered: true,
-            error: "Sync timed out after 45 minutes",
-          },
+          output,
         });
       } else {
         // Success - complete with actual processing results
+        const output: SourceConnectedGitHubOutputSuccess = {
+          inngestFunctionId: "source-connected",
+          status: "success",
+          sourceId,
+          sourceType: "github",
+          repoFullName: sourceMetadata.repoFullName,
+          syncTriggered: true,
+          filesProcessed: syncCompletion.data.filesProcessed,
+          filesFailed: syncCompletion.data.filesFailed,
+          storeSlug: syncCompletion.data.storeSlug,
+        };
+
         await completeJob({
           jobId,
           status: "completed",
-          output: {
-            sourceId,
-            sourceType,
-            syncTriggered: true,
-            filesProcessed: syncCompletion.data.filesProcessed,
-            storeSlug: syncCompletion.data.storeSlug,
-          },
+          output,
         });
       }
     });

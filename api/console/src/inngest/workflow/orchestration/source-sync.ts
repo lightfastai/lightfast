@@ -1,43 +1,47 @@
 /**
- * Source Sync Orchestration Workflow
+ * Source Sync Orchestration Workflow (GitHub)
  *
- * Generic sync orchestrator for ANY source type.
- * Routes sync requests to provider-specific workflows.
+ * Orchestrates GitHub repository syncs (full or incremental).
+ * Routes sync requests to the GitHub provider workflow.
  *
  * Triggered by:
  * - Manual restart (user clicks "Restart" on job)
  * - Scheduled syncs
- * - Config changes (e.g., lightfast.yml modified)
- * - source.connected workflow
+ * - Config changes (lightfast.yml modified)
+ * - source.connected workflow (initial connection)
+ * - GitHub push webhooks (incremental)
  *
- * Routes to:
- * - GitHub → providers/github/sync.ts
- * - Linear → providers/linear/sync.ts (future)
- * - Notion → providers/notion/sync.ts (future)
+ * Routes to: providers/github/sync.ts
  */
 
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
+import type {
+  SourceSyncGitHubInput,
+  SourceSyncGitHubOutputSuccess,
+  SourceSyncGitHubOutputFailure,
+  GitHubSourceMetadata,
+} from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
 import { TRPCError } from "@trpc/server";
 
 /**
- * Source Sync Orchestrator
+ * GitHub Source Sync Orchestrator
  *
- * Provider-agnostic sync orchestration that:
- * 1. Validates source exists and is active
+ * GitHub-specific sync orchestration that:
+ * 1. Validates GitHub source exists and is active
  * 2. Creates job record for tracking
- * 3. Routes to provider-specific sync workflow
+ * 3. Routes to GitHub sync workflow
  */
 export const sourceSync = inngest.createFunction(
   {
     id: "apps-console/source-sync",
-    name: "Source Sync",
-    description: "Generic sync orchestrator for any source type",
+    name: "GitHub Source Sync",
+    description: "Orchestrates GitHub repository syncs (full or incremental)",
     retries: 3,
 
     // Cancel if source is disconnected during sync
@@ -53,7 +57,7 @@ export const sourceSync = inngest.createFunction(
       finish: "45m", // Increased to accommodate step.waitForEvent timeout
     },
   },
-  { event: "apps-console/source.sync" },
+  { event: "apps-console/source.sync.github" },
   async ({ event, step, runId }) => {
     const {
       workspaceId,
@@ -112,12 +116,30 @@ export const sourceSync = inngest.createFunction(
 
     // Step 2: Create job record
     const jobId = await step.run("job.create", async () => {
-      let jobName = `${sourceType} Sync: ${syncMode}`;
-
-      // Customize job name based on source type
-      if (sourceType === "github" && sourceData.source.sourceConfig.provider === "github") {
-        jobName = `GitHub Sync (${syncMode}): ${sourceData.source.sourceConfig.repoFullName}`;
+      // Type narrow to GitHub source config
+      if (sourceData.source.sourceConfig.provider !== "github") {
+        throw new Error(`Expected GitHub source, got ${sourceData.source.sourceConfig.provider}`);
       }
+
+      const jobName = `GitHub Sync (${syncMode}): ${sourceData.source.sourceConfig.repoFullName}`;
+
+      const sourceMetadata: GitHubSourceMetadata = {
+        repoId: sourceData.source.providerResourceId,
+        repoFullName: sourceData.source.sourceConfig.repoFullName,
+        defaultBranch: sourceData.source.sourceConfig.defaultBranch,
+        installationId: sourceData.source.sourceConfig.installationId,
+        isPrivate: sourceData.source.sourceConfig.isPrivate,
+      };
+
+      const input: SourceSyncGitHubInput = {
+        inngestFunctionId: "source-sync",
+        sourceId,
+        sourceType: "github",
+        sourceMetadata,
+        syncMode,
+        trigger,
+        syncParams: syncParams || {},
+      };
 
       return await createJob({
         clerkOrgId: sourceData.workspace.clerkOrgId,
@@ -128,13 +150,7 @@ export const sourceSync = inngest.createFunction(
         inngestFunctionId: "source-sync",
         name: jobName,
         trigger: trigger === "manual" ? "manual" : "automatic",
-        input: {
-          sourceId,
-          sourceType,
-          syncMode,
-          trigger,
-          syncParams,
-        },
+        input,
       });
     });
 
@@ -144,39 +160,18 @@ export const sourceSync = inngest.createFunction(
     });
 
     // Step 4: Route to provider-specific sync workflow
-    const eventIds = await (async () => {
-      switch (sourceType) {
-        case "github":
-          // Trigger GitHub-specific sync
-          return await step.sendEvent("sync.route-github", {
-            name: "apps-console/github.sync",
-            data: {
-              workspaceId,
-              workspaceKey,
-              sourceId,
-              syncMode,
-              trigger,
-              jobId,
-              syncParams: syncParams || {},
-            },
-          });
-
-        case "linear":
-          // TODO: Trigger Linear-specific sync
-          throw new Error("Linear sync not yet implemented");
-
-        case "notion":
-          // TODO: Trigger Notion-specific sync
-          throw new Error("Notion sync not yet implemented");
-
-        case "sentry":
-          // TODO: Trigger Sentry-specific sync
-          throw new Error("Sentry sync not yet implemented");
-
-        default:
-          throw new Error(`Unsupported source type: ${sourceType}`);
-      }
-    })();
+    const eventIds = await step.sendEvent("sync.route-github", {
+      name: "apps-console/github.sync",
+      data: {
+        workspaceId,
+        workspaceKey,
+        sourceId,
+        syncMode,
+        trigger,
+        jobId,
+        syncParams: syncParams || {},
+      },
+    });
 
     await step.run("sync.log-dispatch", async () => {
       log.info("Routed to provider sync", {
@@ -200,6 +195,11 @@ export const sourceSync = inngest.createFunction(
 
     // Step 6: Handle completion or timeout
     const finalStatus = await step.run("sync.finalize", async () => {
+      // Type narrow to GitHub source config
+      if (sourceData.source.sourceConfig.provider !== "github") {
+        throw new Error(`Expected GitHub source, got ${sourceData.source.sourceConfig.provider}`);
+      }
+
       if (syncResult === null) {
         // Timeout occurred - no completion event received within 40 minutes
         log.error("Provider sync timed out", {
@@ -209,16 +209,23 @@ export const sourceSync = inngest.createFunction(
           jobId,
         });
 
-        // Update job status to failed
+        const output: SourceSyncGitHubOutputFailure = {
+          inngestFunctionId: "source-sync",
+          status: "failure",
+          sourceId,
+          sourceType: "github",
+          repoFullName: sourceData.source.sourceConfig.repoFullName,
+          syncMode,
+          filesProcessed: 0,
+          filesFailed: 0,
+          timedOut: true,
+          error: "Sync timed out after 40 minutes",
+        };
+
         await completeJob({
           jobId,
           status: "failed",
-          output: {
-            sourceId,
-            sourceType,
-            syncMode,
-            error: "Sync timed out after 40 minutes",
-          },
+          output,
         });
 
         return {
@@ -237,9 +244,6 @@ export const sourceSync = inngest.createFunction(
         filesFailed: syncResult.data.filesFailed,
       });
 
-      // Job was already completed by the github-sync workflow,
-      // no need to call completeJob again here
-
       return {
         success: true,
         timedOut: false,
@@ -251,17 +255,32 @@ export const sourceSync = inngest.createFunction(
     // Step 7: Complete the source-sync job
     // IMPORTANT: source-sync creates its own job, so we need to complete it here
     await step.run("job.complete-source-sync", async () => {
+      if (finalStatus.timedOut) {
+        // Already completed with failure output above
+        return;
+      }
+
+      // Type narrow to GitHub source config
+      if (sourceData.source.sourceConfig.provider !== "github") {
+        throw new Error(`Expected GitHub source, got ${sourceData.source.sourceConfig.provider}`);
+      }
+
+      const output: SourceSyncGitHubOutputSuccess = {
+        inngestFunctionId: "source-sync",
+        status: "success",
+        sourceId,
+        sourceType: "github",
+        repoFullName: sourceData.source.sourceConfig.repoFullName,
+        syncMode,
+        filesProcessed: finalStatus.filesProcessed,
+        filesFailed: finalStatus.filesFailed,
+        timedOut: false,
+      };
+
       await completeJob({
-        jobId, // This is the source-sync job, not the github-sync job
-        status: finalStatus.timedOut ? "failed" : "completed",
-        output: {
-          sourceId,
-          sourceType,
-          syncMode,
-          filesProcessed: finalStatus.filesProcessed,
-          filesFailed: finalStatus.filesFailed,
-          timedOut: finalStatus.timedOut,
-        },
+        jobId,
+        status: "completed",
+        output,
       });
     });
 

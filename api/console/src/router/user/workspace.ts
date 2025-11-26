@@ -269,7 +269,7 @@ export const workspaceAccessRouter = {
           // Trigger initial sync via Inngest
           try {
             await inngest.send({
-              name: "apps-console/source.connected",
+              name: "apps-console/source.connected.github",
               data: {
                 workspaceId,
                 workspaceKey,

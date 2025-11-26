@@ -5,9 +5,10 @@
  *
  * Phase 1.6: Provider-agnostic workflow architecture
  * - Orchestration layer for routing sync requests
- * - Provider-specific workflows (GitHub, Linear, Notion, etc.)
- * - Generic document processing
- * - Infrastructure provisioning
+ * - Provider-specific workflows (GitHub sync, push handling)
+ * - Adapter pattern (GitHub → Generic transformation)
+ * - Generic document processing (multi-source)
+ * - Infrastructure provisioning (stores, activity logging)
  */
 
 import { serve } from "inngest/next";
@@ -21,6 +22,12 @@ import { sourceSync } from "./workflow/orchestration/source-sync";
 import { githubSync } from "./workflow/providers/github/sync";
 import { githubPushHandler } from "./workflow/providers/github/push-handler";
 
+// GitHub adapters (transform GitHub-specific events to generic document events)
+import {
+  githubProcessAdapter,
+  githubDeleteAdapter,
+} from "./workflow/adapters/github-adapter";
+
 // Generic document processing workflows
 import { processDocuments } from "./workflow/processing/process-documents";
 import { deleteDocuments } from "./workflow/processing/delete-documents";
@@ -29,12 +36,6 @@ import { extractRelationships } from "./workflow/processing/extract-relationship
 // Infrastructure workflows
 import { ensureStore } from "./workflow/infrastructure/ensure-store";
 import { recordActivity } from "./workflow/infrastructure/record-activity";
-
-// GitHub adapters (transform GitHub-specific events to generic document events)
-import {
-  githubProcessAdapter,
-  githubDeleteAdapter,
-} from "./workflow/adapters/github-adapter";
 
 // Export Inngest client
 export { inngest };
@@ -45,14 +46,14 @@ export { sourceConnected, sourceSync };
 // Export GitHub provider workflows
 export { githubSync, githubPushHandler };
 
+// Export GitHub adapters
+export { githubProcessAdapter, githubDeleteAdapter };
+
 // Export generic processing workflows
 export { processDocuments, deleteDocuments, extractRelationships };
 
 // Export infrastructure workflows
 export { ensureStore, recordActivity };
-
-// Export GitHub adapters
-export { githubProcessAdapter, githubDeleteAdapter };
 
 /**
  * Create the route context for Next.js API routes
@@ -70,17 +71,18 @@ export { githubProcessAdapter, githubDeleteAdapter };
  * 3. githubPushHandler - Routes GitHub push webhooks to sync
  * 4. githubSync - Handles full/incremental GitHub repository sync
  *
- * Generic Processing:
- * 5. processDocuments - Generic document processor (all sources)
- * 6. deleteDocuments - Generic document deleter (all sources)
- * 7. extractRelationships - Generic relationship extractor
+ * GitHub Adapters (Provider → Generic transformation):
+ * 5. githubProcessAdapter - Fetches GitHub content → documents.process
+ * 6. githubDeleteAdapter - Transforms deletions → documents.delete
+ *
+ * Generic Processing (Multi-Source):
+ * 7. processDocuments - Generic document processor (all sources)
+ * 8. deleteDocuments - Generic document deleter (all sources)
+ * 9. extractRelationships - Generic relationship extractor
  *
  * Infrastructure:
- * 8. ensureStore - Store provisioning (source-agnostic)
- *
- * Backward Compatibility (deprecated):
- * 9. githubProcessAdapter - OLD: GitHub to generic adapter
- * 10. githubDeleteAdapter - OLD: GitHub delete adapter
+ * 10. ensureStore - Store provisioning (source-agnostic)
+ * 11. recordActivity - Activity logging
  *
  * @example
  * ```typescript

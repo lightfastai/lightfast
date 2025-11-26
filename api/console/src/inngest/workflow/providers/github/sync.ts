@@ -376,20 +376,8 @@ export const githubSync = inngest.createFunction(
       },
     });
 
-    // Step 9: Complete job
-    await step.run("job.complete", async () => {
-      await completeJob({
-        jobId,
-        status: "completed",
-        output: {
-          sourceId,
-          repoFullName,
-          syncMode,
-          filesProcessed: filesToProcess.length,
-          storeSlug,
-        },
-      });
-    });
+    // Step 9: Job completion is handled by parent workflow (source-sync)
+    // This workflow just emits the completion event above
 
     return {
       success: true,

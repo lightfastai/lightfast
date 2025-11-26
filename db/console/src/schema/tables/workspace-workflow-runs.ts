@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import type { JobStatus, JobTrigger } from "@repo/console-validation";
+import type { JobStatus, JobTrigger, WorkflowInput, WorkflowOutput } from "@repo/console-validation";
 import { workspaceStores } from "./workspace-stores";
 
 /**
@@ -104,7 +104,7 @@ export const workspaceWorkflowRuns = pgTable(
      *   config?: object
      * }
      */
-    input: jsonb("input").$type<JobInput>(),
+    input: jsonb("input").$type<WorkflowInput>(),
 
     /**
      * Job output/result (after completion)
@@ -116,7 +116,7 @@ export const workspaceWorkflowRuns = pgTable(
      *   details?: object
      * }
      */
-    output: jsonb("output").$type<JobOutput>(),
+    output: jsonb("output").$type<WorkflowOutput>(),
 
     /**
      * Error message if job failed
@@ -185,40 +185,18 @@ export const workspaceWorkflowRuns = pgTable(
   }),
 );
 
-// TypeScript types
-export interface JobInput {
-  repoFullName?: string;
-  branch?: string;
-  afterSha?: string; // The commit SHA (from GitHub push event)
-  commitMessage?: string;
-  storeSlug?: string; // Target store slug (passed via event data)
-  files?: string[];
-  config?: Record<string, unknown>;
-  sourceId?: string;
-  sourceType?: string;
-  sourceMetadata?: Record<string, unknown>;
-  syncMode?: string;
-  trigger?: string;
-  syncParams?: Record<string, unknown>;
-  repoId?: string;
-}
-
-export interface JobOutput {
-  documentsProcessed?: number;
-  chunksCreated?: number;
-  duration?: number;
-  error?: string;
-  details?: Record<string, unknown>;
-  sourceId?: string;
-  sourceType?: string;
-  syncTriggered?: boolean;
-  repoFullName?: string;
-  syncMode?: string;
-  filesProcessed?: number;
-  filesFailed?: number;
-  storeSlug?: string;
-  timedOut?: boolean;
-}
+// Type re-exports from validation schemas
+export type {
+  WorkflowInput,
+  WorkflowOutput,
+  SourceConnectedGitHubInput,
+  SourceConnectedGitHubOutputSuccess,
+  SourceConnectedGitHubOutputFailure,
+  SourceSyncGitHubInput,
+  SourceSyncGitHubOutputSuccess,
+  SourceSyncGitHubOutputFailure,
+  GitHubSourceMetadata,
+} from "@repo/console-validation";
 
 // Type exports
 export type WorkspaceWorkflowRun = typeof workspaceWorkflowRuns.$inferSelect;

@@ -4,29 +4,29 @@ import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
-import { syncTriggerSchema } from "@repo/console-validation";
+import { syncTriggerSchema, githubSourceMetadataSchema } from "@repo/console-validation";
 
 /**
  * Inngest event schemas for console application
  *
- * Organized by:
- * 1. Source Management Events (provider-agnostic)
- * 2. GitHub-Specific Events
- * 3. Generic Document Processing Events
- * 4. Infrastructure Events
+ * Currently GitHub-only. Events are organized by:
+ * 1. Source Management Events (GitHub)
+ * 2. GitHub-Specific Events (Push, Config)
+ * 3. Infrastructure Events (Store provisioning)
+ * 4. Activity Tracking Events
+ * 5. Workflow Completion Events
  */
 const eventsMap = {
   // ============================================================================
-  // SOURCE MANAGEMENT EVENTS (Provider-agnostic)
+  // SOURCE MANAGEMENT EVENTS (GitHub)
   // ============================================================================
 
   /**
-   * Triggered when ANY source is connected to a workspace
-   * Initiates full sync for that source type
-   *
-   * Replaces: apps-console/repository.connected (now GitHub-specific via source.sync)
+   * GitHub source connected
+   * Triggered when a GitHub repository is connected to a workspace
+   * Initiates full sync for that repository
    */
-  "apps-console/source.connected": {
+  "apps-console/source.connected.github": {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
@@ -35,13 +35,28 @@ const eventsMap = {
       /** workspaceSource.id */
       sourceId: z.string(),
       /** Source provider type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry"]),
-      /** Provider-specific metadata (flexible for different source types) */
-      sourceMetadata: z.record(z.unknown()),
+      sourceType: z.literal("github"),
+      /** GitHub-specific metadata */
+      sourceMetadata: githubSourceMetadataSchema,
       /** How the connection was initiated */
       trigger: z.enum(["user", "api", "automation"]),
     }),
   },
+
+  /**
+   * Linear source connected (future)
+   * Triggered when a Linear team is connected to a workspace
+   */
+  // "apps-console/source.connected.linear": {
+  //   data: z.object({
+  //     workspaceId: z.string(),
+  //     workspaceKey: z.string(),
+  //     sourceId: z.string(),
+  //     sourceType: z.literal("linear"),
+  //     sourceMetadata: linearSourceMetadataSchema,
+  //     trigger: z.enum(["user", "api", "automation"]),
+  //   }),
+  // },
 
   /**
    * Triggered when a source is disconnected from workspace
@@ -57,16 +72,17 @@ const eventsMap = {
   },
 
   /**
-   * Generic sync trigger for any source type
+   * GitHub source sync
+   * Triggers sync workflow for a GitHub repository
    * Supports both full and incremental sync modes
    *
    * Used by:
    * - Manual restart (user clicks "Restart" on job)
    * - Scheduled syncs
    * - Config change detection (triggers full re-sync)
-   * - Webhook events (routed through provider-specific handlers)
+   * - Webhook events (GitHub push)
    */
-  "apps-console/source.sync": {
+  "apps-console/source.sync.github": {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
@@ -77,15 +93,32 @@ const eventsMap = {
       /** Store DB UUID (required for job linking) */
       storeId: z.string(),
       /** Source provider type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry"]),
+      sourceType: z.literal("github"),
       /** Sync mode: full = all documents, incremental = changed only */
       syncMode: z.enum(["full", "incremental"]),
       /** What triggered this sync */
       trigger: syncTriggerSchema,
       /** Provider-specific sync parameters (e.g., changedFiles for GitHub) */
-      syncParams: z.record(z.unknown()).optional(),
+      syncParams: z.record(z.unknown()),
     }),
   },
+
+  /**
+   * Linear source sync (future)
+   * Triggers sync workflow for a Linear team
+   */
+  // "apps-console/source.sync.linear": {
+  //   data: z.object({
+  //     workspaceId: z.string(),
+  //     workspaceKey: z.string(),
+  //     sourceId: z.string(),
+  //     storeId: z.string(),
+  //     sourceType: z.literal("linear"),
+  //     syncMode: z.enum(["full", "incremental"]),
+  //     trigger: syncTriggerSchema,
+  //     syncParams: z.record(z.unknown()),
+  //   }),
+  // },
 
   // ============================================================================
   // GITHUB-SPECIFIC EVENTS
@@ -179,130 +212,6 @@ const eventsMap = {
     }),
   },
 
-  /**
-   * Process a single GitHub file
-   * Chunks text, generates embeddings, and upserts to Pinecone
-   *
-   * DEPRECATED: Will be replaced by apps-console/documents.process
-   * Kept for backward compatibility during migration
-   */
-  "apps-console/docs.file.process": {
-    data: z.object({
-      /** Workspace identifier */
-      workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Repository full name (owner/repo) */
-      repoFullName: z.string(),
-      /** GitHub installation ID */
-      githubInstallationId: z.number(),
-      /** File path relative to repo root */
-      filePath: z.string(),
-      /** Git SHA of the commit */
-      commitSha: z.string(),
-      /** Commit timestamp (ISO 8601) */
-      committedAt: z.string().datetime(),
-    }),
-  },
-
-  /**
-   * Delete a GitHub document and its vectors
-   *
-   * DEPRECATED: Will be replaced by apps-console/documents.delete
-   * Kept for backward compatibility during migration
-   */
-  "apps-console/docs.file.delete": {
-    data: z.object({
-      /** Workspace identifier */
-      workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Repository full name (owner/repo) */
-      repoFullName: z.string(),
-      /** File path relative to repo root */
-      filePath: z.string(),
-    }),
-  },
-
-  // ============================================================================
-  // GENERIC DOCUMENT PROCESSING EVENTS
-  // ============================================================================
-
-  /**
-   * Generic document processing event
-   * Works with any source type (GitHub, Linear, Notion, Sentry)
-   *
-   * This is the target event for all provider adapters to emit
-   */
-  "apps-console/documents.process": {
-    data: z.object({
-      /** Workspace identifier */
-      workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Document ID */
-      documentId: z.string(),
-      /** Source type discriminator */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
-      /** Source-specific identifier */
-      sourceId: z.string(),
-      /** Source-specific metadata */
-      sourceMetadata: z.record(z.unknown()),
-      /** Document title */
-      title: z.string(),
-      /** Document content */
-      content: z.string(),
-      /** Content hash (SHA-256) */
-      contentHash: z.string(),
-      /** Parent document ID (optional, for nested documents) */
-      parentDocId: z.string().optional(),
-      /** Additional metadata (optional) */
-      metadata: z.record(z.unknown()).optional(),
-      /** Cross-source relationships (optional) */
-      relationships: z.record(z.unknown()).optional(),
-    }),
-  },
-
-  /**
-   * Generic document deletion event
-   * Works with any source type
-   *
-   * This is the target event for all provider adapters to emit
-   */
-  "apps-console/documents.delete": {
-    data: z.object({
-      /** Workspace identifier */
-      workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Document ID */
-      documentId: z.string(),
-      /** Source type discriminator */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
-      /** Source-specific identifier */
-      sourceId: z.string(),
-    }),
-  },
-
-  /**
-   * Relationship extraction event
-   * Extracts cross-source relationships from documents
-   */
-  "apps-console/relationships.extract": {
-    data: z.object({
-      /** Document ID */
-      documentId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
-      /** Workspace identifier */
-      workspaceId: z.string(),
-      /** Source type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
-      /** Relationships to extract */
-      relationships: z.record(z.unknown()),
-    }),
-  },
-
   // ============================================================================
   // INFRASTRUCTURE EVENTS
   // ============================================================================
@@ -375,6 +284,134 @@ const eventsMap = {
       relatedActivityId: z.string().optional(),
       /** Timestamp of the activity (ISO string) */
       timestamp: z.string().datetime(),
+    }),
+  },
+
+  // ============================================================================
+  // GITHUB FILE EVENTS (Provider-Specific)
+  // ============================================================================
+
+  /**
+   * Process a single GitHub file
+   * Emitted by: GitHub sync workflow
+   * Consumed by: githubProcessAdapter → documents.process
+   *
+   * The adapter fetches content from GitHub and transforms to generic format
+   */
+  "apps-console/docs.file.process": {
+    data: z.object({
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Repository full name (owner/repo) */
+      repoFullName: z.string(),
+      /** GitHub installation ID */
+      githubInstallationId: z.number(),
+      /** File path relative to repo root */
+      filePath: z.string(),
+      /** Git SHA of the commit */
+      commitSha: z.string(),
+      /** Commit timestamp (ISO 8601) */
+      committedAt: z.string().datetime(),
+    }),
+  },
+
+  /**
+   * Delete a GitHub document and its vectors
+   * Emitted by: GitHub sync workflow
+   * Consumed by: githubDeleteAdapter → documents.delete
+   */
+  "apps-console/docs.file.delete": {
+    data: z.object({
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Repository full name (owner/repo) */
+      repoFullName: z.string(),
+      /** File path relative to repo root */
+      filePath: z.string(),
+    }),
+  },
+
+  // ============================================================================
+  // DOCUMENT PROCESSING EVENTS (Generic, Multi-Source)
+  // ============================================================================
+
+  /**
+   * Process document (generic, multi-source)
+   * Emitted by: Provider-specific adapters (future implementation)
+   * Consumed by: Generic document processor workflow
+   *
+   * Handles: fetch content, parse, chunk, embed, upsert to Pinecone
+   */
+  "apps-console/documents.process": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Store slug */
+      storeSlug: z.string(),
+      /** Deterministic document ID */
+      documentId: z.string(),
+      /** Source type (discriminated union) */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Source-specific identifier */
+      sourceId: z.string(),
+      /** Source-specific metadata */
+      sourceMetadata: z.record(z.unknown()),
+      /** Document title */
+      title: z.string(),
+      /** Document content */
+      content: z.string(),
+      /** Content hash for idempotency */
+      contentHash: z.string(),
+      /** Optional parent document ID */
+      parentDocId: z.string().optional(),
+      /** Additional metadata */
+      metadata: z.record(z.unknown()).optional(),
+      /** Relationships to extract */
+      relationships: z.record(z.unknown()).optional(),
+    }),
+  },
+
+  /**
+   * Delete document (generic, multi-source)
+   * Emitted by: Provider-specific adapters (future implementation)
+   * Consumed by: Generic document deleter workflow
+   */
+  "apps-console/documents.delete": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Store slug */
+      storeSlug: z.string(),
+      /** Document ID to delete */
+      documentId: z.string(),
+      /** Source type */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Source-specific identifier */
+      sourceId: z.string(),
+    }),
+  },
+
+  /**
+   * Extract relationships from document
+   * Emitted by: Document processor after successful processing
+   * Consumed by: Relationship extraction workflow
+   */
+  "apps-console/relationships.extract": {
+    data: z.object({
+      /** Document ID */
+      documentId: z.string(),
+      /** Store slug */
+      storeSlug: z.string(),
+      /** Workspace ID */
+      workspaceId: z.string(),
+      /** Source type */
+      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      /** Relationships to extract */
+      relationships: z.record(z.unknown()),
     }),
   },
 

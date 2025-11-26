@@ -7,10 +7,11 @@
 
 import { db } from "@db/console/client";
 import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/schema";
-import type { WorkspaceWorkflowRun, JobInput, JobOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
+import type { WorkspaceWorkflowRun, WorkflowInput, WorkflowOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import type { JobTrigger, OperationMetricType, OperationMetricUnit } from "@repo/console-validation";
+import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
 /**
  * Create a new job record at workflow start
@@ -31,9 +32,21 @@ export async function createJob(params: {
 	name: string;
 	trigger: JobTrigger;
 	triggeredBy?: string | null;
-	input?: JobInput;
+	input?: WorkflowInput;
 }): Promise<string> {
 	try {
+		// Validate input
+		if (params.input) {
+			const validated = workflowInputSchema.safeParse(params.input);
+			if (!validated.success) {
+				log.error("Invalid workflow input", {
+					error: validated.error.format(),
+					input: params.input,
+				});
+				throw new Error(`Invalid workflow input: ${validated.error.message}`);
+			}
+		}
+
 		// Check for existing job with same inngestRunId (idempotency)
 		const existing = await db.query.workspaceWorkflowRuns.findFirst({
 			where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
@@ -119,17 +132,36 @@ export async function updateJobStatus(
  * Complete job with final output or error
  *
  * Calculates duration and updates all completion fields.
+ * Uses discriminated union to ensure output is required for completed/failed jobs.
  *
- * @param jobId Job ID
- * @param params Completion parameters
+ * @param params Completion parameters (discriminated by status)
  */
-export async function completeJob(params: {
-	jobId: string;
-	status: "completed" | "failed" | "cancelled";
-	output?: JobOutput;
-	errorMessage?: string;
-}): Promise<void> {
+export async function completeJob(
+	params:
+		| {
+				jobId: string;
+				status: "completed" | "failed";
+				output: WorkflowOutput;
+		  }
+		| {
+				jobId: string;
+				status: "cancelled";
+				errorMessage?: string;
+		  },
+): Promise<void> {
 	try {
+		// Validate output for completed/failed jobs
+		if (params.status === "completed" || params.status === "failed") {
+			const validated = workflowOutputSchema.safeParse(params.output);
+			if (!validated.success) {
+				log.error("Invalid workflow output", {
+					error: validated.error.format(),
+					output: params.output,
+				});
+				throw new Error(`Invalid workflow output: ${validated.error.message}`);
+			}
+		}
+
 		// Fetch job to calculate duration
 		const job = await db.query.workspaceWorkflowRuns.findFirst({
 			where: eq(workspaceWorkflowRuns.id, params.jobId),
@@ -155,8 +187,8 @@ export async function completeJob(params: {
 			.update(workspaceWorkflowRuns)
 			.set({
 				status: params.status,
-				output: params.output ?? null,
-				errorMessage: params.errorMessage ?? null,
+				output: params.status === "cancelled" ? null : params.output,
+				errorMessage: params.status === "cancelled" ? params.errorMessage ?? null : null,
 				completedAt,
 				durationMs,
 			})

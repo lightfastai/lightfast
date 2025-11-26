@@ -207,7 +207,7 @@ export const githubPushHandler = inngest.createFunction(
     if (configChanged) {
       // Config changed → trigger FULL sync
       const eventIds = await step.sendEvent("sync.trigger-full", {
-        name: "apps-console/source.sync",
+        name: "apps-console/source.sync.github",
         data: {
           workspaceId,
           workspaceKey,
@@ -216,14 +216,7 @@ export const githubPushHandler = inngest.createFunction(
           sourceType: "github",
           syncMode: "full",
           trigger: "config-change",
-          syncParams: {
-            repoFullName,
-            githubRepoId,
-            githubInstallationId,
-            branch,
-            commitSha: afterSha,
-            reason: "lightfast.yml modified",
-          },
+          syncParams: {},
         },
       });
 
@@ -237,7 +230,7 @@ export const githubPushHandler = inngest.createFunction(
     } else {
       // Normal push → trigger INCREMENTAL sync
       const eventIds = await step.sendEvent("sync.trigger-incremental", {
-        name: "apps-console/source.sync",
+        name: "apps-console/source.sync.github",
         data: {
           workspaceId,
           workspaceKey,
@@ -247,15 +240,9 @@ export const githubPushHandler = inngest.createFunction(
           syncMode: "incremental",
           trigger: "webhook",
           syncParams: {
-            repoFullName,
-            githubRepoId,
-            githubInstallationId,
-            branch,
-            beforeSha,
-            afterSha,
-            deliveryId,
-            headCommitTimestamp,
             changedFiles,
+            afterSha,
+            commitMessage: headCommitTimestamp,
           },
         },
       });

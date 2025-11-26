@@ -8,7 +8,7 @@ import {
 	recordJobMetric,
 	getJob,
 } from "../../lib/jobs";
-import { jobTriggerSchema } from "@repo/console-validation";
+import { jobTriggerSchema, workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
 /**
  * Jobs M2M Router
@@ -37,7 +37,7 @@ export const jobsM2MRouter = {
 				name: z.string(),
 				trigger: jobTriggerSchema,
 				triggeredBy: z.string().nullable().optional(),
-				input: z.record(z.unknown()).nullable().optional(),
+				input: workflowInputSchema.nullable().optional(),
 			}),
 		)
 		.mutation(async ({ input }) => {
@@ -77,17 +77,27 @@ export const jobsM2MRouter = {
 			z.object({
 				jobId: z.string(),
 				status: z.enum(["completed", "failed", "cancelled"]),
-				output: z.record(z.unknown()).nullable().optional(),
+				output: workflowOutputSchema.nullable().optional(),
 				errorMessage: z.string().nullable().optional(),
 			}),
 		)
 		.mutation(async ({ input }) => {
-			await completeJob({
-				jobId: input.jobId,
-				status: input.status,
-				output: input.output ?? undefined,
-				errorMessage: input.errorMessage ?? undefined,
-			});
+			// Handle discriminated union for completeJob
+			if (input.status === "cancelled") {
+				await completeJob({
+					jobId: input.jobId,
+					status: "cancelled",
+					errorMessage: input.errorMessage ?? undefined,
+				});
+			} else if (input.output) {
+				await completeJob({
+					jobId: input.jobId,
+					status: input.status,
+					output: input.output,
+				});
+			} else {
+				throw new Error("Output is required for completed/failed jobs");
+			}
 			return { success: true };
 		}),
 

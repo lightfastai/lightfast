@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces, workspaceStores, type JobInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces, workspaceStores, type WorkflowInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -380,7 +380,14 @@ export const jobsRouter = {
 			}
 
 			// Determine job type and extract necessary parameters from job.input
-			const jobInput = job.input as JobInput;
+			const jobInput = job.input;
+
+			if (!jobInput) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Job has no input data - cannot restart",
+				});
+			}
 
 			// Get workspace slug for workspaceKey
 			const workspace = await db.query.orgWorkspaces.findFirst({
@@ -401,7 +408,7 @@ export const jobsRouter = {
 				case "source-connected":
 				case "source-sync": {
 					// Extract sourceId from job input
-					const sourceId = jobInput.sourceId as string | undefined;
+					const sourceId = jobInput.sourceId;
 
 					if (!sourceId) {
 						throw new TRPCError({
@@ -442,16 +449,16 @@ export const jobsRouter = {
 
 					// Trigger new full sync
 					await inngest.send({
-						name: "apps-console/source.sync",
+						name: "apps-console/source.sync.github",
 						data: {
 							workspaceId,
 							workspaceKey,
 							sourceId,
 							storeId: store.id,
-							sourceType,
+							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
-							syncParams: (jobInput.sourceMetadata as Record<string, unknown>) ?? undefined,
+							syncParams: {},
 						},
 					});
 					break;
@@ -485,7 +492,7 @@ export const jobsRouter = {
 
 					// Trigger new full sync
 					await inngest.send({
-						name: "apps-console/source.sync",
+						name: "apps-console/source.sync.github",
 						data: {
 							workspaceId,
 							workspaceKey,
@@ -494,102 +501,7 @@ export const jobsRouter = {
 							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
-							syncParams: {
-								repoFullName: jobInput.repoFullName,
-								...jobInput,
-							},
-						},
-					});
-					break;
-				}
-
-				// DEPRECATED: Support for old job types created before refactoring
-				case "repository-initial-sync": {
-					// Old GitHub initial sync jobs
-					// Try to extract repoId from job input to find the workspace source
-					const repoId = jobInput.repoId as string | undefined;
-					const repoFullName = jobInput.repoFullName as string | undefined;
-
-					if (!repoId && !repoFullName) {
-						throw new TRPCError({
-							code: "BAD_REQUEST",
-							message: "Deprecated job missing repository information - cannot restart",
-						});
-					}
-
-					// Find workspace source by GitHub repo ID (stored in providerResourceId)
-					let source = null;
-					if (repoId) {
-						source = await db.query.workspaceIntegrations.findFirst({
-							where: and(
-								eq(workspaceIntegrations.workspaceId, workspaceId),
-								eq(workspaceIntegrations.providerResourceId, repoId),
-								eq(workspaceIntegrations.isActive, true),
-							),
-						});
-					}
-
-					// Fallback: try to find by repoFullName in sourceConfig
-					if (!source && repoFullName) {
-						const allSources = await db.query.workspaceIntegrations.findMany({
-							where: and(
-								eq(workspaceIntegrations.workspaceId, workspaceId),
-								eq(workspaceIntegrations.isActive, true),
-							),
-						});
-
-						source = allSources.find(s =>
-							s.sourceConfig.provider === "github" &&
-							s.sourceConfig.repoFullName === repoFullName
-						) ?? null;
-					}
-
-					if (!source) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Cannot find active source for repository - it may have been disconnected`,
-						});
-					}
-
-					// Verify it's a GitHub source
-					if (source.sourceConfig.provider !== "github") {
-						throw new TRPCError({
-							code: "BAD_REQUEST",
-							message: "Source is not a GitHub repository",
-						});
-					}
-
-					// Resolve storeId from "default" store
-					const deprecatedStore = await db.query.workspaceStores.findFirst({
-						where: and(
-							eq(workspaceStores.workspaceId, workspaceId),
-							eq(workspaceStores.slug, "default")
-						),
-					});
-
-					if (!deprecatedStore) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Default store not found for workspace: ${workspaceId}`,
-						});
-					}
-
-					// Trigger new full sync
-					await inngest.send({
-						name: "apps-console/source.sync",
-						data: {
-							workspaceId,
-							workspaceKey,
-							sourceId: source.id,
-							storeId: deprecatedStore.id,
-							sourceType: "github" as const,
-							syncMode: "full" as const,
-							trigger: "manual" as const,
-							syncParams: {
-								repoFullName: source.sourceConfig.repoFullName,
-								defaultBranch: source.sourceConfig.defaultBranch,
-								...jobInput,
-							},
+							syncParams: {},
 						},
 					});
 					break;
