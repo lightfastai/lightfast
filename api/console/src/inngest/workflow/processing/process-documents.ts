@@ -120,10 +120,8 @@ export const processDocuments = inngest.createFunction(
       "Processes documents from any source: fetch, parse, chunk, embed, upsert",
     retries: 3,
 
-    // Prevent reprocessing same document at same content hash
-    idempotency: 'event.data.documentId + "-" + event.data.contentHash',
-
     // Batch events per workspace + store
+    // Note: Idempotency enforced in step.run via existingDoc.contentHash check (line 206)
     batchEvents: {
       maxSize: PRIVATE_CONFIG.workflow.processDoc.batchSize,
       timeout: PRIVATE_CONFIG.workflow.processDoc.batchTimeout,

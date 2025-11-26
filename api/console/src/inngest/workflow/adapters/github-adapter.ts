@@ -38,10 +38,8 @@ export const githubProcessAdapter = inngest.createFunction(
     description: "Fetches GitHub file content and adapts to generic document format",
     retries: PRIVATE_CONFIG.workflow.retries,
 
-    // Prevent duplicate processing of same file at same commit
-    idempotency: 'event.data.repoFullName + ":" + event.data.filePath + ":" + event.data.commitSha',
-
     // Batch events per repository for efficient GitHub API usage
+    // Note: Idempotency handled downstream in process-documents via contentHash
     batchEvents: {
       maxSize: 50,
       timeout: "10s",
