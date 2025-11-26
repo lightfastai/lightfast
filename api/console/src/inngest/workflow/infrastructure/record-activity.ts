@@ -37,6 +37,11 @@ export const recordActivity = inngest.createFunction(
       timeout: "10s", // Wait max 10s before processing partial batch
       key: "event.data.workspaceId", // Batch per workspace
     },
+
+    timeouts: {
+      start: "30s",
+      finish: "2m",
+    },
   },
   { event: "apps-console/activity.record" },
   async ({ events, step }) => {
@@ -51,7 +56,7 @@ export const recordActivity = inngest.createFunction(
     });
 
     // Step 1: Prepare activity records
-    const activityRecords = await step.run("prepare-records", async () => {
+    const activityRecords = await step.run("activity.prepare-records", async () => {
       return events.map((event) => {
         const { data } = event;
 
@@ -71,7 +76,7 @@ export const recordActivity = inngest.createFunction(
     });
 
     // Step 2: Batch insert activities
-    const insertResult = await step.run("batch-insert", async () => {
+    const insertResult = await step.run("activity.batch-insert", async () => {
       try {
         // Use Drizzle's batch insert for optimal performance
         const result = await db

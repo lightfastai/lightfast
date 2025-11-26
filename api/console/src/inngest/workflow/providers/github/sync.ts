@@ -33,7 +33,7 @@ import {
   getThrottledInstallationOctokit,
   GitHubContentService,
 } from "@repo/console-octokit-github";
-import { validateConfig, PRIVATE_CONFIG } from "@repo/console-config";
+import { validateConfig } from "@repo/console-config";
 import { env } from "../../../../env";
 import yaml from "yaml";
 import { minimatch } from "minimatch";
@@ -56,7 +56,7 @@ export const githubSync = inngest.createFunction(
     id: "apps-console/github-sync",
     name: "GitHub Sync",
     description: "Syncs GitHub repository content (full or incremental)",
-    retries: PRIVATE_CONFIG.workflow.retries,
+    retries: 3,
 
     // Only one sync per source at a time
     // Subsequent syncs will be skipped if one is already running
@@ -99,7 +99,7 @@ export const githubSync = inngest.createFunction(
     });
 
     // Step 1: Fetch workspace source
-    const sourceData = await step.run("fetch-source", async () => {
+    const sourceData = await step.run("source.fetch", async () => {
       const source = await db.query.workspaceIntegrations.findFirst({
         where: eq(workspaceIntegrations.id, sourceId),
       });
@@ -129,7 +129,7 @@ export const githubSync = inngest.createFunction(
     // Step 2: Ensure store exists
     const storeSlug = "default";
 
-    await step.sendEvent("ensure-store", {
+    await step.sendEvent("store.ensure", {
       name: "apps-console/store.ensure",
       data: {
         workspaceId,
@@ -140,7 +140,7 @@ export const githubSync = inngest.createFunction(
     });
 
     // Step 3: Update workspace source sync status
-    await step.run("update-sync-status-started", async () => {
+    await step.run("sync.update-status-started", async () => {
       await db
         .update(workspaceIntegrations)
         .set({
@@ -150,7 +150,7 @@ export const githubSync = inngest.createFunction(
     });
 
     // Step 4: Fetch and validate lightfast.yml config
-    const configResult = await step.run("load-config", async () => {
+    const configResult = await step.run("config.load", async () => {
       const app = createGitHubApp({
         appId: env.GITHUB_APP_ID,
         privateKey: env.GITHUB_APP_PRIVATE_KEY,
@@ -226,7 +226,7 @@ export const githubSync = inngest.createFunction(
     const config = configResult.value;
 
     // Step 5: Determine which files to process
-    const filesToProcess = await step.run("determine-files", async () => {
+    const filesToProcess = await step.run("files.determine", async () => {
       if (syncMode === "incremental" && syncParams.changedFiles) {
         // Incremental: use changedFiles from webhook
         const changed = syncParams.changedFiles as Array<{
@@ -308,7 +308,7 @@ export const githubSync = inngest.createFunction(
     // 2. Transform to generic document events
     // 3. Send to generic processors
     const eventIds = await step.sendEvent(
-      "trigger-file-processing",
+      "files.trigger-processing",
       filesToProcess.map((file) => {
         const commitSha = (syncParams.afterSha as string) || "HEAD";
         const committedAt =
@@ -343,7 +343,7 @@ export const githubSync = inngest.createFunction(
       })
     );
 
-    await step.run("log-event-dispatch", async () => {
+    await step.run("files.log-dispatch", async () => {
       log.info("Triggered file processing", {
         count: filesToProcess.length,
         syncMode,
@@ -352,7 +352,7 @@ export const githubSync = inngest.createFunction(
     });
 
     // Step 7: Update workspace source sync status
-    await step.run("update-sync-status-completed", async () => {
+    await step.run("sync.update-status-completed", async () => {
       await db
         .update(workspaceIntegrations)
         .set({
@@ -362,8 +362,22 @@ export const githubSync = inngest.createFunction(
         .where(eq(workspaceIntegrations.id, sourceId));
     });
 
-    // Step 8: Complete job
-    await step.run("complete-job", async () => {
+    // Step 8: Emit completion event for parent workflow
+    await step.sendEvent("sync.emit-completion", {
+      name: "apps-console/github.sync-completed",
+      data: {
+        sourceId,
+        jobId,
+        filesProcessed: filesToProcess.length,
+        filesFailed: 0, // TODO: Track failures in Phase 2
+        storeSlug,
+        syncMode,
+        timedOut: false,
+      },
+    });
+
+    // Step 9: Complete job
+    await step.run("job.complete", async () => {
       await completeJob({
         jobId,
         status: "completed",

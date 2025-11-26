@@ -64,6 +64,7 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 
   console.log(`[Webhook] Push to ${payload.repository.full_name}:${branch}`);
   const headCommitTimestamp = payload.head_commit?.timestamp ?? undefined;
+  const commitMessage = payload.head_commit?.message ?? undefined;
 
   // Resolve workspace and source from GitHub org slug
   const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
@@ -129,7 +130,8 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
       githubRepoId: payload.repository.id,
       githubInstallationId: payload.installation.id,
       beforeSha: payload.before,
-      afterSha: payload.after,
+      afterSha: payload.after, // This is the commit SHA
+      commitMessage,
       branch, // NEW: branch name
       deliveryId,
       headCommitTimestamp,

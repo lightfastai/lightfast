@@ -268,87 +268,6 @@ export const GITHUB_CONFIG = {
 } as const;
 
 /**
- * Inngest workflow configuration
- *
- * Controls workflow behavior and retry policies.
- * Currently private - applied globally to all workflows.
- *
- * Future: Could be configurable per workflow type.
- */
-export const WORKFLOW_CONFIG = {
-  /**
-   * Number of retries for failed workflows
-   *
-   * Default: 3 retries
-   * Applied to: docs-ingestion, process-doc, delete-doc
-   *
-   * @private
-   */
-  retries: 3,
-
-  /**
-   * Default glob patterns for document ingestion
-   *
-   * Used when no lightfast.yml is found in repository.
-   * Covers common documentation paths.
-   *
-   * @private
-   */
-  defaultIncludePatterns: [
-    "docs/**/*.md",
-    "docs/**/*.mdx",
-    "README.md",
-  ] as const,
-
-  /**
-   * Process document workflow tuning
-   */
-  processDoc: {
-    /**
-     * Max number of docs per batch event
-     */
-    batchSize: 25,
-    /**
-     * How long to wait for batch accumulation before running
-     */
-    batchTimeout: "5s",
-    /**
-     * Per-store concurrency limit for process-doc execution
-     */
-    perStoreConcurrency: 5,
-    /**
-     * Embedding batch size (Cohere limit is 96 texts/request)
-     */
-    embeddingBatchSize: 96,
-  },
-
-  /**
-   * Delete document workflow tuning
-   */
-  deleteDoc: {
-    perStoreConcurrency: 10,
-    timeout: {
-      start: "30s",
-      finish: "5m",
-    },
-  },
-
-  /**
-   * Ensure store workflow tuning
-   *
-   * Note: Singleton removed in favor of natural function idempotency.
-   * This prevents "rate limited" errors during concurrent store creation.
-   */
-  ensureStore: {
-    retries: 5,
-    timeout: {
-      start: "1m",
-      finish: "10m",
-    },
-  },
-} as const;
-
-/**
  * Complete private configuration object
  *
  * Aggregates all infrastructure defaults in one place.
@@ -367,7 +286,6 @@ export const PRIVATE_CONFIG = {
   embedding: EMBEDDING_CONFIG,
   chunking: CHUNKING_CONFIG,
   github: GITHUB_CONFIG,
-  workflow: WORKFLOW_CONFIG,
 } as const;
 
 /**

@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces, type JobInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces, workspaceStores, type JobInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -63,19 +63,30 @@ export const jobsRouter = {
 			}
 
 			// Query jobs with limit + 1 to determine if there are more
+			// Left join with workspaceStores to get store slug
 			const jobsList = await db
-				.select()
+				.select({
+					job: workspaceWorkflowRuns,
+					storeSlug: workspaceStores.slug,
+				})
 				.from(workspaceWorkflowRuns)
+				.leftJoin(workspaceStores, eq(workspaceWorkflowRuns.storeId, workspaceStores.id))
 				.where(and(...conditions))
 				.orderBy(desc(workspaceWorkflowRuns.createdAt))
 				.limit(limit + 1);
 
 			// Determine if there are more results
 			const hasMore = jobsList.length > limit;
-			const items = hasMore ? jobsList.slice(0, limit) : jobsList;
+			const rawItems = hasMore ? jobsList.slice(0, limit) : jobsList;
+
+			// Flatten the joined data and include storeSlug
+			const items = rawItems.map(({ job, storeSlug }) => ({
+				...job,
+				storeSlug,
+			}));
 
 			// Get next cursor (createdAt of last item)
-			const nextCursor = hasMore ? items[items.length - 1]?.createdAt : null;
+			const nextCursor = hasMore ? rawItems[rawItems.length - 1]?.job.createdAt : null;
 
 			return {
 				items,
@@ -414,6 +425,21 @@ export const jobsRouter = {
 					// Determine source type from sourceConfig
 					const sourceType = source.sourceConfig.provider;
 
+					// Resolve storeId from "default" store
+					const store = await db.query.workspaceStores.findFirst({
+						where: and(
+							eq(workspaceStores.workspaceId, workspaceId),
+							eq(workspaceStores.slug, "default")
+						),
+					});
+
+					if (!store) {
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Default store not found for workspace: ${workspaceId}`,
+						});
+					}
+
 					// Trigger new full sync
 					await inngest.send({
 						name: "apps-console/source.sync",
@@ -421,6 +447,7 @@ export const jobsRouter = {
 							workspaceId,
 							workspaceKey,
 							sourceId,
+							storeId: store.id,
 							sourceType,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
@@ -441,6 +468,21 @@ export const jobsRouter = {
 						});
 					}
 
+					// Resolve storeId from "default" store
+					const store = await db.query.workspaceStores.findFirst({
+						where: and(
+							eq(workspaceStores.workspaceId, workspaceId),
+							eq(workspaceStores.slug, "default")
+						),
+					});
+
+					if (!store) {
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Default store not found for workspace: ${workspaceId}`,
+						});
+					}
+
 					// Trigger new full sync
 					await inngest.send({
 						name: "apps-console/source.sync",
@@ -448,6 +490,7 @@ export const jobsRouter = {
 							workspaceId,
 							workspaceKey,
 							sourceId,
+							storeId: store.id,
 							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
@@ -516,6 +559,21 @@ export const jobsRouter = {
 						});
 					}
 
+					// Resolve storeId from "default" store
+					const deprecatedStore = await db.query.workspaceStores.findFirst({
+						where: and(
+							eq(workspaceStores.workspaceId, workspaceId),
+							eq(workspaceStores.slug, "default")
+						),
+					});
+
+					if (!deprecatedStore) {
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Default store not found for workspace: ${workspaceId}`,
+						});
+					}
+
 					// Trigger new full sync
 					await inngest.send({
 						name: "apps-console/source.sync",
@@ -523,6 +581,7 @@ export const jobsRouter = {
 							workspaceId,
 							workspaceKey,
 							sourceId: source.id,
+							storeId: deprecatedStore.id,
 							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,

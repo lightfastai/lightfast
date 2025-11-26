@@ -65,6 +65,11 @@ export const extractRelationships = inngest.createFunction(
 
     // Prevent duplicate extraction
     idempotency: 'event.data.documentId + "-relationships"',
+
+    timeouts: {
+      start: "30s",
+      finish: "5m",
+    },
   },
   { event: "apps-console/relationships.extract" },
   async ({ event, step }) => {
@@ -77,7 +82,7 @@ export const extractRelationships = inngest.createFunction(
     });
 
     const extractedRelationships = await step.run(
-      "parse-relationships",
+      "relationships.parse",
       async () => {
         try {
           const parsed: Relationship[] = [];
@@ -127,7 +132,7 @@ export const extractRelationships = inngest.createFunction(
     }
 
     // Store relationships in document
-    await step.run("store-relationships", async () => {
+    await step.run("relationships.store", async () => {
       try {
         await db
           .update(workspaceKnowledgeDocuments)

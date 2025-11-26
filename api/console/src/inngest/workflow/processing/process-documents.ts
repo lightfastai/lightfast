@@ -34,7 +34,6 @@ import {
 import { log } from "@vendor/observability/log";
 import { createHash } from "node:crypto";
 import { inngest } from "../../client/client";
-import { PRIVATE_CONFIG } from "@repo/console-config";
 
 /**
  * Generic document processing event
@@ -123,8 +122,8 @@ export const processDocuments = inngest.createFunction(
     // Batch events per workspace + store
     // Note: Idempotency enforced in step.run via existingDoc.contentHash check (line 206)
     batchEvents: {
-      maxSize: PRIVATE_CONFIG.workflow.processDoc.batchSize,
-      timeout: PRIVATE_CONFIG.workflow.processDoc.batchTimeout,
+      maxSize: 25,
+      timeout: "5s",
       key: 'event.data.workspaceId + "-" + event.data.storeSlug',
     },
 
@@ -132,7 +131,7 @@ export const processDocuments = inngest.createFunction(
     concurrency: [
       {
         key: 'event.data.workspaceId + "-" + event.data.storeSlug',
-        limit: PRIVATE_CONFIG.workflow.processDoc.perStoreConcurrency,
+        limit: 5,
       },
     ],
 
@@ -155,7 +154,7 @@ export const processDocuments = inngest.createFunction(
       count: events.length,
     });
 
-    const results = await step.run("process-documents-batch", async () => {
+    const results = await step.run("documents.process-batch", async () => {
       const storeCache = new Map<string, WorkspaceStore>();
 
       const prepared: PreparedDocument[] = await Promise.all(
@@ -296,7 +295,7 @@ export const processDocuments = inngest.createFunction(
         await generateEmbeddingsForDocuments(
           readyDocs,
           embeddingProvider,
-          PRIVATE_CONFIG.workflow.processDoc.embeddingBatchSize,
+          96, // Cohere API limit
         );
         await upsertDocumentsToPinecone(readyDocs);
         await persistDocuments(readyDocs);
@@ -341,9 +340,9 @@ export const processDocuments = inngest.createFunction(
         }));
 
       if (eventsToSend.length > 0) {
-        const eventIds = await step.sendEvent("trigger-relationship-extraction", eventsToSend);
+        const eventIds = await step.sendEvent("relationships.trigger-extraction", eventsToSend);
 
-        await step.run("log-relationship-extraction", async () => {
+        await step.run("relationships.log-extraction", async () => {
           log.info("Triggered relationship extraction", {
             count: eventsToSend.length,
             eventIds: eventIds.ids.length,

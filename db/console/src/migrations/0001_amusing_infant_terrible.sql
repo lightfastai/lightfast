@@ -1,0 +1,3 @@
+ALTER TABLE "lightfast_workspace_workflow_runs" ADD COLUMN "store_id" varchar(191);--> statement-breakpoint
+ALTER TABLE "lightfast_workspace_workflow_runs" ADD CONSTRAINT "lightfast_workspace_workflow_runs_store_id_lightfast_workspace_stores_id_fk" FOREIGN KEY ("store_id") REFERENCES "public"."lightfast_workspace_stores"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "job_store_id_idx" ON "lightfast_workspace_workflow_runs" USING btree ("store_id");

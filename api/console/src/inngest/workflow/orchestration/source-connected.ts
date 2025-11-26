@@ -14,8 +14,8 @@
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
-import { eq } from "drizzle-orm";
+import { orgWorkspaces, workspaceIntegrations, workspaceStores } from "@db/console/schema";
+import { eq, and } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
 import { getWorkspaceKey } from "@db/console/utils";
@@ -42,6 +42,11 @@ export const sourceConnected = inngest.createFunction(
         match: "data.sourceId",
       },
     ],
+
+    timeouts: {
+      start: "2m",
+      finish: "50m", // Increased to accommodate source-sync completion wait
+    },
   },
   { event: "apps-console/source.connected" },
   async ({ event, step, runId }) => {
@@ -62,7 +67,7 @@ export const sourceConnected = inngest.createFunction(
     });
 
     // Step 1: Fetch workspace and source metadata
-    const metadata = await step.run("fetch-metadata", async () => {
+    const metadata = await step.run("metadata.fetch", async () => {
       const workspace = await db.query.orgWorkspaces.findFirst({
         where: eq(orgWorkspaces.id, workspaceId),
       });
@@ -83,15 +88,28 @@ export const sourceConnected = inngest.createFunction(
         throw new Error(`Workspace source is inactive: ${sourceId}`);
       }
 
+      // Resolve storeId from "default" store
+      const store = await db.query.workspaceStores.findFirst({
+        where: and(
+          eq(workspaceStores.workspaceId, workspaceId),
+          eq(workspaceStores.slug, "default")
+        ),
+      });
+
+      if (!store) {
+        throw new Error(`Default store not found for workspace: ${workspaceId}`);
+      }
+
       return {
         clerkOrgId: workspace.clerkOrgId,
         workspace,
         source,
+        storeId: store.id,
       };
     });
 
     // Step 2: Create job record
-    const jobId = await step.run("create-job", async () => {
+    const jobId = await step.run("job.create", async () => {
       const jobName = sourceType === "github"
         ? `GitHub Sync: ${(sourceMetadata as any).repoFullName || "Unknown"}`
         : `${sourceType} Sync`;
@@ -99,6 +117,7 @@ export const sourceConnected = inngest.createFunction(
       return await createJob({
         clerkOrgId: metadata.clerkOrgId,
         workspaceId,
+        storeId: metadata.storeId,
         repositoryId: null,
         inngestRunId: runId,
         inngestFunctionId: "source-connected",
@@ -113,17 +132,18 @@ export const sourceConnected = inngest.createFunction(
     });
 
     // Step 3: Update job to running
-    await step.run("update-job-running", async () => {
+    await step.run("job.update-status", async () => {
       await updateJobStatus(jobId, "running");
     });
 
     // Step 4: Trigger provider-specific full sync
-    const eventIds = await step.sendEvent("trigger-provider-sync", {
+    const eventIds = await step.sendEvent("sync.trigger-provider", {
       name: "apps-console/source.sync",
       data: {
         workspaceId,
         workspaceKey,
         sourceId,
+        storeId: metadata.storeId,
         sourceType,
         syncMode: "full",
         trigger: "config-change", // Initial connection = first-time config detection
@@ -131,7 +151,7 @@ export const sourceConnected = inngest.createFunction(
       },
     });
 
-    await step.run("log-sync-dispatch", async () => {
+    await step.run("sync.log-dispatch", async () => {
       log.info("Triggered provider sync", {
         sourceId,
         sourceType,
@@ -140,24 +160,53 @@ export const sourceConnected = inngest.createFunction(
       });
     });
 
-    // Step 5: Complete job
-    await step.run("complete-job", async () => {
-      await completeJob({
-        jobId,
-        status: "completed",
-        output: {
-          sourceId,
-          sourceType,
-          syncTriggered: true,
-        },
-      });
+    // Step 5: Wait for source sync to complete
+    // CRITICAL: Don't complete job until sync actually finishes!
+    const syncCompletion = await step.waitForEvent("sync.await-completion", {
+      event: "apps-console/github.sync-completed",
+      timeout: "45m",
+      match: "data.sourceId",
     });
 
+    // Step 6: Complete job with actual results (not premature completion)
+    await step.run("job.complete", async () => {
+      if (syncCompletion === null) {
+        // Timeout - mark job as failed
+        await completeJob({
+          jobId,
+          status: "failed",
+          output: {
+            sourceId,
+            sourceType,
+            syncTriggered: true,
+            error: "Sync timed out after 45 minutes",
+          },
+        });
+      } else {
+        // Success - complete with actual processing results
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            sourceId,
+            sourceType,
+            syncTriggered: true,
+            filesProcessed: syncCompletion.data.filesProcessed,
+            storeSlug: syncCompletion.data.storeSlug,
+          },
+        });
+      }
+    });
+
+    // Step 7: Return with actual results
     return {
-      success: true,
+      success: syncCompletion !== null,
       sourceId,
       sourceType,
       jobId,
+      filesProcessed: syncCompletion?.data.filesProcessed ?? 0,
+      filesFailed: syncCompletion?.data.filesFailed ?? 0,
+      timedOut: syncCompletion === null,
     };
   }
 );

@@ -15,7 +15,6 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
-import { PRIVATE_CONFIG } from "@repo/console-config";
 
 /**
  * Generic document deletion event
@@ -48,11 +47,14 @@ export const deleteDocuments = inngest.createFunction(
     concurrency: [
       {
         key: 'event.data.workspaceId + "-" + event.data.storeSlug',
-        limit: PRIVATE_CONFIG.workflow.deleteDoc.perStoreConcurrency,
+        limit: 10,
       },
     ],
 
-    timeouts: PRIVATE_CONFIG.workflow.deleteDoc.timeout,
+    timeouts: {
+      start: "30s",
+      finish: "5m",
+    },
   },
   { event: "apps-console/documents.delete" },
   async ({ event, step }) => {
@@ -68,7 +70,7 @@ export const deleteDocuments = inngest.createFunction(
     });
 
     // Step 1: Find document and store in database
-    const docInfo = await step.run("find-document", async () => {
+    const docInfo = await step.run("document.find", async () => {
       try {
         // Get store
         const [store] = await db
@@ -163,7 +165,7 @@ export const deleteDocuments = inngest.createFunction(
     }
 
     // Step 2: Delete vectors from Pinecone via metadata filter
-    await step.run("delete-vectors", async () => {
+    await step.run("vectors.delete", async () => {
       try {
         await pineconeClient.deleteByMetadata(
           docInfo.indexName,
@@ -189,7 +191,7 @@ export const deleteDocuments = inngest.createFunction(
     });
 
     // Step 3: Delete vector_entries rows
-    await step.run("delete-vector-entries", async () => {
+    await step.run("vector-entries.delete", async () => {
       try {
         await db
           .delete(workspaceKnowledgeVectorChunks)
@@ -213,7 +215,7 @@ export const deleteDocuments = inngest.createFunction(
     });
 
     // Step 4: Delete docs_documents row
-    await step.run("delete-document", async () => {
+    await step.run("document.delete", async () => {
       try {
         await db.delete(workspaceKnowledgeDocuments).where(eq(workspaceKnowledgeDocuments.id, docInfo.docId));
 

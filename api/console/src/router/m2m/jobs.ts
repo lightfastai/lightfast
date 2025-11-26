@@ -30,6 +30,7 @@ export const jobsM2MRouter = {
 			z.object({
 				clerkOrgId: z.string(),
 				workspaceId: z.string(),
+				storeId: z.string(),
 				repositoryId: z.string().nullable().optional(),
 				inngestRunId: z.string(),
 				inngestFunctionId: z.string(),

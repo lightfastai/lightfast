@@ -13,8 +13,8 @@
 
 import { inngest } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaceIntegrations } from "@db/console/schema";
-import { eq } from "drizzle-orm";
+import { workspaceIntegrations, workspaceStores } from "@db/console/schema";
+import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
 import { env } from "../../../../env";
@@ -50,6 +50,11 @@ export const githubPushHandler = inngest.createFunction(
       key: "event.data.sourceId",
       mode: "cancel",
     },
+
+    timeouts: {
+      start: "1m",
+      finish: "10m",
+    },
   },
   { event: "apps-console/github.push" },
   async ({ event, step }) => {
@@ -77,8 +82,24 @@ export const githubPushHandler = inngest.createFunction(
       deliveryId,
     });
 
-    // Step 1: Validate source exists
-    await step.run("validate-source", async () => {
+    // Step 1: Resolve storeId from "default" store
+    const storeId = await step.run("store.resolve", async () => {
+      const store = await db.query.workspaceStores.findFirst({
+        where: and(
+          eq(workspaceStores.workspaceId, workspaceId),
+          eq(workspaceStores.slug, "default")
+        ),
+      });
+
+      if (!store) {
+        throw new Error(`Default store not found for workspace: ${workspaceId}`);
+      }
+
+      return store.id;
+    });
+
+    // Step 2: Validate source exists
+    await step.run("source.validate", async () => {
       const source = await db.query.workspaceIntegrations.findFirst({
         where: eq(workspaceIntegrations.id, sourceId),
       });
@@ -101,7 +122,7 @@ export const githubPushHandler = inngest.createFunction(
     });
 
     // Step 2: Check if lightfast.yml was modified and update DB status
-    const configChanged = await step.run("check-config-changed", async () => {
+    const configChanged = await step.run("config.check-changed", async () => {
       const hasConfigChange = changedFiles.some((file) =>
         CONFIG_FILE_NAMES.includes(file.path)
       );
@@ -185,12 +206,13 @@ export const githubPushHandler = inngest.createFunction(
     // Step 3: Route to appropriate sync workflow
     if (configChanged) {
       // Config changed → trigger FULL sync
-      const eventIds = await step.sendEvent("trigger-full-sync", {
+      const eventIds = await step.sendEvent("sync.trigger-full", {
         name: "apps-console/source.sync",
         data: {
           workspaceId,
           workspaceKey,
           sourceId,
+          storeId,
           sourceType: "github",
           syncMode: "full",
           trigger: "config-change",
@@ -205,7 +227,7 @@ export const githubPushHandler = inngest.createFunction(
         },
       });
 
-      await step.run("log-full-sync-dispatch", async () => {
+      await step.run("sync.log-dispatch", async () => {
         log.info("Triggered full sync (config changed)", {
           sourceId,
           repoFullName,
@@ -214,12 +236,13 @@ export const githubPushHandler = inngest.createFunction(
       });
     } else {
       // Normal push → trigger INCREMENTAL sync
-      const eventIds = await step.sendEvent("trigger-incremental-sync", {
+      const eventIds = await step.sendEvent("sync.trigger-incremental", {
         name: "apps-console/source.sync",
         data: {
           workspaceId,
           workspaceKey,
           sourceId,
+          storeId,
           sourceType: "github",
           syncMode: "incremental",
           trigger: "webhook",
@@ -237,7 +260,7 @@ export const githubPushHandler = inngest.createFunction(
         },
       });
 
-      await step.run("log-incremental-sync-dispatch", async () => {
+      await step.run("sync.log-dispatch", async () => {
         log.info("Triggered incremental sync (normal push)", {
           sourceId,
           repoFullName,

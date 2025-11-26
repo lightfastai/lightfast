@@ -24,6 +24,7 @@ import type { JobTrigger, OperationMetricType, OperationMetricUnit } from "@repo
 export async function createJob(params: {
 	clerkOrgId: string;
 	workspaceId: string;
+	storeId: string;
 	repositoryId?: string | null;
 	inngestRunId: string;
 	inngestFunctionId: string;
@@ -52,6 +53,7 @@ export async function createJob(params: {
 			.values({
 				clerkOrgId: params.clerkOrgId,
 				workspaceId: params.workspaceId,
+				storeId: params.storeId,
 				repositoryId: params.repositoryId ?? null,
 				inngestRunId: params.inngestRunId,
 				inngestFunctionId: params.inngestFunctionId,

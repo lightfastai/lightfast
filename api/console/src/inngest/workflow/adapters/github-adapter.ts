@@ -21,7 +21,6 @@ import {
   getThrottledInstallationOctokit,
   GitHubContentService,
 } from "@repo/console-octokit-github";
-import { PRIVATE_CONFIG } from "@repo/console-config";
 
 /**
  * GitHub File Process Adapter
@@ -36,7 +35,7 @@ export const githubProcessAdapter = inngest.createFunction(
     id: "apps-console/github-process-adapter",
     name: "GitHub Process Adapter",
     description: "Fetches GitHub file content and adapts to generic document format",
-    retries: PRIVATE_CONFIG.workflow.retries,
+    retries: 3,
 
     // Batch events per repository for efficient GitHub API usage
     // Note: Idempotency handled downstream in process-documents via contentHash
@@ -72,7 +71,7 @@ export const githubProcessAdapter = inngest.createFunction(
     });
 
     // Step 1: Fetch all file contents from GitHub
-    const filesWithContent = await step.run("fetch-files", async () => {
+    const filesWithContent = await step.run("github.fetch-files", async () => {
       const app = createGitHubApp({
         appId: env.GITHUB_APP_ID,
         privateKey: env.GITHUB_APP_PRIVATE_KEY,
@@ -141,7 +140,7 @@ export const githubProcessAdapter = inngest.createFunction(
     // Step 2: Transform to generic document events and send
     if (filesWithContent.length > 0) {
       await step.sendEvent(
-        "send-document-process-events",
+        "documents.send-process-events",
         filesWithContent.map((item) => ({
           name: "apps-console/documents.process" as const,
           data: {
@@ -221,7 +220,7 @@ export const githubDeleteAdapter = inngest.createFunction(
 
     // Transform and forward to generic delete
     await step.sendEvent(
-      "send-document-delete-events",
+      "documents.send-delete-events",
       events.map((event) => {
         // Generate deterministic document ID matching the one used in process adapter
         const documentId = `github:${event.data.repoFullName}:${event.data.filePath}`;

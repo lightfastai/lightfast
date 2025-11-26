@@ -89,7 +89,7 @@ export const ensureStore = inngest.createFunction(
 		id: "apps-console/ensure-store",
 		name: "Ensure Store Exists",
 		description: "Idempotently provisions store and Pinecone namespace",
-		retries: PRIVATE_CONFIG.workflow.ensureStore.retries,
+		retries: 5,
 
 		// CRITICAL: Prevent duplicate store creation within 24hr window
 		// Idempotency caches the result and replays it for concurrent/subsequent calls
@@ -102,7 +102,10 @@ export const ensureStore = inngest.createFunction(
 		// This allows concurrent calls to succeed instead of throwing "rate limited" errors
 
 		// Pinecone index creation can be slow
-		timeouts: PRIVATE_CONFIG.workflow.ensureStore.timeout,
+		timeouts: {
+			start: "1m",
+			finish: "10m",
+		},
 	},
 	{ event: "apps-console/store.ensure" },
 	async ({ event, step }: { event: any; step: any }) => {
@@ -131,7 +134,7 @@ export const ensureStore = inngest.createFunction(
 		const targetDim = embeddingDim ?? embeddingDefaults.dimension;
 
 		// Step 1: Check if store already exists in DB
-		const existingStore = await step.run("check-store-exists", async () => {
+		const existingStore = await step.run("store.check-exists", async () => {
 			const store = await trpc.stores.get({
 				workspaceId,
 				storeSlug,
@@ -151,7 +154,7 @@ export const ensureStore = inngest.createFunction(
 		// If store exists, check for configuration drift
 		if (existingStore) {
 			// Detect configuration drift between store and current environment
-			await step.run("check-config-drift", async () => {
+			await step.run("config.check-drift", async () => {
 				const currentDefaults = resolveEmbeddingDefaults();
 
 				const hasDrift =
@@ -194,7 +197,7 @@ export const ensureStore = inngest.createFunction(
 
 		// Step 2: Fetch workspace and resolve namespace name
 		const { namespaceName, sharedIndexName } = await step.run(
-			"resolve-namespace",
+			"namespace.resolve",
 			async () => {
 				// Fetch workspace to get clerkOrgId
 				const workspace = await trpc.workspace.get({
@@ -224,7 +227,7 @@ export const ensureStore = inngest.createFunction(
 		);
 
 		// Step 3: Check if shared Pinecone index exists
-		const indexExists = await step.run("check-shared-index", async () => {
+		const indexExists = await step.run("index.check-exists", async () => {
 			try {
 				const pinecone = createConsolePineconeClient();
 				const exists = await pinecone.indexExists(sharedIndexName);
@@ -247,7 +250,7 @@ export const ensureStore = inngest.createFunction(
 
 		// Step 4: Create shared Pinecone index if needed (rare - usually exists)
 		if (!indexExists) {
-			await step.run("create-shared-index", async () => {
+			await step.run("index.create", async () => {
 				try {
 					const pinecone = createConsolePineconeClient();
 					await pinecone.createIndex(sharedIndexName, targetDim);
@@ -272,7 +275,7 @@ export const ensureStore = inngest.createFunction(
 		}
 
 		// Step 4b: Configure shared Pinecone index tags/protection
-		await step.run("configure-shared-index", async () => {
+		await step.run("index.configure", async () => {
 			try {
 				const pinecone = createConsolePineconeClient();
 				await pinecone.configureIndex(sharedIndexName, {
@@ -292,7 +295,7 @@ export const ensureStore = inngest.createFunction(
 		});
 
 		// Step 5: Create store DB record
-		const store = await step.run("create-store-record", async () => {
+		const store = await step.run("store.create-record", async () => {
 			const storeId = `${workspaceId}_${storeSlug}`;
 
 			// Create store via tRPC (handles idempotent insert + fallback fetch)

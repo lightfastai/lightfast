@@ -29,6 +29,5 @@ export {
   EMBEDDING_CONFIG,
   CHUNKING_CONFIG,
   GITHUB_CONFIG,
-  WORKFLOW_CONFIG,
   type PrivateConfig,
 } from "./private-config";

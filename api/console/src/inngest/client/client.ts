@@ -74,6 +74,8 @@ const eventsMap = {
       workspaceKey: z.string(),
       /** workspaceSource.id */
       sourceId: z.string(),
+      /** Store DB UUID (required for job linking) */
+      storeId: z.string(),
       /** Source provider type */
       sourceType: z.enum(["github", "linear", "notion", "sentry"]),
       /** Sync mode: full = all documents, incremental = changed only */
@@ -111,8 +113,10 @@ const eventsMap = {
       githubInstallationId: z.number(),
       /** SHA before push */
       beforeSha: z.string(),
-      /** SHA after push */
+      /** SHA after push (the commit SHA) */
       afterSha: z.string(),
+      /** Commit message from head commit */
+      commitMessage: z.string().optional(),
       /** Branch name (e.g., "main") */
       branch: z.string(),
       /** Unique delivery ID for idempotency */
@@ -373,6 +377,79 @@ const eventsMap = {
       timestamp: z.string().datetime(),
     }),
   },
+
+  // ============================================================================
+  // WORKFLOW COMPLETION EVENTS
+  // ============================================================================
+
+  /**
+   * Signal that GitHub sync has completed (all files processed)
+   * Emitted by: github-sync workflow after all file processing completes
+   * Consumed by: source-sync workflow (via step.waitForEvent)
+   */
+  "apps-console/github.sync-completed": {
+    data: z.object({
+      /** workspaceSource.id that completed */
+      sourceId: z.string(),
+      /** Job ID from orchestration layer */
+      jobId: z.string(),
+      /** Number of files processed successfully */
+      filesProcessed: z.number(),
+      /** Number of files that failed */
+      filesFailed: z.number().default(0),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Sync mode that completed */
+      syncMode: z.enum(["full", "incremental"]),
+      /** Whether the sync timed out */
+      timedOut: z.boolean().default(false),
+    }),
+  },
+
+  /**
+   * Signal that document processing batch completed
+   * Emitted by: documents.process workflow after batch finishes
+   * Consumed by: github-sync workflow (via step.waitForEvent)
+   *
+   * NOTE: This is for future batch tracking implementation (Phase 2).
+   * For now, we'll emit immediately after sendEvent() in github-sync.
+   */
+  "apps-console/documents.batch-completed": {
+    data: z.object({
+      /** Workspace identifier */
+      workspaceId: z.string(),
+      /** Store name */
+      storeSlug: z.string(),
+      /** Batch ID for tracking */
+      batchId: z.string(),
+      /** Number of documents in batch */
+      documentCount: z.number(),
+      /** Processing duration in milliseconds */
+      durationMs: z.number(),
+    }),
+  },
+
+  // ============================================================================
+  // FUTURE EXAMPLES (NOT IMPLEMENTED - COMMENTED FOR REFERENCE)
+  // ============================================================================
+
+  /*
+   * Example: User approval response for sensitive operations
+   * This shows how step.waitForEvent could be used for human-in-the-loop
+   * workflows in the future (e.g., approving mass deletions).
+   *
+   * NOT IMPLEMENTED YET - just an example pattern.
+   */
+  // "apps-console/workflow.approval": {
+  //   data: z.object({
+  //     requestId: z.string(),
+  //     runId: z.string(),
+  //     approved: z.boolean(),
+  //     approverUserId: z.string(),
+  //     comment: z.string().optional(),
+  //     timestamp: z.string().datetime(),
+  //   }),
+  // },
 };
 
 /**
