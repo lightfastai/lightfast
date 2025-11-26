@@ -10,7 +10,14 @@ import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/s
 import type { WorkspaceWorkflowRun, WorkflowInput, WorkflowOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import type { JobTrigger, OperationMetricType, OperationMetricUnit } from "@repo/console-validation";
+import type {
+	JobTrigger,
+	OperationMetricType,
+	OperationMetricUnit,
+	JobDurationTags,
+	DocumentsIndexedTags,
+	ErrorTags,
+} from "@repo/console-validation";
 import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
 /**
@@ -255,34 +262,19 @@ export async function recordJobMetric(
 				type: "job_duration";
 				value: number;
 				unit: "ms";
-				tags: {
-					jobType: string;
-					trigger: JobTrigger;
-					syncMode?: "full" | "incremental";
-					sourceType?: string;
-				};
+				tags: JobDurationTags;
 		  }
 		| {
 				type: "documents_indexed";
 				value: number;
 				unit: "count";
-				tags: {
-					jobType: string;
-					sourceType: string;
-					syncMode?: "full" | "incremental";
-					filesProcessed?: number;
-				};
+				tags: DocumentsIndexedTags;
 		  }
 		| {
 				type: "errors";
 				value: 1;
 				unit: "count";
-				tags: {
-					jobType: string;
-					errorType: string;
-					trigger?: JobTrigger;
-					sourceType?: string;
-				};
+				tags: ErrorTags;
 		  }
 	) & {
 		clerkOrgId: string;

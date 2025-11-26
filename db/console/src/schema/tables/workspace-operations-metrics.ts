@@ -8,7 +8,13 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import type { OperationMetricType, OperationMetricUnit } from "@repo/console-validation";
+import type {
+  OperationMetricType,
+  OperationMetricUnit,
+  JobDurationTags,
+  DocumentsIndexedTags,
+  ErrorTags,
+} from "@repo/console-validation";
 
 /**
  * Operations Metrics Table - Internal System Health
@@ -139,13 +145,17 @@ export const workspaceOperationsMetrics = pgTable(
 export type WorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferSelect;
 export type InsertWorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferInsert;
 
-// Tags interface (can stay in db/ since it's table-specific metadata structure)
-export interface OperationMetricTags {
-  jobType?: string;           // Inngest function ID
-  trigger?: string;           // Job trigger type
-  errorType?: string;         // Error classification
-  sourceType?: string;        // Source provider type
-  syncMode?: string;          // Sync mode
-  filesProcessed?: number;    // Number of files processed
-  [key: string]: unknown;
-}
+// Type re-exports from validation schemas
+export type { JobDurationTags, DocumentsIndexedTags, ErrorTags } from "@repo/console-validation";
+
+/**
+ * Discriminated union based on metric type (type column)
+ *
+ * Note: Cannot discriminate at schema level since type is separate column.
+ * This is a union of possible tag structures.
+ *
+ * - job_duration: requires jobType and trigger
+ * - documents_indexed: requires jobType and sourceType
+ * - errors: requires jobType and errorType
+ */
+export type OperationMetricTags = JobDurationTags | DocumentsIndexedTags | ErrorTags;

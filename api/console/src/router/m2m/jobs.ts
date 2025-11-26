@@ -8,7 +8,14 @@ import {
 	recordJobMetric,
 	getJob,
 } from "../../lib/jobs";
-import { jobTriggerSchema, workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
+import {
+	jobTriggerSchema,
+	workflowInputSchema,
+	workflowOutputSchema,
+	jobDurationTagsSchema,
+	documentsIndexedTagsSchema,
+	errorTagsSchema,
+} from "@repo/console-validation";
 
 /**
  * Jobs M2M Router
@@ -118,12 +125,7 @@ export const jobsM2MRouter = {
 					type: z.literal("job_duration"),
 					value: z.number().int().positive(),
 					unit: z.literal("ms"),
-					tags: z.object({
-						jobType: z.string(),
-						trigger: jobTriggerSchema,
-						syncMode: z.enum(["full", "incremental"]).optional(),
-						sourceType: z.string().optional(),
-					}),
+					tags: jobDurationTagsSchema,
 				}),
 				// documents_indexed metric
 				z.object({
@@ -133,12 +135,7 @@ export const jobsM2MRouter = {
 					type: z.literal("documents_indexed"),
 					value: z.number().int().nonnegative(),
 					unit: z.literal("count"),
-					tags: z.object({
-						jobType: z.string(),
-						sourceType: z.string(),
-						syncMode: z.enum(["full", "incremental"]).optional(),
-						filesProcessed: z.number().int().optional(),
-					}),
+					tags: documentsIndexedTagsSchema,
 				}),
 				// errors metric
 				z.object({
@@ -148,12 +145,7 @@ export const jobsM2MRouter = {
 					type: z.literal("errors"),
 					value: z.literal(1),
 					unit: z.literal("count"),
-					tags: z.object({
-						jobType: z.string(),
-						errorType: z.string(),
-						trigger: jobTriggerSchema.optional(),
-						sourceType: z.string().optional(),
-					}),
+					tags: errorTagsSchema,
 				}),
 			]),
 		)

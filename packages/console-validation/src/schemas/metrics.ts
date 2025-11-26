@@ -38,6 +38,42 @@ export const operationMetricUnitSchema = z.enum(["ms", "count"]);
 export type OperationMetricUnit = z.infer<typeof operationMetricUnitSchema>;
 
 /**
+ * Tag Schemas for Operation Metrics
+ *
+ * Separate schemas for type-specific tags to ensure proper validation
+ * and enable reuse across the application.
+ */
+
+// Job duration metric tags
+export const jobDurationTagsSchema = z.object({
+  jobType: z.string(),
+  trigger: jobTriggerSchema,
+  syncMode: z.enum(["full", "incremental"]).optional(),
+  sourceType: z.string().optional(),
+});
+
+// Documents indexed metric tags
+export const documentsIndexedTagsSchema = z.object({
+  jobType: z.string(),
+  sourceType: z.string(),
+  syncMode: z.enum(["full", "incremental"]).optional(),
+  filesProcessed: z.number().int().nonnegative().optional(),
+});
+
+// Error metric tags
+export const errorTagsSchema = z.object({
+  jobType: z.string(),
+  errorType: z.string(),
+  trigger: jobTriggerSchema.optional(),
+  sourceType: z.string().optional(),
+});
+
+// Type exports for tags
+export type JobDurationTags = z.infer<typeof jobDurationTagsSchema>;
+export type DocumentsIndexedTags = z.infer<typeof documentsIndexedTagsSchema>;
+export type ErrorTags = z.infer<typeof errorTagsSchema>;
+
+/**
  * Discriminated Union: Operation Metric with Type-Specific Tags
  *
  * This ensures that each metric type has appropriate, type-safe tags.
@@ -49,14 +85,7 @@ export const jobDurationMetricSchema = z.object({
   type: z.literal("job_duration"),
   value: z.number().int().positive(), // milliseconds
   unit: z.literal("ms"),
-  tags: z
-    .object({
-      jobType: z.string(), // Inngest function ID (e.g., "apps-console/github-sync")
-      trigger: jobTriggerSchema,
-      syncMode: z.enum(["full", "incremental"]).optional(),
-      sourceType: z.string().optional(), // "github", "linear", "notion"
-    })
-    .optional(),
+  tags: jobDurationTagsSchema,
 });
 
 // Documents Indexed Metric
@@ -64,14 +93,7 @@ export const documentsIndexedMetricSchema = z.object({
   type: z.literal("documents_indexed"),
   value: z.number().int().nonnegative(), // count
   unit: z.literal("count"),
-  tags: z
-    .object({
-      jobType: z.string(), // Workflow that indexed the documents
-      sourceType: z.string(), // "github", "linear", "notion"
-      syncMode: z.enum(["full", "incremental"]).optional(),
-      filesProcessed: z.number().int().optional(), // Total files in the job
-    })
-    .optional(),
+  tags: documentsIndexedTagsSchema,
 });
 
 // Error Metric
@@ -79,14 +101,7 @@ export const errorMetricSchema = z.object({
   type: z.literal("errors"),
   value: z.literal(1), // Always 1 per error occurrence
   unit: z.literal("count"),
-  tags: z
-    .object({
-      jobType: z.string(), // Job that failed
-      errorType: z.string(), // Error classification (e.g., "job_failure", "api_timeout")
-      trigger: jobTriggerSchema.optional(),
-      sourceType: z.string().optional(),
-    })
-    .optional(),
+  tags: errorTagsSchema,
 });
 
 /**
