@@ -8,7 +8,6 @@
  * 3. Generate embeddings
  * 4. Upsert to Pinecone
  * 5. Persist to database
- * 6. Extract cross-source relationships
  */
 
 import { db } from "@db/console/client";
@@ -154,6 +153,7 @@ export const processDocuments = inngest.createFunction(
       count: events.length,
     });
 
+    // Process documents
     const results = await step.run("documents.process-batch", async () => {
       const storeCache = new Map<string, WorkspaceStore>();
 

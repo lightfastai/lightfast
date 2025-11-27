@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { githubSourceMetadataSchema, linearSourceMetadataSchema } from "./source-metadata";
+import { githubSourceMetadataSchema } from "./source-metadata";
+import { sourceTypeSchema } from "./sources";
 
 // =============================================================================
 // SOURCE CONNECTED - INPUT
@@ -12,12 +13,7 @@ const sourceConnectedGitHubInputSchema = z.object({
   sourceMetadata: githubSourceMetadataSchema,
 });
 
-const sourceConnectedLinearInputSchema = z.object({
-  inngestFunctionId: z.literal("source-connected"),
-  sourceId: z.string(),
-  sourceType: z.literal("linear"),
-  sourceMetadata: linearSourceMetadataSchema,
-});
+// Future: sourceConnectedLinearInputSchema, etc.
 
 // =============================================================================
 // SOURCE SYNC - INPUT
@@ -33,14 +29,18 @@ const sourceSyncGitHubInputSchema = z.object({
   syncParams: z.record(z.unknown()),
 });
 
-const sourceSyncLinearInputSchema = z.object({
-  inngestFunctionId: z.literal("source-sync"),
+// Future: sourceSyncLinearInputSchema, etc.
+
+// =============================================================================
+// SYNC ORCHESTRATOR - INPUT
+// =============================================================================
+
+const syncOrchestratorInputSchema = z.object({
+  inngestFunctionId: z.literal("sync.orchestrator"),
   sourceId: z.string(),
-  sourceType: z.literal("linear"),
-  sourceMetadata: linearSourceMetadataSchema,
+  sourceType: sourceTypeSchema, // Uses canonical schema from sources.ts
   syncMode: z.enum(["full", "incremental"]),
-  trigger: z.string(),
-  syncParams: z.record(z.unknown()),
+  syncParams: z.record(z.unknown()).optional(),
 });
 
 // =============================================================================
@@ -50,6 +50,7 @@ const sourceSyncLinearInputSchema = z.object({
 export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
   sourceConnectedGitHubInputSchema,
   sourceSyncGitHubInputSchema,
+  syncOrchestratorInputSchema,
   // Future:
   // sourceConnectedLinearInputSchema,
   // sourceSyncLinearInputSchema,
@@ -58,6 +59,7 @@ export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
 export type SourceConnectedGitHubInput = z.infer<typeof sourceConnectedGitHubInputSchema>;
 export type SourceSyncGitHubInput = z.infer<typeof sourceSyncGitHubInputSchema>;
+export type SyncOrchestratorInput = z.infer<typeof syncOrchestratorInputSchema>;
 
 // =============================================================================
 // SOURCE CONNECTED - OUTPUT (SUCCESS)
@@ -75,15 +77,7 @@ const sourceConnectedGitHubOutputSuccessSchema = z.object({
   storeSlug: z.string(),
 });
 
-const sourceConnectedLinearOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("source-connected"),
-  status: z.literal("success"),
-  sourceId: z.string(),
-  sourceType: z.literal("linear"),
-  syncTriggered: z.boolean(),
-  issuesProcessed: z.number().int().nonnegative(),
-  issuesFailed: z.number().int().nonnegative(),
-});
+// Future: sourceConnectedLinearOutputSuccessSchema, etc.
 
 // =============================================================================
 // SOURCE CONNECTED - OUTPUT (FAILURE)
@@ -102,16 +96,7 @@ const sourceConnectedGitHubOutputFailureSchema = z.object({
   error: z.string(),
 });
 
-const sourceConnectedLinearOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("source-connected"),
-  status: z.literal("failure"),
-  sourceId: z.string(),
-  sourceType: z.literal("linear"),
-  syncTriggered: z.boolean(),
-  issuesProcessed: z.number().int().nonnegative(),
-  issuesFailed: z.number().int().nonnegative(),
-  error: z.string(),
-});
+// Future: sourceConnectedLinearOutputFailureSchema, etc.
 
 // =============================================================================
 // SOURCE SYNC - OUTPUT (SUCCESS)
@@ -129,16 +114,7 @@ const sourceSyncGitHubOutputSuccessSchema = z.object({
   timedOut: z.boolean(),
 });
 
-const sourceSyncLinearOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("source-sync"),
-  status: z.literal("success"),
-  sourceId: z.string(),
-  sourceType: z.literal("linear"),
-  syncMode: z.enum(["full", "incremental"]),
-  issuesProcessed: z.number().int().nonnegative(),
-  issuesFailed: z.number().int().nonnegative(),
-  timedOut: z.boolean(),
-});
+// Future: sourceSyncLinearOutputSuccessSchema, etc.
 
 // =============================================================================
 // SOURCE SYNC - OUTPUT (FAILURE)
@@ -157,15 +133,36 @@ const sourceSyncGitHubOutputFailureSchema = z.object({
   error: z.string(),
 });
 
-const sourceSyncLinearOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("source-sync"),
+// Future: sourceSyncLinearOutputFailureSchema, etc.
+
+// =============================================================================
+// SYNC ORCHESTRATOR - OUTPUT (SUCCESS)
+// =============================================================================
+
+const syncOrchestratorOutputSuccessSchema = z.object({
+  inngestFunctionId: z.literal("sync.orchestrator"),
+  status: z.literal("success"),
+  sourceId: z.string(),
+  sourceType: sourceTypeSchema, // Uses canonical schema from sources.ts
+  itemsProcessed: z.number().int().nonnegative(),
+  itemsFailed: z.number().int().nonnegative(),
+  embeddingsCreated: z.number().int().nonnegative(),
+  syncMode: z.enum(["full", "incremental"]),
+});
+
+// =============================================================================
+// SYNC ORCHESTRATOR - OUTPUT (FAILURE)
+// =============================================================================
+
+const syncOrchestratorOutputFailureSchema = z.object({
+  inngestFunctionId: z.literal("sync.orchestrator"),
   status: z.literal("failure"),
   sourceId: z.string(),
-  sourceType: z.literal("linear"),
+  sourceType: sourceTypeSchema, // Uses canonical schema from sources.ts
+  itemsProcessed: z.number().int().nonnegative(),
+  itemsFailed: z.number().int().nonnegative(),
+  embeddingsCreated: z.number().int().nonnegative(),
   syncMode: z.enum(["full", "incremental"]),
-  issuesProcessed: z.number().int().nonnegative(),
-  issuesFailed: z.number().int().nonnegative(),
-  timedOut: z.boolean(),
   error: z.string(),
 });
 
@@ -181,6 +178,8 @@ export const workflowOutputSchema = z.union([
   sourceConnectedGitHubOutputFailureSchema,
   sourceSyncGitHubOutputSuccessSchema,
   sourceSyncGitHubOutputFailureSchema,
+  syncOrchestratorOutputSuccessSchema,
+  syncOrchestratorOutputFailureSchema,
   // Future:
   // sourceConnectedLinearOutputSuccessSchema,
   // sourceConnectedLinearOutputFailureSchema,
@@ -193,3 +192,5 @@ export type SourceConnectedGitHubOutputSuccess = z.infer<typeof sourceConnectedG
 export type SourceConnectedGitHubOutputFailure = z.infer<typeof sourceConnectedGitHubOutputFailureSchema>;
 export type SourceSyncGitHubOutputSuccess = z.infer<typeof sourceSyncGitHubOutputSuccessSchema>;
 export type SourceSyncGitHubOutputFailure = z.infer<typeof sourceSyncGitHubOutputFailureSchema>;
+export type SyncOrchestratorOutputSuccess = z.infer<typeof syncOrchestratorOutputSuccessSchema>;
+export type SyncOrchestratorOutputFailure = z.infer<typeof syncOrchestratorOutputFailureSchema>;

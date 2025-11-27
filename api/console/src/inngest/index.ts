@@ -3,35 +3,30 @@
  *
  * Exports Inngest client, workflows, and route context for Next.js integration
  *
- * Phase 1.6: Provider-agnostic workflow architecture
- * - Orchestration layer for routing sync requests
- * - Provider-specific workflows (GitHub sync, push handling)
- * - Adapter pattern (GitHub → Generic transformation)
- * - Generic document processing (multi-source)
- * - Infrastructure provisioning (stores, activity logging)
+ * New Unified Architecture:
+ * - Unified sync orchestration (sync.orchestrator)
+ * - No race conditions (step.invoke for critical operations)
+ * - Real completion tracking (waitForEvent pattern)
+ * - Accurate metrics from actual processing
+ * - Currently supports: GitHub (Linear, Vercel coming soon)
  */
 
 import { serve } from "inngest/next";
 import { inngest } from "./client/client";
 
 // Orchestration workflows (provider-agnostic)
-import { sourceConnected } from "./workflow/orchestration/source-connected";
-import { sourceSync } from "./workflow/orchestration/source-sync";
+import { syncOrchestrator } from "./workflow/orchestration/sync-orchestrator";
+
+// Source-specific orchestrators
+import { githubSyncOrchestrator } from "./workflow/sources/github-sync-orchestrator";
 
 // GitHub provider workflows
-import { githubSync } from "./workflow/providers/github/sync";
 import { githubPushHandler } from "./workflow/providers/github/push-handler";
-
-// GitHub adapters (transform GitHub-specific events to generic document events)
-import {
-  githubProcessAdapter,
-  githubDeleteAdapter,
-} from "./workflow/adapters/github-adapter";
 
 // Generic document processing workflows
 import { processDocuments } from "./workflow/processing/process-documents";
 import { deleteDocuments } from "./workflow/processing/delete-documents";
-import { extractRelationships } from "./workflow/processing/extract-relationships";
+import { filesBatchProcessor } from "./workflow/processing/files-batch-processor";
 
 // Infrastructure workflows
 import { ensureStore } from "./workflow/infrastructure/ensure-store";
@@ -41,16 +36,16 @@ import { recordActivity } from "./workflow/infrastructure/record-activity";
 export { inngest };
 
 // Export orchestration workflows
-export { sourceConnected, sourceSync };
+export { syncOrchestrator };
+
+// Export source-specific orchestrators
+export { githubSyncOrchestrator };
 
 // Export GitHub provider workflows
-export { githubSync, githubPushHandler };
-
-// Export GitHub adapters
-export { githubProcessAdapter, githubDeleteAdapter };
+export { githubPushHandler };
 
 // Export generic processing workflows
-export { processDocuments, deleteDocuments, extractRelationships };
+export { processDocuments, deleteDocuments, filesBatchProcessor };
 
 // Export infrastructure workflows
 export { ensureStore, recordActivity };
@@ -61,28 +56,27 @@ export { ensureStore, recordActivity };
  * This function should be called in the Inngest API route handler
  * to set up the Inngest server with all registered functions.
  *
- * Phase 1.6 workflow architecture:
+ * New Unified Architecture:
  *
  * Orchestration Layer:
- * 1. sourceConnected - Routes source connection to provider sync
- * 2. sourceSync - Generic sync orchestrator (manual/scheduled/config-change)
+ * 1. syncOrchestrator - Unified sync orchestration (all sources, all modes)
+ *
+ * Source-Specific Orchestrators:
+ * 2. githubSyncOrchestrator - GitHub-specific sync logic
  *
  * GitHub Provider:
- * 3. githubPushHandler - Routes GitHub push webhooks to sync
- * 4. githubSync - Handles full/incremental GitHub repository sync
+ * 3. githubPushHandler - Routes GitHub push webhooks to sync.requested
  *
- * GitHub Adapters (Provider → Generic transformation):
- * 5. githubProcessAdapter - Fetches GitHub content → documents.process
- * 6. githubDeleteAdapter - Transforms deletions → documents.delete
+ * Batch Processing (NEW):
+ * 4. filesBatchProcessor - Processes file batches with completion tracking
  *
- * Generic Processing (Multi-Source):
- * 7. processDocuments - Generic document processor (all sources)
- * 8. deleteDocuments - Generic document deleter (all sources)
- * 9. extractRelationships - Generic relationship extractor
+ * Generic Processing:
+ * 5. processDocuments - Generic document processor (all sources)
+ * 6. deleteDocuments - Generic document deleter (all sources)
  *
  * Infrastructure:
- * 10. ensureStore - Store provisioning (source-agnostic)
- * 11. recordActivity - Activity logging
+ * 7. ensureStore - Store provisioning (source-agnostic)
+ * 8. recordActivity - Activity logging
  *
  * @example
  * ```typescript
@@ -96,30 +90,29 @@ export { ensureStore, recordActivity };
  * ```
  */
 export function createInngestRouteContext() {
-	return serve({
-		client: inngest,
-		functions: [
-			// Orchestration layer
-			sourceConnected,
-			sourceSync,
+  return serve({
+    client: inngest,
+    functions: [
+      // Orchestration layer
+      syncOrchestrator, // Unified sync orchestrator
 
-			// GitHub provider
-			githubPushHandler,
-			githubSync,
+      // Source-specific orchestrators
+      githubSyncOrchestrator,
 
-			// GitHub adapters (fetch content, transform to generic events)
-			githubProcessAdapter,
-			githubDeleteAdapter,
+      // GitHub provider
+      githubPushHandler,
 
-			// Generic processing
-			processDocuments,
-			deleteDocuments,
-			extractRelationships,
+      // Batch processing (NEW ARCHITECTURE)
+      filesBatchProcessor, // Process file batches with completion
 
-			// Infrastructure
-			ensureStore,
-			recordActivity,
-		],
-		servePath: "/api/inngest",
-	});
+      // Generic processing
+      processDocuments,
+      deleteDocuments,
+
+      // Infrastructure
+      ensureStore,
+      recordActivity,
+    ],
+    servePath: "/api/inngest",
+  });
 }

@@ -1,14 +1,13 @@
 /**
  * GitHub Push Webhook Handler
  *
- * Processes GitHub push webhooks and routes to appropriate sync workflow.
+ * Processes GitHub push webhooks and routes to unified sync orchestrator.
  *
  * Key behaviors:
  * 1. If lightfast.yml changed → trigger FULL sync (config may have changed)
  * 2. If normal push → trigger INCREMENTAL sync (only changed files)
  *
- * This replaces the old docs-ingestion.ts with clear GitHub-specific naming
- * and explicit config change handling.
+ * Routes to: sync.orchestrator via sync.requested event
  */
 
 import { inngest } from "../../../client/client";
@@ -207,12 +206,11 @@ export const githubPushHandler = inngest.createFunction(
     if (configChanged) {
       // Config changed → trigger FULL sync
       const eventIds = await step.sendEvent("sync.trigger-full", {
-        name: "apps-console/source.sync.github",
+        name: "apps-console/sync.requested",
         data: {
           workspaceId,
           workspaceKey,
           sourceId,
-          storeId,
           sourceType: "github",
           syncMode: "full",
           trigger: "config-change",
@@ -230,19 +228,18 @@ export const githubPushHandler = inngest.createFunction(
     } else {
       // Normal push → trigger INCREMENTAL sync
       const eventIds = await step.sendEvent("sync.trigger-incremental", {
-        name: "apps-console/source.sync.github",
+        name: "apps-console/sync.requested",
         data: {
           workspaceId,
           workspaceKey,
           sourceId,
-          storeId,
           sourceType: "github",
           syncMode: "incremental",
           trigger: "webhook",
           syncParams: {
             changedFiles,
             afterSha,
-            commitMessage: headCommitTimestamp,
+            headCommitTimestamp,
           },
         },
       });

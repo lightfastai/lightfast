@@ -340,6 +340,8 @@ export const ensureStore = inngest.createFunction(
 		return {
 			status: "created",
 			store,
+			storeId: store.id,
+			indexReady: true,
 			created: true,
 			duration,
 		};

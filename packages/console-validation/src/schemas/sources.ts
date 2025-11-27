@@ -12,12 +12,15 @@ import { z } from "zod";
  *
  * Defines supported OAuth integration providers.
  * Used in user_sources table for personal OAuth connections.
+ *
+ * NOTE: Currently only "github" is fully implemented in workflows.
+ * Other providers are defined for database schema compatibility and future use.
  */
 export const integrationProviderSchema = z.enum([
-  "github",
-  "notion",
-  "linear",
-  "sentry",
+  "github",      // ✅ Implemented
+  "notion",      // 🔜 Future
+  "linear",      // 🔜 Future
+  "sentry",      // 🔜 Future
 ]);
 
 export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
@@ -27,14 +30,17 @@ export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
  *
  * Defines all supported data sources for document indexing.
  * Used in docs_documents table to identify document origin.
+ *
+ * NOTE: Currently only "github" is fully implemented in workflows.
+ * Other sources are defined for database schema compatibility and future use.
  */
 export const sourceTypeSchema = z.enum([
-  "github",
-  "linear",
-  "notion",
-  "sentry",
-  "vercel",
-  "zendesk",
+  "github",      // ✅ Implemented
+  "linear",      // 🔜 Future
+  "notion",      // 🔜 Future
+  "sentry",      // 🔜 Future
+  "vercel",      // 🔜 Future
+  "zendesk",     // 🔜 Future
 ]);
 
 export type SourceType = z.infer<typeof sourceTypeSchema>;

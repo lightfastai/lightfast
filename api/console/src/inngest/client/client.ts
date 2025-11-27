@@ -18,6 +18,166 @@ import { syncTriggerSchema, githubSourceMetadataSchema } from "@repo/console-val
  */
 const eventsMap = {
   // ============================================================================
+  // UNIFIED ORCHESTRATION EVENTS (NEW ARCHITECTURE)
+  // ============================================================================
+
+  /**
+   * Unified sync request event
+   * Single entry point for all sync operations
+   * Replaces fragmented orchestration with single source of truth
+   */
+  "apps-console/sync.requested": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key for naming */
+      workspaceKey: z.string(),
+      /** workspaceSource.id */
+      sourceId: z.string(),
+      /** Source provider type */
+      sourceType: z.enum(["github", "linear", "notion", "vercel"]),
+      /** Sync mode: full = all documents, incremental = changed only */
+      syncMode: z.enum(["full", "incremental"]).default("full"),
+      /** What triggered this sync */
+      trigger: syncTriggerSchema.default("manual"),
+      /** Provider-specific sync parameters */
+      syncParams: z.record(z.unknown()).default({}),
+      /** Parent job ID if this is a sub-job */
+      parentJobId: z.string().optional(),
+    }),
+  },
+
+  /**
+   * Unified sync completion event
+   * Emitted by sync.orchestrator when sync completes with real metrics
+   */
+  "apps-console/sync.completed": {
+    data: z.object({
+      /** workspaceSource.id that completed */
+      sourceId: z.string(),
+      /** Job ID from orchestration */
+      jobId: z.string(),
+      /** Whether sync succeeded */
+      success: z.boolean(),
+      /** Number of files actually processed */
+      filesProcessed: z.number(),
+      /** Number of files that failed */
+      filesFailed: z.number(),
+      /** Number of embeddings created */
+      embeddingsCreated: z.number(),
+      /** Sync mode that completed */
+      syncMode: z.enum(["full", "incremental"]),
+      /** Error message if failed */
+      error: z.string().optional(),
+    }),
+  },
+
+  // ============================================================================
+  // BATCH PROCESSING EVENTS (NEW ARCHITECTURE)
+  // ============================================================================
+
+  /**
+   * Process a batch of files
+   * Emitted by sync.orchestrator for parallel processing
+   */
+  "apps-console/files.batch.process": {
+    data: z.object({
+      /** Unique batch ID for tracking */
+      batchId: z.string(),
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Source ID */
+      sourceId: z.string(),
+      /** Store ID */
+      storeId: z.string(),
+      /** Store slug */
+      storeSlug: z.string(),
+      /** Files to process in this batch */
+      files: z.array(z.object({
+        path: z.string(),
+        status: z.enum(["added", "modified", "removed"]),
+      })),
+      /** GitHub installation ID */
+      githubInstallationId: z.number(),
+      /** Repository full name */
+      repoFullName: z.string(),
+      /** Commit SHA */
+      commitSha: z.string(),
+      /** Commit timestamp */
+      committedAt: z.string(),
+    }),
+  },
+
+  /**
+   * File batch processing completed
+   * Emitted by file batch processor with real counts
+   */
+  "apps-console/files.batch.completed": {
+    data: z.object({
+      /** Batch ID for matching */
+      batchId: z.string(),
+      /** Whether batch succeeded */
+      success: z.boolean(),
+      /** Number of files processed */
+      processed: z.number(),
+      /** Number of files failed */
+      failed: z.number(),
+      /** Processing duration in ms */
+      durationMs: z.number().optional(),
+      /** Error details if failed */
+      errors: z.array(z.string()).optional(),
+    }),
+  },
+
+  // ============================================================================
+  // SOURCE-SPECIFIC ORCHESTRATION EVENTS (NEW ARCHITECTURE)
+  // ============================================================================
+
+  /**
+   * GitHub sync trigger event
+   * Emitted by sync-orchestrator to trigger GitHub-specific sync
+   */
+  "apps-console/github.sync.trigger": {
+    data: z.object({
+      /** Job ID from main orchestrator */
+      jobId: z.string(),
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical external workspace key */
+      workspaceKey: z.string(),
+      /** Source ID */
+      sourceId: z.string(),
+      /** Store ID */
+      storeId: z.string(),
+      /** GitHub-specific source configuration */
+      sourceConfig: z.record(z.unknown()),
+      /** Sync mode */
+      syncMode: z.enum(["full", "incremental"]),
+      /** Sync parameters */
+      syncParams: z.record(z.unknown()).optional(),
+    }),
+  },
+
+  /**
+   * GitHub sync completed event
+   * Emitted by github-sync-orchestrator when sync completes
+   */
+  "apps-console/github.sync.completed": {
+    data: z.object({
+      /** Job ID for correlation */
+      jobId: z.string(),
+      /** Source ID */
+      sourceId: z.string(),
+      /** Whether sync succeeded */
+      success: z.boolean(),
+      /** Number of files processed */
+      filesProcessed: z.number(),
+      /** Number of files failed */
+      filesFailed: z.number(),
+    }),
+  },
+
+  // ============================================================================
   // SOURCE MANAGEMENT EVENTS (GitHub)
   // ============================================================================
 

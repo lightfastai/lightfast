@@ -269,20 +269,15 @@ export const workspaceAccessRouter = {
           // Trigger initial sync via Inngest
           try {
             await inngest.send({
-              name: "apps-console/source.connected.github",
+              name: "apps-console/sync.requested",
               data: {
                 workspaceId,
                 workspaceKey,
                 sourceId: workspaceSourceId,
                 sourceType: "github",
-                sourceMetadata: {
-                  repoFullName: repo.repoFullName,
-                  repoId: repo.repoId,
-                  defaultBranch: repo.defaultBranch,
-                  installationId: repo.installationId,
-                  isPrivate: repo.isPrivate,
-                },
-                trigger: "user",
+                syncMode: "full",
+                trigger: "config-change", // Initial connection
+                syncParams: {},
               },
             });
           } catch (inngestError) {

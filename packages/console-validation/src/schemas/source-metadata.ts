@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-// GitHub source metadata
+/**
+ * GitHub source metadata
+ *
+ * Metadata for GitHub repositories connected as sources.
+ */
 export const githubSourceMetadataSchema = z.object({
   repoId: z.string(),
   repoFullName: z.string(),
@@ -9,11 +13,9 @@ export const githubSourceMetadataSchema = z.object({
   isPrivate: z.boolean(),
 });
 
-// Linear source metadata (future)
-export const linearSourceMetadataSchema = z.object({
-  teamId: z.string(),
-  teamName: z.string(),
-});
-
 export type GitHubSourceMetadata = z.infer<typeof githubSourceMetadataSchema>;
-export type LinearSourceMetadata = z.infer<typeof linearSourceMetadataSchema>;
+
+// Future source metadata schemas:
+// - Linear (teamId, teamName)
+// - Notion (workspaceId, workspaceName)
+// - Sentry (organizationSlug, projectSlug)
