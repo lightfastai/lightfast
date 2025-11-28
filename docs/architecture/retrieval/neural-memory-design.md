@@ -302,22 +302,22 @@ CREATE TABLE workspace_neural_observations (
   occurred_at TIMESTAMP WITH TIME ZONE NOT NULL,
   captured_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-  -- Actor
-  actor_type VARCHAR(50) NOT NULL,
-  actor_id VARCHAR(191),
+  -- Actor (embedded, no foreign key)
+  actor_type VARCHAR(50),              -- 'user' | 'agent' | 'system'
+  actor_id VARCHAR(191),               -- Workspace-scoped actor ID
   actor_name VARCHAR(255),
   actor_metadata JSONB,
 
   -- Content
-  observation_type VARCHAR(100) NOT NULL,
+  observation_type VARCHAR(100) NOT NULL,  -- 'decision' | 'highlight' | 'change' | 'incident'
   title TEXT NOT NULL,
   content TEXT NOT NULL,
 
   -- Context
-  source_references JSONB,
+  source_references JSONB,             -- Links to source events
   context_metadata JSONB,
 
-  -- Embeddings
+  -- Embeddings (3 views)
   embedding_title_id VARCHAR(191),
   embedding_content_id VARCHAR(191),
   embedding_summary_id VARCHAR(191),
@@ -329,15 +329,16 @@ CREATE TABLE workspace_neural_observations (
 
   -- Quality
   confidence_score FLOAT,
-  verification_status VARCHAR(50),
+  significance_score FLOAT,            -- For filtering by importance
 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_obs_workspace_occurred ON workspace_neural_observations(workspace_id, occurred_at DESC);
-CREATE INDEX idx_obs_actor ON workspace_neural_observations(actor_type, actor_id);
-CREATE INDEX idx_obs_type ON workspace_neural_observations(observation_type);
+CREATE INDEX idx_obs_actor ON workspace_neural_observations(workspace_id, actor_type, actor_id);
+CREATE INDEX idx_obs_type ON workspace_neural_observations(workspace_id, observation_type);
+CREATE INDEX idx_obs_significance ON workspace_neural_observations(workspace_id, significance_score DESC);
 ```
 
 ### workspace_neural_summaries
@@ -392,40 +393,35 @@ CREATE TABLE workspace_actor_profiles (
   id VARCHAR(191) PRIMARY KEY,
   workspace_id VARCHAR(191) NOT NULL,
 
-  -- Identification
-  profile_type VARCHAR(50) NOT NULL,
-  actor_id VARCHAR(191) NOT NULL,
+  -- Identification (NO foreign key, just reference)
+  profile_type VARCHAR(50) NOT NULL,     -- 'user' | 'team' | 'project' | 'service'
+  actor_id VARCHAR(191) NOT NULL,        -- Matches actor_id from observations
   actor_name VARCHAR(255) NOT NULL,
 
-  -- Expertise
-  expertise_vectors JSONB,
-  interest_topics JSONB,
-  skill_tags JSONB,
+  -- Expertise (simplified)
+  expertise_domains JSONB,               -- { 'authentication': 0.85, 'database': 0.72 }
+  contribution_types JSONB,              -- { 'code_review': 0.40, 'implementation': 0.35 }
 
   -- Patterns
-  active_hours JSONB,
-  contribution_types JSONB,
-  interaction_frequency JSONB,
+  active_hours JSONB,                    -- [9, 10, 11, 14, 15, 16] (UTC hours)
 
   -- Relationships
-  frequent_collaborators JSONB,
-  reporting_chain JSONB,
-  project_associations JSONB,
+  frequent_collaborators JSONB,          -- ['user_jane', 'user_bob']
 
-  -- Embeddings
-  embedding_expertise_id VARCHAR(191),
-  embedding_interests_id VARCHAR(191),
+  -- Embeddings (single centroid)
+  profile_embedding_id VARCHAR(191),     -- Centroid of actor's observations
 
   -- Stats
   observation_count INTEGER DEFAULT 0,
   last_active_at TIMESTAMP WITH TIME ZONE,
-  profile_confidence FLOAT,
+  profile_confidence FLOAT,              -- Confidence based on observation count
 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX uq_profile_actor ON workspace_actor_profiles(workspace_id, profile_type, actor_id);
+CREATE INDEX idx_profile_active ON workspace_actor_profiles(workspace_id, last_active_at DESC);
 ```
 
 ### workspace_temporal_states
@@ -462,37 +458,61 @@ CREATE INDEX idx_state_entity ON workspace_temporal_states(entity_type, entity_i
 CREATE INDEX idx_state_current ON workspace_temporal_states(workspace_id, is_current) WHERE is_current = TRUE;
 ```
 
+## Implementation Details
+
+For detailed implementation guidance, see the `implementation/` folder:
+
+- **[Source Event Model](./implementation/01-source-events.md)** - Generic event abstraction, enrichers, correlation strategies
+- **[Observation Pipeline](./implementation/02-observation-pipeline.md)** - Step-by-step capture pipeline with Inngest
+- **[API Integration](./implementation/03-api-integration.md)** - How neural memory extends `/v1/search` and other routes
+- **[Summaries & Profiles](./implementation/04-summaries-profiles.md)** - Summary generation, clustering, actor profile computation
+- **[Operational Patterns](./implementation/05-operational.md)** - Error handling, quotas, monitoring, data archival
+- **[Quality Metrics](./implementation/06-quality-metrics.md)** - Continuous evaluation, test queries, SLO tracking
+- **[Actor Identity Mapping](./implementation/07-actor-identity-mapping.md)** - Cross-platform actor correlation with confidence scoring
+- **[Temporal Tracking](./implementation/08-temporal-tracking.md)** - Bi-temporal state tracking and point-in-time queries
+- **[Embeddings & Vector DB](./implementation/09-embeddings-and-vector-db.md)** - Complete flow: Postgres + Pinecone + LLM integration
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1-2)
 - Create database schemas
 - Set up Pinecone namespaces
-- Build observation capture API
+- Build source event abstraction
 - Implement basic embedding pipeline
 
-### Phase 2: Observation Pipeline (Week 3-4)
-- Instrument GitHub sync for observations
-- Add observation extraction from PRs/issues
-- Implement multi-view embeddings
-- Build observation storage service
+**Deliverables:** Working database, Pinecone namespaces, `SourceEvent` interface
 
-### Phase 3: Intelligence Layer (Week 5-6)
-- Implement summary generation job
-- Build clustering algorithms
-- Create profile computation pipeline
+### Phase 2: Observation Pipeline (Week 3-4)
+- Implement observation capture Inngest function
+- Add significance evaluation
+- Build multi-view embedding generation
+- Integrate first source (GitHub)
+
+**Deliverables:** Can capture GitHub PRs as observations with 3 embeddings
+
+### Phase 3: Neural Search (Week 5-6)
+- Implement query classification
+- Build neural search function
+- Add fusion ranking for hybrid mode
+- Extend `/v1/search` route
+
+**Deliverables:** `/v1/search` returns neural memory results
+
+### Phase 4: Summaries & Profiles (Week 7-8)
+- Implement daily summary generation
+- Build clustering algorithm
+- Create actor profile updates
 - Add temporal state tracking
 
-### Phase 4: Retrieval Enhancement (Week 7-8)
-- Update router with neural modes
-- Implement fusion scoring
-- Add actor-aware search
-- Build temporal query handling
+**Deliverables:** Daily summaries, actor profiles updated
 
-### Phase 5: Optimization (Week 9-10)
-- Performance tuning
-- Cache optimization
-- Batch processing improvements
-- Monitoring and metrics
+### Phase 5: Quality & Optimization (Week 9-10)
+- Build continuous evaluation pipeline
+- Add test query management
+- Implement caching optimizations
+- Set up monitoring dashboards
+
+**Deliverables:** Quality metrics tracked, SLOs met
 
 ## Key Differentiators
 
