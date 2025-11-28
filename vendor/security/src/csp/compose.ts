@@ -84,22 +84,30 @@ export function composeCspDirectives(
 /**
  * Create Nosecone options with composed CSP directives
  *
- * IMPORTANT: User directives MERGE with Nosecone defaults (following next-forge pattern).
+ * IMPORTANT: Uses SELECTIVE merging strategy (next-forge pattern):
+ * - scriptSrc & styleSrc: REPLACE defaults (removes nonces)
+ * - All other directives: MERGE with defaults (extends them)
  *
- * This follows the next-forge approach: spread defaults and extend with user values.
- * We merge user-provided sources with default sources for each directive.
+ * This is necessary because:
+ * 1. CSP spec: nonces take precedence over 'unsafe-inline' in modern browsers
+ * 2. Vercel Analytics needs 'unsafe-inline' WITHOUT nonces to work
+ * 3. Other directives (imgSrc, connectSrc, etc.) should extend defaults for security
  *
  * @param configs - Array of partial CSP directive configurations to merge together
- * @returns Nosecone options with user directives merged with defaults
+ * @returns Nosecone options with selective merge strategy
  *
  * @example
  * ```ts
  * const options = composeCspOptions(
- *   createNextjsCspDirectives(),    // ADDS: ['self', 'unsafe-inline']
- *   createClerkCspDirectives(),      // ADDS: [clerk, cloudflare]
- *   createAnalyticsCspDirectives()   // ADDS: [vercel-analytics]
+ *   createNextjsCspDirectives(),    // REPLACES scriptSrc: ['self', 'unsafe-inline']
+ *   createClerkCspDirectives(),      // ADDS to scriptSrc: [clerk, cloudflare]
+ *                                    // MERGES imgSrc with defaults
+ *   createAnalyticsCspDirectives()   // ADDS to scriptSrc: [vercel-analytics]
+ *                                    // MERGES connectSrc with defaults
  * );
- * // Final scriptSrc: [...defaults, 'self', 'unsafe-inline', clerk, cloudflare, vercel-analytics]
+ * // Final scriptSrc: ['self', 'unsafe-inline', clerk, cloudflare, vercel-analytics] (NO nonce)
+ * // Final imgSrc: [...defaults, clerk-images]
+ * // Final connectSrc: [...defaults, clerk-api, vercel-analytics]
  * ```
  */
 export function composeCspOptions(
@@ -114,7 +122,9 @@ export function composeCspOptions(
   // Merge user configs together
   const userDirectives = composeCspDirectives(...configs);
 
-  // Extend each default directive with user directives (merge, don't replace)
+  // Directives that should REPLACE defaults (remove nonces)
+  const replaceDirectives = new Set<keyof CspDirectives>(['scriptSrc', 'styleSrc']);
+
   const directiveKeys: (keyof CspDirectives)[] = [
     "baseUri",
     "childSrc",
@@ -139,9 +149,11 @@ export function composeCspOptions(
     const defaultValue = defaultDirectives[key];
     const userValue = userDirectives[key];
 
-    if (userValue && defaultValue) {
-      // Merge user values with defaults (next-forge pattern)
-      // Convert readonly array to mutable array
+    if (userValue && replaceDirectives.has(key)) {
+      // REPLACE: scriptSrc and styleSrc replace defaults (removes nonces)
+      mergedDirectives[key] = userValue;
+    } else if (userValue && defaultValue) {
+      // MERGE: other directives merge with defaults (extends them)
       mergedDirectives[key] = mergeDirectives([...defaultValue] as Source[], userValue);
     } else if (userValue) {
       // Only user value - use it
