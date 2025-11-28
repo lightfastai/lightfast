@@ -1,9 +1,8 @@
 import React from "react";
-import Link from "next/link";
+import Link from "~/components/ui/link";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
-import { wwwUrl } from "~/lib/related-projects";
 
 export default function AuthLayout({
   children,
@@ -22,7 +21,7 @@ export default function AuthLayout({
             {/* Left: Logo */}
             <div className="-ml-2 flex items-center md:justify-self-start">
               <Button variant="ghost" size="lg" asChild>
-                <Link href={wwwUrl} className="flex items-center">
+                <Link href="/" microfrontend className="flex items-center">
                   <Icons.logoShort className="text-foreground size-6" />
                 </Link>
               </Button>
@@ -37,7 +36,7 @@ export default function AuthLayout({
                 asChild
                 className="rounded-full"
               >
-                <Link href={`${wwwUrl}/early-access`}>
+                <Link href="/early-access" microfrontend>
                   Join the Early Access
                 </Link>
               </Button>

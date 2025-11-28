@@ -13,7 +13,6 @@ import {
   NavigationMenuLink,
 } from "@repo/ui/components/ui/navigation-menu";
 import { Search } from "lucide-react";
-import { authUrl } from "~/lib/related-projects";
 import { INTERNAL_NAV, RESOURCES_NAV, FEATURES_NAV } from "~/config/nav";
 
 export function MarketingNavbar() {
@@ -129,7 +128,7 @@ export function MarketingNavbar() {
             className="rounded-full"
             asChild
           >
-            <Link href={`${authUrl}/sign-in`}>
+            <Link href="/sign-in" microfrontend>
               <span className="text-sm text-secondary-foreground font-medium">
                 Log In
               </span>
