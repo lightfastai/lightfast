@@ -81,7 +81,9 @@ console.log("");
 console.log("🚀 Applying migrations...");
 
 try {
-  execSync("pnpm db:migrate", {
+  // Run drizzle-kit migrate directly (not through pnpm with-env)
+  // Vercel provides env vars directly, no need for dotenv-cli
+  execSync("npx drizzle-kit migrate --config=./src/drizzle.config.ts", {
     cwd: dbConsolePath,
     stdio: "inherit",
     env: {
