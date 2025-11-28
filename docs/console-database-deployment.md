@@ -20,7 +20,7 @@ This prevents the classic race condition where code deploys before schema update
 
 ### Files
 
-- **`apps/console/scripts/pre-build-migrate.sh`** - Pre-build migration script
+- **`apps/console/scripts/pre-build-migrate.mjs`** - Pre-build migration script (JavaScript)
 - **`apps/console/package.json`** - Build command runs `db:migrate:safe` first
 - **`apps/console/vercel.json`** - Provides database credentials at build time
 - **`db/console/src/migrations/`** - Generated migration files (Drizzle)
@@ -35,8 +35,8 @@ pnpm build:prod
 pnpm db:migrate:safe && pnpm with-env:prod next build --turbopack
 
 # Which runs:
-bash scripts/pre-build-migrate.sh  # Runs migrations
-pnpm with-env:prod next build      # Then builds app
+node scripts/pre-build-migrate.mjs  # Runs migrations
+pnpm with-env:prod next build       # Then builds app
 ```
 
 ## Prerequisites
@@ -108,33 +108,33 @@ git push origin main
 
 ### Safety Checks
 
-The pre-build script (`scripts/pre-build-migrate.sh`) includes multiple safety checks:
+The pre-build script (`scripts/pre-build-migrate.mjs`) includes multiple safety checks:
 
 **1. Environment Check**
-```bash
-# Skips if not production
-if [ "$VERCEL_ENV" != "production" ]; then
-  echo "Skipping migrations for non-production deployment"
-  exit 0
-fi
+```javascript
+// Skips if not production
+if (VERCEL_ENV !== "production") {
+  console.log("Skipping migrations for non-production deployment");
+  process.exit(0);
+}
 ```
 
 **2. Credentials Check**
-```bash
-# Skips if database credentials missing
-if [ -z "$DATABASE_HOST" ]; then
-  echo "Skipping migrations (likely local development)"
-  exit 0
-fi
+```javascript
+// Skips if database credentials missing
+if (!DATABASE_HOST || !DATABASE_USERNAME || !DATABASE_PASSWORD) {
+  console.log("Skipping migrations (likely local development)");
+  process.exit(0);
+}
 ```
 
 **3. Migration Files Check**
-```bash
-# Skips if no migrations exist
-if [ ! -d "src/migrations" ]; then
-  echo "No migrations directory - skipping"
-  exit 0
-fi
+```javascript
+// Skips if no migrations exist
+if (!existsSync(migrationsPath)) {
+  console.log("No migrations directory - skipping");
+  process.exit(0);
+}
 ```
 
 ### What Gets Logged
@@ -186,12 +186,12 @@ During Vercel builds, you'll see:
 **Current behavior:** Migrations only run on `VERCEL_ENV=production`
 
 **To enable for preview:**
-```bash
-# Edit scripts/pre-build-migrate.sh
-if [ "$VERCEL_ENV" != "production" ] && [ "$VERCEL_ENV" != "preview" ]; then
-  echo "Skipping migrations for $VERCEL_ENV"
-  exit 0
-fi
+```javascript
+// Edit scripts/pre-build-migrate.mjs
+if (VERCEL_ENV !== "production" && VERCEL_ENV !== "preview") {
+  console.log(`Skipping migrations for ${VERCEL_ENV}`);
+  process.exit(0);
+}
 ```
 
 ### How to Roll Back a Migration

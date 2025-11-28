@@ -7,7 +7,7 @@
     "build": "pnpm build:prod",
     "build:dev": "pnpm with-env:dev next build --turbopack",
     "build:prod": "pnpm db:migrate:safe && pnpm with-env:prod next build --turbopack",
-    "db:migrate:safe": "bash scripts/pre-build-migrate.sh",
+    "db:migrate:safe": "node scripts/pre-build-migrate.mjs",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
     "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:$(microfrontends port)/api/inngest",
