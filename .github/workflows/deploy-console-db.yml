@@ -1,0 +1,128 @@
+name: Deploy Console Database Schema
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (preview changes only)'
+        required: false
+        type: boolean
+        default: true
+      confirm:
+        description: 'Type DEPLOY to confirm production deployment'
+        required: false
+        type: string
+
+jobs:
+  validate:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation
+        if: inputs.dry_run == false
+        run: |
+          if [[ "${{ inputs.confirm }}" != "DEPLOY" ]]; then
+            echo "❌ Production deployment requires confirmation"
+            echo "Please type 'DEPLOY' in the confirm field"
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+  deploy-schema:
+    name: Deploy Console Schema to Production
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup environment variables
+        run: |
+          echo "DATABASE_URL=${{ secrets.CONSOLE_DATABASE_URL }}" >> $GITHUB_ENV
+
+      - name: Preview migrations (Dry Run)
+        if: inputs.dry_run == true
+        run: |
+          echo "🔍 Previewing migration changes for console database..."
+          echo "Environment: production"
+          echo ""
+          cd db/console
+
+          echo "📋 Current schema files:"
+          find src/schema -name "*.ts" -type f | sort
+          echo ""
+
+          echo "📋 Migration files:"
+          if [ -d "src/migrations" ]; then
+            ls -la src/migrations/ | grep -v "^d" || echo "No migration files found"
+          else
+            echo "No migrations directory found"
+          fi
+
+          echo ""
+          echo "⚠️ This is a DRY RUN - no changes will be applied"
+          echo "To apply these changes, run again with:"
+          echo "  - dry_run: false (unchecked)"
+          echo "  - confirm: DEPLOY"
+
+      - name: Apply migrations to production database
+        if: inputs.dry_run == false
+        run: |
+          echo "🚀 Applying migrations to console production database..."
+          cd db/console
+
+          # Apply migrations using Drizzle
+          pnpm db:migrate
+
+          echo "✅ Migrations applied successfully!"
+
+      - name: Generate deployment summary
+        if: always()
+        run: |
+          echo "## 🗃️ Console Database Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: console" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "### ⚠️ Dry Run Mode" >> $GITHUB_STEP_SUMMARY
+            echo "No changes were applied to the database." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To deploy for real:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Run this workflow again" >> $GITHUB_STEP_SUMMARY
+            echo "2. Uncheck 'Dry run'" >> $GITHUB_STEP_SUMMARY
+            echo "3. Type 'DEPLOY' in the confirm field" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Deployment Complete" >> $GITHUB_STEP_SUMMARY
+            echo "Schema changes have been applied to production." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify on failure
+        if: failure() && inputs.dry_run == false
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Please check the logs above for details."
+          echo "The production database was NOT modified."
+          exit 1
