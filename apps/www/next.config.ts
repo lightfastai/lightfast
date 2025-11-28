@@ -52,8 +52,8 @@ let config: NextConfig = withBetterStack(
 			// ppr: true,
 		},
 
-        // Note: Rewrites for /docs are handled automatically by @vercel/microfrontends
-        // via microfrontends.json configuration. Manual rewrites are not needed.
+		// Note: /docs routing is handled by @vercel/microfrontends via
+		// apps/console/microfrontends.json. No manual rewrites needed.
     }),
 );
 

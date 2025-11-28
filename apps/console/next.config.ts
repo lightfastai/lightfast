@@ -8,6 +8,7 @@ import {
   withBetterStack,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
+import { getDocsUrl } from "@repo/app-urls";
 
 const config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
@@ -25,7 +26,20 @@ const config: NextConfig = withBetterStack(
       turbopackScopeHoisting: false,
     },
     async rewrites() {
-      return [];
+      // Proxy /docs to the docs app
+      // Keep /docs prefix since docs app folder structure has app/docs/
+      const docsUrl = getDocsUrl();
+
+      return [
+        {
+          source: "/docs",
+          destination: `${docsUrl}/docs`,
+        },
+        {
+          source: "/docs/:path*",
+          destination: `${docsUrl}/docs/:path*`,
+        },
+      ];
     },
   }),
 );

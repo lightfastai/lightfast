@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port $(microfrontends port) --turbo",
+    "dev": "next dev --port ${NEXT_PUBLIC_DOCS_PORT:-4105} --turbo",
     "build": "pnpm build:prod",
     "build:dev": "next build --turbopack",
     "build:prod": "next build --turbopack",

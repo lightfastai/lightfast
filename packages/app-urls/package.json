@@ -5,8 +5,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/env.d.ts",
-      "default": "./src/env.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
     }
   },
   "license": "MIT",

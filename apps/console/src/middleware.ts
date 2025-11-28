@@ -28,6 +28,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/inngest(.*)",
   "/robots.txt",
   "/sitemap(.*)",
+  "/docs(.*)", // Documentation pages
 ]);
 
 // Team creation routes - accessible to pending users (authenticated but no org claimed)

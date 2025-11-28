@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   const api = getApiPages().map((p) => ({
-    url: `${base}/api/${p.slugs.join("/")}`,
+    url: `${base}/docs/api-reference/${p.slugs.join("/")}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.6,

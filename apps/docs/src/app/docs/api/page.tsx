@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function ApiPage() {
-	// Redirect to the new API reference overview
-	redirect("/api/overview");
+	// Redirect to the API reference overview
+	redirect("/docs/api-reference/overview");
 }

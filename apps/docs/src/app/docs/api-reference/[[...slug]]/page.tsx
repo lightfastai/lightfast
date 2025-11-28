@@ -11,9 +11,9 @@ export default async function Page({
 }) {
   const resolvedParams = await params;
 
-  // Redirect /api to /api/overview
+  // Redirect /docs/api-reference to /docs/api-reference/overview
   if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
-    redirect("/api/overview");
+    redirect("/docs/api-reference/overview");
   }
 
   const page = getApiPage(resolvedParams.slug);

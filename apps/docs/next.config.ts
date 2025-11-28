@@ -7,10 +7,12 @@ const withMDX = createMDX();
 
 const config: NextConfig = {
   reactStrictMode: true,
-  basePath: "/docs",
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: ["@repo/ui", "@repo/url-utils", "@vendor/seo"],
+
+  /** Asset prefix for serving through console app rewrites (/docs path) */
+  assetPrefix: "/docs",
 };
 
 export default withMDX(config);
