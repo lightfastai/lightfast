@@ -6,10 +6,12 @@ import type { PartialCspDirectives } from "./types";
  * Required domains:
  * - va.vercel-scripts.com: Analytics and Speed Insights scripts
  * - vitals.vercel-insights.com: Performance metrics endpoint
- * - us.i.posthog.com: PostHog analytics endpoint
- * - *.posthog.com: PostHog CDN for scripts
+ * - us.i.posthog.com: PostHog analytics endpoint (direct)
+ * - us-assets.i.posthog.com: PostHog script CDN
+ * - *.vercel.app: PostHog reverse proxy (prevents ad blocking)
+ * - *.ingest.sentry.io: Sentry error tracking
  *
- * @returns Partial CSP directives for Analytics (Vercel + PostHog)
+ * @returns Partial CSP directives for Analytics (Vercel + PostHog + Sentry)
  *
  * @example
  * ```ts
@@ -21,16 +23,19 @@ import type { PartialCspDirectives } from "./types";
  */
 export function createAnalyticsCspDirectives(): PartialCspDirectives {
   return {
-    // Scripts: Vercel Analytics and PostHog
+    // Scripts: Vercel Analytics and PostHog (direct + proxy)
     scriptSrc: [
       "https://va.vercel-scripts.com",
       "https://us-assets.i.posthog.com",
+      "https://*.vercel.app", // PostHog reverse proxy
     ],
 
-    // Connections: Performance vitals and PostHog endpoints
+    // Connections: Performance vitals, PostHog, and Sentry
     connectSrc: [
       "https://vitals.vercel-insights.com",
       "https://us.i.posthog.com",
+      "https://*.vercel.app", // PostHog reverse proxy
+      "https://*.ingest.sentry.io",
       "https://*.ingest.us.sentry.io",
     ],
   };
