@@ -4,14 +4,6 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        // auth-specific environment variables
-        // Shared vars (Clerk, Sentry, BetterStack) are inherited from root
-
-        // Next.js specific
-        "NEXT_PUBLIC_VERCEL_ENV",
-        "HEALTH_CHECK_AUTH_TOKEN"
-      ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },
     "dev": {

@@ -4,43 +4,6 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        // www-specific environment variables
-        // Shared vars (Clerk, Sentry, BetterStack) are inherited from root
-
-        // Early access & email
-        "RESEND_EARLY_ACCESS_AUDIENCE_ID",
-        "RESEND_API_KEY",
-
-        // Security
-        "ARCJET_KEY",
-        "ARCJET_SITE_KEY",
-
-        // Background jobs (Inngest)
-        "INNGEST_APP_NAME",
-        "INNGEST_EVENT_KEY",
-        "INNGEST_SIGNING_KEY",
-
-        // Analytics (PostHog)
-        "NEXT_PUBLIC_POSTHOG_HOST",
-        "NEXT_PUBLIC_POSTHOG_KEY",
-        "POSTHOG_API_KEY",
-
-        // Redis/KV (Upstash)
-        "KV_URL",
-        "KV_REST_API_TOKEN",
-        "KV_REST_API_URL",
-        "KV_REST_API_READ_ONLY_TOKEN",
-
-        // CMS (BaseHub)
-        "BASEHUB_TOKEN",
-        "BASEHUB_CHANGELOG_TOKEN",
-
-        // Next.js specific
-        "PORT",
-        "NEXT_PUBLIC_VERCEL_ENV",
-        "NEXT_PUBLIC_API_URL"
-      ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },
     "dev": {

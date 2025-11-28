@@ -4,37 +4,6 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        // chat-specific environment variables
-        // Shared vars (Clerk, Sentry, BetterStack, Database) are inherited from root
-
-        // AI search (Exa)
-        "EXA_API_KEY",
-
-        // Redis/KV (Upstash)
-        "KV_REST_API_URL",
-        "KV_REST_API_TOKEN",
-
-        // Evaluation (BrainTrust)
-        "BRAINTRUST_API_KEY",
-        "BRAINTRUST_PROJECT_NAME",
-
-        // File storage (Vercel Blob)
-        "BLOB_READ_WRITE_TOKEN",
-        "BLOB_BASE_URI",
-
-        // Security (Arcjet)
-        "ARCJET_KEY",
-        "ARCJET_SITE_KEY",
-
-        // Observability (OTEL)
-        "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "OTEL_EXPORTER_OTLP_HEADERS",
-
-        // Next.js specific
-        "NEXT_PUBLIC_VERCEL_ENV",
-        "HEALTH_CHECK_AUTH_TOKEN"
-      ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },
     "dev": {
