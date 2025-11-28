@@ -8,6 +8,11 @@ import type { PartialCspDirectives } from "./types";
  * Based on Clerk's CSP requirements:
  * https://clerk.com/docs/security/clerk-csp
  *
+ * Includes:
+ * - Primary Clerk Frontend API (from publishable key)
+ * - Satellite domain (clerk.lightfast.ai) for cross-domain sessions
+ * - Cloudflare bot protection
+ *
  * @returns Partial CSP directives for Clerk integration
  *
  * @example
@@ -22,16 +27,17 @@ export function createClerkCspDirectives(): PartialCspDirectives {
   const clerkFrontendApi = getClerkFrontendApi();
 
   return {
-    // Scripts: Clerk Frontend API + Cloudflare bot protection
+    // Scripts: Clerk Frontend API + Satellite + Cloudflare bot protection
     scriptSrc: [
-      // TypeScript can't verify runtime string matches Source pattern at compile time
       clerkFrontendApi as Source,
+      "https://clerk.lightfast.ai", // Satellite domain for cross-domain sessions
       "https://challenges.cloudflare.com",
     ],
 
     // Connections: Clerk API for authentication
     connectSrc: [
       clerkFrontendApi as Source,
+      "https://clerk.lightfast.ai", // Satellite domain for cross-domain sessions
     ],
 
     // Images: Clerk CDN for user avatars and assets
