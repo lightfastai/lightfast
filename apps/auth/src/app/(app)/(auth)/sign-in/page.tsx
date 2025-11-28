@@ -12,7 +12,7 @@ export const metadata: Metadata = createMetadata({
     title: "Sign In - Lightfast Auth",
     description:
       "Sign in to your Lightfast account to access the AI agent platform.",
-    url: "https://auth.lightfast.ai/sign-in",
+    url: "https://lightfast.ai/sign-in",
   },
   twitter: {
     title: "Sign In - Lightfast Auth",
@@ -20,7 +20,7 @@ export const metadata: Metadata = createMetadata({
       "Sign in to your Lightfast account to access the AI agent platform.",
   },
   alternates: {
-    canonical: "https://auth.lightfast.ai/sign-in",
+    canonical: "https://lightfast.ai/sign-in",
   },
   robots: {
     index: true,
