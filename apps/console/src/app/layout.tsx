@@ -7,9 +7,11 @@ import { Toaster } from "@repo/ui/components/ui/sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { env } from "~/env";
 import { authUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
@@ -54,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl={`${authUrl}/sign-in`}
       signUpUrl={`${authUrl}/sign-up`}
       signInFallbackRedirectUrl="/account/teams/new"
@@ -74,6 +76,8 @@ export default function RootLayout({
               <Toaster />
             </TRPCReactProvider>
           </NuqsAdapter>
+          <VercelAnalytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
