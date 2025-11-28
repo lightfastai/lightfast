@@ -4,6 +4,7 @@ import {
   createClerkCspDirectives,
   createAnalyticsCspDirectives,
   createSentryCspDirectives,
+  createNextjsCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
 import { createNEMO } from "@rescale/nemo";
@@ -14,6 +15,7 @@ import { consoleUrl, authUrl } from "~/lib/related-projects";
 // Security headers with composable CSP configuration
 const securityHeaders = securityMiddleware(
   composeCspOptions(
+    createNextjsCspDirectives(),
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
     createSentryCspDirectives(),

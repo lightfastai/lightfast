@@ -18,9 +18,10 @@ export const chatUrl = isDevelopment
   : 'https://chat.lightfast.ai';
 
 // Get the console URL dynamically based on environment
+// Console is served from lightfast.ai via microfrontends (not a separate subdomain)
 export const consoleUrl = isDevelopment
   ? `http://localhost:${env.NEXT_PUBLIC_CONSOLE_PORT}`
-  : 'https://console.lightfast.ai';
+  : 'https://lightfast.ai';
 
 // Helper for auth URLs (replicates getAuthUrls from url-config)
 export function getAuthUrls() {

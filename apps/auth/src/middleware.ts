@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { handleCorsPreflightRequest, applyCorsHeaders } from "@repo/url-utils";
 import {
   composeCspOptions,
   createClerkCspDirectives,
@@ -65,10 +64,6 @@ const isRootPath = createRouteMatcher(["/"]);
 
 export default clerkMiddleware(
   async (auth, req: NextRequest, event) => {
-    // Handle CORS preflight requests
-    const preflightResponse = handleCorsPreflightRequest(req);
-    if (preflightResponse) return preflightResponse;
-
     // Single auth check - detect both pending and active users
     // Pending = authenticated but no org (hasn't completed choose-organization task)
     // Active = authenticated with org (completed all tasks)
@@ -77,55 +72,41 @@ export default clerkMiddleware(
     });
     const isPending = Boolean(userId && !orgId);
     const isActive = Boolean(userId && orgId);
-    // Helper to apply headers and return redirect
-    const createRedirectResponse = async (url: URL) => {
-      const redirectResponse = NextResponse.redirect(url);
-      const headersResponse = await securityHeaders();
 
-      // Apply security headers to redirect
-      for (const [key, value] of headersResponse.headers.entries()) {
-        redirectResponse.headers.set(key, value);
-      }
-
-      return applyCorsHeaders(redirectResponse, req);
-    };
+    // Create base response (will be modified by redirects if needed)
+    let response = NextResponse.next();
 
     // UX improvement: redirect authenticated users away from auth pages
     if ((isPending || isActive) && isAuthRoute(req)) {
       if (isPending) {
-        return await createRedirectResponse(
+        response = NextResponse.redirect(
           new URL("/account/teams/new", consoleUrl),
         );
-      }
-      if (isActive && orgSlug) {
-        return await createRedirectResponse(
+      } else if (isActive && orgSlug) {
+        response = NextResponse.redirect(
           new URL(`/${orgSlug}`, consoleUrl),
         );
       }
     }
-
     // Root path routing
-    if (isRootPath(req)) {
+    else if (isRootPath(req)) {
       if (!userId) {
         // Not signed in → sign-in page
-        return await createRedirectResponse(new URL("/sign-in", req.url));
-      }
-      if (isPending) {
+        response = NextResponse.redirect(new URL("/sign-in", req.url));
+      } else if (isPending) {
         // Signed in but no org → team creation
-        return await createRedirectResponse(
+        response = NextResponse.redirect(
           new URL("/account/teams/new", consoleUrl),
         );
-      }
-      if (isActive && orgSlug) {
+      } else if (isActive && orgSlug) {
         // Signed in with org → org dashboard
-        return await createRedirectResponse(
+        response = NextResponse.redirect(
           new URL(`/${orgSlug}`, consoleUrl),
         );
       }
     }
-
     // Protect non-public routes (will redirect to sign-in if needed)
-    if (!isPublicRoute(req)) {
+    else if (!isPublicRoute(req)) {
       await auth.protect();
     }
 
@@ -135,15 +116,8 @@ export default clerkMiddleware(
     // Then run composed middleware
     const middlewareResponse = await composedMiddleware(req, event);
 
-    // Use NextResponse.next() if middleware doesn't return a response
-    const response = middlewareResponse instanceof NextResponse
-      ? middlewareResponse
-      : NextResponse.next();
-
-    // Apply CORS headers to final response
-    const finalResponse = applyCorsHeaders(response, req);
-
     // Apply security headers to final response
+    const finalResponse = middlewareResponse ?? response;
     for (const [key, value] of headersResponse.headers.entries()) {
       finalResponse.headers.set(key, value);
     }

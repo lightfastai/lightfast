@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "/api/",
     },
-    sitemap: "https://console.lightfast.ai/sitemap.xml",
+    sitemap: "https://lightfast.ai/sitemap.xml",
   };
 }
