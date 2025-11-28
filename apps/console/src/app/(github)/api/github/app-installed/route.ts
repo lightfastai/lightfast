@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getConsoleBaseUrl } from "~/lib/base-url";
+import { createBaseUrl } from "~/lib/base-url";
 
 /**
  * GitHub App Installation Callback
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 	}
 
 	// Get the base URL for redirects
-	const baseUrl = getConsoleBaseUrl();
+	const baseUrl = createBaseUrl();
 
 	// Check for custom callback from install route
 	const customCallback = request.cookies.get("github_install_callback")?.value;

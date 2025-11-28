@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { generateOAuthState } from "@repo/console-oauth/state";
 import { env } from "~/env";
-import { getConsoleBaseUrl } from "~/lib/base-url";
+import { createBaseUrl } from "~/lib/base-url";
 
 /**
  * GitHub User OAuth Authorization
@@ -25,7 +25,7 @@ export function GET(request: NextRequest) {
 	const clientId = env.GITHUB_CLIENT_ID;
 
 	// Get the base URL for GitHub OAuth callback
-	const baseUrl = getConsoleBaseUrl();
+	const baseUrl = createBaseUrl();
 	const redirectUri = `${baseUrl}/api/github/user-authorized`;
 
 	// Support custom callback URL via query parameter

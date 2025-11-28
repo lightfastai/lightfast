@@ -240,7 +240,7 @@ GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVA
 GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
 ```
 
-**Note:** Base URLs are automatically determined by `getConsoleBaseUrl()` utility:
+**Note:** Base URLs are automatically determined by `createBaseUrl()` utility:
 - Production: `https://lightfast.ai` (microfrontends)
 - Preview: `https://{VERCEL_URL}` (Vercel preview deployments)
 - Development: `http://localhost:4107` (console app port)

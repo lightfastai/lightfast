@@ -1,0 +1,50 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "lightfast-console": {
+      "packageName": "@lightfast/console",
+      "development": {
+        "local": 4107,
+        "fallback": "app.lightfast.ai"
+      }
+    },
+    "lightfast-www": {
+      "packageName": "@lightfast/www",
+      "development": {
+        "local": 4101
+      },
+      "routing": [
+        {
+          "group": "marketing",
+          "paths": [
+            "/",
+            "/pricing",
+            "/features",
+            "/features/:path*",
+            "/blog",
+            "/blog/:path*",
+            "/changelog",
+            "/integrations",
+            "/use-cases",
+            "/early-access",
+            "/legal/:path*",
+            "/search",
+            "/api/health"
+          ]
+        }
+      ]
+    },
+    "lightfast-auth": {
+      "packageName": "@lightfast/auth",
+      "development": {
+        "local": 4104
+      },
+      "routing": [
+        {
+          "group": "auth",
+          "paths": ["/sign-in", "/sign-in/:path*", "/sign-up"]
+        }
+      ]
+    }
+  }
+}

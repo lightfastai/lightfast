@@ -7,7 +7,7 @@ import { getUserInstallations } from "@repo/console-octokit-github";
 import { createUserTRPCContext, userRouter } from "@api/console";
 import { encrypt } from "@repo/lib";
 import { env } from "~/env";
-import { getConsoleBaseUrl } from "~/lib/base-url";
+import { createBaseUrl } from "~/lib/base-url";
 
 /**
  * GitHub OAuth Token Response
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 	const error = searchParams.get("error");
 
 	// Get the base URL for redirects after OAuth callback
-	const baseUrl = getConsoleBaseUrl();
+	const baseUrl = createBaseUrl();
 
 	// Check for OAuth errors
 	if (error) {

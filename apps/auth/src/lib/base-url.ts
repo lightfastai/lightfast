@@ -33,7 +33,7 @@ type UrlSuffix = z.infer<typeof urlSuffixSchema>;
  * @private
  */
 const createEnvironmentUrl = (suffix: UrlSuffix = ""): string => {
-  const port = process.env.PORT ?? "4107";
+  const port = process.env.PORT ?? "4104";
 
   // Parse and validate the suffix
   const parsedSuffix = urlSuffixSchema.parse(suffix);
