@@ -36,6 +36,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/console-reserved-names": "workspace:^",
     "friendlier-words": "^1.1.3",
     "zod": "catalog:"
   },
