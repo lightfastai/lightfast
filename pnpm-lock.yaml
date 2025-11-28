@@ -913,6 +913,9 @@ importers:
       '@upstash/redis':
         specifier: 'catalog:'
         version: 1.35.6
+      '@vendor/analytics':
+        specifier: workspace:*
+        version: link:../../vendor/analytics
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
