@@ -174,13 +174,17 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **GitHub App Name:** `Lightfast Console App Connector Dev`
 
-**Homepage URL:** `http://localhost:4104`
+**Homepage URL:** `http://localhost:3024`
 
-**Callback URL:** `http://localhost:4104/api/github/callback`
+**Callback URL:** `http://localhost:3024/api/github/user-authorized`
+
+**Setup URL:** `http://localhost:3024/api/github/app-installed`
 
 **Webhook URL:** `https://your-ngrok-url.ngrok.io/api/github/webhooks`
 
 **Installation:** Only on this account (for testing)
+
+**Note:** Port 3024 is the Vercel microfrontends proxy that routes to the console app (port 4107).
 
 ### Production Setup
 
@@ -188,7 +192,7 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **Homepage URL:** `https://console.lightfast.com`
 
-**Callback URL:** `https://console.lightfast.com/api/github/callback`
+**Callback URL:** `https://console.lightfast.com/api/github/user-authorized`
 
 **Webhook URL:** `https://console.lightfast.com/api/github/webhooks`
 
@@ -234,10 +238,12 @@ GITHUB_CLIENT_ID=Iv1.abc123def456  # From app settings
 GITHUB_CLIENT_SECRET=your-client-secret  # Generate in app settings
 GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"  # Generate and download .pem
 GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
-
-# App URLs (adjust for dev/prod)
-NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://console.lightfast.com
 ```
+
+**Note:** Base URLs are automatically determined by `getConsoleBaseUrl()` utility:
+- Production: `https://lightfast.ai` (microfrontends)
+- Preview: `https://{VERCEL_URL}` (Vercel preview deployments)
+- Development: `http://localhost:4107` (console app port)
 
 ### Key Notes
 

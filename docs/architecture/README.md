@@ -1,45 +1,65 @@
----
-title: Architecture Index
-description: System design areas and reading order
-status: working
-owner: platform-architecture
-audience: engineering
-last_updated: 2025-10-30
-tags: [architecture]
+# Lightfast Architecture Documentation
+
+**Last Updated:** 2025-11-27
+**Status:** Production Ready ✅
+
 ---
 
-# Architecture
+## 🚀 Implementation Status
 
-This section covers the system’s deep technical design across data model, ingestion, retrieval, storage, memory, and operations.
+**For what's done and what's next:**
+👉 **[Implementation Status](./implementation-status/README.md)**
 
-- Data Model: ./data-model.md
-- Knowledge Store: ./knowledge-store.md
-- Identity: ./identity.md
+**Quick Summary:**
+- ✅ **Core Infrastructure Complete** - Multi-source architecture ready
+- ✅ **GitHub Integration Complete** - End-to-end tested and production-ready
+- ✅ **Ready to Ship** - No critical blockers
+- 🔜 **Additional Sources** - Linear, Notion, etc. (1-2 weeks each, add based on demand)
+- 🔮 **Future Enhancements** - Relationship extraction (deferred until user feedback)
 
-Ingestion
-- Sync Design: ./ingestion/sync-design.md
-- Observations Heuristics: ./ingestion/observations-heuristics.md
+---
 
-Retrieval
-- Search Design: ./retrieval/search-design.md
-- Router Diagram: ./retrieval/router-diagram.md
+## Core Architecture
 
-Storage
-- Architecture: ./storage/architecture.md
-- Diagrams: ./storage/diagrams.md
-- Implementation Guide: ./storage/implementation-guide.md
+### Data Model
+- **[Data Model](./data-model.md)** - Entity and relationship schemas
+- **[Identity](./identity.md)** - User and organization identity
+- **[Knowledge Store](./knowledge-store.md)** - Store and workspace architecture
 
-Memory
-- Overview: ./memory/README.md
-- Spec: ./memory/spec.md
-- Graph: ./memory/graph.md
-- Org vs Workspace: ./memory/org-workspace-memory.md
+### Storage & Retrieval
+- **[Storage Architecture](./storage/architecture.md)** - S3, Pinecone, database layers
+- **[Storage Diagrams](./storage/diagrams.md)** - Visual architecture
+- **[Storage Implementation Guide](./storage/implementation-guide.md)** - How to use storage layer
+- **[Pinecone Namespace Refactor](./pinecone-namespace-refactor.md)** - Vector indexing strategy
+- **[Search Design](./retrieval/search-design.md)** - Search and retrieval patterns
+- **[Router Diagram](./retrieval/router-diagram.md)** - Query routing architecture
+- **[Neural Memory Design](./retrieval/neural-memory-design.md)** - Advanced retrieval patterns
 
-Phases
-- Phase 1 (Docs, GitHub, Discord): ./phase1/README.md
-- Phase 2 (Linear, Notion): ./phase2/README.md
+### Ingestion
+- **[Sync Design](./ingestion/sync-design.md)** - Webhook and polling strategies
+- **[Observations Heuristics](./ingestion/observations-heuristics.md)** - Event capture patterns
 
-Operations
-- Evaluation Playbook: ../operations/evaluation-playbook.md
-- SLOs: ../operations/slo.md
-- Observability: ../operations/observability.md
+### Memory (Future)
+- **[Memory README](./memory/README.md)** - Overview of memory layer
+- **[Org-Workspace Memory](./memory/org-workspace-memory.md)** - Workspace-scoped memory
+- **[Graph](./memory/graph.md)** - Relationship graph architecture
+- **[Memory Spec](./memory/spec.md)** - Detailed specifications
+- **[Neural Search Research](./memory/RESEARCH_NEURAL_SEARCH.md)** - Research notes
+
+---
+
+## Production Deployment
+
+**Current Status:** Ready to deploy with GitHub integration
+
+**See:** [Implementation Status](./implementation-status/README.md) for:
+- Complete list of what's done
+- What's next (prioritized by user demand)
+- How to add new sources (1-2 weeks each)
+- Deferred enhancements (relationship extraction, etc.)
+- Production readiness checklist
+
+---
+
+**Maintained By:** Engineering Team
+**Next Review:** After production launch

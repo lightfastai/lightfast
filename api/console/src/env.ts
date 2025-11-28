@@ -4,14 +4,52 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { githubEnv } from "@repo/console-octokit-github/env";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, sentryEnv],
+  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv],
   shared: {},
   server: {
-    // GitHub App credentials (required for API operations)
-    GITHUB_APP_ID: z.string().min(1),
-    GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+    /**
+     * Encryption key for decrypting OAuth tokens from database
+     * Must match the key used by apps/console to encrypt tokens
+     *
+     * Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+     *
+     * ⚠️ REQUIRED in all environments - no weak defaults allowed
+     */
+    ENCRYPTION_KEY: z
+      .string()
+      .min(44)
+      .refine(
+        (key) => {
+          // Validate hex (64 chars) or base64 (44 chars)
+          const hexPattern = /^[0-9a-f]{64}$/i;
+          const base64Pattern = /^[A-Za-z0-9+/]{43}=$/;
+          return hexPattern.test(key) || base64Pattern.test(key);
+        },
+        {
+          message:
+            "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
+        },
+      )
+      .refine(
+        (key) => {
+          // Reject weak default key (all zeros)
+          const weakKey =
+            "0000000000000000000000000000000000000000000000000000000000000000";
+          if (key === weakKey) {
+            throw new Error(
+              'Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+            );
+          }
+          return true;
+        },
+        {
+          message:
+            "ENCRYPTION_KEY must be a cryptographically secure random value",
+        },
+      ),
   },
   client: {},
   experimental__runtimeEnv: {},

@@ -3,10 +3,6 @@
 import { RootProvider } from "fumadocs-ui/provider";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import {
-	PrefetchCrossZoneLinks,
-	PrefetchCrossZoneLinksProvider,
-} from "@vercel/microfrontends/next/client";
 
 const SearchDialog = dynamic(
 	() => import("fumadocs-ui/components/dialog/search-default"),
@@ -18,26 +14,23 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
 	return (
-		<PrefetchCrossZoneLinksProvider>
-			<RootProvider
-				search={{
-					enabled: true,
-					SearchDialog,
-					options: {
-						api: "/docs/api/search", // Full path needed for multizone with basePath
+		<RootProvider
+			search={{
+				enabled: true,
+				SearchDialog,
+				options: {
+					api: "/docs/api/search",
+				},
+				hotKey: [
+					{
+						display: "K",
+						key: "k",
 					},
-					hotKey: [
-						{
-							display: "K",
-							key: "k",
-						},
-					],
-				}}
-			>
-				{children}
-			</RootProvider>
-			<PrefetchCrossZoneLinks />
-		</PrefetchCrossZoneLinksProvider>
+				],
+			}}
+		>
+			{children}
+		</RootProvider>
 	);
 }
 

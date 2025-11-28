@@ -1,0 +1,12 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "lib": ["ES2022"],
+    "target": "ES2022",
+    "module": "ESNext"
+  },
+  "include": ["env.ts", "src/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
+}

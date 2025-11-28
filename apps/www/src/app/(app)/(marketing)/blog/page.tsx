@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { exposureTrial } from "~/lib/fonts";
 import Link from "next/link";
 import { blog } from "@vendor/cms";
-import { JsonLd } from "@vendor/seo/json-ld";
+import { JsonLd, type Blog, type WithContext } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
@@ -18,9 +18,14 @@ export const revalidate = 300;
 export default async function BlogPage() {
   const posts = await blog.getPosts().catch(() => []);
 
+  const blogSchema: WithContext<Blog> = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+  };
+
   return (
     <>
-      <JsonLd code={{ "@context": "https://schema.org", "@type": "Blog" }} />
+      <JsonLd code={blogSchema} />
       <h1
         className={`text-6xl font-light leading-[1.2] tracking-[-0.7] text-foreground mb-8 ${exposureTrial.className}`}
       >

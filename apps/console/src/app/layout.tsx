@@ -9,6 +9,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { authUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
   title: "Console",
@@ -42,44 +44,38 @@ export const metadata: Metadata = createMetadata({
 });
 
 export const viewport: Viewport = {
-	themeColor: "#09090b",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<ClerkProvider
-			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-			signInUrl="/sign-in"
-			signUpUrl="/sign-up"
-			signInFallbackRedirectUrl="/app"
-			signUpFallbackRedirectUrl="/app"
-			taskUrls={{
-				"choose-organization": "/onboarding/claim-org",
-			}}
-			appearance={{
-				variables: {
-					colorPrimary: "hsl(221.2 83.2% 53.3%)",
-					colorBackground: "hsl(0 0% 3.9%)",
-					colorInputBackground: "hsl(0 0% 14.9%)",
-					colorInputText: "hsl(0 0% 98%)",
-				},
-			}}
-		>
-			<html lang="en" suppressHydrationWarning>
-				<head />
-				<body
-					className={cn("dark bg-background min-h-screen antialiased", fonts)}
-				>
-					<TRPCReactProvider>
-						{children}
-						<Toaster />
-					</TRPCReactProvider>
-				</body>
-			</html>
-		</ClerkProvider>
-	);
+  return (
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl={`${authUrl}/sign-in`}
+      signUpUrl={`${authUrl}/sign-up`}
+      signInFallbackRedirectUrl="/account/teams/new"
+      signUpFallbackRedirectUrl="/account/teams/new"
+      taskUrls={{
+        "choose-organization": "/account/teams/new",
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body
+          className={cn("dark bg-background min-h-screen antialiased", fonts)}
+        >
+          <NuqsAdapter>
+            <TRPCReactProvider>
+              {children}
+              <Toaster />
+            </TRPCReactProvider>
+          </NuqsAdapter>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
 }

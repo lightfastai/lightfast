@@ -2,100 +2,46 @@
 @import "@repo/ui/globals.css";
 
 /*
- * Console app color overrides
- * Light mode - cream variant for landing page
- */
-:root {
-	/* Cream light mode colors */
-	--background: oklch(0.97 0.01 85);
-	--foreground: oklch(0.2 0.015 85);
-	--card: oklch(0.99 0.005 85);
-	--card-foreground: oklch(0.2 0.015 85);
-	--popover: oklch(0.99 0.005 85);
-	--popover-foreground: oklch(0.2 0.015 85);
-	--primary: oklch(0.25 0.02 85);
-	--primary-foreground: oklch(0.98 0.005 85);
-	--secondary: oklch(0.94 0.01 85);
-	--secondary-foreground: oklch(0.25 0.02 85);
-	--muted: oklch(0.93 0.01 85);
-	--muted-foreground: oklch(0.5 0.01 85);
-	--accent: oklch(0.92 0.015 85);
-	--accent-foreground: oklch(0.25 0.02 85);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.88 0.01 85);
-	--input: oklch(0.88 0.01 85);
-	--ring: oklch(0.6 0.015 85);
-}
-
-/*
- * Dark mode - optimized for AI workflow orchestration interface
+ * Custom color overrides for Console app dark mode only
+ * Light mode uses the default colors from @repo/ui
  */
 .dark {
-	--background: oklch(0.235 0 0);
-	--foreground: oklch(1 0 0);
-	--card: oklch(0.235 0 0);
-	--card-foreground: oklch(1 0 0);
-	--popover: oklch(0.235 0 0);
-	--popover-foreground: oklch(1 0 0);
-	--primary: oklch(1 0 0);
-	--primary-foreground: oklch(0 0 0);
-	--secondary: oklch(0.25 0 0);
-	--secondary-foreground: oklch(1 0 0);
-	--muted: oklch(0.23 0 0);
-	--muted-foreground: oklch(0.72 0 0);
-	--accent: oklch(0.32 0 0);
-	--accent-foreground: oklch(1 0 0);
-	--destructive: oklch(0.69 0.2 23.91);
-	--destructive-foreground: oklch(0 0 0);
-	--border: oklch(0.3211 0 0);
-	--input: oklch(0.3904 0 0);
-	--ring: oklch(0.72 0 0);
-	--chart-1: oklch(0.81 0.17 75.35);
-	--chart-2: oklch(0.58 0.21 260.84);
-	--chart-3: oklch(0.56 0 0);
-	--chart-4: oklch(0.44 0 0);
-	--chart-5: oklch(0.92 0 0);
-	--sidebar: oklch(0.18 0 0);
-	--sidebar-foreground: oklch(1 0 0);
-	--sidebar-primary: oklch(1 0 0);
-	--sidebar-primary-foreground: oklch(0 0 0);
-	--sidebar-accent: oklch(0.2603 0 0);
-	--sidebar-accent-foreground: oklch(1 0 0);
-	--sidebar-border: oklch(0.32 0 0);
-	--sidebar-ring: oklch(0.72 0 0);
+  --background: oklch(0.2178 0 0);
+  --foreground: oklch(0.8853 0 0);
+  --card: oklch(0.2435 0 0);
+  --card-foreground: oklch(0.8853 0 0);
+  --popover: oklch(0.2178 0 0); /* Match background for consistency */
+  --popover-foreground: oklch(0.8853 0 0);
+  --primary: oklch(0.7058 0 0);
+  --primary-foreground: oklch(0.2178 0 0);
+  --secondary: oklch(0.3092 0 0);
+  --secondary-foreground: oklch(0.8853 0 0);
+  --muted: oklch(0.285 0 0);
+  --muted-foreground: oklch(0.5999 0 0);
+  --accent: oklch(0.26 0 0); /* Consistent accent color matching sidebar */
+  --accent-foreground: oklch(0.8853 0 0);
+  --destructive: oklch(0.6591 0.153 22.1703);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.329 0 0);
+  --input: oklch(0.3092 0 0);
+  --input-bg: oklch(0.24 0 0); /* Very subtle, slightly lighter than background */
+  --ring: oklch(0.7058 0 0);
+  --chart-1: oklch(0.7058 0 0);
+  --chart-2: oklch(0.6714 0.0339 206.3482);
+  --chart-3: oklch(0.5452 0 0);
+  --chart-4: oklch(0.4604 0 0);
+  --chart-5: oklch(0.3715 0 0);
+  --sidebar: oklch(0.2178 0 0); /* Same as background */
+  --sidebar-foreground: oklch(0.8853 0 0);
+  --sidebar-primary: oklch(0.7058 0 0);
+  --sidebar-primary-foreground: oklch(0.2178 0 0);
+  --sidebar-accent: oklch(0 0 0); /* Pure black for active state */
+  --sidebar-accent-foreground: oklch(1 0 0); /* Pure white for active state text */
+  --sidebar-border: oklch(0.329 0 0);
+  --sidebar-ring: oklch(0.7058 0 0);
 }
 
-@theme inline {
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--color-card: var(--card);
-	--color-card-foreground: var(--card-foreground);
-	--color-popover: var(--popover);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-primary: var(--primary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-muted: var(--muted);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-accent: var(--accent);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-destructive: var(--destructive);
-	--color-destructive-foreground: var(--destructive-foreground);
-	--color-border: var(--border);
-	--color-input: var(--input);
-	--color-ring: var(--ring);
-	--color-chart-1: var(--chart-1);
-	--color-chart-2: var(--chart-2);
-	--color-chart-3: var(--chart-3);
-	--color-chart-4: var(--chart-4);
-	--color-chart-5: var(--chart-5);
-	--color-sidebar: var(--sidebar);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-ring: var(--sidebar-ring);
+/* Additional custom styles specific to the console app */
+@layer utilities {
+  /* Add any console-specific utility classes here */
 }

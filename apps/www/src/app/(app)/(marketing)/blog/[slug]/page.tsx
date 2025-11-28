@@ -4,7 +4,7 @@ import { blog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { exposureTrial } from "~/lib/fonts";
 import { createMetadata } from "@vendor/seo/metadata";
-import { JsonLd } from "@vendor/seo/json-ld";
+import { JsonLd, type BlogPosting, type WithContext } from "@vendor/seo/json-ld";
 import { createBaseUrl } from "~/lib/base-url";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -38,25 +38,25 @@ export default async function BlogPostPage({ params }: Params) {
   const post = await blog.getPost(slug);
   if (!post) notFound();
 
+  const blogPostSchema: WithContext<BlogPosting> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post._title ?? "",
+    description: post.description ?? "",
+    datePublished: post.date ?? undefined,
+    dateModified: post.date ?? undefined,
+    image: post.image?.url ?? undefined,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${createBaseUrl()}/blog/${slug}`,
+    },
+    author: post.authors?.at(0)?._title ?? undefined,
+    isAccessibleForFree: true,
+  };
+
   return (
     <div className="text-foreground">
-      <JsonLd
-        code={{
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          headline: post._title ?? "",
-          description: post.description ?? "",
-          datePublished: post.date ?? undefined,
-          dateModified: post.date ?? undefined,
-          image: post.image?.url ?? undefined,
-          mainEntityOfPage: {
-            "@type": "WebPage",
-            "@id": `${createBaseUrl()}/blog/${slug}`,
-          },
-          author: post.authors?.at(0)?._title ?? undefined,
-          isAccessibleForFree: true,
-        }}
-      />
+      <JsonLd code={blogPostSchema} />
       <h1 className={`text-5xl font-light leading-tight tracking-[-0.7] mb-6 ${exposureTrial.className}`}>
         {post._title}
       </h1>

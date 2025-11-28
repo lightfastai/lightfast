@@ -7,9 +7,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    },
-    "./char-hash": "./src/char-hash.ts",
-    "./batch": "./src/batch.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
@@ -21,7 +19,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/console-types": "workspace:*"
+    "@repo/console-config": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@vendor/embed": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

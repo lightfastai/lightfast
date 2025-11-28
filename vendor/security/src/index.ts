@@ -33,6 +33,9 @@ export {
 } from "@arcjet/next";
 export { setRateLimitHeaders } from "@arcjet/decorate";
 
+// Export middleware utilities
+export * from "./middleware";
+
 // Export the Arcjet key for apps to create their own instances
 export const ARCJET_KEY = env.ARCJET_KEY;
 

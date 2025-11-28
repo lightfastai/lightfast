@@ -1,8 +1,26 @@
-// Export providers
-export * from "./char-hash";
+/**
+ * @repo/console-embed
+ *
+ * Console-specific embedding utilities with environment-aware provider selection.
+ * Uses @vendor/embed for core embedding functionality.
+ *
+ * @packageDocumentation
+ */
 
-// Future: export * from "./model";
+// Re-export types from vendor/embed
+export type {
+	EmbedRequest,
+	EmbedResponse,
+	EmbeddingProvider,
+} from "@vendor/embed";
 
-// Export utilities
-export * from "./batch";
-export * from "./types";
+// Export console-specific utilities
+export {
+	resolveEmbeddingDefaults,
+	createEmbeddingProvider,
+	createEmbeddingProviderForStore,
+	embedTextsInBatches,
+	type EmbeddingDefaults,
+	type EmbeddingProviderConfig,
+	type StoreEmbeddingConfig,
+} from "./utils";

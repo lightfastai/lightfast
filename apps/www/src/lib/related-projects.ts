@@ -11,14 +11,6 @@ export const wwwUrl = withRelatedProject({
     : 'https://lightfast.ai',
 });
 
-// Get the chat URL dynamically based on environment
-export const chatUrl = withRelatedProject({
-  projectName: 'lightfast-chat',
-  defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_CHAT_PORT}`
-    : 'https://chat.lightfast.ai',
-});
-
 // Get the auth URL dynamically based on environment
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',

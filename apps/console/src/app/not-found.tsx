@@ -17,7 +17,7 @@ export default function NotFound() {
           description="Sorry, we couldn't find the page you're looking for."
         >
           <Button asChild>
-            <Link href="/">Return Home</Link>
+            <Link href="/account/settings/general">Return Home</Link>
           </Button>
         </LightfastErrorPage>
       </LightfastCustomGridBackground.Container>

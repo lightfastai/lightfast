@@ -11,6 +11,10 @@
 		"./env": {
 			"types": "./dist/env.d.ts",
 			"default": "./src/env.ts"
+		},
+		"./inngest": {
+			"types": "./dist/inngest/index.d.ts",
+			"default": "./src/inngest/index.ts"
 		}
 	},
 	"license": "MIT",
@@ -25,19 +29,36 @@
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
 		"@db/console": "workspace:*",
+		"@inngest/middleware-sentry": "catalog:",
+		"@repo/console-api-key": "workspace:*",
+		"@repo/console-auth-middleware": "workspace:^",
+		"@repo/console-chunking": "workspace:*",
+		"@repo/console-clerk-m2m": "workspace:*",
+		"@repo/console-config": "workspace:*",
+		"@repo/console-embed": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",
+		"@repo/console-pinecone": "workspace:*",
 		"@repo/console-types": "workspace:*",
+		"@repo/console-validation": "workspace:^",
+		"@repo/console-webhooks": "workspace:^",
 		"@repo/lib": "workspace:^",
+		"@sentry/core": "^10.20.0",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
+		"@vendor/inngest": "workspace:*",
 		"@vendor/observability": "workspace:*",
+		"@vendor/pinecone": "workspace:*",
 		"drizzle-orm": "catalog:",
+		"gray-matter": "^4.0.3",
+		"inngest": "catalog:",
+		"minimatch": "^10.1.1",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
+		"yaml": "^2.7.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

@@ -6,6 +6,7 @@ import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -15,7 +16,9 @@ import {
 } from "@vercel/microfrontends/next/client";
 
 import { createBaseUrl } from "~/lib/base-url";
+import { authUrl, consoleUrl } from "~/lib/related-projects";
 import { JsonLd } from "@vendor/seo/json-ld";
+import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – Neural Memory for Teams",
@@ -116,51 +119,67 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema: WithContext<Organization> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/logo.png`,
+    sameAs: [
+      siteConfig.links.twitter.href,
+      siteConfig.links.github.href,
+      siteConfig.links.discord.href,
+    ],
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: `${siteConfig.name} – Neural Memory for Teams`,
+    url: siteConfig.url,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  } as const;
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <JsonLd
-          code={{
-            "@context": "https://schema.org",
-            "@type": ["Organization", "TechnologyCompany"],
-            name: siteConfig.name,
-            url: siteConfig.url,
-            logo: `${siteConfig.url}/logo.png`,
-            sameAs: [
-              siteConfig.links.twitter.href,
-              siteConfig.links.github.href,
-              siteConfig.links.discord.href,
-            ],
-          } as any}
-        />
-        <JsonLd
-          code={{
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: `${siteConfig.name} – Neural Memory for Teams`,
-            url: siteConfig.url,
-            potentialAction: {
-              "@type": "SearchAction",
-              target: {
-                "@type": "EntryPoint",
-                urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
-              },
-              "query-input": "required name=search_term_string",
-            },
-          } as any}
-        />
-      </head>
-      <body className={cn("min-h-screen bg-background dark", fonts)}>
-        <PrefetchCrossZoneLinksProvider>
-          <PostHogProvider baseUrl={createBaseUrl()}>
-            {children}
-            <Toaster />
-            <VercelAnalytics />
-            <SpeedInsights />
-          </PostHogProvider>
-          <PrefetchCrossZoneLinks />
-        </PrefetchCrossZoneLinksProvider>
-      </body>
-    </html>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      // Delegate sign-in/sign-up to auth app
+      signInUrl={`${authUrl}/sign-in`}
+      signUpUrl={`${authUrl}/sign-up`}
+      // After authentication, redirect to console app
+      afterSignInUrl={consoleUrl}
+      afterSignUpUrl={consoleUrl}
+      signInFallbackRedirectUrl={consoleUrl}
+      signUpFallbackRedirectUrl={consoleUrl}
+      // Multi-step onboarding task URLs
+      taskUrls={{
+        "choose-organization": `${consoleUrl}/onboarding`,
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <JsonLd code={organizationSchema} />
+          <JsonLd code={websiteSchema} />
+        </head>
+        <body className={cn("min-h-screen bg-background", fonts)}>
+          <PrefetchCrossZoneLinksProvider>
+            <PostHogProvider baseUrl={createBaseUrl()}>
+              {children}
+              <Toaster />
+              <VercelAnalytics />
+              <SpeedInsights />
+            </PostHogProvider>
+            <PrefetchCrossZoneLinks />
+          </PrefetchCrossZoneLinksProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

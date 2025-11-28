@@ -10,6 +10,7 @@
     },
     "./schema": "./src/schema/index.ts",
     "./client": "./src/client.ts",
+    "./utils": "./src/utils/workspace.ts",
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./env.ts"
@@ -20,6 +21,7 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
+    "dev:studio": "pnpm db:studio",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
@@ -31,10 +33,14 @@
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
-    "drizzle-zod": "catalog:",
+    "friendlier-words": "^1.1.3",
+    "postgres": "^3.4.5",
     "zod": "catalog:"
   },
   "devDependencies": {

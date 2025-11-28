@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 
 const settingsNavigation = [
 	{
-		name: "GitHub Integration",
-		path: "github-integration",
-	},
-	{
-		name: "Repositories",
-		path: "repositories",
+		name: "General",
+		path: "",
 	},
 ];
 
@@ -20,32 +17,56 @@ interface SettingsSidebarProps {
 }
 
 export function SettingsSidebar({ slug }: SettingsSidebarProps) {
-	const pathname = usePathname();
+	try {
+		const pathname = usePathname();
 
-	return (
-		<aside className="w-64 flex-shrink-0">
-			<nav className="space-y-1">
-				{settingsNavigation.map((item) => {
-					const href = `/org/${slug}/settings/${item.path}`;
-					const isActive = pathname === href;
+		console.log("[SettingsSidebar] slug:", slug, "pathname:", pathname);
 
-					return (
-						<Link
-							key={item.name}
-							href={href}
-							prefetch={true}
-							className={cn(
-								"block rounded-md px-3 py-2 text-sm font-medium transition-colors",
-								isActive
-									? "bg-foreground/10 text-foreground"
-									: "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
-							)}
-						>
-							{item.name}
-						</Link>
-					);
-				})}
-			</nav>
-		</aside>
-	);
+		// Safety check - if pathname is not available, don't render
+		if (!pathname) {
+			console.warn("[SettingsSidebar] pathname is null/undefined");
+			return null;
+		}
+
+		// Safety check - if slug is not provided
+		if (!slug) {
+			console.error("[SettingsSidebar] slug is missing!");
+			return null;
+		}
+
+		return (
+			<aside className="w-48 flex-shrink-0">
+				<nav className="space-y-0.5">
+					{settingsNavigation.map((item) => {
+						const href = item.path
+							? `/${slug}/settings/${item.path}`
+							: `/${slug}/settings`;
+						const isActive = pathname === href;
+
+						return (
+							<Button
+								key={item.name}
+								variant="ghost"
+								size="sm"
+								asChild
+								className={cn(
+									"w-full justify-start font-normal",
+									isActive
+										? "bg-accent text-accent-foreground"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								<Link href={href} prefetch={true}>
+									{item.name}
+								</Link>
+							</Button>
+						);
+					})}
+				</nav>
+			</aside>
+		);
+	} catch (error) {
+		console.error("[SettingsSidebar] Error rendering:", error);
+		return null;
+	}
 }
