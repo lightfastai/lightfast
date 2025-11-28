@@ -1,15 +1,15 @@
 import type { Options } from "@nosecone/next";
 import { defaults } from "@nosecone/next";
 import type { Source } from "nosecone";
-import type { CspDirectives, PartialCspDirectives } from "./types";
+import type { CspDirective, CspDirectives, PartialCspDirectives } from "./types";
 
 /**
  * Merge multiple CSP directive arrays into one, removing duplicates
  * Handles both static strings and dynamic nonce functions
  */
-function mergeDirectives(...directiveArrays: any[]): Source[] {
+function mergeDirectives(...directiveArrays: readonly Source[][]): Source[] {
   const merged = new Set<string>();
-  const functions: any[] = [];
+  const functions: (() => string)[] = [];
 
   for (const directives of directiveArrays) {
     if (!directives) continue;
@@ -68,7 +68,7 @@ export function composeCspDirectives(
   for (const key of directiveKeys) {
     const directives = configs
       .map((config) => config[key])
-      .filter((d) => d !== undefined);
+      .filter((d): d is CspDirective => d !== undefined);
 
     if (directives.length > 0) {
       result[key] = mergeDirectives(...directives);
@@ -127,18 +127,18 @@ export function composeCspOptions(
     "workerSrc",
   ];
 
-  const mergedDirectives: Record<string, any> = {};
+  const mergedDirectives: Record<string, Source[]> = {};
 
   for (const key of directiveKeys) {
     const defaultValue = defaultDirectives[key];
     const userValue = userDirectives[key];
 
     if (defaultValue && userValue) {
-      // Merge both
-      mergedDirectives[key] = mergeDirectives(defaultValue, userValue);
+      // Merge both - spread readonly arrays into new mutable array
+      mergedDirectives[key] = mergeDirectives([...defaultValue] as Source[], userValue);
     } else if (defaultValue) {
-      // Keep default as-is (cast to array for consistency)
-      mergedDirectives[key] = Array.from(defaultValue as any);
+      // Keep default as-is - spread readonly array into new mutable array
+      mergedDirectives[key] = [...defaultValue] as Source[];
     } else if (userValue) {
       // Use user value
       mergedDirectives[key] = userValue;
@@ -148,7 +148,7 @@ export function composeCspOptions(
   return {
     ...defaults,
     contentSecurityPolicy: {
-      directives: mergedDirectives as any,
+      directives: mergedDirectives,
     },
   };
 }

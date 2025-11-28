@@ -4,8 +4,11 @@ import type { PartialCspDirectives } from "./types";
 /**
  * Create CSP directives for Next.js specific requirements
  *
- * Includes hashes for inline scripts that cannot use nonces,
- * such as those injected by Next.js, Vercel Analytics, or other integrations.
+ * We have to use unsafe-inline because some integrations don't support nonces:
+ * - Vercel Analytics: https://github.com/vercel/analytics/issues/122
+ * - next-themes: https://github.com/pacocoursey/next-themes/issues/106
+ *
+ * This is a known limitation of these libraries, not a security oversight.
  *
  * @returns Partial CSP directives for Next.js integration
  *
@@ -20,11 +23,10 @@ import type { PartialCspDirectives } from "./types";
  */
 export function createNextjsCspDirectives(): PartialCspDirectives {
   return {
-    // Scripts: Allow specific inline scripts via hash
-    // This hash is for inline scripts that cannot use nonces (e.g., Vercel Analytics)
+    // Scripts: Allow inline scripts for Vercel Analytics and next-themes
+    // These libraries inject inline scripts without nonce support
     scriptSrc: [
-      // Hash for Vercel Analytics inline script
-      "'sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo='" as Source,
+      "'unsafe-inline'" as Source,
     ],
   };
 }
