@@ -4,17 +4,11 @@ import type { PartialCspDirectives } from "./types";
 /**
  * Create CSP directives for Next.js specific requirements
  *
- * IMPORTANT: This REPLACES the default scriptSrc entirely (doesn't merge with nonces).
+ * Following next-forge pattern: these directives merge with Nosecone defaults.
  *
- * We have to use unsafe-inline because some integrations don't support nonces:
+ * We use unsafe-inline because some integrations don't support nonces:
  * - Vercel Analytics: https://github.com/vercel/analytics/issues/122
  * - next-themes: https://github.com/pacocoursey/next-themes/issues/106
- *
- * Per CSP spec: when 'unsafe-inline' is present alongside nonces, browsers ignore
- * 'unsafe-inline' (CSP Level 2+). This means we MUST use 'unsafe-inline' WITHOUT nonces
- * for Vercel Analytics to work.
- *
- * This matches next-forge's proven approach: replace scriptSrc entirely rather than merge.
  *
  * @returns Partial CSP directives for Next.js integration
  *
@@ -29,11 +23,22 @@ import type { PartialCspDirectives } from "./types";
  */
 export function createNextjsCspDirectives(): PartialCspDirectives {
   return {
-    // Scripts: REPLACES default scriptSrc (removes nonce)
-    // Must include 'self' and 'unsafe-inline' for Next.js + Vercel Analytics
+    // Scripts: Allow self-hosted scripts and unsafe-inline for Vercel Analytics
     scriptSrc: [
       "'self'" as Source,
       "'unsafe-inline'" as Source,
+    ],
+
+    // Images: Allow self-hosted images, data URIs (for favicons), and blob URLs
+    imgSrc: [
+      "'self'" as Source,
+      "data:" as Source,
+      "blob:" as Source,
+    ],
+
+    // Connections: Allow same-origin requests (for RSC payloads, API routes, etc.)
+    connectSrc: [
+      "'self'" as Source,
     ],
   };
 }
