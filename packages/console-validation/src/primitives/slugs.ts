@@ -11,6 +11,7 @@ import {
   WORKSPACE_NAME,
   STORE_NAME,
   NAMING_ERRORS,
+  RESERVED_WORKSPACE_NAMES,
 } from "../constants/naming";
 
 /**
@@ -52,6 +53,7 @@ export const clerkOrgSlugSchema = z
  * - Alphanumeric + hyphens, periods, underscores
  * - URL-safe without encoding (. _ - don't need escaping)
  * - Can start/end with any allowed character
+ * - Cannot use reserved names (case-insensitive)
  *
  * Used in: Workspace creation, workspace settings, URL paths
  *
@@ -61,13 +63,19 @@ export const clerkOrgSlugSchema = z
  * workspaceNameSchema.parse("Project_v2.0"); // ✅ Valid (periods, underscores)
  * workspaceNameSchema.parse("my project"); // ❌ No spaces
  * workspaceNameSchema.parse("project@2024"); // ❌ No special chars
+ * workspaceNameSchema.parse("settings"); // ❌ Reserved name
+ * workspaceNameSchema.parse("Settings"); // ❌ Reserved name (case-insensitive)
  * ```
  */
 export const workspaceNameSchema = z
   .string()
   .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
   .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
-  .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN);
+  .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN)
+  .refine(
+    (name) => !RESERVED_WORKSPACE_NAMES.includes(name.toLowerCase() as any),
+    { message: NAMING_ERRORS.WORKSPACE_RESERVED }
+  );
 
 /**
  * Workspace Slug Schema (Internal, Pinecone)

@@ -7,32 +7,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import { captureException } from "@sentry/nextjs";
-
-type WaitlistState =
-  | { status: "idle" }
-  | { status: "pending" }
-  | { status: "success"; message: string }
-  | { status: "error"; error: string; isRateLimit?: boolean }
-  | {
-      status: "validation_error";
-      fieldErrors: { email?: string[] };
-      error: string;
-    };
-
-// API Response types matching the server
-interface WaitlistSuccessResponse {
-  success: true;
-  message: string;
-}
-
-interface WaitlistErrorResponse {
-  success: false;
-  error: string;
-  isRateLimit?: boolean;
-  fieldErrors?: { email?: string[] };
-}
-
-type WaitlistResponse = WaitlistSuccessResponse | WaitlistErrorResponse;
+import { joinWaitlistAction, type WaitlistState } from "./_actions/waitlist";
 
 export function WaitlistForm() {
   const [state, setState] = useState<WaitlistState>({ status: "idle" });
@@ -65,56 +40,27 @@ export function WaitlistForm() {
     setState({ status: "pending" });
 
     try {
-      const response = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+      const formData = new FormData();
+      formData.append("email", email);
 
-      const data = (await response.json()) as WaitlistResponse;
+      const result = await joinWaitlistAction(null, formData);
 
-      if (!response.ok || !data.success) {
-        // Type narrowing: if success is false, data is WaitlistErrorResponse
-        if (!data.success) {
-          // Handle validation errors
-          if (data.fieldErrors) {
-            setState({
-              status: "validation_error",
-              fieldErrors: data.fieldErrors,
-              error: data.error,
-            });
-            return;
-          }
+      setState(result);
 
-          // Handle other errors
-          setState({
-            status: "error",
-            error: data.error,
-            isRateLimit: data.isRateLimit,
-          });
-          return;
-        }
+      if (result.status === "success") {
+        setEmail(""); // Clear the input on success
       }
-
-      // Type narrowing: if we got here, data.success is true
-      setState({
-        status: "success",
-        message: data.message,
-      });
-      setEmail(""); // Clear the input
     } catch (error) {
       console.error("Waitlist submission error:", error);
       captureException(error, {
         tags: {
           component: "waitlist-form",
-          error_type: "network_error",
+          error_type: "action_error",
         },
       });
       setState({
         status: "error",
-        error: "Network error. Please check your connection and try again.",
+        error: "An unexpected error occurred. Please try again.",
       });
     }
   };

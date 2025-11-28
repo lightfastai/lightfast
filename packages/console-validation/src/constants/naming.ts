@@ -69,6 +69,86 @@ export const STORE_NAME = {
 } as const;
 
 /**
+ * Reserved Workspace Names
+ *
+ * Names that cannot be used for workspaces to prevent routing conflicts.
+ * These names are reserved for app routes, features, and critical system paths.
+ *
+ * URL format: /{orgSlug}/{workspaceName}
+ * Reserved paths prevent conflicts with routes like: /{orgSlug}/settings
+ *
+ * Categories:
+ * - App routes: Core application pages (settings, billing, etc.)
+ * - API routes: API endpoints and versioning
+ * - Resource names: Plural forms that might become routes
+ * - Actions: Common CRUD operations
+ * - Special values: Reserved keywords
+ */
+export const RESERVED_WORKSPACE_NAMES = [
+  // === APP ROUTES ===
+  'settings',
+  'billing',
+  'account',
+  'profile',
+  'preferences',
+  'dashboard',
+  'overview',
+  'admin',
+  'support',
+  'help',
+
+  // === API ROUTES ===
+  'api',
+  'v1',
+  'v2',
+  'v3',
+  'webhooks',
+  'webhook',
+  'oauth',
+  'auth',
+  'callback',
+
+  // === RESOURCES (current & future) ===
+  'workspaces',
+  'workspace',
+  'teams',
+  'team',
+  'members',
+  'member',
+  'integrations',
+  'integration',
+  'sources',
+  'source',
+  'documents',
+  'document',
+  'workflows',
+  'workflow',
+  'agents',
+  'agent',
+  'stores',
+  'store',
+
+  // === ACTIONS ===
+  'new',
+  'create',
+  'edit',
+  'delete',
+  'update',
+
+  // === BRAND PROTECTION ===
+  'lightfast',
+  'console',
+
+  // === SPECIAL VALUES ===
+  'me',
+  'all',
+  'public',
+  'private',
+  'system',
+  'root',
+] as const;
+
+/**
  * Error Messages
  */
 export const NAMING_ERRORS = {
@@ -82,6 +162,7 @@ export const NAMING_ERRORS = {
   WORKSPACE_MIN_LENGTH: `Workspace name must be at least ${WORKSPACE_NAME.MIN_LENGTH} character`,
   WORKSPACE_MAX_LENGTH: `Workspace name must be ${WORKSPACE_NAME.MAX_LENGTH} characters or less`,
   WORKSPACE_PATTERN: "Only letters, numbers, hyphens (-), periods (.), and underscores (_) are allowed",
+  WORKSPACE_RESERVED: "This name is reserved for system use. Please choose a different name.",
 
   STORE_MIN_LENGTH: `Store name must be at least ${STORE_NAME.MIN_LENGTH} characters`,
   STORE_MAX_LENGTH: `Store name must be less than ${STORE_NAME.MAX_LENGTH} characters`,
@@ -132,6 +213,10 @@ export function validateWorkspaceName(name: string): {
   }
   if (!WORKSPACE_NAME.PATTERN.test(name)) {
     return { valid: false, error: NAMING_ERRORS.WORKSPACE_PATTERN };
+  }
+  // Check reserved names (case-insensitive)
+  if (RESERVED_WORKSPACE_NAMES.includes(name.toLowerCase() as any)) {
+    return { valid: false, error: NAMING_ERRORS.WORKSPACE_RESERVED };
   }
   return { valid: true };
 }

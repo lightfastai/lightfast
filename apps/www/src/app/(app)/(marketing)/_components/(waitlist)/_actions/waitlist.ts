@@ -9,6 +9,7 @@ import { env } from "~/env";
 
 export type WaitlistState =
 	| { status: "idle" }
+	| { status: "pending" }
 	| { status: "success"; message: string }
 	| { status: "error"; error: string; isRateLimit?: boolean }
 	| {
