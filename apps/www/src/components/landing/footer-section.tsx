@@ -1,9 +1,8 @@
-import Link from "next/link";
+import Link from "~/components/ui/link";
 import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { consoleUrl } from "~/lib/related-projects";
 
 export function SiteFooter() {
   return (
@@ -27,13 +26,15 @@ export function SiteFooter() {
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
                   <Link
-                    href={consoleUrl}
+                    href="/account/teams"
+                    microfrontend
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
                     Console
                   </Link>
                   <Link
                     href="/docs/sdk"
+                    microfrontend
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
                     SDK

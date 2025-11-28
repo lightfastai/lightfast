@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "~/components/ui/link";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -26,10 +26,10 @@ export function LoginDropdown({ chatUrl, consoleUrl }: LoginDropdownProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={chatUrl}>Chat</Link>
+          <Link href={chatUrl} microfrontend>Chat</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={consoleUrl}>Console</Link>
+          <Link href={consoleUrl} microfrontend>Console</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -5,7 +5,7 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { SignUpEmailInput } from "./sign-up-email-input";
 import { SignUpCodeVerification } from "./sign-up-code-verification";
 import { OAuthSignUp } from "./oauth-sign-up";
-import Link from "next/link";
+import Link from "~/components/ui/link";
 import { siteConfig } from "@repo/site-config";
 
 export function SignUpForm() {
@@ -71,6 +71,7 @@ export function SignUpForm() {
 							By joining, you agree to our{" "}
 							<Link
 								href={siteConfig.links.terms.href}
+								microfrontend
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -80,6 +81,7 @@ export function SignUpForm() {
 							and{" "}
 							<Link
 								href={siteConfig.links.privacy.href}
+								microfrontend
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
