@@ -10,6 +10,7 @@ import type { PartialCspDirectives } from "./types";
  * - us-assets.i.posthog.com: PostHog script CDN
  * - lightfast-www.vercel.app: PostHog reverse proxy for www app
  * - lightfast-auth.vercel.app: PostHog reverse proxy for auth app
+ * - lightfast-console.vercel.app: PostHog reverse proxy for console app
  * - *.ingest.sentry.io: Sentry error tracking (all regions)
  *
  * @returns Partial CSP directives for Analytics (Vercel + PostHog + Sentry)
@@ -30,6 +31,7 @@ export function createAnalyticsCspDirectives(): PartialCspDirectives {
       "https://us-assets.i.posthog.com",
       "https://lightfast-www.vercel.app", // PostHog reverse proxy (www)
       "https://lightfast-auth.vercel.app", // PostHog reverse proxy (auth)
+      "https://lightfast-console.vercel.app", // PostHog reverse proxy (console)
     ],
 
     // Connections: Performance vitals, PostHog, and Sentry
@@ -38,6 +40,7 @@ export function createAnalyticsCspDirectives(): PartialCspDirectives {
       "https://us.i.posthog.com",
       "https://lightfast-www.vercel.app", // PostHog reverse proxy (www)
       "https://lightfast-auth.vercel.app", // PostHog reverse proxy (auth)
+      "https://lightfast-console.vercel.app", // PostHog reverse proxy (console)
       "https://*.ingest.sentry.io",
       "https://*.ingest.us.sentry.io",
     ],
