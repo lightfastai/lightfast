@@ -16,6 +16,7 @@ import {
 } from "@vercel/microfrontends/next/client";
 
 import { createBaseUrl } from "~/lib/base-url";
+import { env } from "~/env";
 import { authUrl, consoleUrl } from "~/lib/related-projects";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
@@ -149,7 +150,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       // Delegate sign-in/sign-up to auth app
       signInUrl={`${authUrl}/sign-in`}
       signUpUrl={`${authUrl}/sign-up`}

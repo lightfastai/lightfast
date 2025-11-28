@@ -11,6 +11,7 @@ import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { ThemeProvider } from "next-themes";
 import { StructuredData } from "~/components/structured-data";
 import { createMetadata } from "@vendor/seo/metadata";
+import { env } from "~/env";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Chat - Open-Source Model Agnostic AI Chat Interface",
@@ -108,7 +109,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<ClerkProvider
-			publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+			publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 			signInUrl="/sign-in"
 			signUpUrl="/sign-up"
 			signInFallbackRedirectUrl="/new"
