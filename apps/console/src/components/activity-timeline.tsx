@@ -373,8 +373,7 @@ export function ActivityTimeline({
 																</div>
 															)}
 														</div>
-														{activity.metadata &&
-															Object.keys(activity.metadata).length > 0 && (
+														{Object.keys(activity.metadata).length > 0 && (
 																<div className="pt-2 border-t">
 																	<span className="font-medium text-muted-foreground">
 																		Details:
