@@ -19,13 +19,13 @@ export const metadata: Metadata = createMetadata({
   description:
     "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
   image: siteConfig.ogImage,
-  metadataBase: new URL("https://console.lightfast.ai"),
+  metadataBase: new URL("https://lightfast.ai"),
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://console.lightfast.ai",
+    url: "https://lightfast.ai",
     title: "Console - AI Workflow Orchestration",
     description:
       "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
