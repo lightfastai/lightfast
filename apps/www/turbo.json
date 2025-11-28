@@ -1,32 +1,45 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        "CLERK_SECRET_KEY",
+        // www-specific environment variables
+        // Shared vars (Clerk, Sentry, BetterStack) are inherited from root
+
+        // Early access & email
         "RESEND_EARLY_ACCESS_AUDIENCE_ID",
-        "REQUEST_ID_SECRET",
-        "INNGEST_EVENT_KEY",
-        "INNGEST_SIGNING_KEY",
         "RESEND_API_KEY",
+
+        // Security
         "ARCJET_KEY",
         "ARCJET_SITE_KEY",
+
+        // Background jobs (Inngest)
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+
+        // Analytics (PostHog)
         "NEXT_PUBLIC_POSTHOG_HOST",
         "NEXT_PUBLIC_POSTHOG_KEY",
         "POSTHOG_API_KEY",
-        "LOGTAIL_SOURCE_TOKEN",
-        "LOGTAIL_URL",
-        "NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN",
-        "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
-        "NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN",
-        "SENTRY_AUTH_TOKEN",
-        "NEXT_PUBLIC_SENTRY_DSN",
-        "SENTRY_DSN",
+
+        // Redis/KV (Upstash)
         "KV_URL",
         "KV_REST_API_TOKEN",
-        "KV_REST_API_URL"
+        "KV_REST_API_URL",
+        "KV_REST_API_READ_ONLY_TOKEN",
+
+        // CMS (BaseHub)
+        "BASEHUB_TOKEN",
+        "BASEHUB_CHANGELOG_TOKEN",
+
+        // Next.js specific
+        "PORT",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_API_URL"
       ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },

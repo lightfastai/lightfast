@@ -5,16 +5,12 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        "CLERK_SECRET_KEY",
-        "LOGTAIL_SOURCE_TOKEN",
-        "LOGTAIL_URL",
-        "NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN",
-        "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
-        "NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN",
-        "SENTRY_AUTH_TOKEN",
-        "NEXT_PUBLIC_SENTRY_DSN",
-        "SENTRY_DSN"
+        // auth-specific environment variables
+        // Shared vars (Clerk, Sentry, BetterStack) are inherited from root
+
+        // Next.js specific
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "HEALTH_CHECK_AUTH_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },

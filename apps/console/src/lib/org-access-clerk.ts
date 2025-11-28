@@ -14,17 +14,6 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
  */
 
 /**
- * Clerk organization data
- */
-export interface ClerkOrgData {
-	id: string;
-	name: string;
-	slug: string;
-	imageUrl: string;
-	role: string;
-}
-
-/**
  * Organization with access information
  */
 export interface OrgWithAccess {
@@ -35,61 +24,6 @@ export interface OrgWithAccess {
 		imageUrl: string;
 	};
 	role: string; // Clerk role like "org:admin" or "org:member"
-}
-
-/**
- * Result when no organization is active
- */
-export interface NoActiveOrg {
-	hasOrg: false;
-	reason: "no_active_org";
-}
-
-/**
- * Result when organization is not found in Clerk
- */
-export interface OrgNotFound {
-	hasOrg: false;
-	reason: "org_not_found_in_clerk";
-	clerkOrgId: string;
-}
-
-/**
- * Active organization result
- */
-export type ActiveOrgResult = OrgWithAccess | NoActiveOrg | OrgNotFound;
-
-/**
- * Get user's active Clerk organization
- *
- * @returns Active organization with role, or error reason
- */
-export async function getActiveOrg(): Promise<
-	| { hasOrg: true; org: { id: string; name: string; slug: string; imageUrl: string }; role: string }
-	| NoActiveOrg
-	| OrgNotFound
-> {
-	const { orgId, orgRole, orgSlug } = await auth();
-
-	// No active organization in Clerk session
-	if (!orgId || !orgSlug) {
-		return { hasOrg: false, reason: "no_active_org" };
-	}
-
-	// Get organization details from Clerk
-	const clerk = await clerkClient();
-	const clerkOrg = await clerk.organizations.getOrganization({ organizationId: orgId });
-
-	return {
-		hasOrg: true,
-		org: {
-			id: clerkOrg.id,
-			name: clerkOrg.name,
-			slug: clerkOrg.slug,
-			imageUrl: clerkOrg.imageUrl,
-		},
-		role: orgRole ?? "org:member",
-	};
 }
 
 /**
@@ -168,60 +102,4 @@ export async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
 	}
 
 	return orgRole === clerkRole;
-}
-
-/**
- * Get all organizations the user belongs to
- *
- * @returns List of organizations with Clerk membership info
- */
-export async function getUserOrganizations(): Promise<ClerkOrgData[]> {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return [];
-	}
-
-	const clerk = await clerkClient();
-
-	// Get all organizations the user belongs to
-	const { data: memberships } = await clerk.users.getOrganizationMembershipList({
-		userId,
-	});
-
-	return memberships.map((membership) => {
-		const clerkOrg = membership.organization;
-		return {
-			id: clerkOrg.id,
-			name: clerkOrg.name,
-			slug: clerkOrg.slug,
-			imageUrl: clerkOrg.imageUrl,
-			role: membership.role,
-		};
-	});
-}
-
-/**
- * Get a Clerk organization by slug
- *
- * @param slug - Clerk organization slug
- * @returns Organization or undefined if not found
- */
-export async function getOrgBySlug(
-	slug: string,
-): Promise<{ id: string; name: string; slug: string; imageUrl: string } | undefined> {
-	const clerk = await clerkClient();
-
-	try {
-		const org = await clerk.organizations.getOrganization({ slug });
-
-		return {
-			id: org.id,
-			name: org.name,
-			slug: org.slug,
-			imageUrl: org.imageUrl,
-		};
-	} catch {
-		return undefined;
-	}
 }

@@ -3,6 +3,16 @@
   "extends": ["//"],
   "tasks": {
     "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        // docs-specific environment variables
+        // Shared vars (Clerk, Sentry, BetterStack) are inherited from root
+        // Note: caching disabled for docs as content changes frequently
+
+        // Next.js specific
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "HEALTH_CHECK_AUTH_TOKEN"
+      ],
       "cache": false,
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },

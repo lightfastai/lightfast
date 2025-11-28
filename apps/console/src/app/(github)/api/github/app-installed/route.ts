@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { env } from "~/env";
+import { getConsoleBaseUrl } from "~/lib/base-url";
 
 /**
  * GitHub App Installation Callback
@@ -35,13 +35,7 @@ export async function GET(request: NextRequest) {
 	}
 
 	// Get the base URL for redirects
-	const baseUrl =
-		env.NEXT_PUBLIC_APP_URL ??
-		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
-			? "https://console.lightfast.ai"
-			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-				? `https://${process.env.VERCEL_URL}`
-				: "http://localhost:3024"); // Microfrontends proxy port
+	const baseUrl = getConsoleBaseUrl();
 
 	// Check for custom callback from install route
 	const customCallback = request.cookies.get("github_install_callback")?.value;

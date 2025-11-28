@@ -63,12 +63,10 @@ export const env = createEnv({
 		NEXT_PUBLIC_VERCEL_ENV: z
 			.enum(["development", "preview", "production"])
 			.default("development"),
-		NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 	},
 	experimental__runtimeEnv: {
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
-		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	},
 	skipValidation:
 		!!process.env.CI || process.env.npm_lifecycle_event === "lint",

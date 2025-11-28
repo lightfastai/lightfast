@@ -238,10 +238,12 @@ GITHUB_CLIENT_ID=Iv1.abc123def456  # From app settings
 GITHUB_CLIENT_SECRET=your-client-secret  # Generate in app settings
 GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"  # Generate and download .pem
 GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
-
-# App URLs (adjust for dev/prod)
-NEXT_PUBLIC_APP_URL=http://localhost:4104  # or https://console.lightfast.com
 ```
+
+**Note:** Base URLs are automatically determined by `getConsoleBaseUrl()` utility:
+- Production: `https://lightfast.ai` (microfrontends)
+- Preview: `https://{VERCEL_URL}` (Vercel preview deployments)
+- Development: `http://localhost:4107` (console app port)
 
 ### Key Notes
 

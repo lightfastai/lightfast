@@ -5,7 +5,39 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "NEXT_PUBLIC_VERCEL_ENV"
+        // console-specific environment variables
+        // Shared vars (Clerk, Sentry, BetterStack, Database) are inherited from root
+
+        // Encryption for OAuth tokens and sensitive data
+        "ENCRYPTION_KEY",
+
+        // GitHub App integration
+        "GITHUB_APP_ID",
+        "GITHUB_APP_SLUG",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "GITHUB_WEBHOOK_SECRET",
+        "GITHUB_APP_PRIVATE_KEY",
+
+        // Clerk M2M (Machine-to-Machine) authentication
+        "CLERK_MACHINE_SECRET_KEY_TRPC",
+        "CLERK_MACHINE_SECRET_KEY_WEBHOOK",
+        "CLERK_MACHINE_SECRET_KEY_INNGEST",
+
+        // Embeddings (Cohere)
+        "COHERE_API_KEY",
+
+        // AI providers (for agent execution)
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY",
+        "AI_GATEWAY_API_KEY",
+
+        // Vector database (Pinecone)
+        "PINECONE_API_KEY",
+
+        // Next.js specific
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "HEALTH_CHECK_AUTH_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },

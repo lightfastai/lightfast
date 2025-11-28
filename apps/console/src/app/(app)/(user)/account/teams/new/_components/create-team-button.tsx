@@ -90,7 +90,7 @@ export function CreateTeamButton() {
 
         // Navigate to workspace creation
         // The org is already in the cache (optimistic update)
-        // and will be available in getUserOrganizations() on the /new page
+        // and will be available via organization.listUserOrganizations on the /new page
         router.push(`/new?teamSlug=${data.slug}`);
       },
       onSettled: () => {

@@ -7,6 +7,7 @@ import { getUserInstallations } from "@repo/console-octokit-github";
 import { createUserTRPCContext, userRouter } from "@api/console";
 import { encrypt } from "@repo/lib";
 import { env } from "~/env";
+import { getConsoleBaseUrl } from "~/lib/base-url";
 
 /**
  * GitHub OAuth Token Response
@@ -37,16 +38,8 @@ export async function GET(request: NextRequest) {
 	const state = searchParams.get("state");
 	const error = searchParams.get("error");
 
-	// Get the base URL for redirect
-	// In development, use the microfrontends proxy (port 3024)
-	// In production/preview, use the public URL
-	const baseUrl =
-		env.NEXT_PUBLIC_APP_URL ??
-		(env.NEXT_PUBLIC_VERCEL_ENV === "production"
-			? "https://console.lightfast.ai"
-			: env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-				? `https://${process.env.VERCEL_URL}`
-				: "http://localhost:3024"); // Microfrontends proxy port
+	// Get the base URL for redirects after OAuth callback
+	const baseUrl = getConsoleBaseUrl();
 
 	// Check for OAuth errors
 	if (error) {
