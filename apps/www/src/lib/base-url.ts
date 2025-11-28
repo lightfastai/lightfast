@@ -24,6 +24,9 @@ type UrlSuffix = z.infer<typeof urlSuffixSchema>;
 /**
  * Creates a base URL with optional path suffix based on the current environment.
  *
+ * IMPORTANT: Returns custom domain (www.lightfast.ai) in production, not Vercel URL.
+ * This ensures same-origin requests for PostHog proxy (/ingest rewrites).
+ *
  * @param {UrlSuffix} [suffix] - Optional path suffix to append to the base URL (must start with '/' if provided)
  * @returns {string} The complete URL for the current environment
  * @throws {Error} If suffix validation fails
@@ -35,15 +38,17 @@ const createEnvironmentUrl = (suffix: UrlSuffix = ""): string => {
   // Parse and validate the suffix
   const parsedSuffix = urlSuffixSchema.parse(suffix);
 
+  // Production: Use custom domain for same-origin PostHog proxy
   if (env.NODE_ENV === "production") {
-    const host = env.VERCEL_PROJECT_PRODUCTION_URL ?? env.VERCEL_URL;
-    return `https://${host}${parsedSuffix}`;
+    return `https://www.lightfast.ai${parsedSuffix}`;
   }
 
+  // Preview/development on Vercel
   if (env.VERCEL_URL) {
     return `https://${env.VERCEL_URL}${parsedSuffix}`;
   }
 
+  // Local development
   return `http://localhost:${port}${parsedSuffix}`;
 };
 
