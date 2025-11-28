@@ -7,7 +7,7 @@ import type { MetadataRoute } from "next";
  * @returns {MetadataRoute.Sitemap} Next.js compatible sitemap configuration
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://auth.lightfast.ai";
+  const baseUrl = "https://lightfast.ai";
   const currentDate = new Date().toISOString();
 
   return [

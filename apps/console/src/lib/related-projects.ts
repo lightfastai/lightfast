@@ -4,11 +4,12 @@ import { env } from '@repo/app-urls';
 const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
 
 // Get the auth URL dynamically based on environment
+// Auth is served from lightfast.ai via microfrontends (not a separate subdomain)
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
   defaultHost: isDevelopment
     ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
-    : 'https://auth.lightfast.ai',
+    : 'https://lightfast.ai',
 });
 
 // Get the www URL dynamically based on environment

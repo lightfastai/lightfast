@@ -51,12 +51,10 @@ export function getCorsConfig(additionalOrigins: string[] = []): CorsConfig {
     // Production URLs
     "https://lightfast.ai",
     "https://www.lightfast.ai",
-    "https://auth.lightfast.ai",
     "https://cloud.lightfast.ai",
     "https://chat.lightfast.ai",
     "https://docs.lightfast.ai",
     "https://playground.lightfast.ai",
-    "https://lightfast.ai",
     "https://experimental.lightfast.ai",
     // Development URLs
     "http://localhost:4101", // www

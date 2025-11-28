@@ -12,9 +12,10 @@ export const wwwUrl = withRelatedProject({
 });
 
 // Get the auth URL dynamically based on environment
+// Auth is served from lightfast.ai via microfrontends (not a separate subdomain)
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
   defaultHost: isDevelopment
     ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
-    : 'https://auth.lightfast.ai',
+    : 'https://lightfast.ai',
 });

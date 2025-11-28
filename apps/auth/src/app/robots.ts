@@ -19,6 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         "/**/error", // Don't index error pages
       ],
     },
-    sitemap: "https://auth.lightfast.ai/sitemap.xml",
+    sitemap: "https://lightfast.ai/sitemap.xml",
   };
 }
