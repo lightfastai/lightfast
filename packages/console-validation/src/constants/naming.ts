@@ -69,84 +69,40 @@ export const STORE_NAME = {
 } as const;
 
 /**
- * Reserved Workspace Names
+ * Reserved Names
  *
- * Names that cannot be used for workspaces to prevent routing conflicts.
+ * Names that cannot be used for organizations or workspaces to prevent routing conflicts.
  * These names are reserved for app routes, features, and critical system paths.
  *
- * URL format: /{orgSlug}/{workspaceName}
- * Reserved paths prevent conflicts with routes like: /{orgSlug}/settings
+ * Organization URL format: /{orgSlug}
+ * Workspace URL format: /{orgSlug}/{workspaceName}
  *
- * Categories:
- * - App routes: Core application pages (settings, billing, etc.)
- * - API routes: API endpoints and versioning
- * - Resource names: Plural forms that might become routes
- * - Actions: Common CRUD operations
- * - Special values: Reserved keywords
+ * Reserved paths prevent conflicts with:
+ * - Microfrontends routes (e.g., /pricing, /sign-in handled by www/auth apps)
+ * - Organization routes (e.g., /{orgSlug}/settings)
+ * - HTTP status codes (e.g., /404, /500)
+ * - Framework internals (e.g., /_next, .well-known)
+ *
+ * @see @repo/console-reserved-names for full list and rationale
  */
-export const RESERVED_WORKSPACE_NAMES = [
-  // === APP ROUTES ===
-  'settings',
-  'billing',
-  'account',
-  'profile',
-  'preferences',
-  'dashboard',
-  'overview',
-  'admin',
-  'support',
-  'help',
+import { workspace, organization } from '@repo/console-reserved-names';
 
-  // === API ROUTES ===
-  'api',
-  'v1',
-  'v2',
-  'v3',
-  'webhooks',
-  'webhook',
-  'oauth',
-  'auth',
-  'callback',
+/**
+ * @deprecated Use @repo/console-reserved-names package directly
+ * This re-export is kept for backward compatibility
+ */
+export const RESERVED_WORKSPACE_NAMES = workspace.all;
 
-  // === RESOURCES (current & future) ===
-  'workspaces',
-  'workspace',
-  'teams',
-  'team',
-  'members',
-  'member',
-  'integrations',
-  'integration',
-  'sources',
-  'source',
-  'documents',
-  'document',
-  'workflows',
-  'workflow',
-  'agents',
-  'agent',
-  'stores',
-  'store',
-
-  // === ACTIONS ===
-  'new',
-  'create',
-  'edit',
-  'delete',
-  'update',
-
-  // === BRAND PROTECTION ===
-  'lightfast',
-  'console',
-
-  // === SPECIAL VALUES ===
-  'me',
-  'all',
-  'public',
-  'private',
-  'system',
-  'root',
-] as const;
+/**
+ * Reserved organization slugs to prevent routing conflicts
+ *
+ * These prevent orgs from hijacking:
+ * - Microfrontends routes: /pricing → www app (not org "pricing")
+ * - Auth routes: /sign-in → auth app (not org "sign-in")
+ * - System routes: /api, /health, etc.
+ * - Error pages: /404, /500, etc.
+ */
+export const RESERVED_ORGANIZATION_SLUGS = organization.all;
 
 /**
  * Error Messages
