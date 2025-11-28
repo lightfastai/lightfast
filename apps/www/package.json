@@ -9,7 +9,7 @@
     "build:dev": "pnpm with-env:dev next build --turbopack",
     "build:prod": "pnpm with-env:prod next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
+    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env:dev next dev --port $(microfrontends port) --turbopack",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_WWW_PORT:-4101}",
