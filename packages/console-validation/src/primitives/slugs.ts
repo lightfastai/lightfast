@@ -11,8 +11,8 @@ import {
   WORKSPACE_NAME,
   STORE_NAME,
   NAMING_ERRORS,
-  RESERVED_WORKSPACE_NAMES,
 } from "../constants/naming";
+import { workspace, organization } from "@repo/console-reserved-names";
 
 /**
  * Clerk Organization Slug Schema
@@ -22,6 +22,7 @@ import {
  * - Lowercase alphanumeric + hyphens only
  * - Must start/end with letter or number
  * - No consecutive hyphens
+ * - Cannot use reserved names (case-insensitive)
  *
  * Used in: Team creation, org settings, URL slugs
  *
@@ -31,6 +32,8 @@ import {
  * clerkOrgSlugSchema.parse("Light Fast AI"); // ❌ No spaces/uppercase
  * clerkOrgSlugSchema.parse("-invalid"); // ❌ Cannot start with hyphen
  * clerkOrgSlugSchema.parse("test--org"); // ❌ No consecutive hyphens
+ * clerkOrgSlugSchema.parse("pricing"); // ❌ Reserved name
+ * clerkOrgSlugSchema.parse("api"); // ❌ Reserved name
  * ```
  */
 export const clerkOrgSlugSchema = z
@@ -43,6 +46,10 @@ export const clerkOrgSlugSchema = z
   .refine(
     (val) => !CLERK_ORG_SLUG.NO_CONSECUTIVE_HYPHENS.test(val),
     { message: NAMING_ERRORS.ORG_CONSECUTIVE }
+  )
+  .refine(
+    (slug) => !organization.check(slug),
+    { message: NAMING_ERRORS.ORG_RESERVED }
   );
 
 /**
@@ -73,7 +80,7 @@ export const workspaceNameSchema = z
   .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
   .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN)
   .refine(
-    (name) => !RESERVED_WORKSPACE_NAMES.includes(name.toLowerCase() as any),
+    (name) => !workspace.check(name),
     { message: NAMING_ERRORS.WORKSPACE_RESERVED }
   );
 

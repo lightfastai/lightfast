@@ -114,6 +114,7 @@ export const NAMING_ERRORS = {
   ORG_START: "Must start with a letter or number",
   ORG_END: "Must end with a letter or number",
   ORG_CONSECUTIVE: "Cannot contain consecutive hyphens",
+  ORG_RESERVED: "This name is reserved for system use. Please choose a different name.",
 
   WORKSPACE_MIN_LENGTH: `Workspace name must be at least ${WORKSPACE_NAME.MIN_LENGTH} character`,
   WORKSPACE_MAX_LENGTH: `Workspace name must be ${WORKSPACE_NAME.MAX_LENGTH} characters or less`,
@@ -154,6 +155,10 @@ export function validateOrgSlug(slug: string): {
   if (CLERK_ORG_SLUG.NO_CONSECUTIVE_HYPHENS.test(slug)) {
     return { valid: false, error: NAMING_ERRORS.ORG_CONSECUTIVE };
   }
+  // Check reserved organization slugs (case-insensitive)
+  if (organization.check(slug)) {
+    return { valid: false, error: NAMING_ERRORS.ORG_RESERVED };
+  }
   return { valid: true };
 }
 
@@ -171,7 +176,7 @@ export function validateWorkspaceName(name: string): {
     return { valid: false, error: NAMING_ERRORS.WORKSPACE_PATTERN };
   }
   // Check reserved names (case-insensitive)
-  if (RESERVED_WORKSPACE_NAMES.includes(name.toLowerCase() as any)) {
+  if (workspace.check(name)) {
     return { valid: false, error: NAMING_ERRORS.WORKSPACE_RESERVED };
   }
   return { valid: true };
