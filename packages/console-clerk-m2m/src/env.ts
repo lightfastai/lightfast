@@ -33,11 +33,10 @@ export const consoleM2MEnv = createEnv({
     CLERK_MACHINE_SECRET_KEY_INNGEST: z.string().min(1).startsWith("ak_"),
   },
   client: {},
-  experimental__runtimeEnv: {
-    // Note: Server variables are not included in experimental__runtimeEnv by default
-  },
+  experimental__runtimeEnv: {},
   skipValidation:
     !!process.env.CI ||
     process.env.npm_lifecycle_event === "lint" ||
     process.env.SKIP_ENV_VALIDATION === "true",
+  emptyStringAsUndefined: true,
 });
