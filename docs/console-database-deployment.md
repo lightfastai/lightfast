@@ -213,6 +213,110 @@ git push
 # Vercel redeploys with reverted schema
 ```
 
+## ⚠️ Critical: Build Failures After Migration
+
+### The Problem
+
+**If the build fails AFTER migrations run:**
+
+```
+1. ✅ Migrations run (database schema updated)
+2. ❌ Next.js build fails (TypeScript error, missing env, etc.)
+3. ❌ Deployment aborted
+4. 🔥 OLD CODE + NEW SCHEMA = Production broken
+```
+
+### The Solution: Backward-Compatible Migrations
+
+**Always write migrations that work with BOTH old and new code.**
+
+#### ✅ Expand-Contract Pattern (Safe)
+
+**Phase 1: Expand (add column with default)**
+```sql
+-- Migration 1: Add optional column
+ALTER TABLE users ADD COLUMN email TEXT DEFAULT '';
+```
+- Deploy this migration
+- Old code continues working (ignores new column)
+- New code can start using new column
+
+**Phase 2: Contract (make required, later)**
+```sql
+-- Migration 2: Make column required (weeks later, after all code updated)
+ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+```
+
+#### ❌ Breaking Changes (Dangerous)
+
+```sql
+-- ❌ BAD: Add required column immediately
+ALTER TABLE users ADD COLUMN email TEXT NOT NULL;
+-- If build fails, old code crashes trying to INSERT!
+
+-- ❌ BAD: Drop column
+ALTER TABLE users DROP COLUMN legacy_field;
+-- If build fails, old code crashes trying to SELECT!
+
+-- ❌ BAD: Rename column
+ALTER TABLE users RENAME COLUMN name TO full_name;
+-- If build fails, old code can't find 'name'!
+```
+
+### Migration Safety Checklist
+
+Before deploying any migration, ask:
+
+- [ ] **Can old code run with this schema change?**
+- [ ] **Does this add optional fields (not required)?**
+- [ ] **Does this preserve existing columns?**
+- [ ] **Have I tested locally with current production code?**
+
+If any answer is "No", use the expand-contract pattern!
+
+### Example: Safe Column Addition
+
+```typescript
+// Migration: Add email column (optional)
+ALTER TABLE users ADD COLUMN email TEXT;
+
+// Old code (still deployed): Works fine, ignores email
+db.insert(users).values({ name: "Alice" });
+
+// New code (after deploy): Can use email
+db.insert(users).values({ name: "Alice", email: "alice@example.com" });
+
+// Later migration: Make required (only after all code updated)
+ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+```
+
+### What If Build Still Fails?
+
+**Options:**
+
+1. **Quick fix the build** (preferred)
+   - Fix TypeScript error
+   - Add missing env var
+   - Redeploy immediately
+
+2. **Revert the PR** (if unfixable quickly)
+   ```bash
+   git revert HEAD
+   git push
+   # Vercel redeploys, but migration already ran
+   # Need a new migration to undo schema changes
+   ```
+
+3. **Manual schema rollback** (last resort)
+   ```bash
+   # Connect to production database
+   psql $DATABASE_URL
+   # Manually run reverse migration
+   ALTER TABLE users DROP COLUMN email;
+   ```
+
+**Prevention is better than cure - always use backward-compatible migrations!**
+
 ## Best Practices
 
 ### 1. Test Migrations Locally First
