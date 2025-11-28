@@ -70,7 +70,7 @@ export function WaitlistForm() {
       <>
         <ConfettiWrapper />
         <div className="space-y-2">
-          <p className="text-sm font-medium">You've joined the early access!</p>
+          <p className="text-sm font-medium text-foreground">You've joined the early access!</p>
           <p className="text-sm text-muted-foreground">
             We'll send you an invite when we're ready. Check your email for
             updates.
