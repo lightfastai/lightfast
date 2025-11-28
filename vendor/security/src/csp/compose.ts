@@ -29,16 +29,19 @@ function mergeDirectives(...directiveArrays: readonly Source[][]): Source[] {
 /**
  * Compose multiple partial CSP directive configurations into a single configuration
  *
+ * Merges all provided configs together, combining their directive arrays.
+ *
  * @param configs - Array of partial CSP directive configurations to merge
  * @returns Merged CSP directives with all sources combined and deduplicated
  *
  * @example
  * ```ts
  * const directives = composeCspDirectives(
- *   createClerkCspDirectives(),
- *   createAnalyticsCspDirectives(),
- *   createSentryCspDirectives()
+ *   createNextjsCspDirectives(),  // scriptSrc: ['self', 'unsafe-inline']
+ *   createClerkCspDirectives(),    // scriptSrc: [clerk, cloudflare]
+ *   createAnalyticsCspDirectives() // scriptSrc: [vercel-analytics]
  * );
+ * // Result: scriptSrc: ['self', 'unsafe-inline', clerk, cloudflare, vercel-analytics]
  * ```
  */
 export function composeCspDirectives(
@@ -81,19 +84,26 @@ export function composeCspDirectives(
 /**
  * Create Nosecone options with composed CSP directives
  *
- * Starts with Nosecone defaults and extends with provided CSP configurations
+ * IMPORTANT: User directives REPLACE Nosecone defaults (not merge).
  *
- * @param configs - Array of partial CSP directive configurations to merge
- * @returns Nosecone options with merged CSP directives
+ * This is intentional - when you provide scriptSrc, it replaces the default
+ * nonce-based scriptSrc entirely. This is necessary because:
+ * 1. CSP spec: nonces take precedence over 'unsafe-inline' in modern browsers
+ * 2. Vercel Analytics needs 'unsafe-inline' WITHOUT nonces to work
+ * 3. Matches next-forge's proven pattern
+ *
+ * @param configs - Array of partial CSP directive configurations to merge together
+ * @returns Nosecone options with user directives replacing defaults
  *
  * @example
  * ```ts
  * const options = composeCspOptions(
- *   createClerkCspDirectives(),
- *   createAnalyticsCspDirectives(),
- *   createSentryCspDirectives()
+ *   createNextjsCspDirectives(),    // REPLACES scriptSrc: ['self', 'unsafe-inline']
+ *   createClerkCspDirectives(),      // ADDS to scriptSrc: [clerk, cloudflare]
+ *   createAnalyticsCspDirectives()   // ADDS to scriptSrc: [vercel-analytics]
  * );
- * const securityHeaders = securityMiddleware(options);
+ * // Final scriptSrc: ['self', 'unsafe-inline', clerk, cloudflare, vercel-analytics]
+ * // (NO nonce - replaced by our configs)
  * ```
  */
 export function composeCspOptions(
@@ -133,15 +143,13 @@ export function composeCspOptions(
     const defaultValue = defaultDirectives[key];
     const userValue = userDirectives[key];
 
-    if (defaultValue && userValue) {
-      // Merge both - spread readonly arrays into new mutable array
-      mergedDirectives[key] = mergeDirectives([...defaultValue] as Source[], userValue);
-    } else if (defaultValue) {
-      // Keep default as-is - spread readonly array into new mutable array
-      mergedDirectives[key] = [...defaultValue] as Source[];
-    } else if (userValue) {
-      // Use user value
+    if (userValue) {
+      // User provided value - use it and REPLACE defaults (don't merge)
+      // This is critical for scriptSrc where we need 'unsafe-inline' WITHOUT nonces
       mergedDirectives[key] = userValue;
+    } else if (defaultValue) {
+      // No user value - keep default as-is
+      mergedDirectives[key] = [...defaultValue] as Source[];
     }
   }
 
