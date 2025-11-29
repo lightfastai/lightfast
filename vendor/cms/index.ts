@@ -205,6 +205,7 @@ const legalPostMetaFragment = fragmentOnLoose("LegalPagesItem", {
   description: true,
   _sys: {
     createdAt: true,
+    lastModifiedAt: true,
   },
 });
 
@@ -224,13 +225,22 @@ export type LegalPostMeta = {
   _slug?: string | null;
   _title?: string | null;
   description?: string | null;
-  _sys?: { createdAt?: string | null } | null;
+  _sys?: {
+    createdAt?: string | null;
+    lastModifiedAt?: string | null;
+  } | null;
 };
 export type LegalPost = LegalPostMeta & {
   body?: {
     plainText?: string | null;
     json?: { content?: any[]; toc?: any } | null;
     readingTime?: number | null;
+  } | null;
+};
+
+export type LegalPostQueryResponse = {
+  legalPages?: {
+    item?: LegalPost | null;
   } | null;
 };
 
@@ -282,5 +292,148 @@ export const legal = {
     const data: any = await basehub.query(query as any);
 
     return data.legalPages.item as LegalPost;
+  },
+};
+
+/* -------------------------------------------------------------------------------------------------
+ * Changelog Fragments & Queries
+ * -----------------------------------------------------------------------------------------------*/
+
+const changelogEntryMetaFragment = fragmentOnLoose("ChangelogPagesItem", {
+  _slug: true,
+  _title: true,
+  slug: true,
+  _sys: {
+    createdAt: true,
+  },
+});
+
+const changelogEntryFragment = fragmentOnLoose("ChangelogPagesItem", {
+  ...changelogEntryMetaFragment,
+  body: {
+    plainText: true,
+    json: {
+      content: true,
+      toc: true,
+    },
+    readingTime: true,
+  },
+  improvements: true,
+  infrastructure: true,
+  fixes: true,
+  patches: true,
+});
+
+export type ChangelogEntryMeta = {
+  _slug?: string | null;
+  _title?: string | null;
+  slug?: string | null;
+  _sys?: { createdAt?: string | null } | null;
+};
+
+export type ChangelogEntry = ChangelogEntryMeta & {
+  body?: {
+    plainText?: string | null;
+    json?: { content?: any[]; toc?: any } | null;
+    readingTime?: number | null;
+  } | null;
+  improvements?: string | null;
+  infrastructure?: string | null;
+  fixes?: string | null;
+  patches?: string | null;
+};
+
+export type ChangelogEntryQueryResponse = {
+  changelogPages?: {
+    item?: ChangelogEntry | null;
+  } | null;
+};
+
+export type ChangelogEntriesQueryResponse = {
+  changelogPages?: {
+    items?: ChangelogEntry[] | null;
+  } | null;
+};
+
+export const changelog = {
+  entriesQuery: fragmentOnLoose("Query", {
+    changelogPages: {
+      __args: {
+        orderBy: "_sys_createdAt__DESC",
+      },
+      items: changelogEntryFragment,
+    },
+  }),
+
+  latestEntryQuery: fragmentOnLoose("Query", {
+    changelogPages: {
+      __args: {
+        orderBy: "_sys_createdAt__DESC",
+      },
+      item: changelogEntryFragment,
+    },
+  }),
+
+  entryQuery: (slug: string) =>
+    fragmentOnLoose("Query", {
+      changelogPages: {
+        __args: {
+          filter: {
+            _sys_slug: { eq: slug },
+          },
+        },
+        item: changelogEntryFragment,
+      },
+    }),
+
+  entryBySlugQuery: (slug: string) =>
+    fragmentOnLoose("Query", {
+      changelogPages: {
+        __args: {
+          filter: {
+            slug: { eq: slug },
+          },
+        },
+        item: changelogEntryFragment,
+      },
+    }),
+
+  getEntries: async (): Promise<ChangelogEntry[]> => {
+    try {
+      const data: any = await basehub.query(changelog.entriesQuery as any);
+      return data.changelogPages.items as ChangelogEntry[];
+    } catch {
+      // Fallback to empty array if changelog doesn't exist yet
+      return [];
+    }
+  },
+
+  getLatestEntry: async (): Promise<ChangelogEntry | null> => {
+    try {
+      const data: any = await basehub.query(changelog.latestEntryQuery as any);
+      return data.changelogPages.item as ChangelogEntry;
+    } catch {
+      return null;
+    }
+  },
+
+  getEntry: async (slug: string): Promise<ChangelogEntry | null> => {
+    try {
+      const query = changelog.entryQuery(slug);
+      const data: any = await basehub.query(query as any);
+      return data.changelogPages.item as ChangelogEntry;
+    } catch {
+      return null;
+    }
+  },
+
+  getEntryBySlug: async (slug: string): Promise<ChangelogEntry | null> => {
+    try {
+      const query = changelog.entryBySlugQuery(slug);
+      const data: any = await basehub.query(query as any);
+      return data.changelogPages.item as ChangelogEntry;
+    } catch {
+      return null;
+    }
   },
 };

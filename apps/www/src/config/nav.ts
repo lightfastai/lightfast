@@ -54,5 +54,4 @@ export const FEATURES_NAV: NavItem[] = [
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV: NavItem[] = [
   { title: "Changelog", href: "/changelog" },
-  { title: "Blog", href: "/blog" },
 ];

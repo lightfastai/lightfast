@@ -166,10 +166,15 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
+          <script
+            async
+            crossOrigin="anonymous"
+            src="https://tweakcn.com/live-preview.min.js"
+          />
           <JsonLd code={organizationSchema} />
           <JsonLd code={websiteSchema} />
         </head>
-        <body className={cn("min-h-screen bg-background", fonts)}>
+        <body className={cn("min-h-screen dark bg-background", fonts)}>
           <PrefetchCrossZoneLinksProvider>
             <PostHogProvider baseUrl={createBaseUrl()}>
               {children}

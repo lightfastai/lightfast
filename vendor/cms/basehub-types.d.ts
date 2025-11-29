@@ -99,7 +99,7 @@ export interface BlockColor {
     __typename: 'BlockColor'
 }
 
-export type BlockDocument = (LegalPages | TemplateLegalComponent | _AgentStart | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockDocument = (ChangelogPages | ChangelogPagesItem | LegalPages | TemplateLegalComponent | _AgentChangelogWriterAgent | _AgentStart | changelogPagesItem_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockDocumentSys {
     apiNamePath: Scalars['String']
@@ -158,7 +158,7 @@ export interface BlockImage {
     __typename: 'BlockImage'
 }
 
-export type BlockList = (LegalPages | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockList = (ChangelogPages | LegalPages | changelogPagesItem_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockOgImage {
     height: Scalars['Int']
@@ -169,7 +169,7 @@ export interface BlockOgImage {
 
 
 /** Rich text block */
-export type BlockRichText = (Body) & { __isUnion?: true }
+export type BlockRichText = (Body | Body_1) & { __isUnion?: true }
 
 export interface BlockVideo {
     aspectRatio: Scalars['String']
@@ -199,6 +199,62 @@ export interface BodyRichText {
     toc: Scalars['BSHBRichTextTOCSchema']
     __typename: 'BodyRichText'
 }
+
+export interface Body_1 {
+    html: Scalars['String']
+    json: Body_1RichText
+    markdown: Scalars['String']
+    plainText: Scalars['String']
+    readingTime: Scalars['Int']
+    __typename: 'Body_1'
+}
+
+export interface Body_1RichText {
+    content: Scalars['BSHBRichTextContentSchema']
+    toc: Scalars['BSHBRichTextTOCSchema']
+    __typename: 'Body_1RichText'
+}
+
+export interface ChangelogPages {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (ChangelogPagesItem | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: ChangelogPagesItem[]
+    __typename: 'ChangelogPages'
+}
+
+export interface ChangelogPagesItem {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight: (SearchHighlight[] | null)
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    body: (Body | null)
+    fixes: (Scalars['String'] | null)
+    improvements: (Scalars['String'] | null)
+    infrastructure: (Scalars['String'] | null)
+    patches: (Scalars['String'] | null)
+    slug: (Scalars['String'] | null)
+    __typename: 'ChangelogPagesItem'
+}
+
+export type ChangelogPagesItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'slug__ASC' | 'slug__DESC' | 'untitled__ASC' | 'untitled__DESC'
 
 export interface GetUploadSignedURL {
     signedURL: Scalars['String']
@@ -281,6 +337,7 @@ export interface Query {
     /** The structure of the repository. Used by START. */
     _structure: Scalars['JSON']
     _sys: RepoSys
+    changelogPages: ChangelogPages
     legalPages: LegalPages
     __typename: 'Query'
 }
@@ -297,7 +354,7 @@ export interface RepoSys {
     __typename: 'RepoSys'
 }
 
-export type RichTextJson = (BaseRichTextJson | BodyRichText) & { __isUnion?: true }
+export type RichTextJson = (BaseRichTextJson | BodyRichText | Body_1RichText) & { __isUnion?: true }
 
 export interface SearchHighlight {
     /** The field/path that was matched (e.g., "title", "body.content") */
@@ -318,7 +375,7 @@ export interface TemplateLegalComponent {
     _slugPath: Scalars['String']
     _sys: BlockDocumentSys
     _title: Scalars['String']
-    body: (Body | null)
+    body: (Body_1 | null)
     description: (Scalars['String'] | null)
     __typename: 'TemplateLegalComponent'
 }
@@ -345,6 +402,35 @@ export interface Variant {
     isDefault: Scalars['Boolean']
     label: Scalars['String']
     __typename: 'Variant'
+}
+
+export interface _AgentChangelogWriterAgent {
+    _agentKey: Scalars['String']
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    accent: Scalars['String']
+    avatar: Scalars['String']
+    chatUrl: Scalars['String']
+    commit: Scalars['Boolean']
+    description: Scalars['String']
+    edit: Scalars['Boolean']
+    embedUrl: Scalars['String']
+    getUserInfo: Scalars['Boolean']
+    grayscale: Scalars['String']
+    manageBranches: Scalars['Boolean']
+    mcpUrl: Scalars['String']
+    model: Scalars['String']
+    openRouterKey: (Scalars['String'] | null)
+    searchTheWeb: Scalars['Boolean']
+    slackInstallUrl: Scalars['String']
+    systemPrompt: Scalars['String']
+    __typename: '_AgentChangelogWriterAgent'
 }
 
 export interface _AgentStart {
@@ -442,13 +528,34 @@ export type _ResolveTargetsWithEnum = 'id' | 'objectName'
 export type _StructureFormatEnum = 'json' | 'xml'
 
 export interface _agents {
+    changelogWriterAgent: _AgentChangelogWriterAgent
     start: _AgentStart
     __typename: '_agents'
 }
 
 export interface _components {
+    changelogPagesItem: changelogPagesItem_AsList
     templateLegal: templateLegalComponent_AsList
     __typename: '_components'
+}
+
+export interface changelogPagesItem_AsList {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (ChangelogPagesItem | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: ChangelogPagesItem[]
+    __typename: 'changelogPagesItem_AsList'
 }
 
 export interface templateLegalComponent_AsList {
@@ -528,9 +635,13 @@ export interface BlockDocumentGenqlSelection{
     _slugPath?: boolean | number
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
+    on_ChangelogPages?: ChangelogPagesGenqlSelection
+    on_ChangelogPagesItem?: ChangelogPagesItemGenqlSelection
     on_LegalPages?: LegalPagesGenqlSelection
     on_TemplateLegalComponent?: TemplateLegalComponentGenqlSelection
+    on__AgentChangelogWriterAgent?: _AgentChangelogWriterAgentGenqlSelection
     on__AgentStart?: _AgentStartGenqlSelection
+    on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_templateLegalComponent_AsList?: templateLegalComponent_AsListGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "BlockDocument"
@@ -614,7 +725,9 @@ export interface BlockListGenqlSelection{
     _slugPath?: boolean | number
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
+    on_ChangelogPages?: ChangelogPagesGenqlSelection
     on_LegalPages?: LegalPagesGenqlSelection
+    on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_templateLegalComponent_AsList?: templateLegalComponent_AsListGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "BlockList"
@@ -643,6 +756,7 @@ export interface BlockRichTextGenqlSelection{
     /** Words per minute, defaults to average 183wpm */
     wpm?: (Scalars['Int'] | null)} } | boolean | number
     on_Body?: BodyGenqlSelection
+    on_Body_1?: Body_1GenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "BlockRichText"
 }
@@ -684,6 +798,90 @@ export interface BodyRichTextGenqlSelection{
     __typename?: boolean | number
     __fragmentOn?: "BodyRichText"
 }
+
+export interface Body_1GenqlSelection{
+    html?: { __args: {
+    /** It automatically generates a unique id for each heading present in the HTML. Enabled by default. */
+    slugs?: (Scalars['Boolean'] | null), 
+    /** Inserts a table of contents at the beginning of the HTML. */
+    toc?: (Scalars['Boolean'] | null)} } | boolean | number
+    json?: Body_1RichTextGenqlSelection
+    markdown?: boolean | number
+    plainText?: boolean | number
+    readingTime?: { __args: {
+    /** Words per minute, defaults to average 183wpm */
+    wpm?: (Scalars['Int'] | null)} } | boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "Body_1"
+}
+
+export interface Body_1RichTextGenqlSelection{
+    content?: boolean | number
+    toc?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "Body_1RichText"
+}
+
+export interface ChangelogPagesGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: ChangelogPagesItemGenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: ChangelogPagesItemGenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "ChangelogPages"
+}
+
+export interface ChangelogPagesItemGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight?: SearchHighlightGenqlSelection
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    body?: BodyGenqlSelection
+    fixes?: boolean | number
+    improvements?: boolean | number
+    infrastructure?: boolean | number
+    patches?: boolean | number
+    slug?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "ChangelogPagesItem"
+}
+
+export interface ChangelogPagesItemFilterInput {AND?: (ChangelogPagesItemFilterInput | null),OR?: (ChangelogPagesItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),slug?: (StringFilter | null)}
+
+export interface ChangelogPagesItemSearchInput {
+/** Searchable fields for query */
+by?: (Scalars['String'][] | null),
+/** Search query */
+q?: (Scalars['String'] | null)}
 
 export interface DateFilter {eq?: (Scalars['DateTime'] | null),isAfter?: (Scalars['DateTime'] | null),isBefore?: (Scalars['DateTime'] | null),isNull?: (Scalars['Boolean'] | null),neq?: (Scalars['DateTime'] | null),onOrAfter?: (Scalars['DateTime'] | null),onOrBefore?: (Scalars['DateTime'] | null)}
 
@@ -842,6 +1040,17 @@ export interface QueryGenqlSelection{
     /** Whether to include type options in the structure. */
     withTypeOptions?: (Scalars['Boolean'] | null)} } | boolean | number
     _sys?: RepoSysGenqlSelection
+    changelogPages?: (ChangelogPagesGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (ChangelogPagesItemFilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (ChangelogPagesItemOrderByEnum | null), 
+    /** Search configuration */
+    search?: (ChangelogPagesItemSearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
     legalPages?: (LegalPagesGenqlSelection & { __args?: {
     /** Filter by a field. */
     filter?: (TemplateLegalComponentFilterInput | null), 
@@ -875,6 +1084,7 @@ export interface RichTextJsonGenqlSelection{
     toc?: boolean | number
     on_BaseRichTextJson?: BaseRichTextJsonGenqlSelection
     on_BodyRichText?: BodyRichTextGenqlSelection
+    on_Body_1RichText?: Body_1RichTextGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "RichTextJson"
 }
@@ -913,7 +1123,7 @@ export interface TemplateLegalComponentGenqlSelection{
     _slugPath?: boolean | number
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
-    body?: BodyGenqlSelection
+    body?: Body_1GenqlSelection
     description?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "TemplateLegalComponent"
@@ -947,6 +1157,42 @@ export interface VariantGenqlSelection{
     label?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "Variant"
+}
+
+export interface _AgentChangelogWriterAgentGenqlSelection{
+    _agentKey?: boolean | number
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    accent?: boolean | number
+    avatar?: boolean | number
+    chatUrl?: boolean | number
+    commit?: boolean | number
+    description?: boolean | number
+    edit?: boolean | number
+    embedUrl?: boolean | number
+    getUserInfo?: boolean | number
+    grayscale?: boolean | number
+    manageBranches?: boolean | number
+    mcpUrl?: boolean | number
+    model?: boolean | number
+    openRouterKey?: boolean | number
+    searchTheWeb?: boolean | number
+    slackInstallUrl?: boolean | number
+    systemPrompt?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "_AgentChangelogWriterAgent"
 }
 
 export interface _AgentStartGenqlSelection{
@@ -1052,12 +1298,24 @@ export interface _PlaygroundInfoGenqlSelection{
 }
 
 export interface _agentsGenqlSelection{
+    changelogWriterAgent?: _AgentChangelogWriterAgentGenqlSelection
     start?: _AgentStartGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "_agents"
 }
 
 export interface _componentsGenqlSelection{
+    changelogPagesItem?: (changelogPagesItem_AsListGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (ChangelogPagesItemFilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (ChangelogPagesItemOrderByEnum | null), 
+    /** Search configuration */
+    search?: (ChangelogPagesItemSearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
     templateLegal?: (templateLegalComponent_AsListGenqlSelection & { __args?: {
     /** Filter by a field. */
     filter?: (TemplateLegalComponentFilterInput | null), 
@@ -1071,6 +1329,32 @@ export interface _componentsGenqlSelection{
     skip?: (Scalars['Int'] | null)} })
     __typename?: boolean | number
     __fragmentOn?: "_components"
+}
+
+export interface changelogPagesItem_AsListGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: ChangelogPagesItemGenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: ChangelogPagesItemGenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "changelogPagesItem_AsList"
 }
 
 export interface templateLegalComponent_AsListGenqlSelection{
@@ -1156,6 +1440,22 @@ export interface FragmentsMap {
     root: BodyRichText,
     selection: BodyRichTextGenqlSelection,
 }
+  Body_1: {
+    root: Body_1,
+    selection: Body_1GenqlSelection,
+}
+  Body_1RichText: {
+    root: Body_1RichText,
+    selection: Body_1RichTextGenqlSelection,
+}
+  ChangelogPages: {
+    root: ChangelogPages,
+    selection: ChangelogPagesGenqlSelection,
+}
+  ChangelogPagesItem: {
+    root: ChangelogPagesItem,
+    selection: ChangelogPagesItemGenqlSelection,
+}
   GetUploadSignedURL: {
     root: GetUploadSignedURL,
     selection: GetUploadSignedURLGenqlSelection,
@@ -1204,6 +1504,10 @@ export interface FragmentsMap {
     root: Variant,
     selection: VariantGenqlSelection,
 }
+  _AgentChangelogWriterAgent: {
+    root: _AgentChangelogWriterAgent,
+    selection: _AgentChangelogWriterAgentGenqlSelection,
+}
   _AgentStart: {
     root: _AgentStart,
     selection: _AgentStartGenqlSelection,
@@ -1235,6 +1539,10 @@ export interface FragmentsMap {
   _components: {
     root: _components,
     selection: _componentsGenqlSelection,
+}
+  changelogPagesItem_AsList: {
+    root: changelogPagesItem_AsList,
+    selection: changelogPagesItem_AsListGenqlSelection,
 }
   templateLegalComponent_AsList: {
     root: templateLegalComponent_AsList,

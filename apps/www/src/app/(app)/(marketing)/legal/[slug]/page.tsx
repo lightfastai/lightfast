@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
-import { legal } from "@vendor/cms";
+import { legal, type LegalPostQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
 
@@ -40,25 +38,39 @@ export default async function LegalPage({ params }: LegalPageProps) {
       {async ([data]) => {
         "use server";
 
-        const d = data as any;
-        const page = d.legalPages?.item;
+        const response = data as LegalPostQueryResponse;
+        const page = response.legalPages?.item;
         if (!page) notFound();
-        return (
-          <div className="w-full py-8 sm:py-12 lg:py-16">
-            <h1 className="scroll-m-20 text-balance font-extrabold text-2xl tracking-tight lg:text-5xl">
-              {page._title}
-            </h1>
-            {page.description ? (
-              <p className="text-balance leading-7 mt-6">{page.description}</p>
-            ) : null}
 
-            <div className="mt-12">
-              <div className="prose max-w-none prose-neutral dark:prose-invert w-full">
-                {page.body?.json?.content ? (
-                  <Body content={page.body.json.content} />
-                ) : null}
-              </div>
+        const lastModified = page._sys?.lastModifiedAt
+          ? new Date(page._sys.lastModifiedAt)
+          : null;
+        const dateStr = lastModified
+          ? lastModified.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : "";
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start py-8 sm:py-12 lg:py-16">
+            <div className="md:col-span-2">
+              {dateStr && (
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium mb-1">Last updated</p>
+                  <time className="whitespace-nowrap">{dateStr}</time>
+                </div>
+              )}
             </div>
+
+            <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
+              {page.body?.json?.content ? (
+                <div className="prose max-w-none prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80 prose-ul:text-foreground/80 prose-li:text-foreground/80">
+                  <Body content={page.body.json.content} />
+                </div>
+              ) : null}
+            </article>
           </div>
         );
       }}
