@@ -38,7 +38,7 @@ export default async function ChangelogPage() {
         const entries = response.changelogPages?.items ?? [];
 
         return (
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4 pb-32">
             <h1
               className={`text-5xl font-light leading-[1.2] tracking-[-0.7] text-foreground mb-16 ${exposureTrial.className}`}
             >
@@ -53,10 +53,12 @@ export default async function ChangelogPage() {
                       —
                     </div>
                     <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
-                      <h2 className="text-2xl font-semibold mt-0 mb-4">Stay tuned</h2>
+                      <h2 className="text-2xl font-semibold mt-0 mb-4">
+                        Stay tuned
+                      </h2>
                       <p className="text-foreground/80 leading-relaxed">
-                        We're shipping fast. Changelog entries will appear here after
-                        our next release.
+                        We're shipping fast. Changelog entries will appear here
+                        after our next release.
                       </p>
                     </article>
                   </div>
@@ -126,7 +128,9 @@ export default async function ChangelogPage() {
                           {sections.length > 0 && (
                             <div className="space-y-4">
                               {sections.map((section) => {
-                                const items = parseBulletPoints(section.content);
+                                const items = parseBulletPoints(
+                                  section.content,
+                                );
                                 const count = items.length;
 
                                 return (
@@ -134,7 +138,10 @@ export default async function ChangelogPage() {
                                     key={section.key}
                                     className="border rounded-sm overflow-hidden"
                                   >
-                                    <Accordion type="multiple" className="w-full">
+                                    <Accordion
+                                      type="multiple"
+                                      className="w-full"
+                                    >
                                       <AccordionItem
                                         value={section.key}
                                         className="border-none"
