@@ -12,7 +12,7 @@ export default function ContentLayout({
       <div className="flex-1 page-gutter">{children}</div>
 
       {/* Waitlist CTA */}
-      <div className="gap-48 flex-col flex py-32">
+      <div className="gap-48 flex-col flex py-10">
         <div className="page-gutter">
           <div className="max-w-4xl mx-auto">
             <WaitlistCTA />

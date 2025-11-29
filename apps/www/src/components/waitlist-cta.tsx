@@ -5,22 +5,26 @@ import { exposureTrial } from "~/lib/fonts";
 
 export function WaitlistCTA() {
   return (
-    <section>
-      <div className="mx-auto">
-        {/* Top text */}
-        <p className="text-center text-sm text-muted-foreground">
-          Ready to give it a try?
-        </p>
+    <section className="flex w-full flex-col items-center text-center">
+      <div className="w-full px-4">
+        {/* Small label - matching hero section */}
+        <div className="mb-8 opacity-80">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Ready to give it a try?
+          </p>
+        </div>
 
-        {/* Main heading */}
+        {/* Heading - matching hero section sizing */}
         <h2
-          className={`text-5xl font-light pt-2 leading-[1.2] tracking-[-0.7] text-foreground text-center mb-16 ${exposureTrial.className}`}
+          className={`text-3xl sm:text-4xl md:text-5xl font-light leading-[1.1] tracking-[-0.02em] text-balance text-foreground text-center ${exposureTrial.className}`}
         >
           Get on the list.
         </h2>
 
-        {/* Centered form */}
-        <WaitlistForm />
+        {/* Form with matching spacing */}
+        <div className="mt-8 max-w-2xl mx-auto">
+          <WaitlistForm />
+        </div>
       </div>
     </section>
   );
