@@ -4,6 +4,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { VisualShowcase } from "~/components/visual-showcase";
 import { SearchDemo } from "~/components/search-demo";
+import { IntegrationShowcase } from "~/components/integration-showcase";
 
 export default function HomePage() {
   return (
@@ -55,10 +56,15 @@ export default function HomePage() {
       </div>
 
       {/* Demo Section - Search Visual */}
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="max-w-7xl px-4 mx-auto w-full py-10">
         <VisualShowcase>
           <SearchDemo />
         </VisualShowcase>
+      </div>
+
+      {/* Integration Showcase */}
+      <div className="max-w-7xl mx-auto w-full px-4 py-10">
+        <IntegrationShowcase />
       </div>
     </div>
   );

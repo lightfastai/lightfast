@@ -13,7 +13,7 @@ export function DocsCTA() {
               relative overflow-hidden
               border border-border
               p-18 rounded-sm
-              bg-card text-foreground
+              bg-accent/40 text-foreground
               hover:bg-card
               transition-all duration-700 ease-out
             "
@@ -28,6 +28,7 @@ export function DocsCTA() {
                   height={600}
                   className="w-full h-full object-cover"
                   priority
+                  unoptimized
                 />
               </div>
             </div>

@@ -26,7 +26,7 @@ export function VisualShowcase({
       {/* Background Image Layer */}
       <div className="relative z-[1] col-span-full row-span-full overflow-hidden rounded-sm">
         <Image
-          className="h-full w-full select-none object-cover opacity-40 dark:opacity-30"
+          className="h-full w-full select-none object-cover"
           alt="Demo background"
           src={backgroundImage}
           fill
@@ -34,6 +34,7 @@ export function VisualShowcase({
           sizes="100vw"
           quality={70}
           draggable={false}
+          unoptimized
         />
       </div>
 
