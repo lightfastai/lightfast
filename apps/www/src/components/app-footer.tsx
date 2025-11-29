@@ -4,9 +4,9 @@ import { ArrowRight } from "lucide-react";
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
 
-export function SiteFooter() {
+export function AppFooter() {
   return (
-    <footer className="relative w-full text-foreground">
+    <footer className="relative w-full text-foreground page-gutter">
       {/* Section 1 - Logo and Products/Links */}
       <section className="pb-8 sm:pb-10 lg:pb-12">
         <div className="mx-auto w-full">
@@ -14,7 +14,7 @@ export function SiteFooter() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Logo - First 2 columns */}
             <div className="lg:col-span-2">
-              <Icons.logo className="text-foreground w-24 sm:w-28 lg:w-32" />
+              <Icons.logo className="size-22 text-foreground" />
             </div>
 
             {/* Products and Links - Last column */}
@@ -30,14 +30,13 @@ export function SiteFooter() {
                     microfrontend
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
-                    Console
+                    Go to App
                   </Link>
                   <Link
-                    href="/docs/sdk"
-                    microfrontend
+                    href="/docs/get-started/overview"
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
                   >
-                    SDK
+                    Docs
                   </Link>
                 </nav>
               </div>
@@ -168,7 +167,7 @@ export function SiteFooter() {
 
               {/* Additional Info */}
               <div className="hidden sm:block">
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   All rights reserved
                 </p>
               </div>
@@ -178,9 +177,4 @@ export function SiteFooter() {
       </section>
     </footer>
   );
-}
-
-// Keep the old FooterSection as a fallback export
-export function FooterSection() {
-  return <SiteFooter />;
 }

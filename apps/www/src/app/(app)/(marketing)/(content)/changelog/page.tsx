@@ -12,7 +12,7 @@ export default async function ChangelogPage() {
   return (
     <>
       <h1
-        className={`text-4xl font-light leading-[1.2] tracking-[-0.7] text-foreground mb-8 ${exposureTrial.className}`}
+        className={`text-5xl font-light leading-[1.2] tracking-[-0.7] text-foreground mb-16 ${exposureTrial.className}`}
       >
         Changelog
       </h1>

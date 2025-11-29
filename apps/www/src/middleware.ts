@@ -26,12 +26,16 @@ const securityHeaders = securityMiddleware(
  * Custom middleware for www-specific logic
  * Can be extended with analytics, rate limiting, etc.
  */
-const wwwMiddleware = (_request: NextRequest) => {
+const wwwMiddleware = (request: NextRequest) => {
+  // Add pathname to headers for SSR components
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", request.nextUrl.pathname);
+
   // Future: Add www-specific middleware here
   // - Analytics tracking for marketing pages
   // - A/B testing
   // - Custom redirects
-  return NextResponse.next();
+  return response;
 };
 
 /**
@@ -85,6 +89,11 @@ export default clerkMiddleware(
     const finalResponse = middlewareResponse ?? response;
     for (const [key, value] of headersResponse.headers.entries()) {
       finalResponse.headers.set(key, value);
+    }
+
+    // Preserve x-pathname header from wwwMiddleware if present
+    if (middlewareResponse?.headers.get("x-pathname")) {
+      finalResponse.headers.set("x-pathname", middlewareResponse.headers.get("x-pathname")!);
     }
 
     return finalResponse;

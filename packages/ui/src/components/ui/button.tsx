@@ -23,6 +23,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         "link-blue":
           "text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 underline-offset-4 hover:underline transition-colors",
+        none: "",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

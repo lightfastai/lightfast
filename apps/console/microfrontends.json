@@ -19,12 +19,9 @@
           "paths": [
             "/",
             "/pricing",
-            "/features",
-            "/features/:path*",
             "/blog",
             "/blog/:path*",
             "/changelog",
-            "/integrations",
             "/use-cases",
             "/early-access",
             "/legal/:path*",

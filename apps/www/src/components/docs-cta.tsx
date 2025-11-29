@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { exposureTrial } from "~/lib/fonts";
 
-export function ReadyToOrchestrateSection() {
+export function DocsCTA() {
   return (
     <section>
       <div className="mx-auto">
@@ -28,7 +28,6 @@ export function ReadyToOrchestrateSection() {
                   height={600}
                   className="w-full h-full object-cover"
                   priority
-                  unoptimized
                 />
               </div>
             </div>

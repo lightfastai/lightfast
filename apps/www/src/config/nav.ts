@@ -11,8 +11,8 @@ export const INTERNAL_NAV: NavItem[] = [
   { title: "Features", href: "/features" },
   { title: "Pricing", href: "/pricing" },
   // Docs is served from the docs microfrontend
-  { title: "Docs", href: "/docs/get-started/overview", microfrontend: true },
   { title: "Early Access", href: "/early-access" },
+  { title: "Docs", href: "/docs/get-started/overview", microfrontend: true },
 ];
 
 export const SOCIAL_NAV: NavItem[] = [
@@ -54,6 +54,5 @@ export const FEATURES_NAV: NavItem[] = [
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV: NavItem[] = [
   { title: "Changelog", href: "/changelog" },
-  { title: "Docs", href: "/docs/get-started/overview", microfrontend: true },
   { title: "Blog", href: "/blog" },
 ];

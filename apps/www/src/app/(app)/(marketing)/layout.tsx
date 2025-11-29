@@ -1,4 +1,4 @@
-import { MarketingNavbar } from "~/components/marketing/marketing-navbar";
+import { AppNavbar } from "~/components/app-navbar";
 
 export default function MarketingLayout({
   children,
@@ -6,12 +6,12 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-full bg-background h-screen overflow-hidden fixed inset-0">
-      {/* Top Navbar - fixed and on top */}
-      <MarketingNavbar />
+    <div className="min-h-screen w-full bg-background flex flex-col">
+      {/* Sticky Navbar */}
+      <AppNavbar />
 
-      {/* Content area - fills entire screen behind navbar */}
-      <main className="absolute inset-0 overflow-hidden">{children}</main>
+      {/* Main content area - grows to fill available space */}
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

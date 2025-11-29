@@ -3,7 +3,7 @@
 import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
 import { exposureTrial } from "~/lib/fonts";
 
-export function CenteredWaitlistSection() {
+export function WaitlistCTA() {
   return (
     <section>
       <div className="mx-auto">

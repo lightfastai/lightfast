@@ -42,7 +42,7 @@ export function MarketingNavbar() {
       <div className="relative flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
         {/* Left: Logo */}
         <div className="-ml-2 flex items-center md:justify-self-start">
-          <Button variant="ghost" size="lg" className="group" asChild>
+          <Button variant="none" size="lg" className="group" asChild>
             <Link href="/">
               <Icons.logo className="size-22 text-foreground transition-colors" />
             </Link>
@@ -54,26 +54,6 @@ export function MarketingNavbar() {
           {/* Features dropdown disabled */}
           <NavigationMenu viewport={false}>
             <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="nav-trigger text-foreground">
-                  Features
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
-                    {FEATURES_NAV.map((feature) => (
-                      <NavigationMenuLink asChild key={feature.href}>
-                        <Link
-                          href={feature.href}
-                          microfrontend={feature.microfrontend}
-                          className="text-popover-foreground"
-                        >
-                          {feature.title}
-                        </Link>
-                      </NavigationMenuLink>
-                    ))}
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
               {/* Resources dropdown */}
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="nav-trigger text-foreground">

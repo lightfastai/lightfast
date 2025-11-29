@@ -5,16 +5,11 @@ import { ExaSearchVisual } from "~/components/landing/exa-search-visual";
 
 export default function HomePage() {
   return (
-    <div className="h-screen w-screen overflow-hidden fixed inset-0">
+    <div className="h-screen w-full overflow-hidden relative">
       {/* Hero Section - brand blue background with content */}
       <div className="brand bg-background absolute top-0 left-0 right-0 h-[80vh]">
-        <div className="h-full page-gutter relative flex items-start pt-32 lg:pt-64">
+        <div className="h-full page-gutter relative flex items-start pt-32 lg:pt-48">
           <div className="w-full flex items-start">
-            {/* LightfastSineWaveMatrix - positioned on the left, aligned with logo */}
-            <div className="shrink-0 hidden lg:block">
-              <LightfastSineWaveMatrix />
-            </div>
-
             {/* Hero content - centered on page, same as Exa search visual */}
             <div className="absolute left-0 right-0 page-gutter">
               <div className="w-full flex justify-center">
@@ -24,10 +19,10 @@ export default function HomePage() {
                       Memory built for teams
                     </p>
                     <h1
-                      className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-[1.1] tracking-[-0.02em] text-foreground ${exposureTrial.className}`}
+                      className={`text-3xl sm:text-4xl md:text-5xl font-light leading-[1.1] tracking-[-0.02em] text-foreground ${exposureTrial.className}`}
                     >
-                      Search everything your team knows. Get answers with
-                      sources, instantly.
+                      Search everything your team knows.
+                      <br /> Get answers with sources, instantly.
                     </h1>
                   </div>
 
