@@ -1,11 +1,11 @@
 /**
- * Exa Search Visual Component
+ * Search Demo Component
  *
- * Visual showcase for Exa-powered search capabilities.
+ * Visual showcase for Lightfast search capabilities.
  * Displays a code-like search query and mock search results.
  */
 
-export function ExaSearchVisual() {
+export function SearchDemo() {
   const searchResults = [
     {
       title: "Authentication service architecture decision",
@@ -40,8 +40,8 @@ export function ExaSearchVisual() {
   ];
 
   return (
-    <div className="h-full flex flex-col relative">
-      <div className="flex flex-col gap-3 bg-background p-3 rounded-md h-full relative z-10">
+    <div className="relative flex h-full w-full flex-col">
+      <div className="relative z-10 flex h-full flex-col gap-3 rounded-md bg-background p-3">
         {/* Search Query Display */}
         <div className="bg-secondary rounded-md px-3 py-4 font-mono text-sm">
           <div className="text-muted-foreground">

@@ -11,7 +11,7 @@ export default function MarketingLayout({
       <AppNavbar />
 
       {/* Main content area - grows to fill available space */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 py-16">{children}</main>
     </div>
   );
 }
