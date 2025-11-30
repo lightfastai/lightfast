@@ -10,6 +10,10 @@ export const env = createEnv({
   server: {
     // Optional: Add health check auth token if you want to secure the endpoint
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    // Lightfast API configuration
+    LIGHTFAST_API_KEY: z.string().optional(),
+    LIGHTFAST_API_URL: z.string().url().optional().default("https://api.lightfast.ai"),
+    LIGHTFAST_WORKSPACE: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_VERCEL_ENV: z.enum(["development", "preview", "production"]).default("development"),

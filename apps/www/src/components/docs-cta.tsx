@@ -11,9 +11,8 @@ export function DocsCTA() {
           <div
             className="
               relative overflow-hidden
-              border border-border
-              p-18 rounded-sm
-              bg-accent/40 text-foreground
+              p-18 rounded-xs
+              bg-card text-foreground
               hover:bg-card
               transition-all duration-700 ease-out
             "

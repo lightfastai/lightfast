@@ -15,7 +15,7 @@ export default function MarketingLayout({
       <main className="flex-1 py-16">{children}</main>
 
       {/* Footer */}
-      <div className="pb-16 max-w-7xl px-4 mx-auto">
+      <div className="pb-16 max-w-6xl px-4 mx-auto">
         <AppFooter />
       </div>
     </div>

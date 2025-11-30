@@ -1,7 +1,8 @@
 import { getApiPage, getApiPages } from "@/src/lib/source";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { SharedPage } from "@/src/components/shared-page";
+import { DocsLayout } from "@/src/components/docs-layout";
+import { mdxComponents } from "@/mdx-components";
 import { generatePageMetadata } from "@/src/lib/metadata-utils";
 
 export default async function Page({
@@ -25,7 +26,13 @@ export default async function Page({
   const MDX = page.data.body;
   const toc = page.data.toc;
 
-  return <SharedPage MDX={MDX} toc={toc} />;
+  return (
+    <DocsLayout toc={toc}>
+      <article className="max-w-none">
+        <MDX components={mdxComponents} />
+      </article>
+    </DocsLayout>
+  );
 }
 
 export function generateStaticParams() {

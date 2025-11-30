@@ -42,7 +42,7 @@
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
     "clsx": "catalog:",
-    "framer-motion": "^11.3.19",
+    "framer-motion": "^11.18.2",
     "geist": "catalog:",
     "jotai": "^2.12.3",
     "lucide-react": "catalog:",

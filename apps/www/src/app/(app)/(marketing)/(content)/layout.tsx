@@ -13,16 +13,7 @@ export default function ContentLayout({
 
       {/* Waitlist CTA */}
       <div className="gap-48 flex-col flex py-10">
-        <div className="page-gutter">
-          <div className="max-w-4xl mx-auto">
-            <WaitlistCTA />
-          </div>
-        </div>
-
-        {/* Docs CTA */}
-        <div className="page-gutter">
-          <DocsCTA />
-        </div>
+        <WaitlistCTA />
       </div>
     </div>
   );

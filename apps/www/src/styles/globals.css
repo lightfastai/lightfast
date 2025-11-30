@@ -10,7 +10,7 @@
 }
 
 /* Dark mode theme */
-.dark {
+/* .dark {
   --background: oklch(0.269 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -31,6 +31,7 @@
   --ring: oklch(0.556 0 0);
   --radius: 0.5rem;
 }
+*/
 
 /* Dark mode theme v2 */
 .darkv2 {
