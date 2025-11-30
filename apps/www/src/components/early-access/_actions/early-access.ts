@@ -7,29 +7,39 @@ import { handleClerkError } from "~/lib/clerk-error-handler";
 import { captureException } from "@sentry/nextjs";
 import { env } from "~/env";
 
-export type WaitlistState =
+export type EarlyAccessState =
 	| { status: "idle" }
 	| { status: "pending" }
 	| { status: "success"; message: string }
 	| { status: "error"; error: string; isRateLimit?: boolean }
 	| {
 			status: "validation_error";
-			fieldErrors: { email?: string[] };
+			fieldErrors: {
+				email?: string[];
+				companySize?: string[];
+				sources?: string[];
+			};
 			error: string;
 	  };
 
-const waitlistSchema = z.object({
+const earlyAccessSchema = z.object({
 	email: z
 		.string()
 		.min(1, "Email is required")
 		.email("Please enter a valid email address")
 		.toLowerCase()
 		.trim(),
+	companySize: z
+		.string()
+		.min(1, "Company size is required"),
+	sources: z
+		.array(z.string())
+		.min(1, "Please select at least one data source"),
 });
 
-const WAITLIST_EMAILS_SET_KEY = "waitlist:emails";
+const EARLY_ACCESS_EMAILS_SET_KEY = "early-access:emails";
 
-// Configure Arcjet protection for waitlist signup
+// Configure Arcjet protection for early access signup
 const aj = arcjet({
 	key: ARCJET_KEY,
 	// Use IP for rate limiting characteristics
@@ -46,7 +56,7 @@ const aj = arcjet({
 		shield({
 			mode: env.NODE_ENV === "production" ? "LIVE" : "DRY_RUN",
 		}),
-		// Block automated bots from spamming the waitlist
+		// Block automated bots from spamming the early access
 		detectBot({
 			mode: "LIVE",
 			allow: [
@@ -68,21 +78,23 @@ const aj = arcjet({
 		}),
 		// Burst protection: Prevent rapid-fire submissions
 		fixedWindow({
-			mode: "LIVE", 
+			mode: "LIVE",
 			window: "10s",
 			max: 3, // Max 3 attempts in 10 seconds (allows for quick corrections)
 		}),
 	],
 });
 
-export async function joinWaitlistAction(
-	prevState: WaitlistState | null,
+export async function joinEarlyAccessAction(
+	prevState: EarlyAccessState | null,
 	formData: FormData,
-): Promise<WaitlistState> {
+): Promise<EarlyAccessState> {
 	try {
 		// Parse and validate form data first
-		const validatedFields = waitlistSchema.safeParse({
+		const validatedFields = earlyAccessSchema.safeParse({
 			email: formData.get("email"),
+			companySize: formData.get("companySize"),
+			sources: formData.get("sources")?.toString().split(",").filter(Boolean) ?? [],
 		});
 
 		// Return field errors if validation fails
@@ -94,8 +106,8 @@ export async function joinWaitlistAction(
 			};
 		}
 
-		// Email has been validated for format
-		const { email } = validatedFields.data;
+		// Fields have been validated
+		const { email, companySize, sources } = validatedFields.data;
 
 		// Check Arcjet protection with the validated email
 		const req = await request();
@@ -107,7 +119,7 @@ export async function joinWaitlistAction(
 		// Handle denied requests from Arcjet
 		if (decision.isDenied()) {
 			const reason = decision.reason;
-			
+
 			// Check specific denial reasons
 			if (reason.isRateLimit()) {
 				return {
@@ -116,21 +128,21 @@ export async function joinWaitlistAction(
 					isRateLimit: true,
 				};
 			}
-			
+
 			if (reason.isBot()) {
 				return {
 					status: "error",
 					error: "Automated signup detected. Please complete the form manually.",
 				};
 			}
-			
+
 			if (reason.isShield()) {
 				return {
 					status: "error",
 					error: "Request blocked for security reasons. Please try again.",
 				};
 			}
-			
+
 			// Check if email validation failed (disposable, invalid domain, etc.)
 			if ('isEmail' in reason && typeof reason.isEmail === 'function' && reason.isEmail()) {
 				return {
@@ -138,7 +150,7 @@ export async function joinWaitlistAction(
 					error: "Please use a valid email address. Temporary or disposable email addresses are not allowed.",
 				};
 			}
-			
+
 			// Generic denial message
 			return {
 				status: "error",
@@ -148,19 +160,19 @@ export async function joinWaitlistAction(
 
 		// Check if email already exists in our Redis cache for fast duplicate detection
 		try {
-			const emailExists = await redis.sismember(WAITLIST_EMAILS_SET_KEY, email);
+			const emailExists = await redis.sismember(EARLY_ACCESS_EMAILS_SET_KEY, email);
 			if (emailExists) {
 				return {
 					status: "error",
-					error: "This email is already on the waitlist!",
+					error: "This email is already registered for early access!",
 				};
 			}
 		} catch (redisError) {
 			// Log Redis errors but don't block the user if Redis is down
-			console.error("Redis error checking waitlist:", redisError);
+			console.error("Redis error checking early access:", redisError);
 			captureException(redisError, {
 				tags: {
-					action: "joinClerkWaitlist:redis-check",
+					action: "joinEarlyAccess:redis-check",
 					email,
 				},
 			});
@@ -168,7 +180,7 @@ export async function joinWaitlistAction(
 		}
 
 		try {
-			// Use Clerk's Backend API to add to waitlist
+			// Use Clerk's Backend API to add to waitlist with metadata
 			const response = await fetch("https://api.clerk.com/v1/waitlist_entries", {
 				method: "POST",
 				headers: {
@@ -177,28 +189,34 @@ export async function joinWaitlistAction(
 				},
 				body: JSON.stringify({
 					email_address: email,
+					// Store additional metadata about company size and sources
+					public_metadata: {
+						companySize,
+						sources: sources.join(","),
+						submittedAt: new Date().toISOString(),
+					},
 				}),
 			});
 
 			if (!response.ok) {
 				// Parse Clerk API error response
 				const errorData = await response.json() as unknown;
-				
+
 				// Use improved Clerk error handler
 				const errorResult = handleClerkError(errorData, {
-					action: "joinClerkWaitlist:api-call",
+					action: "joinEarlyAccess:api-call",
 					email,
 					httpStatus: response.status,
 				});
-				
+
 				// Handle specific error cases
 				if (errorResult.isAlreadyExists) {
 					return {
 						status: "error",
-						error: "This email is already on the waitlist!",
+						error: "This email is already registered for early access!",
 					};
 				}
-				
+
 				if (errorResult.isRateLimit) {
 					return {
 						status: "error",
@@ -206,9 +224,9 @@ export async function joinWaitlistAction(
 						isRateLimit: true,
 					};
 				}
-				
+
 				if (errorResult.isUserLocked) {
-					const retryMessage = errorResult.retryAfterSeconds 
+					const retryMessage = errorResult.retryAfterSeconds
 						? ` Please try again in ${Math.ceil(errorResult.retryAfterSeconds / 60)} minutes.`
 						: " Please try again later.";
 					return {
@@ -216,7 +234,7 @@ export async function joinWaitlistAction(
 						error: `Your account is temporarily locked.${retryMessage}`,
 					};
 				}
-				
+
 				// For validation errors, return more specific message
 				if (errorResult.isValidationError) {
 					return {
@@ -224,20 +242,20 @@ export async function joinWaitlistAction(
 						error: errorResult.userMessage,
 					};
 				}
-				
+
 				// For other errors, throw to be caught by outer handler
 				throw new Error(errorResult.message);
 			}
 
 			// Add email to Redis set for tracking (non-critical)
 			try {
-				await redis.sadd(WAITLIST_EMAILS_SET_KEY, email);
+				await redis.sadd(EARLY_ACCESS_EMAILS_SET_KEY, email);
 			} catch (redisError) {
 				// Log but don't fail the user experience if Redis is down
 				console.error("Failed to add email to Redis tracking:", redisError);
 				captureException(redisError, {
 					tags: {
-						action: "joinClerkWaitlist:redis-add",
+						action: "joinEarlyAccess:redis-add",
 						email,
 					},
 				});
@@ -246,11 +264,11 @@ export async function joinWaitlistAction(
 			return {
 				status: "success",
 				message:
-					"Successfully joined the waitlist! We'll send you an invite when Lightfast is ready.",
+					"Successfully joined early access! We'll send you an invite when Lightfast is ready.",
 			};
 		} catch (clerkError) {
 			// If it's already an error we want to show, return it
-			if (clerkError instanceof Error && clerkError.message.includes("already on the waitlist")) {
+			if (clerkError instanceof Error && clerkError.message.includes("already registered")) {
 				return {
 					status: "error",
 					error: clerkError.message,
@@ -261,7 +279,7 @@ export async function joinWaitlistAction(
 			console.error("Unexpected Clerk error:", clerkError);
 			captureException(clerkError, {
 				tags: {
-					action: "joinClerkWaitlist:unexpected",
+					action: "joinEarlyAccess:unexpected",
 					email,
 				},
 			});
@@ -273,10 +291,10 @@ export async function joinWaitlistAction(
 		}
 	} catch (error) {
 		// Handle any outer errors (validation, etc.)
-		console.error("Error in waitlist action:", error);
+		console.error("Error in early access action:", error);
 		captureException(error, {
 			tags: {
-				action: "joinClerkWaitlist:outer",
+				action: "joinEarlyAccess:outer",
 			},
 			extra: {
 				formData: Object.fromEntries(formData.entries()),

@@ -10,7 +10,7 @@ export const docsSource = loader({
 
 // API source (API reference documentation)
 export const apiSource = loader({
-	baseUrl: "/api",
+	baseUrl: "/docs/api-reference",
 	source: createMDXSource(apiDocs, apiMeta),
 });
 

@@ -17,7 +17,7 @@ import {
  */
 export function AppNavbar() {
   return (
-    <header className="shrink-0 sticky top-0 z-50 py-4 page-gutter bg-background transition-colors duration-300">
+    <header className="shrink-0 border-b sticky top-0 z-50 py-2 page-gutter bg-background transition-colors duration-300">
       <div className="relative flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
         {/* Left: Logo */}
         <div className="-ml-2 flex items-center md:justify-self-start">
@@ -34,7 +34,7 @@ export function AppNavbar() {
           <NavigationMenu viewport={false}>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-foreground">
+                <NavigationMenuTrigger className="text-muted-foreground">
                   Resources
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -44,7 +44,7 @@ export function AppNavbar() {
                         <Link
                           href={item.href}
                           microfrontend={item.microfrontend}
-                          className="text-popover-foreground"
+                          className="text--foreground"
                         >
                           {item.title}
                         </Link>
@@ -61,7 +61,7 @@ export function AppNavbar() {
             <Button
               key={item.href}
               variant="ghost"
-              className="text-foreground"
+              className="text-muted-foreground"
               asChild
             >
               <Link href={item.href} microfrontend={item.microfrontend}>
@@ -74,7 +74,12 @@ export function AppNavbar() {
         {/* Right: Actions */}
         <div className="flex items-center gap-4 md:justify-self-end">
           {/* Search Icon */}
-          <Button variant="link" size="lg" asChild>
+          <Button
+            variant="link"
+            size="lg"
+            asChild
+            className="text-muted-foreground"
+          >
             <Link href="/search" microfrontend aria-label="Search">
               <Search className="h-5 w-5" />
             </Link>

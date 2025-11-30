@@ -294,7 +294,7 @@ export default function PricingPage() {
       <div className="mt-10 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
         {/* Hero Section */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto grid grid-cols-12">
+          <div className="max-w-6xl mx-auto grid grid-cols-12">
             <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
               <div className="flex w-full flex-col items-center text-center">
                 {/* Small label */}
@@ -323,7 +323,7 @@ export default function PricingPage() {
         </section>
 
         {/* Pricing Section */}
-        <div className="max-w-7xl px-4 mx-auto w-full py-10">
+        <div className="max-w-6xl px-4 mx-auto w-full py-10">
           <div className="space-y-8 w-full">
             {/* Pricing Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
@@ -334,7 +334,7 @@ export default function PricingPage() {
                   <div
                     key={plan.plan}
                     className={cn(
-                      "flex flex-col border rounded-sm p-6 h-full",
+                      "flex flex-col border rounded-xs p-6 h-full",
                       plan.highlighted
                         ? "border-foreground shadow-lg"
                         : "border-border",
@@ -388,11 +388,7 @@ export default function PricingPage() {
                             <span className="text-4xl font-bold text-foreground">
                               Free
                             </span>
-                          ) : price === "Contact" ? (
-                            <span className="text-4xl font-bold text-foreground">
-                              Contact Sales
-                            </span>
-                          ) : (
+                          ) : price === "Contact" ? null : (
                             <>
                               <span className="text-4xl font-bold text-foreground">
                                 ${price}
@@ -429,7 +425,7 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="max-w-7xl mx-auto w-full px-4 py-10">
+        <div className="max-w-6xl mx-auto w-full px-4 py-10">
           <div className="w-full">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
               {/* Left side - FAQ label */}

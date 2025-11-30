@@ -1,30 +1,21 @@
 "use client";
 
-import { WaitlistForm } from "~/app/(app)/(marketing)/_components/(waitlist)/waitlist-form";
-import { exposureTrial } from "~/lib/fonts";
+import Link from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
 
 export function WaitlistCTA() {
   return (
-    <section className="flex w-full flex-col items-center text-center">
+    <section className="flex w-full flex-col items-center justify-center py-48 bg-card rounded-xs text-center">
       <div className="w-full px-4">
-        {/* Small label - matching hero section */}
-        <div className="mb-8 opacity-80">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Ready to give it a try?
-          </p>
-        </div>
-
-        {/* Heading - matching hero section sizing */}
-        <h2
-          className={`text-3xl sm:text-4xl md:text-5xl font-light leading-[1.1] tracking-[-0.02em] text-balance text-foreground text-center ${exposureTrial.className}`}
-        >
-          Get on the list.
+        {/* Large heading - similar to Cursor's design */}
+        <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-foreground mb-12">
+          Try Lightfast now.
         </h2>
 
-        {/* Form with matching spacing */}
-        <div className="mt-8 max-w-2xl mx-auto">
-          <WaitlistForm />
-        </div>
+        {/* CTA Button */}
+        <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg">
+          <Link href="/early-access">Join Early Access</Link>
+        </Button>
       </div>
     </section>
   );

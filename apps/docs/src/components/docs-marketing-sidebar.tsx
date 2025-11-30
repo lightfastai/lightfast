@@ -53,56 +53,22 @@ export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
       side="left"
       variant="sidebar"
       collapsible="header-only"
-      className="border-0 pl-16 ![border-right:0]"
+      className="border-0 ![border-right:0]"
     >
       {/* Static Header - Logo, Trigger, Matrix, Back to Home */}
-      <SidebarHeader className="p-0">
-        {/* Logo and Trigger */}
-        <div className="flex flex-row items-center gap-2 py-4 px-0 border-b border-border/30">
-          <div className="-ml-2 flex items-center">
-            <Button
-              variant="ghost"
-              size="lg"
-              className="hover:bg-black group"
-              asChild
-            >
-              <Link href={wwwUrl}>
-                <Icons.logo className="size-22 text-foreground group-hover:text-foreground transition-colors" />
-              </Link>
-            </Button>
-          </div>
+      <SidebarHeader className="!p-0 gap-0">
+        {/* Logo and Trigger - aligned with main header */}
+        <div className="h-[4.5rem] page-gutter -ml-2 flex flex-row items-center gap-2">
+          <Link href={wwwUrl}>
+            <Icons.logo className="size-22 text-foreground group-hover:text-foreground transition-colors" />
+          </Link>
           <SidebarTrigger />
         </div>
-
-        {/* Matrix Animation */}
-        <SidebarGroup className="px-0 pt-8">
-          <SidebarGroupContent className="px-0">
-            <div className="mb-8">
-              <LightfastSineWaveMatrix />
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Back to Home Link */}
-        <SidebarGroup className="px-0 pb-8">
-          <SidebarGroupContent className="px-0">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="h-auto p-0 text-sm font-light bg-transparent hover:bg-transparent hover:opacity-60 justify-start"
-                >
-                  <Link href={wwwUrl}>← Back to Home</Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarHeader>
 
       {/* Scrollable Documentation Navigation */}
       <DocsSidebarScrollArea className="flex-1 min-h-0 w-full">
-        <div className="w-full max-w-full min-w-0 overflow-hidden pr-2 py-4">
+        <div className="w-full max-w-full min-w-0 overflow-hidden px-8 md:px-16 py-4">
           {tree?.children.map((item, index) => (
             <div key={item.$id ?? `item-${index}`} className="mb-6">
               {item.type === "separator" && (

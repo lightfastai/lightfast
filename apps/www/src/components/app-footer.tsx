@@ -21,20 +21,20 @@ export function AppFooter() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {/* Products Column */}
               <div className="flex flex-col">
-                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-xl font-semibold">
+                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
                   Products
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
                   <Link
-                    href="/account/teams"
+                    href="/sign-in"
                     microfrontend
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
+                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     Go to App
                   </Link>
                   <Link
                     href="/docs/get-started/overview"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
+                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     Docs
                   </Link>
@@ -43,20 +43,20 @@ export function AppFooter() {
 
               {/* Links Column */}
               <div className="flex flex-col">
-                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-xl font-semibold">
+                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
                   Links
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
                   <Link
                     href="/legal/terms"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
+                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     <span className="block sm:hidden">Terms</span>
                     <span className="hidden sm:block">Terms</span>
                   </Link>
                   <Link
                     href="/legal/privacy"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-200"
+                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     <span className="block sm:hidden">Privacy</span>
                     <span className="hidden sm:block">Privacy Policy</span>
@@ -93,7 +93,7 @@ export function AppFooter() {
 
             {/* Newsletter Signup - Last column */}
             <div className="flex flex-col">
-              <h3 className="text-foreground text-sm sm:text-base mb-3 sm:mb-4 font-semibold">
+              <h3 className="text-foreground text-xs sm:text-base mb-3 sm:mb-4 font-semibold">
                 Stay in the loop and be the first to know what's coming next for
                 Lightfast, get industry expert analysis, and much more.
               </h3>

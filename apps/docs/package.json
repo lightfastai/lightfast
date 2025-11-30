@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-portal": "^1.1.10",
     "@repo/app-urls": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
@@ -25,7 +26,7 @@
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
     "clsx": "^2.1.1",
-    "framer-motion": "^11.3.19",
+    "framer-motion": "^11.18.2",
     "fumadocs-core": "15.6.9",
     "fumadocs-mdx": "11.7.4",
     "fumadocs-openapi": "^9.6.4",

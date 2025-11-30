@@ -3,7 +3,7 @@ import "./globals.css";
 import { docsMetadata, siteConfig } from "@/src/lib/site-config";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { Providers } from "@/src/components/providers";
+import { RootProvider } from "fumadocs-ui/provider";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -13,7 +13,13 @@ export default function Layout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className={cn("bg-background min-h-screen dark", fonts)}>
-        <Providers>{children}</Providers>
+        <RootProvider
+          search={{
+            enabled: false, // Disable fumadocs search
+          }}
+        >
+          {children}
+        </RootProvider>
       </body>
     </html>
   );
