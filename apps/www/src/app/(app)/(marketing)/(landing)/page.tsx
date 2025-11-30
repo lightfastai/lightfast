@@ -1,5 +1,6 @@
 import { exposureTrial } from "~/lib/fonts";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@repo/ui/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { VisualShowcase } from "~/components/visual-showcase";
@@ -65,11 +66,11 @@ export default function HomePage() {
         <PlatformAccessCards />
 
         {/* Demo Section - Search Visual */}
-        {/* <div className="max-w-6xl px-4 mx-auto w-full py-10">
+        <div className="max-w-6xl px-4 mx-auto w-full py-10">
           <VisualShowcase>
             <SearchDemo />
           </VisualShowcase>
-        </div> */}
+        </div>
 
         {/* Integration Showcase */}
         <div className="max-w-6xl mx-auto w-full px-4 py-10">
@@ -80,6 +81,23 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto w-full px-4 py-10">
           <FAQSection />
         </div>
+
+        {/* Background Image Section */}
+        {/* <div className="max-w-6xl px-4 mx-auto w-full">
+          <div className="relative rounded-xs w-full h-[720px] overflow-hidden">
+            <div className="absolute inset-0 z-0">
+              <Image
+                src="/images/orange-mouth.avif"
+                alt="Background"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+            <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/5" />
+          </div>
+        </div>
+      */}
 
         {/* Changelog Preview */}
         <div className="max-w-6xl mx-auto w-full px-4">

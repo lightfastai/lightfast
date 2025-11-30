@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 
 const Confetti = dynamic(() => import("react-confetti"), {
@@ -7,7 +9,16 @@ const Confetti = dynamic(() => import("react-confetti"), {
 });
 
 export function ConfettiWrapper() {
-	return (
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+		return () => setMounted(false);
+	}, []);
+
+	if (!mounted) return null;
+
+	return createPortal(
 		<Confetti
 			recycle={false}
 			numberOfPieces={200}
@@ -20,6 +31,7 @@ export function ConfettiWrapper() {
 				pointerEvents: "none",
 				zIndex: 9999,
 			}}
-		/>
+		/>,
+		document.body
 	);
 }

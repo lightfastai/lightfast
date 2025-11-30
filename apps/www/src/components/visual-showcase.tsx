@@ -17,14 +17,14 @@ interface VisualShowcaseProps {
 
 export function VisualShowcase({
   children,
-  backgroundImage = "/images/blue-sky.webp",
+  backgroundImage = "/images/5_landscape.jpg",
   minHeight = "680px",
   maxHeight = "min(780px, 70vh)",
 }: VisualShowcaseProps) {
   return (
-    <div className="relative grid grid-cols-1 grid-rows-1 rounded-sm bg-accent">
+    <div className="relative grid grid-cols-1 grid-rows-1 rounded-xs overflow-hidden bg-accent">
       {/* Background Image Layer */}
-      <div className="relative z-[1] col-span-full row-span-full overflow-hidden rounded-sm">
+      <div className="relative z-[1] col-span-full row-span-full overflow-hidden rounded-xs">
         <Image
           className="h-full w-full select-none object-cover"
           alt="Demo background"
@@ -38,10 +38,13 @@ export function VisualShowcase({
         />
       </div>
 
+      {/* Frosted Glass Blur Overlay */}
+      <div className="absolute inset-0 z-10 col-span-full row-span-full backdrop-blur-md bg-white/5" />
+
       {/* Content Layer */}
       <div className="z-20 col-span-full row-span-full">
         <div
-          className="relative w-full select-none overflow-hidden rounded-sm border border-border"
+          className="relative w-full select-none overflow-hidden rounded-xs border border-border"
           style={{
             height: maxHeight,
             minHeight: minHeight,
