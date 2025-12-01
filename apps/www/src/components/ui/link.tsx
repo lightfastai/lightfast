@@ -13,12 +13,15 @@ type Props =
 
 export function Link(props: Props) {
   if ("microfrontend" in props && props.microfrontend) {
-    const { microfrontend: _mf, ...rest } = props as { microfrontend: true } & MicroLinkProps;
+    const { microfrontend: _mf, ...rest } = props as {
+      microfrontend: true;
+    } & MicroLinkProps;
     return <MicrofrontendLink {...rest} />;
   }
-  const { microfrontend: _mf, ...rest } = props as { microfrontend?: false } & NextLinkProps;
-  return <NextLink {...rest} />;
+  const { microfrontend: _mf, ...rest } = props as {
+    microfrontend?: false;
+  } & NextLinkProps;
+  return <NextLink prefetch {...rest} />;
 }
 
 export default Link;
-
