@@ -1,4 +1,5 @@
-import Link from "~/components/ui/link";
+import NextLink from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
@@ -25,19 +26,18 @@ export function AppFooter() {
                   Products
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
-                  <Link
+                  <MicrofrontendLink
                     href="/sign-in"
-                    microfrontend
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     Go to App
-                  </Link>
-                  <Link
+                  </MicrofrontendLink>
+                  <NextLink
                     href="/docs/get-started/overview"
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     Docs
-                  </Link>
+                  </NextLink>
                 </nav>
               </div>
 
@@ -47,20 +47,20 @@ export function AppFooter() {
                   Links
                 </h3>
                 <nav className="flex flex-col gap-2 sm:gap-3">
-                  <Link
+                  <NextLink
                     href="/legal/terms"
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     <span className="block sm:hidden">Terms</span>
                     <span className="hidden sm:block">Terms</span>
-                  </Link>
-                  <Link
+                  </NextLink>
+                  <NextLink
                     href="/legal/privacy"
                     className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
                   >
                     <span className="block sm:hidden">Privacy</span>
                     <span className="hidden sm:block">Privacy Policy</span>
-                  </Link>
+                  </NextLink>
                 </nav>
               </div>
             </div>
@@ -82,12 +82,12 @@ export function AppFooter() {
                 <span className="text-foreground text-sm sm:text-base lg:text-lg font-medium">
                   Drop us a line at →
                 </span>
-                <Link
+                <NextLink
                   href={`mailto:${emailConfig.hello}`}
                   className="text-primary hover:text-primary/80 text-sm sm:text-base lg:text-lg font-medium transition-colors duration-200 hover:underline break-all"
                 >
                   {emailConfig.hello}
-                </Link>
+                </NextLink>
               </div>
             </div>
 
@@ -98,13 +98,13 @@ export function AppFooter() {
                 Lightfast, get industry expert analysis, and much more.
               </h3>
               <div className="flex flex-col gap-2">
-                <Link
+                <NextLink
                   href="#"
                   className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-2 text-sm font-medium transition-colors duration-200 hover:underline"
                 >
                   Subscribe to Lightfast
                   <ArrowRight className="size-4" />
-                </Link>
+                </NextLink>
               </div>
             </div>
           </div>
@@ -118,30 +118,30 @@ export function AppFooter() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Social Links - First 2 columns */}
             <div className="flex items-center gap-4 sm:gap-6 lg:col-span-2">
-              <Link
+              <NextLink
                 target="_blank"
                 href={siteConfig.links.github.href}
                 aria-label="GitHub"
                 className="group transition-all duration-300 hover:scale-110"
               >
                 <Icons.gitHub className="text-muted-foreground group-hover:text-foreground size-4 transition-colors duration-300" />
-              </Link>
-              <Link
+              </NextLink>
+              <NextLink
                 target="_blank"
                 href={siteConfig.links.discord.href}
                 aria-label="Discord"
                 className="group transition-all duration-300 hover:scale-110"
               >
                 <Icons.discord className="text-muted-foreground group-hover:text-foreground size-4 transition-colors duration-300" />
-              </Link>
-              <Link
+              </NextLink>
+              <NextLink
                 target="_blank"
                 href={siteConfig.links.twitter.href}
                 aria-label="Twitter"
                 className="group transition-all duration-300 hover:scale-110"
               >
                 <Icons.twitter className="text-muted-foreground group-hover:text-foreground size-3 transition-colors duration-300" />
-              </Link>
+              </NextLink>
             </div>
 
             {/* Copyright and Additional Info - Last column */}

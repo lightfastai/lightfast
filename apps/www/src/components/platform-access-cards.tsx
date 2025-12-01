@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { CheckCircle, Package, BookOpen, type LucideIcon } from "lucide-react";
 
 interface AccessCard {
@@ -6,6 +7,8 @@ interface AccessCard {
   icon: LucideIcon;
   title: string;
   description: string;
+  external?: boolean;
+  microfrontend?: boolean;
 }
 
 const accessCards: AccessCard[] = [
@@ -14,12 +17,14 @@ const accessCards: AccessCard[] = [
     icon: CheckCircle,
     title: "Have Access?",
     description: "Go to App and start searching your team's knowledge base.",
+    microfrontend: true,
   },
   {
     href: "/docs/api-reference/overview",
     icon: Package,
     title: "API Platform",
     description: "Use our APIs and models to build your own AI experiences.",
+    external: true,
   },
   {
     href: "/docs/get-started/overview",
@@ -27,6 +32,7 @@ const accessCards: AccessCard[] = [
     title: "Docs",
     description:
       "Learn how to integrate and use Lightfast in your applications.",
+    external: true,
   },
 ];
 
@@ -36,8 +42,18 @@ export function PlatformAccessCards() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {accessCards.map((card) => {
           const Icon = card.icon;
+          const LinkComponent = card.microfrontend ? MicrofrontendLink : Link;
+          const linkProps = card.external
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : {};
+
           return (
-            <Link key={card.href} href={card.href} className="group">
+            <LinkComponent
+              key={card.href}
+              href={card.href}
+              className="group"
+              {...linkProps}
+            >
               <div className="relative h-full rounded-xs border border-transparent bg-card p-8 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
                 <div className="mb-22">
                   <Icon className="h-5 w-5 text-foreground" />
@@ -49,7 +65,7 @@ export function PlatformAccessCards() {
                   {card.description}
                 </p>
               </div>
-            </Link>
+            </LinkComponent>
           );
         })}
       </div>

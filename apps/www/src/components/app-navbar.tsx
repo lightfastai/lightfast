@@ -1,4 +1,5 @@
-import Link from "~/components/ui/link";
+import NextLink from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Search } from "lucide-react";
@@ -14,9 +15,9 @@ export function AppNavbar() {
         {/* Left: Logo */}
         <div className="-ml-2 flex items-center md:justify-self-start">
           <Button variant="none" size="lg" className="group" asChild>
-            <Link href="/" prefetch>
+            <NextLink href="/" prefetch>
               <Icons.logo className="size-22 text-foreground transition-colors" />
-            </Link>
+            </NextLink>
           </Button>
         </div>
 
@@ -32,9 +33,9 @@ export function AppNavbar() {
             asChild
             className="text-muted-foreground"
           >
-            <Link href="/search" microfrontend aria-label="Search">
+            <MicrofrontendLink href="/search" aria-label="Search">
               <Search className="h-5 w-5" />
-            </Link>
+            </MicrofrontendLink>
           </Button>
 
           {/* Sign In Button */}
@@ -44,11 +45,11 @@ export function AppNavbar() {
             className="rounded-full"
             asChild
           >
-            <Link href="/sign-in" microfrontend>
+            <MicrofrontendLink href="/sign-in">
               <span className="text-sm text-secondary-foreground font-medium">
                 Log In
               </span>
-            </Link>
+            </MicrofrontendLink>
           </Button>
         </div>
       </div>

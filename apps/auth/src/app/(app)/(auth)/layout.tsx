@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "~/components/ui/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
@@ -21,9 +21,9 @@ export default function AuthLayout({
             {/* Left: Logo */}
             <div className="-ml-2 flex items-center md:justify-self-start">
               <Button variant="ghost" size="lg" asChild>
-                <Link href="/" microfrontend className="flex items-center">
+                <MicrofrontendLink href="/" className="flex items-center">
                   <Icons.logoShort className="text-foreground size-6" />
-                </Link>
+                </MicrofrontendLink>
               </Button>
             </div>
             {/* Center placeholder to mirror marketing layout */}
@@ -36,9 +36,9 @@ export default function AuthLayout({
                 asChild
                 className="rounded-full"
               >
-                <Link href="/early-access" microfrontend>
+                <MicrofrontendLink href="/early-access">
                   Join the Early Access
-                </Link>
+                </MicrofrontendLink>
               </Button>
             </div>
           </div>

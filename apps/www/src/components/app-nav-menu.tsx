@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "~/components/ui/link";
+import NextLink from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
 import {
@@ -29,13 +30,15 @@ export function AppNavMenu() {
               <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>
-                    <Link
-                      href={item.href}
-                      microfrontend={item.microfrontend}
-                      className="text--foreground"
-                    >
-                      {item.title}
-                    </Link>
+                    {item.microfrontend ? (
+                      <MicrofrontendLink href={item.href} className="text--foreground">
+                        {item.title}
+                      </MicrofrontendLink>
+                    ) : (
+                      <NextLink href={item.href} prefetch className="text--foreground">
+                        {item.title}
+                      </NextLink>
+                    )}
                   </NavigationMenuLink>
                 ))}
               </div>
@@ -52,9 +55,15 @@ export function AppNavMenu() {
           className="text-muted-foreground"
           asChild
         >
-          <Link href={item.href} microfrontend={item.microfrontend}>
-            {item.title}
-          </Link>
+          {item.microfrontend ? (
+            <MicrofrontendLink href={item.href}>
+              {item.title}
+            </MicrofrontendLink>
+          ) : (
+            <NextLink href={item.href} prefetch>
+              {item.title}
+            </NextLink>
+          )}
         </Button>
       ))}
     </nav>
