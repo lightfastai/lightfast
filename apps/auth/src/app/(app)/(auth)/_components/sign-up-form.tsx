@@ -1,11 +1,12 @@
 "use client";
 import * as React from "react";
+import NextLink from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { SignUpEmailInput } from "./sign-up-email-input";
 import { SignUpCodeVerification } from "./sign-up-code-verification";
 import { OAuthSignUp } from "./oauth-sign-up";
-import Link from "~/components/ui/link";
 import { siteConfig } from "@repo/site-config";
 
 export function SignUpForm() {
@@ -69,25 +70,23 @@ export function SignUpForm() {
 						{/* Legal compliance text */}
 						<p className="text-xs text-center text-muted-foreground">
 							By joining, you agree to our{" "}
-							<Link
+							<MicrofrontendLink
 								href={siteConfig.links.terms.href}
-								microfrontend
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
 							>
 								Terms of Service
-							</Link>{" "}
+							</MicrofrontendLink>{" "}
 							and{" "}
-							<Link
+							<MicrofrontendLink
 								href={siteConfig.links.privacy.href}
-								microfrontend
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
 							>
 								Privacy Policy
-							</Link>
+							</MicrofrontendLink>
 						</p>
 
 						{/* Separator */}
@@ -123,11 +122,10 @@ export function SignUpForm() {
 						variant="link-blue"
 						className="inline-flex h-auto p-0 rounded-none text-sm"
 					>
-						<Link href="/sign-in">Log In</Link>
+						<NextLink href="/sign-in" prefetch>Log In</NextLink>
 					</Button>
 				</div>
 			)}
 		</div>
 	);
 }
-

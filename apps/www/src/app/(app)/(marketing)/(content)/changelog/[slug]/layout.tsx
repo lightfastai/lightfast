@@ -10,8 +10,8 @@ export default function ChangelogEntryLayout({
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 mb-8">
-        <Button variant="outline" size="lg" asChild>
-          <Link href="/changelog" className="gap-2">
+        <Button variant="secondary" className="rounded-full" size="lg" asChild>
+          <Link href="/changelog" prefetch className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             See all changelog
           </Link>

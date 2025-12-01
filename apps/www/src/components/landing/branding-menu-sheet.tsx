@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "~/components/ui/link";
+import NextLink from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { usePathname } from "next/navigation";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
@@ -70,9 +71,9 @@ export function BrandingMenuSheet({
         <div className="absolute top-0 left-0 right-0 page-gutter-md py-4 flex items-center justify-between">
           <div className="-ml-2 flex items-center">
             <Button variant="ghost" size="lg" className="group" asChild>
-              <Link href="/" onClick={handleHomeClick}>
+              <NextLink href="/" prefetch onClick={handleHomeClick}>
                 <Icons.logo className="size-22 text-foreground transition-colors group-hover:text-white" />
-              </Link>
+              </NextLink>
             </Button>
           </div>
           <SheetClose asChild>
@@ -138,14 +139,24 @@ export function BrandingMenuSheet({
                       {isActive && (
                         <ChevronRight className="absolute -left-12 top-1/2 -translate-y-1/2 w-8 h-8 text-foreground" />
                       )}
-                      <Link
-                        href={item.href}
-                        microfrontend={item.microfrontend}
-                        onClick={() => onOpenChange(false)}
-                        className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
-                      >
-                        {item.title}
-                      </Link>
+                      {item.microfrontend ? (
+                        <MicrofrontendLink
+                          href={item.href}
+                          onClick={() => onOpenChange(false)}
+                          className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                        >
+                          {item.title}
+                        </MicrofrontendLink>
+                      ) : (
+                        <NextLink
+                          href={item.href}
+                          prefetch
+                          onClick={() => onOpenChange(false)}
+                          className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
+                        >
+                          {item.title}
+                        </NextLink>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -162,7 +173,7 @@ export function BrandingMenuSheet({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 + 0.4 }}
                     >
-                      <Link
+                      <NextLink
                         href={social.href}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -170,7 +181,7 @@ export function BrandingMenuSheet({
                         aria-label={social.label ?? social.title}
                       >
                         {Icon ? <Icon className="w-5 h-5" /> : null}
-                      </Link>
+                      </NextLink>
                     </motion.div>
                   );
                 })}
@@ -194,13 +205,13 @@ export function BrandingMenuSheet({
                         <ChevronRight className="w-8 h-8 text-foreground" />
                       )}
                     </div>
-                    <Link
+                    <NextLink
                       href={item.href}
                       onClick={() => onOpenChange(false)}
                       className={`block font-light text-6xl text-foreground transition-opacity hover:opacity-60 ${exposureTrial.className}`}
                     >
                       {item.title}
-                    </Link>
+                    </NextLink>
                   </motion.div>
                 );
               })}
