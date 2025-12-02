@@ -8,6 +8,16 @@ const withMDX = createMDX();
 const config: NextConfig = {
   reactStrictMode: true,
 
+  images: {
+    formats: ["image/webp"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "imagedelivery.net",
+      },
+    ],
+  },
+
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: ["@repo/ui", "@repo/url-utils", "@vendor/seo"],
 

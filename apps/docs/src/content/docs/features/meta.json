@@ -1,0 +1,12 @@
+{
+  "title": "Features",
+  "pages": [
+    "index",
+    "search",
+    "memory",
+    "relationships",
+    "citations",
+    "quality",
+    "security"
+  ]
+}

@@ -1,0 +1,393 @@
+---
+title: Privacy & Security
+description: How Lightfast ensures data isolation, access control, and compliance through tenant isolation and audit trails
+---
+
+# Privacy & Security
+
+Lightfast is built with privacy and security as core principles. Your team's data stays isolated, access controls are enforced, and all activity is auditable.
+
+## Tenant Isolation
+
+Every workspace operates in complete isolation from other organizations. Your data never mixes with content from other teams.
+
+### Complete Workspace Separation
+
+**Database isolation:**
+- Each workspace has its own tables in the database layer
+- Queries are scoped by workspace ID at the database level
+- No cross-workspace joins or queries possible
+- Row-level security enforces isolation
+
+**Namespaced embeddings:**
+- Vector indexes are partitioned by workspace ID in Pinecone
+- Separate namespaces prevent cross-contamination
+- Queries never search across workspace boundaries
+- Index isolation at the infrastructure level
+
+**Isolated caches:**
+- Redis caches are prefixed by workspace ID
+- Cache keys include workspace identifier
+- No shared cache entries between workspaces
+- Cache eviction is workspace-scoped
+
+**Independent calibration:**
+- Ranking weights tune per workspace
+- Quality metrics measured separately
+- Feedback loops operate in isolation
+- No cross-workspace learning or model sharing
+
+### Why This Matters
+
+**Security:**
+- Vulnerabilities affect one workspace, not all
+- Breaches cannot leak data across organizations
+- Attack surface limited to single tenant
+
+**Privacy:**
+- Your usage patterns never influence other teams
+- Query data stays completely private
+- No cross-organization analytics or reporting
+
+**Compliance:**
+- Meet data residency requirements per workspace
+- Separate retention policies per organization
+- Audit trail isolation for compliance reviews
+
+**Performance:**
+- No "noisy neighbor" problems
+- Resource allocation per workspace
+- Predictable query performance
+
+<Alert>
+**Zero trust architecture.** Even internal Lightfast systems authenticate and authorize every workspace operation. No implicit trust between components—every request is validated.
+</Alert>
+
+## Access Control
+
+Lightfast respects the access controls of your connected repositories and tools. If you can't see it in GitHub, you can't find it in Lightfast.
+
+### Permission Inheritance
+
+**GitHub permissions:**
+- Only content you can view in GitHub is indexed for you
+- Private repos require appropriate access
+- Organization membership determines visibility
+- Team-based access controls are honored
+
+**Per-user filtering:**
+- Search results are filtered based on individual permissions
+- No user sees content they lack access to
+- Permissions checked at query time, not index time
+- Real-time updates when access changes
+
+**Dynamic access checks:**
+- If permissions change (repo made private, access revoked), content disappears from results immediately
+- No stale results from previously accessible content
+- Webhooks and sync jobs keep permissions current
+
+**Team visibility:**
+- Team members only see content from repositories they have access to
+- Workspace admins see aggregated metrics, not restricted content
+- Invitation-based access to workspace features
+
+### Permission Example
+
+Alice has access to `repo-a` and `repo-b`. Bob only has access to `repo-a`.
+
+**Scenario:** Both search for "authentication"
+
+**Alice sees results from:**
+- `repo-a/docs/auth.md`
+- `repo-a/src/auth/`
+- `repo-b/auth-service/`
+- PR discussions from both repos
+
+**Bob sees results from:**
+- `repo-a/docs/auth.md`
+- `repo-a/src/auth/`
+- (No results from `repo-b`)
+
+Alice and Bob are in the same workspace, but see different results based on their individual GitHub permissions.
+
+### Permission Enforcement
+
+**At indexing:**
+- Content is tagged with required permissions
+- Access control lists stored with each document
+- Organization and team membership recorded
+
+**At query time:**
+- User's GitHub token validated
+- Permissions fetched from GitHub API
+- Results filtered before ranking
+- Only accessible content enters result set
+
+**On permission changes:**
+- GitHub webhooks notify Lightfast of access changes
+- Content re-indexed or removed as needed
+- User sessions invalidated when access revoked
+- Results update within minutes
+
+## Data Security
+
+### Encryption
+
+**At rest:**
+- Database encrypted with AES-256
+- S3 document storage encrypted
+- Pinecone indexes encrypted
+- Redis cache encrypted in transit and at rest
+
+**In transit:**
+- All API traffic uses TLS 1.3
+- Internal service communication encrypted
+- Database connections use SSL/TLS
+- No plaintext data transmission
+
+### Authentication
+
+**API authentication:**
+- API keys with workspace-scoped access
+- Keys can be rotated without downtime
+- Rate limiting per key to prevent abuse
+- Automatic key expiration for security
+
+**User authentication:**
+- OAuth via GitHub (or other providers)
+- No passwords stored in Lightfast systems
+- Multi-factor authentication supported
+- Session tokens with configurable TTL
+
+**Service authentication:**
+- Mutual TLS for internal services
+- Service accounts with minimal permissions
+- Credential rotation enforced
+- Audit logs for all service access
+
+### Network Security
+
+**Infrastructure:**
+- VPC isolation for production services
+- Private subnets for databases
+- Security groups restrict traffic
+- WAF protects API endpoints
+
+**DDoS protection:**
+- Cloudflare or similar CDN
+- Rate limiting at multiple layers
+- Auto-scaling handles traffic spikes
+- Graceful degradation under load
+
+## Audit & Compliance
+
+Full query audit trail enables compliance and security reviews.
+
+### Query Logs
+
+**What's logged:**
+- Every search, retrieval, and answer request
+- User ID and workspace ID
+- Timestamp and query parameters
+- Results returned and citations shown
+- API key used (if applicable)
+
+**Retention:**
+- Configurable per workspace (30-365 days)
+- Longer retention available for enterprise
+- Automatic archival to cold storage
+- Deletion after retention period
+
+**Access:**
+- Workspace admins can download logs
+- API for programmatic access
+- Filtering and search capabilities
+- Export to SIEM tools
+
+### Access Logs
+
+**What's tracked:**
+- Which users accessed which documents
+- Timestamp and access method
+- Source IP and user agent
+- Results clicked and citations followed
+
+**Use cases:**
+- Security investigations
+- Compliance audits
+- Usage analytics
+- Anomaly detection
+
+### Compliance Features
+
+**SOC 2 Type II:**
+- Annual audits by independent firms
+- Evidence collection automated
+- Security controls documented
+- Continuous monitoring
+
+**GDPR compliance:**
+- Data deletion on request
+- Export user data in portable format
+- Consent management for analytics
+- Privacy-by-design architecture
+
+**Data residency:**
+- Workspace data stays in specified region
+- No cross-region replication without consent
+- Regional deployment options (US, EU)
+
+**Retention policies:**
+- Configure document retention per workspace
+- Automatic deletion after configured period
+- Exceptions for legal hold
+- Audit trail of deletions
+
+<Alert>
+**SOC 2 Type II compliance.** Lightfast undergoes regular security audits and maintains SOC 2 Type II certification. Enterprise customers can request compliance documentation and security questionnaires.
+</Alert>
+
+## Data Handling
+
+### What We Store
+
+**Metadata:**
+- Document titles, URLs, timestamps
+- User IDs, workspace IDs
+- Repository names, file paths
+- Relationships and graph edges
+
+**Content:**
+- Document bodies in S3
+- Vector embeddings in Pinecone
+- Chunks and summaries
+- Observations and highlights
+
+**Analytics:**
+- Query logs and access logs
+- Usage metrics and performance data
+- Calibration weights and thresholds
+- Quality evaluation results
+
+### What We Don't Store
+
+**Credentials:**
+- No passwords or API keys from source systems
+- GitHub OAuth tokens are ephemeral
+- No long-term storage of secrets
+
+**Sensitive data (unless explicitly indexed):**
+- Environment variables
+- Configuration secrets
+- API keys in code (if .gitignored)
+- Personal identifiable information (filtered)
+
+### Data Retention
+
+**Active data:**
+- Documents: Until removed from source or manually deleted
+- Embeddings: Until document deleted or re-indexed
+- Metadata: Lifetime of workspace
+
+**Logs and analytics:**
+- Query logs: 90 days default (configurable)
+- Access logs: 90 days default (configurable)
+- Metrics: 1 year rolling window
+
+**Deleted data:**
+- Soft delete with 30-day recovery window
+- Permanent deletion after recovery period
+- Embeddings purged immediately
+- Logs retained per retention policy
+
+## Data Residency
+
+Choose where your workspace data is stored:
+
+**US region (default):**
+- Pinecone: us-east-1
+- PlanetScale: AWS us-east-1
+- S3: us-east-1
+- Redis: us-east-1
+
+**EU region (enterprise):**
+- Pinecone: eu-west-1
+- PlanetScale: AWS eu-west-1
+- S3: eu-west-1
+- Redis: eu-west-1
+
+**Multi-region (enterprise):**
+- High availability across regions
+- Active-active or active-passive
+- Latency-based routing
+- Regional failover
+
+## Security Best Practices
+
+### For Workspace Administrators
+
+**Access management:**
+- Review workspace members regularly
+- Remove former employees promptly
+- Use GitHub organization for SSO
+- Enforce MFA for all team members
+
+**API key hygiene:**
+- Rotate keys quarterly
+- Use separate keys per environment (dev/staging/prod)
+- Revoke unused keys
+- Monitor key usage in audit logs
+
+**Compliance:**
+- Review audit logs monthly
+- Configure retention to meet requirements
+- Document data handling in privacy policy
+- Test incident response procedures
+
+### For Developers
+
+**Secure integration:**
+- Store API keys in environment variables, not code
+- Use HTTPS for all API requests
+- Implement proper error handling
+- Respect rate limits
+
+**Data handling:**
+- Don't log query results containing sensitive data
+- Sanitize user inputs before querying
+- Implement client-side rate limiting
+- Cache responses appropriately (with TTL)
+
+## Incident Response
+
+Lightfast has documented procedures for security incidents:
+
+1. **Detection**: Automated monitoring and alerts
+2. **Triage**: Security team assesses severity
+3. **Containment**: Isolate affected workspaces
+4. **Investigation**: Determine root cause and impact
+5. **Remediation**: Fix vulnerability and restore service
+6. **Communication**: Notify affected customers
+7. **Post-mortem**: Document lessons learned
+
+Customers are notified within 24 hours of confirmed data breaches.
+
+## Security Reporting
+
+**Report vulnerabilities:**
+- Email: security@lightfast.ai
+- PGP key available on request
+- Bug bounty program for critical findings
+
+**Response SLA:**
+- Critical: 4 hours
+- High: 24 hours
+- Medium: 7 days
+- Low: 30 days
+
+## Next Steps
+
+- **<NextLink href="/docs/get-started/authentication">Authentication</NextLink>** — How to authenticate API requests
+- **<NextLink href="/docs/features/search">Search & Retrieval</NextLink>** — How permissions affect search
+- **<NextLink href="/docs/get-started/architecture">Architecture</NextLink>** — Security architecture details
+- **<NextLink href="/api/overview">API Reference</NextLink>** — Security headers and best practices

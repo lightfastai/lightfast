@@ -31,11 +31,18 @@ export function AppNavMenu() {
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>
                     {item.microfrontend ? (
-                      <MicrofrontendLink href={item.href} className="text--foreground">
+                      <MicrofrontendLink
+                        href={item.href}
+                        className="text--foreground"
+                      >
                         {item.title}
                       </MicrofrontendLink>
                     ) : (
-                      <NextLink href={item.href} prefetch className="text--foreground">
+                      <NextLink
+                        href={item.href}
+                        prefetch
+                        className="text--foreground"
+                      >
                         {item.title}
                       </NextLink>
                     )}
@@ -56,9 +63,7 @@ export function AppNavMenu() {
           asChild
         >
           {item.microfrontend ? (
-            <MicrofrontendLink href={item.href}>
-              {item.title}
-            </MicrofrontendLink>
+            <MicrofrontendLink href={item.href}>{item.title}</MicrofrontendLink>
           ) : (
             <NextLink href={item.href} prefetch>
               {item.title}

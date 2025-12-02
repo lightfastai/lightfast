@@ -1,0 +1,129 @@
+---
+title: Search & Retrieval
+description: How Lightfast finds relevant content using semantic understanding and hybrid ranking
+---
+
+# Search & Retrieval
+
+Unlike traditional keyword search, Lightfast understands meaning and context. When you search for "authentication refactor," the platform finds related content even if it uses different terminology—like "Update auth flow for OAuth2" or "login security improvements." This semantic understanding makes search more intuitive and comprehensive.
+
+## Semantic Understanding
+
+Lightfast uses vector embeddings to capture the meaning of your queries and content. When you search, the platform:
+
+1. **Analyzes your query intent**: Determines whether you're looking for specific facts, exploring related topics, or tracing decisions
+2. **Retrieves semantically similar content**: Finds documents that match the meaning, not just exact keywords
+3. **Ranks by relevance**: Combines multiple signals to surface the most useful results
+
+**Example search transformations:**
+
+- Query: "Why did we migrate databases?" → Finds: PRs discussing "PostgreSQL adoption," issues about "MySQL performance," RFCs titled "Database strategy 2024"
+- Query: "Who owns payments?" → Finds: CODEOWNERS entries, PR authors for payment-related changes, discussion participants in billing threads
+- Query: "Similar caching approaches" → Finds: Implementation patterns across repos, design docs, related discussions
+
+## Multi-View Retrieval
+
+For each piece of content, Lightfast creates multiple specialized representations optimized for different types of searches:
+
+- **Title embeddings**: Capture high-level topics and themes for broad discovery
+- **Snippet embeddings**: Encode key points and summaries for quick relevance checks
+- **Body embeddings**: Index full content for detailed, specific queries
+- **Summary embeddings**: Provide consolidated understanding of long documents
+
+This multi-view approach means you can find the same document whether you search for a high-level concept or a specific implementation detail. The platform automatically selects the best view based on your query.
+
+<Alert>
+**Embeddings evolve with your content.** When documents are updated, Lightfast regenerates embeddings to reflect the changes. Version namespacing ensures old and new embeddings coexist during transitions without affecting search quality.
+</Alert>
+
+## Hybrid Ranking
+
+Search results are ranked using a sophisticated scoring system that balances multiple signals:
+
+**Relevance signals:**
+- **Semantic similarity**: Vector distance between query and content embeddings
+- **Lexical matching**: Keyword overlap for precise terminology (API names, error codes)
+- **Cross-encoder reranking**: Deep neural reranking of top candidates for precision
+
+**Context signals:**
+- **Recency**: Newer content weighted higher, with configurable decay
+- **Importance**: Stars, reactions, comment count, engagement metrics
+- **Graph relationships**: Connections to frequently accessed or highly cited content
+- **Profile similarity**: Personalization based on your interaction history and team context
+
+The exact weighting of these signals adapts per-workspace through continuous calibration. As your team uses Lightfast, the ranking improves to match how you work.
+
+## Search Modes
+
+Lightfast automatically adapts its retrieval strategy based on your query type. You don't need to specify a mode—the platform analyzes your query and selects the optimal approach. These modes are internal optimizations, but understanding them helps you write better queries.
+
+### Knowledge Mode: Factual Lookups
+
+**When it activates:** Direct questions seeking specific facts, implementation details, or documented answers.
+
+**Example queries:**
+- "What's our API rate limit?" → Finds: API documentation, configuration files, rate limit middleware
+- "How do we handle authentication?" → Finds: Auth service code, login flow diagrams, security docs
+- "What ports does the service use?" → Finds: Configuration files, deployment docs, infrastructure specs
+
+**Optimization focus:**
+- **Precision**: Returns highly relevant results that directly answer the question
+- **Citations**: Every answer links to source documents for verification
+- **Lexical matching**: Boosts exact terminology matches (API names, config keys, error codes)
+
+### Neural Mode: Exploratory Discovery
+
+**When it activates:** Open-ended queries exploring topics, finding patterns, or discovering related content.
+
+**Example queries:**
+- "Similar approaches to caching" → Finds: Redis implementations, CDN strategies, client-side caching, memoization patterns
+- "Related design patterns for async processing" → Finds: Queue-based architectures, event-driven systems, background job patterns
+- "How teams handle rate limiting" → Finds: Token bucket examples, sliding window implementations, backoff strategies
+
+**Optimization focus:**
+- **Discovery**: Surfaces diverse results from across your organization
+- **Breadth**: Includes related concepts you might not have explicitly searched for
+- **Semantic expansion**: Uses embedding similarity to find conceptually related content
+
+### Hybrid Mode: Complex Reasoning
+
+**When it activates:** Multi-part questions that require both precise facts and contextual understanding.
+
+**Example queries:**
+- "Why did we choose PostgreSQL and what alternatives were considered?" → Finds: Decision RFC, benchmark comparisons, migration discussions, MongoDB evaluation notes
+- "What changed in the auth flow and who approved it?" → Finds: Specific PR, review comments, security team approval, related issues
+- "How does our caching work and what problems has it solved?" → Finds: Implementation docs, performance improvements, incident resolutions
+
+**Optimization focus:**
+- **Precise facts**: Anchors on specific details (PostgreSQL, auth flow changes)
+- **Related context**: Expands to include decision rationale, alternatives, impacts
+- **Multi-hop reasoning**: Connects PRs to RFCs, incidents to resolutions, owners to responsibilities
+
+<Alert>
+**Mode selection is transparent.** When using `/v1/answer` with verbose mode, Lightfast includes metadata showing which retrieval strategy was used and why. This helps you understand how results were found.
+</Alert>
+
+## Using Search Effectively
+
+**Best practices for queries:**
+
+1. **Be specific when you need precision**: "What's the Redis connection pool size?" is better than "Redis config"
+2. **Be exploratory when discovering**: "How do we handle retries?" finds patterns across your codebase
+3. **Ask multi-part questions**: "Why did we deprecate X and what replaced it?" gets full context
+4. **Use natural language**: Lightfast understands questions better than keyword lists
+
+**What search can find:**
+
+- Technical implementation details from code and docs
+- Design decisions and their rationale from RFCs and PRs
+- Ownership and expertise from contribution patterns
+- Incident resolutions and their root causes
+- Architectural patterns and best practices
+- Historical context for current systems
+
+## Next Steps
+
+- **<NextLink href="/docs/features/memory">Memory Organization</NextLink>** — How content is structured for retrieval
+- **<NextLink href="/docs/features/citations">Citations & Sources</NextLink>** — Understanding answer verification
+- **<NextLink href="/api/search">POST /v1/search</NextLink>** — Search API endpoint reference
+- **<NextLink href="/api/answer">POST /v1/answer</NextLink>** — Answer API endpoint reference

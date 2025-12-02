@@ -1,0 +1,549 @@
+---
+title: POST /v1/answer
+description: Get synthesized answers with citations (supports streaming)
+---
+
+# POST /v1/answer
+
+Generate synthesized answers to questions using your indexed knowledge. Every answer includes citations showing source documents. Supports streaming for real-time responses.
+
+## Endpoint
+
+```
+POST https://api.lightfast.ai/v1/answer
+```
+
+## Authentication
+
+```bash
+Authorization: Bearer lf_sk_live_...
+```
+
+## Request Body
+
+```typescript
+{
+  query: string              // Question to answer
+  stream?: boolean           // Enable streaming (default: false)
+  maxSources?: number        // Max citations to include (default: 5, max: 20)
+  filters?: {
+    type?: string[]          // Filter source content types
+    source?: string          // Filter by source system
+    createdAfter?: string    // Only use recent sources
+    [key: string]: any       // Custom metadata filters
+  }
+  context?: {
+    conversationId?: string  // For multi-turn conversations
+    previousMessages?: Array<{
+      role: 'user' | 'assistant'
+      content: string
+    }>
+  }
+}
+```
+
+## Response (Non-Streaming)
+
+```typescript
+{
+  data: {
+    answer: string           // Synthesized answer
+    citations: Array<{
+      id: string             // Source content ID
+      title: string          // Source title
+      snippet: string        // Relevant excerpt
+      url?: string           // Link to source
+      type: string           // Content type
+      source: string         // Source system
+      relevance: number      // Relevance score (0-1)
+    }>
+    confidence: number       // Answer confidence (0-1)
+    reasoning: string        // How answer was derived
+  }
+  meta: {
+    sourcesUsed: number      // Number of sources cited
+    took: number             // Query time in ms
+  }
+  requestId: string
+}
+```
+
+## Response (Streaming)
+
+Server-sent events (SSE) format:
+
+```
+data: {"type":"chunk","content":"Lightfast uses"}
+
+data: {"type":"chunk","content":" OAuth 2.0"}
+
+data: {"type":"chunk","content":" for authentication"}
+
+data: {"type":"citations","citations":[...]}
+
+data: {"type":"done","meta":{...}}
+```
+
+## Example Request
+
+
+    ```bash
+    # Non-streaming
+    curl -X POST https://api.lightfast.ai/v1/answer \
+      -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "query": "How does authentication work in our system?",
+        "maxSources": 5
+      }'
+
+    # Streaming
+    curl -X POST https://api.lightfast.ai/v1/answer \
+      -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Accept: text/event-stream" \
+      -d '{
+        "query": "How does authentication work?",
+        "stream": true
+      }'
+    ```
+  
+
+## Example Response
+
+```json
+{
+  "data": {
+    "answer": "The system uses OAuth 2.0 for authentication with the following components:\n\n1. **Authorization Flow**: Implements the authorization code flow with PKCE for enhanced security.\n\n2. **Token Management**: Uses JWT tokens with automatic refresh token rotation. Access tokens expire after 15 minutes, refresh tokens after 30 days.\n\n3. **Validation**: All requests are validated using JWT signatures and checked against a revocation list.\n\n4. **Security Features**: Includes rate limiting, brute force protection, and audit logging for all authentication events.",
+    "citations": [
+      {
+        "id": "pr-123",
+        "title": "Implement OAuth 2.0 authentication",
+        "snippet": "Added OAuth 2.0 authentication flow with refresh tokens and JWT validation. Includes PKCE support for enhanced security...",
+        "url": "https://github.com/org/repo/pull/123",
+        "type": "pull_request",
+        "source": "github",
+        "relevance": 0.95
+      },
+      {
+        "id": "doc-auth",
+        "title": "Authentication Architecture",
+        "snippet": "Our authentication system uses JWT tokens with 15-minute expiration. Refresh tokens are rotated on each use...",
+        "url": "https://notion.so/workspace/auth-architecture",
+        "type": "doc",
+        "source": "notion",
+        "relevance": 0.89
+      },
+      {
+        "id": "rfc-42",
+        "title": "RFC: OAuth 2.0 Implementation",
+        "snippet": "This RFC proposes implementing OAuth 2.0 with PKCE and refresh token rotation...",
+        "url": "https://github.com/org/repo/discussions/42",
+        "type": "discussion",
+        "source": "github",
+        "relevance": 0.87
+      }
+    ],
+    "confidence": 0.92,
+    "reasoning": "Answer synthesized from 3 authoritative sources: the implementation PR, architecture documentation, and the original RFC. All sources align on OAuth 2.0 with PKCE and token rotation."
+  },
+  "meta": {
+    "sourcesUsed": 3,
+    "took": 1847
+  },
+  "requestId": "req_abc123def456"
+}
+```
+
+## Use Cases
+
+### Team Knowledge Bot
+
+Build a bot that answers questions using team knowledge:
+
+```typescript
+// Slack bot example
+app.message(async ({ message, say }) => {
+  const answer = await lf.answer({
+    query: message.text,
+    maxSources: 3
+  })
+
+  await say({
+    text: answer.data.answer,
+    blocks: [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: answer.data.answer }
+      },
+      {
+        type: 'context',
+        elements: answer.data.citations.map(c => ({
+          type: 'mrkdwn',
+          text: `<${c.url}|${c.title}>`
+        }))
+      }
+    ]
+  })
+})
+```
+
+### Documentation Assistant
+
+Help users find answers in docs:
+
+```typescript
+async function docAssistant(question: string) {
+  const answer = await lf.answer({
+    query: question,
+    filters: {
+      type: ['doc', 'guide', 'tutorial']
+    },
+    maxSources: 5
+  })
+
+  return {
+    answer: answer.data.answer,
+    confidence: answer.data.confidence,
+    sources: answer.data.citations
+  }
+}
+```
+
+### Code Context Assistant
+
+Answer questions about code:
+
+```typescript
+const answer = await lf.answer({
+  query: 'How is rate limiting implemented?',
+  filters: {
+    type: ['pull_request', 'code', 'issue'],
+    source: 'github'
+  }
+})
+```
+
+### Decision Tracking
+
+Trace why decisions were made:
+
+```typescript
+const decision = await lf.answer({
+  query: 'Why did we choose PostgreSQL over MongoDB?',
+  filters: {
+    type: ['discussion', 'rfc', 'doc']
+  },
+  maxSources: 10
+})
+
+console.log('Decision:', decision.data.answer)
+console.log('Confidence:', decision.data.confidence)
+console.log('Sources:', decision.data.citations.length)
+```
+
+### Onboarding Assistant
+
+Help new team members learn:
+
+```typescript
+async function onboardingChat(question: string) {
+  const answer = await lf.answer({
+    query: question,
+    stream: true,
+    maxSources: 5
+  })
+
+  // Stream answer in real-time
+  for await (const chunk of answer) {
+    if (chunk.type === 'chunk') {
+      displayStream(chunk.content)
+    } else if (chunk.type === 'citations') {
+      displaySources(chunk.citations)
+    }
+  }
+}
+```
+
+## Streaming
+
+### Why Stream?
+
+Streaming provides:
+- **Real-time responses**: Users see answers as they're generated
+- **Better UX**: Perceived faster response time
+- **Progress indication**: Shows system is working
+
+### Handling Streams
+
+```typescript
+const stream = await lf.answer({
+  query: 'Explain our authentication flow',
+  stream: true
+})
+
+let fullAnswer = ''
+let citations = []
+
+for await (const chunk of stream) {
+  switch (chunk.type) {
+    case 'chunk':
+      fullAnswer += chunk.content
+      process.stdout.write(chunk.content)
+      break
+
+    case 'citations':
+      citations = chunk.citations
+      break
+
+    case 'done':
+      console.log('\n\nGeneration complete')
+      console.log('Confidence:', chunk.meta.confidence)
+      break
+
+    case 'error':
+      console.error('Error:', chunk.error)
+      break
+  }
+}
+```
+
+### Stream Events
+
+| Type | Description | Fields |
+|------|-------------|--------|
+| `chunk` | Text content chunk | `content: string` |
+| `citations` | Source citations | `citations: Citation[]` |
+| `done` | Stream complete | `meta: { confidence, sourcesUsed, took }` |
+| `error` | Error occurred | `error: string, code: string` |
+
+## Multi-Turn Conversations
+
+Maintain context across multiple questions:
+
+```typescript
+const conversationId = 'conv-123'
+let history: Array<{ role: string; content: string }> = []
+
+async function ask(question: string) {
+  const answer = await lf.answer({
+    query: question,
+    context: {
+      conversationId,
+      previousMessages: history
+    }
+  })
+
+  // Update history
+  history.push(
+    { role: 'user', content: question },
+    { role: 'assistant', content: answer.data.answer }
+  )
+
+  return answer
+}
+
+// Conversation
+await ask('How does authentication work?')
+await ask('What about refresh tokens?')  // Understands context
+await ask('Show me the implementation')  // Still contextual
+```
+
+## Filtering Sources
+
+### By Content Type
+
+Use specific types of sources:
+
+```typescript
+// Only use code and PRs
+const answer = await lf.answer({
+  query: 'How is logging implemented?',
+  filters: {
+    type: ['pull_request', 'code']
+  }
+})
+
+// Only use documentation
+const docAnswer = await lf.answer({
+  query: 'What is our API rate limit?',
+  filters: {
+    type: ['doc', 'guide']
+  }
+})
+```
+
+### By Recency
+
+Use only recent sources:
+
+```typescript
+const answer = await lf.answer({
+  query: 'What are our current deployment practices?',
+  filters: {
+    createdAfter: '2024-01-01'  // Last year only
+  }
+})
+```
+
+### By Source System
+
+Use specific data sources:
+
+```typescript
+// GitHub only
+const ghAnswer = await lf.answer({
+  query: 'Latest code changes to auth',
+  filters: { source: 'github' }
+})
+
+// Notion docs only
+const docAnswer = await lf.answer({
+  query: 'Company policies on authentication',
+  filters: { source: 'notion' }
+})
+```
+
+## Answer Confidence
+
+### Interpreting Confidence
+
+- **0.90-1.00**: High confidence - clear answer from authoritative sources
+- **0.70-0.89**: Good confidence - answer well-supported
+- **0.50-0.69**: Moderate confidence - some uncertainty
+- **0.00-0.49**: Low confidence - limited or conflicting information
+
+### Using Confidence
+
+```typescript
+const answer = await lf.answer({
+  query: 'What is our SLA for API uptime?'
+})
+
+if (answer.data.confidence < 0.7) {
+  console.warn('Low confidence answer. Review sources carefully.')
+  console.log('Reasoning:', answer.data.reasoning)
+}
+
+if (answer.data.confidence > 0.9) {
+  console.log('High confidence answer from authoritative sources.')
+}
+```
+
+## Answer Quality
+
+### What Makes a Good Answer?
+
+1. **Clear and concise**: Direct answer to the question
+2. **Well-cited**: Multiple authoritative sources
+3. **Factually accurate**: Verified against sources
+4. **Contextually relevant**: Uses appropriate sources
+5. **Explainable**: Reasoning shows how answer was derived
+
+### Improving Answers
+
+**Better questions:**
+```typescript
+// ❌ Vague
+"authentication"
+
+// ✅ Specific
+"How does our OAuth 2.0 authentication flow handle refresh tokens?"
+
+// ❌ Too broad
+"tell me about the system"
+
+// ✅ Focused
+"What are the main components of our authentication system?"
+```
+
+**Use filters:**
+```typescript
+// Get more relevant sources
+const answer = await lf.answer({
+  query: 'How do we handle errors in the API?',
+  filters: {
+    type: ['code', 'pull_request', 'doc'],
+    source: 'github',
+    createdAfter: '2024-01-01'
+  },
+  maxSources: 10
+})
+```
+
+## Rate Limiting
+
+Answer generation is more expensive than search:
+
+| Plan | Answers/min | Cost per Answer |
+|------|-------------|-----------------|
+| **Free** | 10 | 10 searches |
+| **Pro** | 100 | 10 searches |
+| **Team** | 500 | 10 searches |
+| **Enterprise** | Custom | Custom |
+
+**Recommendation**: Cache answers for common questions.
+
+## Caching Answers
+
+```typescript
+const answerCache = new Map<string, any>()
+
+async function getCachedAnswer(query: string) {
+  const key = query.toLowerCase().trim()
+
+  if (answerCache.has(key)) {
+    return answerCache.get(key)
+  }
+
+  const answer = await lf.answer({ query })
+
+  // Cache for 1 hour
+  answerCache.set(key, answer)
+  setTimeout(() => answerCache.delete(key), 3600000)
+
+  return answer
+}
+```
+
+## Error Handling
+
+```typescript
+try {
+  const answer = await lf.answer({ query: 'How does auth work?' })
+} catch (error) {
+  if (error.code === 'insufficient_sources') {
+    console.error('Not enough sources to answer question')
+  } else if (error.code === 'rate_limit_exceeded') {
+    console.error('Rate limited. Retry after:', error.retryAfter)
+  } else if (error.code === 'invalid_request') {
+    console.error('Invalid query:', error.message)
+  }
+}
+```
+
+### Handling Streaming Errors
+
+```typescript
+const stream = await lf.answer({ query, stream: true })
+
+try {
+  for await (const chunk of stream) {
+    if (chunk.type === 'error') {
+      console.error('Stream error:', chunk.error)
+      break
+    }
+    // Process chunk
+  }
+} catch (error) {
+  console.error('Stream failed:', error)
+}
+```
+
+## Next Steps
+
+- **[POST /v1/search](/api/search)** - Search for specific information
+- **[POST /v1/contents](/api/contents)** - Get full source documents
+- **[POST /v1/similar](/api/similar)** - Find related content
+- **[Answer Quality Guide](/docs/guides/answer-quality)** - Optimize answer generation
+- **[Conversation Patterns](/docs/guides/conversations)** - Build multi-turn chatbots

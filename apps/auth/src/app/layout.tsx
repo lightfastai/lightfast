@@ -96,9 +96,9 @@ export default function RootLayout({
         "choose-organization": `${consoleUrl}/account/teams/new`,
       }}
     >
-      <html lang="en" suppressHydrationWarning>
+      <html className={fonts} lang="en" suppressHydrationWarning>
         <head />
-        <body className={cn("bg-background dark min-h-screen", fonts)}>
+        <body className={cn("bg-background dark min-h-screen")}>
           {children}
           <Toaster position="bottom-right" />
           <VercelAnalytics />

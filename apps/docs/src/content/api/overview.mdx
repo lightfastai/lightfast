@@ -1,56 +1,44 @@
 ---
 title: API Overview
-description: Introduction to the Lightfast Memory API
+description: Introduction to the Lightfast API - Four simple routes for team memory
 ---
 
 import { ApiReferenceCard, ApiReferenceGrid } from '@/src/components/api-reference-card';
 
-The Lightfast Memory API provides real-time semantic search across all your company's data sources. It enables AI tools, custom agents, and applications to access company knowledge through a unified, type-safe API.
+# API Overview
 
-## API Endpoints
+The Lightfast API provides **memory built for teams**. Four simple routes enable you to search by meaning, get full documents, find similar content, and generate answers with citations.
+
+## The Four Routes
 
 <ApiReferenceGrid>
   <ApiReferenceCard
-    title="Add Memory"
-    description="Index new content into a collection for semantic search"
+    title="Search"
+    description="Search and rank results by meaning with optional rationale and highlights"
     method="POST"
-    path="/memories"
-    href="/api/memory/addMemory"
+    path="/v1/search"
+    href="/api/search"
   />
   <ApiReferenceCard
-    title="List Memories"
-    description="List all memories in a collection"
-    method="GET"
-    path="/memories"
-    href="/api/memory/listMemories"
-  />
-  <ApiReferenceCard
-    title="Get Memory"
-    description="Retrieve a specific memory by ID from a collection"
-    method="GET"
-    path="/memories/{id}"
-    href="/api/memory/getMemory"
-  />
-  <ApiReferenceCard
-    title="Search Memories"
-    description="Perform semantic search across your indexed memories"
+    title="Contents"
+    description="Get full documents, metadata, and relationships"
     method="POST"
-    path="/memories/search"
-    href="/api/memory/searchMemories"
+    path="/v1/contents"
+    href="/api/contents"
   />
   <ApiReferenceCard
-    title="Update Memory"
-    description="Update existing memory content or metadata"
-    method="PUT"
-    path="/memories/{id}"
-    href="/api/memory/updateMemory"
+    title="Similar"
+    description="Find related content based on semantic similarity"
+    method="POST"
+    path="/v1/similar"
+    href="/api/similar"
   />
   <ApiReferenceCard
-    title="Delete Memory"
-    description="Remove a memory from the collection permanently"
-    method="DELETE"
-    path="/memories/{id}"
-    href="/api/memory/deleteMemory"
+    title="Answer"
+    description="Get synthesized answers with citations (supports streaming)"
+    method="POST"
+    path="/v1/answer"
+    href="/api/answer"
   />
 </ApiReferenceGrid>
 
@@ -62,11 +50,13 @@ https://api.lightfast.ai/v1
 
 ## Authentication
 
-All API requests require authentication via API keys:
+All API requests require authentication via Bearer token:
 
 ```bash
 Authorization: Bearer lf_sk_live_abc123...
 ```
+
+See [Authentication](/docs/get-started/authentication) for details on API key types and security.
 
 ### Key Types
 
@@ -76,40 +66,121 @@ Authorization: Bearer lf_sk_live_abc123...
 | **Publishable Key** | `lf_pk_` | Read-only access | Client-side search UIs |
 | **Restricted Key** | `lf_rk_` | Custom scopes | Scoped integrations |
 
-## Core Concepts
+## Core Principles
 
-### Collections
+### Search by Meaning
 
-Collections are logical groupings of related memories (e.g., `github-org-name`, `discord-server-id`). Data is automatically partitioned by source and organization.
+Unlike keyword search, Lightfast understands **intent and context**:
 
-### Memories
+```json
+{
+  "query": "authentication refactor"
+}
+```
 
-A memory is an indexed piece of content with associated metadata. Each memory has:
-- **ID**: Unique identifier within the collection
-- **Content**: The text content to search
-- **Metadata**: Structured data for filtering and context
-- **Embedding**: Vector representation for semantic search
+Finds:
+- PRs titled "Update auth flow for OAuth2"
+- Issues about "login security improvements"
+- Discussions on "user session management"
 
-### Semantic Search
+### Always Cite Sources
 
-Unlike keyword search, semantic search understands meaning and context. Searching for "authentication refactor" will find related PRs, issues, and discussions even if they don't contain those exact words.
+Every answer includes citations showing where information came from:
+
+```json
+{
+  "content": "Authentication uses OAuth 2.0...",
+  "citations": [
+    {
+      "id": "pr-123",
+      "title": "Implement OAuth 2.0",
+      "url": "https://github.com/org/repo/pull/123"
+    }
+  ]
+}
+```
+
+### Explainable by Design
+
+Optional `includeRationale` parameter shows why results were ranked:
+
+```json
+{
+  "id": "doc-1",
+  "score": 0.89,
+  "rationale": "High semantic similarity to query. Recently updated. Owned by auth team."
+}
+```
+
+## Quick Start
+
+### Install SDK
+
+
+    ```bash
+    npm install @lightfast/sdk
+    ```
+  
+
+### Initialize Client
+
+
+    ```typescript
+    import { Lightfast } from '@lightfast/sdk'
+
+    const lf = new Lightfast({
+      apiKey: process.env.LIGHTFAST_API_KEY
+    })
+    ```
+  
+
+### Make Your First Call
+
+```typescript
+// Search for content
+const results = await lf.search({
+  query: 'how does authentication work?',
+  limit: 10
+})
+
+// Get full content
+const docs = await lf.contents({
+  ids: [results.data[0].id]
+})
+
+// Find similar
+const similar = await lf.similar({
+  id: results.data[0].id,
+  limit: 5
+})
+
+// Get answer with citations
+const answer = await lf.answer({
+  query: 'explain our authentication flow',
+  stream: true
+})
+```
 
 ## Rate Limiting
 
-| Tier | Searches/min | Writes/min | Quota |
-|------|--------------|------------|-------|
-| **Free** | 60 | 10 | 10K vectors |
-| **Pro** | 600 | 100 | 100K vectors |
-| **Team** | 3,000 | 500 | 500K vectors |
-| **Enterprise** | Custom | Custom | Unlimited |
+Rate limits vary by plan:
 
-Rate limit information is included in response headers:
+| Plan | Searches/min | Quota |
+|------|--------------|-------|
+| **Free** | 60 | 10K vectors |
+| **Pro** | 600 | 100K vectors |
+| **Team** | 3,000 | 500K vectors |
+| **Enterprise** | Custom | Unlimited |
+
+Rate limit headers are included in every response:
 
 ```http
 X-RateLimit-Limit: 600
 X-RateLimit-Remaining: 542
-X-RateLimit-Reset: 1642694400
+X-RateLimit-Reset: 1704110400
 ```
+
+See [Rate Limits Guide](/docs/guides/rate-limits) for best practices.
 
 ## Error Handling
 
@@ -132,97 +203,126 @@ All errors follow a consistent format:
 |------|--------|-------------|
 | `invalid_request` | 400 | Malformed request or invalid parameters |
 | `authentication_failed` | 401 | Invalid or missing API key |
-| `permission_denied` | 403 | Insufficient permissions for operation |
-| `resource_not_found` | 404 | Memory or collection does not exist |
-| `conflict` | 409 | Resource already exists |
+| `permission_denied` | 403 | Insufficient permissions |
+| `resource_not_found` | 404 | Content does not exist |
 | `rate_limit_exceeded` | 429 | Too many requests |
 | `internal_error` | 500 | Unexpected server error |
 
-## SDKs
+See [Error Reference](/api/errors) for complete list and handling strategies.
 
-### TypeScript/JavaScript
+## Response Format
 
-```bash
-npm install @lightfast/memory
+All successful responses follow this structure:
+
+```json
+{
+  "data": [...],           // Array or object with results
+  "meta": {
+    "total": 42,           // Total results available
+    "limit": 10,           // Results per page
+    "offset": 0            // Current offset
+  },
+  "requestId": "req_abc123"  // Unique request identifier
+}
 ```
 
-```typescript
-import { createMemory } from '@lightfast/memory'
+## Pagination
 
-const memory = createMemory({
-  apiKey: process.env.LIGHTFAST_API_KEY,
-  provider: 'chroma',
-  config: {
-    host: 'http://localhost:8000'
+Use `limit` and `offset` for pagination:
+
+```typescript
+// First page
+const page1 = await lf.search({
+  query: 'authentication',
+  limit: 20,
+  offset: 0
+})
+
+// Second page
+const page2 = await lf.search({
+  query: 'authentication',
+  limit: 20,
+  offset: 20
+})
+```
+
+Maximum `limit`: **100**
+
+## Filtering
+
+Filter results by metadata:
+
+```typescript
+const results = await lf.search({
+  query: 'authentication',
+  filters: {
+    type: ['pull_request', 'issue'],
+    source: 'github',
+    createdAfter: '2024-01-01',
+    owner: 'auth-team'
   }
 })
 ```
 
-### Python
+Available filters vary by your indexed content. See [Search](/api/search) for details.
 
-```bash
-pip install lightfast-memory
-```
+## Streaming Responses
 
-```python
-from lightfast_memory import Memory
-
-memory = Memory(
-    api_key=os.getenv("LIGHTFAST_API_KEY"),
-    provider="chroma",
-    config={"host": "http://localhost:8000"}
-)
-```
-
-### Go
-
-```bash
-go get github.com/lightfastai/lightfast-go
-```
-
-```go
-import "github.com/lightfastai/lightfast-go/memory"
-
-client := memory.NewClient(
-    memory.WithAPIKey(os.Getenv("LIGHTFAST_API_KEY")),
-    memory.WithProvider("chroma"),
-)
-```
-
-## Quick Start
-
-### 1. Get your API key
-
-Sign up at [lightfast.ai](https://lightfast.ai) and get your API key from the dashboard.
-
-### 2. Index your first memory
+The `/v1/answer` endpoint supports streaming for real-time responses:
 
 ```typescript
-await memory.addMemory({
-  collection: 'my-project',
-  id: 'doc-1',
-  content: 'Your content here...',
-  metadata: {
-    type: 'doc',
-    source: 'custom',
-    createdAt: new Date().toISOString()
+const answer = await lf.answer({
+  query: 'explain authentication flow',
+  stream: true
+})
+
+for await (const chunk of answer) {
+  process.stdout.write(chunk.content)
+}
+
+// Citations arrive in final chunk
+console.log('\nSources:', answer.citations)
+```
+
+See [Answer](/api/answer) for streaming details.
+
+## MCP Integration
+
+Lightfast provides MCP (Model Context Protocol) tools for agent integration:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_..."
+      }
+    }
   }
-})
+}
 ```
 
-### 3. Search your memories
+See [MCP Integration Guide](/docs/guides/mcp-integration) for setup.
 
-```typescript
-const results = await memory.searchMemory({
-  query: 'your search query',
-  collections: ['my-project'],
-  limit: 10
-})
-```
+## What Gets Indexed?
+
+Lightfast automatically indexes:
+- **GitHub**: PRs, issues, discussions, code, wikis
+- **Linear**: Issues, comments, projects
+- **Notion**: Pages, databases
+- **Slack**: Messages, threads (with permissions)
+- **Discord**: Messages, threads
+- **Custom**: Any content via API
+
+See [Integrations](/docs/guides/integrations) for setup.
 
 ## Next Steps
 
-- [Add Memory](/api/memory/addMemory) - Index new content
-- [Search Memory](/api/memory/searchMemories) - Semantic search
-- [Update Memory](/api/memory/updateMemory) - Update existing content
-- [Delete Memory](/api/memory/deleteMemory) - Remove from index
+- **[POST /v1/search](/api/search)** - Search by meaning
+- **[POST /v1/contents](/api/contents)** - Get full documents
+- **[POST /v1/similar](/api/similar)** - Find related content
+- **[POST /v1/answer](/api/answer)** - Get answers with citations
+- **[Quickstart](/docs/get-started/quickstart)** - 5-minute guide
+- **[Guides](/docs/guides)** - How-to guides for common tasks

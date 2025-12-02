@@ -1,0 +1,259 @@
+---
+title: Citations & Sources
+description: How Lightfast ensures every answer is verifiable with links to source documents
+---
+
+# Citations & Sources
+
+Every answer includes verifiable sources. This is a core principle of Lightfast—no summarization without evidence, no claims without citations. When you use the `/v1/answer` endpoint, responses always include references to the original documents where information was found.
+
+## Citation Structure
+
+Responses include three key components:
+
+### 1. Content — The Answer
+
+The synthesized answer to your query, written in clear language:
+
+```
+"Authentication uses OAuth 2.0 with JWT tokens. The system supports refresh tokens
+with a 7-day expiry and access tokens valid for 1 hour. The implementation follows
+RFC 6749 and includes PKCE for additional security."
+```
+
+### 2. Citations — Source Documents
+
+Source documents with metadata and snippets:
+
+```json
+{
+  "citations": [
+    {
+      "id": "pr-123",
+      "title": "Implement OAuth 2.0 authentication",
+      "url": "https://github.com/org/repo/pull/123",
+      "snippet": "Added OAuth 2.0 flow with refresh tokens (7-day expiry) and access tokens (1-hour expiry). Implementation follows RFC 6749 with PKCE extension.",
+      "relevance_score": 0.94,
+      "timestamp": "2024-03-15T10:30:00Z"
+    },
+    {
+      "id": "doc-auth",
+      "title": "Authentication Guide",
+      "url": "https://github.com/org/repo/blob/main/docs/auth.md",
+      "snippet": "Our OAuth implementation includes PKCE (Proof Key for Code Exchange) to prevent authorization code interception attacks.",
+      "relevance_score": 0.87,
+      "timestamp": "2024-04-02T14:22:00Z"
+    }
+  ]
+}
+```
+
+### 3. Rationale — Why These Sources
+
+Explanation of why these sources were selected:
+
+```
+"These sources were chosen because PR #123 introduced the OAuth implementation with
+specific token expiry details, and the Authentication Guide documents the security
+rationale for including PKCE."
+```
+
+## Verification Workflow
+
+Citations enable you to verify every claim:
+
+1. **Review the answer**: Read the synthesized response
+2. **Check citations**: Examine the source snippets and relevance scores
+3. **Verify claims**: Click through to original documents to see full context
+4. **Assess recency**: Check timestamps to ensure information is current
+5. **Trace decisions**: Follow links to related PRs, issues, or discussions
+
+This transparency builds trust and allows you to dive deeper when needed.
+
+<Alert>
+**Citations respect your permissions.** If a source document becomes inaccessible (repo made private, access revoked), Lightfast automatically excludes it from results. You only see citations for content you currently have permission to view.
+</Alert>
+
+## Citation Metadata
+
+Each citation includes rich metadata to help you assess relevance and trustworthiness:
+
+### Relevance Score
+
+A value from 0.0 to 1.0 indicating how well the source matches your query:
+
+- **0.9 - 1.0**: Highly relevant, directly answers the query
+- **0.8 - 0.9**: Very relevant, contains substantial information
+- **0.7 - 0.8**: Relevant, provides supporting context
+- **< 0.7**: Marginally relevant, included for completeness
+
+Higher scores appear first in the citation list.
+
+### Timestamp
+
+When the source was created or last modified:
+
+- Shows recency of information
+- Helps identify if content might be outdated
+- Useful for understanding evolution of decisions
+
+### Snippet
+
+Key excerpt from the source that contains relevant information:
+
+- Pre-highlighted text saves you time
+- Shows exactly where the answer came from
+- Context for why the source was selected
+
+### Source Type
+
+What kind of document the citation references:
+
+- **PR**: Pull request with code changes and discussion
+- **Issue**: Bug report, feature request, or tracking item
+- **Doc**: Documentation file (README, guide, RFC)
+- **Discussion**: GitHub Discussion thread
+- **Commit**: Individual code commit
+
+## Multi-Source Answers
+
+Complex questions often require multiple sources:
+
+**Query:** "Why did we migrate from MongoDB to PostgreSQL and what were the performance impacts?"
+
+**Citation strategy:**
+
+1. **Decision RFC** (relevance: 0.95) — Why the migration happened
+2. **Benchmark PR** (relevance: 0.92) — Performance comparison data
+3. **Migration guide** (relevance: 0.89) — Implementation details
+4. **Post-migration analysis** (relevance: 0.87) — Actual performance impacts
+5. **Related issues** (relevance: 0.78) — Problems solved and remaining challenges
+
+Each citation contributes a different aspect of the complete answer.
+
+## Citation Quality
+
+Lightfast ensures citation quality through:
+
+### Relevance Filtering
+
+Only sources above a minimum relevance threshold (typically 0.65) are included. This prevents tangentially related content from cluttering citations.
+
+### Diversity
+
+Citations represent diverse perspectives when possible:
+- Multiple source types (PR + docs + discussions)
+- Different time periods (historical context + recent updates)
+- Various contributors (not just one person's view)
+
+### Faithfulness
+
+The answer content must be grounded in the citations:
+- No hallucinated claims
+- No synthesis beyond what sources support
+- Clear attribution when paraphrasing
+
+### Recency Bias
+
+More recent sources are preferred when multiple sources cover the same information:
+- Latest documentation overrides old
+- Recent PRs show current implementation
+- Updated discussions reflect evolved thinking
+
+## Using Citations Effectively
+
+### When to Trust Citations
+
+**High-confidence scenarios:**
+- Multiple citations agree (>3 sources, relevance >0.85)
+- Recent timestamps (within last 6 months)
+- Direct quotes or code snippets
+- Authoritative sources (CODEOWNERS, official docs)
+
+**Verify when:**
+- Single citation with moderate relevance (0.65-0.80)
+- Old timestamps (>2 years for fast-moving code)
+- Conflicting information between citations
+- Critical decisions or compliance questions
+
+### Following Citation Chains
+
+Citations often reference other documents:
+
+1. Start with the primary citation from your answer
+2. Follow links in that document to design docs or RFCs
+3. Trace PRs back to issues they resolve
+4. Read discussion threads for full context
+
+This deep dive reveals the complete decision-making process.
+
+## API Response Format
+
+When using `/v1/answer`, citations are returned in structured format:
+
+```json
+{
+  "answer": {
+    "content": "The synthesized answer text...",
+    "citations": [
+      {
+        "id": "unique-id",
+        "title": "Document title",
+        "url": "https://github.com/...",
+        "snippet": "Relevant excerpt...",
+        "relevance_score": 0.92,
+        "timestamp": "2024-03-15T10:30:00Z",
+        "type": "pr"
+      }
+    ],
+    "rationale": "Explanation of source selection..."
+  }
+}
+```
+
+All fields are documented in the <NextLink href="/api/answer">API reference</NextLink>.
+
+## Examples
+
+### Example 1: Technical Question
+
+**Query:** "How do we handle rate limiting?"
+
+**Citations returned:**
+1. `middleware/rate-limit.ts` — Implementation code
+2. PR #456 "Add rate limiting middleware" — Design discussion
+3. `docs/api.md` — Public documentation
+4. Issue #123 "Rate limit requests" — Original requirements
+
+**Rationale:** "These sources show the implementation, design decisions, public interface, and original motivation for rate limiting."
+
+### Example 2: Decision Question
+
+**Query:** "Why did we choose Redis over Memcached?"
+
+**Citations returned:**
+1. RFC #78 "Caching Strategy" — Decision rationale
+2. PR #234 "Implement Redis caching" — Implementation
+3. Discussion thread — Team debate and alternatives
+4. Performance benchmark — Comparison data
+
+**Rationale:** "RFC #78 documents the decision with Redis vs Memcached tradeoffs. PR #234 shows implementation. Discussion captures team alignment. Benchmark provides data that informed the choice."
+
+### Example 3: Ownership Question
+
+**Query:** "Who owns the payment service?"
+
+**Citations returned:**
+1. `services/payment/CODEOWNERS` — Explicit ownership
+2. Commit history analysis — Alice: 65% of commits
+3. PR review patterns — Alice: primary reviewer
+4. Recent activity — Last 10 PRs authored or reviewed by Alice
+
+**Rationale:** "Alice is listed in CODEOWNERS, authored most commits in the last 6 months, and serves as primary reviewer for payment-related changes."
+
+## Next Steps
+
+- **<NextLink href="/docs/features/search">Search & Retrieval</NextLink>** — How sources are found
+- **<NextLink href="/docs/features/quality">Quality & Evaluation</NextLink>** — How citation quality is measured
+- **<NextLink href="/api/answer">POST /v1/answer</NextLink>** — Generate answers with citations
+- **<NextLink href="/docs/examples">Examples</NextLink>** — See citation patterns in practice

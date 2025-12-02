@@ -1,0 +1,469 @@
+---
+title: Claude Code Development Bot
+description: Build a development assistant using Lightfast MCP servers with Claude Code
+---
+
+# Claude Code Development Bot
+
+Create an AI development assistant that understands your codebase using Lightfast MCP servers integrated with Claude Code.
+
+## Overview
+
+This guide shows you how to build a development assistant that:
+
+- Searches your indexed codebase semantically
+- Answers questions about code architecture
+- Finds related code and documentation
+- Provides context-aware suggestions
+
+## Prerequisites
+
+- Lightfast API key (`lf_sk_live_...`)
+- Claude Code or Claude Desktop installed
+- Indexed codebase (via Lightfast ingestion)
+- Node.js 18+
+
+## Architecture
+
+```
+Claude Code
+├── MCP Server: Lightfast tools
+├── Indexed Knowledge: Code, PRs, Issues, Docs
+└── Context: Retrieved from Lightfast
+```
+
+## Setup
+
+### Install Lightfast MCP Server
+
+```bash
+npm install -g @lightfast/mcp-server
+```
+
+Or use with `npx` (recommended):
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"]
+    }
+  }
+}
+```
+
+### Configure Claude Code
+
+Add to `~/.config/claude-code/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "lightfast-codebase": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"code\",\"pull_request\",\"doc\"]}"
+      }
+    }
+  }
+}
+```
+
+### Configure Claude Desktop
+
+For Claude Desktop, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "lightfast-codebase": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_WORKSPACE_ID": "ws_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"code\",\"pull_request\",\"issue\",\"doc\"]}"
+      }
+    }
+  }
+}
+```
+
+## Indexing Your Codebase
+
+### GitHub Integration
+
+Automatically index PRs, issues, and code:
+
+```typescript
+import { LightfastClient } from '@lightfast/sdk'
+
+const lightfast = new LightfastClient({
+  apiKey: process.env.LIGHTFAST_API_KEY!
+})
+
+// Index a pull request
+await lightfast.index({
+  id: `pr-${pr.number}`,
+  title: pr.title,
+  body: pr.body + '\n\n' + pr.diff,
+  metadata: {
+    type: 'pull_request',
+    repo: 'org/repo',
+    number: pr.number,
+    author: pr.user.login,
+    state: pr.state,
+    url: pr.html_url
+  }
+})
+
+// Index an issue
+await lightfast.index({
+  id: `issue-${issue.number}`,
+  title: issue.title,
+  body: issue.body,
+  metadata: {
+    type: 'issue',
+    repo: 'org/repo',
+    number: issue.number,
+    labels: issue.labels.map(l => l.name),
+    state: issue.state,
+    url: issue.html_url
+  }
+})
+```
+
+### Code Documentation
+
+Index important code files:
+
+```typescript
+import fs from 'fs'
+import path from 'path'
+
+async function indexCodeFile(filePath: string) {
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const relativePath = path.relative(process.cwd(), filePath)
+
+  await lightfast.index({
+    id: `code-${relativePath}`,
+    title: path.basename(filePath),
+    body: content,
+    metadata: {
+      type: 'code',
+      path: relativePath,
+      language: getLanguage(filePath),
+      lastModified: fs.statSync(filePath).mtime.toISOString()
+    }
+  })
+}
+```
+
+### Architecture Decisions (ADRs)
+
+Index architectural decision records:
+
+```typescript
+async function indexADR(adrPath: string) {
+  const content = fs.readFileSync(adrPath, 'utf-8')
+  const { data, content: body } = matter(content)
+
+  await lightfast.index({
+    id: `adr-${path.basename(adrPath, '.md')}`,
+    title: data.title,
+    body,
+    metadata: {
+      type: 'doc',
+      category: 'architecture',
+      status: data.status,
+      date: data.date,
+      deciders: data.deciders
+    }
+  })
+}
+```
+
+## Usage Examples
+
+### Ask About Architecture
+
+```
+You: "How does authentication work in this codebase?"
+
+Claude: [Uses lightfast_search to find auth-related code and docs]
+        [Uses lightfast_contents to get full implementation]
+        [Uses lightfast_similar to find related discussions]
+
+        "Authentication is implemented using..."
+
+        Sources:
+        - src/auth/middleware.ts
+        - PR #234: Implement OAuth 2.0
+        - docs/architecture/auth.md
+```
+
+### Find Implementation Examples
+
+```
+You: "Show me examples of error handling in API routes"
+
+Claude: [Uses lightfast_search with query="error handling api routes"]
+
+        "Here are examples from the codebase:
+
+        1. src/app/api/users/route.ts:
+           - Uses Result pattern with neverthrow
+           - Returns typed error responses
+
+        2. src/app/api/auth/route.ts:
+           - Implements try-catch with error reporting
+           - Maps errors to HTTP status codes
+
+        ..."
+```
+
+### Understand Dependencies
+
+```
+You: "What code depends on the User model?"
+
+Claude: [Uses lightfast_similar with id="code-src/models/user.ts"]
+
+        "The User model is used by:
+
+        - src/app/api/users/route.ts (CRUD operations)
+        - src/lib/auth.ts (Authentication)
+        - src/hooks/useUser.ts (Client-side queries)
+        - PR #456: Add user preferences
+
+        Would you like me to explain any of these?"
+```
+
+### Review Recent Changes
+
+```
+You: "What changed in the last sprint?"
+
+Claude: [Uses lightfast_search with filters for recent PRs]
+
+        "Recent changes include:
+
+        1. PR #789: Implement rate limiting
+           - Added Arcjet integration
+           - Updated API routes
+
+        2. PR #790: Improve error messages
+           - Better user-facing errors
+           - Added error tracking
+
+        3. PR #791: Optimize database queries
+           - Added indexes
+           - Reduced N+1 queries
+        ..."
+```
+
+## Advanced Patterns
+
+### Multi-Source Context
+
+Combine multiple knowledge sources:
+
+```typescript
+// Configure multiple MCP servers
+{
+  "mcpServers": {
+    "lightfast-code": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"code\"]}"
+      }
+    },
+    "lightfast-docs": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"doc\",\"guide\"]}"
+      }
+    },
+    "lightfast-discussions": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"pull_request\",\"issue\"]}"
+      }
+    }
+  }
+}
+```
+
+### Context-Aware Prompts
+
+Create custom prompts with Lightfast context:
+
+```
+System: You are a development assistant with access to the codebase via Lightfast.
+
+When answering questions:
+1. Search Lightfast for relevant code and documentation
+2. Retrieve full content for detailed analysis
+3. Find related context using similarity search
+4. Cite all sources with file paths or PR numbers
+
+Always verify information against the actual codebase before responding.
+```
+
+### Automated Code Review
+
+Use MCP tools for code review assistance:
+
+```
+You: "Review PR #123 for potential issues"
+
+Claude: [Uses lightfast_contents to get PR details]
+        [Uses lightfast_similar to find similar past issues]
+        [Uses lightfast_search to check coding standards]
+
+        "Here are my observations:
+
+        Security:
+        - ✅ Input validation using Zod
+        - ⚠️  Missing rate limiting on new endpoint
+          (See PR #456 for reference implementation)
+
+        Performance:
+        - ⚠️  N+1 query in getUserPosts()
+          (See docs/performance.md for best practices)
+
+        Testing:
+        - ❌ Missing test coverage for error cases
+          (See tests/api/users.test.ts for examples)
+        ..."
+```
+
+## Best Practices
+
+### Indexing Strategy
+
+- **Selective indexing**: Only index important files
+- **Regular updates**: Re-index on PR merge
+- **Versioning**: Tag content with version/branch
+- **Clean metadata**: Include repo, path, type, author
+
+### Query Optimization
+
+- **Be specific**: "authentication middleware" > "auth"
+- **Use filters**: Narrow by type (code, doc, PR)
+- **Combine tools**: Search → Contents → Similar
+- **Verify sources**: Always check cited code
+
+### Context Management
+
+- **Scope queries**: Limit to relevant repos/services
+- **Time-box searches**: Focus on recent changes when relevant
+- **Link discussions**: Connect code to PRs and issues
+- **Track decisions**: Index ADRs and RFC documents
+
+## Integration Workflows
+
+### Onboarding New Developers
+
+```
+Task: Help new developer understand payment flow
+
+1. Claude searches: "payment processing flow"
+2. Retrieves:
+   - docs/architecture/payments.md
+   - src/services/payment.ts
+   - PR #234: Stripe integration
+3. Finds related:
+   - Issue #456: Payment webhook handling
+   - PR #567: Add payment retries
+4. Synthesizes onboarding guide with links
+```
+
+### Bug Investigation
+
+```
+Task: Investigate authentication errors
+
+1. Claude searches: "authentication error 401"
+2. Retrieves recent PRs about auth
+3. Finds similar past issues
+4. Identifies potential causes with references
+5. Suggests fixes based on past solutions
+```
+
+### Feature Planning
+
+```
+Task: Plan new feature implementation
+
+1. Claude searches for similar features
+2. Retrieves implementation examples
+3. Finds related architecture decisions
+4. Suggests approach with code references
+5. Identifies dependencies and potential issues
+```
+
+## Troubleshooting
+
+### MCP Server Not Connecting
+
+Check Claude Code logs:
+
+```bash
+tail -f ~/Library/Logs/Claude/mcp*.log
+```
+
+Test MCP server directly:
+
+```bash
+npx @lightfast/mcp-server --help
+```
+
+### Search Results Not Relevant
+
+Improve indexing:
+
+```typescript
+// Add more context to indexed content
+body: `${file.content}\n\nFile: ${file.path}\nAuthor: ${file.author}\nPurpose: ${file.purpose}`
+
+// Better metadata
+metadata: {
+  type: 'code',
+  language: 'typescript',
+  category: 'api',
+  tags: ['authentication', 'middleware'],
+  importance: 'high'
+}
+```
+
+### Missing Context
+
+Ensure all knowledge is indexed:
+
+```bash
+# Index all docs
+pnpm index:docs
+
+# Index code
+pnpm index:code
+
+# Index PRs and issues (via webhook or script)
+pnpm index:github
+```
+
+## Next Steps
+
+- **[MCP Integration](/docs/guides/mcp-integration)** - Deep dive into MCP setup
+- **[Search Strategies](/docs/guides/search-strategies)** - Optimize search queries
+- **[API Reference](/api/overview)** - Lightfast API documentation
+- **[Claude Code Docs](https://docs.anthropic.com/claude/docs/claude-code)** - Claude Code features

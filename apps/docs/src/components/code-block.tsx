@@ -11,7 +11,12 @@ interface CodeBlockProps {
   showLineNumbers?: boolean;
 }
 
-export function CodeBlock({ children, language = "typescript", className, showLineNumbers = false }: CodeBlockProps) {
+export function CodeBlock({
+  children,
+  language = "typescript",
+  className,
+  showLineNumbers = false,
+}: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async () => {
@@ -30,13 +35,18 @@ export function CodeBlock({ children, language = "typescript", className, showLi
     dockerfile: "text-pink-400",
   };
 
-  const lines = children.split('\n');
+  const lines = children.split("\n");
 
   return (
     <div className={cn("relative group my-4", className)}>
       <div className="absolute right-2 top-2 z-10 flex items-center gap-2">
         {language && (
-          <span className={cn("text-xs font-medium opacity-60", languageColors[language.toLowerCase()] || "text-muted-foreground")}>
+          <span
+            className={cn(
+              "text-xs font-medium opacity-60",
+              languageColors[language.toLowerCase()] || "text-muted-foreground",
+            )}
+          >
             {language}
           </span>
         )}
@@ -63,9 +73,7 @@ export function CodeBlock({ children, language = "typescript", className, showLi
                   </span>
                 ))}
               </div>
-              <div className="flex-1">
-                {children}
-              </div>
+              <div className="flex-1">{children}</div>
             </div>
           ) : (
             children
@@ -75,3 +83,4 @@ export function CodeBlock({ children, language = "typescript", className, showLi
     </div>
   );
 }
+

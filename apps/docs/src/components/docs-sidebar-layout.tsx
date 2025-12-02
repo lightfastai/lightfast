@@ -39,10 +39,10 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
         {/* Main Content Area */}
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Header with actions */}
-          <header className="shrink-0 py-4 bg-background">
+          <header className="shrink-0 bg-background">
             <div className="page-gutter flex items-center justify-end min-h-[3rem]">
               {/* Right side - Navigation and Sign In Button */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-8 py-4">
                 {/* Navigation */}
                 <DocsHeaderNav />
 

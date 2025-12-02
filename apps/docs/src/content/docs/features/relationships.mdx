@@ -1,0 +1,194 @@
+---
+title: Graph Relationships
+description: How Lightfast connects people, code, and decisions through entity and content relationships
+---
+
+# Graph Relationships
+
+Beyond text search, Lightfast maintains explicit relationships between people, code, and decisions. These connections enable questions like "Who owns the code that depends on this library?" or "What discussions led to this implementation?"
+
+## Entity Relationships
+
+Lightfast tracks how people connect to code and content:
+
+- **Ownership**: "Alice owns the auth service" — derived from CODEOWNERS files, commit history, and PR approvals
+- **Contribution**: "Bob authored PR #123 and fixed the payment bug" — direct authorship and impact
+- **Review**: "Carol reviewed all security-related changes last quarter" — subject matter expertise signals
+- **Collaboration**: "Dan and Emma frequently work together on the API layer" — co-authorship patterns
+
+These relationships help identify the right person to ask for context or approve changes.
+
+### How Entity Relationships Are Built
+
+**Ownership signals:**
+- CODEOWNERS file declarations (explicit)
+- Commit frequency and recency in specific directories
+- PR approval patterns for certain types of changes
+- Merge authority and final review responsibility
+
+**Contribution signals:**
+- PR authorship and commit history
+- Issue creation and resolution
+- Discussion participation and comment quality
+- Code changes by size and impact
+
+**Expertise signals:**
+- Review activity in specific domains
+- Consistent involvement in related topics
+- Successful change implementations
+- Knowledge demonstrated in discussions
+
+**Collaboration patterns:**
+- Co-authorship on PRs
+- Review relationships (who reviews whom)
+- Discussion participation overlap
+- Shared project and repo involvement
+
+### Use Cases
+
+**Finding owners:**
+- "Who owns the payment service?" → Alice (70% of commits, listed in CODEOWNERS)
+- "Who can approve infrastructure changes?" → Bob and Carol (frequent reviewers, merge authority)
+
+**Finding expertise:**
+- "Who knows about OAuth?" → Alice (implemented it, reviewed related PRs, active in discussions)
+- "Who should review this security change?" → Carol (security-focused review history)
+
+**Finding collaborators:**
+- "Who works with Alice on the API?" → Dan and Emma (frequent co-authors, shared PR activity)
+- "Who else is involved in the redesign project?" → Full team graph with roles
+
+## Content Relationships
+
+Documents, PRs, issues, and discussions are interconnected:
+
+- **Dependencies**: "Feature X depends on library Y" — code imports, package dependencies, architectural constraints
+- **References**: "Issue #45 references PR #67" — explicit mentions, linked discussions, related work
+- **Supersedes**: "New RFC v2 replaces old design doc v1" — versioning, deprecation, evolution of decisions
+- **Implements**: "PR #89 implements RFC #12" — design-to-code traceability
+
+Content relationships surface context automatically. When viewing a PR, Lightfast can show the RFC that proposed it, the issues it resolves, and the follow-up discussions.
+
+### Relationship Types
+
+**Code dependencies:**
+- Import statements and package dependencies
+- Service-to-service API calls
+- Database schema references
+- Shared library usage
+
+**Document references:**
+- Explicit links in markdown (`[See RFC #12](#12)`)
+- Issue/PR references in commits (`Fixes #45`)
+- Discussion thread replies and mentions
+- Cross-document citations
+
+**Version relationships:**
+- Document supersession (RFC v2 replaces v1)
+- Deprecation notices and migration guides
+- API versioning and compatibility
+- Code refactors and rewrites
+
+**Implementation links:**
+- RFC → implementing PRs
+- Issue → fixing commits
+- Design doc → production code
+- Architecture decision → service deployment
+
+### Use Cases
+
+**Tracing decisions:**
+- "What RFC led to this implementation?" → Find design docs that proposed the feature
+- "Why was this built this way?" → Trace back through issue discussions to requirements
+
+**Understanding dependencies:**
+- "What depends on this library?" → Find all services and repos that import it
+- "What will break if I change this API?" → Identify dependent services and integration points
+
+**Following evolution:**
+- "How has our auth strategy changed?" → See progression of RFCs and implementations
+- "What replaced the old payment system?" → Find superseding designs and migration docs
+
+## Short-Hop Reasoning
+
+Lightfast focuses on **1-2 hop graph traversals** to keep reasoning explainable and bounded:
+
+**1-hop examples:**
+- "Who owns this service?" → Direct ownership from CODEOWNERS
+- "What depends on this library?" → Direct import relationships
+
+**2-hop examples:**
+- "Who owns the code that depends on this library?" → Library → dependents → owners
+- "What decisions led to this implementation?" → PR → linked RFC → discussion thread
+
+By limiting to short hops, Lightfast ensures answers remain grounded in evidence rather than speculative chains of inference.
+
+<Alert>
+**Graph influence is tracked per query.** When a result is boosted due to graph relationships, Lightfast includes this in the rationale. You can see when results surface because of ownership, dependencies, or related discussions.
+</Alert>
+
+### Why Short Hops?
+
+**Explainability:**
+- Each hop is a clear, verifiable relationship
+- Users can trace the reasoning path
+- No black-box graph algorithms
+
+**Performance:**
+- Short hops execute quickly
+- No exponential explosion of candidates
+- Predictable query latency
+
+**Accuracy:**
+- Evidence degrades with distance
+- Longer chains introduce speculation
+- Direct relationships are more reliable
+
+**Trust:**
+- Results are grounded in facts
+- Citations show the relationship path
+- Users can verify connections
+
+## Relationship Examples
+
+### Example 1: Ownership Query
+
+**Query:** "Who owns the authentication service?"
+
+**Graph traversal:**
+1. Find `services/auth/` directory
+2. Check CODEOWNERS → Alice (explicit)
+3. Analyze commit history → Alice (60% of commits last 6 months)
+4. Review PR approvals → Alice (approved 80% of auth-related PRs)
+
+**Answer:** "Alice owns the authentication service (CODEOWNERS entry, 60% of recent commits, primary reviewer for auth changes)"
+
+### Example 2: Dependency Query
+
+**Query:** "What will break if we change the User API?"
+
+**Graph traversal:**
+1. Find User API definition
+2. Identify direct importers → `auth-service`, `profile-service`, `billing-service`
+3. Map to repository owners → Alice (auth), Bob (profile), Carol (billing)
+
+**Answer:** "Three services depend on the User API: auth-service (Alice), profile-service (Bob), billing-service (Carol). [Links to import locations]"
+
+### Example 3: Decision Tracing
+
+**Query:** "Why did we choose PostgreSQL?"
+
+**Graph traversal:**
+1. Find database implementation → `db/postgres/`
+2. Trace to implementing PRs → PR #234
+3. Follow PR references → RFC #42 "Database Migration"
+4. Surface RFC discussion → Decision rationale with Alice, Bob, Carol
+
+**Answer:** "PostgreSQL was chosen per RFC #42 for ACID guarantees and better JSON support. Discussion involved Alice, Bob, and Carol. Implemented in PR #234. [Links to RFC and PR]"
+
+## Next Steps
+
+- **<NextLink href="/docs/features/search">Search & Retrieval</NextLink>** — How search uses relationship signals
+- **<NextLink href="/docs/features/memory">Memory Organization</NextLink>** — How profiles build entity understanding
+- **<NextLink href="/docs/features/citations">Citations & Sources</NextLink>** — How relationship paths appear in citations
+- **<NextLink href="/api/similar">POST /v1/similar</NextLink>** — Find related content via API

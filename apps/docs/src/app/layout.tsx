@@ -10,9 +10,9 @@ import { createMetadata } from "@vendor/seo/metadata";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html className={fonts} lang="en" suppressHydrationWarning>
       <head />
-      <body className={cn("bg-background min-h-screen dark", fonts)}>
+      <body className={cn("bg-background min-h-screen dark")}>
         <RootProvider
           search={{
             enabled: false, // Disable fumadocs search

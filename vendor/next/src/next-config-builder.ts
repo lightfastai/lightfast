@@ -8,18 +8,15 @@ import { createSecureHeaders } from "next-secure-headers";
 import { env } from "../env";
 
 export const config: NextConfig = withVercelToolbar()({
-  serverExternalPackages: [
-    "import-in-the-middle",
-    "require-in-the-middle",
-  ],
+  serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
   images: {
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/webp"],
     remotePatterns: [
-      // {
-      //   protocol: "https",
-      //   hostname: "fal.media",
-      // },
+      {
+        protocol: "https",
+        hostname: "imagedelivery.net",
+      },
     ],
   },
 

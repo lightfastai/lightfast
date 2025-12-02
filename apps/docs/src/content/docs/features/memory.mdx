@@ -1,0 +1,158 @@
+---
+title: Memory Organization
+description: How Lightfast structures knowledge into chunks, observations, summaries, and profiles
+---
+
+# Memory Organization
+
+Lightfast structures your team's knowledge into four complementary layers, each optimized for different types of retrieval and reasoning. This organization enables both precise lookups and broad exploration.
+
+## Chunks: Durable Document Slices
+
+When you index a long document—like a comprehensive API guide or lengthy RFC—Lightfast automatically breaks it into semantic chunks. Each chunk:
+
+- **Represents a coherent section**: Natural breaks at headings, topic shifts, or logical boundaries
+- **Maintains context**: Includes references to the source document, section hierarchy, and surrounding chunks
+- **Enables precision**: Allows specific paragraphs to rank highly without forcing you to read entire documents
+
+**Example:** A 5000-word architecture document becomes 12 chunks. When you search "database migration strategy," only the relevant 2 chunks surface—not the entire document. Each result links back to the full context.
+
+### How Chunking Works
+
+Lightfast uses semantic analysis to determine chunk boundaries:
+
+1. **Respect document structure**: Headings, code blocks, and section breaks guide chunking
+2. **Maintain coherence**: Each chunk represents a complete thought or concept
+3. **Preserve context**: Chunks include metadata about their position in the document hierarchy
+4. **Link relationships**: Chunks reference previous and next sections for navigation
+
+**Chunking benefits:**
+- Find specific sections of long documents without reading everything
+- Get precise answers with minimal noise
+- Navigate to full document context when needed
+- Search remains fast even with thousands of pages
+
+## Observations: Atomic Moments
+
+Observations capture discrete events that provide critical context for decisions and changes:
+
+- **Decisions**: "We chose PostgreSQL over MongoDB for ACID guarantees" (from RFC discussion)
+- **Incidents**: "API latency spike resolved by adding Redis cache" (from post-mortem)
+- **Highlights**: "New authentication flow approved by security team" (from PR review)
+
+Each observation is structured with:
+- **Content**: What happened or was decided
+- **Context**: Why it matters and what problem it solved
+- **People**: Contributors, reviewers, and stakeholders involved
+- **Timestamp**: When the event occurred
+- **Relationships**: Links to related PRs, issues, or documents
+
+Observations make it easy to answer questions like "Why did we make this choice?" or "When did we decide to deprecate this API?"
+
+### Creating Observations
+
+Observations can be:
+
+1. **Automatically extracted**: Lightfast identifies key moments from PR discussions, issue resolutions, and meeting notes
+2. **Manually captured**: Teams can tag important decisions or highlights
+3. **Inferred from patterns**: System changes, deployment events, and incident timelines generate observations
+
+**Use cases:**
+- Trace decision rationale months or years later
+- Understand what problems were solved and why
+- Find stakeholders who were involved in key decisions
+- Build institutional knowledge that survives team changes
+
+## Summaries: Clustered Rollups
+
+Summaries aggregate related content to provide high-level overviews without losing detail:
+
+**Organization dimensions:**
+- **By entity**: Per-person activity summaries, per-repo changelogs, per-project status reports
+- **By topic**: Grouped by semantic similarity—all authentication-related work, all performance optimizations
+- **By time**: Daily digests of changes, weekly progress reports, monthly retrospectives
+
+Summaries help you quickly understand "What happened with the payment service this month?" or "What has Alice been working on?" without reading dozens of individual PRs and issues.
+
+<Alert>
+**Summaries link to source material.** Every summary includes citations to the underlying chunks, observations, and original documents. You can verify claims and dive deeper when needed.
+</Alert>
+
+### Summary Types
+
+**Activity summaries:**
+- Who worked on what and when
+- Major contributions and impacts
+- Collaboration patterns
+
+**Topical summaries:**
+- All work related to a specific theme (e.g., authentication, performance)
+- Cross-repo implementations of similar patterns
+- Evolution of design decisions over time
+
+**Temporal summaries:**
+- What changed in a given time period
+- Sprint or milestone progress reports
+- Quarterly retrospectives and trends
+
+**Use cases:**
+- Onboard new team members quickly
+- Prepare for planning meetings
+- Write status updates and reports
+- Identify patterns and trends
+
+## Profiles: Per-Entity Context
+
+Profiles are learned representations of people, repositories, and projects based on their activity and contributions:
+
+**Profile components:**
+- **Expertise areas**: Topics and technologies someone frequently works with
+- **Code ownership**: Parts of the codebase they maintain or contribute to heavily
+- **Interaction patterns**: What discussions they participate in, who they collaborate with
+- **Contribution history**: Timeline of their involvement across repos and projects
+
+Profiles enable personalized search results and help answer "Who should I ask about X?" queries. When you search, Lightfast can boost results related to your areas of expertise or surface content from people you frequently collaborate with.
+
+### How Profiles Work
+
+Profiles are built from:
+
+1. **Contribution data**: Commits, PRs, reviews, and comments
+2. **Semantic analysis**: Topics and technologies in their work
+3. **Collaboration networks**: Who they work with and on what
+4. **Temporal patterns**: Activity levels and focus areas over time
+
+**Profile applications:**
+- **Personalized search**: Results weighted by your expertise and interests
+- **Expert finding**: Identify the right person to ask about a topic
+- **Team insights**: Understand collaboration patterns and knowledge distribution
+- **Succession planning**: Identify backup owners for critical areas
+
+**Example queries enabled by profiles:**
+- "Who knows about the payment service?" → Find top contributors and reviewers
+- "What does Alice specialize in?" → Show her expertise areas and recent work
+- "Who should review this auth change?" → Identify security-focused reviewers
+
+## How Memory Layers Work Together
+
+The four memory types complement each other:
+
+1. **Chunks** provide granular, precise retrieval of specific content
+2. **Observations** capture atomic moments and decision rationale
+3. **Summaries** offer aggregated views across time, topics, and entities
+4. **Profiles** enable personalization and expert finding
+
+**Example workflow:**
+
+- **Search**: "Why did we migrate to PostgreSQL?"
+- **Chunks**: Find specific paragraphs from the RFC discussing ACID requirements
+- **Observations**: Surface the decision moment with stakeholders and reasoning
+- **Summaries**: Show all database-related work that quarter
+- **Profiles**: Identify who led the migration and has ongoing expertise
+
+## Next Steps
+
+- **<NextLink href="/docs/features/search">Search & Retrieval</NextLink>** — How Lightfast finds content
+- **<NextLink href="/docs/features/relationships">Graph Relationships</NextLink>** — Connections between content
+- **<NextLink href="/docs/get-started/architecture">Architecture</NextLink>** — Technical implementation details
+- **<NextLink href="/api/contents">POST /v1/contents</NextLink>** — Retrieve full content via API

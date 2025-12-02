@@ -1,0 +1,387 @@
+---
+title: POST /v1/search
+description: Search and rank results by meaning with optional rationale and highlights
+---
+
+# POST /v1/search
+
+Search across all your indexed content using semantic understanding. Returns ranked results with optional explanations and highlights.
+
+## Endpoint
+
+```
+POST https://api.lightfast.ai/v1/search
+```
+
+## Authentication
+
+```bash
+Authorization: Bearer lf_sk_live_...
+```
+
+## Request Body
+
+```typescript
+{
+  query: string              // Search query
+  limit?: number             // Results to return (default: 10, max: 100)
+  offset?: number            // Pagination offset (default: 0)
+  includeRationale?: boolean // Include ranking explanation (default: false)
+  includeHighlights?: boolean // Include matched text snippets (default: true)
+  filters?: {
+    type?: string[]          // Filter by content type
+    source?: string          // Filter by source (github, linear, etc.)
+    createdAfter?: string    // ISO 8601 date
+    createdBefore?: string   // ISO 8601 date
+    owner?: string           // Filter by owner/author
+    [key: string]: any       // Custom metadata filters
+  }
+}
+```
+
+## Response
+
+```typescript
+{
+  data: Array<{
+    id: string               // Unique content identifier
+    title: string            // Content title
+    snippet: string          // Brief content preview
+    score: number            // Relevance score (0-1)
+    url?: string             // Link to original content
+    type: string             // Content type (pr, issue, doc, etc.)
+    source: string           // Source system (github, linear, etc.)
+    createdAt: string        // ISO 8601 timestamp
+    updatedAt: string        // ISO 8601 timestamp
+    owner?: string           // Content owner/author
+    metadata: Record<string, any>  // Additional metadata
+    highlights?: string[]    // Matched text snippets
+    rationale?: string       // Why this result was ranked here
+  }>
+  meta: {
+    total: number            // Total matching results
+    limit: number            // Results per page
+    offset: number           // Current offset
+    took: number             // Query time in ms
+  }
+  requestId: string          // Unique request identifier
+}
+```
+
+## Example Request
+
+
+    ```bash
+    curl -X POST https://api.lightfast.ai/v1/search \
+      -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "query": "how does authentication work?",
+        "limit": 10,
+        "includeRationale": true,
+        "includeHighlights": true,
+        "filters": {
+          "type": ["pull_request", "issue"],
+          "createdAfter": "2024-01-01"
+        }
+      }'
+    ```
+  
+
+## Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": "pr-123",
+      "title": "Implement OAuth 2.0 authentication",
+      "snippet": "Added OAuth 2.0 authentication flow with refresh tokens and JWT validation...",
+      "score": 0.92,
+      "url": "https://github.com/org/repo/pull/123",
+      "type": "pull_request",
+      "source": "github",
+      "createdAt": "2024-03-15T10:30:00Z",
+      "updatedAt": "2024-03-16T14:22:00Z",
+      "owner": "alice",
+      "metadata": {
+        "repository": "org/repo",
+        "state": "merged",
+        "labels": ["security", "authentication"]
+      },
+      "highlights": [
+        "OAuth 2.0 authentication flow",
+        "JWT validation and refresh tokens"
+      ],
+      "rationale": "High semantic similarity (0.92). Recent update. Owned by auth team. Merged PR with authentication label."
+    },
+    {
+      "id": "issue-456",
+      "title": "Security: Review authentication flow",
+      "snippet": "We should review the current authentication implementation for security best practices...",
+      "score": 0.87,
+      "url": "https://github.com/org/repo/issues/456",
+      "type": "issue",
+      "source": "github",
+      "createdAt": "2024-02-20T09:15:00Z",
+      "updatedAt": "2024-02-25T16:45:00Z",
+      "owner": "bob",
+      "metadata": {
+        "repository": "org/repo",
+        "state": "closed",
+        "labels": ["security"]
+      },
+      "highlights": [
+        "authentication implementation",
+        "security best practices"
+      ]
+    }
+  ],
+  "meta": {
+    "total": 42,
+    "limit": 10,
+    "offset": 0,
+    "took": 127
+  },
+  "requestId": "req_abc123def456"
+}
+```
+
+## Use Cases
+
+### Team Knowledge Search
+
+Search across all your company's knowledge:
+
+```typescript
+const results = await lf.search({
+  query: 'deployment process for production',
+  limit: 5
+})
+```
+
+### Code Context Discovery
+
+Find relevant code changes and discussions:
+
+```typescript
+const codeContext = await lf.search({
+  query: 'rate limiting implementation',
+  filters: {
+    type: ['pull_request', 'code'],
+    source: 'github'
+  }
+})
+```
+
+### Decision Tracking
+
+Trace why decisions were made:
+
+```typescript
+const decisions = await lf.search({
+  query: 'why did we choose PostgreSQL?',
+  includeRationale: true,
+  filters: {
+    type: ['discussion', 'rfc']
+  }
+})
+```
+
+### Finding Experts
+
+Discover who has context on a topic:
+
+```typescript
+const experts = await lf.search({
+  query: 'authentication and security',
+  includeRationale: true
+})
+
+// Extract owners from results
+const owners = [...new Set(experts.data.map(r => r.owner))]
+```
+
+## Query Syntax
+
+### Natural Language
+
+Use natural language queries for best results:
+
+```typescript
+// ✅ Good
+"how does authentication work in our API?"
+"recent changes to payment processing"
+"who worked on the mobile app login?"
+
+// ❌ Less effective
+"auth API"
+"payment"
+"mobile login"
+```
+
+### Specific Questions
+
+Ask specific questions to get targeted results:
+
+```typescript
+"what are the steps to deploy to production?"
+"how do we handle rate limiting?"
+"what's our policy on API versioning?"
+```
+
+## Filtering
+
+### By Type
+
+Filter by content type:
+
+```typescript
+filters: {
+  type: ['pull_request', 'issue', 'discussion', 'doc']
+}
+```
+
+Common types:
+- `pull_request` - Code changes
+- `issue` - Bug reports, feature requests
+- `discussion` - Threaded conversations
+- `doc` - Documentation pages
+- `code` - Code files
+- `comment` - Individual comments
+
+### By Source
+
+Filter by source system:
+
+```typescript
+filters: {
+  source: 'github' // or 'linear', 'notion', 'slack', etc.
+}
+```
+
+### By Date Range
+
+Filter by creation or update date:
+
+```typescript
+filters: {
+  createdAfter: '2024-01-01',
+  createdBefore: '2024-12-31',
+  updatedAfter: '2024-06-01'
+}
+```
+
+### By Owner
+
+Filter by content owner/author:
+
+```typescript
+filters: {
+  owner: 'alice'
+}
+```
+
+### Custom Metadata
+
+Filter by any custom metadata fields:
+
+```typescript
+filters: {
+  repository: 'org/api-service',
+  state: 'merged',
+  labels: ['security', 'critical']
+}
+```
+
+## Pagination
+
+Use `limit` and `offset` for pagination:
+
+```typescript
+// Page 1
+const page1 = await lf.search({
+  query: 'authentication',
+  limit: 20,
+  offset: 0
+})
+
+// Page 2
+const page2 = await lf.search({
+  query: 'authentication',
+  limit: 20,
+  offset: 20
+})
+
+// Check if more pages exist
+const hasMore = page1.meta.offset + page1.meta.limit < page1.meta.total
+```
+
+## Ranking & Rationale
+
+Enable `includeRationale` to understand why results are ranked:
+
+```typescript
+const results = await lf.search({
+  query: 'authentication security',
+  includeRationale: true
+})
+
+results.data.forEach(result => {
+  console.log(`Score: ${result.score}`)
+  console.log(`Reason: ${result.rationale}`)
+})
+```
+
+Example rationale:
+```
+"High semantic similarity (0.92). Recent update. Owned by auth team.
+Merged PR with authentication label. Connected to 3 related issues."
+```
+
+## Highlights
+
+Highlights show matched text snippets:
+
+```typescript
+const results = await lf.search({
+  query: 'OAuth implementation',
+  includeHighlights: true
+})
+
+results.data.forEach(result => {
+  console.log('Highlights:')
+  result.highlights?.forEach(h => console.log(`  - ${h}`))
+})
+```
+
+## Error Handling
+
+```typescript
+try {
+  const results = await lf.search({ query: 'authentication' })
+} catch (error) {
+  if (error.code === 'invalid_request') {
+    console.error('Invalid query:', error.message)
+  } else if (error.code === 'rate_limit_exceeded') {
+    console.error('Rate limited. Retry after:', error.retryAfter)
+  } else {
+    console.error('Search failed:', error.message)
+  }
+}
+```
+
+Common errors:
+- `invalid_request` (400) - Malformed query or parameters
+- `authentication_failed` (401) - Invalid API key
+- `rate_limit_exceeded` (429) - Too many requests
+- `internal_error` (500) - Server error
+
+See [Error Reference](/api/errors) for complete list.
+
+## Next Steps
+
+- **[POST /v1/contents](/api/contents)** - Get full content for search results
+- **[POST /v1/similar](/api/similar)** - Find related content
+- **[POST /v1/answer](/api/answer)** - Get synthesized answers with citations
+- **[Search Strategies Guide](/docs/guides/search-strategies)** - Optimize your queries

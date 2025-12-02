@@ -1,0 +1,137 @@
+---
+title: Quickstart
+description: Index your team's first memories in 5 minutes. Connect your GitHub repository and start searching your organization's knowledge.
+---
+
+<NextImage
+  src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public"
+  alt="Lightfast Demo"
+  width={1200}
+  height={630}
+  priority={true}
+/>
+
+Lightfast helps teams search everything they know. This guide walks you through indexing your first repository and searching your organization's memory.
+
+## Sign Up & Connect GitHub
+
+To use Lightfast, you'll need to create an account and connect your GitHub repositories. This is the recommended way to get started as it automatically indexes your team's documentation, pull requests, issues, and discussions.
+
+Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink> and create a workspace for your team. When you connect your GitHub account via OAuth, you can select which repositories you want Lightfast to remember. Lightfast respects your GitHub permissions—only content you have access to will be indexed.
+
+Once you're set up and your repositories are connected, you can search your team's knowledge in different ways:
+
+- **Dashboard search**: Use the web interface to search across all your indexed content with natural language queries.
+- **API integration**: Make requests to the Lightfast API from your applications using your API key (see the [Authentication guide](/docs/get-started/authentication) for details).
+- **MCP tools**: Connect AI agents and tools via the Model Context Protocol to let them query your team's memory automatically.
+
+<Alert>
+**Neural Memory varies by plan.** Starter has basic search. Team ($12/user/month) adds semantic search and decision tracking. Business includes auto-summaries and expertise profiles. <WwwLink path="/pricing" external>See all plans</WwwLink>.
+</Alert>
+
+## Create Your Configuration
+
+Lightfast uses a `lightfast.yml` file to control what gets indexed from your repository. This configuration file lives in your repo root and tells Lightfast exactly which files to remember, how to organize them, and which workspace they belong to.
+
+Add a `lightfast.yml` file to the root of your repository:
+
+<CodeEditor
+  code={`# Lightfast Configuration
+# Docs: https://lightfast.com/docs/get-started/config
+
+version: 1
+
+# Workspace identifier (optional - auto-detected from GitHub if omitted)
+# workspace: myorg/myrepo
+
+# Store name (unique identifier for this documentation set)
+# - Max 20 characters
+# - Lowercase alphanumeric with hyphens only
+# - No leading/trailing/consecutive hyphens
+# Use different store names across repos to organize knowledge
+store: root-store
+
+# Files to include (glob patterns - repo-relative paths)
+include:
+  - "README.md"           # Root README
+  - "docs/**/*.md"        # All Markdown in docs/
+  - "**/*.mdx"            # All MDX files
+  # - "rfcs/**/*"         # Design documents
+  # - "docs/**/*.tsx"     # React documentation components
+
+# Files are automatically excluded:
+# - **/node_modules/**
+# - **/.git/**
+# - **/dist/**
+# - **/build/**
+# - **/.next/**
+# - **/.turbo/**`}
+  language="yaml"
+/>
+
+The configuration has three main parts:
+
+- **Store name**: A unique identifier for this documentation set within your workspace. Use different store names across repositories to organize knowledge (e.g., `docs-store`, `api-store`, `infra-store`). You can then filter searches by store to find exactly what you need.
+- **Include patterns**: Glob patterns that match files to index. Patterns are relative to your repository root and support standard glob syntax (`*` matches files, `**` matches directories recursively).
+- **Workspace**: Optional identifier that links this config to your Lightfast workspace. If omitted, Lightfast auto-detects it from your GitHub repository.
+
+Common directories like `node_modules`, `.git`, `dist`, `build`, `.next`, and `.turbo` are automatically excluded—you don't need to specify them.
+
+<Alert>
+**Store names must be unique per workspace.** If you have multiple repositories, use descriptive store names like `marketing-docs`, `api-reference`, or `engineering-wiki` to keep content organized and searchable.
+</Alert>
+
+Once you've created your `lightfast.yml` file, commit and push it to your repository:
+
+<CodeEditor
+  code={`git add lightfast.yml
+git commit -m "Add Lightfast configuration"
+git push origin main`}
+  language="bash"
+  showHeader={false}
+/>
+
+Lightfast automatically detects the configuration and starts indexing your repository. Within minutes, your documentation will be searchable across your team's dashboard, API, and MCP tools.
+
+## Monitor Indexing & Memory Types
+
+After pushing your `lightfast.yml` configuration, Lightfast automatically starts building your team's memory. The platform indexes multiple types of content from your connected repositories, creating a searchable knowledge base that respects your GitHub permissions.
+
+**What Lightfast indexes:**
+
+- **Documentation**: READMEs, wikis, docs folders, and any files matching your include patterns
+- **Pull Requests**: Code changes, review comments, and discussion threads
+- **Issues**: Bug reports, feature requests, project tracking, and comments
+- **Discussions**: GitHub Discussions, decision rationale, and context
+- **People & Ownership**: Contributors, code owners, and subject matter experts
+
+Track your indexing progress at <AuthLink path="/dashboard" external>lightfast.ai/dashboard</AuthLink>. You'll see real-time updates as documents are processed, and most repositories complete indexing within 5-10 minutes. All team members in your workspace can view progress and start searching as soon as content becomes available.
+
+<Alert>
+**Permissions matter.** Lightfast only indexes content you have access to in GitHub. Team members see search results based on their individual GitHub permissions—no one gets access to repositories they couldn't already see.
+</Alert>
+
+## Search Your Team's Knowledge
+
+Once indexing completes, you can search your organization's memory from the dashboard, chat interface, or API. Lightfast understands natural language queries and returns answers with citations showing exactly where information came from.
+
+**Try these example queries:**
+
+- "How does authentication work in our API?" — Find architecture decisions and implementation details
+- "What's our deployment process?" — Discover documented workflows and recent changes
+- "Why did we choose PostgreSQL over MongoDB?" — Trace decision rationale from discussions and PRs
+- "Who owns the payment service?" — Identify code owners and active contributors
+
+Every answer includes **source citations** with links to the original documents, pull requests, or discussions. You can verify the information and dive deeper into the full context. Search works across all indexed content—documentation, code discussions, issues, and decisions—giving you a complete view of your team's knowledge.
+
+<Alert>
+**Search modes adapt to your query.** Lightfast uses hybrid search combining semantic understanding with keyword matching. Complex questions trigger our neural mode for deeper reasoning, while quick lookups use fast retrieval. The API handles this automatically.
+</Alert>
+
+## What's Next?
+
+- **<NextLink href="/docs/features">Features</NextLink>** - Explore what Lightfast can do
+- **<NextLink href="/docs/get-started/architecture">Architecture</NextLink>** - Technical deep dive
+- **<NextLink href="/docs/get-started/authentication">Authentication</NextLink>** - Use the API in your apps
+- **<NextLink href="/api/overview">API Reference</NextLink>** - Build custom integrations
+- **<NextLink href="/docs/examples">Examples</NextLink>** - See real-world implementations

@@ -17,7 +17,7 @@ interface VisualShowcaseProps {
 
 export function VisualShowcase({
   children,
-  backgroundImage = "/images/5_landscape.jpg",
+  backgroundImage = "https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public",
   minHeight = "680px",
   maxHeight = "min(780px, 70vh)",
 }: VisualShowcaseProps) {
@@ -32,9 +32,8 @@ export function VisualShowcase({
           fill
           priority
           sizes="100vw"
-          quality={70}
+          quality={10}
           draggable={false}
-          unoptimized
         />
       </div>
 
