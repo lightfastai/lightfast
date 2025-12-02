@@ -86,19 +86,19 @@ export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
                   <SidebarGroupLabel className="text-xs text-muted-foreground font-normal px-0">
                     {item.name}
                   </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="gap-2">
+                  <SidebarGroupContent className="mt-1">
+                    <SidebarMenu className="gap-1">
                       {item.children.map((page) => {
                         if (page.type !== "page") return null;
 
                         const isActive = page.url === pathname;
 
                         return (
-                          <SidebarMenuItem key={page.url} className="-mx-3">
+                          <SidebarMenuItem key={page.url} className="-mx-4">
                             <SidebarMenuButton
                               asChild
                               isActive={isActive}
-                              className="h-auto px-3 py-1 w-fit text-sm hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground justify-start"
+                              className="h-auto px-4 py-1.5 w-fit text-sm hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
                             >
                               <Link prefetch href={page.url}>
                                 {page.name}

@@ -23,7 +23,7 @@ export function AppNavMenu() {
       <NavigationMenu viewport={false}>
         <NavigationMenuList>
           <NavigationMenuItem>
-            <NavigationMenuTrigger className="text-muted-foreground">
+            <NavigationMenuTrigger className="text-muted-foreground rounded-sm!">
               Resources
             </NavigationMenuTrigger>
             <NavigationMenuContent>
@@ -59,7 +59,7 @@ export function AppNavMenu() {
         <Button
           key={item.href}
           variant="ghost"
-          className="text-muted-foreground"
+          className="text-muted-foreground rounded-sm!"
           asChild
         >
           {item.microfrontend ? (
