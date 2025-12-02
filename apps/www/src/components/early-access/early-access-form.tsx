@@ -286,8 +286,8 @@ export function EarlyAccessForm() {
           <div className="flex-none space-y-3">
             <Button
               type="submit"
-              size="lg"
-              className="w-full"
+              size="xl"
+              className="w-full rounded-xs"
               disabled={!email || !!form.formState.errors.email}
             >
               Continue
@@ -376,8 +376,8 @@ export function EarlyAccessForm() {
           <div className="flex-none space-y-3">
             <Button
               onClick={handleCompanySizeSubmit}
-              size="lg"
-              className="w-full"
+              size="xl"
+              className="w-full rounded-xs"
               disabled={!companySize}
             >
               Continue
@@ -469,8 +469,8 @@ export function EarlyAccessForm() {
           <div className="flex-none space-y-3">
             <Button
               onClick={handleFinalSubmit}
-              size="lg"
-              className="w-full"
+              size="xl"
+              className="w-full rounded-xs"
               disabled={sources.length === 0 || isPending}
             >
               {isPending ? (
