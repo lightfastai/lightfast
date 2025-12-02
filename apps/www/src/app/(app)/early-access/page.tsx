@@ -49,12 +49,14 @@ export default async function EarlyAccessPage({
       {/* Background Image */}
       <div className="fixed inset-0 z-0">
         <Image
-          src="/images/orange-mouth.avif"
+          src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/62c40fbf-28d6-4ef3-8db6-89af016e7200/public"
           alt="Background"
           fill
-          className="object-cover"
           priority
-          unoptimized
+          sizes="100vw"
+          quality={10}
+          draggable={false}
+          className="object-cover"
         />
       </div>
 

@@ -154,7 +154,7 @@ docker run -e LIGHTFAST_API_KEY=lf_sk_live_abc123... myapp`}
 
 ## Security Best Practices
 
-### 1. Never Commit Keys
+### Never Commit Keys
 
 Add API keys to `.gitignore`:
 
@@ -166,7 +166,7 @@ Add API keys to `.gitignore`:
 *.env`}
 </CodeBlock>
 
-### 2. Use Environment Variables
+### Use Environment Variables
 
 Always load keys from environment:
 
@@ -178,7 +178,7 @@ const apiKey = process.env.LIGHTFAST_API_KEY
 const apiKey = 'lf_sk_live_abc123...'`}
 </CodeBlock>
 
-### 3. Restrict Key Permissions
+### Restrict Key Permissions
 
 Use the minimum permissions needed:
 
@@ -186,7 +186,7 @@ Use the minimum permissions needed:
 - CI/CD: Use restricted keys with specific scopes
 - Production: Use secret keys only on secure servers
 
-### 4. Monitor Key Usage
+### Monitor Key Usage
 
 Check your API key usage regularly:
 
@@ -194,7 +194,7 @@ Check your API key usage regularly:
 - Set up alerts for unusual activity
 - Audit logs for sensitive operations
 
-### 5. Implement Request Signing
+### Implement Request Signing
 
 For additional security, sign requests:
 

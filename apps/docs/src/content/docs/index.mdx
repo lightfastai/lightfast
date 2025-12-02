@@ -1,69 +1,90 @@
 ---
-title: Welcome
-description: Welcome to Lightfast Chat documentation
+title: Lightfast Documentation
+description: Memory built for teams. Search by meaning, trace decisions, and never lose context.
 ---
 
-# Welcome to Lightfast Chat
+# Lightfast Documentation
 
-Welcome to the official documentation for **Lightfast Chat**, a modern AI-powered chat application built with cutting-edge web technologies.
+Lightfast is **memory built for teams**. We help people and agents find what they need, understand context, and trace decisions across your entire organization.
+
+## What Lightfast Does
+
+- **Search by meaning**: Find relevant information based on intent, not just keywords
+- **Always cite sources**: Every answer shows where it came from
+- **Explainable by design**: See who owns what, what depends on what, and why decisions were made
+- **Developer-first**: Four simple API routes. MCP tools for agents. Integrate in minutes.
 
 ## Quick Links
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-  <a href="/overview" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
-    <h3 className="text-lg font-semibold mb-2">📚 Overview</h3>
-    <p className="text-sm text-muted-foreground">Learn what Lightfast Chat is and its key features</p>
+  <a href="/docs/get-started/quickstart" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">🚀 Quickstart</h3>
+    <p className="text-sm text-muted-foreground">Get started with Lightfast in 5 minutes</p>
   </a>
 
-  <a href="/getting-started/installation" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
-    <h3 className="text-lg font-semibold mb-2">🚀 Getting Started</h3>
-    <p className="text-sm text-muted-foreground">Install and set up Lightfast Chat in minutes</p>
+  <a href="/api/overview" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">📚 API Reference</h3>
+    <p className="text-sm text-muted-foreground">Complete API documentation for all four routes</p>
   </a>
 
-  <a href="/guides/claude-code-workflow" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+  <a href="/docs/guides" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
     <h3 className="text-lg font-semibold mb-2">📖 Guides</h3>
-    <p className="text-sm text-muted-foreground">In-depth guides for development and deployment</p>
+    <p className="text-sm text-muted-foreground">Step-by-step guides for common tasks</p>
   </a>
 
-  <a href="/reference/api" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
-    <h3 className="text-lg font-semibold mb-2">🔧 API Reference</h3>
-    <p className="text-sm text-muted-foreground">Complete API documentation for developers</p>
+  <a href="/docs/examples" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">💡 Examples</h3>
+    <p className="text-sm text-muted-foreground">Real-world use cases and implementations</p>
   </a>
 </div>
 
+## Core API Routes
+
+Lightfast provides four powerful routes:
+
+- **[POST /v1/search](/api/search)** — Search and rank results with optional rationale and highlights
+- **[POST /v1/contents](/api/contents)** — Get full documents, metadata, and relationships
+- **[POST /v1/similar](/api/similar)** — Find related content based on meaning
+- **[POST /v1/answer](/api/answer)** — Get synthesized answers with citations (supports streaming)
+
 ## What You'll Find Here
 
-### For Users
-- Installation and setup instructions
-- Configuration options
-- Troubleshooting guides
-- Feature explanations
+### Getting Started
+- [Quickstart guide](/docs/get-started/quickstart) - Get up and running in 5 minutes
+- [Core concepts](/docs/get-started/concepts) - Understand how Lightfast works
+- [Authentication](/docs/get-started/authentication) - Secure your API requests
 
-### For Developers
+### How-to Guides
+- Search strategies for different use cases
+- Working with citations and sources
+- Integrating with MCP servers
+- Building agent workflows
+
+### API Reference
+- Complete endpoint documentation
+- Request/response schemas
+- Error handling
+- Rate limits and quotas
+
+### Examples
+- Building a team knowledge bot
+- Decision tracking workflows
+- Code context assistants
+- Document search interfaces
+
+### Concepts
+- How semantic search works
+- Memory organization and retrieval
+- Quality and evaluation metrics
 - Architecture overview
-- Development setup
-- API reference
-- Contributing guidelines
-
-### For Self-Hosters
-- Deployment guides
-- Self-hosting instructions
-- Performance optimization
-- Security best practices
-
-## Getting Help
-
-- **GitHub Issues**: Report bugs or request features
-- **Discord Community**: Get help from the community
-- **Documentation**: You're here! Everything you need is documented
 
 ## Start Your Journey
 
 <div className="flex gap-4 mt-8">
-  <a href="/overview/introduction" className="inline-flex items-center px-4 py-2 border rounded-md hover:bg-accent">
-    Introduction →
-  </a>
-  <a href="/getting-started/quickstart" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+  <a href="/docs/get-started/quickstart" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
     Quickstart →
+  </a>
+  <a href="/api/overview" className="inline-flex items-center px-4 py-2 border rounded-md hover:bg-accent">
+    API Reference →
   </a>
 </div>

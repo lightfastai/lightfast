@@ -1,0 +1,664 @@
+---
+title: Discord Auto-Answer Bot
+description: Build a Discord bot that automatically answers user questions using Lightfast
+---
+
+# Discord Auto-Answer Bot
+
+Create a Discord bot that automatically answers user questions by searching your indexed knowledge base with Lightfast.
+
+## Overview
+
+This guide shows you how to build a Discord bot that:
+
+- Monitors specific channels for questions
+- Searches your knowledge base for answers
+- Responds with relevant information and sources
+- Learns from user feedback to improve accuracy
+
+## Prerequisites
+
+- Lightfast API key (`lf_sk_live_...`)
+- Discord bot token
+- Indexed knowledge base (docs, FAQs, support tickets)
+- Node.js 18+
+
+## Architecture
+
+```
+Discord Bot
+├── Listen: Monitor channels for questions
+├── Search: Query Lightfast for answers
+├── Respond: Send answers with citations
+└── Learn: Track feedback and improve
+```
+
+## Setup
+
+### Install Dependencies
+
+```bash
+pnpm add discord.js @lightfast/sdk dotenv
+pnpm add -D @types/node tsx
+```
+
+### Create Discord Application
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create New Application
+3. Go to Bot tab → Add Bot
+4. Copy bot token
+5. Enable Message Content Intent
+6. Go to OAuth2 → URL Generator
+7. Select bot scope + Send Messages, Read Message History permissions
+8. Use generated URL to invite bot to your server
+
+### Configure Environment
+
+```bash
+# .env
+DISCORD_TOKEN=your_bot_token
+LIGHTFAST_API_KEY=lf_sk_live_...
+DISCORD_GUILD_ID=your_server_id
+DISCORD_CHANNEL_IDS=channel_id_1,channel_id_2
+```
+
+## Bot Implementation
+
+### Basic Bot Structure
+
+Create `src/bot.ts`:
+
+```typescript
+import { Client, GatewayIntentBits, Message } from 'discord.js'
+import { LightfastClient } from '@lightfast/sdk'
+import 'dotenv/config'
+
+const discord = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+})
+
+const lightfast = new LightfastClient({
+  apiKey: process.env.LIGHTFAST_API_KEY!,
+})
+
+const MONITORED_CHANNELS = process.env.DISCORD_CHANNEL_IDS?.split(',') || []
+
+discord.on('ready', () => {
+  console.log(`✅ Bot logged in as ${discord.user?.tag}`)
+})
+
+discord.on('messageCreate', async (message: Message) => {
+  // Ignore bot messages
+  if (message.author.bot) return
+
+  // Only respond in monitored channels
+  if (!MONITORED_CHANNELS.includes(message.channelId)) return
+
+  // Detect if message is a question
+  if (isQuestion(message.content)) {
+    await handleQuestion(message)
+  }
+})
+
+function isQuestion(content: string): boolean {
+  // Simple heuristic: ends with ? or starts with question words
+  const questionWords = ['how', 'what', 'why', 'when', 'where', 'who', 'can', 'is', 'does']
+  const lowerContent = content.toLowerCase().trim()
+
+  return (
+    lowerContent.endsWith('?') ||
+    questionWords.some(word => lowerContent.startsWith(word + ' '))
+  )
+}
+
+async function handleQuestion(message: Message) {
+  // Show typing indicator
+  await message.channel.sendTyping()
+
+  try {
+    // Search Lightfast
+    const answer = await lightfast.answer({
+      query: message.content,
+      maxSources: 3,
+    })
+
+    // Format response
+    const response = formatResponse(answer)
+
+    // Send reply
+    await message.reply(response)
+  } catch (error) {
+    console.error('Error answering question:', error)
+    await message.reply('Sorry, I couldn\'t find an answer to your question. 😕')
+  }
+}
+
+function formatResponse(answer: any): string {
+  let response = answer.text + '\n\n'
+
+  if (answer.sources && answer.sources.length > 0) {
+    response += '**Sources:**\n'
+    answer.sources.forEach((source: any, i: number) => {
+      response += `${i + 1}. [${source.title}](${source.url})\n`
+    })
+  }
+
+  return response
+}
+
+discord.login(process.env.DISCORD_TOKEN)
+```
+
+### Run the Bot
+
+```bash
+tsx src/bot.ts
+```
+
+## Advanced Features
+
+### Confidence Threshold
+
+Only respond if answer confidence is high:
+
+```typescript
+async function handleQuestion(message: Message) {
+  await message.channel.sendTyping()
+
+  const answer = await lightfast.answer({
+    query: message.content,
+    maxSources: 5,
+  })
+
+  // Check confidence score
+  if (answer.confidence < 0.7) {
+    await message.reply(
+      "I'm not confident about the answer. You might want to check the docs or ask a human! 🤔"
+    )
+    return
+  }
+
+  await message.reply(formatResponse(answer))
+}
+```
+
+### Thread Support
+
+Create threads for detailed discussions:
+
+```typescript
+async function handleQuestion(message: Message) {
+  const answer = await lightfast.answer({
+    query: message.content,
+    maxSources: 5,
+  })
+
+  // Create thread for question
+  const thread = await message.startThread({
+    name: message.content.slice(0, 100), // Max 100 chars
+    autoArchiveDuration: 60, // Archive after 1 hour of inactivity
+  })
+
+  // Send answer in thread
+  await thread.send(formatResponse(answer))
+
+  // Add follow-up prompt
+  await thread.send(
+    'Feel free to ask follow-up questions! React with 👍 if this helped or 👎 if not.'
+  )
+}
+```
+
+### Reaction Feedback
+
+Learn from user reactions:
+
+```typescript
+discord.on('messageReactionAdd', async (reaction, user) => {
+  // Ignore bot reactions
+  if (user.bot) return
+
+  const message = reaction.message
+
+  // Check if reaction is on bot's message
+  if (message.author?.id !== discord.user?.id) return
+
+  // Track feedback
+  const helpful = reaction.emoji.name === '👍'
+  const notHelpful = reaction.emoji.name === '👎'
+
+  if (helpful || notHelpful) {
+    await trackFeedback({
+      messageId: message.id,
+      query: message.reference?.messageId, // Original question
+      helpful,
+      userId: user.id,
+    })
+
+    // Optional: acknowledge feedback
+    if (notHelpful) {
+      await message.reply('Thanks for the feedback! A human will follow up soon. 🙏')
+    }
+  }
+})
+
+async function trackFeedback(data: {
+  messageId: string
+  query: string | undefined
+  helpful: boolean
+  userId: string
+}) {
+  // Store in database or analytics service
+  console.log('Feedback received:', data)
+
+  // Optional: send to Lightfast for quality improvement
+  // await lightfast.feedback({ ... })
+}
+```
+
+### Smart Routing
+
+Route complex questions to humans:
+
+```typescript
+async function handleQuestion(message: Message) {
+  const answer = await lightfast.answer({
+    query: message.content,
+    maxSources: 5,
+  })
+
+  // Check if question requires human expertise
+  const needsHuman =
+    answer.confidence < 0.6 ||
+    message.content.includes('urgent') ||
+    message.content.includes('critical')
+
+  if (needsHuman) {
+    // Tag support team
+    await message.reply(
+      `I found some information, but this might need expert help. <@&SUPPORT_ROLE_ID>\n\n${formatResponse(answer)}`
+    )
+    return
+  }
+
+  await message.reply(formatResponse(answer))
+}
+```
+
+### Slash Commands
+
+Add slash commands for better UX:
+
+```typescript
+import { REST, Routes, SlashCommandBuilder } from 'discord.js'
+
+const commands = [
+  new SlashCommandBuilder()
+    .setName('ask')
+    .setDescription('Ask a question')
+    .addStringOption(option =>
+      option
+        .setName('question')
+        .setDescription('Your question')
+        .setRequired(true)
+    ),
+  new SlashCommandBuilder()
+    .setName('search')
+    .setDescription('Search the knowledge base')
+    .addStringOption(option =>
+      option
+        .setName('query')
+        .setDescription('Search query')
+        .setRequired(true)
+    ),
+]
+
+// Register commands
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!)
+
+await rest.put(
+  Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+  { body: commands }
+)
+
+// Handle slash commands
+discord.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return
+
+  if (interaction.commandName === 'ask') {
+    await interaction.deferReply()
+
+    const question = interaction.options.getString('question', true)
+    const answer = await lightfast.answer({ query: question })
+
+    await interaction.editReply(formatResponse(answer))
+  }
+
+  if (interaction.commandName === 'search') {
+    await interaction.deferReply()
+
+    const query = interaction.options.getString('query', true)
+    const results = await lightfast.search({ query, limit: 5 })
+
+    await interaction.editReply(formatSearchResults(results))
+  }
+})
+```
+
+### Embeds for Rich Responses
+
+Use Discord embeds for better formatting:
+
+```typescript
+import { EmbedBuilder } from 'discord.js'
+
+function formatResponseEmbed(answer: any): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setColor(0x0099ff)
+    .setTitle('Answer')
+    .setDescription(answer.text)
+    .setTimestamp()
+
+  if (answer.sources && answer.sources.length > 0) {
+    const sourcesText = answer.sources
+      .map((s: any, i: number) => `${i + 1}. [${s.title}](${s.url})`)
+      .join('\n')
+
+    embed.addFields({
+      name: 'Sources',
+      value: sourcesText,
+    })
+  }
+
+  // Add confidence indicator
+  const confidence = answer.confidence * 100
+  embed.setFooter({
+    text: `Confidence: ${confidence.toFixed(0)}%`
+  })
+
+  return embed
+}
+
+// Use in reply
+await message.reply({ embeds: [formatResponseEmbed(answer)] })
+```
+
+## Indexing Knowledge Base
+
+### Index FAQs
+
+```typescript
+import { LightfastClient } from '@lightfast/sdk'
+
+const faqs = [
+  {
+    question: 'How do I reset my password?',
+    answer: 'Go to Settings → Security → Reset Password...',
+    category: 'account',
+  },
+  // ... more FAQs
+]
+
+async function indexFAQs() {
+  const lightfast = new LightfastClient({
+    apiKey: process.env.LIGHTFAST_API_KEY!,
+  })
+
+  for (const faq of faqs) {
+    await lightfast.index({
+      id: `faq-${faq.question.toLowerCase().replace(/\s+/g, '-')}`,
+      title: faq.question,
+      body: faq.answer,
+      metadata: {
+        type: 'faq',
+        category: faq.category,
+      },
+    })
+  }
+
+  console.log(`✅ Indexed ${faqs.length} FAQs`)
+}
+```
+
+### Index Discord History
+
+Index past support threads:
+
+```typescript
+async function indexSupportThreads() {
+  const channel = await discord.channels.fetch(SUPPORT_CHANNEL_ID)
+  if (!channel?.isTextBased()) return
+
+  const threads = await channel.threads.fetchActive()
+
+  for (const [, thread] of threads.threads) {
+    const messages = await thread.messages.fetch({ limit: 100 })
+    const content = messages.map(m => `${m.author.tag}: ${m.content}`).join('\n\n')
+
+    await lightfast.index({
+      id: `thread-${thread.id}`,
+      title: thread.name,
+      body: content,
+      metadata: {
+        type: 'discord_thread',
+        resolved: thread.archived,
+        participants: [...new Set(messages.map(m => m.author.tag))],
+      },
+    })
+  }
+}
+```
+
+## Deployment
+
+### Using PM2
+
+```bash
+pnpm add -g pm2
+
+# Start bot
+pm2 start tsx --name discord-bot -- src/bot.ts
+
+# Monitor logs
+pm2 logs discord-bot
+
+# Auto-restart on crash
+pm2 startup
+pm2 save
+```
+
+### Using Docker
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
+
+COPY . .
+
+CMD ["tsx", "src/bot.ts"]
+```
+
+```bash
+docker build -t discord-bot .
+docker run -d --env-file .env discord-bot
+```
+
+### Using systemd
+
+```ini
+# /etc/systemd/system/discord-bot.service
+[Unit]
+Description=Discord Auto-Answer Bot
+After=network.target
+
+[Service]
+Type=simple
+User=your-user
+WorkingDirectory=/path/to/bot
+ExecStart=/usr/bin/tsx src/bot.ts
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable discord-bot
+sudo systemctl start discord-bot
+```
+
+## Best Practices
+
+### Rate Limiting
+
+Prevent spam and API overuse:
+
+```typescript
+const cooldowns = new Map<string, number>()
+const COOLDOWN_MS = 5000 // 5 seconds
+
+function isOnCooldown(userId: string): boolean {
+  const lastUsed = cooldowns.get(userId)
+  if (!lastUsed) return false
+
+  const now = Date.now()
+  if (now - lastUsed < COOLDOWN_MS) {
+    return true
+  }
+
+  cooldowns.set(userId, now)
+  return false
+}
+```
+
+### Error Handling
+
+Graceful error handling:
+
+```typescript
+async function handleQuestion(message: Message) {
+  try {
+    await message.channel.sendTyping()
+
+    const answer = await lightfast.answer({
+      query: message.content,
+      maxSources: 5,
+    })
+
+    await message.reply(formatResponse(answer))
+  } catch (error) {
+    if (error.code === 'RATE_LIMIT') {
+      await message.reply('Too many requests! Please try again in a moment.')
+    } else if (error.code === 'NOT_FOUND') {
+      await message.reply('No answer found. Try rephrasing your question!')
+    } else {
+      console.error('Error:', error)
+      await message.reply('Something went wrong. Please try again later.')
+    }
+  }
+}
+```
+
+### Monitoring
+
+Track bot performance:
+
+```typescript
+import { trackMetric } from '@/lib/analytics'
+
+async function handleQuestion(message: Message) {
+  const startTime = Date.now()
+
+  try {
+    const answer = await lightfast.answer({ query: message.content })
+    await message.reply(formatResponse(answer))
+
+    trackMetric('question_answered', {
+      responseTime: Date.now() - startTime,
+      confidence: answer.confidence,
+      sourcesCount: answer.sources.length,
+    })
+  } catch (error) {
+    trackMetric('question_failed', { error: error.message })
+  }
+}
+```
+
+## Troubleshooting
+
+### Bot Not Responding
+
+Check intents:
+
+```typescript
+const discord = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // Required!
+  ],
+})
+```
+
+Enable in Discord Developer Portal:
+1. Go to Bot settings
+2. Enable "Message Content Intent"
+3. Save changes
+4. Restart bot
+
+### Poor Answer Quality
+
+Improve indexing:
+
+```typescript
+// More detailed content
+body: `Question: ${faq.question}\n\nAnswer: ${faq.answer}\n\nRelated: ${faq.related}`
+
+// Better metadata
+metadata: {
+  type: 'faq',
+  category: faq.category,
+  tags: extractTags(faq.question),
+  popularity: faq.viewCount,
+}
+```
+
+### Rate Limit Errors
+
+Implement caching:
+
+```typescript
+const answerCache = new Map<string, any>()
+
+async function getCachedAnswer(query: string) {
+  const cached = answerCache.get(query.toLowerCase())
+  if (cached && Date.now() - cached.timestamp < 3600000) {
+    return cached.answer
+  }
+
+  const answer = await lightfast.answer({ query })
+  answerCache.set(query.toLowerCase(), {
+    answer,
+    timestamp: Date.now(),
+  })
+
+  return answer
+}
+```
+
+## Next Steps
+
+- **[Search Strategies](/docs/guides/search-strategies)** - Optimize answer quality
+- **[Answer Quality](/docs/guides/answer-quality)** - Improve response accuracy
+- **[API Reference](/api/answer)** - Learn about answer parameters
+- **[Discord.js Guide](https://discordjs.guide)** - Advanced bot features

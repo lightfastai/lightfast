@@ -15,9 +15,9 @@ export function DocsHeaderNav() {
   const pathname = usePathname();
 
   // Check if we're in the API section
-  const isApiActive = pathname?.startsWith("/docs/api-reference");
+  const isApiActive = pathname.startsWith("/docs/api-reference");
   // Check if we're in the Docs section (but not API)
-  const isDocsActive = pathname?.startsWith("/docs") && !isApiActive;
+  const isDocsActive = pathname.startsWith("/docs") && !isApiActive;
 
   return (
     <nav className="flex items-center gap-6">

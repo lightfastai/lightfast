@@ -1,0 +1,10 @@
+{
+  "title": "Examples",
+  "pages": [
+    "index",
+    "knowledge-bot",
+    "docs-search-bot",
+    "claude-code-mcp-bot",
+    "discord-auto-answer"
+  ]
+}

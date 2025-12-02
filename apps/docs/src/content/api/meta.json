@@ -1,11 +1,14 @@
 {
   "title": "API Reference",
-  "description": "Complete API documentation for Lightfast Memory API",
+  "description": "Complete API documentation for Lightfast - Four simple routes for team memory",
   "defaultOpen": true,
   "pages": [
     "overview",
     "authentication",
-    "memory",
+    "search",
+    "contents",
+    "similar",
+    "answer",
     "errors",
     "sdks"
   ]

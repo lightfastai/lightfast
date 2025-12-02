@@ -1,0 +1,301 @@
+---
+title: Quality & Evaluation
+description: How Lightfast measures search quality and continuously improves through calibration and feedback
+---
+
+# Quality & Evaluation
+
+Lightfast continuously measures search quality and adapts to your team's usage patterns. The platform tracks performance metrics, calibrates ranking weights per workspace, and learns from how you interact with search results.
+
+## Metrics Tracked
+
+Lightfast evaluates search quality across multiple dimensions to ensure accurate, relevant results.
+
+### Retrieval Quality
+
+Measures how well the search finds relevant documents:
+
+**Recall@K** — Percentage of relevant documents found in top-K results
+- Measures **coverage**: Did we find all the good stuff?
+- Tracked at K=5, K=10, K=20
+- Target: >90% recall@20 for factual queries
+
+**Precision@K** — Percentage of top-K results that are actually relevant
+- Measures **accuracy**: Are the results we show useful?
+- Tracked at K=5, K=10
+- Target: >80% precision@5 for knowledge queries
+
+**Mean Reciprocal Rank (MRR)** — How quickly the first relevant result appears
+- Measures **efficiency**: Do users find answers fast?
+- Higher MRR = relevant results appear earlier
+- Target: MRR >0.7 for common queries
+
+### Ranking Quality
+
+Measures how well results are ordered by relevance:
+
+**Rerank Lift** — Improvement in relevance after cross-encoder reranking
+- Compares initial retrieval order vs. reranked order
+- Shows value of deep neural reranking
+- Typical lift: 15-25% improvement in NDCG
+
+**NDCG (Normalized Discounted Cumulative Gain)** — Overall ranking quality
+- Considers both relevance and position
+- Penalizes relevant results that appear too low
+- Target: NDCG@10 >0.75
+
+### Answer Quality
+
+Measures the quality of synthesized answers with citations:
+
+**Snippet Accuracy** — Do highlighted excerpts contain the answer?
+- Are snippets truly relevant to the query?
+- Do they support claims in the synthesized answer?
+- Target: >85% snippet accuracy
+
+**Citation Relevance** — Are cited sources actually used in the answer?
+- Measures faithfulness to sources
+- Detects hallucination or unsupported claims
+- Target: >90% citation relevance
+
+**Rationale Faithfulness** — Does the explanation match why sources were selected?
+- Are rationale explanations accurate?
+- Do they help users understand source selection?
+- Target: >80% faithfulness score
+
+These metrics are tracked per query type (factual, exploratory, complex) and per workspace to identify improvement opportunities.
+
+## Per-Workspace Calibration
+
+Each workspace automatically tunes its own search parameters based on usage patterns. This ensures Lightfast adapts to how your specific team works and what content matters most to you.
+
+### Ranking Weights
+
+Balance between different signals that contribute to search ranking:
+
+**Semantic similarity weight** — How much to trust vector embeddings
+- Higher for conceptual queries ("similar patterns")
+- Lower when exact keywords matter ("error code XYZ")
+
+**Recency weight** — How much to favor newer content
+- Higher for fast-moving teams with frequent changes
+- Lower for stable documentation that remains relevant
+
+**Importance weight** — How much to consider engagement signals
+- Stars, reactions, comment count
+- Higher when popular content tends to be authoritative
+- Lower when niche but critical docs exist
+
+**Graph relationship weight** — How much to boost ownership/dependency links
+- Higher for "who owns" and "what depends" queries
+- Lower for pure content search
+
+**Profile similarity weight** — How much to personalize based on user history
+- Higher for returning users with established patterns
+- Lower for new users or exploratory queries
+
+### Decay Factors
+
+Control how quickly older content becomes less relevant:
+
+**Time decay curves:**
+- **Fast decay** (half-life: 3 months) — for rapidly changing code, API docs
+- **Medium decay** (half-life: 12 months) — for architecture docs, RFCs
+- **Slow decay** (half-life: 36+ months) — for foundational docs, principles
+
+**Content-type specific:**
+- Issues decay faster than documentation
+- Discussion threads decay slower than commit messages
+- RFCs and design docs maintain relevance longer
+
+**Workspace preferences:**
+- Fast-moving teams: shorter half-lives across the board
+- Stable projects: longer half-lives, more historical value
+
+### Quality Thresholds
+
+Determine which results are included and how aggressively to filter:
+
+**Minimum similarity scores:**
+- Threshold for inclusion in results (typically 0.65)
+- Higher thresholds = fewer but more precise results
+- Lower thresholds = broader but potentially noisier results
+
+**Reranking parameters:**
+- How many candidates to rerank (typically top 50-100)
+- Cross-encoder model selection (speed vs. accuracy tradeoff)
+- Minimum score after reranking
+
+**Citation constraints:**
+- Diversity requirements (multiple source types)
+- Maximum redundancy tolerance
+- Minimum relevance for inclusion in answer citations
+
+Calibration happens automatically as your team uses Lightfast. No manual tuning required.
+
+<Alert>
+**Calibration is transparent.** Enterprise customers can access calibration dashboards to see current weights, thresholds, and how they've evolved over time. This visibility helps understand why search behaves the way it does.
+</Alert>
+
+## Feedback Loops
+
+Lightfast learns from implicit and explicit signals to continuously improve search quality.
+
+### Implicit Signals
+
+Behavioral data collected automatically:
+
+**Click-through data** — Which results users select from search results
+- High-click results boost similar content in future searches
+- Low-click results (despite high rank) trigger investigation
+- Click position reveals if ranking is optimal
+
+**Dwell time** — How long users spend reading retrieved documents
+- Long dwell time suggests content is valuable
+- Quick bounce-back suggests poor match despite initial click
+- Helps distinguish clickbait from genuinely useful results
+
+**Follow-up queries** — When searches are refined or reformulated
+- Immediate reformulation suggests poor initial results
+- Related follow-ups indicate successful exploration
+- Query chains reveal information-seeking patterns
+
+**Navigation paths** — Which citations and links users follow
+- Popular citation chains inform future result ordering
+- Dead-end citations may be demoted
+- Cross-document navigation reveals content relationships
+
+### Explicit Signals
+
+User-provided feedback when available:
+
+**Result ratings** — Thumbs up/down on search results
+- Direct signal of result quality
+- Strongest signal for immediate calibration
+- Collected in dashboard and chat interfaces
+
+**Citation feedback** — Marking citations as helpful or irrelevant
+- Improves answer synthesis quality
+- Trains citation selection models
+- Reduces hallucination risk
+
+**Query reformulation patterns** — How users edit and retry queries
+- What clarifications are needed?
+- What terminology works better?
+- What query structures succeed?
+
+**Saved searches** — Queries users bookmark or repeat
+- Indicates high-value query patterns
+- Helps identify common use cases
+- Suggests candidates for optimization
+
+### Learning Mechanisms
+
+How feedback influences future results:
+
+**Ranking adjustment:**
+- Clicked results rank slightly higher for similar queries
+- Pattern applies workspace-wide, not just for individual users
+- Effect decays over time to adapt to changing needs
+
+**Query expansion:**
+- Successful reformulations inform automatic query expansion
+- Synonyms and related terms discovered through usage
+- Improves recall for under-specified queries
+
+**Model fine-tuning:**
+- Aggregated feedback tunes ranking models
+- Calibration runs weekly to incorporate recent signals
+- A/B testing validates improvements before deployment
+
+**Anomaly detection:**
+- Unusual patterns trigger manual review
+- Prevents gaming or adversarial behavior
+- Identifies edge cases for improvement
+
+<Alert>
+**Privacy-preserving learning.** Feedback loops operate within your workspace only. Your usage patterns never influence results for other organizations, and no query data is shared across workspaces.
+</Alert>
+
+## Quality Monitoring
+
+Lightfast provides visibility into search quality for workspace administrators.
+
+### Dashboards (Enterprise)
+
+**Quality metrics dashboard:**
+- Historical trends for recall, precision, MRR, NDCG
+- Per-query-type breakdowns
+- Comparison across time periods
+
+**Calibration dashboard:**
+- Current weights and thresholds
+- Evolution over time
+- Impact of calibration changes on metrics
+
+**Usage analytics:**
+- Query volume and patterns
+- Popular vs. underserved queries
+- User engagement with results and citations
+
+### Alerts
+
+Automatic notifications when quality degrades:
+
+- Recall drops below threshold
+- Precision declines significantly
+- MRR shows downward trend
+- Citation relevance issues
+
+Alerts help catch problems early and trigger investigation.
+
+## Continuous Improvement
+
+Quality evaluation drives ongoing platform improvements:
+
+### Monthly Reviews
+
+Lightfast teams review:
+- Aggregate metrics across all workspaces
+- Common failure patterns
+- User feedback themes
+- Calibration effectiveness
+
+### Quarterly Experiments
+
+A/B testing of:
+- New ranking algorithms
+- Different embedding models
+- Alternative reranking approaches
+- Citation selection strategies
+
+### Annual Benchmarks
+
+Evaluation against:
+- Public IR benchmarks (MS MARCO, BEIR)
+- Internal golden datasets
+- Competitor baselines
+- Customer-provided test sets
+
+## Best Practices for Quality
+
+**For workspace administrators:**
+
+1. **Monitor dashboards**: Check quality metrics monthly
+2. **Review failing queries**: Investigate patterns in poor results
+3. **Provide test sets**: Share representative queries for evaluation
+4. **Enable feedback**: Encourage team to rate results
+
+**For end users:**
+
+1. **Rate results**: Thumbs up/down helps calibration
+2. **Mark unhelpful citations**: Improves answer quality
+3. **Report issues**: Flag hallucinations or incorrect sources
+4. **Share successful queries**: Help others learn effective patterns
+
+## Next Steps
+
+- **<NextLink href="/docs/features/search">Search & Retrieval</NextLink>** — How quality metrics affect search
+- **<NextLink href="/docs/features/citations">Citations & Sources</NextLink>** — How citation quality is ensured
+- **<NextLink href="/docs/get-started/architecture">Architecture</NextLink>** — Technical implementation of quality systems
+- **<NextLink href="/api/overview">API Reference</NextLink>** — Quality metadata in API responses

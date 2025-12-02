@@ -1,121 +1,221 @@
 ---
 title: Overview
-description: Introduction to Lightfast Core - A modern AI agent framework
+description: Memory built for teams - search everything your team knows
 ---
 
-# Lightfast Core
+# Memory built for teams
 
-Lightfast Core is a production-ready AI agent framework built on top of Vercel AI SDK. It provides a streamlined, type-safe way to build AI agents with advanced features like memory management, tool factories, and provider-specific optimizations.
+Search everything your team knows. Get answers with sources.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## What is Lightfast?
 
-## Why Lightfast Core?
+Lightfast is a **memory system built for teams**. It helps people and AI agents:
 
-Building production AI agents requires more than just calling an LLM API. You need:
+- **Search by meaning** - Find information based on intent, not just keywords
+- **Get answers with citations** - Every answer shows where it came from
+- **Trace decisions** - See who owns what, what depends on what, and why decisions were made
+- **Integrate anywhere** - Four simple API routes. MCP tools for agents. Works in minutes.
 
-- **Stateful conversations** - Manage conversation history across sessions
-- **Context-aware tools** - Tools that can access runtime context like user IDs and session data
-- **Provider optimizations** - Leverage provider-specific features like Anthropic's prompt caching
-- **Production-ready handlers** - Battle-tested request handlers for Next.js and other frameworks
-- **Type safety** - Full TypeScript support with strong typing throughout
+## How It Works
 
-Lightfast Core provides all of this in a clean, composable API that integrates seamlessly with your existing stack.
+### 1. Index Your Knowledge
 
-## Core Architecture
+Lightfast automatically indexes content from across your organization:
 
-Lightfast Core is built around three main concepts:
+- **GitHub**: Pull requests, issues, discussions, code, wikis
+- **Linear**: Issues, comments, projects
+- **Notion**: Pages and databases
+- **Slack**: Messages and threads (with permissions)
+- **Discord**: Messages and threads
+- **Custom sources**: Any content via API
 
-### 1. Agents
-Agents are the core abstraction that combines a language model with tools, memory, and system prompts. They handle the complexity of managing conversations while providing a simple streaming interface.
+### 2. Search by Meaning
+
+Unlike keyword search, Lightfast understands context:
 
 ```typescript
-const agent = createAgent({
-  name: "assistant",
-  system: "You are a helpful AI assistant.",
-  model: gateway("anthropic/claude-4-sonnet"),
-  tools: myTools,
-  createRuntimeContext: ({ sessionId, resourceId }) => ({
-    userId: resourceId,
-    sessionId,
-  }),
-});
+// Ask a question in natural language
+const results = await lf.search({
+  query: 'how does authentication work in our system?'
+})
+
+// Get relevant results even if exact keywords don't match
+// Finds: "OAuth 2.0 implementation", "login security", "user session management"
 ```
 
-### 2. Tools with Runtime Context
-Unlike traditional tools, Lightfast tools can access runtime context like user IDs, session data, and request information. This enables building secure, context-aware tools without global state.
+### 3. Get Answers with Sources
+
+Generate synthesized answers that cite their sources:
 
 ```typescript
-const searchTool = createTool({
-  description: "Search the web",
-  inputSchema: z.object({ query: z.string() }),
-  execute: async ({ query }, context) => {
-    // Access runtime context in tool execution
-    console.log("User:", context.userId);
-    return performSearch(query);
-  },
-});
+const answer = await lf.answer({
+  query: 'explain our deployment process',
+  maxSources: 5
+})
+
+console.log(answer.data.answer)
+// "The deployment process involves..."
+
+console.log(answer.data.citations)
+// [{ title: "Deployment Guide", url: "...", relevance: 0.95 }, ...]
 ```
 
-### 3. Memory Adapters
-Memory adapters provide persistent conversation history with support for different backends. The framework includes Redis and in-memory adapters out of the box.
+## Configuration
+
+Define what gets indexed and remembered with a simple YAML config:
+
+```yaml
+# Lightfast Configuration
+# Docs: https://lightfast.ai/docs/get-started/overview
+
+version: 1
+
+# Store name (unique identifier for this documentation set)
+store: root-store
+
+# Files to include (glob patterns)
+include:
+  - "README.md"
+  - "docs/**/*.md"
+  - "**/*.ts"
+
+# Files to exclude (optional)
+exclude:
+  - "**/node_modules/**"
+  - "**/.git/**"
+```
+
+## The Four API Routes
+
+Lightfast provides everything you need in four simple endpoints:
+
+### POST /v1/search
+Search and rank results by meaning with optional rationale and highlights.
 
 ```typescript
-const memory = new RedisMemory({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
+const results = await lf.search({
+  query: 'authentication implementation',
+  limit: 10,
+  includeRationale: true
+})
+```
+
+### POST /v1/contents
+Get full documents, metadata, and relationships.
+
+```typescript
+const docs = await lf.contents({
+  ids: [results.data[0].id],
+  includeRelationships: true
+})
+```
+
+### POST /v1/similar
+Find related content based on semantic similarity.
+
+```typescript
+const similar = await lf.similar({
+  id: results.data[0].id,
+  limit: 5
+})
+```
+
+### POST /v1/answer
+Get synthesized answers with citations (supports streaming).
+
+```typescript
+const answer = await lf.answer({
+  query: 'how does our payment system work?',
+  stream: true
+})
 ```
 
 ## Key Features
 
-- **🚀 Production Ready** - Battle-tested in production environments
-- **🔒 Type Safe** - Full TypeScript support with inference
-- **⚡ Provider Optimized** - Leverage Anthropic caching, OpenAI streaming, and more
-- **🛠 Extensible** - Easy to add custom tools, memory adapters, and handlers
-- **📊 Observable** - Built-in support for Braintrust, OpenTelemetry, and custom logging
-- **🔐 Secure** - Context isolation, rate limiting, and authentication support
+### Search by Meaning
+Understands intent and context, not just keyword matching. Searching for "authentication refactor" finds PRs about "OAuth 2.0", issues discussing "login security", and docs on "user session management".
 
-## Quick Example
+### Always Cite Sources
+Every answer includes citations showing where information came from. No black-box responses.
 
-Here's a complete example of creating and using an agent:
+### Explainable by Design
+See who owns what, what depends on what, and why results are ranked the way they are.
 
-```typescript
-import { createAgent } from "lightfast/agent";
-import { fetchRequestHandler } from "lightfast/agent/handlers";
-import { RedisMemory } from "lightfast/agent/memory/adapters/redis";
-import { gateway } from "@ai-sdk/gateway";
+### Privacy by Default
+Complete tenant isolation. Your data stays yours. Respects source permissions.
 
-// Create your agent
-const agent = createAgent({
-  name: "assistant",
-  system: "You are a helpful AI assistant.",
-  model: gateway("openai/gpt-5-nano"),
-  tools: {
-    // Tools can be defined inline or imported
-    search: webSearchTool,
-  },
-  createRuntimeContext: ({ sessionId, resourceId }) => ({
-    userId: resourceId,
-    sessionId,
-  }),
-});
+## Use Cases
 
-// Handle requests in your API route
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  
-  return fetchRequestHandler({
-    agent,
-    sessionId: "session-123",
-    memory: new RedisMemory({ /* config */ }),
-    req,
-    resourceId: userId,
-  });
-}
-```
+### Team Knowledge Bot
+Build a Slack or Discord bot that answers questions using your team's knowledge.
+
+### Code Context Assistant
+Help developers find relevant code changes, discussions, and decisions.
+
+### Decision Tracking
+Trace why decisions were made and who was involved.
+
+### Onboarding Assistant
+Help new team members learn about your systems and processes.
+
+### Documentation Search
+Make your docs instantly searchable with semantic understanding.
 
 ## Next Steps
 
-- [Installation](/get-started/installation) - Set up Lightfast Core in your project
-- [Quick Start](/get-started/quick-start) - Build your first agent
-- [Core Concepts](/core-concepts/agents) - Deep dive into the architecture
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+  <a href="/docs/get-started/quickstart" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">🚀 Quickstart</h3>
+    <p className="text-sm text-muted-foreground">Get started with Lightfast in 5 minutes</p>
+  </a>
+
+  <a href="/docs/get-started/concepts" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">📚 Core Concepts</h3>
+    <p className="text-sm text-muted-foreground">Understand how Lightfast works</p>
+  </a>
+
+  <a href="/api/overview" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">🔧 API Reference</h3>
+    <p className="text-sm text-muted-foreground">Complete API documentation</p>
+  </a>
+
+  <a href="/docs/examples/knowledge-bot" className="block p-6 border rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">💡 Examples</h3>
+    <p className="text-sm text-muted-foreground">Real-world implementations</p>
+  </a>
+</div>
+
+## What Makes Lightfast Different?
+
+### Hybrid Retrieval
+Combines semantic search, lexical matching, graph relationships, recency, and importance for accurate results.
+
+### Multi-View Embeddings
+Creates multiple representations of each document (title, snippet, body, summary) for better recall.
+
+### Short-Hop Graph Reasoning
+Maintains 1-2 hop relationships for explainable, bounded reasoning about ownership and dependencies.
+
+### Continuous Quality Improvement
+Measures recall@K, rerank lift, and faithfulness. Tunes per-workspace ranking weights based on usage.
+
+## Get Started Now
+
+```bash
+# Install the SDK
+npm install @lightfast/sdk
+
+# Initialize
+import { Lightfast } from '@lightfast/sdk'
+
+const lf = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY
+})
+
+# Search your knowledge
+const results = await lf.search({
+  query: 'how does X work?'
+})
+```
+
+Ready to dive deeper? [Start the quickstart →](/docs/get-started/quickstart)

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { env } from "~/env";
 
 export const runtime = "edge";
 
@@ -16,10 +18,30 @@ interface LightfastSearchResult {
   snippet?: string;
   score?: number;
   source?: string;
-  highlights?: Array<{
+  highlights?: {
     text: string;
     isHighlighted: boolean;
-  }>;
+  }[];
+}
+
+interface LightfastAPIResult {
+  id?: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  summary?: string;
+  url?: string;
+  slug?: string;
+  snippet?: string;
+  highlight?: string;
+  score?: number;
+  relevance?: number;
+  source?: string;
+  type?: string;
+  highlights?: {
+    text: string;
+    isHighlighted: boolean;
+  }[];
 }
 
 export async function POST(req: NextRequest) {
@@ -35,8 +57,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get Lightfast API key from environment
-    const apiKey = process.env.LIGHTFAST_API_KEY;
-    const apiUrl = process.env.LIGHTFAST_API_URL || "https://api.lightfast.ai";
+    const apiKey = env.LIGHTFAST_API_KEY;
+    const apiUrl = env.LIGHTFAST_API_URL;
 
     if (!apiKey) {
       console.error("LIGHTFAST_API_KEY not configured");
@@ -51,7 +73,7 @@ export async function POST(req: NextRequest) {
       query,
       limit: 10,
       // Add workspace if configured
-      workspace: process.env.LIGHTFAST_WORKSPACE,
+      workspace: env.LIGHTFAST_WORKSPACE,
     };
 
     const response = await fetch(`${apiUrl}/v1/search`, {
@@ -67,17 +89,17 @@ export async function POST(req: NextRequest) {
       throw new Error(`Lightfast API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { results?: LightfastAPIResult[] };
 
     // Transform Lightfast response to our format
-    const results: LightfastSearchResult[] = (data.results || []).map((item: any) => ({
-      id: item.id || generateId(),
-      title: item.title || item.name || "Untitled",
-      description: item.description || item.summary,
-      url: item.url || `/docs/${item.slug || item.id}`,
-      snippet: item.snippet || item.highlight,
-      score: item.score || item.relevance,
-      source: item.source || item.type,
+    const results: LightfastSearchResult[] = (data.results ?? []).map((item: LightfastAPIResult) => ({
+      id: item.id ?? generateId(),
+      title: item.title ?? item.name ?? "Untitled",
+      description: item.description ?? item.summary,
+      url: item.url ?? `/docs/${item.slug ?? item.id}`,
+      snippet: item.snippet ?? item.highlight,
+      score: item.score ?? item.relevance,
+      source: item.source ?? item.type,
       highlights: item.highlights,
     }));
 
@@ -143,8 +165,8 @@ function getMockResults(query: string): LightfastSearchResult[] {
   // Simple filtering based on query
   const filtered = mockData.filter(item =>
     item.title.toLowerCase().includes(query.toLowerCase()) ||
-    item.description?.toLowerCase().includes(query.toLowerCase()) ||
-    item.snippet?.toLowerCase().includes(query.toLowerCase())
+    item.description.toLowerCase().includes(query.toLowerCase()) ||
+    item.snippet.toLowerCase().includes(query.toLowerCase())
   );
 
   return filtered.length > 0 ? filtered : mockData.slice(0, 3);

@@ -1,0 +1,425 @@
+---
+title: MCP Integration
+description: Connect Lightfast to AI agents via Model Context Protocol
+---
+
+# MCP Integration
+
+Integrate Lightfast with AI agents using the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). This enables Claude, ChatGPT, and other AI assistants to search your team's knowledge.
+
+## What is MCP?
+
+MCP (Model Context Protocol) is a standard for connecting AI assistants to external tools and data sources. Lightfast provides MCP tools that let agents:
+
+- Search your indexed knowledge
+- Retrieve full documents
+- Find related content
+- Generate answers with citations
+
+## Installation
+
+### Using npx (Recommended)
+
+Add Lightfast MCP server to your agent configuration:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_..."
+      }
+    }
+  }
+}
+```
+
+### Using npm (Global Install)
+
+```bash
+npm install -g @lightfast/mcp-server
+```
+
+Then configure:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "lightfast-mcp",
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_..."
+      }
+    }
+  }
+}
+```
+
+## Configuration
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_abc123..."
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You'll see Lightfast tools available.
+
+### Cline (VS Code)
+
+Add to Cline MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_abc123..."
+      }
+    }
+  }
+}
+```
+
+### Custom Agent
+
+For custom agent implementations:
+
+```typescript
+import { MCPClient } from '@modelcontextprotocol/sdk/client'
+
+const client = new MCPClient({
+  serverCommand: 'npx',
+  serverArgs: ['-y', '@lightfast/mcp-server'],
+  env: {
+    LIGHTFAST_API_KEY: process.env.LIGHTFAST_API_KEY
+  }
+})
+
+await client.connect()
+```
+
+## Available Tools
+
+### lightfast_search
+
+Search team knowledge:
+
+```typescript
+// Agent uses this tool
+{
+  "tool": "lightfast_search",
+  "arguments": {
+    "query": "how does authentication work?",
+    "limit": 10,
+    "filters": {
+      "type": ["pull_request", "doc"]
+    }
+  }
+}
+```
+
+### lightfast_contents
+
+Get full documents:
+
+```typescript
+{
+  "tool": "lightfast_contents",
+  "arguments": {
+    "ids": ["pr-123", "doc-456"],
+    "includeRelationships": true
+  }
+}
+```
+
+### lightfast_similar
+
+Find related content:
+
+```typescript
+{
+  "tool": "lightfast_similar",
+  "arguments": {
+    "id": "pr-123",
+    "limit": 5
+  }
+}
+```
+
+### lightfast_answer
+
+Get synthesized answers:
+
+```typescript
+{
+  "tool": "lightfast_answer",
+  "arguments": {
+    "query": "explain our deployment process",
+    "maxSources": 5
+  }
+}
+```
+
+## Usage Examples
+
+### Ask Claude About Your Codebase
+
+```
+You: "What's our authentication flow?"
+
+Claude: [Uses lightfast_search to find auth docs]
+        [Uses lightfast_contents to get full details]
+        [Synthesizes answer with citations]
+
+        "Your authentication uses OAuth 2.0 with..."
+        Sources:
+        - PR #123: Implement OAuth 2.0
+        - docs/auth.md: Authentication Guide
+```
+
+### Find Related Issues
+
+```
+You: "Find issues related to PR #456"
+
+Claude: [Uses lightfast_similar with id="pr-456"]
+
+        "Here are related issues:
+        - Issue #789: Security review
+        - Issue #234: Token refresh bug
+        ..."
+```
+
+### Onboard New Team Members
+
+```
+You: "Explain how we handle payments"
+
+Claude: [Uses lightfast_answer]
+
+        "Payment processing is handled by..."
+
+        [Shows detailed answer with citations]
+```
+
+## Best Practices
+
+### Use Specific Queries
+
+Agents work better with specific questions:
+
+```
+✅ "How do we implement rate limiting in the API?"
+❌ "rate limiting"
+```
+
+### Combine Multiple Tools
+
+Agents can chain tools:
+
+```
+1. lightfast_search - Find relevant docs
+2. lightfast_contents - Get full content
+3. lightfast_similar - Find related context
+```
+
+### Leverage Citations
+
+Always check sources provided by the agent:
+
+```
+You: "Why did we choose PostgreSQL?"
+
+Claude: [Uses lightfast_answer]
+
+        "PostgreSQL was chosen because..."
+
+        Sources:
+        - RFC #42: Database Selection
+        - Discussion: Postgres vs MongoDB
+```
+
+## Advanced Configuration
+
+### Custom Filters
+
+Pre-configure filters for specific use cases:
+
+```json
+{
+  "mcpServers": {
+    "lightfast-code": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"pull_request\",\"code\"]}"
+      }
+    },
+    "lightfast-docs": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "lf_sk_live_...",
+        "LIGHTFAST_DEFAULT_FILTERS": "{\"type\":[\"doc\",\"guide\"]}"
+      }
+    }
+  }
+}
+```
+
+### Rate Limiting
+
+Configure request limits:
+
+```json
+{
+  "env": {
+    "LIGHTFAST_API_KEY": "lf_sk_live_...",
+    "LIGHTFAST_MAX_REQUESTS_PER_MINUTE": "30"
+  }
+}
+```
+
+### Caching
+
+Enable response caching:
+
+```json
+{
+  "env": {
+    "LIGHTFAST_API_KEY": "lf_sk_live_...",
+    "LIGHTFAST_CACHE_TTL": "300"
+  }
+}
+```
+
+## Troubleshooting
+
+### MCP Server Not Starting
+
+Check the logs:
+
+```bash
+# Claude Desktop logs
+tail -f ~/Library/Logs/Claude/mcp*.log
+
+# Or check server directly
+npx @lightfast/mcp-server --help
+```
+
+### API Key Issues
+
+Verify your API key:
+
+```bash
+# Test API key
+curl -H "Authorization: Bearer lf_sk_live_..." \
+  https://api.lightfast.ai/v1/search \
+  -d '{"query":"test"}'
+```
+
+### Permission Errors
+
+Ensure API key has correct permissions:
+- `lf_sk_*` - Full access (recommended for MCP)
+- `lf_pk_*` - Read-only (limited functionality)
+
+### Rate Limiting
+
+If hitting rate limits:
+
+1. **Upgrade plan** - Increase limits
+2. **Enable caching** - Reduce redundant requests
+3. **Use filters** - Make queries more specific
+
+## Security Considerations
+
+### API Key Management
+
+- **Never commit** API keys to version control
+- **Use environment variables** for configuration
+- **Rotate keys** regularly (every 90 days)
+
+### Access Control
+
+MCP servers run with your API key's permissions:
+
+- Use **restricted keys** for limited access
+- Create **separate keys** per agent/use case
+- **Monitor usage** in dashboard
+
+### Data Privacy
+
+- Agent has access to **all content** your API key can access
+- Consider using **restricted keys** with scoped permissions
+- Review **audit logs** regularly
+
+## Production Deployment
+
+### Team Setup
+
+Provide each team member their own API key:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfast/mcp-server"],
+      "env": {
+        "LIGHTFAST_API_KEY": "${LIGHTFAST_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+Set in environment:
+```bash
+export LIGHTFAST_API_KEY="lf_sk_live_..."
+```
+
+### Monitoring
+
+Track MCP usage in the dashboard:
+- Request counts per agent
+- Popular queries
+- Error rates
+- Response times
+
+### Updates
+
+Keep MCP server updated:
+
+```bash
+# Using npx (automatic)
+npx -y @lightfast/mcp-server
+
+# Using global install
+npm update -g @lightfast/mcp-server
+```
+
+## Next Steps
+
+- **[Search Strategies](/docs/guides/search-strategies)** - Optimize agent queries
+- **[Answer Quality](/docs/guides/answer-quality)** - Improve agent responses
+- **[API Reference](/api/overview)** - Understand available endpoints
+- **[MCP Documentation](https://modelcontextprotocol.io)** - Learn more about MCP

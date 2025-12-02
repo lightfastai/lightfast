@@ -1,0 +1,479 @@
+---
+title: Team Knowledge Bot
+description: Build a Slack bot that answers questions using team knowledge
+---
+
+# Team Knowledge Bot
+
+Build an intelligent Slack bot that answers questions using your team's indexed knowledge. This example shows a complete implementation with streaming responses and citation formatting.
+
+## Overview
+
+This bot:
+- Listens for mentions in Slack
+- Searches team knowledge for answers
+- Responds with synthesized answers and citations
+- Supports follow-up questions in threads
+
+## Prerequisites
+
+- Lightfast API key
+- Slack app with Bot Token
+- Node.js 18+
+
+## Setup
+
+### Install Dependencies
+
+```bash
+npm install @slack/bolt @lightfast/sdk
+```
+
+### Create Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps)
+2. Create new app
+3. Add Bot Token Scopes:
+   - `app_mentions:read`
+   - `chat:write`
+   - `channels:history`
+4. Install app to workspace
+5. Copy Bot Token
+
+### Environment Variables
+
+```bash
+# .env
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_SIGNING_SECRET=...
+LIGHTFAST_API_KEY=lf_sk_live_...
+```
+
+## Implementation
+
+### Basic Bot
+
+```typescript
+import { App } from '@slack/bolt'
+import { Lightfast } from '@lightfast/sdk'
+
+const app = new App({
+  token: process.env.SLACK_BOT_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET
+})
+
+const lf = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY
+})
+
+// Listen for mentions
+app.event('app_mention', async ({ event, say }) => {
+  try {
+    // Remove bot mention from query
+    const query = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+
+    // Show typing indicator
+    await app.client.chat.postMessage({
+      channel: event.channel,
+      text: 'Searching...'
+    })
+
+    // Get answer from Lightfast
+    const result = await lf.answer({
+      query,
+      maxSources: 5
+    })
+
+    // Format response with citations
+    await say({
+      text: result.data.answer,
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: result.data.answer
+          }
+        },
+        {
+          type: 'divider'
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: '*Sources:*'
+            },
+            ...result.data.citations.map(c => ({
+              type: 'mrkdwn',
+              text: `• <${c.url}|${c.title}>`
+            }))
+          ]
+        }
+      ]
+    })
+  } catch (error) {
+    await say(`Sorry, I encountered an error: ${error.message}`)
+  }
+})
+
+await app.start(3000)
+console.log('⚡️ Bot is running!')
+```
+
+### With Streaming
+
+Stream responses for better UX:
+
+```typescript
+app.event('app_mention', async ({ event, say, client }) => {
+  const query = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+
+  // Post initial message
+  const { ts } = await say({
+    text: 'Thinking...',
+    thread_ts: event.thread_ts
+  })
+
+  try {
+    // Stream answer
+    const stream = await lf.answer({
+      query,
+      stream: true,
+      maxSources: 5
+    })
+
+    let fullAnswer = ''
+    let citations = []
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'chunk') {
+        fullAnswer += chunk.content
+
+        // Update message every 100 chars for smooth streaming
+        if (fullAnswer.length % 100 === 0) {
+          await client.chat.update({
+            channel: event.channel,
+            ts,
+            text: fullAnswer
+          })
+        }
+      } else if (chunk.type === 'citations') {
+        citations = chunk.citations
+      }
+    }
+
+    // Final update with citations
+    await client.chat.update({
+      channel: event.channel,
+      ts,
+      text: fullAnswer,
+      blocks: [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: fullAnswer }
+        },
+        { type: 'divider' },
+        {
+          type: 'context',
+          elements: [
+            { type: 'mrkdwn', text: '*Sources:*' },
+            ...citations.map(c => ({
+              type: 'mrkdwn',
+              text: `• <${c.url}|${c.title}>`
+            }))
+          ]
+        }
+      ]
+    })
+  } catch (error) {
+    await client.chat.update({
+      channel: event.channel,
+      ts,
+      text: `Error: ${error.message}`
+    })
+  }
+})
+```
+
+### Thread Context
+
+Support follow-up questions in threads:
+
+```typescript
+async function getThreadContext(client: any, channel: string, threadTs: string) {
+  const replies = await client.conversations.replies({
+    channel,
+    ts: threadTs
+  })
+
+  return replies.messages.map(m => ({
+    role: m.bot_id ? 'assistant' : 'user',
+    content: m.text
+  }))
+}
+
+app.event('app_mention', async ({ event, say, client }) => {
+  const query = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+
+  // Get thread context if in thread
+  let previousMessages = []
+  if (event.thread_ts) {
+    previousMessages = await getThreadContext(
+      client,
+      event.channel,
+      event.thread_ts
+    )
+  }
+
+  const result = await lf.answer({
+    query,
+    context: {
+      conversationId: event.thread_ts || event.ts,
+      previousMessages
+    }
+  })
+
+  await say({
+    text: result.data.answer,
+    thread_ts: event.thread_ts || event.ts
+  })
+})
+```
+
+## Advanced Features
+
+### Search Mode
+
+Let users choose between search and answer:
+
+```typescript
+app.event('app_mention', async ({ event, say }) => {
+  const text = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+
+  // Parse command
+  const [command, ...queryParts] = text.split(' ')
+  const query = queryParts.join(' ')
+
+  if (command === 'search') {
+    // Return search results
+    const results = await lf.search({ query, limit: 5 })
+
+    await say({
+      blocks: results.data.map(r => ({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*<${r.url}|${r.title}>*\n${r.snippet}`
+        }
+      }))
+    })
+  } else {
+    // Return synthesized answer
+    const answer = await lf.answer({ query })
+    await say({ text: answer.data.answer })
+  }
+})
+```
+
+### Filters
+
+Add slash commands for filtered search:
+
+```typescript
+app.command('/ask-code', async ({ command, ack, say }) => {
+  await ack()
+
+  const answer = await lf.answer({
+    query: command.text,
+    filters: {
+      type: ['pull_request', 'code', 'issue'],
+      source: 'github'
+    }
+  })
+
+  await say({ text: answer.data.answer })
+})
+
+app.command('/ask-docs', async ({ command, ack, say }) => {
+  await ack()
+
+  const answer = await lf.answer({
+    query: command.text,
+    filters: {
+      type: ['doc', 'guide', 'tutorial']
+    }
+  })
+
+  await say({ text: answer.data.answer })
+})
+```
+
+### Reactions
+
+Let users react to provide feedback:
+
+```typescript
+app.event('app_mention', async ({ event, say }) => {
+  const query = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+  const answer = await lf.answer({ query })
+
+  const { ts } = await say({ text: answer.data.answer })
+
+  // Add reaction options
+  await app.client.reactions.add({
+    channel: event.channel,
+    name: 'thumbsup',
+    timestamp: ts
+  })
+  await app.client.reactions.add({
+    channel: event.channel,
+    name: 'thumbsdown',
+    timestamp: ts
+  })
+})
+
+// Track feedback
+app.event('reaction_added', async ({ event }) => {
+  if (event.reaction === 'thumbsup') {
+    // Log positive feedback
+    console.log('User liked answer:', event.item.ts)
+  } else if (event.reaction === 'thumbsdown') {
+    // Log negative feedback
+    console.log('User disliked answer:', event.item.ts)
+  }
+})
+```
+
+## Deployment
+
+### Railway
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and init
+railway login
+railway init
+
+# Add environment variables
+railway variables set SLACK_BOT_TOKEN=...
+railway variables set LIGHTFAST_API_KEY=...
+
+# Deploy
+railway up
+```
+
+### Docker
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+CMD ["node", "bot.js"]
+```
+
+```bash
+docker build -t knowledge-bot .
+docker run -e SLACK_BOT_TOKEN=... -e LIGHTFAST_API_KEY=... knowledge-bot
+```
+
+## Testing
+
+Test locally:
+
+```bash
+# Install ngrok
+npm install -g ngrok
+
+# Start bot
+node bot.js
+
+# In another terminal
+ngrok http 3000
+
+# Update Slack app Event Subscriptions URL
+# to ngrok URL + /slack/events
+```
+
+## Best Practices
+
+### Rate Limiting
+
+Implement rate limiting to avoid hitting API limits:
+
+```typescript
+const { RateLimiterMemory } = require('rate-limiter-flexible')
+
+const rateLimiter = new RateLimiterMemory({
+  points: 10, // 10 requests
+  duration: 60 // per 60 seconds
+})
+
+app.event('app_mention', async ({ event, say }) => {
+  try {
+    await rateLimiter.consume(event.user)
+    // Handle request
+  } catch (error) {
+    await say('Please slow down. Try again in a minute.')
+  }
+})
+```
+
+### Error Handling
+
+Provide helpful error messages:
+
+```typescript
+try {
+  const answer = await lf.answer({ query })
+  await say({ text: answer.data.answer })
+} catch (error) {
+  if (error.code === 'rate_limit_exceeded') {
+    await say('Too many requests. Please try again in a moment.')
+  } else if (error.code === 'insufficient_sources') {
+    await say("I couldn't find enough information to answer that.")
+  } else {
+    await say('Sorry, something went wrong. Please try again.')
+  }
+}
+```
+
+### Caching
+
+Cache common queries:
+
+```typescript
+const cache = new Map()
+
+async function getCachedAnswer(query: string) {
+  const key = query.toLowerCase().trim()
+
+  if (cache.has(key)) {
+    return cache.get(key)
+  }
+
+  const answer = await lf.answer({ query })
+  cache.set(key, answer)
+
+  setTimeout(() => cache.delete(key), 5 * 60 * 1000) // 5 min TTL
+
+  return answer
+}
+```
+
+## Next Steps
+
+- **[Onboarding Assistant](/docs/examples/onboarding-assistant)** - Help new team members
+- **[Code Context Assistant](/docs/examples/code-assistant)** - AI pair programmer
+- **[MCP Integration](/docs/guides/mcp-integration)** - Connect to Claude
+- **[API Reference: Answer](/api/answer)** - Complete answer endpoint docs

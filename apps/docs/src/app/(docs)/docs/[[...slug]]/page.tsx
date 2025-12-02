@@ -5,6 +5,7 @@ import { DeveloperPlatformLanding } from "./_components/developer-platform-landi
 import { DocsLayout } from "@/src/components/docs-layout";
 import { mdxComponents } from "@/mdx-components";
 import { generatePageMetadata } from "@/src/lib/metadata-utils";
+import { exposureTrial } from "@/src/lib/fonts";
 
 export default async function Page({
   params,
@@ -35,10 +36,30 @@ export default async function Page({
 
   const MDX = page.data.body;
   const toc = page.data.toc;
+  const title = page.data.title;
+  const description = page.data.description;
 
   return (
     <DocsLayout toc={toc}>
       <article className="max-w-none">
+        {/* Page Header */}
+        {(title || description) && (
+          <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
+            {title && (
+              <h1
+                className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance ${exposureTrial.className}`}
+              >
+                {title}
+              </h1>
+            )}
+            {description && (
+              <div className="mt-4 w-full">
+                <p className="text-base text-muted-foreground">{description}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <MDX components={mdxComponents} />
       </article>
     </DocsLayout>

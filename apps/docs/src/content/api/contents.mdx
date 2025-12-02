@@ -1,0 +1,406 @@
+---
+title: POST /v1/contents
+description: Get full documents, metadata, and relationships
+---
+
+# POST /v1/contents
+
+Retrieve complete documents with full content, metadata, and relationship information. Use this after getting search results to fetch the full context.
+
+## Endpoint
+
+```
+POST https://api.lightfast.ai/v1/contents
+```
+
+## Authentication
+
+```bash
+Authorization: Bearer lf_sk_live_...
+```
+
+## Request Body
+
+```typescript
+{
+  ids: string[]              // Array of content IDs to retrieve
+  includeRelationships?: boolean // Include graph relationships (default: false)
+}
+```
+
+## Response
+
+```typescript
+{
+  data: Array<{
+    id: string               // Unique content identifier
+    title: string            // Content title
+    content: string          // Full content/body
+    url?: string             // Link to original
+    type: string             // Content type
+    source: string           // Source system
+    createdAt: string        // ISO 8601 timestamp
+    updatedAt: string        // ISO 8601 timestamp
+    owner?: string           // Content owner/author
+    metadata: Record<string, any>  // Full metadata
+    relationships?: {
+      references: Array<{    // Content this references
+        id: string
+        type: string
+        relationship: 'references' | 'depends_on' | 'relates_to'
+      }>
+      referencedBy: Array<{  // Content that references this
+        id: string
+        type: string
+        relationship: 'references' | 'depends_on' | 'relates_to'
+      }>
+      owner: {               // Owner information
+        id: string
+        name: string
+        expertise: string[]  // Topics this owner knows
+      }
+    }
+  }>
+  meta: {
+    total: number
+    retrieved: number
+  }
+  requestId: string
+}
+```
+
+## Example Request
+
+
+    ```bash
+    curl -X POST https://api.lightfast.ai/v1/contents \
+      -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ids": ["pr-123", "issue-456"],
+        "includeRelationships": true
+      }'
+    ```
+  
+
+## Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": "pr-123",
+      "title": "Implement OAuth 2.0 authentication",
+      "content": "## Summary\n\nThis PR implements OAuth 2.0 authentication flow with the following features:\n\n- Authorization code flow\n- Refresh token rotation\n- JWT validation\n- PKCE support\n\n## Implementation Details\n\n...[full PR description]...",
+      "url": "https://github.com/org/repo/pull/123",
+      "type": "pull_request",
+      "source": "github",
+      "createdAt": "2024-03-15T10:30:00Z",
+      "updatedAt": "2024-03-16T14:22:00Z",
+      "owner": "alice",
+      "metadata": {
+        "repository": "org/repo",
+        "state": "merged",
+        "labels": ["security", "authentication"],
+        "commits": 12,
+        "additions": 450,
+        "deletions": 120,
+        "files_changed": 8
+      },
+      "relationships": {
+        "references": [
+          {
+            "id": "issue-789",
+            "type": "issue",
+            "relationship": "closes"
+          },
+          {
+            "id": "rfc-42",
+            "type": "doc",
+            "relationship": "implements"
+          }
+        ],
+        "referencedBy": [
+          {
+            "id": "pr-124",
+            "type": "pull_request",
+            "relationship": "depends_on"
+          }
+        ],
+        "owner": {
+          "id": "user-alice",
+          "name": "Alice Johnson",
+          "expertise": ["authentication", "security", "backend"]
+        }
+      }
+    }
+  ],
+  "meta": {
+    "total": 2,
+    "retrieved": 1
+  },
+  "requestId": "req_abc123def456"
+}
+```
+
+## Use Cases
+
+### Display Full Content
+
+After search, show complete content:
+
+```typescript
+// Search first
+const results = await lf.search({
+  query: 'authentication implementation'
+})
+
+// Get full content
+const docs = await lf.contents({
+  ids: results.data.map(r => r.id)
+})
+
+// Display
+docs.data.forEach(doc => {
+  console.log('Title:', doc.title)
+  console.log('Content:', doc.content)
+  console.log('---')
+})
+```
+
+### Explore Relationships
+
+Discover connected content:
+
+```typescript
+const doc = await lf.contents({
+  ids: ['pr-123'],
+  includeRelationships: true
+})
+
+// What does this reference?
+doc.data[0].relationships?.references.forEach(ref => {
+  console.log(`References ${ref.type}: ${ref.id}`)
+})
+
+// What references this?
+doc.data[0].relationships?.referencedBy.forEach(ref => {
+  console.log(`Referenced by ${ref.type}: ${ref.id}`)
+})
+```
+
+### Find Content Owner
+
+Get owner details and expertise:
+
+```typescript
+const doc = await lf.contents({
+  ids: ['pr-123'],
+  includeRelationships: true
+})
+
+const owner = doc.data[0].relationships?.owner
+console.log(`Owner: ${owner?.name}`)
+console.log(`Expertise: ${owner?.expertise.join(', ')}`)
+```
+
+### Build Content Graph
+
+Traverse relationships for visualization:
+
+```typescript
+async function buildGraph(startId: string, depth = 2) {
+  const visited = new Set<string>()
+  const graph: Record<string, any> = {}
+
+  async function traverse(id: string, currentDepth: number) {
+    if (visited.has(id) || currentDepth > depth) return
+    visited.add(id)
+
+    const doc = await lf.contents({
+      ids: [id],
+      includeRelationships: true
+    })
+
+    graph[id] = doc.data[0]
+
+    // Traverse references
+    const refs = doc.data[0].relationships?.references || []
+    for (const ref of refs) {
+      await traverse(ref.id, currentDepth + 1)
+    }
+  }
+
+  await traverse(startId, 0)
+  return graph
+}
+```
+
+## Relationships
+
+### Types of Relationships
+
+- **references**: Direct references (e.g., PR references issue)
+- **depends_on**: Dependency relationships (e.g., PR depends on another PR)
+- **relates_to**: Semantic relationships (e.g., related discussions)
+- **closes**: Resolves or closes (e.g., PR closes issue)
+- **implements**: Implementation relationship (e.g., PR implements RFC)
+
+### Graph Depth
+
+Relationships include **1-2 hop connections** for explainability:
+
+```typescript
+// 1-hop: Direct references
+PR-123 → Issue-456
+
+// 2-hop: Indirect connections
+PR-123 → Issue-456 → Discussion-789
+```
+
+Lightfast focuses on short-hop reasoning to maintain transparency and performance.
+
+## Metadata
+
+Full metadata varies by content type and source:
+
+### Pull Request Metadata
+
+```typescript
+{
+  repository: string
+  state: 'open' | 'closed' | 'merged'
+  labels: string[]
+  commits: number
+  additions: number
+  deletions: number
+  files_changed: number
+  reviewers: string[]
+  merged_by?: string
+  merged_at?: string
+}
+```
+
+### Issue Metadata
+
+```typescript
+{
+  repository: string
+  state: 'open' | 'closed'
+  labels: string[]
+  assignees: string[]
+  milestone?: string
+  closed_by?: string
+  closed_at?: string
+}
+```
+
+### Document Metadata
+
+```typescript
+{
+  workspace: string
+  path: string
+  collection: string
+  tags: string[]
+  last_edited_by: string
+}
+```
+
+## Batch Retrieval
+
+Retrieve multiple documents efficiently:
+
+```typescript
+// Efficient: Single request
+const docs = await lf.contents({
+  ids: ['pr-1', 'pr-2', 'pr-3', 'issue-1', 'doc-1']
+})
+
+// Less efficient: Multiple requests
+const doc1 = await lf.contents({ ids: ['pr-1'] })
+const doc2 = await lf.contents({ ids: ['pr-2'] })
+// ...
+```
+
+**Recommendation**: Batch up to 50 IDs per request for optimal performance.
+
+## Error Handling
+
+```typescript
+try {
+  const docs = await lf.contents({ ids: ['pr-123'] })
+} catch (error) {
+  if (error.code === 'resource_not_found') {
+    console.error('Some IDs not found:', error.details.notFound)
+  } else if (error.code === 'invalid_request') {
+    console.error('Invalid request:', error.message)
+  }
+}
+```
+
+### Partial Success
+
+If some IDs are not found, they are omitted from results:
+
+```typescript
+const docs = await lf.contents({
+  ids: ['pr-123', 'invalid-id', 'pr-456']
+})
+
+// Returns 2 documents (invalid-id skipped)
+console.log(`Retrieved ${docs.meta.retrieved} of ${docs.meta.total}`)
+```
+
+## Performance Tips
+
+### Request Only What You Need
+
+Don't include relationships unless needed:
+
+```typescript
+// Fast: No relationships
+const docs = await lf.contents({ ids })
+
+// Slower: Includes relationship graph traversal
+const docs = await lf.contents({ ids, includeRelationships: true })
+```
+
+### Batch Requests
+
+Combine multiple ID fetches:
+
+```typescript
+// ✅ Good: Single batch request
+const docs = await lf.contents({ ids: [...allIds] })
+
+// ❌ Bad: Many individual requests
+for (const id of allIds) {
+  await lf.contents({ ids: [id] })
+}
+```
+
+### Cache Results
+
+Cache fetched content to avoid redundant requests:
+
+```typescript
+const cache = new Map<string, any>()
+
+async function getContent(id: string) {
+  if (cache.has(id)) {
+    return cache.get(id)
+  }
+
+  const doc = await lf.contents({ ids: [id] })
+  cache.set(id, doc.data[0])
+  return doc.data[0]
+}
+```
+
+## Next Steps
+
+- **[POST /v1/search](/api/search)** - Search to find content IDs
+- **[POST /v1/similar](/api/similar)** - Find related content
+- **[POST /v1/answer](/api/answer)** - Get synthesized answers
+- **[Graph Relationships Guide](/docs/guides/graph-relationships)** - Understand the knowledge graph

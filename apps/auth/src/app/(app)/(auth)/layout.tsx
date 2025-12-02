@@ -20,11 +20,9 @@ export default function AuthLayout({
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
             {/* Left: Logo */}
             <div className="-ml-2 flex items-center md:justify-self-start">
-              <Button variant="ghost" size="lg" asChild>
-                <MicrofrontendLink href="/" className="flex items-center">
-                  <Icons.logoShort className="text-foreground size-6" />
-                </MicrofrontendLink>
-              </Button>
+              <MicrofrontendLink href="/" className="flex items-center">
+                <Icons.logoShort className="text-foreground size-6" />
+              </MicrofrontendLink>
             </div>
             {/* Center placeholder to mirror marketing layout */}
             <div className="hidden md:block" aria-hidden />
