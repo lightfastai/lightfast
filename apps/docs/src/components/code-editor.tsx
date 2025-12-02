@@ -158,7 +158,7 @@ function highlightLine(line: string, language: string) {
     );
 
     // Flags and options (starting with - or --)
-    remaining = remaining.replace(/\s(-{1,2}[a-zA-Z0-9-]+)/g, (match, flag) => {
+    remaining = remaining.replace(/\s(-{1,2}[a-zA-Z0-9-]+)/g, (match, flag: string) => {
       tokens.push(
         <span key={key++}>
           {match.replace(flag, "")}

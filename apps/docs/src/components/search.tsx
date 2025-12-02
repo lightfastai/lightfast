@@ -2,7 +2,7 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@repo/ui/components/ui/input";
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
@@ -43,10 +43,10 @@ interface SearchResult {
   snippet?: string;
   score?: number;
   source?: string;
-  highlights?: Array<{
+  highlights?: {
     text: string;
     isHighlighted: boolean;
-  }>;
+  }[];
 }
 
 // Cache for search results
@@ -178,11 +178,11 @@ export function Search() {
         throw new Error("Search failed");
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { results?: SearchResult[] };
 
       // Only update if this is still the latest request
       if (currentRequestId === requestIdRef.current) {
-        const searchResults = data.results || [];
+        const searchResults: SearchResult[] = data.results ?? [];
 
         // Update cache
         searchCache.set(cacheKey, {
@@ -194,7 +194,9 @@ export function Search() {
         if (searchCache.size > 50) {
           const entries = Array.from(searchCache.entries());
           entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-          searchCache.delete(entries[0][0]);
+          // Delete the oldest entry (we know it exists since size > 50)
+          const [[oldestKey]] = entries;
+          searchCache.delete(oldestKey);
         }
 
         setResults(searchResults);
@@ -236,7 +238,7 @@ export function Search() {
 
     // Set up new debounce timer
     debounceTimerRef.current = setTimeout(() => {
-      performSearch(searchQuery);
+      void performSearch(searchQuery);
     }, 300);
 
     // Cleanup function
@@ -246,7 +248,7 @@ export function Search() {
         debounceTimerRef.current = undefined;
       }
     };
-  }, [searchQuery, open]); // Remove performSearch dependency since it's stable
+  }, [searchQuery, open, performSearch]);
 
   // Reset when dialog closes and cleanup
   useEffect(() => {
