@@ -207,12 +207,6 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /* Fix for Tailwind v4 removing cursor: pointer from buttons */
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
 }
 
 @layer utilities {
