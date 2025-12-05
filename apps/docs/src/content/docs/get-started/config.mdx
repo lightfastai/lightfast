@@ -7,6 +7,24 @@ description: Complete reference for lightfast.yml configuration files
 
 The `lightfast.yml` file controls what gets indexed from your repository and how Lightfast organizes your team's knowledge. This guide covers all configuration options and best practices.
 
+## Quick Start
+
+Get started with the minimal configuration:
+
+<CodeEditor
+  code={`version: 1
+store: my-docs
+include:
+  - "docs/**/*.md"`}
+  language="yaml"
+/>
+
+That's it! This config will index all Markdown files in your `docs/` directory.
+
+<Alert>
+**Next steps:** Place this file in your repository root as `lightfast.yml`, then customize your store name and add more file patterns below.
+</Alert>
+
 ## Config File Location
 
 Place your `lightfast.yml` file in the **root directory** of your repository. Lightfast automatically detects this file when your repository is connected and uses it to determine what to index.
@@ -22,7 +40,7 @@ Place your `lightfast.yml` file in the **root directory** of your repository. Li
   language="bash"
 />
 
-## Config Schema
+## Core Concepts
 
 ### version (required)
 
@@ -38,25 +56,25 @@ The configuration version. Currently only version `1` is supported.
 A unique identifier for this documentation set within your workspace. Store names help organize knowledge across multiple repositories.
 
 **Constraints:**
+- Must not be empty
 - Maximum 20 characters
 - Lowercase alphanumeric characters and hyphens only
 - No leading, trailing, or consecutive hyphens
 
-<CodeEditor
-  code={`store: docs-store
-
-# Good examples:
-store: api-reference
-store: engineering-wiki
-store: marketing-docs
-
-# Bad examples:
-store: -invalid        # Leading hyphen
-store: invalid-        # Trailing hyphen
-store: invalid--name   # Consecutive hyphens
-store: Invalid_Name    # Uppercase and underscore
-store: this-name-is-way-too-long-for-a-store  # Over 20 chars`}
-  language="yaml"
+<ValidationExample
+  good={[
+    "docs-store",
+    "api-reference",
+    "engineering-wiki",
+    "marketing-docs"
+  ]}
+  bad={[
+    "-invalid          # Leading hyphen",
+    "invalid-          # Trailing hyphen",
+    "invalid--name     # Consecutive hyphens",
+    "Invalid_Name      # Uppercase and underscore",
+    "this-name-is-way-too-long-for-a-store  # Over 20 chars"
+  ]}
 />
 
 <Alert>
@@ -90,69 +108,78 @@ Array of glob patterns matching files to index. Patterns are relative to your re
 - Consider including design documents and RFCs
 - Test patterns locally before committing
 
-### workspace (optional)
+## Configuration Reference
 
-Workspace identifier linking this configuration to your Lightfast workspace. If omitted, Lightfast auto-detects it from your GitHub repository.
+Quick reference for all available options:
 
-<CodeEditor
-  code={`# Auto-detected (recommended)
-# workspace is omitted - Lightfast uses GitHub repo
+| Field | Required | Type | Constraints | Description |
+|-------|----------|------|-------------|-------------|
+| `version` | ✅ | number | Must be `1` | Configuration schema version |
+| `store` | ✅ | string | Max 20 chars, lowercase, alphanumeric + hyphens, no leading/trailing/consecutive hyphens | Unique identifier for this documentation set within your workspace |
+| `include` | ✅ | string[] | Valid glob patterns (relative paths), minimum 1 pattern | Array of glob patterns matching files to index |
 
-# Explicitly specified
-workspace: myorg/myrepo`}
-  language="yaml"
-/>
+**Automatic Exclusions:** `node_modules/`, `.git/`, `dist/`, `build/`, `.next/`, `.turbo/`, dotfiles
 
-**When to specify:**
-- Multi-repo monorepos with different workspaces
-- Custom workspace identifiers not matching GitHub repo
-- Testing or development environments
+## Pattern Selection Guide
 
-## Automatic Exclusions
+Choose the right patterns for your use case:
 
-Lightfast automatically excludes common build artifacts and dependencies. You don't need to specify these patterns:
-
-- `**/node_modules/**` - Node.js dependencies
-- `**/.git/**` - Git repository data
-- `**/dist/**` - Build output
-- `**/build/**` - Build artifacts
-- `**/.next/**` - Next.js build cache
-- `**/.turbo/**` - Turborepo cache
-
-## Complete Example
+### Documentation Sites
+**Use when:** You have a dedicated docs folder with Markdown/MDX files
 
 <CodeEditor
-  code={`# Lightfast Configuration
-# Full example with all options
-
-version: 1
-
-# Workspace (optional - auto-detected from GitHub)
-workspace: acme/platform
-
-# Store name (required - unique per workspace)
-store: platform-docs
-
-# Include patterns (required - at least one)
+  code={`version: 1
+store: docs
 include:
-  # Documentation
-  - "README.md"
   - "docs/**/*.md"
   - "docs/**/*.mdx"
-
-  # Design documents
-  - "rfcs/**/*.md"
-  - "adrs/**/*.md"
-
-  # API documentation
-  - "api-docs/**/*.json"
-  - "openapi.yaml"
-
-  # Code documentation
-  - "src/**/*.tsx"
-  - "packages/*/README.md"`}
+  - "README.md"`}
   language="yaml"
 />
+
+### Engineering Wikis
+**Use when:** You maintain design docs, RFCs, and runbooks
+
+<CodeEditor
+  code={`version: 1
+store: eng-wiki
+include:
+  - "wiki/**/*.md"
+  - "rfcs/**/*.md"
+  - "adrs/**/*.md"
+  - "runbooks/**/*.md"`}
+  language="yaml"
+/>
+
+### API Documentation
+**Use when:** You have OpenAPI specs and API reference docs
+
+<CodeEditor
+  code={`version: 1
+store: api-docs
+include:
+  - "api/**/*.md"
+  - "openapi.yaml"
+  - "swagger.json"
+  - "README.md"`}
+  language="yaml"
+/>
+
+### Monorepo Documentation
+**Use when:** Each package has its own documentation
+
+<CodeEditor
+  code={`version: 1
+store: monorepo-docs
+include:
+  - "README.md"
+  - "docs/**/*.md"
+  - "packages/*/README.md"
+  - "apps/*/README.md"`}
+  language="yaml"
+/>
+
+**Warning:** Large codebases with many source files may hit indexing limits. Start with documentation files and expand as needed.
 
 ## Multi-Repository Setup
 
@@ -198,87 +225,43 @@ Then filter searches by store:
 - Search `store:api-service` for API references
 - Search `store:infra-wiki` for infrastructure guides
 
-## Common Patterns
-
-### Documentation Sites
-
-<CodeEditor
-  code={`version: 1
-store: docs
-include:
-  - "docs/**/*.md"
-  - "docs/**/*.mdx"
-  - "README.md"`}
-  language="yaml"
-/>
-
-### Engineering Wikis
-
-<CodeEditor
-  code={`version: 1
-store: eng-wiki
-include:
-  - "wiki/**/*.md"
-  - "rfcs/**/*.md"
-  - "adrs/**/*.md"
-  - "runbooks/**/*.md"`}
-  language="yaml"
-/>
-
-### API Documentation
-
-<CodeEditor
-  code={`version: 1
-store: api-docs
-include:
-  - "api/**/*.md"
-  - "openapi.yaml"
-  - "swagger.json"
-  - "README.md"`}
-  language="yaml"
-/>
-
-### Monorepo Documentation
-
-<CodeEditor
-  code={`version: 1
-store: monorepo-docs
-include:
-  - "README.md"
-  - "docs/**/*.md"
-  - "packages/*/README.md"
-  - "apps/*/README.md"`}
-  language="yaml"
-/>
-
 ## Validation and Errors
 
 Lightfast validates your configuration when indexing starts. Common errors:
 
 ### Invalid Store Name
 
-```
-Error: Store name must be 20 characters or less
-Error: Store name must be lowercase alphanumeric with hyphens only
-```
+<ValidationErrorList
+  title="Invalid Store Name"
+  errors={[
+    "Store name must not be empty",
+    "Store name must be 20 characters or less",
+    "Store name must be lowercase alphanumeric with hyphens only",
+    "Store name cannot have leading/trailing/consecutive hyphens"
+  ]}
+/>
 
-**Fix:** Use a shorter, valid store name following the constraints.
+**Fix:** Use a valid store name following the constraints.
 
 ### No Include Patterns
 
-```
-Error: At least one include pattern is required
-```
+<ValidationError title="No Include Patterns">
+At least one include pattern is required
+</ValidationError>
 
 **Fix:** Add at least one glob pattern to the `include` array.
 
 ### Invalid Glob Pattern
 
-```
-Error: Pattern '/absolute/path/*.md' should not start with /
-```
+<ValidationErrorList
+  title="Invalid Glob Pattern"
+  errors={[
+    "Pattern '/absolute/path/*.md' should not start with /",
+    "Pattern 'C:\\docs\\*.md' appears to be an absolute path"
+  ]}
+/>
 
-**Fix:** Use relative paths from repository root (e.g., `docs/*.md` instead of `/docs/*.md`).
+**Fix:** Use relative paths from repository root (e.g., `docs/*.md` instead of `/docs/*.md` or `C:\docs\*.md`).
 
 ## Testing Your Configuration
 
@@ -313,6 +296,40 @@ git push origin main`}
 />
 
 Changes take effect within minutes. Previous indexed content from removed patterns will be automatically cleaned up.
+
+## Complete Example
+
+Full configuration with all available options:
+
+<CodeEditor
+  code={`# Lightfast Configuration
+# Full example with all options
+
+version: 1
+
+# Store name (required - unique per workspace)
+store: platform-docs
+
+# Include patterns (required - at least one)
+include:
+  # Documentation
+  - "README.md"
+  - "docs/**/*.md"
+  - "docs/**/*.mdx"
+
+  # Design documents
+  - "rfcs/**/*.md"
+  - "adrs/**/*.md"
+
+  # API documentation
+  - "api-docs/**/*.json"
+  - "openapi.yaml"
+
+  # Code documentation
+  - "src/**/*.tsx"
+  - "packages/*/README.md"`}
+  language="yaml"
+/>
 
 ## What's Next?
 

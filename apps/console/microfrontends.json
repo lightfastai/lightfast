@@ -21,6 +21,8 @@
             "/pricing",
             "/changelog",
             "/changelog/:path*",
+            "/blog",
+            "/blog/:path*",
             "/use-cases",
             "/early-access",
             "/legal/:path*",

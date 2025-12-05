@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { changelog, type ChangelogEntryQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
+import { JsonLd } from "@vendor/seo/json-ld";
 import {
   Accordion,
   AccordionContent,
@@ -88,6 +89,20 @@ export default async function ChangelogEntryPage({
             })
           : "";
 
+        // Generate structured data for SEO
+        const structuredData = {
+          "@context": "https://schema.org" as const,
+          "@type": "SoftwareApplication" as const,
+          name: "Lightfast",
+          applicationCategory: "DeveloperApplication",
+          releaseNotes: `https://lightfast.ai/changelog/${slug}`,
+          ...(created ? { datePublished: created.toISOString() } : {}),
+          ...(entry.slug ? { softwareVersion: entry.slug } : {}),
+          description: entry.body?.plainText
+            ? entry.body.plainText.slice(0, 160)
+            : entry._title || "Lightfast changelog entry",
+        };
+
         const sections = [
           {
             key: "improvements",
@@ -104,8 +119,12 @@ export default async function ChangelogEntryPage({
         ].filter((section) => section.content);
 
         return (
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          <>
+            {/* Structured data for SEO */}
+            <JsonLd code={structuredData as any} />
+
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
               <div className="md:col-span-2 flex items-center gap-2">
                 {entry.slug && (
                   <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
@@ -170,6 +189,7 @@ export default async function ChangelogEntryPage({
               </article>
             </div>
           </div>
+          </>
         );
       }}
     </Feed>

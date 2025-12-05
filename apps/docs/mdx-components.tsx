@@ -14,8 +14,14 @@ import {
   ApiReferenceGrid,
 } from "@/src/components/api-reference-card";
 import { CodeEditor as CodeEditorBase } from "@/src/components/code-editor";
+import {
+  ValidationError,
+  ValidationErrorList,
+  ValidationExample,
+} from "@/src/components/validation-error";
 import { APIPage } from "fumadocs-openapi/ui";
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
+import { NextSteps } from "@/src/components/next-steps";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -267,10 +273,10 @@ export const mdxComponents = {
     );
   },
 
-  // Table components with better styling
+  // Table components - minimal styling matching Alert aesthetic
   table({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <div className="my-6 w-full overflow-y-auto">
+      <div className="my-10 w-full overflow-x-auto rounded-xs bg-card border border-transparent">
         <table className={cn("w-full border-collapse", className)} {...props}>
           {children}
         </table>
@@ -280,7 +286,7 @@ export const mdxComponents = {
 
   thead({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <thead className={cn("border-b", className)} {...props}>
+      <thead className={cn("border-b border-border/50", className)} {...props}>
         {children}
       </thead>
     );
@@ -298,7 +304,7 @@ export const mdxComponents = {
     return (
       <tr
         className={cn(
-          "border-b transition-colors hover:bg-muted/50",
+          "border-b border-border/30 transition-colors hover:bg-muted/30",
           className,
         )}
         {...props}
@@ -312,7 +318,7 @@ export const mdxComponents = {
     return (
       <th
         className={cn(
-          "text-base h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 break-words",
+          "text-xs h-10 px-4 text-left align-middle font-semibold [&:has([role=checkbox])]:pr-0 break-words",
           className,
         )}
         {...props}
@@ -326,7 +332,7 @@ export const mdxComponents = {
     return (
       <td
         className={cn(
-          "text-base p-2 align-middle [&:has([role=checkbox])]:pr-0 break-words",
+          "text-xs p-4 align-middle [&:has([role=checkbox])]:pr-0 break-words",
           className,
         )}
         {...props}
@@ -361,9 +367,17 @@ export const mdxComponents = {
   ApiReferenceGrid,
   APIPage,
 
+  // Validation components
+  ValidationError,
+  ValidationErrorList,
+  ValidationExample,
+
   // Fumadocs UI components
   Tab,
   Tabs,
+
+  // Next Steps component
+  NextSteps,
 
   // CodeEditor with consistent spacing
   CodeEditor({

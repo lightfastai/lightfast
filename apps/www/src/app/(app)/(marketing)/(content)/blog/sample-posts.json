@@ -1,0 +1,143 @@
+{
+  "blog": {
+    "post": {
+      "items": [
+        {
+          "_slug": "introducing-lightfast",
+          "_title": "Introducing Lightfast: Memory Built for Teams",
+          "slug": "introducing-lightfast",
+          "publishedAt": "2025-01-15T10:00:00Z",
+          "description": "Today we're launching Lightfast—a new way for teams and agents to find what they need, understand context, and trace decisions across your entire organization.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Company" },
+            { "_title": "Product" }
+          ],
+          "body": {
+            "plainText": "We're excited to announce Lightfast, a new approach to organizational memory...",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 5
+          }
+        },
+        {
+          "_slug": "mcp-tools-for-agents",
+          "_title": "MCP Tools: Making Lightfast Available to Any Agent",
+          "slug": "mcp-tools-for-agents",
+          "publishedAt": "2025-01-22T14:00:00Z",
+          "description": "We've built Model Context Protocol tools so any agent can search, retrieve, and understand your team's knowledge—with the same API you use for REST.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Product" },
+            { "_title": "Technology" }
+          ],
+          "body": {
+            "plainText": "The Model Context Protocol is changing how agents access external systems...",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 7
+          }
+        },
+        {
+          "_slug": "search-by-meaning",
+          "_title": "How Lightfast Understands What You're Looking For",
+          "slug": "search-by-meaning",
+          "publishedAt": "2025-01-29T09:00:00Z",
+          "description": "Behind the scenes of our hybrid retrieval pipeline: combining dense vectors, lexical search, graph relationships, and cross-encoder reranking for accurate results.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Technology" },
+            { "_title": "Data" }
+          ],
+          "body": {
+            "plainText": "Semantic search is powerful, but it's not enough on its own...",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 8
+          }
+        },
+        {
+          "_slug": "sources-and-citations",
+          "_title": "Every Answer Shows Its Source",
+          "slug": "sources-and-citations",
+          "publishedAt": "2025-02-05T11:00:00Z",
+          "description": "Why we require citations for every answer, how we ensure faithfulness to source material, and what makes an answer trustworthy.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Product" },
+            { "_title": "Guides" }
+          ],
+          "body": {
+            "plainText": "In an age of AI-generated content, verifiability matters more than ever...",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 6
+          }
+        },
+        {
+          "_slug": "who-owns-what",
+          "_title": "Finding Expertise: The 'Who Owns What' Problem",
+          "slug": "who-owns-what",
+          "publishedAt": "2025-02-12T13:00:00Z",
+          "description": "How Lightfast tracks ownership, contributions, and context across your team to answer \"who should I ask about this?\"",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Product" },
+            { "_title": "Data" }
+          ],
+          "body": {
+            "plainText": "Every organization has hidden expertise scattered across teams...",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 7
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "extends": "@repo/typescript-config/internal-package.json",
+  "include": [
+    "src",
+    "agents"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+

@@ -72,8 +72,6 @@ export async function POST(req: NextRequest) {
     const searchRequest: LightfastSearchRequest = {
       query,
       limit: 10,
-      // Add workspace if configured
-      workspace: env.LIGHTFAST_WORKSPACE,
     };
 
     const response = await fetch(`${apiUrl}/v1/search`, {

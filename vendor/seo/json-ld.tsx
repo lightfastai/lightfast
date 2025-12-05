@@ -1,7 +1,16 @@
 import type { Thing, WithContext } from "schema-dts";
 
+// Type for JSON-LD Graph structure
+type GraphContext = {
+  "@context": "https://schema.org" | string | Record<string, unknown> | Array<string | Record<string, unknown>>;
+  "@graph": Array<Thing>;
+};
+
+// Union type supporting both single entities and graph structures
+type JsonLdData = WithContext<Thing> | GraphContext;
+
 type JsonLdProps = {
-  code: WithContext<Thing>;
+  code: JsonLdData;
 };
 
 const escapeJsonForHtml = (json: string): string =>
@@ -22,5 +31,7 @@ export const JsonLd = ({ code }: JsonLdProps) => (
   />
 );
 
+// Export types for use in components
+export type { GraphContext, JsonLdData };
 export * from "schema-dts";
 

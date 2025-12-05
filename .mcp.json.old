@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--headless",
+        "--browser",
+        "chrome",
+        "--caps",
+        "core,tabs,wait,files,testing",
+        "--isolated",
+        "--no-sandbox"
+      ]
+    },
+    "deus-session": {
+      "command": "node",
+      "args": ["./core/deus/dist/mcp-server/index.js"]
+    }
+  }
+}

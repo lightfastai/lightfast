@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Icons } from "@repo/ui/components/icons";
-import { EarlyAccessForm } from "~/components/early-access/early-access-form";
-import { EarlyAccessFormProvider } from "~/components/early-access/early-access-form-provider";
+import { EarlyAccessForm } from "~/components/early-access-form";
+import { EarlyAccessFormProvider } from "~/components/early-access-form-provider";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
 

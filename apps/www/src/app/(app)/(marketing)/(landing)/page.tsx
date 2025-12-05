@@ -10,6 +10,7 @@ import { PlatformAccessCards } from "~/components/platform-access-cards";
 import { ChangelogPreview } from "~/components/changelog-preview";
 import { FAQSection } from "~/components/faq-section";
 import { WaitlistCTA } from "~/components/waitlist-cta";
+import { BecomingLightfast } from "~/components/becoming-lightfast";
 
 export default function HomePage() {
   return (
@@ -102,6 +103,11 @@ export default function HomePage() {
         {/* Changelog Preview */}
         <div className="max-w-6xl mx-auto w-full px-4">
           <ChangelogPreview />
+        </div>
+
+        {/* Becoming Lightfast Section - Seed Round Announcement */}
+        <div className="max-w-6xl mx-auto w-full px-4">
+          <BecomingLightfast />
         </div>
       </div>
 

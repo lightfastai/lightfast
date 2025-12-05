@@ -1,6 +1,5 @@
 import NextLink from "next/link";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import { ArrowRight } from "lucide-react";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
@@ -8,112 +7,211 @@ import { Icons } from "@repo/ui/components/icons";
 export function AppFooter() {
   return (
     <footer className="relative w-full text-foreground">
-      {/* Section 1 - Logo and Products/Links */}
-      <section className="pb-8 sm:pb-10 lg:pb-12">
-        <div className="mx-auto w-full">
-          {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-            {/* Logo - First 2 columns */}
-            <div className="lg:col-span-2">
-              <Icons.logo className="size-22 text-foreground" />
+      {/* Section 1 - Logo and Main Footer Links */}
+      <section className="relative pb-8 sm:pb-10 lg:pb-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Main Links Grid - Full width */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+            {/* Products Column */}
+            <div className="flex flex-col">
+              <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
+                Product
+              </h3>
+              <nav className="flex flex-col gap-2">
+                <NextLink
+                  href="/pricing"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Pricing
+                </NextLink>
+                <NextLink
+                  href="/changelog"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Changelog
+                </NextLink>
+                <NextLink
+                  href="/early-access"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Early Access
+                </NextLink>
+              </nav>
             </div>
 
-            {/* Products and Links - Last column */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {/* Products Column */}
-              <div className="flex flex-col">
-                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
-                  Products
-                </h3>
-                <nav className="flex flex-col gap-2 sm:gap-3">
-                  <MicrofrontendLink
-                    href="/sign-in"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
-                  >
-                    Go to App
-                  </MicrofrontendLink>
-                  <NextLink
-                    href="/docs/get-started/overview"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
-                  >
-                    Docs
-                  </NextLink>
-                </nav>
-              </div>
+            {/* Platform Column */}
+            <div className="flex flex-col">
+              <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
+                Platform
+              </h3>
+              <nav className="flex flex-col gap-2">
+                <MicrofrontendLink
+                  href="/sign-in"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Sign In
+                </MicrofrontendLink>
+                <NextLink
+                  href="https://chat.lightfast.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200 inline-flex items-center gap-1"
+                >
+                  Chat Demo
+                  <span className="text-xs">↗</span>
+                </NextLink>
+              </nav>
+            </div>
 
-              {/* Links Column */}
-              <div className="flex flex-col">
-                <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
-                  Links
-                </h3>
-                <nav className="flex flex-col gap-2 sm:gap-3">
-                  <NextLink
-                    href="/legal/terms"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
-                  >
-                    <span className="block sm:hidden">Terms</span>
-                    <span className="hidden sm:block">Terms</span>
-                  </NextLink>
-                  <NextLink
-                    href="/legal/privacy"
-                    className="text-foreground hover:text-muted-foreground text-lg sm:text-xl lg:text-md font-bold transition-colors duration-200"
-                  >
-                    <span className="block sm:hidden">Privacy</span>
-                    <span className="hidden sm:block">Privacy Policy</span>
-                  </NextLink>
-                </nav>
-              </div>
+            {/* Resources Column */}
+            <div className="flex flex-col">
+              <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
+                Resources
+              </h3>
+              <nav className="flex flex-col gap-2">
+                <NextLink
+                  href="/docs/get-started/overview"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Documentation
+                </NextLink>
+                <NextLink
+                  href="/docs/api/overview"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  API Reference
+                </NextLink>
+                <NextLink
+                  href="/docs/get-started/quickstart"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Getting Started
+                </NextLink>
+                <NextLink
+                  href="/blog"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Blog
+                </NextLink>
+                <NextLink
+                  href="/docs/examples"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Examples
+                </NextLink>
+                <NextLink
+                  href="/docs/guides/mcp-integration"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  MCP Integration
+                </NextLink>
+              </nav>
+            </div>
+
+            {/* Developers Column */}
+            <div className="flex flex-col">
+              <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
+                Developers
+              </h3>
+              <nav className="flex flex-col gap-2">
+                <NextLink
+                  href="/docs/api/sdks"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  SDKs & Tools
+                </NextLink>
+                <NextLink
+                  href="/docs/api/authentication"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Authentication
+                </NextLink>
+                <NextLink
+                  href="/docs/api/errors"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Error Reference
+                </NextLink>
+                <NextLink
+                  href={siteConfig.links.github.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200 inline-flex items-center gap-1"
+                >
+                  GitHub
+                  <span className="text-xs">↗</span>
+                </NextLink>
+                <NextLink
+                  href={siteConfig.links.discord.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200 inline-flex items-center gap-1"
+                >
+                  Discord
+                  <span className="text-xs">↗</span>
+                </NextLink>
+              </nav>
+            </div>
+          </div>
+
+          {/* Company and Legal Links - Additional Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8 lg:mt-12">
+            {/* Company Column */}
+            <div className="flex flex-col">
+              <h3 className="text-muted-foreground mb-3 text-base sm:text-lg lg:text-sm font-semibold">
+                Company
+              </h3>
+              <nav className="flex flex-col gap-2">
+                <NextLink
+                  href="/legal/terms"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Terms of Service
+                </NextLink>
+                <NextLink
+                  href="/legal/privacy"
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Privacy Policy
+                </NextLink>
+                <NextLink
+                  href={`mailto:${emailConfig.hello}`}
+                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
+                >
+                  Contact Us
+                </NextLink>
+              </nav>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section 2 - Contact and Early Access */}
-      <section className="py-6 sm:py-8">
-        <div className="mx-auto w-full">
-          {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-            {/* Contact - First 2 columns */}
-            <div className="flex flex-col lg:col-span-2">
-              <h3 className="text-foreground mb-2 text-base sm:text-lg font-semibold">
-                Have questions or want to chat?
-              </h3>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <span className="text-foreground text-sm sm:text-base lg:text-lg font-medium">
-                  Drop us a line at →
-                </span>
-                <NextLink
-                  href={`mailto:${emailConfig.hello}`}
-                  className="text-primary hover:text-primary/80 text-sm sm:text-base lg:text-lg font-medium transition-colors duration-200 hover:underline break-all"
-                >
-                  {emailConfig.hello}
-                </NextLink>
-              </div>
-            </div>
-
-            {/* Newsletter Signup - Last column */}
-            <div className="flex flex-col">
-              <h3 className="text-foreground text-xs sm:text-base mb-3 sm:mb-4 font-semibold">
-                Stay in the loop and be the first to know what's coming next for
-                Lightfast, get industry expert analysis, and much more.
-              </h3>
-              <div className="flex flex-col gap-2">
-                <NextLink
-                  href="#"
-                  className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-2 text-sm font-medium transition-colors duration-200 hover:underline"
-                >
-                  Subscribe to Lightfast
-                  <ArrowRight className="size-4" />
-                </NextLink>
-              </div>
+      {/* Section 2 - Contact */}
+      <section className="relative py-6 sm:py-8">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Contact Section */}
+          <div className="flex flex-col">
+            <h3 className="text-foreground mb-2 text-base sm:text-lg font-semibold">
+              Have questions or want to chat?
+            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <span className="text-foreground text-sm sm:text-base lg:text-lg font-medium">
+                Drop us a line at →
+              </span>
+              <NextLink
+                href={`mailto:${emailConfig.hello}`}
+                className="text-primary hover:text-primary/80 text-sm sm:text-base lg:text-lg font-medium transition-colors duration-200 hover:underline break-all"
+              >
+                {emailConfig.hello}
+              </NextLink>
             </div>
           </div>
         </div>
       </section>
 
       {/* Section 3 - Copyright and Social */}
-      <section className="py-6 sm:py-8 border-t border-border/10">
-        <div className="mx-auto w-full">
+      <section className="relative py-6 sm:py-8 border-t border-border/10">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Mobile/Tablet: Stack vertically, Desktop: 3-column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Social Links - First 2 columns */}

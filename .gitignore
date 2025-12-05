@@ -88,6 +88,9 @@ dist/
 tmp/
 temp/
 
+# agent outputs
+outputs/
+
 # mastra
 .mastra
 mastra.db
@@ -140,4 +143,3 @@ worktrees/
 
 # Dual CLI local files
 .dual/.local/
-

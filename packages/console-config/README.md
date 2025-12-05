@@ -7,7 +7,6 @@ Parse and validate `lightfast.yml` configuration files.
 Provides utilities for:
 - Loading and parsing `lightfast.yml` configuration
 - Validating config structure with Zod schemas
-- Resolving workspace from environment or config
 - Matching files against glob patterns
 
 ## Installation
@@ -21,17 +20,14 @@ pnpm install
 ## Usage
 
 ```typescript
-import { loadConfig, validateConfig, resolveWorkspace, matchFiles } from "@repo/console-config";
+import { loadConfig, validateConfig, matchFiles } from "@repo/console-config";
 
 // Load config from repo
 const configResult = await loadConfig("/path/to/repo");
 
 if (configResult.isOk()) {
   const config = configResult.value;
-  
-  // Resolve workspace ID
-  const workspace = resolveWorkspace(config);
-  
+
   // Match files against globs
   const files = await matchFiles("/path/to/repo", config.include);
 }
@@ -41,7 +37,6 @@ if (configResult.isOk()) {
 
 ```yaml
 version: 1
-workspace: my-workspace  # Optional, resolves from env if omitted
 store: docs-site
 include:
   - docs/**/*.md

@@ -12,7 +12,6 @@ import { z } from "zod";
  * @example
  * ```yaml
  * version: 1
- * workspace: ws_123
  * store: docs-site
  * include:
  *   - apps/docs/src/content/docs/**\/*.mdx
@@ -24,12 +23,6 @@ export const LightfastConfigSchema = z.object({
    * Configuration version (currently only version 1 is supported)
    */
   version: z.literal(1),
-
-  /**
-   * Workspace identifier (optional - will be resolved from environment if omitted)
-   * @example "ws_123" or "myorg/myrepo"
-   */
-  workspace: z.string().optional(),
 
   /**
    * Human-readable store name (unique per workspace)

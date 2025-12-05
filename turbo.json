@@ -115,7 +115,6 @@
     // Lightfast
     "LIGHTFAST_API_KEY",
     "LIGHTFAST_API_URL",
-    "LIGHTFAST_WORKSPACE",
 
     // Security & Encryption
     "ENCRYPTION_KEY",

@@ -1,7 +1,7 @@
 "use client";
 
 import { WorkflowShowcase } from "./workflow-showcase";
-import { LightfastImageViewer } from "~/components/search/lightfast-image-viewer";
+import { LightfastImageViewer } from "~/components/image-viewer";
 import { Plus } from "lucide-react";
 
 export function DeusShowcase() {

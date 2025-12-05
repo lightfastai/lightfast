@@ -1,4 +1,4 @@
 {
   "title": "Getting Started",
-  "pages": ["overview", "quickstart", "config", "architecture", "authentication"]
+  "pages": ["overview", "quickstart", "config"]
 }

@@ -1,0 +1,56 @@
+# llms.txt for https://lightfast.ai
+
+## What is Lightfast?
+Lightfast is neural memory built for teams - an AI-powered platform that enables semantic search across your entire organization's knowledge. We index GitHub, Slack, Notion, Linear, and other tools to provide instant answers with sources.
+
+## Core Capabilities
+- **Semantic search**: Find information by meaning, not just keywords
+- **Source citations**: Every answer shows exactly where it came from
+- **Real-time indexing**: Captures knowledge as it's created across your tools
+- **Developer-first API**: Simple 4-route API (search, contents, similar, answer)
+- **MCP tools**: Native integration with AI agents via Model Context Protocol
+- **Privacy by default**: Complete tenant isolation, your data stays yours
+
+## Primary Pages
+- https://lightfast.ai/ — Overview of neural memory for teams
+- https://lightfast.ai/pricing — Usage-based pricing model
+- https://lightfast.ai/early-access — Join the early access program
+- https://lightfast.ai/search — Try our semantic search demo
+- https://lightfast.ai/changelog — Product updates and new features
+- https://lightfast.ai/blog — Blog and insights
+
+## Documentation
+- https://lightfast.ai/docs — Developer documentation home
+- https://lightfast.ai/docs/get-started/overview — Getting started overview
+- https://lightfast.ai/docs/get-started/quickstart — Get started in 5 minutes
+- https://lightfast.ai/docs/get-started/config — Configuration guide
+- https://lightfast.ai/docs/features — Feature documentation
+- https://lightfast.ai/docs/features/search — Semantic search capabilities
+- https://lightfast.ai/docs/features/memory — Memory system architecture
+- https://lightfast.ai/docs/features/citations — Source citation system
+- https://lightfast.ai/docs/features/quality — Quality measurement & improvement
+- https://lightfast.ai/docs/features/relationships — Entity relationships & graph
+- https://lightfast.ai/docs/features/security — Security & privacy
+
+## Legal
+- https://lightfast.ai/legal/privacy — Privacy policy
+- https://lightfast.ai/legal/terms — Terms of service
+
+## Use Cases
+- Search across code, PRs, issues, and discussions from GitHub
+- Find decisions and context from Slack conversations
+- Access documentation from Notion and Confluence
+- Track feature specs and bugs from Linear
+- Give AI agents access to company knowledge safely
+- Build custom search experiences with our API
+
+## RSS/Atom Feeds
+- https://lightfast.ai/blog/rss.xml — RSS feed
+- https://lightfast.ai/blog/atom.xml — Atom feed
+- https://lightfast.ai/blog/feed.json — JSON feed
+
+## Contact & Support
+- Email: hello@lightfast.ai
+- Twitter: @lightfastai
+- GitHub: github.com/lightfastai
+- Support: support@lightfast.ai
