@@ -4,6 +4,7 @@ import { ArrowUpRight, ArrowRight, Check, HelpCircle } from "lucide-react";
 import { createMetadata } from "@vendor/seo/metadata";
 import {
   JsonLd,
+  type FAQPage,
   type SoftwareApplication,
   type WithContext,
 } from "@vendor/seo/json-ld";
@@ -24,13 +25,13 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 export const metadata: Metadata = createMetadata({
-  title: "Pricing - Simple Plans That Scale",
+  title: "Lightfast Pricing – Team Memory That Scales",
   description:
-    "Start free with up to 3 users. Scale with transparent per-user pricing. Unlimited everything for enterprise teams.",
+    "Start with a free team memory plan for up to 3 users. Scale Lightfast neural memory across your organization with simple per-user pricing and generous search allowances.",
   openGraph: {
-    title: "Lightfast Pricing - Simple Plans That Scale",
+    title: "Lightfast Pricing – Team Memory That Scales",
     description:
-      "Free starter plan. Team plan with semantic search and Neural Memory. Business plan with unlimited everything. Start small, scale as you grow.",
+      "Pricing for Lightfast neural memory built for teams. Start free and scale with simple per-user pricing, generous search allowances, and Neural Memory included.",
     url: "https://lightfast.ai/pricing",
     type: "website",
   },
@@ -248,6 +249,23 @@ const faqs = [
   },
 ];
 
+function PricingFaqJsonLd() {
+  const structuredData: WithContext<FAQPage> = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
+  return <JsonLd code={structuredData} />;
+}
+
 export default function PricingPage() {
   const softwareSchema: WithContext<SoftwareApplication> = {
     "@context": "https://schema.org",
@@ -291,6 +309,7 @@ export default function PricingPage() {
   return (
     <>
       <JsonLd code={softwareSchema} />
+      <PricingFaqJsonLd />
       <div className="mt-10 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
         {/* Hero Section */}
         <section className="relative">
@@ -300,7 +319,7 @@ export default function PricingPage() {
                 {/* Small label */}
                 <div className="mb-8 opacity-80">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Simple pricing that scales
+                    Pricing for team memory
                   </p>
                 </div>
 
@@ -314,7 +333,19 @@ export default function PricingPage() {
                 {/* Description */}
                 <div className="mt-8 px-4">
                   <p className="text-base text-muted-foreground">
-                    Start free. Upgrade as you grow. No surprises.
+                    Simple pricing for neural memory built for teams. Start free,
+                    then scale Lightfast as more people and agents rely on team
+                    memory.
+                  </p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Want to see how it works before choosing a plan?{" "}
+                    <a
+                      href="/docs/get-started/overview"
+                      className="underline underline-offset-4 hover:text-foreground"
+                    >
+                      Read the developer overview
+                    </a>
+                    .
                   </p>
                 </div>
               </div>

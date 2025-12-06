@@ -125,7 +125,7 @@ export default function RootLayout({
     "@type": "Organization",
     name: siteConfig.name,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/logo.png`,
+    logo: `${siteConfig.url}/android-chrome-512x512.png`,
     sameAs: [
       siteConfig.links.twitter.href,
       siteConfig.links.github.href,

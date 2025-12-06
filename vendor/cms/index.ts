@@ -24,12 +24,52 @@ const imageFragment = fragmentOnLoose("BlockImage", {
 });
 
 /* -------------------------------------------------------------------------------------------------
+ * Blog Categories Fragments & Queries
+ * -----------------------------------------------------------------------------------------------*/
+
+const categoryFragment = fragmentOnLoose("CategoriesItem", {
+  _slug: true,
+  _title: true,
+  description: {
+    plainText: true,
+  },
+});
+
+export type Category = {
+  _slug?: string | null;
+  _title?: string | null;
+  description?: {
+    plainText?: string | null;
+  } | null;
+};
+
+export const categories = {
+  query: fragmentOnLoose("Query", {
+    blog: {
+      categories: {
+        items: categoryFragment,
+      },
+    },
+  }),
+
+  getCategories: async (): Promise<Category[]> => {
+    try {
+      const data: any = await basehub.query(categories.query as any);
+      return data.blog.categories.items as Category[];
+    } catch {
+      return [];
+    }
+  },
+};
+
+/* -------------------------------------------------------------------------------------------------
  * Blog Fragments & Queries
  * -----------------------------------------------------------------------------------------------*/
 
-const postMetaFragment = fragmentOnLoose("PostsItem", {
+const postMetaFragment = fragmentOnLoose("PostItem", {
   _slug: true,
   _title: true,
+  slug: true,
   authors: {
     _title: true,
     avatar: imageFragment,
@@ -38,12 +78,12 @@ const postMetaFragment = fragmentOnLoose("PostsItem", {
   categories: {
     _title: true,
   },
-  date: true,
+  publishedAt: true,
   description: true,
-  image: imageFragment,
+  featuredImage: imageFragment,
 });
 
-const postFragment = fragmentOnLoose("PostsItem", {
+const postFragment = fragmentOnLoose("PostItem", {
   ...postMetaFragment,
   body: {
     plainText: true,
@@ -59,6 +99,7 @@ const postFragment = fragmentOnLoose("PostsItem", {
 export type PostMeta = {
   _slug?: string | null;
   _title?: string | null;
+  slug?: string | null;
   authors?: Array<{
     _title?: string | null;
     avatar?: {
@@ -71,9 +112,9 @@ export type PostMeta = {
     xUrl?: string | null;
   }>;
   categories?: Array<{ _title?: string | null }>;
-  date?: string | null;
+  publishedAt?: string | null;
   description?: string | null;
-  image?: {
+  featuredImage?: {
     url?: string | null;
     width?: number | null;
     height?: number | null;
@@ -121,7 +162,7 @@ const mapLegalToBlogPost = (item: LegalPost): Post => {
 export const blog = {
   postsQuery: fragmentOnLoose("Query", {
     blog: {
-      posts: {
+      post: {
         items: postMetaFragment,
       },
     },
@@ -129,7 +170,7 @@ export const blog = {
 
   latestPostQuery: fragmentOnLoose("Query", {
     blog: {
-      posts: {
+      post: {
         __args: {
           orderBy: "_sys_createdAt__DESC",
         },
@@ -140,10 +181,10 @@ export const blog = {
 
   postQuery: (slug: string) => ({
     blog: {
-      posts: {
+      post: {
         __args: {
           filter: {
-            _sys_slug: { eq: slug },
+            slug: { eq: slug },
           },
         },
         item: postFragment,
@@ -154,7 +195,7 @@ export const blog = {
   getPosts: async (): Promise<PostMeta[]> => {
     try {
       const data: any = await basehub.query(blog.postsQuery as any);
-      return data.blog.posts.items as PostMeta[];
+      return data.blog.post.items as PostMeta[];
     } catch {
       try {
         const fallback = await legal.getPosts();
@@ -168,7 +209,7 @@ export const blog = {
   getLatestPost: async (): Promise<Post | null> => {
     try {
       const data: any = await basehub.query(blog.latestPostQuery as any);
-      return data.blog.posts.item as Post;
+      return data.blog.post.item as Post;
     } catch {
       try {
         const fallback = await legal.getLatestPost();
@@ -183,7 +224,7 @@ export const blog = {
     try {
       const query = blog.postQuery(slug);
       const data: any = await basehub.query(query as any);
-      return data.blog.posts.item as Post;
+      return data.blog.post.item as Post;
     } catch {
       try {
         const fallback = await legal.getPost(slug);

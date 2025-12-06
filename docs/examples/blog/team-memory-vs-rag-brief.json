@@ -1,0 +1,91 @@
+{
+  "brief": {
+    "topic": "Team Memory vs RAG: How Lightfast Keeps AI Answers Explainable",
+    "angle": "Compare ad-hoc RAG stacks to a dedicated team memory layer, showing how Lightfast’s neural memory makes AI answers more explainable, cited, and maintainable over time.",
+    "businessGoal": "consideration",
+    "primaryProductArea": "Lightfast Core / Neural Memory",
+    "targetPersona": "Platform or infra engineer evaluating retrieval options for AI assistants",
+    "campaignTag": "team-memory-vs-rag-2025",
+    "distributionChannels": ["blog", "newsletter", "x", "linkedin", "docs", "community"],
+    "keywords": {
+      "primary": "team memory vs rag",
+      "secondary": [
+        "neural memory for teams",
+        "search by meaning",
+        "answers with sources",
+        "explainable ai answers"
+      ]
+    },
+    "readerProfile": {
+      "role": "Platform / infra engineer or technical lead",
+      "painPoints": [
+        "Maintaining bespoke RAG stacks across multiple tools and data sources",
+        "Difficulty explaining why an AI assistant returned a particular answer",
+        "Lack of consistent citations and source tracking in AI responses",
+        "Pressure to ship AI features quickly without compromising trust or governance"
+      ],
+      "priorKnowledge": "Comfortable with modern AI stacks (embeddings, vector search, RAG), basic observability concepts, and owning internal developer platforms or AI infrastructure."
+    },
+    "outline": [
+      {
+        "heading": "Why teams keep rebuilding RAG from scratch",
+        "goal": "Set up the problem and context: why RAG has become the default pattern for internal AI assistants, and why it feels brittle at scale.",
+        "notes": "Describe typical homegrown RAG stack: ingestion pipelines, embeddings, vector DBs, retrieval logic, ranking, and answer synthesis. Highlight pain points: ad-hoc governance, hard-to-debug relevance, duplicated efforts across teams."
+      },
+      {
+        "heading": "What is team memory?",
+        "goal": "Define team memory as a first-class entity so answer engines can quote the definition early in the post.",
+        "notes": "Use the canonical Lightfast definition or close variant: Lightfast is a memory system built for teams, indexing code, docs, tickets, and conversations so people and agents can search by meaning, get answers with sources, and trace decisions. Contrast team memory with a one-off RAG pipeline."
+      },
+      {
+        "heading": "Team memory vs RAG: what’s the real difference?",
+        "goal": "Clarify conceptual differences between a reusable team memory layer and bespoke RAG implementations.",
+        "notes": "Use bullets to compare: scope (organization-wide vs single app), governance (permissions and ownership baked in vs ad-hoc), explainability (short-hop context graph with citations vs opaque retrieval), and evolution over time. Emphasize that Lightfast is not an AEO analytics product but a memory layer that supports trustworthy AI answers."
+      },
+      {
+        "heading": "How Lightfast keeps AI answers explainable",
+        "goal": "Explain how Lightfast’s design (search by meaning, sources, decision traceability) makes AI answers easier to trust and debug.",
+        "notes": "Cover the four key routes at a high level (search, contents, similar, answer) and how agents use them. Include an example flow: an assistant calls /v1/answer, gets an answer plus citations, and a human can drill into underlying items and relationships. Emphasize short-hop relationships and ownership metadata rather than deep, opaque graphs."
+      },
+      {
+        "heading": "When you should use team memory instead of another RAG stack",
+        "goal": "Give concrete decision criteria for platform teams deciding between building another RAG pipeline or adopting Lightfast.",
+        "notes": "Frame this as a practical decision guide: when you have multiple assistants across the org, when you need strong permissions and auditability, when you want shared context across tools. Include 3–5 bullet scenarios. Acknowledge that RAG is still useful, but team memory should be the shared substrate."
+      },
+      {
+        "heading": "How to plug Lightfast into your existing AI assistants",
+        "goal": "Outline an implementation path so readers can picture using Lightfast in their current stack.",
+        "notes": "High-level steps: index key systems (e.g., GitHub, Linear, Notion, Slack); wire your agents to call Lightfast’s search/answer routes; use citations in responses; gradually replace ad-hoc retrieval code. Link to docs like /docs/get-started/overview and API references. Make clear what is GA vs planned based on implementation status docs."
+      },
+      {
+        "heading": "What this means for your team and AI roadmap",
+        "goal": "Summarize key takeaways and point to next steps that align with consideration/conversion goals.",
+        "notes": "Short list of 3–5 key takeaways (e.g., you don’t need to rebuild RAG for every assistant; you can centralize memory; you can ship explainable answers faster). CTA: start with a small team or use case, index a few systems into Lightfast, and wire it into one assistant to validate the pattern."
+      }
+    ],
+    "internalLinks": [
+      {
+        "label": "Get started with Lightfast team memory",
+        "url": "/docs/get-started/overview",
+        "purpose": "Give readers a canonical, deeper explanation of Lightfast and its core concepts after they understand why team memory beats bespoke RAG."
+      },
+      {
+        "label": "API overview",
+        "url": "/docs",
+        "purpose": "Let platform engineers quickly see how to call search, answer, and related routes from their assistants."
+      },
+      {
+        "label": "Homepage",
+        "url": "/",
+        "purpose": "Reinforce the high-level positioning and value story for stakeholders beyond the immediate technical reader."
+      }
+    ],
+    "constraints": [
+      "Describe Lightfast as team memory / neural memory for teams, not as an AEO analytics platform or generic agent execution engine.",
+      "If you mention answer engines or AEO, frame Lightfast as the memory layer that makes AI answers more explainable and cited, not as a rankings or citation-tracking product.",
+      "Do not claim specific performance metrics or benchmarks unless they are clearly present in the provided context or implementation-status docs.",
+      "Clearly distinguish what is GA vs beta vs planned if you discuss integrations, APIs, or roadmap items."
+    ]
+  }
+}
+

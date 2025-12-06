@@ -6,7 +6,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/issues)
 
-A cloud-native agent execution engine that abstracts infrastructure complexity, enabling developers to focus on building AI agent applications.
+Lightfast is memory built for teams, helping people and agents search everything their organization knows by meaning, get answers with sources, and trace decisions across code, docs, and tools.
 
 🌐 **Website**: [lightfast.ai](https://lightfast.ai)
 📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
@@ -14,7 +14,7 @@ A cloud-native agent execution engine that abstracts infrastructure complexity, 
 
 ## About
 
-Lightfast is a production-ready agent execution platform that provides the infrastructure layer for the agent economy. We abstract away the complexity of orchestrating AI agents, managing resources, and scaling applications so you can focus on building amazing AI experiences.
+Lightfast is a neural memory system for teams. It indexes code, docs, tickets, and conversations so people and AI agents can search by meaning, get answers with sources, and trace decisions across their organization. Under the hood, Lightfast provides a production-ready agent execution and retrieval platform so agents can reliably use this shared memory.
 
 ### Why Lightfast?
 

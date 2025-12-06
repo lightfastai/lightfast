@@ -159,7 +159,7 @@ export function WhatWeRememberSection() {
               {/* Background Image */}
               <div className="absolute inset-0">
                 <Image
-                  src={`/images/playground-placeholder-${activeSection + 1}.webp`}
+                  src="/images/blue-sky.webp"
                   alt={sections[activeSection]?.label ?? ""}
                   fill
                   className="object-cover"

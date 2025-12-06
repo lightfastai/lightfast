@@ -49,6 +49,7 @@
     "@upstash/redis": "catalog:",
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
+    "@vendor/cms": "workspace:^",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:^",

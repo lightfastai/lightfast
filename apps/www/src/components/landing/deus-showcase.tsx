@@ -1,13 +1,13 @@
 "use client";
 
 import { WorkflowShowcase } from "./workflow-showcase";
-import { LightfastImageViewer } from "~/components/search/lightfast-image-viewer";
+import { LightfastImageViewer } from "~/components/image-viewer";
 import { Plus } from "lucide-react";
 
 export function DeusShowcase() {
   return (
     <LightfastImageViewer
-      src="/images/playground-placeholder-1.webp"
+      src="/images/blue-sky.webp"
       alt="Background"
     >
       {/* Window Frame Container */}

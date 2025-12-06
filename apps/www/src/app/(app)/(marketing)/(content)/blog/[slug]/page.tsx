@@ -1,0 +1,368 @@
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { blog, type Post } from "@vendor/cms";
+import { Body } from "@vendor/cms/components/body";
+import { Feed } from "@vendor/cms/components/feed";
+import { JsonLd } from "@vendor/seo/json-ld";
+import { SocialShare } from "~/components/blog-social-share";
+import { Breadcrumbs, type BreadcrumbItem } from "~/components/blog-breadcrumbs";
+
+type BlogPostPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+type BlogPostQueryResponse = {
+  blog?: {
+    post?: {
+      item?: Post | null;
+    } | null;
+  } | null;
+};
+
+export const revalidate = 300;
+
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
+  const posts = await blog.getPosts().catch(() => []);
+  return posts
+    .filter((post) => !!(post.slug || post._slug))
+    .map((post) => ({ slug: (post.slug || post._slug) as string }));
+}
+
+export async function generateMetadata({
+  params,
+}: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await blog.getPost(slug);
+
+  if (!post) return {};
+
+  const description = post.description || post.body?.plainText?.slice(0, 160) ||
+    `${post._title} - Lightfast blog`;
+
+  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
+  const ogImage = post.featuredImage?.url || "https://lightfast.ai/og.jpg";
+
+  return {
+    title: post._title ?? undefined,
+    description: description ?? undefined,
+    authors: post.authors?.map(author => ({ name: author._title ?? undefined })),
+    alternates: {
+      canonical: canonicalUrl,
+      types: {
+        "application/rss+xml": [
+          { url: "https://lightfast.ai/blog/rss.xml", title: "RSS 2.0" },
+        ],
+      },
+    },
+    openGraph: {
+      title: post._title ?? "Blog Post",
+      description,
+      type: "article",
+      url: canonicalUrl,
+      siteName: "Lightfast",
+      publishedTime: post.publishedAt ?? undefined,
+      authors: post.authors?.map(author => author._title ?? "").filter(Boolean),
+      images: [
+        {
+          url: ogImage,
+          width: post.featuredImage?.width ?? 1200,
+          height: post.featuredImage?.height ?? 630,
+          alt: post.featuredImage?.alt ?? post._title ?? "",
+        }
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post._title ?? "Blog Post",
+      description,
+      images: [ogImage],
+      creator: "@lightfastai",
+    },
+  } satisfies Metadata;
+}
+
+export default async function BlogPostPage({
+  params,
+}: BlogPostPageProps) {
+  const { slug } = await params;
+
+  return (
+    <Feed queries={[blog.postQuery(slug) as any]}>
+      {async ([data]) => {
+        "use server";
+
+        const response = data as BlogPostQueryResponse;
+        const post = response.blog?.post?.item;
+        if (!post) notFound();
+
+        const publishedDate = post.publishedAt ? new Date(post.publishedAt) : null;
+        const dateStr = publishedDate
+          ? publishedDate.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : "";
+
+        // Generate structured data for SEO
+        const structuredData = {
+          "@context": "https://schema.org" as const,
+          "@type": "BlogPosting" as const,
+          headline: post._title ?? "",
+          description: post.description || post.body?.plainText?.slice(0, 160) || "",
+          ...(publishedDate ? { datePublished: publishedDate.toISOString() } : {}),
+          url: `https://lightfast.ai/blog/${slug}`,
+          ...(post.authors && post.authors.length > 0 ? {
+            author: post.authors.map(author => ({
+              "@type": "Person" as const,
+              name: author._title ?? "",
+              ...(author.xUrl ? { url: author.xUrl } : {}),
+            })),
+          } : {}),
+          ...(post.featuredImage?.url ? {
+            image: {
+              "@type": "ImageObject" as const,
+              url: post.featuredImage.url,
+              ...(post.featuredImage.width ? { width: post.featuredImage.width } : {}),
+              ...(post.featuredImage.height ? { height: post.featuredImage.height } : {}),
+            },
+          } : {}),
+          publisher: {
+            "@type": "Organization" as const,
+            name: "Lightfast",
+            logo: {
+              "@type": "ImageObject" as const,
+              url: "https://lightfast.ai/android-chrome-512x512.png",
+            },
+          },
+        };
+
+        // Generate breadcrumb items
+        const breadcrumbItems: BreadcrumbItem[] = [
+          { name: "Home", href: "/" },
+          { name: "Blog", href: "/blog" },
+        ];
+
+        // Add category breadcrumb if present (categories don't have slugs in PostMeta)
+        const primaryCategory = post.categories?.[0];
+        if (primaryCategory?._title) {
+          // We can't link to category pages from here since we don't have the slug
+          breadcrumbItems.push({ name: primaryCategory._title });
+        }
+
+        // Add current post (no href for current page)
+        breadcrumbItems.push({ name: post._title || "Post" });
+
+        return (
+          <>
+            {/* Structured data for SEO */}
+            <JsonLd code={structuredData as any} />
+
+            <article className="max-w-7xl mx-auto px-4 pb-32 pt-8">
+              {/* Breadcrumbs */}
+              <Breadcrumbs items={breadcrumbItems} className="mb-8" />
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <div className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
+                  {/* Header */}
+                  <header className="space-y-6">
+                    <div className="space-y-4">
+                      {/* Categories */}
+                      {post.categories && post.categories.length > 0 && (
+                        <div className="flex gap-2">
+                          {post.categories.map((category) => (
+                            <span
+                              key={category._title}
+                              className="inline-block text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground"
+                            >
+                              {category._title}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Title */}
+                      <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">
+                        {post._title}
+                      </h1>
+
+                      {/* Description */}
+                      {post.description && (
+                        <p className="text-xl text-foreground/80 leading-relaxed">
+                          {post.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Author info and metadata */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/60">
+                      {/* Authors */}
+                      {post.authors && post.authors.length > 0 && (
+                        <div className="flex items-center gap-3">
+                          <div className="flex -space-x-2">
+                            {post.authors.map((author, idx) => (
+                              <div key={idx} className="relative">
+                                {author.avatar?.url ? (
+                                  <Image
+                                    src={author.avatar.url}
+                                    alt={author._title || "Author"}
+                                    width={32}
+                                    height={32}
+                                    className="rounded-full border-2 border-background"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                    <span className="text-xs text-muted-foreground">
+                                      {author._title?.charAt(0)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <div>
+                            {post.authors?.map((author, idx) => (
+                              <span key={idx}>
+                                {author.xUrl ? (
+                                  <Link
+                                    href={author.xUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-foreground transition-colors"
+                                  >
+                                    {author._title}
+                                  </Link>
+                                ) : (
+                                  author._title
+                                )}
+                                {idx < (post.authors?.length ?? 0) - 1 && ", "}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Date */}
+                      {dateStr && (
+                        <>
+                          <span className="text-foreground/30">·</span>
+                          <time>{dateStr}</time>
+                        </>
+                      )}
+
+                      {/* Reading time */}
+                      {post.body?.readingTime && (
+                        <>
+                          <span className="text-foreground/30">·</span>
+                          <span>{post.body.readingTime} min read</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Social sharing */}
+                    <div className="pt-4 border-t">
+                      <SocialShare
+                        title={post._title ?? ""}
+                        url={`https://lightfast.ai/blog/${slug}`}
+                        description={post.description ?? undefined}
+                      />
+                    </div>
+                  </header>
+
+                  {/* Featured Image */}
+                  {post.featuredImage?.url && (
+                    <div className="relative aspect-video rounded-lg overflow-hidden mt-8 mb-12">
+                      <Image
+                        src={post.featuredImage.url}
+                        alt={post.featuredImage.alt || post._title || ""}
+                        width={post.featuredImage.width || 1200}
+                        height={post.featuredImage.height || 630}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  {post.body?.json?.content ? (
+                    <div className="prose prose-lg max-w-none mt-12
+                      prose-headings:text-foreground prose-headings:font-semibold
+                      prose-p:text-foreground/80 prose-p:leading-relaxed
+                      prose-strong:text-foreground prose-strong:font-semibold
+                      prose-a:text-foreground prose-a:underline hover:prose-a:text-foreground/80
+                      prose-ul:text-foreground/80 prose-ul:my-6
+                      prose-ol:text-foreground/80 prose-ol:my-6
+                      prose-li:text-foreground/80 prose-li:my-2
+                      prose-blockquote:text-foreground/80 prose-blockquote:border-foreground/20
+                      prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+                      prose-pre:bg-muted prose-pre:text-foreground
+                      prose-img:rounded-lg"
+                    >
+                      <Body content={post.body.json.content} />
+                    </div>
+                  ) : null}
+
+                  {/* Share CTA */}
+                  <div className="mt-16 p-6 bg-muted rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">
+                      Enjoyed this article?
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Share it with your team to spread the knowledge.
+                    </p>
+                    <SocialShare
+                      title={post._title ?? ""}
+                      url={`https://lightfast.ai/blog/${slug}`}
+                      description={post.description ?? undefined}
+                    />
+                  </div>
+
+                  {/* Author Bios */}
+                  {post.authors && post.authors.length > 0 && (
+                    <div className="mt-16 pt-8 border-t">
+                      <h3 className="text-sm font-semibold text-foreground/60 uppercase tracking-wide mb-6">
+                        About the {post.authors.length > 1 ? "Authors" : "Author"}
+                      </h3>
+                      <div className="space-y-6">
+                        {post.authors.map((author, idx) => (
+                          <div key={idx} className="flex gap-4">
+                            {author.avatar?.url && (
+                              <Image
+                                src={author.avatar.url}
+                                alt={author._title || "Author"}
+                                width={48}
+                                height={48}
+                                className="rounded-full flex-shrink-0"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-semibold text-foreground">
+                                {author._title}
+                              </h4>
+                              {author.xUrl && (
+                                <Link
+                                  href={author.xUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+                                >
+                                  @{author.xUrl.split("/").pop()}
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </article>
+          </>
+        );
+      }}
+    </Feed>
+  );
+}

@@ -14,6 +14,9 @@
     "lint": "eslint",
     "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_WWW_PORT:-4101}",
     "typecheck": "tsc --noEmit",
+    "cms:types": "pnpm with-env:dev pnpm --filter @vendor/cms exec basehub generate",
+    "cms:dev": "pnpm with-env:dev pnpm --filter @vendor/cms exec basehub dev",
+    "cms:analyze": "pnpm with-env:dev pnpm --filter @vendor/cms exec basehub",
     "with-env:dev": "dual run --",
     "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
@@ -43,6 +46,7 @@
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
     "clsx": "catalog:",
+    "feed": "^5.1.0",
     "framer-motion": "^11.18.2",
     "geist": "catalog:",
     "jotai": "^2.12.3",

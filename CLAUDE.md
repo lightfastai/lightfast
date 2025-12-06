@@ -13,11 +13,15 @@ Lightfast is a comprehensive pnpm workspace monorepo with Turborepo orchestratio
 
 ## Applications (6)
 - **apps/www** (port 4101) - Marketing website with Next.js 15 + App Router
-- **apps/chat** (port 4106) - AI chat demo with Convex real-time backend + tRPC
 - **apps/console** (port 4107) - Workflow orchestration platform with tRPC
 - **apps/auth** - Centralized Clerk authentication service
 - **apps/docs** - Documentation site built with Fumadocs
-- **apps/www-search** - Search interface with Exa integration
+
+### Independant Application
+- **apps/chat** (port 4106) - Indepdent AI chat demo with Convex real-time backend + tRPC
+
+For the core implementation of Lightfast, we refer to our application with the prefix `console`. Note: apps/chat is independant application and only should be referenced
+if the developer request explicity.
 
 ## Package Organization (40+ packages)
 
@@ -135,30 +139,13 @@ pnpm add package-name --filter @lightfast/www
 pnpm --filter @lightfast/www run script-name
 ```
 
-## Multi-App Development with Dual
-
-This monorepo uses **Dual** (`@lightfastai/dual`) for managing multiple Next.js apps with different port assignments.
-
-**Configuration:** `dual.config.yml` defines 8 services with their paths and environment files.
-
-**Port Assignments (per context):**
-- www: basePort + 1 (e.g., 4101)
-- auth: basePort + 2 (e.g., 4102)
-- chat: basePort + 6 (e.g., 4106)
-- console: basePort + 7 (e.g., 4107)
-
-**Worktrees:**
-Git worktrees are stored in `./worktrees/` for parallel development branches.
-
 ## Common Commands
 
 ## Build, Lint, and Typecheck
 ```bash
 # App-specific build commands (NEVER use global pnpm build)
 pnpm build:www          # Build www app only
-pnpm build:www-search   # Build www-search app only
 pnpm build:auth         # Build auth app only
-pnpm build:chat         # Build chat app only
 pnpm build:console      # Build console app only
 pnpm build:docs         # Build docs app only
 
@@ -188,6 +175,9 @@ pnpm brain          # Run evaluation scripts (BrainTrust)
 ```
 
 ## Database Commands
+
+Note: root folder to run these commands are in `db/console`
+
 ```bash
 pnpm db:migrate     # Run database migrations
 pnpm db:migrate:generate # Generate migration files
@@ -204,7 +194,6 @@ Each app uses typed environment variables via `@t3-oss/env-nextjs` (see each app
 # Environment files typically stored in:
 apps/<app>/.vercel/.env.development.local
 
-# Use dual.config.yml to see which env file each service uses
 ```
 
 **Validation:**
@@ -220,7 +209,6 @@ apps/<app>/.vercel/.env.development.local
   - `console` (4107) - Workflow orchestration with tRPC
   - `auth` - Authentication service
   - `docs` - Documentation with Fumadocs
-  - `www-search` - Search interface with Exa
 - **Packages** (`packages/`): 19+ shared libraries (@repo/*)
 - **Vendor** (`vendor/`): 12 third-party abstractions (@vendor/*)
 - **API** (`api/`): 2 tRPC backend servers (@api/*)
@@ -287,30 +275,6 @@ TypeScript → Zod Validation → tRPC → Database Schema Generation → API Re
 3. Generate TypeScript types from Drizzle schemas
 4. Infer types from tRPC routers for client-side usage
 
-## Result Pattern with neverthrow
-
-Use the Result pattern for explicit error handling:
-
-```typescript
-import { Result, ok, err } from "neverthrow";
-
-async function fetchDataSafe(): Promise<Result<Data, Error>> {
-  try {
-    const data = await fetchData();
-    return ok(data);
-  } catch (error) {
-    return err(new Error("Failed to fetch"));
-  }
-}
-
-// Usage
-const result = await fetchDataSafe();
-result.match(
-  (data) => console.log("Success:", data),
-  (error) => console.error("Error:", error)
-);
-```
-
 ## Vendor Package Pattern
 
 All third-party integrations are abstracted in `@vendor/*` packages:
@@ -328,28 +292,6 @@ import { sql } from "@planetscale/database";
 
 // ✅ Use vendor abstraction
 import { db } from "@vendor/db/client";
-```
-
-## Turborepo Caching Strategy
-
-Turborepo intelligently caches:
-- Build outputs
-- Lint results
-- Type check results
-- Test results
-
-**Cache Invalidation:**
-- Triggered by file changes in the workspace
-- Input hashes include `package.json`, `tsconfig.json`, source files
-- Remote caching via Vercel for team collaboration
-
-**Performance:**
-```bash
-# First build: 2-3 minutes
-pnpm build:www
-
-# Cached build: 100-500ms
-pnpm build:www  # Cache hit!
 ```
 
 ---
@@ -455,19 +397,34 @@ if (result.isErr()) {
 ### 3. Component Architecture
 
 #### Component Organization
-- **Feature-based structure**: Group related components together
-- **Barrel exports**: Use index files for cleaner imports
-- **Separation of concerns**: API logic, UI components, and types in separate files
+- **Flat structure**: All components at root level of components directory
+- **Prefix grouping**: Related components share common prefix (e.g., `blog-`, `search-`, `early-access-`)
+- **Concise naming**: Use generic, descriptive names without vendor/brand prefixes
+- **Separation of concerns**: Keep schemas, actions, and hooks as separate files with clear suffixes
 
-Example structure:
+#### File Naming Conventions
+- **Components**: `feature-name.tsx` (e.g., `search-input.tsx`, `blog-breadcrumbs.tsx`)
+- **Schemas**: `feature-name.schema.ts` (e.g., `early-access-form.schema.ts`)
+- **Actions**: `feature-actions.ts` (e.g., `early-access-actions.ts`)
+- **Hooks**: `use-feature-name.ts` (e.g., `use-early-access-params.ts`)
+- **Providers**: `feature-provider.tsx` (e.g., `early-access-form-provider.tsx`)
+
+Example flat structure:
 ```
-components/early-access/
-├── api/                    # API interaction functions
-├── hooks/                  # Feature-specific hooks
-├── jotai/                  # State atoms and providers
-├── early-access-form.tsx   # Main component
-├── early-access-form.schema.ts  # Validation schema
-└── errors.ts              # Error types and mappings
+components/
+├── app-footer.tsx                    # App-wide footer
+├── app-navbar.tsx                    # App-wide navbar
+├── blog-breadcrumbs.tsx             # Blog breadcrumb navigation
+├── blog-category-nav.tsx            # Blog category navigation
+├── blog-social-share.tsx            # Blog social sharing
+├── early-access-form.tsx            # Early access form component
+├── early-access-form.schema.ts      # Form validation schema
+├── early-access-actions.ts          # Server actions for form
+├── search-input.tsx                 # Search input component
+├── search-results.tsx               # Search results display
+├── image-viewer.tsx                 # Generic image viewer
+├── confetti-wrapper.tsx             # Reusable confetti effect
+└── faq-section.tsx                  # FAQ display component
 ```
 
 #### Component Patterns
@@ -475,6 +432,7 @@ components/early-access/
 - Implement proper loading and error states
 - Use React Hook Form for forms with Zod validation
 - Implement analytics tracking for user interactions
+- Keep component names generic and reusable where possible
 
 ### 4. Styling Approach
 
@@ -489,96 +447,6 @@ Example:
   <p className="text-foreground text-sm">Content</p>
 </div>
 ```
-
-### 5. State Management
-
-#### Client State (Jotai)
-```typescript
-// Define atoms
-export const countAtom = atom(0);
-
-// Use in components
-const [count, setCount] = useAtom(countAtom);
-```
-
-#### Server State
-- Use server components by default
-- Implement proper caching strategies
-- Use React Suspense for loading states
-
-### 6. Error Handling
-
-#### Comprehensive Error System
-```typescript
-// Define error types
-export enum ErrorType {
-  BAD_REQUEST = "BAD_REQUEST",
-  RATE_LIMIT = "RATE_LIMIT",
-  // ...
-}
-
-// Error mapping for user messages
-export const ErrorMap: Record<ErrorType, string> = {
-  [ErrorType.BAD_REQUEST]: "Invalid request",
-  // ...
-};
-
-// Use Result pattern with neverthrow
-const result = await functionSafe();
-result.match(
-  (data) => { /* success */ },
-  (error) => { /* handle error */ }
-);
-```
-
-#### Error Reporting
-- Client errors: Use `useErrorReporter` hook
-- API errors: Use `reportApiError` function
-- Include context: component name, error type, request ID
-
-### 7. Data Fetching
-
-#### API Integration
-```typescript
-// Safe API calls with error handling
-export async function createEntrySafe(data: Data): Promise<Result<Success, Error>> {
-  try {
-    const response = await fetch("/api/endpoint", {
-      method: "POST",
-      headers: {
-        [REQUEST_ID_HEADER]: generateRequestId(),
-      },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      return err(error);
-    }
-    
-    return ok(await response.json());
-  } catch (error) {
-    return err({ type: ErrorType.NETWORK_ERROR, error });
-  }
-}
-```
-
-### 8. Performance Optimization
-
-#### Next.js Configuration
-```typescript
-// next.config.ts
-experimental: {
-  optimizeCss: true,
-  optimizePackageImports: ["@repo/ui", "jotai", "lucide-react"],
-}
-```
-
-#### Best Practices
-- Use dynamic imports for heavy components
-- Implement proper image optimization
-- Minimize client-side JavaScript
-- Use Edge Runtime for API routes
 
 ### 9. Testing & Development
 
@@ -638,69 +506,6 @@ ps aux | grep "pnpm dev"
 - **Environment**: Validated via `@t3-oss/env-nextjs`
 - **Monitoring**: Integrated with Vercel, Sentry, BetterStack
 
-## Common Patterns
-
-### Form Implementation
-```typescript
-const form = useForm({
-  schema: formSchema,
-  defaultValues: { email: "" }
-});
-
-const onSubmit = async (values: z.infer<typeof formSchema>) => {
-  const result = await apiCallSafe(values);
-  result.match(
-    (data) => toast({ title: "Success!" }),
-    (error) => toast({ title: "Error", variant: "destructive" })
-  );
-};
-```
-
-### Protected Routes
-Use Clerk's middleware for authentication:
-```typescript
-// middleware.ts
-export default authMiddleware({
-  publicRoutes: ["/", "/api/health"],
-});
-```
-
-### Background Jobs
-Use Inngest for async processing:
-```typescript
-// _workflow/job.ts
-export const job = inngest.createFunction(
-  { id: "job-id" },
-  { event: "job/trigger" },
-  async ({ event, step }) => {
-    // Job logic
-  }
-);
-```
-
-## Summary
-
-This Next.js app follows modern best practices with:
-- Type-safe environment configuration
-- Comprehensive error handling
-- Performance optimization
-- Proper separation of concerns
-- Security-first approach
-- Full observability stack
-
-When developing, prioritize:
-1. Type safety with TypeScript
-2. Error handling with Result pattern
-3. Performance with Edge Runtime
-4. User experience with proper loading states
-5. Security with input validation
-
----
-
-# tRPC Integration Guide
-
-This guide covers tRPC patterns and best practices used across applications in the monorepo (e.g., `apps/chat`, `apps/console`).
-
 ## Architecture Overview
 
 ### Package Structure
@@ -721,459 +526,6 @@ packages/
 │   │   ├── react.tsx         # Client-side provider & hooks
 │   │   └── server.tsx        # Server-side utilities (RSC)
 │   └── package.json
-
-apps/
-├── <app>/             # Frontend using tRPC
-│   ├── src/
-│   │   ├── hooks/            # Custom tRPC hooks
-│   │   └── lib/
-│   │       └── trpc-errors.ts  # Error handling utilities
-│   └── package.json
-```
-
-## Server-Side Patterns
-
-### 1. tRPC Initialization (api/*/src/trpc.ts)
-
-```typescript
-import { initTRPC, TRPCError } from "@trpc/server";
-import superjson from "superjson";
-import { ZodError } from "zod";
-import { auth } from "@vendor/clerk/server";
-import { db } from "@db/<app>/client";
-
-/**
- * Context creation - available in all procedures
- */
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}) => {
-  const clerkSession = await auth();
-
-  const session = {
-    userId: clerkSession?.userId ?? null,
-  };
-
-  return {
-    session,
-    db,  // Database client
-  };
-};
-
-/**
- * Initialize tRPC with SuperJSON transformer and Zod error formatting
- */
-const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
-  errorFormatter: ({ shape, error }) => ({
-    ...shape,
-    data: {
-      ...shape.data,
-      zodError:
-        error.cause instanceof ZodError
-          ? error.cause.flatten()
-          : null,
-    },
-  }),
-});
-
-/**
- * Procedure types
- */
-export const createTRPCRouter = t.router;
-export const publicProcedure = t.procedure;    // Unauthenticated
-export const protectedProcedure = t.procedure  // Authenticated
-  .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        ...ctx,
-        session: { userId: ctx.session.userId },
-      },
-    });
-  });
-```
-
-**Key Features:**
-- SuperJSON transformer for Date/Map/Set serialization
-- Zod error formatting for validation errors
-- Session-based authentication middleware
-- Type-safe context with authenticated vs public procedures
-
-### 2. Router Definition (api/*/src/root.ts)
-
-```typescript
-import { createTRPCRouter } from "./trpc";
-import { featureARouter } from "./router/feature-a";
-import { featureBRouter } from "./router/feature-b";
-
-/**
- * Main app router - flat structure for easier access
- */
-export const appRouter = createTRPCRouter({
-  featureA: featureARouter,
-  featureB: featureBRouter,
-  // ... more routers
-});
-
-export type AppRouter = typeof appRouter;
-```
-
-**Pattern:**
-- Flat router structure (not nested) for simpler client access
-- Export router type for client-side usage
-- Feature-based router organization
-
-### 3. Feature Router Patterns (api/*/src/router/feature.ts)
-
-#### Query Example
-
-```typescript
-import type { TRPCRouterRecord } from "@trpc/server";
-import { protectedProcedure } from "../../trpc";
-import { z } from "zod";
-
-export const featureRouter = {
-  /**
-   * List items with cursor pagination
-   */
-  list: protectedProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).max(100).default(20),
-        cursor: z.string().nullish(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const items = await ctx.db
-        .select()
-        .from(Table)
-        .where(eq(Table.userId, ctx.session.userId))
-        .limit(input.limit);
-
-      return items;
-    }),
-} satisfies TRPCRouterRecord;
-```
-
-#### Mutation Example
-
-```typescript
-export const featureRouter = {
-  /**
-   * Create or update item
-   */
-  upsert: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        data: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // 1. Verify ownership
-      const item = await ctx.db
-        .select({ id: Table.id })
-        .from(Table)
-        .where(
-          and(
-            eq(Table.id, input.id),
-            eq(Table.userId, ctx.session.userId)
-          )
-        )
-        .limit(1);
-
-      if (!item[0]) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Item not found",
-        });
-      }
-
-      // 2. Perform mutation
-      await ctx.db
-        .update(Table)
-        .set({ data: input.data })
-        .where(eq(Table.id, input.id));
-
-      return { success: true };
-    }),
-} satisfies TRPCRouterRecord;
-```
-
-**Best Practices:**
-- Always validate ownership before mutations
-- Use Zod for input validation
-- Throw descriptive TRPCError with appropriate codes
-- Return success indicators or data objects
-- Use `satisfies TRPCRouterRecord` for type safety
-
-### 4. Next.js API Route Handler (apps/*/src/app/(trpc)/api/trpc/[trpc]/route.ts)
-
-```typescript
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { appRouter, createTRPCContext } from "@api/<app>";
-
-export const runtime = "edge";
-
-const handler = async (req: NextRequest) => {
-  const response = await fetchRequestHandler({
-    endpoint: "/api/trpc",
-    router: appRouter,
-    req,
-    createContext: () =>
-      createTRPCContext({
-        headers: req.headers,
-      }),
-    onError({ error, path }) {
-      console.error(`>>> tRPC Error on '${path}'`, error);
-    },
-  });
-
-  return response;
-};
-
-export { handler as GET, handler as POST };
-```
-
-## Client-Side Patterns
-
-### 1. tRPC Package Setup (packages/*-trpc/src)
-
-#### Query Client (client.ts)
-
-```typescript
-import { QueryClient, defaultShouldDehydrateQuery } from "@tanstack/react-query";
-import SuperJSON from "superjson";
-
-export const createQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30 * 1000,  // 30s to avoid immediate refetch
-      },
-      dehydrate: {
-        serializeData: SuperJSON.serialize,
-        shouldDehydrateQuery: (query) =>
-          defaultShouldDehydrateQuery(query) ||
-          query.state.status === "pending",
-      },
-      hydrate: {
-        deserializeData: SuperJSON.deserialize,
-      },
-    },
-  });
-```
-
-#### React Provider (react.tsx)
-
-```typescript
-"use client";
-
-import { createTRPCClient, httpBatchStreamLink } from "@trpc/client";
-import { createTRPCContext } from "@trpc/tanstack-react-query";
-import type { AppRouter } from "@api/<app>";
-
-const trpcContext = createTRPCContext<AppRouter>();
-
-export const useTRPC = trpcContext.useTRPC;
-export const TRPCProvider = trpcContext.TRPCProvider;
-
-export function TRPCReactProvider({ children }) {
-  const queryClient = getQueryClient();
-  const [trpcClient] = useState(() =>
-    createTRPCClient<AppRouter>({
-      links: [
-        httpBatchStreamLink({
-          transformer: SuperJSON,
-          url: `/api/trpc`,
-          headers: () => ({ "x-trpc-source": "client" }),
-          fetch(url, init) {
-            return fetch(url, { ...init, credentials: "include" });
-          },
-        }),
-      ],
-    })
-  );
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        {children}
-      </TRPCProvider>
-    </QueryClientProvider>
-  );
-}
-```
-
-#### Server Utilities (server.tsx)
-
-```typescript
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import { appRouter, createTRPCContext } from "@api/<app>";
-
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  router: appRouter,
-  ctx: createContext,
-  queryClient: getQueryClient,
-});
-
-export function prefetch(queryOptions) {
-  const queryClient = getQueryClient();
-  if (queryOptions.queryKey[1]?.type === "infinite") {
-    void queryClient.prefetchInfiniteQuery(queryOptions);
-  } else {
-    void queryClient.prefetchQuery(queryOptions);
-  }
-}
-
-export function HydrateClient({ children }) {
-  return (
-    <HydrationBoundary state={dehydrate(getQueryClient())}>
-      {children}
-    </HydrationBoundary>
-  );
-}
-```
-
-### 2. Server Component Usage
-
-```typescript
-import { trpc, HydrateClient, prefetch } from "@repo/<app>-trpc/server";
-import { TRPCReactProvider } from "@repo/<app>-trpc/react";
-
-export default async function Layout({ children }) {
-  // Prefetch critical data in RSC
-  prefetch(trpc.feature.query.queryOptions({ param }));
-
-  return (
-    <TRPCReactProvider>
-      <HydrateClient>
-        {children}
-      </HydrateClient>
-    </TRPCReactProvider>
-  );
-}
-```
-
-### 3. Query Hooks
-
-```typescript
-import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/<app>-trpc/react";
-
-export function useFeatureQuery({ id, enabled = true }) {
-  const trpc = useTRPC();
-
-  return useQuery({
-    ...trpc.feature.get.queryOptions({ id }),
-    enabled: Boolean(id) && enabled,
-    staleTime: 1000 * 60 * 5,
-  });
-}
-```
-
-### 4. Mutation Hooks with Optimistic Updates
-
-```typescript
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { produce } from "immer";
-import { useTRPC } from "@repo/<app>-trpc/react";
-
-export function useFeatureMutation() {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  return useMutation(
-    trpc.feature.update.mutationOptions({
-      onMutate: async (variables) => {
-        // 1. Cancel outgoing queries
-        await queryClient.cancelQueries({
-          queryKey: trpc.feature.list.queryOptions().queryKey,
-        });
-
-        // 2. Snapshot previous data
-        const previous = queryClient.getQueryData(
-          trpc.feature.list.queryOptions().queryKey
-        );
-
-        // 3. Optimistically update
-        queryClient.setQueryData(
-          trpc.feature.list.queryOptions().queryKey,
-          produce(previous, (draft) => {
-            // Update draft
-          })
-        );
-
-        return { previous };
-      },
-
-      onError: (err, vars, context) => {
-        // 4. Rollback on error
-        if (context?.previous) {
-          queryClient.setQueryData(
-            trpc.feature.list.queryOptions().queryKey,
-            context.previous
-          );
-        }
-      },
-
-      onSettled: () => {
-        // 5. Invalidate to ensure consistency
-        void queryClient.invalidateQueries({
-          queryKey: trpc.feature.list.queryOptions().queryKey,
-        });
-      },
-    })
-  );
-}
-```
-
-**Optimistic Update Pattern:**
-1. Cancel in-flight queries
-2. Snapshot current data in `onMutate`
-3. Optimistically update with `setQueryData` + `produce` (immer)
-4. Rollback in `onError` using snapshot
-5. Invalidate in `onSettled` for consistency
-
-### 5. Error Handling Utilities (apps/*/src/lib/trpc-errors.ts)
-
-```typescript
-import type { TRPCClientError } from "@trpc/client";
-import type { AppRouter } from "@api/<app>";
-
-export function isTRPCClientError(
-  error: unknown
-): error is TRPCClientError<AppRouter> {
-  return error instanceof Error && error.name === "TRPCClientError";
-}
-
-export function getTRPCErrorCode(error: unknown) {
-  if (!isTRPCClientError(error)) return null;
-  return error.data?.code as string | null;
-}
-
-export function getValidationErrors(error: unknown) {
-  if (!isTRPCClientError(error)) return null;
-  const code = getTRPCErrorCode(error);
-  if (code !== "BAD_REQUEST") return null;
-
-  if (error.data && "zodError" in error.data) {
-    const zodError = error.data.zodError;
-    if (zodError && 'fieldErrors' in zodError) {
-      return zodError.fieldErrors as Record<string, string[]>;
-    }
-  }
-  return null;
-}
-
-export function showTRPCErrorToast(error: unknown, customMessage?: string) {
-  const code = getTRPCErrorCode(error);
-  // Show appropriate toast based on error code
-  toast.error(customMessage ?? "An error occurred");
-}
 ```
 
 ## Common Patterns Summary
@@ -1342,46 +694,6 @@ export default async function Page2() {
 ```
 
 This ensures each page's prefetch data is properly dehydrated for hydration.
-
----
-
-# Troubleshooting Common Issues
-
-## Build Issues
-
-### "Cannot find module '@repo/ui'" or similar
-**Cause:** Workspace dependencies not installed or built
-**Solution:**
-```bash
-# Clean and reinstall
-pnpm clean
-pnpm install
-
-# Build dependencies first
-pnpm --filter @repo/ui build
-```
-
-### "Turbo task failed with no output"
-**Cause:** Turbo cache corruption
-**Solution:**
-```bash
-# Clear Turbo cache
-pnpm clean:workspaces
-
-# Or delete .turbo directory
-rm -rf .turbo
-```
-
-### "Type errors in node_modules"
-**Cause:** Mismatched TypeScript versions or corrupt node_modules
-**Solution:**
-```bash
-# Ensure consistent TypeScript version from catalog
-pnpm install
-
-# Check for multiple TypeScript versions
-pnpm list typescript
-```
 
 ## Development Server Issues
 

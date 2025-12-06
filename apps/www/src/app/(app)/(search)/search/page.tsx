@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { SearchNavbar } from "~/components/search/search-navbar";
-import { SearchInterface } from "~/components/search/search-interface";
+import { SearchNavbar } from "~/components/search-navbar";
+import { SearchInterface } from "~/components/search-interface";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({

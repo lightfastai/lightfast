@@ -11,6 +11,7 @@ import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authUrl } from "~/lib/related-projects";
+import { isAICrawler, trackAICrawlerVisit } from "~/lib/ai-crawler-tracking";
 
 // Security headers with composable CSP configuration
 const securityHeaders = securityMiddleware(
@@ -59,8 +60,19 @@ const isOrgPageRoute = createRouteMatcher(["/:slug(.)"]);
  * Custom middleware for console-specific logic
  * Can be extended with rate limiting, analytics, logging, etc.
  */
-const consoleMiddleware = (_request: NextRequest) => {
-  // Future: Add console-specific middleware here
+const consoleMiddleware = async (request: NextRequest) => {
+  // Track AI crawler visits for AEO monitoring
+  // TODO: Move AI crawler tracking to @vendor/analytics or @repo/ai-crawler-tracking package
+  // This would allow reuse across other apps and centralized analytics integration
+  const userAgent = request.headers.get("user-agent") || "";
+  if (isAICrawler(userAgent)) {
+    await trackAICrawlerVisit({
+      userAgent,
+      path: request.nextUrl.pathname,
+    }).catch(console.error); // Don't block on tracking errors
+  }
+
+  // Future: Add more console-specific middleware here
   // - Rate limiting for API routes
   // - Analytics tracking
   // - Custom logging

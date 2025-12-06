@@ -7,17 +7,20 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
-      {/* Sticky Navbar */}
-      <AppNavbar />
+    <>
+      {/* Main wrapper */}
+      <div className="relative min-h-screen flex flex-col">
+        {/* Navbar */}
+        <AppNavbar />
 
-      {/* Main content area - grows to fill available space */}
-      <main className="flex-1 py-16">{children}</main>
+        {/* Main content with background */}
+        <main className="flex-1 py-16 bg-background">{children}</main>
 
-      {/* Footer */}
-      <div className="pb-16 max-w-6xl px-4 mx-auto">
-        <AppFooter />
+        {/* Footer - normal flow on mobile, margin-bottom for desktop spacing */}
+        <footer className="mt-auto">
+          <AppFooter />
+        </footer>
       </div>
-    </div>
+    </>
   );
 }
