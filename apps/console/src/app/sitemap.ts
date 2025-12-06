@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogPosts
       .filter((post) => !!post.slug || !!post._slug)
       .map((post) => {
-        const slug = post.slug || post._slug || "";
+        const slug = post.slug ?? post._slug ?? "";
         // Higher priority for comparison/pillar content
         const isPillarContent =
           slug.includes("vs") ||
