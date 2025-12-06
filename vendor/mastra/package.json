@@ -1,11 +1,13 @@
 {
-  "name": "@repo/cms-workflows",
+  "name": "@vendor/mastra",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./mutations/blog": "./src/mutations/blog.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
@@ -14,12 +16,10 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vendor/mastra": "workspace:*",
-    "@repo/ai": "workspace:*",
-    "basehub": "^9.5.2"
+    "@mastra/core": "^0.9.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
