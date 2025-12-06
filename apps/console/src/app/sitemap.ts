@@ -2,6 +2,36 @@ import type { MetadataRoute } from "next";
 import { legal, changelog, blog } from "@vendor/cms";
 
 /**
+ * Get category-based priority for blog posts.
+ * Higher priority for content that drives SEO value.
+ *
+ * @param categories - Array of category objects with _title property
+ * @returns Priority value between 0.7 and 0.95
+ */
+function getCategoryPriority(categories?: { _title?: string | null }[]): number {
+  if (!categories || categories.length === 0) return 0.8;
+
+  const categoryNames = categories
+    .map((c) => c._title?.toLowerCase())
+    .filter(Boolean) as string[];
+
+  // Comparisons get highest priority (0.95) - high SEO value
+  if (categoryNames.includes("comparisons")) return 0.95;
+
+  // Data and Guides get 0.9 - valuable evergreen content
+  if (categoryNames.includes("data") || categoryNames.includes("guides")) return 0.9;
+
+  // Technology and Product get 0.85 - important but less SEO-driven
+  if (categoryNames.includes("technology") || categoryNames.includes("product")) return 0.85;
+
+  // Company gets 0.7 - lowest priority for company news
+  if (categoryNames.includes("company")) return 0.7;
+
+  // Default for uncategorized posts
+  return 0.8;
+}
+
+/**
  * Generates the sitemap for the Lightfast platform.
  *
  * Since console is the root orchestrator serving all microfrontends,
@@ -81,18 +111,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((post) => !!post.slug || !!post._slug)
       .map((post) => {
         const slug = post.slug ?? post._slug ?? "";
-        // Higher priority for comparison/pillar content
-        const isPillarContent =
-          slug.includes("vs") ||
-          slug.includes("best") ||
-          slug.includes("neural-memory") ||
-          slug.includes("comparison");
 
         return {
           url: `${base}/blog/${slug}`,
           lastModified: post.publishedAt ? new Date(post.publishedAt) : new Date(),
           changeFrequency: "weekly" as const,
-          priority: isPillarContent ? 0.9 : 0.8,
+          priority: getCategoryPriority(post.categories),
         };
       }),
     // Changelog listing

@@ -88,9 +88,6 @@ dist/
 tmp/
 temp/
 
-# agent outputs
-outputs/
-
 # mastra
 .mastra
 mastra.db

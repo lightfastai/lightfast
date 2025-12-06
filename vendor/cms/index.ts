@@ -93,6 +93,20 @@ const postFragment = fragmentOnLoose("PostItem", {
     },
     readingTime: true,
   },
+  seo: {
+    metaTitle: true,
+    metaDescription: true,
+    focusKeyword: true,
+    secondaryKeywords: true,
+    canonicalUrl: true,
+    noIndex: true,
+    faq: {
+      items: {
+        question: true,
+        answer: true,
+      },
+    },
+  },
 });
 
 // Relaxed runtime-facing types to avoid tight coupling to BaseHub's d.ts during app typecheck
@@ -128,6 +142,20 @@ export type Post = PostMeta & {
     plainText?: string | null;
     json?: { content?: any[]; toc?: any } | null;
     readingTime?: number | null;
+  } | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    focusKeyword?: string | null;
+    secondaryKeywords?: string | null;
+    canonicalUrl?: string | null;
+    noIndex?: boolean | null;
+    faq?: {
+      items?: Array<{
+        question?: string | null;
+        answer?: string | null;
+      }>;
+    } | null;
   } | null;
 };
 

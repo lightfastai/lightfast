@@ -44,6 +44,31 @@ Lightfast is neural memory built for teams - an AI-powered platform that enables
 - Give AI agents access to company knowledge safely
 - Build custom search experiences with our API
 
+## Content Categories
+Our blog is organized into 5 main categories to help you find relevant content:
+
+### Data (https://lightfast.ai/blog/topic/data)
+Research, benchmarks, and data-driven insights into semantic search, retrieval quality, and AI memory systems.
+
+### Guides (https://lightfast.ai/blog/topic/guides)
+Step-by-step tutorials and best practices for implementing semantic search and building with Lightfast.
+
+### Technology (https://lightfast.ai/blog/topic/technology)
+Deep dives into the technology stack, architecture decisions, and engineering behind neural memory systems.
+
+### Product (https://lightfast.ai/blog/topic/product)
+Product updates, feature announcements, and insights into our product roadmap and development process.
+
+### Company (https://lightfast.ai/blog/topic/company)
+Company news, team updates, and insights into building Lightfast as a business.
+
+## Frequently Updated Content
+These sections are updated regularly with new information:
+
+- **Changelog** (https://lightfast.ai/changelog) — Latest product updates, new features, and improvements (updated weekly)
+- **Blog** (https://lightfast.ai/blog) — Technical insights, guides, and company updates (updated bi-weekly)
+- **Documentation** (https://lightfast.ai/docs) — Developer guides, API references, and integration tutorials (updated continuously)
+
 ## RSS/Atom Feeds
 - https://lightfast.ai/blog/rss.xml — RSS feed
 - https://lightfast.ai/blog/atom.xml — Atom feed

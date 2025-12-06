@@ -106,8 +106,66 @@ export default async function BlogPostPage({
             })
           : "";
 
+        // Get category names for schema generation
+        const categoryNames = (post.categories?.map(c => c._title?.toLowerCase()).filter(Boolean) as string[]) || [];
+
+        // Helper function to get additional schema types based on categories
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        const getAdditionalSchemas = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const schemas: any[] = [];
+
+          // Add FAQ schema from CMS data
+          if (post.seo?.faq?.items && post.seo.faq.items.length > 0) {
+            const faqItems = post.seo.faq.items
+              .filter(item => item.question && item.answer)
+              .map(item => ({
+                "@type": "Question",
+                name: item.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: item.answer,
+                },
+              }));
+
+            if (faqItems.length > 0) {
+              schemas.push({
+                "@type": "FAQPage",
+                mainEntity: faqItems,
+              });
+            }
+          }
+
+          // Add HowTo schema for Data category posts
+          if (categoryNames.includes("data")) {
+            schemas.push({
+              "@type": "HowTo",
+              name: post._title ?? "",
+              description: post.description ?? "",
+              step: [{
+                "@type": "HowToStep",
+                name: "Methodology",
+                text: post.description ?? post.body?.plainText?.slice(0, 200) ?? "",
+              }],
+            });
+          }
+
+          // Add SoftwareSourceCode schema for Technology posts
+          if (categoryNames.includes("technology")) {
+            schemas.push({
+              "@type": "SoftwareSourceCode",
+              name: post._title ?? "",
+              description: post.description ?? "",
+              programmingLanguage: "TypeScript",
+              codeRepository: "https://github.com/lightfastai",
+            });
+          }
+
+          return schemas;
+        };
+
         // Generate structured data for SEO
-        const structuredData = {
+        const baseStructuredData = {
           "@context": "https://schema.org" as const,
           "@type": "BlogPosting" as const,
           headline: post._title ?? "",
@@ -138,6 +196,17 @@ export default async function BlogPostPage({
             },
           },
         };
+
+        // Get additional schemas based on category
+        const additionalSchemas = getAdditionalSchemas();
+
+        // Combine base schema with additional schemas
+        const structuredData = additionalSchemas.length > 0
+          ? {
+              "@context": "https://schema.org",
+              "@graph": [baseStructuredData, ...additionalSchemas],
+            }
+          : baseStructuredData;
 
         // Generate breadcrumb items
         const breadcrumbItems: BreadcrumbItem[] = [
