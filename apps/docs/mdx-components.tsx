@@ -5,6 +5,12 @@ import Link from "next/link";
 import { Info, ExternalLink } from "lucide-react";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import {
+  Accordion as AccordionRoot,
+  AccordionContent as AccordionContentRoot,
+  AccordionItem as AccordionItemRoot,
+  AccordionTrigger as AccordionTriggerRoot,
+} from "@repo/ui/components/ui/accordion";
 import { FeatureList } from "@/src/components/feature-list";
 import { ApiEndpoint } from "@/src/components/api-endpoint";
 import { ApiMethod } from "@/src/components/api-method";
@@ -130,7 +136,7 @@ export const mdxComponents = {
     return (
       <a
         href={href}
-        className="text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-colors"
+        className="text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors"
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
         {...props}
@@ -379,6 +385,61 @@ export const mdxComponents = {
   // Next Steps component
   NextSteps,
 
+  // FAQ accordion components for docs
+  FAQAccordion({
+    children,
+    defaultValue,
+  }: {
+    children: React.ReactNode;
+    defaultValue?: string;
+  }) {
+    return (
+      <div className="my-8">
+        <AccordionRoot
+          type="single"
+          collapsible
+          defaultValue={defaultValue}
+          className="w-full"
+        >
+          {children}
+        </AccordionRoot>
+      </div>
+    );
+  },
+
+  FAQItem({
+    value,
+    question,
+    children,
+  }: {
+    value: string;
+    question: string;
+    children: React.ReactNode;
+  }) {
+    return (
+      <AccordionItemRoot
+        value={value}
+        className="border-b border-border last:border-b-0"
+      >
+        <AccordionTriggerRoot
+          className={cn(
+            "flex justify-between items-center w-full py-6 text-left",
+            "hover:no-underline group",
+          )}
+        >
+          <span className="text-base font-medium text-foreground pr-4">
+            {question}
+          </span>
+        </AccordionTriggerRoot>
+        <AccordionContentRoot className="pb-6 pr-12">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {children}
+          </p>
+        </AccordionContentRoot>
+      </AccordionItemRoot>
+    );
+  },
+
   // CodeEditor with consistent spacing
   CodeEditor({
     code,
@@ -487,13 +548,18 @@ export const mdxComponents = {
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         className={cn(
-          "text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-colors inline-flex items-center gap-1",
+          "text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors",
           className,
         )}
         {...props}
       >
         {children}
-        {external && <ExternalLink className="w-3 h-3" />}
+        {external && (
+          <>
+            {" "}
+            <ExternalLink className="inline-block w-3 h-3 align-baseline" />
+          </>
+        )}
       </Link>
     );
   },
@@ -519,13 +585,18 @@ export const mdxComponents = {
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         className={cn(
-          "text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-colors inline-flex items-center gap-1",
+          "text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors",
           className,
         )}
         {...props}
       >
         {children}
-        {external && <ExternalLink className="w-3 h-3" />}
+        {external && (
+          <>
+            {" "}
+            <ExternalLink className="inline-block w-3 h-3 align-baseline" />
+          </>
+        )}
       </Link>
     );
   },

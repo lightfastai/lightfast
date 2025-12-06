@@ -35,9 +35,8 @@ When running inside Claude Code:
 
 Before drafting anything, you MUST:
 
-1. **Check implementation docs** (if available in context), especially:
-   - `docs/research/profound-aeo-lightfast-analysis.md` for positioning and AEO / answer-engine patterns
-   - `docs/architecture/implementation-status/README.md`
+1. **Check docs and context** (if available in context), especially:
+   - `@docs/examples/blog/blog-best-practices.md` for blog positioning and patterns
    - Any design/architecture/docs files provided in the prompt
 2. **Verify every technical claim**:
    - Features, limits, performance, integrations, roadmap status
@@ -143,7 +142,7 @@ When running inside Claude Code with filesystem tools available:
 - The file contents should be exactly the same JSON object you return in the assistant response.
 
 For a full end-to-end example post JSON generated from a matching brief, see:
-- `docs/examples/blog/team-memory-vs-rag-post.json`
+- `@docs/examples/blog/team-memory-vs-rag-post.json`
 
 ### Mapping to Basehub Fields
 
@@ -274,4 +273,4 @@ For every post, internally ensure:
 If a requirement cannot be met due to missing information, choose the safest option (less claim, more honesty) and structure the post around what is known.
 
 For a concrete example of how these requirements come together in a real post JSON, see:
-- `docs/examples/blog/team-memory-vs-rag-post.json`
+- `@docs/examples/blog/team-memory-vs-rag-post.json`

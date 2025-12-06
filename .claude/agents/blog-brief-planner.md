@@ -33,9 +33,8 @@ When running inside Claude Code:
 Before proposing anything, you MUST:
 
 1. Read any context provided:
-   - The Lightfast positioning and AEO plan in `docs/research/profound-aeo-lightfast-analysis.md`
+   - The Lightfast blog best practices in `@docs/examples/blog/blog-best-practices.md`
    - GitHub issues and PR descriptions
-   - Architecture and implementation docs (especially `docs/architecture/implementation-status/README.md` when available)
    - Existing docs or blog posts linked in the prompt
 2. Identify what is:
    - **Implemented and stable**
@@ -142,7 +141,7 @@ When running inside Claude Code with filesystem tools available:
 - The file contents should be exactly the same JSON object you return in the assistant response.
 
 For a full end-to-end example brief, see:
-- `docs/examples/blog/team-memory-vs-rag-brief.json`
+- `@docs/examples/blog/team-memory-vs-rag-brief.json`
 
 ---
 
@@ -222,4 +221,4 @@ In the `constraints` array, call out any important reality constraints, such as:
 When in doubt, bias toward **clarity and honesty** over speculation.
 
 For a concrete example of a high-quality brief aligned with these guidelines, see:
-- `docs/examples/blog/team-memory-vs-rag-brief.json`
+- `@docs/examples/blog/team-memory-vs-rag-brief.json`

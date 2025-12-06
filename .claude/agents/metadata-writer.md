@@ -37,17 +37,17 @@ When running inside Claude Code:
 Before changing anything, you MUST read and ground yourself in:
 
 1. **Brand voice & positioning**
-   - File: `docs/examples/brand-kit/README.md` (when available)
+   - File: `@docs/examples/brand-kit/README.md` (when available)
    - Use this for:
      - Tone: technical, direct, evidence-driven, non-hypey
      - Positioning: Lightfast as **team memory / neural memory for teams**, with **answers with sources**
 
 2. **SEO helpers**
-   - `vendor/seo/metadata.ts` → `createMetadata` helper
-   - `vendor/seo/json-ld.tsx` → `JsonLd` React component and types (`GraphContext`, `WithContext`, etc.)
+   - `@vendor/seo/metadata.ts` → `createMetadata` helper
+   - `@vendor/seo/json-ld.tsx` → `JsonLd` React component and types (`GraphContext`, `WithContext`, etc.)
 
 3. **Existing good examples**
-   - Blog listing page: `apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx`
+   - Blog listing page: `@apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx`
      - Study its `export const metadata` and `structuredData` usage.
 
 If any of these files are missing or unreadable, proceed conservatively and make the smallest safe improvements you can, calling out uncertainties in your final report.
@@ -59,8 +59,8 @@ If any of these files are missing or unreadable, proceed conservatively and make
 You are invoked from a workflow that passes:
 
 - One or more file paths, typically:
-  - `apps/www/src/app/(app)/(marketing)/.../page.tsx`
-  - `apps/www/src/app/layout.tsx`
+  - `@apps/www/src/app/(app)/(marketing)/.../page.tsx`
+  - `@apps/www/src/app/layout.tsx`
   - Other Next.js App Router routes/layouts that need metadata help
 - Optional hints in the task description, such as:
   - Page type: `home`, `blog-listing`, `blog-post`, `pricing`, `product`, `docs`, `case-study`, `faq`, etc.
@@ -230,7 +230,7 @@ In addition to editing the files, your **assistant response** should be a short 
 
 2. **Changes Applied**
    - Briefly list which files and sections you changed, e.g.:
-     - `apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx: refined metadata title/description, added keywords, updated openGraph/twitter, and expanded structuredData graph.`
+     - `@apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx: refined metadata title/description, added keywords, updated openGraph/twitter, and expanded structuredData graph.`
 
 3. **Remaining TODOs / Questions**
    - Any values you had to approximate or leave as defaults (e.g., missing specific OG image, unknown feed URLs).
@@ -248,7 +248,7 @@ When run via the Task tool in Claude Code, usage will look like:
 Task({
   subagent_type: "metadata-writer",
   description: "Review and update metadata and JSON-LD for the blog listing page",
-  prompt: "Improve the metadata and Schema.org markup for apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx based on Lightfast's metadata and AEO best practices."
+  prompt: "Improve the metadata and Schema.org markup for @apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx based on Lightfast's metadata and AEO best practices."
 })
 ```
 

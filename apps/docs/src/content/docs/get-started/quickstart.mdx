@@ -1,5 +1,5 @@
 ---
-title: Quickstart
+title: "Quickstart: Index Your Team's Knowledge in 5 Minutes"
 description: Index your team's first memories in 5 minutes. Connect your GitHub repository and start searching your organization's knowledge.
 ---
 
@@ -12,6 +12,14 @@ description: Index your team's first memories in 5 minutes. Connect your GitHub 
 />
 
 Lightfast helps teams search everything they know. This guide walks you through indexing your first repository and searching your organization's memory.
+
+## Lightfast Plans Overview
+
+- **Starter** – Basic search across your team's documentation.
+- **Team** – Advanced semantic search and decision tracking for $12/user/month.
+- **Business** – Auto-summaries and expertise profiles for larger teams.
+
+<WwwLink path="/pricing" external>See full plan details</WwwLink>.
 
 ## Sign Up & Connect GitHub
 
@@ -127,3 +135,23 @@ Every answer includes **source citations** with links to the original documents,
 <Alert>
 **Search modes adapt to your query.** Lightfast uses hybrid search combining semantic understanding with keyword matching. Complex questions trigger our neural mode for deeper reasoning, while quick lookups use fast retrieval. The API handles this automatically.
 </Alert>
+
+## FAQ
+
+<FAQAccordion defaultValue="what-is-lightfast">
+  <FAQItem value="what-is-lightfast" question="What is Lightfast?">
+    Lightfast is a shared memory layer for teams and agents. It indexes documentation, pull requests, issues, discussions, and ownership data so you can search by meaning and always see source citations.
+  </FAQItem>
+  <FAQItem
+    value="connect-github"
+    question="How do I connect my GitHub account?"
+  >
+    Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink>, create a workspace, and connect GitHub via OAuth in the dashboard. For more about connecting GitHub with OAuth, see the GitHub docs on <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" target="_blank" rel="noreferrer">authorizing OAuth apps</a>.
+  </FAQItem>
+  <FAQItem
+    value="what-we-index"
+    question="What types of content does Lightfast index?"
+  >
+    Lightfast indexes documentation, pull requests, issues, discussions, and ownership signals, controlled by your `lightfast.yml` include patterns. To learn more about structuring repositories and documentation, see GitHub's guides on <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-repository-views/managing-repository-views" target="_blank" rel="noreferrer">repository views</a> and <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" target="_blank" rel="noreferrer">README best practices</a>.
+  </FAQItem>
+</FAQAccordion>

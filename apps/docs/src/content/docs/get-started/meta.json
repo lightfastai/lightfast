@@ -1,4 +1,4 @@
 {
   "title": "Getting Started",
-  "pages": ["overview", "quickstart", "config"]
+  "pages": ["overview", "[Quickstart](/docs/get-started/quickstart)", "config"]
 }
