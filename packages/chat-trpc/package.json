@@ -26,7 +26,7 @@
     "@trpc/client": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "next": "catalog:",
-    "react": "19.2.0",
+    "react": "19.2.1",
     "superjson": "catalog:"
   },
   "devDependencies": {

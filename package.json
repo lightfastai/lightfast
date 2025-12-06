@@ -57,8 +57,8 @@
   "prettier": "@repo/prettier-config",
   "pnpm": {
     "overrides": {
-      "react": "^19.1.1",
-      "react-dom": "^19.1.1",
+      "react": "^19.2.1",
+      "react-dom": "^19.2.1",
       "@types/react": "^19.1.11",
       "@types/react-dom": "^19.1.8"
     }

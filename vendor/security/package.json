@@ -42,7 +42,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:^",
     "js-cookie": "^3.0.5",
-    "react": "19.2.0",
+    "react": "19.2.1",
     "zod": "catalog:"
   }
 }
