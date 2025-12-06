@@ -7,13 +7,13 @@ import { mdxComponents } from "@/mdx-components";
 import { exposureTrial } from "@/src/lib/fonts";
 import { siteConfig, docsMetadata } from "@/src/lib/site-config";
 import { createMetadata } from "@vendor/seo/metadata";
-import {
-  JsonLd,
-  type GraphContext,
-  type Organization,
-  type WebSite,
-  type Article,
-  type BreadcrumbList,
+import { JsonLd } from "@vendor/seo/json-ld";
+import type {
+  GraphContext,
+  Organization,
+  WebSite,
+  Article,
+  BreadcrumbList,
 } from "@vendor/seo/json-ld";
 
 export default async function Page({
@@ -28,7 +28,9 @@ export default async function Page({
     redirect("/docs/get-started/overview");
   }
 
-  const page = getPage(resolvedParams.slug);
+  // TypeScript now knows slug is defined
+  const slug = resolvedParams.slug;
+  const page = getPage(slug);
 
   if (!page) {
     return notFound();
@@ -36,9 +38,9 @@ export default async function Page({
 
   // Show custom landing page for the get-started/overview page
   if (
-    resolvedParams.slug.length === 2 &&
-    resolvedParams.slug[0] === "get-started" &&
-    resolvedParams.slug[1] === "overview"
+    slug.length === 2 &&
+    slug[0] === "get-started" &&
+    slug[1] === "overview"
   ) {
     return <DeveloperPlatformLanding />;
   }
@@ -78,8 +80,8 @@ export default async function Page({
   };
 
   // Build breadcrumb list
-  const breadcrumbItems = resolvedParams.slug.map((segment, index) => {
-    const url = `/docs/${resolvedParams.slug.slice(0, index + 1).join("/")}`;
+  const breadcrumbItems = slug.map((segment, index) => {
+    const url = `/docs/${slug.slice(0, index + 1).join("/")}`;
     const name = segment.split("-").map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(" ");
@@ -94,17 +96,17 @@ export default async function Page({
 
   const breadcrumbList: BreadcrumbList = {
     "@type": "BreadcrumbList",
-    "@id": `https://lightfast.ai/docs/${resolvedParams.slug.join("/")}#breadcrumb`,
+    "@id": `https://lightfast.ai/docs/${slug.join("/")}#breadcrumb`,
     itemListElement: breadcrumbItems
   };
 
   // Build article entity
   const articleEntity: Article = {
     "@type": "Article",
-    "@id": `https://lightfast.ai/docs/${resolvedParams.slug.join("/")}#article`,
+    "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
     headline: title || "Documentation",
-    description: description || siteConfig.description,
-    url: `https://lightfast.ai/docs/${resolvedParams.slug.join("/")}`,
+    description: description ?? siteConfig.description,
+    url: `https://lightfast.ai/docs/${slug.join("/")}`,
     author: {
       "@id": "https://lightfast.ai/#organization"
     },
@@ -113,7 +115,7 @@ export default async function Page({
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://lightfast.ai/docs/${resolvedParams.slug.join("/")}`
+      "@id": `https://lightfast.ai/docs/${slug.join("/")}`
     }
   };
 
@@ -177,8 +179,8 @@ export async function generateMetadata({
       description: "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
       image: siteConfig.ogImage,
       metadataBase: new URL(siteConfig.url),
-      keywords: docsMetadata.keywords,
-      authors: docsMetadata.authors,
+      keywords: [...docsMetadata.keywords],
+      authors: [...docsMetadata.authors],
       creator: docsMetadata.creator,
       publisher: docsMetadata.creator,
       robots: {
@@ -224,7 +226,9 @@ export async function generateMetadata({
     });
   }
 
-  const page = getPage(resolvedParams.slug);
+  // TypeScript knows slug is defined after the redirect check
+  const slug = resolvedParams.slug;
+  const page = getPage(slug);
 
   // Return 404 metadata for missing pages
   if (!page) {
@@ -241,9 +245,9 @@ export async function generateMetadata({
   }
 
   // Build canonical URL for SEO
-  const pageUrl = `/docs/${resolvedParams.slug.join("/")}`;
+  const pageUrl = `/docs/${slug.join("/")}`;
   const title = page.data.title ? `${page.data.title} – Lightfast Docs` : "Lightfast Docs";
-  const description = page.data.description || siteConfig.description;
+  const description = page.data.description ?? siteConfig.description;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({
@@ -251,8 +255,8 @@ export async function generateMetadata({
     description,
     image: siteConfig.ogImage,
     metadataBase: new URL(siteConfig.url),
-    keywords: [...(page.data.keywords || []), ...docsMetadata.keywords],
-    authors: docsMetadata.authors,
+    keywords: [...docsMetadata.keywords],
+    authors: [...docsMetadata.authors],
     creator: docsMetadata.creator,
     publisher: docsMetadata.creator,
     robots: {

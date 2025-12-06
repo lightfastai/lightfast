@@ -31,8 +31,8 @@ export const metadata: Metadata = createMetadata({
   description: siteConfig.description,
   image: siteConfig.ogImage,
   metadataBase: new URL(siteConfig.url),
-  keywords: docsMetadata.keywords,
-  authors: docsMetadata.authors,
+  keywords: [...docsMetadata.keywords],
+  authors: [...docsMetadata.authors],
   creator: docsMetadata.creator,
   publisher: docsMetadata.creator,
   robots: {

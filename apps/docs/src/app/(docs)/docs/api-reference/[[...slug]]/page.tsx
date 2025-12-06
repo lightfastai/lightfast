@@ -5,13 +5,13 @@ import { DocsLayout } from "@/src/components/docs-layout";
 import { mdxComponents } from "@/mdx-components";
 import { siteConfig, docsMetadata } from "@/src/lib/site-config";
 import { createMetadata } from "@vendor/seo/metadata";
-import {
-  JsonLd,
-  type GraphContext,
-  type Organization,
-  type WebSite,
-  type Article,
-  type BreadcrumbList,
+import { JsonLd } from "@vendor/seo/json-ld";
+import type {
+  GraphContext,
+  Organization,
+  WebSite,
+  Article,
+  BreadcrumbList,
 } from "@vendor/seo/json-ld";
 
 export default async function Page({
@@ -26,7 +26,9 @@ export default async function Page({
     redirect("/docs/api-reference/overview");
   }
 
-  const page = getApiPage(resolvedParams.slug);
+  // TypeScript now knows slug is defined
+  const slug = resolvedParams.slug;
+  const page = getApiPage(slug);
 
   if (!page) {
     return notFound();
@@ -67,7 +69,7 @@ export default async function Page({
   };
 
   // Build breadcrumb list
-  const fullPath = ["api-reference", ...resolvedParams.slug];
+  const fullPath = ["api-reference", ...slug];
   const breadcrumbItems = fullPath.map((segment, index) => {
     const url = `/docs/${fullPath.slice(0, index + 1).join("/")}`;
     const name = segment.split("-").map(word =>
@@ -84,17 +86,17 @@ export default async function Page({
 
   const breadcrumbList: BreadcrumbList = {
     "@type": "BreadcrumbList",
-    "@id": `https://lightfast.ai/docs/api-reference/${resolvedParams.slug.join("/")}#breadcrumb`,
+    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#breadcrumb`,
     itemListElement: breadcrumbItems
   };
 
   // Build article entity
   const articleEntity: Article = {
     "@type": "Article",
-    "@id": `https://lightfast.ai/docs/api-reference/${resolvedParams.slug.join("/")}#article`,
+    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
     headline: title || "API Reference",
-    description: description || "API documentation for Lightfast neural memory",
-    url: `https://lightfast.ai/docs/api-reference/${resolvedParams.slug.join("/")}`,
+    description: description ?? "API documentation for Lightfast neural memory",
+    url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
     author: {
       "@id": "https://lightfast.ai/#organization"
     },
@@ -103,7 +105,7 @@ export default async function Page({
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://lightfast.ai/docs/api-reference/${resolvedParams.slug.join("/")}`
+      "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}`
     }
   };
 
@@ -156,7 +158,7 @@ export async function generateMetadata({
         "developer documentation",
         ...docsMetadata.keywords
       ],
-      authors: docsMetadata.authors,
+      authors: [...docsMetadata.authors],
       creator: docsMetadata.creator,
       publisher: docsMetadata.creator,
       robots: {
@@ -202,7 +204,9 @@ export async function generateMetadata({
     });
   }
 
-  const page = getApiPage(resolvedParams.slug);
+  // TypeScript knows slug is defined after the redirect check
+  const slug = resolvedParams.slug;
+  const page = getApiPage(slug);
 
   // Return 404 metadata for missing pages
   if (!page) {
@@ -219,17 +223,17 @@ export async function generateMetadata({
   }
 
   // Build canonical URL for SEO
-  const pageUrl = `/docs/api-reference/${resolvedParams.slug.join("/")}`;
+  const pageUrl = `/docs/api-reference/${slug.join("/")}`;
   const title = page.data.title ? `${page.data.title} – Lightfast API` : "Lightfast API Reference";
-  const description = page.data.description || "API documentation for Lightfast neural memory";
+  const description = page.data.description ?? "API documentation for Lightfast neural memory";
 
   return createMetadata({
     title,
     description,
     image: siteConfig.ogImage,
     metadataBase: new URL(siteConfig.url),
-    keywords: [...(page.data.keywords || []), "API reference", "REST API", "MCP tools", ...docsMetadata.keywords],
-    authors: docsMetadata.authors,
+    keywords: ["API reference", "REST API", "MCP tools", ...docsMetadata.keywords],
+    authors: [...docsMetadata.authors],
     creator: docsMetadata.creator,
     publisher: docsMetadata.creator,
     robots: {
