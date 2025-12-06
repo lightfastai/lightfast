@@ -67,7 +67,7 @@ export default async function EarlyAccessPage({
       <div className="fixed px-4 py-2 z-30">
         <div className="-ml-2 flex items-center md:justify-self-start">
           <Button variant="none" size="lg" className="group" asChild>
-            <Link href="/">
+            <Link href="/" prefetch>
               <Icons.logo className="size-22 text-foreground transition-colors" />
             </Link>
           </Button>
