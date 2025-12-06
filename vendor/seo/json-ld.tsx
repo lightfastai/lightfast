@@ -33,5 +33,46 @@ export const JsonLd = ({ code }: JsonLdProps) => (
 
 // Export types for use in components
 export type { GraphContext, JsonLdData };
+
+// Re-export commonly used schema types for convenience
+export type {
+  // Core types
+  Thing,
+  WithContext,
+
+  // Organization types
+  Organization,
+
+  // Website types
+  WebSite,
+  WebPage,
+
+  // Content types
+  Article,
+  BlogPosting,
+  Blog,
+  FAQPage,
+  Question,
+  Answer,
+  BreadcrumbList,
+
+  // Product/Service types
+  SoftwareApplication,
+  Product,
+  Service,
+  Offer,
+
+  // Media types
+  ImageObject,
+  VideoObject,
+
+  // Person types
+  Person,
+
+  // Event types
+  Event,
+} from "schema-dts";
+
+// Export all types for advanced usage
 export * from "schema-dts";
 

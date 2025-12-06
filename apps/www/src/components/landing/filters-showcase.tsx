@@ -74,7 +74,7 @@ export function FiltersShowcase() {
           {/* Background Image */}
           <div className="absolute inset-4 rounded-sm overflow-hidden">
             <Image
-              src="/images/playground-placeholder-1.webp"
+              src="/images/blue-sky.webp"
               alt="Background"
               fill
               className="object-cover"

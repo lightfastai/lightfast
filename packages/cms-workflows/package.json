@@ -17,8 +17,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@vendor/mastra": "workspace:*",
     "@repo/ai": "workspace:*",
+    "@vendor/mastra": "workspace:*",
     "basehub": "^9.5.2"
   },
   "devDependencies": {

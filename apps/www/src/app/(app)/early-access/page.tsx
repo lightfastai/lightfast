@@ -8,21 +8,21 @@ import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
 
 export const metadata: Metadata = createMetadata({
-  title: "Early Access - AI Workflow Automation Platform",
+  title: "Early Access – Lightfast Neural Memory for Teams",
   description:
-    "Join the waitlist for early access to Lightfast. Be among the first to experience the future of AI workflow automation for technical founders.",
+    "Join the waitlist for early access to Lightfast neural memory. Be among the first to search everything your organization knows by meaning and get answers with sources.",
   openGraph: {
-    title: "Early Access - AI Workflow Automation Platform",
+    title: "Early Access – Lightfast Neural Memory for Teams",
     description:
-      "Join the waitlist for early access to Lightfast. Be among the first to experience the future of AI workflow automation.",
+      "Sign up for early access to Lightfast, team memory that lets people and agents search everything your organization knows by meaning and get answers with sources.",
     url: "https://lightfast.ai/early-access",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Early Access - AI Workflow Automation Platform",
+    title: "Early Access – Lightfast Neural Memory for Teams",
     description:
-      "Join the waitlist for early access to Lightfast. Be among the first to experience the future of AI workflow automation.",
+      "Join the early access list for Lightfast neural memory built for teams.",
     images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {

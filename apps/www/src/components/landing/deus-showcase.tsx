@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 export function DeusShowcase() {
   return (
     <LightfastImageViewer
-      src="/images/playground-placeholder-1.webp"
+      src="/images/blue-sky.webp"
       alt="Background"
     >
       {/* Window Frame Container */}

@@ -8,11 +8,11 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { cn } from "@repo/ui/lib/utils";
 
-const faqs = [
+export const faqs = [
   {
     question: "What is Lightfast?",
     answer:
-      "Lightfast is memory built for teams. It's a knowledge search platform that indexes everything your team knows—from GitHub PRs and issues to Linear tickets, Slack conversations, Notion docs, and more. Unlike traditional search, Lightfast understands meaning, not just keywords, and every answer comes with its source so you can verify and trust the information.",
+      "Lightfast is a memory system built for teams. It indexes your code, docs, tickets, and conversations so people and AI agents can search by meaning, get answers with sources, and trace decisions across your organization.",
   },
   {
     question: "How is this different from regular search?",

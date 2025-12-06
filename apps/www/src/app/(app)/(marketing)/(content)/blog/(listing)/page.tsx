@@ -20,9 +20,9 @@ type BlogQueryResponse = {
 };
 
 export const metadata: Metadata = {
-  title: "Blog - Lightfast | AI-Powered Team Memory & Knowledge Management",
+  title: "Lightfast Blog – Team Memory & Semantic Search",
   description:
-    "Discover how Lightfast helps teams capture, search, and retrieve organizational knowledge instantly. Product updates, engineering insights, and guides on semantic search, memory systems, and AI-powered knowledge management.",
+    "The Lightfast blog covers team memory, semantic search, and answer-with-sources systems for engineering and platform teams. Find product updates, architecture deep dives, and guides on building reliable organizational memory.",
   keywords: [
     "AI team memory",
     "organizational knowledge management",
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
     "answer engine optimization",
   ],
   openGraph: {
-    title: "Lightfast Blog | AI Team Memory & Knowledge Management",
+    title: "Lightfast Blog – Team Memory & Semantic Search",
     description:
-      "Product updates, engineering insights, and guides on building AI-powered organizational memory systems.",
+      "Articles on team memory, semantic search, and answer-with-sources systems for engineering and platform teams, plus product updates and architecture deep dives.",
     type: "website",
     url: "https://lightfast.ai/blog",
     siteName: "Lightfast",
@@ -47,15 +47,15 @@ export const metadata: Metadata = {
         url: "https://lightfast.ai/og.jpg",
         width: 1200,
         height: 630,
-        alt: "Lightfast Blog - AI-Powered Team Memory",
+        alt: "Lightfast Blog - Team Memory & Semantic Search",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast Blog | AI Team Memory & Knowledge Management",
+    title: "Lightfast Blog – Team Memory & Semantic Search",
     description:
-      "Product updates, engineering insights, and guides on building AI-powered organizational memory systems.",
+      "Team memory, semantic search, and answer-with-sources content for engineering and platform teams.",
     images: ["https://lightfast.ai/og.jpg"],
     creator: "@lightfastai",
   },
@@ -210,4 +210,3 @@ export default async function BlogPage() {
     </>
   );
 }
-

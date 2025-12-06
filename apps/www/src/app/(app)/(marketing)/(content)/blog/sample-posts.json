@@ -3,38 +3,11 @@
     "post": {
       "items": [
         {
-          "_slug": "introducing-lightfast",
-          "_title": "Introducing Lightfast: Memory Built for Teams",
-          "slug": "introducing-lightfast",
-          "publishedAt": "2025-01-15T10:00:00Z",
-          "description": "Today we're launching Lightfast—a new way for teams and agents to find what they need, understand context, and trace decisions across your entire organization.",
-          "featuredImage": null,
-          "authors": [
-            {
-              "_title": "Jeevan Pillay",
-              "avatar": null,
-              "xUrl": "https://x.com/jeevanpillay"
-            }
-          ],
-          "categories": [
-            { "_title": "Company" },
-            { "_title": "Product" }
-          ],
-          "body": {
-            "plainText": "We're excited to announce Lightfast, a new approach to organizational memory...",
-            "json": {
-              "content": [],
-              "toc": []
-            },
-            "readingTime": 5
-          }
-        },
-        {
-          "_slug": "mcp-tools-for-agents",
-          "_title": "MCP Tools: Making Lightfast Available to Any Agent",
-          "slug": "mcp-tools-for-agents",
-          "publishedAt": "2025-01-22T14:00:00Z",
-          "description": "We've built Model Context Protocol tools so any agent can search, retrieve, and understand your team's knowledge—with the same API you use for REST.",
+          "_slug": "what-is-team-memory",
+          "_title": "What Is Team Memory? (And Why Engineering Teams Need It)",
+          "slug": "what-is-team-memory",
+          "publishedAt": "2025-03-01T10:00:00Z",
+          "description": "Define team memory as a category, explain why engineering teams need it, and how Lightfast helps them find answers, understand context, and trace decisions across their organization.",
           "featuredImage": null,
           "authors": [
             {
@@ -45,10 +18,10 @@
           ],
           "categories": [
             { "_title": "Product" },
-            { "_title": "Technology" }
+            { "_title": "Company" }
           ],
           "body": {
-            "plainText": "The Model Context Protocol is changing how agents access external systems...",
+            "plainText": "Team memory is a new way to think about how engineering organizations remember what they decided, shipped, and learned. In this post we define what a team memory system is, why it matters now, and how Lightfast helps teams and agents find answers with sources instead of digging through wikis and chats.",
             "json": {
               "content": [],
               "toc": []
@@ -57,11 +30,38 @@
           }
         },
         {
-          "_slug": "search-by-meaning",
-          "_title": "How Lightfast Understands What You're Looking For",
-          "slug": "search-by-meaning",
-          "publishedAt": "2025-01-29T09:00:00Z",
-          "description": "Behind the scenes of our hybrid retrieval pipeline: combining dense vectors, lexical search, graph relationships, and cross-encoder reranking for accurate results.",
+          "_slug": "team-memory-vs-knowledge-bases-vs-rag",
+          "_title": "Team Memory vs Knowledge Bases vs RAG: How to Choose the Right Approach",
+          "slug": "team-memory-vs-knowledge-bases-vs-rag",
+          "publishedAt": "2025-03-08T10:00:00Z",
+          "description": "A practical guide comparing traditional knowledge bases, bespoke RAG stacks, and team memory platforms—so you can pick the right approach for your engineering org.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Guides" },
+            { "_title": "Technology" }
+          ],
+          "body": {
+            "plainText": "Should you keep investing in a wiki, build your own RAG stack, or adopt a team memory platform? We compare these approaches across setup effort, maintenance, coverage, explainability, and agent compatibility so you can make an informed decision for your organization.",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 9
+          }
+        },
+        {
+          "_slug": "search-by-meaning-not-keywords",
+          "_title": "Search by Meaning, Not Keywords: How Teams Actually Find Answers Faster",
+          "slug": "search-by-meaning-not-keywords",
+          "publishedAt": "2025-03-15T10:00:00Z",
+          "description": "Why semantic search matters for internal knowledge, and how Lightfast’s hybrid retrieval pipeline helps teams find the right answer—even when no one used the exact words.",
           "featuredImage": null,
           "authors": [
             {
@@ -72,10 +72,10 @@
           ],
           "categories": [
             { "_title": "Technology" },
-            { "_title": "Data" }
+            { "_title": "Product" }
           ],
           "body": {
-            "plainText": "Semantic search is powerful, but it's not enough on its own...",
+            "plainText": "Keyword search breaks down when people don’t remember exact filenames, ticket IDs, or phrases. We walk through how Lightfast combines dense vectors, lexical signals, graph relationships, recency, and cross‑encoder reranking so that queries like \"who knows about authentication\" or \"why did we migrate databases\" actually return useful answers.",
             "json": {
               "content": [],
               "toc": []
@@ -84,11 +84,11 @@
           }
         },
         {
-          "_slug": "sources-and-citations",
-          "_title": "Every Answer Shows Its Source",
-          "slug": "sources-and-citations",
-          "publishedAt": "2025-02-05T11:00:00Z",
-          "description": "Why we require citations for every answer, how we ensure faithfulness to source material, and what makes an answer trustworthy.",
+          "_slug": "shared-memory-for-ai-agents",
+          "_title": "Giving AI Agents Shared Memory: A Practical Guide for Builders",
+          "slug": "shared-memory-for-ai-agents",
+          "publishedAt": "2025-03-22T10:00:00Z",
+          "description": "How to give your AI agents access to reliable team memory using Lightfast’s four API routes and MCP tools, without stuffing entire codebases into context.",
           "featuredImage": null,
           "authors": [
             {
@@ -98,24 +98,24 @@
             }
           ],
           "categories": [
-            { "_title": "Product" },
-            { "_title": "Guides" }
+            { "_title": "Guides" },
+            { "_title": "Technology" }
           ],
           "body": {
-            "plainText": "In an age of AI-generated content, verifiability matters more than ever...",
+            "plainText": "Agents are powerful but blind without access to the history of your systems. In this guide we show how to wire agents into Lightfast using the /v1/search, /v1/contents, /v1/similar, and /v1/answer routes and MCP tools so they can fetch just‑in‑time context with citations instead of hauling megabytes of code into every prompt.",
             "json": {
               "content": [],
               "toc": []
             },
-            "readingTime": 6
+            "readingTime": 9
           }
         },
         {
-          "_slug": "who-owns-what",
-          "_title": "Finding Expertise: The 'Who Owns What' Problem",
-          "slug": "who-owns-what",
-          "publishedAt": "2025-02-12T13:00:00Z",
-          "description": "How Lightfast tracks ownership, contributions, and context across your team to answer \"who should I ask about this?\"",
+          "_slug": "measuring-answer-quality-in-team-memory",
+          "_title": "Measuring Answer Quality: Citations, Explainability, and Trust in Team Memory Systems",
+          "slug": "measuring-answer-quality-in-team-memory",
+          "publishedAt": "2025-03-29T10:00:00Z",
+          "description": "A deep dive into how to measure answer quality in internal AI systems, with a focus on citations, faithfulness, and explainability in Lightfast.",
           "featuredImage": null,
           "authors": [
             {
@@ -125,16 +125,70 @@
             }
           ],
           "categories": [
-            { "_title": "Product" },
-            { "_title": "Data" }
+            { "_title": "Data" },
+            { "_title": "Technology" }
           ],
           "body": {
-            "plainText": "Every organization has hidden expertise scattered across teams...",
+            "plainText": "For internal AI assistants, \"looks plausible\" isn’t enough. We outline the metrics that matter for team memory—recall, citation coverage, rationale faithfulness, and user trust—and show how Lightfast uses them to keep answers grounded in real documents, discussions, and decisions.",
             "json": {
               "content": [],
               "toc": []
             },
-            "readingTime": 7
+            "readingTime": 10
+          }
+        },
+        {
+          "_slug": "incident-reviews-with-team-memory",
+          "_title": "Incident Reviews and Postmortems with Team Memory: Never Lose Context Again",
+          "slug": "incident-reviews-with-team-memory",
+          "publishedAt": "2025-04-05T10:00:00Z",
+          "description": "How SRE and platform teams can use team memory to run faster incident reviews, find all the relevant context, and avoid repeating the same mistakes.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Guides" },
+            { "_title": "Data" }
+          ],
+          "body": {
+            "plainText": "After an incident, the hardest part is reconstructing what really happened across PRs, tickets, deploys, and chats. We show how team memory helps incident commanders and reviewers quickly pull together the relevant timeline, see who did what when, and capture decisions with citations so the lessons actually stick.",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 8
+          }
+        },
+        {
+          "_slug": "onboarding-engineers-faster-with-team-memory",
+          "_title": "Onboarding Engineers 5× Faster with Team Memory",
+          "slug": "onboarding-engineers-faster-with-team-memory",
+          "publishedAt": "2025-04-12T10:00:00Z",
+          "description": "A playbook for using team memory to help new engineers ramp up quickly by answering their questions with sources and ownership context.",
+          "featuredImage": null,
+          "authors": [
+            {
+              "_title": "Jeevan Pillay",
+              "avatar": null,
+              "xUrl": "https://x.com/jeevanpillay"
+            }
+          ],
+          "categories": [
+            { "_title": "Guides" },
+            { "_title": "Company" }
+          ],
+          "body": {
+            "plainText": "New hires spend weeks asking basic questions like \"how does auth work?\" or \"who owns billing?\". We walk through an onboarding journey where Lightfast acts as team memory, showing how new engineers can self‑serve answers with citations, see ownership and dependencies, and ramp up in a fraction of the time.",
+            "json": {
+              "content": [],
+              "toc": []
+            },
+            "readingTime": 9
           }
         }
       ]

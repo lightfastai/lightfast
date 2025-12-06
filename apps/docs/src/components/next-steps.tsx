@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@repo/ui/lib/utils";
 import { FileText, Terminal, Layers, Timer } from "lucide-react";
 
 const iconMap = {
@@ -11,22 +10,22 @@ const iconMap = {
 };
 
 export interface NextStepsProps {
-  steps?: Array<{
+  steps?: {
     icon: keyof typeof iconMap;
     image: string;
     title: string;
     description: string;
     href: string;
-  }>;
+  }[];
 }
 
-const defaultSteps: Array<{
+const defaultSteps: {
   icon: keyof typeof iconMap;
   image: string;
   title: string;
   description: string;
   href: string;
-}> = [
+}[] = [
   {
     icon: "file-text",
     image:
@@ -74,7 +73,7 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {steps.map((step, index) => {
+        {steps.map((step, _index) => {
           const Icon = iconMap[step.icon];
 
           return (
