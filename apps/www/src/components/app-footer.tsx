@@ -76,7 +76,7 @@ export function AppFooter() {
                   Documentation
                 </NextLink>
                 <NextLink
-                  href="/docs/api/overview"
+                  href="/docs/api-reference/overview"
                   className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
                 >
                   API Reference
@@ -94,16 +94,10 @@ export function AppFooter() {
                   Blog
                 </NextLink>
                 <NextLink
-                  href="/docs/examples"
+                  href="/docs/features"
                   className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
                 >
-                  Examples
-                </NextLink>
-                <NextLink
-                  href="/docs/guides/mcp-integration"
-                  className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
-                >
-                  MCP Integration
+                  Features
                 </NextLink>
               </nav>
             </div>
@@ -115,19 +109,19 @@ export function AppFooter() {
               </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
-                  href="/docs/api/sdks"
+                  href="/docs/api-reference/sdks"
                   className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
                 >
                   SDKs & Tools
                 </NextLink>
                 <NextLink
-                  href="/docs/api/authentication"
+                  href="/docs/api-reference/authentication"
                   className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
                 >
                   Authentication
                 </NextLink>
                 <NextLink
-                  href="/docs/api/errors"
+                  href="/docs/api-reference/errors"
                   className="text-foreground hover:text-muted-foreground text-sm lg:text-base font-medium transition-colors duration-200"
                 >
                   Error Reference
