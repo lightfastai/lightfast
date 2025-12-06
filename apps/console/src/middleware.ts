@@ -28,6 +28,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/inngest(.*)",
   "/robots.txt",
   "/sitemap(.*)",
+  "/llms.txt", // AI crawler guidance file
   "/docs(.*)", // Documentation pages
 ]);
 
