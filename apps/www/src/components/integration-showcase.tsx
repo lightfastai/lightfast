@@ -15,16 +15,7 @@ const integrations = [
 
 export function IntegrationShowcase() {
   return (
-    <div className="w-full space-y-8">
-      {/* Heading */}
-      <div className="text-center">
-        <h2 className="text-sm">
-          <span className="text-muted-foreground">
-            Lightfast integrates with the tools you use
-          </span>
-        </h2>
-      </div>
-
+    <div className="w-full">
       {/* Logo Garden Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
         {integrations.map((integration) => {
