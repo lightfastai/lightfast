@@ -22,7 +22,6 @@ export async function generateBlogFeed(): Promise<Feed> {
     feedLinks: {
       rss: `${baseUrl}/blog/rss.xml`,
       atom: `${baseUrl}/blog/atom.xml`,
-      json: `${baseUrl}/blog/feed.json`,
     },
     author: {
       name: "Lightfast",

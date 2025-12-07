@@ -68,9 +68,6 @@ export const metadata: Metadata = {
       "application/atom+xml": [
         { url: "https://lightfast.ai/blog/atom.xml", title: "Atom 1.0" },
       ],
-      "application/feed+json": [
-        { url: "https://lightfast.ai/blog/feed.json", title: "JSON Feed" },
-      ],
     },
   },
 };
