@@ -46,9 +46,10 @@ export const LEGAL_NAV: NavItem[] = [
 
 // Feature sub-navigation used for the marketing header dropdown
 export const FEATURES_NAV: NavItem[] = [
-  { title: "Neural Memory", href: "/features/memory" },
-  { title: "Timeline", href: "/features/timeline" },
+  { title: "Memory", href: "/features/memory" },
   { title: "For Agents", href: "/features/agents" },
+  { title: "Connectors", href: "/features/connectors" },
+  { title: "Timeline", href: "/features/timeline" },
 ];
 
 // Resources sub-navigation used for the marketing header dropdown

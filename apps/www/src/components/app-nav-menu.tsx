@@ -3,7 +3,7 @@
 import NextLink from "next/link";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
-import { INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
+import { FEATURES_NAV, INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -19,6 +19,32 @@ import {
 export function AppNavMenu() {
   return (
     <nav className="hidden md:flex items-center md:justify-self-center">
+      {/* Features dropdown */}
+      <NavigationMenu viewport={false}>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="text-muted-foreground rounded-sm!">
+              Features
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
+                {FEATURES_NAV.map((item) => (
+                  <NavigationMenuLink asChild key={item.href}>
+                    <NextLink
+                      href={item.href}
+                      prefetch
+                      className="text--foreground"
+                    >
+                      {item.title}
+                    </NextLink>
+                  </NavigationMenuLink>
+                ))}
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+
       {/* Resources dropdown */}
       <NavigationMenu viewport={false}>
         <NavigationMenuList>

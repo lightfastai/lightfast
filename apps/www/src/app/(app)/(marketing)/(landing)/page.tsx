@@ -233,7 +233,14 @@ export default function HomePage() {
         </div>
 
         {/* Integration Showcase */}
-        <div className="max-w-6xl mx-auto w-full px-4 py-10">
+        <div className="max-w-6xl mx-auto w-full px-4 py-10 space-y-8">
+          <div className="text-center">
+            <h2 className="text-sm">
+              <span className="text-muted-foreground">
+                Lightfast integrates with the tools you use
+              </span>
+            </h2>
+          </div>
           <IntegrationShowcase />
         </div>
 

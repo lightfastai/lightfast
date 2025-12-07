@@ -164,7 +164,10 @@
       "Bash(pnpm build:experimental:*)",
       "Bash(tee:*)",
       "Bash(pnpm clean:*)",
-      "Read(//private/tmp/repos/microfrontends-nextjs-app-multi-zone/**)"
+      "Read(//private/tmp/repos/microfrontends-nextjs-app-multi-zone/**)",
+      "Bash(gh issue comment:*)",
+      "WebFetch(domain:tryprofound.com)",
+      "WebFetch(domain:chatgpt.com)"
     ],
     "deny": []
   },
