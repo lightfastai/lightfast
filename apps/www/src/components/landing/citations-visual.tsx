@@ -6,7 +6,6 @@
  */
 
 import { Quote, ExternalLink } from "lucide-react";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 const answerWithCitations = {
   question: "Why did we choose Clerk over Auth0?",
@@ -51,7 +50,7 @@ const answerWithCitations = {
 
 export function CitationsVisual() {
   return (
-    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl h-full overflow-hidden">
+    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl mx-auto">
       {/* Question */}
       <div className="bg-secondary rounded-md px-4 py-3 shrink-0">
         <div className="flex items-center gap-3">
@@ -62,62 +61,60 @@ export function CitationsVisual() {
         </div>
       </div>
 
-      {/* Answer and Sources - Scrollable Content */}
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="space-y-3 pr-3">
-          {/* Answer with inline citations */}
-          <div className="bg-secondary rounded-md p-4">
-            <p className="text-sm text-foreground leading-relaxed">
-              {answerWithCitations.answer.map((part, index) => {
-                if (part.type === "citation") {
-                  return (
-                    <sup
-                      key={index}
-                      className="inline-flex items-center justify-center w-4 h-4 ml-0.5 text-[10px] font-medium rounded bg-primary/20 text-primary cursor-pointer hover:bg-primary/30"
-                    >
-                      {part.id}
-                    </sup>
-                  );
-                }
-                return <span key={index}>{part.content}</span>;
-              })}
-            </p>
-          </div>
+      {/* Answer and Sources */}
+      <div className="flex-1 space-y-3">
+        {/* Answer with inline citations */}
+        <div className="bg-secondary rounded-md p-4">
+          <p className="text-sm text-foreground leading-relaxed">
+            {answerWithCitations.answer.map((part, index) => {
+              if (part.type === "citation") {
+                return (
+                  <sup
+                    key={index}
+                    className="inline-flex items-center justify-center w-4 h-4 ml-0.5 text-[10px] font-medium rounded bg-primary/20 text-primary cursor-pointer hover:bg-primary/30"
+                  >
+                    {part.id}
+                  </sup>
+                );
+              }
+              return <span key={index}>{part.content}</span>;
+            })}
+          </p>
+        </div>
 
-          {/* Sources */}
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-muted-foreground px-1">
-              Sources
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {answerWithCitations.sources.map((source) => (
-                <div
-                  key={source.id}
-                  className="bg-secondary rounded-md p-3 hover:bg-secondary/80 cursor-pointer group"
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-medium rounded bg-primary/20 text-primary shrink-0 mt-0.5">
-                      {source.id}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 mb-1">
-                        <span className="text-xs font-medium text-foreground truncate">
-                          {source.title}
-                        </span>
-                        <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <span className="text-xs text-primary">{source.source}</span>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                        {source.excerpt}
-                      </p>
+        {/* Sources */}
+        <div className="space-y-2">
+          <span className="text-xs font-medium text-muted-foreground px-1">
+            Sources
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            {answerWithCitations.sources.map((source) => (
+              <div
+                key={source.id}
+                className="bg-secondary rounded-md p-3 hover:bg-secondary/80 cursor-pointer group"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-medium rounded bg-primary/20 text-primary shrink-0 mt-0.5">
+                    {source.id}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {source.title}
+                      </span>
+                      <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
+                    <span className="text-xs text-primary">{source.source}</span>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                      {source.excerpt}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Stats Footer */}
       <div className="bg-secondary rounded-md px-4 py-2 shrink-0">

@@ -6,7 +6,6 @@
  * Designed to be used inside VisualShowcase component.
  */
 
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 const observations = [
   {
@@ -52,7 +51,7 @@ const observations = [
 
 export function NeuralMemoryVisual() {
   return (
-    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl h-full overflow-hidden">
+    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="bg-secondary rounded-md px-4 py-3 shrink-0">
           <div className="flex items-center justify-between">
@@ -82,58 +81,56 @@ export function NeuralMemoryVisual() {
         </div>
 
         {/* Observations Feed */}
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-3 pr-3">
-            {observations.map((obs, index) => (
-              <div key={index} className="bg-secondary rounded-md p-3">
-                <div className="flex items-start gap-3">
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    {/* Title */}
-                    <h4 className="text-sm font-medium text-foreground mb-1">
-                      {obs.title}
-                    </h4>
+        <div className="flex-1 space-y-3">
+          {observations.map((obs, index) => (
+            <div key={index} className="bg-secondary rounded-md p-3">
+              <div className="flex items-start gap-3">
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {/* Title */}
+                  <h4 className="text-sm font-medium text-foreground mb-1">
+                    {obs.title}
+                  </h4>
 
-                    {/* Context */}
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {obs.context}
-                    </p>
+                  {/* Context */}
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {obs.context}
+                  </p>
 
-                    {/* Metadata */}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <span className="text-primary">{obs.source}</span>
-                      </span>
-                      <span>•</span>
-                      <span>{obs.timestamp}</span>
-                      {obs.participants.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            {obs.participants.slice(0, 2).join(", ")}
-                            {obs.participants.length > 2 && (
-                              <span className="text-muted-foreground">
-                                +{obs.participants.length - 2}
-                              </span>
-                            )}
-                          </span>
-                        </>
-                      )}
-                    </div>
+                  {/* Metadata */}
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="text-primary">{obs.source}</span>
+                    </span>
+                    <span>•</span>
+                    <span>{obs.timestamp}</span>
+                    {obs.participants.length > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          {obs.participants.slice(0, 2).join(", ")}
+                          {obs.participants.length > 2 && (
+                            <span className="text-muted-foreground">
+                              +{obs.participants.length - 2}
+                            </span>
+                          )}
+                        </span>
+                      </>
+                    )}
                   </div>
-
-                  {/* Action */}
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    View
-                  </button>
                 </div>
+
+                {/* Action */}
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  View
+                </button>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
+            </div>
+          ))}
+        </div>
 
       {/* Stats Footer */}
       <div className="bg-secondary rounded-md px-4 py-2 shrink-0">

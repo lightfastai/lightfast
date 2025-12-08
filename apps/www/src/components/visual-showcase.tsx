@@ -42,15 +42,9 @@ export function VisualShowcase({
 
       {/* Content Layer */}
       <div className="z-20 col-span-full row-span-full">
-        <div
-          className="relative w-full select-none overflow-hidden rounded-xs border border-border"
-          style={{
-            height: maxHeight,
-            minHeight: minHeight,
-          }}
-        >
-          <div className="absolute inset-0 z-10 h-full w-full transition-opacity duration-150">
-            <div className="mx-auto flex h-full max-w-5xl items-center justify-center px-4 py-16">
+        <div className="relative w-full select-none overflow-hidden rounded-xs min-h-[850px] flex items-center justify-center">
+          <div className="relative z-10 w-full transition-opacity duration-150">
+            <div className="mx-auto max-w-5xl px-4 py-8">
               {children}
             </div>
           </div>

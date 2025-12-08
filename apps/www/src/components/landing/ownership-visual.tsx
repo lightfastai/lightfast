@@ -6,7 +6,6 @@
  */
 
 import { User, Users, Code, FileText } from "lucide-react";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 const ownershipData = [
   {
@@ -49,7 +48,7 @@ const ownershipData = [
 
 export function OwnershipVisual() {
   return (
-    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl h-full overflow-hidden">
+    <div className="flex flex-col gap-3 bg-background p-3 rounded-md w-full max-w-2xl mx-auto">
       {/* Header */}
       <div className="bg-secondary rounded-md px-4 py-3 shrink-0">
         <div className="flex items-center justify-between">
@@ -79,57 +78,55 @@ export function OwnershipVisual() {
       </div>
 
       {/* Ownership List */}
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="space-y-3 pr-3">
-          {ownershipData.map((item, index) => (
-            <div key={index} className="bg-secondary rounded-md p-3">
-              <div className="flex items-start gap-3">
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center">
-                  {item.role === "Team" ? (
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <User className="w-4 h-4 text-muted-foreground" />
-                  )}
+      <div className="flex-1 space-y-3">
+        {ownershipData.map((item, index) => (
+          <div key={index} className="bg-secondary rounded-md p-3">
+            <div className="flex items-start gap-3">
+              {/* Avatar */}
+              <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center">
+                {item.role === "Team" ? (
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <User className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-medium text-foreground">
+                    {item.person}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {item.role}
+                  </span>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-foreground">
-                      {item.person}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.role}
-                    </span>
-                  </div>
-
-                  {/* Ownership tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {item.owns.map((ownership, idx) => {
-                      const Icon = ownership.icon;
-                      return (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-card text-muted-foreground"
-                        >
-                          <Icon className="w-3 h-3" />
-                          {ownership.name}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  {/* Context */}
-                  <p className="text-xs text-muted-foreground">
-                    {item.recentContext}
-                  </p>
+                {/* Ownership tags */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {item.owns.map((ownership, idx) => {
+                    const Icon = ownership.icon;
+                    return (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-card text-muted-foreground"
+                      >
+                        <Icon className="w-3 h-3" />
+                        {ownership.name}
+                      </span>
+                    );
+                  })}
                 </div>
+
+                {/* Context */}
+                <p className="text-xs text-muted-foreground">
+                  {item.recentContext}
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </ScrollArea>
+          </div>
+        ))}
+      </div>
 
       {/* Stats Footer */}
       <div className="bg-secondary rounded-md px-4 py-2 shrink-0">

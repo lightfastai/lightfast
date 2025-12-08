@@ -54,7 +54,7 @@ export function FeatureShowcase({
 
         {/* Visual Demo - 2/3 */}
         <div className={`lg:col-span-2 ${reverse ? "lg:order-1" : ""}`}>
-          <VisualShowcase minHeight="400px" maxHeight="480px">
+          <VisualShowcase>
             {children}
           </VisualShowcase>
         </div>
