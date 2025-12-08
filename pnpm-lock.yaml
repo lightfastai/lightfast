@@ -859,12 +859,21 @@ importers:
       '@repo/console-api-services':
         specifier: workspace:*
         version: link:../../packages/console-api-services
+      '@repo/console-auth-middleware':
+        specifier: workspace:*
+        version: link:../../packages/console-auth-middleware
+      '@repo/console-embed':
+        specifier: workspace:*
+        version: link:../../packages/console-embed
       '@repo/console-oauth':
         specifier: workspace:^
         version: link:../../packages/console-oauth
       '@repo/console-octokit-github':
         specifier: workspace:*
         version: link:../../packages/console-octokit-github
+      '@repo/console-pinecone':
+        specifier: workspace:*
+        version: link:../../packages/console-pinecone
       '@repo/console-trpc':
         specifier: workspace:^
         version: link:../../packages/console-trpc
@@ -943,6 +952,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
       immer:
         specifier: ^10.1.1
         version: 10.1.3

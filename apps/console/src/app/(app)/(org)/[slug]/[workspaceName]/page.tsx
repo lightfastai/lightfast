@@ -1,67 +1,20 @@
 import { Suspense } from "react";
-import {
-  WorkspaceDashboard,
-  WorkspaceDashboardSkeleton,
-} from "~/components/workspace-dashboard";
 import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
+import { WorkspaceSearch, WorkspaceSearchSkeleton } from "~/components/workspace-search";
 
-export default async function WorkspacePage({
+export default async function WorkspaceSearchPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; workspaceName: string }>;
+  searchParams: Promise<{ q?: string; store?: string }>;
 }) {
   const { slug, workspaceName } = await params;
+  const { q = "", store = "" } = await searchParams;
 
-  // No blocking access check - WorkspaceDashboard will use slug to resolve org
-  // This ensures we always use the org from URL, not from potentially stale auth() state
-
-  // Prefetch all 8 queries in parallel on the server (granular for better caching)
-  prefetch(
-    orgTrpc.workspace.sources.list.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-    })
-  );
+  // Prefetch stores list for the search dropdown
   prefetch(
     orgTrpc.workspace.stores.list.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.documents.stats.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.jobs.stats.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.jobs.recent.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.jobPercentiles.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-      timeRange: "24h",
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.performanceTimeSeries.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName: workspaceName,
-      timeRange: "24h",
-    })
-  );
-  prefetch(
-    orgTrpc.workspace.health.overview.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
     })
@@ -71,10 +24,12 @@ export default async function WorkspacePage({
     <div className="flex flex-1 flex-col h-full overflow-auto">
       <HydrateClient>
         <div className="flex flex-col gap-6 py-2 px-6">
-          <Suspense fallback={<WorkspaceDashboardSkeleton />}>
-            <WorkspaceDashboard
+          <Suspense fallback={<WorkspaceSearchSkeleton />}>
+            <WorkspaceSearch
               orgSlug={slug}
               workspaceName={workspaceName}
+              initialQuery={q}
+              initialStore={store}
             />
           </Suspense>
         </div>
