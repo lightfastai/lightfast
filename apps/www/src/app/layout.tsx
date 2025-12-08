@@ -24,7 +24,7 @@ import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – Neural Memory for Teams",
   description:
-    "Neural memory built for teams. Search by meaning with sources. Capture decisions, context, and ownership across code, docs, and tools. Developer‑first API and MCP tools.",
+    "Neural memory for teams. Search by meaning with sources. Capture decisions and context across code, docs, and tools.",
   image: siteConfig.ogImage,
   applicationName: "Lightfast Neural Memory",
   metadataBase: new URL(siteConfig.url),
