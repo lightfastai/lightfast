@@ -1,6 +1,6 @@
 # Lightfast Implementation Status
-**Last Updated:** 2025-11-27
-**Current Branch:** `feat/phase1.6-decouple-github`
+**Last Updated:** 2025-12-08
+**Current Branch:** `main`
 **Status:** Production Ready ✅
 
 ---
@@ -110,6 +110,37 @@ Clerk-centric architecture (no separate organizations table):
 - ✅ Incremental updates
 - ✅ Vector indexing with Pinecone
 - ✅ Full-text search
+
+#### Workspace Search (Complete)
+
+**Search Page** (`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/page.tsx`)
+- Semantic search UI for workspace stores
+- Store selector dropdown
+- Real-time search with latency tracking
+- Results with relevance scores
+
+**Search API Route** (`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/api/search/route.ts`)
+- Next.js API route (not tRPC) for extensibility
+- Clerk session authentication
+- Workspace/store access verification
+- Pinecone vector search with Cohere embeddings
+- Designed for future extensibility:
+  - User's public search API (API key auth)
+  - MCP search connection
+  - Multi-store search
+  - Hybrid search (semantic + keyword)
+  - Reranking
+
+**Workspace Insights** (`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/insights/page.tsx`)
+- Dashboard moved to `/insights` sub-route
+- Search is now the default workspace landing page
+
+**What Works:**
+- ✅ Semantic search through workspace stores
+- ✅ Store-scoped queries with namespace isolation
+- ✅ Latency tracking (embedding + retrieval)
+- ✅ Score-based result ranking
+- ✅ URL-based search state (shareable links)
 
 ---
 
@@ -291,6 +322,8 @@ f4f5da61 refactor(console): remove all deprecated code and dead routes
 - [x] Type-safe APIs
 - [x] Onboarding flow
 - [x] Error tracking
+- [x] Workspace search UI
+- [x] Search API route
 
 ### Nice to Have (Optional)
 - [ ] Linear integration (1-2 weeks)
@@ -307,6 +340,8 @@ f4f5da61 refactor(console): remove all deprecated code and dead routes
 - Workflows: `api/console/src/inngest/workflow/`
 - API routes: `apps/console/src/app/`
 - Migrations: `db/console/src/migrations/`
+- Search UI: `apps/console/src/components/workspace-search.tsx`
+- Search API: `apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/api/search/route.ts`
 
 ### Architecture Docs
 - Storage: `docs/architecture/storage/`
@@ -319,6 +354,6 @@ See `PRODUCTION_READINESS_REPORT.md` at repository root for detailed analysis.
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-08
 **Maintained By:** Engineering team
 **Next Review:** After production launch

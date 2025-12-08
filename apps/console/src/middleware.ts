@@ -54,7 +54,7 @@ const isOrgScopedRoute = createRouteMatcher([
 // Organization page routes - requires active org
 // Matches /:slug and /:slug/* patterns (excluding reserved routes)
 // organizationSyncOptions activates org from URL, then auth.protect verifies access
-const isOrgPageRoute = createRouteMatcher(["/:slug(.)"]);
+const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 
 /**
  * Compose middleware with NEMO
