@@ -1,24 +1,24 @@
 # Lightfast — Vision & Mission
 
-Last Updated: 2025-10-28
+Last Updated: 2025-12-09
 
-Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization.
+Lightfast is the memory layer for software teams. We help engineers and AI agents search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
 
 ---
 
 ## Mission
 
-Make your team's knowledge instantly searchable and trustworthy. Capture what matters as it happens. Never lose context.
+Make your engineering team's history instantly searchable and trustworthy. Capture what matters as it happens. Never lose context.
 
 ## Vision
 
-Any person or agent can ask "who/what/why/depends" and get accurate answers with sources—across your entire company's ecosystem, in real time.
+Any engineer or agent can ask "what broke?", "who owns this?", "why was this decision made?" and get accurate answers with sources—across your entire engineering ecosystem, in real time.
 
 ---
 
 ## Positioning
 
-- **Memory for teams:** Search by meaning, not keywords. Every answer shows its source.
+- **The memory layer for software teams:** Search by meaning, not keywords. Every answer shows its source.
 - **Explainable by design:** See who owns what, what depends on what, and why decisions were made.
 - **Developer-first:** Four simple API routes. MCP tools for agents. Integrate in minutes.
 
@@ -26,7 +26,9 @@ Any person or agent can ask "who/what/why/depends" and get accurate answers with
 
 ## What We Remember
 
-- **Documents & Code:** Pull requests, issues, docs, and discussions from GitHub, Linear, Notion, Slack, and more.
+- **Code & Changes:** Pull requests, commits, code reviews, and discussions from source control (GitHub, GitLab, Bitbucket).
+- **Deployments & Infrastructure:** Deployment events, build logs, environment changes, and infrastructure state (Vercel, Railway, Pulumi, Terraform).
+- **Incidents & Errors:** Error events, incident timelines, resolutions, and post-mortems (Sentry, PagerDuty).
 - **Decisions & Context:** Capture why decisions were made, what was discussed, and who was involved.
 - **People & Ownership:** Track who owns what, who worked on what, and who has context on any topic.
 
