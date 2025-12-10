@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { userSources, type UserSource } from "@db/console/schema";
+import { userSources, workspaceIntegrations } from "@db/console/schema";
 import { userScopedProcedure } from "../../trpc";
 import {
 	getUserInstallations,
@@ -12,6 +12,7 @@ import {
 import { decrypt } from "@repo/lib";
 import { env } from "../../env";
 import yaml from "yaml";
+import type { VercelProjectsResponse } from "@repo/console-vercel/types";
 
 /**
  * User Sources Router
@@ -651,5 +652,272 @@ export const userSourcesRouter = {
 					});
 				}
 			}),
+	},
+
+	/**
+	 * Vercel-specific operations
+	 */
+	vercel: {
+		/**
+		 * Get user's Vercel source
+		 *
+		 * Returns the user's Vercel OAuth connection including
+		 * team and configuration information.
+		 */
+		get: userScopedProcedure.query(async ({ ctx }) => {
+			const result = await ctx.db
+				.select()
+				.from(userSources)
+				.where(
+					and(
+						eq(userSources.userId, ctx.auth.userId),
+						eq(userSources.provider, "vercel"),
+					),
+				)
+				.limit(1);
+
+			const userSource = result[0];
+
+			if (!userSource) {
+				return null;
+			}
+
+			const providerMetadata = userSource.providerMetadata;
+			if (providerMetadata.provider !== "vercel") {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Invalid provider metadata type",
+				});
+			}
+
+			return {
+				id: userSource.id,
+				userId: userSource.userId,
+				provider: userSource.provider,
+				connectedAt: userSource.connectedAt,
+				isActive: userSource.isActive,
+				vercelUserId: providerMetadata.userId,
+				teamId: providerMetadata.teamId,
+				teamSlug: providerMetadata.teamSlug,
+				configurationId: providerMetadata.configurationId,
+			};
+		}),
+
+		/**
+		 * Store Vercel OAuth result (called from OAuth callback route)
+		 * Stores user's Vercel connection with access token
+		 */
+		storeOAuthResult: userScopedProcedure
+			.input(
+				z.object({
+					accessToken: z.string(),
+					userId: z.string(),
+					teamId: z.string().optional(),
+					teamSlug: z.string().optional(),
+					configurationId: z.string(),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				console.log("[tRPC userSources.vercel.storeOAuthResult] Starting");
+				console.log("[tRPC userSources.vercel.storeOAuthResult] Clerk User ID:", ctx.auth.userId);
+				console.log("[tRPC userSources.vercel.storeOAuthResult] Vercel User ID:", input.userId);
+				console.log("[tRPC userSources.vercel.storeOAuthResult] Team ID:", input.teamId);
+				console.log("[tRPC userSources.vercel.storeOAuthResult] Configuration ID:", input.configurationId);
+
+				const now = new Date().toISOString();
+
+				// Check if userSource already exists
+				const existingUserSource = await ctx.db
+					.select()
+					.from(userSources)
+					.where(
+						and(
+							eq(userSources.userId, ctx.auth.userId),
+							eq(userSources.provider, "vercel"),
+						),
+					)
+					.limit(1);
+
+				if (existingUserSource[0]) {
+					// Update existing
+					console.log("[tRPC userSources.vercel.storeOAuthResult] Updating existing userSource:", existingUserSource[0].id);
+					await ctx.db
+						.update(userSources)
+						.set({
+							accessToken: input.accessToken,
+							providerMetadata: {
+								provider: "vercel" as const,
+								userId: input.userId,
+								teamId: input.teamId,
+								teamSlug: input.teamSlug,
+								configurationId: input.configurationId,
+							},
+							isActive: true,
+							lastSyncAt: now,
+						})
+						.where(eq(userSources.id, existingUserSource[0].id));
+
+					console.log("[tRPC userSources.vercel.storeOAuthResult] Updated successfully");
+					return { id: existingUserSource[0].id, created: false };
+				} else {
+					// Create new
+					console.log("[tRPC userSources.vercel.storeOAuthResult] Creating new userSource");
+					const result = await ctx.db
+						.insert(userSources)
+						.values({
+							userId: ctx.auth.userId,
+							provider: "vercel",
+							accessToken: input.accessToken,
+							providerMetadata: {
+								provider: "vercel" as const,
+								userId: input.userId,
+								teamId: input.teamId,
+								teamSlug: input.teamSlug,
+								configurationId: input.configurationId,
+							},
+							isActive: true,
+							connectedAt: now,
+						})
+						.returning({ id: userSources.id });
+
+					console.log("[tRPC userSources.vercel.storeOAuthResult] Created successfully:", result[0]!.id);
+					return { id: result[0]!.id, created: true };
+				}
+			}),
+
+		/**
+		 * List Vercel projects for project selector
+		 *
+		 * Returns all projects from user's Vercel account with connection status.
+		 * Used by the project selector modal to show available projects.
+		 */
+		listProjects: userScopedProcedure
+			.input(
+				z.object({
+					userSourceId: z.string(),
+					workspaceId: z.string(),
+					cursor: z.string().optional(),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// 1. Verify user owns this source
+				const source = await ctx.db.query.userSources.findFirst({
+					where: and(
+						eq(userSources.id, input.userSourceId),
+						eq(userSources.userId, ctx.auth.userId),
+						eq(userSources.provider, "vercel"),
+						eq(userSources.isActive, true),
+					),
+				});
+
+				if (!source) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Vercel connection not found",
+					});
+				}
+
+				// 2. Decrypt token
+				const accessToken = decrypt(source.accessToken, env.ENCRYPTION_KEY);
+
+				// 3. Get team ID from metadata
+				const providerMetadata = source.providerMetadata;
+				if (providerMetadata.provider !== "vercel") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider metadata",
+					});
+				}
+				const teamId = providerMetadata.teamId;
+
+				// 4. Call Vercel API
+				const url = new URL("https://api.vercel.com/v9/projects");
+				if (teamId) url.searchParams.set("teamId", teamId);
+				url.searchParams.set("limit", "100");
+				if (input.cursor) url.searchParams.set("until", input.cursor);
+
+				console.log("[Vercel Projects] Fetching from:", url.toString());
+				console.log("[Vercel Projects] teamId:", teamId);
+
+				const response = await fetch(url.toString(), {
+					headers: { Authorization: `Bearer ${accessToken}` },
+				});
+
+				console.log("[Vercel Projects] Response status:", response.status);
+
+				if (response.status === 401) {
+					// Mark source as needing re-auth
+					await ctx.db
+						.update(userSources)
+						.set({ isActive: false })
+						.where(eq(userSources.id, input.userSourceId));
+
+					throw new TRPCError({
+						code: "UNAUTHORIZED",
+						message: "Vercel connection expired. Please reconnect.",
+					});
+				}
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					console.error("[Vercel API Error]", response.status, errorText);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch Vercel projects",
+					});
+				}
+
+				const data = (await response.json()) as VercelProjectsResponse;
+				console.log("[Vercel Projects] Response data:", JSON.stringify(data, null, 2));
+
+				// 5. Get already-connected projects for this workspace
+				const connected = await ctx.db.query.workspaceIntegrations.findMany({
+					where: and(
+						eq(workspaceIntegrations.workspaceId, input.workspaceId),
+						eq(workspaceIntegrations.userSourceId, input.userSourceId),
+						eq(workspaceIntegrations.isActive, true),
+					),
+					columns: { providerResourceId: true },
+				});
+
+				const connectedIds = new Set(connected.map((c) => c.providerResourceId));
+
+				// 6. Return with connection status
+				return {
+					projects: data.projects.map((p) => ({
+						id: p.id,
+						name: p.name,
+						framework: p.framework,
+						updatedAt: p.updatedAt,
+						isConnected: connectedIds.has(p.id),
+					})),
+					pagination: data.pagination,
+				};
+			}),
+
+		/**
+		 * Disconnect Vercel integration
+		 */
+		disconnect: userScopedProcedure.mutation(async ({ ctx }) => {
+			const result = await ctx.db
+				.update(userSources)
+				.set({ isActive: false })
+				.where(
+					and(
+						eq(userSources.userId, ctx.auth.userId),
+						eq(userSources.provider, "vercel"),
+					),
+				)
+				.returning({ id: userSources.id });
+
+			if (!result[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Vercel integration not found",
+				});
+			}
+
+			return { success: true };
+		}),
 	},
 } satisfies TRPCRouterRecord;

@@ -13,7 +13,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
   url: "https://lightfast.ai",
   ogImage: "https://lightfast.ai/og.jpg",
   description:
-    "Lightfast is neural memory built for teams. Search everything your organization knows by meaning, get answers with sources, and trace decisions across code, docs, and tools via a developer-first API and MCP tools.",
+    "The memory layer for software teams. Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.",
   links: {
     twitter: {
       title: "Twitter",

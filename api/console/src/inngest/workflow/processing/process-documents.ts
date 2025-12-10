@@ -1,6 +1,6 @@
 /**
  * Generic document processing workflow
- * Processes documents from any source (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+ * Processes documents from any source (GitHub, Vercel)
  *
  * Workflow steps:
  * 1. Batch events by workspace + store
@@ -44,7 +44,7 @@ export interface ProcessDocumentEvent {
   documentId: string;
 
   // Source identification (discriminated union)
-  sourceType: "github" | "linear" | "notion" | "sentry" | "vercel" | "zendesk";
+  sourceType: "github" | "vercel";
   sourceId: string;
   sourceMetadata: Record<string, unknown>;
 

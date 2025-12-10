@@ -4,6 +4,8 @@ import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-docume
 import { workspaceStores } from "./tables/workspace-stores";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
+import { workspaceIntegrations } from "./tables/workspace-integrations";
+import { userSources } from "./tables/user-sources";
 import { orgWorkspaces } from "./tables/org-workspaces";
 
 /**
@@ -53,5 +55,16 @@ export const workspaceUserActivitiesRelations = relations(workspaceUserActivitie
   relatedActivity: one(workspaceUserActivities, {
     fields: [workspaceUserActivities.relatedActivityId],
     references: [workspaceUserActivities.id],
+  }),
+}));
+
+export const workspaceIntegrationsRelations = relations(workspaceIntegrations, ({ one }) => ({
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceIntegrations.workspaceId],
+    references: [orgWorkspaces.id],
+  }),
+  userSource: one(userSources, {
+    fields: [workspaceIntegrations.userSourceId],
+    references: [userSources.id],
   }),
 }));

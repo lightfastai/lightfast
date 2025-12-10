@@ -5,7 +5,7 @@
  *
  * This package provides cryptographic verification utilities for:
  * - Verifying GitHub webhook signatures (HMAC SHA-256)
- * - Verifying Linear webhook signatures (stub - to be implemented)
+ * - Verifying Vercel webhook signatures
  * - Timing-attack resistant signature comparison
  * - Timestamp validation to prevent replay attacks
  * - Common webhook verification utilities
@@ -52,4 +52,4 @@
 export * from "./types.js";
 export * from "./common.js";
 export * from "./github.js";
-export * from "./linear.js";
+export * from "./vercel.js";

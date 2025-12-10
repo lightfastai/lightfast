@@ -18,9 +18,7 @@ import { z } from "zod";
  */
 export const integrationProviderSchema = z.enum([
   "github",      // ✅ Implemented
-  "notion",      // 🔜 Future
-  "linear",      // 🔜 Future
-  "sentry",      // 🔜 Future
+  "vercel",      // ✅ Implemented (Phase 01)
 ]);
 
 export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
@@ -36,11 +34,7 @@ export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
  */
 export const sourceTypeSchema = z.enum([
   "github",      // ✅ Implemented
-  "linear",      // 🔜 Future
-  "notion",      // 🔜 Future
-  "sentry",      // 🔜 Future
-  "vercel",      // 🔜 Future
-  "zendesk",     // 🔜 Future
+  "vercel",      // ✅ Implemented (Phase 01)
 ]);
 
 export type SourceType = z.infer<typeof sourceTypeSchema>;

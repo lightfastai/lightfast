@@ -28,7 +28,7 @@ export const userSources = pgTable(
     // User who owns this personal connection
     userId: varchar("user_id", { length: 191 }).notNull().$type<ClerkUserId>(),
 
-    // Provider type (github, notion, linear, sentry)
+    // Provider type (github, vercel)
     provider: varchar("provider", { length: 50 }).notNull().$type<IntegrationProvider>(),
 
     // OAuth credentials (MUST be encrypted at application layer)
@@ -55,21 +55,12 @@ export const userSources = pgTable(
           }[];
         }
       | {
-          provider: "notion";
-          workspaceId: string;
-          workspaceName: string;
-          workspaceIcon?: string;
-          botId: string;
-        }
-      | {
-          provider: "linear";
-          // Linear OAuth gives access to all teams
-        }
-      | {
-          provider: "sentry";
-          userId: string;
-          userName?: string;
-          userEmail?: string;
+          provider: "vercel";
+          // Vercel team/user that installed the integration
+          teamId?: string;              // Vercel team ID (null for personal accounts)
+          teamSlug?: string;            // Vercel team slug
+          userId: string;               // Vercel user ID
+          configurationId: string;      // Integration configuration ID
         }
     >().notNull(),
 
@@ -97,6 +88,4 @@ export type InsertUserSource = typeof userSources.$inferInsert;
 
 // Discriminated union helpers
 export type GitHubUserSource = UserSource & { provider: "github" };
-export type NotionUserSource = UserSource & { provider: "notion" };
-export type LinearUserSource = UserSource & { provider: "linear" };
-export type SentryUserSource = UserSource & { provider: "sentry" };
+export type VercelUserSource = UserSource & { provider: "vercel" };
