@@ -59,6 +59,8 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
+Note: ngrok, inngest and upstash workflow automatically runs with `pnpm dev:app`. You can test ngrok connection with `ps aux | grep ngrok | grep -v grep`  
+
 ## Key Rules
 
 1. **Vendor abstractions**: Standalone re-exports of third-party SDKs. Never import `@planetscale/*` directly → use `@vendor/db`
