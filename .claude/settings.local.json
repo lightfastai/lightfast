@@ -167,7 +167,11 @@
       "Read(//private/tmp/repos/microfrontends-nextjs-app-multi-zone/**)",
       "Bash(gh issue comment:*)",
       "WebFetch(domain:tryprofound.com)",
-      "WebFetch(domain:chatgpt.com)"
+      "WebFetch(domain:chatgpt.com)",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_file_upload",
+      "Read(//tmp/repos/humanlayer/.claude/commands/**)",
+      "Read(//private/tmp/repos/humanlayer/.claude/commands/**)"
     ],
     "deny": []
   },

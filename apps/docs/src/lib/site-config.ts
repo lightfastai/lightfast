@@ -7,7 +7,7 @@ export const siteConfig: SiteConfig<SiteLinks> = {
   url: "https://lightfast.ai/docs",
   ogImage: "https://lightfast.ai/og.jpg",
   description:
-    "Documentation for Lightfast neural memory — Learn how to integrate team memory via a simple REST API and MCP tools. Build search by meaning with sources.",
+    "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
   links: {
     twitter: {
       title: "Twitter",
@@ -42,9 +42,11 @@ export const siteConfig: SiteConfig<SiteLinks> = {
 export const docsMetadata = {
   keywords: [
     "Lightfast documentation",
-    "team memory docs",
+    "memory layer",
+    "memory layer for software teams",
+    "software team memory",
+    "engineering knowledge search",
     "neural memory docs",
-    "organizational memory docs",
     "semantic search",
     "semantic search docs",
     "answers with sources",

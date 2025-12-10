@@ -18,6 +18,10 @@
       "cache": false,
       "persistent": true
     },
+    "dev:ngrok": {
+      "cache": false,
+      "persistent": true
+    },
     "dev:studio": {
       "cache": false,
       "persistent": true

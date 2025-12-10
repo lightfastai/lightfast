@@ -1,8 +1,18 @@
 {
+  "_comment": "Reference of all available MCP servers. Use 'pnpm claude [-b] [-e] [-a]' to start Claude with specific servers.",
   "mcpServers": {
-    "deus-session": {
-      "command": "node",
-      "args": ["./core/deus/dist/mcp-server/index.js"]
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--isolated",
+        "--user-data-dir=/tmp/playwright-mcp",
+        "--storage-state=.auth/browser-session.json"
+      ]
+    },
+    "exa": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/exa-mcp"]
     }
   }
 }

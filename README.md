@@ -6,15 +6,15 @@
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/issues)
 
-Lightfast is memory built for teams, helping people and agents search everything their organization knows by meaning, get answers with sources, and trace decisions across code, docs, and tools.
+Lightfast is the memory layer for software teams. Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
 
 🌐 **Website**: [lightfast.ai](https://lightfast.ai)
 📚 **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
-💬 **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)  
+💬 **Chat Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)
 
 ## About
 
-Lightfast is a neural memory system for teams. It indexes code, docs, tickets, and conversations so people and AI agents can search by meaning, get answers with sources, and trace decisions across their organization. Under the hood, Lightfast provides a production-ready agent execution and retrieval platform so agents can reliably use this shared memory.
+Lightfast is the memory layer for software teams. It indexes code changes, PRs, docs, and decisions so engineers and AI agents can search by meaning, get answers with sources, and trace decisions across their engineering org. Under the hood, Lightfast provides a production-ready retrieval platform so agents can reliably use this shared memory.
 
 ### Why Lightfast?
 

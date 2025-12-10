@@ -25,13 +25,13 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast Pricing – Team Memory That Scales",
+  title: "Lightfast Pricing – Memory Layer That Scales",
   description:
-    "Start with a free team memory plan for up to 3 users. Scale Lightfast neural memory across your organization with simple per-user pricing and generous search allowances.",
+    "Start with a free memory layer plan for up to 3 users. Scale Lightfast neural memory across your organization with simple per-user pricing and generous search allowances.",
   openGraph: {
-    title: "Lightfast Pricing – Team Memory That Scales",
+    title: "Lightfast Pricing – Memory Layer That Scales",
     description:
-      "Pricing for Lightfast neural memory built for teams. Start free and scale with simple per-user pricing, generous search allowances, and Neural Memory included.",
+      "Pricing for Lightfast memory layer for software teams. Start free and scale with simple per-user pricing, generous search allowances, and Neural Memory included.",
     url: "https://lightfast.ai/pricing",
     type: "website",
   },
@@ -39,7 +39,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     title: "Lightfast Pricing",
     description:
-      "Team memory for every size team. Start free, scale transparently. Neural Memory, semantic search, and unlimited sources available.",
+      "Memory layer for every size team. Start free, scale transparently. Neural Memory, semantic search, and unlimited sources available.",
     images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {
@@ -319,7 +319,7 @@ export default function PricingPage() {
                 {/* Small label */}
                 <div className="mb-8 opacity-80">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Pricing for team memory
+                    Pricing for memory layer
                   </p>
                 </div>
 
@@ -333,9 +333,8 @@ export default function PricingPage() {
                 {/* Description */}
                 <div className="mt-8 px-4">
                   <p className="text-base text-muted-foreground">
-                    Simple pricing for neural memory built for teams. Start free,
-                    then scale Lightfast as more people and agents rely on team
-                    memory.
+                    Simple pricing for memory layer for software teams. Start free,
+                    then scale Lightfast as more people and agents rely on memory layer.
                   </p>
                   <p className="mt-3 text-xs text-muted-foreground">
                     Want to see how it works before choosing a plan?{" "}
