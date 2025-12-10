@@ -12,24 +12,9 @@ interface Integration {
 
 const latestIntegrations: Integration[] = [
 	{
-		name: "Linear",
-		description: "Sync tasks with your product roadmap. Create and update issues from Console.",
-		Icon: IntegrationIcons.linear,
-	},
-	{
-		name: "Notion",
-		description: "Reference specs and docs instantly. Semantic search across workspaces.",
-		Icon: IntegrationIcons.notion,
-	},
-	{
 		name: "Vercel",
 		description: "Deployment correlation with code changes and rollback intelligence.",
 		Icon: IntegrationIcons.vercel,
-	},
-	{
-		name: "Sentry",
-		description: "Error tracking with automated debugging context and deployment correlation.",
-		Icon: IntegrationIcons.sentry,
 	},
 	{
 		name: "PostHog",

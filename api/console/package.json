@@ -40,6 +40,7 @@
 		"@repo/console-pinecone": "workspace:*",
 		"@repo/console-types": "workspace:*",
 		"@repo/console-validation": "workspace:^",
+		"@repo/console-vercel": "workspace:^",
 		"@repo/console-webhooks": "workspace:^",
 		"@repo/lib": "workspace:^",
 		"@sentry/core": "^10.20.0",

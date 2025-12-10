@@ -26,6 +26,8 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
+  "/api/github/webhooks", // GitHub webhook endpoint (CRITICAL: must be public)
+  "/api/vercel/webhooks", // Vercel webhook endpoint
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -38,6 +40,9 @@ const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
   "/new(.*)", // Workspace creation flow
   "/api/github(.*)",
+  "/api/vercel/authorize", // Vercel OAuth initiation
+  "/api/vercel/callback", // Vercel OAuth callback
+  "/vercel/connected", // Vercel OAuth success page
   "/api/organizations(.*)",
 ]);
 

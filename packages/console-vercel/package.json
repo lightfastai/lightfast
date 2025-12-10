@@ -1,28 +1,16 @@
 {
-  "name": "@repo/console-webhooks",
+  "name": "@repo/console-vercel",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./github": {
-      "types": "./dist/github.d.ts",
-      "default": "./dist/github.js"
-    },
-    "./vercel": {
-      "types": "./dist/vercel.d.ts",
-      "default": "./dist/vercel.js"
-    },
-    "./common": {
-      "types": "./dist/common.d.ts",
-      "default": "./dist/common.js"
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./src/env.ts"
     },
     "./types": {
       "types": "./dist/types.d.ts",
-      "default": "./dist/types.js"
+      "default": "./src/types.ts"
     }
   },
   "scripts": {
@@ -32,7 +20,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/lib": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

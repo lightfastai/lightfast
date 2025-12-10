@@ -22,6 +22,13 @@
       "when": 1764144219752,
       "tag": "0002_simple_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765342978164,
+      "tag": "0003_early_zodiak",
+      "breakpoints": true
     }
   ]
 }

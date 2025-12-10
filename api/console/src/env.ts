@@ -6,9 +6,10 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { consoleM2MEnv } from "@repo/console-clerk-m2m/env";
+import { vercelEnv } from "@repo/console-vercel/env";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv, consoleM2MEnv],
+  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv, consoleM2MEnv, vercelEnv],
   shared: {},
   server: {
     /**

@@ -140,3 +140,4 @@ worktrees/
 
 # Dual CLI local files
 .dual/.local/
+.auth/

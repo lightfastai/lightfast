@@ -70,13 +70,14 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   if (resourceData.provider === "github") {
     displayName = resourceData.repoFullName;
     detailsUrl = `https://github.com/${resourceData.repoFullName}`;
-  } else if (resourceData.provider === "linear") {
-    displayName = resourceData.teamName;
-  } else if (resourceData.provider === "notion") {
-    displayName = resourceData.pageName ?? resourceData.databaseName ?? "Notion Resource";
+  } else if (resourceData.provider === "vercel") {
+    displayName = resourceData.projectName;
+    detailsUrl = resourceData.teamSlug
+      ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
+      : `https://vercel.com/dashboard`;
   } else {
-    // sentry or other providers
-    displayName = `${resourceData.orgSlug}/${resourceData.projectSlug}`;
+    // Unknown provider fallback
+    displayName = "Unknown Resource";
   }
 
   return (

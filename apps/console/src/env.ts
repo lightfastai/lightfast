@@ -6,9 +6,10 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as dbEnv } from "@db/console/env";
 import { githubEnv } from "@repo/console-octokit-github/env";
+import { vercelEnv } from "@repo/console-vercel/env";
 
 export const env = createEnv({
-	extends: [vercel(), clerkEnvBase, dbEnv, sentryEnv, githubEnv],
+	extends: [vercel(), clerkEnvBase, dbEnv, sentryEnv, githubEnv, vercelEnv],
 	shared: {
 		NODE_ENV: z
 			.enum(["development", "production", "test"])

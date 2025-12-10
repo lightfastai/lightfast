@@ -1,6 +1,6 @@
 /**
  * Generic document deletion workflow
- * Deletes documents from any source (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+ * Deletes documents from any source (GitHub, Vercel)
  *
  * Workflow steps:
  * 1. Find document in database
@@ -23,7 +23,7 @@ export interface DeleteDocumentEvent {
   workspaceId: string;
   storeSlug: string;
   documentId: string;
-  sourceType: "github" | "linear" | "notion" | "sentry" | "vercel" | "zendesk";
+  sourceType: "github" | "vercel";
   sourceId: string;
 }
 

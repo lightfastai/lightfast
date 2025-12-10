@@ -35,7 +35,7 @@ const eventsMap = {
       /** workspaceSource.id */
       sourceId: z.string(),
       /** Source provider type */
-      sourceType: z.enum(["github", "linear", "notion", "vercel"]),
+      sourceType: z.enum(["github", "vercel"]),
       /** Sync mode: full = all documents, incremental = changed only */
       syncMode: z.enum(["full", "incremental"]).default("full"),
       /** What triggered this sync */
@@ -204,21 +204,6 @@ const eventsMap = {
   },
 
   /**
-   * Linear source connected (future)
-   * Triggered when a Linear team is connected to a workspace
-   */
-  // "apps-console/source.connected.linear": {
-  //   data: z.object({
-  //     workspaceId: z.string(),
-  //     workspaceKey: z.string(),
-  //     sourceId: z.string(),
-  //     sourceType: z.literal("linear"),
-  //     sourceMetadata: linearSourceMetadataSchema,
-  //     trigger: z.enum(["user", "api", "automation"]),
-  //   }),
-  // },
-
-  /**
    * Triggered when a source is disconnected from workspace
    * Cancels ongoing syncs and optionally deletes indexed data
    */
@@ -262,23 +247,6 @@ const eventsMap = {
       syncParams: z.record(z.unknown()),
     }),
   },
-
-  /**
-   * Linear source sync (future)
-   * Triggers sync workflow for a Linear team
-   */
-  // "apps-console/source.sync.linear": {
-  //   data: z.object({
-  //     workspaceId: z.string(),
-  //     workspaceKey: z.string(),
-  //     sourceId: z.string(),
-  //     storeId: z.string(),
-  //     sourceType: z.literal("linear"),
-  //     syncMode: z.enum(["full", "incremental"]),
-  //     trigger: syncTriggerSchema,
-  //     syncParams: z.record(z.unknown()),
-  //   }),
-  // },
 
   // ============================================================================
   // GITHUB-SPECIFIC EVENTS
@@ -515,7 +483,7 @@ const eventsMap = {
       /** Deterministic document ID */
       documentId: z.string(),
       /** Source type (discriminated union) */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: z.enum(["github", "vercel"]),
       /** Source-specific identifier */
       sourceId: z.string(),
       /** Source-specific metadata */
@@ -549,7 +517,7 @@ const eventsMap = {
       /** Document ID to delete */
       documentId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: z.enum(["github", "vercel"]),
       /** Source-specific identifier */
       sourceId: z.string(),
     }),
@@ -569,7 +537,7 @@ const eventsMap = {
       /** Workspace ID */
       workspaceId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: z.enum(["github", "vercel"]),
       /** Relationships to extract */
       relationships: z.record(z.unknown()),
     }),
