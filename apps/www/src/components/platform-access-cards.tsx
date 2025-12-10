@@ -16,7 +16,7 @@ const accessCards: AccessCard[] = [
     href: "/sign-in",
     icon: CheckCircle,
     title: "Have Access?",
-    description: "Go to App and start searching your team's knowledge base.",
+    description: "Go to App and start searching your software team's knowledge base.",
     microfrontend: true,
   },
   {
