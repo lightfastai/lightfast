@@ -169,7 +169,9 @@
       "WebFetch(domain:tryprofound.com)",
       "WebFetch(domain:chatgpt.com)",
       "mcp__playwright__browser_run_code",
-      "mcp__playwright__browser_file_upload"
+      "mcp__playwright__browser_file_upload",
+      "Read(//tmp/repos/humanlayer/.claude/commands/**)",
+      "Read(//private/tmp/repos/humanlayer/.claude/commands/**)"
     ],
     "deny": []
   },
