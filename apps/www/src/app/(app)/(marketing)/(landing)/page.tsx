@@ -25,8 +25,8 @@ import {
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
-  title: "Lightfast – Memory Built for Teams | Search by Meaning",
-  description: "Make your team's knowledge instantly searchable and trustworthy. Lightfast helps teams find answers with sources, understand context, and trace decisions.",
+  title: "The Memory Layer for Software Teams",
+  description: "Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources",
   keywords: [
     "team memory",
     "neural memory for teams",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     canonical: "https://lightfast.ai",
   },
   openGraph: {
-    title: "Lightfast – Memory Built for Teams",
+    title: "Lightfast – The Memory Layer for Software Teams",
     description: "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
     url: "https://lightfast.ai",
     siteName: "Lightfast",
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast – Memory Built for Teams",
+    title: "Lightfast – The Memory Layer for Software Teams",
     description: "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
     site: "@lightfastai",
     creator: "@lightfastai",
@@ -191,7 +191,7 @@ export default function HomePage() {
               <h1
                 className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
               >
-                Memory built for teams
+                The memory layer for software teams
                 {/* Search everything your team knows.
                 <br /> Get answers with sources. */}
               </h1>
@@ -199,7 +199,7 @@ export default function HomePage() {
               {/* Description */}
               <div className="mt-4 px-4 w-full">
                 <p className="text-base text-muted-foreground whitespace-nowrap md:whitespace-normal lg:whitespace-nowrap">
-                  Search everything your team knows. Get answers with sources.
+                  Search everything your engineering org knows
                 </p>
               </div>
 

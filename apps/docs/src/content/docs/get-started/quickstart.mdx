@@ -11,7 +11,7 @@ description: Index your team's first memories in 5 minutes. Connect your GitHub 
   priority={true}
 />
 
-Lightfast helps teams search everything they know. This guide walks you through indexing your first repository and searching your organization's memory.
+Lightfast is the memory layer for software teams. This guide walks you through indexing your first repository and searching your engineering org's knowledge.
 
 ## Lightfast Plans Overview
 
@@ -23,15 +23,15 @@ Lightfast helps teams search everything they know. This guide walks you through 
 
 ## Sign Up & Connect GitHub
 
-To use Lightfast, you'll need to create an account and connect your GitHub repositories. This is the recommended way to get started as it automatically indexes your team's documentation, pull requests, issues, and discussions.
+To use Lightfast, you'll need to create an account and connect your GitHub repositories. This is the recommended way to get started as it automatically indexes your software team's documentation, pull requests, issues, and discussions.
 
-Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink> and create a workspace for your team. When you connect your GitHub account via OAuth, you can select which repositories you want Lightfast to remember. Lightfast respects your GitHub permissions—only content you have access to will be indexed.
+Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink> and create a workspace for your software team. When you connect your GitHub account via OAuth, you can select which repositories you want Lightfast to remember. Lightfast respects your GitHub permissions—only content you have access to will be indexed.
 
-Once you're set up and your repositories are connected, you can search your team's knowledge in different ways:
+Once you're set up and your repositories are connected, you can search your engineering org's knowledge in different ways:
 
 - **Dashboard search**: Use the web interface to search across all your indexed content with natural language queries.
 - **API integration**: Make requests to the Lightfast API from your applications using your API key (see the [Authentication guide](/docs/get-started/authentication) for details).
-- **MCP tools**: Connect AI agents and tools via the Model Context Protocol to let them query your team's memory automatically.
+- **MCP tools**: Connect AI agents and tools via the Model Context Protocol to let them query your engineering org's memory automatically.
 
 <Alert>
 **Neural Memory varies by plan.** Starter has basic search. Team ($12/user/month) adds semantic search and decision tracking. Business includes auto-summaries and expertise profiles. <WwwLink path="/pricing" external>See all plans</WwwLink>.
@@ -103,7 +103,7 @@ Lightfast automatically detects the configuration and starts indexing your repos
 
 ## Monitor Indexing & Memory Types
 
-After pushing your `lightfast.yml` configuration, Lightfast automatically starts building your team's memory. The platform indexes multiple types of content from your connected repositories, creating a searchable knowledge base that respects your GitHub permissions.
+After pushing your `lightfast.yml` configuration, Lightfast automatically starts building your memory layer. The platform indexes multiple types of content from your connected repositories, creating a searchable knowledge base that respects your GitHub permissions.
 
 **What Lightfast indexes:**
 
@@ -113,15 +113,15 @@ After pushing your `lightfast.yml` configuration, Lightfast automatically starts
 - **Discussions**: GitHub Discussions, decision rationale, and context
 - **People & Ownership**: Contributors, code owners, and subject matter experts
 
-Track your indexing progress at <AuthLink path="/dashboard" external>lightfast.ai/dashboard</AuthLink>. You'll see real-time updates as documents are processed, and most repositories complete indexing within 5-10 minutes. All team members in your workspace can view progress and start searching as soon as content becomes available.
+Track your indexing progress at <AuthLink path="/dashboard" external>lightfast.ai/dashboard</AuthLink>. You'll see real-time updates as documents are processed, and most repositories complete indexing within 5-10 minutes. All software team members in your workspace can view progress and start searching as soon as content becomes available.
 
 <Alert>
-**Permissions matter.** Lightfast only indexes content you have access to in GitHub. Team members see search results based on their individual GitHub permissions—no one gets access to repositories they couldn't already see.
+**Permissions matter.** Lightfast only indexes content you have access to in GitHub. Software team members see search results based on their individual GitHub permissions—no one gets access to repositories they couldn't already see.
 </Alert>
 
-## Search Your Team's Knowledge
+## Search Your Engineering Knowledge
 
-Once indexing completes, you can search your organization's memory from the dashboard, chat interface, or API. Lightfast understands natural language queries and returns answers with citations showing exactly where information came from.
+Once indexing completes, you can search your engineering org's memory from the dashboard, chat interface, or API. Lightfast understands natural language queries and returns answers with citations showing exactly where information came from.
 
 **Try these example queries:**
 
@@ -130,7 +130,7 @@ Once indexing completes, you can search your organization's memory from the dash
 - "Why did we choose PostgreSQL over MongoDB?" — Trace decision rationale from discussions and PRs
 - "Who owns the payment service?" — Identify code owners and active contributors
 
-Every answer includes **source citations** with links to the original documents, pull requests, or discussions. You can verify the information and dive deeper into the full context. Search works across all indexed content—documentation, code discussions, issues, and decisions—giving you a complete view of your team's knowledge.
+Every answer includes **source citations** with links to the original documents, pull requests, or discussions. You can verify the information and dive deeper into the full context. Search works across all indexed content—documentation, code discussions, issues, and decisions—giving you a complete view of your engineering knowledge.
 
 <Alert>
 **Search modes adapt to your query.** Lightfast uses hybrid search combining semantic understanding with keyword matching. Complex questions trigger our neural mode for deeper reasoning, while quick lookups use fast retrieval. The API handles this automatically.
@@ -140,7 +140,7 @@ Every answer includes **source citations** with links to the original documents,
 
 <FAQAccordion defaultValue="what-is-lightfast">
   <FAQItem value="what-is-lightfast" question="What is Lightfast?">
-    Lightfast is a shared memory layer for teams and agents. It indexes documentation, pull requests, issues, discussions, and ownership data so you can search by meaning and always see source citations.
+    Lightfast is the memory layer for software teams and agents. It indexes documentation, pull requests, issues, discussions, and ownership data so you can search by meaning and always see source citations.
   </FAQItem>
   <FAQItem
     value="connect-github"

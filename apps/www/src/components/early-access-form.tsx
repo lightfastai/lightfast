@@ -408,10 +408,10 @@ export function EarlyAccessForm() {
             {/* Title and description - consistent spacing */}
             <div className="space-y-2 mb-6">
               <h1 className="text-2xl font-semibold text-foreground">
-                Where does your team work?
+                Where does your software team work?
               </h1>
               <p className="text-sm text-muted-foreground">
-                Select all the tools your team uses (you can add more later).
+                Select all the tools your software team uses (you can add more later).
               </p>
             </div>
           </div>

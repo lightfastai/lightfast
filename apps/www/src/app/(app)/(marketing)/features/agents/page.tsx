@@ -11,11 +11,11 @@ import { VisualShowcase } from "~/components/visual-showcase";
 export const metadata: Metadata = createMetadata({
   title: "For Agents – AI Agent Integration | Lightfast",
   description:
-    "Give your AI agents access to team memory. MCP tools and REST API for seamless integration. Same powerful search for humans and agents.",
+    "Give your AI agents access to memory layer. MCP tools and REST API for seamless integration. Same powerful search for humans and agents.",
   openGraph: {
     title: "For Agents – AI Agent Integration",
     description:
-      "Give your AI agents access to team memory. MCP tools and REST API for seamless integration.",
+      "Give your AI agents access to memory layer. MCP tools and REST API for seamless integration.",
     url: "https://lightfast.ai/features/agents",
     type: "website",
   },
@@ -50,7 +50,7 @@ const apiRoutes = [
 
 const relatedPages = [
   {
-    title: "For Teams",
+    title: "For Software Teams",
     href: "/features/memory",
     description: "Search everything your team knows. Find answers instantly.",
   },
@@ -82,7 +82,7 @@ export default function AgentsPage() {
           <h1
             className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] ${exposureTrial.className}`}
           >
-            Give your agents team memory
+            Give your agents a memory layer
           </h1>
           <p className="mt-4 text-base text-muted-foreground">
             Any agent can ask &ldquo;who/what/why/depends&rdquo; and get
@@ -108,7 +108,7 @@ export default function AgentsPage() {
           <div className="relative aspect-[4/3] rounded-lg border border-border overflow-hidden">
             <Image
               src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public"
-              alt="AI agents with team memory"
+              alt="AI agents with memory layer"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"

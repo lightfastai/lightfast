@@ -22,7 +22,7 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast – Neural Memory for Teams",
+  title: "Lightfast – The Memory Layer for Software Teams",
   description:
     "Neural memory for teams. Search by meaning with sources. Capture decisions and context across code, docs, and tools.",
   image: siteConfig.ogImage,
@@ -56,7 +56,7 @@ export const metadata: Metadata = createMetadata({
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: "Lightfast – Neural Memory for Teams",
+    title: "Lightfast – The Memory Layer for Software Teams",
     description:
       "Search by meaning with sources. Capture decisions, context, and ownership across your stack.",
     siteName: siteConfig.name,
@@ -65,7 +65,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast – Neural Memory for Teams",
+    title: "Lightfast – The Memory Layer for Software Teams",
     description:
       "Semantic search with sources. Developer‑first API and MCP tools.",
     images: [siteConfig.ogImage],
@@ -136,7 +136,7 @@ export default function RootLayout({
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: `${siteConfig.name} – Neural Memory for Teams`,
+    name: `${siteConfig.name} – The Memory Layer for Software Teams`,
     url: siteConfig.url,
     potentialAction: {
       "@type": "SearchAction",
