@@ -121,8 +121,8 @@ pnpm db:studio            # Open Drizzle studio
 |----------|------------|
 | **Runtime** | Node.js 22+, pnpm 10.5.2 |
 | **Frontend** | Next.js 15, React 19, TypeScript 5.9+, Tailwind CSS v4 |
-| **Backend** | Convex, PostgreSQL (PlanetScale), Drizzle ORM, Redis (Upstash) |
-| **AI/ML** | Anthropic Claude, OpenAI, Vercel AI SDK 5.0+, Pinecone |
+| **Backend** | PostgreSQL (PlanetScale), Drizzle ORM, Redis (Upstash) |
+| **AI/ML** | Anthropic Claude, OpenAI, Cohere, Vercel AI SDK 5.0+, Pinecone |
 | **DevOps** | Turborepo, Vercel, GitHub Actions |
 | **Auth** | Clerk |
 
