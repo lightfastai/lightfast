@@ -18,12 +18,11 @@
 import { inngest } from "../../client/client";
 import type { Events } from "../../client/client";
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIntegrations, workspaceStores } from "@db/console/schema";
-import { and, eq } from "drizzle-orm";
+import { orgWorkspaces, workspaceIntegrations } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { log } from "@vendor/observability/log";
 import { NonRetriableError } from "inngest";
-import { ensureStore } from "../infrastructure/ensure-store";
 import type { SourceType } from "@repo/console-validation";
 
 /**
@@ -136,7 +135,6 @@ export const syncOrchestrator = inngest.createFunction(
       return await createJob({
         clerkOrgId: metadata.workspace.clerkOrgId,
         workspaceId,
-        storeId: "", // Will be filled after ensure-store
         repositoryId: null,
         inngestRunId: runId,
         inngestFunctionId: "sync.orchestrator",
@@ -152,42 +150,18 @@ export const syncOrchestrator = inngest.createFunction(
       });
     });
 
-    // Step 3: CRITICAL PATH - Ensure store exists using step.invoke
-    // This guarantees the store is created before any processing
-    // Each workspace has exactly ONE store (1:1 relationship)
-    const storeResult = await step.invoke("ensure-store", {
-      function: ensureStore,
-      data: {
-        workspaceId,
-        workspaceKey,
-        // GitHub sources use repoFullName (type guard for discriminated union)
-        ...(sourceType === "github" && metadata.sourceConfig.provider === "github"
-          ? { repoFullName: metadata.sourceConfig.repoFullName }
-          : {}),
-      },
-    });
-
-    // Check if store creation succeeded
-    if (!storeResult) {
-      throw new NonRetriableError("Failed to create store");
-    }
-
-    // Type the result from ensureStore function
-    const { storeId, indexReady } = storeResult as {
-      status: string;
-      storeId: string;
-      indexReady: boolean;
-      created: boolean;
-      duration: number;
-    };
-
-    if (!indexReady) {
-      throw new NonRetriableError("Store index not ready");
-    }
-
-    logger.info("Store created successfully", {
-      storeId,
-      indexReady,
+    // Step 3: Verify workspace has embedding config
+    await step.run("verify-workspace-config", async () => {
+      if (!metadata.workspace.embeddingModel || !metadata.workspace.indexName) {
+        throw new NonRetriableError(
+          `Workspace ${workspaceId} is missing embedding configuration. ` +
+          "Please configure the workspace before syncing."
+        );
+      }
+      logger.info("Workspace config verified", {
+        indexName: metadata.workspace.indexName,
+        embeddingModel: metadata.workspace.embeddingModel,
+      });
     });
 
     // Step 4: Update job status to running
@@ -204,7 +178,6 @@ export const syncOrchestrator = inngest.createFunction(
         workspaceId,
         workspaceKey,
         sourceId,
-        storeId,
         sourceConfig: metadata.sourceConfig,
         syncMode,
         syncParams,

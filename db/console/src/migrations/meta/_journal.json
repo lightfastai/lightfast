@@ -29,6 +29,27 @@
       "when": 1765342978164,
       "tag": "0003_early_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1765417261875,
+      "tag": "0004_big_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1765432556205,
+      "tag": "0005_daily_ikaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1765434648973,
+      "tag": "0006_last_blur",
+      "breakpoints": true
     }
   ]
 }

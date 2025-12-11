@@ -23,11 +23,11 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
 import { db } from "@db/console/client";
-import { workspaceStores } from "@db/console/schema";
+import { orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 
 import { resolveWorkspaceByName } from "@repo/console-auth-middleware";
-import { createEmbeddingProviderForStore } from "@repo/console-embed";
+import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
 import { log } from "@vendor/observability/log";
@@ -141,32 +141,39 @@ export async function POST(
 
     const { workspaceId } = workspaceResult.data;
 
-    // 4. Look up workspace's store (1:1 relationship: each workspace has exactly one store)
-    const store = await db.query.workspaceStores.findFirst({
-      where: eq(workspaceStores.workspaceId, workspaceId),
+    // 4. Look up workspace configuration (embedding config now lives on workspace)
+    const workspace = await db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
     });
 
-    if (!store) {
+    if (!workspace) {
       return NextResponse.json(
-        { error: "Store not found for workspace", requestId },
+        { error: "Workspace not found", requestId },
         { status: 404 }
       );
     }
 
-    log.info("Resolved store", {
+    if (!workspace.indexName || !workspace.namespaceName) {
+      return NextResponse.json(
+        { error: "Workspace is not configured for search", requestId },
+        { status: 404 }
+      );
+    }
+
+    log.info("Resolved workspace", {
       requestId,
-      storeId: store.id,
-      indexName: store.indexName,
-      namespaceName: store.namespaceName,
+      workspaceId: workspace.id,
+      indexName: workspace.indexName,
+      namespaceName: workspace.namespaceName,
     });
 
     // 5. Generate query embedding
     const embedStart = Date.now();
-    const embedding = createEmbeddingProviderForStore(
+    const embedding = createEmbeddingProviderForWorkspace(
       {
-        id: store.id,
-        embeddingModel: store.embeddingModel,
-        embeddingDim: store.embeddingDim,
+        id: workspace.id,
+        embeddingModel: workspace.embeddingModel,
+        embeddingDim: workspace.embeddingDim,
       },
       { inputType: "search_query" }
     );
@@ -192,13 +199,13 @@ export async function POST(
     // 6. Query Pinecone
     const queryStart = Date.now();
     const results = await pineconeClient.query<VectorMetadata>(
-      store.indexName,
+      workspace.indexName,
       {
         vector: queryVector,
         topK,
         includeMetadata: true,
       },
-      store.namespaceName
+      workspace.namespaceName
     );
     const queryLatency = Date.now() - queryStart;
 

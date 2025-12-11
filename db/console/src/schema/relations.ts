@@ -1,12 +1,13 @@
 import { relations } from "drizzle-orm";
 
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
-import { workspaceStores } from "./tables/workspace-stores";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
 import { userSources } from "./tables/user-sources";
 import { orgWorkspaces } from "./tables/org-workspaces";
+import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
+import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -16,30 +17,24 @@ import { orgWorkspaces } from "./tables/org-workspaces";
  */
 
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
-  stores: many(workspaceStores),
-}));
-
-export const workspaceStoresRelations = relations(workspaceStores, ({ one, many }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceStores.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
   documents: many(workspaceKnowledgeDocuments),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
+  neuralObservations: many(workspaceNeuralObservations),
+  observationClusters: many(workspaceObservationClusters),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
-  store: one(workspaceStores, {
-    fields: [workspaceKnowledgeDocuments.storeId],
-    references: [workspaceStores.id],
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceKnowledgeDocuments.workspaceId],
+    references: [orgWorkspaces.id],
   }),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
 }));
 
 export const workspaceKnowledgeVectorChunksRelations = relations(workspaceKnowledgeVectorChunks, ({ one }) => ({
-  store: one(workspaceStores, {
-    fields: [workspaceKnowledgeVectorChunks.storeId],
-    references: [workspaceStores.id],
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceKnowledgeVectorChunks.workspaceId],
+    references: [orgWorkspaces.id],
   }),
   document: one(workspaceKnowledgeDocuments, {
     fields: [workspaceKnowledgeVectorChunks.docId],
@@ -68,3 +63,28 @@ export const workspaceIntegrationsRelations = relations(workspaceIntegrations, (
     references: [userSources.id],
   }),
 }));
+
+export const workspaceNeuralObservationsRelations = relations(
+  workspaceNeuralObservations,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceNeuralObservations.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    cluster: one(workspaceObservationClusters, {
+      fields: [workspaceNeuralObservations.clusterId],
+      references: [workspaceObservationClusters.id],
+    }),
+  }),
+);
+
+export const workspaceObservationClustersRelations = relations(
+  workspaceObservationClusters,
+  ({ one, many }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceObservationClusters.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    observations: many(workspaceNeuralObservations),
+  }),
+);

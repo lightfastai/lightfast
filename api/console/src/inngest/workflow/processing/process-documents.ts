@@ -13,17 +13,17 @@
 import { db } from "@db/console/client";
 import {
   workspaceKnowledgeDocuments,
-  workspaceStores,
+  orgWorkspaces,
   workspaceKnowledgeVectorChunks,
   type WorkspaceKnowledgeDocument,
-  type WorkspaceStore,
+  type OrgWorkspace,
 } from "@db/console/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
 import { chunkText, parseMDX } from "@repo/console-chunking";
 import type { Chunk } from "@repo/console-chunking";
 import {
-  createEmbeddingProviderForStore,
+  createEmbeddingProviderForWorkspace,
   embedTextsInBatches,
 } from "@repo/console-embed";
 import {
@@ -37,7 +37,6 @@ import { inngest } from "../../client/client";
 /**
  * Generic document processing event
  * Works with any source type
- * workspaceId is also the storeId (1:1 relationship)
  */
 export interface ProcessDocumentEvent {
   workspaceId: string;
@@ -68,7 +67,7 @@ interface BasePrepared {
 
 interface ReadyDocument extends BasePrepared {
   status: "ready";
-  store: WorkspaceStore;
+  workspace: OrgWorkspace;
   docId: string;
   indexName: string;
   slug: string;
@@ -93,14 +92,14 @@ export interface ProcessedDocumentResult {
 }
 
 /**
- * Compute configuration hash for a store
+ * Compute configuration hash for a workspace
  */
-function computeConfigHash(store: WorkspaceStore): string {
+function computeConfigHash(workspace: OrgWorkspace): string {
   const configData = JSON.stringify({
-    embeddingModel: store.embeddingModel,
-    embeddingDim: store.embeddingDim,
-    chunkMaxTokens: store.chunkMaxTokens,
-    chunkOverlap: store.chunkOverlap,
+    embeddingModel: workspace.embeddingModel,
+    embeddingDim: workspace.embeddingDim,
+    chunkMaxTokens: workspace.chunkMaxTokens,
+    chunkOverlap: workspace.chunkOverlap,
   });
 
   return createHash("sha256").update(configData).digest("hex");
@@ -154,13 +153,13 @@ export const processDocuments = inngest.createFunction(
 
     // Process documents
     const results = await step.run("documents.process-batch", async () => {
-      const storeCache = new Map<string, WorkspaceStore>();
+      const workspaceCache = new Map<string, OrgWorkspace>();
 
       const prepared: PreparedDocument[] = await Promise.all(
         events.map(async (event): Promise<PreparedDocument> => {
           try {
-            const store = await getStore(
-              storeCache,
+            const workspace = await getWorkspace(
+              workspaceCache,
               event.data.workspaceId,
             );
 
@@ -169,8 +168,8 @@ export const processDocuments = inngest.createFunction(
 
             // Chunk the content
             const chunks = chunkText(event.data.content, {
-              maxTokens: store.chunkMaxTokens,
-              overlap: store.chunkOverlap,
+              maxTokens: workspace.chunkMaxTokens ?? 512,
+              overlap: workspace.chunkOverlap ?? 50,
             });
 
             if (chunks.length === 0) {
@@ -187,12 +186,12 @@ export const processDocuments = inngest.createFunction(
             }
 
             const existingDoc = await findExistingDocument(
-              store.id,
+              workspace.id,
               event.data.sourceType,
               event.data.sourceId,
             );
 
-            const currentConfigHash = computeConfigHash(store);
+            const currentConfigHash = computeConfigHash(workspace);
 
             // Skip if both content and configuration are unchanged
             // BUT first verify that vector_entries exist (handles partial failure recovery)
@@ -207,7 +206,7 @@ export const processDocuments = inngest.createFunction(
                 .from(workspaceKnowledgeVectorChunks)
                 .where(
                   and(
-                    eq(workspaceKnowledgeVectorChunks.storeId, store.id),
+                    eq(workspaceKnowledgeVectorChunks.workspaceId, workspace.id),
                     eq(workspaceKnowledgeVectorChunks.docId, event.data.documentId),
                   ),
                 )
@@ -218,7 +217,7 @@ export const processDocuments = inngest.createFunction(
                   "Document exists but vector entries missing - reprocessing for recovery",
                   {
                     docId: event.data.documentId,
-                    storeId: store.id,
+                    workspaceId: workspace.id,
                     sourceType: event.data.sourceType,
                   },
                 );
@@ -250,9 +249,9 @@ export const processDocuments = inngest.createFunction(
             return {
               status: "ready",
               event: event.data,
-              store,
+              workspace,
               docId: event.data.documentId,
-              indexName: store.indexName,
+              indexName: workspace.indexName!,
               slug,
               contentHash: event.data.contentHash,
               configHash: currentConfigHash,
@@ -279,11 +278,11 @@ export const processDocuments = inngest.createFunction(
           throw new Error("No ready documents to process");
         }
 
-        const embeddingProvider = createEmbeddingProviderForStore(
+        const embeddingProvider = createEmbeddingProviderForWorkspace(
           {
-            id: firstDoc.store.id,
-            embeddingModel: firstDoc.store.embeddingModel,
-            embeddingDim: firstDoc.store.embeddingDim,
+            id: firstDoc.workspace.id,
+            embeddingModel: firstDoc.workspace.embeddingModel,
+            embeddingDim: firstDoc.workspace.embeddingDim,
           },
           {
             inputType: "search_document",
@@ -364,30 +363,36 @@ export const processDocuments = inngest.createFunction(
   },
 );
 
-async function getStore(
-  cache: Map<string, WorkspaceStore>,
+async function getWorkspace(
+  cache: Map<string, OrgWorkspace>,
   workspaceId: string,
-): Promise<WorkspaceStore> {
+): Promise<OrgWorkspace> {
   if (cache.has(workspaceId)) {
     return cache.get(workspaceId)!;
   }
 
-  const store = await db.query.workspaceStores.findFirst({
-    where: eq(workspaceStores.workspaceId, workspaceId),
+  const workspace = await db.query.orgWorkspaces.findFirst({
+    where: eq(orgWorkspaces.id, workspaceId),
   });
 
-  if (!store) {
+  if (!workspace) {
     throw new Error(
-      `Store not found for workspace=${workspaceId}`,
+      `Workspace not found: ${workspaceId}`,
     );
   }
 
-  cache.set(workspaceId, store);
-  return store;
+  if (!workspace.indexName || !workspace.namespaceName) {
+    throw new Error(
+      `Workspace ${workspaceId} is missing Pinecone configuration`,
+    );
+  }
+
+  cache.set(workspaceId, workspace);
+  return workspace;
 }
 
 async function findExistingDocument(
-  storeId: string,
+  workspaceId: string,
   sourceType: string,
   sourceId: string,
 ): Promise<WorkspaceKnowledgeDocument | undefined> {
@@ -396,7 +401,7 @@ async function findExistingDocument(
     .from(workspaceKnowledgeDocuments)
     .where(
       and(
-        eq(workspaceKnowledgeDocuments.storeId, storeId),
+        eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
         eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
         eq(workspaceKnowledgeDocuments.sourceId, sourceId),
       ),
@@ -418,7 +423,7 @@ function generateSlug(title: string, sourceId: string): string {
 
 async function generateEmbeddingsForDocuments(
   docs: ReadyDocument[],
-  embeddingProvider: ReturnType<typeof createEmbeddingProviderForStore>,
+  embeddingProvider: ReturnType<typeof createEmbeddingProviderForWorkspace>,
   batchSize: number,
 ) {
   const queue: Array<{
@@ -508,7 +513,7 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
     }
 
     // Get namespace from first doc in bucket (all share same namespace)
-    const namespaceName = bucket[0]!.store.namespaceName;
+    const namespaceName = bucket[0]!.workspace.namespaceName!;
 
     await pineconeClient.upsertVectors(
       indexName,
@@ -547,7 +552,7 @@ async function persistDocuments(docs: ReadyDocument[]) {
     } else {
       await db.insert(workspaceKnowledgeDocuments).values({
         id: doc.docId,
-        storeId: doc.store.id,
+        workspaceId: doc.workspace.id,
         sourceType: doc.event.sourceType,
         sourceId: doc.event.sourceId,
         sourceMetadata: doc.event.sourceMetadata,
@@ -569,14 +574,14 @@ async function refreshVectorEntries(doc: ReadyDocument) {
     .delete(workspaceKnowledgeVectorChunks)
     .where(
       and(
-        eq(workspaceKnowledgeVectorChunks.storeId, doc.store.id),
+        eq(workspaceKnowledgeVectorChunks.workspaceId, doc.workspace.id),
         eq(workspaceKnowledgeVectorChunks.docId, doc.docId),
       ),
     );
 
   const entries = doc.chunks.map((_, chunkIndex) => ({
     id: `${doc.docId}#${chunkIndex}`,
-    storeId: doc.store.id,
+    workspaceId: doc.workspace.id,
     docId: doc.docId,
     chunkIndex,
     contentHash: doc.contentHash,

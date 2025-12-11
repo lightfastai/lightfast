@@ -2875,6 +2875,12 @@ importers:
 
   packages/console-webhooks:
     dependencies:
+      '@octokit/webhooks-types':
+        specifier: ^7.6.1
+        version: 7.6.1
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../console-types
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib

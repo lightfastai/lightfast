@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyGitHubWebhookFromHeaders } from "@repo/console-webhooks/github";
+import {
+  transformGitHubPush,
+  transformGitHubPullRequest,
+  transformGitHubIssue,
+  transformGitHubRelease,
+  transformGitHubDiscussion,
+} from "@repo/console-webhooks";
 import { SourcesService, WorkspacesService } from "@repo/console-api-services";
 import type {
   PushEvent,
@@ -8,8 +15,13 @@ import type {
   InstallationRepositoriesEvent,
   RepositoryEvent,
   WebhookEvent,
+  PullRequestEvent,
+  IssuesEvent,
+  ReleaseEvent,
+  DiscussionEvent,
 } from "@repo/console-octokit-github";
 import { inngest } from "@api/console/inngest";
+import { log } from "@vendor/observability/log";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
@@ -145,6 +157,216 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 }
 
 /**
+ * Capture push event as observation (separate from sync routing)
+ * Only captures pushes to default branch
+ */
+async function handlePushObservation(
+  payload: PushEvent,
+  deliveryId: string,
+): Promise<void> {
+  // Only capture pushes to default branch
+  const branch = payload.ref.replace("refs/heads/", "");
+  if (branch !== payload.repository.default_branch) {
+    return;
+  }
+
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) return;
+
+  const workspacesService = new WorkspacesService();
+  let workspace;
+  try {
+    workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+  } catch {
+    // Workspace not found - skip observation
+    return;
+  }
+
+  await inngest.send({
+    name: "apps-console/neural/observation.capture",
+    data: {
+      workspaceId: workspace.workspaceId,
+      sourceEvent: transformGitHubPush(payload, {
+        deliveryId,
+        receivedAt: new Date(),
+      }),
+    },
+  });
+
+  log.info("[GitHub Webhook] Push observation captured", {
+    workspaceId: workspace.workspaceId,
+    repo: payload.repository.full_name,
+  });
+}
+
+/**
+ * Handle GitHub pull request events
+ */
+async function handlePullRequestEvent(
+  payload: PullRequestEvent,
+  deliveryId: string,
+): Promise<void> {
+  // Only capture significant PR actions
+  const significantActions = ["opened", "closed", "reopened", "ready_for_review"];
+  if (!significantActions.includes(payload.action)) {
+    return;
+  }
+
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) return;
+
+  const workspacesService = new WorkspacesService();
+  let workspace;
+  try {
+    workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+  } catch {
+    console.log(`[Webhook] No workspace for GitHub org: ${ownerLogin}`);
+    return;
+  }
+
+  await inngest.send({
+    name: "apps-console/neural/observation.capture",
+    data: {
+      workspaceId: workspace.workspaceId,
+      sourceEvent: transformGitHubPullRequest(payload, {
+        deliveryId,
+        receivedAt: new Date(),
+      }),
+    },
+  });
+
+  log.info("[GitHub Webhook] PR observation captured", {
+    workspaceId: workspace.workspaceId,
+    action: payload.action,
+    prNumber: payload.pull_request.number,
+  });
+}
+
+/**
+ * Handle GitHub issues events
+ */
+async function handleIssuesEvent(
+  payload: IssuesEvent,
+  deliveryId: string,
+): Promise<void> {
+  // Only capture significant issue actions
+  const significantActions = ["opened", "closed", "reopened"];
+  if (!significantActions.includes(payload.action)) {
+    return;
+  }
+
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) return;
+
+  const workspacesService = new WorkspacesService();
+  let workspace;
+  try {
+    workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+  } catch {
+    return;
+  }
+
+  await inngest.send({
+    name: "apps-console/neural/observation.capture",
+    data: {
+      workspaceId: workspace.workspaceId,
+      sourceEvent: transformGitHubIssue(payload, {
+        deliveryId,
+        receivedAt: new Date(),
+      }),
+    },
+  });
+
+  log.info("[GitHub Webhook] Issue observation captured", {
+    workspaceId: workspace.workspaceId,
+    action: payload.action,
+    issueNumber: payload.issue.number,
+  });
+}
+
+/**
+ * Handle GitHub release events
+ */
+async function handleReleaseEvent(
+  payload: ReleaseEvent,
+  deliveryId: string,
+): Promise<void> {
+  // Only capture published releases
+  if (payload.action !== "published") {
+    return;
+  }
+
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) return;
+
+  const workspacesService = new WorkspacesService();
+  let workspace;
+  try {
+    workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+  } catch {
+    return;
+  }
+
+  await inngest.send({
+    name: "apps-console/neural/observation.capture",
+    data: {
+      workspaceId: workspace.workspaceId,
+      sourceEvent: transformGitHubRelease(payload, {
+        deliveryId,
+        receivedAt: new Date(),
+      }),
+    },
+  });
+
+  log.info("[GitHub Webhook] Release observation captured", {
+    workspaceId: workspace.workspaceId,
+    tagName: payload.release.tag_name,
+  });
+}
+
+/**
+ * Handle GitHub discussion events
+ */
+async function handleDiscussionEvent(
+  payload: DiscussionEvent,
+  deliveryId: string,
+): Promise<void> {
+  // Only capture created and answered discussions
+  const significantActions = ["created", "answered"];
+  if (!significantActions.includes(payload.action)) {
+    return;
+  }
+
+  const ownerLogin = payload.repository.full_name.split("/")[0]?.toLowerCase();
+  if (!ownerLogin) return;
+
+  const workspacesService = new WorkspacesService();
+  let workspace;
+  try {
+    workspace = await workspacesService.resolveFromGithubOrgSlug(ownerLogin);
+  } catch {
+    return;
+  }
+
+  await inngest.send({
+    name: "apps-console/neural/observation.capture",
+    data: {
+      workspaceId: workspace.workspaceId,
+      sourceEvent: transformGitHubDiscussion(payload, {
+        deliveryId,
+        receivedAt: new Date(),
+      }),
+    },
+  });
+
+  log.info("[GitHub Webhook] Discussion observation captured", {
+    workspaceId: workspace.workspaceId,
+    action: payload.action,
+    discussionNumber: payload.discussion.number,
+  });
+}
+
+/**
  * GitHub Webhook Handler
  * POST /api/github/webhooks
  */
@@ -178,12 +400,35 @@ export async function POST(request: NextRequest) {
       | InstallationRepositoriesEvent
       | InstallationEvent
       | RepositoryEvent
-      | PushEvent;
+      | PushEvent
+      | PullRequestEvent
+      | IssuesEvent
+      | ReleaseEvent
+      | DiscussionEvent;
 
     // Route to appropriate handler
     switch (event) {
       case "push":
+        // Handle sync workflow (existing functionality)
         await handlePushEvent(body as PushEvent, deliveryId);
+        // Also capture as observation for neural memory
+        await handlePushObservation(body as PushEvent, deliveryId);
+        break;
+
+      case "pull_request":
+        await handlePullRequestEvent(body as PullRequestEvent, deliveryId);
+        break;
+
+      case "issues":
+        await handleIssuesEvent(body as IssuesEvent, deliveryId);
+        break;
+
+      case "release":
+        await handleReleaseEvent(body as ReleaseEvent, deliveryId);
+        break;
+
+      case "discussion":
+        await handleDiscussionEvent(body as DiscussionEvent, deliveryId);
         break;
 
       case "installation_repositories":
@@ -233,7 +478,7 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        // TypeScript ensures all cases are handled (event type is 'never' here)
+        // Log unhandled events but don't fail
         console.log("[Webhook] Unhandled event:", event as string);
     }
 

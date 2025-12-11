@@ -6,8 +6,8 @@
  * Document metadata matching database schema
  */
 export interface DocumentMetadata {
-  /** Store ID this document belongs to */
-  storeId: string;
+  /** Workspace ID this document belongs to */
+  workspaceId: string;
   /** Repo-relative file path */
   path: string;
   /** URL-friendly slug */

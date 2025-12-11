@@ -29,8 +29,11 @@ import { deleteDocuments } from "./workflow/processing/delete-documents";
 import { filesBatchProcessor } from "./workflow/processing/files-batch-processor";
 
 // Infrastructure workflows
-import { ensureStore } from "./workflow/infrastructure/ensure-store";
+// Note: ensureStore removed - workspace now has embedding config directly
 import { recordActivity } from "./workflow/infrastructure/record-activity";
+
+// Neural memory workflows
+import { observationCapture } from "./workflow/neural";
 
 // Export Inngest client
 export { inngest };
@@ -48,7 +51,10 @@ export { githubPushHandler };
 export { processDocuments, deleteDocuments, filesBatchProcessor };
 
 // Export infrastructure workflows
-export { ensureStore, recordActivity };
+export { recordActivity };
+
+// Export neural memory workflows
+export { observationCapture };
 
 /**
  * Create the route context for Next.js API routes
@@ -75,8 +81,7 @@ export { ensureStore, recordActivity };
  * 6. deleteDocuments - Generic document deleter (all sources)
  *
  * Infrastructure:
- * 7. ensureStore - Store provisioning (source-agnostic)
- * 8. recordActivity - Activity logging
+ * 7. recordActivity - Activity logging
  *
  * @example
  * ```typescript
@@ -110,8 +115,10 @@ export function createInngestRouteContext() {
       deleteDocuments,
 
       // Infrastructure
-      ensureStore,
       recordActivity,
+
+      // Neural memory
+      observationCapture,
     ],
     servePath: "/api/inngest",
   });
