@@ -13,7 +13,7 @@
 import { inngest } from "../../../client/client";
 import { db } from "@db/console/client";
 import { workspaceIntegrations, workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
 import { env } from "../../../../env";
@@ -81,17 +81,14 @@ export const githubPushHandler = inngest.createFunction(
       deliveryId,
     });
 
-    // Step 1: Resolve storeId from "default" store
+    // Step 1: Resolve storeId (workspaceId = storeId, 1:1 relationship)
     const storeId = await step.run("store.resolve", async () => {
       const store = await db.query.workspaceStores.findFirst({
-        where: and(
-          eq(workspaceStores.workspaceId, workspaceId),
-          eq(workspaceStores.slug, "default")
-        ),
+        where: eq(workspaceStores.workspaceId, workspaceId),
       });
 
       if (!store) {
-        throw new Error(`Default store not found for workspace: ${workspaceId}`);
+        throw new Error(`Store not found for workspace: ${workspaceId}`);
       }
 
       return store.id;

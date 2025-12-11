@@ -36,14 +36,15 @@ export type PerformanceTimeSeries = RouterOutputs["workspace"]["performanceTimeS
 export type PerformanceTimeSeriesPoint = PerformanceTimeSeries[number];
 
 // ============================================================================
-// Sources & Stores (granular endpoints)
+// Sources & Store (granular endpoints)
+// Note: Each workspace has exactly ONE store (1:1 relationship)
 // ============================================================================
 
 export type SourcesList = RouterOutputs["workspace"]["sources"]["list"];
 export type Source = SourcesList["list"][number];
 
-export type StoresList = RouterOutputs["workspace"]["stores"]["list"];
-export type Store = StoresList["list"][number];
+// Store type (1:1 relationship: each workspace has exactly one store)
+export type Store = NonNullable<RouterOutputs["workspace"]["store"]["get"]>;
 
 export type DocumentsStats = RouterOutputs["workspace"]["documents"]["stats"];
 export type JobsStats = RouterOutputs["workspace"]["jobs"]["stats"];

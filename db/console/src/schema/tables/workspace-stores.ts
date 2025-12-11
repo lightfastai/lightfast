@@ -1,17 +1,15 @@
 /**
  * Store table schema
- * Identity and config per (workspaceId, store)
- * Workspace-scoped: Each store belongs to a workspace.
+ * Single store per workspace - identified by workspaceId
  *
- * Architecture Change:
- * - OLD: Each store gets its own Pinecone index (indexName was unique per store)
- * - NEW: All stores share indexes from PRIVATE_CONFIG, each store is a namespace
- * - indexName now references shared index (e.g., "lightfast-production-v1")
- * - namespaceName is the unique hierarchical identifier per store
+ * Architecture:
+ * - All stores share indexes from PRIVATE_CONFIG (e.g., "lightfast-production-v1")
+ * - Each workspace has exactly one store
+ * - Store ID = workspaceId (1:1 relationship)
+ * - Namespace format: org_{clerkOrgId}:ws_{workspaceId}
  */
 
 import {
-  index,
   integer,
   pgTable,
   timestamp,
@@ -36,25 +34,22 @@ export const workspaceStores = pgTable(
   {
     /** Unique identifier for the store */
     id: varchar("id", { length: 191 }).primaryKey(),
-    /** Workspace ID this store belongs to */
+    /** Workspace ID this store belongs to (1:1 relationship, store.id = workspaceId) */
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
-    /** URL-safe store identifier (max 20 chars, lowercase alphanumeric + hyphens) */
-    slug: varchar("slug", { length: 191 }).notNull(),
 
     /**
      * Shared Pinecone index name (references PRIVATE_CONFIG.pinecone.indexes)
-     * NEW: Points to shared index like "lightfast-production-v1"
-     * OLD: Was unique per store like "workspace-slug-store-slug"
+     * Points to shared index like "lightfast-production-v1"
      */
     indexName: varchar("index_name", { length: 191 }).notNull().$type<PineconeIndexName>(),
 
     /**
      * Hierarchical namespace name within the shared index
-     * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
-     * Example: "org_org123:ws_abc456:store_docs"
-     * This is what actually identifies the store's data in Pinecone
+     * Format: org_{clerkOrgId}:ws_{workspaceId}
+     * Example: "org_org123:ws_abc456"
+     * This identifies the workspace's data in Pinecone
      */
     namespaceName: varchar("namespace_name", { length: 191 }).notNull(),
 
@@ -92,8 +87,8 @@ export const workspaceStores = pgTable(
       .default(sql`now()`),
   },
   (t) => ({
-    byWorkspace: index("idx_stores_ws").on(t.workspaceId),
-    uniqueStore: uniqueIndex("uq_ws_slug").on(t.workspaceId, t.slug),
+    // Each workspace has exactly one store, enforced by unique constraint
+    uniqueWorkspace: uniqueIndex("uq_ws_store").on(t.workspaceId),
   }),
 );
 

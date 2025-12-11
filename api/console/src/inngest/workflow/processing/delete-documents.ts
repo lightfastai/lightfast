@@ -18,10 +18,10 @@ import { pineconeClient } from "@repo/console-pinecone";
 
 /**
  * Generic document deletion event
+ * workspaceId is also the storeId (1:1 relationship)
  */
 export interface DeleteDocumentEvent {
   workspaceId: string;
-  storeSlug: string;
   documentId: string;
   sourceType: "github" | "vercel";
   sourceId: string;
@@ -41,12 +41,12 @@ export const deleteDocuments = inngest.createFunction(
     retries: 2,
 
     // Prevent duplicate deletion work
-    idempotency: 'event.data.documentId',
+    idempotency: "event.data.documentId",
 
-    // Allow per-store parallel deletions
+    // Allow per-workspace parallel deletions (1:1 with store)
     concurrency: [
       {
-        key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+        key: "event.data.workspaceId",
         limit: 10,
       },
     ],
@@ -58,12 +58,11 @@ export const deleteDocuments = inngest.createFunction(
   },
   { event: "apps-console/documents.delete" },
   async ({ event, step }) => {
-    const { workspaceId, storeSlug, documentId, sourceType, sourceId } =
+    const { workspaceId, documentId, sourceType, sourceId } =
       event.data;
 
     log.info("Deleting document (multi-source)", {
       workspaceId,
-      storeSlug,
       documentId,
       sourceType,
       sourceId,
@@ -72,17 +71,15 @@ export const deleteDocuments = inngest.createFunction(
     // Step 1: Find document and store in database
     const docInfo = await step.run("document.find", async () => {
       try {
-        // Get store
+        // Get store (1:1 with workspace)
         const [store] = await db
           .select()
           .from(workspaceStores)
-          .where(
-            and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
-          )
+          .where(eq(workspaceStores.workspaceId, workspaceId))
           .limit(1);
 
         if (!store) {
-          log.warn("Store not found", { workspaceId, storeSlug });
+          log.warn("Store not found", { workspaceId });
           return null;
         }
 

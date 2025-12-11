@@ -154,12 +154,12 @@ export const syncOrchestrator = inngest.createFunction(
 
     // Step 3: CRITICAL PATH - Ensure store exists using step.invoke
     // This guarantees the store is created before any processing
+    // Each workspace has exactly ONE store (1:1 relationship)
     const storeResult = await step.invoke("ensure-store", {
       function: ensureStore,
       data: {
         workspaceId,
         workspaceKey,
-        storeSlug: "default",
         // GitHub sources use repoFullName (type guard for discriminated union)
         ...(sourceType === "github" && metadata.sourceConfig.provider === "github"
           ? { repoFullName: metadata.sourceConfig.repoFullName }

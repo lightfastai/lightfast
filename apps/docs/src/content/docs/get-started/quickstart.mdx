@@ -52,13 +52,6 @@ version: 1
 # Workspace identifier (optional - auto-detected from GitHub if omitted)
 # workspace: myorg/myrepo
 
-# Store name (unique identifier for this documentation set)
-# - Max 20 characters
-# - Lowercase alphanumeric with hyphens only
-# - No leading/trailing/consecutive hyphens
-# Use different store names across repos to organize knowledge
-store: root-store
-
 # Files to include (glob patterns - repo-relative paths)
 include:
   - "README.md"           # Root README
@@ -77,17 +70,12 @@ include:
   language="yaml"
 />
 
-The configuration has three main parts:
+The configuration has two main parts:
 
-- **Store name**: A unique identifier for this documentation set within your workspace. Use different store names across repositories to organize knowledge (e.g., `docs-store`, `api-store`, `infra-store`). You can then filter searches by store to find exactly what you need.
 - **Include patterns**: Glob patterns that match files to index. Patterns are relative to your repository root and support standard glob syntax (`*` matches files, `**` matches directories recursively).
 - **Workspace**: Optional identifier that links this config to your Lightfast workspace. If omitted, Lightfast auto-detects it from your GitHub repository.
 
 Common directories like `node_modules`, `.git`, `dist`, `build`, `.next`, and `.turbo` are automatically excluded—you don't need to specify them.
-
-<Alert>
-**Store names must be unique per workspace.** If you have multiple repositories, use descriptive store names like `marketing-docs`, `api-reference`, or `engineering-wiki` to keep content organized and searchable.
-</Alert>
 
 Once you've created your `lightfast.yml` file, commit and push it to your repository:
 

@@ -88,10 +88,8 @@ const eventsMap = {
       workspaceId: z.string(),
       /** Source ID */
       sourceId: z.string(),
-      /** Store ID */
+      /** Store ID (= workspaceId, 1:1 relationship) */
       storeId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Files to process in this batch */
       files: z.array(z.object({
         path: z.string(),
@@ -348,15 +346,14 @@ const eventsMap = {
    * Ensure store and Pinecone index exist
    * Idempotently provisions store infrastructure
    * Can be triggered by sync workflows, admin API, or reconciliation
+   * Each workspace has exactly one store (1:1 relationship)
    */
   "apps-console/store.ensure": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also used as store ID) */
       workspaceId: z.string(),
       /** Canonical external workspace key for naming (e.g., ws-<slug>) */
       workspaceKey: z.string().optional(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Embedding dimension (defaults to provider's dimension) */
       embeddingDim: z.number().optional(),
       /** GitHub repository ID to link (optional) */
@@ -428,10 +425,8 @@ const eventsMap = {
    */
   "apps-console/docs.file.process": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** GitHub installation ID */
@@ -452,10 +447,8 @@ const eventsMap = {
    */
   "apps-console/docs.file.delete": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** File path relative to repo root */
@@ -476,10 +469,8 @@ const eventsMap = {
    */
   "apps-console/documents.process": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Deterministic document ID */
       documentId: z.string(),
       /** Source type (discriminated union) */
@@ -510,10 +501,8 @@ const eventsMap = {
    */
   "apps-console/documents.delete": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Document ID to delete */
       documentId: z.string(),
       /** Source type */
@@ -532,9 +521,7 @@ const eventsMap = {
     data: z.object({
       /** Document ID */
       documentId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
-      /** Workspace ID */
+      /** Workspace ID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
       /** Source type */
       sourceType: z.enum(["github", "vercel"]),
@@ -562,8 +549,8 @@ const eventsMap = {
       filesProcessed: z.number(),
       /** Number of files that failed */
       filesFailed: z.number().default(0),
-      /** Store name */
-      storeSlug: z.string(),
+      /** Workspace ID (also store ID, 1:1 relationship) */
+      workspaceId: z.string(),
       /** Sync mode that completed */
       syncMode: z.enum(["full", "incremental"]),
       /** Whether the sync timed out */
@@ -581,10 +568,8 @@ const eventsMap = {
    */
   "apps-console/documents.batch-completed": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Batch ID for tracking */
       batchId: z.string(),
       /** Number of documents in batch */

@@ -617,14 +617,14 @@ export const workspaceRouter = {
   },
 
   /**
-   * Stores sub-router
+   * Store sub-router (1:1 relationship: each workspace has exactly one store)
    */
-  stores: {
+  store: {
     /**
-     * List stores with document counts
-     * Replaces the stores portion of the old statistics procedure
+     * Get the workspace's store with document count
+     * Note: Each workspace has exactly ONE store (1:1 relationship)
      */
-    list: orgScopedProcedure
+    get: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
       .query(async ({ ctx, input }) => {
         // Resolve workspace from name (user-facing)
@@ -634,31 +634,39 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get stores with document counts
-        const storesWithCounts = await db
+        // Get store with document count (1:1 relationship)
+        const [storeWithCount] = await db
           .select({
             id: workspaceStores.id,
-            slug: workspaceStores.slug,
             indexName: workspaceStores.indexName,
+            namespaceName: workspaceStores.namespaceName,
+            embeddingModel: workspaceStores.embeddingModel,
             embeddingDim: workspaceStores.embeddingDim,
+            chunkMaxTokens: workspaceStores.chunkMaxTokens,
+            chunkOverlap: workspaceStores.chunkOverlap,
             createdAt: workspaceStores.createdAt,
             documentCount: count(workspaceKnowledgeDocuments.id),
           })
           .from(workspaceStores)
           .leftJoin(workspaceKnowledgeDocuments, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
           .where(eq(workspaceStores.workspaceId, workspaceId))
-          .groupBy(workspaceStores.id);
+          .groupBy(workspaceStores.id)
+          .limit(1);
+
+        if (!storeWithCount) {
+          return null;
+        }
 
         return {
-          total: storesWithCounts.length,
-          list: storesWithCounts.map((s) => ({
-            id: s.id,
-            slug: s.slug,
-            indexName: s.indexName,
-            embeddingDim: s.embeddingDim,
-            documentCount: s.documentCount,
-            createdAt: s.createdAt,
-          })),
+          id: storeWithCount.id,
+          indexName: storeWithCount.indexName,
+          namespaceName: storeWithCount.namespaceName,
+          embeddingModel: storeWithCount.embeddingModel,
+          embeddingDim: storeWithCount.embeddingDim,
+          chunkMaxTokens: storeWithCount.chunkMaxTokens,
+          chunkOverlap: storeWithCount.chunkOverlap,
+          documentCount: storeWithCount.documentCount,
+          createdAt: storeWithCount.createdAt,
         };
       }),
   },

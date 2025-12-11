@@ -24,7 +24,7 @@ import { z } from "zod";
 
 import { db } from "@db/console/client";
 import { workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { resolveWorkspaceByName } from "@repo/console-auth-middleware";
 import { createEmbeddingProviderForStore } from "@repo/console-embed";
@@ -34,9 +34,9 @@ import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 
 // Request validation schema
+// Note: store parameter removed - each workspace has exactly ONE store (1:1 relationship)
 const SearchRequestSchema = z.object({
   query: z.string().min(1, "Query must not be empty"),
-  store: z.string().min(1, "Store slug is required"),
   topK: z.number().int().min(1).max(100).default(10),
 });
 
@@ -111,13 +111,12 @@ export async function POST(
       );
     }
 
-    const { query, store: storeSlug, topK } = parseResult.data;
+    const { query, topK } = parseResult.data;
 
     log.info("Search request validated", {
       requestId,
       userId,
       query,
-      storeSlug,
       topK,
     });
 
@@ -142,17 +141,14 @@ export async function POST(
 
     const { workspaceId } = workspaceResult.data;
 
-    // 4. Look up store within workspace
+    // 4. Look up workspace's store (1:1 relationship: each workspace has exactly one store)
     const store = await db.query.workspaceStores.findFirst({
-      where: and(
-        eq(workspaceStores.slug, storeSlug),
-        eq(workspaceStores.workspaceId, workspaceId)
-      ),
+      where: eq(workspaceStores.workspaceId, workspaceId),
     });
 
     if (!store) {
       return NextResponse.json(
-        { error: `Store not found: ${storeSlug}`, requestId },
+        { error: "Store not found for workspace", requestId },
         { status: 404 }
       );
     }

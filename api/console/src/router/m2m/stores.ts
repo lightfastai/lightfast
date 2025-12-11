@@ -4,7 +4,7 @@ import { z } from "zod";
 import { inngestM2MProcedure } from "../../trpc";
 import { db } from "@db/console/client";
 import { workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
 	embeddingModelSchema,
 	embeddingProviderSchema,
@@ -21,11 +21,12 @@ import {
  * Machine-to-machine procedures for store management.
  * Used exclusively by Inngest workflows.
  *
- * User-facing store operations are in workspace.stores sub-router.
+ * Each workspace has exactly ONE store (1:1 relationship).
+ * Store ID = workspaceId.
  */
 export const storesM2MRouter = {
 	/**
-	 * Get store by workspace ID and slug (Inngest workflows)
+	 * Get store by workspace ID (Inngest workflows)
 	 *
 	 * Used by Inngest workflows to check if store exists before processing.
 	 * Returns null if store doesn't exist (workflows handle creation via ensure-store).
@@ -34,15 +35,11 @@ export const storesM2MRouter = {
 		.input(
 			z.object({
 				workspaceId: z.string(),
-				storeSlug: z.string(),
 			}),
 		)
 		.query(async ({ input }) => {
 			const store = await db.query.workspaceStores.findFirst({
-				where: and(
-					eq(workspaceStores.workspaceId, input.workspaceId),
-					eq(workspaceStores.slug, input.storeSlug),
-				),
+				where: eq(workspaceStores.workspaceId, input.workspaceId),
 			});
 
 			return store ?? null;
@@ -53,13 +50,13 @@ export const storesM2MRouter = {
 	 *
 	 * Used by ensure-store workflow to create DB record after Pinecone index is created.
 	 * Uses onConflictDoNothing for idempotency.
+	 * Store ID = workspaceId (1:1 relationship).
 	 */
 	create: inngestM2MProcedure
 		.input(
 			z.object({
 				id: z.string(),
 				workspaceId: z.string(),
-				slug: z.string(),
 				indexName: z.string(),
 				namespaceName: z.string(), // Hierarchical namespace within shared index
 				embeddingDim: z.number(),
@@ -85,16 +82,13 @@ export const storesM2MRouter = {
 
 			// Concurrent creation succeeded, fetch the record
 			const existing = await db.query.workspaceStores.findFirst({
-				where: and(
-					eq(workspaceStores.workspaceId, input.workspaceId),
-					eq(workspaceStores.slug, input.slug),
-				),
+				where: eq(workspaceStores.workspaceId, input.workspaceId),
 			});
 
 			if (!existing) {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: `Failed to create or fetch store: ${input.workspaceId}/${input.slug}`,
+					message: `Failed to create or fetch store for workspace: ${input.workspaceId}`,
 				});
 			}
 

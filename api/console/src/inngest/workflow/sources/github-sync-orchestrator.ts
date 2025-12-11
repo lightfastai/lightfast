@@ -194,8 +194,7 @@ export const githubSyncOrchestrator = inngest.createFunction(
             batchId,
             workspaceId,
             sourceId,
-            storeId,
-            storeSlug: "default",
+            storeId, // workspaceId = storeId (1:1 relationship)
             files: batch || [],
             githubInstallationId: Number.parseInt(
               (sourceConfig as { installationId: string }).installationId,

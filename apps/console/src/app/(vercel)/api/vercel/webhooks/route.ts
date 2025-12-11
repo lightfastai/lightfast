@@ -47,17 +47,14 @@ async function handleDeploymentEvent(
 
   const { workspaceId } = workspace;
 
-  // Get default store
+  // Get workspace store (1:1 relationship: each workspace has exactly one store)
   const store = await db.query.workspaceStores.findFirst({
-    where: and(
-      eq(workspaceStores.workspaceId, workspaceId),
-      eq(workspaceStores.slug, "default"),
-    ),
+    where: eq(workspaceStores.workspaceId, workspaceId),
   });
 
   if (!store) {
     console.error(
-      `[Vercel Webhook] No default store for workspace: ${workspaceId}`,
+      `[Vercel Webhook] No store found for workspace: ${workspaceId}`,
     );
     return;
   }
@@ -167,7 +164,7 @@ async function handleDeploymentEvent(
 async function findWorkspaceForVercelProject(
   projectId: string,
   _teamId: string | undefined,
-): Promise<{ workspaceId: string; storeSlug: string } | null> {
+): Promise<{ workspaceId: string } | null> {
   // Look up workspace integration by Vercel project ID with join to verify provider
   const results = await db
     .select({
@@ -193,9 +190,9 @@ async function findWorkspaceForVercelProject(
     return null;
   }
 
+  // Return workspaceId only (1:1 relationship: workspace = store)
   return {
     workspaceId: integration.workspaceId,
-    storeSlug: "default",
   };
 }
 

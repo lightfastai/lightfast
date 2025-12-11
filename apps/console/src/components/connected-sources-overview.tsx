@@ -70,14 +70,12 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   if (resourceData.provider === "github") {
     displayName = resourceData.repoFullName;
     detailsUrl = `https://github.com/${resourceData.repoFullName}`;
-  } else if (resourceData.provider === "vercel") {
+  } else {
+    // Vercel provider
     displayName = resourceData.projectName;
     detailsUrl = resourceData.teamSlug
       ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
       : `https://vercel.com/dashboard`;
-  } else {
-    // Unknown provider fallback
-    displayName = "Unknown Resource";
   }
 
   return (

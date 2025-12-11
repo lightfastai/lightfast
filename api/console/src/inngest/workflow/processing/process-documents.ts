@@ -37,10 +37,10 @@ import { inngest } from "../../client/client";
 /**
  * Generic document processing event
  * Works with any source type
+ * workspaceId is also the storeId (1:1 relationship)
  */
 export interface ProcessDocumentEvent {
   workspaceId: string;
-  storeSlug: string;
   documentId: string;
 
   // Source identification (discriminated union)
@@ -118,18 +118,18 @@ export const processDocuments = inngest.createFunction(
       "Processes documents from any source: fetch, parse, chunk, embed, upsert",
     retries: 3,
 
-    // Batch events per workspace + store
-    // Note: Idempotency enforced in step.run via existingDoc.contentHash check (line 206)
+    // Batch events per workspace (1:1 with store)
+    // Note: Idempotency enforced in step.run via existingDoc.contentHash check
     batchEvents: {
       maxSize: 25,
       timeout: "5s",
-      key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+      key: "event.data.workspaceId",
     },
 
-    // Limit per-store processing
+    // Limit per-workspace processing (1:1 with store)
     concurrency: [
       {
-        key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+        key: "event.data.workspaceId",
         limit: 5,
       },
     ],
@@ -147,7 +147,6 @@ export const processDocuments = inngest.createFunction(
 
     const sample = events[0];
     log.info("Processing document batch (multi-source)", {
-      storeSlug: sample.data.storeSlug,
       workspaceId: sample.data.workspaceId,
       sourceType: sample.data.sourceType,
       count: events.length,
@@ -163,7 +162,6 @@ export const processDocuments = inngest.createFunction(
             const store = await getStore(
               storeCache,
               event.data.workspaceId,
-              event.data.storeSlug,
             );
 
             // Generate slug from title or sourceId
@@ -266,7 +264,7 @@ export const processDocuments = inngest.createFunction(
               error,
               documentId: event.data.documentId,
               sourceType: event.data.sourceType,
-              store: event.data.storeSlug,
+              workspaceId: event.data.workspaceId,
             });
             throw error;
           }
@@ -332,7 +330,6 @@ export const processDocuments = inngest.createFunction(
           name: "apps-console/relationships.extract" as const,
           data: {
             documentId: e.data.documentId,
-            storeSlug: e.data.storeSlug,
             workspaceId: e.data.workspaceId,
             sourceType: e.data.sourceType,
             relationships: e.data.relationships!,
@@ -370,24 +367,22 @@ export const processDocuments = inngest.createFunction(
 async function getStore(
   cache: Map<string, WorkspaceStore>,
   workspaceId: string,
-  storeSlug: string,
 ): Promise<WorkspaceStore> {
-  const key = `${workspaceId}:${storeSlug}`;
-  if (cache.has(key)) {
-    return cache.get(key)!;
+  if (cache.has(workspaceId)) {
+    return cache.get(workspaceId)!;
   }
 
   const store = await db.query.workspaceStores.findFirst({
-    where: and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
+    where: eq(workspaceStores.workspaceId, workspaceId),
   });
 
   if (!store) {
     throw new Error(
-      `Store not found for workspace=${workspaceId}, store=${storeSlug}`,
+      `Store not found for workspace=${workspaceId}`,
     );
   }
 
-  cache.set(key, store);
+  cache.set(workspaceId, store);
   return store;
 }
 

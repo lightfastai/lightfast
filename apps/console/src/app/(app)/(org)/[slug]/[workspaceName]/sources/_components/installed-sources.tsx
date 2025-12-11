@@ -223,10 +223,9 @@ export function InstalledSources({
 							let name: string;
 							if (integration.type === "github") {
 								name = metadata?.repoFullName ?? providerNames[integration.type] ?? integration.type;
-							} else if (integration.type === "vercel") {
-								name = metadata?.projectName ?? providerNames[integration.type] ?? integration.type;
 							} else {
-								name = providerNames[integration.type] ?? integration.type;
+								// Vercel or other providers
+								name = metadata?.projectName ?? providerNames[integration.type] ?? integration.type;
 							}
 
 							// Get additional metadata for GitHub

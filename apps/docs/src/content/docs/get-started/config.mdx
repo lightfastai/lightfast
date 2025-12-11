@@ -13,7 +13,6 @@ Get started with the minimal configuration:
 
 <CodeEditor
   code={`version: 1
-store: my-docs
 include:
   - "docs/**/*.md"`}
   language="yaml"
@@ -22,7 +21,7 @@ include:
 That's it! This config will index all Markdown files in your `docs/` directory.
 
 <Alert>
-**Next steps:** Place this file in your repository root as `lightfast.yml`, then customize your store name and add more file patterns below.
+**Next steps:** Place this file in your repository root as `lightfast.yml`, then add more file patterns below.
 </Alert>
 
 ## Config File Location
@@ -50,36 +49,6 @@ The configuration version. Currently only version `1` is supported.
   code={`version: 1`}
   language="yaml"
 />
-
-### store (required)
-
-A unique identifier for this documentation set within your workspace. Store names help organize knowledge across multiple repositories.
-
-**Constraints:**
-- Must not be empty
-- Maximum 20 characters
-- Lowercase alphanumeric characters and hyphens only
-- No leading, trailing, or consecutive hyphens
-
-<ValidationExample
-  good={[
-    "docs-store",
-    "api-reference",
-    "engineering-wiki",
-    "marketing-docs"
-  ]}
-  bad={[
-    "-invalid          # Leading hyphen",
-    "invalid-          # Trailing hyphen",
-    "invalid--name     # Consecutive hyphens",
-    "Invalid_Name      # Uppercase and underscore",
-    "this-name-is-way-too-long-for-a-store  # Over 20 chars"
-  ]}
-/>
-
-<Alert>
-**Store names must be unique per workspace.** If you have multiple repositories, use descriptive store names to organize content. You can filter searches by store to find exactly what you need.
-</Alert>
 
 ### include (required)
 
@@ -115,7 +84,6 @@ Quick reference for all available options:
 | Field | Required | Type | Constraints | Description |
 |-------|----------|------|-------------|-------------|
 | `version` | ✅ | number | Must be `1` | Configuration schema version |
-| `store` | ✅ | string | Max 20 chars, lowercase, alphanumeric + hyphens, no leading/trailing/consecutive hyphens | Unique identifier for this documentation set within your workspace |
 | `include` | ✅ | string[] | Valid glob patterns (relative paths), minimum 1 pattern | Array of glob patterns matching files to index |
 
 **Automatic Exclusions:** `node_modules/`, `.git/`, `dist/`, `build/`, `.next/`, `.turbo/`, dotfiles
@@ -129,7 +97,6 @@ Choose the right patterns for your use case:
 
 <CodeEditor
   code={`version: 1
-store: docs
 include:
   - "docs/**/*.md"
   - "docs/**/*.mdx"
@@ -142,7 +109,6 @@ include:
 
 <CodeEditor
   code={`version: 1
-store: eng-wiki
 include:
   - "wiki/**/*.md"
   - "rfcs/**/*.md"
@@ -156,7 +122,6 @@ include:
 
 <CodeEditor
   code={`version: 1
-store: api-docs
 include:
   - "api/**/*.md"
   - "openapi.yaml"
@@ -170,7 +135,6 @@ include:
 
 <CodeEditor
   code={`version: 1
-store: monorepo-docs
 include:
   - "README.md"
   - "docs/**/*.md"
@@ -181,67 +145,9 @@ include:
 
 **Warning:** Large codebases with many source files may hit indexing limits. Start with documentation files and expand as needed.
 
-## Multi-Repository Setup
-
-If your organization has multiple repositories, use unique store names to organize knowledge:
-
-### Documentation Repository
-
-<CodeEditor
-  code={`version: 1
-store: docs-site
-include:
-  - "**/*.md"
-  - "**/*.mdx"`}
-  language="yaml"
-/>
-
-### API Repository
-
-<CodeEditor
-  code={`version: 1
-store: api-service
-include:
-  - "README.md"
-  - "docs/**/*.md"
-  - "openapi.yaml"`}
-  language="yaml"
-/>
-
-### Infrastructure Repository
-
-<CodeEditor
-  code={`version: 1
-store: infra-wiki
-include:
-  - "README.md"
-  - "runbooks/**/*.md"
-  - "terraform/**/*.md"`}
-  language="yaml"
-/>
-
-Then filter searches by store:
-- Search `store:docs-site` for product documentation
-- Search `store:api-service` for API references
-- Search `store:infra-wiki` for infrastructure guides
-
 ## Validation and Errors
 
 Lightfast validates your configuration when indexing starts. Common errors:
-
-### Invalid Store Name
-
-<ValidationErrorList
-  title="Invalid Store Name"
-  errors={[
-    "Store name must not be empty",
-    "Store name must be 20 characters or less",
-    "Store name must be lowercase alphanumeric with hyphens only",
-    "Store name cannot have leading/trailing/consecutive hyphens"
-  ]}
-/>
-
-**Fix:** Use a valid store name following the constraints.
 
 ### No Include Patterns
 
@@ -306,9 +212,6 @@ Full configuration with all available options:
 # Full example with all options
 
 version: 1
-
-# Store name (required - unique per workspace)
-store: platform-docs
 
 # Include patterns (required - at least one)
 include:

@@ -63,30 +63,20 @@ export const jobsRouter = {
 			}
 
 			// Query jobs with limit + 1 to determine if there are more
-			// Left join with workspaceStores to get store slug
+			// Note: storeSlug removed - each workspace has exactly one store (1:1 relationship)
 			const jobsList = await db
-				.select({
-					job: workspaceWorkflowRuns,
-					storeSlug: workspaceStores.slug,
-				})
+				.select()
 				.from(workspaceWorkflowRuns)
-				.leftJoin(workspaceStores, eq(workspaceWorkflowRuns.storeId, workspaceStores.id))
 				.where(and(...conditions))
 				.orderBy(desc(workspaceWorkflowRuns.createdAt))
 				.limit(limit + 1);
 
 			// Determine if there are more results
 			const hasMore = jobsList.length > limit;
-			const rawItems = hasMore ? jobsList.slice(0, limit) : jobsList;
-
-			// Flatten the joined data and include storeSlug
-			const items = rawItems.map(({ job, storeSlug }) => ({
-				...job,
-				storeSlug,
-			}));
+			const items = hasMore ? jobsList.slice(0, limit) : jobsList;
 
 			// Get next cursor (createdAt of last item)
-			const nextCursor = hasMore ? rawItems[rawItems.length - 1]?.job.createdAt : null;
+			const nextCursor = hasMore ? items[items.length - 1]?.createdAt : null;
 
 			return {
 				items,
@@ -432,18 +422,15 @@ export const jobsRouter = {
 					// Determine source type from sourceConfig
 					const sourceType = source.sourceConfig.provider;
 
-					// Resolve storeId from "default" store
+					// Resolve store (1:1 relationship: each workspace has exactly one store)
 					const store = await db.query.workspaceStores.findFirst({
-						where: and(
-							eq(workspaceStores.workspaceId, workspaceId),
-							eq(workspaceStores.slug, "default")
-						),
+						where: eq(workspaceStores.workspaceId, workspaceId),
 					});
 
 					if (!store) {
 						throw new TRPCError({
 							code: "NOT_FOUND",
-							message: `Default store not found for workspace: ${workspaceId}`,
+							message: `Store not found for workspace: ${workspaceId}`,
 						});
 					}
 
@@ -475,18 +462,15 @@ export const jobsRouter = {
 						});
 					}
 
-					// Resolve storeId from "default" store
+					// Resolve store (1:1 relationship: each workspace has exactly one store)
 					const store = await db.query.workspaceStores.findFirst({
-						where: and(
-							eq(workspaceStores.workspaceId, workspaceId),
-							eq(workspaceStores.slug, "default")
-						),
+						where: eq(workspaceStores.workspaceId, workspaceId),
 					});
 
 					if (!store) {
 						throw new TRPCError({
 							code: "NOT_FOUND",
-							message: `Default store not found for workspace: ${workspaceId}`,
+							message: `Store not found for workspace: ${workspaceId}`,
 						});
 					}
 

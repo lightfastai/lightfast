@@ -23,9 +23,6 @@ const DEFAULT_CONFIG = `# Lightfast Configuration
 
 version: 1
 
-# Store name (unique identifier for this documentation set)
-store: docs
-
 # Files to include (glob patterns)
 include:
   - "docs/**/*.md"

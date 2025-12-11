@@ -8,23 +8,24 @@ import { codeToHtml } from "shiki";
 /**
  * Lightfast Config Overview Component
  *
- * Note: Uses a simplified Store shape for display in YAML config.
- * The `name` field is mapped from Store.slug in the parent component.
- * This is intentional for better readability in the generated config file.
+ * Note: Updated for single-store architecture (1:1 relationship).
+ * Each workspace has exactly one store.
  */
 interface LightfastConfigOverviewProps {
 	workspaceName: string;
-	stores: {
+	store: {
 		id: string;
-		name: string; // Mapped from Store.slug for display
+		embeddingModel: string;
 		embeddingDim: number;
+		chunkMaxTokens: number;
+		chunkOverlap: number;
 		documentCount?: number;
-	}[];
+	} | null;
 }
 
 export function LightfastConfigOverview({
 	workspaceName,
-	stores,
+	store,
 }: LightfastConfigOverviewProps) {
 	const [highlightedCode, setHighlightedCode] = useState<string>("");
 
@@ -38,24 +39,37 @@ export function LightfastConfigOverview({
 		return str;
 	};
 
-	const yamlConfig = `# Lightfast Configuration
+	const yamlConfig = store
+		? `# Lightfast Configuration
 workspace:
   name: ${escapeYaml(workspaceName)}
 
-stores:
-${stores
-	.map((store) => {
-		return `  - name: ${escapeYaml(store.name)}
-    embedding_dim: ${store.embeddingDim}
-    vector_db: pinecone
-    index_type: hnsw`;
-	})
-	.join("\n\n")}
+embedding:
+  model: ${store.embeddingModel}
+  dimension: ${store.embeddingDim}
+
+indexing:
+  chunk_size: ${store.chunkMaxTokens}
+  chunk_overlap: ${store.chunkOverlap}
+
+retrieval:
+  top_k: 20
+  rerank_model: cross-encoder
+  similarity_threshold: 0.7`
+		: `# Lightfast Configuration
+workspace:
+  name: ${escapeYaml(workspaceName)}
+
+# Store not configured yet
+# Connect a source to automatically create a store
+
+embedding:
+  model: embed-english-v3.0
+  dimension: 1024
 
 indexing:
   chunk_size: 512
   chunk_overlap: 50
-  embedding_model: text-embedding-3-small
 
 retrieval:
   top_k: 20

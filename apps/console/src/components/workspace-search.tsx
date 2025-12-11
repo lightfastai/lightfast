@@ -8,13 +8,6 @@ import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/ui/select";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Search, Database, FileText, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +16,6 @@ interface WorkspaceSearchProps {
   orgSlug: string;
   workspaceName: string;
   initialQuery: string;
-  initialStore: string;
 }
 
 interface SearchResult {
@@ -44,11 +36,16 @@ interface SearchResponse {
   };
 }
 
+/**
+ * Workspace Search Component
+ *
+ * Note: Store selector has been removed - each workspace has exactly ONE store (1:1 relationship).
+ * The search API automatically uses the workspace's single store.
+ */
 export function WorkspaceSearch({
   orgSlug,
   workspaceName,
   initialQuery,
-  initialStore,
 }: WorkspaceSearchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,14 +53,13 @@ export function WorkspaceSearch({
   const [_isPending, startTransition] = useTransition();
 
   const [query, setQuery] = useState(initialQuery);
-  const [selectedStore, setSelectedStore] = useState(initialStore);
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch stores list
-  const { data: stores } = useSuspenseQuery({
-    ...trpc.workspace.stores.list.queryOptions({
+  // Fetch workspace's single store (1:1 relationship)
+  const { data: store } = useSuspenseQuery({
+    ...trpc.workspace.store.get.queryOptions({
       clerkOrgSlug: orgSlug,
       workspaceName: workspaceName,
     }),
@@ -73,7 +69,7 @@ export function WorkspaceSearch({
   });
 
   // Update URL with search params
-  const updateSearchParams = useCallback((newQuery: string, newStore: string) => {
+  const updateSearchParams = useCallback((newQuery: string) => {
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (newQuery) {
@@ -81,19 +77,19 @@ export function WorkspaceSearch({
       } else {
         params.delete("q");
       }
-      if (newStore) {
-        params.set("store", newStore);
-      } else {
-        params.delete("store");
-      }
       router.push(`/${orgSlug}/${workspaceName}?${params.toString()}`);
     });
   }, [orgSlug, workspaceName, router, searchParams]);
 
   // Perform search via API route
   const handleSearch = useCallback(async () => {
-    if (!query.trim() || !selectedStore) {
-      setError("Please enter a search query and select a store");
+    if (!query.trim()) {
+      setError("Please enter a search query");
+      return;
+    }
+
+    if (!store) {
+      setError("No store configured for this workspace. Connect a source first.");
       return;
     }
 
@@ -108,7 +104,6 @@ export function WorkspaceSearch({
         },
         body: JSON.stringify({
           query: query.trim(),
-          store: selectedStore,
           topK: 10,
         }),
       });
@@ -120,14 +115,14 @@ export function WorkspaceSearch({
 
       const data = (await response.json()) as SearchResponse;
       setSearchResults(data);
-      void updateSearchParams(query.trim(), selectedStore);
+      void updateSearchParams(query.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
       setSearchResults(null);
     } finally {
       setIsSearching(false);
     }
-  }, [query, selectedStore, orgSlug, workspaceName, updateSearchParams]);
+  }, [query, store, orgSlug, workspaceName, updateSearchParams]);
 
   // Handle enter key
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -156,34 +151,13 @@ export function WorkspaceSearch({
       <Card className="border-border/60">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4">
-            {/* Store Selector */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Select Store</label>
-              <Select value={selectedStore} onValueChange={setSelectedStore}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <SelectValue placeholder="Choose a store to search" />
-                </SelectTrigger>
-                <SelectContent>
-                  {stores.list.length === 0 ? (
-                    <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                      No stores available. Connect a source first.
-                    </div>
-                  ) : (
-                    stores.list.map((store) => (
-                      <SelectItem key={store.id} value={store.slug}>
-                        <div className="flex items-center gap-2">
-                          <Database className="h-4 w-4 text-muted-foreground" />
-                          <span>{store.slug}</span>
-                          <Badge variant="outline" className="text-xs ml-2">
-                            {store.documentCount} docs
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Store Info (read-only) */}
+            {store && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Database className="h-4 w-4" />
+                <span>Searching in: {store.embeddingModel} ({store.documentCount} docs)</span>
+              </div>
+            )}
 
             {/* Search Input */}
             <div className="flex gap-2">
@@ -201,7 +175,7 @@ export function WorkspaceSearch({
               </div>
               <Button
                 onClick={handleSearch}
-                disabled={isSearching || !query.trim() || !selectedStore}
+                disabled={isSearching || !query.trim() || !store}
               >
                 {isSearching ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -269,14 +243,19 @@ export function WorkspaceSearch({
               <div>
                 <h3 className="font-medium mb-1">Search your knowledge base</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Select a store and enter a query to search through your indexed documents
+                  Enter a query to search through your indexed documents
                   using semantic similarity.
                 </p>
               </div>
-              {stores.total > 0 && (
+              {store && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Database className="h-3 w-3" />
-                  {stores.total} store{stores.total !== 1 ? "s" : ""} available
+                  {store.documentCount} documents indexed
+                </div>
+              )}
+              {!store && (
+                <div className="text-xs text-muted-foreground">
+                  Connect a source to start indexing documents
                 </div>
               )}
             </div>
@@ -290,13 +269,13 @@ export function WorkspaceSearch({
           href={`/${orgSlug}/${workspaceName}/insights`}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          View Insights →
+          View Insights
         </Link>
         <Link
           href={`/${orgSlug}/${workspaceName}/sources`}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          Manage Sources →
+          Manage Sources
         </Link>
       </div>
     </div>
@@ -373,10 +352,7 @@ export function WorkspaceSearchSkeleton() {
       <Card className="border-border/60">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-64" />
-            </div>
+            <Skeleton className="h-4 w-48" />
             <div className="flex gap-2">
               <Skeleton className="h-10 flex-1" />
               <Skeleton className="h-10 w-24" />

@@ -1,16 +1,13 @@
 /**
  * Ensure store exists workflow
  *
- * TERMINOLOGY:
- * - "Store" = User-facing concept (what developers configure in lightfast.yml)
- * - "Namespace" = Pinecone implementation detail (how we isolate data physically)
- * - Relationship: 1 store = 1 Pinecone namespace (1:1 mapping)
- *
  * ARCHITECTURE:
+ * - Each workspace has exactly ONE store (1:1 relationship)
+ * - Store ID = workspaceId
  * - All stores share Pinecone indexes from PRIVATE_CONFIG (cost optimization)
- * - Each store gets a unique hierarchical namespace within the shared index
- * - Format: {clerkOrgId}:ws_{workspaceSlug}:store_{storeSlug}
- * - Example: org_123abc:ws_robustchicken:store_default
+ * - Each workspace gets a unique namespace within the shared index
+ * - Format: {clerkOrgId}:ws_{workspaceId}
+ * - Example: org_123abc:ws_0iu9we9itb2ez17bh5cji
  *
  * Idempotent store and Pinecone namespace provisioning.
  * Can be triggered by:
@@ -19,7 +16,7 @@
  * - Reconciliation workflow
  *
  * Workflow steps:
- * 1. Check if store exists in DB
+ * 1. Check if store exists in DB (by workspaceId)
  * 2. If not, resolve namespace name and check shared Pinecone index
  * 3. Ensure shared Pinecone index exists (idempotent)
  * 4. Create store DB record with namespace reference (idempotent)
@@ -35,16 +32,15 @@ import { PRIVATE_CONFIG } from "@repo/console-config";
 import { createInngestCaller } from "../../lib";
 
 /**
- * Resolve hierarchical namespace name for a store
+ * Resolve hierarchical namespace name for a workspace
  *
- * Format: {clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
- * Example: "org_123abc:ws_0iu9we9itb2ez17bh5cji:store_default"
+ * Format: {clerkOrgId}:ws_{workspaceId}
+ * Example: "org_123abc:ws_0iu9we9itb2ez17bh5cji"
  *
  * Note: clerkOrgId already contains "org_" prefix (e.g., "org_123abc")
- * workspaceId is the stable UUID identifier
+ * workspaceId is the stable UUID identifier (also serves as store ID)
  *
- * This replaces per-store index names with namespaces within shared indexes.
- * All stores now share indexes from PRIVATE_CONFIG.pinecone.indexes.
+ * All workspaces share indexes from PRIVATE_CONFIG.pinecone.indexes.
  *
  * Pinecone namespace constraints:
  * - Max length: 2048 characters ✅
@@ -54,7 +50,6 @@ import { createInngestCaller } from "../../lib";
 function resolveNamespaceName(
 	clerkOrgId: string,
 	workspaceId: string,
-	storeSlug: string,
 ): string {
 	const sanitize = (s: string) =>
 		s
@@ -64,7 +59,7 @@ function resolveNamespaceName(
 
 	// clerkOrgId already has "org_" prefix (e.g., "org_35ztohqbmqsscw67jwbywlg2l51")
 	// Sanitize preserves underscores, so we get clean namespace names
-	return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}:store_${sanitize(storeSlug)}`;
+	return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}`;
 }
 
 /**
@@ -93,10 +88,11 @@ export const ensureStore = inngest.createFunction(
 
 		// CRITICAL: Prevent duplicate store creation within 24hr window
 		// Idempotency caches the result and replays it for concurrent/subsequent calls
-		idempotency: 'event.data.workspaceId + "-" + event.data.storeSlug',
+		// Each workspace has exactly one store, so workspaceId is the idempotency key
+		idempotency: "event.data.workspaceId",
 
 		// Singleton removed: Function is naturally idempotent via:
-		// 1. Early return if store exists (line 141)
+		// 1. Early return if store exists
 		// 2. onConflictDoNothing() on DB insert
 		// 3. Pinecone createIndex is idempotent (returns success if exists)
 		// This allows concurrent calls to succeed instead of throwing "rate limited" errors
@@ -112,7 +108,6 @@ export const ensureStore = inngest.createFunction(
 		const {
 			workspaceId,
 			workspaceKey,
-			storeSlug,
 			embeddingDim,
 			githubRepoId,
 			repoFullName,
@@ -123,7 +118,6 @@ export const ensureStore = inngest.createFunction(
 		log.info("Ensuring store exists", {
 			workspaceId,
 			workspaceKey,
-			storeSlug,
 		});
 
 		// Create tRPC caller for database operations
@@ -133,11 +127,10 @@ export const ensureStore = inngest.createFunction(
 		const embeddingDefaults = resolveEmbeddingDefaults();
 		const targetDim = embeddingDim ?? embeddingDefaults.dimension;
 
-		// Step 1: Check if store already exists in DB
+		// Step 1: Check if store already exists in DB (by workspaceId)
 		const existingStore = await step.run("store.check-exists", async () => {
 			const store = await trpc.stores.get({
 				workspaceId,
-				storeSlug,
 			});
 
 			if (store) {
@@ -164,7 +157,6 @@ export const ensureStore = inngest.createFunction(
 				if (hasDrift) {
 					log.warn("Store embedding configuration differs from current environment", {
 						storeId: existingStore.id,
-						storeSlug: existingStore.slug,
 						storeConfig: {
 							model: existingStore.embeddingModel,
 							dimension: existingStore.embeddingDim,
@@ -176,7 +168,7 @@ export const ensureStore = inngest.createFunction(
 						},
 						recommendation:
 							"Store will continue using its original embedding configuration. " +
-							"To use the new configuration, create a new store with a different name.",
+							"To use the new configuration, recreate the workspace.",
 					});
 				} else {
 					log.info("Store embedding configuration matches current environment", {
@@ -208,7 +200,6 @@ export const ensureStore = inngest.createFunction(
 				const namespaceName = resolveNamespaceName(
 					workspace.clerkOrgId,
 					workspaceId,
-					storeSlug,
 				);
 
 				// Use shared production index from PRIVATE_CONFIG
@@ -217,7 +208,6 @@ export const ensureStore = inngest.createFunction(
 				log.info("Resolved namespace for store", {
 					clerkOrgId: workspace.clerkOrgId,
 					workspaceId,
-					storeSlug,
 					namespaceName,
 					sharedIndexName,
 				});
@@ -294,15 +284,15 @@ export const ensureStore = inngest.createFunction(
 			}
 		});
 
-		// Step 5: Create store DB record
+		// Step 5: Create store DB record (store ID = workspaceId for 1:1 relationship)
 		const store = await step.run("store.create-record", async () => {
-			const storeId = `${workspaceId}_${storeSlug}`;
+			// Store ID = workspaceId (1:1 relationship)
+			const storeId = workspaceId;
 
 			// Create store via tRPC (handles idempotent insert + fallback fetch)
 			const result = await trpc.stores.create({
 				id: storeId,
 				workspaceId,
-				slug: storeSlug,
 				indexName: sharedIndexName,
 				namespaceName: namespaceName,
 				// All config values explicitly passed from PRIVATE_CONFIG

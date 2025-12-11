@@ -19,7 +19,7 @@ import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
 import { workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * Search router - API key protected procedures for search endpoints
@@ -56,29 +56,16 @@ export const searchRouter = {
 			});
 
 			try {
-				// Extract store from filters
-				const storeLabel = input.filters?.labels?.find((l: string) => l.startsWith("store:"));
-				if (!storeLabel) {
-					throw new TRPCError({
-						code: "BAD_REQUEST",
-						message: "Store label required in filters (e.g., store:docs)",
-					});
-				}
-
-				const storeSlug = storeLabel.replace("store:", "");
-
-				// Phase 1.6: Look up store and verify workspace access
+				// Look up workspace's store (1:1 relationship: each workspace has exactly one store)
+				// Note: store:X filter in labels is now ignored - workspace determines store
 				const store = await db.query.workspaceStores.findFirst({
-					where: and(
-						eq(workspaceStores.slug, storeSlug),
-						eq(workspaceStores.workspaceId, ctx.auth.workspaceId)
-					),
+					where: eq(workspaceStores.workspaceId, ctx.auth.workspaceId),
 				});
 
 				if (!store) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: `Store not found or access denied: ${storeSlug}`,
+						message: "Store not found for workspace",
 					});
 				}
 
@@ -89,7 +76,6 @@ export const searchRouter = {
 					requestId,
 					workspaceId: ctx.auth.workspaceId,
 					userId: ctx.auth.userId,
-					storeSlug,
 					indexName,
 					namespaceName,
 					storeId: store.id,

@@ -5,7 +5,7 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { WorkspaceHeader } from "./workspace-header";
 import { MetricsSidebar } from "./metrics-sidebar";
 import { ActivityTimeline } from "./activity-timeline";
-import { StoresOverview } from "./stores-overview";
+import { StoreOverview } from "./stores-overview";
 import { ConnectedSourcesOverview } from "./connected-sources-overview";
 import { PerformanceMetrics } from "./performance-metrics";
 import { SystemHealthOverview } from "./system-health-overview";
@@ -23,10 +23,11 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
   const trpc = useTRPC();
 
-  // Fetch all queries in parallel (9 total - granular for better caching)
+  // Fetch all queries in parallel (8 total - granular for better caching)
+  // Note: Using workspace.store.get for single store (1:1 relationship)
   const [
     { data: sources },
-    { data: stores },
+    { data: store },
     { data: documents },
     { data: jobStats },
     { data: activities },
@@ -45,13 +46,14 @@ export function WorkspaceDashboard({
         staleTime: 5 * 60 * 1000, // 5 minutes - sources change infrequently
       },
       {
-        ...trpc.workspace.stores.list.queryOptions({
+        // Single store per workspace (1:1 relationship)
+        ...trpc.workspace.store.get.queryOptions({
           clerkOrgSlug: orgSlug,
           workspaceName: workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        staleTime: 5 * 60 * 1000, // 5 minutes - stores change infrequently
+        staleTime: 5 * 60 * 1000, // 5 minutes - store changes infrequently
       },
       {
         ...trpc.workspace.documents.stats.queryOptions({
@@ -132,10 +134,7 @@ export function WorkspaceDashboard({
           workspaceName={
             workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
           }
-          stores={stores.list.map((store) => ({
-            ...store,
-            name: store.slug,
-          }))}
+          store={store}
         />
 
         {/* Right: Metrics Sidebar (like Vitess stats) */}
@@ -156,7 +155,7 @@ export function WorkspaceDashboard({
           {/* System Health Overview - Hierarchical Status */}
           <SystemHealthOverview
             health={health}
-            stores={stores.list}
+            store={store}
             sources={sources.list}
           />
 
@@ -177,14 +176,8 @@ export function WorkspaceDashboard({
       {/* Bottom Section - Full Width */}
       <ConnectedSourcesOverview sources={sources.list} />
 
-      {/* Stores Overview - Full Width, Collapsible (can be removed since it's now in config) */}
-      <StoresOverview
-        stores={stores.list.map((store) => ({
-          ...store,
-          name: store.slug,
-        }))}
-        totalStores={stores.total}
-      />
+      {/* Store Overview - Single store per workspace (1:1 relationship) */}
+      <StoreOverview store={store} />
     </div>
   );
 }
