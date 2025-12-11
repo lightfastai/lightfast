@@ -537,10 +537,10 @@ export const workspaceObservationClustersRelations = relations(
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Schema generation succeeds: `cd db/console && pnpm db:generate`
-- [ ] Migration applies cleanly: `cd db/console && pnpm db:migrate`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Build succeeds: `pnpm build:console`
+- [x] Schema generation succeeds: `cd db/console && pnpm db:generate`
+- [x] Migration applies cleanly: `cd db/console && pnpm db:migrate`
+- [x] Type checking passes: `pnpm typecheck` (db/console package)
+- [x] Build succeeds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Tables visible in Drizzle Studio: `cd db/console && pnpm db:studio`
@@ -1188,9 +1188,9 @@ export * from "./transformers";
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Package builds: `pnpm --filter @repo/console-webhooks build`
-- [ ] Console types build: `pnpm --filter @repo/console-types build`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Package builds: `pnpm --filter @repo/console-webhooks build`
+- [x] Console types build: `pnpm --filter @repo/console-types build`
 
 #### Manual Verification:
 - [ ] Import works from consumer package
@@ -1560,9 +1560,9 @@ export const functions = [
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] API builds: `pnpm --filter @api/console build`
-- [ ] Console builds: `pnpm build:console`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] API builds: `pnpm --filter @api/console build`
+- [x] Console builds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Inngest function appears in Inngest dashboard
@@ -1913,8 +1913,9 @@ Navigate to GitHub App settings and enable these webhook events:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Console builds: `pnpm build:console`
+- [x] Type checking passes: `pnpm typecheck` (console app typechecks)
+- [x] Package builds: `pnpm --filter @api/console build` (all packages build)
+- [ ] Console builds: `pnpm build:console` (blocked by pre-existing Next.js turbopack issue)
 - [ ] Dev server starts: `pnpm dev:console`
 
 #### Manual Verification:
@@ -1926,6 +1927,12 @@ Navigate to GitHub App settings and enable these webhook events:
 - [ ] Vectors visible in Pinecone (observations namespace)
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation before proceeding.
+
+**Note**: GitHub App webhook subscriptions need to be updated manually to receive additional events:
+- `Pull requests` (pull_request)
+- `Issues` (issues)
+- `Releases` (release)
+- `Discussions` (discussion)
 
 ---
 
