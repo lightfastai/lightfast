@@ -46,11 +46,11 @@ export type SourceType = z.infer<typeof sourceTypeSchema>;
  * Used in connected_repository table.
  */
 export const configStatusSchema = z.enum([
-  "configured",    // lightfast.yml exists and is valid
-  "unconfigured",  // No lightfast.yml or invalid
-  "ingesting",     // Currently processing configuration
-  "error",         // Configuration error detected
-  "pending",       // Configuration check pending
+  "configured",      // lightfast.yml exists and is valid
+  "awaiting_config", // No lightfast.yml or invalid - waiting for user to add config
+  "ingesting",       // Currently processing configuration
+  "error",           // Configuration error detected
+  "pending",         // Configuration check pending
 ]);
 
 export type ConfigStatus = z.infer<typeof configStatusSchema>;

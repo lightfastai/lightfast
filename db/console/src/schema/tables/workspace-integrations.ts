@@ -96,7 +96,7 @@ export const workspaceIntegrations = pgTable(
             autoSync: boolean;           // Auto-sync on changes
           };
           status?: {                     // NEW: Optional status tracking
-            configStatus?: "configured" | "unconfigured";
+            configStatus?: "configured" | "awaiting_config";
             configPath?: string;
             lastConfigCheck?: string;
           };

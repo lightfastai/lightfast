@@ -22,7 +22,7 @@ const updateGithubSyncStatusSchema = z.object({
 
 const updateGithubConfigStatusSchema = z.object({
   githubRepoId: z.string(),
-  configStatus: z.enum(["configured", "unconfigured"]),
+  configStatus: z.enum(["configured", "awaiting_config"]),
   configPath: z.string().nullable(),
 });
 
@@ -211,7 +211,7 @@ export const sourcesM2MRouter = {
    * - When repository is added and we check for config
    *
    * Updates the sourceConfig.status field with:
-   * - configStatus: "configured" | "unconfigured"
+   * - configStatus: "configured" | "awaiting_config"
    * - configPath: path to the config file (e.g., ".lightfast.yml")
    * - lastConfigCheck: timestamp of last check
    */

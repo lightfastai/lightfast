@@ -156,7 +156,7 @@ export const githubPushHandler = inngest.createFunction(
                 const updatedConfig = {
                   ...source.sourceConfig,
                   status: {
-                    configStatus: result.exists ? "configured" as const : "unconfigured" as const,
+                    configStatus: result.exists ? "configured" as const : "awaiting_config" as const,
                     configPath: result.path ?? undefined,
                     lastConfigCheck: now,
                   },
@@ -173,7 +173,7 @@ export const githubPushHandler = inngest.createFunction(
             );
 
             log.info("Updated config status", {
-              configStatus: result.exists ? "configured" : "unconfigured",
+              configStatus: result.exists ? "configured" : "awaiting_config",
               configPath: result.path,
             });
           }

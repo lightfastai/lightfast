@@ -13,8 +13,9 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
-import { Search, Circle, ChevronDown, Plus } from "lucide-react";
+import { Search, Circle, ChevronDown, Plus, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -217,7 +218,15 @@ export function InstalledSources({
 								documentCount?: number;
 								isPrivate?: boolean;
 								projectName?: string;
+								status?: {
+									configStatus?: "configured" | "awaiting_config";
+									configPath?: string;
+									lastConfigCheck?: string;
+								};
 							} | null | undefined;
+
+							// Check if this repo is awaiting configuration
+							const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
 
 							// Get display name based on provider type
 							let name: string;
@@ -263,8 +272,10 @@ export function InstalledSources({
 											</div>
 											<div className="flex items-center gap-3 mt-1">
 												<div className="flex items-center gap-2">
-													<Circle className="h-2 w-2 fill-current text-green-500" />
-													<p className="text-sm text-muted-foreground">Active</p>
+													<Circle className={`h-2 w-2 fill-current ${isAwaitingConfig ? "text-amber-500" : "text-green-500"}`} />
+													<p className="text-sm text-muted-foreground">
+														{isAwaitingConfig ? "Awaiting config" : "Active"}
+													</p>
 												</div>
 												<span className="text-muted-foreground">•</span>
 												<p className="text-sm text-muted-foreground">
@@ -284,6 +295,28 @@ export function InstalledSources({
 													</>
 												)}
 											</div>
+											{/* Config Required Banner */}
+											{isAwaitingConfig && (
+												<div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+													<div className="flex items-start gap-2">
+														<AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+														<div className="text-sm flex-1">
+															<p className="font-medium text-amber-800 dark:text-amber-200">
+																Configuration Required
+															</p>
+															<p className="text-amber-700 dark:text-amber-300 mt-0.5">
+																Add a{" "}
+																<ConfigTemplateDialog>
+																	<button className="underline hover:no-underline font-mono text-xs">
+																		lightfast.yml
+																	</button>
+																</ConfigTemplateDialog>
+																{" "}file to start indexing.
+															</p>
+														</div>
+													</div>
+												</div>
+											)}
 										</div>
 									</div>
 								</div>

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Github, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink } from "lucide-react";
+import { Github, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import type { EnrichedConnection, Source } from "~/types";
 
@@ -139,6 +139,14 @@ function SimpleSourceItem({ source }: { source: Source }) {
 
   const SourceIcon = getSourceIcon(source.type);
 
+  // Check if this source is awaiting configuration
+  const metadata = source.metadata as {
+    status?: {
+      configStatus?: "configured" | "awaiting_config";
+    };
+  } | null | undefined;
+  const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
+
   return (
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -159,16 +167,27 @@ function SimpleSourceItem({ source }: { source: Source }) {
           </div>
         </div>
       </div>
-      {source.lastSyncedAt && (
-        <div className="flex items-center gap-2">
-          <div className="rounded-full p-1 bg-green-50 dark:bg-green-950/20">
-            <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500" />
-          </div>
-          <span className="text-xs font-medium text-green-600 dark:text-green-500">
-            Synced
-          </span>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {isAwaitingConfig ? (
+          <>
+            <div className="rounded-full p-1 bg-amber-50 dark:bg-amber-950/20">
+              <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-500" />
+            </div>
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-500">
+              Needs config
+            </span>
+          </>
+        ) : source.lastSyncedAt ? (
+          <>
+            <div className="rounded-full p-1 bg-green-50 dark:bg-green-950/20">
+              <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500" />
+            </div>
+            <span className="text-xs font-medium text-green-600 dark:text-green-500">
+              Synced
+            </span>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -183,6 +202,16 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   if (sources) {
     const totalSources = sources.length;
 
+    // Count sources awaiting configuration
+    const awaitingConfigCount = sources.filter((s) => {
+      const metadata = s.metadata as {
+        status?: {
+          configStatus?: "configured" | "awaiting_config";
+        };
+      } | null | undefined;
+      return metadata?.status?.configStatus === "awaiting_config";
+    }).length;
+
     return (
       <Card>
         <CardHeader>
@@ -194,6 +223,11 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
                   ? "No sources connected yet"
                   : `${totalSources} source${totalSources === 1 ? "" : "s"} connected`}
               </CardDescription>
+              {awaitingConfigCount > 0 && (
+                <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
+                  {awaitingConfigCount} source{awaitingConfigCount === 1 ? "" : "s"} awaiting configuration
+                </p>
+              )}
             </div>
           </div>
         </CardHeader>
