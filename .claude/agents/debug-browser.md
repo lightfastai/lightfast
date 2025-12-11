@@ -20,7 +20,7 @@ You inspect local development services via Playwright browser automation to veri
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Console | http://localhost:3024 | Main application UI |
+| App | http://localhost:3024 | Main application UI |
 | Inngest | http://localhost:8288 | Function runs, events |
 | Drizzle Studio | https://local.drizzle.studio | Database queries |
 | ngrok Inspector | http://localhost:4040 | Webhook deliveries |
@@ -109,7 +109,7 @@ You inspect local development services via Playwright browser automation to veri
 
 **Screenshot**: .playwright-mcp/ngrok-{timestamp}.png
 ```
-
+uu33k
 ### Task: Check Console App
 
 1. Navigate to `http://localhost:3024`

@@ -38,8 +38,8 @@ Note: `apps/chat` (4106) is independent, not part of microfrontends.
 
 ```bash
 # Dev servers (NEVER use global pnpm build)
-pnpm dev:console      # Port 4107 - main product
-pnpm dev:www          # Port 4101 - marketing
+pnpm dev:app      # Port 3024 - through vercel microfrontends 
+pnpm dev:www          # Port 4101 - e.g stadanlone app marketing
 
 # Run dev server in background (for Claude Code sessions)
 pnpm dev:console > /tmp/console-dev.log 2>&1 &
