@@ -41,7 +41,7 @@ POST /v1/similar  — Find related content based on meaning
 POST /v1/answer   — Get synthesized answers with citations (streaming)
 ```
 
-Available via REST API and MCP tools for agent runtimes. Full documentation at [lightfast.ai/docs/api](https://lightfast.ai/docs/api).
+Available via REST API and MCP tools for agent runtimes. Full documentation at [lightfast.ai/docs/api-reference](https://lightfast.ai/docs/api-reference/overview).
 
 ## Principles
 
