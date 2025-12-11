@@ -108,6 +108,129 @@ This document defines Lightfast's neural memory architecture for **engineering t
 
 ---
 
+## Core Types
+
+### Source Event (Pipeline Input)
+
+The `SourceEvent` is the **standardized input** to the observation pipeline. Each source (GitHub, Vercel, Linear, Sentry) must transform its webhook payload into this format.
+
+```typescript
+/**
+ * Standardized event format from any source.
+ * This is what webhook handlers produce and the pipeline consumes.
+ */
+interface SourceEvent {
+  // Source identification
+  source: 'github' | 'vercel' | 'linear' | 'sentry';
+  sourceType: string;        // e.g., "pull_request_merged", "deployment.succeeded"
+  sourceId: string;          // Unique ID: "pr:lightfastai/lightfast#123"
+
+  // Content (semantic-focused, metadata separate)
+  title: string;             // ≤120 chars, embeddable headline
+  body: string;              // Full semantic content for embedding (no verbose labels)
+  summary?: string;          // ≤320 chars, pre-computed gist (optional)
+
+  // Actor (source-specific, resolved later)
+  actor?: {
+    id: string;              // Source-specific ID (e.g., GitHub user ID)
+    name: string;            // Display name
+    email?: string;          // For cross-source identity resolution
+    avatarUrl?: string;
+  };
+
+  // Temporal
+  occurredAt: string;        // ISO timestamp when event happened
+
+  // Relationships (source-specific extraction)
+  references: Reference[];
+
+  // Source-specific metadata (passed through to observation, used for filtering/hybrid search)
+  // IMPORTANT: Store structured fields here (author, repo, labels, etc.)
+  // NOT in body to avoid 30-60% token waste on non-semantic content
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Relationship reference extracted from source event.
+ * Links observations to related entities.
+ */
+interface Reference {
+  type: 'commit' | 'branch' | 'pr' | 'issue' | 'deployment' | 'project' |
+        'cycle' | 'assignee' | 'reviewer' | 'team' | 'label';
+  id: string;                // Entity identifier
+  url?: string;              // Link to source (for hydration)
+  label?: string;            // Relationship qualifier: "fixes", "closes", "blocks"
+}
+```
+
+### Source Transformers
+
+Each source requires a **transformer** that extracts relationships and normalizes the webhook payload into `SourceEvent` format. Transformers are source-specific because relationship semantics vary:
+
+```typescript
+/**
+ * Transformer contract for each source.
+ * Implemented per-source in packages/console-webhooks/src/transformers/
+ */
+interface SourceTransformer<TPayload> {
+  /**
+   * Extract relationship references from source payload.
+   * Source-specific logic (e.g., parsing "fixes #123" from GitHub PR body).
+   */
+  extractReferences(payload: TPayload): Reference[];
+
+  /**
+   * Transform source webhook payload into standardized SourceEvent.
+   */
+  toSourceEvent(payload: TPayload, context: TransformContext): SourceEvent;
+}
+
+interface TransformContext {
+  deliveryId: string;        // Webhook delivery ID for idempotency
+  receivedAt: Date;          // When webhook was received
+}
+```
+
+### Transformer Examples by Source
+
+| Source | Reference Extraction | Notes |
+|--------|---------------------|-------|
+| **GitHub** | Parse `fixes #123` from PR body, extract `head.sha` | Convention-based text parsing |
+| **Vercel** | Read `deployment.meta.githubCommitSha` | Structured metadata field |
+| **Linear** | Direct from `issue.project.id`, `issue.cycle.id` | GraphQL relations in payload |
+| **Sentry** | Extract from `issue.culprit`, stack trace files | Error context parsing |
+
+### Pipeline Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SOURCE → PIPELINE FLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Webhook Payload          Transformer              SourceEvent               │
+│  (source-specific)        (per-source)             (standardized)            │
+│                                                                              │
+│  ┌──────────────┐    ┌─────────────────┐    ┌─────────────────────────────┐ │
+│  │ GitHub       │    │ extractRefs()   │    │ { source: "github",         │ │
+│  │ pull_request │───▶│ toSourceEvent() │───▶│   sourceType: "pr_merged",  │ │
+│  │ webhook      │    │                 │    │   references: [...],        │ │
+│  └──────────────┘    └─────────────────┘    │   ... }                     │ │
+│                                              └──────────────┬──────────────┘ │
+│  ┌──────────────┐    ┌─────────────────┐                   │                │
+│  │ Vercel       │    │ extractRefs()   │                   │                │
+│  │ deployment   │───▶│ toSourceEvent() │───────────────────┤                │
+│  │ webhook      │    │                 │                   │                │
+│  └──────────────┘    └─────────────────┘                   │                │
+│                                                             ▼                │
+│                                              ┌─────────────────────────────┐ │
+│                                              │ neural/observation.capture  │ │
+│                                              │ (generic pipeline)          │ │
+│                                              └─────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Component Design
 
 ### 1. Observation Capture Pipeline
@@ -455,9 +578,13 @@ async function retrievalGovernor(
     actorMatches,
   ] = await Promise.all([
     // Path 1: Vector search (Key 1) - High recall
+    // Single query with layer metadata filtering (hybrid approach)
     searchObservationVectors(workspaceId, queryEmbedding, {
       topK: 50, // Fetch more than needed
-      filters: options.filters,
+      filters: {
+        ...options.filters,
+        layer: { $in: ["observations", "documents"] }, // Filter by layer in single query
+      },
     }),
 
     // Path 2: Entity exact-match lookup
@@ -1230,21 +1357,29 @@ CREATE INDEX idx_state_current ON workspace_temporal_states(workspace_id, is_cur
 
 ## Pinecone Namespace Strategy
 
-```
-Namespace Format: {clerkOrgId}:ws_{workspaceId}:{layer}
+**Recommended Hybrid Approach** (based on performance analysis):
 
-Layers:
-- knowledge      → Document chunks (existing)
-- observations   → Neural observations (new)
-- clusters       → Cluster centroids (new)
-- profiles       → Actor profile embeddings (new)
+```
+Namespace Format: {clerkOrgId}:ws_{workspaceId}
+
+Metadata Field: layer ('knowledge' | 'observations' | 'clusters' | 'profiles')
 
 Example:
-- org_abc123:ws_xyz789:knowledge
-- org_abc123:ws_xyz789:observations
-- org_abc123:ws_xyz789:clusters
-- org_abc123:ws_xyz789:profiles
+- org_abc123:ws_xyz789  (single namespace per workspace)
+  ├─ metadata.layer = 'knowledge'      (document chunks)
+  ├─ metadata.layer = 'observations'   (neural observations)
+  ├─ metadata.layer = 'clusters'       (cluster centroids)
+  └─ metadata.layer = 'profiles'       (actor profile embeddings)
 ```
+
+**Why Hybrid Over Multi-Layer:**
+- ✅ **Single query searches all layers** within workspace (no cross-namespace API calls)
+- ✅ **3× reduction in namespace count** (1 per workspace vs 4 per workspace)
+- ✅ **Same cost profile** (cost driven by namespace SIZE, not COUNT)
+- ✅ **Simpler cross-layer retrieval** in Retrieval Governor
+- ⚠️ Trade-off: Slightly larger average namespace size (offset by fewer total namespaces)
+
+**Research basis**: Web analysis (2025-12-11) on Pinecone performance with 100K+ namespaces shows no latency penalty, but metadata filtering approach simplifies architecture.
 
 ---
 
