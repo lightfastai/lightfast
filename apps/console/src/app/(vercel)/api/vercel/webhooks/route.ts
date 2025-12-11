@@ -15,6 +15,10 @@ import {
   verifyVercelWebhook,
   transformVercelDeployment,
 } from "@repo/console-webhooks";
+import {
+  storeWebhookPayload,
+  extractWebhookHeaders,
+} from "@repo/console-webhooks/storage";
 import { log } from "@vendor/observability/log";
 import { env } from "~/env";
 
@@ -27,7 +31,10 @@ export const dynamic = "force-dynamic";
 async function handleDeploymentEvent(
   payload: VercelWebhookPayload,
   eventType: VercelDeploymentEvent,
+  rawPayload: string,
+  headers: Record<string, string>,
 ) {
+  const receivedAt = new Date();
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
@@ -49,6 +56,17 @@ async function handleDeploymentEvent(
 
   const { workspaceId } = workspace;
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId,
+    deliveryId: payload.id,
+    source: "vercel",
+    eventType,
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   // Emit observation capture event (transformer handles all field mapping)
   await inngest.send({
     name: "apps-console/neural/observation.capture",
@@ -56,7 +74,7 @@ async function handleDeploymentEvent(
       workspaceId,
       sourceEvent: transformVercelDeployment(payload, eventType, {
         deliveryId: payload.id,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -142,12 +160,13 @@ export async function POST(request: NextRequest) {
     }
 
     const eventType = payload.type as VercelDeploymentEvent;
+    const webhookHeaders = extractWebhookHeaders(request.headers);
 
     console.log(`[Vercel Webhook] Received ${eventType} event`);
 
     // Only process deployment events
     if (eventType.startsWith("deployment.")) {
-      await handleDeploymentEvent(payload, eventType);
+      await handleDeploymentEvent(payload, eventType, rawBody, webhookHeaders);
     } else {
       console.log(
         `[Vercel Webhook] Ignoring non-deployment event: ${eventType}`,

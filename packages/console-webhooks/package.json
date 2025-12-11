@@ -27,6 +27,10 @@
     "./transformers": {
       "types": "./dist/transformers/index.d.ts",
       "default": "./dist/transformers/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage.d.ts",
+      "default": "./dist/storage.js"
     }
   },
   "scripts": {
@@ -36,6 +40,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@db/console": "workspace:*",
     "@octokit/webhooks-types": "^7.6.1",
     "@repo/console-types": "workspace:*",
     "@repo/lib": "workspace:*",

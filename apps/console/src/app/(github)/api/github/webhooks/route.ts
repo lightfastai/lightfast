@@ -8,6 +8,10 @@ import {
   transformGitHubRelease,
   transformGitHubDiscussion,
 } from "@repo/console-webhooks";
+import {
+  storeWebhookPayload,
+  extractWebhookHeaders,
+} from "@repo/console-webhooks/storage";
 import { SourcesService, WorkspacesService } from "@repo/console-api-services";
 import type {
   PushEvent,
@@ -163,7 +167,11 @@ async function handlePushEvent(payload: PushEvent, deliveryId: string) {
 async function handlePushObservation(
   payload: PushEvent,
   deliveryId: string,
+  rawPayload: string,
+  headers: Record<string, string>,
 ): Promise<void> {
+  const receivedAt = new Date();
+
   // Only capture pushes to default branch
   const branch = payload.ref.replace("refs/heads/", "");
   if (branch !== payload.repository.default_branch) {
@@ -182,13 +190,24 @@ async function handlePushObservation(
     return;
   }
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId: workspace.workspaceId,
+    deliveryId,
+    source: "github",
+    eventType: "push",
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   await inngest.send({
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
       sourceEvent: transformGitHubPush(payload, {
         deliveryId,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -205,7 +224,11 @@ async function handlePushObservation(
 async function handlePullRequestEvent(
   payload: PullRequestEvent,
   deliveryId: string,
+  rawPayload: string,
+  headers: Record<string, string>,
 ): Promise<void> {
+  const receivedAt = new Date();
+
   // Only capture significant PR actions
   const significantActions = ["opened", "closed", "reopened", "ready_for_review"];
   if (!significantActions.includes(payload.action)) {
@@ -224,13 +247,24 @@ async function handlePullRequestEvent(
     return;
   }
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId: workspace.workspaceId,
+    deliveryId,
+    source: "github",
+    eventType: "pull_request",
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   await inngest.send({
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
       sourceEvent: transformGitHubPullRequest(payload, {
         deliveryId,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -248,7 +282,11 @@ async function handlePullRequestEvent(
 async function handleIssuesEvent(
   payload: IssuesEvent,
   deliveryId: string,
+  rawPayload: string,
+  headers: Record<string, string>,
 ): Promise<void> {
+  const receivedAt = new Date();
+
   // Only capture significant issue actions
   const significantActions = ["opened", "closed", "reopened"];
   if (!significantActions.includes(payload.action)) {
@@ -266,13 +304,24 @@ async function handleIssuesEvent(
     return;
   }
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId: workspace.workspaceId,
+    deliveryId,
+    source: "github",
+    eventType: "issues",
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   await inngest.send({
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
       sourceEvent: transformGitHubIssue(payload, {
         deliveryId,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -290,7 +339,11 @@ async function handleIssuesEvent(
 async function handleReleaseEvent(
   payload: ReleaseEvent,
   deliveryId: string,
+  rawPayload: string,
+  headers: Record<string, string>,
 ): Promise<void> {
+  const receivedAt = new Date();
+
   // Only capture published releases
   if (payload.action !== "published") {
     return;
@@ -307,13 +360,24 @@ async function handleReleaseEvent(
     return;
   }
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId: workspace.workspaceId,
+    deliveryId,
+    source: "github",
+    eventType: "release",
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   await inngest.send({
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
       sourceEvent: transformGitHubRelease(payload, {
         deliveryId,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -330,7 +394,11 @@ async function handleReleaseEvent(
 async function handleDiscussionEvent(
   payload: DiscussionEvent,
   deliveryId: string,
+  rawPayload: string,
+  headers: Record<string, string>,
 ): Promise<void> {
+  const receivedAt = new Date();
+
   // Only capture created and answered discussions
   const significantActions = ["created", "answered"];
   if (!significantActions.includes(payload.action)) {
@@ -348,13 +416,24 @@ async function handleDiscussionEvent(
     return;
   }
 
+  // Store raw webhook payload for permanent retention
+  await storeWebhookPayload({
+    workspaceId: workspace.workspaceId,
+    deliveryId,
+    source: "github",
+    eventType: "discussion",
+    payload: rawPayload,
+    headers,
+    receivedAt,
+  });
+
   await inngest.send({
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
       sourceEvent: transformGitHubDiscussion(payload, {
         deliveryId,
-        receivedAt: new Date(),
+        receivedAt,
       }),
     },
   });
@@ -395,6 +474,7 @@ export async function POST(request: NextRequest) {
 
     const event = eventHeader as WebhookEvent;
     const deliveryId = request.headers.get("x-github-delivery") ?? "unknown";
+    const webhookHeaders = extractWebhookHeaders(request.headers);
 
     const body = JSON.parse(payload) as
       | InstallationRepositoriesEvent
@@ -411,24 +491,24 @@ export async function POST(request: NextRequest) {
       case "push":
         // Handle sync workflow (existing functionality)
         await handlePushEvent(body as PushEvent, deliveryId);
-        // Also capture as observation for neural memory
-        await handlePushObservation(body as PushEvent, deliveryId);
+        // Also capture as observation for neural memory (with raw payload storage)
+        await handlePushObservation(body as PushEvent, deliveryId, payload, webhookHeaders);
         break;
 
       case "pull_request":
-        await handlePullRequestEvent(body as PullRequestEvent, deliveryId);
+        await handlePullRequestEvent(body as PullRequestEvent, deliveryId, payload, webhookHeaders);
         break;
 
       case "issues":
-        await handleIssuesEvent(body as IssuesEvent, deliveryId);
+        await handleIssuesEvent(body as IssuesEvent, deliveryId, payload, webhookHeaders);
         break;
 
       case "release":
-        await handleReleaseEvent(body as ReleaseEvent, deliveryId);
+        await handleReleaseEvent(body as ReleaseEvent, deliveryId, payload, webhookHeaders);
         break;
 
       case "discussion":
-        await handleDiscussionEvent(body as DiscussionEvent, deliveryId);
+        await handleDiscussionEvent(body as DiscussionEvent, deliveryId, payload, webhookHeaders);
         break;
 
       case "installation_repositories":
