@@ -2,8 +2,7 @@
  * Workspace Knowledge Documents table schema
  * Multi-source document storage (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
  *
- * Workspace-scoped: Documents within a knowledge store.
- * Hierarchy: Workspace → Knowledge Store → Documents
+ * Workspace-scoped: Documents belong directly to workspaces.
  */
 
 import {
@@ -17,7 +16,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { workspaceStores } from "./workspace-stores";
+import { orgWorkspaces } from "./org-workspaces";
 import type {
   SourceType,
   DocumentSlug,
@@ -29,10 +28,10 @@ export const workspaceKnowledgeDocuments = pgTable(
   {
     /** Unique identifier for the document */
     id: varchar("id", { length: 191 }).primaryKey(),
-    /** Store ID this document belongs to */
-    storeId: varchar("store_id", { length: 191 })
+    /** Workspace ID this document belongs to */
+    workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
-      .references(() => workspaceStores.id, { onDelete: "cascade" }),
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     // Source identification (discriminated union)
     /** Source type - discriminator for union */
@@ -69,12 +68,12 @@ export const workspaceKnowledgeDocuments = pgTable(
       .default(sql`now()`),
   },
   (t) => ({
-    byStore: index("idx_docs_store").on(t.storeId),
-    bySlug: index("idx_docs_store_slug").on(t.storeId, t.slug),
+    byWorkspace: index("idx_docs_workspace").on(t.workspaceId),
+    bySlug: index("idx_docs_workspace_slug").on(t.workspaceId, t.slug),
     bySourceType: index("idx_docs_source_type").on(t.sourceType),
     bySourceId: index("idx_docs_source_id").on(t.sourceType, t.sourceId),
-    uniqueSourceDoc: uniqueIndex("uq_docs_store_source").on(
-      t.storeId,
+    uniqueSourceDoc: uniqueIndex("uq_docs_workspace_source").on(
+      t.workspaceId,
       t.sourceType,
       t.sourceId
     ),

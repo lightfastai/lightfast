@@ -9,7 +9,7 @@ import { codeToHtml } from "shiki";
  * Lightfast Config Overview Component
  *
  * Note: Updated for single-store architecture (1:1 relationship).
- * Each workspace has exactly one store.
+ * Embedding config now lives directly on workspace.
  */
 interface LightfastConfigOverviewProps {
 	workspaceName: string;

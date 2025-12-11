@@ -18,9 +18,11 @@ export type {
 export {
 	resolveEmbeddingDefaults,
 	createEmbeddingProvider,
-	createEmbeddingProviderForStore,
+	createEmbeddingProviderForWorkspace,
+	createEmbeddingProviderForStore, // @deprecated - use createEmbeddingProviderForWorkspace
 	embedTextsInBatches,
 	type EmbeddingDefaults,
 	type EmbeddingProviderConfig,
-	type StoreEmbeddingConfig,
+	type WorkspaceEmbeddingConfig,
+	type StoreEmbeddingConfig, // @deprecated - use WorkspaceEmbeddingConfig
 } from "./utils";

@@ -88,8 +88,6 @@ const eventsMap = {
       workspaceId: z.string(),
       /** Source ID */
       sourceId: z.string(),
-      /** Store ID (= workspaceId, 1:1 relationship) */
-      storeId: z.string(),
       /** Files to process in this batch */
       files: z.array(z.object({
         path: z.string(),
@@ -145,8 +143,6 @@ const eventsMap = {
       workspaceKey: z.string(),
       /** Source ID */
       sourceId: z.string(),
-      /** Store ID */
-      storeId: z.string(),
       /** GitHub-specific source configuration */
       sourceConfig: z.record(z.unknown()),
       /** Sync mode */
@@ -233,8 +229,6 @@ const eventsMap = {
       workspaceKey: z.string(),
       /** workspaceSource.id */
       sourceId: z.string(),
-      /** Store DB UUID (required for job linking) */
-      storeId: z.string(),
       /** Source provider type */
       sourceType: z.literal("github"),
       /** Sync mode: full = all documents, incremental = changed only */
@@ -576,6 +570,63 @@ const eventsMap = {
       documentCount: z.number(),
       /** Processing duration in milliseconds */
       durationMs: z.number(),
+    }),
+  },
+
+  // ============================================================================
+  // NEURAL MEMORY EVENTS
+  // ============================================================================
+
+  /**
+   * Neural observation capture event
+   * Triggered by webhook handlers to capture engineering events as observations
+   */
+  "apps-console/neural/observation.capture": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Standardized source event */
+      sourceEvent: z.object({
+        source: z.enum(["github", "vercel", "linear", "sentry"]),
+        sourceType: z.string(),
+        sourceId: z.string(),
+        title: z.string(),
+        body: z.string(),
+        actor: z.object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string().optional(),
+          avatarUrl: z.string().optional(),
+        }).optional(),
+        occurredAt: z.string(),
+        references: z.array(z.object({
+          type: z.enum([
+            "commit", "branch", "pr", "issue", "deployment", "project",
+            "cycle", "assignee", "reviewer", "team", "label"
+          ]),
+          id: z.string(),
+          url: z.string().optional(),
+          label: z.string().optional(),
+        })),
+        metadata: z.record(z.unknown()),
+      }),
+    }),
+  },
+
+  /**
+   * Neural observation captured (completion event)
+   * Emitted after an observation is successfully captured
+   */
+  "apps-console/neural/observation.captured": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Observation DB UUID */
+      observationId: z.string(),
+      /** Source ID for correlation */
+      sourceId: z.string(),
+      /** Observation type (e.g., "push", "pull_request_merged") */
+      observationType: z.string(),
     }),
   },
 

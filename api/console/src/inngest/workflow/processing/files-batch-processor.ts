@@ -67,7 +67,6 @@ export const filesBatchProcessor = inngest.createFunction(
       batchId,
       workspaceId,
       sourceId,
-      storeId, // workspaceId = storeId (1:1 relationship)
       files,
       githubInstallationId,
       repoFullName,
@@ -97,7 +96,7 @@ export const filesBatchProcessor = inngest.createFunction(
         const deleteEvents = deletions.map(file => ({
           name: "apps-console/documents.delete" as const,
           data: {
-            workspaceId, // workspaceId = storeId (1:1 relationship)
+            workspaceId,
             documentId: generateDocumentId(repoFullName, file.path),
             sourceType: "github" as const,
             sourceId: file.path,
@@ -186,7 +185,7 @@ export const filesBatchProcessor = inngest.createFunction(
               documentsToProcess.push({
                 name: "apps-console/documents.process" as const,
                 data: {
-                  workspaceId, // workspaceId = storeId (1:1 relationship)
+                  workspaceId,
                   documentId,
                   sourceType: "github" as const,
                   sourceId: result.value.file,

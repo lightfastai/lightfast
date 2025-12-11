@@ -14,11 +14,35 @@ const config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     reactStrictMode: true,
     transpilePackages: [
-      "@repo/ui",
+      // @api packages
+      "@api/console",
+      // @db packages
+      "@db/console",
+      // @repo packages
+      "@repo/app-urls",
+      "@repo/console-api-services",
+      "@repo/console-auth-middleware",
+      "@repo/console-embed",
+      "@repo/console-oauth",
+      "@repo/console-octokit-github",
+      "@repo/console-pinecone",
+      "@repo/console-trpc",
+      "@repo/console-types",
+      "@repo/console-validation",
+      "@repo/console-vercel",
+      "@repo/console-webhooks",
+      "@repo/lib",
       "@repo/site-config",
-      "@vendor/seo",
-      "@vendor/observability",
+      "@repo/ui",
+      "@repo/url-utils",
+      // @vendor packages
+      "@vendor/analytics",
+      "@vendor/clerk",
+      "@vendor/cms",
       "@vendor/next",
+      "@vendor/observability",
+      "@vendor/security",
+      "@vendor/seo",
     ],
     experimental: {
       optimizeCss: true,

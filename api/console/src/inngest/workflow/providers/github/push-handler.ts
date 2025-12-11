@@ -12,7 +12,7 @@
 
 import { inngest } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaceIntegrations, workspaceStores } from "@db/console/schema";
+import { workspaceIntegrations } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
@@ -81,20 +81,7 @@ export const githubPushHandler = inngest.createFunction(
       deliveryId,
     });
 
-    // Step 1: Resolve storeId (workspaceId = storeId, 1:1 relationship)
-    const storeId = await step.run("store.resolve", async () => {
-      const store = await db.query.workspaceStores.findFirst({
-        where: eq(workspaceStores.workspaceId, workspaceId),
-      });
-
-      if (!store) {
-        throw new Error(`Store not found for workspace: ${workspaceId}`);
-      }
-
-      return store.id;
-    });
-
-    // Step 2: Validate source exists
+    // Step 1: Validate source exists
     await step.run("source.validate", async () => {
       const source = await db.query.workspaceIntegrations.findFirst({
         where: eq(workspaceIntegrations.id, sourceId),

@@ -14,11 +14,11 @@ import {
 } from "@repo/console-types/api";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
-import { createEmbeddingProviderForStore } from "@repo/console-embed";
+import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
-import { workspaceStores } from "@db/console/schema";
+import { orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -56,21 +56,27 @@ export const searchRouter = {
 			});
 
 			try {
-				// Look up workspace's store (1:1 relationship: each workspace has exactly one store)
-				// Note: store:X filter in labels is now ignored - workspace determines store
-				const store = await db.query.workspaceStores.findFirst({
-					where: eq(workspaceStores.workspaceId, ctx.auth.workspaceId),
+				// Look up workspace configuration
+				const workspace = await db.query.orgWorkspaces.findFirst({
+					where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
 				});
 
-				if (!store) {
+				if (!workspace) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: "Store not found for workspace",
+						message: "Workspace not found",
 					});
 				}
 
-				const indexName = store.indexName;
-				const namespaceName = store.namespaceName;
+				if (!workspace.indexName || !workspace.namespaceName) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Workspace is not configured for search",
+					});
+				}
+
+				const indexName = workspace.indexName;
+				const namespaceName = workspace.namespaceName;
 
 				log.info("Resolved index and namespace", {
 					requestId,
@@ -78,16 +84,15 @@ export const searchRouter = {
 					userId: ctx.auth.userId,
 					indexName,
 					namespaceName,
-					storeId: store.id,
 				});
 
-				// Generate query embedding using store's embedding configuration
+				// Generate query embedding using workspace's embedding configuration
 				const embedStart = Date.now();
-				const embedding = createEmbeddingProviderForStore(
+				const embedding = createEmbeddingProviderForWorkspace(
 					{
-						id: store.id,
-						embeddingModel: store.embeddingModel,
-						embeddingDim: store.embeddingDim,
+						id: workspace.id,
+						embeddingModel: workspace.embeddingModel,
+						embeddingDim: workspace.embeddingDim,
 					},
 					{
 						inputType: "search_query",

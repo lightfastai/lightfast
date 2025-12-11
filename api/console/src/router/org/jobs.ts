@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces, workspaceStores, type WorkflowInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces, type WorkflowInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -422,27 +422,14 @@ export const jobsRouter = {
 					// Determine source type from sourceConfig
 					const sourceType = source.sourceConfig.provider;
 
-					// Resolve store (1:1 relationship: each workspace has exactly one store)
-					const store = await db.query.workspaceStores.findFirst({
-						where: eq(workspaceStores.workspaceId, workspaceId),
-					});
-
-					if (!store) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Store not found for workspace: ${workspaceId}`,
-						});
-					}
-
-					// Trigger new full sync
+					// Trigger new full sync via unified orchestrator
 					await inngest.send({
-						name: "apps-console/source.sync.github",
+						name: "apps-console/sync.requested",
 						data: {
 							workspaceId,
 							workspaceKey,
 							sourceId,
-							storeId: store.id,
-							sourceType: "github" as const,
+							sourceType: sourceType as "github" | "vercel",
 							syncMode: "full" as const,
 							trigger: "manual" as const,
 							syncParams: {},
@@ -462,26 +449,13 @@ export const jobsRouter = {
 						});
 					}
 
-					// Resolve store (1:1 relationship: each workspace has exactly one store)
-					const store = await db.query.workspaceStores.findFirst({
-						where: eq(workspaceStores.workspaceId, workspaceId),
-					});
-
-					if (!store) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Store not found for workspace: ${workspaceId}`,
-						});
-					}
-
-					// Trigger new full sync
+					// Trigger new full sync via unified orchestrator
 					await inngest.send({
-						name: "apps-console/source.sync.github",
+						name: "apps-console/sync.requested",
 						data: {
 							workspaceId,
 							workspaceKey,
 							sourceId,
-							storeId: store.id,
 							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,

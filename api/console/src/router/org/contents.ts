@@ -13,7 +13,7 @@ import {
 	type ContentsResponse,
 } from "@repo/console-types/api";
 import { db } from "@db/console/client";
-import { workspaceKnowledgeDocuments, workspaceStores } from "@db/console/schema";
+import { workspaceKnowledgeDocuments } from "@db/console/schema";
 import { inArray, eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
@@ -47,22 +47,20 @@ export const contentsRouter = {
 			});
 
 			try {
-				// Phase 1.5: Fetch documents with multi-source support
+				// Fetch documents directly by workspace ID
 				const documents = await db
 					.select({
 						id: workspaceKnowledgeDocuments.id,
 						sourceType: workspaceKnowledgeDocuments.sourceType,
 						sourceId: workspaceKnowledgeDocuments.sourceId,
 						sourceMetadata: workspaceKnowledgeDocuments.sourceMetadata,
-						storeId: workspaceKnowledgeDocuments.storeId,
-						workspaceId: workspaceStores.workspaceId,
+						workspaceId: workspaceKnowledgeDocuments.workspaceId,
 					})
 					.from(workspaceKnowledgeDocuments)
-					.innerJoin(workspaceStores, eq(workspaceKnowledgeDocuments.storeId, workspaceStores.id))
 					.where(
 						and(
 							inArray(workspaceKnowledgeDocuments.id, input.ids),
-							eq(workspaceStores.workspaceId, ctx.auth.workspaceId)
+							eq(workspaceKnowledgeDocuments.workspaceId, ctx.auth.workspaceId)
 						)
 					);
 

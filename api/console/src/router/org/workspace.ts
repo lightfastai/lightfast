@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceStores,
   workspaceKnowledgeDocuments,
   workspaceWorkflowRuns,
   workspaceIntegrations,
@@ -621,8 +620,8 @@ export const workspaceRouter = {
    */
   store: {
     /**
-     * Get the workspace's store with document count
-     * Note: Each workspace has exactly ONE store (1:1 relationship)
+     * Get the workspace's embedding/store configuration with document count
+     * Note: Store config is now on the workspace table directly
      */
     get: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
@@ -634,39 +633,44 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get store with document count (1:1 relationship)
-        const [storeWithCount] = await db
+        // Get workspace with document count
+        const [workspaceWithCount] = await db
           .select({
-            id: workspaceStores.id,
-            indexName: workspaceStores.indexName,
-            namespaceName: workspaceStores.namespaceName,
-            embeddingModel: workspaceStores.embeddingModel,
-            embeddingDim: workspaceStores.embeddingDim,
-            chunkMaxTokens: workspaceStores.chunkMaxTokens,
-            chunkOverlap: workspaceStores.chunkOverlap,
-            createdAt: workspaceStores.createdAt,
+            id: orgWorkspaces.id,
+            indexName: orgWorkspaces.indexName,
+            namespaceName: orgWorkspaces.namespaceName,
+            embeddingModel: orgWorkspaces.embeddingModel,
+            embeddingDim: orgWorkspaces.embeddingDim,
+            chunkMaxTokens: orgWorkspaces.chunkMaxTokens,
+            chunkOverlap: orgWorkspaces.chunkOverlap,
+            createdAt: orgWorkspaces.createdAt,
             documentCount: count(workspaceKnowledgeDocuments.id),
           })
-          .from(workspaceStores)
-          .leftJoin(workspaceKnowledgeDocuments, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
-          .where(eq(workspaceStores.workspaceId, workspaceId))
-          .groupBy(workspaceStores.id)
+          .from(orgWorkspaces)
+          .leftJoin(workspaceKnowledgeDocuments, eq(orgWorkspaces.id, workspaceKnowledgeDocuments.workspaceId))
+          .where(eq(orgWorkspaces.id, workspaceId))
+          .groupBy(orgWorkspaces.id)
           .limit(1);
 
-        if (!storeWithCount) {
+        if (!workspaceWithCount) {
+          return null;
+        }
+
+        // Return null if workspace is not configured for embedding
+        if (!workspaceWithCount.indexName) {
           return null;
         }
 
         return {
-          id: storeWithCount.id,
-          indexName: storeWithCount.indexName,
-          namespaceName: storeWithCount.namespaceName,
-          embeddingModel: storeWithCount.embeddingModel,
-          embeddingDim: storeWithCount.embeddingDim,
-          chunkMaxTokens: storeWithCount.chunkMaxTokens,
-          chunkOverlap: storeWithCount.chunkOverlap,
-          documentCount: storeWithCount.documentCount,
-          createdAt: storeWithCount.createdAt,
+          id: workspaceWithCount.id,
+          indexName: workspaceWithCount.indexName,
+          namespaceName: workspaceWithCount.namespaceName,
+          embeddingModel: workspaceWithCount.embeddingModel,
+          embeddingDim: workspaceWithCount.embeddingDim,
+          chunkMaxTokens: workspaceWithCount.chunkMaxTokens,
+          chunkOverlap: workspaceWithCount.chunkOverlap,
+          documentCount: workspaceWithCount.documentCount,
+          createdAt: workspaceWithCount.createdAt,
         };
       }),
   },
@@ -689,12 +693,11 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get total document count
+        // Get total document count - query directly on documents table by workspaceId
         const [docCountResult] = await db
           .select({ count: count() })
           .from(workspaceKnowledgeDocuments)
-          .innerJoin(workspaceStores, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
-          .where(eq(workspaceStores.workspaceId, workspaceId));
+          .where(eq(workspaceKnowledgeDocuments.workspaceId, workspaceId));
 
         // Get total chunk count (sum of all chunkCounts)
         const [chunkCountResult] = await db
@@ -702,8 +705,7 @@ export const workspaceRouter = {
             total: sql<number>`COALESCE(SUM(${workspaceKnowledgeDocuments.chunkCount}), 0)`,
           })
           .from(workspaceKnowledgeDocuments)
-          .innerJoin(workspaceStores, eq(workspaceStores.id, workspaceKnowledgeDocuments.storeId))
-          .where(eq(workspaceStores.workspaceId, workspaceId));
+          .where(eq(workspaceKnowledgeDocuments.workspaceId, workspaceId));
 
         return {
           total: docCountResult?.count || 0,

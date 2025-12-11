@@ -10,7 +10,7 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceKnowledgeDocuments, workspaceStores, workspaceKnowledgeVectorChunks } from "@db/console/schema";
+import { workspaceKnowledgeDocuments, orgWorkspaces, workspaceKnowledgeVectorChunks } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
@@ -18,7 +18,6 @@ import { pineconeClient } from "@repo/console-pinecone";
 
 /**
  * Generic document deletion event
- * workspaceId is also the storeId (1:1 relationship)
  */
 export interface DeleteDocumentEvent {
   workspaceId: string;
@@ -68,18 +67,21 @@ export const deleteDocuments = inngest.createFunction(
       sourceId,
     });
 
-    // Step 1: Find document and store in database
+    // Step 1: Find document and workspace in database
     const docInfo = await step.run("document.find", async () => {
       try {
-        // Get store (1:1 with workspace)
-        const [store] = await db
-          .select()
-          .from(workspaceStores)
-          .where(eq(workspaceStores.workspaceId, workspaceId))
-          .limit(1);
+        // Get workspace
+        const workspace = await db.query.orgWorkspaces.findFirst({
+          where: eq(orgWorkspaces.id, workspaceId),
+        });
 
-        if (!store) {
-          log.warn("Store not found", { workspaceId });
+        if (!workspace) {
+          log.warn("Workspace not found", { workspaceId });
+          return null;
+        }
+
+        if (!workspace.indexName || !workspace.namespaceName) {
+          log.warn("Workspace missing Pinecone config", { workspaceId });
           return null;
         }
 
@@ -89,7 +91,7 @@ export const deleteDocuments = inngest.createFunction(
           .from(workspaceKnowledgeDocuments)
           .where(
             and(
-              eq(workspaceKnowledgeDocuments.storeId, store.id),
+              eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
               eq(workspaceKnowledgeDocuments.id, documentId),
             ),
           )
@@ -102,7 +104,7 @@ export const deleteDocuments = inngest.createFunction(
             .from(workspaceKnowledgeDocuments)
             .where(
               and(
-                eq(workspaceKnowledgeDocuments.storeId, store.id),
+                eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
                 eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
                 eq(workspaceKnowledgeDocuments.sourceId, sourceId),
               ),
@@ -114,7 +116,7 @@ export const deleteDocuments = inngest.createFunction(
               documentId,
               sourceType,
               sourceId,
-              storeId: store.id,
+              workspaceId,
             });
             return null;
           }
@@ -127,9 +129,9 @@ export const deleteDocuments = inngest.createFunction(
 
           return {
             docId: docBySource.id,
-            storeId: store.id,
-            indexName: store.indexName,
-            namespaceName: store.namespaceName,
+            workspaceId,
+            indexName: workspace.indexName,
+            namespaceName: workspace.namespaceName,
           };
         }
 
@@ -141,9 +143,9 @@ export const deleteDocuments = inngest.createFunction(
 
         return {
           docId: doc.id,
-          storeId: store.id,
-          indexName: store.indexName,
-          namespaceName: store.namespaceName,
+          workspaceId,
+          indexName: workspace.indexName,
+          namespaceName: workspace.namespaceName,
         };
       } catch (error) {
         log.error("Failed to find document", {
@@ -194,7 +196,7 @@ export const deleteDocuments = inngest.createFunction(
           .delete(workspaceKnowledgeVectorChunks)
           .where(
             and(
-              eq(workspaceKnowledgeVectorChunks.storeId, docInfo.storeId),
+              eq(workspaceKnowledgeVectorChunks.workspaceId, docInfo.workspaceId),
               eq(workspaceKnowledgeVectorChunks.docId, docInfo.docId),
             ),
           );

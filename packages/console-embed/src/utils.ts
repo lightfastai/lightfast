@@ -98,61 +98,71 @@ export function createEmbeddingProvider(
 }
 
 /**
- * Store configuration required for embedding provider selection
+ * Workspace configuration required for embedding provider selection
  */
-export interface StoreEmbeddingConfig {
+export interface WorkspaceEmbeddingConfig {
 	/**
-	 * Store ID for error messages
+	 * Workspace ID for error messages
 	 */
 	id: string;
 
 	/**
-	 * Embedding model used by this store
+	 * Embedding model used by this workspace
 	 */
-	embeddingModel: string;
+	embeddingModel: string | null;
 
 	/**
 	 * Embedding dimension
 	 */
-	embeddingDim: number;
+	embeddingDim: number | null;
 }
 
 /**
- * Create an embedding provider bound to a specific store's configuration
+ * @deprecated Use WorkspaceEmbeddingConfig instead
+ */
+export type StoreEmbeddingConfig = WorkspaceEmbeddingConfig;
+
+/**
+ * Create an embedding provider bound to a specific workspace's configuration
  *
  * CRITICAL: This ensures the same embedding model is used for both indexing
  * and retrieval. Vector stores require consistent embedding models - you
  * cannot mix different models in the same semantic space.
  *
- * This function enforces store-level embedding model locking:
- * - Uses the store's configured Cohere embedding model
- * - All stores must use Cohere (COHERE_API_KEY required)
+ * This function enforces workspace-level embedding model locking:
+ * - Uses the workspace's configured Cohere embedding model
+ * - All workspaces must use Cohere (COHERE_API_KEY required)
  * - Prevents accidental model switching that would corrupt search results
  *
- * @param store - Store configuration with embedding model settings
+ * @param workspace - Workspace configuration with embedding model settings
  * @param config - Provider configuration (input type)
- * @returns Cohere embedding provider instance matching store's configuration
+ * @returns Cohere embedding provider instance matching workspace's configuration
  *
  * @example
  * ```typescript
- * // Create provider for a Cohere-based store
- * const provider = createEmbeddingProviderForStore(
- *   { id: "store_123", embeddingModel: "embed-english-v3.0", embeddingDim: 1024 },
+ * // Create provider for a workspace
+ * const provider = createEmbeddingProviderForWorkspace(
+ *   { id: "workspace_123", embeddingModel: "embed-english-v3.0", embeddingDim: 1024 },
  *   { inputType: "search_query" }
  * );
  * ```
  */
-export function createEmbeddingProviderForStore(
-	store: StoreEmbeddingConfig,
+export function createEmbeddingProviderForWorkspace(
+	workspace: WorkspaceEmbeddingConfig,
 	config: EmbeddingProviderConfig,
 ): EmbeddingProvider {
 	return createCohereEmbedding({
 		apiKey: embedEnv.COHERE_API_KEY,
 		model: EMBEDDING_CONFIG.cohere.model,
 		inputType: config.inputType as CohereInputType,
-		dimension: store.embeddingDim, // Use store's dimension, not config default
+		dimension: workspace.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
 	});
 }
+
+/**
+ * @deprecated Use createEmbeddingProviderForWorkspace instead
+ */
+export const createEmbeddingProviderForStore = createEmbeddingProviderForWorkspace;
 
 /**
  * Embed texts using the provided provider while respecting Cohere's 96-text limit.

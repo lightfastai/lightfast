@@ -10,6 +10,11 @@ export type {
   InstallationEvent,
   InstallationRepositoriesEvent,
   RepositoryEvent,
+  // Neural observation event types
+  PullRequestEvent,
+  IssuesEvent,
+  ReleaseEvent,
+  DiscussionEvent,
 } from "@octokit/webhooks-types";
 
 /**
@@ -19,4 +24,9 @@ export type WebhookEvent =
   | "push"
   | "installation"
   | "installation_repositories"
-  | "repository";
+  | "repository"
+  // Neural observation events
+  | "pull_request"
+  | "issues"
+  | "release"
+  | "discussion";

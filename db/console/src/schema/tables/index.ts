@@ -8,10 +8,13 @@ export * from "./user-sources";
 export * from "./org-workspaces";
 
 // Workspace-scoped tables
-export * from "./workspace-stores";
 export * from "./workspace-knowledge-documents";
 export * from "./workspace-knowledge-vector-chunks";
 export * from "./workspace-integrations";
 export * from "./workspace-workflow-runs";
 export * from "./workspace-operations-metrics";
 export * from "./workspace-user-activities";
+
+// Neural memory tables
+export * from "./workspace-neural-observations";
+export * from "./workspace-observation-clusters";

@@ -28,7 +28,6 @@ import { sourcesRouter } from "./router/org/sources";
 import { activitiesRouter } from "./router/org/activities";
 
 // M2M routers (internal services only)
-import { storesM2MRouter } from "./router/m2m/stores";
 import { jobsM2MRouter } from "./router/m2m/jobs";
 import { sourcesM2MRouter } from "./router/m2m/sources";
 import { workspaceM2MRouter } from "./router/m2m/workspace";
@@ -92,13 +91,11 @@ export const orgRouter = createTRPCRouter({
  * - Webhook procedures: Require webhook M2M token (CLERK_M2M_WEBHOOK_CLIENT_ID)
  *
  * Procedures:
- * - stores.*: Store management for Inngest workflows
  * - jobs.*: Job lifecycle management for Inngest workflows
  * - sources.*: Source management for GitHub webhooks
  * - workspace.*: Workspace queries for Inngest workflows
  */
 export const m2mRouter = createTRPCRouter({
-  stores: storesM2MRouter,
   jobs: jobsM2MRouter,
   sources: sourcesM2MRouter,
   workspace: workspaceM2MRouter,
