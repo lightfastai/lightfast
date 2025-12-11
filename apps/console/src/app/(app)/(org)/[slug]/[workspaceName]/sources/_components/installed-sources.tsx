@@ -13,13 +13,14 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
-import { Search, Circle, ChevronDown, Plus, AlertTriangle } from "lucide-react";
+import { Search, Circle, ChevronDown, ChevronRight, Plus, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { VercelProjectSelector } from "~/components/integrations/vercel-project-selector";
+import { EventSettings } from "./event-settings";
 
 interface InstalledSourcesProps {
 	clerkOrgSlug: string;
@@ -54,6 +55,19 @@ export function InstalledSources({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const [showVercelSelector, setShowVercelSelector] = useState(false);
+	const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+	const toggleExpanded = (id: string) => {
+		setExpandedItems((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	};
 
 	// Use nuqs for URL-based state management with server-side initial values
 	const [filters, setFilters] = useQueryStates(
@@ -223,6 +237,9 @@ export function InstalledSources({
 									configPath?: string;
 									lastConfigCheck?: string;
 								};
+								sync?: {
+									events?: string[];
+								};
 							} | null | undefined;
 
 							// Check if this repo is awaiting configuration
@@ -241,84 +258,109 @@ export function InstalledSources({
 							const documentCount = integration.documentCount || metadata?.documentCount;
 							const isPrivate = metadata?.isPrivate;
 
+							const isExpanded = expandedItems.has(integration.id);
+
 							return (
 								<div
 									key={integration.id}
-									className={`flex items-center justify-between p-3 ${
-										index !== filteredIntegrations.length - 1
-											? "border-b border-border"
-											: ""
-									}`}
+									className={index !== filteredIntegrations.length - 1 ? "border-b border-border" : ""}
 								>
-									<div className="flex items-center gap-4 flex-1">
-										{/* Icon */}
-										<div className="flex items-center justify-center w-10 h-10 rounded-sm bg-muted shrink-0 p-2">
-											{IconComponent ? (
-												<IconComponent className="w-full h-full text-foreground" />
-											) : (
-												<span className="text-lg">🔗</span>
-											)}
-										</div>
+									<div className="flex items-center justify-between p-3">
+										<div className="flex items-center gap-4 flex-1">
+											{/* Icon */}
+											<div className="flex items-center justify-center w-10 h-10 rounded-sm bg-muted shrink-0 p-2">
+												{IconComponent ? (
+													<IconComponent className="w-full h-full text-foreground" />
+												) : (
+													<span className="text-lg">🔗</span>
+												)}
+											</div>
 
-										{/* Name and Status */}
-										<div className="flex-1 min-w-0">
-											<div className="flex items-center gap-2">
-												<p className="font-medium text-foreground">{name}</p>
-												{integration.type === "github" && isPrivate && (
-													<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-														Private
-													</span>
-												)}
-											</div>
-											<div className="flex items-center gap-3 mt-1">
+											{/* Name and Status */}
+											<div className="flex-1 min-w-0">
 												<div className="flex items-center gap-2">
-													<Circle className={`h-2 w-2 fill-current ${isAwaitingConfig ? "text-amber-500" : "text-green-500"}`} />
-													<p className="text-sm text-muted-foreground">
-														{isAwaitingConfig ? "Awaiting config" : "Active"}
-													</p>
+													<p className="font-medium text-foreground">{name}</p>
+													{integration.type === "github" && isPrivate && (
+														<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+															Private
+														</span>
+													)}
 												</div>
-												<span className="text-muted-foreground">•</span>
-												<p className="text-sm text-muted-foreground">
-													Synced{" "}
-													{integration.lastSyncedAt
-														? formatDistanceToNow(new Date(integration.lastSyncedAt), {
-																addSuffix: true,
-														  })
-														: "never"}
-												</p>
-												{documentCount && documentCount > 0 && (
-													<>
-														<span className="text-muted-foreground">•</span>
+												<div className="flex items-center gap-3 mt-1">
+													<div className="flex items-center gap-2">
+														<Circle className={`h-2 w-2 fill-current ${isAwaitingConfig ? "text-amber-500" : "text-green-500"}`} />
 														<p className="text-sm text-muted-foreground">
-															{documentCount.toLocaleString()} docs
+															{isAwaitingConfig ? "Awaiting config" : "Active"}
 														</p>
-													</>
-												)}
-											</div>
-											{/* Config Required Banner */}
-											{isAwaitingConfig && (
-												<div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-													<div className="flex items-start gap-2">
-														<AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-														<div className="text-sm flex-1">
-															<p className="font-medium text-amber-800 dark:text-amber-200">
-																Configuration Required
+													</div>
+													<span className="text-muted-foreground">•</span>
+													<p className="text-sm text-muted-foreground">
+														Synced{" "}
+														{integration.lastSyncedAt
+															? formatDistanceToNow(new Date(integration.lastSyncedAt), {
+																	addSuffix: true,
+															  })
+															: "never"}
+													</p>
+													{documentCount && documentCount > 0 && (
+														<>
+															<span className="text-muted-foreground">•</span>
+															<p className="text-sm text-muted-foreground">
+																{documentCount.toLocaleString()} docs
 															</p>
-															<p className="text-amber-700 dark:text-amber-300 mt-0.5">
-																Add a{" "}
-																<ConfigTemplateDialog>
-																	<button className="underline hover:no-underline font-mono text-xs">
-																		lightfast.yml
-																	</button>
-																</ConfigTemplateDialog>
-																{" "}file to start indexing.
-															</p>
+														</>
+													)}
+												</div>
+												{/* Config Required Banner */}
+												{isAwaitingConfig && (
+													<div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+														<div className="flex items-start gap-2">
+															<AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+															<div className="text-sm flex-1">
+																<p className="font-medium text-amber-800 dark:text-amber-200">
+																	Configuration Required
+																</p>
+																<p className="text-amber-700 dark:text-amber-300 mt-0.5">
+																	Add a{" "}
+																	<ConfigTemplateDialog>
+																		<button className="underline hover:no-underline font-mono text-xs">
+																			lightfast.yml
+																		</button>
+																	</ConfigTemplateDialog>
+																	{" "}file to start indexing.
+																</p>
+															</div>
 														</div>
 													</div>
-												</div>
-											)}
+												)}
+											</div>
 										</div>
+
+										{/* Expand/Collapse Button */}
+										<Button
+											variant="ghost"
+											size="sm"
+											className="shrink-0"
+											onClick={() => toggleExpanded(integration.id)}
+										>
+											<ChevronRight
+												className={`h-4 w-4 transition-transform ${
+													isExpanded ? "rotate-90" : ""
+												}`}
+											/>
+										</Button>
 									</div>
+
+									{/* Expanded Event Settings */}
+									{isExpanded && (
+										<EventSettings
+											integrationId={integration.id}
+											provider={integration.type}
+											currentEvents={metadata?.sync?.events ?? []}
+											clerkOrgSlug={clerkOrgSlug}
+											workspaceName={workspaceName}
+										/>
+									)}
 								</div>
 							);
 						})}

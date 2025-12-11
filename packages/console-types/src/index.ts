@@ -10,3 +10,6 @@ export * from "./workspace";
 
 // Neural memory types
 export * from "./neural";
+
+// Integration types
+export * from "./integrations";

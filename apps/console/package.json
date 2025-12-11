@@ -11,7 +11,7 @@
     "dev": "export VC_MICROFRONTENDS_CONFIG=microfrontends.json && pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
     "dev:inngest": "export VC_MICROFRONTENDS_CONFIG=microfrontends.json && npx inngest-cli@latest dev -u http://localhost:$(microfrontends port)/api/inngest",
     "dev:qstash": "npx @upstash/qstash-cli dev",
-    "dev:ngrok": "../../scripts/ngrok 4107",
+    "dev:ngrok": "../../scripts/ngrok 3024",
     "lint": "eslint",
     "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "typecheck": "tsc --noEmit",

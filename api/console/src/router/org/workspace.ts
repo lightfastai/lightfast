@@ -1041,6 +1041,57 @@ export const workspaceRouter = {
       }),
 
     /**
+     * Update event subscriptions for a workspace integration
+     */
+    updateEvents: orgScopedProcedure
+      .input(
+        z.object({
+          integrationId: z.string(),
+          events: z.array(z.string()),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Verify integration belongs to user's org
+        const integration = await ctx.db.query.workspaceIntegrations.findFirst({
+          where: eq(workspaceIntegrations.id, input.integrationId),
+          with: {
+            workspace: true,
+          },
+        });
+
+        if (!integration || integration.workspace?.clerkOrgId !== ctx.auth.orgId) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Integration not found",
+          });
+        }
+
+        // Update source_config.sync.events using JSON merge
+        // The sourceConfig is a discriminated union type, so we need to preserve it properly
+        const currentConfig = integration.sourceConfig;
+
+        // Build the updated config preserving all existing fields
+        // We cast through unknown to satisfy TypeScript while preserving the data structure
+        const updatedConfig = {
+          ...currentConfig,
+          sync: {
+            ...(currentConfig.sync as Record<string, unknown>),
+            events: input.events,
+          },
+        } as typeof currentConfig;
+
+        await ctx.db
+          .update(workspaceIntegrations)
+          .set({
+            sourceConfig: updatedConfig,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(workspaceIntegrations.id, input.integrationId));
+
+        return { success: true };
+      }),
+
+    /**
      * Bulk link multiple GitHub repositories to workspace
      *
      * Allows connecting multiple GitHub repositories in a single operation.
@@ -1172,7 +1223,7 @@ export const workspaceRouter = {
               sync: {
                 branches: ["main"],
                 paths: ["**/*"],
-                events: ["push", "pull_request"],
+                events: ["push", "pull_request", "issues", "release", "discussion"],
                 autoSync: true,
               },
             },

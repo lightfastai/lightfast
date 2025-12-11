@@ -6,11 +6,12 @@
  *
  * Workflow steps:
  * 1. Check for duplicate observations (idempotency)
- * 2. Fetch workspace and store context
- * 3. Generate embedding for observation content
- * 4. Upsert vector to Pinecone
- * 5. Store observation record in database
- * 6. Emit completion event
+ * 2. Check if event is allowed by source config (filtering)
+ * 3. Fetch workspace and store context
+ * 4. Generate embedding for observation content
+ * 5. Upsert vector to Pinecone
+ * 6. Store observation record in database
+ * 7. Emit completion event
  */
 
 import { inngest } from "../../client/client";
@@ -18,6 +19,7 @@ import { db } from "@db/console/client";
 import {
   workspaceNeuralObservations,
   orgWorkspaces,
+  workspaceIntegrations,
 } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
@@ -107,6 +109,42 @@ function buildWorkspaceNamespace(clerkOrgId: string, workspaceId: string): strin
 }
 
 /**
+ * Map detailed sourceType to base event type for config comparison
+ * e.g., "pull_request_opened" -> "pull_request", "issue_closed" -> "issues"
+ */
+function getBaseEventType(source: string, sourceType: string): string {
+  if (source === "github") {
+    // Map GitHub sourceTypes to config event names
+    if (sourceType.startsWith("pull_request")) return "pull_request";
+    if (sourceType.startsWith("issue")) return "issues";
+    if (sourceType.startsWith("release")) return "release";
+    if (sourceType.startsWith("discussion")) return "discussion";
+    if (sourceType === "push") return "push";
+  }
+
+  if (source === "vercel") {
+    // Vercel events are already in config format (e.g., "deployment.created")
+    return sourceType;
+  }
+
+  return sourceType;
+}
+
+/**
+ * Check if an event type is allowed for a source based on sourceConfig.sync.events
+ */
+function isEventAllowed(
+  sourceConfig: { sync?: { events?: string[] } } | null | undefined,
+  baseEventType: string,
+): boolean {
+  const events = sourceConfig?.sync?.events;
+  if (!events || events.length === 0) {
+    return false;
+  }
+  return events.includes(baseEventType);
+}
+
+/**
  * Neural observation capture workflow
  *
  * Processes SourceEvents from webhooks into observations with embeddings.
@@ -171,7 +209,65 @@ export const observationCapture = inngest.createFunction(
       };
     }
 
-    // Step 2: Fetch workspace
+    // Step 2: Check if event is allowed by source config
+    const eventAllowed = await step.run("check-event-allowed", async () => {
+      // Extract resource ID from metadata (repoId for GitHub, projectId for Vercel)
+      const metadata = sourceEvent.metadata as Record<string, unknown>;
+      const resourceId = metadata.repoId?.toString() || metadata.projectId?.toString();
+
+      if (!resourceId) {
+        // No resource ID in metadata - allow event (legacy or unknown source)
+        log.info("No resource ID in metadata, allowing event", {
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+        });
+        return true;
+      }
+
+      // Look up the integration by workspaceId + providerResourceId
+      const integration = await db.query.workspaceIntegrations.findFirst({
+        where: and(
+          eq(workspaceIntegrations.workspaceId, workspaceId),
+          eq(workspaceIntegrations.providerResourceId, resourceId),
+        ),
+      });
+
+      if (!integration) {
+        // Integration not found - allow event (may be processed differently)
+        log.info("Integration not found for resource, allowing event", {
+          workspaceId,
+          resourceId,
+        });
+        return true;
+      }
+
+      // Check if event is allowed
+      const baseEventType = getBaseEventType(sourceEvent.source, sourceEvent.sourceType);
+      const sourceConfig = integration.sourceConfig as { sync?: { events?: string[] } };
+      const allowed = isEventAllowed(sourceConfig, baseEventType);
+
+      if (!allowed) {
+        log.info("Event filtered by source config", {
+          workspaceId,
+          resourceId,
+          sourceType: sourceEvent.sourceType,
+          baseEventType,
+          configuredEvents: sourceConfig?.sync?.events,
+        });
+      }
+
+      return allowed;
+    });
+
+    if (!eventAllowed) {
+      return {
+        status: "filtered",
+        reason: "Event type not enabled in source config",
+        duration: Date.now() - startTime,
+      };
+    }
+
+    // Step 3: Fetch workspace context
     const workspace = await step.run("fetch-context", async () => {
       const ws = await db.query.orgWorkspaces.findFirst({
         where: eq(orgWorkspaces.id, workspaceId),
@@ -188,7 +284,7 @@ export const observationCapture = inngest.createFunction(
       return ws;
     });
 
-    // Step 3: Generate embedding
+    // Step 4: Generate embedding
     const { embeddingVector, vectorId } = await step.run("generate-embedding", async () => {
       const embeddingProvider = createEmbeddingProviderForWorkspace(
         {
@@ -218,7 +314,7 @@ export const observationCapture = inngest.createFunction(
       };
     });
 
-    // Step 4: Upsert to Pinecone
+    // Step 5: Upsert to Pinecone
     await step.run("upsert-vector", async () => {
       const namespace = buildWorkspaceNamespace(
         workspace.clerkOrgId,
@@ -254,7 +350,7 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
-    // Step 5: Store observation in database
+    // Step 6: Store observation in database
     const observation = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(sourceEvent);
       const topics = extractTopics(sourceEvent);
@@ -290,7 +386,7 @@ export const observationCapture = inngest.createFunction(
       return obs;
     });
 
-    // Step 6: Emit completion event
+    // Step 7: Emit completion event
     await step.sendEvent("emit-captured", {
       name: "apps-console/neural/observation.captured",
       data: {

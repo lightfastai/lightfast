@@ -164,7 +164,7 @@ export function transformGitHubPullRequest(
   return {
     source: "github",
     sourceType: `pull_request_${payload.action}`,
-    sourceId: `pr:${payload.repository.full_name}#${pr.number}`,
+    sourceId: `pr:${payload.repository.full_name}#${pr.number}:${payload.action}`,
     title: `[${actionTitle}] ${pr.title.slice(0, 100)}`,
     body, // Semantic content only
     actor: pr.user
@@ -246,7 +246,7 @@ export function transformGitHubIssue(
   return {
     source: "github",
     sourceType: `issue_${payload.action}`,
-    sourceId: `issue:${payload.repository.full_name}#${issue.number}`,
+    sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: `[${actionTitle}] ${issue.title.slice(0, 100)}`,
     body, // Semantic content only
     actor: issue.user

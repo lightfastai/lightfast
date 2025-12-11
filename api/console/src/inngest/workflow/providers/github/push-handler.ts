@@ -81,30 +81,61 @@ export const githubPushHandler = inngest.createFunction(
       deliveryId,
     });
 
-    // Step 1: Validate source exists
-    await step.run("source.validate", async () => {
-      const source = await db.query.workspaceIntegrations.findFirst({
+    // Step 1: Validate source exists and check event filtering
+    const source = await step.run("source.validate", async () => {
+      const src = await db.query.workspaceIntegrations.findFirst({
         where: eq(workspaceIntegrations.id, sourceId),
       });
 
-      if (!source) {
+      if (!src) {
         throw new Error(`Workspace source not found: ${sourceId}`);
       }
 
-      if (!source.isActive) {
+      if (!src.isActive) {
         log.warn("Ignoring push for inactive source", { sourceId });
         throw new Error(`Source is inactive: ${sourceId}`);
       }
 
       // Verify it's a GitHub source
-      if (source.sourceConfig.provider !== "github") {
+      if (src.sourceConfig.provider !== "github") {
         throw new Error(
-          `Expected GitHub source, got: ${source.sourceConfig.provider}`
+          `Expected GitHub source, got: ${src.sourceConfig.provider}`
         );
       }
+
+      return src;
     });
 
-    // Step 2: Check if lightfast.yml was modified and update DB status
+    // Step 2: Check if push events are allowed by source config
+    const pushAllowed = await step.run("check-push-allowed", async () => {
+      const sourceConfig = source.sourceConfig as { sync?: { events?: string[] } };
+      const events = sourceConfig?.sync?.events;
+
+      if (!events || events.length === 0) {
+        log.info("No events configured for source", { sourceId });
+        return false;
+      }
+
+      const allowed = events.includes("push");
+      if (!allowed) {
+        log.info("Push events disabled for source", {
+          sourceId,
+          configuredEvents: events,
+        });
+      }
+      return allowed;
+    });
+
+    if (!pushAllowed) {
+      return {
+        success: false,
+        sourceId,
+        repoFullName,
+        reason: "Push events not enabled in source config",
+      };
+    }
+
+    // Step 3: Check if lightfast.yml was modified and update DB status
     const configChanged = await step.run("config.check-changed", async () => {
       const hasConfigChange = changedFiles.some((file) =>
         CONFIG_FILE_NAMES.includes(file.path)
@@ -186,7 +217,7 @@ export const githubPushHandler = inngest.createFunction(
       return hasConfigChange;
     });
 
-    // Step 3: Route to appropriate sync workflow
+    // Step 4: Route to appropriate sync workflow
     if (configChanged) {
       // Config changed → trigger FULL sync
       const eventIds = await step.sendEvent("sync.trigger-full", {

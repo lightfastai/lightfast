@@ -1,9 +1,9 @@
 #!/bin/bash
 # ngrok helper - starts ngrok tunnel for development
 # Usage: ./scripts/ngrok [port]
-#   port: Port to tunnel (default: 4107 for console)
+#   port: Port to tunnel (default: 3024 for microfrontends)
 
-PORT="${1:-4107}"
+PORT="${1:-3024}"
 
 # Check if ngrok is installed
 if ! command -v ngrok &> /dev/null; then
