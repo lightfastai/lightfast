@@ -32,12 +32,30 @@ import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
+import { llmRelevanceFilter } from "~/lib/neural/llm-filter";
+import type { FilterCandidate } from "~/lib/neural/llm-filter";
+
+// Filter validation schema
+const SearchFiltersSchema = z
+  .object({
+    sourceTypes: z.array(z.string()).optional(),
+    observationTypes: z.array(z.string()).optional(),
+    actorNames: z.array(z.string()).optional(),
+    dateRange: z
+      .object({
+        start: z.string().datetime().optional(),
+        end: z.string().datetime().optional(),
+      })
+      .optional(),
+  })
+  .optional();
 
 // Request validation schema
 // Note: store parameter removed - each workspace has exactly ONE store (1:1 relationship)
 const SearchRequestSchema = z.object({
   query: z.string().min(1, "Query must not be empty"),
   topK: z.number().int().min(1).max(100).default(10),
+  filters: SearchFiltersSchema,
 });
 
 // Response types
@@ -56,7 +74,50 @@ interface SearchResponse {
   latency: {
     total: number;
     retrieval: number;
+    llmFilter: number;
   };
+}
+
+type SearchFilters = z.infer<typeof SearchFiltersSchema>;
+
+/**
+ * Build Pinecone metadata filter from search filters
+ * Uses MongoDB-style operators supported by Pinecone
+ */
+function buildPineconeFilter(
+  filters?: SearchFilters
+): Record<string, unknown> | undefined {
+  if (!filters) return undefined;
+
+  const pineconeFilter: Record<string, unknown> = {
+    // Always filter to observations layer
+    layer: { $eq: "observations" },
+  };
+
+  if (filters.sourceTypes?.length) {
+    pineconeFilter.source = { $in: filters.sourceTypes };
+  }
+
+  if (filters.observationTypes?.length) {
+    pineconeFilter.observationType = { $in: filters.observationTypes };
+  }
+
+  if (filters.actorNames?.length) {
+    pineconeFilter.actorName = { $in: filters.actorNames };
+  }
+
+  if (filters.dateRange?.start || filters.dateRange?.end) {
+    const occurredAtFilter: Record<string, string> = {};
+    if (filters.dateRange.start) {
+      occurredAtFilter.$gte = filters.dateRange.start;
+    }
+    if (filters.dateRange.end) {
+      occurredAtFilter.$lte = filters.dateRange.end;
+    }
+    pineconeFilter.occurredAt = occurredAtFilter;
+  }
+
+  return pineconeFilter;
 }
 
 /**
@@ -111,13 +172,14 @@ export async function POST(
       );
     }
 
-    const { query, topK } = parseResult.data;
+    const { query, topK, filters } = parseResult.data;
 
     log.info("Search request validated", {
       requestId,
       userId,
       query,
       topK,
+      filters: filters ?? null,
     });
 
     // 3. Resolve workspace access
@@ -198,12 +260,14 @@ export async function POST(
 
     // 6. Query Pinecone
     const queryStart = Date.now();
+    const pineconeFilter = buildPineconeFilter(filters);
     const results = await pineconeClient.query<VectorMetadata>(
       workspace.indexName,
       {
         vector: queryVector,
         topK,
         includeMetadata: true,
+        filter: pineconeFilter,
       },
       workspace.namespaceName
     );
@@ -213,17 +277,44 @@ export async function POST(
       requestId,
       queryLatency,
       matchCount: results.matches.length,
+      filterApplied: !!pineconeFilter,
     });
 
-    // 7. Map results to response format
-    const searchResults: SearchResult[] = results.matches.map((match) => ({
+    // 7. Apply LLM relevance filtering
+    const candidates: FilterCandidate[] = results.matches.map((match) => ({
       id: match.id,
       title: String(match.metadata?.title ?? ""),
-      url: String(match.metadata?.url ?? ""),
       snippet: String(match.metadata?.snippet ?? ""),
       score: match.score,
-      metadata: match.metadata ?? {},
     }));
+
+    const filterResult = await llmRelevanceFilter(query, candidates, requestId);
+
+    log.info("LLM filter result", {
+      requestId,
+      inputCount: candidates.length,
+      outputCount: filterResult.results.length,
+      filteredOut: filterResult.filtered,
+      llmLatency: filterResult.latency,
+      bypassed: filterResult.bypassed,
+    });
+
+    // 8. Map results to response format (using filtered results)
+    const searchResults: SearchResult[] = filterResult.results.map((result) => {
+      const match = results.matches.find((m) => m.id === result.id);
+      return {
+        id: result.id,
+        title: result.title,
+        url: String(match?.metadata?.url ?? ""),
+        snippet: result.snippet,
+        score: result.finalScore, // Use combined score
+        metadata: {
+          ...match?.metadata,
+          relevanceScore: result.relevanceScore,
+          vectorScore: result.score,
+        },
+      };
+    });
 
     const response: SearchResponse = {
       results: searchResults,
@@ -231,13 +322,25 @@ export async function POST(
       latency: {
         total: Date.now() - startTime,
         retrieval: queryLatency,
+        llmFilter: filterResult.latency,
       },
     };
 
     log.info("Search complete", {
       requestId,
-      totalLatency: response.latency.total,
-      resultCount: searchResults.length,
+      latency: {
+        total: response.latency.total,
+        embed: embedLatency,
+        retrieval: response.latency.retrieval,
+        llmFilter: response.latency.llmFilter,
+      },
+      results: {
+        vectorMatches: results.matches.length,
+        afterLLMFilter: searchResults.length,
+        filtered: filterResult.filtered,
+      },
+      filters: filters ?? null,
+      llmBypassed: filterResult.bypassed,
     });
 
     return NextResponse.json(response);

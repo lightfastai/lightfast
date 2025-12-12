@@ -19,6 +19,7 @@
     "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
     "@api/console": "workspace:*",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
@@ -28,6 +29,7 @@
     "@nosecone/next": "1.0.0-beta.15",
     "@octokit/openapi-types": "^26.0.0",
     "@octokit/types": "^15.0.0",
+    "@repo/ai": "workspace:^",
     "@repo/app-urls": "workspace:^",
     "@repo/console-api-services": "workspace:*",
     "@repo/console-auth-middleware": "workspace:*",
@@ -61,6 +63,7 @@
     "@vendor/seo": "workspace:*",
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
+    "ai": "catalog:",
     "date-fns": "^4.1.0",
     "drizzle-orm": "catalog:",
     "immer": "^10.1.1",
