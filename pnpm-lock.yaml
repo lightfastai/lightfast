@@ -2782,6 +2782,9 @@ importers:
 
   packages/console-types:
     dependencies:
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../console-validation
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -2884,6 +2887,9 @@ importers:
       '@repo/console-types':
         specifier: workspace:*
         version: link:../console-types
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../console-validation
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib

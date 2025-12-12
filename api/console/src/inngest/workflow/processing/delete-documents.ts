@@ -15,6 +15,7 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
+import type { SourceType } from "@repo/console-validation";
 
 /**
  * Generic document deletion event
@@ -22,7 +23,7 @@ import { pineconeClient } from "@repo/console-pinecone";
 export interface DeleteDocumentEvent {
   workspaceId: string;
   documentId: string;
-  sourceType: "github" | "vercel";
+  sourceType: SourceType;
   sourceId: string;
 }
 

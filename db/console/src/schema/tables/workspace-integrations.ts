@@ -41,14 +41,14 @@ export const workspaceIntegrations = pgTable(
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
-     * Unified source configuration containing all provider-specific data and sync settings.
+     * Unified source configuration containing all source-specific data and sync settings.
      * This replaces the previous separate resourceData + syncConfig fields.
      *
      * Examples:
      *
      * GitHub Repository:
      * {
-     *   provider: "github",
+     *   sourceType: "github",
      *   type: "repository",
      *   installationId: "12345678",
      *   repoId: "567890123",
@@ -67,7 +67,7 @@ export const workspaceIntegrations = pgTable(
      *
      * Vercel Project:
      * {
-     *   provider: "vercel",
+     *   sourceType: "vercel",
      *   type: "project",
      *   projectId: "prj_123456",
      *   projectName: "my-nextjs-app",
@@ -80,7 +80,7 @@ export const workspaceIntegrations = pgTable(
      */
     sourceConfig: jsonb("source_config").$type<
       | {
-          provider: "github";
+          sourceType: "github";
           type: "repository";
           installationId: string;        // GitHub App installation ID
           repoId: string;                // GitHub repo ID
@@ -102,7 +102,7 @@ export const workspaceIntegrations = pgTable(
           };
         }
       | {
-          provider: "vercel";
+          sourceType: "vercel";
           type: "project";
           projectId: string;               // Vercel project ID
           projectName: string;             // "my-nextjs-app"

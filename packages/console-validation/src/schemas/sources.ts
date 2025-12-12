@@ -8,29 +8,17 @@
 import { z } from "zod";
 
 /**
- * Integration Provider Type
- *
- * Defines supported OAuth integration providers.
- * Used in user_sources table for personal OAuth connections.
- *
- * NOTE: Currently only "github" is fully implemented in workflows.
- * Other providers are defined for database schema compatibility and future use.
- */
-export const integrationProviderSchema = z.enum([
-  "github",      // ✅ Implemented
-  "vercel",      // ✅ Implemented (Phase 01)
-]);
-
-export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
-
-/**
  * Source Type
  *
- * Defines all supported data sources for document indexing.
- * Used in docs_documents table to identify document origin.
+ * Canonical type for all external integrations and data sources.
+ * Used across:
+ * - user_sources table (OAuth connections)
+ * - workspace_integrations table (workspace-level sources)
+ * - workspace_knowledge_documents table (document origin)
+ * - Event schemas and workflows
  *
- * NOTE: Currently only "github" is fully implemented in workflows.
- * Other sources are defined for database schema compatibility and future use.
+ * NOTE: Currently only "github" and "vercel" are implemented.
+ * Add new sources here as they are implemented.
  */
 export const sourceTypeSchema = z.enum([
   "github",      // ✅ Implemented

@@ -43,6 +43,7 @@
     "@db/console": "workspace:*",
     "@octokit/webhooks-types": "^7.6.1",
     "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
     "zod": "catalog:"
   },

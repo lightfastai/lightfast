@@ -94,11 +94,11 @@ async function findWorkspaceForVercelProject(
   projectId: string,
   _teamId: string | undefined,
 ): Promise<{ workspaceId: string } | null> {
-  // Look up workspace integration by Vercel project ID with join to verify provider
+  // Look up workspace integration by Vercel project ID with join to verify source type
   const results = await db
     .select({
       workspaceId: workspaceIntegrations.workspaceId,
-      provider: userSources.provider,
+      sourceType: userSources.sourceType,
     })
     .from(workspaceIntegrations)
     .innerJoin(
@@ -109,7 +109,7 @@ async function findWorkspaceForVercelProject(
       and(
         eq(workspaceIntegrations.providerResourceId, projectId),
         eq(workspaceIntegrations.isActive, true),
-        eq(userSources.provider, "vercel"),
+        eq(userSources.sourceType, "vercel"),
       ),
     )
     .limit(1);

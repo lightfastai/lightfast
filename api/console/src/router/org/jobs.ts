@@ -420,7 +420,7 @@ export const jobsRouter = {
 					}
 
 					// Determine source type from sourceConfig
-					const sourceType = source.sourceConfig.provider;
+					const sourceType = source.sourceConfig.sourceType;
 
 					// Trigger new full sync via unified orchestrator
 					await inngest.send({
@@ -429,7 +429,7 @@ export const jobsRouter = {
 							workspaceId,
 							workspaceKey,
 							sourceId,
-							sourceType: sourceType as "github" | "vercel",
+							sourceType,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
 							syncParams: {},

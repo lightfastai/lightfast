@@ -33,6 +33,7 @@ import {
 import { log } from "@vendor/observability/log";
 import { createHash } from "node:crypto";
 import { inngest } from "../../client/client";
+import type { SourceType } from "@repo/console-validation";
 
 /**
  * Generic document processing event
@@ -43,7 +44,7 @@ export interface ProcessDocumentEvent {
   documentId: string;
 
   // Source identification (discriminated union)
-  sourceType: "github" | "vercel";
+  sourceType: SourceType;
   sourceId: string;
   sourceMetadata: Record<string, unknown>;
 

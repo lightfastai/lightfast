@@ -53,7 +53,7 @@ export const userSourcesRouter = {
 
 			return sources.map((source) => ({
 				id: source.id,
-				provider: source.provider,
+				sourceType: source.sourceType,
 				isActive: source.isActive,
 				connectedAt: source.connectedAt,
 				lastSyncAt: source.lastSyncAt,
@@ -125,7 +125,7 @@ export const userSourcesRouter = {
 				.where(
 					and(
 						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.provider, "github"),
+						eq(userSources.sourceType, "github"),
 					),
 				)
 				.limit(1);
@@ -138,7 +138,7 @@ export const userSourcesRouter = {
 
 			// Return user source with installations from providerMetadata
 			const providerMetadata = userSource.providerMetadata;
-			if (providerMetadata.provider !== "github") {
+			if (providerMetadata.sourceType !== "github") {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Invalid provider metadata type",
@@ -148,7 +148,7 @@ export const userSourcesRouter = {
 			return {
 				id: userSource.id,
 				userId: userSource.userId,
-				provider: userSource.provider,
+				sourceType: userSource.sourceType,
 				connectedAt: userSource.connectedAt,
 				isActive: userSource.isActive,
 				installations: providerMetadata.installations ?? [],
@@ -171,7 +171,7 @@ export const userSourcesRouter = {
 				.where(
 					and(
 						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.provider, "github"),
+						eq(userSources.sourceType, "github"),
 					),
 				)
 				.limit(1);
@@ -195,7 +195,7 @@ export const userSourcesRouter = {
 
 				// Get current installations from providerMetadata
 				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.provider !== "github") {
+				if (providerMetadata.sourceType !== "github") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Invalid provider data type",
@@ -244,7 +244,7 @@ export const userSourcesRouter = {
 					.update(userSources)
 					.set({
 						providerMetadata: {
-							provider: "github" as const,
+							sourceType: "github" as const,
 							installations: newInstallations,
 						},
 						lastSyncAt: new Date().toISOString(),
@@ -316,7 +316,7 @@ export const userSourcesRouter = {
 					.where(
 						and(
 							eq(userSources.userId, ctx.auth.userId),
-							eq(userSources.provider, "github"),
+							eq(userSources.sourceType, "github"),
 						),
 					)
 					.limit(1);
@@ -335,7 +335,7 @@ export const userSourcesRouter = {
 								? new Date(input.tokenExpiresAt).toISOString()
 								: null,
 							providerMetadata: {
-								provider: "github" as const,
+								sourceType: "github" as const,
 								installations: input.installations,
 							},
 							isActive: true,
@@ -352,14 +352,14 @@ export const userSourcesRouter = {
 						.insert(userSources)
 						.values({
 							userId: ctx.auth.userId,
-							provider: "github",
+							sourceType: "github",
 							accessToken: input.accessToken,
 							refreshToken: input.refreshToken ?? null,
 							tokenExpiresAt: input.tokenExpiresAt
 								? new Date(input.tokenExpiresAt).toISOString()
 								: null,
 							providerMetadata: {
-								provider: "github" as const,
+								sourceType: "github" as const,
 								installations: input.installations,
 							},
 							isActive: true,
@@ -409,7 +409,7 @@ export const userSourcesRouter = {
 
 				// Verify provider is GitHub
 				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.provider !== "github") {
+				if (providerMetadata.sourceType !== "github") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Invalid provider metadata type",
@@ -507,7 +507,7 @@ export const userSourcesRouter = {
 
 				// Verify provider is GitHub
 				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.provider !== "github") {
+				if (providerMetadata.sourceType !== "github") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Invalid provider metadata type",
@@ -671,7 +671,7 @@ export const userSourcesRouter = {
 				.where(
 					and(
 						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.provider, "vercel"),
+						eq(userSources.sourceType, "vercel"),
 					),
 				)
 				.limit(1);
@@ -683,7 +683,7 @@ export const userSourcesRouter = {
 			}
 
 			const providerMetadata = userSource.providerMetadata;
-			if (providerMetadata.provider !== "vercel") {
+			if (providerMetadata.sourceType !== "vercel") {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Invalid provider metadata type",
@@ -693,7 +693,7 @@ export const userSourcesRouter = {
 			return {
 				id: userSource.id,
 				userId: userSource.userId,
-				provider: userSource.provider,
+				sourceType: userSource.sourceType,
 				connectedAt: userSource.connectedAt,
 				isActive: userSource.isActive,
 				vercelUserId: providerMetadata.userId,
@@ -733,7 +733,7 @@ export const userSourcesRouter = {
 					.where(
 						and(
 							eq(userSources.userId, ctx.auth.userId),
-							eq(userSources.provider, "vercel"),
+							eq(userSources.sourceType, "vercel"),
 						),
 					)
 					.limit(1);
@@ -746,7 +746,7 @@ export const userSourcesRouter = {
 						.set({
 							accessToken: input.accessToken,
 							providerMetadata: {
-								provider: "vercel" as const,
+								sourceType: "vercel" as const,
 								userId: input.userId,
 								teamId: input.teamId,
 								teamSlug: input.teamSlug,
@@ -766,10 +766,10 @@ export const userSourcesRouter = {
 						.insert(userSources)
 						.values({
 							userId: ctx.auth.userId,
-							provider: "vercel",
+							sourceType: "vercel",
 							accessToken: input.accessToken,
 							providerMetadata: {
-								provider: "vercel" as const,
+								sourceType: "vercel" as const,
 								userId: input.userId,
 								teamId: input.teamId,
 								teamSlug: input.teamSlug,
@@ -805,7 +805,7 @@ export const userSourcesRouter = {
 					where: and(
 						eq(userSources.id, input.userSourceId),
 						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.provider, "vercel"),
+						eq(userSources.sourceType, "vercel"),
 						eq(userSources.isActive, true),
 					),
 				});
@@ -822,7 +822,7 @@ export const userSourcesRouter = {
 
 				// 3. Get team ID from metadata
 				const providerMetadata = source.providerMetadata;
-				if (providerMetadata.provider !== "vercel") {
+				if (providerMetadata.sourceType !== "vercel") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Invalid provider metadata",
@@ -905,7 +905,7 @@ export const userSourcesRouter = {
 				.where(
 					and(
 						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.provider, "vercel"),
+						eq(userSources.sourceType, "vercel"),
 					),
 				)
 				.returning({ id: userSources.id });

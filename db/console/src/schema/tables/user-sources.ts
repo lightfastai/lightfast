@@ -1,7 +1,7 @@
 import { pgTable, varchar, timestamp, text, boolean, index, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
-import type { IntegrationProvider, ClerkUserId } from "@repo/console-validation";
+import type { SourceType, ClerkUserId } from "@repo/console-validation";
 
 /**
  * User Sources
@@ -28,8 +28,8 @@ export const userSources = pgTable(
     // User who owns this personal connection
     userId: varchar("user_id", { length: 191 }).notNull().$type<ClerkUserId>(),
 
-    // Provider type (github, vercel)
-    provider: varchar("provider", { length: 50 }).notNull().$type<IntegrationProvider>(),
+    // Source type (github, vercel)
+    sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
 
     // OAuth credentials (MUST be encrypted at application layer)
     accessToken: text("access_token").notNull(),
@@ -37,11 +37,11 @@ export const userSources = pgTable(
     tokenExpiresAt: timestamp("token_expires_at", { mode: "string", withTimezone: true }),
     scopes: text("scopes").array(),
 
-    // Provider-specific metadata from OAuth
+    // Source-specific metadata from OAuth
     // This stores high-level info like installations, workspaces, etc.
     providerMetadata: jsonb("provider_metadata").$type<
       | {
-          provider: "github";
+          sourceType: "github";
           // GitHub App installations user has access to
           installations?: {
             id: string;                    // GitHub installation ID
@@ -55,7 +55,7 @@ export const userSources = pgTable(
           }[];
         }
       | {
-          provider: "vercel";
+          sourceType: "vercel";
           // Vercel team/user that installed the integration
           teamId?: string;              // Vercel team ID (null for personal accounts)
           teamSlug?: string;            // Vercel team slug
@@ -75,10 +75,10 @@ export const userSources = pgTable(
   },
   (table) => ({
     userIdIdx: index("user_source_user_id_idx").on(table.userId),
-    providerIdx: index("user_source_provider_idx").on(table.provider),
+    sourceTypeIdx: index("user_source_source_type_idx").on(table.sourceType),
     isActiveIdx: index("user_source_is_active_idx").on(table.isActive),
-    // Unique: one connection per user per provider
-    userProviderIdx: index("user_source_user_provider_idx").on(table.userId, table.provider),
+    // Unique: one connection per user per source type
+    userSourceTypeIdx: index("user_source_user_source_type_idx").on(table.userId, table.sourceType),
   })
 );
 
@@ -87,5 +87,5 @@ export type UserSource = typeof userSources.$inferSelect;
 export type InsertUserSource = typeof userSources.$inferInsert;
 
 // Discriminated union helpers
-export type GitHubUserSource = UserSource & { provider: "github" };
-export type VercelUserSource = UserSource & { provider: "vercel" };
+export type GitHubUserSource = UserSource & { sourceType: "github" };
+export type VercelUserSource = UserSource & { sourceType: "vercel" };

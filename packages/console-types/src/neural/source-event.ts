@@ -1,11 +1,22 @@
+import type { SourceType } from "@repo/console-validation";
+
 /**
  * Standardized event format from any source.
  * This is what webhook handlers produce and the pipeline consumes.
  */
 export interface SourceEvent {
   // Source identification
-  source: "github" | "vercel" | "linear" | "sentry";
-  sourceType: string; // e.g., "pull_request_merged", "deployment.succeeded"
+  source: SourceType;
+  /**
+   * Internal event type format.
+   * Uses <event-name>.<action> convention with hyphens (kebab-case).
+   * Examples: "pull-request.opened", "deployment.succeeded", "push"
+   *
+   * Note: Typed as string for backward compatibility with existing data.
+   * New events should use InternalEventType values from @repo/console-types.
+   * @see {@link ../integrations/event-types.ts#InternalEventType}
+   */
+  sourceType: string; // Internal format: "pull-request.merged", "deployment.succeeded"
   sourceId: string; // Unique ID: "pr:lightfastai/lightfast#123"
 
   // Content

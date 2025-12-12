@@ -116,7 +116,7 @@ export const workspaceRouter = {
       // GitHub installations are stored in providerMetadata.installations
       const userSource = await db.query.userSources.findFirst({
         where: and(
-          eq(userSources.provider, "github"),
+          eq(userSources.sourceType, "github"),
           eq(userSources.isActive, true),
           sql`EXISTS (
             SELECT 1 FROM jsonb_array_elements(${userSources.providerMetadata}->'installations') AS inst
@@ -561,7 +561,7 @@ export const workspaceRouter = {
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
-            provider: userSources.provider,
+            sourceType: userSources.sourceType,
             isActive: workspaceIntegrations.isActive,
             connectedAt: workspaceIntegrations.connectedAt,
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
@@ -586,18 +586,18 @@ export const workspaceRouter = {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              acc[s.provider] = (acc[s.provider] || 0) + 1;
+              acc[s.sourceType] = (acc[s.sourceType] || 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
           ),
           list: sources.map((s) => ({
             id: s.id,
-            type: s.provider,
-            provider: s.provider, // For UI compatibility
-            displayName: s.sourceConfig.provider === "github" && s.sourceConfig.type === "repository"
+            type: s.sourceType,
+            sourceType: s.sourceType, // Canonical name
+            displayName: s.sourceConfig.sourceType === "github" && s.sourceConfig.type === "repository"
               ? s.sourceConfig.repoFullName
-              : s.provider,
+              : s.sourceType,
             documentCount: s.documentCount,
             isActive: s.isActive, // For UI compatibility
             connectedAt: s.connectedAt, // For UI compatibility
@@ -933,7 +933,7 @@ export const workspaceRouter = {
           where: and(
             eq(userSources.id, userSourceId),
             eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.provider, "vercel"),
+            eq(userSources.sourceType, "vercel"),
           ),
         });
 
@@ -945,7 +945,7 @@ export const workspaceRouter = {
         }
 
         const providerMetadata = userSource.providerMetadata;
-        if (providerMetadata.provider !== "vercel") {
+        if (providerMetadata.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Invalid provider metadata",
@@ -981,7 +981,7 @@ export const workspaceRouter = {
             userSourceId,
             connectedBy: ctx.auth.userId,
             sourceConfig: {
-              provider: "vercel" as const,
+              sourceType: "vercel" as const,
               type: "project" as const,
               projectId,
               projectName,
@@ -1135,7 +1135,7 @@ export const workspaceRouter = {
           where: and(
             eq(userSources.id, input.userSourceId),
             eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.provider, "github"),
+            eq(userSources.sourceType, "github"),
           ),
         });
 
@@ -1147,7 +1147,7 @@ export const workspaceRouter = {
         }
 
         const providerMetadata = source.providerMetadata;
-        if (providerMetadata.provider !== "github") {
+        if (providerMetadata.sourceType !== "github") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Invalid provider metadata",
@@ -1211,7 +1211,7 @@ export const workspaceRouter = {
             connectedBy: ctx.auth.userId,
             providerResourceId: repo.repoId,
             sourceConfig: {
-              provider: "github" as const,
+              sourceType: "github" as const,
               type: "repository" as const,
               installationId: input.installationId,
               repoId: repo.repoId,
@@ -1284,7 +1284,7 @@ export const workspaceRouter = {
           where: and(
             eq(userSources.id, input.userSourceId),
             eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.provider, "vercel"),
+            eq(userSources.sourceType, "vercel"),
           ),
         });
 
@@ -1296,7 +1296,7 @@ export const workspaceRouter = {
         }
 
         const providerMetadata = source.providerMetadata;
-        if (providerMetadata.provider !== "vercel") {
+        if (providerMetadata.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Invalid provider metadata",
@@ -1349,7 +1349,7 @@ export const workspaceRouter = {
             connectedBy: ctx.auth.userId,
             providerResourceId: p.projectId,
             sourceConfig: {
-              provider: "vercel" as const,
+              sourceType: "vercel" as const,
               type: "project" as const,
               projectId: p.projectId,
               projectName: p.projectName,

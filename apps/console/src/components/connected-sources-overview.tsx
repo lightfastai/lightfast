@@ -63,15 +63,15 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   const statusConfig = getStatusConfig(connection.lastSyncStatus);
   const StatusIcon = statusConfig.icon;
 
-  // Get display info based on provider
+  // Get display info based on sourceType
   let displayName = "";
   let detailsUrl = "";
 
-  if (resourceData.provider === "github") {
+  if (resourceData.sourceType === "github") {
     displayName = resourceData.repoFullName;
     detailsUrl = `https://github.com/${resourceData.repoFullName}`;
   } else {
-    // Vercel provider
+    // Vercel sourceType
     displayName = resourceData.projectName;
     detailsUrl = resourceData.teamSlug
       ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
@@ -100,9 +100,9 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
           </div>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="secondary" className="text-xs">
-              {resourceData.provider}
+              {resourceData.sourceType}
             </Badge>
-            {resourceData.provider === "github" && (
+            {resourceData.sourceType === "github" && (
               <Badge variant="outline" className="text-xs">
                 {resourceData.defaultBranch}
               </Badge>
@@ -259,12 +259,12 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   // Otherwise use the full connections layout
   if (!connections) return null;
 
-  // Group by provider
-  const groupedByProvider = connections.reduce(
+  // Group by sourceType
+  const groupedBySourceType = connections.reduce(
     (acc, connection) => {
-      const provider = connection.resource.resourceData.provider;
-      acc[provider] ??= [];
-      acc[provider].push(connection);
+      const sourceType = connection.resource.resourceData.sourceType;
+      acc[sourceType] ??= [];
+      acc[sourceType].push(connection);
       return acc;
     },
     {} as Record<string, EnrichedConnection[]>
@@ -326,11 +326,11 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
           </div>
         ) : (
           <div className="space-y-4">
-            {Object.entries(groupedByProvider).map(([provider, sources]) => (
-              <div key={provider}>
+            {Object.entries(groupedBySourceType).map(([sourceType, sources]) => (
+              <div key={sourceType}>
                 <h4 className="text-sm font-semibold mb-2 capitalize flex items-center gap-2">
                   <Github className="h-4 w-4" />
-                  {provider} ({sources.length})
+                  {sourceType} ({sources.length})
                 </h4>
                 <div className="space-y-2">
                   {sources.map((connection) => (

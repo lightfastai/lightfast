@@ -1,10 +1,11 @@
 import { db } from "@db/console";
 import { workspaceWebhookPayloads } from "@db/console/schema";
+import type { SourceType } from "@repo/console-validation";
 
 export interface StoreWebhookPayloadParams {
   workspaceId: string;
   deliveryId: string;
-  source: "github" | "vercel";
+  source: SourceType;
   eventType: string;
   payload: string; // Raw JSON string from request.text()
   headers: Record<string, string>;

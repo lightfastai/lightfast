@@ -97,9 +97,9 @@ export const githubPushHandler = inngest.createFunction(
       }
 
       // Verify it's a GitHub source
-      if (src.sourceConfig.provider !== "github") {
+      if (src.sourceConfig.sourceType !== "github") {
         throw new Error(
-          `Expected GitHub source, got: ${src.sourceConfig.provider}`
+          `Expected GitHub source, got: ${src.sourceConfig.sourceType}`
         );
       }
 
@@ -180,7 +180,7 @@ export const githubPushHandler = inngest.createFunction(
             const now = new Date().toISOString();
             await Promise.all(
               sources.map((source) => {
-                if (source.sourceConfig.provider !== "github") {
+                if (source.sourceConfig.sourceType !== "github") {
                   return Promise.resolve(null);
                 }
 

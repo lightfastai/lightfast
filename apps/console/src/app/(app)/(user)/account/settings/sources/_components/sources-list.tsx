@@ -84,7 +84,7 @@ export function SourcesList() {
 	// Create a unified list of all sources (connected and available)
 	const allSources = (["github"] as const).map((provider) => {
 		const connectedIntegration = integrations.find(
-			(i) => i.provider === provider && i.isActive,
+			(i) => i.sourceType === provider && i.isActive,
 		);
 		return {
 			provider,

@@ -4,7 +4,11 @@ import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
-import { syncTriggerSchema, githubSourceMetadataSchema } from "@repo/console-validation";
+import {
+  syncTriggerSchema,
+  githubSourceMetadataSchema,
+  sourceTypeSchema,
+} from "@repo/console-validation";
 
 /**
  * Inngest event schemas for console application
@@ -35,7 +39,7 @@ const eventsMap = {
       /** workspaceSource.id */
       sourceId: z.string(),
       /** Source provider type */
-      sourceType: z.enum(["github", "vercel"]),
+      sourceType: sourceTypeSchema,
       /** Sync mode: full = all documents, incremental = changed only */
       syncMode: z.enum(["full", "incremental"]).default("full"),
       /** What triggered this sync */
@@ -468,7 +472,7 @@ const eventsMap = {
       /** Deterministic document ID */
       documentId: z.string(),
       /** Source type (discriminated union) */
-      sourceType: z.enum(["github", "vercel"]),
+      sourceType: sourceTypeSchema,
       /** Source-specific identifier */
       sourceId: z.string(),
       /** Source-specific metadata */
@@ -500,7 +504,7 @@ const eventsMap = {
       /** Document ID to delete */
       documentId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "vercel"]),
+      sourceType: sourceTypeSchema,
       /** Source-specific identifier */
       sourceId: z.string(),
     }),
@@ -518,7 +522,7 @@ const eventsMap = {
       /** Workspace ID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "vercel"]),
+      sourceType: sourceTypeSchema,
       /** Relationships to extract */
       relationships: z.record(z.unknown()),
     }),
@@ -587,7 +591,7 @@ const eventsMap = {
       workspaceId: z.string(),
       /** Standardized source event */
       sourceEvent: z.object({
-        source: z.enum(["github", "vercel", "linear", "sentry"]),
+        source: sourceTypeSchema,
         sourceType: z.string(),
         sourceId: z.string(),
         title: z.string(),
