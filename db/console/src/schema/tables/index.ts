@@ -18,6 +18,7 @@ export * from "./workspace-user-activities";
 // Neural memory tables
 export * from "./workspace-neural-observations";
 export * from "./workspace-observation-clusters";
+export * from "./workspace-neural-entities";
 
 // Webhook storage tables
 export * from "./workspace-webhook-payloads";

@@ -34,6 +34,8 @@ import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { llmRelevanceFilter } from "~/lib/neural/llm-filter";
 import type { FilterCandidate } from "~/lib/neural/llm-filter";
+import { searchByEntities } from "~/lib/neural/entity-search";
+import type { EntitySearchResult } from "@repo/console-types";
 
 // Filter validation schema
 const SearchFiltersSchema = z
@@ -74,6 +76,7 @@ interface SearchResponse {
   latency: {
     total: number;
     retrieval: number;
+    entitySearch: number;
     llmFilter: number;
   };
 }
@@ -118,6 +121,50 @@ function buildPineconeFilter(
   }
 
   return pineconeFilter;
+}
+
+/**
+ * Merge vector search results with entity-matched results
+ * Entity matches get a score boost since they're exact matches
+ */
+function mergeSearchResults(
+  vectorMatches: Array<{ id: string; score: number; metadata?: VectorMetadata }>,
+  entityResults: EntitySearchResult[],
+  limit: number
+): FilterCandidate[] {
+  const resultMap = new Map<string, FilterCandidate>();
+
+  // Add vector results
+  for (const match of vectorMatches) {
+    resultMap.set(match.id, {
+      id: match.id,
+      title: String(match.metadata?.title ?? ""),
+      snippet: String(match.metadata?.snippet ?? ""),
+      score: match.score,
+    });
+  }
+
+  // Add/boost entity results
+  for (const entity of entityResults) {
+    const existing = resultMap.get(entity.observationId);
+    if (existing) {
+      // Boost existing result - entity match confirms relevance
+      existing.score = Math.min(1.0, existing.score + 0.2);
+    } else {
+      // Add new result from entity match
+      resultMap.set(entity.observationId, {
+        id: entity.observationId,
+        title: entity.observationTitle,
+        snippet: entity.observationSnippet,
+        score: 0.85 * entity.confidence, // High base score for exact entity match
+      });
+    }
+  }
+
+  // Sort by score and limit
+  return Array.from(resultMap.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 }
 
 /**
@@ -280,19 +327,31 @@ export async function POST(
       filterApplied: !!pineconeFilter,
     });
 
-    // 7. Apply LLM relevance filtering
-    const candidates: FilterCandidate[] = results.matches.map((match) => ({
-      id: match.id,
-      title: String(match.metadata?.title ?? ""),
-      snippet: String(match.metadata?.snippet ?? ""),
-      score: match.score,
-    }));
+    // 6.5. Entity-enhanced retrieval (parallel path)
+    const entityStart = Date.now();
+    const entityResults = await searchByEntities(query, workspaceId, topK);
+    const entityLatency = Date.now() - entityStart;
 
-    const filterResult = await llmRelevanceFilter(query, candidates, requestId);
+    log.info("Entity search complete", {
+      requestId,
+      entityLatency,
+      entityMatches: entityResults.length,
+      queryEntities: entityResults.map((e) => e.entityKey),
+    });
+
+    // 7. Merge vector and entity results
+    const mergedCandidates = mergeSearchResults(
+      results.matches,
+      entityResults,
+      topK
+    );
+
+    // 8. Apply LLM relevance filtering (on merged results)
+    const filterResult = await llmRelevanceFilter(query, mergedCandidates, requestId);
 
     log.info("LLM filter result", {
       requestId,
-      inputCount: candidates.length,
+      inputCount: mergedCandidates.length,
       outputCount: filterResult.results.length,
       filteredOut: filterResult.filtered,
       llmLatency: filterResult.latency,
@@ -322,6 +381,7 @@ export async function POST(
       latency: {
         total: Date.now() - startTime,
         retrieval: queryLatency,
+        entitySearch: entityLatency,
         llmFilter: filterResult.latency,
       },
     };
@@ -332,10 +392,13 @@ export async function POST(
         total: response.latency.total,
         embed: embedLatency,
         retrieval: response.latency.retrieval,
+        entitySearch: response.latency.entitySearch,
         llmFilter: response.latency.llmFilter,
       },
       results: {
         vectorMatches: results.matches.length,
+        entityMatches: entityResults.length,
+        mergedCandidates: mergedCandidates.length,
         afterLLMFilter: searchResults.length,
         filtered: filterResult.filtered,
       },

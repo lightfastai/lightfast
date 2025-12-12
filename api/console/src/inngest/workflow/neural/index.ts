@@ -5,3 +5,4 @@
  */
 
 export { observationCapture } from "./observation-capture";
+export { entityExtraction } from "./entity-extraction";
