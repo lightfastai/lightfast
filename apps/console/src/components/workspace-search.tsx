@@ -33,8 +33,30 @@ interface SearchResponse {
   latency: {
     total: number;
     retrieval: number;
+    llmFilter: number;
   };
 }
+
+interface SearchFilters {
+  sourceTypes: string[];
+  observationTypes: string[];
+}
+
+const SOURCE_TYPE_OPTIONS = [
+  { value: "github", label: "GitHub" },
+  { value: "vercel", label: "Vercel" },
+];
+
+const OBSERVATION_TYPE_OPTIONS = [
+  { value: "push", label: "Push" },
+  { value: "pull_request_opened", label: "PR Opened" },
+  { value: "pull_request_merged", label: "PR Merged" },
+  { value: "pull_request_closed", label: "PR Closed" },
+  { value: "issue_opened", label: "Issue Opened" },
+  { value: "issue_closed", label: "Issue Closed" },
+  { value: "deployment_succeeded", label: "Deploy Success" },
+  { value: "deployment_error", label: "Deploy Error" },
+];
 
 /**
  * Workspace Search Component
@@ -56,6 +78,10 @@ export function WorkspaceSearch({
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>({
+    sourceTypes: [],
+    observationTypes: [],
+  });
 
   // Fetch workspace's single store (1:1 relationship)
   const { data: store } = useSuspenseQuery({
@@ -104,7 +130,11 @@ export function WorkspaceSearch({
         },
         body: JSON.stringify({
           query: query.trim(),
-          topK: 10,
+          topK: 20, // Increase to allow LLM filtering
+          filters: {
+            sourceTypes: filters.sourceTypes.length > 0 ? filters.sourceTypes : undefined,
+            observationTypes: filters.observationTypes.length > 0 ? filters.observationTypes : undefined,
+          },
         }),
       });
 
@@ -122,7 +152,7 @@ export function WorkspaceSearch({
     } finally {
       setIsSearching(false);
     }
-  }, [query, store, orgSlug, workspaceName, updateSearchParams]);
+  }, [query, store, orgSlug, workspaceName, updateSearchParams, filters]);
 
   // Handle enter key
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -186,6 +216,69 @@ export function WorkspaceSearch({
               </Button>
             </div>
 
+            {/* Filter Controls */}
+            <div className="flex flex-wrap gap-4">
+              {/* Source Type Filter */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Sources</span>
+                <div className="flex flex-wrap gap-1">
+                  {SOURCE_TYPE_OPTIONS.map((option) => (
+                    <Badge
+                      key={option.value}
+                      variant={filters.sourceTypes.includes(option.value) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setFilters(prev => ({
+                          ...prev,
+                          sourceTypes: prev.sourceTypes.includes(option.value)
+                            ? prev.sourceTypes.filter(s => s !== option.value)
+                            : [...prev.sourceTypes, option.value],
+                        }));
+                      }}
+                    >
+                      {option.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Observation Type Filter */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Event Types</span>
+                <div className="flex flex-wrap gap-1">
+                  {OBSERVATION_TYPE_OPTIONS.map((option) => (
+                    <Badge
+                      key={option.value}
+                      variant={filters.observationTypes.includes(option.value) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setFilters(prev => ({
+                          ...prev,
+                          observationTypes: prev.observationTypes.includes(option.value)
+                            ? prev.observationTypes.filter(s => s !== option.value)
+                            : [...prev.observationTypes, option.value],
+                        }));
+                      }}
+                    >
+                      {option.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              {(filters.sourceTypes.length > 0 || filters.observationTypes.length > 0) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilters({ sourceTypes: [], observationTypes: [] })}
+                  className="self-end"
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
             {/* Error Display */}
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
@@ -204,7 +297,8 @@ export function WorkspaceSearch({
             <p className="text-sm text-muted-foreground">
               {searchResults.results.length} result{searchResults.results.length !== 1 ? "s" : ""} found
               <span className="ml-2 text-xs">
-                ({searchResults.latency.total}ms)
+                ({searchResults.latency.total}ms total, {searchResults.latency.retrieval}ms retrieval
+                {searchResults.latency.llmFilter > 0 && `, ${searchResults.latency.llmFilter}ms LLM`})
               </span>
             </p>
           </div>
@@ -302,12 +396,20 @@ function SearchResultCard({ result, rank }: { result: SearchResult; rank: number
               <h3 className="font-medium text-sm leading-tight">
                 {result.title || "Untitled Document"}
               </h3>
-              <Badge
-                variant={scorePercent >= 80 ? "default" : scorePercent >= 60 ? "secondary" : "outline"}
-                className="shrink-0 text-xs"
-              >
-                {scorePercent}%
-              </Badge>
+              <div className="flex items-center gap-1 shrink-0">
+                <Badge
+                  variant={scorePercent >= 80 ? "default" : scorePercent >= 60 ? "secondary" : "outline"}
+                  className="text-xs"
+                >
+                  {scorePercent}%
+                </Badge>
+                {/* Score breakdown if available */}
+                {result.metadata.relevanceScore !== undefined && (
+                  <span className="text-xs text-muted-foreground">
+                    (LLM: {Math.round((result.metadata.relevanceScore as number) * 100)}%)
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Snippet */}
