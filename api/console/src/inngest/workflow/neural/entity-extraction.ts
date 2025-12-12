@@ -1,3 +1,16 @@
+/**
+ * @deprecated Entity extraction is now inline in observation-capture.ts (Day 3.5)
+ * This file is kept for reference but no longer registered with Inngest.
+ *
+ * The inline approach:
+ * - Runs entity extraction in parallel with classification and embedding
+ * - Stores entities in the same transaction as the observation
+ * - Eliminates fire-and-forget async processing
+ * - Enables future cluster assignment that needs entity data
+ *
+ * @see observation-capture.ts for current implementation
+ */
+
 import { sql, eq } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { db } from "@db/console/client";

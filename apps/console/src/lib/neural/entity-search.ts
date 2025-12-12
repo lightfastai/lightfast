@@ -7,11 +7,11 @@ import type { EntitySearchResult } from "@repo/console-types";
 /**
  * Patterns to extract entity references from search queries
  */
-const QUERY_ENTITY_PATTERNS: Array<{
+const QUERY_ENTITY_PATTERNS: {
   category: EntityCategory;
   pattern: RegExp;
   keyExtractor: (match: RegExpMatchArray) => string;
-}> = [
+}[] = [
   // @mentions
   {
     category: "engineer",
@@ -22,13 +22,13 @@ const QUERY_ENTITY_PATTERNS: Array<{
   {
     category: "project",
     pattern: /(#\d{1,6})/g,
-    keyExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1] ?? "",
   },
   // Linear/Jira style
   {
     category: "project",
     pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
-    keyExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1] ?? "",
   },
   // API endpoints
   {
@@ -43,8 +43,8 @@ const QUERY_ENTITY_PATTERNS: Array<{
  */
 export function extractQueryEntities(
   query: string
-): Array<{ category: EntityCategory; key: string }> {
-  const entities: Array<{ category: EntityCategory; key: string }> = [];
+): { category: EntityCategory; key: string }[] {
+  const entities: { category: EntityCategory; key: string }[] = [];
 
   for (const { category, pattern, keyExtractor } of QUERY_ENTITY_PATTERNS) {
     pattern.lastIndex = 0;
@@ -71,7 +71,7 @@ export function extractQueryEntities(
 export async function searchByEntities(
   query: string,
   workspaceId: string,
-  limit: number = 10
+  limit = 10
 ): Promise<EntitySearchResult[]> {
   // 1. Extract entity references from query
   const queryEntities = extractQueryEntities(query);
@@ -126,19 +126,25 @@ export async function searchByEntities(
   // 4. Build result map
   const obsMap = new Map(observations.map((o) => [o.id, o]));
 
-  return matchedEntities
-    .filter((e) => e.sourceObservationId && obsMap.has(e.sourceObservationId))
-    .map((entity) => {
-      const obs = obsMap.get(entity.sourceObservationId!)!;
-      return {
-        entityId: entity.id,
-        entityKey: entity.key,
-        entityCategory: entity.category as EntityCategory,
-        observationId: obs.id,
-        observationTitle: obs.title,
-        observationSnippet: obs.content?.substring(0, 200) || "",
-        occurrenceCount: entity.occurrenceCount,
-        confidence: entity.confidence ?? 0.8,
-      };
+  const results: EntitySearchResult[] = [];
+  for (const entity of matchedEntities) {
+    const obsId = entity.sourceObservationId;
+    if (obsId === null) continue;
+
+    const obs = obsMap.get(obsId);
+    if (!obs) continue;
+
+    results.push({
+      entityId: entity.id,
+      entityKey: entity.key,
+      entityCategory: entity.category,
+      observationId: obs.id,
+      observationTitle: obs.title,
+      observationSnippet: obs.content.substring(0, 200),
+      occurrenceCount: entity.occurrenceCount,
+      confidence: entity.confidence ?? 0.8,
     });
+  }
+
+  return results;
 }

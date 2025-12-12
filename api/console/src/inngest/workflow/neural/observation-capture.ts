@@ -7,28 +7,32 @@
  * Workflow steps:
  * 1. Check for duplicate observations (idempotency)
  * 2. Check if event is allowed by source config (filtering)
- * 3. Fetch workspace and store context
- * 4. Generate embedding for observation content
- * 5. Upsert vector to Pinecone
- * 6. Store observation record in database
- * 7. Emit completion event
+ * 3. Evaluate significance (GATE - return early if below threshold)
+ * 4. Fetch workspace context
+ * 5. PARALLEL: Classification + Embedding + Entity Extraction
+ * 6. Upsert vector to Pinecone
+ * 7. Store observation + entities (transactional)
+ * 8. Emit completion event
  */
 
 import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceNeuralObservations,
+  workspaceNeuralEntities,
   orgWorkspaces,
   workspaceIntegrations,
 } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { NonRetriableError } from "inngest";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import type { SourceEvent } from "@repo/console-types";
-import { scoreSignificance } from "./scoring";
+import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
 import { classifyObservation } from "./classification";
+import { extractEntities, extractFromReferences } from "./entity-extraction-patterns";
+import type { ExtractedEntity } from "@repo/console-types";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -282,7 +286,30 @@ export const observationCapture = inngest.createFunction(
       };
     }
 
-    // Step 3: Fetch workspace context
+    // Step 3: Evaluate significance (early gate)
+    const significance = await step.run("evaluate-significance", async () => {
+      return scoreSignificance(sourceEvent);
+    });
+
+    // Gate: Skip low-significance events
+    if (significance.score < SIGNIFICANCE_THRESHOLD) {
+      log.info("Observation below significance threshold, skipping", {
+        workspaceId,
+        sourceId: sourceEvent.sourceId,
+        significanceScore: significance.score,
+        threshold: SIGNIFICANCE_THRESHOLD,
+        factors: significance.factors,
+      });
+
+      return {
+        status: "below_threshold",
+        significanceScore: significance.score,
+        threshold: SIGNIFICANCE_THRESHOLD,
+        duration: Date.now() - startTime,
+      };
+    }
+
+    // Step 4: Fetch workspace context
     const workspace = await step.run("fetch-context", async () => {
       const ws = await db.query.orgWorkspaces.findFirst({
         where: eq(orgWorkspaces.id, workspaceId),
@@ -299,37 +326,73 @@ export const observationCapture = inngest.createFunction(
       return ws;
     });
 
-    // Step 4: Generate embedding
-    const { embeddingVector, vectorId } = await step.run("generate-embedding", async () => {
-      const embeddingProvider = createEmbeddingProviderForWorkspace(
-        {
-          id: workspace.id,
-          embeddingModel: workspace.embeddingModel,
-          embeddingDim: workspace.embeddingDim,
-        },
-        {
-          inputType: "search_document",
+    // Step 5: PARALLEL processing (no interdependencies)
+    const [classificationResult, embeddingResult, extractedEntities] = await Promise.all([
+      // Classification
+      step.run("classify", async () => {
+        const keywordTopics = extractTopics(sourceEvent);
+        const classification = classifyObservation(sourceEvent);
+
+        // Merge and deduplicate topics
+        const topics = [
+          ...keywordTopics,
+          classification.primaryCategory,
+          ...classification.secondaryCategories,
+        ].filter((t, i, arr) => arr.indexOf(t) === i);
+
+        return { topics, classification };
+      }),
+
+      // Embedding generation
+      step.run("generate-embedding", async () => {
+        const embeddingProvider = createEmbeddingProviderForWorkspace(
+          {
+            id: workspace.id,
+            embeddingModel: workspace.embeddingModel,
+            embeddingDim: workspace.embeddingDim,
+          },
+          { inputType: "search_document" }
+        );
+
+        const textToEmbed = `${sourceEvent.title}\n\n${sourceEvent.body}`;
+        const result = await embeddingProvider.embed([textToEmbed]);
+
+        if (!result.embeddings[0]) {
+          throw new Error("Failed to generate embedding");
         }
-      );
 
-      // Combine title and body for embedding
-      const textToEmbed = `${sourceEvent.title}\n\n${sourceEvent.body}`;
-      const result = await embeddingProvider.embed([textToEmbed]);
+        const vectorId = `obs_${sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        return { embeddingVector: result.embeddings[0], vectorId };
+      }),
 
-      if (!result.embeddings[0]) {
-        throw new Error("Failed to generate embedding");
-      }
+      // Entity extraction (inline, not fire-and-forget)
+      step.run("extract-entities", async () => {
+        const textEntities = extractEntities(sourceEvent.title, sourceEvent.body || "");
+        const references = sourceEvent.references as Array<{ type: string; id: string; label?: string }>;
+        const refEntities = extractFromReferences(references);
 
-      // Generate vector ID
-      const vectorId = `obs_${sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        // Combine and deduplicate
+        const allEntities = [...textEntities, ...refEntities];
+        const entityMap = new Map<string, ExtractedEntity>();
 
-      return {
-        embeddingVector: result.embeddings[0],
-        vectorId,
-      };
-    });
+        for (const entity of allEntities) {
+          const key = `${entity.category}:${entity.key.toLowerCase()}`;
+          const existing = entityMap.get(key);
+          if (!existing || existing.confidence < entity.confidence) {
+            entityMap.set(key, entity);
+          }
+        }
 
-    // Step 5: Upsert to Pinecone
+        // Limit to prevent runaway extraction
+        const deduplicated = Array.from(entityMap.values());
+        return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
+      }),
+    ]);
+
+    const { topics } = classificationResult;
+    const { embeddingVector, vectorId } = embeddingResult;
+
+    // Step 6: Upsert to Pinecone
     await step.run("upsert-vector", async () => {
       const namespace = buildWorkspaceNamespace(
         workspace.clerkOrgId,
@@ -365,59 +428,80 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
-    // Step 6: Store observation in database
-    const observation = await step.run("store-observation", async () => {
+    // Step 7: Store observation + entities (transactional)
+    // Note: Topics come from Step 5 (classify), significance from Step 3
+    const { observation, entitiesStored } = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(sourceEvent);
 
-      // Extract topics and classify
-      const keywordTopics = extractTopics(sourceEvent);
-      const classification = classifyObservation(sourceEvent);
+      return await db.transaction(async (tx) => {
+        // Insert observation
+        const [obs] = await tx
+          .insert(workspaceNeuralObservations)
+          .values({
+            workspaceId,
+            occurredAt: sourceEvent.occurredAt,
+            // TODO (Day 4): Replace passthrough with resolveActor() call
+            actor: sourceEvent.actor || null,
+            observationType,
+            title: sourceEvent.title,
+            content: sourceEvent.body,
+            topics,
+            significanceScore: significance.score,
+            source: sourceEvent.source,
+            sourceType: sourceEvent.sourceType,
+            sourceId: sourceEvent.sourceId,
+            sourceReferences: sourceEvent.references,
+            metadata: sourceEvent.metadata,
+            embeddingVectorId: vectorId,
+            // TODO (Day 4): Add clusterId after cluster assignment
+          })
+          .returning();
 
-      // Merge keyword topics with classification
-      const topics = [
-        ...keywordTopics,
-        classification.primaryCategory,
-        ...classification.secondaryCategories,
-      ].filter((t, i, arr) => arr.indexOf(t) === i); // Deduplicate
+        if (!obs) {
+          throw new Error("Failed to insert observation");
+        }
 
-      // Calculate significance score
-      const significance = scoreSignificance(sourceEvent);
+        // Insert entities with upsert (same transaction)
+        let entitiesStored = 0;
+        for (const entity of extractedEntities) {
+          await tx
+            .insert(workspaceNeuralEntities)
+            .values({
+              workspaceId,
+              category: entity.category,
+              key: entity.key,
+              value: entity.value,
+              sourceObservationId: obs.id,
+              evidenceSnippet: entity.evidence,
+              confidence: entity.confidence,
+            })
+            .onConflictDoUpdate({
+              target: [
+                workspaceNeuralEntities.workspaceId,
+                workspaceNeuralEntities.category,
+                workspaceNeuralEntities.key,
+              ],
+              set: {
+                lastSeenAt: new Date().toISOString(),
+                occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
+                updatedAt: new Date().toISOString(),
+              },
+            });
+          entitiesStored++;
+        }
 
-      const [obs] = await db
-        .insert(workspaceNeuralObservations)
-        .values({
-          workspaceId,
-          occurredAt: sourceEvent.occurredAt,
-          // TODO (Day 4): Replace passthrough with resolveActor() call
-          // See: api/console/src/inngest/workflow/neural/actor-resolution.ts
-          actor: sourceEvent.actor || null,
+        log.info("Observation and entities stored", {
+          observationId: obs.id,
           observationType,
-          title: sourceEvent.title,
-          content: sourceEvent.body,
-          topics,
-          significanceScore: significance.score,
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          sourceId: sourceEvent.sourceId,
-          sourceReferences: sourceEvent.references,
-          metadata: sourceEvent.metadata,
-          embeddingVectorId: vectorId,
-        })
-        .returning();
+          entitiesExtracted: extractedEntities.length,
+          entitiesStored,
+        });
 
-      if (!obs) {
-        throw new Error("Failed to insert observation");
-      }
-
-      log.info("Observation stored in database", {
-        observationId: obs.id,
-        observationType,
+        return { observation: obs, entitiesStored };
       });
-
-      return obs;
     });
 
-    // Step 7: Emit completion event
+    // Step 8: Emit completion event (for future cluster/profile systems)
     await step.sendEvent("emit-captured", {
       name: "apps-console/neural/observation.captured",
       data: {
@@ -425,6 +509,11 @@ export const observationCapture = inngest.createFunction(
         observationId: observation.id,
         sourceId: sourceEvent.sourceId,
         observationType: observation.observationType,
+        // New fields for Day 4
+        significanceScore: significance.score,
+        topics,
+        entitiesExtracted: extractedEntities.length,
+        // TODO (Day 4): Add actorId, clusterId
       },
     });
 

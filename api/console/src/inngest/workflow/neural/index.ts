@@ -5,4 +5,5 @@
  */
 
 export { observationCapture } from "./observation-capture";
-export { entityExtraction } from "./entity-extraction";
+// Entity extraction is now inline in observation-capture.ts (Day 3.5 refactor)
+// export { entityExtraction } from "./entity-extraction";

@@ -128,7 +128,7 @@ function buildPineconeFilter(
  * Entity matches get a score boost since they're exact matches
  */
 function mergeSearchResults(
-  vectorMatches: Array<{ id: string; score: number; metadata?: VectorMetadata }>,
+  vectorMatches: { id: string; score: number; metadata?: VectorMetadata }[],
   entityResults: EntitySearchResult[],
   limit: number
 ): FilterCandidate[] {

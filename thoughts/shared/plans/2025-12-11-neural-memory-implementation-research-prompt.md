@@ -1,7 +1,8 @@
 ---
 title: Neural Memory Implementation Research Prompt
-description: Research prompt for /research-codebase command to map existing infrastructure for 5-day neural memory build
+description: Research prompt for /research-codebase command to map existing infrastructure for neural memory build
 date: 2025-12-11
+updated: 2025-12-13
 status: active
 tags: [neural-memory, research, implementation]
 ---
@@ -12,101 +13,162 @@ Use this prompt with `/research-codebase` to generate a comprehensive map of exi
 
 ---
 
+## Progress Tracking
+
+| Day | Status | Plan Document |
+|-----|--------|---------------|
+| 1 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-11-neural-memory-day1-observations-in.md` |
+| 2 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-12-neural-memory-day2-retrieval-infrastructure.md` |
+| 3 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-12-neural-memory-day3-entity-system.md` |
+| 3.5 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-13-neural-memory-day3.5-write-path-rework.md` |
+| 4 | 🔄 NEXT | Clusters + Actor Resolution + Profiles |
+| 5 | ⏳ PENDING | Multi-view Embeddings + Temporal + Polish |
+
+---
+
 ## Prompt
 
 ```
 ## Neural Memory Full Architecture Implementation
 
-Research the codebase to document everything needed for a 5-day neural memory implementation. Focus on existing patterns, infrastructure, and integration points.
+Research the codebase to document everything needed for the neural memory implementation. Focus on existing patterns, infrastructure, and integration points.
 
 ### Reference Documents
 - `docs/architecture/analysis/2025-12-09-neural-memory-e2e-design.md` - Full architecture spec
 - `thoughts/shared/research/2025-12-11-github-vercel-neural-observations-research.md` - Existing transformer research
 
-### Day 1: Observations In (Pipeline Completion)
+### Day 1: Observations In (Pipeline Completion) ✅ COMPLETE
+
+**Implemented:**
+- Rule-based significance scoring (`scoring.ts`)
+- Regex-based semantic classification (`classification.ts`)
+- Actor resolution placeholder (`actor-resolution.ts`)
+- Single-view embedding generation
+- Observation storage with topics
+
+**Plan:** `thoughts/shared/plans/2025-12-11-neural-memory-day1-observations-in.md`
+
+### Day 2: Basic Retrieval (Observations Out) ✅ COMPLETE
+
+**Implemented:**
+- Search endpoint with metadata filters (`sourceTypes`, `observationTypes`, `dateRange`)
+- LLM relevance gating (GPT-5.1 Instant)
+- Latency tracking (`retrieval`, `llmFilter`)
+- Filter UI in WorkspaceSearch component
+
+**Plan:** `thoughts/shared/plans/2025-12-12-neural-memory-day2-retrieval-infrastructure.md`
+
+### Day 3: Entity System ✅ COMPLETE
+
+**Implemented:**
+- Entity schema (`workspace_neural_entities` table)
+- Regex-based entity extraction patterns
+- Entity extraction workflow (fire-and-forget after observation capture)
+- Entity search integration in search route
+
+**Plan:** `thoughts/shared/plans/2025-12-12-neural-memory-day3-entity-system.md`
+
+### Day 3.5: Write Path Rework ✅ COMPLETE
+
+**Implemented:** Refactored observation capture pipeline to match target architecture.
 
 **Research needed:**
-1. **Current observation pipeline** - Document `api/console/src/inngest/workflow/neural/observation-capture.ts`
-   - What steps exist vs what's stubbed?
-   - Where do significance, classification, actor resolution need to be implemented?
+1. **Current pipeline structure** - Audit `observation-capture.ts` for:
+   - Sequential vs parallel step execution
+   - Where significance gating should occur
+   - How to inline entity extraction (remove fire-and-forget)
 
-2. **Existing embedding infrastructure** - Document `packages/console-embed/`
-   - How does embedding generation work today?
-   - What's the Pinecone upsert pattern?
-   - How to add multi-view embeddings (title, content, summary)?
+2. **Parallel step patterns** - Document Inngest `Promise.all` patterns:
+   - How other workflows parallelize independent steps
+   - Error handling in parallel execution
+   - Step naming conventions for parallel work
 
-3. **Transformer patterns** - Document `packages/console-webhooks/src/transformers/`
-   - GitHub transformer structure
-   - Vercel transformer structure
-   - SourceEvent interface and flow
+3. **Transactional storage patterns** - Document `db.transaction` usage:
+   - How to store observation + entities atomically
+   - Rollback patterns on failure
 
-4. **Database schema** - Document `db/console/src/schema/tables/workspace-neural-observations.ts`
-   - Current observation schema
-   - What fields exist for significance, classification, actor?
+**Key Changes:**
+- Add significance gating (early return for low-value events)
+- Parallelize: classification + embedding + entity extraction
+- Inline entity extraction (same transaction as observation)
+- Remove separate entity extraction workflow
+- Prepare structure for Day 4 additions (cluster assignment slot)
 
-### Day 2: Basic Retrieval (Observations Out)
+**Plan:** `thoughts/shared/plans/2025-12-13-neural-memory-day3.5-write-path-rework.md`
 
-**Research needed:**
-1. **Existing search infrastructure** - Document `api/console/src/router/org/search.ts`
-   - Current vector search implementation
-   - Pinecone query patterns
-   - Hydration from Postgres pattern
-
-2. **Knowledge store retrieval** - Document existing retrieval for knowledge documents
-   - How does the current search endpoint work?
-   - What can be reused for observation retrieval?
-
-3. **Pinecone namespace strategy** - Document current namespace usage
-   - How are namespaces structured today?
-   - Where does the `layer` metadata filter fit?
-
-### Day 3: Entity System
+### Day 4: Clusters + Actor Resolution + Profiles
 
 **Research needed:**
-1. **Entity schema** - Document `db/console/src/schema/tables/workspace-neural-entities.ts` (if exists)
-   - Or document where it needs to be created
+1. **Cluster schema** - Document or create `workspace_observation_clusters`
+   - Topic label, centroid embedding, keywords
+   - Status (open/closed), observation count
+   - Summary and summary generation timestamp
 
-2. **Entity extraction patterns** - Find any existing extraction logic
-   - Regex patterns in codebase
-   - LLM structured output examples
+2. **Cluster assignment algorithm** - Design based on e2e spec:
+   - Embedding similarity to cluster centroids
+   - Entity overlap scoring
+   - Actor overlap scoring
+   - Temporal proximity scoring
+   - Threshold for creating new cluster vs joining existing
 
-3. **Exact-match query patterns** - Document Drizzle query patterns for
-   - Text search / ilike
-   - Array containment (for aliases)
+3. **Actor resolution** - Implement three-tier resolution:
+   - Tier 1: OAuth connection match (confidence 1.0)
+   - Tier 2: Email matching via Clerk (confidence 0.85)
+   - Tier 3: Heuristic matching (confidence 0.60)
 
-### Day 4: Clusters + Profiles
+4. **Actor profile schema** - Document or create `workspace_actor_profiles`
+   - Expertise domains, contribution types
+   - Active hours, frequent collaborators
+   - Profile embedding (centroid of actor's observations)
+
+5. **Fire-and-forget patterns** - Document `step.sendEvent` for:
+   - `neural/profile.update` - Async profile recalculation
+   - `neural/cluster.check-summary` - Async summary generation
+
+6. **LLM summary generation** - Patterns for cluster summaries:
+   - Model choice (Sonnet for quality, Haiku for speed)
+   - Structured output with generateObject
+   - Summary update frequency/debouncing
+
+**Key Deliverables:**
+- Cluster assignment step in observation capture
+- Actor resolution in parallel processing
+- Profile update workflow (fire-and-forget)
+- Cluster summary workflow (fire-and-forget)
+
+### Day 5: Multi-view Embeddings + Temporal + Polish
 
 **Research needed:**
-1. **Cluster schema** - Document `db/console/src/schema/tables/workspace-observation-clusters.ts`
-   - Current schema
-   - Relationship to observations
+1. **Multi-view embedding schema** - Schema changes for:
+   - `embedding_title_id` - Title-only embedding
+   - `embedding_content_id` - Body-only embedding
+   - `embedding_summary_id` - Summary embedding (optional)
 
-2. **Actor/profile infrastructure** - Document any existing actor tables
-   - `workspace_actor_profiles` if exists
-   - `workspace_actor_identities` if exists
-   - Or document where workspace actors are stored today
+2. **Multi-view embedding generation** - Update pipeline:
+   - Generate 3 embeddings in parallel
+   - Upsert 3 vectors to Pinecone
+   - Update retrieval to query appropriate view
 
-3. **Inngest fire-and-forget patterns** - Document `step.sendEvent` usage
-   - How to trigger async profile updates
-   - How to trigger cluster summary generation
+3. **Temporal state tracking** - Design bi-temporal tables:
+   - `workspace_temporal_states` schema
+   - `valid_from` / `valid_to` patterns
+   - Point-in-time query functions
 
-4. **LLM summary generation** - Find existing LLM call patterns
-   - Model usage (Sonnet vs Haiku)
-   - Structured output patterns
+4. **Enhanced retrieval governor** - Full 2-key implementation:
+   - Parallel search paths (vector, entity, cluster, actor)
+   - LLM relevance filtering improvements
+   - Fusion scoring across all paths
 
-### Day 5: 2-Key Retrieval + Temporal
+5. **Retrieval quality polish**:
+   - Braintrust evaluation setup
+   - Latency optimization
+   - Caching strategies
 
-**Research needed:**
-1. **LLM gating patterns** - Find any existing relevance filtering
-   - Or document how to add LLM post-filter to search results
-
-2. **Temporal state patterns** - Document any bi-temporal tables
-   - `valid_from` / `valid_to` patterns in codebase
-   - Or document where temporal tracking needs to be added
-
-3. **Fusion/scoring patterns** - Document how search results are ranked today
-   - Vector score usage
-   - Any existing re-ranking logic
+**Key Deliverables:**
+- Multi-view embeddings (3 vectors per observation)
+- Temporal state tracking for entities
+- Full retrieval governor with all parallel paths
+- Quality metrics and evaluation
 
 ### Cross-Cutting Research
 
@@ -136,15 +198,64 @@ For each area, document:
 
 ## Implementation Plan Summary
 
-| Day | Focus | Key Deliverables |
-|-----|-------|------------------|
-| 1 | Observations In | Significance, Classification, Actor Resolution, Embeddings, Store |
-| 2 | Basic Retrieval | Vector search endpoint, Postgres hydration |
-| 3 | Entity System | Extraction, Store, Lookup |
-| 4 | Clusters + Profiles | Assignment, Summaries, Profile updates |
-| 5 | 2-Key Retrieval + Temporal | LLM gating, Temporal states, Polish |
+| Day | Focus | Key Deliverables | Status |
+|-----|-------|------------------|--------|
+| 1 | Observations In | Significance scoring, Classification, Actor placeholder | ✅ |
+| 2 | Basic Retrieval | Metadata filters, LLM gating, Latency tracking | ✅ |
+| 3 | Entity System | Entity schema, Extraction patterns, Search integration | ✅ |
+| 3.5 | Write Path Rework | Significance gating, Parallelization, Inline entities | ✅ |
+| 4 | Clusters + Profiles | Cluster assignment, Actor resolution, Profile updates | 🔄 |
+| 5 | Multi-view + Temporal | 3 embeddings per obs, Temporal states, Retrieval polish | ⏳ |
 
 ## Reference Architecture
+
+### Current State (Days 1-3)
+
+```
+SourceEvent
+    ↓
+Check Duplicate → Check Event Allowed → Fetch Context
+    ↓
+Generate Embedding (single view, sequential)
+    ↓
+Upsert to Pinecone
+    ↓
+Store Observation (significance + classification computed inline)
+    ↓
+Emit Event → Entity Extraction (fire-and-forget)
+```
+
+**Issues:**
+- Significance computed but not used as gate
+- Sequential steps (no parallelization)
+- Entity extraction is fire-and-forget (can't use for cluster assignment)
+
+### After Day 3.5 (Write Path Rework)
+
+```
+SourceEvent
+    ↓
+Check Duplicate + Event Allowed (combined)
+    ↓
+Fetch Context + Evaluate Significance
+    ↓
+GATE ──→ discard if significance < 40
+    ↓
+┌───────────────────────────────────────┐
+│ PARALLEL (no interdependencies)       │
+│  • Classification                     │
+│  • Embeddings (single view)           │
+│  • Entity Extraction (inline)         │
+└───────────────────────────────────────┘
+    ↓
+Upsert to Pinecone
+    ↓
+Store Observation + Entities (transactional)
+    ↓
+Emit Event (enriched payload for Day 4)
+```
+
+### Target State (Days 4-5 Complete)
 
 ```
 SourceEvent
@@ -154,18 +265,32 @@ Significance (gate) ──→ discard if < threshold
 ┌───────────────────────────────────────┐
 │ PARALLEL (no interdependencies)       │
 │  • Classification                     │
-│  • Actor Resolution                   │
-│  • Embeddings                         │
+│  • Actor Resolution (3-tier)          │
+│  • Embeddings (multi-view: 3 vectors) │
 │  • Entity Extraction                  │
 └───────────────────────────────────────┘
     ↓
 Cluster Assignment ←── needs embeddings + classification
     ↓
-Store Observation
+Store Observation + Entities (transactional)
     ↓
 ┌───────────────────────────────────────┐
 │ ASYNC (fire-and-forget)               │
 │  • Profile Update                     │
-│  • Cluster Summary                    │
+│  • Cluster Summary Check              │
 └───────────────────────────────────────┘
 ```
+
+## Gap Analysis
+
+| Component | Day 1-3 | Day 3.5 | Day 4 | Day 5 |
+|-----------|---------|---------|-------|-------|
+| Significance | Computed, stored | **GATE** | Gate | Gate |
+| Classification | Sequential | **Parallel** | Parallel | Parallel |
+| Actor Resolution | Placeholder | Placeholder | **3-tier** | 3-tier |
+| Embeddings | Single view | Single view | Single view | **Multi-view (3)** |
+| Entity Extraction | Fire-and-forget | **Inline** | Inline | Inline |
+| Cluster Assignment | None | Slot prepared | **Implemented** | Implemented |
+| Profile Update | None | None | **Fire-and-forget** | Fire-and-forget |
+| Cluster Summary | None | None | **Fire-and-forget** | Fire-and-forget |
+| Temporal States | None | None | None | **Implemented** |
