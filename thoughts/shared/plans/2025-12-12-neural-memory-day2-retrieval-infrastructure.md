@@ -200,9 +200,9 @@ log.info("Pinecone query complete", {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] TypeScript compiles without errors: `pnpm --filter @lightfast/console typecheck`
-- [ ] Lint passes: `pnpm --filter @lightfast/console lint`
-- [ ] App builds: `pnpm build:console`
+- [x] TypeScript compiles without errors: `pnpm --filter @lightfast/console typecheck`
+- [x] Lint passes: `pnpm --filter @lightfast/console lint`
+- [x] App builds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Search with no filters returns all observations
@@ -483,9 +483,9 @@ const response: SearchResponse = {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm --filter @lightfast/console typecheck`
-- [ ] Lint passes: `pnpm --filter @lightfast/console lint`
-- [ ] App builds: `pnpm build:console`
+- [x] TypeScript compiles: `pnpm --filter @lightfast/console typecheck`
+- [x] Lint passes: `pnpm --filter @lightfast/console lint`
+- [x] App builds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Search with >5 results shows `latency.llmFilter > 0`
@@ -548,9 +548,9 @@ log.info("Search complete", {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm typecheck`
-- [ ] Lint passes: `pnpm lint`
-- [ ] All packages build: `pnpm build:console`
+- [x] TypeScript compiles: `pnpm typecheck`
+- [x] Lint passes: `pnpm lint`
+- [x] All packages build: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Response latency object includes all fields
@@ -740,9 +740,9 @@ Add tooltip or secondary badge showing LLM vs vector scores:
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm --filter @lightfast/console typecheck`
-- [ ] Lint passes: `pnpm --filter @lightfast/console lint`
-- [ ] App builds: `pnpm build:console`
+- [x] TypeScript compiles: `pnpm --filter @lightfast/console typecheck`
+- [x] Lint passes: `pnpm --filter @lightfast/console lint`
+- [x] App builds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Filter badges appear below search input
