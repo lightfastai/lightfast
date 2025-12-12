@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import { orgWorkspaces } from "./org-workspaces";
 import type { JobStatus, JobTrigger, WorkflowInput, WorkflowOutput } from "@repo/console-validation";
 
 /**
@@ -34,7 +35,9 @@ export const workspaceWorkflowRuns = pgTable(
     /**
      * Workspace ID this job belongs to
      */
-    workspaceId: varchar("workspace_id", { length: 191 }).notNull(),
+    workspaceId: varchar("workspace_id", { length: 191 })
+      .notNull()
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
      * Optional repository ID if job is repository-specific

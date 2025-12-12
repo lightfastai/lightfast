@@ -8,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import { orgWorkspaces } from "./org-workspaces";
 import type {
   OperationMetricType,
   OperationMetricUnit,
@@ -55,7 +56,9 @@ export const workspaceOperationsMetrics = pgTable(
     /**
      * Workspace ID this metric belongs to
      */
-    workspaceId: varchar("workspace_id", { length: 191 }).notNull(),
+    workspaceId: varchar("workspace_id", { length: 191 })
+      .notNull()
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
      * Optional repository ID if metric is repository-specific

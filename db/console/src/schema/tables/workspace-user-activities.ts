@@ -24,6 +24,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import { orgWorkspaces } from "./org-workspaces";
 import type {
   ActivityCategory,
   ActorType,
@@ -45,7 +46,9 @@ export const workspaceUserActivities = pgTable(
      * Workspace ID this activity belongs to
      * All activities are scoped to a workspace
      */
-    workspaceId: varchar("workspace_id", { length: 191 }).notNull(),
+    workspaceId: varchar("workspace_id", { length: 191 })
+      .notNull()
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
      * Actor Type

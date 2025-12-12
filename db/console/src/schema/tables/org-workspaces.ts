@@ -90,10 +90,12 @@ export const orgWorkspaces = pgTable(
     // ========== VECTOR STORAGE CONFIGURATION (previously on workspace_stores) ==========
 
     /**
-     * Shared Pinecone index name (references PRIVATE_CONFIG.pinecone.indexes)
-     * Points to shared index like "lightfast-production-v1"
+     * Shared Pinecone index name (references PRIVATE_CONFIG.pinecone.index)
+     * Points to shared index "lightfast-v1"
      */
-    indexName: varchar("index_name", { length: 191 }).$type<PineconeIndexName>(),
+    indexName: varchar("index_name", {
+      length: 191,
+    }).$type<PineconeIndexName>(),
 
     /**
      * Hierarchical namespace name within the shared index
@@ -137,10 +139,16 @@ export const orgWorkspaces = pgTable(
       .$type<PineconeRegion>(),
 
     /** Maximum tokens per chunk (64-4096) */
-    chunkMaxTokens: integer("chunk_max_tokens").notNull().default(512).$type<ChunkMaxTokens>(),
+    chunkMaxTokens: integer("chunk_max_tokens")
+      .notNull()
+      .default(512)
+      .$type<ChunkMaxTokens>(),
 
     /** Token overlap between chunks (0-1024, must be < chunkMaxTokens) */
-    chunkOverlap: integer("chunk_overlap").notNull().default(50).$type<ChunkOverlap>(),
+    chunkOverlap: integer("chunk_overlap")
+      .notNull()
+      .default(50)
+      .$type<ChunkOverlap>(),
 
     /**
      * Timestamp when workspace was created
