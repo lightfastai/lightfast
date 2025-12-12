@@ -27,6 +27,8 @@ import { NonRetriableError } from "inngest";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import type { SourceEvent } from "@repo/console-types";
+import { scoreSignificance } from "./scoring";
+import { classifyObservation } from "./classification";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -353,18 +355,34 @@ export const observationCapture = inngest.createFunction(
     // Step 6: Store observation in database
     const observation = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(sourceEvent);
-      const topics = extractTopics(sourceEvent);
+
+      // Extract topics and classify
+      const keywordTopics = extractTopics(sourceEvent);
+      const classification = classifyObservation(sourceEvent);
+
+      // Merge keyword topics with classification
+      const topics = [
+        ...keywordTopics,
+        classification.primaryCategory,
+        ...classification.secondaryCategories,
+      ].filter((t, i, arr) => arr.indexOf(t) === i); // Deduplicate
+
+      // Calculate significance score
+      const significance = scoreSignificance(sourceEvent);
 
       const [obs] = await db
         .insert(workspaceNeuralObservations)
         .values({
           workspaceId,
           occurredAt: sourceEvent.occurredAt,
+          // TODO (Day 4): Replace passthrough with resolveActor() call
+          // See: api/console/src/inngest/workflow/neural/actor-resolution.ts
           actor: sourceEvent.actor || null,
           observationType,
           title: sourceEvent.title,
           content: sourceEvent.body,
           topics,
+          significanceScore: significance.score,
           source: sourceEvent.source,
           sourceType: sourceEvent.sourceType,
           sourceId: sourceEvent.sourceId,
