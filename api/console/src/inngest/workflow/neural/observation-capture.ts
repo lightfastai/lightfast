@@ -111,17 +111,30 @@ function buildWorkspaceNamespace(clerkOrgId: string, workspaceId: string): strin
 }
 
 /**
- * Map detailed sourceType to base event type for config comparison
- * e.g., "pull_request_opened" -> "pull_request", "issue_closed" -> "issues"
+ * Map detailed sourceType to base event type for config comparison.
+ *
+ * Internal format uses dot notation: "pull-request.opened", "issue.closed"
+ * Config format uses underscores: "pull_request", "issues"
+ *
+ * @example
+ * getBaseEventType("github", "pull-request.opened") // "pull_request"
+ * getBaseEventType("github", "issue.closed") // "issues"
+ * getBaseEventType("github", "push") // "push"
+ * getBaseEventType("vercel", "deployment.created") // "deployment.created"
  */
 function getBaseEventType(source: string, sourceType: string): string {
   if (source === "github") {
-    // Map GitHub sourceTypes to config event names
-    if (sourceType.startsWith("pull_request")) return "pull_request";
-    if (sourceType.startsWith("issue")) return "issues";
-    if (sourceType.startsWith("release")) return "release";
-    if (sourceType.startsWith("discussion")) return "discussion";
-    if (sourceType === "push") return "push";
+    // Internal format uses dot notation: "pull-request.opened"
+    const dotIndex = sourceType.indexOf(".");
+    if (dotIndex > 0) {
+      const base = sourceType.substring(0, dotIndex);
+      // Convert hyphens to underscores for config format
+      const configBase = base.replace(/-/g, "_");
+      // Special case: issue → issues (config uses plural)
+      return configBase === "issue" ? "issues" : configBase;
+    }
+    // Handle simple events like "push"
+    return sourceType;
   }
 
   if (source === "vercel") {

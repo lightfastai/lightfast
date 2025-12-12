@@ -10,6 +10,7 @@ import type {
   ReleaseEvent,
   DiscussionEvent,
 } from "@octokit/webhooks-types";
+import { toInternalGitHubEvent } from "../event-mapping.js";
 
 /**
  * Transform GitHub push event to SourceEvent
@@ -50,7 +51,7 @@ export function transformGitHubPush(
 
   return {
     source: "github",
-    sourceType: "push",
+    sourceType: toInternalGitHubEvent("push") ?? "push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: `[Push] ${title}`,
     body, // Semantic content only
@@ -161,10 +162,15 @@ export function transformGitHubPullRequest(
   // Structured fields stored in metadata to avoid token waste on non-semantic labels
   const body = [pr.title, pr.body || ""].join("\n");
 
+  // Determine effective action (merged is a special case of closed)
+  const effectiveAction =
+    payload.action === "closed" && pr.merged ? "merged" : payload.action;
+  const internalType = toInternalGitHubEvent("pull_request", effectiveAction);
+
   return {
     source: "github",
-    sourceType: `pull_request_${payload.action}`,
-    sourceId: `pr:${payload.repository.full_name}#${pr.number}:${payload.action}`,
+    sourceType: internalType ?? `pull-request.${effectiveAction}`,
+    sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: `[${actionTitle}] ${pr.title.slice(0, 100)}`,
     body, // Semantic content only
     actor: pr.user
@@ -243,9 +249,11 @@ export function transformGitHubIssue(
   // SEMANTIC CONTENT ONLY (for embedding)
   const body = [issue.title, issue.body || ""].join("\n");
 
+  const internalType = toInternalGitHubEvent("issue", payload.action);
+
   return {
     source: "github",
-    sourceType: `issue_${payload.action}`,
+    sourceType: internalType ?? `issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: `[${actionTitle}] ${issue.title.slice(0, 100)}`,
     body, // Semantic content only
@@ -298,9 +306,11 @@ export function transformGitHubRelease(
   // SEMANTIC CONTENT ONLY (for embedding)
   const body = release.body || "";
 
+  const internalType = toInternalGitHubEvent("release", payload.action);
+
   return {
     source: "github",
-    sourceType: `release_${payload.action}`,
+    sourceType: internalType ?? `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
     title: `[${actionTitle}] ${release.name || release.tag_name}`,
     body, // Semantic content only
@@ -358,9 +368,11 @@ export function transformGitHubDiscussion(
   // SEMANTIC CONTENT ONLY (for embedding)
   const body = [discussion.title, discussion.body || ""].join("\n");
 
+  const internalType = toInternalGitHubEvent("discussion", payload.action);
+
   return {
     source: "github",
-    sourceType: `discussion_${payload.action}`,
+    sourceType: internalType ?? `discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: `[${actionTitle}] ${discussion.title.slice(0, 100)}`,
     body, // Semantic content only

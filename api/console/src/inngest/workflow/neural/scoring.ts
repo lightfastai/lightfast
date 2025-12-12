@@ -1,4 +1,5 @@
 import type { SourceEvent } from "@repo/console-types";
+import { getEventWeight } from "@repo/console-types";
 
 /**
  * Significance scoring for neural observations.
@@ -29,36 +30,6 @@ export interface SignificanceResult {
   score: number;
   factors: string[];
 }
-
-/**
- * Event type base weights.
- * Higher weights for events that typically indicate important changes.
- */
-const EVENT_TYPE_WEIGHTS: Record<string, number> = {
-  // High significance (60-80 base)
-  release_published: 75,
-  release_created: 70,
-  "deployment.error": 70,
-  "deployment.canceled": 65,
-  pull_request_merged: 60,
-
-  // Medium significance (40-60 base)
-  pull_request_opened: 50,
-  pull_request_closed: 45,
-  issue_opened: 45,
-  issue_closed: 40,
-  "deployment.succeeded": 40,
-  "deployment.ready": 40,
-
-  // Lower significance (20-40 base)
-  push: 30,
-  "deployment.created": 30,
-  discussion_created: 35,
-  discussion_answered: 40,
-
-  // Default
-  default: 35,
-};
 
 /**
  * Content signals that increase significance.
@@ -93,10 +64,9 @@ const SIGNIFICANCE_SIGNALS: Array<{ pattern: RegExp; weight: number; factor: str
 export function scoreSignificance(sourceEvent: SourceEvent): SignificanceResult {
   const factors: string[] = [];
 
-  // 1. Event type base weight
-  const eventType = sourceEvent.sourceType.toLowerCase();
-  const defaultWeight = 35;
-  let score = EVENT_TYPE_WEIGHTS[eventType] ?? defaultWeight;
+  // 1. Event type base weight (from centralized INTERNAL_EVENT_TYPES)
+  const eventType = sourceEvent.sourceType;
+  let score = getEventWeight(eventType);
   factors.push(`base:${eventType}`);
 
   // 2. Content signal matching

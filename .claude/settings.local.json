@@ -171,7 +171,9 @@
       "mcp__playwright__browser_run_code",
       "mcp__playwright__browser_file_upload",
       "Read(//tmp/repos/humanlayer/.claude/commands/**)",
-      "Read(//private/tmp/repos/humanlayer/.claude/commands/**)"
+      "Read(//private/tmp/repos/humanlayer/.claude/commands/**)",
+      "mcp__exa__web_search_exa",
+      "Bash(pnpm --filter @repo/console-validation build:*)"
     ],
     "deny": []
   },

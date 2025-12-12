@@ -54,5 +54,8 @@ export * from "./common.js";
 export * from "./github.js";
 export * from "./vercel.js";
 
+// Event mapping utilities
+export * from "./event-mapping.js";
+
 // Transformers
 export * from "./transformers/index.js";

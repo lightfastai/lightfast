@@ -7,6 +7,7 @@ import type {
   VercelWebhookPayload,
   VercelDeploymentEvent,
 } from "../vercel.js";
+import { toInternalVercelEvent } from "../event-mapping.js";
 
 /**
  * Transform Vercel deployment event to SourceEvent
@@ -97,9 +98,11 @@ export function transformVercelDeployment(
     .filter(Boolean)
     .join("\n");
 
+  const internalType = toInternalVercelEvent(eventType);
+
   return {
     source: "vercel",
-    sourceType: eventType,
+    sourceType: internalType ?? eventType,
     sourceId: `deployment:${deployment.id}`,
     title: `[${actionTitle}] ${project.name} from ${branch}`,
     body,

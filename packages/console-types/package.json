@@ -25,6 +25,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@repo/console-validation": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -29,12 +29,14 @@ When this command is invoked:
 
    **Common tasks**:
    - Create a test PR/issue and verify observation capture
+   - Test neural search and retrieval (with filters)
    - Check Inngest for recent runs or failures
    - Query database for recent observations
    - View webhook delivery logs
    - Run full E2E webhook test
 
    Example: "create a test PR and verify the observation was captured"
+   Example: "test search with source filter for github"
    ```
 
 3. **Wait for user input** before proceeding.
@@ -363,7 +365,74 @@ Present webhook delivery summary with screenshot.
 
 ---
 
-## Workflow 5: Full E2E Test
+## Workflow 5: Test Neural Search
+
+**Trigger**: User wants to test observation retrieval (e.g., "test search", "verify retrieval works")
+
+### Step 1: Verify Observations Exist
+
+```bash
+# Quick DB check for recent observations
+curl -s "https://local.drizzle.studio" > /dev/null && echo "Drizzle Studio available"
+```
+
+Spawn `debug-browser` to check observation count in `workspace_neural_observations` table.
+
+### Step 2: Test Search Endpoint
+
+```bash
+# Test search via console API (requires active session)
+curl -X POST "http://localhost:3024/{org-slug}/{workspace-name}/api/search" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: {session-cookie}" \
+  -d '{"query": "test search query", "topK": 5}'
+```
+
+Or spawn `debug-browser` to:
+1. Navigate to workspace search page
+2. Enter test query
+3. Capture results and latency
+4. Screenshot the response
+
+### Step 3: Verify Filter Behavior (Day 2)
+
+Test with filters once implemented:
+```json
+{
+  "query": "deployment",
+  "topK": 10,
+  "filters": {
+    "sourceTypes": ["github"],
+    "observationTypes": ["push", "pull_request_merged"],
+    "dateRange": { "start": "2025-12-01" }
+  }
+}
+```
+
+### Step 4: Report
+
+```
+## Neural Search Test Results
+
+**Query**: {query}
+**Filters**: {filters applied}
+
+### Results
+- Count: {n} observations returned
+- Latency: {total}ms (retrieval: {retrieval}ms, llmFilter: {llm}ms)
+- Top result: {title} (score: {score})
+
+### Verification
+- [ ] Results relevant to query
+- [ ] Filters applied correctly
+- [ ] Latency within budget (<500ms)
+
+{Screenshot attached}
+```
+
+---
+
+## Workflow 6: Full E2E Test
 
 **Trigger**: User wants comprehensive test (e.g., "run full webhook test", "full E2E test")
 
