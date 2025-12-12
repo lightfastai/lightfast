@@ -1,0 +1,36 @@
+{
+  "name": "@repo/console-test-data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./factories": "./src/factories/index.ts",
+    "./injector": "./src/injector/index.ts",
+    "./verifier": "./src/verifier/index.ts",
+    "./scenarios": "./src/scenarios/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "inject": "tsx src/cli/inject.ts",
+    "verify": "tsx src/cli/verify.ts",
+    "clean": "tsx src/cli/clean.ts"
+  },
+  "dependencies": {
+    "@db/console": "workspace:*",
+    "@repo/console-embed": "workspace:*",
+    "@repo/console-pinecone": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "eslint": "catalog:",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  }
+}
