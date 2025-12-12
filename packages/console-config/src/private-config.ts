@@ -16,9 +16,9 @@
  */
 
 import type {
-	EmbeddingProvider,
-	PineconeMetric,
-	PineconeCloud,
+  EmbeddingProvider,
+  PineconeMetric,
+  PineconeCloud,
 } from "@repo/console-validation";
 
 /**
@@ -33,29 +33,26 @@ import type {
  */
 export const PINECONE_CONFIG = {
   /**
-   * Shared Pinecone indexes (platform-level resources)
+   * Shared Pinecone index configuration
    *
-   * NEW ARCHITECTURE: One shared index per environment instead of one-index-per-store
+   * ARCHITECTURE: Single index name per Pinecone project (environment separation at project level)
+   * - lightfast-prod project → lightfast-v1 index (PINECONE_API_KEY for prod)
+   * - lightfast-dev project → lightfast-v1 index (PINECONE_API_KEY for dev)
+   *
+   * Benefits:
    * - Massive cost savings: $50/month vs $7,500+/month for 3000 stores
    * - Scales to 25,000 namespaces per index (Standard plan)
    * - Physical isolation via Pinecone's serverless architecture
+   * - Environment separation at Pinecone project level (different API keys)
    *
-   * Each store gets a hierarchical namespace within the shared index:
-   * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+   * Each workspace gets a hierarchical namespace within the shared index:
+   * Format: org_{clerkOrgId}:ws_{workspaceId}
    */
-  indexes: {
-    production: {
-      name: "lightfast-production-v1",
-      embeddingDim: 1024,
-      embeddingModel: "embed-english-v3.0",
-      embeddingProvider: "cohere" as const,
-    },
-    staging: {
-      name: "lightfast-staging-v1",
-      embeddingDim: 1024,
-      embeddingModel: "embed-english-v3.0",
-      embeddingProvider: "cohere" as const,
-    },
+  index: {
+    name: "lightfast-v1",
+    embeddingDim: 1024,
+    embeddingModel: "embed-english-v3.0",
+    embeddingProvider: "cohere" as const,
   },
 
   /**
@@ -294,17 +291,19 @@ export const PRIVATE_CONFIG = {
 export type PrivateConfig = typeof PRIVATE_CONFIG;
 
 /**
- * Helper to get Pinecone index configuration by environment
+ * Get Pinecone index configuration
  *
- * @param environment - "production" or "staging"
+ * Note: Index name is the same for all environments ("lightfast-v1").
+ * Environment separation is handled at the Pinecone project level via different API keys.
+ *
  * @returns Index configuration with name, dimension, model, and provider
  *
  * @example
  * ```typescript
- * const indexConfig = getPineconeIndexConfig("production");
- * // Returns: { name: "lightfast-production-v1", embeddingDim: 1024, ... }
+ * const indexConfig = getPineconeIndexConfig();
+ * // Returns: { name: "lightfast-v1", embeddingDim: 1024, ... }
  * ```
  */
-export function getPineconeIndexConfig(environment: "production" | "staging") {
-  return PRIVATE_CONFIG.pinecone.indexes[environment];
+export function getPineconeIndexConfig() {
+  return PRIVATE_CONFIG.pinecone.index;
 }
