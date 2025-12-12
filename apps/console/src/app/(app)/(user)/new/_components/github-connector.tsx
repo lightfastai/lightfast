@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -34,8 +34,14 @@ export function GitHubConnector() {
       refetchOnWindowFocus: false,
     });
 
-  // Derive installations directly from query data (no intermediate state for this)
-  const installations = githubUserSource?.installations ?? [];
+  // Memoize installations to prevent new array reference on every render
+  const installations = useMemo(
+    () => githubUserSource?.installations ?? [],
+    [githubUserSource?.installations]
+  );
+
+  // Track previous installations for equality comparison
+  const prevInstallationsRef = useRef<typeof installations>([]);
 
   // Effect 1: Sync userSourceId to context (only when ID value changes, not object reference)
   useEffect(() => {
@@ -43,9 +49,15 @@ export function GitHubConnector() {
     setUserSourceId(id);
   }, [githubUserSource?.id, setUserSourceId]);
 
-  // Effect 2: Sync installations array to context (for RepositoryPicker)
+  // Effect 2: Sync installations array to context (with ID equality check)
   useEffect(() => {
-    setInstallations(installations);
+    const prevIds = prevInstallationsRef.current.map((i) => i.id).join(",");
+    const newIds = installations.map((i) => i.id).join(",");
+
+    if (prevIds !== newIds) {
+      setInstallations(installations);
+      prevInstallationsRef.current = installations;
+    }
   }, [installations, setInstallations]);
 
   // Effect 3: Handle installation selection with proper reset logic
@@ -58,18 +70,25 @@ export function GitHubConnector() {
       if (selectedInstallation !== null) {
         setSelectedInstallation(null);
       }
-    } else {
-      // Check if current selection is still valid
-      const currentSelectionStillExists = selectedInstallation
-        ? installations.some((inst) => inst.id === selectedInstallation.id)
-        : false;
+      return;
+    }
 
-      if (!currentSelectionStillExists) {
-        // Either no selection or selection became invalid, select first
-        const firstInstall = installations[0];
-        if (firstInstall) {
-          setSelectedInstallation(firstInstall);
-        }
+    // Check if current selection still exists
+    const currentSelectionStillExists = selectedInstallation
+      ? installations.some((inst) => inst.id === selectedInstallation.id)
+      : false;
+
+    if (currentSelectionStillExists) {
+      // Selection is valid, no update needed
+      return;
+    }
+
+    // Need to select first installation
+    const firstInstall = installations[0];
+    if (firstInstall) {
+      // Only update if we're selecting a DIFFERENT installation
+      if (selectedInstallation?.id !== firstInstall.id) {
+        setSelectedInstallation(firstInstall);
       }
     }
   }, [installations, selectedInstallation, setSelectedInstallation]);
