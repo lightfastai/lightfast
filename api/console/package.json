@@ -27,6 +27,7 @@
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
 	"dependencies": {
+		"@ai-sdk/gateway": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/console": "workspace:*",
 		"@inngest/middleware-sentry": "catalog:",
@@ -53,6 +54,8 @@
 		"@vendor/inngest": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
+		"ai": "catalog:",
+		"date-fns": "^4.1.0",
 		"drizzle-orm": "catalog:",
 		"gray-matter": "^4.0.3",
 		"inngest": "catalog:",

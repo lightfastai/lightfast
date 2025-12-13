@@ -19,6 +19,8 @@ export * from "./workspace-user-activities";
 export * from "./workspace-neural-observations";
 export * from "./workspace-observation-clusters";
 export * from "./workspace-neural-entities";
+export * from "./workspace-actor-profiles";
+export * from "./workspace-actor-identities";
 
 // Webhook storage tables
 export * from "./workspace-webhook-payloads";

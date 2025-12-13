@@ -33,7 +33,11 @@ import { filesBatchProcessor } from "./workflow/processing/files-batch-processor
 import { recordActivity } from "./workflow/infrastructure/record-activity";
 
 // Neural memory workflows
-import { observationCapture } from "./workflow/neural";
+import {
+  observationCapture,
+  profileUpdate,
+  clusterSummaryCheck,
+} from "./workflow/neural";
 
 // Export Inngest client
 export { inngest };
@@ -54,7 +58,7 @@ export { processDocuments, deleteDocuments, filesBatchProcessor };
 export { recordActivity };
 
 // Export neural memory workflows
-export { observationCapture };
+export { observationCapture, profileUpdate, clusterSummaryCheck };
 
 /**
  * Create the route context for Next.js API routes
@@ -119,7 +123,8 @@ export function createInngestRouteContext() {
 
       // Neural memory
       observationCapture,
-      // entityExtraction removed - now inline in observationCapture (Day 3.5)
+      profileUpdate,
+      clusterSummaryCheck,
     ],
     servePath: "/api/inngest",
   });

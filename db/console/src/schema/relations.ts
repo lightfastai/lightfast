@@ -8,6 +8,8 @@ import { userSources } from "./tables/user-sources";
 import { orgWorkspaces } from "./tables/org-workspaces";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
+import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
+import { workspaceActorIdentities } from "./tables/workspace-actor-identities";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -21,6 +23,8 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   vectorChunks: many(workspaceKnowledgeVectorChunks),
   neuralObservations: many(workspaceNeuralObservations),
   observationClusters: many(workspaceObservationClusters),
+  actorProfiles: many(workspaceActorProfiles),
+  actorIdentities: many(workspaceActorIdentities),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
@@ -86,5 +90,27 @@ export const workspaceObservationClustersRelations = relations(
       references: [orgWorkspaces.id],
     }),
     observations: many(workspaceNeuralObservations),
+  }),
+);
+
+// Actor Profile relations
+export const workspaceActorProfilesRelations = relations(
+  workspaceActorProfiles,
+  ({ one, many }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceActorProfiles.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    identities: many(workspaceActorIdentities),
+  }),
+);
+
+export const workspaceActorIdentitiesRelations = relations(
+  workspaceActorIdentities,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceActorIdentities.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
   }),
 );

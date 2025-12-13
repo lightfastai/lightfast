@@ -93,6 +93,11 @@ export const workspaceNeuralObservations = pgTable(
      */
     actor: jsonb("actor").$type<ObservationActor | null>(),
 
+    /**
+     * Resolved actor ID (source:id format or Clerk user ID)
+     */
+    actorId: varchar("actor_id", { length: 191 }),
+
     // ========== CONTENT ==========
 
     /**

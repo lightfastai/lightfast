@@ -631,6 +631,46 @@ const eventsMap = {
       sourceId: z.string(),
       /** Observation type (e.g., "push", "pull_request_merged") */
       observationType: z.string(),
+      /** Significance score (0-100) */
+      significanceScore: z.number().optional(),
+      /** Topics extracted */
+      topics: z.array(z.string()).optional(),
+      /** Number of entities extracted */
+      entitiesExtracted: z.number().optional(),
+      /** Assigned cluster ID */
+      clusterId: z.string().optional(),
+      /** Whether cluster was newly created */
+      clusterIsNew: z.boolean().optional(),
+    }),
+  },
+
+  /**
+   * Profile update event (fire-and-forget)
+   * Triggers async profile recalculation for actor
+   */
+  "apps-console/neural/profile.update": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Canonical actor ID (source:id format) */
+      actorId: z.string(),
+      /** Observation that triggered update */
+      observationId: z.string(),
+    }),
+  },
+
+  /**
+   * Cluster summary check event (fire-and-forget)
+   * Triggers async summary generation if threshold met
+   */
+  "apps-console/neural/cluster.check-summary": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Cluster to check */
+      clusterId: z.string(),
+      /** Current observation count */
+      observationCount: z.number(),
     }),
   },
 

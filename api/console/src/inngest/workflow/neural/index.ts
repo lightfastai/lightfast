@@ -1,9 +1,12 @@
 /**
- * Neural memory workflow exports
+ * Neural Memory Workflows
  *
- * Workflows for the neural memory observation pipeline.
+ * Observation pipeline:
+ * 1. observationCapture - Main write path (sync)
+ * 2. profileUpdate - Actor profile updates (async, fire-and-forget)
+ * 3. clusterSummaryCheck - Cluster summary generation (async, fire-and-forget)
  */
 
 export { observationCapture } from "./observation-capture";
-// Entity extraction is now inline in observation-capture.ts (Day 3.5 refactor)
-// export { entityExtraction } from "./entity-extraction";
+export { profileUpdate } from "./profile-update";
+export { clusterSummaryCheck } from "./cluster-summary";

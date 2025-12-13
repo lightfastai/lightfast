@@ -33,6 +33,8 @@ import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
 import { classifyObservation } from "./classification";
 import { extractEntities, extractFromReferences } from "./entity-extraction-patterns";
 import type { ExtractedEntity } from "@repo/console-types";
+import { assignToCluster } from "./cluster-assignment";
+import { resolveActor } from "./actor-resolution";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -327,7 +329,7 @@ export const observationCapture = inngest.createFunction(
     });
 
     // Step 5: PARALLEL processing (no interdependencies)
-    const [classificationResult, embeddingResult, extractedEntities] = await Promise.all([
+    const [classificationResult, embeddingResult, extractedEntities, resolvedActor] = await Promise.all([
       // Classification
       step.run("classify", async () => {
         const keywordTopics = extractTopics(sourceEvent);
@@ -387,10 +389,37 @@ export const observationCapture = inngest.createFunction(
         const deduplicated = Array.from(entityMap.values());
         return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
       }),
+
+      // Actor resolution (Tier 2: email matching)
+      step.run("resolve-actor", async () => {
+        return resolveActor(workspaceId, workspace.clerkOrgId, sourceEvent);
+      }),
     ]);
 
     const { topics } = classificationResult;
     const { embeddingVector, vectorId } = embeddingResult;
+
+    // Step 5.5: Assign to cluster
+    const clusterResult = await step.run("assign-cluster", async () => {
+      // Extract entity IDs from extracted entities
+      const entityIds = extractedEntities.map(
+        (e) => `${e.category}:${e.key}`
+      );
+
+      return assignToCluster({
+        workspaceId,
+        embeddingVector,
+        vectorId,
+        topics,
+        entityIds,
+        // Use resolved actor ID for cluster affinity
+        actorId: resolvedActor.actorId,
+        occurredAt: sourceEvent.occurredAt,
+        title: sourceEvent.title,
+        indexName: workspace.indexName!,
+        namespace: buildWorkspaceNamespace(workspace.clerkOrgId, workspaceId),
+      });
+    });
 
     // Step 6: Upsert to Pinecone
     await step.run("upsert-vector", async () => {
@@ -440,8 +469,9 @@ export const observationCapture = inngest.createFunction(
           .values({
             workspaceId,
             occurredAt: sourceEvent.occurredAt,
-            // TODO (Day 4): Replace passthrough with resolveActor() call
             actor: sourceEvent.actor || null,
+            // Resolved actor ID for workspace-level tracking
+            actorId: resolvedActor.actorId,
             observationType,
             title: sourceEvent.title,
             content: sourceEvent.body,
@@ -453,7 +483,7 @@ export const observationCapture = inngest.createFunction(
             sourceReferences: sourceEvent.references,
             metadata: sourceEvent.metadata,
             embeddingVectorId: vectorId,
-            // TODO (Day 4): Add clusterId after cluster assignment
+            clusterId: clusterResult.clusterId,
           })
           .returning();
 
@@ -501,21 +531,46 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
-    // Step 8: Emit completion event (for future cluster/profile systems)
-    await step.sendEvent("emit-captured", {
-      name: "apps-console/neural/observation.captured",
-      data: {
-        workspaceId,
-        observationId: observation.id,
-        sourceId: sourceEvent.sourceId,
-        observationType: observation.observationType,
-        // New fields for Day 4
-        significanceScore: significance.score,
-        topics,
-        entitiesExtracted: extractedEntities.length,
-        // TODO (Day 4): Add actorId, clusterId
+    // Step 8: Fire-and-forget events
+    await step.sendEvent("emit-events", [
+      // Completion event for downstream systems
+      {
+        name: "apps-console/neural/observation.captured" as const,
+        data: {
+          workspaceId,
+          observationId: observation.id,
+          sourceId: sourceEvent.sourceId,
+          observationType: observation.observationType,
+          significanceScore: significance.score,
+          topics,
+          entitiesExtracted: extractedEntities.length,
+          clusterId: clusterResult.clusterId,
+          clusterIsNew: clusterResult.isNew,
+        },
       },
-    });
+      // Profile update (if actor resolved)
+      ...(resolvedActor.actorId
+        ? [
+            {
+              name: "apps-console/neural/profile.update" as const,
+              data: {
+                workspaceId,
+                actorId: resolvedActor.actorId,
+                observationId: observation.id,
+              },
+            },
+          ]
+        : []),
+      // Cluster summary check
+      {
+        name: "apps-console/neural/cluster.check-summary" as const,
+        data: {
+          workspaceId,
+          clusterId: clusterResult.clusterId,
+          observationCount: clusterResult.isNew ? 1 : 0, // Will be fetched in workflow
+        },
+      },
+    ]);
 
     return {
       status: "captured",
