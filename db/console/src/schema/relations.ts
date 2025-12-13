@@ -10,6 +10,7 @@ import { workspaceNeuralObservations } from "./tables/workspace-neural-observati
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
 import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
 import { workspaceActorIdentities } from "./tables/workspace-actor-identities";
+import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -25,6 +26,7 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   observationClusters: many(workspaceObservationClusters),
   actorProfiles: many(workspaceActorProfiles),
   actorIdentities: many(workspaceActorIdentities),
+  temporalStates: many(workspaceTemporalStates),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
@@ -110,6 +112,17 @@ export const workspaceActorIdentitiesRelations = relations(
   ({ one }) => ({
     workspace: one(orgWorkspaces, {
       fields: [workspaceActorIdentities.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+  }),
+);
+
+// Temporal states relation
+export const workspaceTemporalStatesRelations = relations(
+  workspaceTemporalStates,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceTemporalStates.workspaceId],
       references: [orgWorkspaces.id],
     }),
   }),

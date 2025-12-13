@@ -157,9 +157,28 @@ export const workspaceNeuralObservations = pgTable(
     // ========== EMBEDDINGS ==========
 
     /**
-     * Pinecone vector ID for content embedding
+     * @deprecated Use view-specific embedding IDs instead
+     * Legacy Pinecone vector ID for combined title+content embedding
      */
     embeddingVectorId: varchar("embedding_vector_id", { length: 191 }),
+
+    /**
+     * Pinecone vector ID for title-only embedding
+     * Optimized for topic/headline searches
+     */
+    embeddingTitleId: varchar("embedding_title_id", { length: 191 }),
+
+    /**
+     * Pinecone vector ID for content-only embedding
+     * Optimized for detailed content searches
+     */
+    embeddingContentId: varchar("embedding_content_id", { length: 191 }),
+
+    /**
+     * Pinecone vector ID for summary embedding
+     * Combines title and truncated content for balanced retrieval
+     */
+    embeddingSummaryId: varchar("embedding_summary_id", { length: 191 }),
 
     // ========== TIMESTAMPS ==========
 

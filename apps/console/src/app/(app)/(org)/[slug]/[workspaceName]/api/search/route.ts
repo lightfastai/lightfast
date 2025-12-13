@@ -35,6 +35,8 @@ import { randomUUID } from "node:crypto";
 import { llmRelevanceFilter } from "~/lib/neural/llm-filter";
 import type { FilterCandidate } from "~/lib/neural/llm-filter";
 import { searchByEntities } from "~/lib/neural/entity-search";
+import { searchClusters } from "~/lib/neural/cluster-search";
+import { searchActorProfiles } from "~/lib/neural/actor-search";
 import type { EntitySearchResult } from "@repo/console-types";
 
 // Filter validation schema
@@ -73,10 +75,16 @@ interface SearchResult {
 interface SearchResponse {
   results: SearchResult[];
   requestId: string;
+  context?: {
+    clusters: { topic: string | null; summary: string | null; keywords: string[] }[];
+    relevantActors: { displayName: string; expertise: string[] }[];
+  };
   latency: {
     total: number;
     retrieval: number;
     entitySearch: number;
+    clusterSearch: number;
+    actorSearch: number;
     llmFilter: number;
   };
 }
@@ -269,6 +277,10 @@ export async function POST(
       );
     }
 
+    // Extract narrowed types for use in parallel search paths
+    const indexName = workspace.indexName;
+    const namespaceName = workspace.namespaceName;
+
     log.info("Resolved workspace", {
       requestId,
       workspaceId: workspace.id,
@@ -305,44 +317,64 @@ export async function POST(
       dimension: queryVector.length,
     });
 
-    // 6. Query Pinecone
-    const queryStart = Date.now();
+    // 6. 4-path parallel retrieval
     const pineconeFilter = buildPineconeFilter(filters);
-    const results = await pineconeClient.query<VectorMetadata>(
-      workspace.indexName,
-      {
-        vector: queryVector,
-        topK,
-        includeMetadata: true,
-        filter: pineconeFilter,
-      },
-      workspace.namespaceName
-    );
-    const queryLatency = Date.now() - queryStart;
+    const parallelStart = Date.now();
 
-    log.info("Pinecone query complete", {
+    const [vectorResults, entityResults, clusterResults, actorResults] = await Promise.all([
+      // Path 1: Vector similarity search
+      (async () => {
+        const start = Date.now();
+        const results = await pineconeClient.query<VectorMetadata>(
+          indexName,
+          {
+            vector: queryVector,
+            topK,
+            includeMetadata: true,
+            filter: pineconeFilter,
+          },
+          namespaceName
+        );
+        return { results, latency: Date.now() - start };
+      })(),
+
+      // Path 2: Entity search
+      (async () => {
+        const start = Date.now();
+        const results = await searchByEntities(query, workspaceId, topK);
+        return { results, latency: Date.now() - start };
+      })(),
+
+      // Path 3: Cluster context search
+      searchClusters(
+        workspaceId,
+        indexName,
+        namespaceName,
+        queryVector,
+        3 // Top 3 clusters
+      ),
+
+      // Path 4: Actor profile search
+      searchActorProfiles(workspaceId, query, 5),
+    ]);
+
+    log.info("4-path parallel search complete", {
       requestId,
-      queryLatency,
-      matchCount: results.matches.length,
-      filterApplied: !!pineconeFilter,
-    });
-
-    // 6.5. Entity-enhanced retrieval (parallel path)
-    const entityStart = Date.now();
-    const entityResults = await searchByEntities(query, workspaceId, topK);
-    const entityLatency = Date.now() - entityStart;
-
-    log.info("Entity search complete", {
-      requestId,
-      entityLatency,
-      entityMatches: entityResults.length,
-      queryEntities: entityResults.map((e) => e.entityKey),
+      totalLatency: Date.now() - parallelStart,
+      vectorMatches: vectorResults.results.matches.length,
+      vectorLatency: vectorResults.latency,
+      entityMatches: entityResults.results.length,
+      entityLatency: entityResults.latency,
+      clusterMatches: clusterResults.results.length,
+      clusterLatency: clusterResults.latency,
+      actorMatches: actorResults.results.length,
+      actorLatency: actorResults.latency,
     });
 
     // 7. Merge vector and entity results
     const mergedCandidates = mergeSearchResults(
-      results.matches,
-      entityResults,
+      vectorResults.results.matches,
+      entityResults.results,
       topK
     );
 
@@ -358,9 +390,9 @@ export async function POST(
       bypassed: filterResult.bypassed,
     });
 
-    // 8. Map results to response format (using filtered results)
+    // 9. Map results to response format (using filtered results)
     const searchResults: SearchResult[] = filterResult.results.map((result) => {
-      const match = results.matches.find((m) => m.id === result.id);
+      const match = vectorResults.results.matches.find((m) => m.id === result.id);
       return {
         id: result.id,
         title: result.title,
@@ -375,13 +407,29 @@ export async function POST(
       };
     });
 
+    // 10. Build context from cluster and actor results
+    const context = {
+      clusters: clusterResults.results.slice(0, 2).map((c) => ({
+        topic: c.topicLabel,
+        summary: c.summary,
+        keywords: c.keywords,
+      })),
+      relevantActors: actorResults.results.slice(0, 3).map((a) => ({
+        displayName: a.displayName,
+        expertise: a.expertiseDomains,
+      })),
+    };
+
     const response: SearchResponse = {
       results: searchResults,
       requestId,
+      context: context.clusters.length > 0 || context.relevantActors.length > 0 ? context : undefined,
       latency: {
         total: Date.now() - startTime,
-        retrieval: queryLatency,
-        entitySearch: entityLatency,
+        retrieval: vectorResults.latency,
+        entitySearch: entityResults.latency,
+        clusterSearch: clusterResults.latency,
+        actorSearch: actorResults.latency,
         llmFilter: filterResult.latency,
       },
     };
@@ -393,14 +441,22 @@ export async function POST(
         embed: embedLatency,
         retrieval: response.latency.retrieval,
         entitySearch: response.latency.entitySearch,
+        clusterSearch: response.latency.clusterSearch,
+        actorSearch: response.latency.actorSearch,
         llmFilter: response.latency.llmFilter,
       },
       results: {
-        vectorMatches: results.matches.length,
-        entityMatches: entityResults.length,
+        vectorMatches: vectorResults.results.matches.length,
+        entityMatches: entityResults.results.length,
+        clusterMatches: clusterResults.results.length,
+        actorMatches: actorResults.results.length,
         mergedCandidates: mergedCandidates.length,
         afterLLMFilter: searchResults.length,
         filtered: filterResult.filtered,
+      },
+      context: {
+        clusters: context.clusters.length,
+        actors: context.relevantActors.length,
       },
       filters: filters ?? null,
       llmBypassed: filterResult.bypassed,

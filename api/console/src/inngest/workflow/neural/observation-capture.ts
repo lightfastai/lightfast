@@ -42,6 +42,7 @@ import { resolveActor } from "./actor-resolution";
  */
 interface ObservationVectorMetadata {
   layer: string;
+  view: "title" | "content" | "summary"; // Identifies embedding view for multi-view retrieval
   observationType: string;
   source: string;
   sourceType: string;
@@ -53,6 +54,25 @@ interface ObservationVectorMetadata {
   // HACK: Index signature required to satisfy Pinecone's RecordMetadata constraint.
   // TODO: Re-export RecordMetadata from @repo/console-pinecone and extend it properly.
   [key: string]: string | number | boolean | string[];
+}
+
+/**
+ * Result of multi-view embedding generation
+ */
+interface MultiViewEmbeddingResult {
+  title: {
+    vectorId: string;
+    vector: number[];
+  };
+  content: {
+    vectorId: string;
+    vector: number[];
+  };
+  summary: {
+    vectorId: string;
+    vector: number[];
+  };
+  legacyVectorId: string;
 }
 
 /**
@@ -345,8 +365,8 @@ export const observationCapture = inngest.createFunction(
         return { topics, classification };
       }),
 
-      // Embedding generation
-      step.run("generate-embedding", async () => {
+      // Multi-view embedding generation (title, content, summary)
+      step.run("generate-multi-view-embeddings", async (): Promise<MultiViewEmbeddingResult> => {
         const embeddingProvider = createEmbeddingProviderForWorkspace(
           {
             id: workspace.id,
@@ -356,15 +376,37 @@ export const observationCapture = inngest.createFunction(
           { inputType: "search_document" }
         );
 
-        const textToEmbed = `${sourceEvent.title}\n\n${sourceEvent.body}`;
-        const result = await embeddingProvider.embed([textToEmbed]);
+        // Prepare texts for each view
+        const titleText = sourceEvent.title;
+        const contentText = sourceEvent.body;
+        const summaryText = `${sourceEvent.title}\n\n${sourceEvent.body.slice(0, 1000)}`;
 
-        if (!result.embeddings[0]) {
-          throw new Error("Failed to generate embedding");
+        // Generate all 3 embeddings in parallel (single batch call)
+        const result = await embeddingProvider.embed([titleText, contentText, summaryText]);
+
+        if (!result.embeddings[0] || !result.embeddings[1] || !result.embeddings[2]) {
+          throw new Error("Failed to generate all multi-view embeddings");
         }
 
-        const vectorId = `obs_${sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_")}`;
-        return { embeddingVector: result.embeddings[0], vectorId };
+        // Generate view-specific vector IDs
+        const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
+
+        return {
+          title: {
+            vectorId: `obs_title_${baseId}`,
+            vector: result.embeddings[0],
+          },
+          content: {
+            vectorId: `obs_content_${baseId}`,
+            vector: result.embeddings[1],
+          },
+          summary: {
+            vectorId: `obs_summary_${baseId}`,
+            vector: result.embeddings[2],
+          },
+          // Keep legacy ID for backwards compatibility during migration
+          legacyVectorId: `obs_${baseId}`,
+        };
       }),
 
       // Entity extraction (inline, not fire-and-forget)
@@ -397,9 +439,9 @@ export const observationCapture = inngest.createFunction(
     ]);
 
     const { topics } = classificationResult;
-    const { embeddingVector, vectorId } = embeddingResult;
+    // embeddingResult is now MultiViewEmbeddingResult with title, content, summary views
 
-    // Step 5.5: Assign to cluster
+    // Step 5.5: Assign to cluster (use content embedding for best semantic matching)
     const clusterResult = await step.run("assign-cluster", async () => {
       // Extract entity IDs from extracted entities
       const entityIds = extractedEntities.map(
@@ -408,8 +450,8 @@ export const observationCapture = inngest.createFunction(
 
       return assignToCluster({
         workspaceId,
-        embeddingVector,
-        vectorId,
+        embeddingVector: embeddingResult.content.vector,
+        vectorId: embeddingResult.content.vectorId,
         topics,
         entityIds,
         // Use resolved actor ID for cluster affinity
@@ -421,37 +463,69 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
-    // Step 6: Upsert to Pinecone
-    await step.run("upsert-vector", async () => {
+    // Step 6: Upsert multi-view vectors to Pinecone
+    await step.run("upsert-multi-view-vectors", async () => {
       const namespace = buildWorkspaceNamespace(
         workspace.clerkOrgId,
         workspaceId
       );
 
-      const metadata: ObservationVectorMetadata = {
-        layer: "observations", // Hybrid approach: filter by layer in metadata
+      // Base metadata shared across all views
+      const baseMetadata = {
+        layer: "observations",
         observationType: deriveObservationType(sourceEvent),
         source: sourceEvent.source,
         sourceType: sourceEvent.sourceType,
         sourceId: sourceEvent.sourceId,
-        title: sourceEvent.title,
-        snippet: sourceEvent.body.slice(0, 500),
         occurredAt: sourceEvent.occurredAt,
         actorName: sourceEvent.actor?.name || "unknown",
       };
 
+      // View-specific metadata
+      const titleMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "title",
+        title: sourceEvent.title,
+        snippet: sourceEvent.title,
+      };
+
+      const contentMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "content",
+        title: sourceEvent.title,
+        snippet: sourceEvent.body.slice(0, 500),
+      };
+
+      const summaryMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "summary",
+        title: sourceEvent.title,
+        snippet: `${sourceEvent.title}\n${sourceEvent.body.slice(0, 300)}`,
+      };
+
+      // Batch upsert all 3 vectors
       await consolePineconeClient.upsertVectors<ObservationVectorMetadata>(
         workspace.indexName!,
         {
-          ids: [vectorId],
-          vectors: [embeddingVector],
-          metadata: [metadata],
+          ids: [
+            embeddingResult.title.vectorId,
+            embeddingResult.content.vectorId,
+            embeddingResult.summary.vectorId,
+          ],
+          vectors: [
+            embeddingResult.title.vector,
+            embeddingResult.content.vector,
+            embeddingResult.summary.vector,
+          ],
+          metadata: [titleMetadata, contentMetadata, summaryMetadata],
         },
         namespace
       );
 
-      log.info("Vector upserted to Pinecone", {
-        vectorId,
+      log.info("Multi-view vectors upserted to Pinecone", {
+        titleVectorId: embeddingResult.title.vectorId,
+        contentVectorId: embeddingResult.content.vectorId,
+        summaryVectorId: embeddingResult.summary.vectorId,
         namespace,
         indexName: workspace.indexName,
       });
@@ -482,7 +556,10 @@ export const observationCapture = inngest.createFunction(
             sourceId: sourceEvent.sourceId,
             sourceReferences: sourceEvent.references,
             metadata: sourceEvent.metadata,
-            embeddingVectorId: vectorId,
+            embeddingVectorId: embeddingResult.legacyVectorId, // Keep for backwards compat
+            embeddingTitleId: embeddingResult.title.vectorId,
+            embeddingContentId: embeddingResult.content.vectorId,
+            embeddingSummaryId: embeddingResult.summary.vectorId,
             clusterId: clusterResult.clusterId,
           })
           .returning();

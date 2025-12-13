@@ -85,6 +85,20 @@
       "when": 1765585330023,
       "tag": "0011_sharp_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1765589111572,
+      "tag": "0012_low_changeling",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1765589478416,
+      "tag": "0013_naive_landau",
+      "breakpoints": true
     }
   ]
 }
