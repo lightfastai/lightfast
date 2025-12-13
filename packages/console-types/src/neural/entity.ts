@@ -37,3 +37,9 @@ export interface EntitySearchResult {
   /** Extraction confidence */
   confidence: number;
 }
+
+// Re-export LLM entity extraction types
+export type {
+  LLMExtractedEntity,
+  LLMEntityExtractionResponse,
+} from "@repo/console-validation";

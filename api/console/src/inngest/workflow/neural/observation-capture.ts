@@ -647,6 +647,18 @@ export const observationCapture = inngest.createFunction(
           observationCount: clusterResult.isNew ? 1 : 0, // Will be fetched in workflow
         },
       },
+      // LLM entity extraction for observations with rich content (>200 chars)
+      ...((sourceEvent.body?.length ?? 0) > 200
+        ? [
+            {
+              name: "apps-console/neural/llm-entity-extraction.requested" as const,
+              data: {
+                workspaceId,
+                observationId: observation.id,
+              },
+            },
+          ]
+        : []),
     ]);
 
     return {

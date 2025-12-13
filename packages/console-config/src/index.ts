@@ -28,3 +28,9 @@ export {
   GITHUB_CONFIG,
   type PrivateConfig,
 } from "./private-config";
+
+// Export neural memory configuration
+export {
+  LLM_ENTITY_EXTRACTION_CONFIG,
+  type LLMEntityExtractionConfig,
+} from "./neural";

@@ -674,6 +674,19 @@ const eventsMap = {
     }),
   },
 
+  /**
+   * LLM entity extraction event (fire-and-forget)
+   * Triggers async LLM-based entity extraction for observations with rich content
+   */
+  "apps-console/neural/llm-entity-extraction.requested": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Observation to extract entities from */
+      observationId: z.string(),
+    }),
+  },
+
   // ============================================================================
   // FUTURE EXAMPLES (NOT IMPLEMENTED - COMMENTED FOR REFERENCE)
   // ============================================================================
