@@ -36,6 +36,11 @@ pnpm --filter @repo/console-test-data inject -- \
   -w <workspace_id> -o <org_id> -i <index> \
   -s stress -c 100 --skip-verify
 
+# Use a custom dataset
+pnpm --filter @repo/console-test-data inject -- \
+  -w <workspace_id> -o <org_id> -i <index> \
+  -s /path/to/custom.json
+
 # Verify data
 pnpm --filter @repo/console-test-data verify -- \
   -w <workspace_id> -o <org_id> -i <index>
@@ -48,7 +53,7 @@ pnpm --filter @repo/console-test-data verify -- \
 | `-w, --workspace` | Workspace ID (required) |
 | `-o, --org` | Clerk Org ID (required) |
 | `-i, --index` | Pinecone index name (required) |
-| `-s, --scenario` | Scenario: `security`, `performance`, `balanced`, `stress` |
+| `-s, --scenario` | Dataset name or path (default: `security`) |
 | `-c, --count` | Event count for balanced/stress scenarios |
 | `--skip-wait` | Don't wait for workflow completion |
 | `--skip-verify` | Don't run verification after injection |
@@ -57,8 +62,8 @@ pnpm --filter @repo/console-test-data verify -- \
 
 ```typescript
 import {
-  securityScenario,
-  performanceScenario,
+  loadDataset,
+  listDatasets,
   balancedScenario,
   stressScenario,
   triggerObservationCapture,
@@ -67,8 +72,13 @@ import {
   printReport,
 } from '@repo/console-test-data';
 
-// 1. Generate events
-const events = securityScenario();  // or performanceScenario(), etc.
+// 1. Load events from a dataset
+const dataset = loadDataset('security');  // or 'performance', or path to JSON
+const events = dataset.events;
+
+// Or use scenario helpers
+const balanced = balancedScenario(6);  // Shuffled mix from all datasets
+const stress = stressScenario(100);    // Repeated events for load testing
 
 // 2. Trigger workflow
 const triggerResult = await triggerObservationCapture(events, {
@@ -92,57 +102,52 @@ const result = await verify({
 printReport(result);
 ```
 
-## Scenarios
+## Datasets
 
-| Scenario | Events | Description |
-|----------|--------|-------------|
-| `securityScenario()` | 3 | OAuth PR, API keys issue, credential rotation |
-| `performanceScenario()` | 3 | Redis caching PR, dashboard issue, deployment |
-| `balancedScenario(n)` | n | Shuffled mix from all scenarios |
-| `stressScenario(n)` | n | Repeated/varied events for load testing |
+Test data is defined in JSON files in the `datasets/` directory.
 
-## Event Builders
+| Dataset | Events | Description |
+|---------|--------|-------------|
+| `security` | 3 | OAuth PR, API keys issue, credential rotation |
+| `performance` | 3 | Redis caching PR, dashboard issue, deployment |
+| `balanced` | n | Shuffled mix from all datasets |
+| `stress` | n | Repeated/varied events for load testing |
 
-Build individual `SourceEvent` objects matching webhook transformer output:
+### Creating Custom Datasets
 
-```typescript
-import { githubPush, githubPR, githubIssue, vercelDeployment } from '@repo/console-test-data';
+Create a JSON file following the schema in `datasets/schema.json`:
 
-const pushEvent = githubPush({
-  repo: 'org/repo',
-  branch: 'main',
-  commitMessage: 'fix: resolve bug',
-  author: 'alice',
-  daysAgo: 1,
-});
-
-const prEvent = githubPR({
-  repo: 'org/repo',
-  prNumber: 123,
-  title: 'feat: add feature',
-  body: 'Description here',
-  action: 'merged',
-  author: 'bob',
-  labels: ['feature'],
-});
-
-const issueEvent = githubIssue({
-  repo: 'org/repo',
-  issueNumber: 456,
-  title: 'Bug: something broken',
-  body: 'Steps to reproduce...',
-  action: 'opened',
-  author: 'charlie',
-  labels: ['bug'],
-});
-
-const deployEvent = vercelDeployment({
-  projectName: 'my-app',
-  event: 'deployment.succeeded',
-  branch: 'main',
-  environment: 'production',
-});
+```json
+{
+  "$schema": "./schema.json",
+  "name": "my-dataset",
+  "description": "Custom test events",
+  "events": [
+    {
+      "source": "github",
+      "sourceType": "push",
+      "sourceId": "push:org/repo:abc123",
+      "title": "[Push] fix: resolve bug",
+      "body": "Fixed the bug\n\nDetails here...",
+      "actor": { "id": "github:alice", "name": "alice" },
+      "occurredAt": "-1d",
+      "references": [
+        { "type": "commit", "id": "abc123" },
+        { "type": "branch", "id": "main" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "org/repo"
+      }
+    }
+  ]
+}
 ```
+
+**Relative timestamps**: Use `-Nd` (days), `-Nh` (hours), `-Nw` (weeks), `-Nm` (months):
+- `-2d` = 2 days ago
+- `-1w` = 1 week ago
+- `-3h` = 3 hours ago
 
 ## Verification
 
@@ -193,25 +198,24 @@ SourceEvent → inngest.send() → observation.capture workflow
 ## Package Structure
 
 ```
-src/
-├── events/           # SourceEvent builders
-│   ├── github.ts     # githubPush, githubPR, githubIssue
-│   ├── vercel.ts     # vercelDeployment
+packages/console-test-data/
+├── datasets/           # JSON dataset files
+│   ├── schema.json     # JSON Schema for validation
+│   ├── security.json   # Security-focused events
+│   └── performance.json # Performance-focused events
+├── src/
+│   ├── loader/         # JSON dataset loading
+│   │   └── index.ts    # loadDataset, listDatasets, balancedScenario, stressScenario
+│   ├── trigger/        # Workflow triggering
+│   │   ├── trigger.ts  # triggerObservationCapture
+│   │   ├── wait.ts     # waitForCapture
+│   │   └── index.ts
+│   ├── verifier/       # Post-workflow verification
+│   │   ├── verifier.ts # verify, printReport
+│   │   └── index.ts
+│   ├── cli/
+│   │   ├── inject.ts
+│   │   └── verify.ts
 │   └── index.ts
-├── scenarios/        # Pre-built event sets
-│   ├── security.ts
-│   ├── performance.ts
-│   └── index.ts      # balancedScenario, stressScenario
-├── trigger/          # Workflow triggering
-│   ├── trigger.ts    # triggerObservationCapture
-│   ├── wait.ts       # waitForCapture
-│   └── index.ts
-├── verifier/         # Post-workflow verification
-│   ├── verifier.ts   # verify, printReport
-│   └── index.ts
-├── cli/
-│   ├── inject.ts
-│   └── verify.ts
-├── types.ts
-└── index.ts
+└── package.json
 ```

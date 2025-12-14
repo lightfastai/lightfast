@@ -166,9 +166,9 @@ const countPineconeVectors = async (
     ]);
 
     return {
-      titleVectors: titleResult.matches?.length ?? 0,
-      contentVectors: contentResult.matches?.length ?? 0,
-      summaryVectors: summaryResult.matches?.length ?? 0,
+      titleVectors: titleResult.matches.length,
+      contentVectors: contentResult.matches.length,
+      summaryVectors: summaryResult.matches.length,
     };
   } catch {
     return { titleVectors: 0, contentVectors: 0, summaryVectors: 0 };

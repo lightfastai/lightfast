@@ -1,0 +1,81 @@
+{
+  "$schema": "./schema.json",
+  "name": "security",
+  "description": "Security-focused events for testing significance scoring and entity extraction",
+  "events": [
+    {
+      "source": "github",
+      "sourceType": "pull-request.merged",
+      "sourceId": "pr:test/repo#101:merged",
+      "title": "[PR Merged] feat(auth): Implement OAuth2 PKCE flow for secure authentication",
+      "body": "feat(auth): Implement OAuth2 PKCE flow for secure authentication\n## Summary\nImplements PKCE (Proof Key for Code Exchange) extension to OAuth2 flow.\nThis prevents authorization code interception attacks.\n\n## Changes\n- Added PKCE challenge generation in `src/lib/auth/pkce.ts`\n- Updated OAuth callback to verify code_verifier\n- Added @security-team as reviewer for audit\n\n## Security Impact\n- Mitigates CVE-2019-XXXX class vulnerabilities\n- Required for mobile clients per IETF RFC 7636\n\nFixes #45",
+      "actor": { "id": "github:alice", "name": "alice" },
+      "occurredAt": "-2d",
+      "references": [
+        { "type": "pr", "id": "#101", "url": "https://github.com/test/repo/pull/101" },
+        { "type": "branch", "id": "feature-branch", "url": "https://github.com/test/repo/tree/feature-branch" },
+        { "type": "commit", "id": "abc123def456", "url": "https://github.com/test/repo/commit/abc123def456" },
+        { "type": "issue", "id": "#45", "label": "fixes" },
+        { "type": "label", "id": "security" },
+        { "type": "label", "id": "auth" },
+        { "type": "reviewer", "id": "security-team", "url": "https://github.com/security-team" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "test/repo",
+        "repoId": 123456,
+        "prNumber": 101,
+        "action": "merged",
+        "merged": true,
+        "additions": 50,
+        "deletions": 20,
+        "headRef": "feature-branch",
+        "baseRef": "main",
+        "headSha": "abc123def456"
+      }
+    },
+    {
+      "source": "github",
+      "sourceType": "issue.opened",
+      "sourceId": "issue:test/repo#102:opened",
+      "title": "[Issue Opened] Critical: API keys exposed in client bundle",
+      "body": "Critical: API keys exposed in client bundle\n## Problem\nFound API_KEY and JWT_SECRET exposed in the production bundle.\n\n## Steps to Reproduce\n1. Open browser DevTools\n2. Search for \"API_KEY\" in Sources\n\n## Impact\nAttackers could impersonate the server or forge JWTs.\n\n## Suggested Fix\nMove secrets to server-side environment variables.\nReference: src/config/keys.ts:15",
+      "actor": { "id": "github:bob", "name": "bob" },
+      "occurredAt": "-1d",
+      "references": [
+        { "type": "issue", "id": "#102", "url": "https://github.com/test/repo/issues/102" },
+        { "type": "label", "id": "security" },
+        { "type": "label", "id": "critical" },
+        { "type": "label", "id": "bug" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "test/repo",
+        "repoId": 123456,
+        "issueNumber": 102,
+        "action": "opened"
+      }
+    },
+    {
+      "source": "github",
+      "sourceType": "push",
+      "sourceId": "push:test/repo:def789abc012",
+      "title": "[Push] fix(security): Rotate compromised credentials",
+      "body": "fix(security): Rotate compromised credentials\n\n- Regenerated DATABASE_URL with new password\n- Updated Redis connection string\n- Invalidated all existing JWT tokens\n\nBREAKING: All users will need to re-authenticate",
+      "actor": { "id": "github:charlie", "name": "charlie" },
+      "occurredAt": "-0d",
+      "references": [
+        { "type": "commit", "id": "def789abc012", "url": "https://github.com/test/repo/commit/def789abc012" },
+        { "type": "branch", "id": "main", "url": "https://github.com/test/repo/tree/main" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "test/repo",
+        "repoId": 123456,
+        "branch": "main",
+        "afterSha": "def789abc012",
+        "fileCount": 3
+      }
+    }
+  ]
+}

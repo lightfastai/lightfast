@@ -1,0 +1,78 @@
+{
+  "$schema": "./schema.json",
+  "name": "performance",
+  "description": "Performance-focused events for testing optimization-related content",
+  "events": [
+    {
+      "source": "github",
+      "sourceType": "pull-request.merged",
+      "sourceId": "pr:test/repo#201:merged",
+      "title": "[PR Merged] perf: Implement Redis caching for API responses",
+      "body": "perf: Implement Redis caching for API responses\n## Summary\nAdded Redis caching layer to reduce database load.\n\n## Changes\n- New cache module at `src/lib/cache.ts`\n- Configured CACHE_TTL via environment variable\n- Added cache invalidation on writes\n\n## Performance Impact\n- GET /api/dashboard: 450ms → 45ms (90% reduction)\n- Database queries reduced by 75%\n\nTested with @david-perf",
+      "actor": { "id": "github:david", "name": "david" },
+      "occurredAt": "-3d",
+      "references": [
+        { "type": "pr", "id": "#201", "url": "https://github.com/test/repo/pull/201" },
+        { "type": "branch", "id": "feature-branch", "url": "https://github.com/test/repo/tree/feature-branch" },
+        { "type": "commit", "id": "perf123hash", "url": "https://github.com/test/repo/commit/perf123hash" },
+        { "type": "label", "id": "performance" },
+        { "type": "label", "id": "enhancement" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "test/repo",
+        "repoId": 234567,
+        "prNumber": 201,
+        "action": "merged",
+        "merged": true,
+        "additions": 50,
+        "deletions": 20,
+        "headRef": "feature-branch",
+        "baseRef": "main",
+        "headSha": "perf123hash"
+      }
+    },
+    {
+      "source": "github",
+      "sourceType": "issue.opened",
+      "sourceId": "issue:test/repo#202:opened",
+      "title": "[Issue Opened] Dashboard loading time exceeds 5s on production",
+      "body": "Dashboard loading time exceeds 5s on production\n## Problem\nThe GET /api/dashboard endpoint is taking >5 seconds on production.\n\n## Investigation\n- N+1 query detected in user list\n- No database indexes on frequently queried columns\n\n## Environment\n- Production cluster with 1000+ concurrent users\n- Redis not currently deployed",
+      "actor": { "id": "github:eve", "name": "eve" },
+      "occurredAt": "-5d",
+      "references": [
+        { "type": "issue", "id": "#202", "url": "https://github.com/test/repo/issues/202" },
+        { "type": "label", "id": "performance" },
+        { "type": "label", "id": "bug" }
+      ],
+      "metadata": {
+        "testData": true,
+        "repoFullName": "test/repo",
+        "repoId": 234567,
+        "issueNumber": 202,
+        "action": "opened"
+      }
+    },
+    {
+      "source": "vercel",
+      "sourceType": "deployment.succeeded",
+      "sourceId": "deploy:lightfast-app:dpl_abc123",
+      "title": "Deployed lightfast-app to production",
+      "body": "Deployment succeeded for lightfast-app\n\nCommit: perf: enable edge runtime for API routes\nBranch: main\nEnvironment: production",
+      "actor": { "id": "vercel:frank", "name": "frank" },
+      "occurredAt": "-1d",
+      "references": [
+        { "type": "deployment", "id": "dpl_abc123", "url": "https://vercel.com/lightfast/lightfast-app/dpl_abc123" },
+        { "type": "branch", "id": "main" }
+      ],
+      "metadata": {
+        "testData": true,
+        "projectId": "prj_lightfast123",
+        "projectName": "lightfast-app",
+        "deploymentId": "dpl_abc123",
+        "target": "production",
+        "deploymentUrl": "https://lightfast-app.vercel.app"
+      }
+    }
+  ]
+}

@@ -1,24 +1,14 @@
 #!/usr/bin/env npx tsx
 /**
- * Test Data Injection CLI (Workflow-Driven)
+ * Test Data Injection CLI
  *
- * Triggers real Inngest workflow to process test data through production pipeline.
+ * Injects JSON dataset events via Inngest workflow.
  *
  * Usage:
- *   pnpm --filter @repo/console-test-data inject -- --workspace <id> --org <clerkOrgId> --index <name> [options]
- *
- * Options:
- *   --workspace, -w   Workspace ID (required)
- *   --org, -o         Clerk Org ID (required)
- *   --index, -i       Pinecone index name (required)
- *   --scenario, -s    Scenario name: day2, balanced, stress (default: day2)
- *   --count, -c       Event count for balanced/stress scenarios
- *   --skip-wait       Don't wait for workflow completion
- *   --skip-verify     Don't run verification after injection
- *   --help, -h        Show help
+ *   pnpm inject -- --workspace <id> --org <clerkOrgId> --index <name> [options]
  */
 
-import { securityScenario, performanceScenario, balancedScenario, stressScenario } from "../scenarios";
+import { loadDataset, listDatasets, balancedScenario, stressScenario } from "../loader";
 import { triggerObservationCapture } from "../trigger/trigger";
 import { waitForCapture } from "../trigger/wait";
 import { verify, printReport } from "../verifier/verifier";
@@ -52,15 +42,12 @@ function parseArgs() {
 }
 
 function showHelp() {
+  const datasets = listDatasets();
   console.log(`
-Test Data Injection CLI (Workflow-Driven)
-
-Triggers real Inngest workflow to process test data through production pipeline.
-This ensures tests exercise significance scoring, entity extraction, multi-view
-embeddings, cluster assignment, and actor resolution.
+Test Data Injection CLI
 
 Usage:
-  pnpm --filter @repo/console-test-data inject -- [options]
+  pnpm inject -- [options]
 
 Required:
   --workspace, -w   Workspace ID
@@ -68,28 +55,18 @@ Required:
   --index, -i       Pinecone index name
 
 Options:
-  --scenario, -s    Scenario name (default: security)
-                    - security: Security-focused events (3 events)
-                    - performance: Performance-focused events (3 events)
-                    - balanced: Mixed set from all scenarios (use --count)
-                    - stress: High volume test (use --count)
-  --count, -c       Event count for balanced/stress scenarios (default: 6)
+  --scenario, -s    Dataset name or path (default: security)
+                    Available: ${datasets.join(", ")}, balanced, stress
+  --count, -c       Event count for balanced/stress (default: 6)
   --skip-wait       Don't wait for workflow completion
-  --skip-verify     Don't run verification after injection
-  --help, -h        Show this help message
+  --skip-verify     Don't run verification
+  --help, -h        Show this help
 
 Examples:
-  # Inject security scenario (3 events)
-  pnpm inject -- -w <id> -o <orgId> -i <indexName>
-
-  # Inject performance scenario
-  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s performance
-
-  # Inject balanced mix of events
-  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s balanced -c 6
-
-  # Stress test with 100 events
-  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s stress -c 100 --skip-verify
+  pnpm inject -- -w <id> -o <orgId> -i <index>
+  pnpm inject -- -w <id> -o <orgId> -i <index> -s performance
+  pnpm inject -- -w <id> -o <orgId> -i <index> -s balanced -c 10
+  pnpm inject -- -w <id> -o <orgId> -i <index> -s /path/to/custom.json
 `);
 }
 
@@ -115,18 +92,16 @@ async function main() {
     process.exit(1);
   }
 
-  // Select scenario and get events
+  // Load events based on scenario
   const events =
-    scenarioName === "security"
-      ? securityScenario()
-      : scenarioName === "performance"
-        ? performanceScenario()
-        : scenarioName === "stress"
-          ? stressScenario(count)
-          : balancedScenario(count);
+    scenarioName === "stress"
+      ? stressScenario(count)
+      : scenarioName === "balanced"
+        ? balancedScenario(count)
+        : loadDataset(scenarioName).events;
 
   console.log("=".repeat(60));
-  console.log("Test Data Injection (Workflow Mode)");
+  console.log("Test Data Injection");
   console.log("=".repeat(60));
   console.log(`  Workspace: ${workspaceId}`);
   console.log(`  Org: ${clerkOrgId}`);
@@ -137,7 +112,6 @@ async function main() {
 
   console.log(`Triggering ${events.length} events via Inngest workflow...\n`);
 
-  // Trigger events
   const triggerResult = await triggerObservationCapture(events, {
     workspaceId,
     onProgress: (current, total) => {
@@ -147,33 +121,28 @@ async function main() {
 
   console.log(`\n\nTriggered ${triggerResult.triggered} events in ${triggerResult.duration}ms`);
 
-  // Wait for completion
   if (!skipWait) {
     console.log("\nWaiting for workflow completion...");
     const waitResult = await waitForCapture({
       workspaceId,
       sourceIds: triggerResult.sourceIds,
-      timeoutMs: 120000, // 2 minutes
+      timeoutMs: 120000,
     });
 
     console.log(`Completed: ${waitResult.completed}/${triggerResult.triggered}`);
     if (waitResult.pending > 0) {
-      console.log(
-        `Pending/Filtered: ${waitResult.pending} (some may be below significance threshold)`
-      );
+      console.log(`Pending/Filtered: ${waitResult.pending}`);
     }
     if (waitResult.timedOut) {
-      console.log("Warning: Wait timed out, some events may still be processing");
+      console.log("Warning: Wait timed out");
     }
   }
 
-  // Verify results
   if (!skipVerify) {
     console.log("\nVerifying results...");
     const verifyResult = await verify({ workspaceId, clerkOrgId, indexName });
     printReport(verifyResult);
 
-    // Exit with error if health checks fail
     const allHealthy =
       verifyResult.health.multiViewComplete &&
       verifyResult.health.entitiesExtracted &&

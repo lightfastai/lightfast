@@ -5,16 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./events": "./src/events/index.ts",
     "./trigger": "./src/trigger/index.ts",
     "./verifier": "./src/verifier/index.ts",
-    "./scenarios": "./src/scenarios/index.ts"
+    "./loader": "./src/loader/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "inject": "tsx src/cli/inject.ts",
-    "verify": "tsx src/cli/verify.ts"
+    "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
+    "inject": "pnpm with-env tsx src/cli/inject.ts",
+    "verify": "pnpm with-env tsx src/cli/verify.ts"
   },
   "dependencies": {
     "@api/console": "workspace:*",
@@ -27,6 +27,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "tsx": "^4.19.2",
     "typescript": "catalog:"

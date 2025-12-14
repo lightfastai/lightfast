@@ -5,7 +5,7 @@
  */
 
 import type { SourceEvent } from "@repo/console-types";
-import { inngest } from "@api/console/inngest";
+import { inngest } from "@api/console/inngest/client";
 
 export interface TriggerOptions {
   workspaceId: string;
