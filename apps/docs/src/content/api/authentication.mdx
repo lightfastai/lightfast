@@ -1,322 +1,195 @@
 ---
 title: Authentication
-description: API authentication and security
+description: API authentication with dual auth support
 ---
 
 import { CodeBlock } from '@/src/components/code-block';
 
-Learn how to authenticate with the Lightfast Memory API and manage API keys securely.
+All Lightfast API requests require authentication and a workspace identifier. The API supports two authentication methods: API keys for external clients and session authentication for the Console UI.
 
-## API Keys
+## Authentication Methods
 
-All API requests must include an API key in the `Authorization` header:
+### API Key Authentication
+
+For external API clients, use an API key in the `Authorization` header along with the `X-Workspace-ID` header:
 
 <CodeBlock language="bash">
-{`Authorization: Bearer lf_sk_live_abc123...`}
+{`curl -X POST https://lightfast.ai/api/v1/search \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "X-Workspace-ID: ws_abc123" \\
+  -H "Content-Type: application/json" \\
+  -d '{"query": "authentication implementation"}'`}
 </CodeBlock>
 
-## Key Types
+**Required Headers:**
 
-### Secret Keys
+| Header | Description |
+|--------|-------------|
+| `Authorization` | `Bearer <api-key>` - Your API key |
+| `X-Workspace-ID` | The workspace ID to query |
+| `Content-Type` | `application/json` |
 
-Secret keys (`lf_sk_*`) provide full access to the API and should only be used in server-side applications.
+### Session Authentication
 
-<CodeBlock language="typescript">
-{`// ✅ Server-side (Node.js, Python backend, etc.)
-const memory = createMemory({
-  apiKey: process.env.LIGHTFAST_SECRET_KEY // lf_sk_*
-})`}
+For the Console UI, authentication uses Clerk session cookies. The `X-Workspace-ID` header is still required:
+
+<CodeBlock language="bash">
+{`# Session auth (used by Console UI)
+Cookie: __session=<clerk-session>
+X-Workspace-ID: ws_abc123`}
 </CodeBlock>
 
-<CodeBlock language="typescript">
-{`// ❌ NEVER use secret keys in client-side code
-// This exposes your key to anyone who inspects the code
-const memory = createMemory({
-  apiKey: 'lf_sk_live_abc123...' // DANGER!
-})`}
-</CodeBlock>
+Session authentication validates that the user is a member of the organization that owns the workspace.
 
-### Publishable Keys
+## Getting Your API Key
 
-Publishable keys (`lf_pk_*`) provide read-only access and can be safely used in client-side applications.
-
-<CodeBlock language="typescript">
-{`// ✅ Client-side (React, Vue, browser JavaScript)
-const memory = createMemory({
-  apiKey: process.env.NEXT_PUBLIC_LIGHTFAST_KEY // lf_pk_*
-})
-
-// Can only perform searches, not writes
-const results = await memory.searchMemory({
-  query: 'user query'
-})`}
-</CodeBlock>
-
-### Restricted Keys
-
-Restricted keys (`lf_rk_*`) provide custom scoped access for specific use cases.
-
-<CodeBlock language="json">
-{`{
-  "scopes": [
-    "memory:read:github-*",      // Read any GitHub collection
-    "memory:write:discord-123456", // Write to specific Discord
-    "memory:delete:linear-team-eng" // Delete from Linear
-  ],
-  "collections": ["github-lightfast", "discord-123456"],
-  "rateLimit": "1000/hour",
-  "expiresAt": "2025-12-31T23:59:59Z"
-}`}
-</CodeBlock>
-
-## Managing API Keys
-
-### Generate Keys
-
-Create new API keys from the [Lightfast dashboard](https://lightfast.ai/dashboard/api-keys):
-
-1. Navigate to Settings → API Keys
-2. Click "Create New Key"
-3. Select key type and permissions
+1. Sign in to the [Lightfast Console](https://lightfast.ai)
+2. Navigate to **Settings** → **API Keys**
+3. Click **Create New Key**
 4. Copy the key immediately (it won't be shown again)
 
-### Rotate Keys
+## Getting Your Workspace ID
 
-Regularly rotate keys for security:
-
-<CodeBlock language="typescript">
-{`// 1. Generate new key in dashboard
-// 2. Update your environment variables
-// 3. Deploy with new key
-// 4. Revoke old key after verification
-
-// Use environment variables for easy rotation
-const memory = createMemory({
-  apiKey: process.env.LIGHTFAST_API_KEY
-})`}
-</CodeBlock>
-
-### Revoke Keys
-
-Immediately revoke compromised keys:
-
-1. Go to [API Keys dashboard](https://lightfast.ai/dashboard/api-keys)
-2. Find the compromised key
-3. Click "Revoke"
-4. Generate a new key if needed
-
-## Environment Variables
-
-### Node.js / Next.js
-
-<CodeBlock language="bash">
-{`# .env.local
-LIGHTFAST_API_KEY=lf_sk_live_abc123...
-
-# For client-side (Next.js)
-NEXT_PUBLIC_LIGHTFAST_KEY=lf_pk_live_xyz789...`}
-</CodeBlock>
-
-<CodeBlock language="typescript">
-{`// Server-side
-const apiKey = process.env.LIGHTFAST_API_KEY
-
-// Client-side (Next.js)
-const publicKey = process.env.NEXT_PUBLIC_LIGHTFAST_KEY`}
-</CodeBlock>
-
-### Python
-
-<CodeBlock language="bash">
-{`# .env
-LIGHTFAST_API_KEY=lf_sk_live_abc123...`}
-</CodeBlock>
-
-<CodeBlock language="python">
-{`import os
-from dotenv import load_dotenv
-
-load_dotenv()
-api_key = os.getenv("LIGHTFAST_API_KEY")`}
-</CodeBlock>
-
-### Docker
-
-<CodeBlock language="dockerfile">
-{`# Dockerfile
-ENV LIGHTFAST_API_KEY=\${LIGHTFAST_API_KEY}`}
-</CodeBlock>
-
-<CodeBlock language="bash">
-{`# Run with environment variable
-docker run -e LIGHTFAST_API_KEY=lf_sk_live_abc123... myapp`}
-</CodeBlock>
+Your workspace ID can be found in:
+- The Console URL: `https://lightfast.ai/{org}/{workspace}` → workspace ID is in settings
+- Settings → Workspace → Workspace ID
 
 ## Security Best Practices
 
+### Use Environment Variables
+
+Never hardcode API keys in your source code:
+
+<CodeBlock language="typescript">
+{`// ✅ Good - load from environment
+const apiKey = process.env.LIGHTFAST_API_KEY
+const workspaceId = process.env.LIGHTFAST_WORKSPACE_ID
+
+// ❌ Bad - hardcoded credentials
+const apiKey = 'lf_abc123...'`}
+</CodeBlock>
+
+### Environment Setup
+
+<CodeBlock language="bash">
+{`# .env.local
+LIGHTFAST_API_KEY=your-api-key
+LIGHTFAST_WORKSPACE_ID=ws_abc123`}
+</CodeBlock>
+
 ### Never Commit Keys
 
-Add API keys to `.gitignore`:
+Add environment files to `.gitignore`:
 
 <CodeBlock language="bash">
 {`# .gitignore
 .env
 .env.local
-.env.production
-*.env`}
+.env.production`}
 </CodeBlock>
 
-### Use Environment Variables
+### Server-Side Only
 
-Always load keys from environment:
-
-<CodeBlock language="typescript">
-{`// ✅ Good
-const apiKey = process.env.LIGHTFAST_API_KEY
-
-// ❌ Bad
-const apiKey = 'lf_sk_live_abc123...'`}
-</CodeBlock>
-
-### Restrict Key Permissions
-
-Use the minimum permissions needed:
-
-- Client apps: Use publishable keys (read-only)
-- CI/CD: Use restricted keys with specific scopes
-- Production: Use secret keys only on secure servers
-
-### Monitor Key Usage
-
-Check your API key usage regularly:
-
-- Review usage in the dashboard
-- Set up alerts for unusual activity
-- Audit logs for sensitive operations
-
-### Implement Request Signing
-
-For additional security, sign requests:
+API keys should only be used in server-side code:
 
 <CodeBlock language="typescript">
-{`import crypto from 'crypto'
-
-function signRequest(payload: string, secret: string) {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex')
-}
-
-// Include signature in request
-const signature = signRequest(JSON.stringify(data), apiKey)
-headers['X-Signature'] = signature`}
-</CodeBlock>
-
-## OAuth Integration
-
-For user-specific access, integrate with OAuth providers:
-
-### GitHub OAuth
-
-<CodeBlock language="typescript">
-{`// Users authenticate with GitHub
-const githubToken = await getGitHubOAuthToken()
-
-// Use token for GitHub-specific collections
-const memory = createMemory({
-  apiKey: process.env.LIGHTFAST_API_KEY,
-  auth: {
-    github: githubToken
-  }
+{`// ✅ Server-side (Node.js, API routes, server actions)
+const response = await fetch('https://lightfast.ai/api/v1/search', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+    'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ query: 'authentication' })
 })
 
-// Can now access private repos the user has access to
-const results = await memory.searchMemory({
-  collections: ['github-private-repo']
-})`}
+// ❌ Never expose API keys in client-side code`}
 </CodeBlock>
 
-### Discord OAuth
+## Error Responses
+
+Authentication errors return JSON with an error code and message:
+
+<CodeBlock language="json">
+{`{
+  "error": "UNAUTHORIZED",
+  "message": "Authentication required. Provide 'Authorization: Bearer <api-key>' header or sign in.",
+  "requestId": "req_abc123"
+}`}
+</CodeBlock>
+
+### Error Codes
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | No authentication provided or invalid API key |
+| 400 | `BAD_REQUEST` | Missing `X-Workspace-ID` header |
+| 403 | `FORBIDDEN` | User not authorized to access the workspace |
+| 404 | `NOT_FOUND` | Workspace not found |
+
+### Handling Errors
 
 <CodeBlock language="typescript">
-{`// Users authenticate with Discord
-const discordToken = await getDiscordOAuthToken()
+{`const response = await fetch('https://lightfast.ai/api/v1/search', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${apiKey}\`,
+    'X-Workspace-ID': workspaceId,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ query: 'search query' })
+})
 
-// Use token for Discord-specific collections
-const memory = createMemory({
-  apiKey: process.env.LIGHTFAST_API_KEY,
-  auth: {
-    discord: discordToken
+if (!response.ok) {
+  const error = await response.json()
+
+  switch (error.error) {
+    case 'UNAUTHORIZED':
+      console.error('Invalid or missing API key')
+      break
+    case 'BAD_REQUEST':
+      console.error('Missing X-Workspace-ID header')
+      break
+    case 'FORBIDDEN':
+      console.error('No access to this workspace')
+      break
+    case 'NOT_FOUND':
+      console.error('Workspace not found')
+      break
   }
-})`}
-</CodeBlock>
-
-## IP Allowlisting
-
-Restrict API key usage to specific IPs:
-
-<CodeBlock language="json">
-{`{
-  "apiKey": "lf_sk_live_abc123...",
-  "allowedIPs": [
-    "203.0.113.0/24",    // Office network
-    "198.51.100.42",     // Production server
-    "2001:db8::/32"      // IPv6 range
-  ]
 }`}
 </CodeBlock>
 
-## Rate Limiting by Key
+## Example: Complete Request
 
-Different key types have different rate limits:
+<CodeBlock language="typescript">
+{`async function searchWorkspace(query: string) {
+  const response = await fetch('https://lightfast.ai/api/v1/search', {
+    method: 'POST',
+    headers: {
+      'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+      'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID!,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query })
+  })
 
-| Key Type | Requests/min | Requests/hour |
-|----------|--------------|---------------|
-| Secret | 1000 | 30,000 |
-| Publishable | 100 | 3,000 |
-| Restricted | Custom | Custom |
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(\`API error: \${error.message}\`)
+  }
 
-## Troubleshooting
+  return response.json()
+}
 
-### Invalid API Key
-
-<CodeBlock language="json">
-{`{
-  "error": "authentication_failed",
-  "message": "Invalid API key"
-}`}
+// Usage
+const results = await searchWorkspace('how does authentication work?')`}
 </CodeBlock>
 
-**Solutions:**
-- Check key is correct and not truncated
-- Verify key hasn't been revoked
-- Ensure proper `Bearer` prefix in header
+## Next Steps
 
-### Insufficient Permissions
-
-<CodeBlock language="json">
-{`{
-  "error": "permission_denied",
-  "message": "Key does not have write access"
-}`}
-</CodeBlock>
-
-**Solutions:**
-- Use secret key for write operations
-- Check restricted key scopes
-- Verify collection access permissions
-
-### Rate Limit Exceeded
-
-<CodeBlock language="json">
-{`{
-  "error": "rate_limit_exceeded",
-  "message": "Rate limit exceeded. Retry after 42 seconds."
-}`}
-</CodeBlock>
-
-**Solutions:**
-- Implement exponential backoff
-- Upgrade to higher tier
-- Use request batching
+- **[POST /v1/search](/api/search)** - Search your team's knowledge
+- **[POST /v1/contents](/api/contents)** - Retrieve full content by ID
+- **[POST /v1/findsimilar](/api/findsimilar)** - Find semantically similar content
+- **[Error Handling](/api/errors)** - Complete error code reference

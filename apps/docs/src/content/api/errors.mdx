@@ -5,7 +5,7 @@ description: API error codes and handling strategies
 
 import { CodeBlock } from '@/src/components/code-block';
 
-Learn how to handle errors when working with the Lightfast Memory API.
+Learn how to handle errors when working with the Lightfast API.
 
 ## Error Response Format
 
@@ -13,462 +13,318 @@ All errors follow a consistent JSON structure:
 
 <CodeBlock language="json">
 {`{
-  "error": "rate_limit_exceeded",
-  "message": "Rate limit exceeded. Retry after 42 seconds.",
-  "details": {
-    "retryAfter": 42,
-    "limit": 600,
-    "remaining": 0
-  },
+  "error": "UNAUTHORIZED",
+  "message": "Authentication required. Provide 'Authorization: Bearer <api-key>' header or sign in.",
   "requestId": "req_abc123xyz"
 }`}
 </CodeBlock>
+
+| Field | Description |
+|-------|-------------|
+| `error` | Error code (uppercase) |
+| `message` | Human-readable error description |
+| `requestId` | Unique request ID for debugging |
 
 ## Error Codes
 
-### 400 Bad Request
+### INVALID_JSON (400)
 
-The request was invalid or malformed.
+The request body contains invalid JSON.
 
 <CodeBlock language="json">
 {`{
-  "error": "invalid_request",
-  "message": "Content exceeds maximum length of 8000 tokens",
-  "details": {
-    "field": "content",
-    "maxTokens": 8000,
-    "providedTokens": 9245
-  }
+  "error": "INVALID_JSON",
+  "message": "Failed to parse request body as JSON",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
 **Common causes:**
-- Missing required parameters
+- Malformed JSON syntax
+- Missing closing brackets or quotes
+- Invalid escape sequences
+
+### VALIDATION_ERROR (400)
+
+Request parameters failed schema validation.
+
+<CodeBlock language="json">
+{`{
+  "error": "VALIDATION_ERROR",
+  "message": "Query must not be empty",
+  "requestId": "req_abc123"
+}`}
+</CodeBlock>
+
+**Common causes:**
+- Missing required fields (e.g., `query` for search)
 - Invalid parameter types
-- Content too large
-- Malformed JSON
+- Values outside allowed ranges (e.g., `limit > 100`)
 
-### 401 Unauthorized
+### BAD_REQUEST (400)
 
-Authentication failed or API key is invalid.
+The request is missing required headers.
 
 <CodeBlock language="json">
 {`{
-  "error": "authentication_failed",
-  "message": "Invalid API key"
+  "error": "BAD_REQUEST",
+  "message": "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
 **Common causes:**
-- Missing API key
-- Invalid or revoked API key
-- Incorrect `Authorization` header format
+- Missing `X-Workspace-ID` header
+- Empty workspace ID value
 
-### 403 Forbidden
+### UNAUTHORIZED (401)
 
-The API key doesn't have permission for this operation.
+Authentication failed or was not provided.
 
 <CodeBlock language="json">
 {`{
-  "error": "permission_denied",
-  "message": "This key does not have write access to collection 'github-private'"
+  "error": "UNAUTHORIZED",
+  "message": "Authentication required. Provide 'Authorization: Bearer <api-key>' header or sign in.",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
 **Common causes:**
-- Using publishable key for write operations
-- Accessing restricted collections
-- Exceeding key scope permissions
+- Missing `Authorization` header
+- Invalid API key
+- Expired or revoked API key
+- Incorrect `Bearer` prefix
 
-### 404 Not Found
+### FORBIDDEN (403)
 
-The requested resource doesn't exist.
+The authenticated user does not have access to the workspace.
 
 <CodeBlock language="json">
 {`{
-  "error": "resource_not_found",
-  "message": "Memory with id 'pr-127' not found in collection 'github-lightfast'"
+  "error": "FORBIDDEN",
+  "message": "Access denied to this workspace",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
 **Common causes:**
-- Invalid memory ID
-- Non-existent collection
-- Memory was deleted
+- User is not a member of the workspace's organization
+- API key does not have access to the workspace
 
-### 409 Conflict
+### NOT_FOUND (404)
 
-The resource already exists.
+The requested resource does not exist.
 
 <CodeBlock language="json">
 {`{
-  "error": "conflict",
-  "message": "Memory with id 'pr-127' already exists in collection 'github-lightfast'"
+  "error": "NOT_FOUND",
+  "message": "Workspace not found",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
-**Solution:** Use `updateMemory` instead of `addMemory` for existing memories.
+**Common causes:**
+- Invalid workspace ID
+- Workspace was deleted
+- Content ID does not exist
 
-### 429 Too Many Requests
+### METHOD_NOT_ALLOWED (405)
 
-Rate limit exceeded.
+The HTTP method is not supported for this endpoint.
 
 <CodeBlock language="json">
 {`{
-  "error": "rate_limit_exceeded",
-  "message": "Rate limit exceeded. Retry after 42 seconds.",
-  "details": {
-    "retryAfter": 42,
-    "limit": 600,
-    "remaining": 0,
-    "reset": 1642694400
-  }
+  "error": "METHOD_NOT_ALLOWED",
+  "message": "Method GET not allowed. Use POST.",
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
-**Solution:** Implement exponential backoff and retry logic.
+**Solution:** All API endpoints use `POST` method.
 
-### 500 Internal Server Error
+### CONFIG_ERROR (500)
 
-An unexpected error occurred on the server.
+The workspace is not properly configured.
 
 <CodeBlock language="json">
 {`{
-  "error": "internal_error",
+  "error": "CONFIG_ERROR",
+  "message": "Workspace not configured for search",
+  "requestId": "req_abc123"
+}`}
+</CodeBlock>
+
+**Solution:** Ensure the workspace has connected sources and completed initial indexing.
+
+### INTERNAL_ERROR (500)
+
+An unexpected server error occurred.
+
+<CodeBlock language="json">
+{`{
+  "error": "INTERNAL_ERROR",
   "message": "An unexpected error occurred",
-  "requestId": "req_abc123xyz"
+  "requestId": "req_abc123"
 }`}
 </CodeBlock>
 
-**Solution:** Retry with exponential backoff. If persists, contact support with the `requestId`.
+**Solution:** Retry with exponential backoff. If the error persists, contact support with the `requestId`.
 
-### 503 Service Unavailable
-
-The service is temporarily unavailable.
-
-<CodeBlock language="json">
-{`{
-  "error": "service_unavailable",
-  "message": "Service is temporarily unavailable for maintenance",
-  "details": {
-    "retryAfter": 300
-  }
-}`}
-</CodeBlock>
-
-## Error Handling Strategies
+## Error Handling Examples
 
 ### Basic Error Handling
 
 <CodeBlock language="typescript">
-{`try {
-  const result = await memory.addMemory({
-    collection: 'github-lightfast',
-    id: 'pr-127',
-    content: 'PR content...'
-  })
-} catch (error) {
-  if (error.status === 409) {
-    // Memory exists, update instead
-    await memory.updateMemory({
-      collection: 'github-lightfast',
-      id: 'pr-127',
-      content: 'Updated content...'
-    })
-  } else {
-    console.error('Failed to add memory:', error.message)
-    throw error
+{`const response = await fetch('https://lightfast.ai/api/v1/search', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${apiKey}\`,
+    'X-Workspace-ID': workspaceId,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ query: 'authentication' })
+})
+
+if (!response.ok) {
+  const error = await response.json()
+
+  switch (error.error) {
+    case 'UNAUTHORIZED':
+      console.error('Invalid or missing API key')
+      break
+    case 'BAD_REQUEST':
+      console.error('Missing X-Workspace-ID header')
+      break
+    case 'FORBIDDEN':
+      console.error('No access to this workspace')
+      break
+    case 'NOT_FOUND':
+      console.error('Workspace not found')
+      break
+    case 'VALIDATION_ERROR':
+      console.error('Invalid request:', error.message)
+      break
+    default:
+      console.error('API error:', error.message)
   }
-}`}
+
+  return
+}
+
+const data = await response.json()`}
 </CodeBlock>
 
 ### Retry with Exponential Backoff
 
 <CodeBlock language="typescript">
-{`async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3,
-  initialDelay = 1000
-): Promise<T> {
-  for (let i = 0; i < maxRetries; i++) {
+{`async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await fn()
-    } catch (error: any) {
-      const isLastAttempt = i === maxRetries - 1
+      const response = await fetch(url, options)
 
-      // Don't retry on client errors (4xx)
-      if (error.status >= 400 && error.status < 500) {
-        throw error
+      if (response.ok) {
+        return response.json()
       }
 
-      if (isLastAttempt) {
-        throw error
+      const error = await response.json()
+
+      // Don't retry client errors (4xx)
+      if (response.status >= 400 && response.status < 500) {
+        throw new Error(\`API error: \${error.message}\`)
       }
 
-      // Use retry-after header if available
-      const retryAfter = error.details?.retryAfter
-      const delay = retryAfter
-        ? retryAfter * 1000
-        : initialDelay * Math.pow(2, i)
+      // Retry server errors (5xx)
+      if (attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000 // 1s, 2s, 4s
+        console.log(\`Retrying in \${delay}ms...\`)
+        await new Promise(r => setTimeout(r, delay))
+        continue
+      }
 
-      console.log(\`Retry attempt \${i + 1} after \${delay}ms\`)
-      await new Promise(resolve => setTimeout(resolve, delay))
+      throw new Error(\`API error after \${maxRetries} retries: \${error.message}\`)
+
+    } catch (error) {
+      if (attempt === maxRetries - 1) throw error
     }
   }
-
-  throw new Error('Max retries exceeded')
 }
 
 // Usage
-const result = await retryWithBackoff(async () => {
-  return await memory.searchMemory({
-    query: 'auth refactor'
-  })
-})`}
+const results = await fetchWithRetry(
+  'https://lightfast.ai/api/v1/search',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': \`Bearer \${apiKey}\`,
+      'X-Workspace-ID': workspaceId,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query: 'authentication' })
+  }
+)`}
 </CodeBlock>
 
-### Comprehensive Error Handler
+### TypeScript Error Types
 
 <CodeBlock language="typescript">
-{`class MemoryAPIError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public status: number,
-    public details?: any,
-    public requestId?: string
-  ) {
-    super(message)
-    this.name = 'MemoryAPIError'
-  }
-}
-
-async function handleAPIError(error: any): Promise<never> {
-  const { error: code, message, details, requestId } = error.response?.data || {}
-
-  switch (error.status) {
-    case 400:
-      throw new MemoryAPIError(
-        code || 'invalid_request',
-        message || 'Invalid request',
-        400,
-        details,
-        requestId
-      )
-
-    case 401:
-      throw new MemoryAPIError(
-        code || 'authentication_failed',
-        message || 'Authentication failed',
-        401,
-        details,
-        requestId
-      )
-
-    case 403:
-      throw new MemoryAPIError(
-        code || 'permission_denied',
-        message || 'Permission denied',
-        403,
-        details,
-        requestId
-      )
-
-    case 404:
-      throw new MemoryAPIError(
-        code || 'resource_not_found',
-        message || 'Resource not found',
-        404,
-        details,
-        requestId
-      )
-
-    case 409:
-      throw new MemoryAPIError(
-        code || 'conflict',
-        message || 'Resource already exists',
-        409,
-        details,
-        requestId
-      )
-
-    case 429:
-      throw new MemoryAPIError(
-        code || 'rate_limit_exceeded',
-        message || 'Rate limit exceeded',
-        429,
-        details,
-        requestId
-      )
-
-    case 500:
-    case 502:
-    case 503:
-    case 504:
-      throw new MemoryAPIError(
-        code || 'internal_error',
-        message || 'Internal server error',
-        error.status,
-        details,
-        requestId
-      )
-
-    default:
-      throw new MemoryAPIError(
-        'unknown_error',
-        message || 'An unknown error occurred',
-        error.status || 500,
-        details,
-        requestId
-      )
-  }
-}`}
-</CodeBlock>
-
-### Rate Limit Handler
-
-<CodeBlock language="typescript">
-{`class RateLimiter {
-  private requestCount = 0
-  private resetTime = Date.now() + 60000 // 1 minute
-  private readonly limit = 600 // requests per minute
-
-  async checkLimit(): Promise<void> {
-    const now = Date.now()
-
-    // Reset counter if time window passed
-    if (now >= this.resetTime) {
-      this.requestCount = 0
-      this.resetTime = now + 60000
-    }
-
-    // Check if limit exceeded
-    if (this.requestCount >= this.limit) {
-      const waitTime = this.resetTime - now
-      throw new Error(\`Rate limit exceeded. Wait \${waitTime}ms\`)
-    }
-
-    this.requestCount++
-  }
-
-  updateFromHeaders(headers: Headers) {
-    const remaining = parseInt(headers.get('X-RateLimit-Remaining') || '0')
-    const reset = parseInt(headers.get('X-RateLimit-Reset') || '0') * 1000
-
-    if (remaining === 0 && reset > Date.now()) {
-      this.requestCount = this.limit
-      this.resetTime = reset
-    }
-  }
-}
-
-const rateLimiter = new RateLimiter()
-
-async function makeRequest(params: any) {
-  await rateLimiter.checkLimit()
-
-  try {
-    const response = await fetch(url, options)
-    rateLimiter.updateFromHeaders(response.headers)
-    return response
-  } catch (error) {
-    // Handle error
-    throw error
-  }
-}`}
-</CodeBlock>
-
-## Error Logging
-
-### Structured Logging
-
-<CodeBlock language="typescript">
-{`interface ErrorLog {
-  timestamp: string
-  requestId?: string
-  errorCode: string
+{`interface LightfastError {
+  error: string
   message: string
-  status: number
-  details?: any
-  stack?: string
-  context: {
-    operation: string
-    collection?: string
-    memoryId?: string
-  }
+  requestId: string
 }
 
-function logError(error: MemoryAPIError, context: any): void {
-  const errorLog: ErrorLog = {
-    timestamp: new Date().toISOString(),
-    requestId: error.requestId,
-    errorCode: error.code,
-    message: error.message,
-    status: error.status,
-    details: error.details,
-    stack: error.stack,
-    context
+type ErrorCode =
+  | 'INVALID_JSON'
+  | 'VALIDATION_ERROR'
+  | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'METHOD_NOT_ALLOWED'
+  | 'CONFIG_ERROR'
+  | 'INTERNAL_ERROR'
+
+function isLightfastError(data: unknown): data is LightfastError {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'error' in data &&
+    'message' in data &&
+    'requestId' in data
+  )
+}
+
+async function handleResponse(response: Response) {
+  const data = await response.json()
+
+  if (!response.ok && isLightfastError(data)) {
+    throw new Error(\`[\${data.error}] \${data.message} (requestId: \${data.requestId})\`)
   }
 
-  // Send to logging service
-  console.error('API Error:', JSON.stringify(errorLog, null, 2))
-
-  // Send to error tracking (e.g., Sentry)
-  if (typeof window !== 'undefined' && window.Sentry) {
-    window.Sentry.captureException(error, {
-      tags: {
-        errorCode: error.code,
-        status: error.status,
-        requestId: error.requestId
-      },
-      extra: errorLog
-    })
-  }
+  return data
 }`}
 </CodeBlock>
 
-## Common Patterns
+## Error Code Reference
 
-### Idempotent Operations
+| Code | Status | Description | Retry? |
+|------|--------|-------------|--------|
+| `INVALID_JSON` | 400 | Invalid JSON body | No |
+| `VALIDATION_ERROR` | 400 | Schema validation failed | No |
+| `BAD_REQUEST` | 400 | Missing required header | No |
+| `UNAUTHORIZED` | 401 | Authentication failed | No |
+| `FORBIDDEN` | 403 | Access denied | No |
+| `NOT_FOUND` | 404 | Resource not found | No |
+| `METHOD_NOT_ALLOWED` | 405 | Wrong HTTP method | No |
+| `CONFIG_ERROR` | 500 | Workspace not configured | No |
+| `INTERNAL_ERROR` | 500 | Server error | Yes |
 
-Make operations idempotent to handle retries safely:
+## Next Steps
 
-<CodeBlock language="typescript">
-{`async function upsertMemory(params: any) {
-  try {
-    // Try to add first
-    return await memory.addMemory(params)
-  } catch (error: any) {
-    if (error.status === 409) {
-      // Already exists, update instead
-      return await memory.updateMemory({
-        collection: params.collection,
-        id: params.id,
-        content: params.content,
-        metadata: params.metadata
-      })
-    }
-    throw error
-  }
-}`}
-</CodeBlock>
-
-### Graceful Degradation
-
-Provide fallback behavior when the API is unavailable:
-
-<CodeBlock language="typescript">
-{`async function searchWithFallback(query: string) {
-  try {
-    // Try API search first
-    return await memory.searchMemory({ query })
-  } catch (error: any) {
-    if (error.status >= 500 || error.code === 'service_unavailable') {
-      // Fall back to cached results
-      console.warn('API unavailable, using cached results')
-      return getCachedResults(query)
-    }
-    throw error
-  }
-}`}
-</CodeBlock>
+- **[Authentication](/api/authentication)** - API key setup and security
+- **[POST /v1/search](/api/search)** - Search API reference
+- **[API Overview](/api/overview)** - Getting started guide
