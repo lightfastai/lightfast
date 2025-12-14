@@ -19,9 +19,9 @@ const relevanceScoreSchema = z.object({
         .min(0)
         .max(1)
         .describe(
-          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)"
+          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)",
         ),
-    })
+    }),
   ),
 });
 
@@ -67,7 +67,7 @@ export async function llmRelevanceFilter(
   query: string,
   candidates: FilterCandidate[],
   requestId: string,
-  options: Partial<typeof DEFAULT_OPTIONS> = {}
+  options: Partial<typeof DEFAULT_OPTIONS> = {},
 ): Promise<LLMFilterResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
@@ -95,7 +95,7 @@ export async function llmRelevanceFilter(
 
   try {
     const { object } = await generateObject({
-      model: gateway("openai/gpt-5.1-instant"), // Ultra-fast, adaptive reasoning
+      model: gateway("anthropic/claude-haiku-4.5"), // Ultra-fast, adaptive reasoning
       schema: relevanceScoreSchema,
       prompt: buildRelevancePrompt(query, candidates),
       temperature: 0.1, // Low temperature for consistent scoring
@@ -166,12 +166,12 @@ export async function llmRelevanceFilter(
  */
 function buildRelevancePrompt(
   query: string,
-  candidates: FilterCandidate[]
+  candidates: FilterCandidate[],
 ): string {
   const candidateList = candidates
     .map(
       (c, i) =>
-        `${i + 1}. [${c.id}] "${c.title}": ${c.snippet.slice(0, 200)}...`
+        `${i + 1}. [${c.id}] "${c.title}": ${c.snippet.slice(0, 200)}...`,
     )
     .join("\n");
 

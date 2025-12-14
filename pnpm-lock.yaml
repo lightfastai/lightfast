@@ -874,6 +874,9 @@ importers:
       '@repo/app-urls':
         specifier: workspace:^
         version: link:../../packages/app-urls
+      '@repo/console-api-key':
+        specifier: workspace:*
+        version: link:../../packages/console-api-key
       '@repo/console-api-services':
         specifier: workspace:*
         version: link:../../packages/console-api-services
@@ -892,6 +895,9 @@ importers:
       '@repo/console-pinecone':
         specifier: workspace:*
         version: link:../../packages/console-pinecone
+      '@repo/console-rerank':
+        specifier: workspace:*
+        version: link:../../packages/console-rerank
       '@repo/console-trpc':
         specifier: workspace:^
         version: link:../../packages/console-trpc
@@ -2708,6 +2714,55 @@ importers:
       '@vendor/pinecone':
         specifier: workspace:*
         version: link:../../vendor/pinecone
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/console-rerank:
+    dependencies:
+      '@ai-sdk/gateway':
+        specifier: 'catalog:'
+        version: 1.0.7(zod@3.25.76)
+      '@repo/console-config':
+        specifier: workspace:*
+        version: link:../console-config
+      '@vendor/embed':
+        specifier: workspace:*
+        version: link:../../vendor/embed
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@3.25.76)
+      cohere-ai:
+        specifier: ^7.19.0
+        version: 7.19.0(encoding@0.1.13)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

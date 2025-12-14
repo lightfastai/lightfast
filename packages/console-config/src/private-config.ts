@@ -188,6 +188,74 @@ export const EMBEDDING_CONFIG = {
 };
 
 /**
+ * Rerank provider configuration
+ *
+ * Controls reranking behavior for neural memory search.
+ * Currently private - optimized for quality vs latency trade-offs.
+ *
+ * Future: Could allow users to specify mode per workspace.
+ */
+export const RERANK_CONFIG = {
+  /**
+   * Cohere rerank configuration
+   */
+  cohere: {
+    /**
+     * Cohere rerank model
+     * @default "rerank-v3.5"
+     */
+    model: "rerank-v3.5" as const,
+
+    /**
+     * Default relevance threshold
+     * @default 0.4
+     */
+    threshold: 0.4 as const,
+  },
+
+  /**
+   * LLM rerank configuration
+   */
+  llm: {
+    /**
+     * Model to use via AI Gateway
+     * @default "anthropic/claude-haiku-4.5"
+     */
+    model: "anthropic/claude-haiku-4.5" as const,
+
+    /**
+     * Weight for LLM score in final calculation
+     * @default 0.6
+     */
+    llmWeight: 0.6 as const,
+
+    /**
+     * Weight for vector score in final calculation
+     * @default 0.4
+     */
+    vectorWeight: 0.4 as const,
+
+    /**
+     * Skip LLM if candidate count is <= this value
+     * @default 5
+     */
+    bypassThreshold: 5 as const,
+
+    /**
+     * Default relevance threshold
+     * @default 0.4
+     */
+    threshold: 0.4 as const,
+  },
+
+  /**
+   * Default rerank mode
+   * @default "balanced"
+   */
+  defaultMode: "balanced" as const,
+} as const;
+
+/**
  * Document chunking configuration
  *
  * Controls how documents are split into chunks for embedding.
@@ -281,6 +349,7 @@ export const GITHUB_CONFIG = {
 export const PRIVATE_CONFIG = {
   pinecone: PINECONE_CONFIG,
   embedding: EMBEDDING_CONFIG,
+  rerank: RERANK_CONFIG,
   chunking: CHUNKING_CONFIG,
   github: GITHUB_CONFIG,
 } as const;
