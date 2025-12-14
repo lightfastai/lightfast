@@ -1,231 +1,217 @@
 # @repo/console-test-data
 
-Test data generation and injection for neural memory E2E testing.
+Workflow-driven test data generation for neural memory E2E testing.
 
-## Installation
+**Key Design**: Test data is injected via the real Inngest workflow (`apps-console/neural/observation.capture`), ensuring tests exercise the full production pipeline including significance scoring, entity extraction, multi-view embeddings, cluster assignment, and actor resolution.
 
-This package is part of the Lightfast monorepo and is available as a workspace dependency.
+## Prerequisites
 
-```json
-{
-  "dependencies": {
-    "@repo/console-test-data": "workspace:*"
-  }
-}
-```
+Inngest dev server must be running:
 
-## Quick Start
-
-```typescript
-import {
-  ObservationFactory,
-  TestDataInjector,
-  scenarios,
-  factory
-} from '@repo/console-test-data';
-
-// Inject pre-built scenario
-const injector = new TestDataInjector({
-  workspaceId: 'xxx',
-  clerkOrgId: 'org_xxx'
-});
-await injector.injectScenario(scenarios.day2Retrieval);
+```bash
+pnpm dev:console  # Starts Inngest via ngrok
 ```
 
 ## CLI Usage
 
 ```bash
-# Inject Day 2 retrieval test data (20 observations)
+# Inject security scenario (3 events)
 pnpm --filter @repo/console-test-data inject -- \
   -w <workspace_id> \
-  -o <org_id>
+  -o <org_id> \
+  -i <pinecone_index>
 
-# Inject stress test (500 observations)
+# Inject performance scenario
 pnpm --filter @repo/console-test-data inject -- \
-  -w <workspace_id> -o <org_id> \
-  -s stress-medium
+  -w <workspace_id> -o <org_id> -i <index> \
+  -s performance
 
-# Inject custom count
+# Inject balanced mix
 pnpm --filter @repo/console-test-data inject -- \
-  -w <workspace_id> -o <org_id> \
-  -s balanced -c 1000
+  -w <workspace_id> -o <org_id> -i <index> \
+  -s balanced -c 6
 
-# Verify data in DB and Pinecone
+# Stress test (100 events)
+pnpm --filter @repo/console-test-data inject -- \
+  -w <workspace_id> -o <org_id> -i <index> \
+  -s stress -c 100 --skip-verify
+
+# Verify data
 pnpm --filter @repo/console-test-data verify -- \
-  -w <workspace_id> -o <org_id>
-
-# Clean up test data
-pnpm --filter @repo/console-test-data clean -- \
-  -w <workspace_id> -o <org_id> --confirm
+  -w <workspace_id> -o <org_id> -i <index>
 ```
 
-## API
+### CLI Options
 
-### ObservationFactory
+| Option | Description |
+|--------|-------------|
+| `-w, --workspace` | Workspace ID (required) |
+| `-o, --org` | Clerk Org ID (required) |
+| `-i, --index` | Pinecone index name (required) |
+| `-s, --scenario` | Scenario: `security`, `performance`, `balanced`, `stress` |
+| `-c, --count` | Event count for balanced/stress scenarios |
+| `--skip-wait` | Don't wait for workflow completion |
+| `--skip-verify` | Don't run verification after injection |
 
-Fluent builder for generating test observations.
-
-```typescript
-const observations = new ObservationFactory()
-  .withActors(['alice', 'bob', 'charlie'])  // Set actors
-  .withDateRange(30)                         // Last 30 days
-  .security(20)                              // 20 security observations
-  .performance(20)                           // 20 performance observations
-  .bugfixes(20)                              // 20 bug fix observations
-  .features(20)                              // 20 feature observations
-  .devops(20)                                // 20 devops observations
-  .buildShuffled();                          // Build with random order
-```
-
-### Quick Factory Methods
-
-```typescript
-import { factory } from '@repo/console-test-data';
-
-factory.small();              // 20 balanced observations
-factory.medium();             // 100 balanced observations
-factory.large();              // 500 balanced observations
-factory.stress(1000);         // 1000 balanced observations
-factory.securityFocused(50);  // 60% security, 20% bugfixes, 20% features
-factory.performanceFocused(50); // 60% performance, 20% bugfixes, 20% devops
-```
-
-### TestDataInjector
-
-Handles injection into database and Pinecone.
-
-```typescript
-const injector = new TestDataInjector({
-  workspaceId: 'xxx',
-  clerkOrgId: 'org_xxx'
-});
-
-// Inject observations
-const result = await injector.inject(observations, {
-  dryRun: false,           // Set true to preview
-  batchSize: 100,          // Pinecone batch size
-  clearExisting: false,    // Clear existing data first
-  sourceIdPrefix: 'test',  // Prefix for deduplication
-  onProgress: (current, total, obs) => {
-    console.log(`${current}/${total}: ${obs.title}`);
-  }
-});
-
-// Inject pre-built scenario
-await injector.injectScenario(scenarios.day2Retrieval);
-
-// Clear test data
-await injector.clearTestData('test');
-```
-
-### TestDataVerifier
-
-Verifies data exists in database and Pinecone.
-
-```typescript
-import { TestDataVerifier } from '@repo/console-test-data';
-
-const verifier = new TestDataVerifier({
-  workspaceId: 'xxx',
-  clerkOrgId: 'org_xxx'
-});
-
-const result = await verifier.verify();
-// {
-//   success: true,
-//   database: { count: 20, byType: {...}, byActor: {...}, bySource: {...} },
-//   pinecone: { count: 20, byType: {...} },
-//   mismatches: []
-// }
-
-// Print formatted report
-await verifier.printReport();
-```
-
-### Pre-built Scenarios
-
-```typescript
-import { scenarios } from '@repo/console-test-data';
-
-scenarios.day2Retrieval  // 20 obs for Day 2 retrieval testing
-scenarios.stressSmall    // 100 balanced observations
-scenarios.stressMedium   // 500 balanced observations
-scenarios.stressLarge    // 1000 balanced observations
-scenarios.stressXL       // 5000 balanced observations
-```
-
-### Workspace Resolvers
+## Programmatic Usage
 
 ```typescript
 import {
-  findWorkspaceByName,
-  findWorkspaceById,
-  findConfiguredWorkspaces,
-  findWorkspacesByOrg
+  securityScenario,
+  performanceScenario,
+  balancedScenario,
+  stressScenario,
+  triggerObservationCapture,
+  waitForCapture,
+  verify,
+  printReport,
 } from '@repo/console-test-data';
 
-// Find by name
-const target = await findWorkspaceByName('my-org', 'my-workspace');
+// 1. Generate events
+const events = securityScenario();  // or performanceScenario(), etc.
 
-// Find all configured for neural memory
-const workspaces = await findConfiguredWorkspaces();
+// 2. Trigger workflow
+const triggerResult = await triggerObservationCapture(events, {
+  workspaceId: 'xxx',
+  onProgress: (current, total) => console.log(`${current}/${total}`),
+});
+
+// 3. Wait for completion
+const waitResult = await waitForCapture({
+  workspaceId: 'xxx',
+  sourceIds: triggerResult.sourceIds,
+  timeoutMs: 120000,
+});
+
+// 4. Verify results
+const result = await verify({
+  workspaceId: 'xxx',
+  clerkOrgId: 'org_xxx',
+  indexName: 'my-index',
+});
+printReport(result);
 ```
 
-## Template Categories
+## Scenarios
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| Security | 6 | OAuth, JWT, API keys, rate limiting, CSP |
-| Performance | 6 | Caching, virtualization, bundle optimization |
-| Bug Fixes | 6 | Race conditions, null checks, memory leaks |
-| Features | 6 | Search, notifications, exports, dark mode |
-| DevOps | 6 | Deployments, CI/CD, E2E tests |
-| Docs | 3 | API reference, setup guides |
+| Scenario | Events | Description |
+|----------|--------|-------------|
+| `securityScenario()` | 3 | OAuth PR, API keys issue, credential rotation |
+| `performanceScenario()` | 3 | Redis caching PR, dashboard issue, deployment |
+| `balancedScenario(n)` | n | Shuffled mix from all scenarios |
+| `stressScenario(n)` | n | Repeated/varied events for load testing |
 
-## Test Scenarios
+## Event Builders
 
-### Day 2 Retrieval (20 observations)
-
-Tests for:
-- Metadata filters (sourceTypes, observationTypes, actorNames, dateRange)
-- LLM relevance gating (triggers when >5 results)
-- Latency tracking
-- Filter UI functionality
-
-### Stress Tests
-
-| Scenario | Count | Use Case |
-|----------|-------|----------|
-| Small | 100 | Quick validation |
-| Medium | 500 | Performance testing |
-| Large | 1000 | Load testing |
-| XL | 5000 | Capacity testing |
-
-## Types
+Build individual `SourceEvent` objects matching webhook transformer output:
 
 ```typescript
-interface TestObservation {
-  source: 'github' | 'vercel';
-  sourceType: string;
-  title: string;
-  body: string;
-  actorName: string;
-  daysAgo: number;
-  category?: string;
-  tags?: string[];
-}
+import { githubPush, githubPR, githubIssue, vercelDeployment } from '@repo/console-test-data';
 
-interface WorkspaceTarget {
-  workspaceId: string;
-  clerkOrgId: string;
-}
+const pushEvent = githubPush({
+  repo: 'org/repo',
+  branch: 'main',
+  commitMessage: 'fix: resolve bug',
+  author: 'alice',
+  daysAgo: 1,
+});
 
-interface InjectionResult {
-  success: boolean;
-  observationsCreated: number;
-  vectorsUpserted: number;
-  errors: string[];
-  namespace: string;
-  duration: number;
-}
+const prEvent = githubPR({
+  repo: 'org/repo',
+  prNumber: 123,
+  title: 'feat: add feature',
+  body: 'Description here',
+  action: 'merged',
+  author: 'bob',
+  labels: ['feature'],
+});
+
+const issueEvent = githubIssue({
+  repo: 'org/repo',
+  issueNumber: 456,
+  title: 'Bug: something broken',
+  body: 'Steps to reproduce...',
+  action: 'opened',
+  author: 'charlie',
+  labels: ['bug'],
+});
+
+const deployEvent = vercelDeployment({
+  projectName: 'my-app',
+  event: 'deployment.succeeded',
+  branch: 'main',
+  environment: 'production',
+});
+```
+
+## Verification
+
+The verifier checks post-workflow state:
+
+```typescript
+const result = await verify({ workspaceId, clerkOrgId, indexName });
+
+// result.database
+//   .observations    - Total observation count
+//   .entities        - Extracted entity count
+//   .clusters        - Cluster count
+//   .actorProfiles   - Actor profile count
+//   .observationsByType
+//   .entitiesByCategory
+
+// result.pinecone
+//   .titleVectors    - Title view embeddings
+//   .contentVectors  - Content view embeddings
+//   .summaryVectors  - Summary view embeddings
+
+// result.health
+//   .multiViewComplete  - All observations have 3 embeddings
+//   .entitiesExtracted  - At least some entities found
+//   .clustersAssigned   - Observations assigned to clusters
+```
+
+## Architecture
+
+```
+SourceEvent → inngest.send() → observation.capture workflow
+                                      ↓
+                              Significance Gate
+                                      ↓
+                    ┌─────────────────┼─────────────────┐
+                    ↓                 ↓                 ↓
+               Classify          Embed (3x)        Extract Entities
+                    ↓                 ↓                 ↓
+                    └─────────────────┼─────────────────┘
+                                      ↓
+                              Cluster Assignment
+                                      ↓
+                              Actor Resolution
+                                      ↓
+                                   Store
+```
+
+## Package Structure
+
+```
+src/
+├── events/           # SourceEvent builders
+│   ├── github.ts     # githubPush, githubPR, githubIssue
+│   ├── vercel.ts     # vercelDeployment
+│   └── index.ts
+├── scenarios/        # Pre-built event sets
+│   ├── security.ts
+│   ├── performance.ts
+│   └── index.ts      # balancedScenario, stressScenario
+├── trigger/          # Workflow triggering
+│   ├── trigger.ts    # triggerObservationCapture
+│   ├── wait.ts       # waitForCapture
+│   └── index.ts
+├── verifier/         # Post-workflow verification
+│   ├── verifier.ts   # verify, printReport
+│   └── index.ts
+├── cli/
+│   ├── inject.ts
+│   └── verify.ts
+├── types.ts
+└── index.ts
 ```

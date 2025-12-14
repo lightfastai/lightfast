@@ -1,31 +1,47 @@
 /**
  * @repo/console-test-data
  *
- * Test data generation and injection for neural memory E2E testing.
+ * Workflow-driven test data generation for neural memory E2E testing.
  *
  * @example
  * ```typescript
- * import { ObservationFactory, TestDataInjector, scenarios } from '@repo/console-test-data';
+ * import {
+ *   day2RetrievalScenario,
+ *   triggerObservationCapture,
+ *   waitForCapture,
+ *   verify,
+ *   printReport,
+ * } from '@repo/console-test-data';
  *
- * // Use pre-built scenario
- * const injector = new TestDataInjector({ workspaceId, clerkOrgId });
- * await injector.injectScenario(scenarios.day2Retrieval);
+ * // Generate test events
+ * const events = day2RetrievalScenario();
  *
- * // Or build custom observations
- * const factory = new ObservationFactory();
- * const observations = factory
- *   .withActor('alice')
- *   .withSource('github')
- *   .security(5)
- *   .performance(5)
- *   .build();
+ * // Trigger workflow
+ * const triggerResult = await triggerObservationCapture(events, { workspaceId });
  *
- * await injector.inject(observations);
+ * // Wait for completion
+ * const waitResult = await waitForCapture({
+ *   workspaceId,
+ *   sourceIds: triggerResult.sourceIds,
+ * });
+ *
+ * // Verify results
+ * const verifyResult = await verify({ workspaceId, clerkOrgId, indexName });
+ * printReport(verifyResult);
  * ```
  */
 
-export * from "./factories";
-export * from "./injector";
-export * from "./verifier";
+// Event builders
+export * from "./events";
+
+// Scenarios
 export * from "./scenarios";
+
+// Workflow trigger & wait
+export * from "./trigger";
+
+// Verification
+export * from "./verifier";
+
+// Types
 export * from "./types";

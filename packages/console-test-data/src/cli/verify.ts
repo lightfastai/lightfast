@@ -2,11 +2,14 @@
 /**
  * Test Data Verification CLI
  *
+ * Verifies test data was processed correctly by checking database state
+ * and Pinecone vector counts.
+ *
  * Usage:
- *   pnpm --filter @repo/console-test-data verify -- --workspace <id> --org <clerkOrgId>
+ *   pnpm --filter @repo/console-test-data verify -- --workspace <id> --org <clerkOrgId> --index <name>
  */
 
-import { TestDataVerifier } from "../verifier/verifier";
+import { verify, printReport } from "../verifier/verifier";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -34,18 +37,26 @@ function showHelp() {
   console.log(`
 Test Data Verification CLI
 
+Verifies test data was processed correctly by the workflow. Checks:
+- Observations in database
+- Entities extracted
+- Clusters assigned
+- Multi-view embeddings in Pinecone
+- Actor profiles resolved
+
 Usage:
   pnpm --filter @repo/console-test-data verify -- [options]
 
 Required:
   --workspace, -w   Workspace ID
   --org, -o         Clerk Org ID
+  --index, -i       Pinecone index name
 
 Options:
   --help, -h        Show this help message
 
-Example:
-  pnpm verify -- -w meh25w1hzinweyqrouqil -o org_35ztOhqBmqSScw67JwBYwlg2L51
+Examples:
+  pnpm verify -- -w <id> -o <orgId> -i <indexName>
 `);
 }
 
@@ -59,15 +70,26 @@ async function main() {
 
   const workspaceId = (args.workspace ?? args.w) as string;
   const clerkOrgId = (args.org ?? args.o) as string;
+  const indexName = (args.index ?? args.i) as string;
 
-  if (!workspaceId || !clerkOrgId) {
-    console.error("Error: --workspace and --org are required");
+  if (!workspaceId || !clerkOrgId || !indexName) {
+    console.error("Error: --workspace, --org, and --index are required");
     showHelp();
     process.exit(1);
   }
 
-  const verifier = new TestDataVerifier({ workspaceId, clerkOrgId });
-  await verifier.printReport();
+  const result = await verify({ workspaceId, clerkOrgId, indexName });
+  printReport(result);
+
+  // Exit with error code if health checks fail
+  const allHealthy =
+    result.health.multiViewComplete &&
+    result.health.entitiesExtracted &&
+    result.health.clustersAssigned;
+
+  if (!allHealthy && result.database.observations > 0) {
+    process.exit(1);
+  }
 }
 
 main().catch((error) => {

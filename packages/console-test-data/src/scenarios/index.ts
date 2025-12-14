@@ -1,27 +1,54 @@
 /**
- * Pre-built test scenarios
+ * Pre-built Test Scenarios
+ *
+ * Scenario functions that return arrays of SourceEvent for workflow-driven testing.
  */
 
-export { day2RetrievalScenario } from "./day2-retrieval";
-export {
-  createStressTestScenario,
-  stressTestSmall,
-  stressTestMedium,
-  stressTestLarge,
-  stressTestXL,
-} from "./stress-test";
+import type { SourceEvent } from "@repo/console-types";
 
-// Convenience alias
-import { day2RetrievalScenario } from "./day2-retrieval";
-import { stressTestSmall, stressTestMedium, stressTestLarge, stressTestXL } from "./stress-test";
+// Scenario exports
+export { securityScenario } from "./security";
+export { performanceScenario } from "./performance";
+
+import { securityScenario } from "./security";
+import { performanceScenario } from "./performance";
 
 /**
- * All pre-built scenarios
+ * Get all base events from pre-built scenarios
  */
-export const scenarios = {
-  day2Retrieval: day2RetrievalScenario,
-  stressSmall: stressTestSmall,
-  stressMedium: stressTestMedium,
-  stressLarge: stressTestLarge,
-  stressXL: stressTestXL,
+const getAllBaseEvents = (): SourceEvent[] => [
+  ...securityScenario(),
+  ...performanceScenario(),
+];
+
+/**
+ * Generate a balanced scenario with N events
+ * Combines and shuffles events from all pre-built scenarios
+ */
+export const balancedScenario = (count: number): SourceEvent[] => {
+  const allEvents = getAllBaseEvents();
+  const shuffled = allEvents.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+};
+
+/**
+ * Stress test scenario with many events
+ * Repeats and varies the base scenarios to reach the requested count
+ */
+export const stressScenario = (count: number): SourceEvent[] => {
+  const events: SourceEvent[] = [];
+  const base = getAllBaseEvents();
+
+  while (events.length < count) {
+    for (const event of base) {
+      if (events.length >= count) break;
+      events.push({
+        ...event,
+        sourceId: `${event.sourceId}:${events.length}`,
+        occurredAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    }
+  }
+
+  return events;
 };

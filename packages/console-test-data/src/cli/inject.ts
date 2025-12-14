@@ -1,23 +1,27 @@
 #!/usr/bin/env npx tsx
 /**
- * Test Data Injection CLI
+ * Test Data Injection CLI (Workflow-Driven)
+ *
+ * Triggers real Inngest workflow to process test data through production pipeline.
  *
  * Usage:
- *   pnpm --filter @repo/console-test-data inject -- --workspace <id> --org <clerkOrgId> [options]
+ *   pnpm --filter @repo/console-test-data inject -- --workspace <id> --org <clerkOrgId> --index <name> [options]
  *
  * Options:
  *   --workspace, -w   Workspace ID (required)
  *   --org, -o         Clerk Org ID (required)
- *   --scenario, -s    Scenario name: day2, stress-small, stress-medium, stress-large
- *   --count, -c       Number of observations (for custom scenarios)
- *   --dry-run         Preview without inserting
- *   --clear           Clear existing data before injection
+ *   --index, -i       Pinecone index name (required)
+ *   --scenario, -s    Scenario name: day2, balanced, stress (default: day2)
+ *   --count, -c       Event count for balanced/stress scenarios
+ *   --skip-wait       Don't wait for workflow completion
+ *   --skip-verify     Don't run verification after injection
  *   --help, -h        Show help
  */
 
-import { TestDataInjector } from "../injector/injector";
-import { ObservationFactory } from "../factories/observation-factory";
-import { scenarios } from "../scenarios";
+import { securityScenario, performanceScenario, balancedScenario, stressScenario } from "../scenarios";
+import { triggerObservationCapture } from "../trigger/trigger";
+import { waitForCapture } from "../trigger/wait";
+import { verify, printReport } from "../verifier/verifier";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -28,10 +32,10 @@ function parseArgs() {
     if (!arg) continue;
     if (arg === "--help" || arg === "-h") {
       parsed.help = true;
-    } else if (arg === "--dry-run") {
-      parsed.dryRun = true;
-    } else if (arg === "--clear") {
-      parsed.clear = true;
+    } else if (arg === "--skip-wait") {
+      parsed.skipWait = true;
+    } else if (arg === "--skip-verify") {
+      parsed.skipVerify = true;
     } else if (arg.startsWith("--") || arg.startsWith("-")) {
       const key = arg.replace(/^-+/, "");
       const value = args[i + 1];
@@ -49,7 +53,11 @@ function parseArgs() {
 
 function showHelp() {
   console.log(`
-Test Data Injection CLI
+Test Data Injection CLI (Workflow-Driven)
+
+Triggers real Inngest workflow to process test data through production pipeline.
+This ensures tests exercise significance scoring, entity extraction, multi-view
+embeddings, cluster assignment, and actor resolution.
 
 Usage:
   pnpm --filter @repo/console-test-data inject -- [options]
@@ -57,28 +65,31 @@ Usage:
 Required:
   --workspace, -w   Workspace ID
   --org, -o         Clerk Org ID
+  --index, -i       Pinecone index name
 
 Options:
-  --scenario, -s    Scenario name (default: day2)
-                    - day2: 20 observations for retrieval testing
-                    - stress-small: 100 observations
-                    - stress-medium: 500 observations
-                    - stress-large: 1000 observations
-                    - balanced: Custom balanced set (use --count)
-  --count, -c       Number of observations (for balanced scenario)
-  --dry-run         Preview without inserting data
-  --clear           Clear existing data before injection
+  --scenario, -s    Scenario name (default: security)
+                    - security: Security-focused events (3 events)
+                    - performance: Performance-focused events (3 events)
+                    - balanced: Mixed set from all scenarios (use --count)
+                    - stress: High volume test (use --count)
+  --count, -c       Event count for balanced/stress scenarios (default: 6)
+  --skip-wait       Don't wait for workflow completion
+  --skip-verify     Don't run verification after injection
   --help, -h        Show this help message
 
 Examples:
-  # Inject Day 2 retrieval test data
-  pnpm inject -- -w meh25w1hzinweyqrouqil -o org_35ztOhqBmqSScw67JwBYwlg2L51
+  # Inject security scenario (3 events)
+  pnpm inject -- -w <id> -o <orgId> -i <indexName>
 
-  # Inject 500 balanced observations
-  pnpm inject -- -w <id> -o <orgId> -s balanced -c 500
+  # Inject performance scenario
+  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s performance
 
-  # Dry run to preview
-  pnpm inject -- -w <id> -o <orgId> --dry-run
+  # Inject balanced mix of events
+  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s balanced -c 6
+
+  # Stress test with 100 events
+  pnpm inject -- -w <id> -o <orgId> -i <indexName> -s stress -c 100 --skip-verify
 `);
 }
 
@@ -92,88 +103,88 @@ async function main() {
 
   const workspaceId = (args.workspace ?? args.w) as string;
   const clerkOrgId = (args.org ?? args.o) as string;
-  const scenarioName = (args.scenario ?? args.s ?? "day2") as string;
-  const count = parseInt((args.count ?? args.c ?? "20") as string, 10);
-  const dryRun = !!args.dryRun;
-  const clear = !!args.clear;
+  const indexName = (args.index ?? args.i) as string;
+  const scenarioName = (args.scenario ?? args.s ?? "security") as string;
+  const count = parseInt((args.count ?? args.c ?? "6") as string, 10);
+  const skipWait = !!args.skipWait;
+  const skipVerify = !!args.skipVerify;
 
-  if (!workspaceId || !clerkOrgId) {
-    console.error("Error: --workspace and --org are required");
+  if (!workspaceId || !clerkOrgId || !indexName) {
+    console.error("Error: --workspace, --org, and --index are required");
     showHelp();
     process.exit(1);
   }
 
+  // Select scenario and get events
+  const events =
+    scenarioName === "security"
+      ? securityScenario()
+      : scenarioName === "performance"
+        ? performanceScenario()
+        : scenarioName === "stress"
+          ? stressScenario(count)
+          : balancedScenario(count);
+
   console.log("=".repeat(60));
-  console.log("Test Data Injection");
+  console.log("Test Data Injection (Workflow Mode)");
   console.log("=".repeat(60));
   console.log(`  Workspace: ${workspaceId}`);
   console.log(`  Org: ${clerkOrgId}`);
+  console.log(`  Index: ${indexName}`);
   console.log(`  Scenario: ${scenarioName}`);
-  console.log(`  Dry Run: ${dryRun}`);
-  console.log(`  Clear Existing: ${clear}`);
+  console.log(`  Events: ${events.length}`);
   console.log();
 
-  // Select scenario
-  let scenario;
-  switch (scenarioName) {
-    case "day2":
-      scenario = scenarios.day2Retrieval;
-      break;
-    case "stress-small":
-      scenario = scenarios.stressSmall;
-      break;
-    case "stress-medium":
-      scenario = scenarios.stressMedium;
-      break;
-    case "stress-large":
-      scenario = scenarios.stressLarge;
-      break;
-    case "balanced":
-      scenario = {
-        name: `Balanced (${count})`,
-        description: `Custom balanced set with ${count} observations`,
-        observations: new ObservationFactory().balanced(count).buildShuffled(),
-        expectedResults: [],
-      };
-      break;
-    default:
-      console.error(`Unknown scenario: ${scenarioName}`);
-      process.exit(1);
-  }
+  console.log(`Triggering ${events.length} events via Inngest workflow...\n`);
 
-  console.log(`Scenario: ${scenario.name}`);
-  console.log(`Description: ${scenario.description}`);
-  console.log(`Observations: ${scenario.observations.length}`);
-  console.log();
-
-  // Inject
-  const injector = new TestDataInjector({ workspaceId, clerkOrgId });
-  const result = await injector.injectScenario(scenario, {
-    dryRun,
-    clearExisting: clear,
-    onProgress: (current, total, obs) => {
-      process.stdout.write(`\r  [${current}/${total}] ${obs.title.slice(0, 50)}...`);
+  // Trigger events
+  const triggerResult = await triggerObservationCapture(events, {
+    workspaceId,
+    onProgress: (current, total) => {
+      process.stdout.write(`\rTriggered: ${current}/${total}`);
     },
   });
 
-  console.log("\n");
-  console.log("=".repeat(60));
-  console.log("Result");
-  console.log("=".repeat(60));
-  console.log(`  Success: ${result.success}`);
-  console.log(`  Observations: ${result.observationsCreated}`);
-  console.log(`  Vectors: ${result.vectorsUpserted}`);
-  console.log(`  Duration: ${result.duration}ms`);
-  console.log(`  Namespace: ${result.namespace}`);
+  console.log(`\n\nTriggered ${triggerResult.triggered} events in ${triggerResult.duration}ms`);
 
-  if (result.errors.length > 0) {
-    console.log(`  Errors:`);
-    for (const error of result.errors) {
-      console.log(`    - ${error}`);
+  // Wait for completion
+  if (!skipWait) {
+    console.log("\nWaiting for workflow completion...");
+    const waitResult = await waitForCapture({
+      workspaceId,
+      sourceIds: triggerResult.sourceIds,
+      timeoutMs: 120000, // 2 minutes
+    });
+
+    console.log(`Completed: ${waitResult.completed}/${triggerResult.triggered}`);
+    if (waitResult.pending > 0) {
+      console.log(
+        `Pending/Filtered: ${waitResult.pending} (some may be below significance threshold)`
+      );
+    }
+    if (waitResult.timedOut) {
+      console.log("Warning: Wait timed out, some events may still be processing");
     }
   }
 
-  process.exit(result.success ? 0 : 1);
+  // Verify results
+  if (!skipVerify) {
+    console.log("\nVerifying results...");
+    const verifyResult = await verify({ workspaceId, clerkOrgId, indexName });
+    printReport(verifyResult);
+
+    // Exit with error if health checks fail
+    const allHealthy =
+      verifyResult.health.multiViewComplete &&
+      verifyResult.health.entitiesExtracted &&
+      verifyResult.health.clustersAssigned;
+
+    if (!allHealthy) {
+      console.log("Warning: Some health checks failed");
+    }
+  }
+
+  console.log("\nDone!");
 }
 
 main().catch((error) => {

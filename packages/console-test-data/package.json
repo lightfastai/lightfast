@@ -5,8 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./factories": "./src/factories/index.ts",
-    "./injector": "./src/injector/index.ts",
+    "./events": "./src/events/index.ts",
+    "./trigger": "./src/trigger/index.ts",
     "./verifier": "./src/verifier/index.ts",
     "./scenarios": "./src/scenarios/index.ts"
   },
@@ -14,17 +14,15 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "inject": "tsx src/cli/inject.ts",
-    "verify": "tsx src/cli/verify.ts",
-    "clean": "tsx src/cli/clean.ts"
+    "verify": "tsx src/cli/verify.ts"
   },
   "dependencies": {
+    "@api/console": "workspace:*",
     "@db/console": "workspace:*",
-    "@repo/console-embed": "workspace:*",
     "@repo/console-pinecone": "workspace:*",
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "zod": "catalog:"
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

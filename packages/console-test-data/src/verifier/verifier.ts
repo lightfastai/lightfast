@@ -1,216 +1,213 @@
 /**
  * Test Data Verifier
  *
- * Verifies test data exists in database and Pinecone.
+ * Verifies test data was processed correctly by the workflow.
+ * Checks database state and Pinecone vector counts.
  */
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations, orgWorkspaces } from "@db/console/schema";
-import { eq, count, sql } from "drizzle-orm";
+import {
+  workspaceNeuralObservations,
+  workspaceNeuralEntities,
+  workspaceObservationClusters,
+  workspaceActorProfiles,
+} from "@db/console/schema";
+import { eq, count, sql, and } from "drizzle-orm";
 import { consolePineconeClient } from "@repo/console-pinecone";
 
-import type { WorkspaceTarget, VerificationResult } from "../types";
+export interface WorkflowVerificationResult {
+  database: {
+    observations: number;
+    entities: number;
+    clusters: number;
+    actorProfiles: number;
+    observationsByType: Record<string, number>;
+    entitiesByCategory: Record<string, number>;
+  };
+  pinecone: {
+    titleVectors: number;
+    contentVectors: number;
+    summaryVectors: number;
+  };
+  health: {
+    multiViewComplete: boolean;  // All observations have 3 embeddings
+    entitiesExtracted: boolean;  // At least some entities found
+    clustersAssigned: boolean;   // Observations assigned to clusters
+  };
+}
+
+export interface VerifyOptions {
+  workspaceId: string;
+  clerkOrgId: string;
+  indexName: string;
+}
 
 /**
- * Build namespace for workspace
+ * Verify test data was processed correctly by the workflow
  */
-function buildWorkspaceNamespace(clerkOrgId: string, workspaceId: string): string {
+export const verify = async (options: VerifyOptions): Promise<WorkflowVerificationResult> => {
+  const { workspaceId, clerkOrgId, indexName } = options;
+
+  // Database counts
+  const [obsCount] = await db
+    .select({ count: count() })
+    .from(workspaceNeuralObservations)
+    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
+
+  const [entityCount] = await db
+    .select({ count: count() })
+    .from(workspaceNeuralEntities)
+    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
+
+  const [clusterCount] = await db
+    .select({ count: count() })
+    .from(workspaceObservationClusters)
+    .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
+
+  const [profileCount] = await db
+    .select({ count: count() })
+    .from(workspaceActorProfiles)
+    .where(eq(workspaceActorProfiles.workspaceId, workspaceId));
+
+  // Observations by type
+  const obsByType = await db
+    .select({ type: workspaceNeuralObservations.observationType, count: count() })
+    .from(workspaceNeuralObservations)
+    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId))
+    .groupBy(workspaceNeuralObservations.observationType);
+
+  // Entities by category
+  const entsByCategory = await db
+    .select({ category: workspaceNeuralEntities.category, count: count() })
+    .from(workspaceNeuralEntities)
+    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId))
+    .groupBy(workspaceNeuralEntities.category);
+
+  // Check multi-view embedding completeness
+  const [obsWithAllEmbeddings] = await db
+    .select({ count: count() })
+    .from(workspaceNeuralObservations)
+    .where(
+      and(
+        eq(workspaceNeuralObservations.workspaceId, workspaceId),
+        sql`${workspaceNeuralObservations.embeddingTitleId} IS NOT NULL`,
+        sql`${workspaceNeuralObservations.embeddingContentId} IS NOT NULL`,
+        sql`${workspaceNeuralObservations.embeddingSummaryId} IS NOT NULL`
+      )
+    );
+
+  // Check cluster assignments
+  const [obsWithClusters] = await db
+    .select({ count: count() })
+    .from(workspaceNeuralObservations)
+    .where(
+      and(
+        eq(workspaceNeuralObservations.workspaceId, workspaceId),
+        sql`${workspaceNeuralObservations.clusterId} IS NOT NULL`
+      )
+    );
+
+  // Pinecone vector counts by view
+  const namespace = buildNamespace(clerkOrgId, workspaceId);
+  const pineconeStats = await countPineconeVectors(indexName, namespace);
+
+  const totalObs = obsCount?.count ?? 0;
+
+  return {
+    database: {
+      observations: totalObs,
+      entities: entityCount?.count ?? 0,
+      clusters: clusterCount?.count ?? 0,
+      actorProfiles: profileCount?.count ?? 0,
+      observationsByType: Object.fromEntries(obsByType.map(r => [r.type, r.count])),
+      entitiesByCategory: Object.fromEntries(entsByCategory.map(r => [r.category, r.count])),
+    },
+    pinecone: pineconeStats,
+    health: {
+      multiViewComplete: (obsWithAllEmbeddings?.count ?? 0) === totalObs && totalObs > 0,
+      entitiesExtracted: (entityCount?.count ?? 0) > 0,
+      clustersAssigned: (obsWithClusters?.count ?? 0) > 0,
+    },
+  };
+};
+
+const buildNamespace = (clerkOrgId: string, workspaceId: string): string => {
   const sanitize = (s: string) => s.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 50);
   return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}`;
-}
+};
 
-/**
- * Test Data Verifier
- */
-export class TestDataVerifier {
-  private target: WorkspaceTarget;
+const countPineconeVectors = async (
+  indexName: string,
+  namespace: string
+): Promise<{ titleVectors: number; contentVectors: number; summaryVectors: number }> => {
+  try {
+    // Query with dummy vector to count by view
+    const dummyVector = Array.from({ length: 1024 }, () => 0.1);
 
-  constructor(target: WorkspaceTarget) {
-    this.target = target;
-  }
-
-  /**
-   * Verify test data exists in database and Pinecone
-   */
-  async verify(): Promise<VerificationResult> {
-    const mismatches: string[] = [];
-
-    // Get workspace config
-    const workspace = await db.query.orgWorkspaces.findFirst({
-      where: eq(orgWorkspaces.id, this.target.workspaceId),
-    });
-
-    if (!workspace) {
-      return {
-        success: false,
-        database: { count: 0, byType: {}, byActor: {}, bySource: {} },
-        pinecone: { count: 0, byType: {} },
-        mismatches: [`Workspace not found: ${this.target.workspaceId}`],
-      };
-    }
-
-    // Verify database
-    const dbResult = await this.verifyDatabase();
-
-    // Verify Pinecone
-    const pineconeResult = workspace.indexName
-      ? await this.verifyPinecone(workspace.indexName)
-      : { count: 0, byType: {} };
-
-    // Check for mismatches
-    if (dbResult.count !== pineconeResult.count) {
-      mismatches.push(
-        `Count mismatch: DB has ${dbResult.count}, Pinecone has ${pineconeResult.count}`
-      );
-    }
+    const [titleResult, contentResult, summaryResult] = await Promise.all([
+      consolePineconeClient.query(indexName, {
+        vector: dummyVector,
+        topK: 10000,
+        filter: { layer: { $eq: "observations" }, view: { $eq: "title" } },
+        includeMetadata: false,
+      }, namespace),
+      consolePineconeClient.query(indexName, {
+        vector: dummyVector,
+        topK: 10000,
+        filter: { layer: { $eq: "observations" }, view: { $eq: "content" } },
+        includeMetadata: false,
+      }, namespace),
+      consolePineconeClient.query(indexName, {
+        vector: dummyVector,
+        topK: 10000,
+        filter: { layer: { $eq: "observations" }, view: { $eq: "summary" } },
+        includeMetadata: false,
+      }, namespace),
+    ]);
 
     return {
-      success: mismatches.length === 0,
-      database: dbResult,
-      pinecone: pineconeResult,
-      mismatches,
+      titleVectors: titleResult.matches?.length ?? 0,
+      contentVectors: contentResult.matches?.length ?? 0,
+      summaryVectors: summaryResult.matches?.length ?? 0,
     };
+  } catch {
+    return { titleVectors: 0, contentVectors: 0, summaryVectors: 0 };
   }
-
-  /**
-   * Verify database records
-   */
-  async verifyDatabase(): Promise<VerificationResult["database"]> {
-    // Total count
-    const [countResult] = await db
-      .select({ count: count() })
-      .from(workspaceNeuralObservations)
-      .where(eq(workspaceNeuralObservations.workspaceId, this.target.workspaceId));
-
-    // Group by observation type
-    const typeGroups = await db
-      .select({
-        type: workspaceNeuralObservations.observationType,
-        count: count(),
-      })
-      .from(workspaceNeuralObservations)
-      .where(eq(workspaceNeuralObservations.workspaceId, this.target.workspaceId))
-      .groupBy(workspaceNeuralObservations.observationType);
-
-    // Group by source
-    const sourceGroups = await db
-      .select({
-        source: workspaceNeuralObservations.source,
-        count: count(),
-      })
-      .from(workspaceNeuralObservations)
-      .where(eq(workspaceNeuralObservations.workspaceId, this.target.workspaceId))
-      .groupBy(workspaceNeuralObservations.source);
-
-    // Group by actor (using JSON extraction)
-    const actorGroups = await db
-      .select({
-        actor: sql<string>`${workspaceNeuralObservations.actor}->>'name'`,
-        count: count(),
-      })
-      .from(workspaceNeuralObservations)
-      .where(eq(workspaceNeuralObservations.workspaceId, this.target.workspaceId))
-      .groupBy(sql`${workspaceNeuralObservations.actor}->>'name'`);
-
-    return {
-      count: countResult?.count ?? 0,
-      byType: Object.fromEntries(typeGroups.map((g) => [g.type, g.count])),
-      byActor: Object.fromEntries(actorGroups.map((g) => [g.actor || "unknown", g.count])),
-      bySource: Object.fromEntries(sourceGroups.map((g) => [g.source, g.count])),
-    };
-  }
-
-  /**
-   * Verify Pinecone vectors
-   */
-  async verifyPinecone(indexName: string): Promise<VerificationResult["pinecone"]> {
-    const namespace = buildWorkspaceNamespace(this.target.clerkOrgId, this.target.workspaceId);
-
-    try {
-      // Query vectors to check count
-      const dummyVector: number[] = Array.from({ length: 1024 }, () => 0.1);
-      const queryResult = await consolePineconeClient.query(
-        indexName,
-        {
-          vector: dummyVector,
-          topK: 10000, // Get as many as possible
-          includeMetadata: true,
-          filter: { layer: { $eq: "observations" } },
-        },
-        namespace
-      );
-
-      // Group by observation type
-      const byType: Record<string, number> = {};
-      for (const match of queryResult.matches) {
-        const type = (match.metadata as Record<string, unknown>).observationType as string;
-        byType[type] = (byType[type] ?? 0) + 1;
-      }
-
-      return {
-        count: queryResult.matches.length,
-        byType,
-      };
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`Pinecone query failed: ${msg}`);
-      return { count: 0, byType: {} };
-    }
-  }
-
-  /**
-   * Print verification report
-   */
-  async printReport(): Promise<void> {
-    const result = await this.verify();
-
-    console.log("=".repeat(60));
-    console.log("Test Data Verification Report");
-    console.log("=".repeat(60));
-    console.log();
-
-    console.log("DATABASE");
-    console.log("-".repeat(40));
-    console.log(`  Total: ${result.database.count}`);
-    console.log(`  By Type:`);
-    for (const [type, cnt] of Object.entries(result.database.byType)) {
-      console.log(`    - ${type}: ${cnt}`);
-    }
-    console.log(`  By Actor:`);
-    for (const [actor, cnt] of Object.entries(result.database.byActor)) {
-      console.log(`    - ${actor}: ${cnt}`);
-    }
-    console.log(`  By Source:`);
-    for (const [source, cnt] of Object.entries(result.database.bySource)) {
-      console.log(`    - ${source}: ${cnt}`);
-    }
-    console.log();
-
-    console.log("PINECONE");
-    console.log("-".repeat(40));
-    console.log(`  Total: ${result.pinecone.count}`);
-    console.log(`  By Type:`);
-    for (const [type, cnt] of Object.entries(result.pinecone.byType)) {
-      console.log(`    - ${type}: ${cnt}`);
-    }
-    console.log();
-
-    console.log("STATUS");
-    console.log("-".repeat(40));
-    if (result.success) {
-      console.log("  ✓ Verification passed");
-    } else {
-      console.log("  ✗ Verification failed");
-      for (const mismatch of result.mismatches) {
-        console.log(`    - ${mismatch}`);
-      }
-    }
-  }
-}
+};
 
 /**
- * Create verifier for a workspace
+ * Print formatted verification report
  */
-export function createVerifier(target: WorkspaceTarget): TestDataVerifier {
-  return new TestDataVerifier(target);
-}
+export const printReport = (result: WorkflowVerificationResult): void => {
+  console.log("\n========================================");
+  console.log("   TEST DATA VERIFICATION REPORT");
+  console.log("========================================\n");
+
+  console.log("DATABASE:");
+  console.log(`  Observations: ${result.database.observations}`);
+  console.log(`  Entities: ${result.database.entities}`);
+  console.log(`  Clusters: ${result.database.clusters}`);
+  console.log(`  Actor Profiles: ${result.database.actorProfiles}`);
+
+  console.log("\n  By Observation Type:");
+  for (const [type, cnt] of Object.entries(result.database.observationsByType)) {
+    console.log(`    ${type}: ${cnt}`);
+  }
+
+  console.log("\n  By Entity Category:");
+  for (const [cat, cnt] of Object.entries(result.database.entitiesByCategory)) {
+    console.log(`    ${cat}: ${cnt}`);
+  }
+
+  console.log("\nPINECONE:");
+  console.log(`  Title vectors: ${result.pinecone.titleVectors}`);
+  console.log(`  Content vectors: ${result.pinecone.contentVectors}`);
+  console.log(`  Summary vectors: ${result.pinecone.summaryVectors}`);
+
+  console.log("\nHEALTH CHECKS:");
+  console.log(`  Multi-view complete: ${result.health.multiViewComplete ? "PASS" : "FAIL"}`);
+  console.log(`  Entities extracted: ${result.health.entitiesExtracted ? "PASS" : "FAIL"}`);
+  console.log(`  Clusters assigned: ${result.health.clustersAssigned ? "PASS" : "FAIL"}`);
+
+  console.log("\n========================================\n");
+};
