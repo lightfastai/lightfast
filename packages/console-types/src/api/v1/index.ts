@@ -3,3 +3,5 @@
  */
 
 export * from "./search";
+export * from "./contents";
+export * from "./findsimilar";
