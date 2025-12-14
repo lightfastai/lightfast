@@ -19,9 +19,11 @@
   "dependencies": {
     "@api/console": "workspace:*",
     "@db/console": "workspace:*",
+    "@octokit/webhooks-types": "^7.6.1",
     "@repo/console-pinecone": "workspace:*",
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
+    "@repo/console-webhooks": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

@@ -1,12 +1,15 @@
 /**
- * JSON Dataset Loader
+ * Webhook Dataset Loader
  *
- * Loads JSON datasets, resolves relative timestamps, generates unique sourceIds.
+ * Loads raw webhook datasets and transforms them to SourceEvents
+ * using production transformers.
  */
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import type { SourceEvent } from "@repo/console-types";
+import type { WebhookPayload } from "./transform.js";
+import { transformWebhook } from "./transform.js";
 
 export interface Dataset {
   name: string;
@@ -17,66 +20,8 @@ export interface Dataset {
 interface RawDataset {
   name: string;
   description?: string;
-  events: RawSourceEvent[];
+  webhooks: WebhookPayload[];
 }
-
-interface RawSourceEvent extends Omit<SourceEvent, "occurredAt"> {
-  occurredAt: string;
-}
-
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}/;
-const RELATIVE_TIMESTAMP_PATTERN = /^-(\d+)([dhwm])$/;
-
-/**
- * Resolve relative timestamp expressions to ISO strings
- * Supports: "-2d" (2 days ago), "-1w" (1 week ago), "-3h" (3 hours ago)
- */
-const resolveTimestamp = (value: string): string => {
-  if (ISO_DATE_PATTERN.exec(value)) {
-    return value;
-  }
-
-  const match = RELATIVE_TIMESTAMP_PATTERN.exec(value);
-  if (!match) {
-    throw new Error(`Invalid timestamp: ${value}. Use ISO or relative like "-2d"`);
-  }
-
-  const amount = match[1];
-  const unit = match[2];
-  if (!amount || !unit) {
-    throw new Error(`Invalid timestamp: ${value}. Use ISO or relative like "-2d"`);
-  }
-
-  const now = new Date();
-
-  switch (unit) {
-    case "h":
-      now.setHours(now.getHours() - parseInt(amount, 10));
-      break;
-    case "d":
-      now.setDate(now.getDate() - parseInt(amount, 10));
-      break;
-    case "w":
-      now.setDate(now.getDate() - parseInt(amount, 10) * 7);
-      break;
-    case "m":
-      now.setMonth(now.getMonth() - parseInt(amount, 10));
-      break;
-  }
-
-  return now.toISOString();
-};
-
-const generateSuffix = (): string => Math.random().toString(36).substring(2, 8);
-
-const processEvents = (events: RawSourceEvent[]): SourceEvent[] => {
-  const suffix = generateSuffix();
-  return events.map((event, index) => ({
-    ...event,
-    sourceId: `${event.sourceId}:${suffix}:${index}`,
-    occurredAt: resolveTimestamp(event.occurredAt),
-  }));
-};
 
 const getDatasetsDir = (): string => {
   return resolve(import.meta.dirname, "..", "..", "datasets");
@@ -84,6 +29,7 @@ const getDatasetsDir = (): string => {
 
 /**
  * Load a dataset by name or file path
+ * Transforms raw webhooks to SourceEvents using production transformers
  */
 export const loadDataset = (nameOrPath: string): Dataset => {
   const datasetsDir = getDatasetsDir();
@@ -99,14 +45,19 @@ export const loadDataset = (nameOrPath: string): Dataset => {
   const raw = JSON.parse(readFileSync(filePath, "utf-8")) as RawDataset;
 
   if (!raw.name) throw new Error(`Dataset missing: name`);
-  if (!Array.isArray(raw.events) || raw.events.length === 0) {
-    throw new Error(`Dataset must have at least one event`);
+  if (!Array.isArray(raw.webhooks) || raw.webhooks.length === 0) {
+    throw new Error(`Dataset must have at least one webhook`);
   }
+
+  // Transform webhooks to SourceEvents using production transformers
+  const events = raw.webhooks.map((webhook, index) =>
+    transformWebhook(webhook, index)
+  );
 
   return {
     name: raw.name,
     description: raw.description,
-    events: processEvents(raw.events),
+    events,
   };
 };
 
@@ -118,7 +69,7 @@ export const listDatasets = (): string[] => {
   if (!existsSync(datasetsDir)) return [];
 
   return readdirSync(datasetsDir)
-    .filter((f) => f.endsWith(".json") && f !== "schema.json")
+    .filter((f) => f.endsWith(".json") && !f.includes("schema"))
     .map((f) => f.replace(".json", ""));
 };
 
@@ -149,17 +100,20 @@ export const balancedScenario = (count: number): SourceEvent[] => {
 export const stressScenario = (count: number): SourceEvent[] => {
   const base = loadAllDatasets();
   const events: SourceEvent[] = [];
+  let stressIndex = 0;
 
   while (events.length < count) {
     for (const event of base) {
       if (events.length >= count) break;
       events.push({
         ...event,
-        sourceId: `${event.sourceId}:stress:${events.length}`,
-        occurredAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+        sourceId: `${event.sourceId}:stress:${stressIndex++}`,
       });
     }
   }
 
   return events;
 };
+
+// Re-export transform types
+export type { WebhookPayload, GitHubEventType, VercelEventType } from "./transform.js";

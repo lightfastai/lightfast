@@ -2,7 +2,7 @@
 
 Workflow-driven test data generation for neural memory E2E testing.
 
-**Key Design**: Test data is injected via the real Inngest workflow (`apps-console/neural/observation.capture`), ensuring tests exercise the full production pipeline including significance scoring, entity extraction, multi-view embeddings, cluster assignment, and actor resolution.
+**Key Design**: Test data uses **raw webhook payloads** (GitHub/Vercel format) that flow through production transformers before being injected via the real Inngest workflow (`apps-console/neural/observation.capture`). This ensures tests exercise the full production pipeline including webhook transformation, significance scoring, entity extraction, multi-view embeddings, cluster assignment, and actor resolution.
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ import {
   printReport,
 } from '@repo/console-test-data';
 
-// 1. Load events from a dataset
+// 1. Load events from a dataset (webhooks are transformed to SourceEvents)
 const dataset = loadDataset('security');  // or 'performance', or path to JSON
 const events = dataset.events;
 
@@ -104,50 +104,124 @@ printReport(result);
 
 ## Datasets
 
-Test data is defined in JSON files in the `datasets/` directory.
+Test data is defined as **raw webhook payloads** in JSON files in the `datasets/` directory. These webhooks flow through the same production transformers used in real webhook handlers.
 
-| Dataset | Events | Description |
-|---------|--------|-------------|
-| `security` | 3 | OAuth PR, API keys issue, credential rotation |
-| `performance` | 3 | Redis caching PR, dashboard issue, deployment |
+| Dataset | Webhooks | Description |
+|---------|----------|-------------|
+| `security` | 3 | OAuth PR (merged), API keys issue (opened), credential rotation push |
+| `performance` | 3 | Redis caching PR (merged), dashboard issue (opened), Vercel deployment |
 | `balanced` | n | Shuffled mix from all datasets |
 | `stress` | n | Repeated/varied events for load testing |
 
 ### Creating Custom Datasets
 
-Create a JSON file following the schema in `datasets/schema.json`:
+Create a JSON file following the schema in `datasets/webhook-schema.json`. Datasets contain **raw webhook payloads** that match GitHub/Vercel webhook formats:
 
 ```json
 {
-  "$schema": "./schema.json",
+  "$schema": "./webhook-schema.json",
   "name": "my-dataset",
-  "description": "Custom test events",
-  "events": [
+  "description": "Custom test webhooks",
+  "webhooks": [
     {
       "source": "github",
-      "sourceType": "push",
-      "sourceId": "push:org/repo:abc123",
-      "title": "[Push] fix: resolve bug",
-      "body": "Fixed the bug\n\nDetails here...",
-      "actor": { "id": "github:alice", "name": "alice" },
-      "occurredAt": "-1d",
-      "references": [
-        { "type": "commit", "id": "abc123" },
-        { "type": "branch", "id": "main" }
-      ],
-      "metadata": {
-        "testData": true,
-        "repoFullName": "org/repo"
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "aaa111bbb222",
+        "after": "def789abc012",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "commits": [
+          {
+            "id": "def789abc012",
+            "message": "fix: resolve bug",
+            "timestamp": "2024-01-12T16:00:00Z",
+            "author": {
+              "name": "alice",
+              "email": "alice@example.com",
+              "username": "alice"
+            },
+            "added": [],
+            "removed": [],
+            "modified": ["src/index.ts"]
+          }
+        ],
+        "head_commit": {
+          "id": "def789abc012",
+          "message": "fix: resolve bug",
+          "timestamp": "2024-01-12T16:00:00Z",
+          "author": {
+            "name": "alice",
+            "email": "alice@example.com",
+            "username": "alice"
+          },
+          "added": [],
+          "removed": [],
+          "modified": ["src/index.ts"]
+        },
+        "repository": {
+          "id": 123456,
+          "name": "repo",
+          "full_name": "org/repo",
+          "html_url": "https://github.com/org/repo"
+        },
+        "pusher": {
+          "name": "alice",
+          "email": "alice@example.com"
+        },
+        "sender": {
+          "login": "alice",
+          "id": 12345
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_123",
+        "type": "deployment.succeeded",
+        "createdAt": 1704988800000,
+        "payload": {
+          "deployment": {
+            "id": "dpl_abc123",
+            "name": "my-app",
+            "url": "my-app.vercel.app",
+            "meta": {
+              "githubCommitSha": "abc123",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "feat: add feature",
+              "githubCommitAuthorName": "alice"
+            }
+          },
+          "project": {
+            "id": "prj_123",
+            "name": "my-app"
+          }
+        }
       }
     }
   ]
 }
 ```
 
-**Relative timestamps**: Use `-Nd` (days), `-Nh` (hours), `-Nw` (weeks), `-Nm` (months):
-- `-2d` = 2 days ago
-- `-1w` = 1 week ago
-- `-3h` = 3 hours ago
+### Supported Event Types
+
+**GitHub:**
+- `push` - Code pushes to branches
+- `pull_request` - PR opened, closed, merged, etc.
+- `issues` - Issue opened, closed, labeled, etc.
+- `release` - Release published, created
+- `discussion` - Discussion created, answered
+
+**Vercel:**
+- `deployment.created` - Deployment started
+- `deployment.succeeded` - Deployment completed successfully
+- `deployment.ready` - Deployment ready to serve traffic
+- `deployment.canceled` - Deployment canceled
+- `deployment.error` - Deployment failed
 
 ## Verification
 
@@ -178,40 +252,47 @@ const result = await verify({ workspaceId, clerkOrgId, indexName });
 ## Architecture
 
 ```
-SourceEvent → inngest.send() → observation.capture workflow
-                                      ↓
-                              Significance Gate
-                                      ↓
-                    ┌─────────────────┼─────────────────┐
-                    ↓                 ↓                 ↓
-               Classify          Embed (3x)        Extract Entities
-                    ↓                 ↓                 ↓
-                    └─────────────────┼─────────────────┘
-                                      ↓
-                              Cluster Assignment
-                                      ↓
-                              Actor Resolution
-                                      ↓
-                                   Store
+Raw Webhook → transformWebhook() → SourceEvent → inngest.send() → observation.capture
+     ↑                                                                    ↓
+ (GitHub/Vercel format)                                          Significance Gate
+                                                                         ↓
+                                                   ┌─────────────────────┼─────────────────────┐
+                                                   ↓                     ↓                     ↓
+                                              Classify              Embed (3x)         Extract Entities
+                                                   ↓                     ↓                     ↓
+                                                   └─────────────────────┼─────────────────────┘
+                                                                         ↓
+                                                                 Cluster Assignment
+                                                                         ↓
+                                                                 Actor Resolution
+                                                                         ↓
+                                                                      Store
 ```
+
+The `transformWebhook()` function uses the same production transformers from `@repo/console-webhooks`:
+- `transformGitHubPush`, `transformGitHubPullRequest`, `transformGitHubIssue`, etc.
+- `transformVercelDeployment`
+
+This ensures test data exercises the exact same transformation logic as production webhooks.
 
 ## Package Structure
 
 ```
 packages/console-test-data/
-├── datasets/           # JSON dataset files
-│   ├── schema.json     # JSON Schema for validation
-│   ├── security.json   # Security-focused events
-│   └── performance.json # Performance-focused events
+├── datasets/               # JSON dataset files (raw webhook format)
+│   ├── webhook-schema.json # JSON Schema for validation
+│   ├── security.json       # Security-focused webhooks
+│   └── performance.json    # Performance-focused webhooks
 ├── src/
-│   ├── loader/         # JSON dataset loading
-│   │   └── index.ts    # loadDataset, listDatasets, balancedScenario, stressScenario
-│   ├── trigger/        # Workflow triggering
-│   │   ├── trigger.ts  # triggerObservationCapture
-│   │   ├── wait.ts     # waitForCapture
+│   ├── loader/             # Webhook dataset loading + transformation
+│   │   ├── index.ts        # loadDataset, listDatasets, balancedScenario, stressScenario
+│   │   └── transform.ts    # transformWebhook (routes to production transformers)
+│   ├── trigger/            # Workflow triggering
+│   │   ├── trigger.ts      # triggerObservationCapture
+│   │   ├── wait.ts         # waitForCapture
 │   │   └── index.ts
-│   ├── verifier/       # Post-workflow verification
-│   │   ├── verifier.ts # verify, printReport
+│   ├── verifier/           # Post-workflow verification
+│   │   ├── verifier.ts     # verify, printReport
 │   │   └── index.ts
 │   ├── cli/
 │   │   ├── inject.ts

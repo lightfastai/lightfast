@@ -1,77 +1,329 @@
 {
-  "$schema": "./schema.json",
+  "$schema": "./webhook-schema.json",
   "name": "performance",
-  "description": "Performance-focused events for testing optimization-related content",
-  "events": [
+  "description": "Performance-focused webhook events for testing optimization-related content",
+  "webhooks": [
     {
       "source": "github",
-      "sourceType": "pull-request.merged",
-      "sourceId": "pr:test/repo#201:merged",
-      "title": "[PR Merged] perf: Implement Redis caching for API responses",
-      "body": "perf: Implement Redis caching for API responses\n## Summary\nAdded Redis caching layer to reduce database load.\n\n## Changes\n- New cache module at `src/lib/cache.ts`\n- Configured CACHE_TTL via environment variable\n- Added cache invalidation on writes\n\n## Performance Impact\n- GET /api/dashboard: 450ms → 45ms (90% reduction)\n- Database queries reduced by 75%\n\nTested with @david-perf",
-      "actor": { "id": "github:david", "name": "david" },
-      "occurredAt": "-3d",
-      "references": [
-        { "type": "pr", "id": "#201", "url": "https://github.com/test/repo/pull/201" },
-        { "type": "branch", "id": "feature-branch", "url": "https://github.com/test/repo/tree/feature-branch" },
-        { "type": "commit", "id": "perf123hash", "url": "https://github.com/test/repo/commit/perf123hash" },
-        { "type": "label", "id": "performance" },
-        { "type": "label", "id": "enhancement" }
-      ],
-      "metadata": {
-        "testData": true,
-        "repoFullName": "test/repo",
-        "repoId": 234567,
-        "prNumber": 201,
-        "action": "merged",
-        "merged": true,
-        "additions": 50,
-        "deletions": 20,
-        "headRef": "feature-branch",
-        "baseRef": "main",
-        "headSha": "perf123hash"
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 201,
+        "pull_request": {
+          "id": 2234567890,
+          "node_id": "PR_kwDOtest201",
+          "number": 201,
+          "state": "closed",
+          "locked": false,
+          "title": "perf: Implement Redis caching for API responses",
+          "user": {
+            "login": "david",
+            "id": 45678,
+            "node_id": "U_david",
+            "avatar_url": "https://avatars.githubusercontent.com/u/45678",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nAdded Redis caching layer to reduce database load.\n\n## Changes\n- New cache module at `src/lib/cache.ts`\n- Configured CACHE_TTL via environment variable\n- Added cache invalidation on writes\n\n## Performance Impact\n- GET /api/dashboard: 450ms → 45ms (90% reduction)\n- Database queries reduced by 75%\n\nTested with @david-perf",
+          "created_at": "2024-01-08T10:00:00Z",
+          "updated_at": "2024-01-10T14:00:00Z",
+          "closed_at": "2024-01-10T14:00:00Z",
+          "merged_at": "2024-01-10T14:00:00Z",
+          "merge_commit_sha": "perf123hash789",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 10, "node_id": "L_10", "name": "performance", "color": "00ff00", "default": false },
+            { "id": 11, "node_id": "L_11", "name": "enhancement", "color": "a2eeef", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 5,
+          "additions": 200,
+          "deletions": 50,
+          "changed_files": 8,
+          "head": {
+            "label": "test:feature/redis-cache",
+            "ref": "feature/redis-cache",
+            "sha": "perf123hash",
+            "user": {
+              "login": "david",
+              "id": 45678,
+              "node_id": "U_david",
+              "avatar_url": "https://avatars.githubusercontent.com/u/45678",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 234567,
+              "node_id": "R_test2",
+              "name": "api-service",
+              "full_name": "test/api-service",
+              "private": false,
+              "owner": {
+                "login": "test",
+                "id": 11111,
+                "node_id": "O_test",
+                "avatar_url": "https://avatars.githubusercontent.com/u/11111",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/test/api-service",
+              "description": "API Service",
+              "fork": false,
+              "url": "https://api.github.com/repos/test/api-service",
+              "created_at": "2023-01-01T00:00:00Z",
+              "updated_at": "2024-01-10T14:00:00Z",
+              "pushed_at": "2024-01-10T14:00:00Z",
+              "homepage": null,
+              "size": 2000,
+              "stargazers_count": 100,
+              "watchers_count": 100,
+              "language": "TypeScript",
+              "forks_count": 20,
+              "open_issues_count": 10,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "public"
+            }
+          },
+          "base": {
+            "label": "test:main",
+            "ref": "main",
+            "sha": "base000000",
+            "user": {
+              "login": "test",
+              "id": 11111,
+              "node_id": "O_test",
+              "avatar_url": "https://avatars.githubusercontent.com/u/11111",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 234567,
+              "node_id": "R_test2",
+              "name": "api-service",
+              "full_name": "test/api-service",
+              "private": false,
+              "owner": {
+                "login": "test",
+                "id": 11111,
+                "node_id": "O_test",
+                "avatar_url": "https://avatars.githubusercontent.com/u/11111",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/test/api-service",
+              "description": "API Service",
+              "fork": false,
+              "url": "https://api.github.com/repos/test/api-service",
+              "created_at": "2023-01-01T00:00:00Z",
+              "updated_at": "2024-01-10T14:00:00Z",
+              "pushed_at": "2024-01-10T14:00:00Z",
+              "homepage": null,
+              "size": 2000,
+              "stargazers_count": 100,
+              "watchers_count": 100,
+              "language": "TypeScript",
+              "forks_count": 20,
+              "open_issues_count": 10,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "public"
+            }
+          },
+          "html_url": "https://github.com/test/api-service/pull/201",
+          "diff_url": "https://github.com/test/api-service/pull/201.diff",
+          "patch_url": "https://github.com/test/api-service/pull/201.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "david",
+            "id": 45678,
+            "node_id": "U_david",
+            "avatar_url": "https://avatars.githubusercontent.com/u/45678",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 3,
+          "review_comments": 2,
+          "maintainer_can_modify": false,
+          "author_association": "MEMBER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 234567,
+          "node_id": "R_test2",
+          "name": "api-service",
+          "full_name": "test/api-service",
+          "private": false,
+          "owner": {
+            "login": "test",
+            "id": 11111,
+            "node_id": "O_test",
+            "avatar_url": "https://avatars.githubusercontent.com/u/11111",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/test/api-service",
+          "description": "API Service",
+          "fork": false,
+          "url": "https://api.github.com/repos/test/api-service",
+          "created_at": "2023-01-01T00:00:00Z",
+          "updated_at": "2024-01-10T14:00:00Z",
+          "pushed_at": "2024-01-10T14:00:00Z",
+          "homepage": null,
+          "size": 2000,
+          "stargazers_count": 100,
+          "watchers_count": 100,
+          "language": "TypeScript",
+          "forks_count": 20,
+          "open_issues_count": 10,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "public"
+        },
+        "sender": {
+          "login": "david",
+          "id": 45678,
+          "node_id": "U_david",
+          "avatar_url": "https://avatars.githubusercontent.com/u/45678",
+          "type": "User",
+          "site_admin": false
+        }
       }
     },
     {
       "source": "github",
-      "sourceType": "issue.opened",
-      "sourceId": "issue:test/repo#202:opened",
-      "title": "[Issue Opened] Dashboard loading time exceeds 5s on production",
-      "body": "Dashboard loading time exceeds 5s on production\n## Problem\nThe GET /api/dashboard endpoint is taking >5 seconds on production.\n\n## Investigation\n- N+1 query detected in user list\n- No database indexes on frequently queried columns\n\n## Environment\n- Production cluster with 1000+ concurrent users\n- Redis not currently deployed",
-      "actor": { "id": "github:eve", "name": "eve" },
-      "occurredAt": "-5d",
-      "references": [
-        { "type": "issue", "id": "#202", "url": "https://github.com/test/repo/issues/202" },
-        { "type": "label", "id": "performance" },
-        { "type": "label", "id": "bug" }
-      ],
-      "metadata": {
-        "testData": true,
-        "repoFullName": "test/repo",
-        "repoId": 234567,
-        "issueNumber": 202,
-        "action": "opened"
+      "eventType": "issues",
+      "payload": {
+        "action": "opened",
+        "issue": {
+          "id": 887654321,
+          "node_id": "I_kwDOtest202",
+          "number": 202,
+          "title": "Dashboard loading time exceeds 5s on production",
+          "user": {
+            "login": "eve",
+            "id": 56789,
+            "node_id": "U_eve",
+            "avatar_url": "https://avatars.githubusercontent.com/u/56789",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 10, "node_id": "L_10", "name": "performance", "color": "00ff00", "default": false },
+            { "id": 5, "node_id": "L_5", "name": "bug", "color": "d73a4a", "default": false }
+          ],
+          "state": "open",
+          "locked": false,
+          "assignee": null,
+          "assignees": [],
+          "milestone": null,
+          "comments": 0,
+          "created_at": "2024-01-06T09:00:00Z",
+          "updated_at": "2024-01-06T09:00:00Z",
+          "closed_at": null,
+          "author_association": "MEMBER",
+          "active_lock_reason": null,
+          "body": "## Problem\nThe GET /api/dashboard endpoint is taking >5 seconds on production.\n\n## Investigation\n- N+1 query detected in user list\n- No database indexes on frequently queried columns\n\n## Environment\n- Production cluster with 1000+ concurrent users\n- Redis not currently deployed",
+          "reactions": {
+            "url": "https://api.github.com/repos/test/api-service/issues/202/reactions",
+            "total_count": 0,
+            "+1": 0,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
+          },
+          "html_url": "https://github.com/test/api-service/issues/202",
+          "timeline_url": "https://api.github.com/repos/test/api-service/issues/202/timeline",
+          "state_reason": null
+        },
+        "repository": {
+          "id": 234567,
+          "node_id": "R_test2",
+          "name": "api-service",
+          "full_name": "test/api-service",
+          "private": false,
+          "owner": {
+            "login": "test",
+            "id": 11111,
+            "node_id": "O_test",
+            "avatar_url": "https://avatars.githubusercontent.com/u/11111",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/test/api-service",
+          "description": "API Service",
+          "fork": false,
+          "url": "https://api.github.com/repos/test/api-service",
+          "created_at": "2023-01-01T00:00:00Z",
+          "updated_at": "2024-01-06T09:00:00Z",
+          "pushed_at": "2024-01-06T09:00:00Z",
+          "homepage": null,
+          "size": 2000,
+          "stargazers_count": 100,
+          "watchers_count": 100,
+          "language": "TypeScript",
+          "forks_count": 20,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "public"
+        },
+        "sender": {
+          "login": "eve",
+          "id": 56789,
+          "node_id": "U_eve",
+          "avatar_url": "https://avatars.githubusercontent.com/u/56789",
+          "type": "User",
+          "site_admin": false
+        }
       }
     },
     {
       "source": "vercel",
-      "sourceType": "deployment.succeeded",
-      "sourceId": "deploy:lightfast-app:dpl_abc123",
-      "title": "Deployed lightfast-app to production",
-      "body": "Deployment succeeded for lightfast-app\n\nCommit: perf: enable edge runtime for API routes\nBranch: main\nEnvironment: production",
-      "actor": { "id": "vercel:frank", "name": "frank" },
-      "occurredAt": "-1d",
-      "references": [
-        { "type": "deployment", "id": "dpl_abc123", "url": "https://vercel.com/lightfast/lightfast-app/dpl_abc123" },
-        { "type": "branch", "id": "main" }
-      ],
-      "metadata": {
-        "testData": true,
-        "projectId": "prj_lightfast123",
-        "projectName": "lightfast-app",
-        "deploymentId": "dpl_abc123",
-        "target": "production",
-        "deploymentUrl": "https://lightfast-app.vercel.app"
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_perf123",
+        "type": "deployment.succeeded",
+        "createdAt": 1704988800000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_perf789",
+            "name": "api-service",
+            "url": "api-service-abc123.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "perf123hash",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "perf: enable edge runtime for API routes",
+              "githubCommitAuthorName": "frank",
+              "githubCommitAuthorLogin": "frank",
+              "githubOrg": "test",
+              "githubRepo": "api-service"
+            }
+          },
+          "project": {
+            "id": "prj_apiservice123",
+            "name": "api-service"
+          },
+          "team": {
+            "id": "team_test",
+            "slug": "test-team",
+            "name": "Test Team"
+          }
+        }
       }
     }
   ]

@@ -2751,6 +2751,9 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
+      '@octokit/webhooks-types':
+        specifier: ^7.6.1
+        version: 7.6.1
       '@repo/console-pinecone':
         specifier: workspace:*
         version: link:../console-pinecone
@@ -2760,6 +2763,9 @@ importers:
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../console-validation
+      '@repo/console-webhooks':
+        specifier: workspace:*
+        version: link:../console-webhooks
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)

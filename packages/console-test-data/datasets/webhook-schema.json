@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Webhook Test Dataset",
+  "description": "Test dataset containing raw webhook payloads that flow through production transformers",
+  "type": "object",
+  "required": ["name", "webhooks"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "name": {
+      "type": "string",
+      "description": "Dataset identifier"
+    },
+    "description": {
+      "type": "string",
+      "description": "Dataset purpose"
+    },
+    "webhooks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/WebhookPayload" },
+      "minItems": 1
+    }
+  },
+  "definitions": {
+    "WebhookPayload": {
+      "type": "object",
+      "required": ["source", "eventType", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["github", "vercel"],
+          "description": "Webhook source platform"
+        },
+        "eventType": {
+          "type": "string",
+          "description": "Event type identifier",
+          "oneOf": [
+            {
+              "enum": ["push", "pull_request", "issues", "release", "discussion"],
+              "description": "GitHub event types"
+            },
+            {
+              "enum": [
+                "deployment.created",
+                "deployment.succeeded",
+                "deployment.ready",
+                "deployment.canceled",
+                "deployment.error",
+                "deployment.check-rerequested"
+              ],
+              "description": "Vercel event types"
+            }
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "description": "Raw webhook payload matching the source platform's webhook format"
+        }
+      }
+    }
+  }
+}
