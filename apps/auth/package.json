@@ -41,7 +41,7 @@
     "geist": "catalog:",
     "lucide-react": "catalog:",
     "neverthrow": "catalog:",
-    "next": "catalog:",
+    "next": "15.5.8",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-hook-form": "^7.61.1",
