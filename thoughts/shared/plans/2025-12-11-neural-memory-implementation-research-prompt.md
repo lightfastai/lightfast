@@ -21,8 +21,8 @@ Use this prompt with `/research-codebase` to generate a comprehensive map of exi
 | 2 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-12-neural-memory-day2-retrieval-infrastructure.md` |
 | 3 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-12-neural-memory-day3-entity-system.md` |
 | 3.5 | ✅ COMPLETE | `thoughts/shared/plans/2025-12-13-neural-memory-day3.5-write-path-rework.md` |
-| 4 | 🔄 NEXT | Clusters + Actor Resolution + Profiles |
-| 5 | ⏳ PENDING | Multi-view Embeddings + Temporal + Polish |
+| 4 | ✅ COMPLETE | Clusters + Actor Resolution + Profiles |
+| 5 | ✅ COMPLETE | Multi-view Embeddings + Temporal + Polish |
 
 ---
 
@@ -204,8 +204,8 @@ For each area, document:
 | 2 | Basic Retrieval | Metadata filters, LLM gating, Latency tracking | ✅ |
 | 3 | Entity System | Entity schema, Extraction patterns, Search integration | ✅ |
 | 3.5 | Write Path Rework | Significance gating, Parallelization, Inline entities | ✅ |
-| 4 | Clusters + Profiles | Cluster assignment, Actor resolution, Profile updates | 🔄 |
-| 5 | Multi-view + Temporal | 3 embeddings per obs, Temporal states, Retrieval polish | ⏳ |
+| 4 | Clusters + Profiles | Cluster assignment, Actor resolution, Profile updates | ✅ |
+| 5 | Multi-view + Temporal | 3 embeddings per obs, Temporal states, Retrieval polish | ✅ |
 
 ## Reference Architecture
 
