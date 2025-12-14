@@ -273,3 +273,79 @@ export async function verifyGitHubWebhookWithTimestamp(
 
   return result;
 }
+
+/**
+ * Default max age for GitHub webhooks (5 minutes)
+ * Used for replay attack prevention
+ */
+export const GITHUB_MAX_WEBHOOK_AGE_SECONDS = 300;
+
+/**
+ * Extract timestamp from GitHub webhook payload for validation
+ *
+ * Different event types have timestamps in different fields.
+ * Returns null if no timestamp can be extracted.
+ *
+ * @param payload - Parsed GitHub webhook payload
+ * @param eventType - The x-github-event header value
+ * @returns ISO timestamp string or null
+ *
+ * @example
+ * ```ts
+ * const timestamp = extractGitHubPayloadTimestamp(payload, "push");
+ * if (timestamp) {
+ *   const isValid = validateWebhookTimestamp(timestamp, 300);
+ * }
+ * ```
+ */
+export function extractGitHubPayloadTimestamp(
+  payload: GitHubWebhookEvent,
+  eventType: string
+): string | null {
+  // Push events - use head_commit.timestamp
+  if (eventType === "push") {
+    const pushPayload = payload as { head_commit?: { timestamp?: string } };
+    if (pushPayload.head_commit?.timestamp) {
+      return pushPayload.head_commit.timestamp;
+    }
+  }
+
+  // Pull request events - use updated_at
+  if (eventType === "pull_request") {
+    const prPayload = payload as { pull_request?: { updated_at?: string } };
+    if (prPayload.pull_request?.updated_at) {
+      return prPayload.pull_request.updated_at;
+    }
+  }
+
+  // Issue events - use updated_at
+  if (eventType === "issues") {
+    const issuePayload = payload as { issue?: { updated_at?: string } };
+    if (issuePayload.issue?.updated_at) {
+      return issuePayload.issue.updated_at;
+    }
+  }
+
+  // Discussion events - use updated_at
+  if (eventType === "discussion") {
+    const discussionPayload = payload as { discussion?: { updated_at?: string } };
+    if (discussionPayload.discussion?.updated_at) {
+      return discussionPayload.discussion.updated_at;
+    }
+  }
+
+  // Release events - use published_at or created_at
+  if (eventType === "release") {
+    const releasePayload = payload as {
+      release?: { published_at?: string; created_at?: string };
+    };
+    if (releasePayload.release?.published_at) {
+      return releasePayload.release.published_at;
+    }
+    if (releasePayload.release?.created_at) {
+      return releasePayload.release.created_at;
+    }
+  }
+
+  return null;
+}

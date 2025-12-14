@@ -11,6 +11,24 @@ import type {
   DiscussionEvent,
 } from "@octokit/webhooks-types";
 import { toInternalGitHubEvent } from "../event-mapping.js";
+import { validateSourceEvent } from "../validation.js";
+import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
+
+/**
+ * Log validation errors for SourceEvent
+ * Validation is for monitoring - events are still returned to avoid breaking existing flows
+ */
+function logValidationErrors(
+  transformerName: string,
+  event: SourceEvent,
+  errors: string[]
+): void {
+  console.error(`[Transformer:${transformerName}] Invalid SourceEvent:`, {
+    sourceId: event.sourceId,
+    sourceType: event.sourceType,
+    errors,
+  });
+}
 
 /**
  * Transform GitHub push event to SourceEvent
@@ -41,20 +59,20 @@ export function transformGitHubPush(
     0
   );
 
-  const title =
+  const rawTitle =
     payload.head_commit?.message?.split("\n")[0]?.slice(0, 100) ||
     `Push to ${branch}`;
 
   // SEMANTIC CONTENT ONLY (for embedding)
   // Structured fields stored in metadata
-  const body = payload.head_commit?.message || "";
+  const rawBody = payload.head_commit?.message || "";
 
-  return {
+  const event: SourceEvent = {
     source: "github",
     sourceType: toInternalGitHubEvent("push") ?? "push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
-    title: `[Push] ${title}`,
-    body, // Semantic content only
+    title: sanitizeTitle(`[Push] ${rawTitle}`),
+    body: sanitizeBody(rawBody),
     actor: payload.pusher?.name
       ? {
           id: `github:${payload.pusher.name}`,
@@ -77,6 +95,14 @@ export function transformGitHubPush(
       forced: payload.forced,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubPush", event, validation.errors);
+  }
+
+  return event;
 }
 
 /**
@@ -160,19 +186,19 @@ export function transformGitHubPullRequest(
 
   // SEMANTIC CONTENT ONLY (for embedding)
   // Structured fields stored in metadata to avoid token waste on non-semantic labels
-  const body = [pr.title, pr.body || ""].join("\n");
+  const rawBody = [pr.title, pr.body || ""].join("\n");
 
   // Determine effective action (merged is a special case of closed)
   const effectiveAction =
     payload.action === "closed" && pr.merged ? "merged" : payload.action;
   const internalType = toInternalGitHubEvent("pull_request", effectiveAction);
 
-  return {
+  const event: SourceEvent = {
     source: "github",
     sourceType: internalType ?? `pull-request.${effectiveAction}`,
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
-    title: `[${actionTitle}] ${pr.title.slice(0, 100)}`,
-    body, // Semantic content only
+    title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
     actor: pr.user
       ? {
           id: `github:${pr.user.id}`,
@@ -201,6 +227,14 @@ export function transformGitHubPullRequest(
       authorId: pr.user?.id,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubPullRequest", event, validation.errors);
+  }
+
+  return event;
 }
 
 /**
@@ -247,16 +281,16 @@ export function transformGitHubIssue(
   const actionTitle = actionMap[payload.action] || `Issue ${payload.action}`;
 
   // SEMANTIC CONTENT ONLY (for embedding)
-  const body = [issue.title, issue.body || ""].join("\n");
+  const rawBody = [issue.title, issue.body || ""].join("\n");
 
   const internalType = toInternalGitHubEvent("issue", payload.action);
 
-  return {
+  const event: SourceEvent = {
     source: "github",
     sourceType: internalType ?? `issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
-    title: `[${actionTitle}] ${issue.title.slice(0, 100)}`,
-    body, // Semantic content only
+    title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
     actor: issue.user
       ? {
           id: `github:${issue.user.id}`,
@@ -277,6 +311,14 @@ export function transformGitHubIssue(
       authorId: issue.user?.id,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubIssue", event, validation.errors);
+  }
+
+  return event;
 }
 
 /**
@@ -304,16 +346,16 @@ export function transformGitHubRelease(
   const actionTitle = actionMap[payload.action] || `Release ${payload.action}`;
 
   // SEMANTIC CONTENT ONLY (for embedding)
-  const body = release.body || "";
+  const rawBody = release.body || "";
 
   const internalType = toInternalGitHubEvent("release", payload.action);
 
-  return {
+  const event: SourceEvent = {
     source: "github",
     sourceType: internalType ?? `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
-    title: `[${actionTitle}] ${release.name || release.tag_name}`,
-    body, // Semantic content only
+    title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
+    body: sanitizeBody(rawBody),
     actor: release.author
       ? {
           id: `github:${release.author.id}`,
@@ -336,6 +378,14 @@ export function transformGitHubRelease(
       authorId: release.author?.id,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubRelease", event, validation.errors);
+  }
+
+  return event;
 }
 
 /**
@@ -366,16 +416,16 @@ export function transformGitHubDiscussion(
     actionMap[payload.action] || `Discussion ${payload.action}`;
 
   // SEMANTIC CONTENT ONLY (for embedding)
-  const body = [discussion.title, discussion.body || ""].join("\n");
+  const rawBody = [discussion.title, discussion.body || ""].join("\n");
 
   const internalType = toInternalGitHubEvent("discussion", payload.action);
 
-  return {
+  const event: SourceEvent = {
     source: "github",
     sourceType: internalType ?? `discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
-    title: `[${actionTitle}] ${discussion.title.slice(0, 100)}`,
-    body, // Semantic content only
+    title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
     actor: discussion.user
       ? {
           id: `github:${discussion.user.id}`,
@@ -397,6 +447,14 @@ export function transformGitHubDiscussion(
       authorId: discussion.user?.id,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubDiscussion", event, validation.errors);
+  }
+
+  return event;
 }
 
 /**

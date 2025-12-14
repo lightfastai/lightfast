@@ -14,6 +14,7 @@ import type {
 import {
   verifyVercelWebhook,
   transformVercelDeployment,
+  validateWebhookTimestamp,
 } from "@repo/console-webhooks";
 import {
   storeWebhookPayload,
@@ -157,6 +158,25 @@ export async function POST(request: NextRequest) {
         { error: "Missing event payload" },
         { status: 500 },
       );
+    }
+
+    // Timestamp validation (replay attack prevention)
+    // Vercel webhooks include createdAt in milliseconds
+    if (payload.createdAt) {
+      const timestampMs = payload.createdAt;
+      const timestampSeconds = Math.floor(timestampMs / 1000);
+      const isTimestampValid = validateWebhookTimestamp(timestampSeconds, 300);
+
+      if (!isTimestampValid) {
+        log.warn("[Vercel Webhook] Rejected stale webhook", {
+          webhookId: payload.id,
+          timestamp: new Date(timestampMs).toISOString(),
+        });
+        return NextResponse.json(
+          { error: "Webhook timestamp too old (possible replay attack)" },
+          { status: 401 }
+        );
+      }
     }
 
     const eventType = payload.type as VercelDeploymentEvent;

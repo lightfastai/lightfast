@@ -8,6 +8,8 @@ import type {
   VercelDeploymentEvent,
 } from "../vercel.js";
 import { toInternalVercelEvent } from "../event-mapping.js";
+import { validateSourceEvent } from "../validation.js";
+import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 /**
  * Transform Vercel deployment event to SourceEvent
@@ -91,7 +93,7 @@ export function transformVercelDeployment(
 
   // SEMANTIC CONTENT ONLY (for embedding)
   // Structured fields stored in metadata
-  const body = [
+  const rawBody = [
     `${emoji} ${actionTitle}`,
     gitMeta?.githubCommitMessage ? gitMeta.githubCommitMessage : "",
   ]
@@ -100,12 +102,12 @@ export function transformVercelDeployment(
 
   const internalType = toInternalVercelEvent(eventType);
 
-  return {
+  const event: SourceEvent = {
     source: "vercel",
     sourceType: internalType ?? eventType,
     sourceId: `deployment:${deployment.id}`,
-    title: `[${actionTitle}] ${project.name} from ${branch}`,
-    body,
+    title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
+    body: sanitizeBody(rawBody),
     actor: gitMeta?.githubCommitAuthorName
       ? {
           id: `github:${gitMeta.githubCommitAuthorName}`,
@@ -133,6 +135,18 @@ export function transformVercelDeployment(
       gitOrg: gitMeta?.githubOrg,
     },
   };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validateSourceEvent(event);
+  if (!validation.success && validation.errors) {
+    console.error("[Transformer:transformVercelDeployment] Invalid SourceEvent:", {
+      sourceId: event.sourceId,
+      sourceType: event.sourceType,
+      errors: validation.errors,
+    });
+  }
+
+  return event;
 }
 
 export const vercelTransformers = {

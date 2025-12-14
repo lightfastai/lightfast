@@ -54,6 +54,12 @@ export * from "./common.js";
 export * from "./github.js";
 export * from "./vercel.js";
 
+// Validation utilities
+export * from "./validation.js";
+
+// Sanitization utilities
+export * from "./sanitize.js";
+
 // Event mapping utilities
 export * from "./event-mapping.js";
 

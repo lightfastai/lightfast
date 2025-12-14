@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyGitHubWebhookFromHeaders } from "@repo/console-webhooks/github";
+import {
+  verifyGitHubWebhookFromHeaders,
+  extractGitHubPayloadTimestamp,
+  GITHUB_MAX_WEBHOOK_AGE_SECONDS,
+} from "@repo/console-webhooks/github";
+import { validateWebhookTimestamp } from "@repo/console-webhooks/common";
 import {
   transformGitHubPush,
   transformGitHubPullRequest,
@@ -485,6 +490,31 @@ export async function POST(request: NextRequest) {
       | IssuesEvent
       | ReleaseEvent
       | DiscussionEvent;
+
+    // Timestamp validation (replay attack prevention)
+    // Cast to GitHubWebhookEvent for timestamp extraction (safe - already verified)
+    const payloadTimestamp = extractGitHubPayloadTimestamp(
+      body as Parameters<typeof extractGitHubPayloadTimestamp>[0],
+      event
+    );
+    if (payloadTimestamp) {
+      const isTimestampValid = validateWebhookTimestamp(
+        payloadTimestamp,
+        GITHUB_MAX_WEBHOOK_AGE_SECONDS
+      );
+
+      if (!isTimestampValid) {
+        log.warn("[GitHub Webhook] Rejected stale webhook", {
+          eventType: event,
+          timestamp: payloadTimestamp,
+          deliveryId,
+        });
+        return NextResponse.json(
+          { error: "Webhook timestamp too old (possible replay attack)" },
+          { status: 401 }
+        );
+      }
+    }
 
     // Route to appropriate handler
     switch (event) {
