@@ -332,6 +332,10 @@ export interface EnrichedResult {
  *
  * Fetches observation details and associated entities to provide
  * complete result data for the API response.
+ *
+ * Optimizations:
+ * - Parallel queries with Promise.all (vs sequential)
+ * - Skips content column (uses candidate snippet from Pinecone instead)
  */
 export async function enrichSearchResults(
   results: { id: string; score: number }[],
@@ -344,39 +348,44 @@ export async function enrichSearchResults(
 
   const resultIds = results.map((r) => r.id);
 
-  // Fetch observations with metadata
-  const observations = await db
-    .select({
-      id: workspaceNeuralObservations.id,
-      title: workspaceNeuralObservations.title,
-      content: workspaceNeuralObservations.content,
-      source: workspaceNeuralObservations.source,
-      observationType: workspaceNeuralObservations.observationType,
-      occurredAt: workspaceNeuralObservations.occurredAt,
-      metadata: workspaceNeuralObservations.metadata,
-    })
-    .from(workspaceNeuralObservations)
-    .where(
-      and(
-        eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        inArray(workspaceNeuralObservations.id, resultIds)
-      )
-    );
+  // Build candidate map for O(1) lookup (used for snippets)
+  const candidateMap = new Map(candidates.map((c) => [c.id, c]));
 
-  // Fetch entities for these observations
-  const entities = await db
-    .select({
-      observationId: workspaceNeuralEntities.sourceObservationId,
-      key: workspaceNeuralEntities.key,
-      category: workspaceNeuralEntities.category,
-    })
-    .from(workspaceNeuralEntities)
-    .where(
-      and(
-        eq(workspaceNeuralEntities.workspaceId, workspaceId),
-        inArray(workspaceNeuralEntities.sourceObservationId, resultIds)
-      )
-    );
+  // Fetch observations and entities in parallel
+  const [observations, entities] = await Promise.all([
+    // Observations query - skip content column, use candidate snippet instead
+    db
+      .select({
+        id: workspaceNeuralObservations.id,
+        title: workspaceNeuralObservations.title,
+        source: workspaceNeuralObservations.source,
+        observationType: workspaceNeuralObservations.observationType,
+        occurredAt: workspaceNeuralObservations.occurredAt,
+        metadata: workspaceNeuralObservations.metadata,
+      })
+      .from(workspaceNeuralObservations)
+      .where(
+        and(
+          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          inArray(workspaceNeuralObservations.id, resultIds)
+        )
+      ),
+
+    // Entities query
+    db
+      .select({
+        observationId: workspaceNeuralEntities.sourceObservationId,
+        key: workspaceNeuralEntities.key,
+        category: workspaceNeuralEntities.category,
+      })
+      .from(workspaceNeuralEntities)
+      .where(
+        and(
+          eq(workspaceNeuralEntities.workspaceId, workspaceId),
+          inArray(workspaceNeuralEntities.sourceObservationId, resultIds)
+        )
+      ),
+  ]);
 
   // Group entities by observation
   const entityMap = new Map<string, { key: string; category: string }[]>();
@@ -394,17 +403,15 @@ export async function enrichSearchResults(
   // Map results with enrichment
   return results.map((r) => {
     const obs = observationMap.get(r.id);
-    const candidate = candidates.find((c) => c.id === r.id);
+    const candidate = candidateMap.get(r.id);
 
     // Extract URL from metadata if available
     const metadata = obs?.metadata as Record<string, unknown> | undefined;
     const metadataUrl = metadata?.url;
     const url = typeof metadataUrl === "string" ? metadataUrl : "";
 
-    // Create snippet from content (first 200 chars)
-    const snippet = obs?.content
-      ? obs.content.substring(0, 200) + (obs.content.length > 200 ? "..." : "")
-      : candidate?.snippet ?? "";
+    // Use candidate snippet from Pinecone (already computed during indexing)
+    const snippet = candidate?.snippet ?? "";
 
     return {
       id: r.id,

@@ -22,7 +22,7 @@ import { log } from "@vendor/observability/log";
 import { V1ContentsRequestSchema } from "@repo/console-types";
 import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
 
-import { withApiKeyAuth, createAuthErrorResponse } from "../lib/with-api-key-auth";
+import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { buildSourceUrl } from "~/lib/neural/url-builder";
 
 export async function POST(request: NextRequest) {
@@ -32,15 +32,21 @@ export async function POST(request: NextRequest) {
   log.info("v1/contents request", { requestId });
 
   try {
-    // 1. Authenticate via API key
-    const authResult = await withApiKeyAuth(request, requestId);
+    // 1. Authenticate via API key or session
+    const authResult = await withDualAuth(request, requestId);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult, requestId);
+      return createDualAuthErrorResponse(authResult, requestId);
     }
 
-    const { workspaceId, userId, apiKeyId } = authResult.auth;
+    const { workspaceId, userId, authType } = authResult.auth;
 
-    log.info("v1/contents authenticated", { requestId, workspaceId, userId, apiKeyId });
+    log.info("v1/contents authenticated", {
+      requestId,
+      workspaceId,
+      userId,
+      authType,
+      apiKeyId: authResult.auth.apiKeyId,
+    });
 
     // 2. Parse and validate request body
     let body: unknown;

@@ -110,6 +110,7 @@ export class LLMRerankProvider implements RerankProvider {
     const threshold = options?.threshold ?? this.config.threshold;
     const topK = options?.topK ?? candidates.length;
     const requestId = options?.requestId ?? "unknown";
+    const minResults = options?.minResults ?? 0;
 
     if (candidates.length === 0) {
       return {
@@ -172,8 +173,8 @@ export class LLMRerankProvider implements RerankProvider {
         object.scores.map((s) => [s.id, s.relevance]),
       );
 
-      // Combine LLM and vector scores
-      const results = candidates
+      // Combine LLM and vector scores with threshold filtering
+      let results = candidates
         .map((c) => {
           const llmRelevance = scoreMap.get(c.id) ?? 0.5; // Default if missing
           const finalScore =
@@ -190,12 +191,44 @@ export class LLMRerankProvider implements RerankProvider {
         .sort((a, b) => b.score - a.score)
         .slice(0, topK);
 
+      let fallback = false;
+
+      // Minimum results guarantee: if filtering returned too few results,
+      // return top results by score regardless of threshold
+      if (results.length < minResults && candidates.length > 0) {
+        log.info("LLM rerank using minimum results fallback", {
+          requestId,
+          filteredCount: results.length,
+          minResults,
+          threshold,
+        });
+
+        results = candidates
+          .map((c) => {
+            const llmRelevance = scoreMap.get(c.id) ?? 0.5;
+            const finalScore =
+              this.config.llmWeight * llmRelevance +
+              this.config.vectorWeight * c.score;
+            return {
+              id: c.id,
+              score: finalScore,
+              relevance: llmRelevance,
+              originalScore: c.score,
+            };
+          })
+          .sort((a, b) => b.score - a.score)
+          .slice(0, Math.min(topK, minResults));
+
+        fallback = true;
+      }
+
       return {
         results,
         latency,
         provider: this.name,
         filtered: candidates.length - results.length,
         bypassed: false,
+        fallback,
       };
     } catch (error) {
       const latency = Date.now() - startTime;

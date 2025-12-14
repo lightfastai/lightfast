@@ -84,6 +84,11 @@ export interface RerankResponse {
    * Whether reranking was bypassed (e.g., small result set)
    */
   bypassed: boolean;
+
+  /**
+   * True if minimum results guarantee was used (threshold bypassed)
+   */
+  fallback?: boolean;
 }
 
 /**
@@ -105,6 +110,14 @@ export interface RerankOptions {
    * Request ID for logging/tracing
    */
   requestId?: string;
+
+  /**
+   * Minimum number of results to return. If threshold filtering
+   * would return fewer than this, top results by score are returned
+   * regardless of threshold.
+   * @default 0 (no minimum guarantee)
+   */
+  minResults?: number;
 }
 
 /**

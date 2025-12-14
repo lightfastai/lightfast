@@ -7,8 +7,9 @@ import {
   workspaceWorkflowRuns,
   workspaceIntegrations,
   userSources,
+  workspaceActorProfiles,
 } from "@db/console/schema";
-import { eq, and, desc, count, sql, inArray, sum, avg, gte } from "drizzle-orm";
+import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
 import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
 import {
   workspaceListInputSchema,
@@ -1381,4 +1382,48 @@ export const workspaceRouter = {
         };
       }),
   },
+
+  /**
+   * Get workspace actors for filtering
+   * Returns actor profiles with display names for autocomplete
+   */
+  getActors: orgScopedProcedure
+    .input(
+      z.object({
+        clerkOrgSlug: z.string(),
+        workspaceName: z.string(),
+        search: z.string().optional(),
+        limit: z.number().min(1).max(50).default(20),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      // Resolve workspace from name
+      const { workspaceId } = await resolveWorkspaceByName({
+        clerkOrgSlug: input.clerkOrgSlug,
+        workspaceName: input.workspaceName,
+        userId: ctx.auth.userId,
+      });
+
+      // Build where conditions
+      const conditions = [eq(workspaceActorProfiles.workspaceId, workspaceId)];
+
+      if (input.search) {
+        conditions.push(
+          like(workspaceActorProfiles.displayName, `%${input.search}%`)
+        );
+      }
+
+      // Query actors
+      const actors = await db.query.workspaceActorProfiles.findMany({
+        where: and(...conditions),
+        limit: input.limit,
+        orderBy: [desc(workspaceActorProfiles.observationCount)],
+      });
+
+      return actors.map((a) => ({
+        id: a.id,
+        displayName: a.displayName,
+        observationCount: a.observationCount,
+      }));
+    }),
 } satisfies TRPCRouterRecord;

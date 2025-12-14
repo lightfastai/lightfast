@@ -76,6 +76,7 @@ export class CohereRerankProvider implements RerankProvider {
     const threshold = options?.threshold ?? this.defaultThreshold;
     const topK = options?.topK ?? candidates.length;
     const requestId = options?.requestId ?? "unknown";
+    const minResults = options?.minResults ?? 0;
 
     if (candidates.length === 0) {
       return {
@@ -117,8 +118,8 @@ export class CohereRerankProvider implements RerankProvider {
         response.results.map((r) => [r.index, r.relevanceScore]),
       );
 
-      // Map to results format with scores
-      const results = candidates
+      // Map to results format with threshold filtering
+      let results = candidates
         .map((c, index) => {
           const relevance = scoreMap.get(index) ?? 0;
           return {
@@ -132,12 +133,41 @@ export class CohereRerankProvider implements RerankProvider {
         .sort((a, b) => b.score - a.score)
         .slice(0, topK);
 
+      let fallback = false;
+
+      // Minimum results guarantee: if filtering returned too few results,
+      // return top results by score regardless of threshold
+      if (results.length < minResults && candidates.length > 0) {
+        log.info("Cohere rerank using minimum results fallback", {
+          requestId,
+          filteredCount: results.length,
+          minResults,
+          threshold,
+        });
+
+        results = candidates
+          .map((c, index) => {
+            const relevance = scoreMap.get(index) ?? 0;
+            return {
+              id: c.id,
+              score: relevance,
+              relevance,
+              originalScore: c.score,
+            };
+          })
+          .sort((a, b) => b.score - a.score)
+          .slice(0, Math.min(topK, minResults));
+
+        fallback = true;
+      }
+
       return {
         results,
         latency,
         provider: this.name,
         filtered: candidates.length - results.length,
         bypassed: false,
+        fallback,
       };
     } catch (error) {
       const latency = Date.now() - startTime;

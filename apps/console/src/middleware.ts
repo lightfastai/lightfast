@@ -61,6 +61,10 @@ const isOrgScopedRoute = createRouteMatcher([
 // organizationSyncOptions activates org from URL, then auth.protect verifies access
 const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 
+// v1 API routes - auth handled at route level (API key or session)
+// Must bypass Clerk middleware to allow API key authentication
+const isV1ApiRoute = createRouteMatcher(["/v1/(.*)"]);
+
 /**
  * Compose middleware with NEMO
  * Future middleware can be added to the before array
@@ -137,6 +141,12 @@ export default clerkMiddleware(
       }
       // Allow both pending and active users to proceed
       // Authorization happens at procedure level
+    }
+    // v1 API routes: auth handled at route level via withDualAuth
+    // Supports both API key (external clients) and session (console UI)
+    else if (isV1ApiRoute(req)) {
+      // Allow through without Clerk auth checks
+      // Route handlers use withDualAuth() for authentication
     }
     // Org-scoped tRPC routes: require active org
     else if (isOrgScopedRoute(req)) {

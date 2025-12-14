@@ -131,6 +131,12 @@ export type V1SearchContext = z.infer<typeof V1SearchContextSchema>;
 export const V1SearchLatencySchema = z.object({
   /** Total request latency */
   total: z.number().nonnegative(),
+  /** Authentication (API key or session validation) */
+  auth: z.number().nonnegative().optional(),
+  /** JSON parsing and Zod validation */
+  parse: z.number().nonnegative().optional(),
+  /** Total 4-path search latency (includes embedding + parallel retrieval) */
+  search: z.number().nonnegative().optional(),
   /** Embedding generation */
   embedding: z.number().nonnegative().optional(),
   /** Vector retrieval */
@@ -143,6 +149,13 @@ export const V1SearchLatencySchema = z.object({
   actorSearch: z.number().nonnegative().optional(),
   /** Reranking latency */
   rerank: z.number().nonnegative(),
+  /** Database enrichment (fetch full observation metadata + entities) */
+  enrich: z.number().nonnegative().optional(),
+  /**
+   * Maximum latency among parallel operations (retrieval, entitySearch, clusterSearch, actorSearch).
+   * This represents the bottleneck operation that determines parallel phase duration.
+   */
+  maxParallel: z.number().nonnegative().optional(),
 });
 
 export type V1SearchLatency = z.infer<typeof V1SearchLatencySchema>;
