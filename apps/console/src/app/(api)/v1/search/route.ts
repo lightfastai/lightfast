@@ -28,8 +28,14 @@ import type { RerankCandidate } from "@repo/console-rerank";
 import { V1SearchRequestSchema } from "@repo/console-types";
 import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
 
-import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
-import { fourPathParallelSearch, enrichSearchResults } from "~/lib/neural/four-path-search";
+import {
+  withDualAuth,
+  createDualAuthErrorResponse,
+} from "../lib/with-dual-auth";
+import {
+  fourPathParallelSearch,
+  enrichSearchResults,
+} from "~/lib/neural/four-path-search";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -66,7 +72,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: "INVALID_JSON", message: "Invalid JSON body", requestId },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
           details: parseResult.error.flatten().fieldErrors,
           requestId,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -120,17 +126,20 @@ export async function POST(request: NextRequest) {
     const reranker = createRerankProvider(mode);
 
     // Convert candidates to rerank format
-    const rerankCandidates: RerankCandidate[] = searchResult.candidates.map((c) => ({
-      id: c.id,
-      title: c.title,
-      content: c.snippet,
-      score: c.score,
-    }));
+    const rerankCandidates: RerankCandidate[] = searchResult.candidates.map(
+      (c) => ({
+        id: c.id,
+        title: c.title,
+        content: c.snippet,
+        score: c.score,
+      }),
+    );
 
     const rerankResponse = await reranker.rerank(query, rerankCandidates, {
       topK: limit + offset, // Get enough for pagination
       threshold: mode === "thorough" ? 0.4 : undefined,
-      minResults: mode === "balanced" ? Math.max(3, Math.ceil(limit / 2)) : undefined,
+      minResults:
+        mode === "balanced" ? Math.max(3, Math.ceil(limit / 2)) : undefined,
     });
 
     const rerankLatency = Date.now() - rerankStart;
@@ -145,14 +154,17 @@ export async function POST(request: NextRequest) {
     });
 
     // 5. Apply pagination
-    const paginatedResults = rerankResponse.results.slice(offset, offset + limit);
+    const paginatedResults = rerankResponse.results.slice(
+      offset,
+      offset + limit,
+    );
 
     // 6. Enrich results with full metadata from database
     const enrichStart = Date.now();
     const enrichedResults = await enrichSearchResults(
       paginatedResults,
       searchResult.candidates,
-      workspaceId
+      workspaceId,
     );
     const enrichLatency = Date.now() - enrichStart;
 
@@ -224,6 +236,8 @@ export async function POST(request: NextRequest) {
       requestId,
     };
 
+    console.log(response);
+
     log.info("v1/search complete", {
       requestId,
       resultCount: results.length,
@@ -232,7 +246,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    log.error("v1/search error", { requestId, error: error instanceof Error ? error.message : String(error) });
+    log.error("v1/search error", {
+      requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     return NextResponse.json(
       {
@@ -240,7 +257,7 @@ export async function POST(request: NextRequest) {
         message: error instanceof Error ? error.message : "Search failed",
         requestId,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -251,6 +268,6 @@ export async function POST(request: NextRequest) {
 export function GET() {
   return NextResponse.json(
     { error: "METHOD_NOT_ALLOWED", message: "Use POST method" },
-    { status: 405 }
+    { status: 405 },
   );
 }

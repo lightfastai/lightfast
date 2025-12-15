@@ -525,10 +525,14 @@ function SearchResultCard({
               metadata: item.metadata ?? null,
             });
           } else {
+            // Set contentData to empty object to prevent re-fetch loop
+            setContentData({ content: null, metadata: null });
             setContentError("Content not found");
           }
         })
         .catch((err) => {
+          // Set contentData to empty object to prevent re-fetch loop
+          setContentData({ content: null, metadata: null });
           setContentError(err instanceof Error ? err.message : "Failed to load");
         })
         .finally(() => {
