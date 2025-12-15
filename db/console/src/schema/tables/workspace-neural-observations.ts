@@ -217,6 +217,20 @@ export const workspaceNeuralObservations = pgTable(
       table.workspaceId,
       table.observationType,
     ),
+
+    // Index for vector ID lookups (used by v1/contents and v1/findsimilar fallback)
+    embeddingTitleIdx: index("obs_embedding_title_idx").on(
+      table.workspaceId,
+      table.embeddingTitleId,
+    ),
+    embeddingContentIdx: index("obs_embedding_content_idx").on(
+      table.workspaceId,
+      table.embeddingContentId,
+    ),
+    embeddingSummaryIdx: index("obs_embedding_summary_idx").on(
+      table.workspaceId,
+      table.embeddingSummaryId,
+    ),
   }),
 );
 
