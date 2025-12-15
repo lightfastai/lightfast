@@ -49,10 +49,14 @@ import type {
 /**
  * Verify organization access via Clerk
  *
+ * Strategy: User-centric lookup with caching - fetches user's orgs (typically 1-5)
+ * instead of org's members (could be 100+). This is O(user_orgs) vs O(org_size).
+ *
  * This helper:
  * 1. Fetches org by slug from Clerk
- * 2. Verifies user is a member of the org
- * 3. Returns org ID for database queries
+ * 2. Gets user's cached memberships
+ * 3. Verifies user is a member of the org
+ * 4. Returns org ID for database queries
  *
  * @param params - Organization access context
  * @returns Result with clerkOrgId and clerkOrgSlug, or error
@@ -103,13 +107,12 @@ export async function verifyOrgAccess(
       };
     }
 
-    // 2. Verify user has access
-    const membership = await clerk.organizations.getOrganizationMembershipList({
-      organizationId: clerkOrg.id,
-    });
+    // 2. User-centric membership check (cached)
+    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const userMemberships = await getCachedUserOrgMemberships(params.userId);
 
-    const userMembership = membership.data.find(
-      (m) => m.publicUserData?.userId === params.userId
+    const userMembership = userMemberships.find(
+      (m) => m.organizationId === clerkOrg.id
     );
 
     if (!userMembership) {
@@ -351,7 +354,7 @@ export async function verifyWorkspaceAccess(
   params: WorkspaceAccessContext
 ): Promise<WorkspaceAccessResult> {
   try {
-    // 1. Verify org access and get membership info
+    // 1. Verify org access and get org info
     const { clerkClient } = await import("@vendor/clerk/server");
     const clerk = await clerkClient();
 
@@ -376,12 +379,12 @@ export async function verifyWorkspaceAccess(
       };
     }
 
-    const membership = await clerk.organizations.getOrganizationMembershipList({
-      organizationId: clerkOrg.id,
-    });
+    // 2. User-centric membership check (cached)
+    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const userMemberships = await getCachedUserOrgMemberships(params.userId);
 
-    const userMembership = membership.data.find(
-      (m) => m.publicUserData?.userId === params.userId
+    const userMembership = userMemberships.find(
+      (m) => m.organizationId === clerkOrg.id
     );
 
     if (!userMembership) {
@@ -395,7 +398,7 @@ export async function verifyWorkspaceAccess(
     const clerkOrgId = clerkOrg.id;
     const userRole = userMembership.role;
 
-    // 2. Fetch workspace by name within this org
+    // 3. Fetch workspace by name within this org
     const workspace = await params.db.query.orgWorkspaces.findFirst({
       where: and(
         eq(orgWorkspaces.clerkOrgId, clerkOrgId),
@@ -411,7 +414,7 @@ export async function verifyWorkspaceAccess(
       };
     }
 
-    // 3. Return complete workspace access data
+    // 4. Return complete workspace access data
     return {
       success: true,
       data: {

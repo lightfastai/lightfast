@@ -1,28 +1,12 @@
 {
-  "name": "@repo/console-auth-middleware",
-  "version": "0.1.0",
+  "name": "@repo/console-clerk-cache",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    },
-    "./workspace": {
-      "types": "./dist/workspace.d.ts",
-      "default": "./src/workspace.ts"
-    },
-    "./resources": {
-      "types": "./dist/resources.d.ts",
-      "default": "./src/resources.ts"
-    },
-    "./tenant": {
-      "types": "./dist/tenant.d.ts",
-      "default": "./src/tenant.ts"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./src/types.ts"
     }
   },
   "scripts": {
@@ -32,12 +16,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
-    "@repo/console-clerk-cache": "workspace:*",
-    "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "zod": "catalog:"
+    "@vendor/observability": "workspace:*",
+    "@vendor/upstash": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

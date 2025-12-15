@@ -163,17 +163,12 @@ async function validateWorkspaceAccess(
       };
     }
 
-    // 2. Verify user is member of the org
-    // Optimization: Get user's orgs (small list) instead of org's members (large list)
-    const { clerkClient } = await import("@clerk/nextjs/server");
-    const clerk = await clerkClient();
+    // 2. Verify user is member of the org (cached lookup)
+    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const userMemberships = await getCachedUserOrgMemberships(userId);
 
-    const userMemberships = await clerk.users.getOrganizationMembershipList({
-      userId,
-    });
-
-    const isMember = userMemberships.data.some(
-      (m) => m.organization.id === workspace.clerkOrgId
+    const isMember = userMemberships.some(
+      (m) => m.organizationId === workspace.clerkOrgId
     );
 
     if (!isMember) {
