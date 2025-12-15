@@ -48,6 +48,7 @@
 		"@repo/console-validation": "workspace:^",
 		"@repo/console-vercel": "workspace:^",
 		"@repo/console-webhooks": "workspace:^",
+		"@repo/console-workspace-cache": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@sentry/core": "^10.20.0",
 		"@t3-oss/env-nextjs": "^0.12.0",

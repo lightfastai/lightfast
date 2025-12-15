@@ -25,6 +25,7 @@ import {
 } from "@repo/console-validation/schemas";
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
+import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
@@ -509,6 +510,9 @@ export const workspaceRouter = {
           updatedAt: new Date().toISOString(),
         })
         .where(eq(orgWorkspaces.id, workspaceId));
+
+      // Invalidate workspace config cache (defensive, in case future updates touch config fields)
+      await invalidateWorkspaceConfig(workspaceId);
 
       // Record activity (Tier 2: Queue-based)
       await recordActivity({

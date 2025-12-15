@@ -358,6 +358,9 @@ importers:
       '@repo/console-webhooks':
         specifier: workspace:^
         version: link:../../packages/console-webhooks
+      '@repo/console-workspace-cache':
+        specifier: workspace:*
+        version: link:../../packages/console-workspace-cache
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
@@ -922,6 +925,9 @@ importers:
       '@repo/console-webhooks':
         specifier: workspace:^
         version: link:../../packages/console-webhooks
+      '@repo/console-workspace-cache':
+        specifier: workspace:*
+        version: link:../../packages/console-workspace-cache
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -3061,6 +3067,43 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/console-workspace-cache:
+    dependencies:
+      '@db/console':
+        specifier: workspace:*
+        version: link:../../db/console
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
+      '@vendor/upstash':
+        specifier: workspace:*
+        version: link:../../vendor/upstash
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

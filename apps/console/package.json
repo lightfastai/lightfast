@@ -45,6 +45,7 @@
     "@repo/console-validation": "workspace:^",
     "@repo/console-vercel": "workspace:^",
     "@repo/console-webhooks": "workspace:^",
+    "@repo/console-workspace-cache": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-clerk-cache",
+  "name": "@repo/console-workspace-cache",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -17,9 +17,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vendor/clerk": "workspace:*",
+    "@db/console": "workspace:*",
     "@vendor/observability": "workspace:*",
-    "@vendor/upstash": "workspace:*"
+    "@vendor/upstash": "workspace:*",
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

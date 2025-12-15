@@ -11,11 +11,12 @@
  */
 
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceNeuralObservations, workspaceNeuralEntities } from "@db/console/schema";
-import { eq, and, or, inArray } from "drizzle-orm";
+import { workspaceNeuralObservations, workspaceNeuralEntities } from "@db/console/schema";
+import { and, or, inArray, eq } from "drizzle-orm";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
+import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import type { FilterCandidate } from "./llm-filter";
 import { searchByEntities } from "./entity-search";
@@ -354,29 +355,22 @@ export async function fourPathParallelSearch(
   const { workspaceId, query, topK, filters, requestId } = params;
   const startTime = Date.now();
 
-  // 1. Look up workspace configuration
-  const workspace = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.id, workspaceId),
-  });
+  // 1. Look up workspace configuration (cached)
+  const workspace = await getCachedWorkspaceConfig(workspaceId);
 
   if (!workspace) {
-    throw new Error(`Workspace not found: ${workspaceId}`);
+    throw new Error(`Workspace not found or not configured for search: ${workspaceId}`);
   }
 
-  if (!workspace.indexName || !workspace.namespaceName) {
-    throw new Error(`Workspace not configured for search: ${workspaceId}`);
-  }
-
-  const indexName = workspace.indexName;
-  const namespaceName = workspace.namespaceName;
+  const { indexName, namespaceName, embeddingModel, embeddingDim } = workspace;
 
   // 2. Generate query embedding
   const embedStart = Date.now();
   const embedding = createEmbeddingProviderForWorkspace(
     {
-      id: workspace.id,
-      embeddingModel: workspace.embeddingModel,
-      embeddingDim: workspace.embeddingDim,
+      id: workspaceId,
+      embeddingModel,
+      embeddingDim,
     },
     { inputType: "search_query" }
   );

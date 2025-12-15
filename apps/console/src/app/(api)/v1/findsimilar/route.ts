@@ -23,12 +23,12 @@ import {
   workspaceKnowledgeDocuments,
   // TODO: Phase 5 - Re-enable when clusters are migrated to BIGINT
   // workspaceObservationClusters,
-  orgWorkspaces,
 } from "@db/console/schema";
 import { and, eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProvider } from "@repo/console-embed";
+import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { V1FindSimilarRequestSchema } from "@repo/console-types";
 import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-types";
 
@@ -260,25 +260,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Get workspace config for Pinecone
-    const workspace = await db.query.orgWorkspaces.findFirst({
-      columns: {
-        indexName: true,
-        namespaceName: true,
-      },
-      where: eq(orgWorkspaces.id, workspaceId),
-    });
+    // 5. Get workspace config and generate embedding in parallel
+    const [workspace, embedResult] = await Promise.all([
+      getCachedWorkspaceConfig(workspaceId),
+      (async () => {
+        const provider = createEmbeddingProvider({ inputType: "search_document" });
+        return provider.embed([sourceContent.content]);
+      })(),
+    ]);
 
-    if (!workspace?.indexName || !workspace.namespaceName) {
+    // 6. Validate results
+    if (!workspace) {
       return NextResponse.json(
         { error: "CONFIG_ERROR", message: "Workspace not configured for search", requestId },
         { status: 500 }
       );
     }
 
-    // 6. Generate embedding for source content
-    const provider = createEmbeddingProvider({ inputType: "search_document" });
-    const embedResult = await provider.embed([sourceContent.content]);
     const embedding = embedResult.embeddings[0];
     if (!embedding) {
       return NextResponse.json(
