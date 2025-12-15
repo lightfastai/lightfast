@@ -16,7 +16,7 @@ import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations, workspaceKnowledgeDocuments } from "@db/console/schema";
+import { workspaceKnowledgeDocuments } from "@db/console/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { V1ContentsRequestSchema } from "@repo/console-types";
@@ -24,6 +24,8 @@ import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { buildSourceUrl } from "~/lib/neural/url-builder";
+import { resolveObservationsById } from "~/lib/neural/id-resolver";
+import type { ResolvedObservation } from "~/lib/neural/id-resolver";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -76,32 +78,27 @@ export async function POST(request: NextRequest) {
 
     log.info("v1/contents validated", { requestId, idCount: ids.length });
 
-    // 3. Separate IDs by prefix
-    const obsIds = ids.filter((id) => id.startsWith("obs_"));
+    // 3. Separate IDs by type
+    // Observation IDs: either vector IDs (obs_title_*, obs_content_*, obs_summary_*) or database nanoids
+    // Document IDs: doc_* prefix
     const docIds = ids.filter((id) => id.startsWith("doc_"));
+    // obsIds includes both vector IDs and database IDs (anything not a doc_*)
+    const obsIds = ids.filter((id) => !id.startsWith("doc_"));
 
-    // 4. Fetch in parallel
-    const [observations, documents] = await Promise.all([
+    // 4. Fetch in parallel using resolver for observations
+    const [observationMap, documents] = await Promise.all([
       obsIds.length > 0
-        ? db
-            .select({
-              id: workspaceNeuralObservations.id,
-              title: workspaceNeuralObservations.title,
-              content: workspaceNeuralObservations.content,
-              source: workspaceNeuralObservations.source,
-              sourceId: workspaceNeuralObservations.sourceId,
-              observationType: workspaceNeuralObservations.observationType,
-              occurredAt: workspaceNeuralObservations.occurredAt,
-              metadata: workspaceNeuralObservations.metadata,
-            })
-            .from(workspaceNeuralObservations)
-            .where(
-              and(
-                eq(workspaceNeuralObservations.workspaceId, workspaceId),
-                inArray(workspaceNeuralObservations.id, obsIds)
-              )
-            )
-        : Promise.resolve([]),
+        ? resolveObservationsById(workspaceId, obsIds, {
+            id: true,
+            title: true,
+            content: true,
+            source: true,
+            sourceId: true,
+            observationType: true,
+            occurredAt: true,
+            metadata: true,
+          })
+        : Promise.resolve(new Map<string, ResolvedObservation>()),
 
       docIds.length > 0
         ? db
@@ -123,11 +120,11 @@ export async function POST(request: NextRequest) {
 
     // 5. Map to response format
     const items: V1ContentItem[] = [
-      // Observations - full content from DB
-      ...observations.map((obs) => {
-        const metadata = (obs.metadata ?? {}) as Record<string, unknown>;
+      // Observations - full content from DB, keyed by request ID (may be vector ID)
+      ...Array.from(observationMap.entries()).map(([reqId, obs]) => {
+        const metadata = obs.metadata ?? {};
         return {
-          id: obs.id,
+          id: reqId, // Return the ID that was requested (may be vector ID)
           title: obs.title,
           url: buildSourceUrl(obs.source, obs.sourceId, metadata),
           snippet: obs.content.slice(0, 200),
@@ -136,7 +133,7 @@ export async function POST(request: NextRequest) {
           type: obs.observationType,
           occurredAt: obs.occurredAt,
           metadata,
-        };
+        } satisfies V1ContentItem;
       }),
 
       // Documents - metadata + URL only
@@ -157,8 +154,11 @@ export async function POST(request: NextRequest) {
     ];
 
     // 6. Track missing IDs
-    const foundIds = new Set(items.map((item) => item.id));
-    const missing = ids.filter((id) => !foundIds.has(id));
+    const foundRequestIds = new Set([
+      ...observationMap.keys(),
+      ...documents.map((d) => d.id),
+    ]);
+    const missing = ids.filter((id) => !foundRequestIds.has(id));
 
     if (missing.length > 0) {
       log.warn("v1/contents missing IDs", { requestId, missing });
