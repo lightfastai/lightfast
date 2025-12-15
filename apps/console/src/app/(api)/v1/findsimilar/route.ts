@@ -31,6 +31,7 @@ import { createEmbeddingProvider } from "@repo/console-embed";
 import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { V1FindSimilarRequestSchema } from "@repo/console-types";
 import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-types";
+import { recordSystemActivity } from "@api/console/lib/activity";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { resolveByUrl } from "~/lib/neural/url-resolver";
@@ -381,6 +382,28 @@ export async function POST(request: NextRequest) {
       },
       requestId,
     };
+
+    // Track findsimilar query (Tier 3 - fire-and-forget for low latency)
+    recordSystemActivity({
+      workspaceId,
+      actorType: authType === "api-key" ? "api" : "user",
+      actorUserId: userId,
+      category: "search",
+      action: "search.findsimilar",
+      entityType: "findsimilar_query",
+      entityId: requestId,
+      metadata: {
+        sourceId: sourceContent.id,
+        sourceType: sourceContent.type,
+        inputMethod: id ? "id" : "url",
+        limit,
+        threshold,
+        similarCount: similar.length,
+        latencyMs: Date.now() - startTime,
+        authType,
+        apiKeyId: authResult.auth.apiKeyId,
+      },
+    });
 
     log.info("v1/findsimilar complete", {
       requestId,

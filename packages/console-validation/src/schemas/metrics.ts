@@ -18,14 +18,34 @@ import { jobTriggerSchema } from "./job";
  *
  * Defines supported metric types for internal operations tracking.
  *
+ * Core metrics:
  * - job_duration: Background job execution time (milliseconds)
  * - documents_indexed: Count of documents successfully indexed
  * - errors: Error occurrences by type
+ *
+ * Neural workflow metrics:
+ * - observation_captured: Successful observation captures
+ * - observation_filtered: Observations filtered by source config
+ * - observation_duplicate: Duplicate observations skipped
+ * - observation_below_threshold: Observations below significance threshold
+ * - entities_extracted: Entity extraction counts
+ * - cluster_assigned: Cluster assignments
+ * - cluster_summary_generated: Cluster summary generations
+ * - profile_updated: Actor profile updates
  */
 export const operationMetricTypeSchema = z.enum([
   "job_duration",
   "documents_indexed",
   "errors",
+  // Neural workflow metrics
+  "observation_captured",
+  "observation_filtered",
+  "observation_duplicate",
+  "observation_below_threshold",
+  "entities_extracted",
+  "cluster_assigned",
+  "cluster_summary_generated",
+  "profile_updated",
 ]);
 
 export type OperationMetricType = z.infer<typeof operationMetricTypeSchema>;
@@ -73,6 +93,54 @@ export type JobDurationTags = z.infer<typeof jobDurationTagsSchema>;
 export type DocumentsIndexedTags = z.infer<typeof documentsIndexedTagsSchema>;
 export type ErrorTags = z.infer<typeof errorTagsSchema>;
 
+// ============================================================================
+// Neural Workflow Metric Tags
+// ============================================================================
+
+/**
+ * Neural observation metric tags
+ * Common tags for all observation-related metrics
+ */
+export const neuralObservationTagsSchema = z.object({
+  source: z.string(), // github, vercel, etc.
+  sourceType: z.string(), // push, pull_request, etc.
+  observationType: z.string().optional(),
+  significanceScore: z.number().optional(),
+  durationMs: z.number().optional(),
+});
+
+/**
+ * Entity extraction metric tags
+ */
+export const entityExtractionTagsSchema = z.object({
+  observationId: z.string(),
+  entityCount: z.number(),
+  source: z.string().optional(),
+});
+
+/**
+ * Cluster metric tags
+ */
+export const clusterTagsSchema = z.object({
+  clusterId: z.string(),
+  isNew: z.boolean().optional(),
+  observationCount: z.number().optional(),
+});
+
+/**
+ * Profile update metric tags
+ */
+export const profileUpdateTagsSchema = z.object({
+  actorId: z.string(),
+  observationId: z.string().optional(),
+});
+
+// Neural metric type exports
+export type NeuralObservationTags = z.infer<typeof neuralObservationTagsSchema>;
+export type EntityExtractionTags = z.infer<typeof entityExtractionTagsSchema>;
+export type ClusterTags = z.infer<typeof clusterTagsSchema>;
+export type ProfileUpdateTags = z.infer<typeof profileUpdateTagsSchema>;
+
 /**
  * Discriminated Union: Operation Metric with Type-Specific Tags
  *
@@ -104,6 +172,74 @@ export const errorMetricSchema = z.object({
   tags: errorTagsSchema,
 });
 
+// ============================================================================
+// Neural Workflow Metric Schemas
+// ============================================================================
+
+// Observation Captured Metric
+export const observationCapturedMetricSchema = z.object({
+  type: z.literal("observation_captured"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: neuralObservationTagsSchema,
+});
+
+// Observation Filtered Metric
+export const observationFilteredMetricSchema = z.object({
+  type: z.literal("observation_filtered"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: neuralObservationTagsSchema,
+});
+
+// Observation Duplicate Metric
+export const observationDuplicateMetricSchema = z.object({
+  type: z.literal("observation_duplicate"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: neuralObservationTagsSchema,
+});
+
+// Observation Below Threshold Metric
+export const observationBelowThresholdMetricSchema = z.object({
+  type: z.literal("observation_below_threshold"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: neuralObservationTagsSchema,
+});
+
+// Entities Extracted Metric
+export const entitiesExtractedMetricSchema = z.object({
+  type: z.literal("entities_extracted"),
+  value: z.number().int().nonnegative(), // count of entities
+  unit: z.literal("count"),
+  tags: entityExtractionTagsSchema,
+});
+
+// Cluster Assigned Metric
+export const clusterAssignedMetricSchema = z.object({
+  type: z.literal("cluster_assigned"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: clusterTagsSchema,
+});
+
+// Cluster Summary Generated Metric
+export const clusterSummaryGeneratedMetricSchema = z.object({
+  type: z.literal("cluster_summary_generated"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: clusterTagsSchema,
+});
+
+// Profile Updated Metric
+export const profileUpdatedMetricSchema = z.object({
+  type: z.literal("profile_updated"),
+  value: z.literal(1),
+  unit: z.literal("count"),
+  tags: profileUpdateTagsSchema,
+});
+
 /**
  * Union of all operation metric types
  *
@@ -111,17 +247,35 @@ export const errorMetricSchema = z.object({
  * - job_duration must have jobType and trigger tags
  * - documents_indexed must have sourceType
  * - errors must have errorType
+ * - Neural metrics have their respective tags
  */
 export const operationMetricSchema = z.discriminatedUnion("type", [
   jobDurationMetricSchema,
   documentsIndexedMetricSchema,
   errorMetricSchema,
+  // Neural workflow metrics
+  observationCapturedMetricSchema,
+  observationFilteredMetricSchema,
+  observationDuplicateMetricSchema,
+  observationBelowThresholdMetricSchema,
+  entitiesExtractedMetricSchema,
+  clusterAssignedMetricSchema,
+  clusterSummaryGeneratedMetricSchema,
+  profileUpdatedMetricSchema,
 ]);
 
 export type OperationMetric =
   | z.infer<typeof jobDurationMetricSchema>
   | z.infer<typeof documentsIndexedMetricSchema>
-  | z.infer<typeof errorMetricSchema>;
+  | z.infer<typeof errorMetricSchema>
+  | z.infer<typeof observationCapturedMetricSchema>
+  | z.infer<typeof observationFilteredMetricSchema>
+  | z.infer<typeof observationDuplicateMetricSchema>
+  | z.infer<typeof observationBelowThresholdMetricSchema>
+  | z.infer<typeof entitiesExtractedMetricSchema>
+  | z.infer<typeof clusterAssignedMetricSchema>
+  | z.infer<typeof clusterSummaryGeneratedMetricSchema>
+  | z.infer<typeof profileUpdatedMetricSchema>;
 
 // Legacy exports (deprecated - use operation-specific schemas above)
 /**

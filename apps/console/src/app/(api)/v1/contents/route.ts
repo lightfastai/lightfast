@@ -21,6 +21,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { V1ContentsRequestSchema } from "@repo/console-types";
 import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
+import { recordSystemActivity } from "@api/console/lib/activity";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { buildSourceUrl } from "~/lib/neural/url-builder";
@@ -170,6 +171,25 @@ export async function POST(request: NextRequest) {
       missing,
       requestId,
     };
+
+    // Track contents fetch (Tier 3 - fire-and-forget for low latency)
+    recordSystemActivity({
+      workspaceId,
+      actorType: authType === "api-key" ? "api" : "user",
+      actorUserId: userId,
+      category: "search",
+      action: "search.contents",
+      entityType: "contents_fetch",
+      entityId: requestId,
+      metadata: {
+        requestedCount: ids.length,
+        foundCount: items.length,
+        missingCount: missing.length,
+        latencyMs: Date.now() - startTime,
+        authType,
+        apiKeyId: authResult.auth.apiKeyId,
+      },
+    });
 
     log.info("v1/contents complete", {
       requestId,

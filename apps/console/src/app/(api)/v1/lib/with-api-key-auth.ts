@@ -1,23 +1,22 @@
 /**
  * API Key Authentication Middleware for v1 Routes
  *
- * Adapts the tRPC apiKeyProcedure pattern for Next.js route handlers.
- * Extracts and verifies API keys from request headers.
+ * SECURITY: Validates workspace-scoped API keys.
+ * Keys are bound to specific workspaces - no more trusting X-Workspace-ID headers.
  */
 
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { db } from "@db/console/client";
-import { userApiKeys } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { workspaceApiKeys } from "@db/console/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { hashApiKey } from "@repo/console-api-key";
 import { log } from "@vendor/observability/log";
 
 export interface ApiKeyAuthContext {
   workspaceId: string;
-  userId: string;
-  apiKeyId: string;
+  userId: string; // createdByUserId for audit
+  apiKeyId: string; // publicId
+  clerkOrgId: string;
 }
 
 export interface AuthSuccess {
@@ -37,22 +36,15 @@ export interface AuthError {
 export type AuthResult = AuthSuccess | AuthError;
 
 /**
- * Verify API key and extract workspace context
+ * Verify workspace-scoped API key
  *
  * Required headers:
  * - Authorization: Bearer <api-key>
- * - X-Workspace-ID: <workspace-id>
  *
- * @returns AuthResult with either auth context or error details
+ * The workspace is determined by the key binding, NOT by X-Workspace-ID header.
+ * This prevents unauthorized access to other workspaces.
  *
- * @example
- * ```typescript
- * const result = await withApiKeyAuth(request);
- * if (!result.success) {
- *   return NextResponse.json(result.error, { status: result.status });
- * }
- * const { workspaceId, userId, apiKeyId } = result.auth;
- * ```
+ * @returns AuthResult with workspace context from the key binding
  */
 export async function withApiKeyAuth(
   request: NextRequest,
@@ -74,17 +66,16 @@ export async function withApiKeyAuth(
 
   const apiKey = authHeader.slice(7); // Remove "Bearer " prefix
 
-  // 2. Extract X-Workspace-ID header
-  const workspaceId = request.headers.get("x-workspace-id");
-  if (!workspaceId) {
-    log.warn("Missing X-Workspace-ID header", { requestId });
+  // 2. Validate key format (should start with sk_live_ or similar prefix)
+  if (!apiKey.startsWith("sk_")) {
+    log.warn("Invalid API key format", { requestId });
     return {
       success: false,
       error: {
-        code: "BAD_REQUEST",
-        message: "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
+        code: "UNAUTHORIZED",
+        message: "Invalid API key format",
       },
-      status: 400,
+      status: 401,
     };
   }
 
@@ -94,17 +85,20 @@ export async function withApiKeyAuth(
 
     const [foundKey] = await db
       .select({
-        id: userApiKeys.id,
-        userId: userApiKeys.userId,
-        isActive: userApiKeys.isActive,
-        expiresAt: userApiKeys.expiresAt,
+        id: workspaceApiKeys.id,
+        publicId: workspaceApiKeys.publicId,
+        workspaceId: workspaceApiKeys.workspaceId,
+        clerkOrgId: workspaceApiKeys.clerkOrgId,
+        createdByUserId: workspaceApiKeys.createdByUserId,
+        isActive: workspaceApiKeys.isActive,
+        expiresAt: workspaceApiKeys.expiresAt,
       })
-      .from(userApiKeys)
-      .where(and(eq(userApiKeys.keyHash, keyHash), eq(userApiKeys.isActive, true)))
+      .from(workspaceApiKeys)
+      .where(and(eq(workspaceApiKeys.keyHash, keyHash), eq(workspaceApiKeys.isActive, true)))
       .limit(1);
 
     if (!foundKey) {
-      log.warn("Invalid API key", { requestId, workspaceId });
+      log.warn("Invalid API key", { requestId });
       return {
         success: false,
         error: {
@@ -117,7 +111,7 @@ export async function withApiKeyAuth(
 
     // 4. Check expiration
     if (foundKey.expiresAt && new Date(foundKey.expiresAt) < new Date()) {
-      log.warn("Expired API key", { requestId, apiKeyId: foundKey.id });
+      log.warn("Expired API key", { requestId, apiKeyId: foundKey.publicId });
       return {
         success: false,
         error: {
@@ -128,31 +122,51 @@ export async function withApiKeyAuth(
       };
     }
 
-    // 5. Update last used timestamp (non-blocking)
+    // 5. Get client IP for tracking
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+
+    // 6. Update last used timestamp and IP (non-blocking)
     void db
-      .update(userApiKeys)
-      .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-      .where(eq(userApiKeys.id, foundKey.id))
+      .update(workspaceApiKeys)
+      .set({
+        lastUsedAt: sql`CURRENT_TIMESTAMP`,
+        lastUsedFromIp: clientIp.substring(0, 45),
+      })
+      .where(eq(workspaceApiKeys.id, foundKey.id))
       .catch((err: unknown) => {
         log.error("Failed to update API key lastUsedAt", {
           error: err instanceof Error ? err.message : String(err),
-          apiKeyId: foundKey.id,
+          apiKeyId: foundKey.publicId,
         });
       });
 
+    // 7. Log warning if X-Workspace-ID header doesn't match (for migration awareness)
+    const headerWorkspaceId = request.headers.get("x-workspace-id");
+    if (headerWorkspaceId && headerWorkspaceId !== foundKey.workspaceId) {
+      log.warn("X-Workspace-ID header does not match key binding - header ignored", {
+        requestId,
+        headerWorkspaceId,
+        keyWorkspaceId: foundKey.workspaceId,
+        apiKeyId: foundKey.publicId,
+      });
+    }
+
     log.info("API key verified", {
       requestId,
-      apiKeyId: foundKey.id,
-      userId: foundKey.userId,
-      workspaceId,
+      apiKeyId: foundKey.publicId,
+      workspaceId: foundKey.workspaceId,
     });
 
     return {
       success: true,
       auth: {
-        workspaceId,
-        userId: foundKey.userId,
-        apiKeyId: foundKey.id,
+        workspaceId: foundKey.workspaceId, // From key binding, NOT header!
+        userId: foundKey.createdByUserId,
+        apiKeyId: foundKey.publicId,
+        clerkOrgId: foundKey.clerkOrgId,
       },
     };
   } catch (error) {
@@ -171,8 +185,8 @@ export async function withApiKeyAuth(
 /**
  * Helper to create error response from AuthError
  */
-export function createAuthErrorResponse(result: AuthError, requestId: string): NextResponse {
-  return NextResponse.json(
+export function createAuthErrorResponse(result: AuthError, requestId: string): Response {
+  return Response.json(
     {
       error: result.error.code,
       message: result.error.message,

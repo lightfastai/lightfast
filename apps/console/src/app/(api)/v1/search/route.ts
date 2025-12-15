@@ -27,6 +27,7 @@ import { createRerankProvider } from "@repo/console-rerank";
 import type { RerankCandidate } from "@repo/console-rerank";
 import { V1SearchRequestSchema } from "@repo/console-types";
 import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
+import { recordSystemActivity } from "@api/console/lib/activity";
 
 import {
   withDualAuth,
@@ -236,7 +237,28 @@ export async function POST(request: NextRequest) {
       requestId,
     };
 
-    console.log(response);
+    // Track search query (Tier 3 - fire-and-forget for low latency)
+    recordSystemActivity({
+      workspaceId,
+      actorType: authType === "api-key" ? "api" : "user",
+      actorUserId: userId,
+      category: "search",
+      action: "search.query",
+      entityType: "search_query",
+      entityId: requestId,
+      metadata: {
+        query: query.substring(0, 200), // Truncate for storage
+        limit,
+        offset,
+        mode,
+        hasFilters: filters !== undefined,
+        resultCount: results.length,
+        totalMatches: searchResult.total,
+        latencyMs: response.latency.total,
+        authType,
+        apiKeyId: authResult.auth.apiKeyId,
+      },
+    });
 
     log.info("v1/search complete", {
       requestId,

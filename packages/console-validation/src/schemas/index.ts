@@ -17,3 +17,4 @@ export * from "./ingestion";
 export * from "./metrics";
 export * from "./activities";
 export * from "./entities";
+export * from "./workspace-api-key";

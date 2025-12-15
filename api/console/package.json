@@ -19,6 +19,10 @@
 		"./inngest/client": {
 			"types": "./dist/inngest/client/client.d.ts",
 			"default": "./src/inngest/client/client.ts"
+		},
+		"./lib/activity": {
+			"types": "./dist/lib/activity.d.ts",
+			"default": "./src/lib/activity.ts"
 		}
 	},
 	"license": "MIT",

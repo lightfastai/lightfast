@@ -127,6 +127,13 @@
       "when": 1765786777031,
       "tag": "0017_first_lady_ursula",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1765805447492,
+      "tag": "0018_special_frank_castle",
+      "breakpoints": true
     }
   ]
 }

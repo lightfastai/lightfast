@@ -12,10 +12,12 @@ import { db } from "@db/console/client";
 import {
   workspaceActorProfiles,
   workspaceNeuralObservations,
+  orgWorkspaces,
 } from "@db/console/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
+import { recordJobMetric } from "../../../lib/jobs";
 
 export const profileUpdate = inngest.createFunction(
   {
@@ -126,6 +128,26 @@ export const profileUpdate = inngest.createFunction(
         isNew: !existingProfile.exists,
       });
     });
+
+    // Record profile_updated metric
+    // Need to get clerkOrgId from workspace
+    const workspace = await db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
+      columns: { clerkOrgId: true },
+    });
+
+    if (workspace) {
+      void recordJobMetric({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "profile_updated",
+        value: 1,
+        unit: "count",
+        tags: {
+          actorId,
+        },
+      });
+    }
 
     return { actorId, observationCount: recentActivity.count };
   },

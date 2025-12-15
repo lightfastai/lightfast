@@ -10,12 +10,14 @@ import { db } from "@db/console/client";
 import {
   workspaceObservationClusters,
   workspaceNeuralObservations,
+  orgWorkspaces,
 } from "@db/console/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { generateObject } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { z } from "zod";
+import { recordJobMetric } from "../../../lib/jobs";
 
 const SUMMARY_THRESHOLD = 5; // Generate summary after 5 observations
 const SUMMARY_AGE_HOURS = 24; // Regenerate if summary > 24 hours old
@@ -179,6 +181,27 @@ Generate a concise summary, key topics, key contributors, and activity status.`,
         keyTopics: summary.keyTopics,
       });
     });
+
+    // Record cluster_summary_generated metric
+    // Need to get clerkOrgId from workspace
+    const workspace = await db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
+      columns: { clerkOrgId: true },
+    });
+
+    if (workspace) {
+      void recordJobMetric({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "cluster_summary_generated",
+        value: 1,
+        unit: "count",
+        tags: {
+          clusterId,
+          observationCount: observations.length,
+        },
+      });
+    }
 
     return {
       status: "generated",

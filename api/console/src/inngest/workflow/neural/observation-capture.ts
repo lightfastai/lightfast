@@ -36,6 +36,7 @@ import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { nanoid } from "nanoid";
+import { recordJobMetric } from "../../../lib/jobs";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -253,6 +254,20 @@ export const observationCapture = inngest.createFunction(
     });
 
     if (existing) {
+      // Record duplicate metric (non-blocking)
+      void recordJobMetric({
+        clerkOrgId: "", // Will be populated after context fetch if needed
+        workspaceId,
+        type: "observation_duplicate",
+        value: 1,
+        unit: "count",
+        tags: {
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          durationMs: Date.now() - startTime,
+        },
+      });
+
       return {
         status: "duplicate",
         observationId: existing.id,
@@ -311,6 +326,20 @@ export const observationCapture = inngest.createFunction(
     });
 
     if (!eventAllowed) {
+      // Record filtered metric (non-blocking)
+      void recordJobMetric({
+        clerkOrgId: "", // Not available at this stage
+        workspaceId,
+        type: "observation_filtered",
+        value: 1,
+        unit: "count",
+        tags: {
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          durationMs: Date.now() - startTime,
+        },
+      });
+
       return {
         status: "filtered",
         reason: "Event type not enabled in source config",
@@ -331,6 +360,21 @@ export const observationCapture = inngest.createFunction(
         significanceScore: significance.score,
         threshold: SIGNIFICANCE_THRESHOLD,
         factors: significance.factors,
+      });
+
+      // Record below_threshold metric (non-blocking)
+      void recordJobMetric({
+        clerkOrgId: "", // Not available at this stage
+        workspaceId,
+        type: "observation_below_threshold",
+        value: 1,
+        unit: "count",
+        tags: {
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          significanceScore: significance.score,
+          durationMs: Date.now() - startTime,
+        },
       });
 
       return {
@@ -680,11 +724,61 @@ export const observationCapture = inngest.createFunction(
         : []),
     ]);
 
+    // Record success metrics (non-blocking, in parallel)
+    const finalDuration = Date.now() - startTime;
+    const metricsPromises = [
+      // Observation captured metric
+      recordJobMetric({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "observation_captured",
+        value: 1,
+        unit: "count",
+        tags: {
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          observationType: observation.observationType,
+          significanceScore: significance.score,
+          durationMs: finalDuration,
+        },
+      }),
+
+      // Entities extracted metric
+      recordJobMetric({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "entities_extracted",
+        value: entitiesStored,
+        unit: "count",
+        tags: {
+          observationId: observation.externalId,
+          entityCount: entitiesStored,
+          source: sourceEvent.source,
+        },
+      }),
+
+      // Cluster assigned metric
+      recordJobMetric({
+        clerkOrgId: workspace.clerkOrgId,
+        workspaceId,
+        type: "cluster_assigned",
+        value: 1,
+        unit: "count",
+        tags: {
+          clusterId: String(clusterResult.clusterId),
+          isNew: clusterResult.isNew,
+        },
+      }),
+    ];
+
+    // Fire-and-forget metrics recording
+    void Promise.all(metricsPromises);
+
     return {
       status: "captured",
       observationId: observation.externalId, // Public nanoid for API response
       observationType: observation.observationType,
-      duration: Date.now() - startTime,
+      duration: finalDuration,
     };
   }
 );

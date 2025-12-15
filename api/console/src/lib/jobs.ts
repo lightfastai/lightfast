@@ -17,6 +17,10 @@ import type {
 	JobDurationTags,
 	DocumentsIndexedTags,
 	ErrorTags,
+	NeuralObservationTags,
+	EntityExtractionTags,
+	ClusterTags,
+	ProfileUpdateTags,
 } from "@repo/console-validation";
 import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
@@ -275,6 +279,55 @@ export async function recordJobMetric(
 				value: 1;
 				unit: "count";
 				tags: ErrorTags;
+		  }
+		// Neural workflow metrics
+		| {
+				type: "observation_captured";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_filtered";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_duplicate";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_below_threshold";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "entities_extracted";
+				value: number;
+				unit: "count";
+				tags: EntityExtractionTags;
+		  }
+		| {
+				type: "cluster_assigned";
+				value: 1;
+				unit: "count";
+				tags: ClusterTags;
+		  }
+		| {
+				type: "cluster_summary_generated";
+				value: 1;
+				unit: "count";
+				tags: ClusterTags;
+		  }
+		| {
+				type: "profile_updated";
+				value: 1;
+				unit: "count";
+				tags: ProfileUpdateTags;
 		  }
 	) & {
 		clerkOrgId: string;

@@ -7,6 +7,9 @@ export * from "./user-sources";
 // Org-scoped tables
 export * from "./org-workspaces";
 
+// Workspace API Keys (workspace-scoped authentication)
+export * from "./workspace-api-keys";
+
 // Workspace-scoped tables
 export * from "./workspace-knowledge-documents";
 export * from "./workspace-knowledge-vector-chunks";

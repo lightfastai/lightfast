@@ -15,6 +15,10 @@ import type {
   JobDurationTags,
   DocumentsIndexedTags,
   ErrorTags,
+  NeuralObservationTags,
+  EntityExtractionTags,
+  ClusterTags,
+  ProfileUpdateTags,
 } from "@repo/console-validation";
 
 /**
@@ -148,7 +152,15 @@ export type WorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferS
 export type InsertWorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferInsert;
 
 // Type re-exports from validation schemas
-export type { JobDurationTags, DocumentsIndexedTags, ErrorTags } from "@repo/console-validation";
+export type {
+  JobDurationTags,
+  DocumentsIndexedTags,
+  ErrorTags,
+  NeuralObservationTags,
+  EntityExtractionTags,
+  ClusterTags,
+  ProfileUpdateTags,
+} from "@repo/console-validation";
 
 /**
  * Discriminated union based on metric type (type column)
@@ -156,8 +168,22 @@ export type { JobDurationTags, DocumentsIndexedTags, ErrorTags } from "@repo/con
  * Note: Cannot discriminate at schema level since type is separate column.
  * This is a union of possible tag structures.
  *
+ * Core metrics:
  * - job_duration: requires jobType and trigger
  * - documents_indexed: requires jobType and sourceType
  * - errors: requires jobType and errorType
+ *
+ * Neural workflow metrics:
+ * - observation_*: requires source and sourceType
+ * - entities_extracted: requires observationId and entityCount
+ * - cluster_*: requires clusterId
+ * - profile_updated: requires actorId
  */
-export type OperationMetricTags = JobDurationTags | DocumentsIndexedTags | ErrorTags;
+export type OperationMetricTags =
+  | JobDurationTags
+  | DocumentsIndexedTags
+  | ErrorTags
+  | NeuralObservationTags
+  | EntityExtractionTags
+  | ClusterTags
+  | ProfileUpdateTags;

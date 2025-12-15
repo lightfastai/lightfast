@@ -47,6 +47,47 @@ export function generateApiKey(prefix: string = API_KEY_PREFIX): string {
 }
 
 /**
+ * Result from generateWorkspaceApiKey containing all parts needed for storage
+ */
+export interface WorkspaceApiKeyResult {
+  /** Full API key (only returned once, never stored) */
+  key: string;
+  /** Key prefix (e.g., "sk_live_") */
+  prefix: string;
+  /** Last 4 characters of the key secret (for display) */
+  suffix: string;
+}
+
+/**
+ * Generate a new workspace API key with prefix, returning all parts
+ *
+ * This is used for workspace-scoped API keys where we need to store
+ * the prefix and suffix separately for display purposes.
+ *
+ * @param prefix - Key prefix (e.g., "sk_live_", "sk_test_")
+ * @returns Object with full key, prefix, and suffix (last 4 chars)
+ *
+ * @example
+ * ```ts
+ * const { key, prefix, suffix } = generateWorkspaceApiKey("sk_live_");
+ * // key: "sk_live_abc123...xyz789" (full key - return once)
+ * // prefix: "sk_live_"
+ * // suffix: "9789" (last 4 chars)
+ * ```
+ */
+export function generateWorkspaceApiKey(prefix: string = "sk_live_"): WorkspaceApiKeyResult {
+  const keySecret = nanoid(API_KEY_SECRET_LENGTH);
+  const key = `${prefix}${keySecret}`;
+  const suffix = keySecret.slice(-API_KEY_PREVIEW_LENGTH);
+
+  return {
+    key,
+    prefix,
+    suffix,
+  };
+}
+
+/**
  * Hash an API key using SHA-256
  *
  * This is used to:

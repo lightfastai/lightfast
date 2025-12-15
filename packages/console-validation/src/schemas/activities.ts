@@ -258,6 +258,110 @@ export const jobRestartedMetadataSchema = z
   .passthrough();
 
 // ============================================================================
+// API Key Activities
+// ============================================================================
+
+/**
+ * Metadata for apikey.created action
+ */
+export const apiKeyCreatedMetadataSchema = z
+  .object({
+    keyId: z.string(),
+    keyName: z.string(),
+    keyPreview: z.string(), // e.g., "sk_live_...abc1"
+    expiresAt: z.string().datetime().nullable(),
+  })
+  .passthrough();
+
+/**
+ * Metadata for apikey.revoked action
+ */
+export const apiKeyRevokedMetadataSchema = z
+  .object({
+    keyId: z.string(),
+    keyName: z.string(),
+    keyPreview: z.string(),
+  })
+  .passthrough();
+
+/**
+ * Metadata for apikey.deleted action
+ */
+export const apiKeyDeletedMetadataSchema = z
+  .object({
+    keyId: z.string(),
+    keyName: z.string(),
+    keyPreview: z.string(),
+    originallyCreatedAt: z.string().datetime(),
+  })
+  .passthrough();
+
+/**
+ * Metadata for apikey.rotated action
+ */
+export const apiKeyRotatedMetadataSchema = z
+  .object({
+    oldKeyId: z.string(),
+    newKeyId: z.string(),
+    keyName: z.string(),
+    newKeyPreview: z.string(),
+  })
+  .passthrough();
+
+// ============================================================================
+// Search Activities (v1 API)
+// ============================================================================
+
+/**
+ * Metadata for search.query action
+ */
+export const searchQueryMetadataSchema = z
+  .object({
+    query: z.string(),
+    limit: z.number(),
+    offset: z.number(),
+    mode: z.enum(["fast", "balanced", "thorough"]),
+    hasFilters: z.boolean(),
+    resultCount: z.number(),
+    totalMatches: z.number(),
+    latencyMs: z.number(),
+    authType: z.enum(["api-key", "session"]),
+    apiKeyId: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Metadata for search.findsimilar action
+ */
+export const searchFindSimilarMetadataSchema = z
+  .object({
+    sourceId: z.string(),
+    sourceType: z.string(),
+    inputMethod: z.enum(["id", "url"]),
+    limit: z.number(),
+    threshold: z.number(),
+    similarCount: z.number(),
+    latencyMs: z.number(),
+    authType: z.enum(["api-key", "session"]),
+    apiKeyId: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Metadata for search.contents action
+ */
+export const searchContentsMetadataSchema = z
+  .object({
+    requestedCount: z.number(),
+    foundCount: z.number(),
+    missingCount: z.number(),
+    latencyMs: z.number(),
+    authType: z.enum(["api-key", "session"]),
+    apiKeyId: z.string().optional(),
+  })
+  .passthrough();
+
+// ============================================================================
 // Discriminated Union for Runtime Validation
 // ============================================================================
 
@@ -361,6 +465,69 @@ export const jobRestartedActivitySchema = z.object({
 });
 
 /**
+ * API Key Created Activity
+ */
+export const apiKeyCreatedActivitySchema = z.object({
+  category: z.literal("api_key"),
+  action: z.literal("apikey.created"),
+  metadata: apiKeyCreatedMetadataSchema,
+});
+
+/**
+ * API Key Revoked Activity
+ */
+export const apiKeyRevokedActivitySchema = z.object({
+  category: z.literal("api_key"),
+  action: z.literal("apikey.revoked"),
+  metadata: apiKeyRevokedMetadataSchema,
+});
+
+/**
+ * API Key Deleted Activity
+ */
+export const apiKeyDeletedActivitySchema = z.object({
+  category: z.literal("api_key"),
+  action: z.literal("apikey.deleted"),
+  metadata: apiKeyDeletedMetadataSchema,
+});
+
+/**
+ * API Key Rotated Activity
+ */
+export const apiKeyRotatedActivitySchema = z.object({
+  category: z.literal("api_key"),
+  action: z.literal("apikey.rotated"),
+  metadata: apiKeyRotatedMetadataSchema,
+});
+
+/**
+ * Search Query Activity
+ */
+export const searchQueryActivitySchema = z.object({
+  category: z.literal("search"),
+  action: z.literal("search.query"),
+  metadata: searchQueryMetadataSchema,
+});
+
+/**
+ * Search FindSimilar Activity
+ */
+export const searchFindSimilarActivitySchema = z.object({
+  category: z.literal("search"),
+  action: z.literal("search.findsimilar"),
+  metadata: searchFindSimilarMetadataSchema,
+});
+
+/**
+ * Search Contents Activity
+ */
+export const searchContentsActivitySchema = z.object({
+  category: z.literal("search"),
+  action: z.literal("search.contents"),
+  metadata: searchContentsMetadataSchema,
+});
+
+/**
  * Discriminated Union of All Activity Types
  *
  * This discriminated union ensures type safety and runtime validation:
@@ -390,6 +557,15 @@ export const activityTypeSchema = z.discriminatedUnion("action", [
   storeCreatedActivitySchema,
   jobCancelledActivitySchema,
   jobRestartedActivitySchema,
+  // API Key activities
+  apiKeyCreatedActivitySchema,
+  apiKeyRevokedActivitySchema,
+  apiKeyDeletedActivitySchema,
+  apiKeyRotatedActivitySchema,
+  // Search activities
+  searchQueryActivitySchema,
+  searchFindSimilarActivitySchema,
+  searchContentsActivitySchema,
 ]);
 
 export type ActivityType = z.infer<typeof activityTypeSchema>;
@@ -412,6 +588,13 @@ export type IntegrationMetadataUpdatedMetadata = z.infer<typeof integrationMetad
 export type StoreCreatedMetadata = z.infer<typeof storeCreatedMetadataSchema>;
 export type JobCancelledMetadata = z.infer<typeof jobCancelledMetadataSchema>;
 export type JobRestartedMetadata = z.infer<typeof jobRestartedMetadataSchema>;
+export type ApiKeyCreatedMetadata = z.infer<typeof apiKeyCreatedMetadataSchema>;
+export type ApiKeyRevokedMetadata = z.infer<typeof apiKeyRevokedMetadataSchema>;
+export type ApiKeyDeletedMetadata = z.infer<typeof apiKeyDeletedMetadataSchema>;
+export type ApiKeyRotatedMetadata = z.infer<typeof apiKeyRotatedMetadataSchema>;
+export type SearchQueryMetadata = z.infer<typeof searchQueryMetadataSchema>;
+export type SearchFindSimilarMetadata = z.infer<typeof searchFindSimilarMetadataSchema>;
+export type SearchContentsMetadata = z.infer<typeof searchContentsMetadataSchema>;
 
 
 /**
