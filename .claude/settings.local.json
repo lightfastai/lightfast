@@ -182,5 +182,9 @@
     "playwright"
   ],
   "disableAllHooks": false,
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "sandbox": {
+    "enabled": false,
+    "autoAllowBashIfSandboxed": false
+  }
 }
