@@ -158,6 +158,7 @@
   "globalPassThroughEnv": [
     "NODE_ENV",
     "CI",
+    "SKIP_ENV_VALIDATION",
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
