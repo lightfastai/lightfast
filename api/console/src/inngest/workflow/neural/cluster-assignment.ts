@@ -14,6 +14,7 @@ import { db } from "@db/console/client";
 import { workspaceObservationClusters } from "@db/console/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { consolePineconeClient } from "@repo/console-pinecone";
+import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import { nanoid } from "@repo/lib";
 import { differenceInHours, subDays } from "date-fns";
@@ -252,7 +253,10 @@ async function createNewCluster(
     throw new Error("Failed to create cluster");
   }
 
-  log.info("Created new cluster", {
+  // Invalidate workspace config cache so hasClusters flag updates
+  await invalidateWorkspaceConfig(workspaceId);
+
+  log.info("New cluster created, workspace config cache invalidated", {
     clusterId: cluster.id,
     topicLabel,
     workspaceId,

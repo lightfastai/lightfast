@@ -14,6 +14,7 @@ import {
   workspaceNeuralObservations,
 } from "@db/console/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 
 export const profileUpdate = inngest.createFunction(
@@ -69,7 +70,19 @@ export const profileUpdate = inngest.createFunction(
       };
     });
 
-    // Step 2: Upsert profile
+    // Step 2: Check if profile exists (for cache invalidation)
+    const existingProfile = await step.run("check-existing-profile", async () => {
+      const profile = await db.query.workspaceActorProfiles.findFirst({
+        where: and(
+          eq(workspaceActorProfiles.workspaceId, workspaceId),
+          eq(workspaceActorProfiles.actorId, actorId)
+        ),
+        columns: { id: true },
+      });
+      return { exists: !!profile };
+    });
+
+    // Step 3: Upsert profile
     await step.run("upsert-profile", async () => {
       // Extract display name from actorId (source:id -> id)
       const displayName = actorId.split(":")[1] ?? actorId;
@@ -96,10 +109,21 @@ export const profileUpdate = inngest.createFunction(
           },
         });
 
+      // Invalidate workspace config cache if this was a new profile
+      // This ensures hasActors flag updates for the workspace
+      if (!existingProfile.exists) {
+        await invalidateWorkspaceConfig(workspaceId);
+        log.info("New actor profile created, workspace config cache invalidated", {
+          workspaceId,
+          actorId,
+        });
+      }
+
       log.info("Updated actor profile", {
         workspaceId,
         actorId,
         observationCount: recentActivity.count,
+        isNew: !existingProfile.exists,
       });
     });
 

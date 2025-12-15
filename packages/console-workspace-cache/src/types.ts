@@ -7,4 +7,7 @@ export interface CachedWorkspaceConfig {
   namespaceName: string;
   embeddingModel: string;
   embeddingDim: number;
+  // Capability flags for search path optimization
+  hasClusters: boolean;
+  hasActors: boolean;
 }

@@ -25,6 +25,16 @@ import { searchActorProfiles } from "./actor-search";
 import type { EntitySearchResult } from "@repo/console-types";
 
 // ============================================================================
+// EMPTY RESULT CONSTANTS
+// ============================================================================
+
+/** Empty cluster result for skipped path */
+const EMPTY_CLUSTER_RESULT = { results: [], latency: 0 } as const;
+
+/** Empty actor result for skipped path */
+const EMPTY_ACTOR_RESULT = { results: [], latency: 0 } as const;
+
+// ============================================================================
 // VECTOR ID NORMALIZATION
 // ============================================================================
 
@@ -362,7 +372,7 @@ export async function fourPathParallelSearch(
     throw new Error(`Workspace not found or not configured for search: ${workspaceId}`);
   }
 
-  const { indexName, namespaceName, embeddingModel, embeddingDim } = workspace;
+  const { indexName, namespaceName, embeddingModel, embeddingDim, hasClusters, hasActors } = workspace;
 
   // 2. Generate query embedding
   const embedStart = Date.now();
@@ -383,12 +393,12 @@ export async function fourPathParallelSearch(
     throw new Error("Failed to generate query embedding");
   }
 
-  // 3. Execute 4-path parallel retrieval
+  // 3. Execute 4-path parallel retrieval (skip empty paths)
   const pineconeFilter = buildPineconeFilter(filters);
   const parallelStart = Date.now();
 
   const [vectorResults, entityResults, clusterResults, actorResults] = await Promise.all([
-    // Path 1: Vector similarity search
+    // Path 1: Vector similarity search (always execute)
     (async () => {
       const start = Date.now();
       try {
@@ -409,7 +419,7 @@ export async function fourPathParallelSearch(
       }
     })(),
 
-    // Path 2: Entity search
+    // Path 2: Entity search (always execute - fast pattern matching)
     (async () => {
       const start = Date.now();
       try {
@@ -421,25 +431,29 @@ export async function fourPathParallelSearch(
       }
     })(),
 
-    // Path 3: Cluster context search
-    (async () => {
-      try {
-        return await searchClusters(workspaceId, indexName, namespaceName, queryVector, 3);
-      } catch (error) {
-        log.error("Cluster search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-        return { results: [], latency: 0 };
-      }
-    })(),
+    // Path 3: Cluster context search (skip if no clusters)
+    hasClusters
+      ? (async () => {
+          try {
+            return await searchClusters(workspaceId, indexName, namespaceName, queryVector, 3);
+          } catch (error) {
+            log.error("Cluster search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
+            return EMPTY_CLUSTER_RESULT;
+          }
+        })()
+      : Promise.resolve(EMPTY_CLUSTER_RESULT),
 
-    // Path 4: Actor profile search
-    (async () => {
-      try {
-        return await searchActorProfiles(workspaceId, query, 5);
-      } catch (error) {
-        log.error("Actor search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-        return { results: [], latency: 0 };
-      }
-    })(),
+    // Path 4: Actor profile search (skip if no actors)
+    hasActors
+      ? (async () => {
+          try {
+            return await searchActorProfiles(workspaceId, query, 5);
+          } catch (error) {
+            log.error("Actor search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
+            return EMPTY_ACTOR_RESULT;
+          }
+        })()
+      : Promise.resolve(EMPTY_ACTOR_RESULT),
   ]);
 
   log.info("4-path parallel search complete", {
@@ -449,6 +463,9 @@ export async function fourPathParallelSearch(
     entityMatches: entityResults.results.length,
     clusterMatches: clusterResults.results.length,
     actorMatches: actorResults.results.length,
+    // Add skip indicators for observability
+    clusterSkipped: !hasClusters,
+    actorSkipped: !hasActors,
   });
 
   // 4. Normalize vector IDs to observation IDs

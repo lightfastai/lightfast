@@ -1,7 +1,7 @@
 import { redis } from "@vendor/upstash";
 import { db } from "@db/console/client";
-import { orgWorkspaces } from "@db/console/schema";
-import { eq } from "drizzle-orm";
+import { orgWorkspaces, workspaceObservationClusters, workspaceActorProfiles } from "@db/console/schema";
+import { eq, sql } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { getWorkspaceConfigCacheKey } from "./keys";
 import type { CachedWorkspaceConfig } from "./types";
@@ -69,29 +69,55 @@ export async function getCachedWorkspaceConfig(
 /**
  * Fetch workspace config directly from database.
  * Used on cache miss or as fallback on cache failure.
+ *
+ * Runs parallel queries for:
+ * 1. Workspace settings (indexName, namespace, embedding config)
+ * 2. Cluster count (capability detection)
+ * 3. Actor count (capability detection)
  */
 async function fetchWorkspaceConfigFromDB(
   workspaceId: string
 ): Promise<CachedWorkspaceConfig | null> {
-  const workspace = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.id, workspaceId),
-    columns: {
-      indexName: true,
-      namespaceName: true,
-      embeddingModel: true,
-      embeddingDim: true,
-    },
-  });
+  // Run all queries in parallel for efficiency
+  const [workspace, clusterCountResult, actorCountResult] = await Promise.all([
+    // 1. Workspace settings
+    db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
+      columns: {
+        indexName: true,
+        namespaceName: true,
+        embeddingModel: true,
+        embeddingDim: true,
+      },
+    }),
+    // 2. Cluster count (just need to know if > 0)
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(workspaceObservationClusters)
+      .where(eq(workspaceObservationClusters.workspaceId, workspaceId))
+      .limit(1),
+    // 3. Actor count (just need to know if > 0)
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(workspaceActorProfiles)
+      .where(eq(workspaceActorProfiles.workspaceId, workspaceId))
+      .limit(1),
+  ]);
 
   if (!workspace?.indexName || !workspace.namespaceName) {
     return null;
   }
+
+  const clusterCount = clusterCountResult[0]?.count ?? 0;
+  const actorCount = actorCountResult[0]?.count ?? 0;
 
   return {
     indexName: workspace.indexName,
     namespaceName: workspace.namespaceName,
     embeddingModel: workspace.embeddingModel,
     embeddingDim: workspace.embeddingDim,
+    hasClusters: clusterCount > 0,
+    hasActors: actorCount > 0,
   };
 }
 
