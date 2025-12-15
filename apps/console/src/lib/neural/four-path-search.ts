@@ -12,7 +12,7 @@
 
 import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceNeuralObservations, workspaceNeuralEntities } from "@db/console/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, or, inArray } from "drizzle-orm";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
@@ -22,6 +22,183 @@ import { searchByEntities } from "./entity-search";
 import { searchClusters } from "./cluster-search";
 import { searchActorProfiles } from "./actor-search";
 import type { EntitySearchResult } from "@repo/console-types";
+
+// ============================================================================
+// VECTOR ID NORMALIZATION
+// ============================================================================
+
+/**
+ * Information about which embedding views matched for an observation
+ */
+interface ViewMatch {
+  view: "title" | "content" | "summary" | "legacy";
+  score: number;
+  vectorId: string;
+}
+
+/**
+ * Normalized vector result with observation ID
+ */
+interface NormalizedVectorResult {
+  observationId: string;
+  score: number;
+  matchedViews: ViewMatch[];
+  metadata?: VectorMetadata;
+}
+
+/**
+ * Extract view type from vector ID prefix
+ */
+function getViewFromVectorId(vectorId: string): "title" | "content" | "summary" | "legacy" {
+  if (vectorId.startsWith("obs_title_")) return "title";
+  if (vectorId.startsWith("obs_content_")) return "content";
+  if (vectorId.startsWith("obs_summary_")) return "summary";
+  return "legacy";
+}
+
+/**
+ * Normalize Pinecone vector IDs to database observation IDs.
+ * Groups multi-view matches by observation and returns max score.
+ *
+ * This function handles the ID mismatch between Pinecone (which stores
+ * vector IDs like obs_content_...) and the database (which uses nanoid
+ * observation IDs).
+ *
+ * Phase 3 optimization: New observations have observationId in metadata,
+ * allowing direct lookup without database queries. Legacy observations
+ * (without metadata.observationId) fall back to database lookup.
+ */
+async function normalizeVectorIds(
+  workspaceId: string,
+  vectorMatches: { id: string; score: number; metadata?: VectorMetadata }[],
+  requestId?: string
+): Promise<NormalizedVectorResult[]> {
+  if (vectorMatches.length === 0) return [];
+
+  // Separate matches with observationId in metadata (Phase 3) from those without (legacy)
+  const withObsId: typeof vectorMatches = [];
+  const withoutObsId: typeof vectorMatches = [];
+
+  for (const match of vectorMatches) {
+    // Check if metadata has observationId (Phase 3 vectors)
+    const metadata = match.metadata as Record<string, unknown> | undefined;
+    if (typeof metadata?.observationId === "string") {
+      withObsId.push(match);
+    } else {
+      withoutObsId.push(match);
+    }
+  }
+
+  // Group matches by observation ID
+  const obsGroups = new Map<string, {
+    matches: ViewMatch[];
+    metadata?: VectorMetadata;
+  }>();
+
+  // Process matches with observationId directly (no DB lookup needed - Phase 3 path)
+  for (const match of withObsId) {
+    const metadata = match.metadata as Record<string, unknown>;
+    const obsId = metadata.observationId as string;
+    const view = getViewFromVectorId(match.id);
+
+    const existing = obsGroups.get(obsId);
+    if (existing) {
+      existing.matches.push({ view, score: match.score, vectorId: match.id });
+    } else {
+      obsGroups.set(obsId, {
+        matches: [{ view, score: match.score, vectorId: match.id }],
+        metadata: match.metadata,
+      });
+    }
+  }
+
+  // For legacy vectors without observationId, fall back to database lookup (Phase 2 path)
+  if (withoutObsId.length > 0) {
+    const vectorIds = withoutObsId.map((m) => m.id);
+
+    const observations = await db
+      .select({
+        id: workspaceNeuralObservations.id,
+        embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
+        embeddingContentId: workspaceNeuralObservations.embeddingContentId,
+        embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
+        embeddingVectorId: workspaceNeuralObservations.embeddingVectorId,
+      })
+      .from(workspaceNeuralObservations)
+      .where(
+        and(
+          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          or(
+            inArray(workspaceNeuralObservations.embeddingTitleId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingContentId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingSummaryId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingVectorId, vectorIds)
+          )
+        )
+      );
+
+    // Build vector ID → observation mapping for legacy vectors
+    const vectorToObs = new Map<string, { id: string; view: "title" | "content" | "summary" | "legacy" }>();
+    for (const obs of observations) {
+      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, { id: obs.id, view: "title" });
+      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, { id: obs.id, view: "content" });
+      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, { id: obs.id, view: "summary" });
+      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, { id: obs.id, view: "legacy" });
+    }
+
+    // Add legacy matches to obsGroups
+    for (const match of withoutObsId) {
+      const obs = vectorToObs.get(match.id);
+      if (!obs) {
+        log.warn("Vector ID not found in database", { vectorId: match.id, requestId });
+        continue;
+      }
+
+      const existing = obsGroups.get(obs.id);
+      if (existing) {
+        existing.matches.push({ view: obs.view, score: match.score, vectorId: match.id });
+      } else {
+        obsGroups.set(obs.id, {
+          matches: [{ view: obs.view, score: match.score, vectorId: match.id }],
+          metadata: match.metadata,
+        });
+      }
+    }
+  }
+
+  // Log Phase 3 effectiveness
+  if (withObsId.length > 0 || withoutObsId.length > 0) {
+    log.info("normalizeVectorIds paths", {
+      requestId,
+      phase3Direct: withObsId.length,
+      phase2Lookup: withoutObsId.length,
+    });
+  }
+
+  // Convert to result array with max score aggregation
+  const results: NormalizedVectorResult[] = [];
+
+  for (const [obsId, group] of obsGroups) {
+    // Use MAX score across all matching views
+    const maxScore = Math.max(...group.matches.map((m) => m.score));
+
+    results.push({
+      observationId: obsId,
+      score: maxScore,
+      matchedViews: group.matches,
+      metadata: group.metadata,
+    });
+  }
+
+  // Sort by score descending
+  results.sort((a, b) => b.score - a.score);
+
+  return results;
+}
+
+// ============================================================================
+// SEARCH INTERFACES
+// ============================================================================
 
 export interface FourPathSearchParams {
   workspaceId: string;
@@ -62,6 +239,7 @@ export interface FourPathSearchResult {
     entity: number;
     cluster: number;
     actor: number;
+    normalize: number;
     total: number;
   };
   /** Total candidates before dedup */
@@ -116,31 +294,35 @@ function buildPineconeFilter(
 }
 
 /**
- * Merge vector search results with entity-matched results
+ * Merge normalized vector results with entity-matched results.
+ * All IDs are now observation IDs (database nanoids).
  */
 function mergeSearchResults(
-  vectorMatches: { id: string; score: number; metadata?: VectorMetadata }[],
+  normalizedVectorResults: NormalizedVectorResult[],
   entityResults: EntitySearchResult[],
   limit: number
 ): FilterCandidate[] {
   const resultMap = new Map<string, FilterCandidate>();
 
-  // Add vector results
-  for (const match of vectorMatches) {
-    resultMap.set(match.id, {
-      id: match.id,
-      title: String(match.metadata?.title ?? ""),
-      snippet: String(match.metadata?.snippet ?? ""),
-      score: match.score,
+  // Add normalized vector results (now using observation IDs)
+  for (const result of normalizedVectorResults) {
+    resultMap.set(result.observationId, {
+      id: result.observationId,
+      title: String(result.metadata?.title ?? ""),
+      snippet: String(result.metadata?.snippet ?? ""),
+      score: result.score,
     });
   }
 
-  // Add/boost entity results
+  // Merge with entity results
   for (const entity of entityResults) {
     const existing = resultMap.get(entity.observationId);
     if (existing) {
-      // Boost existing result - entity match confirms relevance
+      // Boost score for entity confirmation (+0.2)
       existing.score = Math.min(1.0, existing.score + 0.2);
+      // Prefer entity title/snippet if available
+      if (entity.observationTitle) existing.title = entity.observationTitle;
+      if (entity.observationSnippet) existing.snippet = entity.observationSnippet;
     } else {
       // Add new result from entity match
       resultMap.set(entity.observationId, {
@@ -273,9 +455,25 @@ export async function fourPathParallelSearch(
     actorMatches: actorResults.results.length,
   });
 
-  // 4. Merge vector and entity results
-  const mergedCandidates = mergeSearchResults(
+  // 4. Normalize vector IDs to observation IDs
+  const normalizeStart = Date.now();
+  const normalizedVectorResults = await normalizeVectorIds(
+    workspaceId,
     vectorResults.results.matches,
+    requestId
+  );
+  const normalizeLatency = Date.now() - normalizeStart;
+
+  log.info("4-path search normalized", {
+    requestId,
+    inputVectorCount: vectorResults.results.matches.length,
+    outputObsCount: normalizedVectorResults.length,
+    normalizeLatency,
+  });
+
+  // 5. Merge normalized vector and entity results
+  const mergedCandidates = mergeSearchResults(
+    normalizedVectorResults,
     entityResults.results,
     topK
   );
@@ -299,6 +497,7 @@ export async function fourPathParallelSearch(
       entity: entityResults.latency,
       cluster: clusterResults.latency,
       actor: actorResults.latency,
+      normalize: normalizeLatency,
       total: Date.now() - startTime,
     },
     total: vectorResults.results.matches.length + entityResults.results.length,
