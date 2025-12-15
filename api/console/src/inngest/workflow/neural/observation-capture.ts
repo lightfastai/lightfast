@@ -35,6 +35,7 @@ import { extractEntities, extractFromReferences } from "./entity-extraction-patt
 import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
+import { nanoid } from "nanoid";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -51,6 +52,8 @@ interface ObservationVectorMetadata {
   snippet: string;
   occurredAt: string;
   actorName: string;
+  /** Pre-generated database ID for direct lookup (Phase 3 optimization) */
+  observationId: string;
   // HACK: Index signature required to satisfy Pinecone's RecordMetadata constraint.
   // TODO: Re-export RecordMetadata from @repo/console-pinecone and extend it properly.
   [key: string]: string | number | boolean | string[];
@@ -216,8 +219,14 @@ export const observationCapture = inngest.createFunction(
     const { workspaceId, sourceEvent } = event.data;
     const startTime = Date.now();
 
+    // Pre-generate observation ID at workflow start (Phase 3 optimization)
+    // This ID is stored in Pinecone metadata for direct lookup, eliminating
+    // the need for database queries during search ID normalization.
+    const observationId = nanoid();
+
     log.info("Capturing neural observation", {
       workspaceId,
+      observationId,
       source: sourceEvent.source,
       sourceType: sourceEvent.sourceType,
       sourceId: sourceEvent.sourceId,
@@ -479,6 +488,9 @@ export const observationCapture = inngest.createFunction(
         sourceId: sourceEvent.sourceId,
         occurredAt: sourceEvent.occurredAt,
         actorName: sourceEvent.actor?.name || "unknown",
+        // Pre-generated database ID for direct lookup (Phase 3 optimization)
+        // This eliminates database queries during search ID normalization.
+        observationId,
       };
 
       // View-specific metadata
@@ -537,10 +549,12 @@ export const observationCapture = inngest.createFunction(
       const observationType = deriveObservationType(sourceEvent);
 
       return await db.transaction(async (tx) => {
-        // Insert observation
+        // Insert observation with pre-generated ID (Phase 3 optimization)
+        // The ID is already stored in Pinecone metadata for direct lookup.
         const [obs] = await tx
           .insert(workspaceNeuralObservations)
           .values({
+            id: observationId, // Use pre-generated ID
             workspaceId,
             occurredAt: sourceEvent.occurredAt,
             actor: sourceEvent.actor || null,

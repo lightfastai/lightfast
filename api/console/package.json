@@ -64,6 +64,7 @@
 		"gray-matter": "^4.0.3",
 		"inngest": "catalog:",
 		"minimatch": "^10.1.1",
+		"nanoid": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"yaml": "^2.7.0",
