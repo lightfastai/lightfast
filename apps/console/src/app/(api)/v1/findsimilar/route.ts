@@ -20,12 +20,11 @@ import { randomUUID } from "node:crypto";
 
 import { db } from "@db/console/client";
 import {
-  workspaceNeuralObservations,
   workspaceKnowledgeDocuments,
   workspaceObservationClusters,
   orgWorkspaces,
 } from "@db/console/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProvider } from "@repo/console-embed";
@@ -35,6 +34,12 @@ import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-t
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { resolveByUrl } from "~/lib/neural/url-resolver";
 import { buildSourceUrl } from "~/lib/neural/url-builder";
+import {
+  resolveObservationById,
+  resolveObservationsById,
+} from "~/lib/neural/id-resolver";
+import { workspaceNeuralObservations } from "@db/console/schema";
+import { or, inArray } from "drizzle-orm";
 
 interface SourceContent {
   id: string;
@@ -43,6 +48,135 @@ interface SourceContent {
   type: string;
   source: string;
   clusterId: string | null;
+}
+
+/**
+ * Normalized result with observation ID (deduplicated from multi-view vectors)
+ */
+interface NormalizedMatch {
+  observationId: string;
+  score: number;
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Normalize vector IDs to observation IDs and deduplicate multi-view matches.
+ * Uses max score when same observation matches via multiple views.
+ */
+async function normalizeAndDeduplicate(
+  workspaceId: string,
+  matches: { id: string; score: number; metadata?: Record<string, unknown> }[],
+  requestId: string
+): Promise<NormalizedMatch[]> {
+  if (matches.length === 0) return [];
+
+  // Separate Phase 3 (with observationId in metadata) from legacy vectors
+  const withObsId: typeof matches = [];
+  const withoutObsId: typeof matches = [];
+
+  for (const match of matches) {
+    if (typeof match.metadata?.observationId === "string") {
+      withObsId.push(match);
+    } else {
+      withoutObsId.push(match);
+    }
+  }
+
+  // Group by observation ID
+  const obsGroups = new Map<string, { score: number; metadata: Record<string, unknown> }>();
+
+  // Process Phase 3 vectors (direct from metadata)
+  for (const match of withObsId) {
+    // We checked typeof metadata?.observationId === "string" when filtering into withObsId
+    const metadata = match.metadata ?? {};
+    const obsId = metadata.observationId as string;
+    const existing = obsGroups.get(obsId);
+    if (existing) {
+      // Keep max score
+      if (match.score > existing.score) {
+        existing.score = match.score;
+        existing.metadata = metadata;
+      }
+    } else {
+      obsGroups.set(obsId, { score: match.score, metadata });
+    }
+  }
+
+  // Process legacy vectors (database lookup)
+  if (withoutObsId.length > 0) {
+    const vectorIds = withoutObsId.map((m) => m.id);
+
+    const observations = await db
+      .select({
+        id: workspaceNeuralObservations.id,
+        embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
+        embeddingContentId: workspaceNeuralObservations.embeddingContentId,
+        embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
+        embeddingVectorId: workspaceNeuralObservations.embeddingVectorId,
+      })
+      .from(workspaceNeuralObservations)
+      .where(
+        and(
+          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          or(
+            inArray(workspaceNeuralObservations.embeddingTitleId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingContentId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingSummaryId, vectorIds),
+            inArray(workspaceNeuralObservations.embeddingVectorId, vectorIds)
+          )
+        )
+      );
+
+    // Build vector ID → observation ID mapping
+    const vectorToObs = new Map<string, string>();
+    for (const obs of observations) {
+      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, obs.id);
+      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, obs.id);
+      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, obs.id);
+      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, obs.id);
+    }
+
+    // Add legacy matches to groups
+    for (const match of withoutObsId) {
+      const obsId = vectorToObs.get(match.id);
+      if (!obsId) {
+        log.warn("Vector ID not found in database", { vectorId: match.id, requestId });
+        continue;
+      }
+
+      const existing = obsGroups.get(obsId);
+      if (existing) {
+        if (match.score > existing.score) {
+          existing.score = match.score;
+          existing.metadata = match.metadata ?? {};
+        }
+      } else {
+        obsGroups.set(obsId, { score: match.score, metadata: match.metadata ?? {} });
+      }
+    }
+  }
+
+  // Convert to array and sort by score
+  const results: NormalizedMatch[] = [];
+  for (const [obsId, data] of obsGroups) {
+    results.push({
+      observationId: obsId,
+      score: data.score,
+      metadata: data.metadata,
+    });
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  log.info("findsimilar normalized", {
+    requestId,
+    inputCount: matches.length,
+    outputCount: results.length,
+    phase3Direct: withObsId.length,
+    phase2Lookup: withoutObsId.length,
+  });
+
+  return results;
 }
 
 export async function POST(request: NextRequest) {
@@ -172,24 +306,31 @@ export async function POST(request: NextRequest) {
       workspace.indexName,
       {
         vector: embedding,
-        topK: limit * 2, // Over-fetch for filtering
+        topK: limit * 3, // Over-fetch more to account for multi-view deduplication
         filter: pineconeFilter,
         includeMetadata: true,
       },
       workspace.namespaceName
     );
 
-    // 9. Filter and process results
+    // 9. Normalize vector IDs to observation IDs and deduplicate multi-view matches
+    const normalizedResults = await normalizeAndDeduplicate(
+      workspaceId,
+      pineconeResults.matches as { id: string; score: number; metadata?: Record<string, unknown> }[],
+      requestId
+    );
+
+    // 10. Filter by observation ID and apply threshold
     const exclusions = new Set([sourceContent.id, ...(excludeIds ?? [])]);
-    const filtered = pineconeResults.matches
-      .filter((m) => !exclusions.has(m.id) && m.score >= threshold)
+    const filtered = normalizedResults
+      .filter((m) => !exclusions.has(m.observationId) && m.score >= threshold)
       .slice(0, limit);
 
-    // 10. Enrich results with database info
-    const resultIds = filtered.map((m) => m.id);
+    // 11. Enrich results with database info (using observation IDs)
+    const resultIds = filtered.map((m) => m.observationId);
     const enrichedData = await enrichResults(workspaceId, resultIds, sourceContent.clusterId);
 
-    // 11. Get cluster info for source
+    // 12. Get cluster info for source
     let clusterInfo: { topic: string | null; memberCount: number } | undefined;
     if (sourceContent.clusterId) {
       const cluster = await db.query.workspaceObservationClusters.findFirst({
@@ -204,13 +345,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 12. Build response
+    // 13. Build response
     const similar: V1FindSimilarResult[] = filtered.map((match) => {
-      const data = enrichedData.get(match.id);
-      const metadata = (match.metadata ?? {}) as Record<string, unknown>;
+      const data = enrichedData.get(match.observationId);
+      const metadata = match.metadata;
 
       return {
-        id: match.id,
+        id: match.observationId, // Return observation ID, not vector ID
         title: typeof metadata.title === "string" ? metadata.title : (data?.title ?? ""),
         url: data?.url ?? (typeof metadata.url === "string" ? metadata.url : ""),
         snippet: typeof metadata.snippet === "string" ? metadata.snippet : undefined,
@@ -273,39 +414,13 @@ export async function POST(request: NextRequest) {
 
 /**
  * Fetch source content by ID (observation or document)
+ * Supports both database IDs and Pinecone vector IDs.
  */
 async function fetchSourceContent(
   workspaceId: string,
   contentId: string
 ): Promise<SourceContent | null> {
-  if (contentId.startsWith("obs_")) {
-    const obs = await db.query.workspaceNeuralObservations.findFirst({
-      columns: {
-        id: true,
-        title: true,
-        content: true,
-        observationType: true,
-        source: true,
-        clusterId: true,
-      },
-      where: and(
-        eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        eq(workspaceNeuralObservations.id, contentId)
-      ),
-    });
-
-    if (obs) {
-      return {
-        id: obs.id,
-        title: obs.title,
-        content: obs.content,
-        type: obs.observationType,
-        source: obs.source,
-        clusterId: obs.clusterId,
-      };
-    }
-  }
-
+  // Handle documents first (always doc_* prefix)
   if (contentId.startsWith("doc_")) {
     const doc = await db.query.workspaceKnowledgeDocuments.findFirst({
       columns: {
@@ -332,6 +447,28 @@ async function fetchSourceContent(
         clusterId: null,
       };
     }
+    return null;
+  }
+
+  // Handle observations (both database IDs and vector IDs)
+  const obs = await resolveObservationById(workspaceId, contentId, {
+    id: true,
+    title: true,
+    content: true,
+    observationType: true,
+    source: true,
+    clusterId: true,
+  });
+
+  if (obs) {
+    return {
+      id: obs.id, // Always return database ID for consistency
+      title: obs.title,
+      content: obs.content,
+      type: obs.observationType,
+      source: obs.source,
+      clusterId: obs.clusterId,
+    };
   }
 
   return null;
@@ -339,6 +476,7 @@ async function fetchSourceContent(
 
 /**
  * Enrich results with database info
+ * Supports both database IDs and Pinecone vector IDs.
  */
 async function enrichResults(
   workspaceId: string,
@@ -373,39 +511,32 @@ async function enrichResults(
 
   if (resultIds.length === 0) return result;
 
-  // Fetch observations
-  const obsIds = resultIds.filter((id) => id.startsWith("obs_"));
-  if (obsIds.length > 0) {
-    const observations = await db
-      .select({
-        id: workspaceNeuralObservations.id,
-        title: workspaceNeuralObservations.title,
-        source: workspaceNeuralObservations.source,
-        sourceId: workspaceNeuralObservations.sourceId,
-        observationType: workspaceNeuralObservations.observationType,
-        occurredAt: workspaceNeuralObservations.occurredAt,
-        clusterId: workspaceNeuralObservations.clusterId,
-        metadata: workspaceNeuralObservations.metadata,
-      })
-      .from(workspaceNeuralObservations)
-      .where(
-        and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          inArray(workspaceNeuralObservations.id, obsIds)
-        )
-      );
+  // Filter to observation IDs (both database and vector IDs - anything not doc_*)
+  const obsIds = resultIds.filter((id) => !id.startsWith("doc_"));
+  if (obsIds.length === 0) return result;
 
-    for (const obs of observations) {
-      const metadata = (obs.metadata ?? {}) as Record<string, unknown>;
-      result.set(obs.id, {
-        title: obs.title,
-        url: buildSourceUrl(obs.source, obs.sourceId, metadata),
-        source: obs.source,
-        type: obs.observationType,
-        occurredAt: obs.occurredAt,
-        sameCluster: sourceClusterId !== null && obs.clusterId === sourceClusterId,
-      });
-    }
+  // Use resolver to handle both ID formats
+  const observationMap = await resolveObservationsById(workspaceId, obsIds, {
+    id: true,
+    title: true,
+    source: true,
+    sourceId: true,
+    observationType: true,
+    occurredAt: true,
+    clusterId: true,
+    metadata: true,
+  });
+
+  for (const [requestId, obs] of observationMap) {
+    const metadata = obs.metadata ?? {};
+    result.set(requestId, {
+      title: obs.title,
+      url: buildSourceUrl(obs.source, obs.sourceId, metadata),
+      source: obs.source,
+      type: obs.observationType,
+      occurredAt: obs.occurredAt,
+      sameCluster: sourceClusterId !== null && obs.clusterId === sourceClusterId,
+    });
   }
 
   return result;
