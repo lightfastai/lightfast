@@ -4,7 +4,7 @@ import { workspaceObservationClusters } from "@db/console/schema";
 import { consolePineconeClient } from "@repo/console-pinecone";
 
 export interface ClusterSearchResult {
-  clusterId: string;
+  clusterId: number;  // BIGINT internal ID
   topicLabel: string;
   summary: string | null;
   keywords: string[];

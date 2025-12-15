@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   pgTable,
   real,
@@ -7,7 +8,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -16,10 +16,12 @@ import { orgWorkspaces } from "./org-workspaces";
 export const workspaceActorIdentities = pgTable(
   "lightfast_workspace_actor_identities",
   {
-    id: varchar("id", { length: 191 })
-      .notNull()
+    /**
+     * Internal BIGINT primary key - maximum performance for identity mapping
+     */
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()

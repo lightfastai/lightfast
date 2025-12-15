@@ -36,7 +36,7 @@ interface ClusterAssignmentInput {
 }
 
 interface ClusterAssignmentResult {
-  clusterId: string;
+  clusterId: number;
   isNew: boolean;
   affinityScore: number | null;
 }
@@ -269,7 +269,7 @@ async function createNewCluster(
  * Update cluster metrics when observation is added
  */
 async function updateClusterMetrics(
-  clusterId: string,
+  clusterId: number,
   observation: {
     entityIds: string[];
     actorId: string | null;

@@ -77,7 +77,7 @@ export const clusterSummaryCheck = inngest.createFunction(
       // Check existing summary age
       const existingCluster =
         await db.query.workspaceObservationClusters.findFirst({
-          where: eq(workspaceObservationClusters.id, clusterId),
+          where: eq(workspaceObservationClusters.id, Number(clusterId)),
         });
 
       if (!existingCluster) {
@@ -111,11 +111,19 @@ export const clusterSummaryCheck = inngest.createFunction(
     }
 
     // Step 2: Gather cluster observations
+    // TODO: Phase 5 will enable this when clusters are migrated to BIGINT
+    // Currently, observations.clusterId is BIGINT but we receive varchar clusterId from events
+    // Since all observations have clusterId = null until Phase 5, this query returns nothing
+    const clusterIdNum = parseInt(clusterId, 10);
     const observations = await step.run("gather-observations", async () => {
+      // Skip if clusterId is not a valid number (varchar cluster IDs from Phase 3)
+      if (isNaN(clusterIdNum)) {
+        return [];
+      }
       return db.query.workspaceNeuralObservations.findMany({
         where: and(
           eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.clusterId, clusterId),
+          eq(workspaceNeuralObservations.clusterId, clusterIdNum),
         ),
         orderBy: desc(workspaceNeuralObservations.occurredAt),
         limit: 20, // Limit context size
@@ -163,7 +171,7 @@ Generate a concise summary, key topics, key contributors, and activity status.`,
           summaryGeneratedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(workspaceObservationClusters.id, clusterId));
+        .where(eq(workspaceObservationClusters.id, Number(clusterId)));
 
       log.info("Generated cluster summary", {
         clusterId,

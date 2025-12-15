@@ -57,10 +57,10 @@ export const entityExtraction = inngest.createFunction(
       workspaceId,
     });
 
-    // Step 1: Fetch observation
+    // Step 1: Fetch observation by externalId (observationId is now nanoid string)
     const observation = await step.run("fetch-observation", async () => {
       const result = await db.query.workspaceNeuralObservations.findFirst({
-        where: eq(workspaceNeuralObservations.id, observationId),
+        where: eq(workspaceNeuralObservations.externalId, observationId),
       });
 
       if (!result) {
@@ -128,7 +128,7 @@ export const entityExtraction = inngest.createFunction(
               category: entity.category,
               key: entity.key,
               value: entity.value,
-              sourceObservationId: observationId,
+              sourceObservationId: observation.id,  // Use internal BIGINT id
               evidenceSnippet: entity.evidence,
               confidence: entity.confidence,
             })

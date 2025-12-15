@@ -119,6 +119,7 @@ async function normalizeVectorIds(
     const observations = await db
       .select({
         id: workspaceNeuralObservations.id,
+        externalId: workspaceNeuralObservations.externalId,
         embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
         embeddingContentId: workspaceNeuralObservations.embeddingContentId,
         embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
@@ -138,12 +139,13 @@ async function normalizeVectorIds(
       );
 
     // Build vector ID → observation mapping for legacy vectors
+    // Uses externalId (nanoid) for API-facing lookups
     const vectorToObs = new Map<string, { id: string; view: "title" | "content" | "summary" | "legacy" }>();
     for (const obs of observations) {
-      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, { id: obs.id, view: "title" });
-      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, { id: obs.id, view: "content" });
-      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, { id: obs.id, view: "summary" });
-      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, { id: obs.id, view: "legacy" });
+      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, { id: obs.externalId, view: "title" });
+      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, { id: obs.externalId, view: "content" });
+      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, { id: obs.externalId, view: "summary" });
+      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, { id: obs.externalId, view: "legacy" });
     }
 
     // Add legacy matches to obsGroups
@@ -550,54 +552,64 @@ export async function enrichSearchResults(
   // Build candidate map for O(1) lookup (used for snippets)
   const candidateMap = new Map(candidates.map((c) => [c.id, c]));
 
-  // Fetch observations and entities in parallel
-  const [observations, entities] = await Promise.all([
-    // Observations query - skip content column, use candidate snippet instead
-    db
-      .select({
-        id: workspaceNeuralObservations.id,
-        title: workspaceNeuralObservations.title,
-        source: workspaceNeuralObservations.source,
-        observationType: workspaceNeuralObservations.observationType,
-        occurredAt: workspaceNeuralObservations.occurredAt,
-        metadata: workspaceNeuralObservations.metadata,
-      })
-      .from(workspaceNeuralObservations)
-      .where(
-        and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          inArray(workspaceNeuralObservations.id, resultIds)
-        )
-      ),
+  // Fetch observations first, then entities using internal IDs
+  // Query by externalId since resultIds contains nanoid strings
+  const observations = await db
+    .select({
+      id: workspaceNeuralObservations.id,
+      externalId: workspaceNeuralObservations.externalId,
+      title: workspaceNeuralObservations.title,
+      source: workspaceNeuralObservations.source,
+      observationType: workspaceNeuralObservations.observationType,
+      occurredAt: workspaceNeuralObservations.occurredAt,
+      metadata: workspaceNeuralObservations.metadata,
+    })
+    .from(workspaceNeuralObservations)
+    .where(
+      and(
+        eq(workspaceNeuralObservations.workspaceId, workspaceId),
+        inArray(workspaceNeuralObservations.externalId, resultIds)
+      )
+    );
 
-    // Entities query
-    db
-      .select({
-        observationId: workspaceNeuralEntities.sourceObservationId,
-        key: workspaceNeuralEntities.key,
-        category: workspaceNeuralEntities.category,
-      })
-      .from(workspaceNeuralEntities)
-      .where(
-        and(
-          eq(workspaceNeuralEntities.workspaceId, workspaceId),
-          inArray(workspaceNeuralEntities.sourceObservationId, resultIds)
-        )
-      ),
-  ]);
+  // Get internal IDs for entity query
+  const internalObsIds = observations.map((o) => o.id);
 
-  // Group entities by observation
+  // Query entities using internal BIGINT IDs
+  const entities = internalObsIds.length > 0
+    ? await db
+        .select({
+          observationId: workspaceNeuralEntities.sourceObservationId,
+          key: workspaceNeuralEntities.key,
+          category: workspaceNeuralEntities.category,
+        })
+        .from(workspaceNeuralEntities)
+        .where(
+          and(
+            eq(workspaceNeuralEntities.workspaceId, workspaceId),
+            inArray(workspaceNeuralEntities.sourceObservationId, internalObsIds)
+          )
+        )
+    : [];
+
+  // Build internal ID to externalId map for entity grouping
+  const internalToExternalMap = new Map(observations.map((o) => [o.id, o.externalId]));
+
+  // Group entities by externalId (for result matching)
   const entityMap = new Map<string, { key: string; category: string }[]>();
   for (const entity of entities) {
-    if (entity.observationId) {
-      const existing = entityMap.get(entity.observationId) ?? [];
-      existing.push({ key: entity.key, category: entity.category });
-      entityMap.set(entity.observationId, existing);
+    if (entity.observationId !== null) {
+      const externalId = internalToExternalMap.get(entity.observationId);
+      if (externalId) {
+        const existing = entityMap.get(externalId) ?? [];
+        existing.push({ key: entity.key, category: entity.category });
+        entityMap.set(externalId, existing);
+      }
     }
   }
 
-  // Build observation map
-  const observationMap = new Map(observations.map((o) => [o.id, o]));
+  // Build observation map keyed by externalId (nanoid) for lookup
+  const observationMap = new Map(observations.map((o) => [o.externalId, o]));
 
   // Map results with enrichment
   return results.map((r) => {

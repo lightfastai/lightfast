@@ -1,11 +1,11 @@
 import {
+  bigint,
   index,
   jsonb,
   pgTable,
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -24,11 +24,11 @@ export const workspaceWebhookPayloads = pgTable(
   "lightfast_workspace_webhook_payloads",
   {
     /**
-     * Unique payload identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for raw storage
      */
-    id: varchar("id", { length: 191 })
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Workspace this payload belongs to (cascade delete when workspace deleted)

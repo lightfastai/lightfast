@@ -42,15 +42,17 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     const requestId = event.id;
 
     // Step 1: Fetch observation content
+    // Fetch observation by externalId (observationId is now nanoid string)
     const observation = await step.run("fetch-observation", async () => {
       const [obs] = await db
         .select({
           id: workspaceNeuralObservations.id,
+          externalId: workspaceNeuralObservations.externalId,
           title: workspaceNeuralObservations.title,
           content: workspaceNeuralObservations.content,
         })
         .from(workspaceNeuralObservations)
-        .where(eq(workspaceNeuralObservations.id, observationId))
+        .where(eq(workspaceNeuralObservations.externalId, observationId))
         .limit(1);
 
       return obs ?? null;
@@ -94,7 +96,7 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
               category: entity.category,
               key: entity.key,
               value: entity.value,
-              sourceObservationId: observationId,
+              sourceObservationId: observation.id,  // Use internal BIGINT id
               evidenceSnippet: entity.evidence,
               confidence: entity.confidence,
             })

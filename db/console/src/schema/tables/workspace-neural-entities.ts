@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   integer,
   jsonb,
@@ -26,11 +27,18 @@ export const workspaceNeuralEntities = pgTable(
   "lightfast_workspace_neural_entities",
   {
     /**
-     * Unique entity identifier (nanoid)
+     * Internal BIGINT primary key - maximum join/query performance
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
+      .generatedAlwaysAsIdentity(),
+
+    /**
+     * External identifier for API responses
+     */
+    externalId: varchar("external_id", { length: 21 })
+      .notNull()
+      .unique()
       .$defaultFn(() => nanoid()),
 
     /**
@@ -67,9 +75,9 @@ export const workspaceNeuralEntities = pgTable(
     // ========== PROVENANCE ==========
 
     /**
-     * First observation where this entity was discovered
+     * First observation where this entity was discovered (BIGINT FK)
      */
-    sourceObservationId: varchar("source_observation_id", { length: 191 })
+    sourceObservationId: bigint("source_observation_id", { mode: "number" })
       .references(() => workspaceNeuralObservations.id, { onDelete: "set null" }),
 
     /**
@@ -126,6 +134,9 @@ export const workspaceNeuralEntities = pgTable(
       .notNull(),
   },
   (table) => ({
+    // External ID lookup (API requests)
+    externalIdIdx: uniqueIndex("entity_external_id_idx").on(table.externalId),
+
     // Unique constraint for deduplication
     uniqueEntityKey: uniqueIndex("entity_workspace_category_key_idx").on(
       table.workspaceId,

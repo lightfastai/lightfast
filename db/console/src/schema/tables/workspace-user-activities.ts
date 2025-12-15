@@ -16,6 +16,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   jsonb,
   pgTable,
@@ -23,7 +24,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import type {
   ActivityCategory,
@@ -35,12 +35,11 @@ export const workspaceUserActivities = pgTable(
   "lightfast_workspace_user_activities",
   {
     /**
-     * Unique activity identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for audit logs
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Workspace ID this activity belongs to

@@ -45,11 +45,19 @@ export const profileUpdate = inngest.createFunction(
     const { workspaceId, actorId } = event.data;
 
     // Step 1: Get recent observations for this actor
+    // TODO: Phase 5 will enable this when actor_profiles are migrated to BIGINT
+    // Currently, observations.actorId is BIGINT but we receive varchar actorId from events
+    // Since all observations have actorId = null until Phase 5, this query returns nothing
+    const actorIdNum = parseInt(actorId, 10);
     const recentActivity = await step.run("gather-activity", async () => {
+      // Skip if actorId is not a valid number (varchar actor IDs from Phase 3)
+      if (isNaN(actorIdNum)) {
+        return { count: 0, lastActiveAt: null };
+      }
       const observations = await db.query.workspaceNeuralObservations.findMany({
         where: and(
           eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.actorId, actorId),
+          eq(workspaceNeuralObservations.actorId, actorIdNum),
         ),
         orderBy: desc(workspaceNeuralObservations.occurredAt),
         limit: 100,

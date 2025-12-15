@@ -181,11 +181,9 @@ export const orgWorkspaces = pgTable(
 
 // TypeScript type for settings
 export interface WorkspaceSettings {
-  repositories?: {
-    [repoId: string]: {
+  repositories?: Record<string, {
       enabled: boolean;
-    };
-  };
+    }>;
   defaults?: {
     patterns?: string[];
     ignore?: string[];

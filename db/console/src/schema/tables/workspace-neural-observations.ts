@@ -1,11 +1,13 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   jsonb,
   pgTable,
   real,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
@@ -47,11 +49,18 @@ export const workspaceNeuralObservations = pgTable(
   "lightfast_workspace_neural_observations",
   {
     /**
-     * Unique observation identifier (nanoid)
+     * Internal BIGINT primary key - maximum join/query performance
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
+      .generatedAlwaysAsIdentity(),
+
+    /**
+     * External identifier for API responses and Pinecone metadata
+     */
+    externalId: varchar("external_id", { length: 21 })
+      .notNull()
+      .unique()
       .$defaultFn(() => nanoid()),
 
     /**
@@ -62,9 +71,9 @@ export const workspaceNeuralObservations = pgTable(
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
-     * Cluster this observation is assigned to (nullable until clustering runs)
+     * Cluster this observation is assigned to
      */
-    clusterId: varchar("cluster_id", { length: 191 }),
+    clusterId: bigint("cluster_id", { mode: "number" }),
 
     // ========== TEMPORAL ==========
 
@@ -94,9 +103,9 @@ export const workspaceNeuralObservations = pgTable(
     actor: jsonb("actor").$type<ObservationActor | null>(),
 
     /**
-     * Resolved actor ID (source:id format or Clerk user ID)
+     * Reference to resolved actor profile
      */
-    actorId: varchar("actor_id", { length: 191 }),
+    actorId: bigint("actor_id", { mode: "number" }),
 
     // ========== CONTENT ==========
 
@@ -190,35 +199,38 @@ export const workspaceNeuralObservations = pgTable(
       .notNull(),
   },
   (table) => ({
-    // Index for finding observations by workspace and time
+    // External ID lookup (API requests)
+    externalIdIdx: uniqueIndex("obs_external_id_idx").on(table.externalId),
+
+    // Workspace + time range queries
     workspaceOccurredIdx: index("obs_workspace_occurred_idx").on(
       table.workspaceId,
       table.occurredAt,
     ),
 
-    // Index for finding observations by cluster
+    // Cluster membership
     clusterIdx: index("obs_cluster_idx").on(table.clusterId),
 
-    // Index for finding observations by source
+    // Source filtering
     sourceIdx: index("obs_source_idx").on(
       table.workspaceId,
       table.source,
       table.sourceType,
     ),
 
-    // Index for deduplication by source ID
+    // Deduplication by source ID
     sourceIdIdx: index("obs_source_id_idx").on(
       table.workspaceId,
       table.sourceId,
     ),
 
-    // Index for finding observations by type
+    // Type filtering
     typeIdx: index("obs_type_idx").on(
       table.workspaceId,
       table.observationType,
     ),
 
-    // Index for vector ID lookups (used by v1/contents and v1/findsimilar fallback)
+    // Vector ID lookups (fallback path)
     embeddingTitleIdx: index("obs_embedding_title_idx").on(
       table.workspaceId,
       table.embeddingTitleId,

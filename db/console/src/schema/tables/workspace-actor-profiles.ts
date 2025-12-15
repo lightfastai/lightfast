@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   integer,
   jsonb,
@@ -19,9 +20,19 @@ import { orgWorkspaces } from "./org-workspaces";
 export const workspaceActorProfiles = pgTable(
   "lightfast_workspace_actor_profiles",
   {
-    id: varchar("id", { length: 191 })
-      .notNull()
+    /**
+     * Internal BIGINT primary key - maximum join/query performance
+     */
+    id: bigint("id", { mode: "number" })
       .primaryKey()
+      .generatedAlwaysAsIdentity(),
+
+    /**
+     * External identifier for API responses
+     */
+    externalId: varchar("external_id", { length: 21 })
+      .notNull()
+      .unique()
       .$defaultFn(() => nanoid()),
 
     workspaceId: varchar("workspace_id", { length: 191 })
@@ -67,6 +78,9 @@ export const workspaceActorProfiles = pgTable(
       .notNull(),
   },
   (table) => ({
+    // External ID lookup (API requests)
+    externalIdIdx: uniqueIndex("actor_profile_external_id_idx").on(table.externalId),
+
     // Unique constraint on workspace + actor
     uniqueActorIdx: uniqueIndex("actor_profile_unique_idx").on(
       table.workspaceId,

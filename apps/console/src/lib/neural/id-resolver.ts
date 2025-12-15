@@ -1,8 +1,13 @@
 /**
  * ID Resolver - Resolves observation IDs from various formats
  *
- * Handles both database nanoid IDs and Pinecone vector IDs, providing
- * backward compatibility for the v1/contents and v1/findsimilar endpoints.
+ * Handles externalId (nanoid), internal BIGINT ids, and Pinecone vector IDs,
+ * providing backward compatibility for the v1/contents and v1/findsimilar endpoints.
+ *
+ * After BIGINT migration:
+ * - Internal id: BIGINT auto-increment (for DB joins/performance)
+ * - externalId: nanoid (for API/Pinecone lookups)
+ * - Vector IDs: obs_title_*, obs_content_*, obs_summary_* (legacy support)
  */
 
 import { db } from "@db/console/client";
@@ -13,14 +18,15 @@ import { and, eq, or, inArray } from "drizzle-orm";
  * Observation data returned by the resolver
  */
 export interface ResolvedObservation {
-  id: string;
+  id: number;           // Internal BIGINT
+  externalId: string;   // Public nanoid for API responses
   title: string;
   content: string;
   source: string;
   sourceId: string;
   observationType: string;
   occurredAt: string;
-  clusterId: string | null;
+  clusterId: number | null;
   metadata: Record<string, unknown> | null;
 }
 
@@ -51,13 +57,14 @@ export function getVectorIdView(
 
 /**
  * Resolve a single observation by any ID format.
- * First tries database ID lookup, then falls back to vector ID columns.
+ * Tries externalId first (nanoid for API lookups), then falls back to vector ID columns.
  */
 export async function resolveObservationById(
   workspaceId: string,
   id: string,
   _columns: {
     id?: true;
+    externalId?: true;
     title?: true;
     content?: true;
     source?: true;
@@ -68,10 +75,11 @@ export async function resolveObservationById(
     metadata?: true;
   }
 ): Promise<ResolvedObservation | null> {
-  // Try database ID first (most common case after Phase 2)
-  const byDbId = await db.query.workspaceNeuralObservations.findFirst({
+  // Try externalId first (most common case - API callers use nanoid)
+  const byExternalId = await db.query.workspaceNeuralObservations.findFirst({
     columns: {
       id: true,
+      externalId: true,
       title: true,
       content: true,
       source: true,
@@ -83,21 +91,22 @@ export async function resolveObservationById(
     },
     where: and(
       eq(workspaceNeuralObservations.workspaceId, workspaceId),
-      eq(workspaceNeuralObservations.id, id)
+      eq(workspaceNeuralObservations.externalId, id)
     ),
   });
 
-  if (byDbId) {
+  if (byExternalId) {
     return {
-      id: byDbId.id,
-      title: byDbId.title,
-      content: byDbId.content,
-      source: byDbId.source,
-      sourceId: byDbId.sourceId,
-      observationType: byDbId.observationType,
-      occurredAt: byDbId.occurredAt,
-      clusterId: byDbId.clusterId,
-      metadata: byDbId.metadata as Record<string, unknown> | null,
+      id: byExternalId.id,
+      externalId: byExternalId.externalId,
+      title: byExternalId.title,
+      content: byExternalId.content,
+      source: byExternalId.source,
+      sourceId: byExternalId.sourceId,
+      observationType: byExternalId.observationType,
+      occurredAt: byExternalId.occurredAt,
+      clusterId: byExternalId.clusterId,
+      metadata: byExternalId.metadata as Record<string, unknown> | null,
     };
   }
 
@@ -107,6 +116,7 @@ export async function resolveObservationById(
   const byVectorId = await db.query.workspaceNeuralObservations.findFirst({
     columns: {
       id: true,
+      externalId: true,
       title: true,
       content: true,
       source: true,
@@ -130,6 +140,7 @@ export async function resolveObservationById(
   if (byVectorId) {
     return {
       id: byVectorId.id,
+      externalId: byVectorId.externalId,
       title: byVectorId.title,
       content: byVectorId.content,
       source: byVectorId.source,
@@ -147,7 +158,7 @@ export async function resolveObservationById(
 /**
  * Resolve multiple observations by any ID format.
  * Groups IDs by type for efficient batch queries.
- * Returns a Map where keys are the original request IDs (which may be vector IDs)
+ * Returns a Map where keys are the original request IDs (which may be externalIds or vector IDs)
  * and values are the resolved observation data.
  */
 export async function resolveObservationsById(
@@ -155,6 +166,7 @@ export async function resolveObservationsById(
   ids: string[],
   _columns: {
     id?: true;
+    externalId?: true;
     title?: true;
     content?: true;
     source?: true;
@@ -168,15 +180,16 @@ export async function resolveObservationsById(
   const result = new Map<string, ResolvedObservation>();
   if (ids.length === 0) return result;
 
-  // Separate database IDs from vector IDs
-  const dbIds = ids.filter((id) => !isVectorId(id));
+  // Separate externalIds (nanoids) from vector IDs
+  const externalIds = ids.filter((id) => !isVectorId(id));
   const vectorIds = ids.filter(isVectorId);
 
-  // Batch query for database IDs
-  if (dbIds.length > 0) {
-    const byDbIds = await db.query.workspaceNeuralObservations.findMany({
+  // Batch query for externalIds (nanoids)
+  if (externalIds.length > 0) {
+    const byExternalIds = await db.query.workspaceNeuralObservations.findMany({
       columns: {
         id: true,
+        externalId: true,
         title: true,
         content: true,
         source: true,
@@ -188,13 +201,14 @@ export async function resolveObservationsById(
       },
       where: and(
         eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        inArray(workspaceNeuralObservations.id, dbIds)
+        inArray(workspaceNeuralObservations.externalId, externalIds)
       ),
     });
 
-    for (const obs of byDbIds) {
-      result.set(obs.id, {
+    for (const obs of byExternalIds) {
+      result.set(obs.externalId, {
         id: obs.id,
+        externalId: obs.externalId,
         title: obs.title,
         content: obs.content,
         source: obs.source,
@@ -213,6 +227,7 @@ export async function resolveObservationsById(
     const byVectorIds = await db
       .select({
         id: workspaceNeuralObservations.id,
+        externalId: workspaceNeuralObservations.externalId,
         embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
         embeddingContentId: workspaceNeuralObservations.embeddingContentId,
         embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
@@ -251,6 +266,7 @@ export async function resolveObservationsById(
 
       const resolved: ResolvedObservation = {
         id: obs.id,
+        externalId: obs.externalId,
         title: obs.title,
         content: obs.content,
         source: obs.source,

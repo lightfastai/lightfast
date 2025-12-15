@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   integer,
   jsonb,
@@ -7,7 +8,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import type {
   OperationMetricType,
@@ -41,12 +41,11 @@ export const workspaceOperationsMetrics = pgTable(
   "lightfast_workspace_operations_metrics",
   {
     /**
-     * Unique metric identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for time-series data
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Clerk organization ID (no FK - Clerk is source of truth)

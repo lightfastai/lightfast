@@ -64,7 +64,7 @@ export const jobsM2MRouter = {
 	updateStatus: inngestM2MProcedure
 		.input(
 			z.object({
-				jobId: z.string(),
+				jobId: z.coerce.number(),  // Coerce string to number (BIGINT internal ID)
 				status: z.enum(["running", "queued", "completed", "failed", "cancelled"]),
 			}),
 		)
@@ -81,7 +81,7 @@ export const jobsM2MRouter = {
 	complete: inngestM2MProcedure
 		.input(
 			z.object({
-				jobId: z.string(),
+				jobId: z.coerce.number(),  // Coerce string to number (BIGINT internal ID)
 				status: z.enum(["completed", "failed", "cancelled"]),
 				output: workflowOutputSchema.nullable().optional(),
 				errorMessage: z.string().nullable().optional(),

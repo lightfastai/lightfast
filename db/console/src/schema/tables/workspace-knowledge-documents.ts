@@ -10,7 +10,6 @@ import {
   integer,
   jsonb,
   pgTable,
-  text,
   timestamp,
   uniqueIndex,
   varchar,

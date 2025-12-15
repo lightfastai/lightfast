@@ -120,7 +120,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   const handleRetry = (e: React.MouseEvent) => {
     e.stopPropagation();
     restartMutation.mutate({
-      jobId: job.id,
+      jobId: String(job.id),
       clerkOrgSlug,
       workspaceName,
     });
@@ -147,7 +147,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
           {/* Left: Commit SHA + Job ID */}
           <div className="flex flex-col gap-1 w-[120px] flex-shrink-0">
             <span className="font-mono text-sm">
-              {commitSha?.substring(0, 8) ?? job.id.substring(0, 8)}
+              {commitSha?.substring(0, 8) ?? String(job.id)}
             </span>
             <span className="text-xs text-muted-foreground">
               {job.name}

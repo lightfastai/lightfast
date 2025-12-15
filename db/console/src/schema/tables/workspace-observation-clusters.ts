@@ -1,11 +1,13 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   integer,
   jsonb,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
@@ -18,11 +20,18 @@ export const workspaceObservationClusters = pgTable(
   "lightfast_workspace_observation_clusters",
   {
     /**
-     * Unique cluster identifier (nanoid)
+     * Internal BIGINT primary key - maximum join/query performance
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
+      .generatedAlwaysAsIdentity(),
+
+    /**
+     * External identifier for API responses
+     */
+    externalId: varchar("external_id", { length: 21 })
+      .notNull()
+      .unique()
       .$defaultFn(() => nanoid()),
 
     /**
@@ -123,6 +132,9 @@ export const workspaceObservationClusters = pgTable(
       .notNull(),
   },
   (table) => ({
+    // External ID lookup (API requests)
+    externalIdIdx: uniqueIndex("cluster_external_id_idx").on(table.externalId),
+
     // Index for finding open clusters in workspace
     workspaceStatusIdx: index("cluster_workspace_status_idx").on(
       table.workspaceId,

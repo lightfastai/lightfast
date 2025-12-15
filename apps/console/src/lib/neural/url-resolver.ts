@@ -117,8 +117,9 @@ export async function resolveByUrl(
   }
 
   // Query observations using indexed sourceId lookup
+  // Return externalId (nanoid) for public API use
   const observation = await db.query.workspaceNeuralObservations.findFirst({
-    columns: { id: true },
+    columns: { externalId: true },
     where: and(
       eq(workspaceNeuralObservations.workspaceId, workspaceId),
       inArray(workspaceNeuralObservations.sourceId, sourceIdCandidates)
@@ -127,7 +128,7 @@ export async function resolveByUrl(
   });
 
   if (observation) {
-    return { id: observation.id, type: "observation" };
+    return { id: observation.externalId, type: "observation" };
   }
 
   // For file URLs, check documents table

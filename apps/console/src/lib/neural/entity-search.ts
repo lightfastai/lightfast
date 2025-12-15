@@ -106,24 +106,27 @@ export async function searchByEntities(
   }
 
   // 3. Fetch linked observations
+  // sourceObservationId is now BIGINT (number), query by internal id
   const observationIds = matchedEntities
     .map((e) => e.sourceObservationId)
-    .filter((id): id is string => id !== null);
+    .filter((id): id is number => id !== null);
 
   if (observationIds.length === 0) {
     return [];
   }
 
+  // Query by internal id (BIGINT)
   const observations = await db
     .select({
       id: workspaceNeuralObservations.id,
+      externalId: workspaceNeuralObservations.externalId,
       title: workspaceNeuralObservations.title,
       content: workspaceNeuralObservations.content,
     })
     .from(workspaceNeuralObservations)
     .where(inArray(workspaceNeuralObservations.id, observationIds));
 
-  // 4. Build result map
+  // 4. Build result map keyed by internal id (BIGINT)
   const obsMap = new Map(observations.map((o) => [o.id, o]));
 
   const results: EntitySearchResult[] = [];
@@ -135,10 +138,10 @@ export async function searchByEntities(
     if (!obs) continue;
 
     results.push({
-      entityId: entity.id,
+      entityId: String(entity.id),  // Convert BIGINT to string for API response
       entityKey: entity.key,
       entityCategory: entity.category,
-      observationId: obs.id,
+      observationId: obs.externalId,  // Return externalId (nanoid) for API
       observationTitle: obs.title,
       observationSnippet: obs.content.substring(0, 200),
       occurrenceCount: entity.occurrenceCount,

@@ -105,9 +105,18 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
@@ -267,10 +276,19 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			// Verify job exists and belongs to user's workspace
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
@@ -298,7 +316,7 @@ export const jobsRouter = {
 					status: "cancelled",
 					completedAt: new Date().toISOString(),
 				})
-				.where(eq(workspaceWorkflowRuns.id, input.jobId));
+				.where(eq(workspaceWorkflowRuns.id, jobIdNum));
 
 			// Record activity (Tier 2: Queue-based)
 			await recordActivity({
@@ -345,10 +363,19 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			// Verify job exists and belongs to user's workspace
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),

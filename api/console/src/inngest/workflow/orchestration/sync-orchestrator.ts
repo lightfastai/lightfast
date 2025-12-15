@@ -173,8 +173,9 @@ export const syncOrchestrator = inngest.createFunction(
     const sourceEvent = await step.run("route-to-source", async () => {
       // TypeScript knows sourceType is "github" after runtime check
       const eventName = "apps-console/github.sync.trigger" as const;
+      // Convert jobId to string for event (events expect string IDs)
       const eventData = {
-        jobId,
+        jobId: String(jobId),
         workspaceId,
         workspaceKey,
         sourceId,
@@ -259,7 +260,7 @@ export const syncOrchestrator = inngest.createFunction(
       name: "apps-console/sync.completed",
       data: {
         sourceId,
-        jobId,
+        jobId: String(jobId),  // Convert to string for event
         success: !!sourceResult,
         syncMode,
         filesProcessed: metrics.itemsProcessed,

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   jsonb,
@@ -8,7 +9,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -30,10 +30,12 @@ export type TemporalStateType = "status" | "progress" | "health" | "risk" | "pri
 export const workspaceTemporalStates = pgTable(
   "lightfast_workspace_temporal_states",
   {
-    id: varchar("id", { length: 191 })
-      .notNull()
+    /**
+     * Internal BIGINT primary key - maximum performance for SCD Type 2 pattern
+     */
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()

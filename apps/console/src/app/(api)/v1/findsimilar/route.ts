@@ -21,7 +21,8 @@ import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
 import {
   workspaceKnowledgeDocuments,
-  workspaceObservationClusters,
+  // TODO: Phase 5 - Re-enable when clusters are migrated to BIGINT
+  // workspaceObservationClusters,
   orgWorkspaces,
 } from "@db/console/schema";
 import { and, eq } from "drizzle-orm";
@@ -42,12 +43,13 @@ import { workspaceNeuralObservations } from "@db/console/schema";
 import { or, inArray } from "drizzle-orm";
 
 interface SourceContent {
-  id: string;
+  id: string;          // externalId (nanoid) for observations, doc_* for documents
+  internalId?: number; // Internal BIGINT for observations
   title: string;
   content: string;
   type: string;
   source: string;
-  clusterId: string | null;
+  clusterId: number | null;
 }
 
 /**
@@ -109,6 +111,7 @@ async function normalizeAndDeduplicate(
     const observations = await db
       .select({
         id: workspaceNeuralObservations.id,
+        externalId: workspaceNeuralObservations.externalId,
         embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
         embeddingContentId: workspaceNeuralObservations.embeddingContentId,
         embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
@@ -127,13 +130,13 @@ async function normalizeAndDeduplicate(
         )
       );
 
-    // Build vector ID → observation ID mapping
+    // Build vector ID → externalId mapping (use externalId for public API)
     const vectorToObs = new Map<string, string>();
     for (const obs of observations) {
-      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, obs.id);
-      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, obs.id);
-      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, obs.id);
-      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, obs.id);
+      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, obs.externalId);
+      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, obs.externalId);
+      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, obs.externalId);
+      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, obs.externalId);
     }
 
     // Add legacy matches to groups
@@ -331,19 +334,13 @@ export async function POST(request: NextRequest) {
     const enrichedData = await enrichResults(workspaceId, resultIds, sourceContent.clusterId);
 
     // 12. Get cluster info for source
+    // TODO: Phase 5 will enable this when clusters are migrated to BIGINT
+    // Currently, observations.clusterId is BIGINT but clusters.id is varchar
+    // Since clusterId is null for all observations until Phase 5, this code path is dormant
     let clusterInfo: { topic: string | null; memberCount: number } | undefined;
-    if (sourceContent.clusterId) {
-      const cluster = await db.query.workspaceObservationClusters.findFirst({
-        columns: { topicLabel: true, observationCount: true },
-        where: eq(workspaceObservationClusters.id, sourceContent.clusterId),
-      });
-      if (cluster) {
-        clusterInfo = {
-          topic: cluster.topicLabel,
-          memberCount: cluster.observationCount,
-        };
-      }
-    }
+    // Skip cluster lookup until Phase 5 migrates clusters to BIGINT
+    // The clusterId in observations is now BIGINT, but cluster table still uses varchar IDs
+    // if (sourceContent.clusterId) { ... }
 
     // 13. Build response
     const similar: V1FindSimilarResult[] = filtered.map((match) => {
@@ -450,9 +447,10 @@ async function fetchSourceContent(
     return null;
   }
 
-  // Handle observations (both database IDs and vector IDs)
+  // Handle observations (both externalIds and vector IDs)
   const obs = await resolveObservationById(workspaceId, contentId, {
     id: true,
+    externalId: true,
     title: true,
     content: true,
     observationType: true,
@@ -462,7 +460,8 @@ async function fetchSourceContent(
 
   if (obs) {
     return {
-      id: obs.id, // Always return database ID for consistency
+      id: obs.externalId, // Return externalId (nanoid) for public API
+      internalId: obs.id, // Keep internal BIGINT for reference
       title: obs.title,
       content: obs.content,
       type: obs.observationType,
@@ -476,12 +475,12 @@ async function fetchSourceContent(
 
 /**
  * Enrich results with database info
- * Supports both database IDs and Pinecone vector IDs.
+ * Supports both externalIds (nanoids) and Pinecone vector IDs.
  */
 async function enrichResults(
   workspaceId: string,
   resultIds: string[],
-  sourceClusterId: string | null
+  sourceClusterId: number | null
 ): Promise<
   Map<
     string,
@@ -511,13 +510,14 @@ async function enrichResults(
 
   if (resultIds.length === 0) return result;
 
-  // Filter to observation IDs (both database and vector IDs - anything not doc_*)
+  // Filter to observation IDs (externalIds and vector IDs - anything not doc_*)
   const obsIds = resultIds.filter((id) => !id.startsWith("doc_"));
   if (obsIds.length === 0) return result;
 
   // Use resolver to handle both ID formats
   const observationMap = await resolveObservationsById(workspaceId, obsIds, {
     id: true,
+    externalId: true,
     title: true,
     source: true,
     sourceId: true,

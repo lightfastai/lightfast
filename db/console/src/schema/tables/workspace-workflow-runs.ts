@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
+import { bigint, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
 import type { JobStatus, JobTrigger, WorkflowInput, WorkflowOutput } from "@repo/console-validation";
 
@@ -20,12 +19,11 @@ export const workspaceWorkflowRuns = pgTable(
   "lightfast_workspace_workflow_runs",
   {
     /**
-     * Unique job identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for job tracking
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Clerk organization ID (no FK - Clerk is source of truth)

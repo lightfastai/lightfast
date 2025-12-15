@@ -17,11 +17,11 @@ export interface StoreWebhookPayloadParams {
  * Called after signature verification and workspace resolution.
  *
  * @param params - Webhook payload data to store
- * @returns The ID of the stored payload record
+ * @returns The internal BIGINT ID of the stored payload record
  */
 export async function storeWebhookPayload(
   params: StoreWebhookPayloadParams
-): Promise<string> {
+): Promise<number> {
   const [record] = await db
     .insert(workspaceWebhookPayloads)
     .values({

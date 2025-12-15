@@ -48,7 +48,7 @@ export function ActivityTimeline({
 	activities,
 	isLoading,
 }: ActivityTimelineProps) {
-	const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
+	const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
 	const [filterCategory, setFilterCategory] = useState<string>("all");
 
 	// Category icon mapping
