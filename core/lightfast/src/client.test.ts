@@ -67,7 +67,7 @@ describe("LightfastMemory", () => {
       const result = await memory.search({ query: "test query" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://console.lightfast.ai/v1/search",
+        "https://lightfast.ai/v1/search",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -119,7 +119,7 @@ describe("LightfastMemory", () => {
       const result = await memory.contents({ ids: ["doc_123", "obs_456"] });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://console.lightfast.ai/v1/contents",
+        "https://lightfast.ai/v1/contents",
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({ ids: ["doc_123", "obs_456"] }),

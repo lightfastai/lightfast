@@ -21,10 +21,50 @@ export type {
   V1FindSimilarSource,
 } from "@repo/console-types";
 
+import type {
+  V1SearchRequest,
+  V1ContentsRequest,
+  V1FindSimilarRequest,
+} from "@repo/console-types";
+
 /**
- * Configuration for the LightfastMemory client
+ * SDK input type for search requests.
+ * Makes fields with defaults optional for better developer experience.
+ * The API applies defaults server-side via Zod validation.
  */
-export interface LightfastMemoryConfig {
+export type SearchInput = Omit<
+  V1SearchRequest,
+  "limit" | "offset" | "mode" | "includeContext" | "includeHighlights"
+> &
+  Partial<
+    Pick<
+      V1SearchRequest,
+      "limit" | "offset" | "mode" | "includeContext" | "includeHighlights"
+    >
+  >;
+
+/**
+ * SDK input type for contents requests.
+ * Matches V1ContentsRequest (no defaults to make optional).
+ */
+export type ContentsInput = V1ContentsRequest;
+
+/**
+ * SDK input type for findSimilar requests.
+ * Makes fields with defaults optional for better developer experience.
+ */
+export type FindSimilarInput = Omit<
+  V1FindSimilarRequest,
+  "limit" | "threshold" | "sameSourceOnly"
+> &
+  Partial<
+    Pick<V1FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
+  >;
+
+/**
+ * Configuration for the Lightfast client
+ */
+export interface LightfastConfig {
   /**
    * Your Lightfast API key (starts with sk_live_ or sk_test_)
    */
@@ -32,7 +72,7 @@ export interface LightfastMemoryConfig {
 
   /**
    * Base URL for the Lightfast API
-   * @default "https://console.lightfast.ai"
+   * @default "https://lightfast.ai"
    */
   baseUrl?: string;
 
@@ -44,60 +84,6 @@ export interface LightfastMemoryConfig {
 }
 
 /**
- * Simplified search request for SDK consumers
- * (Omits internal fields, provides better defaults)
+ * @deprecated Use `LightfastConfig` instead
  */
-export interface SearchRequest {
-  /** The search query */
-  query: string;
-  /** Number of results to return (1-100) */
-  limit?: number;
-  /** Offset for pagination */
-  offset?: number;
-  /** Search mode: "fast", "balanced", or "thorough" */
-  mode?: "fast" | "balanced" | "thorough";
-  /** Optional filters */
-  filters?: {
-    sourceTypes?: string[];
-    observationTypes?: string[];
-    actorNames?: string[];
-    dateRange?: { start?: string; end?: string };
-  };
-  /** Include context clusters and actors */
-  includeContext?: boolean;
-  /** Include text highlights */
-  includeHighlights?: boolean;
-}
-
-/**
- * Simplified contents request for SDK consumers
- */
-export interface ContentsRequest {
-  /** Content IDs to fetch (doc_* or obs_* format) */
-  ids: string[];
-}
-
-/**
- * Simplified findSimilar request for SDK consumers
- */
-export interface FindSimilarRequest {
-  /** Content ID to find similar items for */
-  id?: string;
-  /** URL to find similar items for */
-  url?: string;
-  /** Number of results to return (1-50) */
-  limit?: number;
-  /** Minimum similarity threshold (0-1) */
-  threshold?: number;
-  /** Only return items from the same source */
-  sameSourceOnly?: boolean;
-  /** IDs to exclude from results */
-  excludeIds?: string[];
-  /** Optional filters */
-  filters?: {
-    sourceTypes?: string[];
-    observationTypes?: string[];
-    actorNames?: string[];
-    dateRange?: { start?: string; end?: string };
-  };
-}
+export type LightfastMemoryConfig = LightfastConfig;

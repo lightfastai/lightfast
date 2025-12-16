@@ -1,4 +1,7 @@
 // Client
+export { Lightfast, createLightfast } from "./client";
+
+// Deprecated aliases
 export { LightfastMemory, createLightfastMemory } from "./client";
 
 // Errors
@@ -14,11 +17,14 @@ export {
 
 // Types
 export type {
+  LightfastConfig,
+  // Deprecated alias
   LightfastMemoryConfig,
-  SearchRequest,
-  ContentsRequest,
-  FindSimilarRequest,
-  // Re-exported API types
+  // SDK input types (with optional fields for defaults)
+  SearchInput,
+  ContentsInput,
+  FindSimilarInput,
+  // V1 API types (re-exported from @repo/console-types)
   V1SearchRequest,
   V1SearchResponse,
   V1SearchResult,

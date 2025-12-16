@@ -8,16 +8,16 @@ import {
   ValidationError,
 } from "./errors";
 import type {
-  ContentsRequest,
-  FindSimilarRequest,
-  LightfastMemoryConfig,
-  SearchRequest,
+  ContentsInput,
+  FindSimilarInput,
+  LightfastConfig,
+  SearchInput,
   V1ContentsResponse,
   V1FindSimilarResponse,
   V1SearchResponse,
 } from "./types";
 
-const DEFAULT_BASE_URL = "https://console.lightfast.ai";
+const DEFAULT_BASE_URL = "https://lightfast.ai";
 const DEFAULT_TIMEOUT = 30000;
 const SDK_VERSION = "0.1.0";
 
@@ -32,20 +32,20 @@ interface ApiErrorResponse {
 }
 
 /**
- * Lightfast Memory SDK client
+ * Lightfast SDK client for Neural Memory API
  *
  * @example
  * ```typescript
- * const memory = new LightfastMemory({ apiKey: "sk_live_..." });
- * const results = await memory.search({ query: "authentication" });
+ * const lightfast = new Lightfast({ apiKey: "sk_live_..." });
+ * const results = await lightfast.search({ query: "authentication" });
  * ```
  */
-export class LightfastMemory {
+export class Lightfast {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
 
-  constructor(config: LightfastMemoryConfig) {
+  constructor(config: LightfastConfig) {
     if (!config.apiKey) {
       throw new Error("API key is required");
     }
@@ -66,14 +66,14 @@ export class LightfastMemory {
    *
    * @example
    * ```typescript
-   * const results = await memory.search({
+   * const results = await lightfast.search({
    *   query: "user authentication",
    *   mode: "balanced",
    *   limit: 10,
    * });
    * ```
    */
-  async search(request: SearchRequest): Promise<V1SearchResponse> {
+  async search(request: SearchInput): Promise<V1SearchResponse> {
     return this.request<V1SearchResponse>("/v1/search", {
       query: request.query,
       limit: request.limit ?? 10,
@@ -93,12 +93,12 @@ export class LightfastMemory {
    *
    * @example
    * ```typescript
-   * const content = await memory.contents({
+   * const content = await lightfast.contents({
    *   ids: ["doc_abc123", "obs_def456"],
    * });
    * ```
    */
-  async contents(request: ContentsRequest): Promise<V1ContentsResponse> {
+  async contents(request: ContentsInput): Promise<V1ContentsResponse> {
     return this.request<V1ContentsResponse>("/v1/contents", {
       ids: request.ids,
     });
@@ -112,14 +112,14 @@ export class LightfastMemory {
    *
    * @example
    * ```typescript
-   * const similar = await memory.findSimilar({
+   * const similar = await lightfast.findSimilar({
    *   id: "doc_abc123",
    *   limit: 5,
    *   threshold: 0.7,
    * });
    * ```
    */
-  async findSimilar(request: FindSimilarRequest): Promise<V1FindSimilarResponse> {
+  async findSimilar(request: FindSimilarInput): Promise<V1FindSimilarResponse> {
     if (!request.id && !request.url) {
       throw new ValidationError("Either 'id' or 'url' must be provided");
     }
@@ -149,7 +149,7 @@ export class LightfastMemory {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
-          "User-Agent": `lightfast-memory/${SDK_VERSION}`,
+          "User-Agent": `lightfast/${SDK_VERSION}`,
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -160,7 +160,10 @@ export class LightfastMemory {
       const data: unknown = await response.json();
 
       if (!response.ok) {
-        throw this.handleErrorResponse(response.status, data as ApiErrorResponse);
+        throw this.handleErrorResponse(
+          response.status,
+          data as ApiErrorResponse,
+        );
       }
 
       return data as T;
@@ -185,7 +188,10 @@ export class LightfastMemory {
   /**
    * Convert HTTP error response to appropriate error class
    */
-  private handleErrorResponse(status: number, data: ApiErrorResponse): LightfastError {
+  private handleErrorResponse(
+    status: number,
+    data: ApiErrorResponse,
+  ): LightfastError {
     const message = data.error ?? data.message ?? "Unknown error";
     const requestId = data.requestId;
 
@@ -210,16 +216,26 @@ export class LightfastMemory {
 }
 
 /**
- * Create a new LightfastMemory client
+ * Create a new Lightfast client
  *
  * @param config - Client configuration
- * @returns LightfastMemory instance
+ * @returns Lightfast instance
  *
  * @example
  * ```typescript
- * const memory = createLightfastMemory({ apiKey: "sk_live_..." });
+ * const lightfast = createLightfast({ apiKey: "sk_live_..." });
  * ```
  */
-export function createLightfastMemory(config: LightfastMemoryConfig): LightfastMemory {
-  return new LightfastMemory(config);
+export function createLightfast(config: LightfastConfig): Lightfast {
+  return new Lightfast(config);
 }
+
+/**
+ * @deprecated Use `Lightfast` instead
+ */
+export const LightfastMemory = Lightfast;
+
+/**
+ * @deprecated Use `createLightfast` instead
+ */
+export const createLightfastMemory = createLightfast;
