@@ -1,24 +1,24 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceApiKeys, orgWorkspaces } from "@db/console/schema";
+import { orgApiKeys, orgWorkspaces } from "@db/console/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
-  createWorkspaceApiKeySchema,
-  revokeWorkspaceApiKeySchema,
-  deleteWorkspaceApiKeySchema,
-  rotateWorkspaceApiKeySchema,
-  listWorkspaceApiKeysSchema,
+  createOrgApiKeySchema,
+  revokeOrgApiKeySchema,
+  deleteOrgApiKeySchema,
+  rotateOrgApiKeySchema,
+  listOrgApiKeysSchema,
 } from "@repo/console-validation/schemas";
-import { generateWorkspaceApiKey, hashApiKey } from "@repo/console-api-key";
+import { generateOrgApiKey, hashApiKey } from "@repo/console-api-key";
 import { recordCriticalActivity } from "../../lib/activity";
 
 import { orgScopedProcedure } from "../../trpc";
 
 /**
- * Workspace API Keys Router
+ * Organization API Keys Router
  *
- * Manages workspace-scoped API keys for secure, isolated API access.
+ * Manages organization-scoped API keys for secure, isolated API access.
  * Each key is bound to a specific workspace, eliminating the security gap
  * where user-scoped keys could access any workspace via X-Workspace-ID header.
  *
@@ -29,13 +29,13 @@ import { orgScopedProcedure } from "../../trpc";
  * - Key rotation atomically revokes old key and creates new one
  * - All operations are tracked via recordCriticalActivity (Tier 1)
  */
-export const workspaceApiKeysRouter = {
+export const orgApiKeysRouter = {
   /**
    * List all API keys for a workspace
    * Returns keys with preview only (never full key)
    */
   list: orgScopedProcedure
-    .input(listWorkspaceApiKeysSchema)
+    .input(listOrgApiKeysSchema)
     .query(async ({ ctx, input }) => {
       // Verify workspace belongs to org
       const workspace = await db.query.orgWorkspaces.findFirst({
@@ -53,8 +53,8 @@ export const workspaceApiKeysRouter = {
         });
       }
 
-      const keys = await db.query.workspaceApiKeys.findMany({
-        where: eq(workspaceApiKeys.workspaceId, input.workspaceId),
+      const keys = await db.query.orgApiKeys.findMany({
+        where: eq(orgApiKeys.workspaceId, input.workspaceId),
         columns: {
           publicId: true,
           name: true,
@@ -66,7 +66,7 @@ export const workspaceApiKeysRouter = {
           createdAt: true,
           createdByUserId: true,
         },
-        orderBy: [desc(workspaceApiKeys.createdAt)],
+        orderBy: [desc(orgApiKeys.createdAt)],
       });
 
       return keys.map((key) => ({
@@ -82,11 +82,11 @@ export const workspaceApiKeysRouter = {
     }),
 
   /**
-   * Create a new workspace API key
+   * Create a new organization API key
    * Returns the full key ONLY on creation (never again)
    */
   create: orgScopedProcedure
-    .input(createWorkspaceApiKeySchema)
+    .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       // Verify workspace belongs to org
       const workspace = await db.query.orgWorkspaces.findFirst({
@@ -104,12 +104,12 @@ export const workspaceApiKeysRouter = {
         });
       }
 
-      // Generate key with workspace prefix
-      const { key, prefix, suffix } = generateWorkspaceApiKey("sk_live_");
+      // Generate key with unified sk-lf- prefix
+      const { key, prefix, suffix } = generateOrgApiKey();
       const keyHash = await hashApiKey(key);
 
       const [created] = await db
-        .insert(workspaceApiKeys)
+        .insert(orgApiKeys)
         .values({
           workspaceId: input.workspaceId,
           clerkOrgId: workspace.clerkOrgId,
@@ -121,8 +121,8 @@ export const workspaceApiKeysRouter = {
           expiresAt: input.expiresAt?.toISOString(),
         })
         .returning({
-          id: workspaceApiKeys.id,
-          publicId: workspaceApiKeys.publicId,
+          id: orgApiKeys.id,
+          publicId: orgApiKeys.publicId,
         });
 
       if (!created) {
@@ -139,7 +139,7 @@ export const workspaceApiKeysRouter = {
         actorUserId: ctx.auth.userId,
         category: "api_key",
         action: "apikey.created",
-        entityType: "workspace_api_key",
+        entityType: "org_api_key",
         entityId: created.publicId,
         metadata: {
           keyId: created.publicId,
@@ -165,11 +165,11 @@ export const workspaceApiKeysRouter = {
    * Key remains in database but becomes inactive
    */
   revoke: orgScopedProcedure
-    .input(revokeWorkspaceApiKeySchema)
+    .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       // Find key
-      const existingKey = await db.query.workspaceApiKeys.findFirst({
-        where: eq(workspaceApiKeys.publicId, input.keyId),
+      const existingKey = await db.query.orgApiKeys.findFirst({
+        where: eq(orgApiKeys.publicId, input.keyId),
         columns: {
           id: true,
           publicId: true,
@@ -212,9 +212,9 @@ export const workspaceApiKeysRouter = {
       }
 
       await db
-        .update(workspaceApiKeys)
+        .update(orgApiKeys)
         .set({ isActive: false, updatedAt: new Date().toISOString() })
-        .where(eq(workspaceApiKeys.id, existingKey.id));
+        .where(eq(orgApiKeys.id, existingKey.id));
 
       // Track API key revocation (security-critical)
       await recordCriticalActivity({
@@ -223,7 +223,7 @@ export const workspaceApiKeysRouter = {
         actorUserId: ctx.auth.userId,
         category: "api_key",
         action: "apikey.revoked",
-        entityType: "workspace_api_key",
+        entityType: "org_api_key",
         entityId: existingKey.publicId,
         metadata: {
           keyId: existingKey.publicId,
@@ -240,11 +240,11 @@ export const workspaceApiKeysRouter = {
    * Key is removed from database entirely
    */
   delete: orgScopedProcedure
-    .input(deleteWorkspaceApiKeySchema)
+    .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       // Find key
-      const existingKey = await db.query.workspaceApiKeys.findFirst({
-        where: eq(workspaceApiKeys.publicId, input.keyId),
+      const existingKey = await db.query.orgApiKeys.findFirst({
+        where: eq(orgApiKeys.publicId, input.keyId),
         columns: {
           id: true,
           publicId: true,
@@ -280,8 +280,8 @@ export const workspaceApiKeysRouter = {
       }
 
       await db
-        .delete(workspaceApiKeys)
-        .where(eq(workspaceApiKeys.id, existingKey.id));
+        .delete(orgApiKeys)
+        .where(eq(orgApiKeys.id, existingKey.id));
 
       // Track API key deletion (security-critical)
       await recordCriticalActivity({
@@ -290,7 +290,7 @@ export const workspaceApiKeysRouter = {
         actorUserId: ctx.auth.userId,
         category: "api_key",
         action: "apikey.deleted",
-        entityType: "workspace_api_key",
+        entityType: "org_api_key",
         entityId: existingKey.publicId,
         metadata: {
           keyId: existingKey.publicId,
@@ -308,11 +308,11 @@ export const workspaceApiKeysRouter = {
    * Returns the new full key ONLY on rotation (never again)
    */
   rotate: orgScopedProcedure
-    .input(rotateWorkspaceApiKeySchema)
+    .input(rotateOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       // Find existing key
-      const existingKey = await db.query.workspaceApiKeys.findFirst({
-        where: eq(workspaceApiKeys.publicId, input.keyId),
+      const existingKey = await db.query.orgApiKeys.findFirst({
+        where: eq(orgApiKeys.publicId, input.keyId),
         columns: {
           id: true,
           publicId: true,
@@ -348,21 +348,21 @@ export const workspaceApiKeysRouter = {
         });
       }
 
-      // Generate new key
-      const { key, prefix, suffix } = generateWorkspaceApiKey("sk_live_");
+      // Generate new key with unified sk-lf- prefix
+      const { key, prefix, suffix } = generateOrgApiKey();
       const keyHash = await hashApiKey(key);
 
       // Transaction: revoke old, create new
       const [newKey] = await db.transaction(async (tx) => {
         // Revoke old key
         await tx
-          .update(workspaceApiKeys)
+          .update(orgApiKeys)
           .set({ isActive: false, updatedAt: new Date().toISOString() })
-          .where(eq(workspaceApiKeys.id, existingKey.id));
+          .where(eq(orgApiKeys.id, existingKey.id));
 
         // Create new key
         return tx
-          .insert(workspaceApiKeys)
+          .insert(orgApiKeys)
           .values({
             workspaceId: existingKey.workspaceId,
             clerkOrgId: existingKey.clerkOrgId,
@@ -374,8 +374,8 @@ export const workspaceApiKeysRouter = {
             expiresAt: input.expiresAt?.toISOString(),
           })
           .returning({
-            id: workspaceApiKeys.id,
-            publicId: workspaceApiKeys.publicId,
+            id: orgApiKeys.id,
+            publicId: orgApiKeys.publicId,
           });
       });
 
@@ -393,7 +393,7 @@ export const workspaceApiKeysRouter = {
         actorUserId: ctx.auth.userId,
         category: "api_key",
         action: "apikey.rotated",
-        entityType: "workspace_api_key",
+        entityType: "org_api_key",
         entityId: newKey.publicId,
         metadata: {
           oldKeyId: existingKey.publicId,

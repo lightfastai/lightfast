@@ -276,10 +276,11 @@ All workspace mutations track activity via `recordCriticalActivity()`.
 | Auth middleware | N/A | Done |
 | Activity tracking | No | Yes |
 
-## Open Questions
+## Decisions
 
-1. Should user keys and workspace keys use the same prefix format (`sk-lf-...`)?
-2. Should the entropy be increased from 165 bits to 256 bits?
-3. Should checksums be added for offline validation?
-4. What is the migration path for existing keys if format changes?
-5. Should workspace key UI be in org settings or workspace settings?
+1. **Same format for all keys**: Yes - both user and org keys use `sk-lf-...` format
+2. **Entropy**: Yes - increase to 256 bits (43 chars with 62-char alphabet)
+3. **Checksums**: Future TODO - not implementing now (add comment referencing GitHub's approach)
+4. **Migration**: Not needed - not in production yet, can make breaking changes
+5. **Naming**: "Organization API Keys" (NOT workspace) - rename `workspace-api-keys` to `org-api-keys`
+6. **Legacy code**: Delete `workspace-api-keys.ts` schema and related router

@@ -7,7 +7,7 @@
 
 import type { NextRequest } from "next/server";
 import { db } from "@db/console/client";
-import { workspaceApiKeys } from "@db/console/schema";
+import { orgApiKeys } from "@db/console/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { hashApiKey } from "@repo/console-api-key";
 import { log } from "@vendor/observability/log";
@@ -66,14 +66,14 @@ export async function withApiKeyAuth(
 
   const apiKey = authHeader.slice(7); // Remove "Bearer " prefix
 
-  // 2. Validate key format (should start with sk_live_ or similar prefix)
-  if (!apiKey.startsWith("sk_")) {
+  // 2. Validate key format (should start with sk-lf- prefix)
+  if (!apiKey.startsWith("sk-lf-")) {
     log.warn("Invalid API key format", { requestId });
     return {
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "Invalid API key format",
+        message: "Invalid API key format. Keys must start with 'sk-lf-'.",
       },
       status: 401,
     };
@@ -85,16 +85,16 @@ export async function withApiKeyAuth(
 
     const [foundKey] = await db
       .select({
-        id: workspaceApiKeys.id,
-        publicId: workspaceApiKeys.publicId,
-        workspaceId: workspaceApiKeys.workspaceId,
-        clerkOrgId: workspaceApiKeys.clerkOrgId,
-        createdByUserId: workspaceApiKeys.createdByUserId,
-        isActive: workspaceApiKeys.isActive,
-        expiresAt: workspaceApiKeys.expiresAt,
+        id: orgApiKeys.id,
+        publicId: orgApiKeys.publicId,
+        workspaceId: orgApiKeys.workspaceId,
+        clerkOrgId: orgApiKeys.clerkOrgId,
+        createdByUserId: orgApiKeys.createdByUserId,
+        isActive: orgApiKeys.isActive,
+        expiresAt: orgApiKeys.expiresAt,
       })
-      .from(workspaceApiKeys)
-      .where(and(eq(workspaceApiKeys.keyHash, keyHash), eq(workspaceApiKeys.isActive, true)))
+      .from(orgApiKeys)
+      .where(and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true)))
       .limit(1);
 
     if (!foundKey) {
@@ -130,12 +130,12 @@ export async function withApiKeyAuth(
 
     // 6. Update last used timestamp and IP (non-blocking)
     void db
-      .update(workspaceApiKeys)
+      .update(orgApiKeys)
       .set({
         lastUsedAt: sql`CURRENT_TIMESTAMP`,
         lastUsedFromIp: clientIp.substring(0, 45),
       })
-      .where(eq(workspaceApiKeys.id, foundKey.id))
+      .where(eq(orgApiKeys.id, foundKey.id))
       .catch((err: unknown) => {
         log.error("Failed to update API key lastUsedAt", {
           error: err instanceof Error ? err.message : String(err),

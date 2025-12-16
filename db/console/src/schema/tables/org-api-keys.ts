@@ -12,9 +12,9 @@ import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Workspace API Keys table for workspace-scoped API authentication
+ * Organization API Keys table for workspace-scoped API authentication
  *
- * Workspace-scoped: Each key is bound to a specific workspace and can only
+ * Organization-scoped: Each key is bound to a specific workspace and can only
  * access that workspace's resources. This prevents the security gap where
  * user-scoped keys could access any workspace via X-Workspace-ID header.
  *
@@ -26,8 +26,8 @@ import { orgWorkspaces } from "./org-workspaces";
  * - Track last used timestamp for security auditing
  * - Track created by user for audit trail
  */
-export const workspaceApiKeys = pgTable(
-  "lightfast_workspace_api_keys",
+export const orgApiKeys = pgTable(
+  "lightfast_workspace_api_keys", // Keep original table name for now
   {
     /**
      * Unique API key identifier
@@ -76,7 +76,7 @@ export const workspaceApiKeys = pgTable(
     keyHash: text("key_hash").notNull(),
 
     /**
-     * Key prefix for identification (e.g., "sk_live_")
+     * Key prefix for identification (e.g., "sk-lf-")
      * Helps users identify key type without exposing full key
      */
     keyPrefix: varchar("key_prefix", { length: 20 }).notNull(),
@@ -157,5 +157,13 @@ export const workspaceApiKeys = pgTable(
 );
 
 // Type exports
-export type WorkspaceApiKey = typeof workspaceApiKeys.$inferSelect;
-export type InsertWorkspaceApiKey = typeof workspaceApiKeys.$inferInsert;
+export type OrgApiKey = typeof orgApiKeys.$inferSelect;
+export type InsertOrgApiKey = typeof orgApiKeys.$inferInsert;
+
+// Backward compatibility exports
+/** @deprecated Use orgApiKeys instead */
+export const workspaceApiKeys = orgApiKeys;
+/** @deprecated Use OrgApiKey instead */
+export type WorkspaceApiKey = OrgApiKey;
+/** @deprecated Use InsertOrgApiKey instead */
+export type InsertWorkspaceApiKey = InsertOrgApiKey;

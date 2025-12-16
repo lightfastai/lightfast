@@ -26,7 +26,7 @@ import { integrationRouter } from "./router/org/integration";
 import { jobsRouter } from "./router/org/jobs";
 import { sourcesRouter } from "./router/org/sources";
 import { activitiesRouter } from "./router/org/activities";
-import { workspaceApiKeysRouter } from "./router/org/workspace-api-keys";
+import { orgApiKeysRouter } from "./router/org/org-api-keys";
 
 // M2M routers (internal services only)
 import { jobsM2MRouter } from "./router/m2m/jobs";
@@ -80,7 +80,7 @@ export const orgRouter = createTRPCRouter({
   jobs: jobsRouter,
   sources: sourcesRouter,
   activities: activitiesRouter,
-  workspaceApiKeys: workspaceApiKeysRouter,
+  orgApiKeys: orgApiKeysRouter,
 });
 
 /**
