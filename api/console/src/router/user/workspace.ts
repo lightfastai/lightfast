@@ -250,6 +250,7 @@ export const workspaceAccessRouter = {
               userSourceId: repo.userSourceId,
               connectedBy: ctx.auth.userId,
               sourceConfig: {
+                version: 1 as const,
                 sourceType: "github" as const,
                 type: "repository" as const,
                 installationId: repo.installationId,

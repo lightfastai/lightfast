@@ -244,6 +244,7 @@ export const userSourcesRouter = {
 					.update(userSources)
 					.set({
 						providerMetadata: {
+							version: 1 as const,
 							sourceType: "github" as const,
 							installations: newInstallations,
 						},
@@ -335,6 +336,7 @@ export const userSourcesRouter = {
 								? new Date(input.tokenExpiresAt).toISOString()
 								: null,
 							providerMetadata: {
+								version: 1 as const,
 								sourceType: "github" as const,
 								installations: input.installations,
 							},
@@ -359,6 +361,7 @@ export const userSourcesRouter = {
 								? new Date(input.tokenExpiresAt).toISOString()
 								: null,
 							providerMetadata: {
+								version: 1 as const,
 								sourceType: "github" as const,
 								installations: input.installations,
 							},
@@ -746,6 +749,7 @@ export const userSourcesRouter = {
 						.set({
 							accessToken: input.accessToken,
 							providerMetadata: {
+								version: 1 as const,
 								sourceType: "vercel" as const,
 								userId: input.userId,
 								teamId: input.teamId,
@@ -769,6 +773,7 @@ export const userSourcesRouter = {
 							sourceType: "vercel",
 							accessToken: input.accessToken,
 							providerMetadata: {
+								version: 1 as const,
 								sourceType: "vercel" as const,
 								userId: input.userId,
 								teamId: input.teamId,

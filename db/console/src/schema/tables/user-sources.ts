@@ -41,6 +41,7 @@ export const userSources = pgTable(
     // This stores high-level info like installations, workspaces, etc.
     providerMetadata: jsonb("provider_metadata").$type<
       | {
+          version: 1;
           sourceType: "github";
           // GitHub App installations user has access to
           installations?: {
@@ -55,6 +56,7 @@ export const userSources = pgTable(
           }[];
         }
       | {
+          version: 1;
           sourceType: "vercel";
           // Vercel team/user that installed the integration
           teamId?: string;              // Vercel team ID (null for personal accounts)

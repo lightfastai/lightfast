@@ -80,6 +80,7 @@ export const workspaceIntegrations = pgTable(
      */
     sourceConfig: jsonb("source_config").$type<
       | {
+          version: 1;
           sourceType: "github";
           type: "repository";
           installationId: string;        // GitHub App installation ID
@@ -102,6 +103,7 @@ export const workspaceIntegrations = pgTable(
           };
         }
       | {
+          version: 1;
           sourceType: "vercel";
           type: "project";
           projectId: string;               // Vercel project ID

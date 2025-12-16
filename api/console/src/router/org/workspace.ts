@@ -979,6 +979,7 @@ export const workspaceRouter = {
             userSourceId,
             connectedBy: ctx.auth.userId,
             sourceConfig: {
+              version: 1 as const,
               sourceType: "vercel" as const,
               type: "project" as const,
               projectId,
@@ -1209,6 +1210,7 @@ export const workspaceRouter = {
             connectedBy: ctx.auth.userId,
             providerResourceId: repo.repoId,
             sourceConfig: {
+              version: 1 as const,
               sourceType: "github" as const,
               type: "repository" as const,
               installationId: input.installationId,
@@ -1347,6 +1349,7 @@ export const workspaceRouter = {
             connectedBy: ctx.auth.userId,
             providerResourceId: p.projectId,
             sourceConfig: {
+              version: 1 as const,
               sourceType: "vercel" as const,
               type: "project" as const,
               projectId: p.projectId,
