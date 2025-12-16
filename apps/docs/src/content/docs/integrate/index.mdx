@@ -1,0 +1,78 @@
+---
+title: Integration Overview
+description: Connect your applications and AI agents to Lightfast's memory layer via SDK or MCP
+---
+
+# Integration Overview
+
+Lightfast provides two ways to integrate with your engineering org's memory: a **TypeScript SDK** for applications and an **MCP Server** for AI assistants.
+
+## Choose Your Integration
+
+| Method | Best For | Setup Time |
+|--------|----------|------------|
+| **TypeScript SDK** | Custom applications, backends, CLI tools | 5 minutes |
+| **MCP Server** | Claude, Cursor, Codex, and other AI assistants | 2 minutes |
+
+## TypeScript SDK
+
+The `lightfast` package gives you full programmatic access to search, retrieve content, and find similar documents.
+
+```typescript
+import { Lightfast } from "lightfast";
+
+const lightfast = new Lightfast({ apiKey: process.env.LIGHTFAST_API_KEY });
+
+const results = await lightfast.search({
+  query: "how does authentication work",
+  limit: 10,
+});
+```
+
+**Use cases:**
+- Build internal search tools
+- Add context to your AI applications
+- Create automated documentation tools
+- Power Slack bots or CLI assistants
+
+<NextLink href="/docs/integrate/sdk">SDK Documentation →</NextLink>
+
+## MCP Server
+
+The `@lightfastai/mcp` package connects AI assistants directly to your workspace memory via the [Model Context Protocol](https://modelcontextprotocol.io/).
+
+```bash
+npx @lightfastai/mcp --api-key sk_live_...
+```
+
+**Supported clients:**
+- Claude Desktop
+- Claude Code (CLI)
+- Cursor
+- OpenAI Codex
+- Any MCP-compatible client
+
+<NextLink href="/docs/integrate/mcp">MCP Documentation →</NextLink>
+
+## Requirements
+
+Both integration methods require:
+
+- **Node.js >= 18**
+- **Lightfast API Key** — [Request early access](https://lightfast.ai/early-access)
+
+## API Endpoints
+
+Both SDK and MCP use the same underlying API:
+
+| Endpoint | Description |
+|----------|-------------|
+| `/v1/search` | Semantic search across workspace memory |
+| `/v1/contents` | Fetch full document content by ID |
+| `/v1/findsimilar` | Find semantically similar documents |
+
+## Next Steps
+
+- <NextLink href="/docs/integrate/sdk">Get started with the SDK</NextLink>
+- <NextLink href="/docs/integrate/mcp">Configure MCP for your AI assistant</NextLink>
+- <NextLink href="/docs/get-started/quickstart">Set up your workspace first</NextLink>

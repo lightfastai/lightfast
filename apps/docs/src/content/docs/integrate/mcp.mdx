@@ -1,0 +1,222 @@
+---
+title: MCP Server
+description: Connect AI assistants to your workspace memory via Model Context Protocol
+---
+
+# MCP Server
+
+The `@lightfastai/mcp` package connects AI assistants like Claude, Cursor, and Codex directly to your workspace memory via the [Model Context Protocol](https://modelcontextprotocol.io/).
+
+## Installation
+
+No installation required — run directly with npx:
+
+```bash
+npx @lightfastai/mcp --api-key sk_live_...
+```
+
+Or install globally:
+
+```bash
+npm install -g @lightfastai/mcp
+lightfast-mcp --api-key sk_live_...
+```
+
+## Configuration
+
+Choose your AI assistant and add the configuration:
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving.
+
+### Claude Code (CLI)
+
+Add to `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+Or use the CLI:
+
+```bash
+claude mcp add lightfast --scope project -- npx -y @lightfastai/mcp
+```
+
+For global (user-level) configuration, add to `~/.claude.json` or use `--scope user`.
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+### OpenAI Codex
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.lightfast]
+command = "npx"
+args = ["-y", "@lightfastai/mcp"]
+
+[mcp_servers.lightfast.env]
+LIGHTFAST_API_KEY = "sk_live_..."
+```
+
+## Available Tools
+
+Once configured, your AI assistant has access to three tools:
+
+### lightfast_search
+
+Search through workspace neural memory for relevant documents and observations.
+
+**Parameters:**
+- `query` (required): Natural language search query
+- `limit`: Number of results (default: 10)
+- `mode`: Search mode — "fast", "balanced", or "quality"
+- `filters`: Filter by source, date range, or type
+
+**Example prompt:**
+> "Search lightfast for how authentication works in our API"
+
+### lightfast_contents
+
+Fetch full content for documents by their IDs.
+
+**Parameters:**
+- `ids` (required): Array of document IDs to fetch
+
+**Example prompt:**
+> "Get the full content of doc_abc123 from lightfast"
+
+### lightfast_find_similar
+
+Find content semantically similar to a given document or URL.
+
+**Parameters:**
+- `id` or `url` (one required): Document ID or URL to find similar content for
+- `limit`: Number of results (default: 10)
+- `threshold`: Minimum similarity score (default: 0.5)
+
+**Example prompt:**
+> "Find PRs similar to https://github.com/org/repo/pull/123"
+
+## Usage Examples
+
+Once configured, you can ask your AI assistant questions like:
+
+- "Search our codebase for how rate limiting is implemented"
+- "What decisions have we made about database choices?"
+- "Find documentation about our deployment process"
+- "Who has worked on the payment service?"
+- "Find PRs similar to this authentication refactor"
+
+The AI assistant will automatically use the Lightfast tools to search your workspace memory and provide answers with sources.
+
+## CLI Options
+
+```bash
+npx @lightfastai/mcp [options]
+
+Options:
+  --api-key <key>    Lightfast API key (or set LIGHTFAST_API_KEY env var)
+  --base-url <url>   API base URL (default: https://lightfast.ai)
+  --help, -h         Show help message
+  --version, -v      Show version
+```
+
+## Environment Variables
+
+Instead of passing `--api-key`, you can set the environment variable:
+
+```bash
+export LIGHTFAST_API_KEY=sk_live_...
+npx @lightfastai/mcp
+```
+
+This is especially useful in MCP configurations where you don't want to hardcode the key:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "${LIGHTFAST_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+## Troubleshooting
+
+### Server not connecting
+
+1. Verify your API key is valid and starts with `sk_`
+2. Check that Node.js >= 18 is installed
+3. Restart your AI assistant after configuration changes
+
+### Tools not appearing
+
+1. Ensure the MCP server is running (check logs)
+2. Verify the configuration file is in the correct location
+3. For Claude Code, run `/mcp` to check server status
+
+### Permission errors
+
+1. Lightfast respects your GitHub permissions
+2. Ensure your workspace has the repositories you're searching
+3. Check that your API key has access to the workspace
+
+## Next Steps
+
+- <NextLink href="/docs/integrate/sdk">Use the SDK for custom integrations</NextLink>
+- <NextLink href="/docs/features/search">Learn about search modes and filters</NextLink>
+- [View MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)

@@ -217,8 +217,8 @@ LIGHTFAST_API_KEY = "sk_live_..."
 ## Documentation
 
 - [API Reference](https://lightfast.ai/docs/api) — Full endpoint documentation
-- [SDK Guide](https://lightfast.ai/docs/sdk) — TypeScript SDK usage
-- [MCP Setup](https://lightfast.ai/docs/mcp) — Configure AI assistants
+- [SDK Guide](https://lightfast.ai/docs/integrate/sdk) — TypeScript SDK usage
+- [MCP Setup](https://lightfast.ai/docs/integrate/mcp) — Configure AI assistants
 - [Changelog](https://lightfast.ai/changelog) — Latest updates and releases
 - [Blog](https://lightfast.ai/blog) — Tutorials, announcements, and deep dives
 
