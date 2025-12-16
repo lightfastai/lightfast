@@ -1,4 +1,4 @@
-import type { Memory } from "lightfast/memory";
+import type { Memory } from "@lightfastai/ai-sdk/memory";
 import type {
 	LightfastAppChatUIMessage,
 	LightfastAppChatUIMessagePart,

@@ -1,4 +1,4 @@
-import { createTool } from "lightfast/tool";
+import { createTool } from "@lightfastai/ai-sdk/tool";
 import { z } from "zod";
 
 import type {

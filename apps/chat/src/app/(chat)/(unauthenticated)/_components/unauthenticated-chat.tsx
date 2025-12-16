@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { DataStreamProvider } from "~/hooks/use-data-stream";
-import { uuidv4 } from "lightfast/v2/utils";
+import { uuidv4 } from "@lightfastai/ai-sdk/v2/utils";
 
 interface UnauthenticatedChatProps {
 	agentId: string;

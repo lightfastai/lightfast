@@ -5,18 +5,18 @@ Production-ready AI agent framework with built-in observability, caching, and ty
 ## Installation
 
 ```bash
-npm install lightfast
+npm install @lightfastai/ai-sdk
 # or
-pnpm add lightfast
-# or  
-yarn add lightfast
+pnpm add @lightfastai/ai-sdk
+# or
+yarn add @lightfastai/ai-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { createAgent } from 'lightfast/agent';
-import { createTool } from 'lightfast/tool';
+import { createAgent } from '@lightfastai/ai-sdk/agent';
+import { createTool } from '@lightfastai/ai-sdk/tool';
 import { z } from 'zod';
 
 // Define your runtime context type
@@ -83,14 +83,14 @@ OTEL_EXPORTER_OTLP_HEADERS=api-key=your-key
 
 ```typescript
 import { gateway } from '@ai-sdk/gateway';
-import { createAgent } from 'lightfast/agent';
-import { fetchRequestHandler } from 'lightfast/server/adapters/fetch';
-import { RedisMemory } from 'lightfast/memory/adapters/redis';
-import { AnthropicProviderCache, ClineConversationStrategy } from 'lightfast/cache';
+import { createAgent } from '@lightfastai/ai-sdk/agent';
+import { fetchRequestHandler } from '@lightfastai/ai-sdk/server/adapters/fetch';
+import { RedisMemory } from '@lightfastai/ai-sdk/memory/adapters/redis';
+import { AnthropicProviderCache, ClineConversationStrategy } from '@lightfastai/ai-sdk/cache';
 import { smoothStream, stepCountIs, wrapLanguageModel } from 'ai';
 import { BraintrustMiddleware, initLogger, traced } from 'braintrust';
-import { getBraintrustConfig, isOtelEnabled } from 'lightfast/v2/braintrust-env';
-import { uuidv4 } from 'lightfast/v2/utils';
+import { getBraintrustConfig, isOtelEnabled } from '@lightfastai/ai-sdk/v2/braintrust-env';
+import { uuidv4 } from '@lightfastai/ai-sdk/v2/utils';
 
 // Initialize observability
 const braintrustConfig = getBraintrustConfig();
@@ -214,7 +214,7 @@ export async function POST(req: Request) {
 #### Anthropic Cache Control (Recommended for Claude)
 
 ```typescript
-import { AnthropicProviderCache, ClineConversationStrategy } from 'lightfast/cache';
+import { AnthropicProviderCache, ClineConversationStrategy } from '@lightfastai/ai-sdk/cache';
 
 // Proven strategy from Cline AI assistant
 const cache = new AnthropicProviderCache({
@@ -235,7 +235,7 @@ This strategy:
 #### Redis Memory (Production)
 
 ```typescript
-import { RedisMemory } from 'lightfast/memory/adapters/redis';
+import { RedisMemory } from '@lightfastai/ai-sdk/memory/adapters/redis';
 
 const memory = new RedisMemory({
   url: process.env.KV_REST_API_URL,
@@ -246,7 +246,7 @@ const memory = new RedisMemory({
 #### In-Memory (Development)
 
 ```typescript
-import { InMemoryMemory } from 'lightfast/memory/adapters/in-memory';
+import { InMemoryMemory } from '@lightfastai/ai-sdk/memory/adapters/in-memory';
 
 const memory = new InMemoryMemory();
 ```
@@ -256,7 +256,7 @@ const memory = new InMemoryMemory();
 #### Type-Safe Tool Creation
 
 ```typescript
-import { createTool } from 'lightfast/tool';
+import { createTool } from '@lightfastai/ai-sdk/tool';
 import { z } from 'zod';
 
 // Tools receive merged context: SystemContext & RequestContext & AppRuntimeContext

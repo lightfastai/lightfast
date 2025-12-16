@@ -1,7 +1,7 @@
 import type { RegularSearchOptions, SearchResponse } from "exa-js";
 import { currentSpan, wrapTraced } from "braintrust";
 import Exa from "exa-js";
-import { createTool } from "lightfast/tool";
+import { createTool } from "@lightfastai/ai-sdk/tool";
 import { z } from "zod";
 
 import type {

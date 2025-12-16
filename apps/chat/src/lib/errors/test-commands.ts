@@ -1,6 +1,6 @@
 import { env } from "~/env";
 import { ApiErrors } from "./api-error-builder";
-import { uuidv4 } from "lightfast/v2/utils";
+import { uuidv4 } from "@lightfastai/ai-sdk/v2/utils";
 
 /**
  * Development-only error testing commands

@@ -71,8 +71,8 @@ export interface LightfastConfig {
  * 
  * @example
  * ```typescript
- * import { Lightfast } from "lightfast/client";
- * import { createAgent } from "lightfast/agent";
+ * import { Lightfast } from "@lightfastai/ai-sdk/client";
+ * import { createAgent } from "@lightfastai/ai-sdk/agent";
  * 
  * const myAgent = createAgent({
  *   name: "my-agent",
@@ -203,7 +203,7 @@ export class Lightfast {
  * 
  * @example
  * ```typescript
- * import { createLightfast } from "lightfast/client";
+ * import { createLightfast } from "@lightfastai/ai-sdk/client";
  * import { someAgent } from "./agents/some-agent";
  * 
  * export default createLightfast({

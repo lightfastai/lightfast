@@ -12,7 +12,7 @@ import type {
   UIMessageStreamWriter,
   UITools,
 } from "ai";
-import type { RuntimeContext } from "lightfast/server/adapters/types";
+import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
 
 /**
  * Artifact kinds - extensible for different artifact types.
