@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { db, workspaceActorProfiles } from "@db/console";
+import { db } from "@db/console/client";
+import { orgActorIdentities } from "@db/console/schema";
 
 /**
  * Minimal interface for Clerk external account data needed for actor linking.
@@ -19,21 +20,25 @@ interface ClerkUserForLinking {
 }
 
 /**
- * Lazily links a Clerk user to their GitHub-based actor profile.
- * Called when an authenticated user accesses a workspace.
+ * Lazily links a Clerk user to their GitHub-based actor identity.
+ * Called when an authenticated user accesses ANY workspace in the org.
+ *
+ * Changed from workspace-level to org-level linking:
+ * - Previous: Updated workspaceActorProfiles.clerkUserId per workspace
+ * - Now: Updates orgActorIdentities.clerkUserId once per org
  *
  * This is a no-op if:
  * - User has no GitHub external account
- * - No actor profile exists for this GitHub ID in the workspace
- * - Profile is already linked to this Clerk user
+ * - No actor identity exists for this GitHub ID in the org
+ * - Identity is already linked to this Clerk user
  */
 export async function ensureActorLinked(
-  workspaceId: string,
-  clerkUser: ClerkUserForLinking,
+  clerkOrgId: string,
+  clerkUser: ClerkUserForLinking
 ): Promise<{ linked: boolean; actorId: string | null }> {
   // Find GitHub external account
   const githubAccount = clerkUser.externalAccounts?.find(
-    (acc: ClerkExternalAccount) => acc.provider === "oauth_github",
+    (acc: ClerkExternalAccount) => acc.provider === "oauth_github"
   );
 
   if (!githubAccount?.providerUserId) {
@@ -43,18 +48,18 @@ export async function ensureActorLinked(
   const githubNumericId = githubAccount.providerUserId;
   const canonicalActorId = `github:${githubNumericId}`;
 
-  // Lazy link: Update profile if clerkUserId not set
+  // Lazy link at ORG level: Update identity if clerkUserId not set
   const result = await db
-    .update(workspaceActorProfiles)
+    .update(orgActorIdentities)
     .set({ clerkUserId: clerkUser.id })
     .where(
       and(
-        eq(workspaceActorProfiles.workspaceId, workspaceId),
-        eq(workspaceActorProfiles.actorId, canonicalActorId),
-        isNull(workspaceActorProfiles.clerkUserId),
-      ),
+        eq(orgActorIdentities.clerkOrgId, clerkOrgId),
+        eq(orgActorIdentities.canonicalActorId, canonicalActorId),
+        isNull(orgActorIdentities.clerkUserId)
+      )
     )
-    .returning({ actorId: workspaceActorProfiles.actorId });
+    .returning({ actorId: orgActorIdentities.canonicalActorId });
 
   return {
     linked: result.length > 0,
@@ -63,23 +68,32 @@ export async function ensureActorLinked(
 }
 
 /**
- * Get actor profile for a Clerk user in a workspace.
- * Returns null if user has no linked actor profile.
+ * Get actor identity for a Clerk user in an org.
+ * Returns null if user has no linked actor identity.
+ *
+ * Changed from workspace-level to org-level lookup:
+ * - Previous: Queried workspaceActorProfiles by workspaceId + clerkUserId
+ * - Now: Queries orgActorIdentities by clerkOrgId + clerkUserId
  */
 export async function getActorForClerkUser(
-  workspaceId: string,
-  clerkUserId: string,
-): Promise<{ actorId: string; displayName: string } | null> {
-  const profile = await db.query.workspaceActorProfiles.findFirst({
+  clerkOrgId: string,
+  clerkUserId: string
+): Promise<{ actorId: string; sourceUsername: string | null } | null> {
+  const identity = await db.query.orgActorIdentities.findFirst({
     where: and(
-      eq(workspaceActorProfiles.workspaceId, workspaceId),
-      eq(workspaceActorProfiles.clerkUserId, clerkUserId),
+      eq(orgActorIdentities.clerkOrgId, clerkOrgId),
+      eq(orgActorIdentities.clerkUserId, clerkUserId)
     ),
     columns: {
-      actorId: true,
-      displayName: true,
+      canonicalActorId: true,
+      sourceUsername: true,
     },
   });
 
-  return profile ?? null;
+  if (!identity) return null;
+
+  return {
+    actorId: identity.canonicalActorId,
+    sourceUsername: identity.sourceUsername,
+  };
 }

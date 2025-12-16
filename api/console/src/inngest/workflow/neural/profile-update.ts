@@ -18,6 +18,7 @@ import { eq, and, desc, sql } from "drizzle-orm";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import { recordJobMetric } from "../../../lib/jobs";
+import { upsertOrgActorIdentity } from "../../../lib/actor-identity";
 
 export const profileUpdate = inngest.createFunction(
   {
@@ -96,7 +97,32 @@ export const profileUpdate = inngest.createFunction(
       return { exists: !!profile };
     });
 
-    // Step 3: Upsert profile
+    // Step 3: Upsert org-level identity (new - org-scoped identity mapping)
+    await step.run("upsert-identity", async () => {
+      if (!clerkOrgId) {
+        log.warn("Skipping identity upsert - no clerkOrgId", { workspaceId, actorId });
+        return;
+      }
+
+      await upsertOrgActorIdentity({
+        clerkOrgId,
+        canonicalActorId: actorId,
+        source: actorId.split(":")[0] ?? "unknown",
+        sourceId: actorId.split(":")[1] ?? actorId,
+        sourceActor: sourceActor ?? null,
+        mappingMethod: "webhook",
+        confidenceScore: 1.0,
+      });
+
+      log.info("Upserted org-level actor identity", {
+        clerkOrgId,
+        actorId,
+        sourceUsername: sourceActor?.name,
+      });
+    });
+
+    // Step 4: Upsert profile (workspace-specific activity data)
+    // Note: avatarUrl is now in orgActorIdentities (identity, not activity)
     await step.run("upsert-profile", async () => {
       // Use source actor name if available, fallback to actorId suffix
       const displayName = sourceActor?.name ?? actorId.split(":")[1] ?? actorId;
@@ -108,7 +134,7 @@ export const profileUpdate = inngest.createFunction(
           actorId,
           displayName,
           email: sourceActor?.email ?? null,
-          avatarUrl: sourceActor?.avatarUrl ?? null,
+          // avatarUrl removed - now in orgActorIdentities
           observationCount: recentActivity.count,
           lastActiveAt: recentActivity.lastActiveAt,
           profileConfidence: 0.5, // Default until more sophisticated analysis
@@ -119,10 +145,10 @@ export const profileUpdate = inngest.createFunction(
             workspaceActorProfiles.actorId,
           ],
           set: {
-            // Update name/email/avatar only if currently null (COALESCE keeps existing values)
+            // Update name/email only if currently null (COALESCE keeps existing values)
             displayName: sql`COALESCE(${workspaceActorProfiles.displayName}, ${displayName})`,
             email: sql`COALESCE(${workspaceActorProfiles.email}, ${sourceActor?.email ?? null})`,
-            avatarUrl: sql`COALESCE(${workspaceActorProfiles.avatarUrl}, ${sourceActor?.avatarUrl ?? null})`,
+            // avatarUrl removed - now in orgActorIdentities
             observationCount: recentActivity.count,
             lastActiveAt: recentActivity.lastActiveAt,
             updatedAt: new Date().toISOString(),

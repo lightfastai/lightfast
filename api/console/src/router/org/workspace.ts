@@ -200,13 +200,14 @@ export const workspaceRouter = {
         });
       }
 
-      // Lazy actor linking: connect Clerk user to their GitHub-based actor profile
+      // Lazy actor linking: connect Clerk user to their GitHub-based actor identity
       // Fire-and-forget to avoid blocking workspace access
+      // Changed to org-level linking: links once per org, not per workspace
       void (async () => {
         try {
           const clerk = await clerkClient();
           const user = await clerk.users.getUser(ctx.auth.userId);
-          await ensureActorLinked(workspaceId, user);
+          await ensureActorLinked(clerkOrgId, user);
         } catch {
           // Silently ignore linking errors - this is best-effort
         }

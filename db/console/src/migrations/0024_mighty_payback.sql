@@ -1,0 +1,1 @@
+DROP TABLE "lightfast_workspace_actor_identities" CASCADE;

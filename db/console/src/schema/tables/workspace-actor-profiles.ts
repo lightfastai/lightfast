@@ -5,7 +5,6 @@ import {
   integer,
   pgTable,
   real,
-  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -14,33 +13,33 @@ import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Actor Profiles - Unified Profiles for Workspace Contributors
+ * Actor Profiles - Workspace-Specific Activity Tracking
  *
  * ## Architecture Overview
  *
- * This table stores unified profile data for each canonical actor. It works together
- * with `workspaceActorIdentities`:
+ * This table stores workspace-specific activity data for each canonical actor.
+ * Identity data (username, avatar, Clerk linking) is now in `orgActorIdentities`.
  *
  * ```
- * workspaceActorIdentities                  workspaceActorProfiles (this table)
- * ┌─────────────────────────────────────┐   ┌─────────────────────────────┐
- * │ source: "github"                    │   │ actorId: "github:12345678"  │
- * │ sourceId: "12345678"                │──▶│ displayName: "octocat"      │
- * │ canonicalActorId: "github:12345678" │   │ clerkUserId: "user_abc"     │
- * │ sourceUsername: "octocat"           │   │ observationCount: 42        │
- * └─────────────────────────────────────┘   └─────────────────────────────┘
+ * orgActorIdentities (org-scoped)              workspaceActorProfiles (this table)
+ * ┌─────────────────────────────────────┐      ┌─────────────────────────────┐
+ * │ clerkOrgId: "org_abc"               │      │ workspaceId: "ws_prod"      │
+ * │ source: "github"                    │      │ actorId: "github:12345678"  │
+ * │ sourceId: "12345678"                │──────│ displayName: "octocat"      │
+ * │ canonicalActorId: "github:12345678" │      │ observationCount: 42        │
+ * │ sourceUsername: "octocat"           │      │ lastActiveAt: "2025-..."    │
+ * │ avatarUrl: "https://..."            │      └─────────────────────────────┘
+ * │ clerkUserId: "user_xyz"             │
+ * └─────────────────────────────────────┘
  * ```
  *
  * ## Why Two Tables?
  *
- * **Identities table**: Maps multiple external identities → one canonical actor
- * - @mention search: Query `sourceUsername` to find actors by username
- * - Multi-source: GitHub, Vercel, future Lightfast usernames
+ * **Identity is org-invariant**: "octocat" is the same person across all workspaces.
+ * - `orgActorIdentities`: Username, avatar, Clerk user linking (one per org)
  *
- * **Profiles table (this one)**: Stores unified profile data per canonical actor
- * - Stats: observation count, last active timestamp
- * - Display: name, avatar, email (for display only)
- * - Auth linking: `clerkUserId` links authenticated users to their actor
+ * **Activity is workspace-specific**: Different stats per workspace.
+ * - `workspaceActorProfiles` (this table): Observation count, last active (per workspace)
  *
  * ## Canonical Actor ID Format
  *
@@ -48,34 +47,16 @@ import { orgWorkspaces } from "./org-workspaces";
  * - GitHub: `github:12345678` (numeric ID, immutable)
  * - Vercel: Resolved to GitHub ID via commit SHA linkage
  *
- * GitHub numeric ID is the single source of truth for identity.
- *
- * ## Clerk User Linking
- *
- * The `clerkUserId` field links authenticated Clerk users to their actor profile:
- * - Clerk provides GitHub numeric ID via `externalAccounts[].providerUserId`
- * - Lazy linking: When user accesses workspace, profile is linked if exists
- * - Not an identity source: Clerk is auth layer, not event source
- *
- * ```
- * Clerk User (user_abc)
- *     │
- *     └── externalAccounts[oauth_github].providerUserId = "12345678"
- *                                                             │
- *                                                             ▼
- *                                         actorId = "github:12345678" ──→ Profile
- * ```
- *
  * ## Profile Creation Flow
  *
  * 1. GitHub webhook arrives (push, PR, etc.)
  * 2. Actor resolution extracts `sender.id` (numeric GitHub ID)
- * 3. Profile created/updated with `actorId = "github:{numericId}"`
- * 4. When Clerk user accesses workspace, `clerkUserId` is lazily linked
+ * 3. Identity created/updated in `orgActorIdentities` (org-level)
+ * 4. Profile created/updated here with activity stats (workspace-level)
  *
- * @see workspaceActorIdentities - Cross-platform identity mapping
+ * @see orgActorIdentities - Org-level identity mapping (username, avatar, Clerk linking)
  * @see api/console/src/inngest/workflow/neural/profile-update.ts - Profile creation
- * @see api/console/src/lib/actor-linking.ts - Lazy Clerk user linking
+ * @see api/console/src/lib/actor-identity.ts - Identity upsert
  */
 export const workspaceActorProfiles = pgTable(
   "lightfast_workspace_actor_profiles",
@@ -99,16 +80,14 @@ export const workspaceActorProfiles = pgTable(
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
-    // Identity
+    // Identity reference
     actorId: varchar("actor_id", { length: 191 }).notNull(),
     displayName: varchar("display_name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }),
-    avatarUrl: text("avatar_url"),
+    // Note: avatarUrl moved to orgActorIdentities (identity, not activity)
+    // Note: clerkUserId moved to orgActorIdentities (org-level linking)
 
-    // Clerk user linking (for authenticated user → actor resolution)
-    clerkUserId: varchar("clerk_user_id", { length: 191 }),
-
-    // Stats
+    // Stats (workspace-specific activity)
     observationCount: integer("observation_count").notNull().default(0),
     lastActiveAt: timestamp("last_active_at", {
       mode: "string",
@@ -133,12 +112,14 @@ export const workspaceActorProfiles = pgTable(
   },
   (table) => ({
     // External ID lookup (API requests)
-    externalIdIdx: uniqueIndex("actor_profile_external_id_idx").on(table.externalId),
+    externalIdIdx: uniqueIndex("actor_profile_external_id_idx").on(
+      table.externalId
+    ),
 
     // Unique constraint on workspace + actor
     uniqueActorIdx: uniqueIndex("actor_profile_unique_idx").on(
       table.workspaceId,
-      table.actorId,
+      table.actorId
     ),
 
     // Index for finding profiles in workspace
@@ -147,15 +128,10 @@ export const workspaceActorProfiles = pgTable(
     // Index for finding recently active profiles
     lastActiveIdx: index("actor_profile_last_active_idx").on(
       table.workspaceId,
-      table.lastActiveAt,
+      table.lastActiveAt
     ),
-
-    // Index for Clerk user → actor profile lookup
-    clerkUserIdx: index("actor_profile_clerk_user_idx").on(
-      table.workspaceId,
-      table.clerkUserId,
-    ),
-  }),
+    // Note: clerkUserIdx removed - Clerk user lookup is now org-level via orgActorIdentities
+  })
 );
 
 export type WorkspaceActorProfile = typeof workspaceActorProfiles.$inferSelect;

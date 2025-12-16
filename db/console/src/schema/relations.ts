@@ -9,7 +9,7 @@ import { orgWorkspaces } from "./tables/org-workspaces";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
 import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
-import { workspaceActorIdentities } from "./tables/workspace-actor-identities";
+import { orgActorIdentities } from "./tables/org-actor-identities";
 import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 
 /**
@@ -25,7 +25,6 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   neuralObservations: many(workspaceNeuralObservations),
   observationClusters: many(workspaceObservationClusters),
   actorProfiles: many(workspaceActorProfiles),
-  actorIdentities: many(workspaceActorIdentities),
   temporalStates: many(workspaceTemporalStates),
 }));
 
@@ -98,22 +97,12 @@ export const workspaceObservationClustersRelations = relations(
 // Actor Profile relations
 export const workspaceActorProfilesRelations = relations(
   workspaceActorProfiles,
-  ({ one, many }) => ({
+  ({ one }) => ({
     workspace: one(orgWorkspaces, {
       fields: [workspaceActorProfiles.workspaceId],
       references: [orgWorkspaces.id],
     }),
-    identities: many(workspaceActorIdentities),
-  }),
-);
-
-export const workspaceActorIdentitiesRelations = relations(
-  workspaceActorIdentities,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceActorIdentities.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
+    // Note: identities relation removed - now using org-level orgActorIdentities
   }),
 );
 
@@ -125,5 +114,15 @@ export const workspaceTemporalStatesRelations = relations(
       fields: [workspaceTemporalStates.workspaceId],
       references: [orgWorkspaces.id],
     }),
+  }),
+);
+
+// Org-level actor identities relation
+// No direct FK to orgWorkspaces - clerkOrgId is a logical reference to Clerk
+export const orgActorIdentitiesRelations = relations(
+  orgActorIdentities,
+  () => ({
+    // No direct FK relations - clerkOrgId references Clerk org (external)
+    // canonicalActorId links logically to workspaceActorProfiles.actorId
   }),
 );

@@ -1,10 +1,15 @@
 import { and, desc, eq, ilike, or, inArray } from "drizzle-orm";
 import { db } from "@db/console/client";
-import { workspaceActorProfiles, workspaceActorIdentities } from "@db/console/schema";
+import {
+  workspaceActorProfiles,
+  orgActorIdentities,
+  orgWorkspaces,
+} from "@db/console/schema";
 
 export interface ActorSearchResult {
   actorId: string;
   displayName: string;
+  avatarUrl: string | null;
   expertiseDomains: string[];
   observationCount: number;
   lastActiveAt: string | null;
@@ -35,8 +40,12 @@ function extractActorMentions(query: string): string[] {
 }
 
 /**
- * Search for relevant actor profiles based on query
- * Matches by @mentions, display names, and expertise domains
+ * Search for relevant actor profiles based on query.
+ *
+ * Changed from workspace-level to org-level identity search:
+ * - @mentions search org-level identities (all actors known to org)
+ * - Profile data still filtered by workspace (activity is workspace-specific)
+ * - Avatar URL now comes from identity table, not profile table
  */
 export async function searchActorProfiles(
   workspaceId: string,
@@ -46,24 +55,35 @@ export async function searchActorProfiles(
   const startTime = Date.now();
 
   try {
+    // Get clerkOrgId for this workspace
+    const workspace = await db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
+      columns: { clerkOrgId: true },
+    });
+
+    if (!workspace) {
+      return { results: [], latency: Date.now() - startTime };
+    }
+
     const mentions = extractActorMentions(query);
     const queryLower = query.toLowerCase();
 
-    // 1. Search by explicit @mentions
+    // 1. Search by explicit @mentions (ORG-LEVEL)
     let mentionMatches: ActorSearchResult[] = [];
     if (mentions.length > 0) {
       const identities = await db
         .select({
-          canonicalActorId: workspaceActorIdentities.canonicalActorId,
-          sourceUsername: workspaceActorIdentities.sourceUsername,
+          canonicalActorId: orgActorIdentities.canonicalActorId,
+          sourceUsername: orgActorIdentities.sourceUsername,
+          avatarUrl: orgActorIdentities.avatarUrl,
         })
-        .from(workspaceActorIdentities)
+        .from(orgActorIdentities)
         .where(
           and(
-            eq(workspaceActorIdentities.workspaceId, workspaceId),
+            eq(orgActorIdentities.clerkOrgId, workspace.clerkOrgId),
             or(
               ...mentions.map((m) =>
-                ilike(workspaceActorIdentities.sourceUsername, `%${m}%`)
+                ilike(orgActorIdentities.sourceUsername, `%${m}%`)
               )
             )
           )
@@ -73,6 +93,7 @@ export async function searchActorProfiles(
       const actorIds = identities.map((i) => i.canonicalActorId);
 
       if (actorIds.length > 0) {
+        // Get profiles for these actors in this workspace
         const profiles = await db
           .select()
           .from(workspaceActorProfiles)
@@ -83,19 +104,31 @@ export async function searchActorProfiles(
             )
           );
 
-        mentionMatches = profiles.map((p) => ({
-          actorId: p.actorId,
-          displayName: p.displayName,
-          expertiseDomains: p.expertiseDomains ?? [],
-          observationCount: p.observationCount,
-          lastActiveAt: p.lastActiveAt,
-          matchType: "mention" as const,
-          score: 0.95, // High score for explicit mentions
-        }));
+        // Build map of actorId -> profile for quick lookup
+        const profileMap = new Map(profiles.map((p) => [p.actorId, p]));
+
+        // Combine identity data with profile data
+        mentionMatches = identities
+          .filter((i) => profileMap.has(i.canonicalActorId))
+          .map((i) => {
+            const profile = profileMap.get(i.canonicalActorId);
+            if (!profile) return null;
+            return {
+              actorId: i.canonicalActorId,
+              displayName: profile.displayName,
+              avatarUrl: i.avatarUrl, // From identity, not profile
+              expertiseDomains: [], // Not yet implemented in schema
+              observationCount: profile.observationCount,
+              lastActiveAt: profile.lastActiveAt,
+              matchType: "mention" as const,
+              score: 0.95, // High score for explicit mentions
+            };
+          })
+          .filter((m): m is NonNullable<typeof m> => m !== null);
       }
     }
 
-    // 2. Search by display name (fuzzy match)
+    // 2. Search by display name (WORKSPACE-LEVEL - profiles)
     const nameMatches = await db
       .select()
       .from(workspaceActorProfiles)
@@ -108,12 +141,34 @@ export async function searchActorProfiles(
       .orderBy(desc(workspaceActorProfiles.observationCount))
       .limit(topK);
 
+    // Get avatar URLs from identity table for name matches
+    const nameMatchActorIds = nameMatches.map((p) => p.actorId);
+    let identityAvatars = new Map<string, string | null>();
+    if (nameMatchActorIds.length > 0) {
+      const identities = await db
+        .select({
+          canonicalActorId: orgActorIdentities.canonicalActorId,
+          avatarUrl: orgActorIdentities.avatarUrl,
+        })
+        .from(orgActorIdentities)
+        .where(
+          and(
+            eq(orgActorIdentities.clerkOrgId, workspace.clerkOrgId),
+            inArray(orgActorIdentities.canonicalActorId, nameMatchActorIds)
+          )
+        );
+      identityAvatars = new Map(
+        identities.map((i) => [i.canonicalActorId, i.avatarUrl])
+      );
+    }
+
     const nameResults: ActorSearchResult[] = nameMatches
       .filter((p) => !mentionMatches.some((m) => m.actorId === p.actorId))
       .map((p) => ({
         actorId: p.actorId,
         displayName: p.displayName,
-        expertiseDomains: p.expertiseDomains ?? [],
+        avatarUrl: identityAvatars.get(p.actorId) ?? null,
+        expertiseDomains: [], // Not yet implemented in schema
         observationCount: p.observationCount,
         lastActiveAt: p.lastActiveAt,
         matchType: "name" as const,

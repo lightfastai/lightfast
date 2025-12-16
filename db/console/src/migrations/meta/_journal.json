@@ -155,6 +155,27 @@
       "when": 1765874852671,
       "tag": "0021_jazzy_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1765876317301,
+      "tag": "0022_brainy_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1765877034501,
+      "tag": "0023_dizzy_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1765877314943,
+      "tag": "0024_mighty_payback",
+      "breakpoints": true
     }
   ]
 }
