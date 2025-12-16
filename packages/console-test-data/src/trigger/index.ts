@@ -1,11 +1,8 @@
 /**
- * Workflow Trigger & Wait
+ * Workflow Trigger
  *
- * Functions to trigger Inngest events and wait for workflow completion.
+ * Functions to trigger Inngest events for test data injection.
  */
 
 export { triggerObservationCapture } from "./trigger";
 export type { TriggerOptions, TriggerResult } from "./trigger";
-
-export { waitForCapture } from "./wait";
-export type { WaitOptions, WaitResult } from "./wait";

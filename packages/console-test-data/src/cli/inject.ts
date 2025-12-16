@@ -5,13 +5,11 @@
  * Injects JSON dataset events via Inngest workflow.
  *
  * Usage:
- *   pnpm inject -- --workspace <id> --org <clerkOrgId> --index <name> [options]
+ *   pnpm inject -- --workspace <id> [options]
  */
 
 import { loadDataset, listDatasets, balancedScenario, stressScenario } from "../loader";
 import { triggerObservationCapture } from "../trigger/trigger";
-import { waitForCapture } from "../trigger/wait";
-import { verify, printReport } from "../verifier/verifier";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -22,10 +20,6 @@ function parseArgs() {
     if (!arg) continue;
     if (arg === "--help" || arg === "-h") {
       parsed.help = true;
-    } else if (arg === "--skip-wait") {
-      parsed.skipWait = true;
-    } else if (arg === "--skip-verify") {
-      parsed.skipVerify = true;
     } else if (arg.startsWith("--") || arg.startsWith("-")) {
       const key = arg.replace(/^-+/, "");
       const value = args[i + 1];
@@ -51,22 +45,18 @@ Usage:
 
 Required:
   --workspace, -w   Workspace ID
-  --org, -o         Clerk Org ID
-  --index, -i       Pinecone index name
 
 Options:
   --scenario, -s    Dataset name or path (default: security)
                     Available: ${datasets.join(", ")}, balanced, stress
   --count, -c       Event count for balanced/stress (default: 6)
-  --skip-wait       Don't wait for workflow completion
-  --skip-verify     Don't run verification
   --help, -h        Show this help
 
 Examples:
-  pnpm inject -- -w <id> -o <orgId> -i <index>
-  pnpm inject -- -w <id> -o <orgId> -i <index> -s performance
-  pnpm inject -- -w <id> -o <orgId> -i <index> -s balanced -c 10
-  pnpm inject -- -w <id> -o <orgId> -i <index> -s /path/to/custom.json
+  pnpm inject -- -w <workspaceId>
+  pnpm inject -- -w <workspaceId> -s performance
+  pnpm inject -- -w <workspaceId> -s balanced -c 10
+  pnpm inject -- -w <workspaceId> -s /path/to/custom.json
 `);
 }
 
@@ -79,15 +69,11 @@ async function main() {
   }
 
   const workspaceId = (args.workspace ?? args.w) as string;
-  const clerkOrgId = (args.org ?? args.o) as string;
-  const indexName = (args.index ?? args.i) as string;
   const scenarioName = (args.scenario ?? args.s ?? "security") as string;
   const count = parseInt((args.count ?? args.c ?? "6") as string, 10);
-  const skipWait = !!args.skipWait;
-  const skipVerify = !!args.skipVerify;
 
-  if (!workspaceId || !clerkOrgId || !indexName) {
-    console.error("Error: --workspace, --org, and --index are required");
+  if (!workspaceId) {
+    console.error("Error: --workspace is required");
     showHelp();
     process.exit(1);
   }
@@ -104,8 +90,6 @@ async function main() {
   console.log("Test Data Injection");
   console.log("=".repeat(60));
   console.log(`  Workspace: ${workspaceId}`);
-  console.log(`  Org: ${clerkOrgId}`);
-  console.log(`  Index: ${indexName}`);
   console.log(`  Scenario: ${scenarioName}`);
   console.log(`  Events: ${events.length}`);
   console.log();
@@ -120,39 +104,6 @@ async function main() {
   });
 
   console.log(`\n\nTriggered ${triggerResult.triggered} events in ${triggerResult.duration}ms`);
-
-  if (!skipWait) {
-    console.log("\nWaiting for workflow completion...");
-    const waitResult = await waitForCapture({
-      workspaceId,
-      sourceIds: triggerResult.sourceIds,
-      timeoutMs: 120000,
-    });
-
-    console.log(`Completed: ${waitResult.completed}/${triggerResult.triggered}`);
-    if (waitResult.pending > 0) {
-      console.log(`Pending/Filtered: ${waitResult.pending}`);
-    }
-    if (waitResult.timedOut) {
-      console.log("Warning: Wait timed out");
-    }
-  }
-
-  if (!skipVerify) {
-    console.log("\nVerifying results...");
-    const verifyResult = await verify({ workspaceId, clerkOrgId, indexName });
-    printReport(verifyResult);
-
-    const allHealthy =
-      verifyResult.health.multiViewComplete &&
-      verifyResult.health.entitiesExtracted &&
-      verifyResult.health.clustersAssigned;
-
-    if (!allHealthy) {
-      console.log("Warning: Some health checks failed");
-    }
-  }
-
   console.log("\nDone!");
 }
 
