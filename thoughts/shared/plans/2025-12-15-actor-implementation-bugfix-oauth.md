@@ -571,7 +571,7 @@ async ({ event, step }) => {
 
 ### Overview
 
-Since GitHub is the only sign-in method, we don't need to resolve actors to Clerk users at webhook ingestion time. We simply store the GitHub ID and use GitHub-provided profile data for display. Resolution to Clerk users happens lazily when needed (e.g., for "My Work" queries).
+Since GitHub is the only sign-in method, we don't need to resolve actors to Clerk users at webhook ingestion time. We simply store the GitHub ID and use GitHub-provided profile data for display.
 
 ### Architecture
 
@@ -583,14 +583,6 @@ Since GitHub is the only sign-in method, we don't need to resolve actors to Cler
 │  2. Store observation with actorId: "github:12345"                      │
 │  3. Store profile with displayName: "alice", avatarUrl from GitHub      │
 │  4. Done! No Clerk lookup needed at write time.                         │
-│                                                                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│  "My Work" Query (forward lookup - works natively):                     │
-│                                                                         │
-│  1. User is authenticated → we have their clerkUserId                   │
-│  2. Get their GitHub ID: user.externalAccounts[0].externalId            │
-│  3. Query: SELECT * FROM observations WHERE actorId = 'github:12345'    │
-│  4. Done! Single Clerk API call + DB query.                             │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -610,9 +602,7 @@ The actor resolution no longer tries to resolve to Clerk user. It just construct
  * For MVP, we don't resolve actors to Clerk users at webhook time.
  * We simply store the GitHub ID and use GitHub-provided profile data.
  *
- * Resolution to Clerk users happens lazily:
- * - "My Work" queries: Get user's GitHub ID from their Clerk account (forward lookup)
- * - "Who is this?" queries: Iterate org members if needed (deferred optimization)
+ * Resolution to Clerk users can happen lazily when needed.
  *
  * Future: Add github_clerk_mappings cache table for O(1) reverse lookups.
  */
@@ -651,33 +641,6 @@ await db.insert(workspaceActorProfiles).values({
   displayName: sourceActor.name,        // "alice" (from GitHub)
   avatarUrl: sourceActor.avatarUrl,     // GitHub avatar URL
   // No resolvedClerkUserId - deferred
-});
-```
-
-#### 3. "My Work" Query Pattern
-
-**File**: For future implementation (e.g., `api/console/src/router/user.ts`)
-
-```typescript
-/**
- * Get current user's GitHub ID for "My Work" queries.
- * This is a forward lookup (Clerk → GitHub ID) which works natively.
- */
-async function getMyGitHubId(clerkUserId: string): Promise<string | null> {
-  const clerk = await clerkClient();
-  const user = await clerk.users.getUser(clerkUserId);
-
-  const githubAccount = user.externalAccounts?.find(
-    (acc) => acc.provider === "oauth_github"
-  );
-
-  return githubAccount?.externalId ?? null;
-}
-
-// Usage in "My Work" query:
-const myGithubId = await getMyGitHubId(auth.userId);
-const myWork = await db.query.workspaceNeuralObservations.findMany({
-  where: eq(actorId, `github:${myGithubId}`),
 });
 ```
 
@@ -1037,7 +1000,7 @@ User signs up with GitHub OAuth, later disconnects GitHub from Clerk account set
 
 **Impact**:
 - Historical observations still have `github:12345`
-- "My Work" query fails - no GitHub ID in Clerk profile
+- User-specific queries would fail - no GitHub ID in Clerk profile
 - Work becomes "orphaned"
 
 **Future enhancement**: Track last-known GitHub ID in user metadata, or prompt user to reconnect.
@@ -1069,7 +1032,7 @@ Bots have numeric IDs like regular users:
 
 Someone outside the organization submits a PR.
 
-**Behavior**: Stored as `github:999999` with GitHub-provided profile data. Semantic search finds their work. "My Work" won't find their stuff (they're not a Lightfast user).
+**Behavior**: Stored as `github:999999` with GitHub-provided profile data. Semantic search finds their work.
 
 **No action needed**: This is expected behavior.
 
@@ -1166,38 +1129,6 @@ Populated via Clerk webhook on `user.created`. Enables:
 - Late resolution when external contributors sign up
 
 **Decision**: Deferred. GitHub-provided profile data is sufficient for MVP.
-
-### Cross-Organization Self-Search ("My Work")
-
-Self-search works WITHOUT the cache table (forward lookup via Clerk):
-
-```typescript
-async function searchMyWork(clerkUserId: string, query: string) {
-  // 1. Get my GitHub ID from Clerk (forward lookup - works natively)
-  const clerk = await clerkClient();
-  const user = await clerk.users.getUser(clerkUserId);
-  const myGithubId = user.externalAccounts?.find(
-    a => a.provider === "oauth_github"
-  )?.externalId;
-
-  // 2. Get all orgs I belong to
-  const myWorkspaceIds = await getMyWorkspaceIds(clerkUserId);
-
-  // 3. Query MY observations across all workspaces
-  const results = await db.query.workspaceNeuralObservations.findMany({
-    where: and(
-      inArray(wno.workspaceId, myWorkspaceIds),
-      eq(wno.actorId, `github:${myGithubId}`),
-    ),
-  });
-
-  return results;
-}
-```
-
-**Use Case**: Developer searches "all authentication code I've worked on" across all their organizations.
-
-**Decision**: Deferred. Implement when "My Work" becomes a product priority.
 
 ### Late Resolution for External Contributors
 
