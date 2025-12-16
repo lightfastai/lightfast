@@ -1,7 +1,6 @@
 "use client";
 
 import { notFound } from "next/navigation";
-import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 import { SignUpForm } from "../_components/sign-up-form";
 
 /**
