@@ -19,7 +19,9 @@ import type {
 
 const DEFAULT_BASE_URL = "https://lightfast.ai";
 const DEFAULT_TIMEOUT = 30000;
-const SDK_VERSION = "0.1.0";
+
+declare const __SDK_VERSION__: string;
+const SDK_VERSION = __SDK_VERSION__;
 
 /**
  * Error response structure from the API

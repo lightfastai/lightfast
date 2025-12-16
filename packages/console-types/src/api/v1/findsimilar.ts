@@ -13,19 +13,45 @@ import { V1SearchFiltersSchema } from "./search";
 export const V1FindSimilarRequestSchema = z
   .object({
     /** Content ID to find similar items for */
-    id: z.string().optional(),
+    id: z
+      .string()
+      .optional()
+      .describe("Document ID to find similar content for"),
     /** URL to find similar items for (alternative to id) */
-    url: z.string().url().optional(),
+    url: z
+      .string()
+      .url()
+      .optional()
+      .describe("URL to find similar content for (alternative to id)"),
     /** Maximum results to return (1-50, default 10) */
-    limit: z.number().int().min(1).max(50).default(10),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(10)
+      .describe("Maximum number of similar items to return (1-50, default: 10)"),
     /** Minimum similarity threshold (0-1, default 0.5) */
-    threshold: z.number().min(0).max(1).default(0.5),
+    threshold: z
+      .number()
+      .min(0)
+      .max(1)
+      .default(0.5)
+      .describe("Minimum similarity score 0-1 (default: 0.5)"),
     /** Only return results from same source type */
-    sameSourceOnly: z.boolean().default(false),
+    sameSourceOnly: z
+      .boolean()
+      .default(false)
+      .describe("Only return results from the same source type (default: false)"),
     /** IDs to exclude from results */
-    excludeIds: z.array(z.string()).optional(),
+    excludeIds: z
+      .array(z.string())
+      .optional()
+      .describe("Array of IDs to exclude from results"),
     /** Optional filters for scoping results */
-    filters: V1SearchFiltersSchema.optional(),
+    filters: V1SearchFiltersSchema.optional().describe(
+      "Optional filters to scope results by source type, observation type, actors, or date range"
+    ),
   })
   .refine((data) => Boolean(data.id) || Boolean(data.url), {
     message: "Either id or url must be provided",

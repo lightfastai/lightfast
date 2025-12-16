@@ -1,4 +1,5 @@
 import { defineConfig } from "tsup";
+import pkg from "./package.json";
 
 export default defineConfig({
   entry: {
@@ -18,5 +19,8 @@ export default defineConfig({
   silent: false,
   outExtension() {
     return { js: ".mjs" };
+  },
+  define: {
+    __SDK_VERSION__: JSON.stringify(pkg.version),
   },
 });

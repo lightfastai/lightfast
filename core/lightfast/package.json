@@ -1,8 +1,18 @@
 {
   "name": "lightfast",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "Lightfast Neural Memory SDK - TypeScript client for the Lightfast Memory API",
-  "keywords": ["lightfast", "memory", "ai", "semantic-search", "typescript"],
+  "publishConfig": {
+    "tag": "latest",
+    "access": "public"
+  },
+  "keywords": [
+    "lightfast",
+    "memory",
+    "ai",
+    "semantic-search",
+    "typescript"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/lightfastai/lightfast.git",

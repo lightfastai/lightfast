@@ -41,19 +41,43 @@ export type V1SearchFilters = z.infer<typeof V1SearchFiltersSchema>;
  */
 export const V1SearchRequestSchema = z.object({
   /** Search query text */
-  query: z.string().min(1, "Query must not be empty"),
+  query: z
+    .string()
+    .min(1, "Query must not be empty")
+    .describe("The search query text to find relevant documents"),
   /** Number of results to return (1-100, default 10) */
-  limit: z.number().int().min(1).max(100).default(10),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(10)
+    .describe("Maximum number of results to return (1-100, default: 10)"),
   /** Result offset for pagination (default 0) */
-  offset: z.number().int().min(0).default(0),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe("Result offset for pagination (default: 0)"),
   /** Rerank mode for result quality (default: balanced) */
-  mode: RerankModeSchema.default("balanced"),
+  mode: RerankModeSchema.default("balanced").describe(
+    "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)"
+  ),
   /** Optional filters for scoping results */
-  filters: V1SearchFiltersSchema.optional(),
+  filters: V1SearchFiltersSchema.optional().describe(
+    "Optional filters to scope results by source type, observation type, actors, or date range"
+  ),
   /** Include cluster and actor context (default: true) */
-  includeContext: z.boolean().default(true),
+  includeContext: z
+    .boolean()
+    .default(true)
+    .describe("Include contextual information like topic clusters (default: true)"),
   /** Include highlighted snippets (default: true) */
-  includeHighlights: z.boolean().default(true),
+  includeHighlights: z
+    .boolean()
+    .default(true)
+    .describe("Include highlighted text snippets (default: true)"),
 });
 
 export type V1SearchRequest = z.infer<typeof V1SearchRequestSchema>;

@@ -14,7 +14,8 @@ export const V1ContentsRequestSchema = z.object({
   ids: z
     .array(z.string())
     .min(1, "At least one ID required")
-    .max(50, "Maximum 50 IDs per request"),
+    .max(50, "Maximum 50 IDs per request")
+    .describe("Array of document or observation IDs to fetch (1-50 IDs)"),
 });
 
 export type V1ContentsRequest = z.infer<typeof V1ContentsRequestSchema>;
