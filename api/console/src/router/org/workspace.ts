@@ -642,12 +642,7 @@ export const workspaceRouter = {
         const [workspaceWithCount] = await db
           .select({
             id: orgWorkspaces.id,
-            indexName: orgWorkspaces.indexName,
-            namespaceName: orgWorkspaces.namespaceName,
-            embeddingModel: orgWorkspaces.embeddingModel,
-            embeddingDim: orgWorkspaces.embeddingDim,
-            chunkMaxTokens: orgWorkspaces.chunkMaxTokens,
-            chunkOverlap: orgWorkspaces.chunkOverlap,
+            settings: orgWorkspaces.settings,
             createdAt: orgWorkspaces.createdAt,
             documentCount: count(workspaceKnowledgeDocuments.id),
           })
@@ -661,19 +656,17 @@ export const workspaceRouter = {
           return null;
         }
 
-        // Return null if workspace is not configured for embedding
-        if (!workspaceWithCount.indexName) {
-          return null;
-        }
+        // Settings is always populated (NOT NULL)
+        const { embedding } = workspaceWithCount.settings;
 
         return {
           id: workspaceWithCount.id,
-          indexName: workspaceWithCount.indexName,
-          namespaceName: workspaceWithCount.namespaceName,
-          embeddingModel: workspaceWithCount.embeddingModel,
-          embeddingDim: workspaceWithCount.embeddingDim,
-          chunkMaxTokens: workspaceWithCount.chunkMaxTokens,
-          chunkOverlap: workspaceWithCount.chunkOverlap,
+          indexName: embedding.indexName,
+          namespaceName: embedding.namespaceName,
+          embeddingModel: embedding.embeddingModel,
+          embeddingDim: embedding.embeddingDim,
+          chunkMaxTokens: embedding.chunkMaxTokens,
+          chunkOverlap: embedding.chunkOverlap,
           documentCount: workspaceWithCount.documentCount,
           createdAt: workspaceWithCount.createdAt,
         };

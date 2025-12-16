@@ -134,6 +134,13 @@
       "when": 1765805447492,
       "tag": "0018_special_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1765856001550,
+      "tag": "0019_flowery_steve_rogers",
+      "breakpoints": true
     }
   ]
 }

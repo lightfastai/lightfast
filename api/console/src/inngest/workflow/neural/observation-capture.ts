@@ -131,16 +131,6 @@ function extractTopics(sourceEvent: SourceEvent): string[] {
 }
 
 /**
- * Build namespace for workspace (hybrid approach)
- * Use single namespace per workspace with layer as metadata field (not namespace suffix)
- * See: thoughts/shared/research/2025-12-11-web-analysis-neural-memory-architecture-implications.md
- */
-function buildWorkspaceNamespace(clerkOrgId: string, workspaceId: string): string {
-  const sanitize = (s: string) => s.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 50);
-  return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}`;
-}
-
-/**
  * Map detailed sourceType to base event type for config comparison.
  *
  * Internal format uses dot notation: "pull-request.opened", "issue.closed"
@@ -395,8 +385,9 @@ export const observationCapture = inngest.createFunction(
         throw new NonRetriableError(`Workspace not found: ${workspaceId}`);
       }
 
-      if (!ws.indexName || !ws.embeddingModel) {
-        throw new NonRetriableError(`Workspace ${workspaceId} is missing embedding configuration`);
+      // Settings is always populated (NOT NULL with version check)
+      if (ws.settings.version !== 1) {
+        throw new NonRetriableError(`Workspace ${workspaceId} has invalid settings version`);
       }
 
       return ws;
@@ -424,8 +415,8 @@ export const observationCapture = inngest.createFunction(
         const embeddingProvider = createEmbeddingProviderForWorkspace(
           {
             id: workspace.id,
-            embeddingModel: workspace.embeddingModel,
-            embeddingDim: workspace.embeddingDim,
+            embeddingModel: workspace.settings.embedding.embeddingModel,
+            embeddingDim: workspace.settings.embedding.embeddingDim,
           },
           { inputType: "search_document" }
         );
@@ -512,17 +503,14 @@ export const observationCapture = inngest.createFunction(
         actorId: resolvedActor.actorId,
         occurredAt: sourceEvent.occurredAt,
         title: sourceEvent.title,
-        indexName: workspace.indexName!,
-        namespace: buildWorkspaceNamespace(workspace.clerkOrgId, workspaceId),
+        indexName: workspace.settings.embedding.indexName,
+        namespace: workspace.settings.embedding.namespaceName,
       });
     });
 
     // Step 6: Upsert multi-view vectors to Pinecone
     await step.run("upsert-multi-view-vectors", async () => {
-      const namespace = buildWorkspaceNamespace(
-        workspace.clerkOrgId,
-        workspaceId
-      );
+      const namespace = workspace.settings.embedding.namespaceName;
 
       // Base metadata shared across all views
       const baseMetadata = {
@@ -563,7 +551,7 @@ export const observationCapture = inngest.createFunction(
 
       // Batch upsert all 3 vectors
       await consolePineconeClient.upsertVectors<ObservationVectorMetadata>(
-        workspace.indexName!,
+        workspace.settings.embedding.indexName,
         {
           ids: [
             embeddingResult.title.vectorId,
@@ -585,7 +573,7 @@ export const observationCapture = inngest.createFunction(
         contentVectorId: embeddingResult.content.vectorId,
         summaryVectorId: embeddingResult.summary.vectorId,
         namespace,
-        indexName: workspace.indexName,
+        indexName: workspace.settings.embedding.indexName,
       });
     });
 

@@ -1,6 +1,8 @@
 import { db } from "../client";
 import { orgWorkspaces } from "../schema";
 import { generateRandomSlug } from "./workspace-names";
+import { EMBEDDING_DEFAULTS } from "@repo/console-validation/constants";
+import type { WorkspaceSettings } from "@repo/console-types";
 
 /**
  * Compute workspace key from slug
@@ -11,6 +13,45 @@ import { generateRandomSlug } from "./workspace-names";
  */
 export function getWorkspaceKey(slug: string): string {
   return `ws-${slug}`;
+}
+
+/**
+ * Build Pinecone namespace for a workspace
+ *
+ * Format: {sanitizedClerkOrgId}:ws_{sanitizedWorkspaceId}
+ * Example: "org_abc123:ws_xyz789"
+ */
+export function buildWorkspaceNamespace(
+  clerkOrgId: string,
+  workspaceId: string,
+): string {
+  const sanitize = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 50);
+  return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}`;
+}
+
+/**
+ * Build default workspace settings with embedding configuration
+ */
+export function buildWorkspaceSettings(
+  clerkOrgId: string,
+  workspaceId: string,
+): WorkspaceSettings {
+  return {
+    version: 1,
+    embedding: {
+      indexName: EMBEDDING_DEFAULTS.indexName,
+      namespaceName: buildWorkspaceNamespace(clerkOrgId, workspaceId),
+      embeddingDim: EMBEDDING_DEFAULTS.embeddingDim,
+      embeddingModel: EMBEDDING_DEFAULTS.embeddingModel,
+      embeddingProvider: EMBEDDING_DEFAULTS.embeddingProvider,
+      pineconeMetric: EMBEDDING_DEFAULTS.pineconeMetric,
+      pineconeCloud: EMBEDDING_DEFAULTS.pineconeCloud,
+      pineconeRegion: EMBEDDING_DEFAULTS.pineconeRegion,
+      chunkMaxTokens: EMBEDDING_DEFAULTS.chunkMaxTokens,
+      chunkOverlap: EMBEDDING_DEFAULTS.chunkOverlap,
+    },
+  };
 }
 
 /**
@@ -53,16 +94,20 @@ export async function createCustomWorkspace(
       throw new Error(`Workspace with name "${name}" already exists`);
     }
 
-    // Create workspace with nanoid
+    // Generate workspace ID first (needed for namespace)
+    const { nanoid } = await import("@repo/lib");
+    const workspaceId = nanoid();
+
+    // Create workspace with full settings
     // Database unique constraint (workspace_org_name_idx) will catch duplicates
     const [newWorkspace] = await tx
       .insert(orgWorkspaces)
       .values({
-        // id is auto-generated nanoid via $defaultFn
+        id: workspaceId,
         clerkOrgId,
         name,      // User-facing name (e.g., "My-Awesome-Workspace")
         slug,      // Random slug for Pinecone (e.g., "robust-chicken")
-        settings: {},
+        settings: buildWorkspaceSettings(clerkOrgId, workspaceId),
       })
       .returning({ id: orgWorkspaces.id });
 

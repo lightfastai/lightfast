@@ -12,6 +12,10 @@
  * All enum values are type-checked against validation schemas (@repo/console-validation).
  * This ensures config values can never violate database constraints.
  *
+ * Single Source of Truth:
+ * Core embedding defaults are defined in @repo/console-validation/constants.
+ * This file re-exports and extends them with additional operational config.
+ *
  * @packageDocumentation
  */
 
@@ -20,6 +24,11 @@ import type {
   PineconeMetric,
   PineconeCloud,
 } from "@repo/console-validation";
+import {
+  PINECONE_DEFAULTS,
+  EMBEDDING_MODEL_DEFAULTS,
+  CHUNKING_DEFAULTS,
+} from "@repo/console-validation/constants";
 
 /**
  * Pinecone infrastructure configuration
@@ -47,12 +56,14 @@ export const PINECONE_CONFIG = {
    *
    * Each workspace gets a hierarchical namespace within the shared index:
    * Format: org_{clerkOrgId}:ws_{workspaceId}
+   *
+   * Values from: @repo/console-validation/constants (single source of truth)
    */
   index: {
-    name: "lightfast-v1",
-    embeddingDim: 1024,
-    embeddingModel: "embed-english-v3.0",
-    embeddingProvider: "cohere" as const,
+    name: PINECONE_DEFAULTS.indexName,
+    embeddingDim: EMBEDDING_MODEL_DEFAULTS.dimension,
+    embeddingModel: EMBEDDING_MODEL_DEFAULTS.model,
+    embeddingProvider: EMBEDDING_MODEL_DEFAULTS.provider,
   },
 
   /**
@@ -63,7 +74,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  metric: "cosine" as PineconeMetric,
+  metric: PINECONE_DEFAULTS.metric as PineconeMetric,
 
   /**
    * Cloud provider for serverless indexes
@@ -73,7 +84,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  cloud: "aws" as PineconeCloud,
+  cloud: PINECONE_DEFAULTS.cloud as PineconeCloud,
 
   /**
    * AWS region for serverless indexes
@@ -83,7 +94,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  region: "us-east-1" as const,
+  region: PINECONE_DEFAULTS.region,
 
   /**
    * Default deletion protection value for new indexes
@@ -136,6 +147,8 @@ export const EMBEDDING_CONFIG = {
    * Cohere embedding configuration
    *
    * COHERE_API_KEY is required for all embedding operations.
+   *
+   * Values from: @repo/console-validation/constants (single source of truth)
    */
   cohere: {
     /**
@@ -146,7 +159,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    provider: "cohere" as const,
+    provider: EMBEDDING_MODEL_DEFAULTS.provider,
 
     /**
      * Model name
@@ -156,7 +169,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    model: "embed-english-v3.0" as const,
+    model: EMBEDDING_MODEL_DEFAULTS.model,
 
     /**
      * Embedding dimension
@@ -166,7 +179,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    dimension: 1024 as const,
+    dimension: EMBEDDING_MODEL_DEFAULTS.dimension,
   },
 
   /**
@@ -274,9 +287,11 @@ export const CHUNKING_CONFIG = {
    * - Smaller chunks: More precise retrieval, less context
    * - Larger chunks: More context, less precise retrieval
    *
+   * Values from: @repo/console-validation/constants (single source of truth)
+   *
    * @private
    */
-  maxTokens: 512,
+  maxTokens: CHUNKING_DEFAULTS.maxTokens,
 
   /**
    * Token overlap between consecutive chunks
@@ -286,7 +301,7 @@ export const CHUNKING_CONFIG = {
    *
    * @private
    */
-  overlap: 50,
+  overlap: CHUNKING_DEFAULTS.overlap,
 } as const;
 
 /**

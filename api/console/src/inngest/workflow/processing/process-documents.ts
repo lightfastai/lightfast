@@ -97,10 +97,10 @@ export interface ProcessedDocumentResult {
  */
 function computeConfigHash(workspace: OrgWorkspace): string {
   const configData = JSON.stringify({
-    embeddingModel: workspace.embeddingModel,
-    embeddingDim: workspace.embeddingDim,
-    chunkMaxTokens: workspace.chunkMaxTokens,
-    chunkOverlap: workspace.chunkOverlap,
+    embeddingModel: workspace.settings.embedding.embeddingModel,
+    embeddingDim: workspace.settings.embedding.embeddingDim,
+    chunkMaxTokens: workspace.settings.embedding.chunkMaxTokens,
+    chunkOverlap: workspace.settings.embedding.chunkOverlap,
   });
 
   return createHash("sha256").update(configData).digest("hex");
@@ -169,8 +169,8 @@ export const processDocuments = inngest.createFunction(
 
             // Chunk the content
             const chunks = chunkText(event.data.content, {
-              maxTokens: workspace.chunkMaxTokens ?? 512,
-              overlap: workspace.chunkOverlap ?? 50,
+              maxTokens: workspace.settings.embedding.chunkMaxTokens,
+              overlap: workspace.settings.embedding.chunkOverlap,
             });
 
             if (chunks.length === 0) {
@@ -252,7 +252,7 @@ export const processDocuments = inngest.createFunction(
               event: event.data,
               workspace,
               docId: event.data.documentId,
-              indexName: workspace.indexName!,
+              indexName: workspace.settings.embedding.indexName,
               slug,
               contentHash: event.data.contentHash,
               configHash: currentConfigHash,
@@ -282,8 +282,8 @@ export const processDocuments = inngest.createFunction(
         const embeddingProvider = createEmbeddingProviderForWorkspace(
           {
             id: firstDoc.workspace.id,
-            embeddingModel: firstDoc.workspace.embeddingModel,
-            embeddingDim: firstDoc.workspace.embeddingDim,
+            embeddingModel: firstDoc.workspace.settings.embedding.embeddingModel,
+            embeddingDim: firstDoc.workspace.settings.embedding.embeddingDim,
           },
           {
             inputType: "search_document",
@@ -377,15 +377,11 @@ async function getWorkspace(
   });
 
   if (!workspace) {
-    throw new Error(
-      `Workspace not found: ${workspaceId}`,
-    );
+    throw new Error(`Workspace not found: ${workspaceId}`);
   }
 
-  if (!workspace.indexName || !workspace.namespaceName) {
-    throw new Error(
-      `Workspace ${workspaceId} is missing Pinecone configuration`,
-    );
+  if (workspace.settings.version !== 1) {
+    throw new Error(`Workspace ${workspaceId} has invalid settings version`);
   }
 
   cache.set(workspaceId, workspace);
@@ -514,7 +510,7 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
     }
 
     // Get namespace from first doc in bucket (all share same namespace)
-    const namespaceName = bucket[0]!.workspace.namespaceName!;
+    const namespaceName = bucket[0]!.workspace.settings.embedding.namespaceName;
 
     await pineconeClient.upsertVectors(
       indexName,

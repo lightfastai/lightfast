@@ -84,10 +84,7 @@ async function fetchWorkspaceConfigFromDB(
     db.query.orgWorkspaces.findFirst({
       where: eq(orgWorkspaces.id, workspaceId),
       columns: {
-        indexName: true,
-        namespaceName: true,
-        embeddingModel: true,
-        embeddingDim: true,
+        settings: true,
       },
     }),
     // 2. Cluster count (just need to know if > 0)
@@ -104,18 +101,20 @@ async function fetchWorkspaceConfigFromDB(
       .limit(1),
   ]);
 
-  if (!workspace?.indexName || !workspace.namespaceName) {
+  if (!workspace || workspace.settings.version !== 1) {
     return null;
   }
 
   const clusterCount = clusterCountResult[0]?.count ?? 0;
   const actorCount = actorCountResult[0]?.count ?? 0;
 
+  const { embedding } = workspace.settings;
+
   return {
-    indexName: workspace.indexName,
-    namespaceName: workspace.namespaceName,
-    embeddingModel: workspace.embeddingModel,
-    embeddingDim: workspace.embeddingDim,
+    indexName: embedding.indexName,
+    namespaceName: embedding.namespaceName,
+    embeddingModel: embedding.embeddingModel,
+    embeddingDim: embedding.embeddingDim,
     hasClusters: clusterCount > 0,
     hasActors: actorCount > 0,
   };

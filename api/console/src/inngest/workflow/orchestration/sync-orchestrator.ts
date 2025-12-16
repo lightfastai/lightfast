@@ -152,15 +152,14 @@ export const syncOrchestrator = inngest.createFunction(
 
     // Step 3: Verify workspace has embedding config
     await step.run("verify-workspace-config", async () => {
-      if (!metadata.workspace.embeddingModel || !metadata.workspace.indexName) {
+      if (metadata.workspace.settings.version !== 1) {
         throw new NonRetriableError(
-          `Workspace ${workspaceId} is missing embedding configuration. ` +
-          "Please configure the workspace before syncing."
+          `Workspace ${workspaceId} has invalid settings version.`
         );
       }
       logger.info("Workspace config verified", {
-        indexName: metadata.workspace.indexName,
-        embeddingModel: metadata.workspace.embeddingModel,
+        indexName: metadata.workspace.settings.embedding.indexName,
+        embeddingModel: metadata.workspace.settings.embedding.embeddingModel,
       });
     });
 

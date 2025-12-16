@@ -81,8 +81,8 @@ export const deleteDocuments = inngest.createFunction(
           return null;
         }
 
-        if (!workspace.indexName || !workspace.namespaceName) {
-          log.warn("Workspace missing Pinecone config", { workspaceId });
+        if (workspace.settings.version !== 1) {
+          log.warn("Workspace has invalid settings version", { workspaceId });
           return null;
         }
 
@@ -131,8 +131,8 @@ export const deleteDocuments = inngest.createFunction(
           return {
             docId: docBySource.id,
             workspaceId,
-            indexName: workspace.indexName,
-            namespaceName: workspace.namespaceName,
+            indexName: workspace.settings.embedding.indexName,
+            namespaceName: workspace.settings.embedding.namespaceName,
           };
         }
 
@@ -145,8 +145,8 @@ export const deleteDocuments = inngest.createFunction(
         return {
           docId: doc.id,
           workspaceId,
-          indexName: workspace.indexName,
-          namespaceName: workspace.namespaceName,
+          indexName: workspace.settings.embedding.indexName,
+          namespaceName: workspace.settings.embedding.namespaceName,
         };
       } catch (error) {
         log.error("Failed to find document", {

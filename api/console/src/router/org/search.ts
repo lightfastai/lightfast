@@ -68,15 +68,15 @@ export const searchRouter = {
 					});
 				}
 
-				if (!workspace.indexName || !workspace.namespaceName) {
+				if (workspace.settings.version !== 1) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: "Workspace is not configured for search",
+						message: "Workspace has invalid settings",
 					});
 				}
 
-				const indexName = workspace.indexName;
-				const namespaceName = workspace.namespaceName;
+				const indexName = workspace.settings.embedding.indexName;
+				const namespaceName = workspace.settings.embedding.namespaceName;
 
 				log.info("Resolved index and namespace", {
 					requestId,
@@ -91,8 +91,8 @@ export const searchRouter = {
 				const embedding = createEmbeddingProviderForWorkspace(
 					{
 						id: workspace.id,
-						embeddingModel: workspace.embeddingModel,
-						embeddingDim: workspace.embeddingDim,
+						embeddingModel: workspace.settings.embedding.embeddingModel,
+						embeddingDim: workspace.settings.embedding.embeddingDim,
 					},
 					{
 						inputType: "search_query",
