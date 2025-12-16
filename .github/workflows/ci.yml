@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       lightfast-core: ${{ steps.changes.outputs.lightfast-core }}
-      compiler: ${{ steps.changes.outputs.compiler }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,10 +29,7 @@ jobs:
           filters: |
             lightfast-core:
               - 'core/lightfast/**'
-              - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
-            compiler:
-              - 'core/compiler/**'
+              - 'core/mcp/**'
               - 'pnpm-lock.yaml'
               - '.github/workflows/ci.yml'
 
@@ -61,8 +57,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint lightfast
-        run: pnpm --filter lightfast lint || echo "⚠️ Linting issues found but not blocking CI"
+      - name: Lint packages
+        run: |
+          pnpm --filter lightfast lint || echo "⚠️ Linting issues found in lightfast but not blocking CI"
+          pnpm --filter @lightfastai/mcp lint || echo "⚠️ Linting issues found in @lightfastai/mcp but not blocking CI"
 
   # Type checking (medium speed)
   typecheck:
@@ -88,8 +86,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check lightfast
-        run: pnpm --filter lightfast typecheck || echo "⚠️ Type errors found but not blocking CI"
+      - name: Type check packages
+        run: |
+          pnpm --filter lightfast typecheck || echo "⚠️ Type errors found in lightfast but not blocking CI"
+          pnpm --filter @lightfastai/mcp typecheck || echo "⚠️ Type errors found in @lightfastai/mcp but not blocking CI"
 
   # Test (simple test run on Node 22)
   test:
@@ -143,168 +143,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build lightfast
-        run: pnpm --filter lightfast build
+      - name: Build packages
+        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp
 
       - name: Check build outputs
         run: |
-          echo "📦 Build outputs:"
+          echo "📦 lightfast build outputs:"
           ls -la core/lightfast/dist/
-          echo "✅ Build completed successfully"
-
-  # Compiler: Lint check
-  compiler-lint:
-    name: Compiler Lint
-    needs: changes
-    if: needs.changes.outputs.compiler == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint compiler
-        run: pnpm --filter @lightfastai/compiler lint
-
-  # Compiler: Type check
-  compiler-typecheck:
-    name: Compiler Type Check
-    needs: changes
-    if: needs.changes.outputs.compiler == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check compiler
-        run: pnpm --filter @lightfastai/compiler typecheck
-
-  # Compiler: Test with coverage
-  compiler-test:
-    name: Compiler Test
-    needs: changes
-    if: needs.changes.outputs.compiler == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test compiler with coverage
-        run: pnpm --filter @lightfastai/compiler test:coverage
-
-      - name: Generate coverage report
-        run: |
-          echo "📊 Coverage Report:"
-          pnpm --filter @lightfastai/compiler exec vitest run --coverage.reporter=text-summary
-
-  # Compiler: Build check
-  compiler-build:
-    name: Compiler Build
-    needs: changes
-    if: needs.changes.outputs.compiler == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build compiler
-        run: pnpm --filter @lightfastai/compiler build
-
-      - name: Check build outputs
-        run: |
-          echo "📦 Compiler build outputs:"
-          ls -la core/compiler/dist/
-          echo "✅ Compiler build completed successfully"
+          echo ""
+          echo "📦 @lightfastai/mcp build outputs:"
+          ls -la core/mcp/dist/
+          echo "✅ All builds completed successfully"
 
   # Summary job (required status check)
   ci-success:
     name: CI Success
-    if: always() && (needs.changes.outputs.lightfast-core == 'true' || needs.changes.outputs.compiler == 'true')
-    needs: [changes, lint, typecheck, test, build, compiler-lint, compiler-typecheck, compiler-test, compiler-build]
+    if: always() && needs.changes.outputs.lightfast-core == 'true'
+    needs: [changes, lint, typecheck, test, build]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs
         run: |
-          # Check lightfast-core jobs
-          LIGHTFAST_SUCCESS=true
-          if [[ "${{ needs.changes.outputs.lightfast-core }}" == "true" ]]; then
-            if [[ "${{ needs.lint.result }}" != "success" || \
-                  "${{ needs.typecheck.result }}" != "success" || \
-                  "${{ needs.test.result }}" != "success" || \
-                  "${{ needs.build.result }}" != "success" ]]; then
-              LIGHTFAST_SUCCESS=false
-            fi
-          fi
-          
-          # Check compiler jobs
-          COMPILER_SUCCESS=true
-          if [[ "${{ needs.changes.outputs.compiler }}" == "true" ]]; then
-            if [[ "${{ needs.compiler-lint.result }}" != "success" || \
-                  "${{ needs.compiler-typecheck.result }}" != "success" || \
-                  "${{ needs.compiler-test.result }}" != "success" || \
-                  "${{ needs.compiler-build.result }}" != "success" ]]; then
-              COMPILER_SUCCESS=false
-            fi
-          fi
-          
-          if [[ "$LIGHTFAST_SUCCESS" == "true" && "$COMPILER_SUCCESS" == "true" ]]; then
-            echo "✅ All CI checks passed!"
-          else
+          if [[ "${{ needs.lint.result }}" != "success" || \
+                "${{ needs.typecheck.result }}" != "success" || \
+                "${{ needs.test.result }}" != "success" || \
+                "${{ needs.build.result }}" != "success" ]]; then
             echo "❌ Some CI checks failed"
             exit 1
           fi
+          echo "✅ All CI checks passed!"
