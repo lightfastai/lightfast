@@ -47,10 +47,9 @@ export function SignInForm({
 	}
 
 	function handlePasswordSuccess() {
-		// Password sign-in is complete, redirect to console app
+		// Password sign-in is complete, redirect to team creation
 		setError("");
-		// Redirect to console app root after successful authentication
-		window.location.href = consoleUrl;
+		window.location.href = `${consoleUrl}/account/teams/new`;
 	}
 
 	return (

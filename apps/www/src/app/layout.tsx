@@ -157,11 +157,10 @@ export default function RootLayout({
       // After authentication, redirect to console app
       afterSignInUrl={consoleUrl}
       afterSignUpUrl={consoleUrl}
-      signInFallbackRedirectUrl={consoleUrl}
-      signUpFallbackRedirectUrl={consoleUrl}
-      // Multi-step onboarding task URLs
+      signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+      signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
       taskUrls={{
-        "choose-organization": `${consoleUrl}/onboarding`,
+        "choose-organization": `${consoleUrl}/account/teams/new`,
       }}
     >
       <html className={fonts} lang="en" suppressHydrationWarning>

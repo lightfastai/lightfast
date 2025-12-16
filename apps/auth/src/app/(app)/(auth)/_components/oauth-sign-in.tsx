@@ -23,7 +23,7 @@ export function OAuthSignIn() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: "/sign-in/sso-callback",
-				redirectUrlComplete: consoleUrl,
+				redirectUrlComplete: `${consoleUrl}/account/teams/new`,
 			});
 		} catch (err) {
 			log.error("[OAuthSignIn] OAuth authentication failed", {

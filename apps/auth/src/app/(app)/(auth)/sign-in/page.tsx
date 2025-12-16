@@ -29,12 +29,9 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function SignInPage() {
-	return (
-		<>
-			<SignedOut>
-				<RedirectToTasks />
-			</SignedOut>
-			<SignInForm />
-		</>
-	);
+  return (
+    <>
+      <SignInForm />
+    </>
+  );
 }

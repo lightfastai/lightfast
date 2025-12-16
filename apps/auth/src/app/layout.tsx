@@ -82,23 +82,15 @@ export default function RootLayout({
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl={consoleUrl}
-      signUpFallbackRedirectUrl={consoleUrl}
-      appearance={{
-        variables: {
-          colorPrimary: "#3b82f6",
-          colorBackground: "#0a0a0a",
-          colorInputBackground: "#18181b",
-          colorInputText: "#fafafa",
-        },
-      }}
+      signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+      signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
       taskUrls={{
         "choose-organization": `${consoleUrl}/account/teams/new`,
       }}
     >
       <html className={fonts} lang="en" suppressHydrationWarning>
         <head />
-        <body className={cn("bg-background dark min-h-screen")}>
+        <body className={cn("bg-background dark font-sans min-h-screen")}>
           {children}
           <Toaster position="bottom-right" />
           <VercelAnalytics />
