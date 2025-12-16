@@ -9,7 +9,7 @@ import {
   LightfastChatSession,
   LightfastChatSessionShare,
 } from "@db/chat";
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 import { computeMessageCharCount } from "@repo/chat-ai-types";
 
 import { publicProcedure, protectedProcedure } from "../../trpc";

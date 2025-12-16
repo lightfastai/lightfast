@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { datetime, int, mysqlTable, varchar, uniqueIndex } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 /**
  * LightfastChatUsage table tracks user billing usage by period

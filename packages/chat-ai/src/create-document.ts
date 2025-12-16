@@ -8,7 +8,7 @@ import type {
   LightfastRuntimeContext,
 } from "@repo/chat-ai-types";
 import { ARTIFACT_KINDS } from "@repo/chat-ai-types";
-import { uuidv4 as generateUUID } from "@repo/lib";
+import { uuidv4 as generateUUID } from "@repo/lib/uuid";
 
 const inputSchema: z.ZodType<CreateDocumentToolInput> = z.object({
   title: z

@@ -10,7 +10,7 @@ import {
 import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 import { LightfastChatSession } from "./session";
 

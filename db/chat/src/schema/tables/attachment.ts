@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 export const LightfastChatAttachment = mysqlTable(
   "lightfast_chat_attachment",

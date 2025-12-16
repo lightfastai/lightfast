@@ -15,6 +15,14 @@
     "./datetime": {
       "types": "./dist/datetime/index.d.ts",
       "default": "./src/datetime/index.ts"
+    },
+    "./uuid": {
+      "types": "./dist/uuid.d.ts",
+      "default": "./src/uuid.ts"
+    },
+    "./nanoid": {
+      "types": "./dist/nanoid.d.ts",
+      "default": "./src/nanoid.ts"
     }
   },
   "license": "MIT",
