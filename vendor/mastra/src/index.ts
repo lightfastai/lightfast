@@ -12,5 +12,5 @@
  */
 
 export { Mastra } from "@mastra/core/mastra";
-export { createWorkflow, createStep } from "@mastra/core/workflows";
+export { createWorkflow, createStep } from "@mastra/core/workflows/vNext";
 
