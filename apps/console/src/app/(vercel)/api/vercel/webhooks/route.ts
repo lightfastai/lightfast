@@ -5,6 +5,7 @@ import { db } from "@db/console";
 import {
   workspaceIntegrations,
   userSources,
+  orgWorkspaces,
 } from "@db/console/schema";
 import { inngest } from "@api/console/inngest";
 import type {
@@ -73,6 +74,7 @@ async function handleDeploymentEvent(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformVercelDeployment(payload, eventType, {
         deliveryId: payload.id,
         receivedAt,
@@ -90,21 +92,28 @@ async function handleDeploymentEvent(
 /**
  * Find workspace associated with Vercel project
  * Resolves workspace via workspaceIntegrations table using projectId
+ * Returns workspaceId and clerkOrgId for metrics tracking
  */
 async function findWorkspaceForVercelProject(
   projectId: string,
   _teamId: string | undefined,
-): Promise<{ workspaceId: string } | null> {
+): Promise<{ workspaceId: string; clerkOrgId: string } | null> {
   // Look up workspace integration by Vercel project ID with join to verify source type
+  // Also join orgWorkspaces to get clerkOrgId
   const results = await db
     .select({
       workspaceId: workspaceIntegrations.workspaceId,
       sourceType: userSources.sourceType,
+      clerkOrgId: orgWorkspaces.clerkOrgId,
     })
     .from(workspaceIntegrations)
     .innerJoin(
       userSources,
       eq(workspaceIntegrations.userSourceId, userSources.id),
+    )
+    .innerJoin(
+      orgWorkspaces,
+      eq(workspaceIntegrations.workspaceId, orgWorkspaces.id),
     )
     .where(
       and(
@@ -120,9 +129,10 @@ async function findWorkspaceForVercelProject(
     return null;
   }
 
-  // Return workspaceId only (1:1 relationship: workspace = store)
+  // Return workspaceId and clerkOrgId for metrics tracking
   return {
     workspaceId: integration.workspaceId,
+    clerkOrgId: integration.clerkOrgId,
   };
 }
 

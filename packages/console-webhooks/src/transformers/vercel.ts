@@ -108,9 +108,11 @@ export function transformVercelDeployment(
     sourceId: `deployment:${deployment.id}`,
     title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
     body: sanitizeBody(rawBody),
+    // Note: Vercel only provides username, not numeric GitHub ID
+    // This creates username-based actor IDs (see Known Limitations in plan)
     actor: gitMeta?.githubCommitAuthorName
       ? {
-          id: `github:${gitMeta.githubCommitAuthorName}`,
+          id: gitMeta.githubCommitAuthorName,
           name: gitMeta.githubCommitAuthorName,
         }
       : undefined,

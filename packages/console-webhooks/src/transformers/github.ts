@@ -73,11 +73,14 @@ export function transformGitHubPush(
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
-    actor: payload.pusher?.name
+    // Use sender (has numeric ID) instead of pusher (only has username)
+    // This ensures consistency with PR/Issue/Release/Discussion events
+    actor: payload.sender
       ? {
-          id: `github:${payload.pusher.name}`,
-          name: payload.pusher.name,
-          email: payload.pusher.email || undefined,
+          id: String(payload.sender.id),
+          name: payload.sender.login,
+          email: payload.pusher?.email || undefined, // Get email from pusher
+          avatarUrl: payload.sender.avatar_url,
         }
       : undefined,
     occurredAt: payload.head_commit?.timestamp || new Date().toISOString(),
@@ -132,6 +135,16 @@ export function transformGitHubPullRequest(
       type: "commit",
       id: pr.head.sha,
       url: `${payload.repository.html_url}/commit/${pr.head.sha}`,
+    });
+  }
+
+  // Add merge commit SHA for cross-source linkage (Vercel deploy → PR)
+  if (pr.merge_commit_sha) {
+    refs.push({
+      type: "commit",
+      id: pr.merge_commit_sha,
+      url: `${payload.repository.html_url}/commit/${pr.merge_commit_sha}`,
+      label: "merge", // Distinguish from head commit
     });
   }
 
@@ -201,7 +214,7 @@ export function transformGitHubPullRequest(
     body: sanitizeBody(rawBody),
     actor: pr.user
       ? {
-          id: `github:${pr.user.id}`,
+          id: String(pr.user.id),
           name: pr.user.login,
           avatarUrl: pr.user.avatar_url,
         }
@@ -293,7 +306,7 @@ export function transformGitHubIssue(
     body: sanitizeBody(rawBody),
     actor: issue.user
       ? {
-          id: `github:${issue.user.id}`,
+          id: String(issue.user.id),
           name: issue.user.login,
           avatarUrl: issue.user.avatar_url,
         }
@@ -358,7 +371,7 @@ export function transformGitHubRelease(
     body: sanitizeBody(rawBody),
     actor: release.author
       ? {
-          id: `github:${release.author.id}`,
+          id: String(release.author.id),
           name: release.author.login,
           avatarUrl: release.author.avatar_url,
         }
@@ -428,7 +441,7 @@ export function transformGitHubDiscussion(
     body: sanitizeBody(rawBody),
     actor: discussion.user
       ? {
-          id: `github:${discussion.user.id}`,
+          id: String(discussion.user.id),
           name: discussion.user.login,
           avatarUrl: discussion.user.avatar_url,
         }

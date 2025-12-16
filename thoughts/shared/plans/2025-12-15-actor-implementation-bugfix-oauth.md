@@ -209,10 +209,10 @@ cd db/console && pnpm db:generate
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Migration generates successfully: `pnpm db:generate`
-- [ ] Migration applies cleanly: `pnpm db:migrate`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
+- [x] Migration generates successfully: `pnpm db:generate`
+- [x] Migration applies cleanly: `pnpm db:migrate`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
 - [ ] Actor search by @mention still works
@@ -415,9 +415,9 @@ Result: Found PR #42 → "This deploy shipped PR #42"
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Package builds successfully: `pnpm --filter @repo/console-webhooks build`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
+- [x] Package builds successfully: `pnpm --filter @repo/console-webhooks build`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
 - [ ] Send test GitHub push webhook, verify actor.id is numeric (from sender.id)
@@ -554,9 +554,9 @@ async ({ event, step }) => {
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] API builds successfully: `pnpm --filter @api/console build`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
+- [x] API builds successfully: `pnpm --filter @api/console build`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
 - [ ] Trigger profile update via webhook
@@ -647,9 +647,9 @@ await db.insert(workspaceActorProfiles).values({
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] API builds successfully: `pnpm --filter @api/console build`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
+- [x] API builds successfully: `pnpm --filter @api/console build`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
 - [ ] Send GitHub webhook, verify observation stored with `actorId: "github:12345"`

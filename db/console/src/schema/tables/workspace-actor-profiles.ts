@@ -3,7 +3,6 @@ import {
   bigint,
   index,
   integer,
-  jsonb,
   pgTable,
   real,
   text,
@@ -15,7 +14,68 @@ import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Actor profiles - unified profiles for workspace contributors
+ * Actor Profiles - Unified Profiles for Workspace Contributors
+ *
+ * ## Architecture Overview
+ *
+ * This table stores unified profile data for each canonical actor. It works together
+ * with `workspaceActorIdentities`:
+ *
+ * ```
+ * workspaceActorIdentities                  workspaceActorProfiles (this table)
+ * ┌─────────────────────────────────────┐   ┌─────────────────────────────┐
+ * │ source: "github"                    │   │ actorId: "github:12345678"  │
+ * │ sourceId: "12345678"                │──▶│ displayName: "octocat"      │
+ * │ canonicalActorId: "github:12345678" │   │ clerkUserId: "user_abc"     │
+ * │ sourceUsername: "octocat"           │   │ observationCount: 42        │
+ * └─────────────────────────────────────┘   └─────────────────────────────┘
+ * ```
+ *
+ * ## Why Two Tables?
+ *
+ * **Identities table**: Maps multiple external identities → one canonical actor
+ * - @mention search: Query `sourceUsername` to find actors by username
+ * - Multi-source: GitHub, Vercel, future Lightfast usernames
+ *
+ * **Profiles table (this one)**: Stores unified profile data per canonical actor
+ * - Stats: observation count, last active timestamp
+ * - Display: name, avatar, email (for display only)
+ * - Auth linking: `clerkUserId` links authenticated users to their actor
+ *
+ * ## Canonical Actor ID Format
+ *
+ * The `actorId` field uses format: `{source}:{sourceId}`
+ * - GitHub: `github:12345678` (numeric ID, immutable)
+ * - Vercel: Resolved to GitHub ID via commit SHA linkage
+ *
+ * GitHub numeric ID is the single source of truth for identity.
+ *
+ * ## Clerk User Linking
+ *
+ * The `clerkUserId` field links authenticated Clerk users to their actor profile:
+ * - Clerk provides GitHub numeric ID via `externalAccounts[].providerUserId`
+ * - Lazy linking: When user accesses workspace, profile is linked if exists
+ * - Not an identity source: Clerk is auth layer, not event source
+ *
+ * ```
+ * Clerk User (user_abc)
+ *     │
+ *     └── externalAccounts[oauth_github].providerUserId = "12345678"
+ *                                                             │
+ *                                                             ▼
+ *                                         actorId = "github:12345678" ──→ Profile
+ * ```
+ *
+ * ## Profile Creation Flow
+ *
+ * 1. GitHub webhook arrives (push, PR, etc.)
+ * 2. Actor resolution extracts `sender.id` (numeric GitHub ID)
+ * 3. Profile created/updated with `actorId = "github:{numericId}"`
+ * 4. When Clerk user accesses workspace, `clerkUserId` is lazily linked
+ *
+ * @see workspaceActorIdentities - Cross-platform identity mapping
+ * @see api/console/src/inngest/workflow/neural/profile-update.ts - Profile creation
+ * @see api/console/src/lib/actor-linking.ts - Lazy Clerk user linking
  */
 export const workspaceActorProfiles = pgTable(
   "lightfast_workspace_actor_profiles",
@@ -45,14 +105,8 @@ export const workspaceActorProfiles = pgTable(
     email: varchar("email", { length: 255 }),
     avatarUrl: text("avatar_url"),
 
-    // Expertise (future enhancement)
-    expertiseDomains: jsonb("expertise_domains").$type<string[]>(),
-    contributionTypes: jsonb("contribution_types").$type<string[]>(),
-    activeHours: jsonb("active_hours").$type<Record<string, number>>(),
-    frequentCollaborators: jsonb("frequent_collaborators").$type<string[]>(),
-
-    // Embedding (future enhancement)
-    profileEmbeddingId: varchar("profile_embedding_id", { length: 191 }),
+    // Clerk user linking (for authenticated user → actor resolution)
+    clerkUserId: varchar("clerk_user_id", { length: 191 }),
 
     // Stats
     observationCount: integer("observation_count").notNull().default(0),
@@ -94,6 +148,12 @@ export const workspaceActorProfiles = pgTable(
     lastActiveIdx: index("actor_profile_last_active_idx").on(
       table.workspaceId,
       table.lastActiveAt,
+    ),
+
+    // Index for Clerk user → actor profile lookup
+    clerkUserIdx: index("actor_profile_clerk_user_idx").on(
+      table.workspaceId,
+      table.clerkUserId,
     ),
   }),
 );

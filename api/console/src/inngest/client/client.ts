@@ -589,6 +589,8 @@ const eventsMap = {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
+      /** Clerk organization ID (optional for backwards compat, resolved at webhook handler) */
+      clerkOrgId: z.string().optional(),
       /** Standardized source event */
       sourceEvent: z.object({
         source: sourceTypeSchema,
@@ -625,6 +627,8 @@ const eventsMap = {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
       /** Observation DB UUID */
       observationId: z.string(),
       /** Source ID for correlation */
@@ -652,10 +656,19 @@ const eventsMap = {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
       /** Canonical actor ID (source:id format) */
       actorId: z.string(),
       /** Observation that triggered update */
       observationId: z.string(),
+      /** Source actor data for profile enrichment */
+      sourceActor: z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().optional(),
+        avatarUrl: z.string().optional(),
+      }).optional(),
     }),
   },
 
@@ -667,6 +680,8 @@ const eventsMap = {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
       /** Cluster to check */
       clusterId: z.string(),
       /** Current observation count */
@@ -682,6 +697,8 @@ const eventsMap = {
     data: z.object({
       /** Workspace DB UUID */
       workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
       /** Observation to extract entities from */
       observationId: z.string(),
     }),

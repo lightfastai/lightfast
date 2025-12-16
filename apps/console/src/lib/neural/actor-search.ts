@@ -54,7 +54,7 @@ export async function searchActorProfiles(
     if (mentions.length > 0) {
       const identities = await db
         .select({
-          actorId: workspaceActorIdentities.actorId,
+          canonicalActorId: workspaceActorIdentities.canonicalActorId,
           sourceUsername: workspaceActorIdentities.sourceUsername,
         })
         .from(workspaceActorIdentities)
@@ -70,7 +70,7 @@ export async function searchActorProfiles(
         )
         .limit(topK);
 
-      const actorIds = identities.map((i) => i.actorId);
+      const actorIds = identities.map((i) => i.canonicalActorId);
 
       if (actorIds.length > 0) {
         const profiles = await db

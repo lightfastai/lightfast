@@ -29,6 +29,7 @@ import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
+import { ensureActorLinked } from "../../lib/actor-linking";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -110,6 +111,7 @@ export const workspaceRouter = {
    * - workspaceId: Database UUID for internal operations
    * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
    * - workspaceSlug: Internal slug identifier
+   * - clerkOrgId: Clerk organization ID for metrics tracking
    */
   resolveFromGithubOrgSlug: publicProcedure
     .input(workspaceResolveFromGithubOrgSlugInputSchema)
@@ -165,6 +167,7 @@ export const workspaceRouter = {
         workspaceId: workspace.id,
         workspaceKey,
         workspaceSlug: workspace.slug,
+        clerkOrgId: workspace.clerkOrgId,
       };
     }),
 
@@ -196,6 +199,18 @@ export const workspaceRouter = {
           message: "Workspace not found",
         });
       }
+
+      // Lazy actor linking: connect Clerk user to their GitHub-based actor profile
+      // Fire-and-forget to avoid blocking workspace access
+      void (async () => {
+        try {
+          const clerk = await clerkClient();
+          const user = await clerk.users.getUser(ctx.auth.userId);
+          await ensureActorLinked(workspaceId, user);
+        } catch {
+          // Silently ignore linking errors - this is best-effort
+        }
+      })();
 
       return {
         id: workspace.id,

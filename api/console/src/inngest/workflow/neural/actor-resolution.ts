@@ -1,192 +1,138 @@
-import type { SourceEvent, SourceActor } from "@repo/console-types";
+import type { SourceEvent, SourceActor, SourceReference } from "@repo/console-types";
 import { db } from "@db/console/client";
-import { workspaceActorIdentities } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { workspaceNeuralObservations } from "@db/console/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import { clerkClient } from "@vendor/clerk/server";
 
 /**
  * Actor Resolution for Neural Observations
  *
- * Currently implements Tier 2 (email matching) only.
+ * For MVP, we don't resolve actors to Clerk users at webhook time.
+ * We simply store the GitHub ID and use GitHub-provided profile data.
  *
- * Resolution Tiers (from E2E design):
- * - Tier 1 (confidence 1.0): OAuth connection match
- *   TODO: Match sourceEvent.actor.id to user-sources.providerAccountId
- *   Requires adding providerAccountId field to user-sources table
+ * Resolution to Clerk users can happen lazily when needed.
  *
- * - Tier 2 (confidence 0.85): Email matching [IMPLEMENTED]
- *   Match sourceEvent.actor.email to workspace member emails via Clerk API
+ * For Vercel events, we attempt to resolve the username-based actor ID
+ * to a numeric GitHub ID via commit SHA linkage.
  *
- * - Tier 3 (confidence 0.60): Heuristic matching
- *   TODO: Match by username similarity, display name
- *   Lower confidence, use as fallback
+ * Future: Add github_clerk_mappings cache table for O(1) reverse lookups.
  */
 
 export interface ResolvedActor {
   /** Original actor from source event */
   sourceActor: SourceActor | null;
-  /** Resolved workspace user ID (Clerk user ID) - null if unresolved */
-  resolvedUserId: string | null;
   /** Canonical actor ID for this workspace (source:id format) */
   actorId: string | null;
-  /** Resolution confidence: 0.85 (email), 0 (unresolved) */
-  confidence: number;
-  /** Resolution method used */
-  method: "oauth" | "email" | "heuristic" | "unresolved";
 }
 
 /**
- * Resolve source actor to workspace user.
+ * Attempt to resolve Vercel actor to numeric GitHub ID via commit SHA.
  *
- * Currently implements email matching only (Tier 2).
+ * When a Vercel deployment arrives, we have username but not numeric ID.
+ * If a GitHub push event with the same commit SHA already exists, we can
+ * extract the numeric ID from that event's actor data.
+ *
+ * @returns Numeric GitHub user ID if found, null otherwise
+ */
+async function resolveVercelActorViaCommitSha(
+  workspaceId: string,
+  commitSha: string,
+  _username: string,
+): Promise<{ numericId: string } | null> {
+  if (!commitSha) return null;
+
+  try {
+    // Find GitHub observation with same commit SHA in references
+    // Using PostgreSQL JSONB containment to search within the array
+    const githubEvent = await db.query.workspaceNeuralObservations.findFirst({
+      where: and(
+        eq(workspaceNeuralObservations.workspaceId, workspaceId),
+        eq(workspaceNeuralObservations.source, "github"),
+        // Check if sourceReferences contains a commit with this SHA
+        sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`,
+      ),
+      columns: {
+        actor: true,
+      },
+    });
+
+    if (!githubEvent?.actor) return null;
+
+    // Extract numeric ID from GitHub actor
+    const numericId = githubEvent.actor.id;
+    if (!numericId || !/^\d+$/.test(numericId)) return null;
+
+    log.info("Resolved Vercel actor via commit SHA", {
+      commitSha,
+      numericId,
+    });
+
+    return { numericId };
+  } catch (error) {
+    log.warn("Failed to resolve Vercel actor via commit SHA", {
+      commitSha,
+      error,
+    });
+    return null;
+  }
+}
+
+/**
+ * Resolve source actor to canonical actor ID.
+ *
+ * For GitHub events: constructs canonical ID from numeric user ID.
+ * For Vercel events: attempts to resolve username to numeric ID via commit SHA.
  */
 export async function resolveActor(
   workspaceId: string,
-  clerkOrgId: string,
   sourceEvent: SourceEvent,
 ): Promise<ResolvedActor> {
-  const sourceActor = sourceEvent.actor ?? null;
+  let sourceActor = sourceEvent.actor ?? null;
 
   if (!sourceActor) {
     return {
       sourceActor: null,
-      resolvedUserId: null,
       actorId: null,
-      confidence: 0,
-      method: "unresolved",
     };
   }
 
-  // Generate canonical actor ID
-  const actorId = `${sourceEvent.source}:${sourceActor.id}`;
+  // For Vercel events, try to resolve username to numeric GitHub ID
+  if (sourceEvent.source === "vercel") {
+    const references = sourceEvent.references as SourceReference[];
+    const commitRef = references?.find((ref) => ref.type === "commit");
 
-  // Check if we already have a cached identity mapping
-  const existingIdentity = await db.query.workspaceActorIdentities.findFirst({
-    where: and(
-      eq(workspaceActorIdentities.workspaceId, workspaceId),
-      eq(workspaceActorIdentities.source, sourceEvent.source),
-      eq(workspaceActorIdentities.sourceId, sourceActor.id),
-    ),
-  });
-
-  if (existingIdentity?.actorId) {
-    log.debug("Using cached actor identity", {
-      actorId: existingIdentity.actorId,
-      method: existingIdentity.mappingMethod,
-    });
-
-    return {
-      sourceActor,
-      resolvedUserId: existingIdentity.actorId, // This is the resolved user ID
-      actorId,
-      confidence: existingIdentity.confidenceScore,
-      method: existingIdentity.mappingMethod as ResolvedActor["method"],
-    };
-  }
-
-  // Tier 2: Email matching
-  if (sourceActor.email) {
-    const resolved = await resolveByEmail(
-      workspaceId,
-      clerkOrgId,
-      sourceEvent.source,
-      sourceActor,
-    );
-
-    if (resolved) {
-      return {
-        sourceActor,
-        resolvedUserId: resolved.userId,
-        actorId,
-        confidence: 0.85,
-        method: "email",
-      };
-    }
-  }
-
-  // TODO (Future): Tier 1 - OAuth connection match
-  // Would need to query user-sources table for providerAccountId match
-  // Return confidence 1.0 if matched
-
-  // TODO (Future): Tier 3 - Heuristic matching
-  // Match by username similarity, display name
-  // Return confidence 0.60 if matched
-
-  // No match found
-  return {
-    sourceActor,
-    resolvedUserId: null,
-    actorId,
-    confidence: 0,
-    method: "unresolved",
-  };
-}
-
-/**
- * Resolve actor by email matching against Clerk organization members
- */
-async function resolveByEmail(
-  workspaceId: string,
-  clerkOrgId: string,
-  source: string,
-  actor: SourceActor,
-): Promise<{ userId: string } | null> {
-  if (!actor.email) return null;
-
-  try {
-    // Get Clerk client instance
-    const clerk = await clerkClient();
-
-    // Get organization members from Clerk
-    const memberships =
-      await clerk.organizations.getOrganizationMembershipList({
-        organizationId: clerkOrgId,
-        limit: 100,
-      });
-
-    // Find member with matching email
-    for (const membership of memberships.data) {
-      const userId = membership.publicUserData?.userId;
-      if (!userId) continue;
-
-      // Get user details to check email
-      const user = await clerk.users.getUser(userId);
-      const userEmails = user.emailAddresses.map((e) =>
-        e.emailAddress.toLowerCase(),
+    if (commitRef?.id) {
+      const resolved = await resolveVercelActorViaCommitSha(
+        workspaceId,
+        commitRef.id,
+        sourceActor.id, // username
       );
 
-      if (userEmails.includes(actor.email.toLowerCase())) {
-        // Cache the identity mapping
-        await db
-          .insert(workspaceActorIdentities)
-          .values({
-            workspaceId,
-            actorId: userId,
-            source,
-            sourceId: actor.id,
-            sourceUsername: actor.name,
-            sourceEmail: actor.email,
-            mappingMethod: "email",
-            confidenceScore: 0.85,
-          })
-          .onConflictDoNothing();
+      if (resolved) {
+        // Upgrade actor ID to numeric format
+        sourceActor = {
+          ...sourceActor,
+          id: resolved.numericId,
+        };
 
-        log.info("Resolved actor by email", {
-          sourceActor: actor.id,
-          resolvedUserId: userId,
-          email: actor.email,
+        log.info("Vercel actor upgraded to numeric ID", {
+          originalUsername: sourceActor.name,
+          numericId: resolved.numericId,
         });
-
-        return { userId };
       }
     }
-  } catch (error) {
-    log.warn("Failed to resolve actor by email", {
-      actorEmail: actor.email,
-      error,
-    });
   }
 
-  return null;
+  // Construct canonical actor ID: source:id
+  // For GitHub: github:12345678 (numeric)
+  // For Vercel: github:12345678 (if resolved) or github:username (if not)
+  // Note: Vercel actors use "github:" prefix since they're GitHub users
+  const actorId = sourceEvent.source === "vercel"
+    ? `github:${sourceActor.id}`
+    : `${sourceEvent.source}:${sourceActor.id}`;
+
+  return {
+    actorId,
+    sourceActor,
+  };
 }

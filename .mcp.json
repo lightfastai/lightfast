@@ -13,6 +13,13 @@
     "exa": {
       "command": "npx",
       "args": ["-y", "@anthropic/exa-mcp"]
+    },
+    "lightfast": {
+      "command": "node",
+      "args": ["core/mcp/dist/index.mjs"],
+      "env": {
+        "LIGHTFAST_API_KEY": "${LIGHTFAST_API_KEY}"
+      }
     }
   }
 }

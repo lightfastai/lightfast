@@ -36,6 +36,7 @@ import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { nanoid } from "nanoid";
+import type { SourceActor, SourceReference } from "@repo/console-types";
 import { recordJobMetric } from "../../../lib/jobs";
 
 /**
@@ -180,6 +181,137 @@ function isEventAllowed(
 }
 
 /**
+ * Resolve clerkOrgId from event data or database.
+ *
+ * New events include clerkOrgId from webhook handler.
+ * Legacy events (or edge cases) fallback to database lookup.
+ *
+ * @returns clerkOrgId or empty string if workspace not found
+ */
+async function resolveClerkOrgId(
+  eventClerkOrgId: string | undefined,
+  workspaceId: string,
+): Promise<string> {
+  // Prefer event data (new flow)
+  if (eventClerkOrgId) {
+    return eventClerkOrgId;
+  }
+
+  // Track fallback usage to monitor migration progress
+  // Fallback to database lookup (backwards compat)
+  log.warn("clerkOrgId fallback to DB lookup", {
+    workspaceId,
+    reason: "event_missing_clerkOrgId",
+  });
+
+  const workspace = await db.query.orgWorkspaces.findFirst({
+    where: eq(orgWorkspaces.id, workspaceId),
+    columns: { clerkOrgId: true },
+  });
+
+  return workspace?.clerkOrgId ?? "";
+}
+
+/**
+ * Reconcile Vercel actor IDs when a GitHub push provides numeric ID.
+ *
+ * When a GitHub push arrives with a commit SHA, we find any Vercel observations
+ * that reference the same commit but have username-based actor IDs. We then
+ * update those observations with the numeric GitHub ID from the push event.
+ *
+ * This ensures cross-source actor consistency: Vercel deployments triggered
+ * by the same commit as a GitHub push will share the same canonical actor ID.
+ *
+ * @returns Array of updated observation IDs
+ */
+async function reconcileVercelActorsForCommit(
+  workspaceId: string,
+  commitSha: string,
+  numericActorId: string,
+  sourceActor: SourceActor,
+): Promise<string[]> {
+  if (!commitSha || !numericActorId) return [];
+
+  // Only reconcile if the actor ID is actually numeric
+  if (!/^\d+$/.test(numericActorId)) return [];
+
+  try {
+    // Find Vercel observations with this commit SHA that have non-numeric actor IDs
+    // Using PostgreSQL JSONB containment to search within the sourceReferences array
+    const vercelObservations = await db.query.workspaceNeuralObservations.findMany({
+      where: and(
+        eq(workspaceNeuralObservations.workspaceId, workspaceId),
+        eq(workspaceNeuralObservations.source, "vercel"),
+        // Check if sourceReferences contains a commit with this SHA
+        sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`,
+      ),
+      columns: {
+        id: true,
+        externalId: true,
+        actor: true,
+      },
+    });
+
+    if (vercelObservations.length === 0) return [];
+
+    const updatedIds: string[] = [];
+
+    for (const obs of vercelObservations) {
+      const currentActor = obs.actor as SourceActor | null;
+
+      // Skip if no actor or already has numeric ID
+      if (!currentActor?.id) continue;
+      if (/^\d+$/.test(currentActor.id)) continue;
+
+      // Update the actor with numeric ID and enriched profile data
+      const updatedActor: SourceActor = {
+        ...currentActor,
+        id: numericActorId,
+        // Preserve existing name, or use the GitHub actor's name
+        name: currentActor.name ?? sourceActor.name,
+        // Add email/avatar from GitHub if not present
+        email: currentActor.email ?? sourceActor.email,
+        avatarUrl: currentActor.avatarUrl ?? sourceActor.avatarUrl,
+      };
+
+      await db
+        .update(workspaceNeuralObservations)
+        .set({
+          actor: updatedActor,
+        })
+        .where(eq(workspaceNeuralObservations.id, obs.id));
+
+      updatedIds.push(obs.externalId);
+
+      log.info("Reconciled Vercel actor with numeric GitHub ID", {
+        observationId: obs.externalId,
+        commitSha,
+        previousActorId: currentActor.id,
+        numericActorId,
+      });
+    }
+
+    if (updatedIds.length > 0) {
+      log.info("Reconciled Vercel actors for commit", {
+        workspaceId,
+        commitSha,
+        numericActorId,
+        reconciled: updatedIds.length,
+      });
+    }
+
+    return updatedIds;
+  } catch (error) {
+    log.warn("Failed to reconcile Vercel actors for commit", {
+      workspaceId,
+      commitSha,
+      error,
+    });
+    return [];
+  }
+}
+
+/**
  * Neural observation capture workflow
  *
  * Processes SourceEvents from webhooks into observations with embeddings.
@@ -207,7 +339,7 @@ export const observationCapture = inngest.createFunction(
   },
   { event: "apps-console/neural/observation.capture" },
   async ({ event, step }) => {
-    const { workspaceId, sourceEvent } = event.data;
+    const { workspaceId, clerkOrgId: eventClerkOrgId, sourceEvent } = event.data;
     const startTime = Date.now();
 
     // Pre-generate externalId at workflow start (Phase 3 optimization)
@@ -216,8 +348,15 @@ export const observationCapture = inngest.createFunction(
     // The internal BIGINT id is auto-generated by the database.
     const externalId = nanoid();
 
+    // Resolve clerkOrgId EARLY (before any metrics or processing)
+    // This ensures all metrics have valid clerkOrgId
+    const clerkOrgId = await step.run("resolve-clerk-org-id", async () => {
+      return resolveClerkOrgId(eventClerkOrgId, workspaceId);
+    });
+
     log.info("Capturing neural observation", {
       workspaceId,
+      clerkOrgId,
       externalId,
       source: sourceEvent.source,
       sourceType: sourceEvent.sourceType,
@@ -246,7 +385,7 @@ export const observationCapture = inngest.createFunction(
     if (existing) {
       // Record duplicate metric (non-blocking)
       void recordJobMetric({
-        clerkOrgId: "", // Will be populated after context fetch if needed
+        clerkOrgId, // Now valid from early resolution
         workspaceId,
         type: "observation_duplicate",
         value: 1,
@@ -318,7 +457,7 @@ export const observationCapture = inngest.createFunction(
     if (!eventAllowed) {
       // Record filtered metric (non-blocking)
       void recordJobMetric({
-        clerkOrgId: "", // Not available at this stage
+        clerkOrgId, // Now valid from early resolution
         workspaceId,
         type: "observation_filtered",
         value: 1,
@@ -354,7 +493,7 @@ export const observationCapture = inngest.createFunction(
 
       // Record below_threshold metric (non-blocking)
       void recordJobMetric({
-        clerkOrgId: "", // Not available at this stage
+        clerkOrgId, // Now valid from early resolution
         workspaceId,
         type: "observation_below_threshold",
         value: 1,
@@ -479,7 +618,7 @@ export const observationCapture = inngest.createFunction(
 
       // Actor resolution (Tier 2: email matching)
       step.run("resolve-actor", async () => {
-        return resolveActor(workspaceId, workspace.clerkOrgId, sourceEvent);
+        return resolveActor(workspaceId, sourceEvent);
       }),
     ]);
 
@@ -658,14 +797,46 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
+    // Step 7.5: Reconcile Vercel actors (only for GitHub push events)
+    // When a GitHub push arrives, update any Vercel observations that reference
+    // the same commit SHA but have username-based actor IDs
+    if (sourceEvent.source === "github" && sourceEvent.sourceType === "push") {
+      await step.run("reconcile-vercel-actors", async () => {
+        // Extract commit SHAs from the push event references
+        const references = sourceEvent.references as SourceReference[];
+        const commitRefs = references?.filter((ref) => ref.type === "commit") || [];
+
+        if (commitRefs.length === 0 || !resolvedActor.sourceActor?.id) {
+          return { reconciled: 0 };
+        }
+
+        let totalReconciled = 0;
+
+        // Reconcile for each commit SHA in the push
+        for (const commitRef of commitRefs) {
+          const reconciledIds = await reconcileVercelActorsForCommit(
+            workspaceId,
+            commitRef.id,
+            resolvedActor.sourceActor.id,
+            resolvedActor.sourceActor,
+          );
+          totalReconciled += reconciledIds.length;
+        }
+
+        return { reconciled: totalReconciled };
+      });
+    }
+
     // Step 8: Fire-and-forget events
     // Note: Using externalId for public-facing events, convert BIGINT ids to strings for events
+    // All child events receive clerkOrgId for metrics tracking (Phase: clerkOrgId propagation)
     await step.sendEvent("emit-events", [
       // Completion event for downstream systems
       {
         name: "apps-console/neural/observation.captured" as const,
         data: {
           workspaceId,
+          clerkOrgId, // Propagate for metrics tracking
           observationId: observation.externalId, // Public nanoid for API consumers
           sourceId: sourceEvent.sourceId,
           observationType: observation.observationType,
@@ -683,8 +854,10 @@ export const observationCapture = inngest.createFunction(
               name: "apps-console/neural/profile.update" as const,
               data: {
                 workspaceId,
+                clerkOrgId, // Propagate for metrics tracking
                 actorId: resolvedActor.actorId,
                 observationId: observation.externalId, // Public nanoid
+                sourceActor: resolvedActor.sourceActor ?? undefined,
               },
             },
           ]
@@ -694,6 +867,7 @@ export const observationCapture = inngest.createFunction(
         name: "apps-console/neural/cluster.check-summary" as const,
         data: {
           workspaceId,
+          clerkOrgId, // Propagate for metrics tracking
           clusterId: String(clusterResult.clusterId), // Convert BIGINT to string for events
           observationCount: clusterResult.isNew ? 1 : 0, // Will be fetched in workflow
         },
@@ -705,6 +879,7 @@ export const observationCapture = inngest.createFunction(
               name: "apps-console/neural/llm-entity-extraction.requested" as const,
               data: {
                 workspaceId,
+                clerkOrgId, // Propagate for metrics tracking
                 observationId: observation.externalId, // Public nanoid
               },
             },
@@ -717,7 +892,7 @@ export const observationCapture = inngest.createFunction(
     const metricsPromises = [
       // Observation captured metric
       recordJobMetric({
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId, // Use pre-resolved value for consistency
         workspaceId,
         type: "observation_captured",
         value: 1,
@@ -733,7 +908,7 @@ export const observationCapture = inngest.createFunction(
 
       // Entities extracted metric
       recordJobMetric({
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId, // Use pre-resolved value for consistency
         workspaceId,
         type: "entities_extracted",
         value: entitiesStored,
@@ -747,7 +922,7 @@ export const observationCapture = inngest.createFunction(
 
       // Cluster assigned metric
       recordJobMetric({
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId, // Use pre-resolved value for consistency
         workspaceId,
         type: "cluster_assigned",
         value: 1,

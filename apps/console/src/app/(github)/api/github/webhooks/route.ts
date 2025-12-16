@@ -210,6 +210,7 @@ async function handlePushObservation(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformGitHubPush(payload, {
         deliveryId,
         receivedAt,
@@ -267,6 +268,7 @@ async function handlePullRequestEvent(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformGitHubPullRequest(payload, {
         deliveryId,
         receivedAt,
@@ -324,6 +326,7 @@ async function handleIssuesEvent(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformGitHubIssue(payload, {
         deliveryId,
         receivedAt,
@@ -380,6 +383,7 @@ async function handleReleaseEvent(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformGitHubRelease(payload, {
         deliveryId,
         receivedAt,
@@ -436,6 +440,7 @@ async function handleDiscussionEvent(
     name: "apps-console/neural/observation.capture",
     data: {
       workspaceId: workspace.workspaceId,
+      clerkOrgId: workspace.clerkOrgId,
       sourceEvent: transformGitHubDiscussion(payload, {
         deliveryId,
         receivedAt,

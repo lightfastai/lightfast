@@ -63,7 +63,19 @@ export const clusterSummaryCheck = inngest.createFunction(
   },
   { event: "apps-console/neural/cluster.check-summary" },
   async ({ event, step }) => {
-    const { workspaceId, clusterId, observationCount } = event.data;
+    const { workspaceId, clerkOrgId: eventClerkOrgId, clusterId, observationCount } = event.data;
+
+    // Resolve clerkOrgId (prefer event, fallback to DB)
+    // New events receive clerkOrgId from parent workflow (observation-capture)
+    const clerkOrgId = eventClerkOrgId ?? await (async () => {
+      // Track fallback usage to monitor migration progress
+      log.warn("clerkOrgId fallback to DB lookup", { workspaceId, reason: "event_missing_clerkOrgId" });
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
+        columns: { clerkOrgId: true },
+      });
+      return workspace?.clerkOrgId ?? "";
+    })();
 
     // Step 1: Check if summary needed and get cluster
     const cluster = await step.run("check-threshold", async () => {
@@ -183,15 +195,10 @@ Generate a concise summary, key topics, key contributors, and activity status.`,
     });
 
     // Record cluster_summary_generated metric
-    // Need to get clerkOrgId from workspace
-    const workspace = await db.query.orgWorkspaces.findFirst({
-      where: eq(orgWorkspaces.id, workspaceId),
-      columns: { clerkOrgId: true },
-    });
-
-    if (workspace) {
+    // clerkOrgId is resolved at workflow start (from event or DB fallback)
+    if (clerkOrgId) {
       void recordJobMetric({
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId,
         workspaceId,
         type: "cluster_summary_generated",
         value: 1,

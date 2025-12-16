@@ -14,7 +14,7 @@ import {
   workspaceNeuralObservations,
   orgWorkspaces,
 } from "@db/console/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import { recordJobMetric } from "../../../lib/jobs";
@@ -45,7 +45,19 @@ export const profileUpdate = inngest.createFunction(
   },
   { event: "apps-console/neural/profile.update" },
   async ({ event, step }) => {
-    const { workspaceId, actorId } = event.data;
+    const { workspaceId, clerkOrgId: eventClerkOrgId, actorId, sourceActor } = event.data;
+
+    // Resolve clerkOrgId (prefer event, fallback to DB)
+    // New events receive clerkOrgId from parent workflow (observation-capture)
+    const clerkOrgId = eventClerkOrgId ?? await (async () => {
+      // Track fallback usage to monitor migration progress
+      log.warn("clerkOrgId fallback to DB lookup", { workspaceId, reason: "event_missing_clerkOrgId" });
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
+        columns: { clerkOrgId: true },
+      });
+      return workspace?.clerkOrgId ?? "";
+    })();
 
     // Step 1: Get recent observations for this actor
     // TODO: Phase 5 will enable this when actor_profiles are migrated to BIGINT
@@ -86,8 +98,8 @@ export const profileUpdate = inngest.createFunction(
 
     // Step 3: Upsert profile
     await step.run("upsert-profile", async () => {
-      // Extract display name from actorId (source:id -> id)
-      const displayName = actorId.split(":")[1] ?? actorId;
+      // Use source actor name if available, fallback to actorId suffix
+      const displayName = sourceActor?.name ?? actorId.split(":")[1] ?? actorId;
 
       await db
         .insert(workspaceActorProfiles)
@@ -95,6 +107,8 @@ export const profileUpdate = inngest.createFunction(
           workspaceId,
           actorId,
           displayName,
+          email: sourceActor?.email ?? null,
+          avatarUrl: sourceActor?.avatarUrl ?? null,
           observationCount: recentActivity.count,
           lastActiveAt: recentActivity.lastActiveAt,
           profileConfidence: 0.5, // Default until more sophisticated analysis
@@ -105,6 +119,10 @@ export const profileUpdate = inngest.createFunction(
             workspaceActorProfiles.actorId,
           ],
           set: {
+            // Update name/email/avatar only if currently null (COALESCE keeps existing values)
+            displayName: sql`COALESCE(${workspaceActorProfiles.displayName}, ${displayName})`,
+            email: sql`COALESCE(${workspaceActorProfiles.email}, ${sourceActor?.email ?? null})`,
+            avatarUrl: sql`COALESCE(${workspaceActorProfiles.avatarUrl}, ${sourceActor?.avatarUrl ?? null})`,
             observationCount: recentActivity.count,
             lastActiveAt: recentActivity.lastActiveAt,
             updatedAt: new Date().toISOString(),
@@ -130,15 +148,10 @@ export const profileUpdate = inngest.createFunction(
     });
 
     // Record profile_updated metric
-    // Need to get clerkOrgId from workspace
-    const workspace = await db.query.orgWorkspaces.findFirst({
-      where: eq(orgWorkspaces.id, workspaceId),
-      columns: { clerkOrgId: true },
-    });
-
-    if (workspace) {
+    // clerkOrgId is resolved at workflow start (from event or DB fallback)
+    if (clerkOrgId) {
       void recordJobMetric({
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId,
         workspaceId,
         type: "profile_updated",
         value: 1,
