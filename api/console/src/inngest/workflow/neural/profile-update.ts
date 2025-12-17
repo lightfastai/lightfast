@@ -7,7 +7,7 @@
  * Debounce: 5 minutes per actor (via concurrency + debounce)
  */
 
-import { inngest } from "../../client/client";
+import { inngest, type Events } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceActorProfiles,
@@ -17,8 +17,13 @@ import {
 import { eq, and, desc, sql } from "drizzle-orm";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
-import { recordJobMetric } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
 import { upsertOrgActorIdentity } from "../../../lib/actor-identity";
+import type {
+  NeuralProfileUpdateInput,
+  NeuralProfileUpdateOutputSuccess,
+  NeuralProfileUpdateOutputFailure,
+} from "@repo/console-validation";
 
 export const profileUpdate = inngest.createFunction(
   {
@@ -43,10 +48,39 @@ export const profileUpdate = inngest.createFunction(
       start: "30s",
       finish: "2m",
     },
+
+    // Handle failures gracefully - complete job as failed
+    onFailure: async ({ event, error }) => {
+      const originalEvent = event.data.event as Events["apps-console/neural/profile.update"];
+      const { workspaceId, actorId } = originalEvent.data;
+      const eventId = originalEvent.id;
+
+      log.error("Neural profile update failed", {
+        workspaceId,
+        actorId,
+        error: error.message,
+      });
+
+      if (eventId) {
+        const job = await getJobByInngestRunId(eventId);
+        if (job) {
+          await completeJob({
+            jobId: job.id,
+            status: "failed",
+            output: {
+              inngestFunctionId: "neural.profile.update",
+              status: "failure",
+              actorId,
+              error: error.message,
+            } satisfies NeuralProfileUpdateOutputFailure,
+          });
+        }
+      }
+    },
   },
   { event: "apps-console/neural/profile.update" },
   async ({ event, step }) => {
-    const { workspaceId, clerkOrgId: eventClerkOrgId, actorId, sourceActor } = event.data;
+    const { workspaceId, clerkOrgId: eventClerkOrgId, actorId, observationId, sourceActor } = event.data;
 
     // Resolve clerkOrgId (prefer event, fallback to DB)
     // New events receive clerkOrgId from parent workflow (observation-capture)
@@ -59,6 +93,29 @@ export const profileUpdate = inngest.createFunction(
       });
       return workspace?.clerkOrgId ?? "";
     })();
+
+    // Create job record for tracking
+    const inngestRunId = event.id ?? `neural-profile-${actorId}-${Date.now()}`;
+    const jobId = await step.run("create-job", async () => {
+      return createJob({
+        clerkOrgId,
+        workspaceId,
+        inngestRunId,
+        inngestFunctionId: "neural.profile.update",
+        name: `Update profile: ${actorId}`,
+        trigger: "webhook",
+        input: {
+          inngestFunctionId: "neural.profile.update",
+          actorId,
+          observationId,
+        } satisfies NeuralProfileUpdateInput,
+      });
+    });
+
+    // Update job status to running
+    await step.run("update-job-running", async () => {
+      await updateJobStatus(jobId, "running");
+    });
 
     // Step 1: Get recent observations for this actor
     // TODO: Phase 5 will enable this when actor_profiles are migrated to BIGINT
@@ -170,6 +227,21 @@ export const profileUpdate = inngest.createFunction(
         actorId,
         observationCount: recentActivity.count,
         isNew: !existingProfile.exists,
+      });
+    });
+
+    // Complete job with success output
+    await step.run("complete-job-success", async () => {
+      await completeJob({
+        jobId,
+        status: "completed",
+        output: {
+          inngestFunctionId: "neural.profile.update",
+          status: "success",
+          actorId,
+          observationCount: recentActivity.count,
+          isNewProfile: !existingProfile.exists,
+        } satisfies NeuralProfileUpdateOutputSuccess,
       });
     });
 

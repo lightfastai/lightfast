@@ -10,6 +10,7 @@ import { db } from "@db/console/client";
 import {
   workspaceNeuralEntities,
   workspaceNeuralObservations,
+  orgWorkspaces,
 } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
 import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
@@ -17,13 +18,20 @@ import type { LLMEntityExtractionResponse } from "@repo/console-validation";
 import type { ExtractedEntity } from "@repo/console-types";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
 
-import { inngest } from "../../client/client";
+import { inngest, type Events } from "../../client/client";
 import {
   createTracedModel,
   generateObject,
   buildNeuralTelemetry,
 } from "./ai-helpers";
 import { buildExtractionPrompt } from "./llm-entity-extraction";
+import { createJob, updateJobStatus, completeJob, getJobByInngestRunId } from "../../../lib/jobs";
+import type {
+  NeuralLLMEntityExtractionInput,
+  NeuralLLMEntityExtractionOutputSuccess,
+  NeuralLLMEntityExtractionOutputSkipped,
+  NeuralLLMEntityExtractionOutputFailure,
+} from "@repo/console-validation";
 
 export const llmEntityExtractionWorkflow = inngest.createFunction(
   {
@@ -34,11 +42,72 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       key: "event.data.observationId",
       period: "1m",
     },
+
+    // Handle failures gracefully - complete job as failed
+    onFailure: async ({ event, error }) => {
+      const originalEvent = event.data.event as Events["apps-console/neural/llm-entity-extraction.requested"];
+      const { workspaceId, observationId } = originalEvent.data;
+      const eventId = originalEvent.id;
+
+      log.error("Neural LLM entity extraction failed", {
+        workspaceId,
+        observationId,
+        error: error.message,
+      });
+
+      if (eventId) {
+        const job = await getJobByInngestRunId(eventId);
+        if (job) {
+          await completeJob({
+            jobId: job.id,
+            status: "failed",
+            output: {
+              inngestFunctionId: "neural.llm-entity-extraction",
+              status: "failure",
+              observationId,
+              error: error.message,
+            } satisfies NeuralLLMEntityExtractionOutputFailure,
+          });
+        }
+      }
+    },
   },
   { event: "apps-console/neural/llm-entity-extraction.requested" },
   async ({ event, step }) => {
     const { workspaceId, observationId } = event.data;
     const config = LLM_ENTITY_EXTRACTION_CONFIG;
+
+    // Resolve clerkOrgId from workspace (not in event data for this workflow)
+    const clerkOrgId = await step.run("resolve-clerk-org-id", async () => {
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
+        columns: { clerkOrgId: true },
+      });
+      return workspace?.clerkOrgId ?? "";
+    });
+
+    // Create job record for tracking
+    const inngestRunId = event.id ?? `neural-llm-entity-${observationId}-${Date.now()}`;
+    const jobId = await step.run("create-job", async () => {
+      return createJob({
+        clerkOrgId,
+        workspaceId,
+        inngestRunId,
+        inngestFunctionId: "neural.llm-entity-extraction",
+        name: `LLM entities: ${observationId}`,
+        trigger: "webhook",
+        input: {
+          inngestFunctionId: "neural.llm-entity-extraction",
+          observationId,
+          contentLength: 0, // Will be determined after fetch
+        } satisfies NeuralLLMEntityExtractionInput,
+      });
+    });
+
+    // Update job status to running
+    await step.run("update-job-running", async () => {
+      await updateJobStatus(jobId, "running");
+    });
 
     // Step 1: Fetch observation
     const observation = await step.run("fetch-observation", async () => {
@@ -56,6 +125,19 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     });
 
     if (!observation) {
+      // Complete job as skipped (observation_not_found)
+      await step.run("complete-job-skipped-not-found", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.llm-entity-extraction",
+            status: "skipped",
+            reason: "observation_not_found",
+          } satisfies NeuralLLMEntityExtractionOutputSkipped,
+        });
+      });
+
       return { status: "skipped", reason: "observation_not_found" };
     }
 
@@ -63,6 +145,20 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     const content = observation.content;
     const contentLength = content.length;
     if (contentLength < config.minContentLength) {
+      // Complete job as skipped (content_too_short)
+      await step.run("complete-job-skipped-short", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.llm-entity-extraction",
+            status: "skipped",
+            observationId,
+            reason: "content_too_short",
+          } satisfies NeuralLLMEntityExtractionOutputSkipped,
+        });
+      });
+
       return { status: "skipped", reason: "content_too_short", contentLength };
     }
 
@@ -98,6 +194,21 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       }));
 
     if (entities.length === 0) {
+      // Complete job with zero entities (success, but nothing to store)
+      await step.run("complete-job-no-entities", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.llm-entity-extraction",
+            status: "success",
+            observationId,
+            entitiesExtracted: 0,
+            entitiesStored: 0,
+          } satisfies NeuralLLMEntityExtractionOutputSuccess,
+        });
+      });
+
       return { status: "completed", entitiesExtracted: 0 };
     }
 
@@ -142,6 +253,21 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       }
 
       return count;
+    });
+
+    // Complete job with success output
+    await step.run("complete-job-success", async () => {
+      await completeJob({
+        jobId,
+        status: "completed",
+        output: {
+          inngestFunctionId: "neural.llm-entity-extraction",
+          status: "success",
+          observationId,
+          entitiesExtracted: entities.length,
+          entitiesStored: storedCount,
+        } satisfies NeuralLLMEntityExtractionOutputSuccess,
+      });
     });
 
     log.info("LLM entity extraction completed", {

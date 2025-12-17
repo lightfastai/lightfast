@@ -15,7 +15,7 @@
  * 8. Emit completion event
  */
 
-import { inngest } from "../../client/client";
+import { inngest, type Events } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceNeuralObservations,
@@ -47,7 +47,13 @@ import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { nanoid } from "nanoid";
 import type { SourceActor, SourceReference } from "@repo/console-types";
-import { recordJobMetric } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
+import type {
+  NeuralObservationCaptureInput,
+  NeuralObservationCaptureOutputSuccess,
+  NeuralObservationCaptureOutputFiltered,
+  NeuralObservationCaptureOutputFailure,
+} from "@repo/console-validation";
 
 /**
  * Observation vector metadata stored in Pinecone
@@ -346,6 +352,37 @@ export const observationCapture = inngest.createFunction(
       start: "1m",
       finish: "5m",
     },
+
+    // Handle failures gracefully - complete job as failed
+    onFailure: async ({ event, error }) => {
+      // event in onFailure is FailureEventPayload where data.event contains the original event
+      const originalEvent = event.data.event as Events["apps-console/neural/observation.capture"];
+      const { workspaceId, sourceEvent } = originalEvent.data;
+      const eventId = originalEvent.id;
+
+      log.error("Neural observation capture failed", {
+        workspaceId,
+        sourceId: sourceEvent.sourceId,
+        error: error.message,
+      });
+
+      // Try to find and fail the job by inngestRunId
+      if (eventId) {
+        const job = await getJobByInngestRunId(eventId);
+        if (job) {
+          await completeJob({
+            jobId: job.id,
+            status: "failed",
+            output: {
+              inngestFunctionId: "neural.observation.capture",
+              status: "failure",
+              sourceId: sourceEvent.sourceId,
+              error: error.message,
+            } satisfies NeuralObservationCaptureOutputFailure,
+          });
+        }
+      }
+    },
   },
   { event: "apps-console/neural/observation.capture" },
   async ({ event, step }) => {
@@ -373,6 +410,32 @@ export const observationCapture = inngest.createFunction(
       sourceId: sourceEvent.sourceId,
     });
 
+    // Step 0: Create job record for tracking
+    // Generate a run ID if event.id is not available (shouldn't happen in production)
+    const inngestRunId = event.id ?? `neural-obs-${sourceEvent.sourceId}-${Date.now()}`;
+    const jobId = await step.run("create-job", async () => {
+      return createJob({
+        clerkOrgId,
+        workspaceId,
+        inngestRunId,
+        inngestFunctionId: "neural.observation.capture",
+        name: `Capture ${sourceEvent.source}/${sourceEvent.sourceType}`,
+        trigger: "webhook",
+        input: {
+          inngestFunctionId: "neural.observation.capture",
+          sourceId: sourceEvent.sourceId,
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          title: sourceEvent.title,
+        } satisfies NeuralObservationCaptureInput,
+      });
+    });
+
+    // Update job status to running
+    await step.run("update-job-running", async () => {
+      await updateJobStatus(jobId, "running");
+    });
+
     // Step 1: Check for duplicate
     const existing = await step.run("check-duplicate", async () => {
       const obs = await db.query.workspaceNeuralObservations.findFirst({
@@ -393,6 +456,20 @@ export const observationCapture = inngest.createFunction(
     });
 
     if (existing) {
+      // Complete job as filtered (duplicate - expected behavior, not failure)
+      await step.run("complete-job-duplicate", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.observation.capture",
+            status: "filtered",
+            reason: "duplicate",
+            sourceId: sourceEvent.sourceId,
+          } satisfies NeuralObservationCaptureOutputFiltered,
+        });
+      });
+
       // Record duplicate metric (non-blocking)
       void recordJobMetric({
         clerkOrgId, // Now valid from early resolution
@@ -465,6 +542,20 @@ export const observationCapture = inngest.createFunction(
     });
 
     if (!eventAllowed) {
+      // Complete job as filtered (event_not_allowed)
+      await step.run("complete-job-filtered", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.observation.capture",
+            status: "filtered",
+            reason: "event_not_allowed",
+            sourceId: sourceEvent.sourceId,
+          } satisfies NeuralObservationCaptureOutputFiltered,
+        });
+      });
+
       // Record filtered metric (non-blocking)
       void recordJobMetric({
         clerkOrgId, // Now valid from early resolution
@@ -499,6 +590,21 @@ export const observationCapture = inngest.createFunction(
         significanceScore: significance.score,
         threshold: SIGNIFICANCE_THRESHOLD,
         factors: significance.factors,
+      });
+
+      // Complete job as filtered (below_threshold)
+      await step.run("complete-job-below-threshold", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.observation.capture",
+            status: "filtered",
+            reason: "below_threshold",
+            sourceId: sourceEvent.sourceId,
+            significanceScore: significance.score,
+          } satisfies NeuralObservationCaptureOutputFiltered,
+        });
       });
 
       // Record below_threshold metric (non-blocking)
@@ -940,8 +1046,26 @@ export const observationCapture = inngest.createFunction(
         : []),
     ]);
 
-    // Record success metrics (non-blocking, in parallel)
+    // Complete job with success output
     const finalDuration = Date.now() - startTime;
+    await step.run("complete-job-success", async () => {
+      await completeJob({
+        jobId,
+        status: "completed",
+        output: {
+          inngestFunctionId: "neural.observation.capture",
+          status: "success",
+          observationId: observation.externalId,
+          observationType: observation.observationType,
+          significanceScore: significance.score,
+          entitiesExtracted: entitiesStored,
+          clusterId: String(clusterResult.clusterId),
+          clusterIsNew: clusterResult.isNew,
+        } satisfies NeuralObservationCaptureOutputSuccess,
+      });
+    });
+
+    // Record success metrics (non-blocking, in parallel)
     const metricsPromises = [
       // Observation captured metric
       recordJobMetric({

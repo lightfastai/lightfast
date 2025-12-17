@@ -5,7 +5,7 @@
  * Generates LLM summary when cluster reaches threshold.
  */
 
-import { inngest } from "../../client/client";
+import { inngest, type Events } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceObservationClusters,
@@ -15,12 +15,18 @@ import {
 import { eq, and, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { z } from "zod";
-import { recordJobMetric } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
 import {
   createTracedModel,
   generateObject,
   buildNeuralTelemetry,
 } from "./ai-helpers";
+import type {
+  NeuralClusterSummaryInput,
+  NeuralClusterSummaryOutputSuccess,
+  NeuralClusterSummaryOutputSkipped,
+  NeuralClusterSummaryOutputFailure,
+} from "@repo/console-validation";
 
 const SUMMARY_THRESHOLD = 5; // Generate summary after 5 observations
 const SUMMARY_AGE_HOURS = 24; // Regenerate if summary > 24 hours old
@@ -65,6 +71,35 @@ export const clusterSummaryCheck = inngest.createFunction(
       start: "30s",
       finish: "3m",
     },
+
+    // Handle failures gracefully - complete job as failed
+    onFailure: async ({ event, error }) => {
+      const originalEvent = event.data.event as Events["apps-console/neural/cluster.check-summary"];
+      const { workspaceId, clusterId } = originalEvent.data;
+      const eventId = originalEvent.id;
+
+      log.error("Neural cluster summary failed", {
+        workspaceId,
+        clusterId,
+        error: error.message,
+      });
+
+      if (eventId) {
+        const job = await getJobByInngestRunId(eventId);
+        if (job) {
+          await completeJob({
+            jobId: job.id,
+            status: "failed",
+            output: {
+              inngestFunctionId: "neural.cluster.summary",
+              status: "failure",
+              clusterId,
+              error: error.message,
+            } satisfies NeuralClusterSummaryOutputFailure,
+          });
+        }
+      }
+    },
   },
   { event: "apps-console/neural/cluster.check-summary" },
   async ({ event, step }) => {
@@ -81,6 +116,29 @@ export const clusterSummaryCheck = inngest.createFunction(
       });
       return workspace?.clerkOrgId ?? "";
     })();
+
+    // Create job record for tracking
+    const inngestRunId = event.id ?? `neural-cluster-${clusterId}-${Date.now()}`;
+    const jobId = await step.run("create-job", async () => {
+      return createJob({
+        clerkOrgId,
+        workspaceId,
+        inngestRunId,
+        inngestFunctionId: "neural.cluster.summary",
+        name: `Cluster summary: ${clusterId}`,
+        trigger: "webhook",
+        input: {
+          inngestFunctionId: "neural.cluster.summary",
+          clusterId,
+          observationCount,
+        } satisfies NeuralClusterSummaryInput,
+      });
+    });
+
+    // Update job status to running
+    await step.run("update-job-running", async () => {
+      await updateJobStatus(jobId, "running");
+    });
 
     // Step 1: Check if summary needed and get cluster
     const cluster = await step.run("check-threshold", async () => {
@@ -126,6 +184,20 @@ export const clusterSummaryCheck = inngest.createFunction(
     });
 
     if (!cluster) {
+      // Complete job as skipped
+      await step.run("complete-job-skipped", async () => {
+        await completeJob({
+          jobId,
+          status: "completed",
+          output: {
+            inngestFunctionId: "neural.cluster.summary",
+            status: "skipped",
+            clusterId,
+            reason: observationCount < SUMMARY_THRESHOLD ? "below_threshold" : "cluster_not_found",
+          } satisfies NeuralClusterSummaryOutputSkipped,
+        });
+      });
+
       return { status: "skipped", reason: "threshold_not_met_or_cluster_not_found" };
     }
 
@@ -203,6 +275,21 @@ Generate a concise summary, key topics, key contributors, and activity status.`,
         clusterId,
         status: summary.status,
         keyTopics: summary.keyTopics,
+      });
+    });
+
+    // Complete job with success output
+    await step.run("complete-job-success", async () => {
+      await completeJob({
+        jobId,
+        status: "completed",
+        output: {
+          inngestFunctionId: "neural.cluster.summary",
+          status: "success",
+          clusterId,
+          summaryGenerated: true,
+          keyTopics: summary.keyTopics,
+        } satisfies NeuralClusterSummaryOutputSuccess,
       });
     });
 

@@ -424,7 +424,14 @@ export const jobsRouter = {
 			switch (job.inngestFunctionId) {
 				case "source-connected":
 				case "source-sync": {
-					// Extract sourceId from job input
+					// Type narrowing: check jobInput discriminator for sourceId access
+					if (jobInput.inngestFunctionId !== "source-connected" && jobInput.inngestFunctionId !== "source-sync") {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Job input type mismatch - cannot restart",
+						});
+					}
+					// Extract sourceId from job input (now properly narrowed)
 					const sourceId = jobInput.sourceId;
 
 					if (!sourceId) {
@@ -466,8 +473,10 @@ export const jobsRouter = {
 				}
 
 				case "apps-console/github-sync": {
-					// GitHub-specific sync restart
-					const sourceId = jobInput.sourceId as string | undefined;
+					// GitHub-specific sync restart (legacy function ID, not in discriminated union)
+					// Use type assertion for legacy job format
+					const legacyInput = jobInput as { sourceId?: string };
+					const sourceId = legacyInput.sourceId;
 
 					if (!sourceId) {
 						throw new TRPCError({
