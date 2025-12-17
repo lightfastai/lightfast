@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { changelog, type ChangelogEntryQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
@@ -32,24 +33,58 @@ export async function generateMetadata({
 
   if (!entry) return {};
 
-  const description = entry.body?.plainText
-    ? entry.body.plainText.slice(0, 160)
-    : `${entry._title} - Lightfast changelog update`;
+  // Use SEO fields with fallbacks
+  const title = entry.seo?.metaTitle || entry._title || "Changelog";
+  const description =
+    entry.seo?.metaDescription ||
+    entry.excerpt ||
+    entry.tldr ||
+    entry.body?.plainText?.slice(0, 160) ||
+    `${entry._title} - Lightfast changelog update`;
+
+  const canonicalUrl =
+    entry.seo?.canonicalUrl || `https://lightfast.ai/changelog/${slug}`;
+  const ogImage = entry.featuredImage?.url || "https://lightfast.ai/og.jpg";
+  const publishedTime = entry.publishedAt || entry._sys?.createdAt;
 
   return {
-    title: entry._title ?? undefined,
-    description: description ?? undefined,
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+      types: {
+        "application/rss+xml": [
+          { url: "https://lightfast.ai/changelog/rss.xml", title: "RSS 2.0" },
+        ],
+        "application/atom+xml": [
+          { url: "https://lightfast.ai/changelog/atom.xml", title: "Atom" },
+        ],
+      },
+    },
     openGraph: {
-      title: entry._title ?? "Changelog",
+      title,
       description,
       type: "article",
-      publishedTime: entry._sys?.createdAt ?? undefined,
+      url: canonicalUrl,
+      siteName: "Lightfast",
+      publishedTime: publishedTime ?? undefined,
+      images: [
+        {
+          url: ogImage,
+          width: entry.featuredImage?.width ?? 1200,
+          height: entry.featuredImage?.height ?? 630,
+          alt: entry.featuredImage?.alt ?? title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
-      title: entry._title ?? "Changelog",
+      title,
       description,
+      images: [ogImage],
+      creator: "@lightfastai",
     },
+    ...(entry.seo?.noIndex ? { robots: { index: false } } : {}),
   } satisfies Metadata;
 }
 
@@ -78,30 +113,82 @@ export default async function ChangelogEntryPage({
         const entry = response.changelogPages?.item;
         if (!entry) notFound();
 
-        const created = entry._sys?.createdAt
-          ? new Date(entry._sys.createdAt)
-          : null;
-        const dateStr = created
-          ? created.toLocaleDateString(undefined, {
+        // Use publishedAt if available, fall back to createdAt
+        const publishedTime = entry.publishedAt || entry._sys?.createdAt;
+        const publishedDate = publishedTime ? new Date(publishedTime) : null;
+        const dateStr = publishedDate
+          ? publishedDate.toLocaleDateString(undefined, {
               year: "numeric",
               month: "short",
               day: "numeric",
             })
           : "";
 
-        // Generate structured data for SEO
-        const structuredData = {
+        // Generate base structured data
+        const baseStructuredData = {
           "@context": "https://schema.org" as const,
           "@type": "SoftwareApplication" as const,
           name: "Lightfast",
           applicationCategory: "DeveloperApplication",
           releaseNotes: `https://lightfast.ai/changelog/${slug}`,
-          ...(created ? { datePublished: created.toISOString() } : {}),
+          ...(publishedDate
+            ? { datePublished: publishedDate.toISOString() }
+            : {}),
           ...(entry.slug ? { softwareVersion: entry.slug } : {}),
-          description: entry.body?.plainText
-            ? entry.body.plainText.slice(0, 160)
-            : entry._title || "Lightfast changelog entry",
+          description:
+            entry.seo?.metaDescription ||
+            entry.excerpt ||
+            entry.tldr ||
+            entry.body?.plainText?.slice(0, 160) ||
+            entry._title ||
+            "Lightfast changelog entry",
+          ...(entry.featuredImage?.url
+            ? {
+                image: {
+                  "@type": "ImageObject" as const,
+                  url: entry.featuredImage.url,
+                  ...(entry.featuredImage.width
+                    ? { width: entry.featuredImage.width }
+                    : {}),
+                  ...(entry.featuredImage.height
+                    ? { height: entry.featuredImage.height }
+                    : {}),
+                },
+              }
+            : {}),
+          offers: {
+            "@type": "Offer" as const,
+            price: "0",
+            priceCurrency: "USD",
+          },
         };
+
+        // Generate FAQ schema if FAQ items exist
+        const faqItems = entry.seo?.faq?.items?.filter(
+          (item) => item.question && item.answer,
+        );
+        const faqSchema =
+          faqItems && faqItems.length > 0
+            ? {
+                "@type": "FAQPage" as const,
+                mainEntity: faqItems.map((item) => ({
+                  "@type": "Question" as const,
+                  name: item.question,
+                  acceptedAnswer: {
+                    "@type": "Answer" as const,
+                    text: item.answer,
+                  },
+                })),
+              }
+            : null;
+
+        // Combine schemas
+        const structuredData = faqSchema
+          ? {
+              "@context": "https://schema.org",
+              "@graph": [baseStructuredData, faqSchema],
+            }
+          : baseStructuredData;
 
         const sections = [
           {
@@ -141,8 +228,35 @@ export default async function ChangelogEntryPage({
                   <h1 className="text-3xl text-foreground font-semibold tracking-tight">
                     {entry._title}
                   </h1>
+
+                  {/* TL;DR Summary for AEO */}
+                  {entry.tldr && (
+                    <div className="bg-muted/50 border rounded-lg p-4 mt-6">
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        TL;DR
+                      </h2>
+                      <p className="text-foreground/90 leading-relaxed">
+                        {entry.tldr}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Featured Image */}
+                  {entry.featuredImage?.url && (
+                    <div className="relative aspect-video rounded-lg overflow-hidden mt-8">
+                      <Image
+                        src={entry.featuredImage.url}
+                        alt={entry.featuredImage.alt || entry._title || ""}
+                        width={entry.featuredImage.width || 1200}
+                        height={entry.featuredImage.height || 630}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                    </div>
+                  )}
+
                   {entry.body?.json?.content ? (
-                    <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80 prose-ul:text-foreground/80 prose-li:text-foreground/80">
+                    <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
                       <Body content={entry.body.json.content} />
                     </div>
                   ) : null}

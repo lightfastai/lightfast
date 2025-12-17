@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { exposureTrial } from "~/lib/fonts";
 import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
@@ -65,11 +66,13 @@ export default async function ChangelogPage() {
                 </div>
               ) : (
                 entries.map((item) => {
-                  const created = item._sys?.createdAt
-                    ? new Date(item._sys.createdAt)
+                  // Use publishedAt if available, fall back to createdAt
+                  const publishedTime = item.publishedAt || item._sys?.createdAt;
+                  const publishedDate = publishedTime
+                    ? new Date(publishedTime)
                     : null;
-                  const dateStr = created
-                    ? created.toLocaleDateString(undefined, {
+                  const dateStr = publishedDate
+                    ? publishedDate.toLocaleDateString(undefined, {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
@@ -118,8 +121,29 @@ export default async function ChangelogPage() {
                                 item._title
                               )}
                             </h2>
+
+                            {/* Excerpt for better list preview */}
+                            {item.excerpt && (
+                              <p className="text-foreground/70 mt-2 line-clamp-2">
+                                {item.excerpt}
+                              </p>
+                            )}
+
+                            {/* Featured image thumbnail */}
+                            {item.featuredImage?.url && (
+                              <div className="relative aspect-video rounded-lg overflow-hidden mt-4 max-w-sm">
+                                <Image
+                                  src={item.featuredImage.url}
+                                  alt={item.featuredImage.alt || item._title || ""}
+                                  width={400}
+                                  height={225}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+
                             {item.body?.json?.content ? (
-                              <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80 prose-ul:text-foreground/80 prose-li:text-foreground/80">
+                              <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
                                 <Body content={item.body.json.content} />
                               </div>
                             ) : null}

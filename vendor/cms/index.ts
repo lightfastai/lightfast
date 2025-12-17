@@ -391,6 +391,25 @@ const changelogEntryFragment = fragmentOnLoose("ChangelogPagesItem", {
   infrastructure: true,
   fixes: true,
   patches: true,
+  // AEO fields
+  featuredImage: imageFragment,
+  publishedAt: true,
+  excerpt: true,
+  tldr: true,
+  seo: {
+    metaTitle: true,
+    metaDescription: true,
+    focusKeyword: true,
+    secondaryKeyword: true,
+    canonicalUrl: true,
+    noIndex: true,
+    faq: {
+      items: {
+        question: true,
+        answer: true,
+      },
+    },
+  },
 });
 
 export type ChangelogEntryMeta = {
@@ -410,6 +429,31 @@ export type ChangelogEntry = ChangelogEntryMeta & {
   infrastructure?: string | null;
   fixes?: string | null;
   patches?: string | null;
+  // AEO fields
+  featuredImage?: {
+    url?: string | null;
+    width?: number | null;
+    height?: number | null;
+    alt?: string | null;
+    blurDataURL?: string | null;
+  } | null;
+  publishedAt?: string | null;
+  excerpt?: string | null;
+  tldr?: string | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    focusKeyword?: string | null;
+    secondaryKeyword?: string | null;
+    canonicalUrl?: string | null;
+    noIndex?: boolean | null;
+    faq?: {
+      items?: Array<{
+        question?: string | null;
+        answer?: string | null;
+      }>;
+    } | null;
+  } | null;
 };
 
 export type ChangelogEntryQueryResponse = {

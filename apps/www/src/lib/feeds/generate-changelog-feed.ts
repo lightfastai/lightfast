@@ -36,18 +36,28 @@ export async function generateChangelogFeed(): Promise<Feed> {
   // Add entries to feed (newest first, limit 50)
   entries.slice(0, 50).forEach((entry) => {
     const url = `${baseUrl}/changelog/${entry.slug || entry._slug}`;
-    const date = entry._sys?.createdAt
-      ? new Date(entry._sys.createdAt)
-      : buildDate;
+
+    // Use publishedAt if available, fall back to createdAt
+    const publishedDate = entry.publishedAt
+      ? new Date(entry.publishedAt)
+      : entry._sys?.createdAt
+        ? new Date(entry._sys.createdAt)
+        : buildDate;
+
+    // Use AEO fields for enhanced descriptions
+    const description =
+      entry.excerpt ||
+      entry.tldr ||
+      entry.body?.plainText?.slice(0, 300) ||
+      "View the latest updates from Lightfast";
 
     feed.addItem({
       title: entry._title ?? "Untitled",
       id: url,
       link: url,
-      description:
-        entry.body?.plainText?.slice(0, 300) ??
-        "View the latest updates from Lightfast",
-      date: date,
+      description,
+      date: publishedDate,
+      ...(entry.featuredImage?.url ? { image: entry.featuredImage.url } : {}),
     });
   });
 

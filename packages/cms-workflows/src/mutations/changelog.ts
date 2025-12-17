@@ -2,6 +2,22 @@ import { basehub } from "basehub";
 import { basehubEnv } from "@vendor/cms/env";
 
 /**
+ * SEO input for changelog entries
+ */
+export type ChangelogSeoInput = {
+  metaTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  secondaryKeyword?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+  faq?: Array<{
+    question: string;
+    answer: string;
+  }>;
+};
+
+/**
  * Input type for creating a changelog entry via BaseHub mutation.
  * Maps to ChangelogPagesItem schema fields.
  */
@@ -20,6 +36,17 @@ export type ChangelogEntryInput = {
   fixes?: string;
   /** Bullet list of patches */
   patches?: string;
+  // AEO fields
+  /** BaseHub asset ID for featured image */
+  featuredImageId?: string;
+  /** ISO 8601 date string for publish date (defaults to createdAt) */
+  publishedAt?: string;
+  /** Short excerpt for listings and feeds (max 300 chars) */
+  excerpt?: string;
+  /** Brief summary optimized for AI citation (50-100 words) */
+  tldr?: string;
+  /** SEO metadata and FAQ schema */
+  seo?: ChangelogSeoInput;
 };
 
 const getMutationClient = () => {
@@ -37,6 +64,47 @@ async function getChangelogCollectionId(): Promise<string> {
     },
   });
   return (result as { changelogPages: { _id: string } }).changelogPages._id;
+}
+
+/**
+ * Build SEO component value for BaseHub mutation
+ */
+function buildSeoValue(seo: ChangelogSeoInput) {
+  return {
+    type: "component",
+    value: {
+      ...(seo.metaTitle !== undefined && {
+        metaTitle: { type: "text", value: seo.metaTitle },
+      }),
+      ...(seo.metaDescription !== undefined && {
+        metaDescription: { type: "text", value: seo.metaDescription },
+      }),
+      ...(seo.focusKeyword !== undefined && {
+        focusKeyword: { type: "text", value: seo.focusKeyword },
+      }),
+      ...(seo.secondaryKeyword !== undefined && {
+        secondaryKeyword: { type: "text", value: seo.secondaryKeyword },
+      }),
+      ...(seo.canonicalUrl !== undefined && {
+        canonicalUrl: { type: "text", value: seo.canonicalUrl },
+      }),
+      ...(seo.noIndex !== undefined && {
+        noIndex: { type: "boolean", value: seo.noIndex },
+      }),
+      ...(seo.faq && seo.faq.length > 0 && {
+        faq: {
+          type: "blocks",
+          value: seo.faq.map((item) => ({
+            type: "instance",
+            value: {
+              question: { type: "text", value: item.question },
+              answer: { type: "text", value: item.answer },
+            },
+          })),
+        },
+      }),
+    },
+  };
 }
 
 /**
@@ -82,6 +150,20 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
                 type: "text",
                 value: data.patches ?? null,
               },
+              // AEO fields
+              ...(data.featuredImageId && {
+                featuredImage: { type: "image", value: data.featuredImageId },
+              }),
+              ...(data.publishedAt && {
+                publishedAt: { type: "date", value: data.publishedAt },
+              }),
+              ...(data.excerpt !== undefined && {
+                excerpt: { type: "text", value: data.excerpt },
+              }),
+              ...(data.tldr !== undefined && {
+                tldr: { type: "text", value: data.tldr },
+              }),
+              ...(data.seo && { seo: buildSeoValue(data.seo) }),
             },
           },
         }],
@@ -120,6 +202,22 @@ export async function updateChangelogEntry(
   }
   if (data.patches !== undefined) {
     valueUpdates.patches = { type: "text", value: data.patches };
+  }
+  // AEO fields
+  if (data.featuredImageId !== undefined) {
+    valueUpdates.featuredImage = { type: "image", value: data.featuredImageId };
+  }
+  if (data.publishedAt !== undefined) {
+    valueUpdates.publishedAt = { type: "date", value: data.publishedAt };
+  }
+  if (data.excerpt !== undefined) {
+    valueUpdates.excerpt = { type: "text", value: data.excerpt };
+  }
+  if (data.tldr !== undefined) {
+    valueUpdates.tldr = { type: "text", value: data.tldr };
+  }
+  if (data.seo !== undefined) {
+    valueUpdates.seo = buildSeoValue(data.seo);
   }
 
   const updateData: Record<string, unknown> = {
