@@ -25,14 +25,19 @@ async function main() {
           _title: true,
         },
       },
+      post: {
+        _id: true, // Get the collection ID for parentId
+      },
     },
   });
 
   const authors = queryResult.blog.author.items ?? [];
   const categories = queryResult.blog.categories.items ?? [];
+  const postCollectionId = queryResult.blog.post._id;
 
   console.log("blog.author.items:", authors);
   console.log("blog.categories.items:", categories);
+  console.log("blog.post collection ID:", postCollectionId);
 
   if (authors.length === 0) {
     throw new Error("No authors found in blog.author.items – create one in Basehub first.");
@@ -66,63 +71,68 @@ This post was created via a scripted transaction to validate the updated blog sc
     transaction: {
       __args: {
         autoCommit: `AI: Test blog post - ${title}`,
-        data: {
+        data: [{
           type: "create",
-          _table: "blog.post",
-          _title: title,
-          slug,
-          description,
-          body: {
-            type: "rich-text",
-            markdown: content,
-          },
-          excerpt: {
-            type: "rich-text",
-            markdown: excerpt,
-          },
-          // SeoComponent
-          seo: {
-            focusKeyword: "ai blog test",
-            secondaryKeywords: "lightfast blog, basehub, claude code",
-            metaDescription: description.slice(0, 160),
-            metaTitle: title,
-            canonicalUrl: `https://example.com/blog/${slug}`,
-            noIndex: false,
-          },
-          // DistributionComponent
-          distribution: {
-            businessGoal: "awareness",
-            primaryProductArea: "Lightfast Core",
-            targetPersona: "IC engineers",
-            campaignTag: "test-ai-blog-workflow",
-            distributionChannels: "blog, newsletter",
-          },
-          // EngagementComponent
-          engagement: {
-            ctaType: "newsletter",
-            ctaTitle: "Stay in the loop",
-            ctaButtonText: "Subscribe",
-            ctaButtonUrl: "https://example.com/newsletter",
-            ctaDescription: {
-              type: "rich-text",
-              markdown: "Subscribe to get updates on our AI content workflows.",
+          parentId: postCollectionId,
+          data: {
+            type: "instance",
+            title: title,
+            value: {
+              slug: { type: "text", value: slug },
+              description: { type: "text", value: description },
+              body: {
+                type: "rich-text",
+                value: { format: "markdown", value: content },
+              },
+              excerpt: {
+                type: "rich-text",
+                value: { format: "markdown", value: excerpt },
+              },
+              // SeoComponent
+              seo: {
+                type: "instance",
+                value: {
+                  focusKeyword: { type: "text", value: "ai blog test" },
+                  secondaryKeywords: { type: "text", value: "lightfast blog, basehub, claude code" },
+                  metaDescription: { type: "text", value: description.slice(0, 160) },
+                  metaTitle: { type: "text", value: title },
+                  canonicalUrl: { type: "text", value: `https://example.com/blog/${slug}` },
+                  noIndex: { type: "boolean", value: false },
+                },
+              },
+              // DistributionComponent
+              distribution: {
+                type: "instance",
+                value: {
+                  businessGoal: { type: "select", value: "awareness" },
+                  primaryProductArea: { type: "text", value: "Lightfast Core" },
+                  targetPersona: { type: "text", value: "IC engineers" },
+                  campaignTag: { type: "text", value: "test-ai-blog-workflow" },
+                  distributionChannels: { type: "text", value: "blog, newsletter" },
+                },
+              },
+              // EngagementComponent
+              engagement: {
+                type: "instance",
+                value: {
+                  ctaType: { type: "select", value: "newsletter" },
+                  ctaTitle: { type: "text", value: "Stay in the loop" },
+                  ctaButtonText: { type: "text", value: "Subscribe" },
+                  ctaButtonUrl: { type: "text", value: "https://example.com/newsletter" },
+                  ctaDescription: {
+                    type: "rich-text",
+                    value: { format: "markdown", value: "Subscribe to get updates on our AI content workflows." },
+                  },
+                },
+              },
+              status: { type: "select", value: "draft" },
+              publishedAt: { type: "date", value: now },
+              contentType: { type: "select", value: "tutorial" },
+              authors: { type: "reference", value: [authorId] },
+              categories: { type: "reference", value: [categoryId] },
             },
           },
-          status: "draft",
-          publishedAt: {
-            type: "date",
-            value: now,
-          },
-          contentType: "tutorial",
-          author: {
-            type: "reference",
-            ids: [authorId],
-          },
-          categories: {
-            type: "reference",
-            ids: [categoryId],
-          },
-        },
+        }],
       },
       message: true,
       status: true,

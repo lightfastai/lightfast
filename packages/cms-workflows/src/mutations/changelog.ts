@@ -27,30 +27,64 @@ const getMutationClient = () => {
 };
 
 /**
+ * Get the changelogPages collection ID for use as parentId in create mutations.
+ */
+async function getChangelogCollectionId(): Promise<string> {
+  const client = getMutationClient();
+  const result = await client.query({
+    changelogPages: {
+      _id: true,
+    },
+  });
+  return (result as { changelogPages: { _id: string } }).changelogPages._id;
+}
+
+/**
  * Create a new changelog entry in BaseHub.
  * Requires BASEHUB_ADMIN_TOKEN environment variable.
  */
 export async function createChangelogEntry(data: ChangelogEntryInput) {
   const client = getMutationClient();
+  const parentId = await getChangelogCollectionId();
 
   return client.mutation({
     transaction: {
       __args: {
         autoCommit: `Create changelog: ${data.title}`,
-        data: {
+        data: [{
           type: "create",
-          _table: "changelogPages",
-          _title: data.title,
-          slug: data.slug,
-          body: {
-            type: "rich-text",
-            markdown: data.body,
+          parentId: parentId,
+          data: {
+            type: "instance",
+            title: data.title,
+            slug: data.slug,
+            value: {
+              body: {
+                type: "rich-text",
+                value: {
+                  format: "markdown",
+                  value: data.body,
+                },
+              },
+              improvements: {
+                type: "text",
+                value: data.improvements ?? null,
+              },
+              infrastructure: {
+                type: "text",
+                value: data.infrastructure ?? null,
+              },
+              fixes: {
+                type: "text",
+                value: data.fixes ?? null,
+              },
+              patches: {
+                type: "text",
+                value: data.patches ?? null,
+              },
+            },
           },
-          improvements: data.improvements ?? null,
-          infrastructure: data.infrastructure ?? null,
-          fixes: data.fixes ?? null,
-          patches: data.patches ?? null,
-        },
+        }],
       },
       message: true,
       status: true,
@@ -67,28 +101,43 @@ export async function updateChangelogEntry(
 ) {
   const client = getMutationClient();
 
+  const valueUpdates: Record<string, unknown> = {};
+
+  if (data.body) {
+    valueUpdates.body = {
+      type: "rich-text",
+      value: { format: "markdown", value: data.body },
+    };
+  }
+  if (data.improvements !== undefined) {
+    valueUpdates.improvements = { type: "text", value: data.improvements };
+  }
+  if (data.infrastructure !== undefined) {
+    valueUpdates.infrastructure = { type: "text", value: data.infrastructure };
+  }
+  if (data.fixes !== undefined) {
+    valueUpdates.fixes = { type: "text", value: data.fixes };
+  }
+  if (data.patches !== undefined) {
+    valueUpdates.patches = { type: "text", value: data.patches };
+  }
+
   const updateData: Record<string, unknown> = {
     type: "update",
     id: entryId,
   };
 
-  if (data.title) updateData._title = data.title;
+  if (data.title) updateData.title = data.title;
   if (data.slug) updateData.slug = data.slug;
-  if (data.body) {
-    updateData.body = { type: "rich-text", markdown: data.body };
+  if (Object.keys(valueUpdates).length > 0) {
+    updateData.value = valueUpdates;
   }
-  if (data.improvements !== undefined)
-    updateData.improvements = data.improvements;
-  if (data.infrastructure !== undefined)
-    updateData.infrastructure = data.infrastructure;
-  if (data.fixes !== undefined) updateData.fixes = data.fixes;
-  if (data.patches !== undefined) updateData.patches = data.patches;
 
   return client.mutation({
     transaction: {
       __args: {
         autoCommit: `Update changelog: ${data.title ?? entryId}`,
-        data: updateData,
+        data: [updateData],
       },
       message: true,
       status: true,

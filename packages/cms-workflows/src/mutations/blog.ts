@@ -71,8 +71,24 @@ const getMutationClient = () => {
   return basehub({ token: basehubEnv.BASEHUB_ADMIN_TOKEN });
 };
 
+/**
+ * Get the blog.post collection ID for use as parentId in create mutations.
+ */
+async function getBlogPostCollectionId(): Promise<string> {
+  const client = getMutationClient();
+  const result = await client.query({
+    blog: {
+      post: {
+        _id: true,
+      },
+    },
+  });
+  return (result as { blog: { post: { _id: string } } }).blog.post._id;
+}
+
 export async function createBlogPostFromAI(data: AIGeneratedPost) {
   const client = getMutationClient();
+  const parentId = await getBlogPostCollectionId();
 
   const publishedAtIso =
     data.publishedAt?.toISOString() ?? new Date().toISOString();
@@ -88,84 +104,104 @@ export async function createBlogPostFromAI(data: AIGeneratedPost) {
 
   const seoMetaTitle = data.seo.metaTitle ?? data.title;
 
+  // Build the value object with proper field types
+  const valueFields: Record<string, unknown> = {
+    slug: { type: "text", value: data.slug ?? "" },
+    description: { type: "text", value: data.description },
+    body: {
+      type: "rich-text",
+      value: { format: "markdown", value: data.content },
+    },
+    excerpt: {
+      type: "rich-text",
+      value: { format: "markdown", value: data.excerpt },
+    },
+    status: { type: "select", value: data.status ?? "draft" },
+    publishedAt: { type: "date", value: publishedAtIso },
+    contentType: { type: "select", value: data.contentType },
+    authors: { type: "reference", value: data.authorIds },
+    categories: { type: "reference", value: data.categoryIds },
+  };
+
+  // Add optional fields
+  if (data.featuredImageId) {
+    valueFields.featuredImage = { type: "reference", value: data.featuredImageId };
+  }
+
+  if (data.ogImageId) {
+    valueFields.ogImage = { type: "reference", value: data.ogImageId };
+  }
+
+  if (data.videoId) {
+    valueFields.videoUrl = { type: "reference", value: data.videoId };
+  }
+
+  if (data.relatedPostIds && data.relatedPostIds.length > 0) {
+    valueFields.relatedPosts = { type: "reference", value: data.relatedPostIds };
+  }
+
+  // SEO component fields
+  valueFields.seo = {
+    type: "instance",
+    value: {
+      focusKeyword: { type: "text", value: data.seo.focusKeyword },
+      secondaryKeywords: { type: "text", value: data.seo.secondaryKeywords.join(", ") },
+      metaDescription: { type: "text", value: seoMetaDescription },
+      metaTitle: { type: "text", value: seoMetaTitle },
+      canonicalUrl: { type: "text", value: data.seo.canonicalUrl ?? null },
+      noIndex: { type: "boolean", value: data.seo.noIndex ?? false },
+    },
+  };
+
+  // Distribution component
+  if (data.distribution) {
+    valueFields.distribution = {
+      type: "instance",
+      value: {
+        businessGoal: { type: "select", value: data.distribution.businessGoal ?? null },
+        primaryProductArea: { type: "text", value: data.distribution.primaryProductArea ?? null },
+        targetPersona: { type: "text", value: data.distribution.targetPersona ?? null },
+        campaignTag: { type: "text", value: data.distribution.campaignTag ?? null },
+        distributionChannels: { type: "text", value: distributionChannels ?? null },
+      },
+    };
+  }
+
+  // Engagement component
+  if (data.engagement) {
+    const engagementValue: Record<string, unknown> = {
+      ctaType: { type: "select", value: data.engagement.ctaType ?? null },
+      ctaTitle: { type: "text", value: data.engagement.ctaTitle ?? null },
+      ctaButtonText: { type: "text", value: data.engagement.ctaButtonText ?? null },
+      ctaButtonUrl: { type: "text", value: data.engagement.ctaButtonUrl ?? null },
+    };
+
+    if (data.engagement.ctaDescriptionMarkdown) {
+      engagementValue.ctaDescription = {
+        type: "rich-text",
+        value: { format: "markdown", value: data.engagement.ctaDescriptionMarkdown },
+      };
+    }
+
+    valueFields.engagement = {
+      type: "instance",
+      value: engagementValue,
+    };
+  }
+
   return client.mutation({
     transaction: {
       __args: {
         autoCommit: `AI: Create post - ${data.title}`,
-        data: {
-          // BaseHub Transaction "create" for the blog.post list
+        data: [{
           type: "create",
-          _table: "blog.post",
-          _title: data.title,
-          slug: data.slug,
-          description: data.description,
-          body: {
-            type: "rich-text",
-            markdown: data.content,
+          parentId: parentId,
+          data: {
+            type: "instance",
+            title: data.title,
+            value: valueFields,
           },
-          excerpt: {
-            type: "rich-text",
-            markdown: data.excerpt,
-          },
-          seo: {
-            focusKeyword: data.seo.focusKeyword,
-            secondaryKeywords: data.seo.secondaryKeywords.join(", "),
-            metaDescription: seoMetaDescription,
-            metaTitle: seoMetaTitle,
-            canonicalUrl: data.seo.canonicalUrl,
-            noIndex: data.seo.noIndex ?? false,
-          },
-          distribution: data.distribution && {
-            businessGoal: data.distribution.businessGoal ?? null,
-            primaryProductArea: data.distribution.primaryProductArea ?? null,
-            targetPersona: data.distribution.targetPersona ?? null,
-            campaignTag: data.distribution.campaignTag ?? null,
-            distributionChannels: distributionChannels ?? null,
-          },
-          engagement: data.engagement && {
-            ctaType: data.engagement.ctaType ?? null,
-            ctaTitle: data.engagement.ctaTitle ?? null,
-            ctaButtonText: data.engagement.ctaButtonText ?? null,
-            ctaButtonUrl: data.engagement.ctaButtonUrl ?? null,
-            ctaDescription: data.engagement.ctaDescriptionMarkdown && {
-              type: "rich-text",
-              markdown: data.engagement.ctaDescriptionMarkdown,
-            },
-          },
-          status: data.status ?? "draft",
-          publishedAt: {
-            type: "date",
-            value: publishedAtIso,
-          },
-          contentType: data.contentType,
-          featuredImage: data.featuredImageId && {
-            type: "reference",
-            id: data.featuredImageId,
-          },
-          ogImage: data.ogImageId && {
-            type: "reference",
-            id: data.ogImageId,
-          },
-          videoUrl: data.videoId && {
-            type: "reference",
-            id: data.videoId,
-          },
-          author: {
-            type: "reference",
-            ids: data.authorIds,
-          },
-          categories: {
-            type: "reference",
-            ids: data.categoryIds,
-          },
-          relatedPosts:
-            data.relatedPostIds && data.relatedPostIds.length > 0
-              ? {
-                  type: "reference",
-                  ids: data.relatedPostIds,
-                }
-              : undefined,
-        },
+        }],
       },
       message: true,
       status: true,
@@ -183,11 +219,13 @@ export async function updatePostStatus(
     transaction: {
       __args: {
         autoCommit: `Update post status to ${status}`,
-        data: {
+        data: [{
           type: "update",
           id: postId,
-          status,
-        },
+          value: {
+            status: { type: "select", value: status },
+          },
+        }],
       },
       message: true,
       status: true,
