@@ -14,10 +14,13 @@ import {
 } from "@db/console/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import { generateObject } from "ai";
-import { gateway } from "@ai-sdk/gateway";
 import { z } from "zod";
 import { recordJobMetric } from "../../../lib/jobs";
+import {
+  createTracedModel,
+  generateObject,
+  buildNeuralTelemetry,
+} from "./ai-helpers";
 
 const SUMMARY_THRESHOLD = 5; // Generate summary after 5 observations
 const SUMMARY_AGE_HOURS = 24; // Regenerate if summary > 24 hours old
@@ -36,6 +39,8 @@ const clusterSummarySchema = z.object({
     .enum(["active", "completed", "stalled"])
     .describe("Cluster activity status"),
 });
+
+type ClusterSummary = z.infer<typeof clusterSummarySchema>;
 
 export const clusterSummaryCheck = inngest.createFunction(
   {
@@ -148,18 +153,20 @@ export const clusterSummaryCheck = inngest.createFunction(
       return { status: "skipped", reason: "no_observations" };
     }
 
-    // Step 3: Generate summary with LLM
-    const summary = await step.run("generate-summary", async () => {
-      const observationSummaries = observations.map((obs) => ({
-        type: obs.observationType,
-        title: obs.title,
-        actor: (obs.actor as { name?: string } | null)?.name ?? "unknown",
-        date: obs.occurredAt,
-        snippet: obs.content?.slice(0, 200) ?? "",
-      }));
+    // Step 3: Generate summary with LLM using step.ai.wrap()
+    const observationSummaries = observations.map((obs) => ({
+      type: obs.observationType,
+      title: obs.title,
+      actor: (obs.actor as { name?: string } | null)?.name ?? "unknown",
+      date: obs.occurredAt,
+      snippet: obs.content.slice(0, 200),
+    }));
 
-      const { object } = await generateObject({
-        model: gateway("openai/gpt-4.1-mini"),
+    const summaryResult = (await step.ai.wrap(
+      "generate-summary",
+      generateObject,
+      {
+        model: createTracedModel("openai/gpt-4.1-mini"),
         schema: clusterSummarySchema,
         prompt: `Summarize this cluster of engineering activity observations.
 
@@ -171,10 +178,15 @@ ${JSON.stringify(observationSummaries, null, 2)}
 
 Generate a concise summary, key topics, key contributors, and activity status.`,
         temperature: 0.3,
-      });
+        experimental_telemetry: buildNeuralTelemetry("neural-cluster-summary", {
+          clusterId,
+          workspaceId,
+          observationCount: observations.length,
+        }),
+      } as Parameters<typeof generateObject>[0]
+    )) as { object: ClusterSummary };
 
-      return object;
-    });
+    const summary = summaryResult.object;
 
     // Step 4: Update cluster with summary
     await step.run("update-cluster", async () => {

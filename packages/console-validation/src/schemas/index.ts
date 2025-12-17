@@ -18,3 +18,4 @@ export * from "./metrics";
 export * from "./activities";
 export * from "./entities";
 export * from "./org-api-key";
+export * from "./classification";

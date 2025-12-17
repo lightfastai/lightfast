@@ -10,17 +10,20 @@
  * - "Using the new caching layer" → definition: caching-layer
  */
 
-import { generateObject } from "ai";
-import { gateway } from "@ai-sdk/gateway";
 import { log } from "@vendor/observability/log";
 import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
 import type { ExtractedEntity } from "@repo/console-types";
+import {
+  createTracedModel,
+  generateObject,
+  buildNeuralTelemetry,
+} from "./ai-helpers";
 
 /**
  * Build the prompt for LLM entity extraction
  */
-function buildExtractionPrompt(title: string, content: string): string {
+export function buildExtractionPrompt(title: string, content: string): string {
   return `Extract structured entities from this engineering observation.
 
 OBSERVATION TITLE:
@@ -88,10 +91,14 @@ export async function extractEntitiesWithLLM(
 
   try {
     const { object } = await generateObject({
-      model: gateway("openai/gpt-5.1-instant"),
+      model: createTracedModel("openai/gpt-5.1-instant"),
       schema: llmEntityExtractionResponseSchema,
       prompt: buildExtractionPrompt(title, content),
       temperature: config.temperature,
+      experimental_telemetry: buildNeuralTelemetry("neural-entity-extraction", {
+        observationId: observationId ?? "unknown",
+        contentLength: content.length,
+      }),
     });
 
     const latency = Date.now() - startTime;

@@ -397,6 +397,9 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@3.25.76)
+      braintrust:
+        specifier: 'catalog:'
+        version: 0.2.6(@aws-sdk/credential-provider-web-identity@3.928.0)(zod@3.25.76)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0

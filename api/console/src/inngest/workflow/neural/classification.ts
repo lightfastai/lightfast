@@ -1,60 +1,60 @@
+/**
+ * Neural Observation Classification
+ *
+ * Classifies source events into semantic categories using Claude Haiku.
+ * Provides primary category, secondary tags, topics, and confidence scores.
+ *
+ * Used by observation-capture.ts step.ai.wrap() for inline classification.
+ */
+
 import type { SourceEvent } from "@repo/console-types";
 
-/**
- * Semantic classification for neural observations.
- *
- * Current implementation: Regex-based pattern matching to categorize
- * events into semantic types.
- *
- * TODO (Future Enhancement): Replace with LLM-based classification using
- * Claude Haiku for semantic understanding. The LLM approach would:
- * - Understand intent beyond keyword matching
- * - Handle ambiguous cases (e.g., "refactor that fixes a bug")
- * - Provide confidence scores
- * - Extract secondary categories contextually
- *
- * Example future implementation:
- * ```typescript
- * import { generateObject } from "@repo/ai/ai";
- * import { anthropic } from "@ai-sdk/anthropic";
- *
- * const { object } = await generateObject({
- *   model: anthropic("claude-3-5-haiku-latest"),
- *   schema: classificationSchema,
- *   prompt: `Classify this event: ${sourceEvent.title}`,
- * });
- * ```
- */
+// Re-export types from validation schema
+export type { PrimaryCategory, ClassificationResponse } from "@repo/console-validation";
 
 /**
- * Primary semantic categories for observations.
+ * Build the classification prompt for Claude Haiku
  */
-export type PrimaryCategory =
-  | "bug_fix"
-  | "feature"
-  | "refactor"
-  | "documentation"
-  | "testing"
-  | "infrastructure"
-  | "security"
-  | "performance"
-  | "incident"
-  | "decision"
-  | "discussion"
-  | "release"
-  | "deployment"
-  | "other";
+export function buildClassificationPrompt(sourceEvent: SourceEvent): string {
+  return `Classify this engineering event into categories.
 
-export interface ClassificationResult {
-  primaryCategory: PrimaryCategory;
-  secondaryCategories: string[];
+EVENT DETAILS:
+- Source: ${sourceEvent.source}
+- Type: ${sourceEvent.sourceType}
+- Title: ${sourceEvent.title}
+${sourceEvent.body ? `- Description: ${sourceEvent.body.slice(0, 1000)}` : ""}
+
+CATEGORIES (choose the most appropriate primary category):
+- bug_fix: Bug fixes, patches, error corrections
+- feature: New features, additions, implementations
+- refactor: Code restructuring, cleanup, reorganization
+- documentation: Docs, README, comments, JSDoc
+- testing: Tests, specs, coverage improvements
+- infrastructure: CI/CD, pipelines, Docker, config
+- security: Security fixes, auth changes, permissions
+- performance: Optimizations, speed improvements
+- incident: Outages, emergencies, hotfixes
+- decision: ADRs, architecture decisions
+- discussion: RFCs, proposals, design discussions
+- release: Version releases, changelogs
+- deployment: Deployments, shipping to production
+- other: Doesn't fit other categories
+
+RULES:
+1. Choose ONE primary category that best fits
+2. Add up to 3 secondary categories if clearly relevant
+3. Extract up to 5 topic keywords from the content
+4. Provide confidence (0.0-1.0) based on clarity of classification
+5. For ambiguous cases (e.g., "refactor that fixes a bug"), choose the dominant intent
+
+Classify this event.`;
 }
 
 /**
- * Category detection patterns.
+ * Category detection patterns for fallback classification.
  * Order matters - first match wins for primary category.
  */
-const CATEGORY_PATTERNS: Array<{ category: PrimaryCategory; patterns: RegExp[] }> = [
+const CATEGORY_PATTERNS: { category: string; patterns: RegExp[] }[] = [
   // Release/deployment (check first - specific event types)
   {
     category: "release",
@@ -133,53 +133,43 @@ const CATEGORY_PATTERNS: Array<{ category: PrimaryCategory; patterns: RegExp[] }
 ];
 
 /**
- * Secondary category patterns for additional context.
+ * Fallback regex-based classification for when LLM is unavailable
+ * or for low-priority events that don't warrant LLM cost.
  */
-const SECONDARY_PATTERNS: Array<{ tag: string; pattern: RegExp }> = [
-  // Technical areas
-  { tag: "api", pattern: /\bapi\b/i },
-  { tag: "frontend", pattern: /\b(frontend|ui|ux|react|vue|angular)\b/i },
-  { tag: "backend", pattern: /\b(backend|server|api|endpoint)\b/i },
-  { tag: "database", pattern: /\b(database|db|sql|postgres|mysql|mongo)\b/i },
-  { tag: "auth", pattern: /\b(auth|login|session|jwt|oauth)\b/i },
+export function classifyObservationFallback(sourceEvent: SourceEvent): {
+  primaryCategory: string;
+  secondaryCategories: string[];
+} {
+  const body = sourceEvent.body || "";
+  const text = `${sourceEvent.sourceType} ${sourceEvent.title} ${body}`.toLowerCase();
 
-  // Platforms
-  { tag: "github", pattern: /\bgithub\b/i },
-  { tag: "vercel", pattern: /\bvercel\b/i },
-  { tag: "aws", pattern: /\baws\b/i },
-
-  // Languages/frameworks
-  { tag: "typescript", pattern: /\b(typescript|tsx?)\b/i },
-  { tag: "react", pattern: /\breact\b/i },
-  { tag: "nextjs", pattern: /\bnext\.?js\b/i },
-];
-
-/**
- * Classify an observation into semantic categories.
- */
-export function classifyObservation(sourceEvent: SourceEvent): ClassificationResult {
-  const textToAnalyze = `${sourceEvent.sourceType} ${sourceEvent.title} ${sourceEvent.body || ""}`;
-
-  // Find primary category (first match wins)
-  let primaryCategory: PrimaryCategory = "other";
+  // Priority-ordered patterns - first match wins
+  let primaryCategory = "other";
   for (const { category, patterns } of CATEGORY_PATTERNS) {
-    if (patterns.some((p) => p.test(textToAnalyze))) {
+    if (patterns.some((p) => p.test(text))) {
       primaryCategory = category;
       break;
     }
   }
 
-  // Find secondary categories (all matches)
-  const secondaryCategories: string[] = [];
-  for (const { tag, pattern } of SECONDARY_PATTERNS) {
-    if (pattern.test(textToAnalyze) && !secondaryCategories.includes(tag)) {
-      secondaryCategories.push(tag);
-    }
-  }
+  // Extract secondary categories (all matches except primary)
+  const secondaryCategories = CATEGORY_PATTERNS
+    .filter(({ category, patterns }) =>
+      category !== primaryCategory && patterns.some((p) => p.test(text))
+    )
+    .map(({ category }) => category)
+    .slice(0, 3);
 
-  // Limit to 3 secondary categories
-  return {
-    primaryCategory,
-    secondaryCategories: secondaryCategories.slice(0, 3),
-  };
+  return { primaryCategory, secondaryCategories };
+}
+
+/**
+ * Legacy function - redirects to fallback for backwards compatibility
+ * @deprecated Use classifyObservationFallback or LLM classification via step.ai.wrap()
+ */
+export function classifyObservation(sourceEvent: SourceEvent): {
+  primaryCategory: string;
+  secondaryCategories: string[];
+} {
+  return classifyObservationFallback(sourceEvent);
 }

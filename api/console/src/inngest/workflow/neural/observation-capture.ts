@@ -30,8 +30,18 @@ import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import type { SourceEvent } from "@repo/console-types";
 import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
-import { classifyObservation } from "./classification";
+import {
+  buildClassificationPrompt,
+  classifyObservationFallback,
+} from "./classification";
+import { classificationResponseSchema } from "@repo/console-validation";
+import type { ClassificationResponse } from "@repo/console-validation";
 import { extractEntities, extractFromReferences } from "./entity-extraction-patterns";
+import {
+  createTracedModel,
+  generateObject,
+  buildNeuralTelemetry,
+} from "./ai-helpers";
 import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
@@ -532,23 +542,66 @@ export const observationCapture = inngest.createFunction(
       return ws;
     });
 
-    // Step 5: PARALLEL processing (no interdependencies)
-    const [classificationResult, embeddingResult, extractedEntities, resolvedActor] = await Promise.all([
-      // Classification
-      step.run("classify", async () => {
+    // Step 5a: Classification with Claude Haiku (uses step.ai.wrap)
+    const classificationResult = await (async () => {
+      try {
+        const llmResult = (await step.ai.wrap(
+          "classify-observation",
+          generateObject,
+          {
+            model: createTracedModel("anthropic/claude-3-5-haiku-latest"),
+            schema: classificationResponseSchema,
+            prompt: buildClassificationPrompt(sourceEvent),
+            temperature: 0.2,
+            experimental_telemetry: buildNeuralTelemetry("neural-classification", {
+              workspaceId,
+              sourceType: sourceEvent.sourceType,
+              source: sourceEvent.source,
+            }),
+          } as Parameters<typeof generateObject>[0]
+        )) as { object: ClassificationResponse };
+
+        const classification = llmResult.object;
         const keywordTopics = extractTopics(sourceEvent);
-        const classification = classifyObservation(sourceEvent);
 
         // Merge and deduplicate topics
         const topics = [
           ...keywordTopics,
           classification.primaryCategory,
           ...classification.secondaryCategories,
+          ...classification.topics,
         ].filter((t, i, arr) => arr.indexOf(t) === i);
 
         return { topics, classification };
-      }),
+      } catch (error) {
+        // Fallback to regex-based classification on LLM failure
+        log.warn("Classification LLM failed, using fallback", {
+          error: String(error),
+          sourceId: sourceEvent.sourceId,
+        });
+        const fallback = classifyObservationFallback(sourceEvent);
+        const keywordTopics = extractTopics(sourceEvent);
+        const topics = [
+          ...keywordTopics,
+          fallback.primaryCategory,
+          ...fallback.secondaryCategories,
+        ].filter((t, i, arr) => arr.indexOf(t) === i);
 
+        return {
+          topics,
+          classification: {
+            primaryCategory: fallback.primaryCategory,
+            secondaryCategories: fallback.secondaryCategories,
+            topics: [],
+            confidence: 0.5,
+            reasoning: "Fallback regex classification",
+          } as ClassificationResponse,
+        };
+      }
+    })();
+
+    // Step 5b: PARALLEL processing (no interdependencies)
+    const [embeddingResult, extractedEntities, resolvedActor] = await Promise.all([
       // Multi-view embedding generation (title, content, summary)
       step.run("generate-multi-view-embeddings", async (): Promise<MultiViewEmbeddingResult> => {
         const embeddingProvider = createEmbeddingProviderForWorkspace(

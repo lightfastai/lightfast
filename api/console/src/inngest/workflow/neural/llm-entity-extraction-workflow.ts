@@ -1,10 +1,8 @@
 /**
  * LLM Entity Extraction Workflow
  *
- * Fire-and-forget workflow that extracts contextual entities from observations
- * using LLM. Triggered after observation capture for qualifying observations.
- *
- * This complements rule-based extraction without blocking the main pipeline.
+ * Asynchronously extracts semantic entities from observation content
+ * using LLM (GPT-5.1-instant) with Braintrust tracing and Inngest AI observability.
  */
 
 import { eq, sql } from "drizzle-orm";
@@ -14,18 +12,19 @@ import {
   workspaceNeuralObservations,
 } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
-import { inngest } from "../../client/client";
-import { extractEntitiesWithLLM } from "./llm-entity-extraction";
+import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
+import type { LLMEntityExtractionResponse } from "@repo/console-validation";
+import type { ExtractedEntity } from "@repo/console-types";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
 
-/**
- * LLM Entity Extraction Workflow
- *
- * Fire-and-forget workflow that extracts contextual entities from observations
- * using LLM. Triggered after observation capture for qualifying observations.
- *
- * This complements rule-based extraction without blocking the main pipeline.
- */
+import { inngest } from "../../client/client";
+import {
+  createTracedModel,
+  generateObject,
+  buildNeuralTelemetry,
+} from "./ai-helpers";
+import { buildExtractionPrompt } from "./llm-entity-extraction";
+
 export const llmEntityExtractionWorkflow = inngest.createFunction(
   {
     id: "apps-console/neural.llm-entity-extraction",
@@ -33,21 +32,19 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     retries: 2,
     debounce: {
       key: "event.data.observationId",
-      period: "1m", // LLM_ENTITY_EXTRACTION_CONFIG.debounceMs = 60_000
+      period: "1m",
     },
   },
   { event: "apps-console/neural/llm-entity-extraction.requested" },
   async ({ event, step }) => {
-    const { observationId, workspaceId } = event.data;
-    const requestId = event.id;
+    const { workspaceId, observationId } = event.data;
+    const config = LLM_ENTITY_EXTRACTION_CONFIG;
 
-    // Step 1: Fetch observation content
-    // Fetch observation by externalId (observationId is now nanoid string)
+    // Step 1: Fetch observation
     const observation = await step.run("fetch-observation", async () => {
       const [obs] = await db
         .select({
           id: workspaceNeuralObservations.id,
-          externalId: workspaceNeuralObservations.externalId,
           title: workspaceNeuralObservations.title,
           content: workspaceNeuralObservations.content,
         })
@@ -59,35 +56,56 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     });
 
     if (!observation) {
-      log.warn("LLM entity extraction skipped - observation not found", {
-        requestId,
-        observationId,
-      });
       return { status: "skipped", reason: "observation_not_found" };
     }
 
-    // Step 2: Extract entities with LLM
-    const llmEntities = await step.run("extract-entities-llm", async () => {
-      return await extractEntitiesWithLLM(
-        observation.title,
-        observation.content ?? "",
-        { observationId, requestId }
-      );
-    });
+    // Skip if content too short
+    const content = observation.content;
+    const contentLength = content.length;
+    if (contentLength < config.minContentLength) {
+      return { status: "skipped", reason: "content_too_short", contentLength };
+    }
 
-    if (llmEntities.length === 0) {
-      log.info("LLM entity extraction completed - no entities found", {
-        requestId,
-        observationId,
-      });
+    // Step 2: Extract entities with LLM using step.ai.wrap()
+    const extractionResult = (await step.ai.wrap(
+      "extract-entities-llm",
+      generateObject,
+      {
+        model: createTracedModel("openai/gpt-5.1-instant"),
+        schema: llmEntityExtractionResponseSchema,
+        prompt: buildExtractionPrompt(
+          observation.title,
+          content
+        ),
+        temperature: config.temperature,
+        experimental_telemetry: buildNeuralTelemetry("neural-entity-extraction", {
+          observationId,
+          workspaceId,
+          contentLength,
+        }),
+      } as Parameters<typeof generateObject>[0]
+    )) as { object: LLMEntityExtractionResponse };
+
+    // Filter by confidence threshold
+    const entities: ExtractedEntity[] = extractionResult.object.entities
+      .filter((e) => e.confidence >= config.minConfidence)
+      .map((e) => ({
+        category: e.category,
+        key: e.key,
+        value: e.value,
+        confidence: e.confidence,
+        evidence: e.reasoning ?? `LLM extracted: ${e.category}`,
+      }));
+
+    if (entities.length === 0) {
       return { status: "completed", entitiesExtracted: 0 };
     }
 
-    // Step 3: Store entities (upsert pattern)
+    // Step 3: Store entities
     const storedCount = await step.run("store-entities", async () => {
       let count = 0;
 
-      for (const entity of llmEntities) {
+      for (const entity of entities) {
         try {
           await db
             .insert(workspaceNeuralEntities)
@@ -95,8 +113,8 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
               workspaceId,
               category: entity.category,
               key: entity.key,
-              value: entity.value,
-              sourceObservationId: observation.id,  // Use internal BIGINT id
+              value: entity.value ?? null,
+              sourceObservationId: observation.id,
               evidenceSnippet: entity.evidence,
               confidence: entity.confidence,
             })
@@ -110,14 +128,12 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
                 lastSeenAt: new Date().toISOString(),
                 occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
                 updatedAt: new Date().toISOString(),
-                // Update confidence if LLM is more confident
                 confidence: sql`GREATEST(${workspaceNeuralEntities.confidence}, ${entity.confidence})`,
               },
             });
           count++;
         } catch (error) {
           log.error("Failed to store LLM entity", {
-            requestId,
             observationId,
             entity,
             error,
@@ -128,16 +144,16 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       return count;
     });
 
-    log.info("LLM entity extraction workflow completed", {
-      requestId,
+    log.info("LLM entity extraction completed", {
       observationId,
-      entitiesExtracted: llmEntities.length,
+      workspaceId,
+      entitiesExtracted: entities.length,
       entitiesStored: storedCount,
     });
 
     return {
       status: "completed",
-      entitiesExtracted: llmEntities.length,
+      entitiesExtracted: entities.length,
       entitiesStored: storedCount,
     };
   }
