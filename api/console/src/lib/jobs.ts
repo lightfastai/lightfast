@@ -21,6 +21,8 @@ import type {
 	EntityExtractionTags,
 	ClusterTags,
 	ProfileUpdateTags,
+	ActorResolutionTags,
+	ClusterAffinityTags,
 } from "@repo/console-validation";
 import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
@@ -328,6 +330,19 @@ export async function recordJobMetric(
 				value: 1;
 				unit: "count";
 				tags: ProfileUpdateTags;
+		  }
+		// Analytics metrics
+		| {
+				type: "actor_resolution";
+				value: 1;
+				unit: "count";
+				tags: ActorResolutionTags;
+		  }
+		| {
+				type: "cluster_affinity";
+				value: 1;
+				unit: "count";
+				tags: ClusterAffinityTags;
 		  }
 	) & {
 		clerkOrgId: string;

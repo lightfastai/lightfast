@@ -19,6 +19,8 @@ import type {
   EntityExtractionTags,
   ClusterTags,
   ProfileUpdateTags,
+  ActorResolutionTags,
+  ClusterAffinityTags,
 } from "@repo/console-validation";
 
 /**
@@ -160,6 +162,8 @@ export type {
   EntityExtractionTags,
   ClusterTags,
   ProfileUpdateTags,
+  ActorResolutionTags,
+  ClusterAffinityTags,
 } from "@repo/console-validation";
 
 /**
@@ -178,6 +182,10 @@ export type {
  * - entities_extracted: requires observationId and entityCount
  * - cluster_*: requires clusterId
  * - profile_updated: requires actorId
+ *
+ * Analytics metrics:
+ * - actor_resolution: requires resolved, source, and optional method
+ * - cluster_affinity: requires affinityScore, joined, and optional clusterId
  */
 export type OperationMetricTags =
   | JobDurationTags
@@ -186,4 +194,6 @@ export type OperationMetricTags =
   | NeuralObservationTags
   | EntityExtractionTags
   | ClusterTags
-  | ProfileUpdateTags;
+  | ProfileUpdateTags
+  | ActorResolutionTags
+  | ClusterAffinityTags;

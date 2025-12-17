@@ -781,6 +781,32 @@ export const observationCapture = inngest.createFunction(
       }),
     ]);
 
+    // Record actor_resolution analytics metric (non-blocking)
+    // Determines resolution method based on source and actor ID format
+    const getActorResolutionMethod = (): "github_id" | "commit_sha" | "username" | "none" => {
+      if (!resolvedActor.actorId) return "none";
+      if (sourceEvent.source === "github") return "github_id";
+      // For Vercel: check if we got a numeric ID (resolved via commit SHA) or username
+      if (sourceEvent.source === "vercel") {
+        const actorIdPart = resolvedActor.actorId.split(":")[1];
+        return actorIdPart && /^\d+$/.test(actorIdPart) ? "commit_sha" : "username";
+      }
+      return "github_id";
+    };
+
+    void recordJobMetric({
+      clerkOrgId,
+      workspaceId,
+      type: "actor_resolution",
+      value: 1,
+      unit: "count",
+      tags: {
+        resolved: !!resolvedActor.actorId,
+        source: sourceEvent.source,
+        method: getActorResolutionMethod(),
+      },
+    });
+
     const { topics } = classificationResult;
     // embeddingResult is now MultiViewEmbeddingResult with title, content, summary views
 
@@ -804,6 +830,21 @@ export const observationCapture = inngest.createFunction(
         indexName: workspace.settings.embedding.indexName,
         namespace: workspace.settings.embedding.namespaceName,
       });
+    });
+
+    // Record cluster_affinity analytics metric (non-blocking)
+    // Tracks how well observations fit into clusters
+    void recordJobMetric({
+      clerkOrgId,
+      workspaceId,
+      type: "cluster_affinity",
+      value: 1,
+      unit: "count",
+      tags: {
+        affinityScore: clusterResult.affinityScore ?? 0,
+        joined: !clusterResult.isNew,
+        clusterId: String(clusterResult.clusterId),
+      },
     });
 
     // Step 6: Upsert multi-view vectors to Pinecone
