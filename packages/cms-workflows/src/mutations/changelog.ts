@@ -67,11 +67,11 @@ async function getChangelogCollectionId(): Promise<string> {
 }
 
 /**
- * Build SEO component value for BaseHub mutation
+ * Build SEO instance value for BaseHub mutation
  */
 function buildSeoValue(seo: ChangelogSeoInput) {
   return {
-    type: "component",
+    type: "instance",
     value: {
       ...(seo.metaTitle !== undefined && {
         metaTitle: { type: "text", value: seo.metaTitle },
@@ -93,7 +93,7 @@ function buildSeoValue(seo: ChangelogSeoInput) {
       }),
       ...(seo.faq && seo.faq.length > 0 && {
         faq: {
-          type: "blocks",
+          type: "list",
           value: seo.faq.map((item) => ({
             type: "instance",
             value: {
@@ -125,8 +125,9 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
           data: {
             type: "instance",
             title: data.title,
-            slug: data.slug,
             value: {
+              // Custom slug field (different from _slug system field)
+              slug: { type: "text", value: data.slug },
               body: {
                 type: "rich-text",
                 value: {
@@ -134,22 +135,19 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
                   value: data.body,
                 },
               },
-              improvements: {
-                type: "text",
-                value: data.improvements ?? null,
-              },
-              infrastructure: {
-                type: "text",
-                value: data.infrastructure ?? null,
-              },
-              fixes: {
-                type: "text",
-                value: data.fixes ?? null,
-              },
-              patches: {
-                type: "text",
-                value: data.patches ?? null,
-              },
+              // Optional categorized sections - only include if provided
+              ...(data.improvements && {
+                improvements: { type: "text", value: data.improvements },
+              }),
+              ...(data.infrastructure && {
+                infrastructure: { type: "text", value: data.infrastructure },
+              }),
+              ...(data.fixes && {
+                fixes: { type: "text", value: data.fixes },
+              }),
+              ...(data.patches && {
+                patches: { type: "text", value: data.patches },
+              }),
               // AEO fields
               ...(data.featuredImageId && {
                 featuredImage: { type: "image", value: data.featuredImageId },

@@ -49,6 +49,7 @@
     "feed": "^5.1.0",
     "framer-motion": "^11.18.2",
     "geist": "catalog:",
+    "gray-matter": "^4.0.3",
     "jotai": "^2.12.3",
     "lucide-react": "catalog:",
     "neverthrow": "catalog:",
@@ -65,6 +66,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@repo/cms-workflows": "workspace:^",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
