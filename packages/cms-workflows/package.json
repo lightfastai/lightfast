@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./mutations/blog": "./src/mutations/blog.ts"
+    "./mutations/blog": "./src/mutations/blog.ts",
+    "./mutations/changelog": "./src/mutations/changelog.ts"
   },
   "license": "MIT",
   "scripts": {
