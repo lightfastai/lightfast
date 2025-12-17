@@ -477,7 +477,7 @@ export const changelog = {
   entriesQuery: fragmentOnLoose("Query", {
     changelogPages: {
       __args: {
-        orderBy: "_sys_createdAt__DESC",
+        orderBy: "publishedAt__DESC",
       },
       items: changelogEntryFragment,
     },
@@ -486,7 +486,7 @@ export const changelog = {
   entriesMetaQuery: fragmentOnLoose("Query", {
     changelogPages: {
       __args: {
-        orderBy: "_sys_createdAt__DESC",
+        orderBy: "publishedAt__DESC",
       },
       items: changelogEntryMetaFragment,
     },
@@ -495,7 +495,7 @@ export const changelog = {
   latestEntryQuery: fragmentOnLoose("Query", {
     changelogPages: {
       __args: {
-        orderBy: "_sys_createdAt__DESC",
+        orderBy: "publishedAt__DESC",
       },
       item: changelogEntryFragment,
     },

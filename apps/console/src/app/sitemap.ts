@@ -175,9 +175,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((entry) => !!entry.slug)
       .map((entry) => ({
         url: `${base}/changelog/${entry.slug}`,
-        lastModified: entry._sys?.createdAt
-          ? new Date(entry._sys.createdAt)
-          : new Date(),
+        lastModified: entry.publishedAt
+          ? new Date(entry.publishedAt)
+          : entry._sys?.createdAt
+            ? new Date(entry._sys.createdAt)
+            : new Date(),
         changeFrequency: "monthly" as const,
         priority: 0.6,
       })),

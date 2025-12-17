@@ -67,12 +67,22 @@ Parsed:
    - For manual input, parse comma-separated items as individual changes
    - **CRITICAL**: Complete this step before spawning any sub-agents
 
-2. **Create tracking plan using TodoWrite:**
+2. **Ask for version number:**
+   - Use `AskUserQuestion` to prompt for the changelog version
+   - Question: "What version number is this changelog for?"
+   - Accept either format: `4` or `0-4` (both produce slug prefix `0-4`)
+   - Parse the input:
+     - If user enters `4` → version is `4`
+     - If user enters `0-4` → version is `4` (strip the `0-` prefix)
+   - The final slug will be: `0-{version}-lightfast-{feature-slug}`
+   - Example: version `4` + features "Neural Memory" → `0-4-lightfast-neural-memory`
+
+3. **Create tracking plan using TodoWrite:**
    - Break down the changelog into trackable items
    - Create todos for each feature/change to document
    - Track fact-checking progress for each claim
 
-3. **Spawn parallel sub-agents for fact-checking:**
+4. **Spawn parallel sub-agents for fact-checking:**
    - Create multiple Task agents to verify claims concurrently
    - Use specialized agents that know how to research the codebase:
 
@@ -95,14 +105,14 @@ Parsed:
    - Each agent knows its job - just tell it what you're looking for
    - Don't write detailed prompts about HOW to search - the agents already know
 
-4. **Wait for all sub-agents to complete and synthesize findings:**
+5. **Wait for all sub-agents to complete and synthesize findings:**
    - **IMPORTANT**: Wait for ALL sub-agent tasks to complete before proceeding
    - Compile verification results for each claimed feature
    - Note any discrepancies between PR claims and actual implementation
    - Identify limitations or partial implementations to disclose
    - Include specific file paths for reference
 
-5. **Categorize changes:**
+6. **Categorize changes:**
    - Group verified changes into:
      - **Features**: New capabilities (use PR labels or title keywords)
      - **Improvements**: Enhancements to existing features
@@ -110,7 +120,7 @@ Parsed:
      - **Fixes**: Bug fixes (usually not in changelog unless significant)
    - Remove or flag any claims that couldn't be verified
 
-6. **Generate changelog using skill templates:**
+7. **Generate changelog using skill templates:**
    - Load skill from `.claude/skills/changelog-writer/SKILL.md`
    - Apply templates from `resources/templates.md`
    - Follow SEO requirements from `resources/seo-requirements.md`
@@ -123,13 +133,13 @@ Parsed:
      - No emoji - professional tone
      - **DO NOT include "Key files:" sections** - file references belong ONLY in the Metadata section at the bottom under "Fact-checked files"
 
-7. **Save output:**
+8. **Save output:**
    - **Filename format**: `{title-slug}-{YYYYMMDD-HHMMSS}.md`
    - **Title slug**: Top 2-3 features in kebab-case, max 50 characters
    - **Output path**: `thoughts/changelog/{filename}`
    - Example: `github-file-sync-semantic-search-20251217-143022.md`
 
-8. **Present results:**
+9. **Present results:**
    ```
    ## Changelog Generated
 
@@ -250,7 +260,8 @@ No changes to document. Please provide:
 - Keep the main agent focused on synthesis, not deep file reading
 - **Critical ordering**: Follow the numbered steps exactly
   - ALWAYS fetch PR data first before spawning sub-tasks (step 1)
-  - ALWAYS wait for all sub-agents to complete before writing (step 4)
+  - ALWAYS ask for version number before fact-checking (step 2)
+  - ALWAYS wait for all sub-agents to complete before writing (step 5)
   - NEVER write the changelog with unverified claims
 - **Accuracy first**: It's better to document fewer features accurately than many features incorrectly
 - **Disclosure over hype**: Always disclose limitations, beta status, partial implementations
