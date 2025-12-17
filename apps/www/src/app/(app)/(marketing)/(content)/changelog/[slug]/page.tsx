@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { changelog, type ChangelogEntryQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
@@ -113,6 +115,9 @@ export default async function ChangelogEntryPage({
         const entry = response.changelogPages?.item;
         if (!entry) notFound();
 
+        // Fetch adjacent entries for navigation
+        const adjacentEntries = await changelog.getAdjacentEntries(slug);
+
         // Use publishedAt if available, fall back to createdAt
         const publishedTime = entry.publishedAt || entry._sys?.createdAt;
         const publishedDate = publishedTime ? new Date(publishedTime) : null;
@@ -212,97 +217,145 @@ export default async function ChangelogEntryPage({
 
             <div className="max-w-7xl mx-auto px-4">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-              <div className="md:col-span-2 flex items-center gap-2">
-                {entry.slug && (
-                  <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
-                    {entry.slug}
-                  </span>
-                )}
-                <time className="text-sm text-muted-foreground whitespace-nowrap">
-                  {dateStr}
-                </time>
-              </div>
-
-              <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
-                <div>
-                  <h1 className="text-3xl text-foreground font-semibold tracking-tight">
-                    {entry._title}
-                  </h1>
-
-                  {/* TL;DR Summary for AEO */}
-                  {entry.tldr && (
-                    <div className="bg-muted/50 border rounded-lg p-4 mt-6">
-                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                        TL;DR
-                      </h2>
-                      <p className="text-foreground/90 leading-relaxed">
-                        {entry.tldr}
-                      </p>
-                    </div>
+                <div className="md:col-span-2 flex items-center gap-2">
+                  {entry.slug && (
+                    <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
+                      {entry.slug}
+                    </span>
                   )}
-
-                  {/* Featured Image */}
-                  {entry.featuredImage?.url && (
-                    <div className="relative aspect-video rounded-lg overflow-hidden mt-8">
-                      <Image
-                        src={entry.featuredImage.url}
-                        alt={entry.featuredImage.alt || entry._title || ""}
-                        width={entry.featuredImage.width || 1200}
-                        height={entry.featuredImage.height || 630}
-                        className="w-full h-full object-cover"
-                        priority
-                      />
-                    </div>
-                  )}
-
-                  {entry.body?.json?.content ? (
-                    <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
-                      <Body content={entry.body.json.content} />
-                    </div>
-                  ) : null}
+                  <time className="text-sm text-muted-foreground whitespace-nowrap">
+                    {dateStr}
+                  </time>
                 </div>
 
-                {sections.length > 0 && (
-                  <div className="space-y-4">
-                    {sections.map((section) => {
-                      const items = parseBulletPoints(section.content);
-                      const count = items.length;
+                <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
+                  <div>
+                    <h1 className="text-3xl text-foreground font-semibold tracking-tight">
+                      {entry._title}
+                    </h1>
 
-                      return (
-                        <div
-                          key={section.key}
-                          className="border rounded-sm overflow-hidden"
+                    {/* TL;DR Summary for AEO */}
+                    {entry.tldr && (
+                      <div className="bg-muted/50 border rounded-lg p-4 mt-6">
+                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                          TL;DR
+                        </h2>
+                        <p className="text-foreground/90 leading-relaxed">
+                          {entry.tldr}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Featured Image */}
+                    {entry.featuredImage?.url && (
+                      <div className="relative aspect-video rounded-lg overflow-hidden mt-8">
+                        <Image
+                          src={entry.featuredImage.url}
+                          alt={entry.featuredImage.alt || entry._title || ""}
+                          width={entry.featuredImage.width || 1200}
+                          height={entry.featuredImage.height || 630}
+                          className="w-full h-full object-cover"
+                          priority
+                        />
+                      </div>
+                    )}
+
+                    {entry.body?.json?.content ? (
+                      <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
+                        <Body content={entry.body.json.content} />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {sections.length > 0 && (
+                    <div className="space-y-4">
+                      {sections.map((section) => {
+                        const items = parseBulletPoints(section.content);
+                        const count = items.length;
+
+                        return (
+                          <div
+                            key={section.key}
+                            className="border rounded-sm overflow-hidden"
+                          >
+                            <Accordion type="multiple" className="w-full">
+                              <AccordionItem
+                                value={section.key}
+                                className="border-none"
+                              >
+                                <AccordionTrigger className="text-base font-semibold px-4 py-3">
+                                  {section.title} ({count})
+                                </AccordionTrigger>
+                                <AccordionContent className="px-4">
+                                  <ul className="space-y-2 text-foreground/80">
+                                    {items.map((item, idx) => (
+                                      <li key={idx} className="leading-relaxed">
+                                        • {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {entry.body?.readingTime ? (
+                    <div className="text-xs text-muted-foreground">
+                      {entry.body.readingTime} min read
+                    </div>
+                  ) : null}
+
+                  {/* Previous/Next Navigation */}
+                  {(adjacentEntries.previous || adjacentEntries.next) && (
+                    <nav
+                      aria-label="Changelog navigation"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12 pb-4 pt-8"
+                    >
+                      {adjacentEntries.previous ? (
+                        <Link
+                          href={`/changelog/${adjacentEntries.previous.slug}`}
+                          className="group"
                         >
-                          <Accordion type="multiple" className="w-full">
-                            <AccordionItem value={section.key} className="border-none">
-                              <AccordionTrigger className="text-base font-semibold px-4 py-3">
-                                {section.title} ({count})
-                              </AccordionTrigger>
-                              <AccordionContent className="px-4">
-                                <ul className="space-y-2 text-foreground/80">
-                                  {items.map((item, idx) => (
-                                    <li key={idx} className="leading-relaxed">
-                                      • {item}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {entry.body?.readingTime ? (
-                  <div className="text-xs text-muted-foreground">
-                    {entry.body.readingTime} min read
-                  </div>
-                ) : null}
-              </article>
+                          <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <ChevronLeft className="h-4 w-4" />
+                              Previous post
+                            </span>
+                            <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                              {adjacentEntries.previous._title}
+                            </span>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div />
+                      )}
+                      {adjacentEntries.next ? (
+                        <Link
+                          href={`/changelog/${adjacentEntries.next.slug}`}
+                          className="group md:text-right"
+                        >
+                          <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                            <span className="flex items-center justify-end gap-1 text-sm text-muted-foreground md:justify-end">
+                              Next post
+                              <ChevronRight className="h-4 w-4" />
+                            </span>
+                            <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                              {adjacentEntries.next._title}
+                            </span>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div />
+                      )}
+                    </nav>
+                  )}
+                </article>
+              </div>
             </div>
-          </div>
           </>
         );
       }}

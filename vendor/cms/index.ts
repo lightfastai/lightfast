@@ -468,6 +468,11 @@ export type ChangelogEntriesQueryResponse = {
   } | null;
 };
 
+export type ChangelogAdjacentEntries = {
+  previous?: ChangelogEntryMeta | null;
+  next?: ChangelogEntryMeta | null;
+};
+
 export const changelog = {
   entriesQuery: fragmentOnLoose("Query", {
     changelogPages: {
@@ -475,6 +480,15 @@ export const changelog = {
         orderBy: "_sys_createdAt__DESC",
       },
       items: changelogEntryFragment,
+    },
+  }),
+
+  entriesMetaQuery: fragmentOnLoose("Query", {
+    changelogPages: {
+      __args: {
+        orderBy: "_sys_createdAt__DESC",
+      },
+      items: changelogEntryMetaFragment,
     },
   }),
 
@@ -547,6 +561,34 @@ export const changelog = {
       return data.changelogPages.item as ChangelogEntry;
     } catch {
       return null;
+    }
+  },
+
+  getAdjacentEntries: async (
+    currentSlug: string,
+  ): Promise<ChangelogAdjacentEntries> => {
+    try {
+      const data: any = await basehub.query(changelog.entriesMetaQuery as any);
+      const entries = (data.changelogPages?.items ?? []) as ChangelogEntryMeta[];
+
+      // Find current entry index
+      const currentIndex = entries.findIndex(
+        (entry) => entry.slug === currentSlug,
+      );
+
+      if (currentIndex === -1) {
+        return { previous: null, next: null };
+      }
+
+      // Entries are ordered newest first (DESC), so:
+      // - previous (older) = index + 1
+      // - next (newer) = index - 1
+      return {
+        previous: entries[currentIndex + 1] ?? null,
+        next: entries[currentIndex - 1] ?? null,
+      };
+    } catch {
+      return { previous: null, next: null };
     }
   },
 };
