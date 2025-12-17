@@ -75,6 +75,14 @@ Every draft MUST include:
 - `seo.metaDescription`, `seo.focusKeyword` (SEO)
 - `_internal.status`, `_internal.source_prs` (traceability)
 
+### Slug Format
+
+Always use: `0-<version>-lightfast-<feature-slug>`
+
+Examples:
+- `0-1-lightfast-github-file-sync-semantic-search`
+- `0-2-lightfast-pr-metadata-linear-integration`
+
 Recommended:
 - `seo.secondaryKeyword`, `seo.faq[]` (enhanced SEO)
 

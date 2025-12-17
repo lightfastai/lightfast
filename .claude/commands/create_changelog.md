@@ -168,7 +168,7 @@ The frontmatter structure maps directly to `ChangelogEntryInput` type, enabling 
 ---
 # Fields that map directly to ChangelogEntryInput
 title: "{2-3 key features}"
-slug: "{version-slug}"
+slug: "0-{version}-lightfast-{feature-slug}"  # e.g., "0-1-lightfast-github-file-sync"
 publishedAt: "{YYYY-MM-DD}"
 excerpt: "{Max 300 char summary for listings and RSS feeds}"
 tldr: "{50-100 word summary for AI citation. Self-contained paragraph covering key user benefits.}"

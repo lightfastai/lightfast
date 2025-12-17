@@ -34,7 +34,7 @@
 ```yaml
 ---
 title: "GitHub File Sync, Semantic Search, Team Workspaces"
-slug: "0-1"
+slug: "0-1-lightfast-github-file-sync-semantic-search"
 publishedAt: "2025-01-15"
 excerpt: "Connect GitHub repos with webhook-driven sync, search code semantically with vector + full-text retrieval, and organize work in isolated team workspaces."
 tldr: "Lightfast v0.1 brings GitHub file sync with automatic webhook updates, semantic code search combining vector embeddings and BM25 full-text with cross-encoder reranking, and team workspaces with Clerk SSO. Currently supports file contents; PR metadata coming in v0.2."

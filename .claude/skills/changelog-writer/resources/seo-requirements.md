@@ -73,7 +73,7 @@ The frontmatter structure maps directly to `ChangelogEntryInput` type in `@repo/
 | Field | Required | Constraints | Example |
 |-------|----------|-------------|---------|
 | `title` | Yes | 2-3 key features | "GitHub File Sync, Semantic Search, Team Workspaces" |
-| `slug` | Yes | URL-safe version identifier | "0-1", "neural-memory-day-1" |
+| `slug` | Yes | Format: `0-<version>-lightfast-<feature-slug>` | "0-1-lightfast-github-file-sync-semantic-search" |
 | `publishedAt` | Yes | ISO 8601 date | "2025-01-15" |
 
 ### AEO Fields (Answer Engine Optimization)
