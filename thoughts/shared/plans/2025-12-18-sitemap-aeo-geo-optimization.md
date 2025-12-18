@@ -258,8 +258,8 @@ export type PostMeta = {
 - [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
-- [ ] Verify CMS queries return `lastModifiedAt` field for changelog entries
-- [ ] Verify CMS queries return `lastModifiedAt` field for blog posts
+- [x] Verify CMS queries return `lastModifiedAt` field for changelog entries
+- [x] Verify CMS queries return `lastModifiedAt` field for blog posts
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation before proceeding to Phase 2.
 
@@ -598,11 +598,11 @@ Per Google's guidance and the research: "If you can't provide accurate lastmod d
 - [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
-- [ ] Start dev server and verify sitemap at `http://localhost:4107/sitemap.xml`
-- [ ] Verify CMS content (blog posts, changelog entries) has `lastModified` dates from CMS
-- [ ] Verify listing pages have dates derived from most recent entry
-- [ ] Verify static pages have NO `lastModified` field
-- [ ] Verify changelog frequency is `weekly`
+- [x] Start dev server and verify sitemap at `http://localhost:4107/sitemap.xml`
+- [x] Verify CMS content (blog posts, changelog entries) has `lastModified` dates from CMS
+- [x] Verify listing pages have dates derived from most recent entry
+- [x] Verify static pages have NO `lastModified` field
+- [x] Verify changelog frequency is `weekly`
 
 **Implementation Note**: After completing this phase and all automated verification passes, deploy to production and verify sitemap at `https://lightfast.ai/sitemap.xml`.
 
