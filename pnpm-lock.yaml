@@ -2362,9 +2362,6 @@ importers:
       '@vendor/cms':
         specifier: workspace:*
         version: link:../../vendor/cms
-      '@vendor/mastra':
-        specifier: workspace:*
-        version: link:../../vendor/mastra
       basehub:
         specifier: ^9.5.2
         version: 9.5.2(@babel/runtime@7.28.4)(@types/react@19.2.2)(react@19.2.1)
@@ -2377,6 +2374,9 @@ importers:
       unified:
         specifier: ^11.0.0
         version: 11.0.5
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

@@ -8,6 +8,7 @@
       "default": "./index.ts"
     },
     "./env": "./env.ts",
+    "./types": "./types.ts",
     "./next-config": "./next-config.ts",
     "./components/*": "./components/*"
   },

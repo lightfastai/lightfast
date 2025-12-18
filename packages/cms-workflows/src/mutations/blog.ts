@@ -1,12 +1,19 @@
 import { basehub } from "basehub";
-import type { Scalars } from "basehub";
+import type { CreateOp } from "basehub/api-transaction";
 import { basehubEnv } from "@vendor/cms/env";
+import type {
+  ContentType,
+  BusinessGoal,
+  CTAType,
+  PostStatus,
+} from "@vendor/cms/types";
 
-// Reuse scalar enums from generated Basehub types
-export type ContentType = Scalars["BSHBSelect__442379851"];
-export type BusinessGoal = Scalars["BSHBSelect__1319627841"];
-export type CTAType = Scalars["BSHBSelect_957971831"];
-export type PostStatus = Scalars["BSHBSelect_950708073"];
+// Re-export types for consumers of this module
+export type { ContentType, BusinessGoal, CTAType, PostStatus };
+
+// Extract the instance value type from CreateOp
+type CreateInstanceOp = Extract<CreateOp, { type: "instance" }>;
+type MutationValue = NonNullable<CreateInstanceOp["value"]>;
 
 // Narrow input type for distribution component (matches DistributionComponent fields)
 export type DistributionInput = {
@@ -86,7 +93,11 @@ async function getBlogPostCollectionId(): Promise<string> {
   return (result as { blog: { post: { _id: string } } }).blog.post._id;
 }
 
-export async function createBlogPostFromAI(data: AIGeneratedPost) {
+type MutationResult = {
+  transaction: { message: string | null; status: string };
+};
+
+export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<MutationResult> {
   const client = getMutationClient();
   const parentId = await getBlogPostCollectionId();
 
@@ -105,7 +116,7 @@ export async function createBlogPostFromAI(data: AIGeneratedPost) {
   const seoMetaTitle = data.seo.metaTitle ?? data.title;
 
   // Build the value object with proper field types
-  const valueFields: Record<string, unknown> = {
+  const valueFields: MutationValue = {
     slug: { type: "text", value: data.slug ?? "" },
     description: { type: "text", value: data.description },
     body: {
@@ -169,7 +180,7 @@ export async function createBlogPostFromAI(data: AIGeneratedPost) {
 
   // Engagement component
   if (data.engagement) {
-    const engagementValue: Record<string, unknown> = {
+    const engagementValue: MutationValue = {
       ctaType: { type: "select", value: data.engagement.ctaType ?? null },
       ctaTitle: { type: "text", value: data.engagement.ctaTitle ?? null },
       ctaButtonText: { type: "text", value: data.engagement.ctaButtonText ?? null },
@@ -212,7 +223,7 @@ export async function createBlogPostFromAI(data: AIGeneratedPost) {
 export async function updatePostStatus(
   postId: string,
   status: Extract<PostStatus, "published" | "archived">,
-) {
+): Promise<MutationResult> {
   const client = getMutationClient();
 
   return client.mutation({

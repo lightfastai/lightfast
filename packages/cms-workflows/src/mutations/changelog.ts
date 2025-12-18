@@ -1,6 +1,20 @@
 import { basehub } from "basehub";
+import type { CreateOp, Operation } from "basehub/api-transaction";
 import { basehubEnv } from "@vendor/cms/env";
 import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
+
+// Extract the instance value type from CreateOp for properly typed mutation values
+type CreateInstanceOp = Extract<CreateOp, { type: "instance" }>;
+type MutationValue = NonNullable<CreateInstanceOp["value"]>;
+
+// Extract update operation types
+type UpdateOp = Extract<Operation, { type: "update" }>;
+type UpdateValue = NonNullable<UpdateOp["value"]>;
+
+// Return type for mutation functions
+type MutationResult = {
+  transaction: { message: string | null; status: string };
+};
 
 /**
  * SEO input for changelog entries
@@ -72,34 +86,34 @@ async function getChangelogCollectionId(): Promise<string> {
  */
 function buildSeoValue(seo: ChangelogSeoInput) {
   return {
-    type: "instance",
+    type: "instance" as const,
     value: {
       ...(seo.metaTitle !== undefined && {
-        metaTitle: { type: "text", value: seo.metaTitle },
+        metaTitle: { type: "text" as const, value: seo.metaTitle },
       }),
       ...(seo.metaDescription !== undefined && {
-        metaDescription: { type: "text", value: seo.metaDescription },
+        metaDescription: { type: "text" as const, value: seo.metaDescription },
       }),
       ...(seo.focusKeyword !== undefined && {
-        focusKeyword: { type: "text", value: seo.focusKeyword },
+        focusKeyword: { type: "text" as const, value: seo.focusKeyword },
       }),
       ...(seo.secondaryKeyword !== undefined && {
-        secondaryKeyword: { type: "text", value: seo.secondaryKeyword },
+        secondaryKeyword: { type: "text" as const, value: seo.secondaryKeyword },
       }),
       ...(seo.canonicalUrl !== undefined && {
-        canonicalUrl: { type: "text", value: seo.canonicalUrl },
+        canonicalUrl: { type: "text" as const, value: seo.canonicalUrl },
       }),
       ...(seo.noIndex !== undefined && {
-        noIndex: { type: "boolean", value: seo.noIndex },
+        noIndex: { type: "boolean" as const, value: seo.noIndex },
       }),
       ...(seo.faq && seo.faq.length > 0 && {
         faq: {
-          type: "list",
+          type: "collection" as const,
           value: seo.faq.map((item) => ({
-            type: "instance",
+            type: "instance" as const,
             value: {
-              question: { type: "text", value: item.question },
-              answer: { type: "text", value: item.answer },
+              question: { type: "text" as const, value: item.question },
+              answer: { type: "text" as const, value: item.answer },
             },
           })),
         },
@@ -112,7 +126,7 @@ function buildSeoValue(seo: ChangelogSeoInput) {
  * Create a new changelog entry in BaseHub.
  * Requires BASEHUB_ADMIN_TOKEN environment variable.
  */
-export async function createChangelogEntry(data: ChangelogEntryInput) {
+export async function createChangelogEntry(data: ChangelogEntryInput): Promise<MutationResult> {
   const client = getMutationClient();
   const parentId = await getChangelogCollectionId();
 
@@ -151,7 +165,7 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
               }),
               // AEO fields
               ...(data.featuredImageId && {
-                featuredImage: { type: "image", value: data.featuredImageId },
+                featuredImage: { type: "image" as const, value: { url: data.featuredImageId } },
               }),
               ...(data.publishedAt && {
                 publishedAt: { type: "date", value: data.publishedAt },
@@ -179,62 +193,58 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
 export async function updateChangelogEntry(
   entryId: string,
   data: Partial<ChangelogEntryInput>,
-) {
+): Promise<MutationResult> {
   const client = getMutationClient();
 
-  const valueUpdates: Record<string, unknown> = {};
-
-  if (data.body) {
-    valueUpdates.body = {
-      type: "rich-text",
-      value: { format: "json", value: markdownToBaseHubJson(data.body) },
-    };
-  }
-  if (data.improvements !== undefined) {
-    valueUpdates.improvements = { type: "text", value: data.improvements };
-  }
-  if (data.infrastructure !== undefined) {
-    valueUpdates.infrastructure = { type: "text", value: data.infrastructure };
-  }
-  if (data.fixes !== undefined) {
-    valueUpdates.fixes = { type: "text", value: data.fixes };
-  }
-  if (data.patches !== undefined) {
-    valueUpdates.patches = { type: "text", value: data.patches };
-  }
-  // AEO fields
-  if (data.featuredImageId !== undefined) {
-    valueUpdates.featuredImage = { type: "image", value: data.featuredImageId };
-  }
-  if (data.publishedAt !== undefined) {
-    valueUpdates.publishedAt = { type: "date", value: data.publishedAt };
-  }
-  if (data.excerpt !== undefined) {
-    valueUpdates.excerpt = { type: "text", value: data.excerpt };
-  }
-  if (data.tldr !== undefined) {
-    valueUpdates.tldr = { type: "text", value: data.tldr };
-  }
-  if (data.seo !== undefined) {
-    valueUpdates.seo = buildSeoValue(data.seo);
-  }
-
-  const updateData: Record<string, unknown> = {
-    type: "update",
-    id: entryId,
+  // Build value updates object with proper type assertions
+  const valueUpdates: UpdateValue = {
+    ...(data.body && {
+      body: {
+        type: "rich-text" as const,
+        value: { format: "json" as const, value: markdownToBaseHubJson(data.body) },
+      },
+    }),
+    ...(data.improvements !== undefined && {
+      improvements: { type: "text" as const, value: data.improvements },
+    }),
+    ...(data.infrastructure !== undefined && {
+      infrastructure: { type: "text" as const, value: data.infrastructure },
+    }),
+    ...(data.fixes !== undefined && {
+      fixes: { type: "text" as const, value: data.fixes },
+    }),
+    ...(data.patches !== undefined && {
+      patches: { type: "text" as const, value: data.patches },
+    }),
+    // AEO fields - for updates, image fields use "media" type
+    ...(data.featuredImageId !== undefined && {
+      featuredImage: { type: "media" as const, value: { url: data.featuredImageId } },
+    }),
+    ...(data.publishedAt !== undefined && {
+      publishedAt: { type: "date" as const, value: data.publishedAt },
+    }),
+    ...(data.excerpt !== undefined && {
+      excerpt: { type: "text" as const, value: data.excerpt },
+    }),
+    ...(data.tldr !== undefined && {
+      tldr: { type: "text" as const, value: data.tldr },
+    }),
+    ...(data.seo !== undefined && {
+      seo: buildSeoValue(data.seo),
+    }),
   };
-
-  if (data.title) updateData.title = data.title;
-  if (data.slug) updateData.slug = data.slug;
-  if (Object.keys(valueUpdates).length > 0) {
-    updateData.value = valueUpdates;
-  }
 
   return client.mutation({
     transaction: {
       __args: {
         autoCommit: `Update changelog: ${data.title ?? entryId}`,
-        data: [updateData],
+        data: [{
+          type: "update" as const,
+          id: entryId,
+          ...(data.title && { title: data.title }),
+          ...(data.slug && { slug: data.slug }),
+          ...(Object.keys(valueUpdates).length > 0 && { value: valueUpdates }),
+        }],
       },
       message: true,
       status: true,

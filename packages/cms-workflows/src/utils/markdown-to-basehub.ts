@@ -31,7 +31,13 @@ import type {
   Delete,
 } from "mdast";
 
-// BaseHub RichText types (from @basehub/mutation-api-helpers)
+// Import official basehub RichTextNode type for type compatibility
+import type { RichTextNode as BasehubRichTextNode } from "basehub/api-transaction";
+
+// Re-export basehub's type for consumers
+export type RichTextNode = BasehubRichTextNode;
+
+// Mark type matches basehub's Mark type
 type Mark =
   | { type: "bold" | "italic" | "underline" | "strike" | "kbd" }
   | {
@@ -46,63 +52,6 @@ type Mark =
     }
   | { type: "highlight"; attrs: { color?: string | null } };
 
-type BaseRichTextNode = {
-  type: string;
-  attrs?: Record<string, unknown>;
-  marks?: Mark[];
-  content?: RichTextNode[];
-};
-
-type TextNode = {
-  type: "text";
-  text: string;
-  marks?: Mark[];
-};
-
-type CodeBlockNode = {
-  type: "codeBlock";
-  attrs: { language?: string };
-  content?: [{ type: "text"; text: string }];
-};
-
-type HeadingNode = {
-  type: "heading";
-  attrs: { level: number; id?: string };
-  content?: RichTextNode[];
-};
-
-type OrderedListNode = {
-  type: "orderedList";
-  attrs?: { start: number };
-  content?: RichTextNode[];
-};
-
-type TableCellNode = {
-  type: "tableCell" | "tableHeader" | "tableFooter";
-  attrs: { colspan: number; rowspan: number; colwidth?: null | number[] };
-  content?: RichTextNode[];
-};
-
-type ImageNode = {
-  type: "image";
-  attrs: {
-    src: string;
-    alt?: string;
-    width?: number;
-    height?: number;
-    caption?: string;
-  };
-};
-
-export type RichTextNode =
-  | BaseRichTextNode
-  | TextNode
-  | CodeBlockNode
-  | HeadingNode
-  | OrderedListNode
-  | TableCellNode
-  | ImageNode;
-
 /**
  * Context passed through the AST conversion to track state like marks
  */
@@ -114,10 +63,10 @@ interface ConversionContext {
 /**
  * Create a text node with optional marks
  */
-function createTextNode(text: string, marks: Mark[] = []): TextNode {
-  const node: TextNode = { type: "text", text };
+function createTextNode(text: string, marks: Mark[] = []): RichTextNode {
+  const node: RichTextNode = { type: "text" as const, text };
   if (marks.length > 0) {
-    node.marks = [...marks];
+    (node as { marks?: Mark[] }).marks = [...marks];
   }
   return node;
 }
@@ -228,12 +177,12 @@ function convertInlineContent(
       case "image": {
         const imgNode = child as Image;
         result.push({
-          type: "image",
+          type: "image" as const,
           attrs: {
             src: imgNode.url,
             alt: imgNode.alt ?? undefined,
           },
-        } as ImageNode);
+        });
         break;
       }
       default: {
@@ -269,19 +218,20 @@ function convertNode(
       const headingText = extractText(heading);
       const content = convertInlineContent(heading.children as Content[], ctx);
       return {
-        type: "heading",
-        attrs: { level: heading.depth, id: slugify(headingText) },
+        type: "heading" as const,
+        attrs: { level: heading.depth },
         content,
-      } as HeadingNode;
+      };
     }
 
     case "code": {
       const codeBlock = node as Code;
       return {
-        type: "codeBlock",
+        type: "codeBlock" as const,
         attrs: { language: codeBlock.lang ?? undefined },
-        content: [{ type: "text", text: codeBlock.value }],
-      } as CodeBlockNode;
+        text: codeBlock.value,
+        content: [{ type: "text" as const, text: codeBlock.value }],
+      };
     }
 
     case "list": {
@@ -292,12 +242,12 @@ function convertNode(
 
       if (list.ordered) {
         return {
-          type: "orderedList",
+          type: "orderedList" as const,
           attrs: { start: list.start ?? 1 },
           content: listContent,
-        } as OrderedListNode;
+        };
       }
-      return { type: "bulletList", content: listContent };
+      return { type: "bulletList" as const, content: listContent };
     }
 
     case "listItem": {
@@ -351,7 +301,7 @@ function convertNode(
 
         const cells = row.children.map((cell: TableCell) => {
           const tableCell = cell;
-          const cellType = isHeaderRow ? "tableHeader" : "tableCell";
+          const cellType = (isHeaderRow ? "tableHeader" : "tableCell") as "tableHeader" | "tableCell";
 
           // Table cells should contain a paragraph wrapping the inline content
           const cellInlineContent = convertInlineContent(
@@ -362,25 +312,25 @@ function convertNode(
           return {
             type: cellType,
             attrs: { colspan: 1, rowspan: 1 },
-            content: [{ type: "paragraph", content: cellInlineContent }],
-          } as TableCellNode;
+            content: [{ type: "paragraph" as const, content: cellInlineContent }],
+          };
         });
 
-        tableContent.push({ type: "tableRow", content: cells });
+        tableContent.push({ type: "tableRow" as const, content: cells });
       }
 
-      return { type: "table", content: tableContent };
+      return { type: "table" as const, content: tableContent };
     }
 
     case "image": {
       const img = node as Image;
       return {
-        type: "image",
+        type: "image" as const,
         attrs: {
           src: img.url,
           alt: img.alt ?? undefined,
         },
-      } as ImageNode;
+      };
     }
 
     default: {
