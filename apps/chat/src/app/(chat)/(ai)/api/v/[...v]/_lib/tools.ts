@@ -1,6 +1,6 @@
 import type { InferUITools } from "ai";
-import type { RuntimeContext } from "lightfast/server/adapters/types";
-import type { ToolFactorySet } from "lightfast/tool";
+import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
+import type { ToolFactorySet } from "@lightfastai/ai-sdk/tool";
 
 import type { AppRuntimeContext } from "@repo/chat-ai-types";
 import { createDocumentTool } from "@repo/chat-ai/create-document";

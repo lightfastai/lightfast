@@ -11,7 +11,10 @@ export function createClient() {
 
   const client = postgres(connectionString, {
     ssl: "require",
-    max: 10, // Connection pool size
+    max: 20,              // Match PlanetScale default_pool_size
+    prepare: false,       // Required for PgBouncer transaction mode
+    idle_timeout: 20,     // Serverless: close idle connections after 20s
+    connect_timeout: 10,  // Fail fast on connection issues
   });
 
   return drizzle(client, { schema });

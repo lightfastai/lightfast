@@ -119,7 +119,7 @@ export interface ActivityData {
  */
 export async function recordCriticalActivity(
   data: ActivityData
-): Promise<{ success: true; activityId: string } | { success: false; error: string }> {
+): Promise<{ success: true; activityId: number } | { success: false; error: string }> {
   try {
     // Validate activity type (action, category, metadata)
     const validation = activityTypeSchema.safeParse({
@@ -160,7 +160,7 @@ export async function recordCriticalActivity(
       action: data.action,
     });
 
-    return { success: true, activityId: result?.id ?? "" };
+    return { success: true, activityId: result?.id ?? 0 };
   } catch (error) {
     log.error("Failed to record critical activity", {
       workspaceId: data.workspaceId,

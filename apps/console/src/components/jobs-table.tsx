@@ -92,8 +92,6 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   const commitSha: string | undefined = job.input && "afterSha" in job.input ? String(job.input.afterSha) : undefined;
   const commitMessage: string | undefined = job.input && "commitMessage" in job.input ? String(job.input.commitMessage) : undefined;
   const branch: string | undefined = job.input && "branch" in job.input ? String(job.input.branch) : undefined;
-  // Store slug comes from the joined workspaceStores table
-  const storeSlug = job.storeSlug;
 
   // Restart mutation
   const restartMutation = useMutation(
@@ -122,7 +120,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   const handleRetry = (e: React.MouseEvent) => {
     e.stopPropagation();
     restartMutation.mutate({
-      jobId: job.id,
+      jobId: String(job.id),
       clerkOrgSlug,
       workspaceName,
     });
@@ -146,13 +144,13 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
         onClick={() => hasDetails && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-6">
-          {/* Left: Commit SHA + Store slug */}
+          {/* Left: Commit SHA + Job ID */}
           <div className="flex flex-col gap-1 w-[120px] flex-shrink-0">
             <span className="font-mono text-sm">
-              {commitSha?.substring(0, 8) ?? job.id.substring(0, 8)}
+              {commitSha?.substring(0, 8) ?? String(job.id)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {storeSlug ?? "—"}
+              {job.name}
             </span>
           </div>
 

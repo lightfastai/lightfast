@@ -12,17 +12,17 @@ export const faqs = [
   {
     question: "What is Lightfast?",
     answer:
-      "Lightfast is a memory system built for teams. It indexes your code, docs, tickets, and conversations so people and AI agents can search by meaning, get answers with sources, and trace decisions across your organization.",
+      "Lightfast is a memory layer for software teams. It indexes your code, docs, tickets, and conversations so engineers and AI agents can search by meaning, get answers with sources, and trace decisions across your entire engineering org.",
   },
   {
     question: "How is this different from regular search?",
     answer:
-      "Traditional search matches keywords. Lightfast understands intent and meaning. Ask 'who knows about authentication' and it finds the people who've worked on auth code, discussed auth issues, or reviewed auth PRs—even if they never used that exact word. It's semantic search plus Neural Memory that tracks decisions, changes, and expertise across your entire organization.",
+      "Traditional search matches keywords. Lightfast understands intent and meaning. Ask 'who knows about authentication' and it finds the people who've worked on auth code, discussed auth issues, or reviewed auth PRs—even if they never used that exact word. It's semantic search plus the memory layer that tracks decisions, changes, and expertise across your entire engineering org.",
   },
   {
-    question: "What is Neural Memory?",
+    question: "What is the memory layer?",
     answer:
-      "Neural Memory captures the important moments in your team's history—decisions made, incidents resolved, features shipped. It builds expertise profiles showing who knows what, tracks how things evolved over time, and generates summaries of team activity. This enables powerful queries like 'what decisions were made about the database migration' or 'who has context on the payment system'.",
+      "The memory layer captures the important moments in your team's history—decisions made, incidents resolved, features shipped. It builds expertise profiles showing who knows what, tracks how things evolved over time, and generates summaries of team activity. This enables powerful queries like 'what decisions were made about the database migration' or 'who has context on the payment system'.",
   },
   {
     question: "What tools and platforms do you integrate with?",
@@ -52,7 +52,7 @@ export const faqs = [
   {
     question: "How does pricing work?",
     answer:
-      "We offer a free Starter plan for up to 3 users with 2 sources. Our Team plan is $12/user/month with semantic search and Neural Memory. Business plan includes unlimited everything with advanced features. You pay for users who can search, not for how much you search. Check our pricing page for full details.",
+      "We offer a free Starter plan for up to 3 users with 2 sources. Our Team plan is $12/user/month with semantic search and the memory layer. Business plan includes unlimited everything with advanced features. You pay for users who can search, not for how much you search. Check our pricing page for full details.",
   },
 ];
 

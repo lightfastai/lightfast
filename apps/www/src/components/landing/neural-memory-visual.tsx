@@ -1,5 +1,5 @@
 /**
- * Neural Memory Visual Component
+ * Memory Layer Visual Component
  *
  * Showcases decision capture and observation extraction.
  * Displays timeline of key moments automatically extracted from sources.

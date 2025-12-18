@@ -97,7 +97,7 @@ export class SourcesService extends DeusApiM2MService {
    */
   async updateConfigStatus(params: {
     githubRepoId: string;
-    configStatus: "configured" | "unconfigured";
+    configStatus: "configured" | "awaiting_config";
     configPath: string | null;
   }) {
     return await this.call(

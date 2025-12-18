@@ -70,6 +70,9 @@ const postMetaFragment = fragmentOnLoose("PostItem", {
   _slug: true,
   _title: true,
   slug: true,
+  _sys: {
+    lastModifiedAt: true,
+  },
   authors: {
     _title: true,
     avatar: imageFragment,
@@ -114,6 +117,9 @@ export type PostMeta = {
   _slug?: string | null;
   _title?: string | null;
   slug?: string | null;
+  _sys?: {
+    lastModifiedAt?: string | null;
+  } | null;
   authors?: Array<{
     _title?: string | null;
     avatar?: {
@@ -374,6 +380,7 @@ const changelogEntryMetaFragment = fragmentOnLoose("ChangelogPagesItem", {
   slug: true,
   _sys: {
     createdAt: true,
+    lastModifiedAt: true,
   },
 });
 
@@ -391,13 +398,35 @@ const changelogEntryFragment = fragmentOnLoose("ChangelogPagesItem", {
   infrastructure: true,
   fixes: true,
   patches: true,
+  // AEO fields
+  featuredImage: imageFragment,
+  publishedAt: true,
+  excerpt: true,
+  tldr: true,
+  seo: {
+    metaTitle: true,
+    metaDescription: true,
+    focusKeyword: true,
+    secondaryKeyword: true,
+    canonicalUrl: true,
+    noIndex: true,
+    faq: {
+      items: {
+        question: true,
+        answer: true,
+      },
+    },
+  },
 });
 
 export type ChangelogEntryMeta = {
   _slug?: string | null;
   _title?: string | null;
   slug?: string | null;
-  _sys?: { createdAt?: string | null } | null;
+  _sys?: {
+    createdAt?: string | null;
+    lastModifiedAt?: string | null;
+  } | null;
 };
 
 export type ChangelogEntry = ChangelogEntryMeta & {
@@ -410,6 +439,31 @@ export type ChangelogEntry = ChangelogEntryMeta & {
   infrastructure?: string | null;
   fixes?: string | null;
   patches?: string | null;
+  // AEO fields
+  featuredImage?: {
+    url?: string | null;
+    width?: number | null;
+    height?: number | null;
+    alt?: string | null;
+    blurDataURL?: string | null;
+  } | null;
+  publishedAt?: string | null;
+  excerpt?: string | null;
+  tldr?: string | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    focusKeyword?: string | null;
+    secondaryKeyword?: string | null;
+    canonicalUrl?: string | null;
+    noIndex?: boolean | null;
+    faq?: {
+      items?: Array<{
+        question?: string | null;
+        answer?: string | null;
+      }>;
+    } | null;
+  } | null;
 };
 
 export type ChangelogEntryQueryResponse = {
@@ -424,20 +478,34 @@ export type ChangelogEntriesQueryResponse = {
   } | null;
 };
 
+export type ChangelogAdjacentEntries = {
+  previous?: ChangelogEntryMeta | null;
+  next?: ChangelogEntryMeta | null;
+};
+
 export const changelog = {
   entriesQuery: fragmentOnLoose("Query", {
     changelogPages: {
       __args: {
-        orderBy: "_sys_createdAt__DESC",
+        orderBy: "publishedAt__DESC",
       },
       items: changelogEntryFragment,
+    },
+  }),
+
+  entriesMetaQuery: fragmentOnLoose("Query", {
+    changelogPages: {
+      __args: {
+        orderBy: "publishedAt__DESC",
+      },
+      items: changelogEntryMetaFragment,
     },
   }),
 
   latestEntryQuery: fragmentOnLoose("Query", {
     changelogPages: {
       __args: {
-        orderBy: "_sys_createdAt__DESC",
+        orderBy: "publishedAt__DESC",
       },
       item: changelogEntryFragment,
     },
@@ -503,6 +571,34 @@ export const changelog = {
       return data.changelogPages.item as ChangelogEntry;
     } catch {
       return null;
+    }
+  },
+
+  getAdjacentEntries: async (
+    currentSlug: string,
+  ): Promise<ChangelogAdjacentEntries> => {
+    try {
+      const data: any = await basehub.query(changelog.entriesMetaQuery as any);
+      const entries = (data.changelogPages?.items ?? []) as ChangelogEntryMeta[];
+
+      // Find current entry index
+      const currentIndex = entries.findIndex(
+        (entry) => entry.slug === currentSlug,
+      );
+
+      if (currentIndex === -1) {
+        return { previous: null, next: null };
+      }
+
+      // Entries are ordered newest first (DESC), so:
+      // - previous (older) = index + 1
+      // - next (newer) = index - 1
+      return {
+        previous: entries[currentIndex + 1] ?? null,
+        next: entries[currentIndex - 1] ?? null,
+      };
+    } catch {
+      return { previous: null, next: null };
     }
   },
 };

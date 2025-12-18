@@ -15,23 +15,14 @@ import { formatDistanceToNow } from "date-fns";
 
 const providerIcons = {
 	github: Github,
-	notion: () => <span className="text-lg">📝</span>,
-	linear: () => <span className="text-lg">◇</span>,
-	sentry: () => <span className="text-lg">🔍</span>,
 };
 
 const providerNames = {
 	github: "GitHub",
-	notion: "Notion",
-	linear: "Linear",
-	sentry: "Sentry",
 };
 
 const providerDescriptions = {
 	github: "Connect your GitHub account",
-	notion: "Connect your Notion workspace",
-	linear: "Connect your Linear workspace",
-	sentry: "Connect your Sentry account",
 };
 
 /**
@@ -91,9 +82,9 @@ export function SourcesList() {
 	};
 
 	// Create a unified list of all sources (connected and available)
-	const allSources = (["github", "notion", "linear", "sentry"] as const).map((provider) => {
+	const allSources = (["github"] as const).map((provider) => {
 		const connectedIntegration = integrations.find(
-			(i) => i.provider === provider && i.isActive,
+			(i) => i.sourceType === provider && i.isActive,
 		);
 		return {
 			provider,

@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import type { Memory } from "lightfast/memory";
+import type { Memory } from "@lightfastai/ai-sdk/memory";
 import type { ChatFetchContext } from "@repo/chat-ai-types";
 
 interface SessionMessagesData<TMessage> {

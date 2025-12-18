@@ -1,151 +1,250 @@
 # Lightfast
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License: FSL-1.1](https://img.shields.io/badge/License-FSL--1.1-orange.svg)](LICENSE-FSL.md)
+[![npm version](https://img.shields.io/npm/v/lightfast.svg)](https://www.npmjs.com/package/lightfast)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/issues)
 
-Lightfast is the memory layer for software teams. We help engineers and AI agents search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
+**The memory layer for software teams.** Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
 
-**Website**: [lightfast.ai](https://lightfast.ai) | **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs) | **Demo**: [chat.lightfast.ai](https://chat.lightfast.ai)
+> **Early Access** — Lightfast is currently in early access. [Request access →](https://lightfast.ai/early-access)
 
-## About
+[Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs) · [Chat Demo](https://chat.lightfast.ai) · [Discord](https://discord.gg/YqPDfcar2C)
 
-Lightfast indexes your engineering history so engineers and AI agents can search by meaning, get answers with sources, and trace decisions across your codebase.
+## Why Lightfast?
 
-Ask questions like:
-- "What broke in the last deployment?"
-- "Who owns the authentication service?"
-- "Why was this architecture decision made?"
+Lightfast indexes code changes, PRs, docs, and decisions so engineers and AI agents can:
 
-Get accurate answers with citations—across your entire engineering ecosystem, in real time.
+- **Search by meaning** — not just keywords
+- **Get answers with sources** — trace decisions across your org
+- **Share memory** — production-ready retrieval for agents
 
-## What We Remember
+## Supported Sources
 
-| Category | Sources | Examples |
-|----------|---------|----------|
-| **Code & Changes** | GitHub, GitLab, Bitbucket | Pull requests, commits, code reviews, discussions |
-| **Deployments & Infrastructure** | Vercel, Railway, Pulumi, Terraform | Deployment events, build logs, environment changes |
-| **Incidents & Errors** | Sentry, PagerDuty | Error events, incident timelines, resolutions, post-mortems |
-| **Decisions & Context** | All sources | Why decisions were made, what was discussed, who was involved |
-| **People & Ownership** | All sources | Who owns what, who worked on what, who has context |
+**Available now:**
+- **GitHub** — Pull requests, issues, code, discussions
+- **Vercel** — Deployments, logs, project activity
 
-## API
+**Coming soon:**
+- Linear, Sentry, Slack, Notion, Confluence
+- PlanetScale, Pulumi, Terraform, Zendesk
+- [Request an integration →](https://github.com/lightfastai/lightfast/issues)
 
-Four routes power everything:
+## Use Cases
 
+```typescript
+// "Why did we choose Postgres over MongoDB?"
+await lightfast.search({ query: "database selection decision postgres mongodb" });
+
+// "How does our payment integration work?"
+await lightfast.search({ query: "stripe payment flow implementation" });
+
+// "What broke in last week's deployment?"
+await lightfast.search({ query: "production incident postmortem", filters: { dateRange: "7d" } });
+
+// "Find PRs similar to this refactor"
+await lightfast.findSimilar({ url: "https://github.com/org/repo/pull/123" });
+
+// "What do we know about rate limiting?"
+await lightfast.search({ query: "rate limiting implementation patterns" });
 ```
-POST /v1/search   — Search and rank results with rationale and highlights
-POST /v1/contents — Get full documents, metadata, and relationships
-POST /v1/similar  — Find related content based on meaning
-POST /v1/answer   — Get synthesized answers with citations (streaming)
+
+**Example response:**
+
+```json
+{
+  "results": [
+    {
+      "id": "doc_abc123",
+      "type": "pull_request",
+      "title": "Add rate limiting to API endpoints",
+      "snippet": "Implemented token bucket algorithm with Redis...",
+      "score": 0.92,
+      "source": "github",
+      "url": "https://github.com/org/repo/pull/456",
+      "metadata": { "author": "jane", "mergedAt": "2024-12-01" }
+    }
+  ],
+  "meta": { "total": 24, "latency": { "total": 145 } }
+}
 ```
 
-Available via REST API and MCP tools for agent runtimes. Full documentation at [lightfast.ai/docs/api-reference](https://lightfast.ai/docs/api-reference/overview).
+## Security
 
-## Principles
+- **Your code stays yours** — We index metadata and content for search, never train on your data
+- **Encrypted at rest and in transit** — Industry-standard security practices
+- **Role-based access** — Workspace permissions mirror your source permissions
+- **Self-hosted option** — Coming soon for enterprises with strict data residency requirements
 
-- **Search by meaning**: Understand intent, not just match keywords
-- **Always cite sources**: Every answer shows where it came from
-- **Privacy by default**: Your data stays yours. Complete tenant isolation
-- **Continuously improve**: Measure quality, learn from usage, adapt over time
+## Requirements
 
----
+- Node.js >= 18
+- A Lightfast API key ([request access](https://lightfast.ai/early-access))
 
-## Development
+## Integrate in 2 Ways
 
-This is a pnpm monorepo built with Turborepo containing the Lightfast platform.
+### 1. TypeScript SDK
 
-### Prerequisites
-
-- **Node.js**: >= 22.0.0
-- **pnpm**: 10.5.2
-
-### Quick Start
+Install the `lightfast` package to add semantic search to any application:
 
 ```bash
-# Clone and install
-git clone https://github.com/lightfastai/lightfast.git
-cd lightfast
-pnpm install
-
-# Set up environment
-cp apps/www/.env.example apps/www/.env.local
-
-# Start development
-pnpm dev:www      # Marketing site (port 4101)
-pnpm dev:console  # Main product (port 4107)
-pnpm dev:docs     # Documentation
+npm install lightfast
 ```
 
-### Project Structure
+```typescript
+import { Lightfast } from "lightfast";
 
-```
-lightfast/
-├── core/                 # AI agent framework and orchestration
-│   ├── lightfast/       # Core execution engine
-│   └── console/         # AI orchestration framework
-├── apps/                 # Next.js applications
-│   ├── console/         # Main product (port 4107)
-│   ├── www/             # Marketing website (port 4101)
-│   ├── auth/            # Authentication service
-│   ├── chat/            # AI chat demo
-│   └── docs/            # Documentation (Fumadocs)
-├── api/                  # API definitions (tRPC, schemas)
-├── db/                   # Database schemas (Drizzle)
-├── packages/             # Shared packages (@repo/*)
-├── vendor/               # Third-party integrations (@vendor/*)
-└── internal/             # Dev tooling configs
-```
+// Pass API key directly or use LIGHTFAST_API_KEY environment variable
+const lightfast = new Lightfast({ apiKey: process.env.LIGHTFAST_API_KEY });
 
-### Common Commands
+// Search your workspace memory
+const results = await lightfast.search({
+  query: "how does authentication work",
+  limit: 10,
+});
 
-```bash
-# Development
-pnpm dev:console          # Main product
-pnpm dev:www              # Marketing site
+// Get full document content
+const content = await lightfast.contents({
+  ids: ["doc_abc123"],
+});
 
-# Build & Quality
-pnpm build:console        # Build specific app
-pnpm lint && pnpm typecheck
-
-# Database (from db/console/)
-pnpm db:generate          # Generate migrations
-pnpm db:migrate           # Run migrations
-pnpm db:studio            # Open Drizzle studio
+// Find similar documents
+const similar = await lightfast.findSimilar({
+  id: "doc_abc123",
+  threshold: 0.7,
+});
 ```
 
-### Tech Stack
+### 2. MCP Server (Claude, Cursor, Codex)
 
-| Category | Technology |
-|----------|------------|
-| **Runtime** | Node.js 22+, pnpm 10.5.2 |
-| **Frontend** | Next.js 15, React 19, TypeScript 5.9+, Tailwind CSS v4 |
-| **Backend** | PostgreSQL (PlanetScale), Drizzle ORM, Redis (Upstash) |
-| **AI/ML** | Anthropic Claude, OpenAI, Cohere, Vercel AI SDK 5.0+, Pinecone |
-| **DevOps** | Turborepo, Vercel, GitHub Actions |
-| **Auth** | Clerk |
+Connect AI assistants directly to your workspace memory via [Model Context Protocol](https://modelcontextprotocol.io/).
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Claude Code (CLI)</strong></summary>
+
+Add to `.mcp.json` in your project root (or `~/.claude.json` for global):
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+Or use the CLI: `claude mcp add lightfast --scope project -- npx -y @lightfastai/mcp`
+
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+Add to `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "lightfast": {
+      "command": "npx",
+      "args": ["-y", "@lightfastai/mcp"],
+      "env": {
+        "LIGHTFAST_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>OpenAI Codex</strong></summary>
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.lightfast]
+command = "npx"
+args = ["-y", "@lightfastai/mcp"]
+
+[mcp_servers.lightfast.env]
+LIGHTFAST_API_KEY = "sk_live_..."
+```
+
+</details>
+
+**Available tools:**
+- `lightfast_search` — Search workspace memory
+- `lightfast_contents` — Fetch full document content
+- `lightfast_find_similar` — Find semantically similar documents
+
+## Get an API Key
+
+1. [Request early access](https://lightfast.ai/early-access) to join the waitlist
+2. Create a workspace and connect your sources (GitHub, docs, etc.)
+3. Generate an API key from your workspace settings
+
+## Documentation
+
+- [API Reference](https://lightfast.ai/docs/api) — Full endpoint documentation
+- [SDK Guide](https://lightfast.ai/docs/integrate/sdk) — TypeScript SDK usage
+- [MCP Setup](https://lightfast.ai/docs/integrate/mcp) — Configure AI assistants
+- [Changelog](https://lightfast.ai/changelog) — Latest updates and releases
+- [Blog](https://lightfast.ai/blog) — Tutorials, announcements, and deep dives
 
 ## Contributing
 
-1. Fork and clone the repository
-2. Install dependencies: `pnpm install`
-3. Create a feature branch: `git checkout -b feature/amazing-feature`
-4. Run quality checks: `pnpm lint && pnpm typecheck`
-5. Submit a pull request
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+```bash
+git clone https://github.com/lightfastai/lightfast.git
+cd lightfast
+pnpm install
+pnpm dev
+```
 
 ## Community
 
-- **Discord**: [Join our community](https://discord.gg/YqPDfcar2C)
-- **Twitter**: [@lightfastai](https://x.com/lightfastai)
-- **GitHub**: [github.com/lightfastai/lightfast](https://github.com/lightfastai/lightfast)
+- [Discord](https://discord.gg/YqPDfcar2C) — Chat with the team and community
+- [GitHub Issues](https://github.com/lightfastai/lightfast/issues) — Report bugs and request features
+- [Twitter](https://x.com/lightfastai) — Follow for updates
 
 ## License
 
-Licensed under [Apache License 2.0](LICENSE). See [LICENSING.md](LICENSING.md) for details.
+Lightfast uses a dual licensing approach:
 
----
+All components are licensed under [Apache License 2.0](LICENSE) — a permissive open source license.
 
-**Built with care by the Lightfast team**
+**For Users**: You're covered by Apache-2.0 for all Lightfast components — use freely in commercial and non-commercial projects.
+
+See [LICENSING.md](LICENSING.md) for complete details.

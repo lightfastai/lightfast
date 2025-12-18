@@ -1,92 +1,140 @@
 ---
 title: POST /v1/search
-description: Search and rank results by meaning with optional rationale and highlights
+description: Search across your team's knowledge with semantic understanding and multi-path retrieval
 ---
 
 # POST /v1/search
 
-Search across all your indexed content using semantic understanding. Returns ranked results with optional explanations and highlights.
+Search across all your indexed content using semantic understanding. Returns ranked results with optional context about related topics and experts.
 
 ## Endpoint
 
 ```
-POST https://api.lightfast.ai/v1/search
+POST https://lightfast.ai/api/v1/search
 ```
 
 ## Authentication
 
+See [Authentication](/api/authentication) for details.
+
 ```bash
-Authorization: Bearer lf_sk_live_...
+Authorization: Bearer YOUR_API_KEY
+X-Workspace-ID: ws_abc123
 ```
 
 ## Request Body
 
 ```typescript
 {
-  query: string              // Search query
-  limit?: number             // Results to return (default: 10, max: 100)
+  query: string              // Search query (required)
+  limit?: number             // Results to return (1-100, default: 10)
   offset?: number            // Pagination offset (default: 0)
-  includeRationale?: boolean // Include ranking explanation (default: false)
-  includeHighlights?: boolean // Include matched text snippets (default: true)
+  mode?: "fast" | "balanced" | "thorough"  // Rerank mode (default: "balanced")
   filters?: {
-    type?: string[]          // Filter by content type
-    source?: string          // Filter by source (github, linear, etc.)
-    createdAfter?: string    // ISO 8601 date
-    createdBefore?: string   // ISO 8601 date
-    owner?: string           // Filter by owner/author
-    [key: string]: any       // Custom metadata filters
+    sourceTypes?: string[]   // Filter by source (e.g., ["github", "linear"])
+    observationTypes?: string[] // Filter by type (e.g., ["commit", "issue"])
+    actorNames?: string[]    // Filter by contributor (e.g., ["@sarah"])
+    dateRange?: {
+      start?: string         // ISO 8601 datetime
+      end?: string           // ISO 8601 datetime
+    }
   }
+  includeContext?: boolean   // Include clusters and actors (default: true)
+  includeHighlights?: boolean // Include highlighted snippets (default: true)
 }
 ```
+
+### Search Modes
+
+| Mode | Description | Typical Latency |
+|------|-------------|-----------------|
+| `fast` | Vector scores only, no reranking | ~50ms |
+| `balanced` | Cohere reranking for quality | ~130ms |
+| `thorough` | LLM-based scoring for best results | ~600ms |
 
 ## Response
 
 ```typescript
 {
   data: Array<{
-    id: string               // Unique content identifier
+    id: string               // Observation ID
     title: string            // Content title
-    snippet: string          // Brief content preview
+    url: string              // Link to source
+    snippet: string          // Content preview
     score: number            // Relevance score (0-1)
-    url?: string             // Link to original content
-    type: string             // Content type (pr, issue, doc, etc.)
-    source: string           // Source system (github, linear, etc.)
-    createdAt: string        // ISO 8601 timestamp
-    updatedAt: string        // ISO 8601 timestamp
-    owner?: string           // Content owner/author
-    metadata: Record<string, any>  // Additional metadata
-    highlights?: string[]    // Matched text snippets
-    rationale?: string       // Why this result was ranked here
+    source: string           // Source type (github, linear, etc.)
+    type: string             // Observation type (commit, issue, etc.)
+    occurredAt?: string      // When the event occurred (ISO 8601)
+    entities?: Array<{       // Extracted entities
+      key: string
+      category: string
+    }>
+    highlights?: {           // Highlighted matches
+      title?: string
+      snippet?: string
+    }
   }>
+  context?: {
+    clusters?: Array<{       // Related topic clusters
+      topic: string | null
+      summary: string | null
+      keywords: string[]
+    }>
+    relevantActors?: Array<{ // Relevant contributors
+      displayName: string
+      expertiseDomains: string[]
+    }>
+  }
   meta: {
     total: number            // Total matching results
     limit: number            // Results per page
     offset: number           // Current offset
-    took: number             // Query time in ms
+    took: number             // Total time in ms
+    mode: string             // Rerank mode used
+    paths: {                 // Search paths executed
+      vector: boolean
+      entity: boolean
+      cluster: boolean
+      actor: boolean
+    }
   }
-  requestId: string          // Unique request identifier
+  latency: {
+    total: number            // Total request latency
+    auth?: number            // Authentication time
+    parse?: number           // Request parsing
+    search?: number          // Total search time
+    embedding?: number       // Embedding generation
+    retrieval: number        // Vector retrieval
+    entitySearch?: number    // Entity path search
+    clusterSearch?: number   // Cluster path search
+    actorSearch?: number     // Actor path search
+    rerank: number           // Reranking time
+    enrich?: number          // Database enrichment
+    maxParallel?: number     // Bottleneck parallel operation
+  }
+  requestId: string          // Request ID for debugging
 }
 ```
 
 ## Example Request
 
-
-    ```bash
-    curl -X POST https://api.lightfast.ai/v1/search \
-      -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "query": "how does authentication work?",
-        "limit": 10,
-        "includeRationale": true,
-        "includeHighlights": true,
-        "filters": {
-          "type": ["pull_request", "issue"],
-          "createdAfter": "2024-01-01"
-        }
-      }'
-    ```
-  
+```bash
+curl -X POST https://lightfast.ai/api/v1/search \
+  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "how does authentication work?",
+    "limit": 10,
+    "mode": "balanced",
+    "filters": {
+      "sourceTypes": ["github"],
+      "observationTypes": ["pull_request", "issue"]
+    },
+    "includeContext": true,
+    "includeHighlights": true
+  }'
+```
 
 ## Example Response
 
@@ -94,203 +142,144 @@ Authorization: Bearer lf_sk_live_...
 {
   "data": [
     {
-      "id": "pr-123",
+      "id": "obs_abc123",
       "title": "Implement OAuth 2.0 authentication",
+      "url": "https://github.com/org/repo/pull/123",
       "snippet": "Added OAuth 2.0 authentication flow with refresh tokens and JWT validation...",
       "score": 0.92,
-      "url": "https://github.com/org/repo/pull/123",
-      "type": "pull_request",
       "source": "github",
-      "createdAt": "2024-03-15T10:30:00Z",
-      "updatedAt": "2024-03-16T14:22:00Z",
-      "owner": "alice",
-      "metadata": {
-        "repository": "org/repo",
-        "state": "merged",
-        "labels": ["security", "authentication"]
-      },
-      "highlights": [
-        "OAuth 2.0 authentication flow",
-        "JWT validation and refresh tokens"
+      "type": "pull_request",
+      "occurredAt": "2024-03-15T10:30:00Z",
+      "entities": [
+        { "key": "OAuth 2.0", "category": "technology" },
+        { "key": "JWT", "category": "technology" }
       ],
-      "rationale": "High semantic similarity (0.92). Recent update. Owned by auth team. Merged PR with authentication label."
+      "highlights": {
+        "title": "Implement <mark>OAuth 2.0 authentication</mark>",
+        "snippet": "Added <mark>OAuth 2.0 authentication</mark> flow with refresh tokens..."
+      }
     },
     {
-      "id": "issue-456",
+      "id": "obs_def456",
       "title": "Security: Review authentication flow",
-      "snippet": "We should review the current authentication implementation for security best practices...",
-      "score": 0.87,
       "url": "https://github.com/org/repo/issues/456",
-      "type": "issue",
+      "snippet": "We should review the current authentication implementation...",
+      "score": 0.87,
       "source": "github",
-      "createdAt": "2024-02-20T09:15:00Z",
-      "updatedAt": "2024-02-25T16:45:00Z",
-      "owner": "bob",
-      "metadata": {
-        "repository": "org/repo",
-        "state": "closed",
-        "labels": ["security"]
-      },
-      "highlights": [
-        "authentication implementation",
-        "security best practices"
-      ]
+      "type": "issue",
+      "occurredAt": "2024-02-20T09:15:00Z"
     }
   ],
+  "context": {
+    "clusters": [
+      {
+        "topic": "Authentication & Security",
+        "summary": "OAuth implementation, JWT tokens, and security reviews",
+        "keywords": ["oauth", "jwt", "authentication", "security"]
+      }
+    ],
+    "relevantActors": [
+      {
+        "displayName": "Alice Chen",
+        "expertiseDomains": ["authentication", "security", "backend"]
+      }
+    ]
+  },
   "meta": {
     "total": 42,
     "limit": 10,
     "offset": 0,
-    "took": 127
+    "took": 127,
+    "mode": "balanced",
+    "paths": {
+      "vector": true,
+      "entity": true,
+      "cluster": true,
+      "actor": true
+    }
+  },
+  "latency": {
+    "total": 127,
+    "auth": 2,
+    "parse": 1,
+    "search": 85,
+    "embedding": 15,
+    "retrieval": 45,
+    "entitySearch": 30,
+    "clusterSearch": 25,
+    "actorSearch": 20,
+    "rerank": 35,
+    "enrich": 4,
+    "maxParallel": 45
   },
   "requestId": "req_abc123def456"
 }
 ```
 
-## Use Cases
-
-### Team Knowledge Search
-
-Search across all your company's knowledge:
-
-```typescript
-const results = await lf.search({
-  query: 'deployment process for production',
-  limit: 5
-})
-```
-
-### Code Context Discovery
-
-Find relevant code changes and discussions:
-
-```typescript
-const codeContext = await lf.search({
-  query: 'rate limiting implementation',
-  filters: {
-    type: ['pull_request', 'code'],
-    source: 'github'
-  }
-})
-```
-
-### Decision Tracking
-
-Trace why decisions were made:
-
-```typescript
-const decisions = await lf.search({
-  query: 'why did we choose PostgreSQL?',
-  includeRationale: true,
-  filters: {
-    type: ['discussion', 'rfc']
-  }
-})
-```
-
-### Finding Experts
-
-Discover who has context on a topic:
-
-```typescript
-const experts = await lf.search({
-  query: 'authentication and security',
-  includeRationale: true
-})
-
-// Extract owners from results
-const owners = [...new Set(experts.data.map(r => r.owner))]
-```
-
-## Query Syntax
-
-### Natural Language
-
-Use natural language queries for best results:
-
-```typescript
-// ✅ Good
-"how does authentication work in our API?"
-"recent changes to payment processing"
-"who worked on the mobile app login?"
-
-// ❌ Less effective
-"auth API"
-"payment"
-"mobile login"
-```
-
-### Specific Questions
-
-Ask specific questions to get targeted results:
-
-```typescript
-"what are the steps to deploy to production?"
-"how do we handle rate limiting?"
-"what's our policy on API versioning?"
-```
-
 ## Filtering
 
-### By Type
+### By Source Type
 
-Filter by content type:
+Filter to specific sources:
 
 ```typescript
 filters: {
-  type: ['pull_request', 'issue', 'discussion', 'doc']
+  sourceTypes: ["github", "linear"]  // Only GitHub and Linear
 }
 ```
 
-Common types:
-- `pull_request` - Code changes
-- `issue` - Bug reports, feature requests
-- `discussion` - Threaded conversations
-- `doc` - Documentation pages
-- `code` - Code files
-- `comment` - Individual comments
+### By Observation Type
 
-### By Source
-
-Filter by source system:
+Filter to specific content types:
 
 ```typescript
 filters: {
-  source: 'github' // or 'linear', 'notion', 'slack', etc.
+  observationTypes: ["pull_request", "issue", "commit"]
+}
+```
+
+Common observation types:
+- `pull_request` - Code changes
+- `issue` - Bug reports, feature requests
+- `commit` - Individual commits
+- `discussion` - Threaded conversations
+- `document` - Documentation
+
+### By Contributor
+
+Filter by who created the content:
+
+```typescript
+filters: {
+  actorNames: ["@alice", "@bob"]
 }
 ```
 
 ### By Date Range
 
-Filter by creation or update date:
+Filter to a time period:
 
 ```typescript
 filters: {
-  createdAfter: '2024-01-01',
-  createdBefore: '2024-12-31',
-  updatedAfter: '2024-06-01'
+  dateRange: {
+    start: "2024-01-01T00:00:00Z",
+    end: "2024-12-31T23:59:59Z"
+  }
 }
 ```
 
-### By Owner
+### Combined Filters
 
-Filter by content owner/author:
-
-```typescript
-filters: {
-  owner: 'alice'
-}
-```
-
-### Custom Metadata
-
-Filter by any custom metadata fields:
+Combine multiple filters:
 
 ```typescript
 filters: {
-  repository: 'org/api-service',
-  state: 'merged',
-  labels: ['security', 'critical']
+  sourceTypes: ["github"],
+  observationTypes: ["pull_request"],
+  actorNames: ["@alice"],
+  dateRange: {
+    start: "2024-06-01T00:00:00Z"
+  }
 }
 ```
 
@@ -299,89 +288,95 @@ filters: {
 Use `limit` and `offset` for pagination:
 
 ```typescript
-// Page 1
-const page1 = await lf.search({
-  query: 'authentication',
-  limit: 20,
-  offset: 0
+// First page
+const page1 = await fetch('/v1/search', {
+  body: JSON.stringify({
+    query: 'authentication',
+    limit: 20,
+    offset: 0
+  })
 })
 
-// Page 2
-const page2 = await lf.search({
-  query: 'authentication',
-  limit: 20,
-  offset: 20
+// Second page
+const page2 = await fetch('/v1/search', {
+  body: JSON.stringify({
+    query: 'authentication',
+    limit: 20,
+    offset: 20
+  })
 })
 
-// Check if more pages exist
-const hasMore = page1.meta.offset + page1.meta.limit < page1.meta.total
+// Check for more pages
+const hasMore = response.meta.offset + response.meta.limit < response.meta.total
 ```
 
-## Ranking & Rationale
+## Understanding Context
 
-Enable `includeRationale` to understand why results are ranked:
+When `includeContext: true`, the response includes:
+
+### Clusters
+
+Topic clusters help you understand related themes:
 
 ```typescript
-const results = await lf.search({
-  query: 'authentication security',
-  includeRationale: true
-})
-
-results.data.forEach(result => {
-  console.log(`Score: ${result.score}`)
-  console.log(`Reason: ${result.rationale}`)
+response.context?.clusters?.forEach(cluster => {
+  console.log('Topic:', cluster.topic)
+  console.log('Summary:', cluster.summary)
+  console.log('Keywords:', cluster.keywords.join(', '))
 })
 ```
 
-Example rationale:
-```
-"High semantic similarity (0.92). Recent update. Owned by auth team.
-Merged PR with authentication label. Connected to 3 related issues."
-```
+### Relevant Actors
 
-## Highlights
-
-Highlights show matched text snippets:
+Find experts on the topic:
 
 ```typescript
-const results = await lf.search({
-  query: 'OAuth implementation',
-  includeHighlights: true
-})
-
-results.data.forEach(result => {
-  console.log('Highlights:')
-  result.highlights?.forEach(h => console.log(`  - ${h}`))
+response.context?.relevantActors?.forEach(actor => {
+  console.log('Expert:', actor.displayName)
+  console.log('Domains:', actor.expertiseDomains.join(', '))
 })
 ```
+
+## Understanding Latency
+
+The `latency` object breaks down where time is spent:
+
+| Field | Description |
+|-------|-------------|
+| `total` | End-to-end request time |
+| `embedding` | Time to generate query embedding |
+| `retrieval` | Vector search time |
+| `entitySearch` | Entity-based retrieval |
+| `clusterSearch` | Cluster-based retrieval |
+| `actorSearch` | Actor-based retrieval |
+| `rerank` | Reranking model time |
+| `maxParallel` | Bottleneck of parallel operations |
+
+The `maxParallel` field shows the slowest parallel operation, which determines the total search phase duration.
 
 ## Error Handling
 
 ```typescript
-try {
-  const results = await lf.search({ query: 'authentication' })
-} catch (error) {
-  if (error.code === 'invalid_request') {
-    console.error('Invalid query:', error.message)
-  } else if (error.code === 'rate_limit_exceeded') {
-    console.error('Rate limited. Retry after:', error.retryAfter)
-  } else {
-    console.error('Search failed:', error.message)
-  }
+const response = await fetch('https://lightfast.ai/api/v1/search', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${apiKey}`,
+    'X-Workspace-ID': workspaceId,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ query: 'authentication' })
+})
+
+if (!response.ok) {
+  const error = await response.json()
+  console.error('Search failed:', error.error, error.message)
 }
 ```
 
-Common errors:
-- `invalid_request` (400) - Malformed query or parameters
-- `authentication_failed` (401) - Invalid API key
-- `rate_limit_exceeded` (429) - Too many requests
-- `internal_error` (500) - Server error
-
-See [Error Reference](/api/errors) for complete list.
+See [Error Reference](/api/errors) for all error codes.
 
 ## Next Steps
 
 - **[POST /v1/contents](/api/contents)** - Get full content for search results
-- **[POST /v1/similar](/api/similar)** - Find related content
-- **[POST /v1/answer](/api/answer)** - Get synthesized answers with citations
-- **[Search Strategies Guide](/docs/guides/search-strategies)** - Optimize your queries
+- **[POST /v1/findsimilar](/api/findsimilar)** - Find related content
+- **[Authentication](/api/authentication)** - API authentication details

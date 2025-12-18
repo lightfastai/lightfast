@@ -1,17 +1,8 @@
 import Link from "next/link";
 import { type Post, categories as categoriesAPI } from "@vendor/cms";
-import samplePosts from "../../../sample-posts.json";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { JsonLd, type GraphContext } from "@vendor/seo/json-ld";
-
-type BlogQueryResponse = {
-  blog?: {
-    post?: {
-      items?: Post[] | null;
-    } | null;
-  } | null;
-};
 
 const categorySEO: Record<string, {
   metaTitle: string;
@@ -133,9 +124,8 @@ export default async function CategoryPage({ params }: Props) {
 
   const displayName = currentCategory._title || category;
 
-  // Using sample data for development
-  const response = samplePosts as BlogQueryResponse;
-  const allPosts = response.blog?.post?.items ?? [];
+  // TODO: Fetch real posts from CMS
+  const allPosts: Post[] = [];
 
   // Filter posts by category
   const posts = allPosts.filter((post) =>

@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces, workspaceStores, type WorkflowInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces, type WorkflowInput } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -63,30 +63,20 @@ export const jobsRouter = {
 			}
 
 			// Query jobs with limit + 1 to determine if there are more
-			// Left join with workspaceStores to get store slug
+			// Note: storeSlug removed - each workspace has exactly one store (1:1 relationship)
 			const jobsList = await db
-				.select({
-					job: workspaceWorkflowRuns,
-					storeSlug: workspaceStores.slug,
-				})
+				.select()
 				.from(workspaceWorkflowRuns)
-				.leftJoin(workspaceStores, eq(workspaceWorkflowRuns.storeId, workspaceStores.id))
 				.where(and(...conditions))
 				.orderBy(desc(workspaceWorkflowRuns.createdAt))
 				.limit(limit + 1);
 
 			// Determine if there are more results
 			const hasMore = jobsList.length > limit;
-			const rawItems = hasMore ? jobsList.slice(0, limit) : jobsList;
-
-			// Flatten the joined data and include storeSlug
-			const items = rawItems.map(({ job, storeSlug }) => ({
-				...job,
-				storeSlug,
-			}));
+			const items = hasMore ? jobsList.slice(0, limit) : jobsList;
 
 			// Get next cursor (createdAt of last item)
-			const nextCursor = hasMore ? rawItems[rawItems.length - 1]?.job.createdAt : null;
+			const nextCursor = hasMore ? items[items.length - 1]?.createdAt : null;
 
 			return {
 				items,
@@ -115,9 +105,18 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
@@ -277,10 +276,19 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			// Verify job exists and belongs to user's workspace
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
@@ -308,7 +316,7 @@ export const jobsRouter = {
 					status: "cancelled",
 					completedAt: new Date().toISOString(),
 				})
-				.where(eq(workspaceWorkflowRuns.id, input.jobId));
+				.where(eq(workspaceWorkflowRuns.id, jobIdNum));
 
 			// Record activity (Tier 2: Queue-based)
 			await recordActivity({
@@ -355,10 +363,19 @@ export const jobsRouter = {
 				userId: ctx.auth.userId,
 			});
 
+			// Parse jobId to number (BIGINT internal ID)
+			const jobIdNum = parseInt(input.jobId, 10);
+			if (isNaN(jobIdNum)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid job ID format",
+				});
+			}
+
 			// Verify job exists and belongs to user's workspace
 			const job = await db.query.workspaceWorkflowRuns.findFirst({
 				where: and(
-					eq(workspaceWorkflowRuns.id, input.jobId),
+					eq(workspaceWorkflowRuns.id, jobIdNum),
 					eq(workspaceWorkflowRuns.workspaceId, workspaceId),
 					eq(workspaceWorkflowRuns.clerkOrgId, clerkOrgId),
 				),
@@ -407,7 +424,14 @@ export const jobsRouter = {
 			switch (job.inngestFunctionId) {
 				case "source-connected":
 				case "source-sync": {
-					// Extract sourceId from job input
+					// Type narrowing: check jobInput discriminator for sourceId access
+					if (jobInput.inngestFunctionId !== "source-connected" && jobInput.inngestFunctionId !== "source-sync") {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Job input type mismatch - cannot restart",
+						});
+					}
+					// Extract sourceId from job input (now properly narrowed)
 					const sourceId = jobInput.sourceId;
 
 					if (!sourceId) {
@@ -430,32 +454,16 @@ export const jobsRouter = {
 					}
 
 					// Determine source type from sourceConfig
-					const sourceType = source.sourceConfig.provider;
+					const sourceType = source.sourceConfig.sourceType;
 
-					// Resolve storeId from "default" store
-					const store = await db.query.workspaceStores.findFirst({
-						where: and(
-							eq(workspaceStores.workspaceId, workspaceId),
-							eq(workspaceStores.slug, "default")
-						),
-					});
-
-					if (!store) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Default store not found for workspace: ${workspaceId}`,
-						});
-					}
-
-					// Trigger new full sync
+					// Trigger new full sync via unified orchestrator
 					await inngest.send({
-						name: "apps-console/source.sync.github",
+						name: "apps-console/sync.requested",
 						data: {
 							workspaceId,
 							workspaceKey,
 							sourceId,
-							storeId: store.id,
-							sourceType: "github" as const,
+							sourceType,
 							syncMode: "full" as const,
 							trigger: "manual" as const,
 							syncParams: {},
@@ -465,8 +473,10 @@ export const jobsRouter = {
 				}
 
 				case "apps-console/github-sync": {
-					// GitHub-specific sync restart
-					const sourceId = jobInput.sourceId as string | undefined;
+					// GitHub-specific sync restart (legacy function ID, not in discriminated union)
+					// Use type assertion for legacy job format
+					const legacyInput = jobInput as { sourceId?: string };
+					const sourceId = legacyInput.sourceId;
 
 					if (!sourceId) {
 						throw new TRPCError({
@@ -475,29 +485,13 @@ export const jobsRouter = {
 						});
 					}
 
-					// Resolve storeId from "default" store
-					const store = await db.query.workspaceStores.findFirst({
-						where: and(
-							eq(workspaceStores.workspaceId, workspaceId),
-							eq(workspaceStores.slug, "default")
-						),
-					});
-
-					if (!store) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Default store not found for workspace: ${workspaceId}`,
-						});
-					}
-
-					// Trigger new full sync
+					// Trigger new full sync via unified orchestrator
 					await inngest.send({
-						name: "apps-console/source.sync.github",
+						name: "apps-console/sync.requested",
 						data: {
 							workspaceId,
 							workspaceKey,
 							sourceId,
-							storeId: store.id,
 							sourceType: "github" as const,
 							syncMode: "full" as const,
 							trigger: "manual" as const,

@@ -4,7 +4,11 @@ import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
-import { syncTriggerSchema, githubSourceMetadataSchema } from "@repo/console-validation";
+import {
+  syncTriggerSchema,
+  githubSourceMetadataSchema,
+  sourceTypeSchema,
+} from "@repo/console-validation";
 
 /**
  * Inngest event schemas for console application
@@ -35,7 +39,7 @@ const eventsMap = {
       /** workspaceSource.id */
       sourceId: z.string(),
       /** Source provider type */
-      sourceType: z.enum(["github", "linear", "notion", "vercel"]),
+      sourceType: sourceTypeSchema,
       /** Sync mode: full = all documents, incremental = changed only */
       syncMode: z.enum(["full", "incremental"]).default("full"),
       /** What triggered this sync */
@@ -88,10 +92,6 @@ const eventsMap = {
       workspaceId: z.string(),
       /** Source ID */
       sourceId: z.string(),
-      /** Store ID */
-      storeId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Files to process in this batch */
       files: z.array(z.object({
         path: z.string(),
@@ -147,8 +147,6 @@ const eventsMap = {
       workspaceKey: z.string(),
       /** Source ID */
       sourceId: z.string(),
-      /** Store ID */
-      storeId: z.string(),
       /** GitHub-specific source configuration */
       sourceConfig: z.record(z.unknown()),
       /** Sync mode */
@@ -204,21 +202,6 @@ const eventsMap = {
   },
 
   /**
-   * Linear source connected (future)
-   * Triggered when a Linear team is connected to a workspace
-   */
-  // "apps-console/source.connected.linear": {
-  //   data: z.object({
-  //     workspaceId: z.string(),
-  //     workspaceKey: z.string(),
-  //     sourceId: z.string(),
-  //     sourceType: z.literal("linear"),
-  //     sourceMetadata: linearSourceMetadataSchema,
-  //     trigger: z.enum(["user", "api", "automation"]),
-  //   }),
-  // },
-
-  /**
    * Triggered when a source is disconnected from workspace
    * Cancels ongoing syncs and optionally deletes indexed data
    */
@@ -250,8 +233,6 @@ const eventsMap = {
       workspaceKey: z.string(),
       /** workspaceSource.id */
       sourceId: z.string(),
-      /** Store DB UUID (required for job linking) */
-      storeId: z.string(),
       /** Source provider type */
       sourceType: z.literal("github"),
       /** Sync mode: full = all documents, incremental = changed only */
@@ -262,23 +243,6 @@ const eventsMap = {
       syncParams: z.record(z.unknown()),
     }),
   },
-
-  /**
-   * Linear source sync (future)
-   * Triggers sync workflow for a Linear team
-   */
-  // "apps-console/source.sync.linear": {
-  //   data: z.object({
-  //     workspaceId: z.string(),
-  //     workspaceKey: z.string(),
-  //     sourceId: z.string(),
-  //     storeId: z.string(),
-  //     sourceType: z.literal("linear"),
-  //     syncMode: z.enum(["full", "incremental"]),
-  //     trigger: syncTriggerSchema,
-  //     syncParams: z.record(z.unknown()),
-  //   }),
-  // },
 
   // ============================================================================
   // GITHUB-SPECIFIC EVENTS
@@ -380,15 +344,14 @@ const eventsMap = {
    * Ensure store and Pinecone index exist
    * Idempotently provisions store infrastructure
    * Can be triggered by sync workflows, admin API, or reconciliation
+   * Each workspace has exactly one store (1:1 relationship)
    */
   "apps-console/store.ensure": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also used as store ID) */
       workspaceId: z.string(),
       /** Canonical external workspace key for naming (e.g., ws-<slug>) */
       workspaceKey: z.string().optional(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Embedding dimension (defaults to provider's dimension) */
       embeddingDim: z.number().optional(),
       /** GitHub repository ID to link (optional) */
@@ -460,10 +423,8 @@ const eventsMap = {
    */
   "apps-console/docs.file.process": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** GitHub installation ID */
@@ -484,10 +445,8 @@ const eventsMap = {
    */
   "apps-console/docs.file.delete": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Repository full name (owner/repo) */
       repoFullName: z.string(),
       /** File path relative to repo root */
@@ -508,14 +467,12 @@ const eventsMap = {
    */
   "apps-console/documents.process": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Deterministic document ID */
       documentId: z.string(),
       /** Source type (discriminated union) */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: sourceTypeSchema,
       /** Source-specific identifier */
       sourceId: z.string(),
       /** Source-specific metadata */
@@ -542,14 +499,12 @@ const eventsMap = {
    */
   "apps-console/documents.delete": {
     data: z.object({
-      /** Workspace DB UUID */
+      /** Workspace DB UUID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
       /** Document ID to delete */
       documentId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: sourceTypeSchema,
       /** Source-specific identifier */
       sourceId: z.string(),
     }),
@@ -564,12 +519,10 @@ const eventsMap = {
     data: z.object({
       /** Document ID */
       documentId: z.string(),
-      /** Store slug */
-      storeSlug: z.string(),
-      /** Workspace ID */
+      /** Workspace ID (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
       /** Source type */
-      sourceType: z.enum(["github", "linear", "notion", "sentry", "vercel", "zendesk"]),
+      sourceType: sourceTypeSchema,
       /** Relationships to extract */
       relationships: z.record(z.unknown()),
     }),
@@ -594,8 +547,8 @@ const eventsMap = {
       filesProcessed: z.number(),
       /** Number of files that failed */
       filesFailed: z.number().default(0),
-      /** Store name */
-      storeSlug: z.string(),
+      /** Workspace ID (also store ID, 1:1 relationship) */
+      workspaceId: z.string(),
       /** Sync mode that completed */
       syncMode: z.enum(["full", "incremental"]),
       /** Whether the sync timed out */
@@ -613,16 +566,141 @@ const eventsMap = {
    */
   "apps-console/documents.batch-completed": {
     data: z.object({
-      /** Workspace identifier */
+      /** Workspace identifier (also store ID, 1:1 relationship) */
       workspaceId: z.string(),
-      /** Store name */
-      storeSlug: z.string(),
       /** Batch ID for tracking */
       batchId: z.string(),
       /** Number of documents in batch */
       documentCount: z.number(),
       /** Processing duration in milliseconds */
       durationMs: z.number(),
+    }),
+  },
+
+  // ============================================================================
+  // NEURAL MEMORY EVENTS
+  // ============================================================================
+
+  /**
+   * Neural observation capture event
+   * Triggered by webhook handlers to capture engineering events as observations
+   */
+  "apps-console/neural/observation.capture": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID (optional for backwards compat, resolved at webhook handler) */
+      clerkOrgId: z.string().optional(),
+      /** Standardized source event */
+      sourceEvent: z.object({
+        source: sourceTypeSchema,
+        sourceType: z.string(),
+        sourceId: z.string(),
+        title: z.string(),
+        body: z.string(),
+        actor: z.object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string().optional(),
+          avatarUrl: z.string().optional(),
+        }).optional(),
+        occurredAt: z.string(),
+        references: z.array(z.object({
+          type: z.enum([
+            "commit", "branch", "pr", "issue", "deployment", "project",
+            "cycle", "assignee", "reviewer", "team", "label"
+          ]),
+          id: z.string(),
+          url: z.string().optional(),
+          label: z.string().optional(),
+        })),
+        metadata: z.record(z.unknown()),
+      }),
+    }),
+  },
+
+  /**
+   * Neural observation captured (completion event)
+   * Emitted after an observation is successfully captured
+   */
+  "apps-console/neural/observation.captured": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
+      /** Observation DB UUID */
+      observationId: z.string(),
+      /** Source ID for correlation */
+      sourceId: z.string(),
+      /** Observation type (e.g., "push", "pull_request_merged") */
+      observationType: z.string(),
+      /** Significance score (0-100) */
+      significanceScore: z.number().optional(),
+      /** Topics extracted */
+      topics: z.array(z.string()).optional(),
+      /** Number of entities extracted */
+      entitiesExtracted: z.number().optional(),
+      /** Assigned cluster ID */
+      clusterId: z.string().optional(),
+      /** Whether cluster was newly created */
+      clusterIsNew: z.boolean().optional(),
+    }),
+  },
+
+  /**
+   * Profile update event (fire-and-forget)
+   * Triggers async profile recalculation for actor
+   */
+  "apps-console/neural/profile.update": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
+      /** Canonical actor ID (source:id format) */
+      actorId: z.string(),
+      /** Observation that triggered update */
+      observationId: z.string(),
+      /** Source actor data for profile enrichment */
+      sourceActor: z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().optional(),
+        avatarUrl: z.string().optional(),
+      }).optional(),
+    }),
+  },
+
+  /**
+   * Cluster summary check event (fire-and-forget)
+   * Triggers async summary generation if threshold met
+   */
+  "apps-console/neural/cluster.check-summary": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
+      /** Cluster to check */
+      clusterId: z.string(),
+      /** Current observation count */
+      observationCount: z.number(),
+    }),
+  },
+
+  /**
+   * LLM entity extraction event (fire-and-forget)
+   * Triggers async LLM-based entity extraction for observations with rich content
+   */
+  "apps-console/neural/llm-entity-extraction.requested": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID (passed from parent workflow) */
+      clerkOrgId: z.string().optional(),
+      /** Observation to extract entities from */
+      observationId: z.string(),
     }),
   },
 

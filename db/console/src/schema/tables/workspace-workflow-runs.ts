@@ -1,8 +1,7 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
+import { bigint, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { orgWorkspaces } from "./org-workspaces";
 import type { JobStatus, JobTrigger, WorkflowInput, WorkflowOutput } from "@repo/console-validation";
-import { workspaceStores } from "./workspace-stores";
 
 /**
  * Jobs table tracks Inngest workflow executions
@@ -20,12 +19,11 @@ export const workspaceWorkflowRuns = pgTable(
   "lightfast_workspace_workflow_runs",
   {
     /**
-     * Unique job identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for job tracking
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Clerk organization ID (no FK - Clerk is source of truth)
@@ -35,14 +33,9 @@ export const workspaceWorkflowRuns = pgTable(
     /**
      * Workspace ID this job belongs to
      */
-    workspaceId: varchar("workspace_id", { length: 191 }).notNull(),
-
-    /**
-     * Store ID this job writes to
-     */
-    storeId: varchar("store_id", { length: 191 })
+    workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
-      .references(() => workspaceStores.id, { onDelete: "cascade" }),
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
      * Optional repository ID if job is repository-specific
@@ -164,9 +157,6 @@ export const workspaceWorkflowRuns = pgTable(
 
     // Index for finding jobs by workspace
     workspaceIdIdx: index("job_workspace_id_idx").on(table.workspaceId),
-
-    // Index for finding jobs by store
-    storeIdIdx: index("job_store_id_idx").on(table.storeId),
 
     // Index for finding jobs by repository
     repositoryIdIdx: index("job_repository_id_idx").on(table.repositoryId),

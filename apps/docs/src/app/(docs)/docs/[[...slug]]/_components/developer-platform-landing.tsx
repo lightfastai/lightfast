@@ -1,4 +1,4 @@
-import { CodeEditor } from "@/src/components/code-editor";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { exposureTrial } from "@/src/lib/fonts";
 
 const lightfastConfig = `# Lightfast Configuration
@@ -66,12 +66,8 @@ export function DeveloperPlatformLanding() {
           </div>
 
           {/* Right Column: Code Editor (7/12) */}
-          <div className="lg:col-span-7 h-full">
-            <CodeEditor
-              code={lightfastConfig}
-              language="yaml"
-              className="border-border"
-            />
+          <div className="lg:col-span-7 h-full border rounded-xs">
+            <SSRCodeBlock language="yaml">{lightfastConfig}</SSRCodeBlock>
           </div>
         </div>
       </div>

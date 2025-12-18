@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
+    "@repo/console-clerk-cache": "workspace:*",
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "drizzle-orm": "catalog:",

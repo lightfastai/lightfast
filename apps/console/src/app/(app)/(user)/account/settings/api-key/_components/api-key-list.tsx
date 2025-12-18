@@ -249,7 +249,7 @@ export function ApiKeyList() {
 										)}
 									</div>
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<code className="text-xs">••••{key.keyPreview}</code>
+										<code className="text-xs">{key.keyPreview}</code>
 										<span>•</span>
 										<span>
 											Created{" "}

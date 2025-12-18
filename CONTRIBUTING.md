@@ -51,7 +51,7 @@ pnpm dev:www        # Start www app only
 
 # Building (app-specific)
 pnpm build:www      # Build www app only
-pnpm build:auth     # Build auth app only  
+pnpm build:auth     # Build auth app only
 pnpm build:cloud    # Build cloud app only
 
 # Code Quality
@@ -69,6 +69,54 @@ pnpm db:studio      # Open database studio
 pnpm clean          # Clean all build artifacts
 pnpm clean:workspaces # Clean turbo workspaces
 ```
+
+### Claude Code with MCP
+
+Start Claude Code with selective MCP servers:
+
+```bash
+pnpm claude           # Base only
+pnpm claude -b        # + Playwright browser (fresh session)
+pnpm claude -B        # + Playwright browser (with saved session)
+pnpm claude -e        # + Exa search
+pnpm claude -b -e     # + browser + exa
+pnpm claude -a        # All MCP servers (browser with session + exa)
+```
+
+Available MCP servers are documented in `.mcp.json`.
+
+#### Saving Browser Sessions for Playwright
+
+The `-B` flag uses a saved browser session from `.auth/browser-session.json`, allowing Playwright to access authenticated pages without re-logging in each time.
+
+**To save a new browser session:**
+
+1. Start Claude Code with the basic browser flag:
+   ```bash
+   pnpm claude -b
+   ```
+
+2. Ask Claude to navigate to the site and log in:
+   ```
+   Navigate to https://example.com/login and log in with my credentials
+   ```
+
+3. After logging in, ask Claude to save the session:
+   ```
+   Save the browser storage state to .auth/browser-session.json
+   ```
+
+   Claude will run something like:
+   ```javascript
+   await page.context().storageState({ path: '.auth/browser-session.json' })
+   ```
+
+4. Future sessions with `-B` or `-a` will use this saved state:
+   ```bash
+   pnpm claude -B  # Now authenticated automatically
+   ```
+
+**Note:** Add `.auth/` to your `.gitignore` to avoid committing session data.
 
 ### Making Changes
 

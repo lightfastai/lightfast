@@ -26,6 +26,8 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
+  "/api/github/webhooks", // GitHub webhook endpoint (CRITICAL: must be public)
+  "/api/vercel/webhooks", // Vercel webhook endpoint
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -38,6 +40,9 @@ const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
   "/new(.*)", // Workspace creation flow
   "/api/github(.*)",
+  "/api/vercel/authorize", // Vercel OAuth initiation
+  "/api/vercel/callback", // Vercel OAuth callback
+  "/vercel/connected", // Vercel OAuth success page
   "/api/organizations(.*)",
 ]);
 
@@ -55,6 +60,10 @@ const isOrgScopedRoute = createRouteMatcher([
 // Matches /:slug and /:slug/* patterns (excluding reserved routes)
 // organizationSyncOptions activates org from URL, then auth.protect verifies access
 const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
+
+// v1 API routes - auth handled at route level (API key or session)
+// Must bypass Clerk middleware to allow API key authentication
+const isV1ApiRoute = createRouteMatcher(["/v1/(.*)"]);
 
 /**
  * Compose middleware with NEMO
@@ -132,6 +141,12 @@ export default clerkMiddleware(
       }
       // Allow both pending and active users to proceed
       // Authorization happens at procedure level
+    }
+    // v1 API routes: auth handled at route level via withDualAuth
+    // Supports both API key (external clients) and session (console UI)
+    else if (isV1ApiRoute(req)) {
+      // Allow through without Clerk auth checks
+      // Route handlers use withDualAuth() for authentication
     }
     // Org-scoped tRPC routes: require active org
     else if (isOrgScopedRoute(req)) {

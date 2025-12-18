@@ -23,3 +23,16 @@ export {
   validateWorkspaceName,
   validateStoreName,
 } from "./naming";
+
+/**
+ * Embedding Configuration Defaults
+ *
+ * Single source of truth for embedding/vector storage configuration.
+ */
+export {
+  PINECONE_DEFAULTS,
+  EMBEDDING_MODEL_DEFAULTS,
+  CHUNKING_DEFAULTS,
+  EMBEDDING_DEFAULTS,
+  type EmbeddingDefaults,
+} from "./embedding";

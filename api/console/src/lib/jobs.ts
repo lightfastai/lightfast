@@ -17,6 +17,12 @@ import type {
 	JobDurationTags,
 	DocumentsIndexedTags,
 	ErrorTags,
+	NeuralObservationTags,
+	EntityExtractionTags,
+	ClusterTags,
+	ProfileUpdateTags,
+	ActorResolutionTags,
+	ClusterAffinityTags,
 } from "@repo/console-validation";
 import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
 
@@ -27,12 +33,11 @@ import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validat
  * to handle retries gracefully.
  *
  * @param params Job creation parameters
- * @returns Created job ID
+ * @returns Created job internal BIGINT ID
  */
 export async function createJob(params: {
 	clerkOrgId: string;
 	workspaceId: string;
-	storeId: string;
 	repositoryId?: string | null;
 	inngestRunId: string;
 	inngestFunctionId: string;
@@ -40,7 +45,7 @@ export async function createJob(params: {
 	trigger: JobTrigger;
 	triggeredBy?: string | null;
 	input?: WorkflowInput;
-}): Promise<string> {
+}): Promise<number> {
 	try {
 		// Validate input
 		if (params.input) {
@@ -73,7 +78,6 @@ export async function createJob(params: {
 			.values({
 				clerkOrgId: params.clerkOrgId,
 				workspaceId: params.workspaceId,
-				storeId: params.storeId,
 				repositoryId: params.repositoryId ?? null,
 				inngestRunId: params.inngestRunId,
 				inngestFunctionId: params.inngestFunctionId,
@@ -109,11 +113,11 @@ export async function createJob(params: {
 /**
  * Update job status during execution
  *
- * @param jobId Job ID
+ * @param jobId Job ID (BIGINT internal ID)
  * @param status New status
  */
 export async function updateJobStatus(
-	jobId: string,
+	jobId: number,
 	status: "running" | "queued" | "completed" | "failed" | "cancelled",
 ): Promise<void> {
 	try {
@@ -146,17 +150,19 @@ export async function updateJobStatus(
 export async function completeJob(
 	params:
 		| {
-				jobId: string;
+				jobId: number;
 				status: "completed" | "failed";
 				output: WorkflowOutput;
 		  }
 		| {
-				jobId: string;
+				jobId: number;
 				status: "cancelled";
 				errorMessage?: string;
 		  },
 ): Promise<void> {
 	try {
+		const jobIdNum = params.jobId;
+
 		// Validate output for completed/failed jobs
 		if (params.status === "completed" || params.status === "failed") {
 			const validated = workflowOutputSchema.safeParse(params.output);
@@ -171,7 +177,7 @@ export async function completeJob(
 
 		// Fetch job to calculate duration
 		const job = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.id, params.jobId),
+			where: eq(workspaceWorkflowRuns.id, jobIdNum),
 		});
 
 		if (!job) {
@@ -199,7 +205,7 @@ export async function completeJob(
 				completedAt,
 				durationMs,
 			})
-			.where(eq(workspaceWorkflowRuns.id, params.jobId));
+			.where(eq(workspaceWorkflowRuns.id, jobIdNum));
 
 		log.info("Completed job", {
 			jobId: params.jobId,
@@ -276,6 +282,68 @@ export async function recordJobMetric(
 				unit: "count";
 				tags: ErrorTags;
 		  }
+		// Neural workflow metrics
+		| {
+				type: "observation_captured";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_filtered";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_duplicate";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "observation_below_threshold";
+				value: 1;
+				unit: "count";
+				tags: NeuralObservationTags;
+		  }
+		| {
+				type: "entities_extracted";
+				value: number;
+				unit: "count";
+				tags: EntityExtractionTags;
+		  }
+		| {
+				type: "cluster_assigned";
+				value: 1;
+				unit: "count";
+				tags: ClusterTags;
+		  }
+		| {
+				type: "cluster_summary_generated";
+				value: 1;
+				unit: "count";
+				tags: ClusterTags;
+		  }
+		| {
+				type: "profile_updated";
+				value: 1;
+				unit: "count";
+				tags: ProfileUpdateTags;
+		  }
+		// Analytics metrics
+		| {
+				type: "actor_resolution";
+				value: 1;
+				unit: "count";
+				tags: ActorResolutionTags;
+		  }
+		| {
+				type: "cluster_affinity";
+				value: 1;
+				unit: "count";
+				tags: ClusterAffinityTags;
+		  }
 	) & {
 		clerkOrgId: string;
 		workspaceId: string;
@@ -311,13 +379,20 @@ export async function recordJobMetric(
 /**
  * Get job by ID
  *
- * @param jobId Job ID
+ * @param jobId Job ID (string representation of BIGINT)
  * @returns Job or null if not found
  */
 export async function getJob(jobId: string): Promise<WorkspaceWorkflowRun | null> {
 	try {
+		// Parse jobId to number (BIGINT internal ID)
+		const jobIdNum = parseInt(jobId, 10);
+		if (isNaN(jobIdNum)) {
+			log.error("Invalid job ID format", { jobId });
+			return null;
+		}
+
 		const job = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.id, jobId),
+			where: eq(workspaceWorkflowRuns.id, jobIdNum),
 		});
 
 		return job ?? null;

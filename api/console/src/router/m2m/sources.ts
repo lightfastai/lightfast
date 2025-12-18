@@ -22,7 +22,7 @@ const updateGithubSyncStatusSchema = z.object({
 
 const updateGithubConfigStatusSchema = z.object({
   githubRepoId: z.string(),
-  configStatus: z.enum(["configured", "unconfigured"]),
+  configStatus: z.enum(["configured", "awaiting_config"]),
   configPath: z.string().nullable(),
 });
 
@@ -87,7 +87,7 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source && source.sourceConfig.provider !== "github") {
+      if (source && source.sourceConfig.sourceType !== "github") {
         return null;
       }
 
@@ -125,7 +125,7 @@ export const sourcesM2MRouter = {
           where: eq(workspaceIntegrations.id, source.id),
         });
 
-        if (fullSource?.sourceConfig.provider !== "github") {
+        if (fullSource?.sourceConfig.sourceType !== "github") {
           return null;
         }
       }
@@ -211,7 +211,7 @@ export const sourcesM2MRouter = {
    * - When repository is added and we check for config
    *
    * Updates the sourceConfig.status field with:
-   * - configStatus: "configured" | "unconfigured"
+   * - configStatus: "configured" | "awaiting_config"
    * - configPath: path to the config file (e.g., ".lightfast.yml")
    * - lastConfigCheck: timestamp of last check
    */
@@ -236,7 +236,7 @@ export const sourcesM2MRouter = {
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config
-          if (source.sourceConfig.provider !== "github") {
+          if (source.sourceConfig.sourceType !== "github") {
             return Promise.resolve(null);
           }
 
@@ -262,7 +262,7 @@ export const sourcesM2MRouter = {
 
       // Record activity for each updated source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
-        if (source.sourceConfig.provider === "github") {
+        if (source.sourceConfig.sourceType === "github") {
           recordSystemActivity({
             workspaceId: source.workspaceId,
             actorType: "webhook",
@@ -308,7 +308,7 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources with matching installationId
       const installationSources = sources.filter(
         (source) =>
-          source.sourceConfig.provider === "github" &&
+          source.sourceConfig.sourceType === "github" &&
           source.sourceConfig.installationId === input.githubInstallationId
       );
 
@@ -387,7 +387,7 @@ export const sourcesM2MRouter = {
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config
-          if (source.sourceConfig.provider !== "github") {
+          if (source.sourceConfig.sourceType !== "github") {
             return Promise.resolve(null);
           }
 
@@ -413,7 +413,7 @@ export const sourcesM2MRouter = {
 
       // Record activity for each deleted source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
-        if (source.sourceConfig.provider === "github") {
+        if (source.sourceConfig.sourceType === "github") {
           recordSystemActivity({
             workspaceId: source.workspaceId,
             actorType: "webhook",
@@ -466,7 +466,7 @@ export const sourcesM2MRouter = {
       const updates = await Promise.all(
         sources.map((source) => {
           // Type guard to ensure we're working with GitHub config
-          if (source.sourceConfig.provider !== "github") {
+          if (source.sourceConfig.sourceType !== "github") {
             return Promise.resolve(null);
           }
 
@@ -500,7 +500,7 @@ export const sourcesM2MRouter = {
 
       // Record activity for each metadata update (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
-        if (source.sourceConfig.provider === "github") {
+        if (source.sourceConfig.sourceType === "github") {
           recordSystemActivity({
             workspaceId: source.workspaceId,
             actorType: "webhook",

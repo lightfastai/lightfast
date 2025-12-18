@@ -39,9 +39,10 @@ interface GitHubInstallation {
 }
 
 interface WorkspaceFormState {
-  // Repository selection (not in react-hook-form)
-  selectedRepository: Repository | null;
-  setSelectedRepository: (repo: Repository | null) => void;
+  // Multi-repo selection (not in react-hook-form)
+  selectedRepositories: Repository[];
+  setSelectedRepositories: (repos: Repository[]) => void;
+  toggleRepository: (repo: Repository) => void;
   userSourceId: string | null;
   setUserSourceId: (id: string | null) => void;
   installations: GitHubInstallation[];
@@ -72,17 +73,29 @@ export function WorkspaceFormProvider({
   });
 
   // Additional state for GitHub integration (not validated by form schema)
-  const [selectedRepository, setSelectedRepository] = useState<Repository | null>(null);
+  const [selectedRepositories, setSelectedRepositories] = useState<Repository[]>([]);
   const [userSourceId, setUserSourceId] = useState<string | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
   const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
+
+  // Toggle helper for multi-repo selection
+  const toggleRepository = (repo: Repository) => {
+    setSelectedRepositories((prev) => {
+      const exists = prev.find((r) => r.id === repo.id);
+      if (exists) {
+        return prev.filter((r) => r.id !== repo.id);
+      }
+      return [...prev, repo];
+    });
+  };
 
   return (
     <Form {...form}>
       <WorkspaceFormContext.Provider
         value={{
-          selectedRepository,
-          setSelectedRepository,
+          selectedRepositories,
+          setSelectedRepositories,
+          toggleRepository,
           userSourceId,
           setUserSourceId,
           installations,

@@ -12,14 +12,23 @@
  * All enum values are type-checked against validation schemas (@repo/console-validation).
  * This ensures config values can never violate database constraints.
  *
+ * Single Source of Truth:
+ * Core embedding defaults are defined in @repo/console-validation/constants.
+ * This file re-exports and extends them with additional operational config.
+ *
  * @packageDocumentation
  */
 
 import type {
-	EmbeddingProvider,
-	PineconeMetric,
-	PineconeCloud,
+  EmbeddingProvider,
+  PineconeMetric,
+  PineconeCloud,
 } from "@repo/console-validation";
+import {
+  PINECONE_DEFAULTS,
+  EMBEDDING_MODEL_DEFAULTS,
+  CHUNKING_DEFAULTS,
+} from "@repo/console-validation/constants";
 
 /**
  * Pinecone infrastructure configuration
@@ -33,29 +42,28 @@ import type {
  */
 export const PINECONE_CONFIG = {
   /**
-   * Shared Pinecone indexes (platform-level resources)
+   * Shared Pinecone index configuration
    *
-   * NEW ARCHITECTURE: One shared index per environment instead of one-index-per-store
+   * ARCHITECTURE: Single index name per Pinecone project (environment separation at project level)
+   * - lightfast-prod project → lightfast-v1 index (PINECONE_API_KEY for prod)
+   * - lightfast-dev project → lightfast-v1 index (PINECONE_API_KEY for dev)
+   *
+   * Benefits:
    * - Massive cost savings: $50/month vs $7,500+/month for 3000 stores
    * - Scales to 25,000 namespaces per index (Standard plan)
    * - Physical isolation via Pinecone's serverless architecture
+   * - Environment separation at Pinecone project level (different API keys)
    *
-   * Each store gets a hierarchical namespace within the shared index:
-   * Format: org_{clerkOrgId}:ws_{workspaceId}:store_{storeSlug}
+   * Each workspace gets a hierarchical namespace within the shared index:
+   * Format: org_{clerkOrgId}:ws_{workspaceId}
+   *
+   * Values from: @repo/console-validation/constants (single source of truth)
    */
-  indexes: {
-    production: {
-      name: "lightfast-production-v1",
-      embeddingDim: 1024,
-      embeddingModel: "embed-english-v3.0",
-      embeddingProvider: "cohere" as const,
-    },
-    staging: {
-      name: "lightfast-staging-v1",
-      embeddingDim: 1024,
-      embeddingModel: "embed-english-v3.0",
-      embeddingProvider: "cohere" as const,
-    },
+  index: {
+    name: PINECONE_DEFAULTS.indexName,
+    embeddingDim: EMBEDDING_MODEL_DEFAULTS.dimension,
+    embeddingModel: EMBEDDING_MODEL_DEFAULTS.model,
+    embeddingProvider: EMBEDDING_MODEL_DEFAULTS.provider,
   },
 
   /**
@@ -66,7 +74,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  metric: "cosine" as PineconeMetric,
+  metric: PINECONE_DEFAULTS.metric as PineconeMetric,
 
   /**
    * Cloud provider for serverless indexes
@@ -76,7 +84,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  cloud: "aws" as PineconeCloud,
+  cloud: PINECONE_DEFAULTS.cloud as PineconeCloud,
 
   /**
    * AWS region for serverless indexes
@@ -86,7 +94,7 @@ export const PINECONE_CONFIG = {
    *
    * @private
    */
-  region: "us-east-1" as const,
+  region: PINECONE_DEFAULTS.region,
 
   /**
    * Default deletion protection value for new indexes
@@ -139,6 +147,8 @@ export const EMBEDDING_CONFIG = {
    * Cohere embedding configuration
    *
    * COHERE_API_KEY is required for all embedding operations.
+   *
+   * Values from: @repo/console-validation/constants (single source of truth)
    */
   cohere: {
     /**
@@ -149,7 +159,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    provider: "cohere" as const,
+    provider: EMBEDDING_MODEL_DEFAULTS.provider,
 
     /**
      * Model name
@@ -159,7 +169,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    model: "embed-english-v3.0" as const,
+    model: EMBEDDING_MODEL_DEFAULTS.model,
 
     /**
      * Embedding dimension
@@ -169,7 +179,7 @@ export const EMBEDDING_CONFIG = {
      *
      * @private
      */
-    dimension: 1024 as const,
+    dimension: EMBEDDING_MODEL_DEFAULTS.dimension,
   },
 
   /**
@@ -191,6 +201,74 @@ export const EMBEDDING_CONFIG = {
 };
 
 /**
+ * Rerank provider configuration
+ *
+ * Controls reranking behavior for neural memory search.
+ * Currently private - optimized for quality vs latency trade-offs.
+ *
+ * Future: Could allow users to specify mode per workspace.
+ */
+export const RERANK_CONFIG = {
+  /**
+   * Cohere rerank configuration
+   */
+  cohere: {
+    /**
+     * Cohere rerank model
+     * @default "rerank-v3.5"
+     */
+    model: "rerank-v3.5" as const,
+
+    /**
+     * Default relevance threshold
+     * @default 0.4
+     */
+    threshold: 0.4 as const,
+  },
+
+  /**
+   * LLM rerank configuration
+   */
+  llm: {
+    /**
+     * Model to use via AI Gateway
+     * @default "anthropic/claude-haiku-4.5"
+     */
+    model: "anthropic/claude-haiku-4.5" as const,
+
+    /**
+     * Weight for LLM score in final calculation
+     * @default 0.6
+     */
+    llmWeight: 0.6 as const,
+
+    /**
+     * Weight for vector score in final calculation
+     * @default 0.4
+     */
+    vectorWeight: 0.4 as const,
+
+    /**
+     * Skip LLM if candidate count is <= this value
+     * @default 5
+     */
+    bypassThreshold: 5 as const,
+
+    /**
+     * Default relevance threshold
+     * @default 0.4
+     */
+    threshold: 0.4 as const,
+  },
+
+  /**
+   * Default rerank mode
+   * @default "balanced"
+   */
+  defaultMode: "balanced" as const,
+} as const;
+
+/**
  * Document chunking configuration
  *
  * Controls how documents are split into chunks for embedding.
@@ -209,9 +287,11 @@ export const CHUNKING_CONFIG = {
    * - Smaller chunks: More precise retrieval, less context
    * - Larger chunks: More context, less precise retrieval
    *
+   * Values from: @repo/console-validation/constants (single source of truth)
+   *
    * @private
    */
-  maxTokens: 512,
+  maxTokens: CHUNKING_DEFAULTS.maxTokens,
 
   /**
    * Token overlap between consecutive chunks
@@ -221,7 +301,7 @@ export const CHUNKING_CONFIG = {
    *
    * @private
    */
-  overlap: 50,
+  overlap: CHUNKING_DEFAULTS.overlap,
 } as const;
 
 /**
@@ -284,6 +364,7 @@ export const GITHUB_CONFIG = {
 export const PRIVATE_CONFIG = {
   pinecone: PINECONE_CONFIG,
   embedding: EMBEDDING_CONFIG,
+  rerank: RERANK_CONFIG,
   chunking: CHUNKING_CONFIG,
   github: GITHUB_CONFIG,
 } as const;
@@ -294,17 +375,19 @@ export const PRIVATE_CONFIG = {
 export type PrivateConfig = typeof PRIVATE_CONFIG;
 
 /**
- * Helper to get Pinecone index configuration by environment
+ * Get Pinecone index configuration
  *
- * @param environment - "production" or "staging"
+ * Note: Index name is the same for all environments ("lightfast-v1").
+ * Environment separation is handled at the Pinecone project level via different API keys.
+ *
  * @returns Index configuration with name, dimension, model, and provider
  *
  * @example
  * ```typescript
- * const indexConfig = getPineconeIndexConfig("production");
- * // Returns: { name: "lightfast-production-v1", embeddingDim: 1024, ... }
+ * const indexConfig = getPineconeIndexConfig();
+ * // Returns: { name: "lightfast-v1", embeddingDim: 1024, ... }
  * ```
  */
-export function getPineconeIndexConfig(environment: "production" | "staging") {
-  return PRIVATE_CONFIG.pinecone.indexes[environment];
+export function getPineconeIndexConfig() {
+  return PRIVATE_CONFIG.pinecone.index;
 }

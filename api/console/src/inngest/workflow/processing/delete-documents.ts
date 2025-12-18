@@ -1,6 +1,6 @@
 /**
  * Generic document deletion workflow
- * Deletes documents from any source (GitHub, Linear, Notion, Sentry, Vercel, Zendesk)
+ * Deletes documents from any source (GitHub, Vercel)
  *
  * Workflow steps:
  * 1. Find document in database
@@ -10,20 +10,20 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceKnowledgeDocuments, workspaceStores, workspaceKnowledgeVectorChunks } from "@db/console/schema";
+import { workspaceKnowledgeDocuments, orgWorkspaces, workspaceKnowledgeVectorChunks } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
+import type { SourceType } from "@repo/console-validation";
 
 /**
  * Generic document deletion event
  */
 export interface DeleteDocumentEvent {
   workspaceId: string;
-  storeSlug: string;
   documentId: string;
-  sourceType: "github" | "linear" | "notion" | "sentry" | "vercel" | "zendesk";
+  sourceType: SourceType;
   sourceId: string;
 }
 
@@ -41,12 +41,12 @@ export const deleteDocuments = inngest.createFunction(
     retries: 2,
 
     // Prevent duplicate deletion work
-    idempotency: 'event.data.documentId',
+    idempotency: "event.data.documentId",
 
-    // Allow per-store parallel deletions
+    // Allow per-workspace parallel deletions (1:1 with store)
     concurrency: [
       {
-        key: 'event.data.workspaceId + "-" + event.data.storeSlug',
+        key: "event.data.workspaceId",
         limit: 10,
       },
     ],
@@ -58,31 +58,31 @@ export const deleteDocuments = inngest.createFunction(
   },
   { event: "apps-console/documents.delete" },
   async ({ event, step }) => {
-    const { workspaceId, storeSlug, documentId, sourceType, sourceId } =
+    const { workspaceId, documentId, sourceType, sourceId } =
       event.data;
 
     log.info("Deleting document (multi-source)", {
       workspaceId,
-      storeSlug,
       documentId,
       sourceType,
       sourceId,
     });
 
-    // Step 1: Find document and store in database
+    // Step 1: Find document and workspace in database
     const docInfo = await step.run("document.find", async () => {
       try {
-        // Get store
-        const [store] = await db
-          .select()
-          .from(workspaceStores)
-          .where(
-            and(eq(workspaceStores.workspaceId, workspaceId), eq(workspaceStores.slug, storeSlug)),
-          )
-          .limit(1);
+        // Get workspace
+        const workspace = await db.query.orgWorkspaces.findFirst({
+          where: eq(orgWorkspaces.id, workspaceId),
+        });
 
-        if (!store) {
-          log.warn("Store not found", { workspaceId, storeSlug });
+        if (!workspace) {
+          log.warn("Workspace not found", { workspaceId });
+          return null;
+        }
+
+        if (workspace.settings.version !== 1) {
+          log.warn("Workspace has invalid settings version", { workspaceId });
           return null;
         }
 
@@ -92,7 +92,7 @@ export const deleteDocuments = inngest.createFunction(
           .from(workspaceKnowledgeDocuments)
           .where(
             and(
-              eq(workspaceKnowledgeDocuments.storeId, store.id),
+              eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
               eq(workspaceKnowledgeDocuments.id, documentId),
             ),
           )
@@ -105,7 +105,7 @@ export const deleteDocuments = inngest.createFunction(
             .from(workspaceKnowledgeDocuments)
             .where(
               and(
-                eq(workspaceKnowledgeDocuments.storeId, store.id),
+                eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
                 eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
                 eq(workspaceKnowledgeDocuments.sourceId, sourceId),
               ),
@@ -117,7 +117,7 @@ export const deleteDocuments = inngest.createFunction(
               documentId,
               sourceType,
               sourceId,
-              storeId: store.id,
+              workspaceId,
             });
             return null;
           }
@@ -130,9 +130,9 @@ export const deleteDocuments = inngest.createFunction(
 
           return {
             docId: docBySource.id,
-            storeId: store.id,
-            indexName: store.indexName,
-            namespaceName: store.namespaceName,
+            workspaceId,
+            indexName: workspace.settings.embedding.indexName,
+            namespaceName: workspace.settings.embedding.namespaceName,
           };
         }
 
@@ -144,9 +144,9 @@ export const deleteDocuments = inngest.createFunction(
 
         return {
           docId: doc.id,
-          storeId: store.id,
-          indexName: store.indexName,
-          namespaceName: store.namespaceName,
+          workspaceId,
+          indexName: workspace.settings.embedding.indexName,
+          namespaceName: workspace.settings.embedding.namespaceName,
         };
       } catch (error) {
         log.error("Failed to find document", {
@@ -197,7 +197,7 @@ export const deleteDocuments = inngest.createFunction(
           .delete(workspaceKnowledgeVectorChunks)
           .where(
             and(
-              eq(workspaceKnowledgeVectorChunks.storeId, docInfo.storeId),
+              eq(workspaceKnowledgeVectorChunks.workspaceId, docInfo.workspaceId),
               eq(workspaceKnowledgeVectorChunks.docId, docInfo.docId),
             ),
           );

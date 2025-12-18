@@ -167,7 +167,13 @@
       "Read(//private/tmp/repos/microfrontends-nextjs-app-multi-zone/**)",
       "Bash(gh issue comment:*)",
       "WebFetch(domain:tryprofound.com)",
-      "WebFetch(domain:chatgpt.com)"
+      "WebFetch(domain:chatgpt.com)",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_file_upload",
+      "Read(//tmp/repos/humanlayer/.claude/commands/**)",
+      "Read(//private/tmp/repos/humanlayer/.claude/commands/**)",
+      "mcp__exa__web_search_exa",
+      "Bash(pnpm --filter @repo/console-validation build:*)"
     ],
     "deny": []
   },
@@ -176,5 +182,9 @@
     "playwright"
   ],
   "disableAllHooks": false,
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "sandbox": {
+    "enabled": false,
+    "autoAllowBashIfSandboxed": false
+  }
 }

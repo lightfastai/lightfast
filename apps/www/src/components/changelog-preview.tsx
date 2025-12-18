@@ -36,9 +36,9 @@ export function ChangelogPreview() {
             {/* Changelog Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {latestEntries.map((item) => {
-                const created = item._sys?.createdAt
-                  ? new Date(item._sys.createdAt)
-                  : null;
+                // Use publishedAt if available, fall back to createdAt
+                const publishedTime = item.publishedAt ?? item._sys?.createdAt;
+                const created = publishedTime ? new Date(publishedTime) : null;
                 const dateStr = created
                   ? created.toLocaleDateString(undefined, {
                       year: "numeric",
@@ -71,7 +71,7 @@ export function ChangelogPreview() {
                       <div className="flex items-center gap-2 mb-4">
                         {item.slug && (
                           <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground">
-                            {item.slug}
+                            {item.slug.slice(0, 3)}
                           </span>
                         )}
                         <time className="text-xs text-muted-foreground">
@@ -94,4 +94,3 @@ export function ChangelogPreview() {
     </Feed>
   );
 }
-

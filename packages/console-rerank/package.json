@@ -1,0 +1,41 @@
+{
+  "name": "@repo/console-rerank",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsup --watch",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
+    "@repo/console-config": "workspace:*",
+    "@vendor/embed": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "ai": "catalog:",
+    "cohere-ai": "^7.19.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tsup": "^8.5.0",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

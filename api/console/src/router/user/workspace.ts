@@ -216,7 +216,7 @@ export const workspaceAccessRouter = {
           const existing = existingResult.find((ws) => {
             const data = ws.sourceConfig;
             return (
-              data.provider === "github" &&
+              data.sourceType === "github" &&
               data.type === "repository" &&
               data.repoId === repo.repoId
             );
@@ -227,7 +227,7 @@ export const workspaceAccessRouter = {
           if (existing) {
             // Update existing connection (idempotent)
             const currentConfig = existing.sourceConfig;
-            if (currentConfig.provider === "github" && currentConfig.type === "repository") {
+            if (currentConfig.sourceType === "github" && currentConfig.type === "repository") {
               await ctx.db
                 .update(workspaceIntegrations)
                 .set({
@@ -250,7 +250,8 @@ export const workspaceAccessRouter = {
               userSourceId: repo.userSourceId,
               connectedBy: ctx.auth.userId,
               sourceConfig: {
-                provider: "github" as const,
+                version: 1 as const,
+                sourceType: "github" as const,
                 type: "repository" as const,
                 installationId: repo.installationId,
                 repoId: repo.repoId,

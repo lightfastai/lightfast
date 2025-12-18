@@ -66,7 +66,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
             <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
               {page.body?.json?.content ? (
-                <div className="prose max-w-none prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80 prose-ul:text-foreground/80 prose-li:text-foreground/80">
+                <div className="prose max-w-none prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
                   <Body content={page.body.json.content} />
                 </div>
               ) : null}

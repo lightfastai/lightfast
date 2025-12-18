@@ -10,9 +10,9 @@ import {
 } from "@sentry/nextjs";
 import { smoothStream, stepCountIs, wrapLanguageModel } from "ai";
 import { BraintrustMiddleware, initLogger, traced } from "braintrust";
-import { createAgent } from "lightfast/agent";
-import { fetchRequestHandler } from "lightfast/server/adapters/fetch";
-import { uuidv4 } from "lightfast/v2/utils";
+import { createAgent } from "@lightfastai/ai-sdk/agent";
+import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
+import { uuidv4 } from "@lightfastai/ai-sdk/v2/utils";
 
 import type { AppRuntimeContext } from "@repo/chat-ai-types";
 import { getBraintrustConfig, isOtelEnabled } from "@repo/ai/braintrust-env";

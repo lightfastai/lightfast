@@ -19,6 +19,9 @@ import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 /**
  * Create Workspace Button
  * Client island for workspace creation mutation and navigation
+ * Supports multi-repo selection via two-step creation:
+ * 1. Create workspace
+ * 2. Bulk link selected repositories
  */
 export function CreateWorkspaceButton() {
   const router = useRouter();
@@ -39,16 +42,14 @@ export function CreateWorkspaceButton() {
   const workspaceName = form.watch("workspaceName");
   const selectedOrgId = form.watch("organizationId");
 
-  // Get GitHub-related state from context
-  const { selectedRepository, userSourceId, selectedInstallation } =
+  // Get GitHub-related state from context (now supports multiple repos)
+  const { selectedRepositories, userSourceId, selectedInstallation } =
     useWorkspaceForm();
 
   // Find the organization by ID from tRPC cache
   const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
 
   // Create workspace mutation with optimistic updates
-  // Use workspaceAccess (user router) for pending user support
-  // Optionally connects GitHub repository atomically (prevents race conditions)
   const createWorkspaceMutation = useMutation(
     trpc.workspaceAccess.create.mutationOptions({
       onMutate: async (variables) => {
@@ -60,7 +61,6 @@ export function CreateWorkspaceButton() {
         const orgSlug = selectedOrg.slug;
 
         // Cancel outgoing queries to prevent race conditions
-        // Use workspaceAccess (user router) instead of workspace (org router) for pending users
         await queryClient.cancelQueries({
           queryKey: trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
@@ -84,10 +84,10 @@ export function CreateWorkspaceButton() {
               // Add optimistic workspace (will be replaced by server data)
               draft.push({
                 id: "temp-" + Date.now(),
-                name: variables.workspaceName, // User-facing name used in URLs
+                name: variables.workspaceName,
                 slug: variables.workspaceName
                   .toLowerCase()
-                  .replace(/\s+/g, "-"), // Internal slug
+                  .replace(/\s+/g, "-"),
                 createdAt: new Date().toISOString(),
               });
             }),
@@ -116,6 +116,21 @@ export function CreateWorkspaceButton() {
             }).queryKey,
           });
         }
+      },
+    }),
+  );
+
+  // Bulk link repositories mutation
+  const bulkLinkMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkGitHubRepositories.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link repositories:", error);
+        // Note: Workspace is already created, just show warning
+        toast({
+          title: "Repositories not linked",
+          description: "Workspace created, but failed to connect repositories. You can add them later.",
+          variant: "destructive",
+        });
       },
     }),
   );
@@ -151,48 +166,39 @@ export function CreateWorkspaceButton() {
     }
 
     try {
-      // Build repository connection data if repository is selected
-      let githubRepository = undefined;
-      if (selectedRepository && userSourceId && selectedInstallation) {
-        githubRepository = {
-          userSourceId,
-          installationId: selectedInstallation.id,
-          repoId: selectedRepository.id,
-          repoName: selectedRepository.name,
-          repoFullName: selectedRepository.fullName,
-          defaultBranch: selectedRepository.defaultBranch,
-          isPrivate: selectedRepository.isPrivate,
-          isArchived: selectedRepository.isArchived,
-          syncConfig: {
-            branches: [selectedRepository.defaultBranch],
-            paths: ["**/*"],
-            events: [],
-            autoSync: true,
-          },
-        };
-      }
-
-      // Create workspace (and optionally connect repository atomically)
+      // Step 1: Create workspace (without repositories - we'll link them separately)
       const workspace = await createWorkspaceMutation.mutateAsync({
         clerkOrgId: selectedOrgId,
         workspaceName,
-        githubRepository,
+        // Note: Don't pass githubRepository here - we use bulk link instead
       });
 
-      // Show success toast
-      const hasRepository = Boolean(githubRepository);
-      toast({
-        title: "Workspace created!",
-        description: hasRepository
-          ? `${workspaceName} has been created and is syncing.`
-          : `${workspaceName} workspace is ready. Add sources to get started.`,
-      });
-
-      // Set active organization before navigation (prevents race conditions)
-      // Ensures Clerk cookies are updated before RSC request
+      // Step 2: Set active organization before bulk linking (required for org-scoped procedures)
       if (setActive) {
         await setActive({ organization: selectedOrgId });
       }
+
+      // Step 3: Bulk link repositories if any selected
+      if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
+        await bulkLinkMutation.mutateAsync({
+          workspaceId: workspace.workspaceId,
+          userSourceId,
+          installationId: selectedInstallation.id,
+          repositories: selectedRepositories.map((repo) => ({
+            repoId: repo.id,
+            repoFullName: repo.fullName,
+          })),
+        });
+      }
+
+      // Show success toast
+      const repoCount = selectedRepositories.length;
+      toast({
+        title: "Workspace created!",
+        description: repoCount > 0
+          ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
+          : `${workspaceName} workspace is ready. Add sources to get started.`,
+      });
 
       // Redirect to workspace
       const orgSlug = selectedOrg?.slug;
@@ -209,9 +215,9 @@ export function CreateWorkspaceButton() {
   };
 
   const isDisabled =
-    !form.formState.isValid || createWorkspaceMutation.isPending;
+    !form.formState.isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
 
-  const isLoading = createWorkspaceMutation.isPending;
+  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">

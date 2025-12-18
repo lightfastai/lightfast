@@ -1,0 +1,33 @@
+#!/bin/bash
+# ngrok helper - starts ngrok tunnel for development
+# Usage: ./scripts/ngrok [port]
+#   port: Port to tunnel (default: 3024 for microfrontends)
+
+PORT="${1:-3024}"
+
+# Check if ngrok is installed
+if ! command -v ngrok &> /dev/null; then
+  echo "Error: ngrok is not installed"
+  echo ""
+  echo "Install ngrok:"
+  echo "  brew install ngrok    # macOS"
+  echo "  Or download from https://ngrok.com/download"
+  echo ""
+  echo "Then authenticate:"
+  echo "  ngrok config add-authtoken <your-token>"
+  exit 1
+fi
+
+# Check if user is logged in by checking for authtoken
+if ! ngrok config check &> /dev/null; then
+  echo "Error: ngrok is not configured"
+  echo ""
+  echo "Add your authtoken:"
+  echo "  ngrok config add-authtoken <your-token>"
+  echo ""
+  echo "Get your token at: https://dashboard.ngrok.com/get-started/your-authtoken"
+  exit 1
+fi
+
+echo "Looking good! Starting ngrok on port $PORT..."
+exec ngrok http "$PORT"

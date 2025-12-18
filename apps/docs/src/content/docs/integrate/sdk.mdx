@@ -1,0 +1,294 @@
+---
+title: TypeScript SDK
+description: Add semantic search to your applications with the Lightfast SDK
+---
+
+# TypeScript SDK
+
+The `lightfast` package provides a type-safe client for the Lightfast API, letting you search your engineering org's memory from any Node.js application.
+
+## Installation
+
+```bash
+npm install lightfast
+```
+
+## Quick Start
+
+```typescript
+import { Lightfast } from "lightfast";
+
+const lightfast = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY,
+});
+
+// Search your workspace memory
+const results = await lightfast.search({
+  query: "how does authentication work",
+});
+
+console.log(results.results[0].title);
+// → "Add JWT authentication to API endpoints"
+```
+
+## Configuration
+
+```typescript
+const lightfast = new Lightfast({
+  // Required: Your API key (starts with sk_live_ or sk_test_)
+  apiKey: "sk_live_...",
+
+  // Optional: Override base URL (default: https://lightfast.ai)
+  baseUrl: "https://lightfast.ai",
+
+  // Optional: Request timeout in ms (default: 30000)
+  timeout: 30000,
+});
+```
+
+You can also set the `LIGHTFAST_API_KEY` environment variable and pass it directly:
+
+```typescript
+const lightfast = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY,
+});
+```
+
+## Methods
+
+### search()
+
+Search through workspace neural memory for relevant documents and observations.
+
+```typescript
+const results = await lightfast.search({
+  // Required: Natural language query
+  query: "database migration patterns",
+
+  // Optional: Number of results (default: 10)
+  limit: 10,
+
+  // Optional: Pagination offset (default: 0)
+  offset: 0,
+
+  // Optional: Search mode - "fast" | "balanced" | "quality" (default: "balanced")
+  mode: "balanced",
+
+  // Optional: Include surrounding context (default: true)
+  includeContext: true,
+
+  // Optional: Include highlighted snippets (default: true)
+  includeHighlights: true,
+
+  // Optional: Filter by source, date, type
+  filters: {
+    sources: ["github"],
+    dateRange: "30d",
+  },
+});
+```
+
+**Response:**
+
+```typescript
+{
+  results: [
+    {
+      id: "doc_abc123",
+      type: "pull_request",
+      title: "Add database migration framework",
+      snippet: "Implemented Drizzle ORM migrations with...",
+      score: 0.92,
+      source: "github",
+      url: "https://github.com/org/repo/pull/456",
+      metadata: {
+        author: "jane",
+        mergedAt: "2024-12-01"
+      }
+    }
+  ],
+  meta: {
+    total: 24,
+    latency: { total: 145 }
+  }
+}
+```
+
+### contents()
+
+Fetch full content for documents and observations by their IDs.
+
+```typescript
+const content = await lightfast.contents({
+  // Required: Array of document IDs
+  ids: ["doc_abc123", "obs_def456"],
+});
+```
+
+**Response:**
+
+```typescript
+{
+  items: [
+    {
+      id: "doc_abc123",
+      type: "pull_request",
+      title: "Add database migration framework",
+      content: "Full document content...",
+      metadata: { ... }
+    }
+  ],
+  missing: [] // IDs that weren't found
+}
+```
+
+### findSimilar()
+
+Find content semantically similar to a given document or URL.
+
+```typescript
+// By document ID
+const similar = await lightfast.findSimilar({
+  id: "doc_abc123",
+  limit: 5,
+  threshold: 0.7,
+});
+
+// By URL
+const similar = await lightfast.findSimilar({
+  url: "https://github.com/org/repo/pull/123",
+  limit: 5,
+});
+```
+
+**Options:**
+
+```typescript
+{
+  // One of id or url is required
+  id: "doc_abc123",
+  url: "https://github.com/...",
+
+  // Optional: Number of results (default: 10)
+  limit: 10,
+
+  // Optional: Minimum similarity score 0-1 (default: 0.5)
+  threshold: 0.5,
+
+  // Optional: Only return results from same source (default: false)
+  sameSourceOnly: false,
+
+  // Optional: Exclude specific document IDs
+  excludeIds: ["doc_xyz"],
+}
+```
+
+## Error Handling
+
+The SDK provides typed errors for common scenarios:
+
+```typescript
+import {
+  Lightfast,
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+  NetworkError,
+} from "lightfast";
+
+try {
+  const results = await lightfast.search({ query: "test" });
+} catch (error) {
+  if (error instanceof AuthenticationError) {
+    // Invalid or expired API key
+  } else if (error instanceof ValidationError) {
+    // Invalid request parameters
+    console.log(error.details); // Field-specific errors
+  } else if (error instanceof RateLimitError) {
+    // Too many requests
+    console.log(error.retryAfter); // Seconds until retry
+  } else if (error instanceof NotFoundError) {
+    // Resource not found
+  } else if (error instanceof NetworkError) {
+    // Connection or timeout error
+  }
+}
+```
+
+## TypeScript Types
+
+All request and response types are exported:
+
+```typescript
+import type {
+  LightfastConfig,
+  SearchInput,
+  V1SearchResponse,
+  V1SearchResult,
+  ContentsInput,
+  V1ContentsResponse,
+  FindSimilarInput,
+  V1FindSimilarResponse,
+} from "lightfast";
+```
+
+## Examples
+
+### Build a CLI Search Tool
+
+```typescript
+import { Lightfast } from "lightfast";
+
+const lightfast = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY,
+});
+
+async function search(query: string) {
+  const { results } = await lightfast.search({ query, limit: 5 });
+
+  for (const result of results) {
+    console.log(`[${result.score.toFixed(2)}] ${result.title}`);
+    console.log(`  ${result.url}\n`);
+  }
+}
+
+search(process.argv[2]);
+```
+
+### Add Context to AI Prompts
+
+```typescript
+import { Lightfast } from "lightfast";
+import { generateText } from "ai";
+
+const lightfast = new Lightfast({
+  apiKey: process.env.LIGHTFAST_API_KEY,
+});
+
+async function answerWithContext(question: string) {
+  // Get relevant context from your codebase
+  const { results } = await lightfast.search({
+    query: question,
+    limit: 5,
+  });
+
+  const context = results
+    .map((r) => `[${r.title}]\n${r.snippet}`)
+    .join("\n\n");
+
+  // Use context in AI prompt
+  const { text } = await generateText({
+    model: "gpt-4",
+    prompt: `Based on this context from our codebase:\n\n${context}\n\nAnswer: ${question}`,
+  });
+
+  return text;
+}
+```
+
+## Next Steps
+
+- <NextLink href="/docs/integrate/mcp">Set up MCP for AI assistants</NextLink>
+- <NextLink href="/docs/features/search">Learn about search modes</NextLink>
+- [View SDK source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/lightfast)

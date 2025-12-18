@@ -7,14 +7,14 @@ export default async function WorkspaceSearchPage({
   searchParams,
 }: {
   params: Promise<{ slug: string; workspaceName: string }>;
-  searchParams: Promise<{ q?: string; store?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const { slug, workspaceName } = await params;
-  const { q = "", store = "" } = await searchParams;
+  const { q = "" } = await searchParams;
 
-  // Prefetch stores list for the search dropdown
+  // Prefetch workspace's single store (1:1 relationship)
   prefetch(
-    orgTrpc.workspace.stores.list.queryOptions({
+    orgTrpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
     })
@@ -29,7 +29,6 @@ export default async function WorkspaceSearchPage({
               orgSlug={slug}
               workspaceName={workspaceName}
               initialQuery={q}
-              initialStore={store}
             />
           </Suspense>
         </div>

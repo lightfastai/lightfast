@@ -15,6 +15,7 @@ export const RequestIdSchema = z.string().uuid();
 export const LatencySchema = z.object({
   total: z.number().nonnegative(),
   retrieval: z.number().nonnegative(),
+  llmFilter: z.number().nonnegative().optional(),
   rerank: z.number().nonnegative().optional(),
 });
 

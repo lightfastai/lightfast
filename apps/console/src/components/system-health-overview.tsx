@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
-	ChevronRight,
-	ChevronDown,
 	Database,
 	Box,
 	Activity,
@@ -15,6 +12,7 @@ import {
 	Github,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+
 interface HealthData {
 	workspaceHealth: "healthy" | "degraded" | "down";
 	totalJobs24h: number;
@@ -25,8 +23,8 @@ interface HealthData {
 
 interface Store {
 	id: string;
-	slug: string;
 	embeddingDim: number;
+	embeddingModel: string;
 	documentCount: number;
 }
 
@@ -40,39 +38,21 @@ interface Source {
 
 interface SystemHealthOverviewProps {
 	health: HealthData;
-	stores: Store[];
+	store: Store | null; // Single store (1:1 relationship)
 	sources: Source[];
 }
 
+/**
+ * System Health Overview Component
+ *
+ * Shows hierarchical view of workspace health.
+ * Note: Each workspace has exactly ONE store (1:1 relationship).
+ */
 export function SystemHealthOverview({
 	health,
-	stores,
+	store,
 	sources,
 }: SystemHealthOverviewProps) {
-	// Map stores with their sources (simplified - all sources shown for each store)
-	const storesWithHealth = stores.map((store) => ({
-		...store,
-		name: store.slug,
-		health: health.workspaceHealth, // Use workspace health as proxy for store health
-		successRate: health.successRate,
-		sources: sources.map((source) => ({
-			...source,
-			health: health.workspaceHealth, // Use workspace health as proxy for source health
-		})),
-	}));
-
-	const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set());
-
-	const toggleStore = (storeId: string) => {
-		const newExpanded = new Set(expandedStores);
-		if (newExpanded.has(storeId)) {
-			newExpanded.delete(storeId);
-		} else {
-			newExpanded.add(storeId);
-		}
-		setExpandedStores(newExpanded);
-	};
-
 	return (
 		<Card className="border-border/60">
 			<CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -92,7 +72,7 @@ export function SystemHealthOverview({
 						<div className="flex-1">
 							<p className="text-sm font-medium">Workspace</p>
 							<p className="text-xs text-muted-foreground">
-								{stores.length} stores, {sources.length} sources
+								{store ? "1 store" : "No store"}, {sources.length} sources
 							</p>
 						</div>
 						<Badge variant="outline" className="text-xs">
@@ -100,93 +80,80 @@ export function SystemHealthOverview({
 						</Badge>
 					</div>
 
-					{/* Stores Level */}
-					{storesWithHealth.map((store) => {
-						const isExpanded = expandedStores.has(store.id);
-						return (
-							<div key={store.id} className="space-y-2 pl-6 border-l-2 border-border/50">
-								<button
-									type="button"
-									onClick={() => toggleStore(store.id)}
-									className="w-full flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left"
-								>
-									<div className="flex items-center gap-2 flex-1 min-w-0">
-										{isExpanded ? (
-											<ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-										) : (
-											<ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-										)}
-										<HealthIndicator status={store.health} />
-										<Box className="h-4 w-4 text-muted-foreground shrink-0" />
-										<div className="flex-1 min-w-0">
-											<p className="text-sm font-medium truncate">{store.name}</p>
-											<p className="text-xs text-muted-foreground">
-												{store.documentCount.toLocaleString()} documents
-											</p>
-										</div>
-									</div>
-									<div className="flex items-center gap-2 shrink-0">
-										<Badge variant="outline" className="text-xs">
-											{store.embeddingDim}d
-										</Badge>
-										<Badge
-											variant={
-												store.successRate >= 95
-													? "default"
-													: store.successRate >= 80
-														? "secondary"
-														: "destructive"
-											}
-											className="text-xs"
-										>
-											{store.successRate.toFixed(0)}%
-										</Badge>
-									</div>
-								</button>
-
-								{/* Sources Level (expandable) */}
-								{isExpanded && store.sources.length > 0 && (
-									<div className="space-y-2 pl-6 border-l-2 border-border/30">
-										{store.sources.map((source) => (
-											<div
-												key={source.id}
-												className="flex items-center gap-3 p-3 rounded-lg border bg-card"
-											>
-												<HealthIndicator status={source.health} />
-												<SourceIcon type={source.type} />
-												<div className="flex-1 min-w-0">
-													<p className="text-sm font-medium truncate">
-														{source.displayName}
-													</p>
-													<p className="text-xs text-muted-foreground">
-														{source.documentCount.toLocaleString()} documents
-													</p>
-												</div>
-												{source.lastSyncedAt && (
-													<p className="text-xs text-muted-foreground shrink-0">
-														{formatRelativeTime(new Date(source.lastSyncedAt))}
-													</p>
-												)}
-											</div>
-										))}
-									</div>
-								)}
-
-								{isExpanded && store.sources.length === 0 && (
-									<div className="pl-6 border-l-2 border-border/30">
-										<div className="p-3 text-center text-xs text-muted-foreground">
-											No sources connected to this store
-										</div>
-									</div>
-								)}
+					{/* Store Level (single store) */}
+					{store && (
+						<div className="space-y-2 pl-6 border-l-2 border-border/50">
+							<div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+								<HealthIndicator status={health.workspaceHealth} />
+								<Box className="h-4 w-4 text-muted-foreground shrink-0" />
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-medium truncate">{store.embeddingModel}</p>
+									<p className="text-xs text-muted-foreground">
+										{store.documentCount.toLocaleString()} documents
+									</p>
+								</div>
+								<div className="flex items-center gap-2 shrink-0">
+									<Badge variant="outline" className="text-xs">
+										{store.embeddingDim}d
+									</Badge>
+									<Badge
+										variant={
+											health.successRate >= 95
+												? "default"
+												: health.successRate >= 80
+													? "secondary"
+													: "destructive"
+										}
+										className="text-xs"
+									>
+										{health.successRate.toFixed(0)}%
+									</Badge>
+								</div>
 							</div>
-						);
-					})}
 
-					{storesWithHealth.length === 0 && (
+							{/* Sources Level */}
+							{sources.length > 0 && (
+								<div className="space-y-2 pl-6 border-l-2 border-border/30">
+									{sources.map((source) => (
+										<div
+											key={source.id}
+											className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+										>
+											<HealthIndicator status={health.workspaceHealth} />
+											<SourceIcon type={source.type} />
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium truncate">
+													{source.displayName}
+												</p>
+												<p className="text-xs text-muted-foreground">
+													{source.documentCount.toLocaleString()} documents
+												</p>
+											</div>
+											{source.lastSyncedAt && (
+												<p className="text-xs text-muted-foreground shrink-0">
+													{formatRelativeTime(new Date(source.lastSyncedAt))}
+												</p>
+											)}
+										</div>
+									))}
+								</div>
+							)}
+
+							{sources.length === 0 && (
+								<div className="pl-6 border-l-2 border-border/30">
+									<div className="p-3 text-center text-xs text-muted-foreground">
+										No sources connected yet
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+
+					{!store && (
 						<div className="text-center py-8 text-sm text-muted-foreground">
 							<Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
-							<p>No stores configured yet</p>
+							<p>No store configured yet</p>
+							<p className="text-xs mt-1">Connect a source to create a store</p>
 						</div>
 					)}
 				</div>

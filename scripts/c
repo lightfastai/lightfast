@@ -1,0 +1,81 @@
+#!/bin/bash
+# Claude Code with dynamic MCP profiles
+# Usage: ./scripts/c [-b] [-B] [-e] [-a]
+#   -b, --browser         Add Playwright browser (no session)
+#   -B, --browser-session Add Playwright browser (with saved session)
+#   -e, --exa             Add Exa search
+#   -a, --all             Add all MCP servers (browser with session)
+
+# Future MCP servers:
+# deus-session: ',"deus-session":{"command":"node","args":["./core/deus/dist/mcp-server/index.js"]}'
+
+playwright_mode=""  # "", "basic", or "session"
+has_exa=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b|--browser)
+      playwright_mode="basic"
+      ;;
+    -B|--browser-session)
+      playwright_mode="session"
+      ;;
+    -e|--exa)
+      has_exa=true
+      ;;
+    -a|--all)
+      playwright_mode="session"
+      has_exa=true
+      ;;
+    -h|--help)
+      echo "Usage: ./scripts/c [-b] [-B] [-e] [-a]"
+      echo "  -b, --browser         Add Playwright browser (no session)"
+      echo "  -B, --browser-session Add Playwright browser (with saved session)"
+      echo "  -e, --exa             Add Exa search"
+      echo "  -a, --all             Add all MCP servers (browser with session)"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "Usage: ./scripts/c [-b|--browser] [-B|--browser-session] [-e|--exa] [-a|--all]"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Validate browser session file exists if using session mode
+if [[ "$playwright_mode" == "session" && ! -f ".auth/browser-session.json" ]]; then
+  echo "Error: Browser session file not found at .auth/browser-session.json"
+  echo ""
+  echo "To create a browser session:"
+  echo "  1. Start with basic browser: pnpm claude -b"
+  echo "  2. Ask Claude to navigate and log in to your site"
+  echo "  3. Ask Claude to save the session:"
+  echo "     \"Save the browser storage state to .auth/browser-session.json\""
+  echo ""
+  echo "Or use -b for basic browser mode without saved session"
+  exit 1
+fi
+
+# Build mcpServers object
+servers=""
+
+if [[ "$playwright_mode" == "session" ]]; then
+  servers+='"playwright":{"command":"npx","args":["@playwright/mcp@latest","--storage-state=.auth/browser-session.json"]}'
+elif [[ "$playwright_mode" == "basic" ]]; then
+  servers+='"playwright":{"command":"npx","args":["@playwright/mcp@latest"]}'
+fi
+
+if $has_exa; then
+  [[ -n "$servers" ]] && servers+=","
+  servers+='"exa":{"command":"npx","args":["-y","@anthropic/exa-mcp"]}'
+fi
+
+mcp="{\"mcpServers\":{$servers}}"
+
+echo "Starting Claude Code with:"
+echo "$mcp" | jq -r '.mcpServers | keys[]' 2>/dev/null | sed 's/^/  - /'
+echo ""
+
+exec claude --mcp-config "$mcp" --strict-mcp-config

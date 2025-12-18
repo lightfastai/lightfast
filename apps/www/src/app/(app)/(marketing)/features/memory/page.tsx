@@ -35,7 +35,8 @@ const relatedPages = [
   {
     title: "For Agents",
     href: "/features/agents",
-    description: "Give your AI agents access to team memory. MCP tools and REST API.",
+    description:
+      "Give your AI agents access to memory layer. MCP tools and REST API.",
   },
   {
     title: "Connectors",
@@ -51,11 +52,11 @@ const relatedPages = [
 ];
 
 export const metadata: Metadata = createMetadata({
-  title: "Memory – Neural Memory for Teams | Lightfast",
+  title: "Memory – Memory Layer for Software Teams | Lightfast",
   description:
     "Capture decisions, ownership, and context as it happens. Search by meaning, not keywords. Every answer shows its source.",
   openGraph: {
-    title: "Memory – Neural Memory for Teams",
+    title: "Memory – Memory Layer for Software Teams",
     description:
       "Capture decisions, ownership, and context as it happens. Search by meaning, not keywords.",
     url: "https://lightfast.ai/features/memory",
@@ -192,7 +193,7 @@ export default function MemoryPage() {
               <h2
                 className={`text-xl md:text-2xl font-light ${exposureTrial.className}`}
               >
-                Ready to give your team memory?
+                Ready to give your team a memory layer?
               </h2>
             </div>
             <div className="flex flex-wrap justify-center gap-3">

@@ -10,19 +10,16 @@
 import { nanoid } from "@repo/lib";
 
 /**
- * API key prefix for Console CLI authentication (default)
+ * Unified API key prefix for all Lightfast keys
+ * Format follows industry conventions: sk-{vendor}-{secret}
  */
-export const API_KEY_PREFIX = "console_sk_";
-
-/**
- * Lightfast API key prefix for general use
- */
-export const LIGHTFAST_API_KEY_PREFIX = "lf_";
+export const LIGHTFAST_API_KEY_PREFIX = "sk-lf-";
 
 /**
  * Length of the random portion of the API key
+ * 43 chars × 62-char alphabet = ~256 bits entropy
  */
-export const API_KEY_SECRET_LENGTH = 32;
+export const API_KEY_SECRET_LENGTH = 43;
 
 /**
  * Number of characters to show in the key preview
@@ -30,20 +27,66 @@ export const API_KEY_SECRET_LENGTH = 32;
 export const API_KEY_PREVIEW_LENGTH = 4;
 
 /**
- * Generate a new API key with configurable prefix
+ * @deprecated Legacy prefix - do not use for new keys
+ */
+export const API_KEY_PREFIX = "console_sk_";
+
+/**
+ * Generate a new API key with the unified Lightfast format
  *
- * @param prefix - The prefix to use (default: "console_sk_")
- * @returns The generated API key
+ * @param prefix - The prefix to use (default: "sk-lf-")
+ * @returns The generated API key with ~256 bits of entropy
  *
  * @example
  * ```ts
- * const key = generateApiKey();           // "console_sk_abc123...xyz789"
- * const lfKey = generateApiKey("lf_");    // "lf_abc123...xyz789"
+ * const key = generateApiKey();  // "sk-lf-AbC123xYz456..."
  * ```
  */
-export function generateApiKey(prefix: string = API_KEY_PREFIX): string {
+export function generateApiKey(
+  prefix: string = LIGHTFAST_API_KEY_PREFIX
+): string {
   const keySecret = nanoid(API_KEY_SECRET_LENGTH);
   return `${prefix}${keySecret}`;
+}
+
+/**
+ * Result from generateOrgApiKey containing all parts needed for storage
+ */
+export interface OrgApiKeyResult {
+  /** Full API key (only returned once, never stored) */
+  key: string;
+  /** Key prefix (e.g., "sk-lf-") */
+  prefix: string;
+  /** Last 4 characters of the key secret (for display) */
+  suffix: string;
+}
+
+/**
+ * Generate a new organization API key, returning all parts for storage
+ *
+ * This is used for org-scoped API keys where we store
+ * the prefix and suffix separately for display purposes.
+ *
+ * @returns Object with full key, prefix, and suffix (last 4 chars)
+ *
+ * @example
+ * ```ts
+ * const { key, prefix, suffix } = generateOrgApiKey();
+ * // key: "sk-lf-AbC123...XyZ789" (full key - return once)
+ * // prefix: "sk-lf-"
+ * // suffix: "Z789" (last 4 chars)
+ * ```
+ */
+export function generateOrgApiKey(): OrgApiKeyResult {
+  const keySecret = nanoid(API_KEY_SECRET_LENGTH);
+  const key = `${LIGHTFAST_API_KEY_PREFIX}${keySecret}`;
+  const suffix = keySecret.slice(-API_KEY_PREVIEW_LENGTH);
+
+  return {
+    key,
+    prefix: LIGHTFAST_API_KEY_PREFIX,
+    suffix,
+  };
 }
 
 /**
@@ -58,7 +101,7 @@ export function generateApiKey(prefix: string = API_KEY_PREFIX): string {
  *
  * @example
  * ```ts
- * const hash = await hashApiKey("console_sk_abc123");
+ * const hash = await hashApiKey("sk-lf-abc123...");
  * // Returns: "abc123...def456" (64 character hex string)
  * ```
  */
@@ -73,71 +116,43 @@ export async function hashApiKey(key: string): Promise<string> {
 /**
  * Extract a preview of the API key for display purposes
  *
- * Returns the last N characters of the secret portion (after the prefix).
- * This is safe to show in UIs and logs.
- *
  * @param key - The full API key
- * @param prefix - The prefix to remove (default: auto-detect from known prefixes)
- * @returns Preview string in format "...XXXX"
- *
- * @example
- * ```ts
- * const preview = extractKeyPreview("console_sk_abc123xyz789");
- * // Returns: "...9789" (last 4 chars of the secret)
- *
- * const lfPreview = extractKeyPreview("lf_abc123xyz789");
- * // Returns: "...9789" (auto-detects lf_ prefix)
- * ```
+ * @returns Preview string in format "sk-lf-...XXXX"
  */
-export function extractKeyPreview(key: string, prefix?: string): string {
-  // Auto-detect prefix if not provided
-  let detectedPrefix = prefix;
-  if (!detectedPrefix) {
-    if (key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-      detectedPrefix = LIGHTFAST_API_KEY_PREFIX;
-    } else if (key.startsWith(API_KEY_PREFIX)) {
-      detectedPrefix = API_KEY_PREFIX;
-    } else {
-      detectedPrefix = "";
-    }
-  }
-
-  // Remove the prefix and get the secret portion
-  const keySecret = key.replace(detectedPrefix, "");
-  // Get the last N characters
-  const preview = keySecret.slice(-API_KEY_PREVIEW_LENGTH);
-  return `...${preview}`;
+export function extractKeyPreview(key: string): string {
+  const suffix = key.slice(-API_KEY_PREVIEW_LENGTH);
+  return `sk-lf-...${suffix}`;
 }
 
 /**
  * Validate that a string has the correct API key format
  *
- * Checks that the key:
- * - Starts with a valid prefix (console_sk_ or lf_)
- * - Has the minimum expected length
- *
  * @param key - The string to validate
- * @param prefix - Optional specific prefix to validate against (validates any known prefix if not provided)
  * @returns True if the key has the correct format
- *
- * @example
- * ```ts
- * isValidApiKeyFormat("console_sk_abc123");  // true
- * isValidApiKeyFormat("lf_abc123");          // true
- * isValidApiKeyFormat("invalid_key");        // false
- * isValidApiKeyFormat("console_sk_");        // false (too short)
- * isValidApiKeyFormat("lf_abc", "lf_");      // true (specific prefix check)
- * ```
  */
-export function isValidApiKeyFormat(key: string, prefix?: string): boolean {
-  const validPrefixes = prefix ? [prefix] : [API_KEY_PREFIX, LIGHTFAST_API_KEY_PREFIX];
-
-  // Check if key starts with any valid prefix
-  const matchedPrefix = validPrefixes.find(p => key.startsWith(p));
-  if (!matchedPrefix) {
+export function isValidApiKeyFormat(key: string): boolean {
+  // Must start with sk-lf-
+  if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
     return false;
   }
 
-  const minLength = matchedPrefix.length + 1;
-  return key.length >= minLength;
+  // Must have correct length: prefix (6) + secret (43) = 49
+  const expectedLength =
+    LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
+  return key.length === expectedLength;
+}
+
+/**
+ * @deprecated Use OrgApiKeyResult instead
+ */
+export type WorkspaceApiKeyResult = OrgApiKeyResult;
+
+/**
+ * @deprecated Use generateOrgApiKey instead
+ */
+export function generateWorkspaceApiKey(
+  _prefix: string = "sk_live_"
+): OrgApiKeyResult {
+  // Ignores the prefix parameter and uses the new unified format
+  return generateOrgApiKey();
 }

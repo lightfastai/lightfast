@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkOrgId } from "@repo/console-validation";
+import type { WorkspaceSettings } from "@repo/console-types";
 
 /**
  * Organization Workspaces table represents isolated knowledge bases within an organization.
@@ -66,15 +67,29 @@ export const orgWorkspaces = pgTable(
     slug: varchar("slug", { length: 191 }).notNull(),
 
     /**
-     * Workspace-level settings and configuration
-     * Structure (Phase 2):
+     * Workspace settings and configuration (versioned)
+     *
+     * Structure (V1):
      * {
-     *   repositories: { [repoId]: { enabled: boolean } },
-     *   defaults: { patterns: string[], ignore: string[] },
-     *   features: { codeIndexing: boolean, multiLanguage: boolean }
+     *   version: 1,
+     *   embedding: {
+     *     indexName: "lightfast-v1",
+     *     namespaceName: "{clerkOrgId}:ws_{workspaceId}",
+     *     embeddingDim: 1024,
+     *     embeddingModel: "embed-english-v3.0",
+     *     embeddingProvider: "cohere",
+     *     pineconeMetric: "cosine",
+     *     pineconeCloud: "aws",
+     *     pineconeRegion: "us-east-1",
+     *     chunkMaxTokens: 512,
+     *     chunkOverlap: 50,
+     *   },
+     *   repositories?: { [repoId]: { enabled: boolean } },
+     *   defaults?: { patterns?: string[], ignore?: string[] },
+     *   features?: { codeIndexing?: boolean, multiLanguage?: boolean }
      * }
      */
-    settings: jsonb("settings").$type<WorkspaceSettings>(),
+    settings: jsonb("settings").notNull().$type<WorkspaceSettings>(),
 
     /**
      * Timestamp when workspace was created
@@ -104,23 +119,6 @@ export const orgWorkspaces = pgTable(
     slugIdx: index("workspace_slug_idx").on(table.slug),
   }),
 );
-
-// TypeScript type for settings
-export interface WorkspaceSettings {
-  repositories?: {
-    [repoId: string]: {
-      enabled: boolean;
-    };
-  };
-  defaults?: {
-    patterns?: string[];
-    ignore?: string[];
-  };
-  features?: {
-    codeIndexing?: boolean;
-    multiLanguage?: boolean;
-  };
-}
 
 // Type exports
 export type OrgWorkspace = typeof orgWorkspaces.$inferSelect;

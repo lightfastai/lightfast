@@ -3,7 +3,7 @@ import { datetime, json, mysqlTable, primaryKey, varchar } from "drizzle-orm/mys
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { ARTIFACT_KINDS, type ArtifactKind } from "@repo/chat-ai-types";
 
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 /**
  * LightfastChatArtifact table - matches Vercel AI Chatbot's Document table structure

@@ -41,14 +41,14 @@ export const workspaceIntegrations = pgTable(
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
-     * Unified source configuration containing all provider-specific data and sync settings.
+     * Unified source configuration containing all source-specific data and sync settings.
      * This replaces the previous separate resourceData + syncConfig fields.
      *
      * Examples:
      *
      * GitHub Repository:
      * {
-     *   provider: "github",
+     *   sourceType: "github",
      *   type: "repository",
      *   installationId: "12345678",
      *   repoId: "567890123",
@@ -65,33 +65,23 @@ export const workspaceIntegrations = pgTable(
      *   }
      * }
      *
-     * Linear Team:
+     * Vercel Project:
      * {
-     *   provider: "linear",
-     *   type: "team",
-     *   teamId: "abc-def-ghi",
-     *   teamKey: "ENG",
-     *   teamName: "Engineering",
+     *   sourceType: "vercel",
+     *   type: "project",
+     *   projectId: "prj_123456",
+     *   projectName: "my-nextjs-app",
+     *   configurationId: "icfg_789",
      *   sync: {
-     *     events: ["issue.created", "issue.updated"],
-     *     autoSync: true
-     *   }
-     * }
-     *
-     * Notion Database:
-     * {
-     *   provider: "notion",
-     *   type: "database",
-     *   databaseId: "xyz-123-456",
-     *   databaseName: "Product Specs",
-     *   sync: {
+     *     events: ["deployment.created", "deployment.ready"],
      *     autoSync: true
      *   }
      * }
      */
     sourceConfig: jsonb("source_config").$type<
       | {
-          provider: "github";
+          version: 1;
+          sourceType: "github";
           type: "repository";
           installationId: string;        // GitHub App installation ID
           repoId: string;                // GitHub repo ID
@@ -107,43 +97,23 @@ export const workspaceIntegrations = pgTable(
             autoSync: boolean;           // Auto-sync on changes
           };
           status?: {                     // NEW: Optional status tracking
-            configStatus?: "configured" | "unconfigured";
+            configStatus?: "configured" | "awaiting_config";
             configPath?: string;
             lastConfigCheck?: string;
           };
         }
       | {
-          provider: "notion";
-          type: "page" | "database";
-          pageId?: string;               // For pages
-          databaseId?: string;           // For databases
-          pageName?: string;             // For pages
-          databaseName?: string;         // For databases
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-      | {
-          provider: "linear";
-          type: "team";
-          teamId: string;
-          teamKey: string;               // "ENG"
-          teamName: string;              // "Engineering"
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-      | {
-          provider: "sentry";
+          version: 1;
+          sourceType: "vercel";
           type: "project";
-          orgSlug: string;
-          projectSlug: string;
-          projectId: string;
+          projectId: string;               // Vercel project ID
+          projectName: string;             // "my-nextjs-app"
+          teamId?: string;                 // Vercel team ID (null for personal accounts)
+          teamSlug?: string;               // Team slug for display
+          configurationId: string;         // Integration configuration ID (from OAuth)
           sync: {
-            events?: string[];
-            autoSync: boolean;
+            events?: string[];             // ["deployment.created", "deployment.ready", ...]
+            autoSync: boolean;             // Track deployments automatically
           };
         }
     >().notNull(),
@@ -154,9 +124,7 @@ export const workspaceIntegrations = pgTable(
      *
      * Examples:
      * - GitHub: repoId (e.g., "567890123")
-     * - Linear: teamId (e.g., "abc-def-ghi")
-     * - Notion: databaseId or pageId (e.g., "xyz-123-456")
-     * - Sentry: projectId (e.g., "proj-789")
+     * - Vercel: projectId (e.g., "prj_123456")
      */
     providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull().$type<SourceIdentifier>(),
 

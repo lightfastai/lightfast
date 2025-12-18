@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { type Post } from "@vendor/cms";
-import samplePosts from "../sample-posts.json";
 import {
   JsonLd,
   type GraphContext,
@@ -10,14 +9,6 @@ import {
   type BlogPosting,
 } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
-
-type BlogQueryResponse = {
-  blog?: {
-    post?: {
-      items?: Post[] | null;
-    } | null;
-  } | null;
-};
 
 export const metadata: Metadata = {
   title: "Lightfast Blog – Team Memory & Semantic Search",
@@ -73,9 +64,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  // Using sample data for development
-  const response = samplePosts as BlogQueryResponse;
-  const posts = response.blog?.post?.items ?? [];
+  // TODO: Fetch real posts from CMS
+  const posts: Post[] = [];
 
   // Structured data for SEO - using @graph for multiple entities
   const structuredData: GraphContext = {
@@ -144,65 +134,65 @@ export default async function BlogPage() {
 
       {/* Posts List */}
       <div className="space-y-2">
-            {posts.length === 0 ? (
-              <div className="bg-card border border-transparent rounded-lg p-8">
-                <h2 className="text-2xl font-semibold mb-4">Coming soon</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  We're preparing news and updates about Lightfast. Check back
-                  soon for product announcements, feature releases, and insights
-                  from the Lightfast team.
-                </p>
-              </div>
-            ) : (
-              posts.map((post) => {
-                const publishedDate = post.publishedAt
-                  ? new Date(post.publishedAt)
-                  : null;
-                const dateStr = publishedDate
-                  ? publishedDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "";
+        {posts.length === 0 ? (
+          <div className="bg-card border border-transparent rounded-xs p-6">
+            <h2 className="text-lg font-semibold mb-4">Coming soon</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              We're preparing news and updates about Lightfast. Check back soon
+              for product announcements, feature releases, and insights from the
+              Lightfast team.
+            </p>
+          </div>
+        ) : (
+          posts.map((post) => {
+            const publishedDate = post.publishedAt
+              ? new Date(post.publishedAt)
+              : null;
+            const dateStr = publishedDate
+              ? publishedDate.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })
+              : "";
 
-                // Get primary category
-                const primaryCategory = post.categories?.[0]?._title;
+            // Get primary category
+            const primaryCategory = post.categories?.[0]?._title;
 
-                return (
-                  <article
-                    key={post._slug ?? post._title}
-                    className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
-                  >
-                    <Link
-                      href={`/blog/${post.slug || post._slug}`}
-                      className="block group"
-                    >
-                      <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
-                        {post._title}
-                      </h2>
+            return (
+              <article
+                key={post._slug ?? post._title}
+                className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
+              >
+                <Link
+                  href={`/blog/${post.slug || post._slug}`}
+                  className="block group"
+                >
+                  <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
+                    {post._title}
+                  </h2>
 
-                      {post.description && (
-                        <p className="text-muted-foreground text-md leading-relaxed mb-4">
-                          {post.description}
-                        </p>
-                      )}
+                  {post.description && (
+                    <p className="text-muted-foreground text-md leading-relaxed mb-4">
+                      {post.description}
+                    </p>
+                  )}
 
-                      {/* Metadata */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {primaryCategory && (
-                          <>
-                            <span>{primaryCategory}</span>
-                            <span>·</span>
-                          </>
-                        )}
-                        <time>{dateStr}</time>
-                      </div>
-                    </Link>
-                  </article>
-                );
-              })
-            )}
+                  {/* Metadata */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {primaryCategory && (
+                      <>
+                        <span>{primaryCategory}</span>
+                        <span>·</span>
+                      </>
+                    )}
+                    <time>{dateStr}</time>
+                  </div>
+                </Link>
+              </article>
+            );
+          })
+        )}
       </div>
     </>
   );

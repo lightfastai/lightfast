@@ -1,0 +1,146 @@
+{
+  "name": "@lightfastai/ai-sdk",
+  "version": "0.2.1",
+  "description": "AI agents, tools, and workflows for Lightfast",
+  "keywords": [
+    "ai",
+    "agents",
+    "llm",
+    "typescript",
+    "workflow"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/ai-sdk"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "Apache-2.0",
+  "author": "Lightfast <hello@lightfast.ai>",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.mjs"
+    },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "import": "./dist/agent.mjs"
+    },
+    "./tool": {
+      "types": "./dist/tool.d.ts",
+      "import": "./dist/tool.mjs"
+    },
+    "./server/adapters/fetch": {
+      "types": "./dist/server/adapters/fetch.d.ts",
+      "import": "./dist/server/adapters/fetch.mjs"
+    },
+    "./server/adapters/types": {
+      "types": "./dist/server/adapters/types.d.ts",
+      "import": "./dist/server/adapters/types.mjs"
+    },
+    "./memory": {
+      "types": "./dist/memory.d.ts",
+      "import": "./dist/memory.mjs"
+    },
+    "./memory/adapters/in-memory": {
+      "types": "./dist/memory/adapters/in-memory.d.ts",
+      "import": "./dist/memory/adapters/in-memory.mjs"
+    },
+    "./memory/adapters/redis": {
+      "types": "./dist/memory/adapters/redis.d.ts",
+      "import": "./dist/memory/adapters/redis.mjs"
+    },
+    "./cache": {
+      "types": "./dist/cache.d.ts",
+      "import": "./dist/cache.mjs"
+    },
+    "./v2/agent": {
+      "types": "./dist/v2/agent.d.ts",
+      "import": "./dist/v2/agent.mjs"
+    },
+    "./v2/server": {
+      "types": "./dist/v2/server.d.ts",
+      "import": "./dist/v2/server.mjs"
+    },
+    "./v2/react": {
+      "types": "./dist/v2/react.d.ts",
+      "import": "./dist/v2/react.mjs"
+    },
+    "./v2/core": {
+      "types": "./dist/v2/core.d.ts",
+      "import": "./dist/v2/core.mjs"
+    },
+    "./v2": {
+      "types": "./dist/v2/index.d.ts",
+      "import": "./dist/v2/index.mjs"
+    },
+    "./v2/utils": {
+      "types": "./dist/v2/utils.d.ts",
+      "import": "./dist/v2/utils.mjs"
+    },
+    "./v2/events": {
+      "types": "./dist/v2/events.d.ts",
+      "import": "./dist/v2/events.mjs"
+    },
+    "./v2/env": {
+      "types": "./dist/v2/env.d.ts",
+      "import": "./dist/v2/env.mjs",
+      "default": "./dist/v2/env.mjs"
+    },
+    "./v2/braintrust-env": {
+      "types": "./dist/v2/braintrust-env.d.ts",
+      "import": "./dist/v2/braintrust-env.mjs",
+      "default": "./dist/v2/braintrust-env.mjs"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist .cache .turbo node_modules",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "2.0.4",
+    "@ai-sdk/gateway": "^1.0.15",
+    "@ai-sdk/provider": "2.0.0",
+    "@t3-oss/env-core": "^0.12.0",
+    "@upstash/qstash": "^2.8.1",
+    "@upstash/redis": "^1.35.1",
+    "ai": "5.0.15",
+    "braintrust": "^0.2.1",
+    "pino": "^9.7.0",
+    "resumable-stream": "^2.0.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@rollup/rollup-darwin-arm64": "^4.46.2",
+    "@types/node": "^24.3.0",
+    "@types/react": "19.2.2",
+    "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "rollup": "^4.46.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

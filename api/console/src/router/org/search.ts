@@ -14,12 +14,12 @@ import {
 } from "@repo/console-types/api";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
-import { createEmbeddingProviderForStore } from "@repo/console-embed";
+import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
 import { db } from "@db/console/client";
-import { workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { orgWorkspaces } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Search router - API key protected procedures for search endpoints
@@ -56,52 +56,43 @@ export const searchRouter = {
 			});
 
 			try {
-				// Extract store from filters
-				const storeLabel = input.filters?.labels?.find((l: string) => l.startsWith("store:"));
-				if (!storeLabel) {
-					throw new TRPCError({
-						code: "BAD_REQUEST",
-						message: "Store label required in filters (e.g., store:docs)",
-					});
-				}
-
-				const storeSlug = storeLabel.replace("store:", "");
-
-				// Phase 1.6: Look up store and verify workspace access
-				const store = await db.query.workspaceStores.findFirst({
-					where: and(
-						eq(workspaceStores.slug, storeSlug),
-						eq(workspaceStores.workspaceId, ctx.auth.workspaceId)
-					),
+				// Look up workspace configuration
+				const workspace = await db.query.orgWorkspaces.findFirst({
+					where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
 				});
 
-				if (!store) {
+				if (!workspace) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: `Store not found or access denied: ${storeSlug}`,
+						message: "Workspace not found",
 					});
 				}
 
-				const indexName = store.indexName;
-				const namespaceName = store.namespaceName;
+				if (workspace.settings.version !== 1) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Workspace has invalid settings",
+					});
+				}
+
+				const indexName = workspace.settings.embedding.indexName;
+				const namespaceName = workspace.settings.embedding.namespaceName;
 
 				log.info("Resolved index and namespace", {
 					requestId,
 					workspaceId: ctx.auth.workspaceId,
 					userId: ctx.auth.userId,
-					storeSlug,
 					indexName,
 					namespaceName,
-					storeId: store.id,
 				});
 
-				// Generate query embedding using store's embedding configuration
+				// Generate query embedding using workspace's embedding configuration
 				const embedStart = Date.now();
-				const embedding = createEmbeddingProviderForStore(
+				const embedding = createEmbeddingProviderForWorkspace(
 					{
-						id: store.id,
-						embeddingModel: store.embeddingModel,
-						embeddingDim: store.embeddingDim,
+						id: workspace.id,
+						embeddingModel: workspace.settings.embedding.embeddingModel,
+						embeddingDim: workspace.settings.embedding.embeddingDim,
 					},
 					{
 						inputType: "search_query",

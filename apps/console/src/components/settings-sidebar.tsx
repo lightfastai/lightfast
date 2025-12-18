@@ -10,6 +10,10 @@ const settingsNavigation = [
 		name: "General",
 		path: "",
 	},
+	{
+		name: "API Keys",
+		path: "api-keys",
+	},
 ];
 
 interface SettingsSidebarProps {

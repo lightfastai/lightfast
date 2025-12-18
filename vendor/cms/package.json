@@ -8,6 +8,7 @@
       "default": "./index.ts"
     },
     "./env": "./env.ts",
+    "./types": "./types.ts",
     "./next-config": "./next-config.ts",
     "./components/*": "./components/*"
   },
@@ -22,6 +23,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@repo/ui": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "basehub": "^9.5.2",
     "react": "19.2.1",

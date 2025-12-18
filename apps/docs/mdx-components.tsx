@@ -1,10 +1,12 @@
 import { cn } from "@repo/ui/lib/utils";
 import type React from "react";
+import { isValidElement, Children } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Info, ExternalLink } from "lucide-react";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import {
   Accordion as AccordionRoot,
   AccordionContent as AccordionContentRoot,
@@ -14,12 +16,10 @@ import {
 import { FeatureList } from "@/src/components/feature-list";
 import { ApiEndpoint } from "@/src/components/api-endpoint";
 import { ApiMethod } from "@/src/components/api-method";
-import { CodeBlock } from "@/src/components/code-block";
 import {
   ApiReferenceCard,
   ApiReferenceGrid,
 } from "@/src/components/api-reference-card";
-import { CodeEditor as CodeEditorBase } from "@/src/components/code-editor";
 import {
   ValidationError,
   ValidationErrorList,
@@ -73,7 +73,7 @@ export const mdxComponents = {
   },
 
   // Code components - handles both inline and block code
-  code({ inline, className, children, ...props }: CodeComponentProps) {
+  async code({ inline, className, children, ...props }: CodeComponentProps) {
     // Inline code styling
     if (inline) {
       return (
@@ -88,26 +88,54 @@ export const mdxComponents = {
         </code>
       );
     }
-    // Block code without syntax highlighting
+
+    // Block code - use SSRCodeBlock for syntax highlighting
+    const langMatch = className?.match(/language-(\w+)/);
+    if (langMatch && typeof children === "string") {
+      const language = langMatch[1];
+      return SSRCodeBlock({
+        children,
+        language,
+        className: "my-6",
+      });
+    }
+
+    // Fallback for block code without language
     return (
-      <code className={cn("font-mono text-sm", className)} {...props}>
+      <code className={cn("font-mono", className)} {...props}>
         {children}
       </code>
     );
   },
 
-  // Pre component for code blocks
-  pre({ children, className, ...props }: MarkdownComponentProps) {
+  // Pre component for code blocks - uses SSR syntax highlighting
+  async pre({ children, className, ...props }: MarkdownComponentProps) {
+    // Check if children is a code element with language class
+    const child = Children.only(children);
+    if (isValidElement(child) && child.type === "code") {
+      const codeProps = child.props as {
+        className?: string;
+        children?: React.ReactNode;
+      };
+      const langMatch = codeProps.className?.match(/language-(\w+)/);
+
+      if (langMatch && typeof codeProps.children === "string") {
+        const language = langMatch[1];
+        const codeContent = codeProps.children;
+
+        // Call SSRCodeBlock as async function
+        const highlighted = await SSRCodeBlock({
+          children: codeContent,
+          language,
+          className: "my-6",
+        });
+        return highlighted;
+      }
+    }
+
+    // Fallback - just pass through children (SSRCodeBlock handles its own styling)
     return (
-      <pre
-        className={cn(
-          "my-6 relative w-full rounded-md border border-border bg-muted/50 dark:bg-muted/20",
-          "text-foreground p-4 text-sm font-mono leading-relaxed",
-          "overflow-auto",
-          className,
-        )}
-        {...props}
-      >
+      <pre className={cn("my-6 text-sm", className)} {...props}>
         {children}
       </pre>
     );
@@ -368,7 +396,6 @@ export const mdxComponents = {
   FeatureList,
   ApiEndpoint,
   ApiMethod,
-  CodeBlock,
   ApiReferenceCard,
   ApiReferenceGrid,
   APIPage,
@@ -437,32 +464,6 @@ export const mdxComponents = {
           </p>
         </AccordionContentRoot>
       </AccordionItemRoot>
-    );
-  },
-
-  // CodeEditor with consistent spacing
-  CodeEditor({
-    code,
-    language,
-    className,
-    showHeader,
-    ...props
-  }: {
-    code: string;
-    language: string;
-    className?: string;
-    showHeader?: boolean;
-  }) {
-    return (
-      <div className="my-10">
-        <CodeEditorBase
-          code={code}
-          language={language}
-          className={className}
-          showHeader={showHeader}
-          {...props}
-        />
-      </div>
     );
   },
 

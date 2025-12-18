@@ -12,9 +12,9 @@
       "types": "./dist/github.d.ts",
       "default": "./dist/github.js"
     },
-    "./linear": {
-      "types": "./dist/linear.d.ts",
-      "default": "./dist/linear.js"
+    "./vercel": {
+      "types": "./dist/vercel.d.ts",
+      "default": "./dist/vercel.js"
     },
     "./common": {
       "types": "./dist/common.d.ts",
@@ -23,6 +23,14 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.js"
+    },
+    "./transformers": {
+      "types": "./dist/transformers/index.d.ts",
+      "default": "./dist/transformers/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage.d.ts",
+      "default": "./dist/storage.js"
     }
   },
   "scripts": {
@@ -32,6 +40,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@db/console": "workspace:*",
+    "@octokit/webhooks-types": "^7.6.1",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
     "zod": "catalog:"
   },

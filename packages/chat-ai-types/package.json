@@ -39,8 +39,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "ai": "catalog:",
-    "lightfast": "workspace:*"
+    "@lightfastai/ai-sdk": "workspace:*",
+    "ai": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

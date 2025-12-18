@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { SignInForm } from "../_components/sign-in-form";
-import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
@@ -29,12 +28,9 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function SignInPage() {
-	return (
-		<>
-			<SignedOut>
-				<RedirectToTasks />
-			</SignedOut>
-			<SignInForm />
-		</>
-	);
+  return (
+    <>
+      <SignInForm />
+    </>
+  );
 }

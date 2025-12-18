@@ -12,8 +12,8 @@
 
 import { inngest } from "../../../client/client";
 import { db } from "@db/console/client";
-import { workspaceIntegrations, workspaceStores } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { workspaceIntegrations } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { createGitHubApp, ConfigDetectorService } from "@repo/console-octokit-github";
 import { env } from "../../../../env";
@@ -81,46 +81,61 @@ export const githubPushHandler = inngest.createFunction(
       deliveryId,
     });
 
-    // Step 1: Resolve storeId from "default" store
-    const storeId = await step.run("store.resolve", async () => {
-      const store = await db.query.workspaceStores.findFirst({
-        where: and(
-          eq(workspaceStores.workspaceId, workspaceId),
-          eq(workspaceStores.slug, "default")
-        ),
-      });
-
-      if (!store) {
-        throw new Error(`Default store not found for workspace: ${workspaceId}`);
-      }
-
-      return store.id;
-    });
-
-    // Step 2: Validate source exists
-    await step.run("source.validate", async () => {
-      const source = await db.query.workspaceIntegrations.findFirst({
+    // Step 1: Validate source exists and check event filtering
+    const source = await step.run("source.validate", async () => {
+      const src = await db.query.workspaceIntegrations.findFirst({
         where: eq(workspaceIntegrations.id, sourceId),
       });
 
-      if (!source) {
+      if (!src) {
         throw new Error(`Workspace source not found: ${sourceId}`);
       }
 
-      if (!source.isActive) {
+      if (!src.isActive) {
         log.warn("Ignoring push for inactive source", { sourceId });
         throw new Error(`Source is inactive: ${sourceId}`);
       }
 
       // Verify it's a GitHub source
-      if (source.sourceConfig.provider !== "github") {
+      if (src.sourceConfig.sourceType !== "github") {
         throw new Error(
-          `Expected GitHub source, got: ${source.sourceConfig.provider}`
+          `Expected GitHub source, got: ${src.sourceConfig.sourceType}`
         );
       }
+
+      return src;
     });
 
-    // Step 2: Check if lightfast.yml was modified and update DB status
+    // Step 2: Check if push events are allowed by source config
+    const pushAllowed = await step.run("check-push-allowed", async () => {
+      const sourceConfig = source.sourceConfig as { sync?: { events?: string[] } };
+      const events = sourceConfig?.sync?.events;
+
+      if (!events || events.length === 0) {
+        log.info("No events configured for source", { sourceId });
+        return false;
+      }
+
+      const allowed = events.includes("push");
+      if (!allowed) {
+        log.info("Push events disabled for source", {
+          sourceId,
+          configuredEvents: events,
+        });
+      }
+      return allowed;
+    });
+
+    if (!pushAllowed) {
+      return {
+        success: false,
+        sourceId,
+        repoFullName,
+        reason: "Push events not enabled in source config",
+      };
+    }
+
+    // Step 3: Check if lightfast.yml was modified and update DB status
     const configChanged = await step.run("config.check-changed", async () => {
       const hasConfigChange = changedFiles.some((file) =>
         CONFIG_FILE_NAMES.includes(file.path)
@@ -165,14 +180,14 @@ export const githubPushHandler = inngest.createFunction(
             const now = new Date().toISOString();
             await Promise.all(
               sources.map((source) => {
-                if (source.sourceConfig.provider !== "github") {
+                if (source.sourceConfig.sourceType !== "github") {
                   return Promise.resolve(null);
                 }
 
                 const updatedConfig = {
                   ...source.sourceConfig,
                   status: {
-                    configStatus: result.exists ? "configured" as const : "unconfigured" as const,
+                    configStatus: result.exists ? "configured" as const : "awaiting_config" as const,
                     configPath: result.path ?? undefined,
                     lastConfigCheck: now,
                   },
@@ -189,7 +204,7 @@ export const githubPushHandler = inngest.createFunction(
             );
 
             log.info("Updated config status", {
-              configStatus: result.exists ? "configured" : "unconfigured",
+              configStatus: result.exists ? "configured" : "awaiting_config",
               configPath: result.path,
             });
           }
@@ -202,7 +217,7 @@ export const githubPushHandler = inngest.createFunction(
       return hasConfigChange;
     });
 
-    // Step 3: Route to appropriate sync workflow
+    // Step 4: Route to appropriate sync workflow
     if (configChanged) {
       // Config changed → trigger FULL sync
       const eventIds = await step.sendEvent("sync.trigger-full", {

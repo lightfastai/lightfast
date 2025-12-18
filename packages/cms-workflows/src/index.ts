@@ -1,2 +1,2 @@
 export * from "./mutations/blog";
-export * from "./workflows/blog";
+export * from "./mutations/changelog";

@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { datetime, varchar, mysqlTable, uniqueIndex, index } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 /**
  * QuotaReservation table tracks temporary quota reservations

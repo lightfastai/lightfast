@@ -125,6 +125,9 @@ storybook-static
 # Playwright
 .playwright-mcp/*
 
+# Browser auth sessions (MCP)
+.auth/
+
 # Lightfast CLI
 .lightfast/
 .tanstack/
@@ -140,3 +143,4 @@ worktrees/
 
 # Dual CLI local files
 .dual/.local/
+.auth/

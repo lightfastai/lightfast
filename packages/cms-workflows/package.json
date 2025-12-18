@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./mutations/blog": "./src/mutations/blog.ts"
+    "./mutations/blog": "./src/mutations/blog.ts",
+    "./mutations/changelog": "./src/mutations/changelog.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -18,13 +19,18 @@
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
-    "@vendor/mastra": "workspace:*",
-    "basehub": "^9.5.2"
+    "@vendor/cms": "workspace:*",
+    "basehub": "^9.5.2",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/mdast": "^4.0.0",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",

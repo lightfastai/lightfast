@@ -47,14 +47,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: |
-          pnpm --filter lightfast build
-          pnpm --filter @lightfastai/cli build
+        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp
 
-      - name: Run tests (if any)
-        run: |
-          pnpm --filter lightfast test || echo "No tests configured"
-          pnpm --filter @lightfastai/cli test || echo "No tests configured"
+      - name: Run tests
+        run: pnpm --filter lightfast test
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets

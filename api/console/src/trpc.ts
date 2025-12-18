@@ -15,6 +15,7 @@ import { ZodError } from "zod";
 import { eq, and, sql } from "drizzle-orm";
 
 import { auth, clerkClient } from "@vendor/clerk/server";
+import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 import { verifyM2MToken } from "@repo/console-clerk-m2m";
 import {
   verifyOrgAccess,
@@ -711,8 +712,11 @@ export async function resolveWorkspaceBySlug(params: {
 /**
  * Helper: Verify organization membership
  *
+ * Strategy: User-centric lookup with caching - fetches user's orgs (typically 1-5)
+ * instead of org's members (could be 100+). This is O(user_orgs) vs O(org_size).
+ *
  * This centralizes the pattern of:
- * 1. Fetching organization membership list from Clerk
+ * 1. Fetching user's organization memberships (cached)
  * 2. Verifying user has access to the organization
  * 3. Optionally verifying user has admin role
  * 4. Returning the membership object for further processing
@@ -735,16 +739,12 @@ export async function verifyOrgMembership(params: {
     imageUrl: string;
   };
 }> {
-  const clerk = await clerkClient();
+  // User-centric lookup: get user's orgs (cached)
+  const userMemberships = await getCachedUserOrgMemberships(params.userId);
 
-  // Fetch organization membership list
-  const membership = await clerk.organizations.getOrganizationMembershipList({
-    organizationId: params.clerkOrgId,
-  });
-
-  // Find user's membership
-  const userMembership = membership.data.find(
-    (m) => m.publicUserData?.userId === params.userId,
+  // Find membership in target org
+  const userMembership = userMemberships.find(
+    (m) => m.organizationId === params.clerkOrgId,
   );
 
   if (!userMembership) {
@@ -765,10 +765,10 @@ export async function verifyOrgMembership(params: {
   return {
     role: userMembership.role,
     organization: {
-      id: userMembership.organization.id,
-      name: userMembership.organization.name,
-      slug: userMembership.organization.slug,
-      imageUrl: userMembership.organization.imageUrl,
+      id: userMembership.organizationId,
+      name: userMembership.organizationName,
+      slug: userMembership.organizationSlug,
+      imageUrl: userMembership.imageUrl,
     },
   };
 }

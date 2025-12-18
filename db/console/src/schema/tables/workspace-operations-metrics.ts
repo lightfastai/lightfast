@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   index,
   integer,
   jsonb,
@@ -7,13 +8,19 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
+import { orgWorkspaces } from "./org-workspaces";
 import type {
   OperationMetricType,
   OperationMetricUnit,
   JobDurationTags,
   DocumentsIndexedTags,
   ErrorTags,
+  NeuralObservationTags,
+  EntityExtractionTags,
+  ClusterTags,
+  ProfileUpdateTags,
+  ActorResolutionTags,
+  ClusterAffinityTags,
 } from "@repo/console-validation";
 
 /**
@@ -40,12 +47,11 @@ export const workspaceOperationsMetrics = pgTable(
   "lightfast_workspace_operations_metrics",
   {
     /**
-     * Unique metric identifier (nanoid)
+     * Internal BIGINT primary key - maximum performance for time-series data
      */
-    id: varchar("id", { length: 191 })
-      .notNull()
+    id: bigint("id", { mode: "number" })
       .primaryKey()
-      .$defaultFn(() => nanoid()),
+      .generatedAlwaysAsIdentity(),
 
     /**
      * Clerk organization ID (no FK - Clerk is source of truth)
@@ -55,7 +61,9 @@ export const workspaceOperationsMetrics = pgTable(
     /**
      * Workspace ID this metric belongs to
      */
-    workspaceId: varchar("workspace_id", { length: 191 }).notNull(),
+    workspaceId: varchar("workspace_id", { length: 191 })
+      .notNull()
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
      * Optional repository ID if metric is repository-specific
@@ -146,7 +154,17 @@ export type WorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferS
 export type InsertWorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferInsert;
 
 // Type re-exports from validation schemas
-export type { JobDurationTags, DocumentsIndexedTags, ErrorTags } from "@repo/console-validation";
+export type {
+  JobDurationTags,
+  DocumentsIndexedTags,
+  ErrorTags,
+  NeuralObservationTags,
+  EntityExtractionTags,
+  ClusterTags,
+  ProfileUpdateTags,
+  ActorResolutionTags,
+  ClusterAffinityTags,
+} from "@repo/console-validation";
 
 /**
  * Discriminated union based on metric type (type column)
@@ -154,8 +172,28 @@ export type { JobDurationTags, DocumentsIndexedTags, ErrorTags } from "@repo/con
  * Note: Cannot discriminate at schema level since type is separate column.
  * This is a union of possible tag structures.
  *
+ * Core metrics:
  * - job_duration: requires jobType and trigger
  * - documents_indexed: requires jobType and sourceType
  * - errors: requires jobType and errorType
+ *
+ * Neural workflow metrics:
+ * - observation_*: requires source and sourceType
+ * - entities_extracted: requires observationId and entityCount
+ * - cluster_*: requires clusterId
+ * - profile_updated: requires actorId
+ *
+ * Analytics metrics:
+ * - actor_resolution: requires resolved, source, and optional method
+ * - cluster_affinity: requires affinityScore, joined, and optional clusterId
  */
-export type OperationMetricTags = JobDurationTags | DocumentsIndexedTags | ErrorTags;
+export type OperationMetricTags =
+  | JobDurationTags
+  | DocumentsIndexedTags
+  | ErrorTags
+  | NeuralObservationTags
+  | EntityExtractionTags
+  | ClusterTags
+  | ProfileUpdateTags
+  | ActorResolutionTags
+  | ClusterAffinityTags;

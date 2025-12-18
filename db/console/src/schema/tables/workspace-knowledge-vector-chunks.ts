@@ -2,8 +2,7 @@
  * Workspace Knowledge Vector Chunks table schema
  * Mapping of doc chunks to vector IDs for idempotent upsert/delete
  *
- * Workspace-scoped: Vector chunks within a knowledge store.
- * Hierarchy: Workspace → Knowledge Store → Documents → Vector Chunks
+ * Workspace-scoped: Vector chunks belong directly to workspaces.
  */
 
 import {
@@ -15,7 +14,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { workspaceStores } from "./workspace-stores";
+import { orgWorkspaces } from "./org-workspaces";
 import { workspaceKnowledgeDocuments } from "./workspace-knowledge-documents";
 import type { ContentHash } from "@repo/console-validation";
 
@@ -24,10 +23,10 @@ export const workspaceKnowledgeVectorChunks = pgTable(
   {
     /** Vector ID used in Pinecone index (e.g., ${docId}#${chunkIndex}) */
     id: varchar("id", { length: 191 }).primaryKey(),
-    /** Store ID this vector belongs to */
-    storeId: varchar("store_id", { length: 191 })
+    /** Workspace ID this vector belongs to */
+    workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
-      .references(() => workspaceStores.id, { onDelete: "cascade" }),
+      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
     /** Document ID this chunk belongs to */
     docId: varchar("doc_id", { length: 191 })
       .notNull()
@@ -42,9 +41,9 @@ export const workspaceKnowledgeVectorChunks = pgTable(
       .default(sql`now()`),
   },
   (t) => ({
-    byStoreDoc: index("idx_vec_store_doc").on(t.storeId, t.docId),
+    byWorkspaceDoc: index("idx_vec_workspace_doc").on(t.workspaceId, t.docId),
     uniq: uniqueIndex("uq_vec_unique").on(
-      t.storeId,
+      t.workspaceId,
       t.docId,
       t.chunkIndex,
       t.contentHash,

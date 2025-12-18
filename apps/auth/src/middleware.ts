@@ -9,10 +9,13 @@ import {
 import { securityMiddleware } from "@vendor/security/middleware";
 import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { consoleUrl } from "~/lib/related-projects";
 
-// Security headers with composable CSP configuration
+// =============================================================================
+// Security Headers
+// =============================================================================
+
 const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
@@ -22,30 +25,24 @@ const securityHeaders = securityMiddleware(
   ),
 );
 
-/**
- * Custom middleware for auth-specific logic
- * Handles CORS for cross-origin authentication
- */
-const authMiddleware = (_request: NextRequest) => {
-  // Future: Add auth-specific middleware here
-  // - Rate limiting for sign-in attempts
-  // - Custom analytics for auth events
-  // - Fraud detection
-  return NextResponse.next();
-};
+async function withSecurityHeaders(
+  response: NextResponse,
+): Promise<NextResponse> {
+  const headers = await securityHeaders();
+  for (const [key, value] of headers.headers.entries()) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
 
-/**
- * Compose middleware with NEMO
- * Execution order: authMiddleware runs before the auth check
- */
-const composedMiddleware = createNEMO(
-  {},
-  {
-    before: [authMiddleware],
-  },
-);
+async function secureRedirect(url: URL | string): Promise<NextResponse> {
+  return withSecurityHeaders(NextResponse.redirect(url));
+}
 
-// Define public routes that don't need authentication
+// =============================================================================
+// Route Matchers
+// =============================================================================
+
 const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in",
@@ -53,80 +50,84 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up",
   "/sign-up/sso-callback",
   "/api/health",
-  "/robots.txt",
-  "/sitemap.xml",
 ]);
 
-// Define auth routes that authenticated users with orgs should be redirected away from
 const isAuthRoute = createRouteMatcher(["/sign-in", "/sign-up"]);
-
 const isRootPath = createRouteMatcher(["/"]);
 
+// =============================================================================
+// NEMO Composition
+// =============================================================================
+
+const composedMiddleware = createNEMO(
+  {},
+  {
+    before: [
+      // Future: Add auth-specific middleware here
+      // - Rate limiting for sign-in attempts
+      // - Custom analytics for auth events
+      // - Fraud detection
+    ],
+  },
+);
+
+// =============================================================================
+// Main Middleware
+// =============================================================================
+
 export default clerkMiddleware(
-  async (auth, req: NextRequest, event) => {
-    // Single auth check - detect both pending and active users
-    // Pending = authenticated but no org (hasn't completed choose-organization task)
-    // Active = authenticated with org (completed all tasks)
+  async (auth, req: NextRequest, event: NextFetchEvent) => {
     const { userId, orgId, orgSlug } = await auth({
       treatPendingAsSignedOut: false,
     });
     const isPending = Boolean(userId && !orgId);
     const isActive = Boolean(userId && orgId);
 
-    // Create base response (will be modified by redirects if needed)
-    let response = NextResponse.next();
-
-    // UX improvement: redirect authenticated users away from auth pages
+    // -------------------------------------------------------------------------
+    // 1. Redirect authenticated users away from auth pages
+    // -------------------------------------------------------------------------
     if ((isPending || isActive) && isAuthRoute(req)) {
       if (isPending) {
-        response = NextResponse.redirect(
-          new URL("/account/teams/new", consoleUrl),
-        );
-      } else if (isActive && orgSlug) {
-        response = NextResponse.redirect(
-          new URL(`/${orgSlug}`, consoleUrl),
-        );
+        return secureRedirect(new URL("/account/teams/new", consoleUrl));
+      }
+      if (isActive && orgSlug) {
+        return secureRedirect(new URL(`/${orgSlug}`, consoleUrl));
       }
     }
-    // Root path routing
-    else if (isRootPath(req)) {
+
+    // -------------------------------------------------------------------------
+    // 2. Root path routing
+    // -------------------------------------------------------------------------
+    if (isRootPath(req)) {
       if (!userId) {
-        // Not signed in → sign-in page
-        response = NextResponse.redirect(new URL("/sign-in", req.url));
-      } else if (isPending) {
-        // Signed in but no org → team creation
-        response = NextResponse.redirect(
-          new URL("/account/teams/new", consoleUrl),
-        );
-      } else if (isActive && orgSlug) {
-        // Signed in with org → org dashboard
-        response = NextResponse.redirect(
-          new URL(`/${orgSlug}`, consoleUrl),
-        );
+        return secureRedirect(new URL("/sign-in", req.url));
+      }
+      if (isPending) {
+        return secureRedirect(new URL("/account/teams/new", consoleUrl));
+      }
+      if (isActive && orgSlug) {
+        return secureRedirect(new URL(`/${orgSlug}`, consoleUrl));
       }
     }
-    // Protect non-public routes (will redirect to sign-in if needed)
-    else if (!isPublicRoute(req)) {
+
+    // -------------------------------------------------------------------------
+    // 3. Protect non-public routes
+    // -------------------------------------------------------------------------
+    if (!isPublicRoute(req)) {
       await auth.protect();
     }
 
-    // Run security headers first
-    const headersResponse = await securityHeaders();
+    // -------------------------------------------------------------------------
+    // 4. Run NEMO middleware chain (rate limiting, analytics, etc.)
+    // -------------------------------------------------------------------------
+    const nemoResponse = await composedMiddleware(req, event);
 
-    // Then run composed middleware
-    const middlewareResponse = await composedMiddleware(req, event);
-
-    // Apply security headers to final response
-    const finalResponse = middlewareResponse ?? response;
-    for (const [key, value] of headersResponse.headers.entries()) {
-      finalResponse.headers.set(key, value);
-    }
-
-    return finalResponse;
-  },
-  {
-    // Enable debug logging in development
-    // debug: process.env.NODE_ENV === "development",
+    // -------------------------------------------------------------------------
+    // 5. Return with security headers
+    // -------------------------------------------------------------------------
+    return withSecurityHeaders(
+      (nemoResponse as NextResponse | null) ?? NextResponse.next(),
+    );
   },
 );
 

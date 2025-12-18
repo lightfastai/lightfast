@@ -13,7 +13,7 @@ import { eq, and, sql, lt } from "drizzle-orm";
 import { toZonedTime, format } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
 import { clerkClient } from "@clerk/nextjs/server";
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 import {
 	BILLING_LIMITS,
 	ClerkPlanKey,

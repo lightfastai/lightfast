@@ -50,22 +50,6 @@ export type GitHubWebhookVerificationResult =
   WebhookVerificationResult<GitHubWebhookEvent>;
 
 /**
- * Linear webhook event types (placeholder - extend when implementing)
- */
-export interface LinearWebhookEvent {
-  action?: string;
-  type?: string;
-  data?: unknown;
-  [key: string]: unknown;
-}
-
-/**
- * Linear webhook verification result
- */
-export type LinearWebhookVerificationResult =
-  WebhookVerificationResult<LinearWebhookEvent>;
-
-/**
  * Webhook signature verification error types
  */
 export enum WebhookError {

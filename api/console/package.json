@@ -15,6 +15,14 @@
 		"./inngest": {
 			"types": "./dist/inngest/index.d.ts",
 			"default": "./src/inngest/index.ts"
+		},
+		"./inngest/client": {
+			"types": "./dist/inngest/client/client.d.ts",
+			"default": "./src/inngest/client/client.ts"
+		},
+		"./lib/activity": {
+			"types": "./dist/lib/activity.d.ts",
+			"default": "./src/lib/activity.ts"
 		}
 	},
 	"license": "MIT",
@@ -27,12 +35,14 @@
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
 	"dependencies": {
+		"@ai-sdk/gateway": "catalog:",
 		"@clerk/nextjs": "catalog:",
 		"@db/console": "workspace:*",
 		"@inngest/middleware-sentry": "catalog:",
 		"@repo/console-api-key": "workspace:*",
 		"@repo/console-auth-middleware": "workspace:^",
 		"@repo/console-chunking": "workspace:*",
+		"@repo/console-clerk-cache": "workspace:*",
 		"@repo/console-clerk-m2m": "workspace:*",
 		"@repo/console-config": "workspace:*",
 		"@repo/console-embed": "workspace:*",
@@ -40,7 +50,9 @@
 		"@repo/console-pinecone": "workspace:*",
 		"@repo/console-types": "workspace:*",
 		"@repo/console-validation": "workspace:^",
+		"@repo/console-vercel": "workspace:^",
 		"@repo/console-webhooks": "workspace:^",
+		"@repo/console-workspace-cache": "workspace:*",
 		"@repo/lib": "workspace:^",
 		"@sentry/core": "^10.20.0",
 		"@t3-oss/env-nextjs": "^0.12.0",
@@ -52,10 +64,14 @@
 		"@vendor/inngest": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
+		"ai": "catalog:",
+		"braintrust": "catalog:",
+		"date-fns": "^4.1.0",
 		"drizzle-orm": "catalog:",
 		"gray-matter": "^4.0.3",
 		"inngest": "catalog:",
 		"minimatch": "^10.1.1",
+		"nanoid": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"yaml": "^2.7.0",

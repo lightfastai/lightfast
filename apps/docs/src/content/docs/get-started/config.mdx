@@ -5,40 +5,37 @@ description: Complete reference for lightfast.yml configuration files
 
 # Config
 
-The `lightfast.yml` file controls what gets indexed from your repository and how Lightfast organizes your team's knowledge. This guide covers all configuration options and best practices.
+The `lightfast.yml` file controls what gets indexed from your repository and how Lightfast organizes your engineering knowledge. This guide covers all configuration options and best practices.
 
 ## Quick Start
 
 Get started with the minimal configuration:
 
-<CodeEditor
-  code={`version: 1
-store: my-docs
+```yaml
+version: 1
 include:
-  - "docs/**/*.md"`}
-  language="yaml"
-/>
+  - "docs/**/*.md"
+```
 
 That's it! This config will index all Markdown files in your `docs/` directory.
 
 <Alert>
-**Next steps:** Place this file in your repository root as `lightfast.yml`, then customize your store name and add more file patterns below.
+**Next steps:** Place this file in your repository root as `lightfast.yml`, then add more file patterns below.
 </Alert>
 
 ## Config File Location
 
 Place your `lightfast.yml` file in the **root directory** of your repository. Lightfast automatically detects this file when your repository is connected and uses it to determine what to index.
 
-<CodeEditor
-  code={`your-repository/
+```bash
+your-repository/
 ├── lightfast.yml          # Configuration file
 ├── README.md
 ├── docs/
 │   ├── api/
 │   └── guides/
-└── src/`}
-  language="bash"
-/>
+└── src/
+```
 
 ## Core Concepts
 
@@ -46,40 +43,9 @@ Place your `lightfast.yml` file in the **root directory** of your repository. Li
 
 The configuration version. Currently only version `1` is supported.
 
-<CodeEditor
-  code={`version: 1`}
-  language="yaml"
-/>
-
-### store (required)
-
-A unique identifier for this documentation set within your workspace. Store names help organize knowledge across multiple repositories.
-
-**Constraints:**
-- Must not be empty
-- Maximum 20 characters
-- Lowercase alphanumeric characters and hyphens only
-- No leading, trailing, or consecutive hyphens
-
-<ValidationExample
-  good={[
-    "docs-store",
-    "api-reference",
-    "engineering-wiki",
-    "marketing-docs"
-  ]}
-  bad={[
-    "-invalid          # Leading hyphen",
-    "invalid-          # Trailing hyphen",
-    "invalid--name     # Consecutive hyphens",
-    "Invalid_Name      # Uppercase and underscore",
-    "this-name-is-way-too-long-for-a-store  # Over 20 chars"
-  ]}
-/>
-
-<Alert>
-**Store names must be unique per workspace.** If you have multiple repositories, use descriptive store names to organize content. You can filter searches by store to find exactly what you need.
-</Alert>
+```yaml
+version: 1
+```
 
 ### include (required)
 
@@ -91,16 +57,15 @@ Array of glob patterns matching files to index. Patterns are relative to your re
 - `?` - Matches any single character except `/`
 - `[abc]` - Matches any character in the set
 
-<CodeEditor
-  code={`include:
+```yaml
+include:
   - "README.md"              # Specific file
   - "docs/**/*.md"           # All .md files in docs/ recursively
   - "**/*.mdx"               # All .mdx files anywhere
   - "rfcs/**/*"              # All files in rfcs/ directory
   - "guides/*.{md,mdx}"      # .md and .mdx files in guides/
-  - "src/**/*.tsx"           # All TypeScript React files`}
-  language="yaml"
-/>
+  - "src/**/*.tsx"           # All TypeScript React files
+```
 
 **Best Practices:**
 - Use specific patterns to avoid indexing unnecessary files
@@ -115,7 +80,6 @@ Quick reference for all available options:
 | Field | Required | Type | Constraints | Description |
 |-------|----------|------|-------------|-------------|
 | `version` | ✅ | number | Must be `1` | Configuration schema version |
-| `store` | ✅ | string | Max 20 chars, lowercase, alphanumeric + hyphens, no leading/trailing/consecutive hyphens | Unique identifier for this documentation set within your workspace |
 | `include` | ✅ | string[] | Valid glob patterns (relative paths), minimum 1 pattern | Array of glob patterns matching files to index |
 
 **Automatic Exclusions:** `node_modules/`, `.git/`, `dist/`, `build/`, `.next/`, `.turbo/`, dotfiles
@@ -127,121 +91,55 @@ Choose the right patterns for your use case:
 ### Documentation Sites
 **Use when:** You have a dedicated docs folder with Markdown/MDX files
 
-<CodeEditor
-  code={`version: 1
-store: docs
+```yaml
+version: 1
 include:
   - "docs/**/*.md"
   - "docs/**/*.mdx"
-  - "README.md"`}
-  language="yaml"
-/>
+  - "README.md"
+```
 
 ### Engineering Wikis
 **Use when:** You maintain design docs, RFCs, and runbooks
 
-<CodeEditor
-  code={`version: 1
-store: eng-wiki
+```yaml
+version: 1
 include:
   - "wiki/**/*.md"
   - "rfcs/**/*.md"
   - "adrs/**/*.md"
-  - "runbooks/**/*.md"`}
-  language="yaml"
-/>
+  - "runbooks/**/*.md"
+```
 
 ### API Documentation
 **Use when:** You have OpenAPI specs and API reference docs
 
-<CodeEditor
-  code={`version: 1
-store: api-docs
+```yaml
+version: 1
 include:
   - "api/**/*.md"
   - "openapi.yaml"
   - "swagger.json"
-  - "README.md"`}
-  language="yaml"
-/>
+  - "README.md"
+```
 
 ### Monorepo Documentation
 **Use when:** Each package has its own documentation
 
-<CodeEditor
-  code={`version: 1
-store: monorepo-docs
+```yaml
+version: 1
 include:
   - "README.md"
   - "docs/**/*.md"
   - "packages/*/README.md"
-  - "apps/*/README.md"`}
-  language="yaml"
-/>
+  - "apps/*/README.md"
+```
 
 **Warning:** Large codebases with many source files may hit indexing limits. Start with documentation files and expand as needed.
-
-## Multi-Repository Setup
-
-If your organization has multiple repositories, use unique store names to organize knowledge:
-
-### Documentation Repository
-
-<CodeEditor
-  code={`version: 1
-store: docs-site
-include:
-  - "**/*.md"
-  - "**/*.mdx"`}
-  language="yaml"
-/>
-
-### API Repository
-
-<CodeEditor
-  code={`version: 1
-store: api-service
-include:
-  - "README.md"
-  - "docs/**/*.md"
-  - "openapi.yaml"`}
-  language="yaml"
-/>
-
-### Infrastructure Repository
-
-<CodeEditor
-  code={`version: 1
-store: infra-wiki
-include:
-  - "README.md"
-  - "runbooks/**/*.md"
-  - "terraform/**/*.md"`}
-  language="yaml"
-/>
-
-Then filter searches by store:
-- Search `store:docs-site` for product documentation
-- Search `store:api-service` for API references
-- Search `store:infra-wiki` for infrastructure guides
 
 ## Validation and Errors
 
 Lightfast validates your configuration when indexing starts. Common errors:
-
-### Invalid Store Name
-
-<ValidationErrorList
-  title="Invalid Store Name"
-  errors={[
-    "Store name must not be empty",
-    "Store name must be 20 characters or less",
-    "Store name must be lowercase alphanumeric with hyphens only",
-    "Store name cannot have leading/trailing/consecutive hyphens"
-  ]}
-/>
-
-**Fix:** Use a valid store name following the constraints.
 
 ### No Include Patterns
 
@@ -267,15 +165,13 @@ At least one include pattern is required
 
 Before committing, test your glob patterns locally:
 
-<CodeEditor
-  code={`# Install fast-glob globally
+```bash
+# Install fast-glob globally
 npm install -g fast-glob-cli
 
 # Test your patterns
-fast-glob "docs/**/*.md" "**/*.mdx" --cwd /path/to/repo`}
-  language="bash"
-  showHeader={false}
-/>
+fast-glob "docs/**/*.md" "**/*.mdx" --cwd /path/to/repo
+```
 
 This shows which files will be matched by your patterns.
 
@@ -287,13 +183,11 @@ To update your configuration:
 2. Commit and push changes
 3. Lightfast automatically detects updates and re-indexes
 
-<CodeEditor
-  code={`git add lightfast.yml
+```bash
+git add lightfast.yml
 git commit -m "Update Lightfast configuration"
-git push origin main`}
-  language="bash"
-  showHeader={false}
-/>
+git push origin main
+```
 
 Changes take effect within minutes. Previous indexed content from removed patterns will be automatically cleaned up.
 
@@ -301,14 +195,11 @@ Changes take effect within minutes. Previous indexed content from removed patter
 
 Full configuration with all available options:
 
-<CodeEditor
-  code={`# Lightfast Configuration
+```yaml
+# Lightfast Configuration
 # Full example with all options
 
 version: 1
-
-# Store name (required - unique per workspace)
-store: platform-docs
 
 # Include patterns (required - at least one)
 include:
@@ -327,9 +218,8 @@ include:
 
   # Code documentation
   - "src/**/*.tsx"
-  - "packages/*/README.md"`}
-  language="yaml"
-/>
+  - "packages/*/README.md"
+```
 
 ## What's Next?
 

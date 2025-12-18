@@ -1,5 +1,6 @@
 import "server-only";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 
 /**
  * Organization access utilities using Clerk RBAC
@@ -29,6 +30,11 @@ export interface OrgWithAccess {
 /**
  * Require access to a specific organization by Clerk org slug
  *
+ * Strategy: User-centric lookup with caching.
+ * 1. Fetch org by slug (required for org metadata)
+ * 2. Get user's cached memberships
+ * 3. Verify user is member of target org
+ *
  * @param slug - Clerk organization slug from URL params
  * @throws Error if user doesn't have access
  * @returns Organization and user's role
@@ -47,7 +53,7 @@ export async function requireOrgAccess(
 		throw new Error("Authentication required.");
 	}
 
-	// Get organization by slug from URL
+	// Get organization by slug from URL (needed for org metadata like name, imageUrl)
 	const clerk = await clerkClient();
 	let clerkOrg;
 	try {
@@ -56,13 +62,11 @@ export async function requireOrgAccess(
 		throw new Error(`Organization not found: ${slug}`);
 	}
 
-	// Verify user has access to this organization
-	const membership = await clerk.organizations.getOrganizationMembershipList({
-		organizationId: clerkOrg.id,
-	});
+	// User-centric membership check (cached)
+	const userMemberships = await getCachedUserOrgMemberships(userId);
 
-	const userMembership = membership.data.find(
-		(m) => m.publicUserData?.userId === userId,
+	const userMembership = userMemberships.find(
+		(m) => m.organizationId === clerkOrg.id,
 	);
 
 	if (!userMembership) {

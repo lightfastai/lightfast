@@ -67,7 +67,6 @@ export const githubSyncOrchestrator = inngest.createFunction(
       jobId,
       workspaceId,
       sourceId,
-      storeId,
       sourceConfig,
       syncMode = "full",
       syncParams = {},
@@ -138,6 +137,16 @@ export const githubSyncOrchestrator = inngest.createFunction(
         }
       }
 
+      // If no config found, return empty array - sync NOTHING
+      // Repos without lightfast.yml must be explicitly configured
+      if (!config.include || config.include.length === 0) {
+        logger.info("No lightfast.yml config found - skipping sync", {
+          repoFullName,
+          sourceId,
+        });
+        return []; // Return empty array - no files to process
+      }
+
       // Determine files based on sync mode
       if (syncMode === "incremental" && syncParams.changedFiles) {
         const changed = syncParams.changedFiles as Array<{
@@ -145,7 +154,7 @@ export const githubSyncOrchestrator = inngest.createFunction(
           status: "added" | "modified" | "removed";
         }>;
 
-        const include = config.include || ["**/*"];
+        const include = config.include;
         const filtered = changed.filter((file) =>
           include.some((pattern: string) => minimatch(file.path, pattern)),
         );
@@ -159,7 +168,7 @@ export const githubSyncOrchestrator = inngest.createFunction(
           defaultBranch,
         );
 
-        const include = config.include || ["**/*"];
+        const include = config.include;
         const filtered = allFiles
           .filter((file: { path: string }) =>
             include.some((pattern: string) => minimatch(file.path, pattern)),
@@ -194,8 +203,6 @@ export const githubSyncOrchestrator = inngest.createFunction(
             batchId,
             workspaceId,
             sourceId,
-            storeId,
-            storeSlug: "default",
             files: batch || [],
             githubInstallationId: Number.parseInt(
               (sourceConfig as { installationId: string }).installationId,

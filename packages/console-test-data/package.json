@@ -1,0 +1,36 @@
+{
+  "name": "@repo/console-test-data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./trigger": "./src/trigger/index.ts",
+    "./loader": "./src/loader/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
+    "inject": "pnpm with-env tsx src/cli/inject.ts"
+  },
+  "dependencies": {
+    "@api/console": "workspace:*",
+    "@db/console": "workspace:*",
+    "@octokit/webhooks-types": "^7.6.1",
+    "@repo/console-pinecone": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/console-webhooks": "workspace:*",
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "eslint": "catalog:",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  }
+}

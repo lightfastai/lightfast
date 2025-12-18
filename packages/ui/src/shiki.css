@@ -1,0 +1,19 @@
+/* Shiki syntax highlighting - import only where SSR code blocks are used */
+.shiki,
+.shiki span {
+  color: var(--shiki-light, inherit);
+  background-color: var(--shiki-light-bg, transparent);
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark, inherit);
+  background-color: var(--shiki-dark-bg, transparent);
+}
+
+/* Ensure code blocks don't overflow */
+.shiki code {
+  display: block;
+  width: fit-content;
+  min-width: 100%;
+}

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { uuidv4 } from "@repo/lib";
+import { uuidv4 } from "@repo/lib/uuid";
 
 /**
  * Hook to manage session ID generation and retrieval based on pathname and search params.

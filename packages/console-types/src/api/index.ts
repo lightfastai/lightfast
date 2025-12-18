@@ -2,3 +2,4 @@
 export * from "./search";
 export * from "./contents";
 export * from "./common";
+export * from "./v1";

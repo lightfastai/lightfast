@@ -63,7 +63,7 @@ export function validateWorkspaceSlug(slug: string): boolean {
   }
 
   // No leading/trailing/consecutive hyphens
-  if (/--/.test(slug) || /^-|-$/.test(slug)) {
+  if (slug.includes('--') || /^-|-$/.test(slug)) {
     return false;
   }
 
@@ -109,7 +109,7 @@ export function validateStoreSlug(slug: string): boolean {
   }
 
   // No leading/trailing/consecutive hyphens
-  if (/--/.test(slug) || /^-|-$/.test(slug)) {
+  if (slug.includes('--') || /^-|-$/.test(slug)) {
     return false;
   }
 

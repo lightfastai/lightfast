@@ -21,12 +21,12 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@lightfastai/ai-sdk": "workspace:*",
     "@repo/chat-ai-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "ai": "catalog:",
     "braintrust": "catalog:",
     "exa-js": "catalog:",
-    "lightfast": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

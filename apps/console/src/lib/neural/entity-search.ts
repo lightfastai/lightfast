@@ -1,0 +1,153 @@
+import { eq, and, inArray, desc } from "drizzle-orm";
+import { db } from "@db/console/client";
+import { workspaceNeuralEntities, workspaceNeuralObservations } from "@db/console/schema";
+import type { EntityCategory } from "@repo/console-validation";
+import type { EntitySearchResult } from "@repo/console-types";
+
+/**
+ * Patterns to extract entity references from search queries
+ */
+const QUERY_ENTITY_PATTERNS: {
+  category: EntityCategory;
+  pattern: RegExp;
+  keyExtractor: (match: RegExpMatchArray) => string;
+}[] = [
+  // @mentions
+  {
+    category: "engineer",
+    pattern: /@([a-zA-Z0-9_-]{1,39})\b/g,
+    keyExtractor: (m) => `@${m[1]}`,
+  },
+  // Issue/PR references
+  {
+    category: "project",
+    pattern: /(#\d{1,6})/g,
+    keyExtractor: (m) => m[1] ?? "",
+  },
+  // Linear/Jira style
+  {
+    category: "project",
+    pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
+    keyExtractor: (m) => m[1] ?? "",
+  },
+  // API endpoints
+  {
+    category: "endpoint",
+    pattern: /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s"'<>]{1,100})/gi,
+    keyExtractor: (m) => `${m[1]?.toUpperCase()} ${m[2]}`,
+  },
+];
+
+/**
+ * Extract entity references from a search query
+ */
+export function extractQueryEntities(
+  query: string
+): { category: EntityCategory; key: string }[] {
+  const entities: { category: EntityCategory; key: string }[] = [];
+
+  for (const { category, pattern, keyExtractor } of QUERY_ENTITY_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(query)) !== null) {
+      const key = keyExtractor(match);
+      if (key && key.length >= 2) {
+        entities.push({ category, key });
+      }
+    }
+  }
+
+  return entities;
+}
+
+/**
+ * Search for observations linked to entities mentioned in the query
+ *
+ * @param query - User's search query
+ * @param workspaceId - Workspace to search in
+ * @param limit - Max results to return
+ * @returns Observations linked to matched entities
+ */
+export async function searchByEntities(
+  query: string,
+  workspaceId: string,
+  limit = 10
+): Promise<EntitySearchResult[]> {
+  // 1. Extract entity references from query
+  const queryEntities = extractQueryEntities(query);
+
+  if (queryEntities.length === 0) {
+    return [];
+  }
+
+  // 2. Find matching entities (exact key match)
+  const entityKeys = queryEntities.map((e) => e.key);
+  const matchedEntities = await db
+    .select({
+      id: workspaceNeuralEntities.id,
+      key: workspaceNeuralEntities.key,
+      category: workspaceNeuralEntities.category,
+      sourceObservationId: workspaceNeuralEntities.sourceObservationId,
+      occurrenceCount: workspaceNeuralEntities.occurrenceCount,
+      confidence: workspaceNeuralEntities.confidence,
+    })
+    .from(workspaceNeuralEntities)
+    .where(
+      and(
+        eq(workspaceNeuralEntities.workspaceId, workspaceId),
+        inArray(workspaceNeuralEntities.key, entityKeys)
+      )
+    )
+    .orderBy(desc(workspaceNeuralEntities.occurrenceCount))
+    .limit(limit);
+
+  if (matchedEntities.length === 0) {
+    return [];
+  }
+
+  // 3. Fetch linked observations
+  // sourceObservationId is now BIGINT (number), query by internal id
+  const observationIds = matchedEntities
+    .map((e) => e.sourceObservationId)
+    .filter((id): id is number => id !== null);
+
+  if (observationIds.length === 0) {
+    return [];
+  }
+
+  // Query by internal id (BIGINT)
+  const observations = await db
+    .select({
+      id: workspaceNeuralObservations.id,
+      externalId: workspaceNeuralObservations.externalId,
+      title: workspaceNeuralObservations.title,
+      content: workspaceNeuralObservations.content,
+    })
+    .from(workspaceNeuralObservations)
+    .where(inArray(workspaceNeuralObservations.id, observationIds));
+
+  // 4. Build result map keyed by internal id (BIGINT)
+  const obsMap = new Map(observations.map((o) => [o.id, o]));
+
+  const results: EntitySearchResult[] = [];
+  for (const entity of matchedEntities) {
+    const obsId = entity.sourceObservationId;
+    if (obsId === null) continue;
+
+    const obs = obsMap.get(obsId);
+    if (!obs) continue;
+
+    results.push({
+      entityId: String(entity.id),  // Convert BIGINT to string for API response
+      entityKey: entity.key,
+      entityCategory: entity.category,
+      observationId: obs.externalId,  // Return externalId (nanoid) for API
+      observationTitle: obs.title,
+      observationSnippet: obs.content.substring(0, 200),
+      occurrenceCount: entity.occurrenceCount,
+      confidence: entity.confidence ?? 0.8,
+    });
+  }
+
+  return results;
+}

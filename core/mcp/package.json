@@ -1,0 +1,67 @@
+{
+  "name": "@lightfastai/mcp",
+  "version": "0.1.0-alpha.1",
+  "description": "Lightfast Neural Memory MCP Server - MCP for the Lightfast Memory API",
+  "publishConfig": {
+    "tag": "latest",
+    "access": "public"
+  },
+  "keywords": [
+    "lightfast",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "memory",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/mcp"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "Apache-2.0",
+  "author": "Lightfast <hello@lightfast.ai>",
+  "type": "module",
+  "bin": {
+    "lightfast-mcp": "./dist/index.mjs",
+    "@lightfastai/mcp": "./dist/index.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist .cache .turbo node_modules",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@repo/console-types": "workspace:*",
+    "lightfast": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "tsup": "^8.5.0",
+    "typescript": "catalog:",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

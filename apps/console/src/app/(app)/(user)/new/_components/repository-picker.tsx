@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Github, Search, Check, Loader2 } from "lucide-react";
+import { Github, Search, Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,7 +18,7 @@ import { useWorkspaceForm } from "./workspace-form-provider";
 
 /**
  * Repository Picker
- * Client island for repository selection with installation filtering and search
+ * Client island for multi-repository selection with installation filtering and search
  */
 interface RepositoryPickerProps {
   userSourceId: string | null;
@@ -30,12 +32,12 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
     installations,
     selectedInstallation,
     setSelectedInstallation,
-    selectedRepository,
-    setSelectedRepository,
+    selectedRepositories,
+    toggleRepository,
+    setSelectedRepositories,
   } = useWorkspaceForm();
 
   // Fetch repositories for selected installation
-  // Use user router for pending user support
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
     ...trpc.userSources.github.repositories.queryOptions({
       integrationId: userSourceId ?? "",
@@ -51,7 +53,26 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Handle adjusting GitHub App permissions
+  // Check if repo is selected
+  const isSelected = (repoId: string) =>
+    selectedRepositories.some((r) => r.id === repoId);
+
+  // Handle select all
+  const handleSelectAll = () => {
+    const unselected = filteredRepositories.filter((r) => !isSelected(r.id));
+    setSelectedRepositories([...selectedRepositories, ...unselected]);
+  };
+
+  // Handle deselect all
+  const handleDeselectAll = () => {
+    const filteredIds = new Set(filteredRepositories.map((r) => r.id));
+    setSelectedRepositories(selectedRepositories.filter((r) => !filteredIds.has(r.id)));
+  };
+
+  // Count selected from current filtered list
+  const selectedFromFiltered = filteredRepositories.filter((r) => isSelected(r.id)).length;
+
+  // Handle GitHub App permissions adjustment
   const handleAdjustPermissions = () => {
     const width = 600;
     const height = 800;
@@ -84,7 +105,8 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
             );
             if (installation) {
               setSelectedInstallation(installation);
-              setSelectedRepository(null);
+              // Clear selections when changing installation
+              setSelectedRepositories([]);
             }
           }}
         >
@@ -117,7 +139,19 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
         </div>
       </div>
 
-      {/* Repository List */}
+      {/* Selected Count & Actions */}
+      {selectedRepositories.length > 0 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {selectedRepositories.length} repositor{selectedRepositories.length === 1 ? "y" : "ies"} selected
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedRepositories([])}>
+            Clear all
+          </Button>
+        </div>
+      )}
+
+      {/* Repository List with Checkboxes */}
       <div className="rounded-lg border bg-card max-h-[300px] overflow-y-auto">
         {isLoadingRepos ? (
           <div className="p-8 text-center text-muted-foreground">
@@ -131,16 +165,34 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
               : "No repositories found"}
           </div>
         ) : (
-          <div className="divide-y">
-            {filteredRepositories.map((repo) => (
-              <button
-                key={repo.id}
-                onClick={() => setSelectedRepository(repo)}
-                className={`w-full flex items-center justify-between p-4 hover:bg-accent transition-colors text-left ${
-                  selectedRepository?.id === repo.id ? "bg-accent" : ""
-                }`}
+          <>
+            {/* Select All Header */}
+            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+              <span className="text-sm text-muted-foreground">
+                {filteredRepositories.length} repositor{filteredRepositories.length === 1 ? "y" : "ies"}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectedFromFiltered === filteredRepositories.length ? handleDeselectAll : handleSelectAll}
               >
-                <div className="flex items-center gap-4 flex-1">
+                {selectedFromFiltered === filteredRepositories.length ? "Deselect all" : "Select all"}
+              </Button>
+            </div>
+
+            {/* Repository List */}
+            <div className="divide-y">
+              {filteredRepositories.map((repo) => (
+                <label
+                  key={repo.id}
+                  className={`flex items-center gap-3 p-4 hover:bg-accent transition-colors cursor-pointer ${
+                    isSelected(repo.id) ? "bg-accent/50" : ""
+                  }`}
+                >
+                  <Checkbox
+                    checked={isSelected(repo.id)}
+                    onCheckedChange={() => toggleRepository(repo)}
+                  />
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                     <Github className="h-5 w-5" />
                   </div>
@@ -153,14 +205,16 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
                         </span>
                       )}
                     </div>
+                    {repo.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {repo.description}
+                      </p>
+                    )}
                   </div>
-                </div>
-                {selectedRepository?.id === repo.id && (
-                  <Check className="h-5 w-5 text-primary" />
-                )}
-              </button>
-            ))}
-          </div>
+                </label>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

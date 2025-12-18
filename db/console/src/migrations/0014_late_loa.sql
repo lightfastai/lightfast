@@ -1,0 +1,3 @@
+CREATE INDEX "obs_embedding_title_idx" ON "lightfast_workspace_neural_observations" USING btree ("workspace_id","embedding_title_id");--> statement-breakpoint
+CREATE INDEX "obs_embedding_content_idx" ON "lightfast_workspace_neural_observations" USING btree ("workspace_id","embedding_content_id");--> statement-breakpoint
+CREATE INDEX "obs_embedding_summary_idx" ON "lightfast_workspace_neural_observations" USING btree ("workspace_id","embedding_summary_id");

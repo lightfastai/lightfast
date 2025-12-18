@@ -8,39 +8,21 @@
 import { z } from "zod";
 
 /**
- * Integration Provider Type
- *
- * Defines supported OAuth integration providers.
- * Used in user_sources table for personal OAuth connections.
- *
- * NOTE: Currently only "github" is fully implemented in workflows.
- * Other providers are defined for database schema compatibility and future use.
- */
-export const integrationProviderSchema = z.enum([
-  "github",      // ✅ Implemented
-  "notion",      // 🔜 Future
-  "linear",      // 🔜 Future
-  "sentry",      // 🔜 Future
-]);
-
-export type IntegrationProvider = z.infer<typeof integrationProviderSchema>;
-
-/**
  * Source Type
  *
- * Defines all supported data sources for document indexing.
- * Used in docs_documents table to identify document origin.
+ * Canonical type for all external integrations and data sources.
+ * Used across:
+ * - user_sources table (OAuth connections)
+ * - workspace_integrations table (workspace-level sources)
+ * - workspace_knowledge_documents table (document origin)
+ * - Event schemas and workflows
  *
- * NOTE: Currently only "github" is fully implemented in workflows.
- * Other sources are defined for database schema compatibility and future use.
+ * NOTE: Currently only "github" and "vercel" are implemented.
+ * Add new sources here as they are implemented.
  */
 export const sourceTypeSchema = z.enum([
   "github",      // ✅ Implemented
-  "linear",      // 🔜 Future
-  "notion",      // 🔜 Future
-  "sentry",      // 🔜 Future
-  "vercel",      // 🔜 Future
-  "zendesk",     // 🔜 Future
+  "vercel",      // ✅ Implemented (Phase 01)
 ]);
 
 export type SourceType = z.infer<typeof sourceTypeSchema>;
@@ -52,11 +34,11 @@ export type SourceType = z.infer<typeof sourceTypeSchema>;
  * Used in connected_repository table.
  */
 export const configStatusSchema = z.enum([
-  "configured",    // lightfast.yml exists and is valid
-  "unconfigured",  // No lightfast.yml or invalid
-  "ingesting",     // Currently processing configuration
-  "error",         // Configuration error detected
-  "pending",       // Configuration check pending
+  "configured",      // lightfast.yml exists and is valid
+  "awaiting_config", // No lightfast.yml or invalid - waiting for user to add config
+  "ingesting",       // Currently processing configuration
+  "error",           // Configuration error detected
+  "pending",         // Configuration check pending
 ]);
 
 export type ConfigStatus = z.infer<typeof configStatusSchema>;

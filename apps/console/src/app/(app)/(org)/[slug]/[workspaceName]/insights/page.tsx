@@ -23,7 +23,7 @@ export default async function WorkspacePage({
     })
   );
   prefetch(
-    orgTrpc.workspace.stores.list.queryOptions({
+    orgTrpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
     })

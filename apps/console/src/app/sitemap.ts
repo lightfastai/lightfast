@@ -32,6 +32,37 @@ function getCategoryPriority(categories?: { _title?: string | null }[]): number 
 }
 
 /**
+ * Get the most recent lastModified date from CMS entries.
+ * Used for listing pages to accurately reflect when the listing changed.
+ *
+ * @param entries - Array of CMS entries with optional date fields
+ * @returns Most recent date or undefined if no dates available
+ */
+function getMostRecentDate(
+  entries: {
+    _sys?: { lastModifiedAt?: string | null; createdAt?: string | null } | null;
+    publishedAt?: string | null;
+  }[],
+): Date | undefined {
+  if (entries.length === 0) return undefined;
+
+  // Entries are already sorted by date (newest first) from CMS
+  const mostRecent = entries[0];
+  if (!mostRecent) return undefined;
+
+  if (mostRecent._sys?.lastModifiedAt) {
+    return new Date(mostRecent._sys.lastModifiedAt);
+  }
+  if (mostRecent.publishedAt) {
+    return new Date(mostRecent.publishedAt);
+  }
+  if (mostRecent._sys?.createdAt) {
+    return new Date(mostRecent._sys.createdAt);
+  }
+  return undefined;
+}
+
+/**
  * Generates the sitemap for the Lightfast platform.
  *
  * Since console is the root orchestrator serving all microfrontends,
@@ -54,137 +85,138 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   return [
-    // Homepage - highest priority
+    // Homepage - highest priority (no lastModified - per Google guidance, omit rather than fake)
     {
       url: base,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "weekly",
       priority: 1.0,
     },
-    // Core marketing pages
+    // Core marketing pages (no lastModified - static pages should omit to avoid false freshness signals)
     {
       url: `${base}/pricing`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
       url: `${base}/early-access`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: "monthly",
       priority: 0.8,
     },
-    // Feature pages
+    // Feature pages (no lastModified - static pages)
     {
       url: `${base}/features/agents`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
     {
       url: `${base}/features/connectors`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
     {
       url: `${base}/features/memory`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
     {
       url: `${base}/features/timeline`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
-    // Use case pages
+    // Use case pages (no lastModified - static pages)
     {
       url: `${base}/use-cases/technical-founders`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
     {
       url: `${base}/use-cases/founding-engineers`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
     {
       url: `${base}/use-cases/agent-builders`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.85,
     },
-    // Documentation
+    // Documentation (no lastModified - static pages)
     {
       url: `${base}/docs`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${base}/docs/get-started/quickstart`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
       url: `${base}/docs/get-started/config`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
       url: `${base}/docs/api-reference`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
-    // Blog listing page
+    // Blog listing page - uses most recent post's date (accurate: listing changes when new post added)
     {
       url: `${base}/blog`,
-      lastModified: new Date(),
+      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     // Individual blog posts from CMS
+    // Uses lastModifiedAt for accurate freshness signals (AEO/GEO optimization)
     ...blogPosts
       .filter((post) => !!post.slug || !!post._slug)
       .map((post) => {
         const slug = post.slug ?? post._slug ?? "";
+        const lastModified = post._sys?.lastModifiedAt
+          ? new Date(post._sys.lastModifiedAt)
+          : post.publishedAt
+            ? new Date(post.publishedAt)
+            : undefined;
 
         return {
           url: `${base}/blog/${slug}`,
-          lastModified: post.publishedAt ? new Date(post.publishedAt) : new Date(),
+          ...(lastModified && { lastModified }),
           changeFrequency: "weekly" as const,
           priority: getCategoryPriority(post.categories),
         };
       }),
-    // Changelog listing
+    // Changelog listing - uses most recent entry's date (accurate: listing changes when new entry added)
     {
       url: `${base}/changelog`,
-      lastModified: new Date(),
+      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
       changeFrequency: "weekly",
-      priority: 0.7,
+      priority: 0.8,
     },
     // Individual changelog entries from CMS
+    // Uses lastModifiedAt for accurate freshness signals (AEO/GEO optimization)
+    // AI search engines show 76.4% recency bias - accurate timestamps improve citation probability
     ...changelogEntries
       .filter((entry) => !!entry.slug)
-      .map((entry) => ({
-        url: `${base}/changelog/${entry.slug}`,
-        lastModified: entry._sys?.createdAt
-          ? new Date(entry._sys.createdAt)
-          : new Date(),
-        changeFrequency: "monthly" as const,
-        priority: 0.6,
-      })),
-    // Search
+      .map((entry) => {
+        const lastModified = entry._sys?.lastModifiedAt
+          ? new Date(entry._sys.lastModifiedAt)
+          : entry.publishedAt
+            ? new Date(entry.publishedAt)
+            : entry._sys?.createdAt
+              ? new Date(entry._sys.createdAt)
+              : undefined;
+
+        return {
+          url: `${base}/changelog/${entry.slug}`,
+          ...(lastModified && { lastModified }),
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        };
+      }),
+    // Search (no lastModified - static page)
     {
       url: `${base}/search`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
     },
@@ -199,16 +231,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "monthly" as const,
         priority: 0.5,
       })),
-    // Auth pages (lower priority as they're functional)
+    // Auth pages (lower priority as they're functional, no lastModified - static pages)
     {
       url: `${base}/sign-in`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${base}/sign-up`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
