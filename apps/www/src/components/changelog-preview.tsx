@@ -71,7 +71,7 @@ export function ChangelogPreview() {
                       <div className="flex items-center gap-2 mb-4">
                         {item.slug && (
                           <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground">
-                            {item.slug}
+                            {item.slug.slice(0, 3)}
                           </span>
                         )}
                         <time className="text-xs text-muted-foreground">
@@ -94,4 +94,3 @@ export function ChangelogPreview() {
     </Feed>
   );
 }
-

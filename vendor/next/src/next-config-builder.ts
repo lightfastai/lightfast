@@ -17,6 +17,10 @@ export const config: NextConfig = withVercelToolbar()({
         protocol: "https",
         hostname: "imagedelivery.net",
       },
+      {
+        protocol: "https",
+        hostname: "assets.basehub.com",
+      },
     ],
   },
 

@@ -90,7 +90,7 @@ const richTextBaseComponents = {
     rowspan?: number;
     colwidth?: number[] | null;
   }) => (
-    <td className="px-4 py-3 text-xs" colSpan={colspan} rowSpan={rowspan}>
+    <td className="px-4 py-3 text-sm" colSpan={colspan} rowSpan={rowspan}>
       {children}
     </td>
   ),
@@ -147,12 +147,10 @@ const richTextBaseComponents = {
     return <>{children}</>;
   },
 
-  // Image using next/image for optimization
+  // Image using next/image for optimization - enforces 4:3 aspect ratio
   img: ({
     src,
     alt,
-    width,
-    height,
   }: {
     src?: string;
     alt?: string;
@@ -161,13 +159,16 @@ const richTextBaseComponents = {
   }) => {
     if (!src) return null;
     return (
-      <Image
-        src={src}
-        alt={alt || ""}
-        width={width || 800}
-        height={height || 450}
-        className="rounded-lg my-6"
-      />
+      <div className="relative aspect-[4/3] my-6 rounded-xs overflow-hidden bg-card">
+        <Image
+          src={src}
+          alt={alt || ""}
+          fill
+          priority
+          quality={40}
+          className="object-cover"
+        />
+      </div>
     );
   },
 

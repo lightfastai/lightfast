@@ -35,7 +35,8 @@ const relatedPages = [
   {
     title: "For Agents",
     href: "/features/agents",
-    description: "Give your AI agents access to memory layer. MCP tools and REST API.",
+    description:
+      "Give your AI agents access to memory layer. MCP tools and REST API.",
   },
   {
     title: "Connectors",

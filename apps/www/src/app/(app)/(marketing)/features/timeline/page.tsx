@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock, History, CalendarDays, GitCommit } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  History,
+  CalendarDays,
+  GitCommit,
+} from "lucide-react";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Button } from "@repo/ui/components/ui/button";
 import { exposureTrial } from "~/lib/fonts";
@@ -51,11 +57,13 @@ const capabilities = [
 const examples = [
   {
     question: "What decisions were made about the auth system?",
-    context: "Shows all authentication-related decisions with dates and participants",
+    context:
+      "Shows all authentication-related decisions with dates and participants",
   },
   {
     question: "Who was working on payments last month?",
-    context: "Lists team members with payment-related commits, issues, and discussions",
+    context:
+      "Lists team members with payment-related commits, issues, and discussions",
   },
   {
     question: "What changed in the API since last release?",
@@ -123,10 +131,10 @@ export default function TimelinePage() {
           {capabilities.map((capability) => (
             <div
               key={capability.title}
-              className="flex flex-col gap-4 p-6 border border-border rounded-sm"
+              className="flex flex-col gap-4 p-6 bg-card rounded-xs"
             >
               <capability.icon className="h-6 w-6 text-muted-foreground" />
-              <h3 className="text-lg font-medium">{capability.title}</h3>
+              <h3 className="mt-16 text-lg font-medium">{capability.title}</h3>
               <p className="text-sm text-muted-foreground">
                 {capability.description}
               </p>
@@ -137,7 +145,7 @@ export default function TimelinePage() {
 
       {/* Example Queries Section */}
       <div className="max-w-5xl mx-auto w-full px-4">
-        <div className="border border-border rounded-sm p-8 md:p-12">
+        <div className="bg-card rounded-sm p-8 md:p-12">
           <h2
             className={`text-xl md:text-2xl font-light mb-6 ${exposureTrial.className}`}
           >
