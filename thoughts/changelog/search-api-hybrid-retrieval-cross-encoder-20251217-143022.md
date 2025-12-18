@@ -1,6 +1,6 @@
 ---
 title: 'Search API, Hybrid Retrieval, Cross-Encoder Reranking'
-slug: 0-4-lightfast-search-api-hybrid-retrieval
+slug: 0-3-lightfast-search-api-hybrid-retrieval
 publishedAt: '2025-12-15'
 excerpt: >-
   Public Search API with four-path hybrid retrieval combining vector similarity,
@@ -68,16 +68,16 @@ _internal:
     - packages/console-rerank/src/providers/llm.ts
     - packages/console-rerank/src/providers/passthrough.ts
     - packages/console-types/src/api/v1/search.ts
-  publishedAt: '2025-12-17T07:35:06.873Z'
+  publishedAt: '2025-12-18T06:25:30.649Z'
 ---
 
-**Public Search API with hybrid retrieval and cross-encoder reranking**
+**Public Search API with hybrid retrieval and cross-encoder reranking for semantic code search**
 
 ---
 
 ### Search API
 
-Query your workspace's neural memory through a production-ready REST API. The `/v1/search` endpoint accepts semantic queries and returns ranked results with full metadata, entity extraction, and contextual information.
+Perform semantic code search across your workspace's neural memory through a production-ready REST API. The `/v1/search` endpoint accepts natural language queries and returns ranked results with full metadata, entity extraction, and contextual information.
 
 **What's included:**
 - POST `/v1/search` endpoint with Bearer token or session authentication
@@ -103,7 +103,7 @@ curl -X POST https://lightfast.ai/v1/search \
 
 ### Four-Path Hybrid Retrieval
 
-Search results combine four parallel retrieval strategies for comprehensive coverage. Unlike simple vector search, hybrid retrieval captures both semantic similarity and structured patterns.
+Our approach to semantic code search combines four parallel retrieval strategies for comprehensive coverage. Unlike simple vector search, hybrid retrieval captures both semantic similarity and structured patterns.
 
 **What's included:**
 - **Vector Path**: Pinecone semantic search using query embeddings
@@ -207,7 +207,7 @@ The API returns structured results with optional context and detailed latency me
 
 ### Resources
 
-- [Search API Reference](/docs/api/search)
-- [Authentication Guide](/docs/api/authentication)
+- [Search API Reference](/docs/api-reference/search)
+- [Authentication Guide](/docs/api-reference/authentication)
 - [SDK Documentation](/docs/integrate/sdk)
 - [Search Feature Guide](/docs/features/search)

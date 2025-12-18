@@ -1,7 +1,7 @@
 ---
 title: 'Entity Extraction, Observation Clusters, Multi-View Embeddings'
-slug: 0-3-lightfast-neural-memory
-publishedAt: '2025-12-11'
+slug: 0-2-lightfast-neural-memory
+publishedAt: '2025-12-13'
 excerpt: >-
   Neural Memory now automatically extracts entities from your development
   activity, groups related observations into topic clusters, and generates
@@ -76,7 +76,7 @@ _internal:
     - 'packages/console-validation/src/schemas/entities.ts:9-17'
     - 'packages/console-validation/src/constants/embedding.ts:32-39'
     - 'packages/console-config/src/neural.ts:16-31'
-  publishedAt: '2025-12-17T07:34:30.787Z'
+  publishedAt: '2025-12-18T06:26:03.740Z'
 ---
 
 **Entity Extraction, Observation Clusters, Multi-View Embeddings**
@@ -188,6 +188,6 @@ const results = await pinecone.query({
 ### Resources
 
 - [Search Documentation](/docs/features/search)
-- [Neural Memory Overview](/docs/features/neural-memory)
+- [Neural Memory Overview](/docs/features/memory)
 - [API Reference](/docs/api-reference)
-- [Configuration Guide](/docs/config)
+- [Configuration Guide](/docs/get-started/config)

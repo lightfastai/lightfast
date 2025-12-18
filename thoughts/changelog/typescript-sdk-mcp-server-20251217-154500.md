@@ -56,7 +56,7 @@ _internal:
     - 'core/mcp/src/server.ts:1-82'
     - 'core/mcp/src/index.ts:1-77'
     - core/mcp/package.json
-  publishedAt: '2025-12-17T07:35:32.504Z'
+  publishedAt: '2025-12-18T06:41:32.658Z'
 ---
 
 **Official TypeScript client and MCP Server for Lightfast neural memory**

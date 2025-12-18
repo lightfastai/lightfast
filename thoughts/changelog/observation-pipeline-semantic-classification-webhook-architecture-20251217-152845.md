@@ -1,7 +1,7 @@
 ---
 title: 'Observation Pipeline, Semantic Classification, Webhook Architecture'
-slug: 0-2-1-lightfast-neural-memory-foundation
-publishedAt: '2025-12-13'
+slug: 0-1-lightfast-neural-memory-foundation
+publishedAt: '2025-12-11'
 excerpt: >-
   Neural Memory foundation layer: real-time observation capture from GitHub and
   Vercel webhooks, AI-powered semantic classification with 14 engineering
@@ -72,7 +72,7 @@ _internal:
     - 'packages/console-webhooks/src/vercel.ts:281-347'
     - 'packages/console-validation/src/schemas/classification.ts:1-58'
     - 'db/console/src/schema/tables/workspace-neural-observations.ts:48-247'
-  publishedAt: '2025-12-18T02:50:15.255Z'
+  publishedAt: '2025-12-18T06:09:48.829Z'
 ---
 
 **Real-time event capture, AI classification, and production-ready webhook infrastructure**
@@ -85,7 +85,7 @@ The neural observation pipeline captures engineering activity from your connecte
 
 **What's included:**
 
-- **Significance scoring** filters low-value events (threshold: 40/100). High-value events like releases (70), security incidents (65), and PR merges (60) pass through automatically. Routine commits (30) and trivial changes are filtered.
+- **Significance scoring** filters low-value events (threshold: 40/100). High-value events like releases (75), deployment failures (70), and PR merges (60) pass through automatically. Routine commits (30) and trivial changes are filtered.
 - **Multi-view embeddings** generate three vectors per observation: title-only for headline searches, full content for detailed queries, and a balanced summary view. All three are stored in Pinecone with pre-computed observation IDs for direct lookup.
 - **Entity extraction** identifies API endpoints, file paths, issue references, @mentions, and environment variables from event content. Entities are deduplicated and tracked with occurrence counts.
 - **Cluster assignment** groups related observations using embedding similarity (40 points), entity overlap (30 points), actor overlap (20 points), and temporal proximity (10 points). Threshold: 60/100 to join an existing cluster.
@@ -93,18 +93,18 @@ The neural observation pipeline captures engineering activity from your connecte
 **Example: Significance Scoring**
 
 ```typescript
-// Event weights
+// Event weights (base scores)
 const weights = {
-  release: 70,
-  incident: 65,
+  'release.published': 75,
+  'deployment.error': 70,
   'pull-request.merged': 60,
   'pull-request.opened': 50,
-  deployment: 50,
-  issue: 45,
+  'issue.opened': 45,
+  'deployment.succeeded': 40,
   push: 30
 };
 
-// Content signals
+// Content signals (added to base score)
 if (title.match(/breaking|security|CVE/i)) score += 20;
 if (title.match(/hotfix|emergency/i)) score += 15;
 if (title.match(/chore|deps|bump/i)) score -= 10;
@@ -246,7 +246,6 @@ Raw webhook payload storage enables replay and debugging. When something goes wr
 
 ### Resources
 
-- [GitHub Integration Setup](/docs/integrations/github)
-- [Vercel Integration Setup](/docs/integrations/vercel)
-- [Neural Memory Overview](/docs/neural-memory)
-- [API Reference](/docs/api-reference)
+- [Memory Features](/docs/features/memory)
+- [Search Features](/docs/features/search)
+- [Getting Started](/docs/get-started/overview)
