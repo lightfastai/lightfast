@@ -1,6 +1,6 @@
 ---
 title: 'Observation Pipeline, Semantic Classification, Webhook Architecture'
-slug: 0-2-lightfast-neural-memory-foundation
+slug: 0-2-1-lightfast-neural-memory-foundation
 publishedAt: '2025-12-13'
 excerpt: >-
   Neural Memory foundation layer: real-time observation capture from GitHub and
@@ -72,7 +72,7 @@ _internal:
     - 'packages/console-webhooks/src/vercel.ts:281-347'
     - 'packages/console-validation/src/schemas/classification.ts:1-58'
     - 'db/console/src/schema/tables/workspace-neural-observations.ts:48-247'
-  publishedAt: '2025-12-17T07:24:17.266Z'
+  publishedAt: '2025-12-18T02:50:15.255Z'
 ---
 
 **Real-time event capture, AI classification, and production-ready webhook infrastructure**
