@@ -20,13 +20,14 @@ import {
   type SoftwareApplication,
   type FAQPage,
   type Question,
-  type Answer
+  type Answer,
 } from "@vendor/seo/json-ld";
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
   title: "The Memory Layer for Software Teams",
-  description: "Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources",
+  description:
+    "Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources",
   keywords: [
     "team memory",
     "neural memory for teams",
@@ -37,11 +38,9 @@ export const metadata: Metadata = {
     "team knowledge base",
     "organizational memory",
     "decision tracking",
-    "context management"
+    "context management",
   ],
-  authors: [
-    { name: "Lightfast", url: "https://lightfast.ai" }
-  ],
+  authors: [{ name: "Lightfast", url: "https://lightfast.ai" }],
   creator: "Lightfast",
   publisher: "Lightfast",
   robots: {
@@ -60,7 +59,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Lightfast – The Memory Layer for Software Teams",
-    description: "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
+    description:
+      "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
     url: "https://lightfast.ai",
     siteName: "Lightfast",
     type: "website",
@@ -72,13 +72,14 @@ export const metadata: Metadata = {
         height: 630,
         alt: "Lightfast – Memory Built for Teams",
         type: "image/jpeg",
-      }
+      },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Lightfast – The Memory Layer for Software Teams",
-    description: "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
+    description:
+      "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
     site: "@lightfastai",
     creator: "@lightfastai",
     images: ["https://lightfast.ai/og.jpg"],
@@ -100,9 +101,10 @@ export default function HomePage() {
     sameAs: [
       "https://twitter.com/lightfastai",
       "https://github.com/lightfastai",
-      "https://www.linkedin.com/company/lightfastai"
+      "https://www.linkedin.com/company/lightfastai",
     ],
-    description: "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization."
+    description:
+      "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization.",
   };
 
   // Build website entity
@@ -113,8 +115,8 @@ export default function HomePage() {
     name: "Lightfast",
     description: "Memory built for teams – Search by meaning, not keywords",
     publisher: {
-      "@id": "https://lightfast.ai/#organization"
-    }
+      "@id": "https://lightfast.ai/#organization",
+    },
   };
 
   // Build software application entity
@@ -128,9 +130,10 @@ export default function HomePage() {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-      url: "https://lightfast.ai/early-access"
+      url: "https://lightfast.ai/early-access",
     },
-    description: "Neural memory for teams. Search and find answers with sources across your entire organization.",
+    description:
+      "Neural memory for teams. Search and find answers with sources across your entire organization.",
     featureList: [
       "Search by meaning, not keywords",
       "Answers with sources",
@@ -138,8 +141,8 @@ export default function HomePage() {
       "Decision tracking",
       "Context preservation",
       "API access",
-      "MCP tools for agents"
-    ]
+      "MCP tools for agents",
+    ],
   };
 
   // Build FAQ entity
@@ -153,21 +156,16 @@ export default function HomePage() {
         acceptedAnswer: {
           "@type": "Answer",
           text: faq.answer,
-        }
+        },
       };
       return question;
-    })
+    }),
   };
 
   // Combine all entities in a graph
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
-    "@graph": [
-      organizationEntity,
-      websiteEntity,
-      softwareEntity,
-      faqEntity
-    ]
+    "@graph": [organizationEntity, websiteEntity, softwareEntity, faqEntity],
   };
 
   return (
@@ -189,7 +187,7 @@ export default function HomePage() {
 
               {/* Heading */}
               <h1
-                className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
+                className={`text-2xl sm:text-3xl md:text-4xl font-light  px-4 text-balance ${exposureTrial.className}`}
               >
                 The memory layer for software teams
                 {/* Search everything your team knows.
