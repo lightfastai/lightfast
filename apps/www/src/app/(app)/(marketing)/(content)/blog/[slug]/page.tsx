@@ -361,12 +361,7 @@ export default async function BlogPostPage({
                       prose-p:text-foreground/80 prose-p:leading-relaxed
                       prose-strong:text-foreground prose-strong:font-semibold
                       prose-a:text-foreground prose-a:underline hover:prose-a:text-foreground/80
-                      prose-ul:text-foreground/80 prose-ul:my-6
-                      prose-ol:text-foreground/80 prose-ol:my-6
-                      prose-li:text-foreground/80 prose-li:my-2
                       prose-blockquote:text-foreground/80 prose-blockquote:border-foreground/20
-                      prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                      prose-pre:bg-muted prose-pre:text-foreground
                       prose-img:rounded-lg"
                     >
                       <Body content={post.body.json.content} />

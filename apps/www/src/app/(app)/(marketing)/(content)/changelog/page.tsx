@@ -67,7 +67,8 @@ export default async function ChangelogPage() {
               ) : (
                 entries.map((item) => {
                   // Use publishedAt if available, fall back to createdAt
-                  const publishedTime = item.publishedAt || item._sys?.createdAt;
+                  const publishedTime =
+                    item.publishedAt || item._sys?.createdAt;
                   const publishedDate = publishedTime
                     ? new Date(publishedTime)
                     : null;
@@ -100,7 +101,7 @@ export default async function ChangelogPage() {
                         <div className="md:col-span-2 flex items-center gap-2">
                           {item.slug && (
                             <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
-                              {item.slug}
+                              {item.slug.slice(0, 3)}
                             </span>
                           )}
                           <time className="text-sm text-muted-foreground whitespace-nowrap">
@@ -124,7 +125,7 @@ export default async function ChangelogPage() {
 
                             {/* Excerpt for better list preview */}
                             {item.excerpt && (
-                              <p className="text-foreground/70 mt-2 line-clamp-2">
+                              <p className="text-muted-foreground mt-6 text-sm p-3 bg-card rounded-xs">
                                 {item.excerpt}
                               </p>
                             )}
@@ -134,7 +135,9 @@ export default async function ChangelogPage() {
                               <div className="relative aspect-video rounded-lg overflow-hidden mt-4 max-w-sm">
                                 <Image
                                   src={item.featuredImage.url}
-                                  alt={item.featuredImage.alt || item._title || ""}
+                                  alt={
+                                    item.featuredImage.alt || item._title || ""
+                                  }
                                   width={400}
                                   height={225}
                                   className="w-full h-full object-cover"

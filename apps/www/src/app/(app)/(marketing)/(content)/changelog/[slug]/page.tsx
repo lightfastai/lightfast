@@ -220,7 +220,7 @@ export default async function ChangelogEntryPage({
                 <div className="md:col-span-2 flex items-center gap-2">
                   {entry.slug && (
                     <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
-                      {entry.slug}
+                      {entry.slug.slice(0, 3)}
                     </span>
                   )}
                   <time className="text-sm text-muted-foreground whitespace-nowrap">
@@ -236,11 +236,11 @@ export default async function ChangelogEntryPage({
 
                     {/* TL;DR Summary for AEO */}
                     {entry.tldr && (
-                      <div className="bg-muted/50 border rounded-lg p-4 mt-6">
-                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      <div className="bg-card rounded-xs p-8 my-8">
+                        <h2 className="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-widest mb-12">
                           TL;DR
                         </h2>
-                        <p className="text-foreground/90 leading-relaxed">
+                        <p className="text-foreground/90 text-sm leading-relaxed">
                           {entry.tldr}
                         </p>
                       </div>

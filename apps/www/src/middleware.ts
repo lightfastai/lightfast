@@ -45,11 +45,6 @@ async function secureRedirect(url: URL | string): Promise<NextResponse> {
 
 const isRootPath = createRouteMatcher(["/"]);
 
-const isAllowedForAuthenticatedUsers = createRouteMatcher([
-  "/legal(.*)",
-  "/api(.*)",
-]);
-
 // =============================================================================
 // NEMO Composition
 // =============================================================================
@@ -85,13 +80,6 @@ export default clerkMiddleware(
     // 1. Redirect authenticated users from root to sign-in (which routes them)
     // -------------------------------------------------------------------------
     if (userId && isRootPath(req)) {
-      return secureRedirect(new URL("/sign-in", authUrl));
-    }
-
-    // -------------------------------------------------------------------------
-    // 2. Redirect authenticated users from marketing pages to sign-in
-    // -------------------------------------------------------------------------
-    if (userId && !isAllowedForAuthenticatedUsers(req)) {
       return secureRedirect(new URL("/sign-in", authUrl));
     }
 

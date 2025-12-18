@@ -333,18 +333,9 @@ export default function PricingPage() {
                 {/* Description */}
                 <div className="mt-8 px-4">
                   <p className="text-base text-muted-foreground">
-                    Simple pricing for memory layer for software teams. Start free,
-                    then scale Lightfast as more people and agents rely on memory layer.
-                  </p>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Want to see how it works before choosing a plan?{" "}
-                    <a
-                      href="/docs/get-started/overview"
-                      className="underline underline-offset-4 hover:text-foreground"
-                    >
-                      Read the developer overview
-                    </a>
-                    .
+                    Simple pricing for memory layer for software teams. Start
+                    free, then scale Lightfast as more people and agents rely on
+                    memory layer.
                   </p>
                 </div>
               </div>
@@ -364,10 +355,10 @@ export default function PricingPage() {
                   <div
                     key={plan.plan}
                     className={cn(
-                      "flex flex-col border rounded-xs p-6 h-full",
+                      "flex flex-col bg-card rounded-xs p-6 h-full",
                       plan.highlighted
-                        ? "border-foreground shadow-lg"
-                        : "border-border",
+                        ? "border border-foreground shadow-lg"
+                        : "",
                     )}
                   >
                     <div className="space-y-1">
