@@ -8,4 +8,10 @@ export const { docs: apiDocs, meta: apiMeta } = defineDocs({
 	dir: "src/content/api",
 });
 
-export default defineConfig();
+export default defineConfig({
+	mdxOptions: {
+		// Disable fumadocs' built-in Shiki code highlighting
+		// to preserve language-* className for custom SSRCodeBlock
+		rehypeCodeOptions: false,
+	},
+});
