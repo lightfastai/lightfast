@@ -3,8 +3,6 @@ title: POST /v1/contents
 description: Retrieve full content and metadata for documents and observations
 ---
 
-import { CodeBlock } from '@/src/components/code-block';
-
 # POST /v1/contents
 
 Retrieve complete content for documents and observations by ID. Use this after search to fetch full content for results.
@@ -19,25 +17,25 @@ POST https://lightfast.ai/api/v1/contents
 
 See [Authentication](/api/authentication) for details.
 
-<CodeBlock language="bash">
-{`Authorization: Bearer YOUR_API_KEY
-X-Workspace-ID: ws_abc123`}
-</CodeBlock>
+```bash
+Authorization: Bearer YOUR_API_KEY
+X-Workspace-ID: ws_abc123
+```
 
 ## Request Body
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   ids: string[]  // Array of content IDs (1-50 IDs per request)
-}`}
-</CodeBlock>
+}
+```
 
 Content IDs use prefixes like `doc_*` or `obs_*` and are returned from the search endpoint.
 
 ## Response
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   items: Array<{
     id: string               // Content ID
     title: string | null     // Content title (may be null)
@@ -51,32 +49,32 @@ Content IDs use prefixes like `doc_*` or `obs_*` and are returned from the searc
   }>
   missing: string[]          // IDs that were not found
   requestId: string          // Request ID for debugging
-}`}
-</CodeBlock>
+}
+```
 
 ## Example Request
 
-<CodeBlock language="bash">
-{`curl -X POST https://lightfast.ai/api/v1/contents \\
-  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \\
-  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \\
-  -H "Content-Type: application/json" \\
+```bash
+curl -X POST https://lightfast.ai/api/v1/contents \
+  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
   -d '{
     "ids": ["obs_abc123", "obs_def456"]
-  }'`}
-</CodeBlock>
+  }'
+```
 
 ## Example Response
 
-<CodeBlock language="json">
-{`{
+```json
+{
   "items": [
     {
       "id": "obs_abc123",
       "title": "Implement OAuth 2.0 authentication",
       "url": "https://github.com/org/repo/pull/123",
       "snippet": "Added OAuth 2.0 authentication flow with refresh tokens...",
-      "content": "## Summary\\n\\nThis PR implements OAuth 2.0 authentication flow with the following features:\\n\\n- Authorization code flow\\n- Refresh token rotation\\n- JWT validation\\n- PKCE support\\n\\n## Implementation Details\\n\\n...",
+      "content": "## Summary\n\nThis PR implements OAuth 2.0 authentication flow with the following features:\n\n- Authorization code flow\n- Refresh token rotation\n- JWT validation\n- PKCE support\n\n## Implementation Details\n\n...",
       "source": "github",
       "type": "pull_request",
       "occurredAt": "2024-03-15T10:30:00Z",
@@ -98,15 +96,15 @@ Content IDs use prefixes like `doc_*` or `obs_*` and are returned from the searc
   ],
   "missing": [],
   "requestId": "req_abc123def456"
-}`}
-</CodeBlock>
+}
+```
 
 ## Handling Missing IDs
 
 If some IDs are not found, they appear in the `missing` array:
 
-<CodeBlock language="json">
-{`{
+```json
+{
   "items": [
     {
       "id": "obs_abc123",
@@ -119,14 +117,14 @@ If some IDs are not found, they appear in the `missing` array:
   ],
   "missing": ["obs_invalid", "obs_deleted"],
   "requestId": "req_xyz789"
-}`}
-</CodeBlock>
+}
+```
 
-<CodeBlock language="typescript">
-{`const response = await fetch('https://lightfast.ai/api/v1/contents', {
+```typescript
+const response = await fetch('https://lightfast.ai/api/v1/contents', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
+    'Authorization': `Bearer ${apiKey}`,
     'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
@@ -143,15 +141,15 @@ data.items.forEach(item => {
 // Handle missing IDs
 if (data.missing.length > 0) {
   console.warn('Not found:', data.missing.join(', '))
-}`}
-</CodeBlock>
+}
+```
 
 ## Use Cases
 
 ### Fetch Full Content After Search
 
-<CodeBlock language="typescript">
-{`// 1. Search for relevant content
+```typescript
+// 1. Search for relevant content
 const searchResponse = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: { /* ... */ },
@@ -174,17 +172,17 @@ contentData.items.forEach(item => {
   console.log('Title:', item.title)
   console.log('Content:', item.content || item.snippet)
   console.log('---')
-})`}
-</CodeBlock>
+})
+```
 
 ### Build a Document Viewer
 
-<CodeBlock language="typescript">
-{`async function getDocument(id: string) {
+```typescript
+async function getDocument(id: string) {
   const response = await fetch('https://lightfast.ai/api/v1/contents', {
     method: 'POST',
     headers: {
-      'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+      'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
       'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID!,
       'Content-Type': 'application/json'
     },
@@ -203,15 +201,15 @@ contentData.items.forEach(item => {
 // Usage
 const doc = await getDocument('obs_abc123')
 console.log(doc.title)
-console.log(doc.content)`}
-</CodeBlock>
+console.log(doc.content)
+```
 
 ## Batch Retrieval
 
 Retrieve multiple documents efficiently in a single request (max 50 IDs):
 
-<CodeBlock language="typescript">
-{`// Efficient: Single batch request
+```typescript
+// Efficient: Single batch request
 const response = await fetch('https://lightfast.ai/api/v1/contents', {
   method: 'POST',
   headers: { /* ... */ },
@@ -225,18 +223,18 @@ for (const id of ids) {
   await fetch('https://lightfast.ai/api/v1/contents', {
     body: JSON.stringify({ ids: [id] })
   })
-}`}
-</CodeBlock>
+}
+```
 
 **Limit:** Maximum 50 IDs per request. For more IDs, make multiple requests.
 
 ## Error Handling
 
-<CodeBlock language="typescript">
-{`const response = await fetch('https://lightfast.ai/api/v1/contents', {
+```typescript
+const response = await fetch('https://lightfast.ai/api/v1/contents', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
+    'Authorization': `Bearer ${apiKey}`,
     'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
@@ -253,9 +251,9 @@ const data = await response.json()
 
 // Partial success - some IDs found, some missing
 if (data.missing.length > 0) {
-  console.warn(\`\${data.missing.length} IDs not found\`)
-}`}
-</CodeBlock>
+  console.warn(`${data.missing.length} IDs not found`)
+}
+```
 
 See [Error Reference](/api/errors) for all error codes.
 

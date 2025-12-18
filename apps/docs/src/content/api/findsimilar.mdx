@@ -3,8 +3,6 @@ title: POST /v1/findsimilar
 description: Find semantically similar content based on a source document
 ---
 
-import { CodeBlock } from '@/src/components/code-block';
-
 # POST /v1/findsimilar
 
 Discover content semantically related to a specific document. Find related discussions, similar implementations, or connected topics.
@@ -19,15 +17,15 @@ POST https://lightfast.ai/api/v1/findsimilar
 
 See [Authentication](/api/authentication) for details.
 
-<CodeBlock language="bash">
-{`Authorization: Bearer YOUR_API_KEY
-X-Workspace-ID: ws_abc123`}
-</CodeBlock>
+```bash
+Authorization: Bearer YOUR_API_KEY
+X-Workspace-ID: ws_abc123
+```
 
 ## Request Body
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   id?: string              // Content ID to find similar items for
   url?: string             // URL alternative to ID
   limit?: number           // Results to return (1-50, default: 10)
@@ -40,15 +38,15 @@ X-Workspace-ID: ws_abc123`}
     actorNames?: string[]
     dateRange?: { start?: string; end?: string }
   }
-}`}
-</CodeBlock>
+}
+```
 
 **Note:** Either `id` or `url` must be provided, but not both.
 
 ## Response
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   source: {
     id: string             // Source content ID
     title: string          // Source title
@@ -80,16 +78,16 @@ X-Workspace-ID: ws_abc123`}
     }
   }
   requestId: string        // Request ID for debugging
-}`}
-</CodeBlock>
+}
+```
 
 ## Example Request
 
-<CodeBlock language="bash">
-{`curl -X POST https://lightfast.ai/api/v1/findsimilar \\
-  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \\
-  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \\
-  -H "Content-Type: application/json" \\
+```bash
+curl -X POST https://lightfast.ai/api/v1/findsimilar \
+  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
   -d '{
     "id": "obs_abc123",
     "limit": 10,
@@ -97,13 +95,13 @@ X-Workspace-ID: ws_abc123`}
     "filters": {
       "observationTypes": ["pull_request", "issue"]
     }
-  }'`}
-</CodeBlock>
+  }'
+```
 
 ## Example Response
 
-<CodeBlock language="json">
-{`{
+```json
+{
   "source": {
     "id": "obs_abc123",
     "title": "Implement OAuth 2.0 authentication",
@@ -150,8 +148,8 @@ X-Workspace-ID: ws_abc123`}
     }
   },
   "requestId": "req_abc123def456"
-}`}
-</CodeBlock>
+}
+```
 
 ## Understanding Similarity Scores
 
@@ -179,41 +177,41 @@ Use `threshold` to filter out results below a minimum similarity.
 
 Only return results above a minimum score:
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   "id": "obs_abc123",
   "threshold": 0.7  // Only results with score >= 0.7
-}`}
-</CodeBlock>
+}
+```
 
 ### Same Source Only
 
 Restrict to same source type:
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   "id": "obs_abc123",
   "sameSourceOnly": true  // Only GitHub if source is GitHub
-}`}
-</CodeBlock>
+}
+```
 
 ### Exclude Specific IDs
 
 Exclude certain results:
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   "id": "obs_abc123",
   "excludeIds": ["obs_def456", "obs_ghi789"]
-}`}
-</CodeBlock>
+}
+```
 
 ### By Content Type
 
 Use the same filters as search:
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   "id": "obs_abc123",
   "filters": {
     "observationTypes": ["pull_request"],
@@ -222,19 +220,19 @@ Use the same filters as search:
       "start": "2024-01-01T00:00:00Z"
     }
   }
-}`}
-</CodeBlock>
+}
+```
 
 ## Use Cases
 
 ### "More Like This" Feature
 
-<CodeBlock language="typescript">
-{`async function findRelated(documentId: string) {
+```typescript
+async function findRelated(documentId: string) {
   const response = await fetch('https://lightfast.ai/api/v1/findsimilar', {
     method: 'POST',
     headers: {
-      'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+      'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
       'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID!,
       'Content-Type': 'application/json'
     },
@@ -249,15 +247,15 @@ Use the same filters as search:
 
   console.log('Similar to:', data.source.title)
   data.similar.forEach(item => {
-    console.log(\`- \${item.title} (score: \${item.score})\`)
+    console.log(`- ${item.title} (score: ${item.score})`)
   })
-}`}
-</CodeBlock>
+}
+```
 
 ### Find Duplicate Issues
 
-<CodeBlock language="typescript">
-{`async function checkForDuplicates(issueId: string) {
+```typescript
+async function checkForDuplicates(issueId: string) {
   const response = await fetch('https://lightfast.ai/api/v1/findsimilar', {
     method: 'POST',
     headers: { /* ... */ },
@@ -275,16 +273,16 @@ Use the same filters as search:
   if (data.similar.length > 0) {
     console.warn('Potential duplicates found:')
     data.similar.forEach(dup => {
-      console.log(\`- \${dup.title} (score: \${dup.score})\`)
+      console.log(`- ${dup.title} (score: ${dup.score})`)
     })
   }
-}`}
-</CodeBlock>
+}
+```
 
 ### Explore Topic Clusters
 
-<CodeBlock language="typescript">
-{`async function exploreCluster(documentId: string) {
+```typescript
+async function exploreCluster(documentId: string) {
   const response = await fetch('https://lightfast.ai/api/v1/findsimilar', {
     method: 'POST',
     headers: { /* ... */ },
@@ -308,16 +306,16 @@ Use the same filters as search:
 
   console.log('In same cluster:', inCluster.length)
   console.log('Related but outside cluster:', outside.length)
-}`}
-</CodeBlock>
+}
+```
 
 ## Error Handling
 
-<CodeBlock language="typescript">
-{`const response = await fetch('https://lightfast.ai/api/v1/findsimilar', {
+```typescript
+const response = await fetch('https://lightfast.ai/api/v1/findsimilar', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
+    'Authorization': `Bearer ${apiKey}`,
     'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
@@ -327,8 +325,8 @@ Use the same filters as search:
 if (!response.ok) {
   const error = await response.json()
   console.error('Request failed:', error.error, error.message)
-}`}
-</CodeBlock>
+}
+```
 
 See [Error Reference](/api/errors) for all error codes.
 

@@ -3,8 +3,6 @@ title: Authentication
 description: API authentication with dual auth support
 ---
 
-import { CodeBlock } from '@/src/components/code-block';
-
 All Lightfast API requests require authentication and a workspace identifier. The API supports two authentication methods: API keys for external clients and session authentication for the Console UI.
 
 ## Authentication Methods
@@ -13,13 +11,13 @@ All Lightfast API requests require authentication and a workspace identifier. Th
 
 For external API clients, use an API key in the `Authorization` header along with the `X-Workspace-ID` header:
 
-<CodeBlock language="bash">
-{`curl -X POST https://lightfast.ai/api/v1/search \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "X-Workspace-ID: ws_abc123" \\
-  -H "Content-Type: application/json" \\
-  -d '{"query": "authentication implementation"}'`}
-</CodeBlock>
+```bash
+curl -X POST https://lightfast.ai/api/v1/search \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "X-Workspace-ID: ws_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "authentication implementation"}'
+```
 
 **Required Headers:**
 
@@ -33,11 +31,11 @@ For external API clients, use an API key in the `Authorization` header along wit
 
 For the Console UI, authentication uses Clerk session cookies. The `X-Workspace-ID` header is still required:
 
-<CodeBlock language="bash">
-{`# Session auth (used by Console UI)
+```bash
+# Session auth (used by Console UI)
 Cookie: __session=<clerk-session>
-X-Workspace-ID: ws_abc123`}
-</CodeBlock>
+X-Workspace-ID: ws_abc123
+```
 
 Session authentication validates that the user is a member of the organization that owns the workspace.
 
@@ -60,64 +58,64 @@ Your workspace ID can be found in:
 
 Never hardcode API keys in your source code:
 
-<CodeBlock language="typescript">
-{`// ✅ Good - load from environment
+```typescript
+// ✅ Good - load from environment
 const apiKey = process.env.LIGHTFAST_API_KEY
 const workspaceId = process.env.LIGHTFAST_WORKSPACE_ID
 
 // ❌ Bad - hardcoded credentials
-const apiKey = 'lf_abc123...'`}
-</CodeBlock>
+const apiKey = 'lf_abc123...'
+```
 
 ### Environment Setup
 
-<CodeBlock language="bash">
-{`# .env.local
+```bash
+# .env.local
 LIGHTFAST_API_KEY=your-api-key
-LIGHTFAST_WORKSPACE_ID=ws_abc123`}
-</CodeBlock>
+LIGHTFAST_WORKSPACE_ID=ws_abc123
+```
 
 ### Never Commit Keys
 
 Add environment files to `.gitignore`:
 
-<CodeBlock language="bash">
-{`# .gitignore
+```bash
+# .gitignore
 .env
 .env.local
-.env.production`}
-</CodeBlock>
+.env.production
+```
 
 ### Server-Side Only
 
 API keys should only be used in server-side code:
 
-<CodeBlock language="typescript">
-{`// ✅ Server-side (Node.js, API routes, server actions)
+```typescript
+// ✅ Server-side (Node.js, API routes, server actions)
 const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+    'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
     'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID,
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({ query: 'authentication' })
 })
 
-// ❌ Never expose API keys in client-side code`}
-</CodeBlock>
+// ❌ Never expose API keys in client-side code
+```
 
 ## Error Responses
 
 Authentication errors return JSON with an error code and message:
 
-<CodeBlock language="json">
-{`{
+```json
+{
   "error": "UNAUTHORIZED",
   "message": "Authentication required. Provide 'Authorization: Bearer <api-key>' header or sign in.",
   "requestId": "req_abc123"
-}`}
-</CodeBlock>
+}
+```
 
 ### Error Codes
 
@@ -130,11 +128,11 @@ Authentication errors return JSON with an error code and message:
 
 ### Handling Errors
 
-<CodeBlock language="typescript">
-{`const response = await fetch('https://lightfast.ai/api/v1/search', {
+```typescript
+const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
+    'Authorization': `Bearer ${apiKey}`,
     'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
@@ -158,17 +156,17 @@ if (!response.ok) {
       console.error('Workspace not found')
       break
   }
-}`}
-</CodeBlock>
+}
+```
 
 ## Example: Complete Request
 
-<CodeBlock language="typescript">
-{`async function searchWorkspace(query: string) {
+```typescript
+async function searchWorkspace(query: string) {
   const response = await fetch('https://lightfast.ai/api/v1/search', {
     method: 'POST',
     headers: {
-      'Authorization': \`Bearer \${process.env.LIGHTFAST_API_KEY}\`,
+      'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
       'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID!,
       'Content-Type': 'application/json'
     },
@@ -177,15 +175,15 @@ if (!response.ok) {
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(\`API error: \${error.message}\`)
+    throw new Error(`API error: ${error.message}`)
   }
 
   return response.json()
 }
 
 // Usage
-const results = await searchWorkspace('how does authentication work?')`}
-</CodeBlock>
+const results = await searchWorkspace('how does authentication work?')
+```
 
 ## Next Steps
 

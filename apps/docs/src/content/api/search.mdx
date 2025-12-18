@@ -3,8 +3,6 @@ title: POST /v1/search
 description: Search across your team's knowledge with semantic understanding and multi-path retrieval
 ---
 
-import { CodeBlock } from '@/src/components/code-block';
-
 # POST /v1/search
 
 Search across all your indexed content using semantic understanding. Returns ranked results with optional context about related topics and experts.
@@ -19,15 +17,15 @@ POST https://lightfast.ai/api/v1/search
 
 See [Authentication](/api/authentication) for details.
 
-<CodeBlock language="bash">
-{`Authorization: Bearer YOUR_API_KEY
-X-Workspace-ID: ws_abc123`}
-</CodeBlock>
+```bash
+Authorization: Bearer YOUR_API_KEY
+X-Workspace-ID: ws_abc123
+```
 
 ## Request Body
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   query: string              // Search query (required)
   limit?: number             // Results to return (1-100, default: 10)
   offset?: number            // Pagination offset (default: 0)
@@ -43,8 +41,8 @@ X-Workspace-ID: ws_abc123`}
   }
   includeContext?: boolean   // Include clusters and actors (default: true)
   includeHighlights?: boolean // Include highlighted snippets (default: true)
-}`}
-</CodeBlock>
+}
+```
 
 ### Search Modes
 
@@ -56,8 +54,8 @@ X-Workspace-ID: ws_abc123`}
 
 ## Response
 
-<CodeBlock language="typescript">
-{`{
+```typescript
+{
   data: Array<{
     id: string               // Observation ID
     title: string            // Content title
@@ -115,16 +113,16 @@ X-Workspace-ID: ws_abc123`}
     maxParallel?: number     // Bottleneck parallel operation
   }
   requestId: string          // Request ID for debugging
-}`}
-</CodeBlock>
+}
+```
 
 ## Example Request
 
-<CodeBlock language="bash">
-{`curl -X POST https://lightfast.ai/api/v1/search \\
-  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \\
-  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \\
-  -H "Content-Type: application/json" \\
+```bash
+curl -X POST https://lightfast.ai/api/v1/search \
+  -H "Authorization: Bearer $LIGHTFAST_API_KEY" \
+  -H "X-Workspace-ID: $LIGHTFAST_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
   -d '{
     "query": "how does authentication work?",
     "limit": 10,
@@ -135,13 +133,13 @@ X-Workspace-ID: ws_abc123`}
     },
     "includeContext": true,
     "includeHighlights": true
-  }'`}
-</CodeBlock>
+  }'
+```
 
 ## Example Response
 
-<CodeBlock language="json">
-{`{
+```json
+{
   "data": [
     {
       "id": "obs_abc123",
@@ -215,8 +213,8 @@ X-Workspace-ID: ws_abc123`}
     "maxParallel": 45
   },
   "requestId": "req_abc123def456"
-}`}
-</CodeBlock>
+}
+```
 
 ## Filtering
 
@@ -224,21 +222,21 @@ X-Workspace-ID: ws_abc123`}
 
 Filter to specific sources:
 
-<CodeBlock language="typescript">
-{`filters: {
+```typescript
+filters: {
   sourceTypes: ["github", "linear"]  // Only GitHub and Linear
-}`}
-</CodeBlock>
+}
+```
 
 ### By Observation Type
 
 Filter to specific content types:
 
-<CodeBlock language="typescript">
-{`filters: {
+```typescript
+filters: {
   observationTypes: ["pull_request", "issue", "commit"]
-}`}
-</CodeBlock>
+}
+```
 
 Common observation types:
 - `pull_request` - Code changes
@@ -251,46 +249,46 @@ Common observation types:
 
 Filter by who created the content:
 
-<CodeBlock language="typescript">
-{`filters: {
+```typescript
+filters: {
   actorNames: ["@alice", "@bob"]
-}`}
-</CodeBlock>
+}
+```
 
 ### By Date Range
 
 Filter to a time period:
 
-<CodeBlock language="typescript">
-{`filters: {
+```typescript
+filters: {
   dateRange: {
     start: "2024-01-01T00:00:00Z",
     end: "2024-12-31T23:59:59Z"
   }
-}`}
-</CodeBlock>
+}
+```
 
 ### Combined Filters
 
 Combine multiple filters:
 
-<CodeBlock language="typescript">
-{`filters: {
+```typescript
+filters: {
   sourceTypes: ["github"],
   observationTypes: ["pull_request"],
   actorNames: ["@alice"],
   dateRange: {
     start: "2024-06-01T00:00:00Z"
   }
-}`}
-</CodeBlock>
+}
+```
 
 ## Pagination
 
 Use `limit` and `offset` for pagination:
 
-<CodeBlock language="typescript">
-{`// First page
+```typescript
+// First page
 const page1 = await fetch('/v1/search', {
   body: JSON.stringify({
     query: 'authentication',
@@ -309,8 +307,8 @@ const page2 = await fetch('/v1/search', {
 })
 
 // Check for more pages
-const hasMore = response.meta.offset + response.meta.limit < response.meta.total`}
-</CodeBlock>
+const hasMore = response.meta.offset + response.meta.limit < response.meta.total
+```
 
 ## Understanding Context
 
@@ -320,24 +318,24 @@ When `includeContext: true`, the response includes:
 
 Topic clusters help you understand related themes:
 
-<CodeBlock language="typescript">
-{`response.context?.clusters?.forEach(cluster => {
+```typescript
+response.context?.clusters?.forEach(cluster => {
   console.log('Topic:', cluster.topic)
   console.log('Summary:', cluster.summary)
   console.log('Keywords:', cluster.keywords.join(', '))
-})`}
-</CodeBlock>
+})
+```
 
 ### Relevant Actors
 
 Find experts on the topic:
 
-<CodeBlock language="typescript">
-{`response.context?.relevantActors?.forEach(actor => {
+```typescript
+response.context?.relevantActors?.forEach(actor => {
   console.log('Expert:', actor.displayName)
   console.log('Domains:', actor.expertiseDomains.join(', '))
-})`}
-</CodeBlock>
+})
+```
 
 ## Understanding Latency
 
@@ -358,11 +356,11 @@ The `maxParallel` field shows the slowest parallel operation, which determines t
 
 ## Error Handling
 
-<CodeBlock language="typescript">
-{`const response = await fetch('https://lightfast.ai/api/v1/search', {
+```typescript
+const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
+    'Authorization': `Bearer ${apiKey}`,
     'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
@@ -372,8 +370,8 @@ The `maxParallel` field shows the slowest parallel operation, which determines t
 if (!response.ok) {
   const error = await response.json()
   console.error('Search failed:', error.error, error.message)
-}`}
-</CodeBlock>
+}
+```
 
 See [Error Reference](/api/errors) for all error codes.
 
