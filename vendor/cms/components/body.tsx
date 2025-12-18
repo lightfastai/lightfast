@@ -1,6 +1,9 @@
 import { RichText } from "basehub/react-rich-text";
 import type { ComponentProps, ReactNode } from "react";
-import { CMSCodeBlock } from "@repo/ui/components/cms-code-block";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
+import { cn } from "@repo/ui/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
 
 type BodyProps = ComponentProps<typeof RichText>;
 
@@ -8,13 +11,17 @@ type BodyProps = ComponentProps<typeof RichText>;
 const richTextBaseComponents = {
   // Tighter list spacing
   ul: ({ children }: { children?: ReactNode }) => (
-    <ul className="my-4 space-y-1 list-disc pl-6">{children}</ul>
+    <ul className="my-4 ml-6 list-disc pl-4 not-prose text-foreground space-y-2">
+      {children}
+    </ul>
   ),
   ol: ({ children }: { children?: ReactNode }) => (
-    <ol className="my-4 space-y-1 list-decimal pl-6">{children}</ol>
+    <ol className="my-4 ml-6 list-decimal pl-4 not-prose text-foreground space-y-2">
+      {children}
+    </ol>
   ),
   li: ({ children }: { children?: ReactNode }) => (
-    <li className="my-1">{children}</li>
+    <li className="text-foreground/90 pl-4">{children}</li>
   ),
 
   // Table elements with responsive wrapper
@@ -22,7 +29,7 @@ const richTextBaseComponents = {
     children,
     ...props
   }: { children?: ReactNode } & React.HTMLAttributes<HTMLTableElement>) => (
-    <div className="my-6 overflow-x-auto">
+    <div className="my-6 overflow-x-auto rounded-xs overflow-hidden not-prose text-foreground">
       <table className="min-w-full border-collapse" {...props}>
         {children}
       </table>
@@ -44,11 +51,16 @@ const richTextBaseComponents = {
   }: {
     children?: ReactNode;
   } & React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <tbody className="divide-y divide-border/40 bg-card" {...props}>
+    <tbody
+      className="divide-y divide-border border-border/40 bg-card"
+      {...props}
+    >
       {children}
     </tbody>
   ),
-  tr: ({ children }: { children?: ReactNode }) => <tr>{children}</tr>,
+  tr: ({ children }: { children?: ReactNode }) => (
+    <tr className="">{children}</tr>
+  ),
   // BaseHub passes lowercase colspan/rowspan and colwidth - we ignore colwidth to prevent layout issues
   th: ({
     children,
@@ -61,8 +73,7 @@ const richTextBaseComponents = {
     colwidth?: number[] | null;
   }) => (
     <th
-      className="whitespace-nowrap text-left font-semibold text-sm"
-      style={{ padding: "0.375rem 1rem" }}
+      className="whitespace-nowrap px-4 py-2 text-left font-semibold text-sm"
       colSpan={colspan}
       rowSpan={rowspan}
     >
@@ -79,42 +90,55 @@ const richTextBaseComponents = {
     rowspan?: number;
     colwidth?: number[] | null;
   }) => (
-    <td
-      className="text-sm"
-      style={{ padding: "0.375rem 1rem" }}
-      colSpan={colspan}
-      rowSpan={rowspan}
-    >
+    <td className="px-4 py-3 text-xs" colSpan={colspan} rowSpan={rowspan}>
       {children}
     </td>
   ),
 
   // Pre renders the code block wrapper with syntax highlighting
-  pre: ({
+  // BaseHub passes code and language props directly
+  pre: async ({
     children,
     code,
     language,
+    className,
   }: {
     children?: ReactNode;
     code?: string;
     language?: string;
-  }) => (
-    <CMSCodeBlock code={code} language={language}>
-      {children}
-    </CMSCodeBlock>
-  ),
+    className?: string;
+  }) => {
+    // If we have code content, use SSR highlighting
+    if (code) {
+      return SSRCodeBlock({
+        children: code,
+        language,
+        className: cn("my-6 not-prose", className),
+      });
+    }
+
+    // Fallback for content without code prop
+    return <pre className={cn("my-6", className)}>{children}</pre>;
+  },
 
   // Code - inline gets styled, block just passes through (pre handles it)
   code: ({
     children,
     isInline,
+    className,
   }: {
     children?: ReactNode;
     isInline?: boolean;
+    className?: string;
   }) => {
     if (isInline) {
       return (
-        <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+        <code
+          className={cn(
+            "bg-muted/50 rounded-md px-1 py-0.5 text-sm font-mono",
+            className,
+          )}
+        >
           {children}
         </code>
       );
@@ -122,6 +146,48 @@ const richTextBaseComponents = {
     // Block code - just pass through, pre wrapper handles styling
     return <>{children}</>;
   },
+
+  // Image using next/image for optimization
+  img: ({
+    src,
+    alt,
+    width,
+    height,
+  }: {
+    src?: string;
+    alt?: string;
+    width?: number;
+    height?: number;
+  }) => {
+    if (!src) return null;
+    return (
+      <Image
+        src={src}
+        alt={alt || ""}
+        width={width || 800}
+        height={height || 450}
+        className="rounded-lg my-6"
+      />
+    );
+  },
+
+  // Link - always opens in new tab for CMS content
+  a: ({ children, href }: { children?: ReactNode; href?: string }) => {
+    if (!href) return <span>{children}</span>;
+    return (
+      <Link
+        href={href}
+        className="text-primary underline underline-offset-4 hover:text-primary/80"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {children}
+      </Link>
+    );
+  },
+
+  // Horizontal rule with reduced spacing
+  hr: () => <hr className="not-prose my-8 border-border/40" />,
 };
 
 export const Body = ({ components, ...props }: BodyProps) => (

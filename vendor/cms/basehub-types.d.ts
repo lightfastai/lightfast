@@ -144,7 +144,7 @@ export interface BlockColor {
     __typename: 'BlockColor'
 }
 
-export type BlockDocument = (Author | AuthorItem | Blog | Categories | CategoriesItem | ChangelogPages | ChangelogPagesItem | DistributionComponent | EngagementComponent | Faq | FaqItem | LegalPages | Post | PostItem | SeoComponent | TemplateLegalComponent | _AgentChangelogWriterAgent | _AgentStart | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem_AsList | postItem_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockDocument = (Author | AuthorItem | Blog | Categories | CategoriesItem | ChangelogPages | ChangelogPagesItem | DistributionComponent | EngagementComponent | Faq | FaqItem | FaqItem_1 | Faq_1 | LegalPages | Post | PostItem | SeoComponent | SeoComponent_1 | TemplateLegalComponent | _AgentChangelogWriterAgent | _AgentStart | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockDocumentSys {
     apiNamePath: Scalars['String']
@@ -203,7 +203,7 @@ export interface BlockImage {
     __typename: 'BlockImage'
 }
 
-export type BlockList = (Author | Categories | ChangelogPages | Faq | LegalPages | Post | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem_AsList | postItem_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockList = (Author | Categories | ChangelogPages | Faq | Faq_1 | LegalPages | Post | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockOgImage {
     height: Scalars['Int']
@@ -357,15 +357,21 @@ export interface ChangelogPagesItem {
     _sys: BlockDocumentSys
     _title: Scalars['String']
     body: (Body_1 | null)
+    excerpt: (Scalars['String'] | null)
+    featuredImage: (BlockImage | null)
     fixes: (Scalars['String'] | null)
     improvements: (Scalars['String'] | null)
     infrastructure: (Scalars['String'] | null)
     patches: (Scalars['String'] | null)
+    /** ISO 8601 date string. */
+    publishedAt: (Scalars['String'] | null)
+    seo: SeoComponent_1
     slug: (Scalars['String'] | null)
+    tldr: (Scalars['String'] | null)
     __typename: 'ChangelogPagesItem'
 }
 
-export type ChangelogPagesItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'slug__ASC' | 'slug__DESC' | 'untitled__ASC' | 'untitled__DESC'
+export type ChangelogPagesItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'tldr__ASC' | 'tldr__DESC'
 
 export interface CtaDescription {
     html: Scalars['String']
@@ -490,6 +496,43 @@ export interface FaqItem {
 }
 
 export type FaqItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC' | 'untitled__ASC' | 'untitled__DESC'
+
+export interface FaqItem_1 {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight: (SearchHighlight[] | null)
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    answer: (Scalars['String'] | null)
+    question: (Scalars['String'] | null)
+    __typename: 'FaqItem_1'
+}
+
+export type FaqItem_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC'
+
+export interface Faq_1 {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (FaqItem_1 | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: FaqItem_1[]
+    __typename: 'Faq_1'
+}
 
 export interface GetUploadSignedURL {
     signedURL: Scalars['String']
@@ -675,6 +718,29 @@ export interface SeoComponent {
 
 export type SeoComponentOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeywords__ASC' | 'secondaryKeywords__DESC'
 
+export interface SeoComponent_1 {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight: (SearchHighlight[] | null)
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    canonicalUrl: (Scalars['String'] | null)
+    faq: Faq_1
+    focusKeyword: (Scalars['String'] | null)
+    metaDescription: (Scalars['String'] | null)
+    metaTitle: (Scalars['String'] | null)
+    noIndex: Scalars['Boolean']
+    secondaryKeyword: (Scalars['String'] | null)
+    __typename: 'SeoComponent_1'
+}
+
+export type SeoComponent_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeyword__ASC' | 'secondaryKeyword__DESC'
+
 export interface TemplateLegalComponent {
     _analyticsKey: Scalars['String']
     _dashboardUrl: Scalars['String']
@@ -851,8 +917,10 @@ export interface _components {
     distribution: distributionComponent_AsList
     engagement: engagementComponent_AsList
     faqItem: faqItem_AsList
+    faqItem1: faqItem1_AsList
     postItem: postItem_AsList
     seo: seoComponent_AsList
+    seoComponent1: seoComponent1_AsList
     templateLegal: templateLegalComponent_AsList
     __typename: '_components'
 }
@@ -952,6 +1020,25 @@ export interface engagementComponent_AsList {
     __typename: 'engagementComponent_AsList'
 }
 
+export interface faqItem1_AsList {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (FaqItem_1 | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: FaqItem_1[]
+    __typename: 'faqItem1_AsList'
+}
+
 export interface faqItem_AsList {
     _analyticsKey: Scalars['String']
     _dashboardUrl: Scalars['String']
@@ -988,6 +1075,25 @@ export interface postItem_AsList {
     /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
     items: PostItem[]
     __typename: 'postItem_AsList'
+}
+
+export interface seoComponent1_AsList {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (SeoComponent_1 | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: SeoComponent_1[]
+    __typename: 'seoComponent1_AsList'
 }
 
 export interface seoComponent_AsList {
@@ -1158,10 +1264,13 @@ export interface BlockDocumentGenqlSelection{
     on_EngagementComponent?: EngagementComponentGenqlSelection
     on_Faq?: FaqGenqlSelection
     on_FaqItem?: FaqItemGenqlSelection
+    on_FaqItem_1?: FaqItem_1GenqlSelection
+    on_Faq_1?: Faq_1GenqlSelection
     on_LegalPages?: LegalPagesGenqlSelection
     on_Post?: PostGenqlSelection
     on_PostItem?: PostItemGenqlSelection
     on_SeoComponent?: SeoComponentGenqlSelection
+    on_SeoComponent_1?: SeoComponent_1GenqlSelection
     on_TemplateLegalComponent?: TemplateLegalComponentGenqlSelection
     on__AgentChangelogWriterAgent?: _AgentChangelogWriterAgentGenqlSelection
     on__AgentStart?: _AgentStartGenqlSelection
@@ -1170,8 +1279,10 @@ export interface BlockDocumentGenqlSelection{
     on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_distributionComponent_AsList?: distributionComponent_AsListGenqlSelection
     on_engagementComponent_AsList?: engagementComponent_AsListGenqlSelection
+    on_faqItem1_AsList?: faqItem1_AsListGenqlSelection
     on_faqItem_AsList?: faqItem_AsListGenqlSelection
     on_postItem_AsList?: postItem_AsListGenqlSelection
+    on_seoComponent1_AsList?: seoComponent1_AsListGenqlSelection
     on_seoComponent_AsList?: seoComponent_AsListGenqlSelection
     on_templateLegalComponent_AsList?: templateLegalComponent_AsListGenqlSelection
     __typename?: boolean | number
@@ -1260,6 +1371,7 @@ export interface BlockListGenqlSelection{
     on_Categories?: CategoriesGenqlSelection
     on_ChangelogPages?: ChangelogPagesGenqlSelection
     on_Faq?: FaqGenqlSelection
+    on_Faq_1?: Faq_1GenqlSelection
     on_LegalPages?: LegalPagesGenqlSelection
     on_Post?: PostGenqlSelection
     on_authorItem_AsList?: authorItem_AsListGenqlSelection
@@ -1267,8 +1379,10 @@ export interface BlockListGenqlSelection{
     on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_distributionComponent_AsList?: distributionComponent_AsListGenqlSelection
     on_engagementComponent_AsList?: engagementComponent_AsListGenqlSelection
+    on_faqItem1_AsList?: faqItem1_AsListGenqlSelection
     on_faqItem_AsList?: faqItem_AsListGenqlSelection
     on_postItem_AsList?: postItem_AsListGenqlSelection
+    on_seoComponent1_AsList?: seoComponent1_AsListGenqlSelection
     on_seoComponent_AsList?: seoComponent_AsListGenqlSelection
     on_templateLegalComponent_AsList?: templateLegalComponent_AsListGenqlSelection
     __typename?: boolean | number
@@ -1543,16 +1657,24 @@ export interface ChangelogPagesItemGenqlSelection{
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
     body?: Body_1GenqlSelection
+    excerpt?: boolean | number
+    featuredImage?: BlockImageGenqlSelection
     fixes?: boolean | number
     improvements?: boolean | number
     infrastructure?: boolean | number
     patches?: boolean | number
+    /** ISO 8601 date string. */
+    publishedAt?: boolean | number
+    seo?: SeoComponent_1GenqlSelection
     slug?: boolean | number
+    tldr?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "ChangelogPagesItem"
 }
 
-export interface ChangelogPagesItemFilterInput {AND?: (ChangelogPagesItemFilterInput | null),OR?: (ChangelogPagesItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),slug?: (StringFilter | null)}
+export interface ChangelogPagesItemFilterInput {AND?: (ChangelogPagesItemFilterInput | null),OR?: (ChangelogPagesItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),excerpt?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),publishedAt?: (DateFilter | null),seo?: (ChangelogPagesItemFilterInput__seo | null),slug?: (StringFilter | null),tldr?: (StringFilter | null)}
+
+export interface ChangelogPagesItemFilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
 
 export interface ChangelogPagesItemSearchInput {
 /** Searchable fields for query */
@@ -1755,6 +1877,63 @@ export interface FaqItemSearchInput {
 by?: (Scalars['String'][] | null),
 /** Search query */
 q?: (Scalars['String'] | null)}
+
+export interface FaqItem_1GenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight?: SearchHighlightGenqlSelection
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    answer?: boolean | number
+    question?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "FaqItem_1"
+}
+
+export interface FaqItem_1FilterInput {AND?: (FaqItem_1FilterInput | null),OR?: (FaqItem_1FilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),answer?: (StringFilter | null),question?: (StringFilter | null)}
+
+export interface FaqItem_1SearchInput {
+/** Searchable fields for query */
+by?: (Scalars['String'][] | null),
+/** Search query */
+q?: (Scalars['String'] | null)}
+
+export interface Faq_1GenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: FaqItem_1GenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: FaqItem_1GenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "Faq_1"
+}
 
 export interface GetUploadSignedURLGenqlSelection{
     signedURL?: boolean | number
@@ -2112,6 +2291,52 @@ by?: (Scalars['String'][] | null),
 /** Search query */
 q?: (Scalars['String'] | null)}
 
+export interface SeoComponent_1GenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight?: SearchHighlightGenqlSelection
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    canonicalUrl?: boolean | number
+    faq?: (Faq_1GenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (FaqItem_1FilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (FaqItem_1OrderByEnum | null), 
+    /** Search configuration */
+    search?: (FaqItem_1SearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
+    focusKeyword?: boolean | number
+    metaDescription?: boolean | number
+    metaTitle?: boolean | number
+    noIndex?: boolean | number
+    secondaryKeyword?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "SeoComponent_1"
+}
+
+export interface SeoComponent_1FilterInput {AND?: (SeoComponent_1FilterInput | null),OR?: (SeoComponent_1FilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
+
+export interface SeoComponent_1SearchInput {
+/** Searchable fields for query */
+by?: (Scalars['String'][] | null),
+/** Search query */
+q?: (Scalars['String'] | null)}
+
 export interface StringFilter {contains?: (Scalars['String'] | null),endsWith?: (Scalars['String'] | null),eq?: (Scalars['String'] | null),in?: (Scalars['String'][] | null),isNull?: (Scalars['Boolean'] | null),matches?: (StringMatchesFilter | null),notEq?: (Scalars['String'] | null),notIn?: (Scalars['String'][] | null),startsWith?: (Scalars['String'] | null)}
 
 export interface StringMatchesFilter {caseSensitive?: (Scalars['Boolean'] | null),pattern: Scalars['String']}
@@ -2383,6 +2608,17 @@ export interface _componentsGenqlSelection{
     search?: (FaqItemSearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
+    faqItem1?: (faqItem1_AsListGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (FaqItem_1FilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (FaqItem_1OrderByEnum | null), 
+    /** Search configuration */
+    search?: (FaqItem_1SearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
     postItem?: (postItem_AsListGenqlSelection & { __args?: {
     /** Filter by a field. */
     filter?: (PostItemFilterInput | null), 
@@ -2403,6 +2639,17 @@ export interface _componentsGenqlSelection{
     orderBy?: (SeoComponentOrderByEnum | null), 
     /** Search configuration */
     search?: (SeoComponentSearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
+    seoComponent1?: (seoComponent1_AsListGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (SeoComponent_1FilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (SeoComponent_1OrderByEnum | null), 
+    /** Search configuration */
+    search?: (SeoComponent_1SearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
     templateLegal?: (templateLegalComponent_AsListGenqlSelection & { __args?: {
@@ -2550,6 +2797,32 @@ export interface engagementComponent_AsListGenqlSelection{
     __fragmentOn?: "engagementComponent_AsList"
 }
 
+export interface faqItem1_AsListGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: FaqItem_1GenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: FaqItem_1GenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "faqItem1_AsList"
+}
+
 export interface faqItem_AsListGenqlSelection{
     _analyticsKey?: { __args: {
     /**
@@ -2600,6 +2873,32 @@ export interface postItem_AsListGenqlSelection{
     items?: PostItemGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "postItem_AsList"
+}
+
+export interface seoComponent1_AsListGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: SeoComponent_1GenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: SeoComponent_1GenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "seoComponent1_AsList"
 }
 
 export interface seoComponent_AsListGenqlSelection{
@@ -2795,6 +3094,14 @@ export interface FragmentsMap {
     root: FaqItem,
     selection: FaqItemGenqlSelection,
 }
+  FaqItem_1: {
+    root: FaqItem_1,
+    selection: FaqItem_1GenqlSelection,
+}
+  Faq_1: {
+    root: Faq_1,
+    selection: Faq_1GenqlSelection,
+}
   GetUploadSignedURL: {
     root: GetUploadSignedURL,
     selection: GetUploadSignedURLGenqlSelection,
@@ -2842,6 +3149,10 @@ export interface FragmentsMap {
   SeoComponent: {
     root: SeoComponent,
     selection: SeoComponentGenqlSelection,
+}
+  SeoComponent_1: {
+    root: SeoComponent_1,
+    selection: SeoComponent_1GenqlSelection,
 }
   TemplateLegalComponent: {
     root: TemplateLegalComponent,
@@ -2911,6 +3222,10 @@ export interface FragmentsMap {
     root: engagementComponent_AsList,
     selection: engagementComponent_AsListGenqlSelection,
 }
+  faqItem1_AsList: {
+    root: faqItem1_AsList,
+    selection: faqItem1_AsListGenqlSelection,
+}
   faqItem_AsList: {
     root: faqItem_AsList,
     selection: faqItem_AsListGenqlSelection,
@@ -2918,6 +3233,10 @@ export interface FragmentsMap {
   postItem_AsList: {
     root: postItem_AsList,
     selection: postItem_AsListGenqlSelection,
+}
+  seoComponent1_AsList: {
+    root: seoComponent1_AsList,
+    selection: seoComponent1_AsListGenqlSelection,
 }
   seoComponent_AsList: {
     root: seoComponent_AsList,
