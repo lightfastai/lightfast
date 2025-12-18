@@ -1,6 +1,6 @@
 ---
 title: 'TypeScript SDK, MCP Server'
-slug: 0-5-lightfast-typescript-sdk-mcp-server
+slug: 0-4-lightfast-typescript-sdk-mcp-server
 publishedAt: '2025-12-17'
 excerpt: >-
   Integrate Lightfast neural memory into your applications with the official
@@ -174,7 +174,7 @@ npm install -g @lightfastai/mcp
   "mcpServers": {
     "lightfast": {
       "command": "npx",
-      "args": ["@lightfastai/mcp", "--api-key", "sk_live_..."]
+      "args": ["-y", "@lightfastai/mcp", "--api-key", "sk_live_..."]
     }
   }
 }
@@ -209,5 +209,5 @@ The MCP Server uses stdio transport to integrate seamlessly with existing AI ass
 
 - [SDK Documentation](/docs/integrate/sdk)
 - [MCP Setup Guide](/docs/integrate/mcp)
-- [API Reference](/docs/api)
-- [Quick Start](/docs/quick-start)
+- [API Reference](/docs/api-reference)
+- [Quick Start](/docs/get-started/quickstart)
