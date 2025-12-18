@@ -1,5 +1,6 @@
 import { basehub } from "basehub";
 import { basehubEnv } from "@vendor/cms/env";
+import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
 
 /**
  * SEO input for changelog entries
@@ -131,8 +132,8 @@ export async function createChangelogEntry(data: ChangelogEntryInput) {
               body: {
                 type: "rich-text",
                 value: {
-                  format: "markdown",
-                  value: data.body,
+                  format: "json",
+                  value: markdownToBaseHubJson(data.body),
                 },
               },
               // Optional categorized sections - only include if provided
@@ -186,7 +187,7 @@ export async function updateChangelogEntry(
   if (data.body) {
     valueUpdates.body = {
       type: "rich-text",
-      value: { format: "markdown", value: data.body },
+      value: { format: "json", value: markdownToBaseHubJson(data.body) },
     };
   }
   if (data.improvements !== undefined) {

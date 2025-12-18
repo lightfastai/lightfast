@@ -19,13 +19,18 @@
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
+    "@vendor/cms": "workspace:*",
     "@vendor/mastra": "workspace:*",
-    "basehub": "^9.5.2"
+    "basehub": "^9.5.2",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/mdast": "^4.0.0",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
