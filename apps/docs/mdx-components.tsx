@@ -102,7 +102,7 @@ export const mdxComponents = {
 
     // Fallback for block code without language
     return (
-      <code className={cn("font-mono text-sm", className)} {...props}>
+      <code className={cn("font-mono", className)} {...props}>
         {children}
       </code>
     );
