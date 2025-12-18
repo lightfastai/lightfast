@@ -135,7 +135,7 @@ export const mdxComponents = {
 
     // Fallback - just pass through children (SSRCodeBlock handles its own styling)
     return (
-      <pre className={cn("my-6", className)} {...props}>
+      <pre className={cn("my-6 text-sm", className)} {...props}>
         {children}
       </pre>
     );
