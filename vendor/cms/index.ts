@@ -70,6 +70,9 @@ const postMetaFragment = fragmentOnLoose("PostItem", {
   _slug: true,
   _title: true,
   slug: true,
+  _sys: {
+    lastModifiedAt: true,
+  },
   authors: {
     _title: true,
     avatar: imageFragment,
@@ -114,6 +117,9 @@ export type PostMeta = {
   _slug?: string | null;
   _title?: string | null;
   slug?: string | null;
+  _sys?: {
+    lastModifiedAt?: string | null;
+  } | null;
   authors?: Array<{
     _title?: string | null;
     avatar?: {
@@ -374,6 +380,7 @@ const changelogEntryMetaFragment = fragmentOnLoose("ChangelogPagesItem", {
   slug: true,
   _sys: {
     createdAt: true,
+    lastModifiedAt: true,
   },
 });
 
@@ -416,7 +423,10 @@ export type ChangelogEntryMeta = {
   _slug?: string | null;
   _title?: string | null;
   slug?: string | null;
-  _sys?: { createdAt?: string | null } | null;
+  _sys?: {
+    createdAt?: string | null;
+    lastModifiedAt?: string | null;
+  } | null;
 };
 
 export type ChangelogEntry = ChangelogEntryMeta & {
