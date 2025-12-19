@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowRight,
   GitBranch,
@@ -25,6 +24,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { exposureTrial } from "~/lib/fonts";
 import { IntegrationShowcase } from "~/components/integration-showcase";
+import { ConnectorHeroVisual } from "~/components/landing/connector-hero-visual";
 
 export const metadata: Metadata = createMetadata({
   title: "Connectors – Integrate Your Tools | Lightfast",
@@ -182,16 +182,7 @@ export default function ConnectorsPage() {
 
         {/* Media Column */}
         <div className="col-span-12 lg:col-span-7">
-          <div className="relative aspect-[4/3] rounded-lg border border-border overflow-hidden">
-            <Image
-              src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public"
-              alt="Connect your tools to Lightfast"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          </div>
+          <ConnectorHeroVisual />
         </div>
       </div>
 
