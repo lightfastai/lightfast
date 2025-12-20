@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Button } from "@repo/ui/components/ui/button";
 import { exposureTrial } from "~/lib/fonts";
+import { AgentHeroVisual } from "~/components/landing/agent-hero-visual";
 import { McpAgentVisual } from "~/components/landing/mcp-agent-visual";
 import { VisualShowcase } from "~/components/visual-showcase";
 
@@ -105,16 +105,7 @@ export default function AgentsPage() {
 
         {/* Media Column */}
         <div className="col-span-12 lg:col-span-7">
-          <div className="relative aspect-[4/3] rounded-lg border border-border overflow-hidden">
-            <Image
-              src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public"
-              alt="AI agents with memory layer"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          </div>
+          <AgentHeroVisual />
         </div>
       </div>
 

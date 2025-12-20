@@ -17,7 +17,7 @@ interface VisualShowcaseProps {
 
 export function VisualShowcase({
   children,
-  backgroundImage = "https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/3932e2f7-ef96-4b98-852c-3d281e468d00/public",
+  backgroundImage = "https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/596ee9cd-4dcc-4b0d-18f7-c60f53b02400/public",
   minHeight = "680px",
   maxHeight = "min(780px, 70vh)",
 }: VisualShowcaseProps) {
@@ -38,15 +38,13 @@ export function VisualShowcase({
       </div>
 
       {/* Frosted Glass Blur Overlay */}
-      <div className="absolute inset-0 z-10 col-span-full row-span-full backdrop-blur-md bg-white/5" />
+      <div className="absolute inset-0 z-10 col-span-full row-span-full backdrop-blur-md" />
 
       {/* Content Layer */}
       <div className="z-20 col-span-full row-span-full">
         <div className="relative w-full select-none overflow-hidden rounded-xs min-h-[850px] flex items-center justify-center">
           <div className="relative z-10 w-full transition-opacity duration-150">
-            <div className="mx-auto max-w-5xl px-4 py-8">
-              {children}
-            </div>
+            <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
           </div>
         </div>
       </div>

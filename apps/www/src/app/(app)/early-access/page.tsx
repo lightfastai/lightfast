@@ -49,7 +49,7 @@ export default async function EarlyAccessPage({
       {/* Background Image */}
       <div className="fixed inset-0 z-0">
         <Image
-          src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/62c40fbf-28d6-4ef3-8db6-89af016e7200/public"
+          src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/2949b91e-06a4-4197-7ea6-008d94cb5500/public"
           alt="Background"
           fill
           priority
@@ -61,7 +61,7 @@ export default async function EarlyAccessPage({
       </div>
 
       {/* Frosted Glass Blur Overlay */}
-      <div className="fixed inset-0 z-10 backdrop-blur-md bg-white/5" />
+      <div className="fixed inset-0 z-10 backdrop-blur-md" />
 
       {/* Logo - Top Left */}
       <div className="fixed px-4 py-2 z-30">
