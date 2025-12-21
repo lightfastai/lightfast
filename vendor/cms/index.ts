@@ -88,6 +88,7 @@ const postMetaFragment = fragmentOnLoose("PostItem", {
 
 const postFragment = fragmentOnLoose("PostItem", {
   ...postMetaFragment,
+  tldr: true,
   body: {
     plainText: true,
     json: {
@@ -144,6 +145,7 @@ export type PostMeta = {
 };
 
 export type Post = PostMeta & {
+  tldr?: string | null;
   body?: {
     plainText?: string | null;
     json?: { content?: any[]; toc?: any } | null;
