@@ -1,13 +1,6 @@
 {
   "title": "API Reference",
-  "description": "Complete API documentation for Lightfast - Three routes for team memory",
+  "description": "Complete API documentation for Lightfast",
   "defaultOpen": true,
-  "pages": [
-    "overview",
-    "authentication",
-    "search",
-    "contents",
-    "findsimilar",
-    "errors"
-  ]
+  "pages": ["getting-started", "endpoints", "sdks-tools"]
 }

@@ -1,0 +1,215 @@
+---
+title: TypeScript SDK
+description: TypeScript SDK API reference for the Lightfast search API
+---
+
+# TypeScript SDK Reference
+
+The `lightfast` npm package provides a type-safe client for the Lightfast API.
+
+## Installation
+
+```bash
+npm install lightfast
+```
+
+## Client Configuration
+
+```typescript
+import { Lightfast } from "lightfast";
+
+const client = new Lightfast(config: LightfastConfig);
+```
+
+### LightfastConfig
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `apiKey` | `string` | Yes | - | API key (starts with `sk_live_` or `sk_test_`) |
+| `baseUrl` | `string` | No | `https://lightfast.ai` | API base URL |
+| `timeout` | `number` | No | `30000` | Request timeout in milliseconds |
+
+---
+
+## Methods
+
+### search()
+
+Search through workspace memory for relevant documents and observations.
+
+```typescript
+const response = await client.search(input: SearchInput): Promise<V1SearchResponse>
+```
+
+#### SearchInput
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `query` | `string` | Yes | - | Natural language search query |
+| `limit` | `number` | No | `10` | Number of results to return |
+| `offset` | `number` | No | `0` | Pagination offset |
+| `mode` | `"fast" \| "balanced" \| "quality"` | No | `"balanced"` | Search mode |
+| `includeContext` | `boolean` | No | `true` | Include surrounding context |
+| `includeHighlights` | `boolean` | No | `true` | Include highlighted snippets |
+| `filters` | `SearchFilters` | No | - | Filter results |
+
+#### SearchFilters
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sources` | `string[]` | Filter by source (e.g., `["github"]`) |
+| `dateRange` | `string` | Filter by date (e.g., `"30d"`, `"7d"`) |
+
+#### V1SearchResponse
+
+```typescript
+interface V1SearchResponse {
+  results: V1SearchResult[];
+  meta: {
+    total: number;
+    latency: { total: number };
+  };
+}
+
+interface V1SearchResult {
+  id: string;
+  type: string;
+  title: string;
+  snippet: string;
+  score: number;
+  source: string;
+  url: string;
+  metadata: Record<string, unknown>;
+}
+```
+
+---
+
+### contents()
+
+Fetch full content for documents by their IDs.
+
+```typescript
+const response = await client.contents(input: ContentsInput): Promise<V1ContentsResponse>
+```
+
+#### ContentsInput
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `ids` | `string[]` | Yes | Array of document IDs to fetch |
+
+#### V1ContentsResponse
+
+```typescript
+interface V1ContentsResponse {
+  items: V1ContentItem[];
+  missing: string[];
+}
+
+interface V1ContentItem {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  metadata: Record<string, unknown>;
+}
+```
+
+---
+
+### findSimilar()
+
+Find content semantically similar to a given document or URL.
+
+```typescript
+const response = await client.findSimilar(input: FindSimilarInput): Promise<V1FindSimilarResponse>
+```
+
+#### FindSimilarInput
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `id` | `string` | One of `id` or `url` | - | Document ID to find similar content for |
+| `url` | `string` | One of `id` or `url` | - | URL to find similar content for |
+| `limit` | `number` | No | `10` | Number of results |
+| `threshold` | `number` | No | `0.5` | Minimum similarity score (0-1) |
+| `sameSourceOnly` | `boolean` | No | `false` | Only return results from same source |
+| `excludeIds` | `string[]` | No | - | Document IDs to exclude |
+
+#### V1FindSimilarResponse
+
+```typescript
+interface V1FindSimilarResponse {
+  results: V1SimilarResult[];
+  source: {
+    id: string;
+    title: string;
+    type: string;
+  };
+}
+
+interface V1SimilarResult {
+  id: string;
+  type: string;
+  title: string;
+  snippet: string;
+  score: number;
+  source: string;
+  url: string;
+}
+```
+
+---
+
+## Error Classes
+
+The SDK exports typed error classes for handling specific error conditions.
+
+```typescript
+import {
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+  NetworkError,
+} from "lightfast";
+```
+
+| Error Class | HTTP Status | Description |
+|-------------|-------------|-------------|
+| `AuthenticationError` | 401 | Invalid or expired API key |
+| `ValidationError` | 400 | Invalid request parameters. Access `error.details` for field-specific errors |
+| `NotFoundError` | 404 | Resource not found |
+| `RateLimitError` | 429 | Too many requests. Access `error.retryAfter` for retry delay in seconds |
+| `NetworkError` | - | Connection or timeout error |
+
+---
+
+## Type Exports
+
+All request and response types are exported:
+
+```typescript
+import type {
+  LightfastConfig,
+  SearchInput,
+  SearchFilters,
+  V1SearchResponse,
+  V1SearchResult,
+  ContentsInput,
+  V1ContentsResponse,
+  V1ContentItem,
+  FindSimilarInput,
+  V1FindSimilarResponse,
+  V1SimilarResult,
+} from "lightfast";
+```
+
+---
+
+## Related
+
+- [TypeScript SDK Tutorial](/docs/integrate/sdk) - Getting started guide with examples
+- [POST /v1/search](/docs/api-reference/endpoints/search) - REST API endpoint reference
+- [GitHub Repository](https://github.com/lightfastai/lightfast/tree/main/core/lightfast) - SDK source code

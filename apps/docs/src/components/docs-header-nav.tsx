@@ -31,7 +31,7 @@ export function DocsHeaderNav() {
         Docs
       </Link>
       <Link
-        href="/docs/api-reference/overview"
+        href="/docs/api-reference/getting-started/overview"
         className={cn(
           "text-sm font-medium transition-colors hover:text-foreground",
           isApiActive ? "text-foreground" : "text-muted-foreground",

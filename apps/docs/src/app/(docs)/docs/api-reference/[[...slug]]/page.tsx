@@ -21,9 +21,9 @@ export default async function Page({
 }) {
   const resolvedParams = await params;
 
-  // Redirect /docs/api-reference to /docs/api-reference/overview
+  // Redirect /docs/api-reference to /docs/api-reference/getting-started/overview
   if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
-    redirect("/docs/api-reference/overview");
+    redirect("/docs/api-reference/getting-started/overview");
   }
 
   // TypeScript now knows slug is defined

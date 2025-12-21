@@ -17,21 +17,21 @@ The Lightfast API provides **memory built for teams**. Three routes enable you t
     description="Search and rank results by meaning with multi-path retrieval"
     method="POST"
     path="/api/v1/search"
-    href="/api/search"
+    href="/api/endpoints/search"
   />
   <ApiReferenceCard
     title="Contents"
     description="Get full documents and metadata by ID"
     method="POST"
     path="/api/v1/contents"
-    href="/api/contents"
+    href="/api/endpoints/contents"
   />
   <ApiReferenceCard
     title="FindSimilar"
     description="Find related content based on semantic similarity"
     method="POST"
     path="/api/v1/findsimilar"
-    href="/api/findsimilar"
+    href="/api/endpoints/findsimilar"
   />
 </ApiReferenceGrid>
 
@@ -50,7 +50,7 @@ Authorization: Bearer YOUR_API_KEY
 X-Workspace-ID: ws_abc123
 ```
 
-See [Authentication](/api/authentication) for details on obtaining API keys and workspace IDs.
+See [Authentication](/api/getting-started/authentication) for details on obtaining API keys and workspace IDs.
 
 ## Quick Start
 
@@ -162,7 +162,7 @@ const results = await fetch('https://lightfast.ai/api/v1/search', {
 })
 ```
 
-See [Search](/api/search) for all filter options.
+See [Search](/api/endpoints/search) for all filter options.
 
 ## Error Handling
 
@@ -186,7 +186,7 @@ All errors follow a consistent format:
 | `NOT_FOUND` | 404 | Resource not found |
 | `INTERNAL_ERROR` | 500 | Server error |
 
-See [Error Reference](/api/errors) for complete list and handling strategies.
+See [Error Reference](/api/getting-started/errors) for complete list and handling strategies.
 
 ## What Gets Indexed?
 
@@ -199,8 +199,8 @@ Connect sources in the [Console](https://lightfast.ai) settings.
 
 ## Next Steps
 
-- **[POST /v1/search](/api/search)** - Search by meaning
-- **[POST /v1/contents](/api/contents)** - Get full documents
-- **[POST /v1/findsimilar](/api/findsimilar)** - Find related content
-- **[Authentication](/api/authentication)** - API key setup
-- **[Errors](/api/errors)** - Error handling
+- **[POST /v1/search](/api/endpoints/search)** - Search by meaning
+- **[POST /v1/contents](/api/endpoints/contents)** - Get full documents
+- **[POST /v1/findsimilar](/api/endpoints/findsimilar)** - Find related content
+- **[Authentication](/api/getting-started/authentication)** - API key setup
+- **[Errors](/api/getting-started/errors)** - Error handling

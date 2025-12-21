@@ -1,0 +1,197 @@
+---
+title: MCP Server
+description: Model Context Protocol server API reference for AI assistant integration
+---
+
+# MCP Server Reference
+
+The `@lightfastai/mcp` package provides a Model Context Protocol server that exposes Lightfast tools to AI assistants.
+
+## Installation
+
+```bash
+npx @lightfastai/mcp
+# or
+npm install -g @lightfastai/mcp
+```
+
+## CLI Options
+
+```bash
+npx @lightfastai/mcp [options]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--api-key` | `string` | `$LIGHTFAST_API_KEY` | Lightfast API key |
+| `--base-url` | `string` | `https://lightfast.ai` | API base URL |
+| `--help, -h` | - | - | Show help message |
+| `--version, -v` | - | - | Show version |
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `LIGHTFAST_API_KEY` | API key (alternative to `--api-key` flag) |
+
+---
+
+## Tools
+
+The MCP server exposes three tools to AI assistants.
+
+### lightfast_search
+
+Search through workspace memory for relevant documents and observations.
+
+#### Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `query` | `string` | Yes | - | Natural language search query |
+| `limit` | `number` | No | `10` | Number of results to return |
+| `mode` | `string` | No | `"balanced"` | Search mode: `"fast"`, `"balanced"`, or `"quality"` |
+| `filters` | `object` | No | - | Filter object with `sources` and `dateRange` |
+
+#### Example Request
+```json
+{
+  "name": "lightfast_search",
+  "arguments": {
+    "query": "how does authentication work",
+    "limit": 5,
+    "mode": "quality"
+  }
+}
+```
+
+#### Response Schema
+```typescript
+{
+  results: Array<{
+    id: string;
+    type: string;
+    title: string;
+    snippet: string;
+    score: number;
+    source: string;
+    url: string;
+  }>;
+  meta: {
+    total: number;
+    latency: { total: number };
+  };
+}
+```
+
+---
+
+### lightfast_contents
+
+Fetch full content for documents by their IDs.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `ids` | `string[]` | Yes | Array of document IDs to fetch |
+
+#### Example Request
+```json
+{
+  "name": "lightfast_contents",
+  "arguments": {
+    "ids": ["doc_abc123", "doc_def456"]
+  }
+}
+```
+
+#### Response Schema
+```typescript
+{
+  items: Array<{
+    id: string;
+    type: string;
+    title: string;
+    content: string;
+    metadata: Record<string, unknown>;
+  }>;
+  missing: string[];
+}
+```
+
+---
+
+### lightfast_find_similar
+
+Find content semantically similar to a given document or URL.
+
+#### Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `id` | `string` | One of `id`/`url` | - | Document ID |
+| `url` | `string` | One of `id`/`url` | - | URL to find similar content for |
+| `limit` | `number` | No | `10` | Number of results |
+| `threshold` | `number` | No | `0.5` | Minimum similarity score (0-1) |
+
+#### Example Request
+```json
+{
+  "name": "lightfast_find_similar",
+  "arguments": {
+    "url": "https://github.com/org/repo/pull/123",
+    "limit": 5,
+    "threshold": 0.7
+  }
+}
+```
+
+#### Response Schema
+```typescript
+{
+  results: Array<{
+    id: string;
+    type: string;
+    title: string;
+    snippet: string;
+    score: number;
+    source: string;
+    url: string;
+  }>;
+  source: {
+    id: string;
+    title: string;
+    type: string;
+  };
+}
+```
+
+---
+
+## Error Responses
+
+All tools return errors in the following format:
+
+```json
+{
+  "error": "ERROR_CODE",
+  "message": "Human-readable error message",
+  "requestId": "req_abc123"
+}
+```
+
+| Error Code | Description |
+|------------|-------------|
+| `UNAUTHORIZED` | Invalid or missing API key |
+| `VALIDATION_ERROR` | Invalid parameters |
+| `NOT_FOUND` | Resource not found |
+| `INTERNAL_ERROR` | Server error |
+
+---
+
+## Related
+
+- [MCP Setup Guide](/docs/integrate/mcp) - Configuration for Claude, Cursor, Codex
+- [POST /v1/search](/docs/api-reference/endpoints/search) - REST API endpoint reference
+- [GitHub Repository](https://github.com/lightfastai/lightfast/tree/main/core/mcp) - MCP server source code

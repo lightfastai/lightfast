@@ -138,7 +138,7 @@ function getMockResults(query: string): LightfastSearchResult[] {
       id: "3",
       title: "Search Endpoint",
       description: "Search and rank results with semantic understanding",
-      url: "/docs/api-reference/search",
+      url: "/docs/api-reference/endpoints/search",
       snippet: "POST /v1/search - Search through your team's knowledge base...",
       source: "API Reference",
     },
