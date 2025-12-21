@@ -71,20 +71,15 @@ export default function AgentsPage() {
   return (
     <div className="mt-6 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
       {/* Hero Section — Split */}
-      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-8 items-center px-4 min-h-[500px] lg:min-h-[600px]">
+      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-16 items-center px-4 min-h-[500px] lg:min-h-[600px]">
         {/* Text Column */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="mb-8">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              For Agents
-            </p>
-          </div>
+        <div className="col-span-12 lg:col-span-6">
           <h1
             className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] ${exposureTrial.className}`}
           >
             Give your agents a memory layer
           </h1>
-          <p className="mt-4 text-base text-muted-foreground">
+          <p className="mt-4 text-base text-foreground">
             Any agent can ask &ldquo;who/what/why/depends&rdquo; and get
             accurate answers with sources—across your entire company&apos;s
             ecosystem.
@@ -104,7 +99,7 @@ export default function AgentsPage() {
         </div>
 
         {/* Media Column */}
-        <div className="col-span-12 lg:col-span-7">
+        <div className="col-span-12 lg:col-span-6">
           <AgentHeroVisual />
         </div>
       </div>

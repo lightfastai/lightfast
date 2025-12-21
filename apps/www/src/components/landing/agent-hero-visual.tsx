@@ -12,10 +12,7 @@ export function AgentHeroVisual() {
   return (
     <div className="relative grid grid-cols-1 grid-rows-1 rounded-sm overflow-hidden aspect-[4/3]">
       {/* Background Image Layer */}
-      <div className="relative z-[1] bg-card border border-border col-span-full row-span-full overflow-hidden"></div>
-
-      {/* Frosted Glass Blur Overlay */}
-      <div className="absolute inset-0 z-10 col-span-full row-span-full backdrop-blur-md" />
+      <div className="relative z-[1] bg-card col-span-full row-span-full overflow-hidden"></div>
 
       {/* Content Layer */}
       <div className="z-20 col-span-full row-span-full flex items-center justify-center p-4 sm:p-6 lg:p-8">

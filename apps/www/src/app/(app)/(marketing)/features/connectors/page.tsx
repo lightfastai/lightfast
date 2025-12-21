@@ -24,7 +24,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { exposureTrial } from "~/lib/fonts";
 import { IntegrationShowcase } from "~/components/integration-showcase";
-import { ConnectorHeroVisual } from "~/components/landing/connector-hero-visual";
 
 export const metadata: Metadata = createMetadata({
   title: "Connectors – Integrate Your Tools | Lightfast",
@@ -148,54 +147,18 @@ const connectorFaqs = [
 export default function ConnectorsPage() {
   return (
     <div className="mt-6 flex w-full flex-col gap-32 overflow-x-clip pb-32 md:px-10">
-      {/* Hero Section — Split */}
-      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-8 items-center px-4 min-h-[500px] lg:min-h-[600px]">
-        {/* Text Column */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="mb-8">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Connectors
-            </p>
-          </div>
-          <h1
-            className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] ${exposureTrial.className}`}
-          >
-            Connect your tools
-          </h1>
-          <p className="mt-4 text-base text-muted-foreground">
-            Pull in knowledge from where your team already works. GitHub,
-            Linear, Notion, Slack, and more—all searchable in one place.
-          </p>
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Button asChild size="lg" className="rounded-full">
-              <Link href="/early-access">Join Early Access</Link>
-            </Button>
-            <Link
-              href="/docs/get-started/overview"
-              className="group inline-flex items-center justify-center text-sm font-medium transition-colors hover:text-foreground/80"
-            >
-              <span>View all connectors</span>
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Media Column */}
-        <div className="col-span-12 lg:col-span-7">
-          <ConnectorHeroVisual />
-        </div>
-      </div>
-
-      {/* Benefits Section */}
+      {/* Hero Section */}
       <div className="max-w-6xl mx-auto w-full px-4">
-        <h2
-          className={`text-2xl md:text-3xl font-light mb-4 ${exposureTrial.className}`}
+        <h1
+          className={`text-3xl sm:text-3xl md:text-4xl lg:text-4xl font-light leading-[1.1] tracking-[-0.02em] mb-6 ${exposureTrial.className}`}
         >
-          Connectors make Lightfast
-          <br />
-          even more useful
-        </h2>
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          Connect your tools
+        </h1>
+        <p className="text-md text-foreground max-w-2xl mb-12">
+          Pull in knowledge from where your team already works. GitHub, Linear,
+          Notion, Slack, and more—all searchable in one place.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
             return (
@@ -213,6 +176,18 @@ export default function ConnectorsPage() {
               </div>
             );
           })}
+        </div>
+        <div className="mt-12 flex flex-col gap-4 sm:flex-row">
+          <Button asChild size="lg" className="rounded-full">
+            <Link href="/early-access">Join Early Access</Link>
+          </Button>
+          <Link
+            href="/docs/get-started/overview"
+            className="group inline-flex items-center justify-center text-sm font-medium transition-colors hover:text-foreground/80"
+          >
+            <span>View all connectors</span>
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
 
