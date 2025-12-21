@@ -1,6 +1,7 @@
 import { basehub } from "basehub";
 import type { CreateOp } from "basehub/api-transaction";
 import { basehubEnv } from "@vendor/cms/env";
+import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
 import type {
   ContentType,
   BusinessGoal,
@@ -40,6 +41,7 @@ export type AIGeneratedPost = {
   slug?: string;
   description: string;
   excerpt: string;
+  tldr: string; // AEO field for AI citation (80-100 words)
   content: string;
   contentType: ContentType;
 
@@ -121,12 +123,13 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     description: { type: "text", value: data.description },
     body: {
       type: "rich-text",
-      value: { format: "markdown", value: data.content },
+      value: { format: "json", value: markdownToBaseHubJson(data.content) },
     },
     excerpt: {
       type: "rich-text",
-      value: { format: "markdown", value: data.excerpt },
+      value: { format: "json", value: markdownToBaseHubJson(data.excerpt) },
     },
+    tldr: { type: "text", value: data.tldr },
     status: { type: "select", value: data.status ?? "draft" },
     publishedAt: { type: "date", value: publishedAtIso },
     contentType: { type: "select", value: data.contentType },
@@ -190,7 +193,7 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     if (data.engagement.ctaDescriptionMarkdown) {
       engagementValue.ctaDescription = {
         type: "rich-text",
-        value: { format: "markdown", value: data.engagement.ctaDescriptionMarkdown },
+        value: { format: "json", value: markdownToBaseHubJson(data.engagement.ctaDescriptionMarkdown) },
       };
     }
 
