@@ -90,7 +90,7 @@
     "use-debounce": "^10.0.5",
     "use-stick-to-bottom": "1.1.1",
     "usehooks-ts": "^3.1.0",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

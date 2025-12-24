@@ -16,7 +16,6 @@ catalog:
   superjson: ^2.2.1
   '@types/node': ^20.16.11
   '@types/eslint__js': 8.42.3
-  zod: ^3.24.0
   '@eslint/js': ^9.37.0
   eslint: ^9.23.0
   prettier: ^3.5.3
@@ -66,6 +65,10 @@ catalogs:
     postcss: 8.5.6
     '@tailwindcss/postcss': 4.1.11
     '@tailwindcss/typography': ^0.5.16
+  zod3:
+    zod: ^3.25.76
+  zod4:
+    zod: ^4.0.0
 onlyBuiltDependencies:
 - '@clerk/shared'
 - '@lightfastai/dual'
@@ -89,7 +92,7 @@ linkWorkspacePackages: true
 overrides:
   '@types/minimatch': 5.1.2
   '@browserbasehq/stagehand>dotenv': ^17.2.1
-  zod-to-json-schema>zod: ^3.24.0
+  zod-to-json-schema>zod: ^3.25.76
 publicHoistPattern:
 - '@ianvs/prettier-plugin-sort-imports'
 - prettier-plugin-tailwindcss

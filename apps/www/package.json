@@ -63,7 +63,7 @@
     "react-hook-form": "catalog:",
     "shiki": "^3.9.2",
     "tailwind-merge": "catalog:",
-    "zod": "catalog:",
+    "zod": "catalog:zod3",
     "zustand": "catalog:"
   },
   "devDependencies": {

@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
