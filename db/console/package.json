@@ -41,7 +41,7 @@
     "drizzle-orm": "catalog:",
     "friendlier-words": "^1.1.3",
     "postgres": "^3.4.5",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@planetscale/database": "^1.19.0",

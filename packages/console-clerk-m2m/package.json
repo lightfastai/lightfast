@@ -20,7 +20,7 @@
     "@clerk/backend": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -35,6 +35,6 @@
 		"@inngest/agent-kit": "^0.7.3",
 		"@inngest/middleware-sentry": "catalog:",
 		"inngest": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:zod3"
 	}
 }

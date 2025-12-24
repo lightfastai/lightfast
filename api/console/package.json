@@ -75,7 +75,7 @@
 		"react": "catalog:react19",
 		"superjson": "catalog:",
 		"yaml": "^2.7.0",
-		"zod": "catalog:"
+		"zod": "catalog:zod3"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

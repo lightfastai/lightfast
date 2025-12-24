@@ -12,9 +12,35 @@ import type {
   GraphContext,
   Organization,
   WebSite,
-  Article,
+  TechArticle,
   BreadcrumbList,
 } from "@vendor/seo/json-ld";
+
+/**
+ * Extended frontmatter SEO fields.
+ * These match the schema defined in source.config.ts
+ */
+interface ExtendedFrontmatter {
+  // Base fumadocs fields
+  title?: string;
+  description?: string;
+  // SEO meta fields
+  keywords?: string;
+  canonical?: string;
+  // OpenGraph overrides
+  ogImage?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  // Indexing controls
+  noindex?: boolean;
+  nofollow?: boolean;
+  // Article metadata
+  author?: string;
+  publishedAt?: string;
+  updatedAt?: string;
+  // TechArticle fields
+  proficiencyLevel?: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+}
 
 export default async function Page({
   params,
@@ -47,8 +73,11 @@ export default async function Page({
 
   const MDX = page.data.body;
   const toc = page.data.toc;
-  const title = page.data.title;
-  const description = page.data.description;
+
+  // Cast page.data to include extended frontmatter fields
+  const frontmatter = page.data as unknown as ExtendedFrontmatter;
+  const title = frontmatter.title;
+  const description = frontmatter.description;
 
   // Build structured data for SEO
   const organizationEntity: Organization = {
@@ -100,23 +129,29 @@ export default async function Page({
     itemListElement: breadcrumbItems
   };
 
-  // Build article entity
-  const articleEntity: Article = {
-    "@type": "Article",
+  // Build TechArticle entity for documentation pages
+  // TechArticle is better suited for technical documentation than generic Article
+  const techArticleEntity: TechArticle = {
+    "@type": "TechArticle",
     "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
-    headline: title || "Documentation",
+    headline: title ?? "Documentation",
     description: description ?? siteConfig.description,
     url: `https://lightfast.ai/docs/${slug.join("/")}`,
-    author: {
-      "@id": "https://lightfast.ai/#organization"
-    },
+    author: frontmatter.author
+      ? { "@type": "Person", name: frontmatter.author }
+      : { "@id": "https://lightfast.ai/#organization" },
     publisher: {
       "@id": "https://lightfast.ai/#organization"
     },
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `https://lightfast.ai/docs/${slug.join("/")}`
-    }
+    },
+    // TechArticle-specific fields
+    proficiencyLevel: frontmatter.proficiencyLevel ?? "Beginner",
+    // Add article dates if available in frontmatter
+    ...(frontmatter.publishedAt ? { datePublished: frontmatter.publishedAt } : {}),
+    ...(frontmatter.updatedAt ? { dateModified: frontmatter.updatedAt } : {}),
   };
 
   const structuredData: GraphContext = {
@@ -125,7 +160,7 @@ export default async function Page({
       organizationEntity,
       websiteEntity,
       breadcrumbList,
-      articleEntity
+      techArticleEntity
     ]
   };
 
@@ -135,15 +170,15 @@ export default async function Page({
       <DocsLayout toc={toc}>
         <article className="max-w-none">
         {/* Page Header */}
-        {(title || description) && (
+        {(title !== undefined || description !== undefined) && (
           <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
-            {title && (
+            {title ? (
               <h1
                 className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance ${exposureTrial.className}`}
               >
                 {title}
               </h1>
-            )}
+            ) : null}
             {description && (
               <div className="mt-4 w-full">
                 <p className="text-base text-muted-foreground">{description}</p>
@@ -244,59 +279,84 @@ export async function generateMetadata({
     });
   }
 
+  // Cast page.data to include extended frontmatter fields
+  const frontmatter = page.data as unknown as ExtendedFrontmatter;
+
   // Build canonical URL for SEO
   const pageUrl = `/docs/${slug.join("/")}`;
-  const title = page.data.title ? `${page.data.title} – Lightfast Docs` : "Lightfast Docs";
-  const description = page.data.description ?? siteConfig.description;
+  const title = frontmatter.title ? `${frontmatter.title} – Lightfast Docs` : "Lightfast Docs";
+  const description = frontmatter.description ?? siteConfig.description;
+
+  // Extract per-page SEO fields from extended frontmatter with fallbacks
+  const pageKeywords = frontmatter.keywords
+    ? frontmatter.keywords.split(",").map((k: string) => k.trim())
+    : [];
+  const ogImage = frontmatter.ogImage
+    ? `https://lightfast.ai${frontmatter.ogImage}`
+    : siteConfig.ogImage;
+  const canonical = frontmatter.canonical ?? `${siteConfig.url}${pageUrl}`;
+  const noindex = frontmatter.noindex ?? false;
+  const nofollow = frontmatter.nofollow ?? false;
+
+  // Use ogTitle/ogDescription overrides if provided, otherwise use page title/description
+  const ogTitle = frontmatter.ogTitle ?? title;
+  const ogDescription = frontmatter.ogDescription ?? description;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({
     title,
     description,
-    image: siteConfig.ogImage,
+    image: ogImage,
     metadataBase: new URL(siteConfig.url),
-    keywords: [...docsMetadata.keywords],
-    authors: [...docsMetadata.authors],
+    // Merge per-page keywords with default docs keywords
+    keywords: [...pageKeywords, ...docsMetadata.keywords],
+    authors: frontmatter.author
+      ? [{ name: frontmatter.author }, ...docsMetadata.authors]
+      : [...docsMetadata.authors],
     creator: docsMetadata.creator,
     publisher: docsMetadata.creator,
     robots: {
-      index: true,
-      follow: true,
+      index: !noindex,
+      follow: !nofollow,
       googleBot: {
-        index: true,
-        follow: true,
+        index: !noindex,
+        follow: !nofollow,
         "max-video-preview": -1,
         "max-image-preview": "large",
         "max-snippet": -1,
       },
     },
     alternates: {
-      canonical: `${siteConfig.url}${pageUrl}`,
+      canonical,
     },
     openGraph: {
-      title,
-      description,
+      title: ogTitle,
+      description: ogDescription,
       url: `${siteConfig.url}${pageUrl}`,
       siteName: "Lightfast Documentation",
       type: "article",
       locale: "en_US",
+      // Include article dates for better SEO and freshness signals
+      ...(frontmatter.publishedAt ? { publishedTime: frontmatter.publishedAt } : {}),
+      ...(frontmatter.updatedAt ? { modifiedTime: frontmatter.updatedAt } : {}),
+      ...(frontmatter.author ? { authors: [frontmatter.author] } : {}),
       images: [
         {
-          url: siteConfig.ogImage,
+          url: ogImage,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: ogTitle,
           type: "image/jpeg",
         }
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: ogTitle,
+      description: ogDescription,
       site: "@lightfastai",
       creator: "@lightfastai",
-      images: [siteConfig.ogImage],
+      images: [ogImage],
     },
     category: "Technology",
   });

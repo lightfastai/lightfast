@@ -46,7 +46,7 @@
     "react-dom": "19.2.1",
     "react-hook-form": "^7.61.1",
     "svix": "^1.62.0",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

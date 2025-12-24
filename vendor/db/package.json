@@ -28,7 +28,7 @@
 		"ai": "catalog:",
 		"drizzle-orm": "catalog:",
 		"drizzle-zod": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:zod3"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

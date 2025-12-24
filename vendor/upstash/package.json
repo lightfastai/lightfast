@@ -34,6 +34,6 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "@upstash/redis": "^1.35.1",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   }
 }
