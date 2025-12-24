@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { arcjet, shield, detectBot, fixedWindow, validateEmail, request, ARCJET_KEY } from "@vendor/security";
+import { arcjet, shield, detectBot, fixedWindow, slidingWindow, validateEmail, request, ARCJET_KEY } from "@vendor/security";
 import { redis } from "@vendor/upstash";
 import { handleClerkError } from "~/lib/clerk-error-handler";
 import { captureException } from "@sentry/nextjs";
@@ -64,19 +64,19 @@ const aj = arcjet({
 				"CATEGORY:MONITOR", // Allow monitoring services
 			],
 		}),
-		// Hourly limit: More lenient for shared networks
-		fixedWindow({
+		// Hourly limit: Sliding window prevents burst at window boundaries
+		slidingWindow({
 			mode: "LIVE",
-			window: "1h",
+			interval: "1h",
 			max: 10, // Allow up to 10 signups per hour from same IP (offices, families)
 		}),
-		// Daily limit: Prevent sustained abuse
-		fixedWindow({
+		// Daily limit: Sliding window for consistent daily protection
+		slidingWindow({
 			mode: "LIVE",
-			window: "24h",
+			interval: "24h",
 			max: 50, // Maximum 50 signups per day from same IP
 		}),
-		// Burst protection: Prevent rapid-fire submissions
+		// Burst protection: Fixed window is fine for short bursts
 		fixedWindow({
 			mode: "LIVE",
 			window: "10s",

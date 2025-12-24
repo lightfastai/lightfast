@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type Post } from "@vendor/cms";
+import { blog, type Post } from "@vendor/cms";
 import {
   JsonLd,
   type GraphContext,
@@ -64,8 +64,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  // TODO: Fetch real posts from CMS
-  const posts: Post[] = [];
+  const posts: Post[] = await blog.getPosts();
 
   // Structured data for SEO - using @graph for multiple entities
   const structuredData: GraphContext = {

@@ -1,7 +1,6 @@
 import { exposureTrial } from "~/lib/fonts";
 import { categories as categoriesAPI } from "@vendor/cms";
 import { CategoryNav } from "~/components/blog-category-nav";
-import { DynamicBreadcrumbs } from "~/components/blog-dynamic-breadcrumbs";
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -15,9 +14,6 @@ export default async function BlogListingLayout({
 
   return (
     <div className="max-w-7xl mx-auto px-4 pb-32 pt-8">
-      {/* Breadcrumbs - dynamic based on current path */}
-      <DynamicBreadcrumbs categories={allCategories} />
-
       <div className="flex items-start justify-between mb-16 max-w-5xl mr-2">
         <h1
           className={`text-5xl font-light leading-[1.2] tracking-[-0.7] text-foreground max-w-2xl ${exposureTrial.className}`}

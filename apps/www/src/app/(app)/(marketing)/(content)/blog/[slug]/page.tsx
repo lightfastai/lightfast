@@ -7,7 +7,7 @@ import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { SocialShare } from "~/components/blog-social-share";
-import { Breadcrumbs, type BreadcrumbItem } from "~/components/blog-breadcrumbs";
+import { SidebarBreadcrumb } from "~/components/blog-sidebar-breadcrumb";
 
 type BlogPostPageProps = {
   params: Promise<{ slug: string }>;
@@ -38,7 +38,9 @@ export async function generateMetadata({
 
   if (!post) return {};
 
-  const description = post.description || post.body?.plainText?.slice(0, 160) ||
+  const description =
+    post.description ||
+    post.body?.plainText?.slice(0, 160) ||
     `${post._title} - Lightfast blog`;
 
   const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
@@ -47,7 +49,9 @@ export async function generateMetadata({
   return {
     title: post._title ?? undefined,
     description: description ?? undefined,
-    authors: post.authors?.map(author => ({ name: author._title ?? undefined })),
+    authors: post.authors?.map((author) => ({
+      name: author._title ?? undefined,
+    })),
     alternates: {
       canonical: canonicalUrl,
       types: {
@@ -63,14 +67,16 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: "Lightfast",
       publishedTime: post.publishedAt ?? undefined,
-      authors: post.authors?.map(author => author._title ?? "").filter(Boolean),
+      authors: post.authors
+        ?.map((author) => author._title ?? "")
+        .filter(Boolean),
       images: [
         {
           url: ogImage,
           width: post.featuredImage?.width ?? 1200,
           height: post.featuredImage?.height ?? 630,
           alt: post.featuredImage?.alt ?? post._title ?? "",
-        }
+        },
       ],
     },
     twitter: {
@@ -83,9 +89,7 @@ export async function generateMetadata({
   } satisfies Metadata;
 }
 
-export default async function BlogPostPage({
-  params,
-}: BlogPostPageProps) {
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
   return (
@@ -97,7 +101,9 @@ export default async function BlogPostPage({
         const post = response.blog?.post?.item;
         if (!post) notFound();
 
-        const publishedDate = post.publishedAt ? new Date(post.publishedAt) : null;
+        const publishedDate = post.publishedAt
+          ? new Date(post.publishedAt)
+          : null;
         const dateStr = publishedDate
           ? publishedDate.toLocaleDateString(undefined, {
               year: "numeric",
@@ -107,7 +113,10 @@ export default async function BlogPostPage({
           : "";
 
         // Get category names for schema generation
-        const categoryNames = (post.categories?.map(c => c._title?.toLowerCase()).filter(Boolean) as string[]) || [];
+        const categoryNames =
+          (post.categories
+            ?.map((c) => c._title?.toLowerCase())
+            .filter(Boolean) as string[]) || [];
 
         // Helper function to get additional schema types based on categories
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -118,8 +127,8 @@ export default async function BlogPostPage({
           // Add FAQ schema from CMS data
           if (post.seo?.faq?.items && post.seo.faq.items.length > 0) {
             const faqItems = post.seo.faq.items
-              .filter(item => item.question && item.answer)
-              .map(item => ({
+              .filter((item) => item.question && item.answer)
+              .map((item) => ({
                 "@type": "Question",
                 name: item.question,
                 acceptedAnswer: {
@@ -142,11 +151,16 @@ export default async function BlogPostPage({
               "@type": "HowTo",
               name: post._title ?? "",
               description: post.description ?? "",
-              step: [{
-                "@type": "HowToStep",
-                name: "Methodology",
-                text: post.description ?? post.body?.plainText?.slice(0, 200) ?? "",
-              }],
+              step: [
+                {
+                  "@type": "HowToStep",
+                  name: "Methodology",
+                  text:
+                    post.description ??
+                    post.body?.plainText?.slice(0, 200) ??
+                    "",
+                },
+              ],
             });
           }
 
@@ -169,24 +183,35 @@ export default async function BlogPostPage({
           "@context": "https://schema.org" as const,
           "@type": "BlogPosting" as const,
           headline: post._title ?? "",
-          description: post.description || post.body?.plainText?.slice(0, 160) || "",
-          ...(publishedDate ? { datePublished: publishedDate.toISOString() } : {}),
+          description:
+            post.description || post.body?.plainText?.slice(0, 160) || "",
+          ...(publishedDate
+            ? { datePublished: publishedDate.toISOString() }
+            : {}),
           url: `https://lightfast.ai/blog/${slug}`,
-          ...(post.authors && post.authors.length > 0 ? {
-            author: post.authors.map(author => ({
-              "@type": "Person" as const,
-              name: author._title ?? "",
-              ...(author.xUrl ? { url: author.xUrl } : {}),
-            })),
-          } : {}),
-          ...(post.featuredImage?.url ? {
-            image: {
-              "@type": "ImageObject" as const,
-              url: post.featuredImage.url,
-              ...(post.featuredImage.width ? { width: post.featuredImage.width } : {}),
-              ...(post.featuredImage.height ? { height: post.featuredImage.height } : {}),
-            },
-          } : {}),
+          ...(post.authors && post.authors.length > 0
+            ? {
+                author: post.authors.map((author) => ({
+                  "@type": "Person" as const,
+                  name: author._title ?? "",
+                  ...(author.xUrl ? { url: author.xUrl } : {}),
+                })),
+              }
+            : {}),
+          ...(post.featuredImage?.url
+            ? {
+                image: {
+                  "@type": "ImageObject" as const,
+                  url: post.featuredImage.url,
+                  ...(post.featuredImage.width
+                    ? { width: post.featuredImage.width }
+                    : {}),
+                  ...(post.featuredImage.height
+                    ? { height: post.featuredImage.height }
+                    : {}),
+                },
+              }
+            : {}),
           publisher: {
             "@type": "Organization" as const,
             name: "Lightfast",
@@ -201,28 +226,16 @@ export default async function BlogPostPage({
         const additionalSchemas = getAdditionalSchemas();
 
         // Combine base schema with additional schemas
-        const structuredData = additionalSchemas.length > 0
-          ? {
-              "@context": "https://schema.org",
-              "@graph": [baseStructuredData, ...additionalSchemas],
-            }
-          : baseStructuredData;
+        const structuredData =
+          additionalSchemas.length > 0
+            ? {
+                "@context": "https://schema.org",
+                "@graph": [baseStructuredData, ...additionalSchemas],
+              }
+            : baseStructuredData;
 
-        // Generate breadcrumb items
-        const breadcrumbItems: BreadcrumbItem[] = [
-          { name: "Home", href: "/" },
-          { name: "Blog", href: "/blog" },
-        ];
-
-        // Add category breadcrumb if present (categories don't have slugs in PostMeta)
+        // Get primary category for breadcrumb
         const primaryCategory = post.categories?.[0];
-        if (primaryCategory?._title) {
-          // We can't link to category pages from here since we don't have the slug
-          breadcrumbItems.push({ name: primaryCategory._title });
-        }
-
-        // Add current post (no href for current page)
-        breadcrumbItems.push({ name: post._title || "Post" });
 
         return (
           <>
@@ -230,36 +243,24 @@ export default async function BlogPostPage({
             <JsonLd code={structuredData as any} />
 
             <article className="max-w-7xl mx-auto px-4 pb-32 pt-8">
-              {/* Breadcrumbs */}
-              <Breadcrumbs items={breadcrumbItems} className="mb-8" />
-
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                <div className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
+                <SidebarBreadcrumb
+                  categoryName={primaryCategory?._title}
+                  postTitle={post._title || "Post"}
+                  postSlug={slug}
+                />
+                <div className="md:col-span-8 lg:col-span-6">
                   {/* Header */}
                   <header className="space-y-6">
                     <div className="space-y-4">
-                      {/* Categories */}
-                      {post.categories && post.categories.length > 0 && (
-                        <div className="flex gap-2">
-                          {post.categories.map((category) => (
-                            <span
-                              key={category._title}
-                              className="inline-block text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground"
-                            >
-                              {category._title}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
                       {/* Title */}
-                      <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">
+                      <h1 className="text-4xl md:text-4xl font-semibold tracking-tight text-foreground">
                         {post._title}
                       </h1>
 
                       {/* Description */}
                       {post.description && (
-                        <p className="text-xl text-foreground/80 leading-relaxed">
+                        <p className="text-md text-foreground/80 leading-relaxed">
                           {post.description}
                         </p>
                       )}
@@ -340,6 +341,18 @@ export default async function BlogPostPage({
                     </div>
                   </header>
 
+                  {/* TL;DR Summary for AEO */}
+                  {post.tldr && (
+                    <div className="bg-card rounded-xs p-8 my-8">
+                      <h2 className="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-widest mb-12">
+                        TL;DR
+                      </h2>
+                      <p className="text-foreground/90 text-sm leading-relaxed">
+                        {post.tldr}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Featured Image */}
                   {post.featuredImage?.url && (
                     <div className="relative aspect-video rounded-lg overflow-hidden mt-8 mb-12">
@@ -356,7 +369,8 @@ export default async function BlogPostPage({
 
                   {/* Content */}
                   {post.body?.json?.content ? (
-                    <div className="prose prose-lg max-w-none mt-12
+                    <div
+                      className="prose prose-lg max-w-none mt-12
                       prose-headings:text-foreground prose-headings:font-semibold
                       prose-p:text-foreground/80 prose-p:leading-relaxed
                       prose-strong:text-foreground prose-strong:font-semibold
@@ -369,7 +383,7 @@ export default async function BlogPostPage({
                   ) : null}
 
                   {/* Share CTA */}
-                  <div className="mt-16 p-6 bg-muted rounded-lg">
+                  <div className="mt-16 p-6 bg-card rounded-sm">
                     <h3 className="text-lg font-semibold mb-2">
                       Enjoyed this article?
                     </h3>
@@ -387,7 +401,8 @@ export default async function BlogPostPage({
                   {post.authors && post.authors.length > 0 && (
                     <div className="mt-16 pt-8 border-t">
                       <h3 className="text-sm font-semibold text-foreground/60 uppercase tracking-wide mb-6">
-                        About the {post.authors.length > 1 ? "Authors" : "Author"}
+                        About the{" "}
+                        {post.authors.length > 1 ? "Authors" : "Author"}
                       </h3>
                       <div className="space-y-6">
                         {post.authors.map((author, idx) => (

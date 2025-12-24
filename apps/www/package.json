@@ -45,6 +45,7 @@
     "@vendor/upstash": "workspace:*",
     "@vercel/microfrontends": "^2.0.1",
     "@vercel/related-projects": "catalog:",
+    "basehub": "^9.5.2",
     "clsx": "catalog:",
     "feed": "^5.1.0",
     "framer-motion": "^11.18.2",
