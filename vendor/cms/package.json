@@ -27,7 +27,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "basehub": "^9.5.2",
     "react": "19.2.1",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

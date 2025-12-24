@@ -45,7 +45,7 @@
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -23,7 +23,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "resend": "^4.3.0",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
