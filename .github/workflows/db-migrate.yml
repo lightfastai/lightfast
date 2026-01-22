@@ -64,18 +64,10 @@ jobs:
           pnpm drizzle-kit migrate --config=./src/drizzle.config.ts
           echo "Migrations completed successfully!"
 
-      - name: Verify migration status
-        working-directory: db/console
-        env:
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      - name: Summary
         run: |
-          echo "Verifying migration status..."
-          echo "Checking database connection and schema..."
-          # This will fail if there are any pending migrations
-          pnpm drizzle-kit push --config=./src/drizzle.config.ts --dry-run 2>&1 || true
-          echo "Migration verification complete"
+          echo "Database migration completed successfully."
+          echo "Check the 'Run migrations' step above for details on what was applied."
 
   # Job that runs if confirmation was not provided
   no-confirmation:
