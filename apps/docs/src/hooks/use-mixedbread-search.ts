@@ -1,8 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Mixedbread from '@mixedbread/sdk';
-import { env } from '~/env';
 
 export interface SearchResult {
   id: string;
@@ -14,18 +12,43 @@ export interface SearchResult {
   source?: string;
 }
 
+// Types for the Mixedbread API response
+interface MixedbreadMetadata {
+  file_path?: string;
+  synced?: boolean;
+  git_branch?: string;
+  git_commit?: string;
+  uploaded_at?: string;
+}
+
+interface MixedbreadGeneratedMetadata {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  type?: string;
+  file_type?: string;
+  language?: string;
+  word_count?: number;
+}
+
+interface MixedbreadSearchItem {
+  file_id: string;
+  chunk_index: number;
+  filename: string;
+  score: number;
+  text?: string;
+  metadata?: MixedbreadMetadata;
+  generated_metadata?: MixedbreadGeneratedMetadata;
+}
+
+interface SearchApiResponse {
+  data?: MixedbreadSearchItem[];
+  error?: string;
+}
+
 // Module-level cache for search results
 const searchCache = new Map<string, { results: SearchResult[]; timestamp: number }>();
 const CACHE_TTL = 60000; // 1 minute cache
-
-// Initialize Mixedbread client (lazy initialization)
-let mxbaiClient: Mixedbread | null = null;
-
-function getMxbaiClient(): Mixedbread {
-  if (mxbaiClient) return mxbaiClient;
-  mxbaiClient = new Mixedbread({ apiKey: env.NEXT_PUBLIC_MXBAI_API_KEY });
-  return mxbaiClient;
-}
 
 export function useMixedbreadSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -64,14 +87,21 @@ export function useMixedbreadSearch() {
     setError(null);
 
     try {
-      const client = getMxbaiClient();
-
-      // Use Mixedbread store search
-      const response = await client.stores.search({
-        query,
-        store_identifiers: [env.NEXT_PUBLIC_MXBAI_STORE_ID],
-        top_k: 10,
+      // Call our server-side API route instead of Mixedbread directly
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+        signal: abortController.signal,
       });
+
+      if (!response.ok) {
+        throw new Error('Search request failed');
+      }
+
+      const json = await response.json() as SearchApiResponse;
 
       // Check if this is still the latest request
       if (currentRequestId !== requestIdRef.current) {
@@ -79,43 +109,51 @@ export function useMixedbreadSearch() {
       }
 
       // Transform results to our format
-      const searchResults: SearchResult[] = response.data.map((item) => {
-        // Extract metadata - the file metadata contains the MDX frontmatter
-        const metadata = item.metadata as Record<string, unknown> | undefined;
+      const items = json.data ?? [];
+      const searchResults: SearchResult[] = items.map((item) => {
+        // Mixedbread returns:
+        // - item.metadata: { file_path, synced, git_branch, ... }
+        // - item.generated_metadata: { title, description, keywords, ... } (from MDX frontmatter)
+        // - item.filename: just the filename (e.g., "quickstart.mdx")
+        const metadata = item.metadata;
+        const generatedMetadata = item.generated_metadata;
 
-        // Get title from metadata or filename
-        const title = (metadata?.title as string) ||
-                     (metadata?.name as string) ||
-                     item.filename.replace(/\.mdx?$/, '').replace(/-/g, ' ') ||
-                     'Untitled';
+        // Get title from generated_metadata (MDX frontmatter) or fallback to filename
+        const title = generatedMetadata?.title ??
+                     item.filename.replace(/\.mdx?$/, '').replace(/-/g, ' ');
 
-        // Get description from metadata
-        const description = (metadata?.description as string) || undefined;
+        // Get description from generated_metadata
+        const description = generatedMetadata?.description;
 
-        // Build URL from filename/metadata
-        // MDX files are typically in src/content/docs/ or src/content/api/
-        let url = (metadata?.url as string) || (metadata?.slug as string) || '';
-        if (!url) {
-          // Convert filename to URL path
-          // e.g., "src/content/docs/getting-started.mdx" -> "/docs/getting-started"
-          const filename = item.filename;
-          if (filename.includes('content/docs/')) {
-            const pathPart = filename.split('content/docs/')[1];
+        // Build URL from metadata.file_path which contains the full path
+        // e.g., "/Users/.../apps/docs/src/content/docs/get-started/quickstart.mdx" -> "/docs/get-started/quickstart"
+        let url = '';
+        const filePath = metadata?.file_path ?? '';
+        if (filePath) {
+          if (filePath.includes('content/docs/')) {
+            const pathPart = filePath.split('content/docs/')[1] ?? '';
             url = '/docs/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
-          } else if (filename.includes('content/api/')) {
-            const pathPart = filename.split('content/api/')[1];
+          } else if (filePath.includes('content/api/')) {
+            const pathPart = filePath.split('content/api/')[1] ?? '';
             url = '/docs/api/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
-          } else {
-            url = '/docs/' + filename.replace(/\.mdx?$/, '');
           }
         }
+        // Fallback to filename if file_path not available
+        if (!url && item.filename) {
+          url = '/docs/' + item.filename.replace(/\.mdx?$/, '');
+        }
 
-        // Get snippet from chunk text
-        const snippet = 'text' in item ? item.text.substring(0, 200) : undefined;
+        // Get snippet from chunk text (strip frontmatter)
+        let snippet: string | undefined;
+        if (item.text) {
+          // Remove YAML frontmatter if present
+          const withoutFrontmatter = item.text.replace(/^---[\s\S]*?---\s*/, '');
+          snippet = withoutFrontmatter.substring(0, 200).trim();
+        }
 
-        // Determine source from path or metadata
-        let source = (metadata?.source as string) || 'Documentation';
-        if (item.filename.includes('content/api/')) {
+        // Determine source from file path
+        let source = 'Documentation';
+        if (filePath.includes('content/api/')) {
           source = 'API Reference';
         }
 
