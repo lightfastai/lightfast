@@ -26,7 +26,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@upstash/workflow": "^0.2.22",
     "next": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

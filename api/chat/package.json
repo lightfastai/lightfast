@@ -53,7 +53,7 @@
 		"nanoid": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:zod3"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

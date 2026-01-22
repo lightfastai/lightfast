@@ -23,7 +23,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
     "@vercel/blob": "^1.1.1",
-    "zod": "catalog:"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

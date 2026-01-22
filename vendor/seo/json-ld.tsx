@@ -49,12 +49,15 @@ export type {
 
   // Content types
   Article,
+  TechArticle,
   BlogPosting,
   Blog,
   FAQPage,
   Question,
   Answer,
   BreadcrumbList,
+  HowTo,
+  HowToStep,
 
   // Product/Service types
   SoftwareApplication,
