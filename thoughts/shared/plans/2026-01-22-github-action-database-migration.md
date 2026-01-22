@@ -33,11 +33,11 @@ A new GitHub Actions workflow file at `.github/workflows/db-migrate.yml` that:
 5. Logs migration output for debugging
 
 ### Verification Criteria
-- [ ] Workflow appears in GitHub Actions UI under "Actions" tab
-- [ ] Manual dispatch works with "Run workflow" button
-- [ ] Workflow accesses database credentials from GitHub Secrets
-- [ ] Migrations execute successfully (verified by checking database state)
-- [ ] Workflow logs show migration SQL that was applied
+- [x] Workflow appears in GitHub Actions UI under "Actions" tab
+- [x] Manual dispatch works with "Run workflow" button
+- [x] Workflow accesses database credentials from GitHub Secrets
+- [x] Migrations execute successfully (verified by checking database state)
+- [x] Workflow logs show migration SQL that was applied
 
 ## What We're NOT Doing
 
@@ -196,14 +196,14 @@ jobs:
 
 #### Automated Verification:
 - [x] Workflow file passes YAML validation: `yamllint .github/workflows/db-migrate.yml`
-- [ ] Workflow appears in GitHub Actions after push
+- [x] Workflow appears in GitHub Actions after push
 
 #### Manual Verification:
-- [ ] "Database Migration" workflow visible in GitHub Actions UI
-- [ ] "Run workflow" button appears on the workflow page
-- [ ] Confirmation input field appears when clicking "Run workflow"
-- [ ] Typing anything other than "migrate" fails the workflow
-- [ ] Typing "migrate" triggers the migration job
+- [x] "Database Migration" workflow visible in GitHub Actions UI
+- [x] "Run workflow" button appears on the workflow page
+- [x] Confirmation input field appears when clicking "Run workflow"
+- [x] Typing anything other than "migrate" fails the workflow
+- [x] Typing "migrate" triggers the migration job
 
 **Implementation Note**: After completing this phase, test the workflow with the confirmation safety check before running actual migrations.
 
@@ -234,14 +234,14 @@ Verify the workflow executes correctly by running it manually.
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Workflow completes with green checkmark
-- [ ] All job steps show success status
+- [x] Workflow completes with green checkmark
+- [x] All job steps show success status
 
 #### Manual Verification:
-- [ ] Migration output shows expected SQL statements (if any pending)
-- [ ] No database connection errors in logs
-- [ ] "Migrations completed successfully" message appears
-- [ ] Database state reflects applied migrations (check via Drizzle Studio if needed)
+- [x] Migration output shows expected SQL statements (if any pending)
+- [x] No database connection errors in logs
+- [x] "Migrations completed successfully" message appears
+- [x] Database state reflects applied migrations (check via Drizzle Studio if needed)
 
 ---
 
