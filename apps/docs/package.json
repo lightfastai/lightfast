@@ -4,18 +4,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port ${NEXT_PUBLIC_DOCS_PORT:-4105} --turbo",
+    "dev": "pnpm with-env next dev --port ${NEXT_PUBLIC_DOCS_PORT:-4105} --turbo",
     "build": "pnpm build:prod",
     "build:dev": "next build --turbopack",
-    "build:prod": "next build --turbopack",
+    "build:prod": "pnpm with-env next build --turbopack && pnpm with-env pnpm search:sync:ci",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .turbo dist .source tsconfig.tsbuildinfo",
-    "postinstall": "fumadocs-mdx"
+    "postinstall": "fumadocs-mdx",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
+    "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y"
   },
   "dependencies": {
+    "@mixedbread/sdk": "^0.50.1",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-portal": "^1.1.10",
     "@repo/app-urls": "workspace:*",
@@ -41,6 +45,7 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
+    "@mixedbread/cli": "^2.1.1",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
@@ -50,6 +55,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "prettier": "catalog:",
