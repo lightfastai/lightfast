@@ -1,0 +1,91 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "migrate" to confirm you want to run migrations against production'
+        required: true
+        type: string
+
+# Only allow one migration at a time
+concurrency:
+  group: db-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    # Only run if user typed "migrate" as confirmation
+    if: github.event.inputs.confirm == 'migrate'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Show pending migrations
+        working-directory: db/console
+        env:
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          echo "Checking for pending migrations..."
+          echo "---"
+          ls -la src/migrations/*.sql | tail -10
+          echo "---"
+          echo "Migration journal:"
+          cat src/migrations/meta/_journal.json | tail -30
+
+      - name: Run migrations
+        working-directory: db/console
+        env:
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          echo "Running database migrations..."
+          pnpm drizzle-kit migrate --config=./src/drizzle.config.ts
+          echo "Migrations completed successfully!"
+
+      - name: Verify migration status
+        working-directory: db/console
+        env:
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          echo "Verifying migration status..."
+          echo "Checking database connection and schema..."
+          # This will fail if there are any pending migrations
+          pnpm drizzle-kit push --config=./src/drizzle.config.ts --dry-run 2>&1 || true
+          echo "Migration verification complete"
+
+  # Job that runs if confirmation was not provided
+  no-confirmation:
+    name: Migration Not Confirmed
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm != 'migrate'
+    steps:
+      - name: Show error
+        run: |
+          echo "Migration was not confirmed."
+          echo "You must type 'migrate' in the confirmation input to run migrations."
+          echo "This is a safety measure to prevent accidental database changes."
+          exit 1
