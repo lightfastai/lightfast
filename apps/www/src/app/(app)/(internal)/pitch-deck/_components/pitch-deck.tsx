@@ -20,8 +20,20 @@ import {
   ShowcaseSlideContent,
   ColumnsSlideContent,
 } from "./slide-content";
+import { PitchDeckMobile } from "./pitch-deck-mobile";
 
 export function PitchDeck() {
+  const { isMobile } = usePitchDeck();
+
+  // Render mobile-optimized layout on mobile devices
+  if (isMobile) {
+    return <PitchDeckMobile />;
+  }
+
+  return <PitchDeckDesktop />;
+}
+
+function PitchDeckDesktop() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
