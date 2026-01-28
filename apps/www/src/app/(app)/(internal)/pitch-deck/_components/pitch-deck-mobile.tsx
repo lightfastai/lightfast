@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import {
@@ -10,22 +9,17 @@ import {
   ShowcaseSlideContent,
   ColumnsSlideContent,
 } from "./slide-content";
-import { MobileSlideSheet } from "./mobile-slide-sheet";
 import { MobileBottomBar } from "./mobile-bottom-bar";
 
 export function PitchDeckMobile() {
-  const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null);
-
   return (
     <main aria-label="Pitch Deck Presentation">
       {/* Vertical scroll container */}
       <div className="space-y-6 px-4 pt-20 pb-24">
         {PITCH_SLIDES.map((slide, index) => (
-          <button
+          <article
             key={slide.id}
-            onClick={() => setSelectedSlideIndex(index)}
-            className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-            aria-label={`View slide ${index + 1}: ${slide.title}`}
+            aria-label={`Slide ${index + 1}: ${slide.title}`}
           >
             <div
               className={cn(
@@ -38,16 +32,9 @@ export function PitchDeckMobile() {
                 <MobileSlideContent slide={slide} />
               </div>
             </div>
-          </button>
+          </article>
         ))}
       </div>
-
-      {/* Tap-to-expand sheet */}
-      <MobileSlideSheet
-        slideIndex={selectedSlideIndex}
-        onClose={() => setSelectedSlideIndex(null)}
-        onNavigate={setSelectedSlideIndex}
-      />
 
       {/* Sticky bottom bar */}
       <MobileBottomBar />
