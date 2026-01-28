@@ -36,7 +36,7 @@ export default async function PitchDeckLayout({
             </div>
 
             {/* Center: Menu (desktop only) */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <PitchDeckNavbar />
             </div>
 
@@ -45,7 +45,7 @@ export default async function PitchDeckLayout({
               <DownloadButton />
               <a
                 href="mailto:jp@lightfast.ai"
-                className="hidden md:block text-sm text-foreground hover:text-muted-foreground transition-colors"
+                className="hidden lg:block text-sm text-foreground hover:text-muted-foreground transition-colors"
               >
                 CONTACT
               </a>
