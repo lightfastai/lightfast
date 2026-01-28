@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { PitchDeck } from "~/components/pitch-deck";
-import { PitchDeckNavbar } from "~/components/pitch-deck-navbar";
+import { PitchDeck } from "./_components/pitch-deck";
 
 export const metadata: Metadata = {
   title: "Pitch Deck | Lightfast",

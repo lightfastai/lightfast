@@ -1,57 +1,17 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useRef, useEffect } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  AnimatePresence,
+} from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
-
-// Grid configuration - matching Flabbergast dimensions
-const GRID_COLUMNS = 4;
-
-interface GridPosition {
-  x: number; // percentage from left (viewport-relative)
-  y: number; // percentage from top (viewport-relative)
-  scale: number;
-}
-
-function calculateGridPositions(totalSlides: number): GridPosition[] {
-  const rows = Math.ceil(totalSlides / GRID_COLUMNS);
-  const positions: GridPosition[] = [];
-
-  // Thumbnail scale: Flabbergast uses 15.76vw thumbnails from 70vw slides
-  // 15.76 / 70 = 0.225 (22.5%)
-  const thumbnailScale = 0.225;
-
-  // Column positions relative to center (50%)
-  // Spread 4 columns across ~48% width, centered
-  const columnPositions = [-24, -8, 8, 24];
-
-  // Row positioning: ~22vh between row centers for adequate spacing with larger thumbnails
-  const rowHeight = 22;
-  const totalGridHeight = rows * rowHeight;
-  const startY = (100 - totalGridHeight) / 2 + rowHeight / 2;
-
-  for (let i = 0; i < totalSlides; i++) {
-    const col = i % GRID_COLUMNS;
-    const row = Math.floor(i / GRID_COLUMNS);
-
-    // X position: center-relative (50% + offset)
-    const xPercent = 50 + columnPositions[col]!;
-    const yPercent = startY + row * rowHeight;
-
-    positions.push({
-      x: xPercent,
-      y: yPercent,
-      scale: thumbnailScale,
-    });
-  }
-
-  return positions;
-}
-
-// Pre-calculate grid positions
-const GRID_POSITIONS = calculateGridPositions(PITCH_SLIDES.length);
+import { usePitchDeck } from "./pitch-deck-context";
 
 export function PitchDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,8 +20,7 @@ export function PitchDeck() {
     offset: ["start start", "end end"],
   });
 
-  // Grid view state - triggers when scrolled past last slide
-  const [isGridView, setIsGridView] = useState(false);
+  const { isGridView, setIsGridView } = usePitchDeck();
 
   // Grid view threshold: last slide ends at (totalSlides) / (totalSlides + 1)
   // For 8 slides with +1 extra: 8/9 = 0.889
@@ -102,6 +61,11 @@ export function PitchDeck() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const handleGridItemClick = (index: number) => {
+    const scrollTarget = index * window.innerHeight;
+    window.scrollTo({ top: scrollTarget, behavior: "smooth" });
+  };
+
   return (
     <main aria-label="Pitch Deck Presentation">
       <div
@@ -110,14 +74,12 @@ export function PitchDeck() {
         style={{ height: `${(PITCH_SLIDES.length + 1) * 100}vh` }}
       >
         <div
-          className="sticky top-0 h-screen flex items-center justify-center overflow-visible"
+          className="sticky top-0 h-screen flex flex-col items-center justify-center page-gutter py-16 overflow-visible"
           role="region"
           aria-label="Slide viewer"
         >
-          {/* Container with aspect ratio to properly size the slide area */}
-          <div
-            className="relative w-[70vw] mx-auto aspect-[16/9] overflow-visible"
-          >
+          {/* Slide container - fills available space with aspect ratio constraint */}
+          <div className="relative w-full max-w-[1200px] aspect-[16/9] overflow-visible">
             {PITCH_SLIDES.map((slide, index) => (
               <PitchSlide
                 key={slide.id}
@@ -126,40 +88,142 @@ export function PitchDeck() {
                 totalSlides={PITCH_SLIDES.length}
                 scrollProgress={scrollYProgress}
                 isGridView={isGridView}
-                gridPosition={GRID_POSITIONS[index]!}
               />
             ))}
           </div>
 
-          {/* Progress Indicator */}
+          {/* Progress Indicator - positioned with padding offset */}
           <SlideIndicator
             totalSlides={PITCH_SLIDES.length}
             scrollProgress={scrollYProgress}
+            isGridView={isGridView}
+            onDotClick={handleGridItemClick}
           />
         </div>
       </div>
+
+      {/* Grid View Overlay */}
+      <AnimatePresence>
+        {isGridView && (
+          <GridView>
+            {PITCH_SLIDES.map((slide, index) => (
+              <GridSlideItem
+                key={slide.id}
+                slide={slide}
+                index={index}
+                totalSlides={PITCH_SLIDES.length}
+                onClick={() => handleGridItemClick(index)}
+              />
+            ))}
+          </GridView>
+        )}
+      </AnimatePresence>
     </main>
+  );
+}
+
+// Grid View Overlay with CSS Grid
+function GridView({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm overflow-auto"
+    >
+      <div className="min-h-screen py-24 px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {children}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Grid Item Component - Shows actual slide content scaled down
+function GridSlideItem({
+  slide,
+  index,
+  totalSlides,
+  onClick,
+}: {
+  slide: (typeof PITCH_SLIDES)[number];
+  index: number;
+  totalSlides: number;
+  onClick: () => void;
+}) {
+  // Stagger delay: last slide animates first (reverse order)
+  const staggerDelay = (totalSlides - 1 - index) * 0.05;
+
+  return (
+    <motion.div
+      onClick={onClick}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        transition: {
+          delay: staggerDelay,
+          duration: 0.3,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
+      }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+      className="cursor-pointer group"
+    >
+      {/* Container maintains 16:9 aspect ratio */}
+      <div className="w-full aspect-[16/9] rounded-lg overflow-hidden shadow-lg transition-shadow duration-200 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20">
+        {/* Inner wrapper scales down the full slide content */}
+        <div
+          className={cn(
+            "w-[400%] h-[400%] origin-top-left",
+            slide.bgColor
+          )}
+          style={{ transform: "scale(0.25)" }}
+        >
+          <div className="w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
+            <SlideContent slide={slide} />
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground text-center truncate">
+        {index + 1}. {slide.title}
+      </p>
+    </motion.div>
   );
 }
 
 function SlideIndicator({
   totalSlides,
   scrollProgress,
+  isGridView,
+  onDotClick,
 }: {
   totalSlides: number;
   scrollProgress: MotionValue<number>;
+  isGridView: boolean;
+  onDotClick: (index: number) => void;
 }) {
   return (
-    <div className="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2">
+    <motion.div
+      className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2"
+      animate={{ opacity: isGridView ? 0 : 1, pointerEvents: isGridView ? "none" : "auto" }}
+      transition={{ duration: 0.2 }}
+    >
       {Array.from({ length: totalSlides }).map((_, index) => (
         <IndicatorDot
           key={index}
           index={index}
           totalSlides={totalSlides}
           scrollProgress={scrollProgress}
+          onClick={() => onDotClick(index)}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -167,10 +231,12 @@ function IndicatorDot({
   index,
   totalSlides,
   scrollProgress,
+  onClick,
 }: {
   index: number;
   totalSlides: number;
   scrollProgress: MotionValue<number>;
+  onClick: () => void;
 }) {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -188,9 +254,11 @@ function IndicatorDot({
   );
 
   return (
-    <motion.div
+    <motion.button
+      onClick={onClick}
       style={{ opacity, scaleY }}
-      className="w-0.5 h-3 bg-foreground rounded-full origin-center"
+      className="w-0.5 h-3 bg-foreground rounded-full origin-center cursor-pointer hover:bg-foreground/80 transition-colors"
+      aria-label={`Go to slide ${index + 1}`}
     />
   );
 }
@@ -201,7 +269,6 @@ interface PitchSlideProps {
   totalSlides: number;
   scrollProgress: MotionValue<number>;
   isGridView: boolean;
-  gridPosition: GridPosition;
 }
 
 function PitchSlide({
@@ -210,7 +277,6 @@ function PitchSlide({
   totalSlides,
   scrollProgress,
   isGridView,
-  gridPosition,
 }: PitchSlideProps) {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -261,58 +327,20 @@ function PitchSlide({
     [index, index + 1, index + 1]
   );
 
-  // Stagger delay: last slide animates first (reverse order)
-  // 50ms between each slide
-  const staggerDelay = (totalSlides - 1 - index) * 0.05;
-
-  // Click handler for grid view navigation
-  const handleGridClick = () => {
-    if (!isGridView) return;
-
-    // Calculate scroll position for this slide
-    // Each slide occupies 100vh, so slide N starts at N * 100vh
-    const scrollTarget = index * window.innerHeight;
-
-    window.scrollTo({
-      top: scrollTarget,
-      behavior: "smooth",
-    });
-  };
+  // Don't render slides when in grid view (they render in GridView instead)
+  if (isGridView) {
+    return null;
+  }
 
   return (
     <motion.article
-      onClick={handleGridClick}
-      style={!isGridView ? { y, scale, opacity, zIndex } : undefined}
-      animate={
-        isGridView
-          ? {
-              // Position relative to viewport center (container is centered at 50%)
-              x: `${gridPosition.x - 50}vw`,
-              y: `${gridPosition.y - 50}vh`,
-              scale: gridPosition.scale,
-              opacity: 1,
-              zIndex: totalSlides - index,
-            }
-          : undefined
-      }
-      transition={
-        isGridView
-          ? {
-              duration: 0.4,
-              delay: staggerDelay,
-              ease: [0.25, 0.1, 0.25, 1],
-            }
-          : { duration: 0 }
-      }
-      className={cn(
-        "absolute inset-0 will-change-transform origin-center"
-      )}
+      style={{ y, scale, opacity, zIndex }}
+      className={cn("absolute inset-0 will-change-transform origin-center")}
       aria-label={`Slide ${index + 1} of ${totalSlides}: ${slide.title}`}
     >
       <div
         className={cn(
-          "w-full aspect-[16/9] rounded-[15px] overflow-hidden shadow-2xl transition-all",
-          isGridView && "cursor-pointer hover:ring-4 hover:ring-white/30",
+          "w-full aspect-[16/9] rounded-[15px] overflow-hidden shadow-2xl",
           slide.bgColor
         )}
       >
