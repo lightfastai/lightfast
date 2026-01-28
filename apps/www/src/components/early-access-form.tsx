@@ -53,9 +53,22 @@ export function EarlyAccessForm() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { step } = urlParams;
-  const email = form.watch("email");
-  const companySize = form.watch("companySize");
-  const sources = form.watch("sources");
+
+  // Only subscribe to fields needed for current step to reduce re-renders
+  // Step "email": needs email for button disable state
+  // Step "company": needs companySize for button disable state
+  // Step "sources": needs sources for button disable state, email for success display
+  const email = step === "email" || step === "sources"
+    ? form.watch("email")
+    : form.getValues("email");
+
+  const companySize = step === "company"
+    ? form.watch("companySize")
+    : form.getValues("companySize");
+
+  const sources = step === "sources"
+    ? form.watch("sources")
+    : form.getValues("sources");
 
   // Track client-side errors
   useEffect(() => {
@@ -184,7 +197,7 @@ export function EarlyAccessForm() {
             <div className="h-1 w-8 rounded-full bg-primary" />
           </div>
 
-          <div className="flex flex-col h-[640px] justify-center space-y-4">
+          <div className="flex flex-col h-[640px] justify-center space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold text-foreground">
                 You're in!
@@ -231,7 +244,7 @@ export function EarlyAccessForm() {
 
       {/* Step 1: Email */}
       {step === "email" && (
-        <form onSubmit={handleEmailSubmit} className="flex flex-col h-[640px]">
+        <form onSubmit={handleEmailSubmit} className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
           {/* Header - fixed height */}
           <div className="flex-none">
             {/* Back button space - hidden but maintains layout */}
@@ -301,7 +314,7 @@ export function EarlyAccessForm() {
 
       {/* Step 2: Company Size */}
       {step === "company" && (
-        <div className="flex flex-col h-[640px]">
+        <div className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
           {/* Header - fixed height */}
           <div className="flex-none">
             {/* Back button - consistent height */}
@@ -391,7 +404,7 @@ export function EarlyAccessForm() {
 
       {/* Step 3: Data Sources */}
       {step === "sources" && (
-        <div className="flex flex-col h-[640px]">
+        <div className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
           {/* Header - fixed height */}
           <div className="flex-none">
             {/* Back button - consistent height */}
