@@ -13,8 +13,7 @@ export function DownloadButton() {
 
     setIsExporting(true);
     try {
-      // TODO: Remove debug: true after testing fonts
-      await exportSlidesToPdf({ debug: true });
+      await exportSlidesToPdf();
     } catch (error) {
       console.error("Failed to export slides:", error);
     } finally {

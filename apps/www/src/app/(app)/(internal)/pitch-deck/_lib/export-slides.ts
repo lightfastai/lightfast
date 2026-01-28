@@ -12,14 +12,12 @@ export interface ExportOptions {
   width?: number;
   height?: number;
   filename?: string;
-  debug?: boolean;
 }
 
 const DEFAULT_OPTIONS: Required<ExportOptions> = {
   width: 1920,
   height: 1080,
   filename: "lightfast-pitch-deck",
-  debug: false,
 };
 
 /**
@@ -27,9 +25,9 @@ const DEFAULT_OPTIONS: Required<ExportOptions> = {
  * Uses ReactDOM to render slides off-screen for consistent styling.
  */
 export async function exportSlidesToPdf(
-  options: ExportOptions = {}
+  options: ExportOptions = {},
 ): Promise<void> {
-  const { width, height, filename, debug } = { ...DEFAULT_OPTIONS, ...options };
+  const { width, height, filename } = { ...DEFAULT_OPTIONS, ...options };
 
   // Create PDF with landscape orientation matching slide aspect ratio
   // jsPDF uses points (pt) as default unit, but we can specify dimensions in px
@@ -44,29 +42,16 @@ export async function exportSlidesToPdf(
   await document.fonts.ready;
 
   // Create off-screen container for rendering
-  // In debug mode, make it visible for inspection
   const container = document.createElement("div");
-  container.style.cssText = debug
-    ? `
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(0.4);
-      width: ${width}px;
-      height: ${height}px;
-      overflow: hidden;
-      z-index: 9999;
-      box-shadow: 0 0 0 4px red;
-    `
-    : `
-      position: fixed;
-      left: -9999px;
-      top: 0;
-      width: ${width}px;
-      height: ${height}px;
-      overflow: hidden;
-      z-index: -1;
-    `;
+  container.style.cssText = `
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: ${width}px;
+    height: ${height}px;
+    overflow: hidden;
+    z-index: -1;
+  `;
   document.body.appendChild(container);
 
   // Create wrapper for React rendering
@@ -84,26 +69,15 @@ export async function exportSlidesToPdf(
             slide,
             width,
             height,
-          })
+          }),
         );
       });
 
-      // Delay to ensure styles are computed (longer in debug mode for inspection)
-      await new Promise((resolve) => setTimeout(resolve, debug ? 3000 : 50));
+      // Small delay to ensure styles are computed
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Capture as canvas
       const slideElement = renderContainer.firstElementChild as HTMLElement;
-
-      // In debug mode, log computed styles for inspection
-      if (debug) {
-        const computed = window.getComputedStyle(slideElement);
-        console.log(`[Slide ${i + 1}] Computed styles:`, {
-          fontFamily: computed.fontFamily,
-          fontSize: computed.fontSize,
-          color: computed.color,
-          backgroundColor: computed.backgroundColor,
-        });
-      }
       const canvas = await html2canvas(slideElement, {
         width,
         height,
