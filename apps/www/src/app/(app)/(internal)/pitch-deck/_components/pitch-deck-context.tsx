@@ -17,8 +17,8 @@ interface PitchDeckContextProps {
   isGridView: boolean;
   setIsGridView: (grid: boolean) => void;
 
-  // Mobile detection
-  isMobile: boolean;
+  // Mobile detection - undefined during hydration
+  isMobile: boolean | undefined;
 }
 
 const PitchDeckContext = React.createContext<PitchDeckContextProps | null>(null);
@@ -52,7 +52,7 @@ export function PitchDeckProvider({
 
   // Update preface state when mobile detection completes
   React.useEffect(() => {
-    if (isMobile) {
+    if (isMobile === true) {
       _setPrefaceExpanded(false);
     }
   }, [isMobile]);
@@ -64,8 +64,13 @@ export function PitchDeckProvider({
   }, []);
 
   const togglePreface = React.useCallback(() => {
-    setPrefaceExpanded(!prefaceExpanded);
-  }, [prefaceExpanded, setPrefaceExpanded]);
+    _setPrefaceExpanded((prev) => {
+      const next = !prev;
+      // Persist to cookie
+      document.cookie = `${PREFACE_COOKIE_NAME}=${next}; path=/; max-age=${PREFACE_COOKIE_MAX_AGE}`;
+      return next;
+    });
+  }, []);
 
   // Keyboard shortcut: Cmd/Ctrl + B to toggle preface
   React.useEffect(() => {

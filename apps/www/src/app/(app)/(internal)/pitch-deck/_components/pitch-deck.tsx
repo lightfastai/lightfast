@@ -20,20 +20,9 @@ import {
   ShowcaseSlideContent,
   ColumnsSlideContent,
 } from "./slide-content";
-import { PitchDeckMobile } from "./pitch-deck-mobile";
+import { MobileBottomBar } from "./mobile-bottom-bar";
 
 export function PitchDeck() {
-  const { isMobile } = usePitchDeck();
-
-  // Render mobile-optimized layout on mobile devices
-  if (isMobile) {
-    return <PitchDeckMobile />;
-  }
-
-  return <PitchDeckDesktop />;
-}
-
-function PitchDeckDesktop() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -48,7 +37,7 @@ function PitchDeckDesktop() {
   // Trigger grid when scroll exceeds ~0.92 (in the extra scroll space)
   const GRID_THRESHOLD = 0.92;
 
-  // Update current slide based on scroll progress
+  // Update current slide based on scroll progress (desktop only, but safe to run)
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const slideIndex = Math.min(
       Math.floor(latest * PITCH_SLIDES.length),
@@ -65,7 +54,7 @@ function PitchDeckDesktop() {
     }
   });
 
-  // Keyboard navigation
+  // Keyboard navigation (desktop only behavior, but safe to attach)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const scrollAmount = window.innerHeight;
@@ -116,9 +105,10 @@ function PitchDeckDesktop() {
 
   return (
     <main aria-label="Pitch Deck Presentation">
+      {/* Desktop: Scroll-driven stacking experience */}
       <div
         ref={containerRef}
-        className="relative"
+        className="hidden lg:block relative"
         style={{ height: `${(PITCH_SLIDES.length + 1) * 100}vh` }}
       >
         <div
@@ -162,7 +152,30 @@ function PitchDeckDesktop() {
         </div>
       </div>
 
-      {/* Grid View Overlay */}
+      {/* Mobile: Simple vertical scroll */}
+      <div className="lg:hidden space-y-6 px-4 pt-20 pb-24">
+        {PITCH_SLIDES.map((slide, index) => (
+          <article
+            key={slide.id}
+            aria-label={`Slide ${index + 1}: ${slide.title}`}
+          >
+            <div
+              className={cn(
+                "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg",
+                slide.bgColor
+              )}
+              style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
+            >
+              <div className="relative h-full p-4 flex flex-col justify-between">
+                <SlideContent slide={slide} />
+              </div>
+            </div>
+          </article>
+        ))}
+        <MobileBottomBar />
+      </div>
+
+      {/* Grid View Overlay (desktop only) */}
       <AnimatePresence>
         {isGridView && (
           <GridView>

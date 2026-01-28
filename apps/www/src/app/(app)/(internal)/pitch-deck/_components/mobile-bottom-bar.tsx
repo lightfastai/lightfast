@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, Loader2, Maximize } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { exportSlidesToPdf } from "../_lib/export-slides";
+import { exportSlidesToPdfLazy } from "../_lib/export-slides-lazy";
 import { LandscapePromptModal } from "./landscape-prompt-modal";
 
 export function MobileBottomBar() {
@@ -15,7 +15,7 @@ export function MobileBottomBar() {
 
     setIsExporting(true);
     try {
-      await exportSlidesToPdf();
+      await exportSlidesToPdfLazy();
     } catch (error) {
       console.error("Failed to export slides:", error);
     } finally {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { exportSlidesToPdf } from "../_lib/export-slides";
+import { exportSlidesToPdfLazy } from "../_lib/export-slides-lazy";
 
 export function DownloadButton() {
   const [isExporting, setIsExporting] = useState(false);
@@ -13,7 +13,7 @@ export function DownloadButton() {
 
     setIsExporting(true);
     try {
-      await exportSlidesToPdf();
+      await exportSlidesToPdfLazy();
     } catch (error) {
       console.error("Failed to export slides:", error);
     } finally {
