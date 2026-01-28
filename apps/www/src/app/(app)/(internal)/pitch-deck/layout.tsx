@@ -6,6 +6,7 @@ import { PitchDeckNavbar } from "./_components/pitch-deck-navbar";
 import { PitchDeckProvider } from "./_components/pitch-deck-context";
 import { PitchDeckLayoutContent } from "./_components/pitch-deck-layout-content";
 import { PrefaceToggle } from "./_components/preface-toggle";
+import { DownloadButton } from "./_components/download-button";
 
 export default async function PitchDeckLayout({
   children,
@@ -36,8 +37,9 @@ export default async function PitchDeckLayout({
             {/* Center: Menu */}
             <PitchDeckNavbar />
 
-            {/* Right: Contact */}
-            <div className="md:justify-self-end">
+            {/* Right: Download + Contact */}
+            <div className="flex items-center gap-4 md:justify-self-end">
+              <DownloadButton />
               <a
                 href="mailto:jp@lightfast.ai"
                 className="text-sm text-foreground hover:text-muted-foreground transition-colors"

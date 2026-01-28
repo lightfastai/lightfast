@@ -12,6 +12,7 @@ import type { MotionValue } from "framer-motion";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
+import { TitleSlideContent, ContentSlideContent } from "./slide-content";
 
 export function PitchDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -355,54 +356,9 @@ function PitchSlide({
 function SlideContent({ slide }: { slide: (typeof PITCH_SLIDES)[number] }) {
   switch (slide.type) {
     case "title":
-      return (
-        <>
-          {/* Grid pattern overlay for title slides */}
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, white 1px, transparent 1px),
-                linear-gradient(to bottom, white 1px, transparent 1px)
-              `,
-              backgroundSize: "60px 60px",
-            }}
-          />
-          <div className="relative flex-1 flex items-center justify-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center text-white tracking-tight">
-              {slide.title}
-            </h1>
-          </div>
-          <p className="relative text-xs sm:text-sm text-center text-white/70">
-            {slide.subtitle}
-          </p>
-        </>
-      );
+      return <TitleSlideContent slide={slide} variant="responsive" />;
     case "content":
-      return (
-        <>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-light text-neutral-900">
-            {slide.title}
-          </h2>
-          <div className="flex-1 flex flex-col justify-end">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-              <p className="text-[10px] sm:text-xs uppercase tracking-wider text-neutral-500">
-                {slide.leftText}
-              </p>
-              <div className="space-y-2 sm:space-y-4">
-                {slide.rightText.map((text, i) => (
-                  <p
-                    key={i}
-                    className="text-xs sm:text-sm border-b border-neutral-300 pb-2 text-neutral-700"
-                  >
-                    {text}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      );
+      return <ContentSlideContent slide={slide} variant="responsive" />;
     default:
       return null;
   }
