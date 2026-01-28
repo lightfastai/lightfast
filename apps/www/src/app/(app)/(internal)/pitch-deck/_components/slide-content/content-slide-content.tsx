@@ -19,7 +19,7 @@ export function ContentSlideContent({
     <>
       <h2
         className={cn(
-          "font-light text-neutral-900",
+          "font-normal text-foreground",
           isFixed ? "text-5xl" : "text-xl sm:text-2xl md:text-3xl"
         )}
       >

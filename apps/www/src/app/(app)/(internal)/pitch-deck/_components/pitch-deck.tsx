@@ -13,7 +13,14 @@ import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
-import { TitleSlideContent, ContentSlideContent } from "./slide-content";
+import {
+  TitleSlideContent,
+  ContentSlideContent,
+  CustomTitleSlide,
+  CustomClosingSlide,
+  ShowcaseSlideContent,
+  ColumnsSlideContent,
+} from "./slide-content";
 
 export function PitchDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -202,9 +209,9 @@ function GridSlideItem({
         {/* Inner wrapper scales down the full slide content */}
         <div
           className={cn("w-[400%] h-[400%] origin-top-left", slide.bgColor)}
-          style={{ transform: "scale(0.25)" }}
+          style={{ transform: "scale(0.25)", "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
         >
-          <div className="w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
+          <div className="relative w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
             <SlideContent slide={slide} />
           </div>
         </div>
@@ -370,6 +377,7 @@ function PitchSlide({
           "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-2xl",
           slide.bgColor,
         )}
+        style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
       >
         <div className="relative h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
           <SlideContent slide={slide} />
@@ -380,11 +388,23 @@ function PitchSlide({
 }
 
 function SlideContent({ slide }: { slide: (typeof PITCH_SLIDES)[number] }) {
+  // First slide (id: "title") uses the custom grid design
+  if (slide.type === "title" && slide.id === "title") {
+    return <CustomTitleSlide slide={slide} variant="responsive" />;
+  }
+
+  // Last slide (id: "vision") uses the custom closing design
+  if (slide.type === "title" && slide.id === "vision") {
+    return <CustomClosingSlide slide={slide} variant="responsive" />;
+  }
+
   switch (slide.type) {
-    case "title":
-      return <TitleSlideContent slide={slide} variant="responsive" />;
     case "content":
       return <ContentSlideContent slide={slide} variant="responsive" />;
+    case "showcase":
+      return <ShowcaseSlideContent slide={slide} variant="responsive" />;
+    case "columns":
+      return <ColumnsSlideContent slide={slide} variant="responsive" />;
     default:
       return null;
   }
