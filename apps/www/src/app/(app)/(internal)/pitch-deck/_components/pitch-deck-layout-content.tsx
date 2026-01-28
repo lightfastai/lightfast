@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { cn } from "@repo/ui/lib/utils";
 import { usePitchDeck } from "./pitch-deck-context";
 
 interface PitchDeckLayoutContentProps {
@@ -13,17 +13,14 @@ export function PitchDeckLayoutContent({ children }: PitchDeckLayoutContentProps
   return (
     <div className="flex min-h-screen">
       {/* Left Column - Founder Preface */}
-      <motion.div
-        initial={false}
-        animate={{
-          x: prefaceExpanded ? 0 : "-100%",
-          opacity: prefaceExpanded ? 1 : 0,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: [0.25, 0.1, 0.25, 1],
-        }}
-        className="fixed top-0 left-0 w-[30%] h-screen bg-background z-30"
+      <div
+        className={cn(
+          "fixed top-0 left-0 w-[30%] h-screen bg-background z-30",
+          "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          prefaceExpanded
+            ? "translate-x-0 opacity-100"
+            : "-translate-x-full opacity-0"
+        )}
       >
         <div className="w-full h-full page-gutter">
           {/* Position content to align with slide center */}
@@ -53,23 +50,17 @@ export function PitchDeckLayoutContent({ children }: PitchDeckLayoutContentProps
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Right Column - Slides */}
-      <motion.div
-        initial={false}
-        animate={{
-          marginLeft: prefaceExpanded ? "30%" : "0%",
-          width: prefaceExpanded ? "70%" : "100%",
-        }}
-        transition={{
-          duration: 0.3,
-          ease: [0.25, 0.1, 0.25, 1],
-        }}
-        className="min-h-screen"
+      <div
+        className={cn(
+          "min-h-screen transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          prefaceExpanded ? "ml-[30%] w-[70%]" : "ml-0 w-full"
+        )}
       >
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 }

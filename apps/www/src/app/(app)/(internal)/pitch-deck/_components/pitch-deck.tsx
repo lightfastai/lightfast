@@ -2,13 +2,15 @@
 
 import { useRef, useEffect, useState } from "react";
 import {
-  motion,
+  LazyMotion,
+  m,
   useScroll,
   useTransform,
   useMotionValueEvent,
   AnimatePresence,
 } from "framer-motion";
 import type { MotionValue } from "framer-motion";
+import { loadMotionFeatures } from "../_lib/motion-features";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
@@ -104,101 +106,103 @@ export function PitchDeck() {
   };
 
   return (
-    <main aria-label="Pitch Deck Presentation">
-      {/* Desktop: Scroll-driven stacking experience */}
-      <div
-        ref={containerRef}
-        className="hidden lg:block relative"
-        style={{ height: `${(PITCH_SLIDES.length + 1) * 100}vh` }}
-      >
+    <LazyMotion features={loadMotionFeatures} strict>
+      <main aria-label="Pitch Deck Presentation">
+        {/* Desktop: Scroll-driven stacking experience */}
         <div
-          className="sticky top-0 h-screen flex flex-col items-center justify-center page-gutter py-16 overflow-visible"
-          role="region"
-          aria-label="Slide viewer"
+          ref={containerRef}
+          className="hidden lg:block relative"
+          style={{ height: `${(PITCH_SLIDES.length + 1) * 100}vh` }}
         >
-          {/* Slide container - fills available space with aspect ratio constraint */}
-          <div className="relative w-full max-w-[1200px] aspect-[16/9] overflow-visible">
-            {PITCH_SLIDES.map((slide, index) => (
-              <PitchSlide
-                key={slide.id}
-                slide={slide}
-                index={index}
-                totalSlides={PITCH_SLIDES.length}
-                scrollProgress={scrollYProgress}
-                isGridView={isGridView}
-              />
-            ))}
-          </div>
-
-          {/* Progress Indicator - positioned with padding offset */}
-          <SlideIndicator
-            totalSlides={PITCH_SLIDES.length}
-            scrollProgress={scrollYProgress}
-            isGridView={isGridView}
-            onDotClick={handleGridItemClick}
-          />
-
-          {/* Scroll Hint - disappears on first scroll */}
-          <ScrollHint isGridView={isGridView} />
-
-          {/* Navigation Controls */}
-          <NavigationControls
-            currentSlide={currentSlide}
-            totalSlides={PITCH_SLIDES.length}
-            onPrev={handlePrevSlide}
-            onNext={handleNextSlide}
-            isGridView={isGridView}
-          />
-        </div>
-      </div>
-
-      {/* Mobile: Simple vertical scroll */}
-      <div className="lg:hidden space-y-6 px-4 pt-20 pb-24">
-        {PITCH_SLIDES.map((slide, index) => (
-          <article
-            key={slide.id}
-            aria-label={`Slide ${index + 1}: ${slide.title}`}
+          <div
+            className="sticky top-0 h-screen flex flex-col items-center justify-center page-gutter py-16 overflow-visible"
+            role="region"
+            aria-label="Slide viewer"
           >
-            <div
-              className={cn(
-                "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg",
-                slide.bgColor
-              )}
-              style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
-            >
-              <div className="relative h-full p-4 flex flex-col justify-between">
-                <SlideContent slide={slide} />
-              </div>
+            {/* Slide container - fills available space with aspect ratio constraint */}
+            <div className="relative w-full max-w-[1200px] aspect-[16/9] overflow-visible">
+              {PITCH_SLIDES.map((slide, index) => (
+                <PitchSlide
+                  key={slide.id}
+                  slide={slide}
+                  index={index}
+                  totalSlides={PITCH_SLIDES.length}
+                  scrollProgress={scrollYProgress}
+                  isGridView={isGridView}
+                />
+              ))}
             </div>
-          </article>
-        ))}
-        <MobileBottomBar />
-      </div>
 
-      {/* Grid View Overlay (desktop only) */}
-      <AnimatePresence>
-        {isGridView && (
-          <GridView>
-            {PITCH_SLIDES.map((slide, index) => (
-              <GridSlideItem
-                key={slide.id}
-                slide={slide}
-                index={index}
-                totalSlides={PITCH_SLIDES.length}
-                onClick={() => handleGridItemClick(index)}
-              />
-            ))}
-          </GridView>
-        )}
-      </AnimatePresence>
-    </main>
+            {/* Progress Indicator - positioned with padding offset */}
+            <SlideIndicator
+              totalSlides={PITCH_SLIDES.length}
+              scrollProgress={scrollYProgress}
+              isGridView={isGridView}
+              onDotClick={handleGridItemClick}
+            />
+
+            {/* Scroll Hint - disappears on first scroll */}
+            <ScrollHint isGridView={isGridView} />
+
+            {/* Navigation Controls */}
+            <NavigationControls
+              currentSlide={currentSlide}
+              totalSlides={PITCH_SLIDES.length}
+              onPrev={handlePrevSlide}
+              onNext={handleNextSlide}
+              isGridView={isGridView}
+            />
+          </div>
+        </div>
+
+        {/* Mobile: Simple vertical scroll */}
+        <div className="lg:hidden space-y-6 px-4 pt-20 pb-24">
+          {PITCH_SLIDES.map((slide, index) => (
+            <article
+              key={slide.id}
+              aria-label={`Slide ${index + 1}: ${slide.title}`}
+            >
+              <div
+                className={cn(
+                  "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg",
+                  slide.bgColor
+                )}
+                style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
+              >
+                <div className="relative h-full p-4 flex flex-col justify-between">
+                  <SlideContent slide={slide} />
+                </div>
+              </div>
+            </article>
+          ))}
+          <MobileBottomBar />
+        </div>
+
+        {/* Grid View Overlay (desktop only) */}
+        <AnimatePresence>
+          {isGridView && (
+            <GridView>
+              {PITCH_SLIDES.map((slide, index) => (
+                <GridSlideItem
+                  key={slide.id}
+                  slide={slide}
+                  index={index}
+                  totalSlides={PITCH_SLIDES.length}
+                  onClick={() => handleGridItemClick(index)}
+                />
+              ))}
+            </GridView>
+          )}
+        </AnimatePresence>
+      </main>
+    </LazyMotion>
   );
 }
 
 // Grid View Overlay with CSS Grid
 function GridView({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -212,7 +216,7 @@ function GridView({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -232,7 +236,7 @@ function GridSlideItem({
   const staggerDelay = (totalSlides - 1 - index) * 0.05;
 
   return (
-    <motion.div
+    <m.div
       onClick={onClick}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{
@@ -270,7 +274,7 @@ function GridSlideItem({
           {slide.gridTitle}
         </p>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -286,7 +290,7 @@ function SlideIndicator({
   onDotClick: (index: number) => void;
 }) {
   return (
-    <motion.div
+    <m.div
       className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-2"
       animate={{
         opacity: isGridView ? 0 : 1,
@@ -303,7 +307,7 @@ function SlideIndicator({
           onClick={() => onDotClick(index)}
         />
       ))}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -334,7 +338,7 @@ function IndicatorLine({
   );
 
   return (
-    <motion.button
+    <m.button
       onClick={onClick}
       style={{ opacity, width }}
       className="h-px min-w-6 bg-foreground cursor-pointer hover:bg-foreground/80 transition-colors block"
@@ -364,7 +368,7 @@ function ScrollHint({ isGridView }: { isGridView: boolean }) {
   if (hasScrolled || isGridView) return null;
 
   return (
-    <motion.div
+    <m.div
       className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -379,7 +383,7 @@ function ScrollHint({ isGridView }: { isGridView: boolean }) {
       <div className="h-3 w-px bg-muted-foreground/50 mt-1" />
 
       {/* Animated diamond indicator */}
-      <motion.div
+      <m.div
         className="mt-1"
         transition={{
           duration: 1.2,
@@ -388,7 +392,7 @@ function ScrollHint({ isGridView }: { isGridView: boolean }) {
         }}
       >
         <div className="w-2 h-2 rotate-45 border border-muted-foreground" />
-      </motion.div>
+      </m.div>
 
       {/* Dotted line below */}
       <div className="flex flex-col gap-1 mt-1">
@@ -396,7 +400,7 @@ function ScrollHint({ isGridView }: { isGridView: boolean }) {
         <div className="w-px h-1 bg-muted-foreground/30" />
         <div className="w-px h-1 bg-muted-foreground/20" />
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -417,7 +421,7 @@ function NavigationControls({
   const isLast = currentSlide === totalSlides - 1;
 
   return (
-    <motion.div
+    <m.div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4"
       initial={{ opacity: 0 }}
       animate={{
@@ -450,7 +454,7 @@ function NavigationControls({
       >
         <ChevronDown className="h-4 w-4" />
       </button>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -529,7 +533,7 @@ function PitchSlide({
   }
 
   return (
-    <motion.article
+    <m.article
       style={{ y, scale, opacity, zIndex }}
       className={cn("absolute inset-0 will-change-transform origin-center")}
       aria-label={`Slide ${index + 1} of ${totalSlides}: ${slide.title}`}
@@ -545,7 +549,7 @@ function PitchSlide({
           <SlideContent slide={slide} />
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 }
 
