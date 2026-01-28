@@ -12,6 +12,7 @@ export const PITCH_SLIDES = [
     id: "intro",
     type: "content" as const,
     title: "Hi, we are Lightfast.",
+    gridTitle: "Introduction",
     leftText: "THE MEMORY LAYER FOR ENGINEERING TEAMS",
     rightText: [
       "Any engineer or AI agent can ask 'what broke?', 'who owns this?', or 'why was this decision made?'—and get accurate answers with sources.",
@@ -25,6 +26,7 @@ export const PITCH_SLIDES = [
     id: "problem",
     type: "content" as const,
     title: "The Problem.",
+    gridTitle: "Problem",
     leftText: "CONTEXT IS SCATTERED",
     rightText: [
       "Engineers spend 30% of their time searching for context—costing companies $40K+/engineer/year",
@@ -40,6 +42,7 @@ export const PITCH_SLIDES = [
     id: "solution",
     type: "content" as const,
     title: "Our Solution.",
+    gridTitle: "Solution",
     leftText: "A UNIFIED MEMORY LAYER",
     rightText: [
       "Connect GitHub, Vercel, and docs in 5 minutes with OAuth—no configuration files",
@@ -55,6 +58,7 @@ export const PITCH_SLIDES = [
     id: "insight",
     type: "content" as const,
     title: "Our Insight.",
+    gridTitle: "Insight",
     leftText: "THE NON-OBVIOUS TRUTH",
     rightText: [
       "Vector search alone gives 60-70% precision—too noisy for engineers to trust",
@@ -70,6 +74,7 @@ export const PITCH_SLIDES = [
     id: "why-now",
     type: "columns" as const,
     title: "Why Now.",
+    gridTitle: "Why Now",
     columns: [
       {
         header: "AI CAPABILITY",
@@ -99,6 +104,7 @@ export const PITCH_SLIDES = [
     id: "team",
     type: "content" as const,
     title: "The Team.",
+    gridTitle: "Team",
     leftText: "WHY US FOR THIS",
     rightText: [
       "[Name]: Built search at [Company], served X queries/day",
@@ -114,6 +120,7 @@ export const PITCH_SLIDES = [
     id: "validation",
     type: "content" as const,
     title: "Validation.",
+    gridTitle: "Validation",
     leftText: "WHY WE'RE BUILDING THIS",
     rightText: [
       "We lived this problem—spent years watching context evaporate across teams",

@@ -24,7 +24,7 @@ export function PitchDeckNavbar() {
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger className="bg-card/80 backdrop-blur-sm rounded-xs! px-4 py-2">
-            <span className="text-xs text-foreground">MENU</span>
+            <span className="text-xs text-foreground mr-16">MENU</span>
           </NavigationMenuTrigger>
           <NavigationMenuContent className="left-1/2 -translate-x-1/2">
             <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">

@@ -24,8 +24,8 @@ export function CustomTitleSlide({
   return (
     <div className="absolute inset-0 bg-[var(--pitch-deck-red)] overflow-hidden">
       {/* Grid overlay */}
-      <div className="absolute inset-0 grid grid-cols-12 gap-2 p-2 grid-rows-6">
-        {Array.from({ length: 72 }).map((_, i) => (
+      <div className="absolute inset-0 grid grid-cols-12 p-4 grid-rows-4">
+        {Array.from({ length: 48 }).map((_, i) => (
           <div
             key={i}
             className="border-[1.5px] border-[var(--pitch-deck-red-overlay)]/30 rounded-sm transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"

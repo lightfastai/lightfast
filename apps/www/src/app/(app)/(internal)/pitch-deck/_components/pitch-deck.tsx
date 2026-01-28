@@ -40,7 +40,7 @@ export function PitchDeck() {
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const slideIndex = Math.min(
       Math.floor(latest * PITCH_SLIDES.length),
-      PITCH_SLIDES.length - 1
+      PITCH_SLIDES.length - 1,
     );
     if (slideIndex !== currentSlide) {
       setCurrentSlide(slideIndex);
@@ -180,8 +180,8 @@ function GridView({ children }: { children: React.ReactNode }) {
       transition={{ duration: 0.3 }}
       className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm overflow-auto"
     >
-      <div className="min-h-screen py-24 px-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen py-24 px-8 flex items-center justify-center">
+        <div className="max-w-7xl w-full">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {children}
           </div>
@@ -228,16 +228,23 @@ function GridSlideItem({
         {/* Inner wrapper scales down the full slide content */}
         <div
           className={cn("w-[400%] h-[400%] origin-top-left", slide.bgColor)}
-          style={{ transform: "scale(0.25)", "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
+          style={
+            {
+              transform: "scale(0.25)",
+              "--foreground": "oklch(0.205 0 0)",
+            } as React.CSSProperties
+          }
         >
           <div className="relative w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
             <SlideContent slide={slide} />
           </div>
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground text-center truncate">
-        {index + 1}. {slide.title}
-      </p>
+      {"gridTitle" in slide && slide.gridTitle && (
+        <p className="mt-2 text-xs text-muted-foreground text-center truncate">
+          {slide.gridTitle}
+        </p>
+      )}
     </motion.div>
   );
 }
@@ -349,7 +356,6 @@ function ScrollHint({ isGridView }: { isGridView: boolean }) {
       {/* Animated diamond indicator */}
       <motion.div
         className="mt-1"
-        animate={{ y: [0, 4, 0] }}
         transition={{
           duration: 1.2,
           repeat: Infinity,
@@ -404,7 +410,10 @@ function NavigationControls({
         <ChevronUp className="h-4 w-4" />
       </button>
 
-      <span className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
+      <span
+        className="text-xs text-muted-foreground tabular-nums"
+        aria-live="polite"
+      >
         {currentSlide + 1} / {totalSlides}
       </span>
 
