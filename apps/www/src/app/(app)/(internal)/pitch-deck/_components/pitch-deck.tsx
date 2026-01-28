@@ -9,6 +9,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import type { MotionValue } from "framer-motion";
+import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
@@ -54,7 +55,10 @@ export function PitchDeck() {
       }
       if (e.key === "End") {
         e.preventDefault();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
       }
     };
 
@@ -100,6 +104,23 @@ export function PitchDeck() {
             isGridView={isGridView}
             onDotClick={handleGridItemClick}
           />
+
+          {/* Back to Home */}
+          <motion.div
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+            animate={{
+              opacity: isGridView ? 0 : 1,
+              pointerEvents: isGridView ? "none" : "auto",
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Back to Home
+            </Link>
+          </motion.div>
         </div>
       </div>
 
@@ -177,13 +198,10 @@ function GridSlideItem({
       className="cursor-pointer group"
     >
       {/* Container maintains 16:9 aspect ratio */}
-      <div className="w-full aspect-[16/9] rounded-lg overflow-hidden shadow-lg transition-shadow duration-200 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20">
+      <div className="w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg transition-shadow duration-200 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20">
         {/* Inner wrapper scales down the full slide content */}
         <div
-          className={cn(
-            "w-[400%] h-[400%] origin-top-left",
-            slide.bgColor
-          )}
+          className={cn("w-[400%] h-[400%] origin-top-left", slide.bgColor)}
           style={{ transform: "scale(0.25)" }}
         >
           <div className="w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
@@ -211,12 +229,15 @@ function SlideIndicator({
 }) {
   return (
     <motion.div
-      className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2"
-      animate={{ opacity: isGridView ? 0 : 1, pointerEvents: isGridView ? "none" : "auto" }}
+      className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-2"
+      animate={{
+        opacity: isGridView ? 0 : 1,
+        pointerEvents: isGridView ? "none" : "auto",
+      }}
       transition={{ duration: 0.2 }}
     >
       {Array.from({ length: totalSlides }).map((_, index) => (
-        <IndicatorDot
+        <IndicatorLine
           key={index}
           index={index}
           totalSlides={totalSlides}
@@ -228,7 +249,7 @@ function SlideIndicator({
   );
 }
 
-function IndicatorDot({
+function IndicatorLine({
   index,
   totalSlides,
   scrollProgress,
@@ -245,20 +266,20 @@ function IndicatorDot({
   const opacity = useTransform(
     scrollProgress,
     [slideStart - 0.05, slideStart, slideEnd - 0.05, slideEnd],
-    [0.3, 1, 1, 0.3]
+    [0.3, 1, 1, 0.3],
   );
 
-  const scaleY = useTransform(
+  const width = useTransform(
     scrollProgress,
     [slideStart - 0.05, slideStart, slideEnd - 0.05, slideEnd],
-    [1, 1.5, 1.5, 1]
+    [24, 40, 40, 24],
   );
 
   return (
     <motion.button
       onClick={onClick}
-      style={{ opacity, scaleY }}
-      className="w-0.5 h-3 bg-foreground rounded-full origin-center cursor-pointer hover:bg-foreground/80 transition-colors"
+      style={{ opacity, width }}
+      className="h-px min-w-6 bg-foreground cursor-pointer hover:bg-foreground/80 transition-colors block"
       aria-label={`Go to slide ${index + 1}`}
     />
   );
@@ -302,30 +323,35 @@ function PitchSlide({
         ],
     isFirstSlide
       ? ["0%", "-30px", "-50px", "-60px", "-60px"]
-      : ["150vh", "150vh", "0%", "-30px", "-50px", "-60px", "-60px"]
+      : ["150vh", "150vh", "0%", "-30px", "-50px", "-60px", "-60px"],
   );
 
   const scale = useTransform(
     scrollProgress,
     isFirstSlide
       ? [0, slideEnd, slideEnd + 0.1, slideEnd + 0.2, slideEnd + 0.3]
-      : [slideStart - 0.08, slideStart, slideEnd, slideEnd + 0.1, slideEnd + 0.2, slideEnd + 0.3],
-    isFirstSlide
-      ? [1, 0.95, 0.9, 0.85, 0.85]
-      : [1, 1, 0.95, 0.9, 0.85, 0.85]
+      : [
+          slideStart - 0.08,
+          slideStart,
+          slideEnd,
+          slideEnd + 0.1,
+          slideEnd + 0.2,
+          slideEnd + 0.3,
+        ],
+    isFirstSlide ? [1, 0.95, 0.9, 0.85, 0.85] : [1, 1, 0.95, 0.9, 0.85, 0.85],
   );
 
   // Opacity: all slides start visible, fade out when stacking behind
   const opacity = useTransform(
     scrollProgress,
     [slideEnd + 0.15, slideEnd + 0.25, slideEnd + 0.35],
-    [1, 0.6, 0]
+    [1, 0.6, 0],
   );
 
   const zIndex = useTransform(
     scrollProgress,
     [slideStart - 0.1, slideStart, slideEnd],
-    [index, index + 1, index + 1]
+    [index, index + 1, index + 1],
   );
 
   // Don't render slides when in grid view (they render in GridView instead)
@@ -341,8 +367,8 @@ function PitchSlide({
     >
       <div
         className={cn(
-          "w-full aspect-[16/9] rounded-[15px] overflow-hidden shadow-2xl",
-          slide.bgColor
+          "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-2xl",
+          slide.bgColor,
         )}
       >
         <div className="relative h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">

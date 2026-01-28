@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Download, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { Icons } from "@repo/ui/components/icons";
 import { exportSlidesToPdf } from "../_lib/export-slides";
 
 export function DownloadButton() {
@@ -24,19 +24,15 @@ export function DownloadButton() {
   return (
     <Button
       variant="ghost"
-      size="sm"
+      size="icon"
       onClick={handleDownload}
       disabled={isExporting}
       className="text-sm text-foreground hover:text-muted-foreground transition-colors"
     >
       {isExporting ? (
-        <>
-          <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
-        </>
+        <Loader2 className="size-4 animate-spin" />
       ) : (
-        <>
-          <Icons.download className="mr-2 h-4 w-4" />
-        </>
+        <Download className="size-4" />
       )}
     </Button>
   );
