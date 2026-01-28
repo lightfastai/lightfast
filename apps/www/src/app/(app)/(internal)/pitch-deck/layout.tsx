@@ -24,9 +24,9 @@ export default async function PitchDeckLayout({
       <div className="relative min-h-screen bg-background">
         {/* Header - matches marketing navbar alignment */}
         <header className="fixed top-0 left-0 right-0 z-50 py-4 page-gutter bg-background/80 backdrop-blur-sm">
-          <div className="relative flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
+          <div className="relative flex items-center justify-between gap-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
             {/* Left: Logo + Toggle */}
-            <div className="-ml-2 flex items-center gap-1 md:justify-self-start">
+            <div className="-ml-2 flex items-center gap-1 lg:justify-self-start">
               <Button variant="none" size="lg" className="group" asChild>
                 <Link href="/" prefetch>
                   <Icons.logo className="size-22 text-foreground transition-colors" />
@@ -41,7 +41,7 @@ export default async function PitchDeckLayout({
             </div>
 
             {/* Right: Download + Contact (desktop) + Mobile Nav */}
-            <div className="flex items-center gap-4 md:justify-self-end">
+            <div className="flex items-center gap-4 lg:justify-self-end">
               <DownloadButton />
               <a
                 href="mailto:jp@lightfast.ai"
