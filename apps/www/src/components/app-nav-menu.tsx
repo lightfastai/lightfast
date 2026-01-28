@@ -18,7 +18,7 @@ import {
  */
 export function AppNavMenu() {
   return (
-    <nav className="hidden md:flex items-center md:justify-self-center">
+    <nav className="hidden lg:flex items-center lg:justify-self-center">
       {/* Features dropdown */}
       <NavigationMenu viewport={false}>
         <NavigationMenuList>
