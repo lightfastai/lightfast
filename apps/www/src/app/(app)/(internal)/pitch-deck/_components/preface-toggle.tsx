@@ -4,17 +4,27 @@ import { PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { usePitchDeck } from "./pitch-deck-context";
+import { useTracking } from "./pitch-deck-tracking-provider";
 
 export function PrefaceToggle({ className }: { className?: string }) {
   const { prefaceExpanded, togglePreface } = usePitchDeck();
+  const { trackPrefaceToggle } = useTracking();
+
+  const handleToggle = () => {
+    const newState = !prefaceExpanded;
+    togglePreface();
+    trackPrefaceToggle(newState);
+  };
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={togglePreface}
+      onClick={handleToggle}
       className={cn("size-8", className)}
-      aria-label={prefaceExpanded ? "Collapse founder note" : "Expand founder note"}
+      aria-label={
+        prefaceExpanded ? "Collapse founder note" : "Expand founder note"
+      }
     >
       {prefaceExpanded ? (
         <PanelLeftClose className="size-4" />

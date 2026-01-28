@@ -4,6 +4,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { PitchDeckNavbar } from "./_components/pitch-deck-navbar";
 import { PitchDeckProvider } from "./_components/pitch-deck-context";
+import { PitchDeckTrackingProvider } from "./_components/pitch-deck-tracking-provider";
 import { PitchDeckLayoutContent } from "./_components/pitch-deck-layout-content";
 import { PrefaceToggle } from "./_components/preface-toggle";
 
@@ -19,7 +20,8 @@ export default async function PitchDeckLayout({
 
   return (
     <PitchDeckProvider defaultPrefaceExpanded={defaultPrefaceExpanded}>
-      <div className="relative min-h-screen bg-background">
+      <PitchDeckTrackingProvider>
+        <div className="relative min-h-screen bg-background">
         {/* Header - matches marketing navbar alignment */}
         <header className="fixed top-0 left-0 right-0 z-50 py-4 page-gutter bg-background/80 backdrop-blur-sm">
           <div className="relative flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
@@ -50,7 +52,8 @@ export default async function PitchDeckLayout({
 
         {/* Split Layout with animated transitions */}
         <PitchDeckLayoutContent>{children}</PitchDeckLayoutContent>
-      </div>
+        </div>
+      </PitchDeckTrackingProvider>
     </PitchDeckProvider>
   );
 }

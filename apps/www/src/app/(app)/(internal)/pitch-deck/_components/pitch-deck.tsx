@@ -12,6 +12,7 @@ import type { MotionValue } from "framer-motion";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
+import { useTracking } from "./pitch-deck-tracking-provider";
 
 export function PitchDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,6 +22,10 @@ export function PitchDeck() {
   });
 
   const { isGridView, setIsGridView } = usePitchDeck();
+  const { trackSlideView, trackGridView, trackGridItemClick } = useTracking();
+
+  // Track current slide based on scroll
+  const previousSlideRef = useRef<number>(-1);
 
   // Grid view threshold: last slide ends at (totalSlides) / (totalSlides + 1)
   // For 8 slides with +1 extra: 8/9 = 0.889
@@ -29,8 +34,26 @@ export function PitchDeck() {
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const shouldBeGrid = latest >= GRID_THRESHOLD;
+
+    // Track grid view state change
     if (shouldBeGrid !== isGridView) {
       setIsGridView(shouldBeGrid);
+      trackGridView(shouldBeGrid);
+    }
+
+    // Track slide views based on scroll progress
+    // Calculate which slide is currently in view
+    const currentSlideIndex = Math.min(
+      Math.floor(latest * PITCH_SLIDES.length),
+      PITCH_SLIDES.length - 1
+    );
+
+    if (
+      currentSlideIndex !== previousSlideRef.current &&
+      currentSlideIndex >= 0
+    ) {
+      previousSlideRef.current = currentSlideIndex;
+      trackSlideView(currentSlideIndex);
     }
   });
 
@@ -62,6 +85,7 @@ export function PitchDeck() {
   }, []);
 
   const handleGridItemClick = (index: number) => {
+    trackGridItemClick(index);
     const scrollTarget = index * window.innerHeight;
     window.scrollTo({ top: scrollTarget, behavior: "smooth" });
   };
