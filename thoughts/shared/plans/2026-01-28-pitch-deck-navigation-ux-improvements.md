@@ -109,9 +109,9 @@ Also remove the `Link` import from `next/link` at line 12 (if no longer used els
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Build succeeds: `pnpm build:www`
+- [x] TypeScript compiles: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
+- [x] Build succeeds: `pnpm build:www`
 
 #### Manual Verification:
 - [ ] "Back to Home" link no longer appears at bottom center
@@ -215,9 +215,9 @@ Add inside the sticky container (after SlideIndicator, where "Back to Home" was 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Build succeeds: `pnpm build:www`
+- [x] TypeScript compiles: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
+- [x] Build succeeds: `pnpm build:www`
 
 #### Manual Verification:
 - [ ] "SCROLL" text with animated diamond indicator appears immediately on page load
@@ -357,9 +357,9 @@ Add after ScrollHint:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] TypeScript compiles: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Build succeeds: `pnpm build:www`
+- [x] TypeScript compiles: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
+- [x] Build succeeds: `pnpm build:www`
 
 #### Manual Verification:
 - [ ] Prev/next buttons appear at bottom center

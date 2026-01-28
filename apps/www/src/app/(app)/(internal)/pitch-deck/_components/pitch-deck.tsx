@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   motion,
   useScroll,
@@ -9,12 +9,11 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import type { MotionValue } from "framer-motion";
-import Link from "next/link";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
 import {
-  TitleSlideContent,
   ContentSlideContent,
   CustomTitleSlide,
   CustomClosingSlide,
@@ -30,13 +29,24 @@ export function PitchDeck() {
   });
 
   const { isGridView, setIsGridView } = usePitchDeck();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Grid view threshold: last slide ends at (totalSlides) / (totalSlides + 1)
   // For 8 slides with +1 extra: 8/9 = 0.889
   // Trigger grid when scroll exceeds ~0.92 (in the extra scroll space)
   const GRID_THRESHOLD = 0.92;
 
+  // Update current slide based on scroll progress
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const slideIndex = Math.min(
+      Math.floor(latest * PITCH_SLIDES.length),
+      PITCH_SLIDES.length - 1
+    );
+    if (slideIndex !== currentSlide) {
+      setCurrentSlide(slideIndex);
+    }
+
+    // Grid view logic
     const shouldBeGrid = latest >= GRID_THRESHOLD;
     if (shouldBeGrid !== isGridView) {
       setIsGridView(shouldBeGrid);
@@ -78,6 +88,20 @@ export function PitchDeck() {
     window.scrollTo({ top: scrollTarget, behavior: "smooth" });
   };
 
+  const handlePrevSlide = () => {
+    if (currentSlide > 0) {
+      const scrollTarget = (currentSlide - 1) * window.innerHeight;
+      window.scrollTo({ top: scrollTarget, behavior: "smooth" });
+    }
+  };
+
+  const handleNextSlide = () => {
+    if (currentSlide < PITCH_SLIDES.length - 1) {
+      const scrollTarget = (currentSlide + 1) * window.innerHeight;
+      window.scrollTo({ top: scrollTarget, behavior: "smooth" });
+    }
+  };
+
   return (
     <main aria-label="Pitch Deck Presentation">
       <div
@@ -112,22 +136,17 @@ export function PitchDeck() {
             onDotClick={handleGridItemClick}
           />
 
-          {/* Back to Home */}
-          <motion.div
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-            animate={{
-              opacity: isGridView ? 0 : 1,
-              pointerEvents: isGridView ? "none" : "auto",
-            }}
-            transition={{ duration: 0.2 }}
-          >
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Back to Home
-            </Link>
-          </motion.div>
+          {/* Scroll Hint - disappears on first scroll */}
+          <ScrollHint isGridView={isGridView} />
+
+          {/* Navigation Controls */}
+          <NavigationControls
+            currentSlide={currentSlide}
+            totalSlides={PITCH_SLIDES.length}
+            onPrev={handlePrevSlide}
+            onNext={handleNextSlide}
+            isGridView={isGridView}
+          />
         </div>
       </div>
 
@@ -289,6 +308,115 @@ function IndicatorLine({
       className="h-px min-w-6 bg-foreground cursor-pointer hover:bg-foreground/80 transition-colors block"
       aria-label={`Go to slide ${index + 1}`}
     />
+  );
+}
+
+function ScrollHint({ isGridView }: { isGridView: boolean }) {
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  // Hide on first scroll - never show again
+  useEffect(() => {
+    if (hasScrolled) return;
+
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setHasScrolled(true);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [hasScrolled]);
+
+  // Don't render if user has scrolled or in grid view
+  if (hasScrolled || isGridView) return null;
+
+  return (
+    <motion.div
+      className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* SCROLL text */}
+      <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground uppercase">
+        Scroll
+      </span>
+
+      {/* Vertical line */}
+      <div className="h-3 w-px bg-muted-foreground/50 mt-1" />
+
+      {/* Animated diamond indicator */}
+      <motion.div
+        className="mt-1"
+        animate={{ y: [0, 4, 0] }}
+        transition={{
+          duration: 1.2,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <div className="w-2 h-2 rotate-45 border border-muted-foreground" />
+      </motion.div>
+
+      {/* Dotted line below */}
+      <div className="flex flex-col gap-1 mt-1">
+        <div className="w-px h-1 bg-muted-foreground/40" />
+        <div className="w-px h-1 bg-muted-foreground/30" />
+        <div className="w-px h-1 bg-muted-foreground/20" />
+      </div>
+    </motion.div>
+  );
+}
+
+function NavigationControls({
+  currentSlide,
+  totalSlides,
+  onPrev,
+  onNext,
+  isGridView,
+}: {
+  currentSlide: number;
+  totalSlides: number;
+  onPrev: () => void;
+  onNext: () => void;
+  isGridView: boolean;
+}) {
+  const isFirst = currentSlide === 0;
+  const isLast = currentSlide === totalSlides - 1;
+
+  return (
+    <motion.div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4"
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: isGridView ? 0 : 1,
+        pointerEvents: isGridView ? "none" : "auto",
+      }}
+      transition={{ duration: 0.2 }}
+    >
+      <button
+        onClick={onPrev}
+        disabled={isFirst}
+        className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        aria-label="Previous slide"
+      >
+        <ChevronUp className="h-4 w-4" />
+      </button>
+
+      <span className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
+        {currentSlide + 1} / {totalSlides}
+      </span>
+
+      <button
+        onClick={onNext}
+        disabled={isLast}
+        className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        aria-label="Next slide"
+      >
+        <ChevronDown className="h-4 w-4" />
+      </button>
+    </motion.div>
   );
 }
 
