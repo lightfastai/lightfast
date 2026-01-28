@@ -5,29 +5,25 @@ import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 
-import { posthogEnv } from "../../../env";
-
-// Ensure baseUrl is a valid URL without /ingest
-export function PostHogProvider({
-  children,
-  baseUrl,
-}: {
+interface PostHogProviderProps {
   children: React.ReactNode;
-  baseUrl: string;
-}) {
-  useEffect(() => {
-    posthog.init(posthogEnv.NEXT_PUBLIC_POSTHOG_KEY, {
-      api_host: `${baseUrl}/ingest`,
-      ui_host: "https://us.posthog.com",
-      person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
-      capture_pageview: false, // Disable automatic pageview capture, as we capture manually
-    });
-  }, []);
+}
 
+/**
+ * PostHog context provider.
+ *
+ * IMPORTANT: PostHog must be initialized via initializePostHogAnalytics()
+ * in your app's instrumentation-client.ts BEFORE this provider mounts.
+ *
+ * This provider:
+ * - Wraps children in PostHog React context
+ * - Renders automatic pageview tracking component
+ */
+export function PostHogProvider({ children }: PostHogProviderProps) {
   return (
     <PHProvider client={posthog}>
-      <SuspendedPostHogPageView />
       {children}
+      <SuspendedPostHogPageView />
     </PHProvider>
   );
 }

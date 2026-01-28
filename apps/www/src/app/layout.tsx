@@ -15,7 +15,6 @@ import {
   PrefetchCrossZoneLinksProvider,
 } from "@vercel/microfrontends/next/client";
 
-import { createBaseUrl } from "~/lib/base-url";
 import { env } from "~/env";
 import { authUrl, consoleUrl } from "~/lib/related-projects";
 import { JsonLd } from "@vendor/seo/json-ld";
@@ -170,7 +169,7 @@ export default function RootLayout({
         </head>
         <body className={cn("min-h-screen dark font-sans bg-background")}>
           <PrefetchCrossZoneLinksProvider>
-            <PostHogProvider baseUrl={createBaseUrl()}>
+            <PostHogProvider>
               {children}
               <Toaster />
               <VercelAnalytics />

@@ -1,60 +1,39 @@
-import { z } from "zod";
-
-import { env } from "~/env";
-
 /**
- * Schema for validating URL suffixes.
- * - Must start with a forward slash if provided
- * - Cannot contain protocol or domain parts
- * - Allows alphanumeric characters, slashes, hyphens, and underscores
+ * Client-side base URL utility.
+ *
+ * Uses window.location.origin on client, environment variables on server.
  */
-const urlSuffixSchema = z
-  .string()
-  .regex(/^\/.*$/, "Suffix must start with '/' if provided")
-  .regex(/^(?!https?:\/\/).*$/, "Suffix cannot contain protocol")
-  .regex(
-    /^[/a-zA-Z0-9-_]*$/,
-    "Suffix can only contain alphanumeric characters, slashes, hyphens, and underscores",
-  )
-  .or(z.literal(""))
-  .transform((suffix) => suffix.replace(/\/+/g, "/")); // normalize multiple slashes
-
-type UrlSuffix = z.infer<typeof urlSuffixSchema>;
 
 /**
- * Creates a base URL with optional path suffix based on the current environment.
+ * Creates a base URL based on the current environment.
  *
  * IMPORTANT: Returns custom domain (www.lightfast.ai) in production, not Vercel URL.
  * This ensures same-origin requests for PostHog proxy (/ingest rewrites).
  *
- * @param {UrlSuffix} [suffix] - Optional path suffix to append to the base URL (must start with '/' if provided)
- * @returns {string} The complete URL for the current environment
- * @throws {Error} If suffix validation fails
- * @private
- */
-const createEnvironmentUrl = (suffix: UrlSuffix = ""): string => {
-  const port = env.PORT;
-
-  // Parse and validate the suffix
-  const parsedSuffix = urlSuffixSchema.parse(suffix);
-
-  // Production: Use custom domain for same-origin PostHog proxy
-  if (env.NODE_ENV === "production") {
-    return `https://www.lightfast.ai${parsedSuffix}`;
-  }
-
-  // Preview/development on Vercel
-  if (env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}${parsedSuffix}`;
-  }
-
-  // Local development
-  return `http://localhost:${port}${parsedSuffix}`;
-};
-
-/**
- * Gets the base URL for the application.
- *
  * @returns {string} The complete base URL for the current environment
  */
-export const createBaseUrl = (): string => createEnvironmentUrl();
+export const createBaseUrl = (): string => {
+  // Client-side: use window.location.origin for correct same-origin requests
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  // Server-side: use environment variables
+  const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
+  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
+
+  // Production: Use custom domain for same-origin PostHog proxy
+  if (vercelEnv === "production") {
+    return "https://www.lightfast.ai";
+  }
+
+  // Preview on Vercel
+  if (vercelUrl) {
+    return `https://${vercelUrl}`;
+  }
+
+  // Local development fallback
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const port = process.env.PORT || 3000;
+  return `http://localhost:${port}`;
+};
