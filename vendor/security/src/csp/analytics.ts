@@ -7,6 +7,7 @@ import type { PartialCspDirectives } from "./types";
  * - va.vercel-scripts.com: Analytics and Speed Insights scripts
  * - vitals.vercel-insights.com: Performance metrics endpoint
  * - us.i.posthog.com: PostHog analytics endpoint (direct)
+ * - us.posthog.com: PostHog UI host (for feature flags, surveys, etc.)
  * - us-assets.i.posthog.com: PostHog script CDN
  * - *.ingest.sentry.io: Sentry error tracking (all regions)
  *
@@ -31,12 +32,16 @@ export function createAnalyticsCspDirectives(): PartialCspDirectives {
       "https://us-assets.i.posthog.com",
     ],
 
-    // Connections: Performance vitals, PostHog direct, and Sentry
+    // Connections: Performance vitals, PostHog direct/UI, and Sentry
     connectSrc: [
       "https://vitals.vercel-insights.com",
       "https://us.i.posthog.com",
+      "https://us.posthog.com",
       "https://*.ingest.sentry.io",
       "https://*.ingest.us.sentry.io",
     ],
+
+    // Frames: PostHog surveys and feature flag UI
+    frameSrc: ["https://us.posthog.com"],
   };
 }

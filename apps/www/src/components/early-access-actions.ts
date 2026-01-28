@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { after } from "next/server";
 import { arcjet, shield, detectBot, fixedWindow, slidingWindow, validateEmail, request, ARCJET_KEY } from "@vendor/security";
 import { redis } from "@vendor/upstash";
 import { handleClerkError } from "~/lib/clerk-error-handler";
@@ -247,25 +248,29 @@ export async function joinEarlyAccessAction(
 				throw new Error(errorResult.message);
 			}
 
-			// Add email to Redis set for tracking (non-critical)
-			try {
-				await redis.sadd(EARLY_ACCESS_EMAILS_SET_KEY, email);
-			} catch (redisError) {
-				// Log but don't fail the user experience if Redis is down
-				console.error("Failed to add email to Redis tracking:", redisError);
-				captureException(redisError, {
-					tags: {
-						action: "joinEarlyAccess:redis-add",
-						email,
-					},
-				});
-			}
-
-			return {
+			// Return immediately for faster response
+			const successResponse: EarlyAccessState = {
 				status: "success",
 				message:
 					"Successfully joined early access! We'll send you an invite when Lightfast is ready.",
 			};
+
+			// Track in Redis after response is sent (non-blocking)
+			after(async () => {
+				try {
+					await redis.sadd(EARLY_ACCESS_EMAILS_SET_KEY, email);
+				} catch (redisError) {
+					console.error("Failed to add email to Redis tracking:", redisError);
+					captureException(redisError, {
+						tags: {
+							action: "joinEarlyAccess:redis-add",
+							email,
+						},
+					});
+				}
+			});
+
+			return successResponse;
 		} catch (clerkError) {
 			// If it's already an error we want to show, return it
 			if (clerkError instanceof Error && clerkError.message.includes("already registered")) {

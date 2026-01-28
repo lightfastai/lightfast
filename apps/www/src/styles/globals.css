@@ -7,6 +7,9 @@
   --brand-orange: oklch(0.5913 0.2286 31.28);
   --brand-orange-overlay: oklch(0.6496 0.2375 31.9);
   --brand-gray: oklch(0.1957 0 0);
+  /* Pitch deck red colors */
+  --pitch-deck-red: #e62200;
+  --pitch-deck-red-overlay: #ff3714;
 }
 
 /* Dark mode theme */

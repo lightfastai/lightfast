@@ -4,6 +4,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Search } from "lucide-react";
 import { AppNavMenu } from "./app-nav-menu";
+import { AppMobileNav } from "./app-mobile-nav";
 
 /**
  * Server-rendered navbar component
@@ -11,9 +12,9 @@ import { AppNavMenu } from "./app-nav-menu";
 export function AppNavbar() {
   return (
     <header className="shrink-0 border-b sticky top-0 z-50 py-4 page-gutter bg-background transition-colors duration-300">
-      <div className="relative flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
+      <div className="relative flex items-center justify-between gap-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         {/* Left: Logo */}
-        <div className="-ml-2 flex items-center md:justify-self-start">
+        <div className="-ml-2 flex items-center lg:justify-self-start">
           <Button variant="none" size="lg" className="group" asChild>
             <NextLink href="/" prefetch>
               <Icons.logo className="size-22 text-foreground transition-colors" />
@@ -25,7 +26,7 @@ export function AppNavbar() {
         <AppNavMenu />
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-4 md:justify-self-end">
+        <div className="flex items-center gap-4 lg:justify-self-end">
           {/* Search Icon */}
           <Button
             variant="link"
@@ -51,6 +52,9 @@ export function AppNavbar() {
               </span>
             </MicrofrontendLink>
           </Button>
+
+          {/* Mobile Nav Trigger - only visible below lg */}
+          <AppMobileNav />
         </div>
       </div>
     </header>

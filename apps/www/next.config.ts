@@ -7,6 +7,7 @@ import {
 	config as vendorConfig,
 	withBetterStack,
 	withSentry,
+	withAnalyzer,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
 
@@ -47,6 +48,11 @@ let config: NextConfig = withBetterStack(
 				"jotai",
 				"lucide-react",
 				"react-confetti",
+				"framer-motion",
+				"date-fns",
+				"class-variance-authority",
+				"clsx",
+				"tailwind-merge",
 			],
 			// Faster navigation for production
 			// ppr: true,
@@ -59,6 +65,11 @@ let config: NextConfig = withBetterStack(
 
 if (env.VERCEL) {
 	config = withSentry(config);
+}
+
+// Enable bundle analysis when requested
+if (process.env.ANALYZE === "true") {
+	config = withAnalyzer(config);
 }
 
 export default withMicrofrontends(config, { debug: true });

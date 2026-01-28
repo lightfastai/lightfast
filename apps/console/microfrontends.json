@@ -32,6 +32,7 @@
             "/legal/:path*",
             "/search",
             "/preview",
+            "/pitch-deck",
             "/api/health",
             "/images/:path*",
             "/fonts/:path*",

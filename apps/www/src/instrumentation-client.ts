@@ -3,8 +3,10 @@ import {
   init as initSentry,
   replayIntegration,
 } from "@sentry/nextjs";
+import { initializePostHogAnalytics } from "@vendor/analytics/posthog-instrumentation-client";
 
 import { env } from "~/env";
+import { createBaseUrl } from "~/lib/base-url";
 
 initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
@@ -36,6 +38,11 @@ initSentry({
       blockAllMedia: true,
     }),
   ],
+});
+
+// Initialize PostHog analytics
+initializePostHogAnalytics({
+  baseUrl: createBaseUrl(),
 });
 
 export const onRouterTransitionStart = captureRouterTransitionStart;

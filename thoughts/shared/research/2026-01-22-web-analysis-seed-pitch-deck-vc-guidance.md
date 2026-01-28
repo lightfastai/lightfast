@@ -2,11 +2,14 @@
 date: 2026-01-22T12:00:00+11:00
 researcher: Claude Code
 topic: "What makes a successful early-stage/seed pitch deck according to top VCs"
-tags: [research, web-analysis, pitch-deck, fundraising, seed-stage, vc, yc, sequoia, a16z, blackbird, airtree]
+tags: [research, web-analysis, pitch-deck, fundraising, seed-stage, pre-seed, vc, yc, sequoia, a16z, blackbird, airtree]
 status: complete
 created_at: 2026-01-22
+last_updated: 2026-01-22
+last_updated_by: Claude Code
+last_updated_note: "Added comprehensive YC pre-seed funding guidance section"
 confidence: high
-sources_count: 45
+sources_count: 65
 ---
 
 # Web Research: Successful Seed-Stage Pitch Deck Guidance from Top VCs
@@ -24,6 +27,150 @@ What does a successful seed-stage pitch deck contain, and how should founders cr
 After analyzing official guidance from five leading VC firms, clear patterns emerge for successful seed-stage pitch decks. **All firms prioritize clarity, simplicity, and storytelling over templates.** The consensus is that seed-stage decks should be 10-15 slides, lead with the team/founders, demonstrate a unique insight ("secret"), and show traction through metrics with timeframes. Notably, **product demos are valued more than lengthy slide decks** across all firms.
 
 Key divergence: US firms (YC, Sequoia, a16z) place more emphasis on market size, while ANZ firms (Blackbird, Airtree) explicitly discourage traditional TAM/SAM/SOM slides in favor of mission clarity and "customer love metrics."
+
+---
+
+## YC's Pre-Seed Funding Approach
+
+### Critical Insight: YC Doesn't Distinguish Pre-Seed from Seed
+
+**Y Combinator does not formally distinguish between "pre-seed" and "seed"** in their application process, deal terms, or official guidance. All accepted companies receive the same deal regardless of stage:
+
+- **$500,000 total investment** for **7% equity**
+  - $125,000 on post-money SAFE (fixed 7%)
+  - $375,000 on uncapped MFN SAFE
+
+The "pre-seed vs seed" distinction is a market/investor construct, not a YC construct.
+
+### What YC Actually Accepts
+
+| Stage at Acceptance | % of YC Batches |
+|---------------------|-----------------|
+| Idea-stage only (no product) | ~40% |
+| Pre-revenue | Majority |
+| Just a demo/prototype | Common |
+| Millions in revenue | Minority |
+
+**Source**: [YC FAQ](https://www.ycombinator.com/faq.html)
+
+### YC's Three Evaluation Criteria (Stage-Agnostic)
+
+From Paul Graham's [How to Apply to Y Combinator](https://www.ycombinator.com/howtoapply):
+
+1. **Founders**: Evidence of extraordinary achievement and determination
+2. **Idea**: Level of insight and understanding of the problem
+3. **Clarity**: How clearly you can communicate
+
+**Key point**: You can be accepted with weakness in one or even two areas if you're exceptional in the remaining area(s).
+
+### Pre-Seed Traction Expectations for YC
+
+YC defines pre-seed traction as "any repeatable signal that strangers care enough to click, pay, rave, or wait for what you're building."
+
+**Quantitative signals YC values:**
+- 100–500 weekly active beta users
+- 30–50% MoM waitlist growth
+- $5k–$25k in pre-orders or Letters of Intent
+- 40%+ day-30 retention on MVP
+
+**Qualitative signals YC values:**
+- 10 glowing user video testimonials
+- Fortune-500 pilot partnership in progress
+- Feature requests coming in faster than you can build
+
+**Critical YC Philosophy**: "Story > Spreadsheet" at pre-seed stage.
+
+### Pre-Seed vs Seed: Market Comparison (2025-2026)
+
+| Dimension | Pre-Seed | Seed |
+|-----------|----------|------|
+| **Funding Amount** | $500K-$1M (median ~$700K) | $2-3.5M (median $2.5-3.5M) |
+| **Valuation** | $3-8M post-money | $8-15M post-money |
+| **Product Stage** | Idea/prototype/MVP in progress | Working MVP/early PMF |
+| **Traction** | Validation over revenue; $1-25K MRR | $50K-$1M ARR; clear PMF signals |
+| **Team Size** | 2+ (often just founders) | 2-10 (expanded team) |
+| **Equity Dilution** | 2.5-12.5% | 15-25% |
+| **Investment Vehicle** | SAFE (89-90% of deals) | SAFE or priced equity round |
+| **Investor Focus** | Team, idea, market potential | Traction, scalability, unit economics |
+
+### YC SAFE Terms for Pre-Seed
+
+**Post-Money SAFE** (YC standard since 2018):
+- Investor ownership % = Investment ÷ Post-Money Valuation Cap
+- **Typical pre-seed caps**: $5M - $8M
+- **2025 median** (for $1M raise): $10M cap
+
+**YC Recommendation**: Issue either valuation cap OR discount flavor, **generally not both**.
+
+**Example**: $500K investment with $10M cap = 5% ownership when SAFE converts.
+
+**Source**: [YC Understanding SAFEs](https://www.ycombinator.com/library/6m-understanding-safes-and-priced-equity-rounds)
+
+### Post-YC Demo Day Benchmarks (2025)
+
+| Tier | % of Batch | Typical Raise | Post-Money Valuation |
+|------|------------|---------------|---------------------|
+| Top Tier | 5-10% | $2M | $20-25M |
+| Mid Tier | ~60% | $2M | $20M |
+| Lower Tier | 30-35% | $1-2M | $12-18M |
+
+**Sector-Specific**:
+- Healthcare: $4.6M median at $25-35M post-money
+- AI/Agentic: $3.5M median at $22-30M post-money
+
+### YC Partner Guidance on Fundraising
+
+**Michael Seibel (YC Managing Director)**:
+- "Raise money **as quickly as possible** and then get back to work"
+- "Valuation is not equal to success or even probability of success"
+- Fundraising should take only **~5% of a founder's time**
+
+**Key Advice**:
+- Focus on: users, product, hiring, shipping code
+- Don't pitch investors before execution
+- Non-technical teams need **10x the traction** to overcome that hurdle
+
+### Getting Into YC Without Traction
+
+From GrowthMentor research: **1/3 of interviewed founders were accepted with little more than an idea and pitch deck**.
+
+**To get in without traction, you need:**
+1. Very good team with proven track record, OR
+2. Crazy idea that's compelling, OR
+3. Unique insight into the problem
+
+**Examples**:
+- "4 Swedes got accepted at $0 MRR"
+- "Sofa startup got in with just a pitch deck"
+
+### Pre-Seed Pitch Deck for YC
+
+YC provides **one deck template** for all early-stage fundraising (no separate pre-seed template):
+
+**10 Slides** ([YC Seed Deck Template](https://www.ycombinator.com/blog/intro-to-the-yc-seed-deck)):
+1. **Title Page**: Company name + one-line description
+2. **Problem**: Clearly state the problem and its impact
+3. **Solution**: What you do, described clearly with concrete benefits
+4. **Traction**: Metrics (if you have them) — **skip if none**
+5. **More Metrics**: Additional relevant statistics
+6. **Secret/Insight**: What makes you special
+7. **Business Model**: Lay out the model (even if emerging)
+8. **Market**: Market size and potential for returns
+9. **Team**: Why founders are suited to this problem
+10. **Ask**: How much money + what milestones within a year
+
+**For Pre-Seed specifically**: If you have no traction, skip the traction slide entirely. Don't fake it.
+
+### Pre-Seed Sources
+
+- [YC FAQ](https://www.ycombinator.com/faq.html)
+- [YC Deal Terms](https://www.ycombinator.com/deal)
+- [How to Apply to YC](https://www.ycombinator.com/howtoapply) - Paul Graham
+- [Understanding SAFEs](https://www.ycombinator.com/library/6m-understanding-safes-and-priced-equity-rounds)
+- [How to Show Traction for Pre-Seed](https://www.flowjam.com/blog/how-to-show-traction-for-pre-seed-startup)
+- [Getting Into YC](https://www.hubspot.com/startups/fundraising/getting-into-y-combinator)
+- [2025 Pre-Seed Benchmarks](https://www.metal.so/collections/2025-pre-seed-funding-benchmarks-saas-startups-round-size-valuation-equity)
+- [YC Seed Round Size 2025](https://www.rebelfund.vc/blog-posts/yc-seed-round-size-2025-benchmarks-winter-spring-batches)
 
 ---
 
