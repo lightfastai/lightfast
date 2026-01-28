@@ -22,8 +22,7 @@ export function NavbarStateInjector({ initialPathname }: NavbarStateInjectorProp
     const updateNavbarState = () => {
       const scrollY = window.scrollY;
       const isScrolled = scrollY > 25;
-      const isHomePage = pathname === "/";
-      const showBrandNavbar = isHomePage || isScrolled;
+      const showBrandNavbar = isScrolled;
 
       if (showBrandNavbar) {
         navbarElement.classList.add("brand-navbar");
