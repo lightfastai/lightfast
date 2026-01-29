@@ -1,4 +1,4 @@
-import { AppNavbar } from "~/components/app-navbar";
+import { AppNavbarV2 } from "~/components/app-navbar-v2";
 import { AppFooter } from "~/components/app-footer";
 
 export default function MarketingLayout({
@@ -11,7 +11,7 @@ export default function MarketingLayout({
       {/* Main wrapper */}
       <div className="relative min-h-screen flex flex-col">
         {/* Navbar */}
-        <AppNavbar />
+        <AppNavbarV2 />
 
         {/* Main content with background */}
         <main className="flex-1 py-16 bg-background">{children}</main>

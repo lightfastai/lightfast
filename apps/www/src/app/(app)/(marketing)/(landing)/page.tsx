@@ -3,7 +3,7 @@ import { exposureTrial } from "~/lib/fonts";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@repo/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { AnnouncementBadge } from "~/components/announcement-badge";
 import { VisualShowcase } from "~/components/visual-showcase";
 import { SearchDemo } from "~/components/search-demo";
 import { IntegrationShowcase } from "~/components/integration-showcase";
@@ -12,6 +12,7 @@ import { ChangelogPreview } from "~/components/changelog-preview";
 import { FAQSection, faqs } from "~/components/faq-section";
 import { WaitlistCTA } from "~/components/waitlist-cta";
 import { BecomingLightfast } from "~/components/becoming-lightfast";
+import { DitheredBackground } from "~/components/dithered-background";
 import {
   JsonLd,
   type GraphContext,
@@ -172,59 +173,62 @@ export default function HomePage() {
     <>
       {/* Structured data for SEO */}
       <JsonLd code={structuredData} />
-      <div className="mt-6 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
+      <div className="mt-16 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
         {/* Hero Section - centered content */}
         <div className="max-w-7xl mx-auto grid grid-cols-12">
           <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
             <section className="flex w-full flex-col items-center text-center">
-              {/* Small label */}
-              {/* <div className="mb-8 opacity-80">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Memory built for teams
-                </p>
-              </div>
-              /*}
+              {/* Announcement badge */}
+              <AnnouncementBadge />
 
               {/* Heading */}
               <h1
-                className={`text-2xl sm:text-3xl md:text-4xl font-light  px-4 text-balance ${exposureTrial.className}`}
+                className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light px-4 text-balance ${exposureTrial.className}`}
               >
                 The memory layer for software teams
-                {/* Search everything your team knows.
-                <br /> Get answers with sources. */}
               </h1>
 
               {/* Description */}
-              <div className="mt-4 px-4 w-full">
-                <p className="text-base text-muted-foreground whitespace-nowrap md:whitespace-normal lg:whitespace-nowrap">
+              <div className="mt-6 px-4 w-full">
+                <p className="text-lg md:text-xl text-muted-foreground">
                   Search everything your engineering org knows
                 </p>
               </div>
 
-              {/* CTA - centered */}
-              <div className="mt-8 flex flex-col justify-center gap-8 sm:flex-row">
-                <Button asChild size="lg" className="rounded-full">
-                  <Link href="/early-access" className="group">
-                    <span>Join Early Access</span>
-                  </Link>
-                </Button>
-                <Link
-                  href="/docs/get-started/overview"
-                  className="group inline-flex items-center justify-center text-sm font-medium transition-colors hover:text-foreground/80"
-                >
-                  <span>Learn more about Lightfast</span>
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+              {/* Email CTA */}
+              <div className="mt-10 w-full max-w-xl px-4">
+                <form className="relative flex h-12 items-center rounded-full bg-secondary/50 border border-border/30 pl-6 pr-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your company email"
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                  <Button type="submit" className="rounded-full px-6 shrink-0">
+                    Join Waitlist
+                  </Button>
+                </form>
               </div>
             </section>
           </div>
         </div>
 
         {/* Platform Access Cards */}
-        <PlatformAccessCards />
+        <div className="py-16 md:py-24">
+          <div className="relative">
+            {/* Dithered background - starts at ~20% of card height */}
+            <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-screen h-[calc(100%+6rem)] overflow-hidden">
+              <DitheredBackground />
+            </div>
+
+            {/* Cards - positioned above the blue background */}
+            <div className="relative z-10 max-w-6xl px-4 mx-auto">
+              <PlatformAccessCards />
+            </div>
+          </div>
+        </div>
 
         {/* Demo Section - Search Visual */}
-        <div className="max-w-6xl px-4 mx-auto w-full py-10">
+        <div className="max-w-6xl px-4 mx-auto w-full py-64">
           <VisualShowcase>
             <SearchDemo />
           </VisualShowcase>

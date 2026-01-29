@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "catalog:",
+    "@paper-design/shaders-react": "0.0.71",
     "@radix-ui/react-dialog": "^1.1.14",
     "@repo/app-urls": "workspace:*",
     "@repo/console-billing": "workspace:*",

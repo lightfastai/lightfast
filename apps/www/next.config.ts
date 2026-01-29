@@ -43,6 +43,8 @@ const wwwConfig: NextConfig = {
 		"@repo/site-config",
 		"@repo/email",
 		"@repo/lib",
+		"@paper-design/shaders-react",
+		"@paper-design/shaders",
 	],
 
 	// Add automatic static optimization where possible
@@ -58,6 +60,7 @@ const wwwConfig: NextConfig = {
 			"class-variance-authority",
 			"clsx",
 			"tailwind-merge",
+			"@paper-design/shaders-react",
 		],
 	},
 

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { CheckCircle, Package, BookOpen, type LucideIcon } from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
+
+type CardVariant = "glass" | "muted" | "blue";
 
 interface AccessCard {
   href: string;
@@ -9,15 +12,51 @@ interface AccessCard {
   description: string;
   external?: boolean;
   microfrontend?: boolean;
+  variant: CardVariant;
 }
+
+const variantStyles: Record<
+  CardVariant,
+  {
+    card: string;
+    icon: string;
+    title: string;
+    description: string;
+    colSpan: string;
+  }
+> = {
+  glass: {
+    card: "bg-gradient-to-br from-muted/80 via-muted/50 to-card/30 backdrop-blur-xl border-border/30 shadow-inner hover:from-muted/90 hover:via-muted/60 hover:to-card/40",
+    icon: "text-foreground",
+    title: "text-foreground",
+    description: "text-muted-foreground",
+    colSpan: "md:col-span-5",
+  },
+  muted: {
+    card: "bg-muted border-border hover:bg-accent/10 hover:border-muted-foreground/20",
+    icon: "text-foreground",
+    title: "text-foreground",
+    description: "text-muted-foreground",
+    colSpan: "md:col-span-4",
+  },
+  blue: {
+    card: "bg-primary border-primary hover:bg-primary/90",
+    icon: "text-primary-foreground/80",
+    title: "text-primary-foreground",
+    description: "text-primary-foreground/70",
+    colSpan: "md:col-span-3",
+  },
+};
 
 const accessCards: AccessCard[] = [
   {
     href: "/sign-in",
     icon: CheckCircle,
     title: "Have Access?",
-    description: "Go to App and start searching your software team's knowledge base.",
+    description:
+      "Go to App and start searching your software team's knowledge base.",
     microfrontend: true,
+    variant: "glass",
   },
   {
     href: "/docs/api-reference/overview",
@@ -25,6 +64,7 @@ const accessCards: AccessCard[] = [
     title: "API Platform",
     description: "Use our APIs and models to build your own AI experiences.",
     external: true,
+    variant: "muted",
   },
   {
     href: "/docs/get-started/overview",
@@ -33,43 +73,47 @@ const accessCards: AccessCard[] = [
     description:
       "Learn how to integrate and use Lightfast in your applications.",
     external: true,
+    variant: "blue",
   },
 ];
 
 export function PlatformAccessCards() {
   return (
-    <div className="max-w-6xl px-4 mx-auto w-full">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {accessCards.map((card) => {
-          const Icon = card.icon;
-          const LinkComponent = card.microfrontend ? MicrofrontendLink : Link;
-          const linkProps = card.external
-            ? { target: "_blank", rel: "noopener noreferrer" }
-            : {};
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      {accessCards.map((card) => {
+        const Icon = card.icon;
+        const LinkComponent = card.microfrontend ? MicrofrontendLink : Link;
+        const linkProps = card.external
+          ? { target: "_blank", rel: "noopener noreferrer" }
+          : {};
+        const styles = variantStyles[card.variant];
 
-          return (
-            <LinkComponent
-              key={card.href}
-              href={card.href}
-              className="group"
-              {...linkProps}
+        return (
+          <LinkComponent
+            key={card.href}
+            href={card.href}
+            className={cn("group", styles.colSpan)}
+            {...linkProps}
+          >
+            <div
+              className={cn(
+                "relative h-full rounded-xs border p-8 transition-all duration-200",
+                styles.card,
+              )}
             >
-              <div className="relative h-full rounded-xs border border-transparent bg-card p-8 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
-                <div className="mb-22">
-                  <Icon className="h-5 w-5 text-foreground" />
-                </div>
-                <h3 className="mb-2 text-xl font-medium text-foreground">
-                  {card.title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {card.description}
-                </p>
+              <div className="mb-32">
+                <Icon className={cn("h-5 w-5", styles.icon)} />
               </div>
-            </LinkComponent>
-          );
-        })}
-      </div>
+              <h3 className={cn("mb-2 text-xl font-medium", styles.title)}>
+                {card.title}
+              </h3>
+              <p className={cn("text-sm leading-relaxed", styles.description)}>
+                {card.description}
+              </p>
+            </div>
+          </LinkComponent>
+        );
+      })}
     </div>
   );
 }
-

@@ -1,0 +1,35 @@
+"use client";
+
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const ImageDithering = lazy(() =>
+  import("@paper-design/shaders-react").then((mod) => ({
+    default: mod.ImageDithering,
+  })),
+);
+
+function Fallback() {
+  return <div className="w-full h-full bg-blue-800" />;
+}
+
+export function DitheredBackground() {
+  return (
+    <Suspense fallback={<Fallback />}>
+      <ImageDithering
+        width="100%"
+        height="100%"
+        image="/images/blue-sky.webp"
+        colorBack="#1e40af"
+        colorFront="#ffffff"
+        colorHighlight="#3b82f6"
+        originalColors={false}
+        inverted={false}
+        type="8x8"
+        size={2}
+        colorSteps={2}
+        fit="cover"
+        style={{ width: "100%", height: "100%" }}
+      />
+    </Suspense>
+  );
+}
