@@ -162,52 +162,84 @@ export default function HomePage() {
       <JsonLd code={structuredData} />
 
       {/* Grid-based landing page */}
-      <div className="min-h-screen bg-[#f5f5f5]">
-        {/* Hero Section with Grid */}
-        <section className="relative w-full min-h-screen">
+      <div className="min-h-screen bg-background flex items-center justify-center py-8">
+        {/* Hero Section with Grid - square cells maintained via aspect-ratio */}
+        {/* Desktop: 8 cols × 6 rows, aspect-ratio 8/6 = 4:3 */}
+        {/* Mobile: 4 cols × 6 rows, aspect-ratio 4/6 = 2:3 */}
+        <section className="relative w-full md:aspect-[8/6] aspect-[4/6] max-w-7xl mx-auto">
           {/* Double-lined grid background */}
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Vertical lines - 6 columns */}
-            <div className="absolute inset-0 flex">
+          <div className="absolute inset-0 pointer-events-none border border-border">
+            {/* Vertical double lines - responsive column count */}
+            {/* Mobile: 3 dividers for 4 cols, Desktop: 7 dividers for 8 cols */}
+            <div className="hidden md:block">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div
                   key={`v-${i}`}
-                  className="flex-1 border-l border-[#e0e0e0] first:border-l-0 last:border-r"
+                  className="absolute top-0 bottom-0 flex gap-1"
                   style={{
-                    borderLeftWidth: i === 0 ? 0 : "1px",
-                    boxShadow:
-                      i > 0 ? "inset 2px 0 0 0 #e0e0e0" : "none",
+                    left: `${((i + 1) / 8) * 100}%`,
+                    transform: "translateX(-50%)",
                   }}
                 >
-                  {/* Inner double line */}
-                  <div className="h-full w-[2px] ml-[-1px] bg-transparent border-r border-[#e8e8e8]" />
+                  <div className="w-px h-full bg-border" />
+                  <div className="w-px h-full bg-border" />
                 </div>
               ))}
             </div>
-            {/* Horizontal lines - 8 rows */}
-            <div className="absolute inset-0 flex flex-col">
-              {Array.from({ length: 9 }).map((_, i) => (
+            <div className="md:hidden">
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div
-                  key={`h-${i}`}
-                  className="flex-1 border-t border-[#e0e0e0] first:border-t-0 last:border-b"
+                  key={`v-mobile-${i}`}
+                  className="absolute top-0 bottom-0 flex gap-1"
                   style={{
-                    borderTopWidth: i === 0 ? 0 : "1px",
-                    boxShadow:
-                      i > 0 ? "inset 0 2px 0 0 #e0e0e0" : "none",
+                    left: `${((i + 1) / 4) * 100}%`,
+                    transform: "translateX(-50%)",
                   }}
                 >
-                  {/* Inner double line */}
-                  <div className="w-full h-[2px] mt-[-1px] bg-transparent border-b border-[#e8e8e8]" />
+                  <div className="w-px h-full bg-border" />
+                  <div className="w-px h-full bg-border" />
+                </div>
+              ))}
+            </div>
+            {/* Horizontal double lines - 5 dividers for 6 rows */}
+            <div className="hidden md:block">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={`h-${i}`}
+                  className="absolute left-0 right-0 flex flex-col gap-1"
+                  style={{
+                    top: `${((i + 1) / 6) * 100}%`,
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  <div className="h-px w-full bg-border" />
+                  <div className="h-px w-full bg-border" />
+                </div>
+              ))}
+            </div>
+            <div className="md:hidden">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={`h-mobile-${i}`}
+                  className="absolute left-0 right-0 flex flex-col gap-1"
+                  style={{
+                    top: `${((i + 1) / 6) * 100}%`,
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  <div className="h-px w-full bg-border" />
+                  <div className="h-px w-full bg-border" />
                 </div>
               ))}
             </div>
           </div>
 
           {/* Grid content container */}
-          <div className="relative z-10 grid grid-cols-6 grid-rows-8 w-full min-h-screen p-8">
+          {/* Mobile: 4 cols × 6 rows | Desktop: 8 cols × 6 rows */}
+          <div className="relative z-10 grid grid-cols-4 md:grid-cols-8 grid-rows-6 w-full h-full p-4 md:p-8">
             {/* Top left - Tagline */}
-            <div className="col-span-2 row-span-1 p-4">
-              <p className="text-xs text-muted-foreground leading-tight">
+            <div className="col-span-2 row-span-1 p-2 md:p-4">
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
                 Memory Built
                 <br />
                 For Teams.
@@ -215,8 +247,8 @@ export default function HomePage() {
             </div>
 
             {/* Top right - Intro text */}
-            <div className="col-start-5 col-span-2 row-span-1 p-4 text-right">
-              <p className="text-xs text-muted-foreground leading-tight">
+            <div className="col-start-3 md:col-start-7 col-span-2 row-span-1 p-2 md:p-4 text-right">
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
                 Introducing the
                 <br />
                 Memory Layer for Software Teams
@@ -224,31 +256,36 @@ export default function HomePage() {
             </div>
 
             {/* Main headline - spans multiple columns and rows */}
-            <div className="col-span-4 row-start-2 row-span-2 p-4 flex items-end">
+            <div className="col-span-4 row-start-2 row-span-2 p-2 md:p-4 flex items-end">
               <h1
-                className={`text-4xl md:text-5xl lg:text-6xl font-light leading-[1.1] ${exposureTrial.className}`}
+                className={`text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-light leading-[1.1] ${exposureTrial.className}`}
               >
                 <span className="text-foreground">The Memory Layer</span>
                 <br />
                 <span className="text-foreground">for Software</span>{" "}
                 <span className="text-muted-foreground">Teams</span>
                 <br />
-                <span className="text-muted-foreground">
-                  and AI Agents
-                </span>
+                <span className="text-muted-foreground">and AI Agents</span>
               </h1>
             </div>
 
             {/* Right side - Blue visual block */}
-            <div className="col-start-5 col-span-2 row-start-2 row-span-4 bg-[#2563eb] flex items-center justify-center">
+            {/* Mobile: cols 3-4, rows 4-6 | Desktop: cols 6-8, rows 2-5 */}
+            <div className="col-start-3 md:col-start-6 col-span-2 md:col-span-3 row-start-4 md:row-start-2 row-span-3 md:row-span-4 bg-[var(--brand-blue)] flex items-center justify-center">
               {/* Placeholder for visual element */}
-              <div className="w-24 h-24 opacity-20">
+              <div className="w-16 h-16 md:w-24 md:h-24 opacity-20">
                 <svg
                   viewBox="0 0 100 100"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="2" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="white"
+                    strokeWidth="2"
+                  />
                   <path
                     d="M50 10 L50 90 M10 50 L90 50 M25 25 L75 75 M75 25 L25 75"
                     stroke="white"
@@ -258,8 +295,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Side text on blue block */}
-            <div className="col-start-6 col-span-1 row-start-2 row-span-1 p-4 flex items-start justify-end">
+            {/* Side text on blue block - hidden on mobile */}
+            <div className="hidden md:flex col-start-8 col-span-1 row-start-2 row-span-1 p-4 items-start justify-end">
               <p className="text-xs text-white text-right leading-tight">
                 Search everything your
                 <br />
@@ -268,39 +305,44 @@ export default function HomePage() {
             </div>
 
             {/* Feature section - left side */}
-            <div className="col-span-2 row-start-5 row-span-2 p-4">
-              <h2 className="text-sm font-medium mb-4">Semantic Search</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+            <div className="col-span-2 md:col-span-3 row-start-4 md:row-start-5 row-span-2 p-2 md:p-4">
+              <h2 className="text-xs md:text-sm font-medium mb-2 md:mb-4">
+                Semantic Search
+              </h2>
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed mb-2 md:mb-4">
                 Search by meaning, not keywords.
                 <br />
                 Find answers across code, docs,
                 <br />
                 PRs, and decisions.
               </p>
-              <a href="/early-access" className="text-xs text-[#2563eb] hover:underline">
+              <a
+                href="/early-access"
+                className="text-[10px] md:text-xs text-[var(--brand-blue)] hover:underline"
+              >
                 Join Waitlist →
               </a>
             </div>
 
             {/* Stats row - bottom */}
-            <div className="col-span-3 row-start-8 row-span-1 p-4 flex gap-12">
+            <div className="col-span-2 md:col-span-4 row-start-6 row-span-1 p-2 md:p-4 flex gap-4 md:gap-12">
               <div>
-                <p className="text-3xl font-light">10x</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xl md:text-3xl font-light">10x</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Faster context
                   <br />
                   retrieval
                 </p>
               </div>
               <div>
-                <p className="text-3xl font-light">100%</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xl md:text-3xl font-light">100%</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Source
                   <br />
                   attribution
                 </p>
               </div>
-              <div>
+              <div className="hidden md:block">
                 <p className="text-3xl font-light">∞</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Team
@@ -310,8 +352,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Bottom right - Blue accent */}
-            <div className="col-start-5 col-span-2 row-start-7 row-span-2 bg-[#2563eb] flex items-center justify-center">
+            {/* Bottom right - Blue accent - hidden on mobile */}
+            <div className="hidden md:flex col-start-7 col-span-2 row-start-5 row-span-2 bg-[var(--brand-blue)] items-center justify-center">
               {/* Asterisk symbol */}
               <span className="text-white text-4xl">✳</span>
             </div>
