@@ -1,18 +1,6 @@
 import type { Metadata } from "next";
 import { exposureTrial } from "~/lib/fonts";
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@repo/ui/components/ui/button";
-import { AnnouncementBadge } from "~/components/announcement-badge";
-import { VisualShowcase } from "~/components/visual-showcase";
-import { SearchDemo } from "~/components/search-demo";
-import { IntegrationShowcase } from "~/components/integration-showcase";
-import { PlatformAccessCards } from "~/components/platform-access-cards";
-import { ChangelogPreview } from "~/components/changelog-preview";
-import { FAQSection, faqs } from "~/components/faq-section";
-import { WaitlistCTA } from "~/components/waitlist-cta";
-import { BecomingLightfast } from "~/components/becoming-lightfast";
-import { DitheredBackground } from "~/components/dithered-background";
+import { faqs } from "~/components/faq-section";
 import {
   JsonLd,
   type GraphContext,
@@ -21,7 +9,6 @@ import {
   type SoftwareApplication,
   type FAQPage,
   type Question,
-  type Answer,
 } from "@vendor/seo/json-ld";
 
 // SEO metadata for the landing page
@@ -173,115 +160,164 @@ export default function HomePage() {
     <>
       {/* Structured data for SEO */}
       <JsonLd code={structuredData} />
-      <div className="mt-16 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
-        {/* Hero Section - centered content */}
-        <div className="max-w-7xl mx-auto grid grid-cols-12">
-          <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
-            <section className="flex w-full flex-col items-center text-center">
-              {/* Announcement badge */}
-              <AnnouncementBadge />
 
-              {/* Heading */}
+      {/* Grid-based landing page */}
+      <div className="min-h-screen bg-[#f5f5f5]">
+        {/* Hero Section with Grid */}
+        <section className="relative w-full min-h-screen">
+          {/* Double-lined grid background */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Vertical lines - 6 columns */}
+            <div className="absolute inset-0 flex">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div
+                  key={`v-${i}`}
+                  className="flex-1 border-l border-[#e0e0e0] first:border-l-0 last:border-r"
+                  style={{
+                    borderLeftWidth: i === 0 ? 0 : "1px",
+                    boxShadow:
+                      i > 0 ? "inset 2px 0 0 0 #e0e0e0" : "none",
+                  }}
+                >
+                  {/* Inner double line */}
+                  <div className="h-full w-[2px] ml-[-1px] bg-transparent border-r border-[#e8e8e8]" />
+                </div>
+              ))}
+            </div>
+            {/* Horizontal lines - 8 rows */}
+            <div className="absolute inset-0 flex flex-col">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div
+                  key={`h-${i}`}
+                  className="flex-1 border-t border-[#e0e0e0] first:border-t-0 last:border-b"
+                  style={{
+                    borderTopWidth: i === 0 ? 0 : "1px",
+                    boxShadow:
+                      i > 0 ? "inset 0 2px 0 0 #e0e0e0" : "none",
+                  }}
+                >
+                  {/* Inner double line */}
+                  <div className="w-full h-[2px] mt-[-1px] bg-transparent border-b border-[#e8e8e8]" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Grid content container */}
+          <div className="relative z-10 grid grid-cols-6 grid-rows-8 w-full min-h-screen p-8">
+            {/* Top left - Tagline */}
+            <div className="col-span-2 row-span-1 p-4">
+              <p className="text-xs text-muted-foreground leading-tight">
+                Memory Built
+                <br />
+                For Teams.
+              </p>
+            </div>
+
+            {/* Top right - Intro text */}
+            <div className="col-start-5 col-span-2 row-span-1 p-4 text-right">
+              <p className="text-xs text-muted-foreground leading-tight">
+                Introducing the
+                <br />
+                Memory Layer for Software Teams
+              </p>
+            </div>
+
+            {/* Main headline - spans multiple columns and rows */}
+            <div className="col-span-4 row-start-2 row-span-2 p-4 flex items-end">
               <h1
-                className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light px-4 text-balance ${exposureTrial.className}`}
+                className={`text-4xl md:text-5xl lg:text-6xl font-light leading-[1.1] ${exposureTrial.className}`}
               >
-                The memory layer for software teams
+                <span className="text-foreground">The Memory Layer</span>
+                <br />
+                <span className="text-foreground">for Software</span>{" "}
+                <span className="text-muted-foreground">Teams</span>
+                <br />
+                <span className="text-muted-foreground">
+                  and AI Agents
+                </span>
               </h1>
+            </div>
 
-              {/* Description */}
-              <div className="mt-6 px-4 w-full">
-                <p className="text-lg md:text-xl text-muted-foreground">
-                  Search everything your engineering org knows
+            {/* Right side - Blue visual block */}
+            <div className="col-start-5 col-span-2 row-start-2 row-span-4 bg-[#2563eb] flex items-center justify-center">
+              {/* Placeholder for visual element */}
+              <div className="w-24 h-24 opacity-20">
+                <svg
+                  viewBox="0 0 100 100"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="2" />
+                  <path
+                    d="M50 10 L50 90 M10 50 L90 50 M25 25 L75 75 M75 25 L25 75"
+                    stroke="white"
+                    strokeWidth="1"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Side text on blue block */}
+            <div className="col-start-6 col-span-1 row-start-2 row-span-1 p-4 flex items-start justify-end">
+              <p className="text-xs text-white text-right leading-tight">
+                Search everything your
+                <br />
+                engineering org knows.
+              </p>
+            </div>
+
+            {/* Feature section - left side */}
+            <div className="col-span-2 row-start-5 row-span-2 p-4">
+              <h2 className="text-sm font-medium mb-4">Semantic Search</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                Search by meaning, not keywords.
+                <br />
+                Find answers across code, docs,
+                <br />
+                PRs, and decisions.
+              </p>
+              <a href="/early-access" className="text-xs text-[#2563eb] hover:underline">
+                Join Waitlist →
+              </a>
+            </div>
+
+            {/* Stats row - bottom */}
+            <div className="col-span-3 row-start-8 row-span-1 p-4 flex gap-12">
+              <div>
+                <p className="text-3xl font-light">10x</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Faster context
+                  <br />
+                  retrieval
                 </p>
               </div>
-
-              {/* Email CTA */}
-              <div className="mt-10 w-full max-w-xl px-4">
-                <form className="relative flex h-12 items-center rounded-full bg-secondary/50 border border-border/30 pl-6 pr-2">
-                  <input
-                    type="email"
-                    placeholder="Enter your company email"
-                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                  />
-                  <Button type="submit" className="rounded-full px-6 shrink-0">
-                    Join Waitlist
-                  </Button>
-                </form>
+              <div>
+                <p className="text-3xl font-light">100%</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Source
+                  <br />
+                  attribution
+                </p>
               </div>
-            </section>
-          </div>
-        </div>
-
-        {/* Platform Access Cards */}
-        <div className="py-16 md:py-24">
-          <div className="relative">
-            {/* Dithered background - starts at ~20% of card height */}
-            <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-screen h-[calc(100%+6rem)] overflow-hidden">
-              <DitheredBackground />
+              <div>
+                <p className="text-3xl font-light">∞</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Team
+                  <br />
+                  memory
+                </p>
+              </div>
             </div>
 
-            {/* Cards - positioned above the blue background */}
-            <div className="relative z-10 max-w-6xl px-4 mx-auto">
-              <PlatformAccessCards />
+            {/* Bottom right - Blue accent */}
+            <div className="col-start-5 col-span-2 row-start-7 row-span-2 bg-[#2563eb] flex items-center justify-center">
+              {/* Asterisk symbol */}
+              <span className="text-white text-4xl">✳</span>
             </div>
           </div>
-        </div>
-
-        {/* Demo Section - Search Visual */}
-        <div className="max-w-6xl px-4 mx-auto w-full py-64">
-          <VisualShowcase>
-            <SearchDemo />
-          </VisualShowcase>
-        </div>
-
-        {/* Integration Showcase */}
-        <div className="max-w-6xl mx-auto w-full px-4 py-10 space-y-8">
-          <div className="text-center">
-            <h2 className="text-sm">
-              <span className="text-muted-foreground">
-                Lightfast integrates with the tools you use
-              </span>
-            </h2>
-          </div>
-          <IntegrationShowcase />
-        </div>
-
-        {/* FAQ Section */}
-        <div className="max-w-6xl mx-auto w-full px-4 py-10">
-          <FAQSection />
-        </div>
-
-        {/* Background Image Section */}
-        {/* <div className="max-w-6xl px-4 mx-auto w-full">
-          <div className="relative rounded-xs w-full h-[720px] overflow-hidden">
-            <div className="absolute inset-0 z-0">
-              <Image
-                src="/images/orange-mouth.webp"
-                alt="Background"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
-            <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/5" />
-          </div>
-        </div>
-      */}
-
-        {/* Changelog Preview */}
-        <div className="max-w-6xl mx-auto w-full px-4">
-          <ChangelogPreview />
-        </div>
-
-        {/* Becoming Lightfast Section - Seed Round Announcement 
-        <div className="max-w-6xl mx-auto w-full px-4">
-          <BecomingLightfast />
-        </div>
-        */}
+        </section>
       </div>
-
-      {/* Waitlist CTA - Outside of padding container */}
-      <WaitlistCTA />
     </>
   );
 }
