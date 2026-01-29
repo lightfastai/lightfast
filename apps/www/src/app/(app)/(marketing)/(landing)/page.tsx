@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { exposureTrial } from "~/lib/fonts";
 import { faqs } from "~/components/faq-section";
 import {
   JsonLd,
@@ -166,198 +165,59 @@ export default function HomePage() {
         {/* Hero Section with Grid - square cells maintained via aspect-ratio */}
         {/* Desktop: 8 cols × 6 rows, aspect-ratio 8/6 = 4:3 */}
         {/* Mobile: 4 cols × 6 rows, aspect-ratio 4/6 = 2:3 */}
-        <section className="relative w-full md:aspect-[8/6] aspect-[4/6] max-w-7xl mx-auto">
-          {/* Double-lined grid background */}
-          <div className="absolute inset-0 pointer-events-none border border-border">
-            {/* Vertical double lines - responsive column count */}
-            {/* Mobile: 3 dividers for 4 cols, Desktop: 7 dividers for 8 cols */}
-            <div className="hidden md:block">
-              {Array.from({ length: 7 }).map((_, i) => (
+        {/* Gap creates double-line effect: bg-border/50 shows through the 3px gaps */}
+        <section
+          className="relative w-full md:aspect-[8/6] aspect-[4/6] max-w-7xl mx-auto
+            grid grid-cols-4 md:grid-cols-8 grid-rows-6
+            gap-[3px] bg-border/50 border border-border/50"
+        >
+          {/*
+            Grid Cell System:
+            - Cells are addressable by row (1-6) and column (1-4 mobile, 1-8 desktop)
+            - Use data-cell="row-col" for debugging
+            - Content can be placed directly inside cells OR overlay with grid positioning
+
+            To place content in a specific cell:
+            1. Find the cell by data-cell attribute
+            2. Add content as children
+
+            To span multiple cells (overlay approach):
+            - Add a positioned element with col-start-X col-span-Y row-start-X row-span-Y
+            - Example: <div className="col-start-2 col-span-3 row-start-2 row-span-2 z-10">
+          */}
+
+          {/* Visual grid cells - these create the cell backgrounds */}
+          {Array.from({ length: 6 }).map((_, rowIdx) => {
+            const row = rowIdx + 1; // 1-indexed for grid positioning
+            return Array.from({ length: 8 }).map((_, colIdx) => {
+              const col = colIdx + 1; // 1-indexed for grid positioning
+              const isMobileVisible = col <= 4;
+
+              return (
                 <div
-                  key={`v-${i}`}
-                  className="absolute top-0 bottom-0 flex gap-1"
+                  key={`cell-${row}-${col}`}
+                  data-cell={`${row}-${col}`}
+                  className={`bg-background ${!isMobileVisible ? "hidden md:block" : ""}`}
                   style={{
-                    left: `${((i + 1) / 8) * 100}%`,
-                    transform: "translateX(-50%)",
+                    gridRow: row,
+                    gridColumn: col,
                   }}
-                >
-                  <div className="w-px h-full bg-border" />
-                  <div className="w-px h-full bg-border" />
-                </div>
-              ))}
-            </div>
-            <div className="md:hidden">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={`v-mobile-${i}`}
-                  className="absolute top-0 bottom-0 flex gap-1"
-                  style={{
-                    left: `${((i + 1) / 4) * 100}%`,
-                    transform: "translateX(-50%)",
-                  }}
-                >
-                  <div className="w-px h-full bg-border" />
-                  <div className="w-px h-full bg-border" />
-                </div>
-              ))}
-            </div>
-            {/* Horizontal double lines - 5 dividers for 6 rows */}
-            <div className="hidden md:block">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={`h-${i}`}
-                  className="absolute left-0 right-0 flex flex-col gap-1"
-                  style={{
-                    top: `${((i + 1) / 6) * 100}%`,
-                    transform: "translateY(-50%)",
-                  }}
-                >
-                  <div className="h-px w-full bg-border" />
-                  <div className="h-px w-full bg-border" />
-                </div>
-              ))}
-            </div>
-            <div className="md:hidden">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={`h-mobile-${i}`}
-                  className="absolute left-0 right-0 flex flex-col gap-1"
-                  style={{
-                    top: `${((i + 1) / 6) * 100}%`,
-                    transform: "translateY(-50%)",
-                  }}
-                >
-                  <div className="h-px w-full bg-border" />
-                  <div className="h-px w-full bg-border" />
-                </div>
-              ))}
-            </div>
-          </div>
+                />
+              );
+            });
+          })}
 
-          {/* Grid content container */}
-          {/* Mobile: 4 cols × 6 rows | Desktop: 8 cols × 6 rows */}
-          <div className="relative z-10 grid grid-cols-4 md:grid-cols-8 grid-rows-6 w-full h-full p-4 md:p-8">
-            {/* Top left - Tagline */}
-            <div className="col-span-2 row-span-1 p-2 md:p-4">
-              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
-                Memory Built
-                <br />
-                For Teams.
-              </p>
-            </div>
+          {/*
+            Content Layer - add content items here with explicit grid positioning
+            Example usage:
 
-            {/* Top right - Intro text */}
-            <div className="col-start-3 md:col-start-7 col-span-2 row-span-1 p-2 md:p-4 text-right">
-              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
-                Introducing the
-                <br />
-                Memory Layer for Software Teams
-              </p>
+            <div
+              className="z-10 flex items-center justify-center"
+              style={{ gridColumn: "2 / 4", gridRow: "2 / 4" }}
+            >
+              Hero Title Here
             </div>
-
-            {/* Main headline - spans multiple columns and rows */}
-            <div className="col-span-4 row-start-2 row-span-2 p-2 md:p-4 flex items-end">
-              <h1
-                className={`text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-light leading-[1.1] ${exposureTrial.className}`}
-              >
-                <span className="text-foreground">The Memory Layer</span>
-                <br />
-                <span className="text-foreground">for Software</span>{" "}
-                <span className="text-muted-foreground">Teams</span>
-                <br />
-                <span className="text-muted-foreground">and AI Agents</span>
-              </h1>
-            </div>
-
-            {/* Right side - Blue visual block */}
-            {/* Mobile: cols 3-4, rows 4-6 | Desktop: cols 6-8, rows 2-5 */}
-            <div className="col-start-3 md:col-start-6 col-span-2 md:col-span-3 row-start-4 md:row-start-2 row-span-3 md:row-span-4 bg-[var(--brand-blue)] flex items-center justify-center">
-              {/* Placeholder for visual element */}
-              <div className="w-16 h-16 md:w-24 md:h-24 opacity-20">
-                <svg
-                  viewBox="0 0 100 100"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M50 10 L50 90 M10 50 L90 50 M25 25 L75 75 M75 25 L25 75"
-                    stroke="white"
-                    strokeWidth="1"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            {/* Side text on blue block - hidden on mobile */}
-            <div className="hidden md:flex col-start-8 col-span-1 row-start-2 row-span-1 p-4 items-start justify-end">
-              <p className="text-xs text-white text-right leading-tight">
-                Search everything your
-                <br />
-                engineering org knows.
-              </p>
-            </div>
-
-            {/* Feature section - left side */}
-            <div className="col-span-2 md:col-span-3 row-start-4 md:row-start-5 row-span-2 p-2 md:p-4">
-              <h2 className="text-xs md:text-sm font-medium mb-2 md:mb-4">
-                Semantic Search
-              </h2>
-              <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed mb-2 md:mb-4">
-                Search by meaning, not keywords.
-                <br />
-                Find answers across code, docs,
-                <br />
-                PRs, and decisions.
-              </p>
-              <a
-                href="/early-access"
-                className="text-[10px] md:text-xs text-[var(--brand-blue)] hover:underline"
-              >
-                Join Waitlist →
-              </a>
-            </div>
-
-            {/* Stats row - bottom */}
-            <div className="col-span-2 md:col-span-4 row-start-6 row-span-1 p-2 md:p-4 flex gap-4 md:gap-12">
-              <div>
-                <p className="text-xl md:text-3xl font-light">10x</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                  Faster context
-                  <br />
-                  retrieval
-                </p>
-              </div>
-              <div>
-                <p className="text-xl md:text-3xl font-light">100%</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                  Source
-                  <br />
-                  attribution
-                </p>
-              </div>
-              <div className="hidden md:block">
-                <p className="text-3xl font-light">∞</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Team
-                  <br />
-                  memory
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom right - Blue accent - hidden on mobile */}
-            <div className="hidden md:flex col-start-7 col-span-2 row-start-5 row-span-2 bg-[var(--brand-blue)] items-center justify-center">
-              {/* Asterisk symbol */}
-              <span className="text-white text-4xl">✳</span>
-            </div>
-          </div>
+          */}
         </section>
       </div>
     </>
