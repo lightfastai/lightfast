@@ -11,7 +11,7 @@ import { AppMobileNav } from "./app-mobile-nav";
  */
 export function AppNavbar() {
   return (
-    <header className="shrink-0 border-b sticky top-0 z-50 py-4 page-gutter bg-background transition-colors duration-300">
+    <header className="shrink-0 py-4 transition-colors duration-300">
       <div className="relative flex items-center justify-between gap-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         {/* Left: Logo */}
         <div className="-ml-2 flex items-center lg:justify-self-start">

@@ -6,7 +6,7 @@ import { Icons } from "@repo/ui/components/icons";
 
 export function AppFooter() {
   return (
-    <footer className="relative w-full text-foreground">
+    <footer className="relative w-full h-full bg-background text-foreground pt-8 sm:pt-10 lg:pt-12">
       {/* Section 1 - Logo and Main Footer Links */}
       <section className="relative pb-8 sm:pb-10 lg:pb-12">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -150,7 +150,7 @@ export default function RootLayout({
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />
       </head>
-      <body className={cn("min-h-screen dark font-sans bg-background")}>
+      <body className={cn("min-h-screen font-sans bg-background")}>
         <PrefetchCrossZoneLinksProvider>
           <PostHogProvider>
             {children}

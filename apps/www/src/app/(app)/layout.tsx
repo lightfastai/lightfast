@@ -1,13 +1,7 @@
-interface MarketingLayoutProps {
+interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export default function MarketingLayout({ children }: MarketingLayoutProps) {
-  return (
-    <div className="relative flex min-h-screen flex-col">
-      <div className="relative flex-1">
-        <main className="h-full">{children}</main>
-      </div>
-    </div>
-  );
+export default function AppLayout({ children }: AppLayoutProps) {
+  return <>{children}</>;
 }

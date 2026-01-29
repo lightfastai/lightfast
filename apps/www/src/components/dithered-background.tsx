@@ -18,7 +18,7 @@ export function DitheredBackground() {
       <ImageDithering
         width="100%"
         height="100%"
-        image="/images/blue-sky.webp"
+        image="/images/lightfast-gradient.webp"
         colorBack="#1e40af"
         colorFront="#ffffff"
         colorHighlight="#3b82f6"

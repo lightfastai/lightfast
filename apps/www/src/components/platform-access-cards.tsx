@@ -3,7 +3,7 @@ import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { CheckCircle, Package, BookOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
-type CardVariant = "glass" | "muted" | "blue";
+type CardVariant = "glass" | "muted" | "red";
 
 interface AccessCard {
   href: string;
@@ -39,11 +39,11 @@ const variantStyles: Record<
     description: "text-muted-foreground",
     colSpan: "md:col-span-4",
   },
-  blue: {
-    card: "bg-primary border-primary hover:bg-primary/90",
-    icon: "text-primary-foreground/80",
-    title: "text-primary-foreground",
-    description: "text-primary-foreground/70",
+  red: {
+    card: "bg-[var(--pitch-deck-red)] hover:bg-[var(--pitch-deck-red-overlay)]",
+    icon: "text-primary",
+    title: "text-primary",
+    description: "text-primary",
     colSpan: "md:col-span-3",
   },
 };
@@ -73,7 +73,7 @@ const accessCards: AccessCard[] = [
     description:
       "Learn how to integrate and use Lightfast in your applications.",
     external: true,
-    variant: "blue",
+    variant: "red",
   },
 ];
 

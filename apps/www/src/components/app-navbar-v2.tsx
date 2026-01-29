@@ -3,88 +3,172 @@ import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Search } from "lucide-react";
-import { AppNavMenu } from "./app-nav-menu";
 import { AppMobileNav } from "./app-mobile-nav";
+import { INTERNAL_NAV, FEATURES_NAV, RESOURCES_NAV } from "~/config/nav";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuLink,
+} from "@repo/ui/components/ui/navigation-menu";
 
 /**
  * Server-rendered navbar component (v2)
- * Transforms to compact floating bar on scroll (desktop only)
- * Uses translate transforms for smooth animation
+ * Clean horizontal layout with logo + text on left, nav items + actions on right
  */
 export function AppNavbarV2() {
   return (
-    <header
-      id="app-navbar"
-      className="group shrink-0 sticky top-0 z-50 py-4 page-gutter transition-all duration-300
-        bg-background lg:group-[.brand-navbar]:bg-transparent"
-    >
-      {/* Background pill that appears on scroll (desktop only) */}
-      <div
-        className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-          h-14 w-full max-w-5xl rounded-sm
-          bg-transparent lg:group-[.brand-navbar]:bg-black
-          scale-x-0 lg:group-[.brand-navbar]:scale-x-100
-          origin-center transition-all duration-300 pointer-events-none"
-        aria-hidden="true"
-      />
-
+    <div id="app-navbar" className="shrink-0 py-4 page-gutter bg-transparent">
       {/* Content container */}
-      <div
-        className="relative flex items-center justify-between gap-4
-          lg:grid lg:grid-cols-[1fr_auto_1fr]"
-      >
-        {/* Left: Logo - translates right on scroll */}
-        <div
-          className="-ml-2 flex items-center lg:justify-self-start
-            transition-transform duration-300
-            lg:group-[.brand-navbar]:translate-x-[calc((100vw-1024px)/2-1.5rem)]"
+      <div className="relative flex items-center justify-between">
+        {/* Left: Logo */}
+        <NextLink
+          href="/"
+          prefetch
+          className="flex items-center hover:opacity-80 transition-opacity"
         >
-          <Button variant="none" size="lg" className="group/logo" asChild>
-            <NextLink href="/" prefetch>
-              <Icons.logo className="size-22 text-foreground lg:group-[.brand-navbar]:text-white transition-colors" />
-            </NextLink>
-          </Button>
-        </div>
+          <Icons.logo className="size-22 h-4 text-foreground transition-colors" />
+        </NextLink>
 
-        {/* Center: Nav items */}
-        <AppNavMenu />
+        {/* Right: Nav items + Actions */}
+        <nav className="hidden lg:flex items-center group gap-1 rounded-md bg-white/80 px-1 py-1">
+          {/* Features dropdown */}
+          <NavigationMenu viewport={false}>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-sm font-medium text-black rounded-sm transition-opacity group-hover:opacity-60 hover:!opacity-100">
+                  Features
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
+                    {FEATURES_NAV.map((item) => (
+                      <NavigationMenuLink asChild key={item.href}>
+                        <NextLink href={item.href} prefetch>
+                          {item.title}
+                        </NextLink>
+                      </NavigationMenuLink>
+                    ))}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
 
-        {/* Right: Actions - translates left on scroll */}
-        <div
-          className="flex items-center gap-4 lg:justify-self-end
-            transition-transform duration-300
-            lg:group-[.brand-navbar]:-translate-x-[calc((100vw-1024px)/2-1.5rem)]"
-        >
+          {/* Resources dropdown */}
+          <NavigationMenu viewport={false}>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-sm font-medium text-black rounded-sm transition-opacity group-hover:opacity-60 hover:!opacity-100">
+                  Resources
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
+                    {RESOURCES_NAV.map((item) => (
+                      <NavigationMenuLink asChild key={item.href}>
+                        {item.microfrontend ? (
+                          <MicrofrontendLink href={item.href}>
+                            {item.title}
+                          </MicrofrontendLink>
+                        ) : (
+                          <NextLink href={item.href} prefetch>
+                            {item.title}
+                          </NextLink>
+                        )}
+                      </NavigationMenuLink>
+                    ))}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {/* Flat nav items (Pricing, Docs) */}
+          {INTERNAL_NAV.filter(
+            (i) => i.href !== "/features" && i.href !== "/early-access",
+          ).map((item) =>
+            item.microfrontend ? (
+              <MicrofrontendLink
+                key={item.href}
+                href={item.href}
+                className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium text-black rounded-sm transition-opacity group-hover:opacity-60 hover:!opacity-100"
+              >
+                {item.title}
+              </MicrofrontendLink>
+            ) : (
+              <NextLink
+                key={item.href}
+                href={item.href}
+                prefetch
+                className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium text-black rounded-sm transition-opacity group-hover:opacity-60 hover:!opacity-100"
+              >
+                {item.title}
+              </NextLink>
+            ),
+          )}
+
           {/* Search Icon */}
           <Button
             variant="link"
-            size="lg"
+            size="sm"
             asChild
-            className="text-muted-foreground lg:group-[.brand-navbar]:text-white/80 lg:group-[.brand-navbar]:hover:text-white"
+            className="h-8 min-w-8 px-3 text-black transition-opacity group-hover:opacity-60 hover:!opacity-100"
           >
             <MicrofrontendLink href="/search" aria-label="Search">
               <Search className="h-5 w-5" />
             </MicrofrontendLink>
           </Button>
 
-          {/* Sign In Button */}
-          <Button
-            variant="secondary"
-            size="lg"
-            className="rounded-full lg:group-[.brand-navbar]:bg-white lg:group-[.brand-navbar]:text-black"
-            asChild
+          {/* Sign In Link */}
+          <MicrofrontendLink
+            href="/sign-in"
+            className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium text-black rounded-sm transition-opacity group-hover:opacity-60 hover:!opacity-100"
           >
-            <MicrofrontendLink href="/sign-in">
-              <span className="text-sm text-secondary-foreground font-medium lg:group-[.brand-navbar]:text-black">
-                Log In
-              </span>
+            Sign in
+          </MicrofrontendLink>
+
+          {/* Join Early Access Button */}
+          <NextLink
+            href="/early-access"
+            prefetch
+            className="inline-flex items-center justify-center h-8 px-3 rounded-sm bg-brand-blue text-sm font-medium text-white transition-all hover:bg-black hover:text-white"
+          >
+            Join Early Access
+          </NextLink>
+        </nav>
+
+        {/* Mobile: Search + Sign In + Join Early Access + Nav Trigger */}
+        <div className="flex lg:hidden items-center gap-1 rounded-md bg-white/80 px-1 py-1">
+          <Button
+            variant="link"
+            size="sm"
+            asChild
+            className="h-8 min-w-8 px-2 text-black"
+          >
+            <MicrofrontendLink href="/search" aria-label="Search">
+              <Search className="h-5 w-5" />
             </MicrofrontendLink>
           </Button>
 
-          {/* Mobile Nav Trigger - only visible below lg */}
+          <MicrofrontendLink
+            href="/sign-in"
+            className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium text-black rounded-sm"
+          >
+            Sign in
+          </MicrofrontendLink>
+
+          <NextLink
+            href="/early-access"
+            prefetch
+            className="inline-flex items-center justify-center h-8 px-3 rounded-sm bg-brand-blue text-sm font-medium text-white transition-all hover:bg-black hover:text-white"
+          >
+            Join Early Access
+          </NextLink>
+
           <AppMobileNav />
         </div>
       </div>
-    </header>
+    </div>
   );
 }

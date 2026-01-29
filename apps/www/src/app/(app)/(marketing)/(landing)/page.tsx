@@ -1,6 +1,54 @@
 import type { Metadata } from "next";
-import { faqs } from "~/components/faq-section";
+import Link from "next/link";
+import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import { faqs, FAQSection } from "~/components/faq-section";
 import { DitheredBackground } from "~/components/dithered-background";
+import { LightfastLogoLatest } from "~/components/icons";
+import { IntegrationShowcase } from "~/components/integration-showcase";
+import { PlatformAccessCards } from "~/components/platform-access-cards";
+import { ChangelogPreview } from "~/components/changelog-preview";
+import { FeatureVisualsTabs } from "~/components/feature-visuals-tabs";
+import { exposureTrial } from "~/lib/fonts";
+
+const benefits = [
+  {
+    icon: Search,
+    title: "One search, all sources",
+    description:
+      "Search across all your connected tools at once. No more switching between apps to find what you need.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Automatic sync",
+    description:
+      "Changes sync in real-time. New PRs, issues, and messages are indexed as they happen.",
+  },
+  {
+    icon: Users,
+    title: "Identity correlation",
+    description:
+      "Link the same person across platforms. john@company.com on GitHub is John Smith on Linear.",
+  },
+  {
+    icon: Zap,
+    title: "Instant answers",
+    description:
+      "Get answers from your connected tools without spending hours on research.",
+  },
+  {
+    icon: Link2,
+    title: "Track dependencies",
+    description:
+      "See what depends on what. Understand relationships across your codebase and documentation.",
+  },
+  {
+    icon: Shield,
+    title: "Privacy by default",
+    description:
+      "Your data stays yours. Complete tenant isolation with enterprise-grade security.",
+  },
+];
 import {
   JsonLd,
   type GraphContext,
@@ -76,7 +124,7 @@ export const metadata: Metadata = {
 };
 
 // Debug flag: set to true to display row/col coordinates in each grid cell
-const SHOW_GRID_LABELS = true;
+const SHOW_GRID_LABELS = false;
 
 export default function HomePage() {
   // Build organization entity
@@ -165,7 +213,7 @@ export default function HomePage() {
       <JsonLd code={structuredData} />
 
       {/* Grid-based landing page */}
-      <div className="min-h-screen bg-background flex justify-center">
+      <div className="min-h-screen bg-background flex flex-col items-center">
         {/* Hero Section with Grid - square cells via aspect-square on each cell */}
         {/* Desktop: 9 cols × 7 rows | Mobile: 4 cols × 7 rows */}
         {/*
@@ -231,28 +279,28 @@ export default function HomePage() {
             */
             const borderlessZone = new Set([
               // Row 1: cols 1-5 (image now starts at col 6)
-              "1-1",
-              "1-2",
-              "1-3",
-              "1-4",
-              "1-5",
+              // "1-1",
+              // "1-2",
+              // "1-3",
+              // "1-4",
+              // "1-5",
               // Row 2: cols 1-4 (image now starts at col 5)
-              "2-1",
-              "2-2",
-              "2-3",
-              "2-4",
+              // "2-1",
+              // "2-2",
+              // "2-3",
+              // "2-4",
               // Row 3: cols 1-3 (image now starts at col 4)
-              "3-1",
-              "3-2",
-              "3-3",
+              // "3-1",
+              // "3-2",
+              // "3-3",
               // Row 4: cols 1-3 (image now starts at col 4)
-              "4-1",
-              "4-2",
-              "4-3",
+              // "4-1",
+              // "4-2",
+              // "4-3",
               // Row 5: cols 1-3 (image now starts at col 4)
-              "5-1",
-              "5-2",
-              "5-3",
+              // "5-1",
+              // "5-2",
+              // "5-3",
               // Row 6: no borderless cells (image starts at col 5)
             ]);
 
@@ -487,6 +535,35 @@ export default function HomePage() {
             - Keep borderlessZone and content overlays in sync to avoid visual bugs
           */}
 
+          {/* Hero text - spans cells 2-1, 2-2, 2-3, 2-4 */}
+          <div
+            className="z-10 flex items-center relative"
+            style={{
+              gridColumn: "1 / 5",
+              gridRow: 2,
+            }}
+          >
+            {/* Top-left corner accent */}
+            <div className="absolute top-0 left-0 w-2 h-2">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
+              <div className="absolute top-0 left-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
+            </div>
+            {/* Bottom-right corner accent */}
+            <div className="absolute bottom-0 right-0 w-2 h-2">
+              <div className="absolute bottom-0 right-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
+              <div className="absolute bottom-0 right-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
+            </div>
+            <h1
+              className={`text-2xl md:text-4xl px-4 ${exposureTrial.className}`}
+            >
+              <span className="text-muted-foreground">The</span>{" "}
+              <span className="text-[var(--pitch-deck-red)]">Memory Layer</span>{" "}
+              <span className="text-muted-foreground">
+                for Software Teams and AI Agents
+              </span>
+            </h1>
+          </div>
+
           {/* Dithered background overlay - complex L-shape */}
           <div
             className="z-10 hidden md:block overflow-hidden"
@@ -494,13 +571,113 @@ export default function HomePage() {
               gridColumn: "4 / 10", // cols 4-9 (bounding box)
               gridRow: "1 / 7", // rows 1-6 (bounding box)
               clipPath:
-                "polygon(33.33% 0%, 83.33% 0%, 83.33% 16.67%, 100% 16.67%, 100% 100%, 33.33% 100%, 33.33% 83.33%, 0% 83.33%, 0% 33.33%, 16.67% 33.33%, 16.67% 16.67%, 33.33% 16.67%)",
+                "polygon(50% 0%, 83.33% 0%, 83.33% 16.67%, 100% 16.67%, 100% 100%, 33.33% 100%, 33.33% 83.33%, 0% 83.33%, 0% 50%, 16.67% 50%, 16.67% 33.33%, 33.33% 33.33%, 33.33% 16.67%, 50% 16.67%)",
             }}
           >
             <DitheredBackground />
           </div>
         </section>
+
+        {/* Integrations Section */}
+        <section className="w-full max-w-7xl mx-auto py-16">
+          <IntegrationShowcase />
+        </section>
+
+        {/* Feature Visuals & Platform Access Cards */}
+        <section className="dark w-full min-h-screen bg-background py-16 pb-32 relative overflow-hidden">
+          {/* Content */}
+          <div className="max-w-7xl mx-auto space-y-32 relative z-10">
+            <FeatureVisualsTabs />
+          </div>
+          {/* Platform Access Cards with dither background */}
+          <div className="relative mt-32">
+            {/* Dithered background - full width, starts at halfway point of cards */}
+            <div className="absolute top-1/2 inset-x-0 bottom-0 -mb-16">
+              <div className="h-[700px]">
+                <DitheredBackground />
+              </div>
+            </div>
+            {/* Cards above the dither */}
+            <div className="max-w-7xl mx-auto relative z-10">
+              <PlatformAccessCards />
+            </div>
+          </div>
+        </section>
+
+        {/* Connect Your Tools Section */}
+        <section className="w-full max-w-7xl mx-auto px-4 py-16 relative z-10">
+          <h2
+            className={`text-2xl md:text-3xl font-light leading-[1.1] tracking-[-0.02em] mb-6 ${exposureTrial.className}`}
+          >
+            Connect your tools
+          </h2>
+          <p className="text-md text-muted-foreground max-w-2xl mb-12">
+            Pull in knowledge from where your team already works. GitHub,
+            Linear, Notion, Slack, and more—all searchable in one place.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {benefits.map((benefit) => {
+              const Icon = benefit.icon;
+              return (
+                <div
+                  key={benefit.title}
+                  className="border border-border/50 rounded-xs p-8"
+                >
+                  <div className="mb-4">
+                    <Icon className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <h3 className="mb-2 text-base font-medium">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {benefit.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="w-full max-w-7xl mx-auto px-4 py-16 relative z-10">
+          <FAQSection />
+        </section>
+
+        {/* Changelog Preview */}
+        <section className="w-full max-w-7xl mx-auto py-16 relative z-10">
+          <ChangelogPreview />
+        </section>
       </div>
+
+      {/* CTA Section */}
+      <section className="relative w-full h-[800px] bg-[var(--pitch-deck-red)] overflow-hidden">
+        {/* Grid overlay */}
+        <div className="absolute inset-4 grid grid-cols-4 md:grid-cols-12 grid-rows-4 gap-[8px] border border-[var(--pitch-deck-red-overlay)]/30">
+          {Array.from({ length: 48 }).map((_, i) => (
+            <div
+              key={i}
+              className="border border-[var(--pitch-deck-red-overlay)]/30 transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
+            />
+          ))}
+        </div>
+
+        {/* Centered content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            <LightfastLogoLatest className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-white tracking-tight">
+              Try Lightfast Now
+            </h2>
+          </div>
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-white text-[var(--pitch-deck-red)] hover:bg-white/90 pointer-events-auto"
+          >
+            <Link href="/early-access">Join Early Access</Link>
+          </Button>
+        </div>
+      </section>
     </>
   );
 }
