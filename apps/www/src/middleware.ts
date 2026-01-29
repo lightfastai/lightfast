@@ -1,4 +1,3 @@
-import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 import {
   composeCspOptions,
   createClerkCspDirectives,
@@ -10,7 +9,6 @@ import { securityMiddleware } from "@vendor/security/middleware";
 import { createNEMO } from "@rescale/nemo";
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
-import { authUrl } from "~/lib/related-projects";
 
 // =============================================================================
 // Security Headers
@@ -19,7 +17,7 @@ import { authUrl } from "~/lib/related-projects";
 const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
-    createClerkCspDirectives(),
+    createClerkCspDirectives(), // Keep for other apps in microfrontends
     createAnalyticsCspDirectives(),
     createSentryCspDirectives(),
   ),
@@ -34,16 +32,6 @@ async function withSecurityHeaders(
   }
   return response;
 }
-
-async function secureRedirect(url: URL | string): Promise<NextResponse> {
-  return withSecurityHeaders(NextResponse.redirect(url));
-}
-
-// =============================================================================
-// Route Matchers
-// =============================================================================
-
-const isRootPath = createRouteMatcher(["/"]);
 
 // =============================================================================
 // NEMO Composition
@@ -70,32 +58,18 @@ const composedMiddleware = createNEMO(
 // Main Middleware
 // =============================================================================
 
-export default clerkMiddleware(
-  async (auth, req: NextRequest, event: NextFetchEvent) => {
-    const { userId, orgId, orgSlug } = await auth({
-      treatPendingAsSignedOut: false,
-    });
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent,
+) {
+  // Run NEMO middleware chain (sets x-pathname, etc.)
+  const nemoResponse = await composedMiddleware(req, event);
 
-    // -------------------------------------------------------------------------
-    // 1. Redirect authenticated users from root to sign-in (which routes them)
-    // -------------------------------------------------------------------------
-    if (userId && isRootPath(req)) {
-      return secureRedirect(new URL("/sign-in", authUrl));
-    }
-
-    // -------------------------------------------------------------------------
-    // 3. Run NEMO middleware chain (sets x-pathname, etc.)
-    // -------------------------------------------------------------------------
-    const nemoResponse = await composedMiddleware(req, event);
-
-    // -------------------------------------------------------------------------
-    // 4. Return with security headers
-    // -------------------------------------------------------------------------
-    return withSecurityHeaders(
-      (nemoResponse as NextResponse | null) ?? NextResponse.next(),
-    );
-  },
-);
+  // Return with security headers
+  return withSecurityHeaders(
+    (nemoResponse as NextResponse | null) ?? NextResponse.next(),
+  );
+}
 
 export const config = {
   matcher: [

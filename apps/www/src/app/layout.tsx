@@ -6,7 +6,6 @@ import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { ClerkProvider } from "@vendor/clerk/client";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -15,10 +14,8 @@ import {
   PrefetchCrossZoneLinksProvider,
 } from "@vercel/microfrontends/next/client";
 
-import { env } from "~/env";
-import { authUrl, consoleUrl } from "~/lib/related-projects";
 import { JsonLd } from "@vendor/seo/json-ld";
-import type { Organization, WebSite, WithContext } from "@vendor/seo/json-ld";
+import type { Organization, WithContext } from "@vendor/seo/json-ld";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Memory Layer for Software Teams",
@@ -148,37 +145,22 @@ export default function RootLayout({
   } as const;
 
   return (
-    <ClerkProvider
-      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      // Delegate sign-in/sign-up to auth app
-      signInUrl={`${authUrl}/sign-in`}
-      signUpUrl={`${authUrl}/sign-up`}
-      // After authentication, redirect to console app
-      afterSignInUrl={consoleUrl}
-      afterSignUpUrl={consoleUrl}
-      signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      taskUrls={{
-        "choose-organization": `${consoleUrl}/account/teams/new`,
-      }}
-    >
-      <html className={fonts} lang="en" suppressHydrationWarning>
-        <head>
-          <JsonLd code={organizationSchema} />
-          <JsonLd code={websiteSchema} />
-        </head>
-        <body className={cn("min-h-screen dark font-sans bg-background")}>
-          <PrefetchCrossZoneLinksProvider>
-            <PostHogProvider>
-              {children}
-              <Toaster />
-              <VercelAnalytics />
-              <SpeedInsights />
-            </PostHogProvider>
-            <PrefetchCrossZoneLinks />
-          </PrefetchCrossZoneLinksProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html className={fonts} lang="en" suppressHydrationWarning>
+      <head>
+        <JsonLd code={organizationSchema} />
+        <JsonLd code={websiteSchema} />
+      </head>
+      <body className={cn("min-h-screen dark font-sans bg-background")}>
+        <PrefetchCrossZoneLinksProvider>
+          <PostHogProvider>
+            {children}
+            <Toaster />
+            <VercelAnalytics />
+            <SpeedInsights />
+          </PostHogProvider>
+          <PrefetchCrossZoneLinks />
+        </PrefetchCrossZoneLinksProvider>
+      </body>
+    </html>
   );
 }
