@@ -69,6 +69,10 @@ catalogs:
     zod: ^3.25.76
   zod4:
     zod: ^4.0.0
+  next15:
+    next: ^15.5.7
+  next16:
+    next: ^16.1.6
 onlyBuiltDependencies:
 - '@clerk/shared'
 - '@lightfastai/dual'
