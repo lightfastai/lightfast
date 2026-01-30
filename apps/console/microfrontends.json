@@ -33,6 +33,7 @@
             "/search",
             "/preview",
             "/pitch-deck",
+            "/unicorn-test",
             "/api/health",
             "/images/:path*",
             "/fonts/:path*",

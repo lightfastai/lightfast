@@ -65,6 +65,7 @@
     "react-hook-form": "catalog:",
     "shiki": "^3.9.2",
     "tailwind-merge": "catalog:",
+    "unicornstudio-react": "2.0.1-1",
     "zod": "catalog:zod3",
     "zustand": "catalog:"
   },

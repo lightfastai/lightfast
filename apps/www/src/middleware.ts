@@ -20,6 +20,12 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(), // Keep for other apps in microfrontends
     createAnalyticsCspDirectives(),
     createSentryCspDirectives(),
+    // UnicornStudio
+    {
+      scriptSrc: ["https://cdn.jsdelivr.net"],
+      connectSrc: ["https://assets.unicorn.studio"],
+      imgSrc: ["https://assets.unicorn.studio"],
+    },
   ),
 );
 
