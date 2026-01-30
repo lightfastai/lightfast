@@ -13,6 +13,7 @@ import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
 import { FeatureVisualsTabs } from "~/components/feature-visuals-tabs";
 import { UnicornScene } from "~/components/unicorn-scene";
 import { LissajousHero } from "~/components/lissajous-hero";
+import { GridSection } from "~/components/grid-section";
 import { exposureTrial } from "~/lib/fonts";
 
 const benefits = [
@@ -709,61 +710,77 @@ export default function HomePage() {
         </section>
 
         {/* Connect Your Tools Section */}
-        <section className="w-full max-w-7xl mx-auto px-4 py-16 relative z-10">
-          <h2
-            className={`text-2xl md:text-3xl font-light leading-[1.1] tracking-[-0.02em] mb-6 ${exposureTrial.className}`}
-          >
-            Connect your tools
-          </h2>
-          <p className="text-md text-muted-foreground max-w-2xl mb-12">
-            Pull in knowledge from where your team already works. GitHub,
-            Linear, Notion, Slack, and more—all searchable in one place.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {benefits.map((benefit) => {
-              const Icon = benefit.icon;
-              return (
-                <div
-                  key={benefit.title}
-                  className="border border-border/50 rounded-xs p-8"
-                >
-                  <div className="mb-4">
-                    <Icon className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <h3 className="mb-2 text-base font-medium">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {benefit.description}
-                  </p>
+        <section className="w-full bg-background py-24 md:py-32">
+          <div className="w-full px-8 md:px-16 lg:px-24">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  Connect Your Tools
+                </span>
+              </div>
+
+              {/* Right: Content + Cards - spans 2 columns */}
+              <div className="lg:col-span-2">
+                <p className="text-base md:text-lg leading-relaxed text-muted-foreground max-w-xl mb-12">
+                  Pull in knowledge from where your team already works. GitHub,
+                  Linear, Notion, Slack, and more—all searchable in one place.
+                </p>
+
+                {/* Benefits Grid - negative margin to align icon/title with text above */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 -ml-8">
+                  {benefits.map((benefit) => {
+                    const Icon = benefit.icon;
+                    return (
+                      <div
+                        key={benefit.title}
+                        className="border border-border rounded-none p-8"
+                      >
+                        <div className="mb-4">
+                          <Icon className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <h3 className="mb-2 text-base font-medium">
+                          {benefit.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {benefit.description}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
         </section>
 
         {/* FAQ Section */}
-        <section className="w-full max-w-7xl mx-auto px-4 py-16 relative z-10">
-          <FAQSection />
+        <section className="w-full bg-background py-24 md:py-32">
+          <div className="w-full px-8 md:px-16 lg:px-24">
+            <FAQSection />
+          </div>
         </section>
 
         {/* Changelog Preview */}
-        <section className="w-full max-w-7xl mx-auto py-16 relative z-10">
-          <ChangelogPreview />
+        <section className="w-full bg-background py-24 md:py-32">
+          <div className="w-full px-8 md:px-16 lg:px-24">
+            <ChangelogPreview />
+          </div>
         </section>
       </div>
 
       {/* CTA Section */}
       <section className="relative w-full h-fit p-4 bg-[var(--pitch-deck-red)] overflow-hidden">
         {/* Grid overlay */}
-        <div className="relative grid grid-cols-4 md:grid-cols-12 grid-rows-6 gap-[8px] border border-[var(--pitch-deck-red-overlay)]/30">
-          {Array.from({ length: 72 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square border border-[var(--pitch-deck-red-overlay)]/30 transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
-            />
-          ))}
-        </div>
+        <GridSection
+          rows={6}
+          cols={12}
+          borderVariant="simple"
+          borderColorClass="border-[var(--pitch-deck-red-overlay)]/30"
+          cellBackground="bg-transparent"
+          interactive
+          hoverClass="hover:bg-[var(--pitch-deck-red-overlay)]"
+        />
 
         {/* Centered content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none">

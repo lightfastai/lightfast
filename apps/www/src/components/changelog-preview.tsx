@@ -66,11 +66,11 @@ export function ChangelogPreview() {
                     href={`/changelog/${item.slug}`}
                     className="group"
                   >
-                    <div className="h-full rounded-xs border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                    <div className="h-full rounded-none border border-border p-6 transition-colors hover:bg-muted/50">
                       {/* Version Badge and Date on same line */}
                       <div className="flex items-center gap-2 mb-4">
                         {item.slug && (
-                          <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center h-6 px-2 rounded-md border border-border text-xs text-muted-foreground">
                             {item.slug.slice(0, 3)}
                           </span>
                         )}
@@ -80,7 +80,7 @@ export function ChangelogPreview() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-md font-medium text-foreground line-clamp-2 px-2">
+                      <h3 className="text-sm font-medium text-foreground line-clamp-2">
                         {item._title}
                       </h3>
                     </div>

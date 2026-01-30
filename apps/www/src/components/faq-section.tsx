@@ -59,71 +59,71 @@ export const faqs = [
 export function FAQSection() {
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Left side - FAQ label */}
-          <div className="md:col-span-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              FAQs
-            </span>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+        {/* Left: Badge */}
+        <div>
+          <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+            FAQ
+          </span>
+        </div>
 
-          {/* Right side - FAQ content */}
-          <div className="md:col-span-10 md:col-start-3">
-            {/* Header with CTA */}
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
-              <div className="space-y-1">
-                <p className="text-xl text-muted-foreground">
-                  Learn how Lightfast works.
-                </p>
-              </div>
-
-              <div className="mt-6 lg:mt-0 lg:text-right">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Ready to get started?
-                </p>
-                <Link
-                  href="/early-access"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors group"
-                >
-                  Join early access
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </div>
+        {/* Right: FAQ content - spans 2 columns */}
+        <div className="lg:col-span-2">
+          {/* Header with CTA */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
+            <div className="space-y-1">
+              <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
+                Learn how Lightfast works.
+              </p>
             </div>
 
-            {/* FAQ Accordion */}
-            <Accordion
-              type="single"
-              collapsible
-              className="w-full"
-              defaultValue="item-0"
-            >
-              {faqs.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`item-${index}`}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <AccordionTrigger
-                    className={cn(
-                      "flex justify-between items-center w-full py-6 text-left",
-                      "hover:no-underline group",
-                    )}
-                  >
-                    <span className="text-base font-medium text-foreground pr-4">
-                      {faq.question}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-6 pr-12">
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {faq.answer}
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <div className="mt-6 lg:mt-0 lg:text-right">
+              <p className="text-sm text-muted-foreground mb-2">
+                Ready to get started?
+              </p>
+              <Link
+                href="/early-access"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors group"
+              >
+                Join early access
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           </div>
+
+          {/* FAQ Accordion */}
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full"
+            defaultValue="item-0"
+          >
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="border-b border-border last:border-b-0"
+              >
+                <AccordionTrigger
+                  className={cn(
+                    "flex justify-between items-center w-full py-6 text-left",
+                    "hover:no-underline group"
+                  )}
+                >
+                  <span className="text-base font-medium text-foreground pr-4">
+                    {faq.question}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-6 pr-12">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </div>
+    </div>
   );
 }
