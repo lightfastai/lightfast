@@ -4,13 +4,15 @@
 /* Override shadcn border-radius via CSS variable */
 :root {
   /* Brand colors */
-  --brand-blue: oklch(0.4512 0.275 269.89);
+  --brand-blue: oklch(0.4868 0.2565 266.23);
   --brand-orange: oklch(0.5913 0.2286 31.28);
   --brand-orange-overlay: oklch(0.6496 0.2375 31.9);
   --brand-gray: oklch(0.1957 0 0);
   /* Pitch deck red colors */
   --pitch-deck-red: #e62200;
   --pitch-deck-red-overlay: #ff3714;
+  /* Navbar background */
+  --nav-pill: oklch(0 0 0 / 4%);
 
   /* Light mode theme overrides */
   --background: oklch(0.985 0 0);
@@ -60,7 +62,7 @@
 
 /* Dark mode theme v2 */
 .dark {
-  --background: oklch(0.205 0 0);
+  --background: oklch(0 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -79,6 +81,8 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --radius: 0.5rem;
+  /* Navbar background */
+  --nav-pill: oklch(1 0 0 / 4%);
 }
 
 /* Early Access theme - clean white background */
