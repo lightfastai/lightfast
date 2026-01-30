@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -8,7 +9,10 @@ import { LightfastLogoLatest } from "~/components/icons";
 import { IntegrationShowcase } from "~/components/integration-showcase";
 import { PlatformAccessCards } from "~/components/platform-access-cards";
 import { ChangelogPreview } from "~/components/changelog-preview";
+import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
 import { FeatureVisualsTabs } from "~/components/feature-visuals-tabs";
+import { UnicornScene } from "~/components/unicorn-scene";
+import { LissajousHero } from "~/components/lissajous-hero";
 import { exposureTrial } from "~/lib/fonts";
 
 const benefits = [
@@ -126,6 +130,9 @@ export const metadata: Metadata = {
 // Debug flag: set to true to display row/col coordinates in each grid cell
 const SHOW_GRID_LABELS = false;
 
+// Flag to disable the grid system for hero section
+const DISABLE_HERO_GRID = true;
+
 export default function HomePage() {
   // Build organization entity
   const organizationEntity: Organization = {
@@ -214,21 +221,51 @@ export default function HomePage() {
 
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background flex flex-col items-center">
-        {/* Hero Section with Grid - square cells via aspect-square on each cell */}
-        {/* Desktop: 9 cols × 7 rows | Mobile: 4 cols × 7 rows */}
-        {/*
-          Double-line grid effect:
-          - Gap (8px) between cells creates space for double lines
-          - Each cell has borders on sides facing other cells
-          - Cell border + gap + adjacent cell border = double line
-          - Edge cells have no outward border, keeping outer edge single-lined
-        */}
-        <section
-          className="relative w-full max-w-7xl mx-auto h-fit
-            grid grid-cols-4 md:grid-cols-9 content-start
-            gap-[8px] border border-border/50"
-        >
-          {/*
+        {/* Hero Section */}
+        {DISABLE_HERO_GRID ? (
+          /* Full-width hero without grid - Lightfield style */
+          <section className="relative w-full h-screen bg-linear-to-b from-[#c7c9d1] to-[#ebe8e5]">
+            {/* Hero text - left middle (optically adjusted slightly upward) */}
+            <div className="absolute top-[45%] -translate-y-1/2 left-8 md:left-16 lg:left-24 z-20 max-w-md">
+              <LightfastLogoLatest className="w-5 h-5 mb-4 text-muted-foreground" />
+              <h1 className="text-xl md:text-2xl lg:text-3xl leading-[1.1] tracking-[-0.02em] mb-4">
+                <span className="text-muted-foreground">The</span>{" "}
+                <span className="text-primary">memory layer</span>{" "}
+                <span className="text-muted-foreground">
+                  for software teams and AI agents.
+                </span>
+              </h1>
+              <Link
+                href="/early-access"
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-[var(--nav-pill)] backdrop-blur-md text-xs text-foreground hover:bg-[var(--nav-pill)]/80 transition-colors"
+              >
+                Join Early Access
+                <span className="ml-2">→</span>
+              </Link>
+            </div>
+
+            {/* Changelog badge - bottom left */}
+            <div className="absolute bottom-8 left-8 md:left-16 lg:left-24 z-20">
+              <HeroChangelogBadge />
+            </div>
+          </section>
+        ) : (
+          /* Grid-based hero - original implementation */
+          /* Hero Section with Grid - square cells via aspect-square on each cell */
+          /* Desktop: 9 cols × 7 rows | Mobile: 4 cols × 7 rows */
+          /*
+            Double-line grid effect:
+            - Gap (8px) between cells creates space for double lines
+            - Each cell has borders on sides facing other cells
+            - Cell border + gap + adjacent cell border = double line
+            - Edge cells have no outward border, keeping outer edge single-lined
+          */
+          <section
+            className="relative w-full max-w-7xl mx-auto h-fit
+              grid grid-cols-4 md:grid-cols-9 content-start
+              gap-[8px] border border-border"
+          >
+            {/*
             Grid Cell System:
             - Cells are addressable by row (1-7) and column (1-4 mobile, 1-9 desktop)
             - Use data-cell="row-col" for debugging
@@ -243,9 +280,9 @@ export default function HomePage() {
             - Example: <div className="col-start-2 col-span-3 row-start-2 row-span-2 z-10">
           */}
 
-          {/* Visual grid cells - these create the cell backgrounds with double-line borders */}
-          {(() => {
-            /*
+            {/* Visual grid cells - these create the cell backgrounds with double-line borders */}
+            {(() => {
+              /*
               ===================================================================================
               BORDERLESS ZONE CONFIGURATION
               ===================================================================================
@@ -277,117 +314,117 @@ export default function HomePage() {
               - Remove "2-4", "3-3", "4-3" from the Set
               - Add a comment noting why they were removed
             */
-            const borderlessZone = new Set([
-              // Row 1: cols 1-5 (image now starts at col 6)
-              // "1-1",
-              // "1-2",
-              // "1-3",
-              // "1-4",
-              // "1-5",
-              // Row 2: cols 1-4 (image now starts at col 5)
-              // "2-1",
-              // "2-2",
-              // "2-3",
-              // "2-4",
-              // Row 3: cols 1-3 (image now starts at col 4)
-              // "3-1",
-              // "3-2",
-              // "3-3",
-              // Row 4: cols 1-3 (image now starts at col 4)
-              // "4-1",
-              // "4-2",
-              // "4-3",
-              // Row 5: cols 1-3 (image now starts at col 4)
-              // "5-1",
-              // "5-2",
-              // "5-3",
-              // Row 6: no borderless cells (image starts at col 5)
-            ]);
+              const borderlessZone = new Set<string>([
+                // Row 1: cols 1-5 (image now starts at col 6)
+                // "1-1",
+                // "1-2",
+                // "1-3",
+                // "1-4",
+                // "1-5",
+                // Row 2: cols 1-4 (image now starts at col 5)
+                // "2-1",
+                // "2-2",
+                // "2-3",
+                // "2-4",
+                // Row 3: cols 1-3 (image now starts at col 4)
+                // "3-1",
+                // "3-2",
+                // "3-3",
+                // Row 4: cols 1-3 (image now starts at col 4)
+                // "4-1",
+                // "4-2",
+                // "4-3",
+                // Row 5: cols 1-3 (image now starts at col 4)
+                // "5-1",
+                // "5-2",
+                // "5-3",
+                // Row 6: no borderless cells (image starts at col 5)
+              ]);
 
-            const isInBorderlessZone = (r: number, c: number) =>
-              borderlessZone.has(`${r}-${c}`);
+              const isInBorderlessZone = (r: number, c: number) =>
+                borderlessZone.has(`${r}-${c}`);
 
-            return Array.from({ length: 7 }).map((_, rowIdx) => {
-              const row = rowIdx + 1; // 1-indexed for grid positioning
-              return Array.from({ length: 9 }).map((_, colIdx) => {
-                const col = colIdx + 1; // 1-indexed for grid positioning
-                const isMobileVisible = col <= 4;
+              return Array.from({ length: 7 }).map((_, rowIdx) => {
+                const row = rowIdx + 1; // 1-indexed for grid positioning
+                return Array.from({ length: 9 }).map((_, colIdx) => {
+                  const col = colIdx + 1; // 1-indexed for grid positioning
+                  const isMobileVisible = col <= 4;
 
-                // Edge detection
-                const isTopEdge = row === 1;
-                const isBottomEdge = row === 7;
-                const isLeftEdge = col === 1;
-                const isRightEdgeDesktop = col === 9;
-                const isRightEdgeMobile = col === 4;
+                  // Edge detection
+                  const isTopEdge = row === 1;
+                  const isBottomEdge = row === 7;
+                  const isLeftEdge = col === 1;
+                  const isRightEdgeDesktop = col === 9;
+                  const isRightEdgeMobile = col === 4;
 
-                // Borderless zone detection - remove borders between cells in the same zone
-                const inZone = isInBorderlessZone(row, col);
-                const aboveInZone = isInBorderlessZone(row - 1, col);
-                const belowInZone = isInBorderlessZone(row + 1, col);
-                const leftInZone = isInBorderlessZone(row, col - 1);
-                const rightInZone = isInBorderlessZone(row, col + 1);
+                  // Borderless zone detection - remove borders between cells in the same zone
+                  const inZone = isInBorderlessZone(row, col);
+                  const aboveInZone = isInBorderlessZone(row - 1, col);
+                  const belowInZone = isInBorderlessZone(row + 1, col);
+                  const leftInZone = isInBorderlessZone(row, col - 1);
+                  const rightInZone = isInBorderlessZone(row, col + 1);
 
-                // Build border classes for double-line effect
-                // Each cell has borders on sides facing other cells (not edges)
-                // Skip borders between cells that are both in the borderless zone
-                const borderClasses = [
-                  // Top border: all except top edge, skip if both cells in borderless zone
-                  !isTopEdge &&
-                    !(inZone && aboveInZone) &&
-                    "border-t border-t-border/50",
-                  // Bottom border: all except bottom edge, skip if both cells in borderless zone
-                  !isBottomEdge &&
-                    !(inZone && belowInZone) &&
-                    "border-b border-b-border/50",
-                  // Left border: all except left edge, skip if both cells in borderless zone
-                  !isLeftEdge &&
-                    !(inZone && leftInZone) &&
-                    "border-l border-l-border/50",
-                  // Right border: complex responsive logic, skip if both cells in borderless zone
-                  // Mobile: cols 1-3 have right border, col 4 doesn't
-                  // Desktop: cols 1-8 have right border, col 9 doesn't
-                  !isRightEdgeMobile &&
-                    col <= 4 &&
-                    !(inZone && rightInZone) &&
-                    "border-r border-r-border/50",
-                  isRightEdgeMobile &&
-                    !isRightEdgeDesktop &&
-                    !(inZone && rightInZone) &&
-                    "md:border-r md:border-r-border/50",
-                  col > 4 &&
-                    !isRightEdgeDesktop &&
-                    !(inZone && rightInZone) &&
-                    "border-r border-r-border/50",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
+                  // Build border classes for double-line effect
+                  // Each cell has borders on sides facing other cells (not edges)
+                  // Skip borders between cells that are both in the borderless zone
+                  const borderClasses = [
+                    // Top border: all except top edge, skip if both cells in borderless zone
+                    !isTopEdge &&
+                      !(inZone && aboveInZone) &&
+                      "border-t border-t-border",
+                    // Bottom border: all except bottom edge, skip if both cells in borderless zone
+                    !isBottomEdge &&
+                      !(inZone && belowInZone) &&
+                      "border-b border-b-border",
+                    // Left border: all except left edge, skip if both cells in borderless zone
+                    !isLeftEdge &&
+                      !(inZone && leftInZone) &&
+                      "border-l border-l-border",
+                    // Right border: complex responsive logic, skip if both cells in borderless zone
+                    // Mobile: cols 1-3 have right border, col 4 doesn't
+                    // Desktop: cols 1-8 have right border, col 9 doesn't
+                    !isRightEdgeMobile &&
+                      col <= 4 &&
+                      !(inZone && rightInZone) &&
+                      "border-r border-r-border",
+                    isRightEdgeMobile &&
+                      !isRightEdgeDesktop &&
+                      !(inZone && rightInZone) &&
+                      "md:border-r md:border-r-border",
+                    col > 4 &&
+                      !isRightEdgeDesktop &&
+                      !(inZone && rightInZone) &&
+                      "border-r border-r-border",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
 
-                // Visibility classes - need to use flex variant for desktop-only cells when showing labels
-                const visibilityClass = !isMobileVisible
-                  ? SHOW_GRID_LABELS
-                    ? "hidden md:flex"
-                    : "hidden md:block"
-                  : "";
+                  // Visibility classes - need to use flex variant for desktop-only cells when showing labels
+                  const visibilityClass = !isMobileVisible
+                    ? SHOW_GRID_LABELS
+                      ? "hidden md:flex"
+                      : "hidden md:block"
+                    : "";
 
-                return (
-                  <div
-                    key={`cell-${row}-${col}`}
-                    data-cell={`${row}-${col}`}
-                    className={`bg-background aspect-square ${borderClasses} ${visibilityClass} ${SHOW_GRID_LABELS ? "flex items-center justify-center" : ""}`}
-                    style={{ gridRow: row, gridColumn: col }}
-                  >
-                    {SHOW_GRID_LABELS && (
-                      <span className="text-xs text-muted-foreground/50 font-mono">
-                        {row}-{col}
-                      </span>
-                    )}
-                  </div>
-                );
+                  return (
+                    <div
+                      key={`cell-${row}-${col}`}
+                      data-cell={`${row}-${col}`}
+                      className={`bg-background aspect-square ${borderClasses} ${visibilityClass} ${SHOW_GRID_LABELS ? "flex items-center justify-center" : ""}`}
+                      style={{ gridRow: row, gridColumn: col }}
+                    >
+                      {SHOW_GRID_LABELS && (
+                        <span className="text-xs text-muted-foreground/50 font-mono">
+                          {row}-{col}
+                        </span>
+                      )}
+                    </div>
+                  );
+                });
               });
-            });
-          })()}
+            })()}
 
-          {/*
+            {/*
             ===================================================================================
             CONTENT PLACEMENT GUIDE
             ===================================================================================
@@ -535,37 +572,37 @@ export default function HomePage() {
             - Keep borderlessZone and content overlays in sync to avoid visual bugs
           */}
 
-          {/* Hero text - spans cells 2-1, 2-2, 2-3, 2-4 */}
-          <div
-            className="z-10 flex items-center relative"
-            style={{
-              gridColumn: "1 / 5",
-              gridRow: 2,
-            }}
-          >
-            {/* Top-left corner accent */}
-            <div className="absolute top-0 left-0 w-2 h-2">
-              <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
-              <div className="absolute top-0 left-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
-            </div>
-            {/* Bottom-right corner accent */}
-            <div className="absolute bottom-0 right-0 w-2 h-2">
-              <div className="absolute bottom-0 right-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
-              <div className="absolute bottom-0 right-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
-            </div>
-            <h1
-              className={`text-2xl md:text-4xl px-4 ${exposureTrial.className}`}
+            {/* Hero text - spans cells 2-1, 2-2, 2-3, 2-4 */}
+            <div
+              className="z-10 flex items-center relative"
+              style={{
+                gridColumn: "1 / 5",
+                gridRow: 2,
+              }}
             >
-              <span className="text-muted-foreground">The</span>{" "}
-              <span className="text-[var(--pitch-deck-red)]">Memory Layer</span>{" "}
-              <span className="text-muted-foreground">
-                for Software Teams and AI Agents
-              </span>
-            </h1>
-          </div>
+              {/* Top-left corner accent */}
+              <div className="absolute top-0 left-0 w-2 h-2">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
+                <div className="absolute top-0 left-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
+              </div>
+              {/* Bottom-right corner accent */}
+              <div className="absolute bottom-0 right-0 w-2 h-2">
+                <div className="absolute bottom-0 right-0 w-full h-[1px] bg-[var(--pitch-deck-red)]" />
+                <div className="absolute bottom-0 right-0 w-[1px] h-full bg-[var(--pitch-deck-red)]" />
+              </div>
+              <h1
+                className={`text-2xl md:text-4xl px-4 ${exposureTrial.className}`}
+              >
+                <span className="text-muted-foreground">The</span>{" "}
+                <span className="text-primary">Memory Layer</span>{" "}
+                <span className="text-muted-foreground">
+                  for Software Teams and AI Agents
+                </span>
+              </h1>
+            </div>
 
-          {/* Dithered background overlay - complex L-shape */}
-          <div
+            {/* Dithered background overlay - complex L-shape */}
+            {/* <div
             className="z-10 hidden md:block overflow-hidden"
             style={{
               gridColumn: "4 / 10", // cols 4-9 (bounding box)
@@ -575,31 +612,98 @@ export default function HomePage() {
             }}
           >
             <DitheredBackground />
+          </div> */}
+
+            {/* Hero visual - Unicorn Studio scene */}
+            <div
+              className="z-10 hidden md:block overflow-hidden relative"
+              style={{
+                gridColumn: "4 / 10", // cols 4-9 (bounding box)
+                gridRow: "1 / 7", // rows 1-6 (bounding box)
+                clipPath:
+                  "polygon(50% 0%, 83.33% 0%, 83.33% 16.67%, 100% 16.67%, 100% 100%, 33.33% 100%, 33.33% 83.33%, 0% 83.33%, 0% 50%, 16.67% 50%, 16.67% 33.33%, 33.33% 33.33%, 33.33% 16.67%, 50% 16.67%)",
+              }}
+            >
+              <UnicornScene
+                projectId="WJgAtyV7ZTlZqfZHiGn5"
+                className="w-full h-full"
+                scale={0.75}
+                dpi={1.5}
+                fps={30}
+                lazyLoad={false}
+                altText="Lightfast hero visual"
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Introducing Section */}
+        <section className="w-full bg-background py-24 md:py-32">
+          <div className="w-full px-8 md:px-16 lg:px-24">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  Introducing Lightfast
+                </span>
+              </div>
+
+              {/* Right: Content - spans 2 columns */}
+              <div className="lg:col-span-2 max-w-xl">
+                <p className="text-base md:text-lg leading-relaxed mb-6">
+                  <span className="text-foreground font-normal">
+                    Engineering teams lose hours searching for context.
+                  </span>{" "}
+                  <span className="text-muted-foreground">
+                    Instead of building, they dig through Slack threads, stale
+                    docs, and scattered PRs trying to understand decisions that
+                    were made months ago.
+                  </span>
+                </p>
+                <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
+                  That&apos;s why we built Lightfast — the first memory layer
+                  for software teams. It indexes everything your team knows,
+                  surfaces answers with sources, and gives your agents the
+                  context they need to actually help.
+                </p>
+              </div>
+            </div>
+
+            {/* Lissajous Hero */}
+            <Link
+              href="/blog/announcing-lightfast"
+              className="block w-full rounded-sm overflow-hidden"
+            >
+              <LissajousHero />
+            </Link>
           </div>
         </section>
 
         {/* Integrations Section */}
-        <section className="w-full max-w-7xl mx-auto py-16">
+        {/* <section className="w-full max-w-7xl mx-auto py-16">
           <IntegrationShowcase />
-        </section>
+        </section> */}
 
-        {/* Feature Visuals & Platform Access Cards */}
-        <section className="dark w-full min-h-screen bg-background py-16 pb-32 relative overflow-hidden">
-          {/* Content */}
-          <div className="max-w-7xl mx-auto space-y-32 relative z-10">
+        {/* Feature Visuals Section */}
+        <section className="dark w-full min-h-screen bg-background relative overflow-hidden">
+          {/* Content - full width, left-aligned like hero */}
+          <div className="w-full px-8 md:px-16 lg:px-24 py-24 relative z-10">
             <FeatureVisualsTabs />
           </div>
           {/* Platform Access Cards with dither background */}
           <div className="relative mt-32">
-            {/* Dithered background - full width, starts at halfway point of cards */}
-            <div className="absolute top-1/2 inset-x-0 bottom-0 -mb-16">
-              <div className="h-[700px]">
-                <DitheredBackground />
-              </div>
-            </div>
-            {/* Cards above the dither */}
-            <div className="max-w-7xl mx-auto relative z-10">
+            {/* Cards */}
+            <div className="relative z-10 w-full px-8 md:px-16 lg:px-24">
               <PlatformAccessCards />
+            </div>
+            {/* Gradient background - full width, pulled up to overlap cards */}
+            <div className="relative w-screen h-[500px] -mt-[150px] left-1/2 -translate-x-1/2">
+              <Image
+                src="/images/nascent_remix.webp"
+                alt="Lightfast visual background"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
         </section>
@@ -650,13 +754,13 @@ export default function HomePage() {
       </div>
 
       {/* CTA Section */}
-      <section className="relative w-full h-[800px] bg-[var(--pitch-deck-red)] overflow-hidden">
+      <section className="relative w-full h-fit p-4 bg-[var(--pitch-deck-red)] overflow-hidden">
         {/* Grid overlay */}
-        <div className="absolute inset-4 grid grid-cols-4 md:grid-cols-12 grid-rows-4 gap-[8px] border border-[var(--pitch-deck-red-overlay)]/30">
-          {Array.from({ length: 48 }).map((_, i) => (
+        <div className="relative grid grid-cols-4 md:grid-cols-12 grid-rows-6 gap-[8px] border border-[var(--pitch-deck-red-overlay)]/30">
+          {Array.from({ length: 72 }).map((_, i) => (
             <div
               key={i}
-              className="border border-[var(--pitch-deck-red-overlay)]/30 transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
+              className="aspect-square border border-[var(--pitch-deck-red-overlay)]/30 transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
             />
           ))}
         </div>
@@ -678,6 +782,16 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
+
+      {/* Unicorn Studio Section */}
+      {/* <section className="w-full max-w-7xl mx-auto">
+        <div className="h-[600px] border border-border rounded-xs overflow-hidden">
+          <UnicornScene
+            projectId="l4I4U2goI9votcrBdYG1"
+            className="w-full h-full"
+          />
+        </div>
+      </section> */}
     </>
   );
 }
