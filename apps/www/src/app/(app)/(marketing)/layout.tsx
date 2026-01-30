@@ -21,7 +21,7 @@ export default function MarketingLayout({
       </main>
 
       {/* Spacer - transparent to reveal footer behind */}
-      <div className="h-[800px] md:h-[650px]" />
+      <div className="h-[800px] md:h-[650px] dark bg-background" />
 
       {/* Footer - fixed behind content, revealed on scroll */}
       <footer className="fixed bottom-0 left-0 right-0 z-0 h-[800px] md:h-[650px]">
