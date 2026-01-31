@@ -126,9 +126,9 @@ export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
  * @returns {import("next").NextConfig}
  */
-export const withAnalyzer: (sourceConfig: NextConfig) => NextConfig = (
-  sourceConfig: NextConfig,
-) => withBundleAnalyzer()(sourceConfig);
+export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
+  // Type assertion needed due to multiple Next.js versions in monorepo
+  withBundleAnalyzer()(sourceConfig as any) as NextConfig;
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}

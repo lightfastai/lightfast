@@ -28,13 +28,13 @@
     "@repo/typescript-config": "workspace:*",
     "@types/eslint": "^8.56.5",
     "eslint": "catalog:",
-    "next": "catalog:next15",
+    "next": "catalog:next16",
     "typescript": "catalog:",
     "webpack": "^5"
   },
   "dependencies": {
     "@logtail/next": "^0.2.0",
-    "@next/bundle-analyzer": "^15.0.3",
+    "@next/bundle-analyzer": "^16.0.0",
     "@sentry/nextjs": "^10.20.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
