@@ -472,18 +472,34 @@ export function transformGitHubDiscussion(
 
 /**
  * Extract linked issues from PR/issue body
- * Matches: fixes #123, closes #123, resolves #123
+ * Matches:
+ * - GitHub issues: fixes #123, closes #123, resolves #123
+ * - External issues: fixes LIN-892, fixes ENG-123, resolves Sentry CHECKOUT-123
  */
 function extractLinkedIssues(
   body: string
 ): Array<{ id: string; url?: string; label: string }> {
-  const pattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   const matches: Array<{ id: string; url?: string; label: string }> = [];
+
+  // Pattern 1: GitHub-style issue references (fixes #123)
+  const githubPattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   let match;
 
-  while ((match = pattern.exec(body)) !== null) {
+  while ((match = githubPattern.exec(body)) !== null) {
     matches.push({
       id: `#${match[2]}`,
+      label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
+    });
+  }
+
+  // Pattern 2: External issue references (fixes LIN-892, resolves CHECKOUT-123)
+  // Matches: keyword + optional "Sentry " + PROJECT-123 format
+  const externalPattern =
+    /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+(?:Sentry\s+)?([A-Z]+-\d+)/gi;
+
+  while ((match = externalPattern.exec(body)) !== null) {
+    matches.push({
+      id: match[2] ?? "",
       label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
     });
   }

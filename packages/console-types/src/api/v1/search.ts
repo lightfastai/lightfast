@@ -83,6 +83,22 @@ export const V1SearchRequestSchema = z.object({
 export type V1SearchRequest = z.infer<typeof V1SearchRequestSchema>;
 
 /**
+ * V1 API source reference - links to related external resources
+ */
+export const V1SourceReferenceSchema = z.object({
+  /** Reference type (e.g., "commit", "issue", "pr", "branch", "project") */
+  type: z.string(),
+  /** Reference identifier */
+  id: z.string(),
+  /** URL to the referenced resource */
+  url: z.string().optional(),
+  /** Human-readable label for the reference */
+  label: z.string().optional(),
+});
+
+export type V1SourceReference = z.infer<typeof V1SourceReferenceSchema>;
+
+/**
  * Individual search result
  */
 export const V1SearchResultSchema = z.object({
@@ -111,6 +127,8 @@ export const V1SearchResultSchema = z.object({
       })
     )
     .optional(),
+  /** Cross-source references (commits, issues, PRs, branches) */
+  references: z.array(V1SourceReferenceSchema).optional(),
   /** Highlighted snippet (if includeHighlights) */
   highlights: z
     .object({

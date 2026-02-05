@@ -11,6 +11,7 @@ import { workspaceObservationClusters } from "./tables/workspace-observation-clu
 import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
 import { orgActorIdentities } from "./tables/org-actor-identities";
 import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
+import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -124,5 +125,24 @@ export const orgActorIdentitiesRelations = relations(
   () => ({
     // No direct FK relations - clerkOrgId references Clerk org (external)
     // canonicalActorId links logically to workspaceActorProfiles.actorId
+  }),
+);
+
+// Workspace observation relationships - edges in the relationship graph
+export const workspaceObservationRelationshipsRelations = relations(
+  workspaceObservationRelationships,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceObservationRelationships.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    sourceObservation: one(workspaceNeuralObservations, {
+      fields: [workspaceObservationRelationships.sourceObservationId],
+      references: [workspaceNeuralObservations.id],
+    }),
+    targetObservation: one(workspaceNeuralObservations, {
+      fields: [workspaceObservationRelationships.targetObservationId],
+      references: [workspaceNeuralObservations.id],
+    }),
   }),
 );

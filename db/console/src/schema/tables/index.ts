@@ -28,3 +28,6 @@ export * from "./workspace-temporal-states";
 
 // Webhook storage tables
 export * from "./workspace-webhook-payloads";
+
+// Relationship graph tables
+export * from "./workspace-observation-relationships";

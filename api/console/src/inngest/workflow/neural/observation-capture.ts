@@ -45,6 +45,7 @@ import {
 import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
+import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
 import type { SourceActor, SourceReference } from "@repo/console-types";
 import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
@@ -997,7 +998,25 @@ export const observationCapture = inngest.createFunction(
       });
     });
 
-    // Step 7.5: Reconcile Vercel actors (only for GitHub push events)
+    // Step 7.5: Detect and create relationships
+    // Links this observation to others via shared commit SHAs, branch names, issue IDs
+    const relationshipsCreated = await step.run(
+      "detect-relationships",
+      async () => {
+        return detectAndCreateRelationships(
+          workspaceId,
+          observation.id,
+          sourceEvent
+        );
+      }
+    );
+
+    log.info("Observation relationships detected", {
+      observationId: observation.externalId,
+      relationshipsCreated,
+    });
+
+    // Step 7.6: Reconcile Vercel actors (only for GitHub push events)
     // When a GitHub push arrives, update any Vercel observations that reference
     // the same commit SHA but have username-based actor IDs
     if (sourceEvent.source === "github" && sourceEvent.sourceType === "push") {
