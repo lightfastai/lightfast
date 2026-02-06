@@ -1,16 +1,13 @@
 import { Suspense } from "react";
 import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
-import { WorkspaceSearch, WorkspaceSearchSkeleton } from "~/components/workspace-search";
+import { AskLightfast, AskLightfastSkeleton } from "~/components/ask-lightfast";
 
-export default async function WorkspaceSearchPage({
+export default async function AskLightfastPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string; workspaceName: string }>;
-  searchParams: Promise<{ q?: string }>;
 }) {
   const { slug, workspaceName } = await params;
-  const { q = "" } = await searchParams;
 
   // Prefetch workspace's single store (1:1 relationship)
   prefetch(
@@ -21,18 +18,10 @@ export default async function WorkspaceSearchPage({
   );
 
   return (
-    <div className="flex flex-1 flex-col h-full overflow-auto">
+    <Suspense fallback={<AskLightfastSkeleton />}>
       <HydrateClient>
-        <div className="flex flex-col gap-6 py-2 px-6">
-          <Suspense fallback={<WorkspaceSearchSkeleton />}>
-            <WorkspaceSearch
-              orgSlug={slug}
-              workspaceName={workspaceName}
-              initialQuery={q}
-            />
-          </Suspense>
-        </div>
+        <AskLightfast orgSlug={slug} workspaceName={workspaceName} />
       </HydrateClient>
-    </div>
+    </Suspense>
   );
 }

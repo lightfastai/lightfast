@@ -1,22 +1,10 @@
 "use client";
 
 import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
-import {
-  
-  createContext,
-  
-  useContext,
-  useEffect,
-  useRef,
-  useState
-} from "react";
-import type {ComponentProps, HTMLAttributes} from "react";
-import {
-  
-  
-  createHighlighter
-} from "shiki";
-import type {BundledLanguage, BundledTheme} from "shiki";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { ComponentProps, HTMLAttributes } from "react";
+import { createHighlighter } from "shiki";
+import type { BundledLanguage, BundledTheme } from "shiki";
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";
@@ -61,7 +49,7 @@ class HighlighterManager {
 
   private async ensureHighlightersInitialized(
     themes: [BundledTheme, BundledTheme],
-    language: BundledLanguage
+    language: BundledLanguage,
   ): Promise<void> {
     const [lightTheme, darkTheme] = themes;
     const jsEngine = createJavaScriptRegexEngine({ forgiving: true });
@@ -122,7 +110,7 @@ class HighlighterManager {
     code: string,
     language: BundledLanguage,
     themes: [BundledTheme, BundledTheme],
-    preClassName?: string
+    preClassName?: string,
   ): Promise<[string, string]> {
     // Ensure only one initialization happens at a time
     if (this.initializationPromise) {
@@ -132,7 +120,7 @@ class HighlighterManager {
     // Initialize or load language
     this.initializationPromise = this.ensureHighlightersInitialized(
       themes,
-      language
+      language,
     );
     await this.initializationPromise;
     this.initializationPromise = null;
@@ -156,8 +144,8 @@ class HighlighterManager {
     });
 
     return [
-      light ? removePreBackground(addPreClass(light)) : '',
-      dark ? removePreBackground(addPreClass(dark)) : '',
+      light ? removePreBackground(addPreClass(light)) : "",
+      dark ? removePreBackground(addPreClass(dark)) : "",
     ];
   }
 }
@@ -169,7 +157,7 @@ const highlighterManager = new HighlighterManager();
 const removePreBackground = (html: string) => {
   return html.replace(
     /(<pre[^>]*)(style="[^"]*background[^";]*;?[^"]*")([^>]*>)/g,
-    "$1$3"
+    "$1$3",
   );
 };
 
@@ -197,7 +185,7 @@ export const CodeBlockHeader = ({
   <div
     className={cn(
       "flex items-center justify-between bg-muted/80 p-3 text-muted-foreground text-xs",
-      className
+      className,
     )}
     data-code-block-header
     data-language={language}
@@ -272,7 +260,7 @@ export const CodeBlockContent = ({
               "[&>pre]:!border-0 [&>pre]:!bg-transparent [&>pre]:!p-0 [&>pre]:!m-0",
               "[&_code]:!border-0 [&_code]:!bg-transparent [&_code]:!p-0",
               "[&_*]:!border-0",
-              className
+              className,
             )}
             // biome-ignore lint/security/noDangerouslySetInnerHtml: "this is needed."
             dangerouslySetInnerHTML={{ __html: html }}
@@ -287,7 +275,7 @@ export const CodeBlockContent = ({
               "[&>pre]:!border-0 [&>pre]:!bg-transparent [&>pre]:!p-0 [&>pre]:!m-0",
               "[&_code]:!border-0 [&_code]:!bg-transparent [&_code]:!p-0",
               "[&_*]:!border-0",
-              className
+              className,
             )}
             // biome-ignore lint/security/noDangerouslySetInnerHtml: "this is needed."
             dangerouslySetInnerHTML={{ __html: darkHtml }}
@@ -655,7 +643,7 @@ export const CodeBlockDownloadButton = ({
     <button
       className={cn(
         "cursor-pointer p-1 text-muted-foreground transition-all hover:text-foreground",
-        className
+        className,
       )}
       onClick={downloadCode}
       title="Download file"
@@ -694,7 +682,7 @@ export const CodeBlockCopyButton = ({
         onCopy?.();
         timeoutRef.current = window.setTimeout(
           () => setIsCopied(false),
-          timeout
+          timeout,
         );
       }
     } catch (error) {
@@ -714,7 +702,7 @@ export const CodeBlockCopyButton = ({
     <button
       className={cn(
         "cursor-pointer p-1 text-muted-foreground transition-all hover:text-foreground",
-        className
+        className,
       )}
       onClick={copyToClipboard}
       type="button"
@@ -724,4 +712,3 @@ export const CodeBlockCopyButton = ({
     </button>
   );
 };
-

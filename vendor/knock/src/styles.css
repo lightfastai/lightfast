@@ -1,0 +1,229 @@
+/*
+ * Knock Notification Component Styling
+ * Customized to match shadcn/ui colors from the console app
+ */
+
+:root {
+  /* Icon button sizing */
+  --rnf-notification-icon-button-size: 1rem;
+
+  /* Color Palette - Mapped to console shadcn colors (dark mode OKLCH) */
+  /* Primary/Accent */
+  --rnf-primary: oklch(0.922 0 0); /* primary yellow */
+  --rnf-primary-foreground: oklch(0.205 0 0); /* dark background */
+
+  /* Backgrounds */
+  --rnf-background: oklch(0.205 0 0); /* dark bg */
+  --rnf-surface: oklch(0.145 0 0); /* darker surface (card) */
+  --rnf-surface-secondary: oklch(0.24 0 0); /* slightly lighter */
+  --rnf-foreground: oklch(0.985 0 0); /* light text */
+  --rnf-foreground-secondary: oklch(0.85 0 0); /* muted text - brightened */
+
+  /* Borders & Dividers */
+  --rnf-border-color: oklch(1 0 0 / 10%); /* subtle border */
+  --rnf-divider-color: oklch(1 0 0 / 5%); /* even more subtle */
+
+  /* Interactive States */
+  --rnf-hover-background: oklch(0.269 0 0); /* hover state */
+  --rnf-focus-ring-color: oklch(0.556 0 0); /* focus ring */
+  --rnf-disabled-foreground: oklch(0.6 0 0); /* disabled text - brightened */
+
+  /* Status Colors */
+  --rnf-success-color: oklch(0.704 0.191 22.216); /* destructive red - use for alerts */
+  --rnf-error-color: oklch(0.704 0.191 22.216); /* error red */
+  --rnf-warning-color: oklch(0.922 0 0); /* warning yellow */
+
+  /* Shadows */
+  --rnf-shadow-sm: none;
+  --rnf-shadow-md: none;
+  --rnf-shadow-lg: none;
+
+  /* Spacing & Border Radius */
+  --rnf-border-radius-sm: 0.125rem;
+  --rnf-border-radius-md: 0.25rem;
+  --rnf-border-radius-lg: 0.375rem;
+
+  /* Font sizing */
+  --rnf-font-size-xs: 0.75rem;
+  --rnf-font-size-sm: 0.875rem;
+  --rnf-font-size-base: 1rem;
+  --rnf-font-size-lg: 1.125rem;
+}
+
+/* Icon Button Styling */
+.rnf-notification-icon-button {
+  width: var(--rnf-notification-icon-button-size);
+  height: var(--rnf-notification-icon-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--rnf-foreground);
+  transition: all 0.2s ease-in-out;
+}
+
+.rnf-notification-icon-button:hover {
+  color: var(--rnf-primary);
+}
+
+.rnf-notification-icon-button svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Popover Styling */
+.rnf-notification-feed-popover {
+  background-color: var(--rnf-surface);
+  border: 1px solid var(--rnf-border-color);
+  border-radius: var(--rnf-border-radius-lg);
+  box-shadow: none;
+  color: var(--rnf-foreground);
+  overflow: hidden;
+}
+
+/* Feed Container */
+.rnf-notification-feed {
+  background-color: var(--rnf-surface);
+  color: var(--rnf-foreground);
+  overflow: hidden;
+}
+
+/* Notification Item Styling */
+.rnf-notification-item {
+  background-color: var(--rnf-surface-secondary);
+  border: 1px solid var(--rnf-border-color);
+  border-radius: var(--rnf-border-radius-md);
+  color: var(--rnf-foreground);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.rnf-notification-item:hover {
+  background-color: var(--rnf-hover-background);
+}
+
+.rnf-notification-item--unread {
+  border-left: 3px solid var(--rnf-primary);
+}
+
+/* Notification Content */
+.rnf-notification-title {
+  color: var(--rnf-foreground);
+  font-weight: 600;
+}
+
+.rnf-notification-body {
+  color: var(--rnf-foreground-secondary);
+  font-size: var(--rnf-font-size-sm);
+}
+
+.rnf-notification-timestamp {
+  color: var(--rnf-foreground-secondary);
+  font-size: var(--rnf-font-size-xs);
+}
+
+/* Button Styling */
+.rnf-button {
+  background-color: var(--rnf-primary);
+  color: var(--rnf-primary-foreground);
+  border: none;
+  border-radius: var(--rnf-border-radius-md);
+  padding: 0.5rem 1rem;
+  font-size: var(--rnf-font-size-sm);
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.rnf-button:hover {
+  opacity: 0.9;
+}
+
+.rnf-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Close Button */
+.rnf-close-button {
+  background: transparent;
+  border: none;
+  color: var(--rnf-foreground-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.rnf-close-button:hover {
+  color: var(--rnf-foreground);
+}
+
+/* Mark All As Read Button */
+.rnf-mark-all-as-read {
+  background: transparent;
+  border: none;
+  color: var(--rnf-primary);
+  cursor: pointer;
+  font-size: var(--rnf-font-size-sm);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.rnf-mark-all-as-read:hover:not(:disabled) {
+  color: var(--rnf-primary);
+  opacity: 0.8;
+}
+
+.rnf-mark-all-as-read:disabled {
+  color: var(--rnf-disabled-foreground);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rnf-mark-all-as-read--dark {
+  color: var(--rnf-primary);
+}
+
+.rnf-mark-all-as-read--dark:hover:not(:disabled) {
+  color: var(--rnf-primary);
+  opacity: 0.8;
+}
+
+.rnf-mark-all-as-read--dark:disabled {
+  color: var(--rnf-disabled-foreground);
+  opacity: 0.5;
+}
+
+.rnf-mark-all-as-read svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Empty State */
+.rnf-empty-state {
+  color: var(--rnf-foreground-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Scrollbar Styling */
+.rnf-notification-feed::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rnf-notification-feed::-webkit-scrollbar-track {
+  background: var(--rnf-surface);
+  border-radius: var(--rnf-border-radius-sm);
+}
+
+.rnf-notification-feed::-webkit-scrollbar-thumb {
+  background: var(--rnf-border-color);
+  border-radius: var(--rnf-border-radius-sm);
+}
+
+.rnf-notification-feed::-webkit-scrollbar-thumb:hover {
+  background: var(--rnf-foreground-secondary);
+}

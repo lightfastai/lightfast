@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
-import { Toaster } from "@repo/ui/components/ui/toaster";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
@@ -154,7 +153,6 @@ export default function RootLayout({
         <PrefetchCrossZoneLinksProvider>
           <PostHogProvider>
             {children}
-            <Toaster />
             <VercelAnalytics />
             <SpeedInsights />
           </PostHogProvider>

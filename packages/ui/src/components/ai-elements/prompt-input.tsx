@@ -906,6 +906,32 @@ export const PromptInputSubmit = ({
   );
 };
 
+export type PromptInputClearProps = ComponentProps<typeof Button>;
+
+export const PromptInputClear = ({
+  className,
+  variant = "outline",
+  size = "sm",
+  children,
+  ...props
+}: PromptInputClearProps) => {
+  return (
+    <Button
+      className={cn(
+        "shrink-0 gap-1.5 rounded-full! text-xs",
+        "border-border/30 dark:border-border/50",
+        className
+      )}
+      size={size}
+      type="button"
+      variant={variant}
+      {...props}
+    >
+      {children ?? "Clear"}
+    </Button>
+  );
+};
+
 export type PromptInputModelSelectProps = ComponentProps<typeof Select>;
 
 export const PromptInputModelSelect = (props: PromptInputModelSelectProps) => (

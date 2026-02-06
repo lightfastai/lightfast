@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { Key, Copy, Trash2, Plus, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 

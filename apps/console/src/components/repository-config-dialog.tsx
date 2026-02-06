@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 
 interface RepositoryConfigDialogProps {
   open: boolean;
@@ -27,7 +27,6 @@ type State =
 
 export function RepositoryConfigDialog({ open, onOpenChange, fullName, installationId }: RepositoryConfigDialogProps) {
   const [state, setState] = useState<State>({ status: "idle" });
-  const { toast } = useToast();
 
   async function fetchConfig() {
     try {
@@ -45,7 +44,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch config";
       setState({ status: "error", message });
-      toast({ title: "Failed to load config", description: message, variant: "destructive" });
+      toast.error("Failed to load config", { description: message });
     }
   }
 

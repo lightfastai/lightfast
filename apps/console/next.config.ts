@@ -39,6 +39,7 @@ const config: NextConfig = withBetterStack(
       "@vendor/analytics",
       "@vendor/clerk",
       "@vendor/cms",
+      "@vendor/knock",
       "@vendor/next",
       "@vendor/observability",
       "@vendor/security",

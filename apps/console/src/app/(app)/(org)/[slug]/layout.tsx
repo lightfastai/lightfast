@@ -3,6 +3,7 @@ import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
 import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { AppSidebar } from "~/components/app-sidebar";
+import { AppHeader } from "~/components/app-header";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
@@ -29,6 +30,25 @@ interface OrgLayoutProps {
  * - requireOrgAccess fetches org directly from Clerk by slug and verifies membership
  * - This avoids race conditions with Clerk cookie propagation
  */
+// Layout wrapper for answer page with floating header
+function AnswerPageLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarInset>
+      {/* Floating header absolutely positioned over content */}
+      <div className="absolute top-0 left-0 right-0 h-14 flex items-center px-4 z-40">
+        <AppHeader />
+      </div>
+
+      {/* Content spans full height with floating header, scrollbar at viewport edge */}
+      <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden pt-14">
+        <div className="flex flex-col flex-1 h-full min-h-0 w-full overflow-hidden">
+          <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
+        </div>
+      </div>
+    </SidebarInset>
+  );
+}
+
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
 
@@ -52,17 +72,10 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <SidebarProvider className="h-full min-h-0">
+        <SidebarProvider className="!h-full !min-h-0 overflow-hidden">
           <AppSidebar />
-          <SidebarInset>
-            <div className="flex-1 overflow-auto">
-              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Suspense fallback={<PageLoadingSkeleton />}>
-                  {children}
-                </Suspense>
-              </div>
-            </div>
-          </SidebarInset>
+          {/* Use AnswerPageLayout for answer interface pages, StandardOrgLayout for others */}
+          <AnswerPageLayout>{children}</AnswerPageLayout>
         </SidebarProvider>
       </OrgPageErrorBoundary>
     </HydrateClient>
@@ -71,7 +84,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
 function PageLoadingSkeleton() {
   return (
-    <div className="flex items-center justify-center h-full w-full">
+    <div className="flex items-center justify-center h-full min-h-0 w-full">
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   );

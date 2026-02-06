@@ -14,7 +14,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { Loader2, RefreshCw } from "lucide-react";
 

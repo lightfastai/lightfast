@@ -1,25 +1,18 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@repo/ui/components/ui/command";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Label } from "@repo/ui/components/ui/label";
+import { Input } from "@repo/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import { cn } from "@repo/ui/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface ActorFilterProps {
   orgSlug: string;
@@ -42,13 +35,24 @@ export function ActorFilter({
     ...trpc.workspace.getActors.queryOptions({
       clerkOrgSlug: orgSlug,
       workspaceName: workspaceName,
-      search: search || undefined,
-      limit: 20,
+      search: undefined, // Fetch all actors, filter client-side
+      limit: 50,
     }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     staleTime: 60 * 1000, // 1 minute
   });
+
+  // Filter actors client-side based on search
+  const filteredActors = useMemo(() => {
+    if (!actors) return [];
+    if (!search) return actors;
+
+    const searchLower = search.toLowerCase();
+    return actors.filter((actor) =>
+      actor.displayName.toLowerCase().includes(searchLower),
+    );
+  }, [actors, search]);
 
   const toggleActor = useCallback(
     (displayName: string) => {
@@ -58,88 +62,62 @@ export function ActorFilter({
         onSelectionChange([...selectedActors, displayName]);
       }
     },
-    [selectedActors, onSelectionChange]
-  );
-
-  const removeActor = useCallback(
-    (displayName: string) => {
-      onSelectionChange(selectedActors.filter((a) => a !== displayName));
-    },
-    [selectedActors, onSelectionChange]
+    [selectedActors, onSelectionChange],
   );
 
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">Actors</span>
-      <div className="flex flex-wrap gap-1">
-        {/* Selected actors as badges */}
-        {selectedActors.map((actor) => (
-          <Badge key={actor} variant="default" className="gap-1">
-            {actor}
-            <button
-              onClick={() => removeActor(actor)}
-              className="hover:text-destructive"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
-
-        {/* Add actor button/combobox */}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="h-6 px-2 text-xs gap-1"
-            >
-              Add actor
-              <ChevronsUpDown className="h-3 w-3 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-0" align="start">
-            <Command shouldFilter={false}>
-              <CommandInput
-                placeholder="Search actors..."
-                value={search}
-                onValueChange={setSearch}
-              />
-              <CommandList>
-                <CommandEmpty>No actors found.</CommandEmpty>
-                <CommandGroup>
-                  {actors?.map((actor) => (
-                    <CommandItem
-                      key={actor.id}
-                      value={actor.displayName}
-                      onSelect={() => {
-                        toggleActor(actor.displayName);
-                        setOpen(false);
-                        setSearch("");
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedActors.includes(actor.displayName)
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <div className="flex-1 truncate">
-                        <span>{actor.displayName}</span>
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          ({actor.observationCount})
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="h-9 w-full justify-between font-normal"
+        >
+          <span className="truncate">
+            {selectedActors.length > 0
+              ? `${selectedActors.length} selected`
+              : "Select actors..."}
+          </span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[250px] p-3" align="start">
+        <div className="space-y-3">
+          <Input
+            placeholder="Search actors..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8"
+          />
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {filteredActors.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-2">
+                No actors found.
+              </p>
+            ) : (
+              filteredActors.map((actor) => (
+                <div key={actor.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`actor-${actor.id}`}
+                    checked={selectedActors.includes(actor.displayName)}
+                    onCheckedChange={(_checked) => {
+                      toggleActor(actor.displayName);
+                    }}
+                  />
+                  <Label
+                    htmlFor={`actor-${actor.id}`}
+                    className="text-sm font-normal cursor-pointer flex-1 truncate"
+                  >
+                    {actor.displayName}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      ({actor.observationCount})
+                    </span>
+                  </Label>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

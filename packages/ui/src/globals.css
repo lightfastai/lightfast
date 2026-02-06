@@ -286,15 +286,15 @@
     background-color: var(--scrollbar-thumb-bg-hover);
   }
 
-  /* Thin scrollbar variant */
+  /* Thin scrollbar variant - applies to both axes */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: var(--scrollbar-size-thin);
-    height: var(--scrollbar-size-thin);
+    width: var(--scrollbar-size-thin) !important;
+    height: var(--scrollbar-size-thin) !important;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -370,5 +370,16 @@
 
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Hide number input spinner */
+  .input-no-spinner::-webkit-outer-spin-button,
+  .input-no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input-no-spinner[type="number"] {
+    -moz-appearance: textfield;
   }
 }

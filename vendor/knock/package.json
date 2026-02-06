@@ -1,0 +1,43 @@
+{
+  "name": "@vendor/knock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./components/provider": "./src/components/provider.tsx",
+    "./components/trigger": "./src/components/trigger.tsx",
+    "./styles": "./src/styles.css",
+    "./env": "./env.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@knocklabs/node": "^1.20.0",
+    "@knocklabs/react": "^0.8.11",
+    "@t3-oss/env-nextjs": "catalog:",
+    "react": "catalog:react19",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

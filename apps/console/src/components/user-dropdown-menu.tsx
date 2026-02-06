@@ -87,7 +87,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   };
 
   if (!isLoaded) {
-    return null;
+    return <div className="size-6 rounded-full bg-white border border-border/50" />;
   }
 
   return (

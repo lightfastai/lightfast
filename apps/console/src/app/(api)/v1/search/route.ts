@@ -23,20 +23,13 @@ import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 
 import { log } from "@vendor/observability/log";
-import { createRerankProvider } from "@repo/console-rerank";
-import type { RerankCandidate } from "@repo/console-rerank";
 import { V1SearchRequestSchema } from "@repo/console-types";
-import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
-import { recordSystemActivity } from "@api/console/lib/activity";
 
 import {
   withDualAuth,
   createDualAuthErrorResponse,
 } from "../lib/with-dual-auth";
-import {
-  fourPathParallelSearch,
-  enrichSearchResults,
-} from "~/lib/neural/four-path-search";
+import { searchLogic } from "~/lib/v1";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -111,159 +104,29 @@ export async function POST(request: NextRequest) {
       filters: filters ?? null,
     });
 
-    // 3. Execute 4-path parallel search
-    const searchStart = Date.now();
-    const searchResult = await fourPathParallelSearch({
-      workspaceId,
-      query,
-      topK: limit * 2, // Over-fetch for reranking
-      filters,
-      requestId,
-    });
-    const searchLatency = Date.now() - searchStart;
-
-    // 4. Apply reranking based on mode
-    const rerankStart = Date.now();
-    const reranker = createRerankProvider(mode);
-
-    // Convert candidates to rerank format
-    const rerankCandidates: RerankCandidate[] = searchResult.candidates.map(
-      (c) => ({
-        id: c.id,
-        title: c.title,
-        content: c.snippet,
-        score: c.score,
-      }),
-    );
-
-    const rerankResponse = await reranker.rerank(query, rerankCandidates, {
-      topK: limit + offset, // Get enough for pagination
-      threshold: mode === "thorough" ? 0.4 : undefined,
-      minResults:
-        mode === "balanced" ? Math.max(3, Math.ceil(limit / 2)) : undefined,
-    });
-
-    const rerankLatency = Date.now() - rerankStart;
-
-    log.info("v1/search reranked", {
-      requestId,
-      mode,
-      provider: rerankResponse.provider,
-      inputCount: rerankCandidates.length,
-      outputCount: rerankResponse.results.length,
-      rerankLatency,
-    });
-
-    // 5. Apply pagination
-    const paginatedResults = rerankResponse.results.slice(
-      offset,
-      offset + limit,
-    );
-
-    // 6. Enrich results with full metadata from database
-    const enrichStart = Date.now();
-    const enrichedResults = await enrichSearchResults(
-      paginatedResults,
-      searchResult.candidates,
-      workspaceId,
-    );
-    const enrichLatency = Date.now() - enrichStart;
-
-    // 7. Build response results
-    const results: V1SearchResult[] = enrichedResults.map((r) => ({
-      id: r.id,
-      title: r.title,
-      url: r.url,
-      snippet: r.snippet,
-      score: r.score,
-      source: r.source,
-      type: r.type,
-      occurredAt: r.occurredAt ?? undefined,
-      entities: r.entities,
-      references: r.references.length > 0 ? r.references : undefined,
-      highlights: includeHighlights
-        ? { title: r.title, snippet: r.snippet }
-        : undefined,
-    }));
-
-    // 8. Build context (if requested)
-    const context = includeContext
-      ? {
-          clusters: searchResult.clusters.slice(0, 2).map((c) => ({
-            topic: c.topicLabel,
-            summary: c.summary,
-            keywords: c.keywords,
-          })),
-          relevantActors: searchResult.actors.slice(0, 3).map((a) => ({
-            displayName: a.displayName,
-            expertiseDomains: a.expertiseDomains,
-          })),
-        }
-      : undefined;
-
-    // 9. Calculate maxParallel (bottleneck among parallel operations)
-    const maxParallel = Math.max(
-      searchResult.latency.vector,
-      searchResult.latency.entity,
-      searchResult.latency.cluster,
-      searchResult.latency.actor,
-    );
-
-    // 10. Build response
-    const response: V1SearchResponse = {
-      data: results,
-      context,
-      meta: {
-        total: searchResult.total,
-        limit,
-        offset,
-        took: Date.now() - startTime,
-        mode,
-        paths: searchResult.paths,
-      },
-      latency: {
-        total: Date.now() - startTime,
-        auth: authLatency,
-        parse: parseLatency,
-        search: searchLatency,
-        embedding: searchResult.latency.embedding,
-        retrieval: searchResult.latency.vector,
-        entitySearch: searchResult.latency.entity,
-        clusterSearch: searchResult.latency.cluster,
-        actorSearch: searchResult.latency.actor,
-        rerank: rerankLatency,
-        enrich: enrichLatency,
-        maxParallel,
-      },
-      requestId,
-    };
-
-    // Track search query (Tier 3 - fire-and-forget for low latency)
-    recordSystemActivity({
-      workspaceId,
-      actorType: authType === "api-key" ? "api" : "user",
-      actorUserId: userId,
-      category: "search",
-      action: "search.query",
-      entityType: "search_query",
-      entityId: requestId,
-      metadata: {
-        query: query.substring(0, 200), // Truncate for storage
+    // 3. Call extracted logic
+    const response = await searchLogic(
+      { workspaceId, userId, authType, apiKeyId: authResult.auth.apiKeyId },
+      {
+        query,
         limit,
         offset,
         mode,
-        hasFilters: filters !== undefined,
-        resultCount: results.length,
-        totalMatches: searchResult.total,
-        latencyMs: response.latency.total,
-        authType,
-        apiKeyId: authResult.auth.apiKeyId,
-      },
-    });
+        filters,
+        includeContext,
+        includeHighlights,
+        requestId,
+      }
+    );
+
+    // Update latency metrics to include auth and parse time
+    response.latency.auth = authLatency;
+    response.latency.parse = parseLatency;
+    response.latency.total = Date.now() - startTime;
 
     log.info("v1/search complete", {
       requestId,
-      resultCount: results.length,
+      resultCount: response.data.length,
       latency: response.latency,
     });
 
