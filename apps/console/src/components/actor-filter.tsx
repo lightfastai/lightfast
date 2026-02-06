@@ -99,7 +99,7 @@ export function ActorFilter({
                   <Checkbox
                     id={`actor-${actor.id}`}
                     checked={selectedActors.includes(actor.displayName)}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={(_checked) => {
                       toggleActor(actor.displayName);
                     }}
                   />

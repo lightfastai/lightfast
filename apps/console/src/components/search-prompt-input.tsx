@@ -33,7 +33,7 @@ const AnimatedModeToggle = forwardRef<
     value: string;
     onValueChange: (value: string) => void;
   }
->(function AnimatedModeToggle({ value, onValueChange }, ref) {
+>(function AnimatedModeToggle({ value, onValueChange }, _ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [bgStyle, setBgStyle] = useState<{
     width: number;
@@ -45,11 +45,12 @@ const AnimatedModeToggle = forwardRef<
 
     const updateBgPosition = () => {
       const container = containerRef.current;
-      const selectedButton = container?.querySelector(
+      if (!container) return;
+      const selectedButton = container.querySelector<HTMLElement>(
         `[data-state="on"]`,
-      ) as HTMLElement;
+      );
 
-      if (selectedButton && container) {
+      if (selectedButton) {
         const containerRect = container.getBoundingClientRect();
         const buttonRect = selectedButton.getBoundingClientRect();
 
@@ -65,9 +66,7 @@ const AnimatedModeToggle = forwardRef<
 
     // Update on resize
     const resizeObserver = new ResizeObserver(updateBgPosition);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+    resizeObserver.observe(containerRef.current);
 
     return () => resizeObserver.disconnect();
   }, []);
@@ -75,11 +74,11 @@ const AnimatedModeToggle = forwardRef<
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const selectedButton = containerRef.current.querySelector(
+    const selectedButton = containerRef.current.querySelector<HTMLElement>(
       `[data-state="on"]`,
-    ) as HTMLElement;
+    );
 
-    if (selectedButton && containerRef.current) {
+    if (selectedButton) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const buttonRect = selectedButton.getBoundingClientRect();
 
@@ -218,7 +217,7 @@ export const SearchPromptInput = forwardRef<
             <PromptInputClear
               onClick={onClear}
               disabled={isClearDisabled}
-              title={clearDisabledReason || "Clear filters"}
+              title={clearDisabledReason ?? "Clear filters"}
               className="px-3 h-8 dark:shadow-sm"
             />
           )}

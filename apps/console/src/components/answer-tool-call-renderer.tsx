@@ -51,7 +51,7 @@ export function ToolCallRenderer({
   className,
 }: ToolCallRendererProps) {
   const displayName =
-    TOOL_NAMES[toolName as keyof typeof TOOL_NAMES] || toolName;
+    (TOOL_NAMES as Record<string, string>)[toolName] ?? toolName;
 
   // Handle loading states (input-streaming, input-available)
   if (
@@ -132,73 +132,68 @@ export function ToolCallRenderer({
     );
   }
 
-  // Handle output-available
-  if (toolPart.state === "output-available") {
-    if (toolName === "workspaceSearch") {
-      return (
-        <SearchToolResult
-          data={
-            (toolPart as SearchToolUIPart & { state: "output-available" })
-              .output
-          }
-        />
-      );
-    }
-
-    if (toolName === "workspaceContents") {
-      return (
-        <ContentsToolResult
-          data={
-            (toolPart as ContentsToolUIPart & { state: "output-available" })
-              .output
-          }
-        />
-      );
-    }
-
-    if (toolName === "workspaceFindSimilar") {
-      return (
-        <FindSimilarToolResult
-          data={
-            (toolPart as FindSimilarToolUIPart & { state: "output-available" })
-              .output
-          }
-        />
-      );
-    }
-
-    // JSON fallback for other tools
-    const output = toolPart.output;
-    const jsonStr =
-      typeof output === "string" ? output : JSON.stringify(output, null, 2);
-
+  // Handle output-available (final state after error checks)
+  if (toolName === "workspaceSearch") {
     return (
-      <div className={cn("border rounded-lg w-full", className)}>
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value={`tool-output-${toolName}`}>
-            <AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50">
-              <div className="flex items-center gap-2 flex-1">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <div className="text-left flex-1">
-                  <div className="font-medium text-xs lowercase text-muted-foreground">
-                    {displayName}
-                  </div>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4">
-              <div className="pt-3 pb-4">
-                <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
-                  {jsonStr}
-                </pre>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      <SearchToolResult
+        data={
+          (toolPart as SearchToolUIPart & { state: "output-available" })
+            .output
+        }
+      />
     );
   }
 
-  // Default fallback
-  return null;
+  if (toolName === "workspaceContents") {
+    return (
+      <ContentsToolResult
+        data={
+          (toolPart as ContentsToolUIPart & { state: "output-available" })
+            .output
+        }
+      />
+    );
+  }
+
+  if (toolName === "workspaceFindSimilar") {
+    return (
+      <FindSimilarToolResult
+        data={
+          (toolPart as FindSimilarToolUIPart & { state: "output-available" })
+            .output
+        }
+      />
+    );
+  }
+
+  // JSON fallback for other tools
+  const output = (toolPart as ToolUIPart & { state: "output-available" }).output;
+  const jsonStr =
+    typeof output === "string" ? output : JSON.stringify(output, null, 2);
+
+  return (
+    <div className={cn("border rounded-lg w-full", className)}>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value={`tool-output-${toolName}`}>
+          <AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <div className="text-left flex-1">
+                <div className="font-medium text-xs lowercase text-muted-foreground">
+                  {displayName}
+                </div>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4">
+            <div className="pt-3 pb-4">
+              <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
+                {jsonStr}
+              </pre>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
 }

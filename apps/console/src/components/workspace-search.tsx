@@ -173,11 +173,8 @@ export function WorkspaceSearch({
 
   const handlePromptSubmit = useCallback(
     async (message: PromptInputMessage) => {
-      const content =
-        typeof message === "string"
-          ? message
-          : (message as any).text || (message as any).content || "";
-      setQuery(content);
+      const content = message.text?.trim() ?? "";
+      void setQuery(content);
       setInputValue(""); // Clear input after submission
       await performSearch(content);
     },
@@ -213,7 +210,7 @@ export function WorkspaceSearch({
               <SearchPromptInput
                 placeholder="Ask a question or describe what you're looking for..."
                 onSubmit={handlePromptSubmit}
-                status={isSearching ? "pending" : "idle"}
+                status={isSearching ? "submitted" : "ready"}
                 isSubmitDisabled={isSearching || !inputValue.trim() || !store}
                 submitDisabledReason={
                   !store ? "No store configured for this workspace" : undefined
@@ -249,7 +246,7 @@ export function WorkspaceSearch({
                   actorNames={actorNames}
                   onActorNamesChange={setActorNames}
                   agePreset={agePreset}
-                  onAgePresetChange={setAgePreset}
+                  onAgePresetChange={(v) => void setAgePreset(v as typeof agePreset)}
                   orgSlug={orgSlug}
                   workspaceName={workspaceName}
                 />
@@ -271,7 +268,7 @@ export function WorkspaceSearch({
           <SearchResultsPanel
             searchResults={searchResults}
             activeTab={activeTab}
-            onActiveTabChange={setActiveTab}
+            onActiveTabChange={(v) => void setActiveTab(v as typeof activeTab)}
             expandedId={expandedId}
             onExpandedIdChange={setExpandedId}
             offset={offset}

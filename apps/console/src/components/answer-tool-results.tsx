@@ -4,7 +4,6 @@ import React from "react";
 import { ExternalLink } from "lucide-react";
 import type {
   V1SearchResponse,
-  V1SearchResult,
   V1ContentsResponse,
   V1FindSimilarResponse,
 } from "@repo/console-types";
@@ -14,6 +13,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Card, CardContent } from "@repo/ui/components/ui/card";
 
 const toHostname = (url: string): string => {
   try {
@@ -28,7 +29,7 @@ const toHostname = (url: string): string => {
  */
 export function SearchToolResult({ data }: { data: V1SearchResponse }) {
   const results = data.data;
-  const resultCount = results?.length ?? 0;
+  const resultCount = results.length;
 
   if (resultCount === 0) {
     return (

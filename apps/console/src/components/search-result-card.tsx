@@ -14,8 +14,6 @@ import {
   ExternalLink,
   Loader2,
   Sparkles,
-  ChevronDown,
-  ChevronRight,
   Copy,
   Check,
 } from "lucide-react";
@@ -28,7 +26,7 @@ import type {
 // Search result card component with expandable content
 export function SearchResultCard({
   result,
-  rank,
+  rank: _rank,
   isExpanded,
   onToggleExpand,
   storeId,
