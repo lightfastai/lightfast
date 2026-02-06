@@ -76,11 +76,20 @@ export async function detectAndCreateRelationships(
     );
 
     for (const match of commitMatches) {
-      // Determine relationship type based on sources
+      // Find the original commit reference that linked to this match
+      const commitRef = references.find(
+        (r) => r.type === "commit" && r.id === match.linkingKey
+      );
+
+      // Determine relationship type based on sources and labels
       const relType = determineCommitRelationType(
         sourceEvent.source,
-        match.source
+        match.source,
+        commitRef
       );
+
+      // Explicit resolution gets "explicit" detection method
+      const detectionMethod = commitRef?.label === "resolved_by" ? "explicit" : "commit_match";
 
       detectedRelationships.push({
         targetObservationId: match.id,
@@ -88,7 +97,7 @@ export async function detectAndCreateRelationships(
         linkingKey: match.linkingKey,
         linkingKeyType: "commit",
         confidence: 1.0,
-        metadata: { detectionMethod: "commit_match" },
+        metadata: { detectionMethod },
       });
     }
   }
@@ -183,6 +192,53 @@ export async function detectAndCreateRelationships(
         linkingKey: match.linkingKey,
         linkingKeyType: "pr",
         confidence: 1.0,
+        metadata: { detectionMethod: "pr_match" },
+      });
+    }
+  }
+
+  // 5. Detect "triggers" relationships (Sentry → Linear via attachments)
+  // When a Linear issue has a Sentry attachment, it means the Sentry issue triggered the Linear work
+  const linkedSentryIssues = references
+    .filter(
+      (r) =>
+        r.type === "issue" &&
+        r.label === "linked" &&
+        sourceEvent.source === "linear"
+    )
+    .map((r) => r.id);
+
+  if (linkedSentryIssues.length > 0) {
+    // Find Sentry observations matching these issue IDs
+    const sentryMatches = await findObservationsByReference(
+      workspaceId,
+      observationId,
+      "issue",
+      linkedSentryIssues
+    );
+
+    // Also check by title/sourceId for Sentry observations
+    const sentryTitleMatches = await findObservationsByIssueId(
+      workspaceId,
+      observationId,
+      linkedSentryIssues
+    );
+
+    // Combine and deduplicate
+    const allSentryMatches = new Map<number, { id: number; linkingKey: string }>();
+    for (const m of [...sentryMatches, ...sentryTitleMatches]) {
+      if (!allSentryMatches.has(m.id)) {
+        allSentryMatches.set(m.id, { id: m.id, linkingKey: m.linkingKey });
+      }
+    }
+
+    for (const match of allSentryMatches.values()) {
+      detectedRelationships.push({
+        targetObservationId: match.id,
+        relationshipType: "triggers",
+        linkingKey: match.linkingKey,
+        linkingKeyType: "issue",
+        confidence: 0.8,
         metadata: { detectionMethod: "explicit" },
       });
     }
@@ -276,7 +332,8 @@ async function findObservationsByReference(
 }
 
 /**
- * Find observations that mention specific issue IDs in title or sourceId
+ * Find observations that mention specific issue IDs
+ * Searches: JSONB sourceReferences, title, and sourceId
  */
 async function findObservationsByIssueId(
   workspaceId: string,
@@ -285,7 +342,13 @@ async function findObservationsByIssueId(
 ): Promise<{ id: number; linkingKey: string }[]> {
   if (issueIds.length === 0) return [];
 
-  // Build conditions for title/sourceId matching
+  // JSONB containment conditions for issue references
+  const jsonbConditions = issueIds.map(
+    (id) =>
+      sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "issue", id }])}::jsonb`
+  );
+
+  // Title/sourceId ILIKE conditions
   const titleConditions = issueIds.map(
     (id) =>
       sql`${workspaceNeuralObservations.title} ILIKE ${"%" + id + "%"}`
@@ -300,19 +363,28 @@ async function findObservationsByIssueId(
       id: workspaceNeuralObservations.id,
       title: workspaceNeuralObservations.title,
       sourceId: workspaceNeuralObservations.sourceId,
+      sourceReferences: workspaceNeuralObservations.sourceReferences,
     })
     .from(workspaceNeuralObservations)
     .where(
       and(
         eq(workspaceNeuralObservations.workspaceId, workspaceId),
         sql`${workspaceNeuralObservations.id} != ${excludeId}`,
-        or(...titleConditions, ...sourceIdConditions)
+        or(...jsonbConditions, ...titleConditions, ...sourceIdConditions)
       )
     )
     .limit(50);
 
-  // Find which issue ID matched
   return results.map((r) => {
+    // Check JSONB references first (higher quality match)
+    const refs = (r.sourceReferences ?? []) as SourceReference[];
+    const jsonbMatch = refs.find(
+      (ref) => ref.type === "issue" && issueIds.includes(ref.id)
+    );
+    if (jsonbMatch) {
+      return { id: r.id, linkingKey: jsonbMatch.id };
+    }
+    // Fall back to title/sourceId match
     const matchingId = issueIds.find(
       (id) => r.title.includes(id) || r.sourceId.includes(id)
     );
@@ -366,20 +438,37 @@ async function findObservationsByPrId(
 }
 
 /**
- * Determine relationship type based on source types
+ * Determine relationship type based on source types and commit reference labels
+ *
+ * Strictly assigns types per the definitive links research:
+ * - `resolves` (1.0, explicit) — Only when Sentry provides a commit with `label: "resolved_by"`
+ * - `deploys` (1.0) — Vercel deployment ↔ GitHub commit
+ * - `same_commit` (1.0) — Default for commit SHA matching across sources
  */
 function determineCommitRelationType(
-  sourceType: string,
-  targetType: string
+  newSource: string,
+  matchSource: string,
+  commitRef: SourceReference | undefined
 ): RelationshipType {
-  // Vercel deployment deploys a commit
-  if (sourceType === "vercel" && targetType === "github") return "deploys";
-  if (sourceType === "github" && targetType === "vercel") return "deploys";
+  // Explicit Sentry → commit resolution (statusDetails.inCommit)
+  // Only when the new observation is Sentry AND the commit ref has "resolved_by" label
+  if (newSource === "sentry" && commitRef?.label === "resolved_by") {
+    return "resolves";
+  }
+  // Or when we're matching against a Sentry observation that has resolved_by
+  if (matchSource === "sentry" && commitRef?.label === "resolved_by") {
+    return "resolves";
+  }
 
-  // Sentry resolved by commit
-  if (sourceType === "sentry" || targetType === "sentry") return "resolves";
+  // Vercel ↔ GitHub commit = deploys
+  if (
+    (newSource === "vercel" && matchSource === "github") ||
+    (newSource === "github" && matchSource === "vercel")
+  ) {
+    return "deploys";
+  }
 
-  // Default to same_commit for GitHub-to-GitHub
+  // Default: same commit SHA across any sources
   return "same_commit";
 }
 

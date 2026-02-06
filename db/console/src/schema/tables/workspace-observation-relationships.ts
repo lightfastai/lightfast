@@ -43,6 +43,7 @@ export interface RelationshipMetadata {
     | "explicit"
     | "commit_match"
     | "branch_match"
+    | "pr_match"
     | "entity_cooccurrence";
   /** Additional context about the relationship */
   context?: string;

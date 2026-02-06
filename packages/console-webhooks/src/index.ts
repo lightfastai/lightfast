@@ -53,6 +53,8 @@ export * from "./types.js";
 export * from "./common.js";
 export * from "./github.js";
 export * from "./vercel.js";
+export * from "./linear.js";
+export * from "./sentry.js";
 
 // Validation utilities
 export * from "./validation.js";
