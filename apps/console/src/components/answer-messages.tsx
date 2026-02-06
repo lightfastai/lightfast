@@ -153,8 +153,7 @@ const AssistantMessage = memo(function AssistantMessage({
                 if (isReasoningPart(part) && part.text.length > 1) {
                   const trimmedText = part.text.replace(/^\n+/, "");
                   const isReasoningStreaming =
-                    isCurrentlyStreaming &&
-                    index === message.parts.length - 1;
+                    isCurrentlyStreaming && index === message.parts.length - 1;
                   return (
                     <div
                       key={`${message.id}-reasoning-${index}`}
@@ -174,7 +173,10 @@ const AssistantMessage = memo(function AssistantMessage({
                 if (isToolPart(part)) {
                   const toolName = part.type.replace("tool-", "");
                   return (
-                    <div key={`${message.id}-tool-${index}`} className="w-full">
+                    <div
+                      key={`${message.id}-tool-${index}`}
+                      className="w-full py-2"
+                    >
                       <ToolCallRenderer
                         toolPart={part as ToolUIPart}
                         toolName={toolName}
@@ -220,8 +222,7 @@ interface Turn {
 
 function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
   const turns: Turn[] = [];
-  const isStreamingStatus =
-    status === "submitted" || status === "streaming";
+  const isStreamingStatus = status === "submitted" || status === "streaming";
   let pendingUser: UIMessage | null = null;
 
   for (const message of messages) {
@@ -245,8 +246,7 @@ function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
           user: pendingUser,
           assistant: message,
           isStreaming:
-            isStreamingStatus &&
-            message === messages[messages.length - 1],
+            isStreamingStatus && message === messages[messages.length - 1],
         });
         pendingUser = null;
       }
@@ -267,10 +267,7 @@ function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
 }
 
 export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
-  const turns = useMemo(
-    () => buildTurns(messages, status),
-    [messages, status],
-  );
+  const turns = useMemo(() => buildTurns(messages, status), [messages, status]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -280,9 +277,7 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
             <div className="py-8">
               <div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
                 <div className="text-center text-muted-foreground">
-                  <p className="text-sm">
-                    Ask a question about your workspace
-                  </p>
+                  <p className="text-sm">Ask a question about your workspace</p>
                 </div>
               </div>
             </div>

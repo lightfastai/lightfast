@@ -40,7 +40,7 @@ function getWorkspacePrimaryItems(
 ): NavItem[] {
   return [
     {
-      title: "Ask Lightfast",
+      title: "Ask",
       href: `/${orgSlug}/${workspaceName}`,
     },
     {
@@ -139,7 +139,11 @@ export function AppSidebar() {
       : "organization";
 
   return (
-    <Sidebar variant="inset" collapsible="none">
+    <Sidebar
+      variant="inset"
+      collapsible="none"
+      className="border-r border-border/50 group/sidebar"
+    >
       {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="h-14 flex items-center px-4">

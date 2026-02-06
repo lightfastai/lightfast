@@ -52,7 +52,9 @@ interface AskLightfastSuggestionsProps {
   onSelectPrompt: (prompt: string) => void;
 }
 
-export function AskLightfastSuggestions({ onSelectPrompt }: AskLightfastSuggestionsProps) {
+export function AskLightfastSuggestions({
+  onSelectPrompt,
+}: AskLightfastSuggestionsProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [visiblePrompts, setVisiblePrompts] = useState<number>(0);
 
@@ -89,7 +91,7 @@ export function AskLightfastSuggestions({ onSelectPrompt }: AskLightfastSuggesti
               key={category.id}
               variant="outline"
               size="lg"
-              className="dark:bg-transparent"
+              className="dark:bg-card dark:border-border/70 active:bg-transparent rounded-sm hover:bg-transparent dark:hover:bg-transparent hover:border-border/50"
               onClick={() => handleCategoryClick(category.id)}
             >
               {category.icon}
@@ -98,7 +100,7 @@ export function AskLightfastSuggestions({ onSelectPrompt }: AskLightfastSuggesti
           ))}
         </div>
       ) : (
-        <div className="border border-border/50 p-2 rounded-xl bg-background backdrop-blur-2xl shadow-sm">
+        <div className="border border-border/50 p-2 rounded-sm bg-background backdrop-blur-2xl shadow-sm">
           <div className="flex items-center justify-between px-2 pb-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground px-2">
               {selectedCategoryData?.icon}
@@ -131,7 +133,7 @@ export function AskLightfastSuggestions({ onSelectPrompt }: AskLightfastSuggesti
                 <Button
                   variant="ghost"
                   onClick={() => handlePromptClick(prompt)}
-                  className="w-full text-left justify-start whitespace-normal"
+                  className="w-full text-left justify-start whitespace-normal hover:bg-transparent dark:hover:bg-muted/30"
                 >
                   <span className="text-xs font-base">{prompt}</span>
                 </Button>

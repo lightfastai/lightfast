@@ -40,8 +40,8 @@ function AnswerPageLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Content spans full height with floating header, scrollbar at viewport edge */}
-      <div className="flex flex-col flex-1 h-full min-h-0 overflow-auto pt-14">
-        <div className="flex flex-col flex-1 h-full min-h-0 w-full">
+      <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden pt-14">
+        <div className="flex flex-col flex-1 h-full min-h-0 w-full overflow-hidden">
           <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <SidebarProvider className="h-full min-h-0">
+        <SidebarProvider className="!h-full !min-h-0 overflow-hidden">
           <AppSidebar />
           {/* Use AnswerPageLayout for answer interface pages, StandardOrgLayout for others */}
           <AnswerPageLayout>{children}</AnswerPageLayout>

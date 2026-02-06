@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
-import { WorkspaceSearch, WorkspaceSearchSkeleton } from "~/components/workspace-search";
+import {
+  WorkspaceSearch,
+  WorkspaceSearchSkeleton,
+} from "~/components/workspace-search";
 
 export default async function WorkspaceSearchPage({
   params,
@@ -17,19 +20,17 @@ export default async function WorkspaceSearchPage({
     orgTrpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
       workspaceName: workspaceName,
-    })
+    }),
   );
 
   return (
     <Suspense fallback={<WorkspaceSearchSkeleton />}>
       <HydrateClient>
-        <div className="flex flex-col gap-6 py-2 px-6">
-          <WorkspaceSearch
-            orgSlug={slug}
-            workspaceName={workspaceName}
-            initialQuery={q}
-          />
-        </div>
+        <WorkspaceSearch
+          orgSlug={slug}
+          workspaceName={workspaceName}
+          initialQuery={q}
+        />
       </HydrateClient>
     </Suspense>
   );

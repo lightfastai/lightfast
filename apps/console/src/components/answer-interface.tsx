@@ -86,11 +86,11 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
   if (messages.length === 0) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-background">
-        <div className="w-full max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
+        <div className="w-full -mt-24 max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
           <div className="mb-8">
             <div className="flex flex-col items-center justify-center">
               <p className="text-3xl font-semibold text-center">
-                Ask Lightfast
+                Explore your infrastructure
               </p>
             </div>
           </div>
