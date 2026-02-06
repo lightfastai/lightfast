@@ -27,6 +27,7 @@ import { jobsRouter } from "./router/org/jobs";
 import { sourcesRouter } from "./router/org/sources";
 import { activitiesRouter } from "./router/org/activities";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
+import { backfillRouter } from "./router/org/backfill";
 
 // M2M routers (internal services only)
 import { jobsM2MRouter } from "./router/m2m/jobs";
@@ -81,6 +82,7 @@ export const orgRouter = createTRPCRouter({
   sources: sourcesRouter,
   activities: activitiesRouter,
   orgApiKeys: orgApiKeysRouter,
+  backfill: backfillRouter,
 });
 
 /**

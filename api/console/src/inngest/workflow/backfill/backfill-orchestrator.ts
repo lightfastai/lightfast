@@ -21,6 +21,7 @@ import { getConnector } from "@repo/console-backfill";
 import type { BackfillConfig, BackfillCheckpoint } from "@repo/console-backfill";
 import { env } from "../../../env";
 import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
+import { storeIngestionPayload } from "@repo/console-webhooks/storage";
 import { updateBackfillState, updateBackfillCheckpoint } from "./backfill-state";
 
 export const backfillOrchestrator = inngest.createFunction(
@@ -239,6 +240,23 @@ export const backfillOrchestrator = inngest.createFunction(
                   }
                 : undefined,
             };
+          },
+        );
+
+        // Store raw page data for audit trail
+        await step.run(
+          `store-${entityType}-p${pageNum}`,
+          async () => {
+            await storeIngestionPayload({
+              workspaceId,
+              deliveryId: `backfill-${integrationId}-${entityType}-p${pageNum}`,
+              source: provider,
+              eventType: `backfill.${entityType}`,
+              payload: JSON.stringify(result.events),
+              headers: {},
+              receivedAt: new Date(),
+              ingestionSource: "backfill",
+            });
           },
         );
 
