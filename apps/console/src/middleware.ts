@@ -3,6 +3,7 @@ import {
   composeCspOptions,
   createClerkCspDirectives,
   createAnalyticsCspDirectives,
+  createKnockCspDirectives,
   createSentryCspDirectives,
   createNextjsCspDirectives,
 } from "@vendor/security/csp";
@@ -18,6 +19,7 @@ const securityHeaders = securityMiddleware(
     createNextjsCspDirectives(),
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
+    createKnockCspDirectives(),
     createSentryCspDirectives(),
   ),
 );

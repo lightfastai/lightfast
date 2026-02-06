@@ -3,15 +3,25 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HelpCircle, Mail, BookOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@repo/ui/components/ui/sidebar";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { TeamSwitcher } from "./team-switcher";
 
 /**
  * Navigation item types
@@ -22,17 +32,32 @@ interface NavItem {
 }
 
 /**
- * Build navigation items for workspace-level pages
+ * Build primary navigation items for workspace-level pages
  */
-function getWorkspaceNavItems(
+function getWorkspacePrimaryItems(
   orgSlug: string,
   workspaceName: string,
 ): NavItem[] {
   return [
     {
-      title: "Dashboard",
+      title: "Ask Lightfast",
       href: `/${orgSlug}/${workspaceName}`,
     },
+    {
+      title: "Search",
+      href: `/${orgSlug}/${workspaceName}/search`,
+    },
+  ];
+}
+
+/**
+ * Build management navigation items for workspace-level pages
+ */
+function getWorkspaceManageItems(
+  orgSlug: string,
+  workspaceName: string,
+): NavItem[] {
+  return [
     {
       title: "Sources",
       href: `/${orgSlug}/${workspaceName}/sources`,
@@ -65,6 +90,29 @@ function getOrgNavItems(orgSlug: string): NavItem[] {
 }
 
 /**
+ * Render a set of navigation items
+ */
+function renderNavItems(items: NavItem[], pathname: string) {
+  return items.map((item) => {
+    // For Settings, match any settings subpage (org or workspace level)
+    const isActive =
+      item.title === "Settings"
+        ? pathname.startsWith(item.href)
+        : pathname === item.href;
+
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild isActive={isActive}>
+          <Link href={item.href} prefetch={true}>
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  });
+}
+
+/**
  * PlanetScale-style sidebar component for the Console app
  */
 export function AppSidebar() {
@@ -84,46 +132,93 @@ export function AppSidebar() {
   const isInWorkspace =
     workspaceName && workspaceName !== "settings" && !isInOrgSettings;
 
-  // Build navigation items based on context
-  let mainNavItems: NavItem[] = [];
-
-  if (isInWorkspace) {
-    // Workspace level: show workspace nav items only
-    mainNavItems = getWorkspaceNavItems(orgSlug, workspaceName);
-  } else {
-    // Org level (root or settings): show org nav items (Workspaces + Settings link)
-    // Settings pages have their own SettingsSidebar
-    mainNavItems = getOrgNavItems(orgSlug);
-  }
+  // Determine mode based on pathname
+  const mode =
+    pathname.startsWith("/account") || pathname.startsWith("/new")
+      ? "account"
+      : "organization";
 
   return (
     <Sidebar variant="inset" collapsible="none">
+      {/* Org component header - only show if in org context */}
+      {orgSlug && (
+        <div className="h-14 flex items-center px-4">
+          <TeamSwitcher mode={mode} />
+        </div>
+      )}
       <SidebarContent>
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainNavItems.map((item) => {
-                // For Settings, match any settings subpage (org or workspace level)
-                const isActive =
-                  item.title === "Settings"
-                    ? pathname.startsWith(item.href)
-                    : pathname === item.href;
+        {isInWorkspace ? (
+          <>
+            {/* Primary Navigation - no label */}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderNavItems(
+                    getWorkspacePrimaryItems(orgSlug, workspaceName),
+                    pathname,
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.href} prefetch={true}>
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            {/* Manage Section - with label */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderNavItems(
+                    getWorkspaceManageItems(orgSlug, workspaceName),
+                    pathname,
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          /* Org Navigation - single group, no label */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderNavItems(getOrgNavItems(orgSlug), pathname)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
+      <SidebarFooter>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full bg-muted p-1"
+              title="Help"
+            >
+              <HelpCircle className="h-3 w-3" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="center" className="w-48 p-1">
+            <div className="flex flex-col gap-2">
+              <a
+                href="mailto:support@lightfast.ai"
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-xs text-foreground transition-colors"
+              >
+                <Mail className="h-3 w-3" />
+                <span>Contact Support</span>
+              </a>
+              <Link
+                href="https://lightfast.ai/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-xs text-foreground transition-colors"
+              >
+                <BookOpen className="h-3 w-3" />
+                <span>Help Docs</span>
+              </Link>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </SidebarFooter>
     </Sidebar>
   );
 }

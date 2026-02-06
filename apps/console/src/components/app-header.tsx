@@ -1,49 +1,34 @@
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
-import { TeamSwitcher } from "./team-switcher";
+import { useParams } from "next/navigation";
+import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 
 /**
- * Main application header
- *
- * Determines header mode based on current route:
- * - /account/* and /new pages show "My Account" mode
- * - Organization pages show organization mode with workspace switcher
+ * Application header - full width with workspace switcher on left and user actions on right
  */
 export function AppHeader() {
-  const pathname = usePathname();
   const params = useParams();
-
-  // Determine mode based on pathname
-  const mode =
-    pathname.startsWith("/account") || pathname.startsWith("/new")
-      ? "account"
-      : "organization";
 
   const workspaceName =
     typeof params.workspaceName === "string" ? params.workspaceName : undefined;
   const orgSlug = typeof params.slug === "string" ? params.slug : undefined;
 
   return (
-    <header className="flex items-center justify-between py-2 px-4 bg-background">
-      {/* Left side - Team/Workspace Switchers */}
-      <div className="flex items-center gap-1">
-        <TeamSwitcher mode={mode} />
-        {workspaceName && orgSlug && (
-          <>
-            <span className="text-muted-foreground/40 text-sm mr-2">/</span>
-            <WorkspaceSwitcher
-              orgSlug={orgSlug}
-              workspaceName={workspaceName}
-            />
-          </>
-        )}
-      </div>
+    <div className="w-full flex items-center pl-2">
+      {/* Left side - Workspace switcher */}
+      {workspaceName && orgSlug ? (
+        <WorkspaceSwitcher orgSlug={orgSlug} workspaceName={workspaceName} />
+      ) : (
+        <div />
+      )}
 
-      {/* Right side - User avatar */}
-      <UserDropdownMenu />
-    </header>
+      {/* Right side - Notifications and User dropdown */}
+      <div className="flex items-center gap-3 ml-auto">
+        <NotificationsTrigger />
+        <UserDropdownMenu />
+      </div>
+    </div>
   );
 }
