@@ -33,6 +33,8 @@
     "@octokit/types": "^15.0.0",
     "@repo/ai": "workspace:^",
     "@repo/app-urls": "workspace:^",
+    "@repo/console-ai": "workspace:*",
+    "@repo/console-ai-types": "workspace:*",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-api-services": "workspace:*",
     "@repo/console-auth-middleware": "workspace:*",

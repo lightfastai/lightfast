@@ -901,6 +901,12 @@ importers:
       '@repo/app-urls':
         specifier: workspace:^
         version: link:../../packages/app-urls
+      '@repo/console-ai':
+        specifier: workspace:*
+        version: link:../../packages/console-ai
+      '@repo/console-ai-types':
+        specifier: workspace:*
+        version: link:../../packages/console-ai-types
       '@repo/console-api-key':
         specifier: workspace:*
         version: link:../../packages/console-api-key
@@ -2426,6 +2432,80 @@ importers:
       '@types/mdast':
         specifier: ^4.0.0
         version: 4.0.4
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/console-ai:
+    dependencies:
+      '@lightfastai/ai-sdk':
+        specifier: workspace:*
+        version: link:../../core/ai-sdk
+      '@repo/console-ai-types':
+        specifier: workspace:*
+        version: link:../console-ai-types
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../console-types
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@3.25.76)
+      zod:
+        specifier: catalog:zod3
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/console-ai-types:
+    dependencies:
+      '@lightfastai/ai-sdk':
+        specifier: workspace:*
+        version: link:../../core/ai-sdk
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../console-types
+      ai:
+        specifier: 'catalog:'
+        version: 5.0.15(zod@4.1.12)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22

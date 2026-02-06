@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { ExternalLink } from "lucide-react";
 import type {
   V1SearchResponse,
@@ -10,90 +8,77 @@ import type {
   V1ContentsResponse,
   V1FindSimilarResponse,
 } from "@repo/console-types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
+
+const toHostname = (url: string): string => {
+  try {
+    return new URL(url).hostname || url;
+  } catch {
+    return url;
+  }
+};
 
 /**
- * Render search tool results as compact cards
+ * Render search tool results in an accordion with links
  */
 export function SearchToolResult({ data }: { data: V1SearchResponse }) {
   const results = data.data;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/prefer-optional-chain
-  if (!results || results.length === 0) {
+  const resultCount = results?.length ?? 0;
+
+  if (resultCount === 0) {
     return (
-      <div className="text-sm text-muted-foreground italic">
-        No results found
-      </div>
+      <p className="py-2 text-sm text-muted-foreground">
+        No results found.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <div className="text-xs text-muted-foreground">
-        {results.length} result{results.length !== 1 ? "s" : ""} found
-      </div>
-      <div className="space-y-1">
-        {results.slice(0, 5).map((result, idx) => (
-          <SearchResultItem key={result.id} result={result} rank={idx + 1} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SearchResultItem({
-  result,
-  rank,
-}: {
-  result: V1SearchResult;
-  rank: number;
-}) {
-  const scorePercent = Math.round(result.score * 100);
-
-  return (
-    <Card className="border-border/50 hover:border-border transition-colors">
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-medium shrink-0">
-                {rank}
+    <div className="border rounded-lg w-full">
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="workspace-search-results">
+          <AccordionTrigger className="items-center px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+            <div className="flex flex-1 items-center gap-2">
+              <div className="flex-1 text-left">
+                <div className="text-xs font-medium lowercase text-muted-foreground">
+                  workspace search
+                </div>
               </div>
-              <h4 className="font-medium text-sm leading-tight truncate">
-                {result.title || "Untitled"}
-              </h4>
+              <span className="text-xs text-muted-foreground/70">
+                {resultCount} result{resultCount !== 1 ? "s" : ""}
+              </span>
             </div>
-            {result.snippet && (
-              <p className="text-xs text-muted-foreground line-clamp-1">
-                {result.snippet}
-              </p>
-            )}
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              {result.source && <span>{result.source}</span>}
-              {result.type && (
-                <>
-                  <span>•</span>
-                  <span>{result.type}</span>
-                </>
-              )}
+          </AccordionTrigger>
+          <AccordionContent className="px-4">
+            <div className="pt-3">
+              {results.slice(0, 10).map((result, index) => (
+                <div key={`search-result-${index}`}>
+                  <a
+                    href={result.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-muted/50"
+                  >
+                    <h4 className="flex-1 truncate text-xs font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                      {result.title || "Untitled"}
+                    </h4>
+                    <span className="shrink-0 text-xs text-muted-foreground/70">
+                      {toHostname(result.url)}
+                    </span>
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                  </a>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Badge variant="outline" className="text-xs">
-              {scorePercent}%
-            </Badge>
-            {result.url && (
-              <a
-                href={result.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1 hover:bg-muted rounded"
-              >
-                <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-              </a>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   );
 }
 

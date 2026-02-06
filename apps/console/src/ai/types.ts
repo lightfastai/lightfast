@@ -1,16 +1,9 @@
-import type { UIMessage } from "ai";
-
-/** Runtime context injected per-request into Answer tools */
-export interface AnswerRuntimeContext {
-  workspaceId: string;
-  userId: string;
-  authToken?: string;
-}
+import type { LightfastAnswerUIMessage } from "@repo/console-ai-types";
 
 /** Context passed through memory operations */
 export interface AnswerMemoryContext {
   workspaceId: string;
 }
 
-/** Answer-specific message type (standard UIMessage for V1) */
-export type AnswerMessage = UIMessage;
+/** Answer-specific message type */
+export type AnswerMessage = LightfastAnswerUIMessage;
