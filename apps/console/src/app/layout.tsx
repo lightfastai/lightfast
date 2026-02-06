@@ -11,6 +11,7 @@ import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { ConsoleNotificationsProvider } from "~/components/notifications-provider";
 import { env } from "~/env";
 import { authUrl } from "~/lib/related-projects";
 
@@ -72,8 +73,10 @@ export default function RootLayout({
         >
           <NuqsAdapter>
             <TRPCReactProvider>
-              {children}
-              <Toaster />
+              <ConsoleNotificationsProvider>
+                {children}
+                <Toaster />
+              </ConsoleNotificationsProvider>
             </TRPCReactProvider>
           </NuqsAdapter>
           <VercelAnalytics />
