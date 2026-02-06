@@ -43,7 +43,7 @@
     "@vendor/security": "workspace:*",
     "@vendor/seo": "workspace:*",
     "@vendor/upstash": "workspace:*",
-    "@vercel/microfrontends": "^2.0.1",
+    "@vercel/microfrontends": "^2.3.0",
     "@vercel/related-projects": "catalog:",
     "basehub": "^9.5.2",
     "clsx": "catalog:",
