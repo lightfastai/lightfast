@@ -144,6 +144,8 @@ export interface VercelWebhookPayload {
         githubCommitOrg?: string;
         githubCommitRepo?: string;
         githubCommitRepoId?: string;
+        /** PR number (undocumented but may be present for PR deployments) */
+        githubPrId?: string;
       };
     };
 

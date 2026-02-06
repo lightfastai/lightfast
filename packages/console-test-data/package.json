@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
-    "inject": "pnpm with-env tsx src/cli/inject.ts"
+    "inject": "pnpm with-env tsx src/cli/inject.ts",
+    "reset-demo": "pnpm with-env tsx src/cli/reset-demo.ts"
   },
   "dependencies": {
     "@api/console": "workspace:*",

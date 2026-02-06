@@ -55,6 +55,15 @@ export function transformVercelDeployment(
     });
   }
 
+  // Add PR reference (best-effort - githubPrId may not always be present)
+  if (gitMeta?.githubPrId && gitMeta?.githubOrg && gitMeta?.githubRepo) {
+    refs.push({
+      type: "pr",
+      id: `#${gitMeta.githubPrId}`,
+      url: `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/pull/${gitMeta.githubPrId}`,
+    });
+  }
+
   // Add deployment reference
   refs.push({
     type: "deployment",

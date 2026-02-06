@@ -23,6 +23,8 @@ import { z } from "zod";
 export const sourceTypeSchema = z.enum([
   "github",      // ✅ Implemented
   "vercel",      // ✅ Implemented (Phase 01)
+  "linear",      // ✅ Transformer ready
+  "sentry",      // ✅ Transformer ready
 ]);
 
 export type SourceType = z.infer<typeof sourceTypeSchema>;

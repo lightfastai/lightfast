@@ -176,6 +176,20 @@
       "when": 1765877314943,
       "tag": "0024_mighty_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1770289232282,
+      "tag": "0025_cooing_zuras",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1770289375204,
+      "tag": "0026_windy_enchantress",
+      "breakpoints": true
     }
   ]
 }

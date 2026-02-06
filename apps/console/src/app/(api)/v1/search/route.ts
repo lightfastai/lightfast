@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
       type: r.type,
       occurredAt: r.occurredAt ?? undefined,
       entities: r.entities,
+      references: r.references.length > 0 ? r.references : undefined,
       highlights: includeHighlights
         ? { title: r.title, snippet: r.snippet }
         : undefined,

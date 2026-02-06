@@ -351,8 +351,8 @@ export function InstalledSources({
 										</Button>
 									</div>
 
-									{/* Expanded Event Settings */}
-									{isExpanded && (
+									{/* Expanded Event Settings - Only for providers with webhook handlers */}
+									{isExpanded && (integration.type === "github" || integration.type === "vercel") && (
 										<EventSettings
 											integrationId={integration.id}
 											provider={integration.type}
