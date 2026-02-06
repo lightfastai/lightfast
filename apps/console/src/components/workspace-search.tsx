@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Copy,
   Check,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import type {
@@ -39,6 +40,7 @@ import type {
 } from "@repo/console-types";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
 import { ActorFilter } from "./actor-filter";
+import { AnswerInterface } from "./answer-interface";
 
 interface WorkspaceSearchProps {
   orgSlug: string;
@@ -88,6 +90,8 @@ export function WorkspaceSearch({
     setQuery,
     mode,
     setMode,
+    interfaceMode,
+    setInterfaceMode,
     sourceTypes,
     setSourceTypes,
     observationTypes,
@@ -176,20 +180,62 @@ export function WorkspaceSearch({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Mode Toggle */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Search</h1>
-          <Badge variant="secondary" className="text-xs">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Semantic
-          </Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {interfaceMode === "answer" ? "Answer" : "Search"}
+            </h1>
+            <Badge variant="secondary" className="text-xs">
+              {interfaceMode === "answer" ? (
+                <>
+                  <Lightbulb className="h-3 w-3 mr-1" />
+                  AI-Powered
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Semantic
+                </>
+              )}
+            </Badge>
+          </div>
+
+          {/* Interface Mode Toggle */}
+          <ToggleGroup
+            type="single"
+            value={interfaceMode}
+            onValueChange={(value) => value && setInterfaceMode(value as "search" | "answer")}
+            className="border rounded-lg p-1"
+          >
+            <ToggleGroupItem value="search" aria-label="Search mode" className="gap-1 text-xs">
+              <Search className="h-3 w-3" />
+              Direct Search
+            </ToggleGroupItem>
+            <ToggleGroupItem value="answer" aria-label="Answer mode" className="gap-1 text-xs">
+              <Lightbulb className="h-3 w-3" />
+              AI Answer
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
         <p className="text-sm text-muted-foreground">
-          Search through your workspace knowledge using natural language
+          {interfaceMode === "answer"
+            ? "Ask questions about your workspace and get AI-powered answers"
+            : "Search through your workspace knowledge using natural language"}
         </p>
       </div>
 
+      {/* Answer Mode */}
+      {interfaceMode === "answer" && store && (
+        <div className="min-h-[500px] flex flex-col">
+          <AnswerInterface workspaceId={store.id} />
+        </div>
+      )}
+
+      {/* Search Mode */}
+      {interfaceMode === "search" && (
+        <>
       {/* Search Controls */}
       <Card className="border-border/60">
         <CardContent className="pt-6">
@@ -468,6 +514,8 @@ export function WorkspaceSearch({
           Manage Sources
         </Link>
       </div>
+        </>
+      )}
     </div>
   );
 }

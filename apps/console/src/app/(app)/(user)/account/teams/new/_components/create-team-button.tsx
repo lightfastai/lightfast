@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { TeamFormValues } from "@repo/console-validation/forms";
 
@@ -28,7 +28,6 @@ export function CreateTeamButton() {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const form = useFormContext<TeamFormValues>();
 
   const teamName = form.watch("teamName");
@@ -76,17 +75,10 @@ export function CreateTeamButton() {
           );
         }
 
-        toast({
-          title: "Failed to create team",
-          description: err.message || "Please try again.",
-          variant: "destructive",
-        });
+        toast.error(err.message || "Failed to create team. Please try again.");
       },
       onSuccess: (data) => {
-        toast({
-          title: "Team created!",
-          description: `Successfully created ${teamName}`,
-        });
+        toast.success(`Team created! Successfully created ${teamName}`);
 
         // Navigate to workspace creation
         // The org is already in the cache (optimistic update)
@@ -107,11 +99,7 @@ export function CreateTeamButton() {
     // Trigger form validation
     const isValid = await form.trigger();
     if (!isValid) {
-      toast({
-        title: "Validation failed",
-        description: "Please fix the errors in the form before submitting.",
-        variant: "destructive",
-      });
+      toast.error("Please fix the errors in the form before submitting.");
       return;
     }
 

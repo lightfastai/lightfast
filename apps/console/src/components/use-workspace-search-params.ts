@@ -9,6 +9,7 @@ import {
 import type { RerankMode } from "@repo/console-types";
 
 const rerankModes = ["fast", "balanced", "thorough"] as const;
+const interfaceModes = ["search", "answer"] as const;
 
 /**
  * Workspace search URL state hook
@@ -16,6 +17,7 @@ const rerankModes = ["fast", "balanced", "thorough"] as const;
  * Manages URL query parameters for the workspace search:
  * - q: Search query text
  * - mode: Rerank mode (fast/balanced/thorough)
+ * - m: Interface mode (search/answer)
  * - sources: Source type filters
  * - types: Observation type filters
  * - actors: Actor name filters
@@ -26,6 +28,7 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     {
       q: parseAsString.withDefault(initialQuery),
       mode: parseAsStringLiteral(rerankModes).withDefault("balanced"),
+      m: parseAsStringLiteral(interfaceModes).withDefault("search"),
       sources: parseAsArrayOf(parseAsString).withDefault([]),
       types: parseAsArrayOf(parseAsString).withDefault([]),
       actors: parseAsArrayOf(parseAsString).withDefault([]),
@@ -42,6 +45,8 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     setQuery: (q: string) => setParams({ q }),
     mode: params.mode as RerankMode,
     setMode: (mode: RerankMode) => setParams({ mode }),
+    interfaceMode: params.m as "search" | "answer",
+    setInterfaceMode: (m: "search" | "answer") => setParams({ m }),
     sourceTypes: params.sources,
     setSourceTypes: (sources: string[]) => setParams({ sources }),
     observationTypes: params.types,

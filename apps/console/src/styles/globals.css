@@ -35,8 +35,8 @@
   --sidebar-foreground: oklch(0.8853 0 0);
   --sidebar-primary: oklch(0.7058 0 0);
   --sidebar-primary-foreground: oklch(0.2178 0 0);
-  --sidebar-accent: oklch(0 0 0); /* Pure black for active state */
-  --sidebar-accent-foreground: oklch(1 0 0); /* Pure white for active state text */
+  --sidebar-accent: oklch(0.26 0 0); /* Subtle accent, same as input-bg */
+  --sidebar-accent-foreground: oklch(0.8853 0 0);
   --sidebar-border: oklch(0.329 0 0);
   --sidebar-ring: oklch(0.7058 0 0);
 }
