@@ -705,6 +705,31 @@ const eventsMap = {
   },
 
   // ============================================================================
+  // NOTIFICATION EVENTS
+  // ============================================================================
+
+  /**
+   * Notification dispatch event
+   * Triggers Knock notification workflow for user-facing events
+   */
+  "apps-console/notification.dispatch": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID */
+      clerkOrgId: z.string().optional(),
+      /** Knock workflow key */
+      workflowKey: z.string(),
+      /** Recipients (Clerk user IDs) */
+      recipients: z.array(z.string()),
+      /** Tenant ID for workspace scoping */
+      tenant: z.string().optional(),
+      /** Notification data payload */
+      payload: z.record(z.unknown()),
+    }),
+  },
+
+  // ============================================================================
   // FUTURE EXAMPLES (NOT IMPLEMENTED - COMMENTED FOR REFERENCE)
   // ============================================================================
 
