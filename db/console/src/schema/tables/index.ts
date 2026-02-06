@@ -26,7 +26,7 @@ export * from "./workspace-actor-profiles";
 export * from "./org-actor-identities";
 export * from "./workspace-temporal-states";
 
-// Webhook storage tables
+// Ingestion payload storage tables
 export * from "./workspace-webhook-payloads";
 
 // Relationship graph tables

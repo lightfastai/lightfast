@@ -38,6 +38,7 @@
     "@repo/console-api-key": "workspace:*",
     "@repo/console-api-services": "workspace:*",
     "@repo/console-auth-middleware": "workspace:*",
+    "@repo/console-backfill": "workspace:*",
     "@repo/console-clerk-cache": "workspace:*",
     "@repo/console-embed": "workspace:*",
     "@repo/console-oauth": "workspace:^",

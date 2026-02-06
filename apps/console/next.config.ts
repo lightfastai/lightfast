@@ -22,6 +22,7 @@ const config: NextConfig = withBetterStack(
       "@repo/app-urls",
       "@repo/console-api-services",
       "@repo/console-auth-middleware",
+      "@repo/console-backfill",
       "@repo/console-embed",
       "@repo/console-oauth",
       "@repo/console-octokit-github",

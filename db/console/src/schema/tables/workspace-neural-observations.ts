@@ -189,6 +189,15 @@ export const workspaceNeuralObservations = pgTable(
      */
     embeddingSummaryId: varchar("embedding_summary_id", { length: 191 }),
 
+    // ========== INGESTION ==========
+
+    /**
+     * How this observation was ingested: webhook, backfill, manual, or api
+     */
+    ingestionSource: varchar("ingestion_source", { length: 20 })
+      .default("webhook")
+      .notNull(),
+
     // ========== TIMESTAMPS ==========
 
     createdAt: timestamp("created_at", {
