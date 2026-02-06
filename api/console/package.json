@@ -62,6 +62,7 @@
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/inngest": "workspace:*",
+		"@vendor/knock": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
 		"ai": "catalog:",

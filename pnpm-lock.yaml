@@ -394,6 +394,9 @@ importers:
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
+      '@vendor/knock':
+        specifier: workspace:*
+        version: link:../../vendor/knock
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
@@ -988,6 +991,9 @@ importers:
       '@vendor/cms':
         specifier: workspace:^
         version: link:../../vendor/cms
+      '@vendor/knock':
+        specifier: workspace:*
+        version: link:../../vendor/knock
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
@@ -3971,6 +3977,49 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  vendor/knock:
+    dependencies:
+      '@knocklabs/node':
+        specifier: ^1.20.0
+        version: 1.28.0
+      '@knocklabs/react':
+        specifier: ^0.8.11
+        version: 0.8.11(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@t3-oss/env-nextjs':
+        specifier: 'catalog:'
+        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
+      react:
+        specifier: ^19.2.1
+        version: 19.2.1
+      zod:
+        specifier: catalog:zod3
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      '@types/react':
+        specifier: ^19.1.11
+        version: 19.2.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   vendor/mastra:
     dependencies:
       '@mastra/core':
@@ -6026,6 +6075,26 @@ packages:
   '@jsdevtools/ono@7.1.3':
     resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
 
+  '@knocklabs/client@0.18.7':
+    resolution: {integrity: sha512-p4wyvh5UiA19y1bkNvUdspklUO6tCsFUmmlNZAAGJTQcddst7Gbk/KcwqPpJkAGw69lGctQ2DTaXJ9JQmJCaIg==}
+
+  '@knocklabs/node@1.28.0':
+    resolution: {integrity: sha512-xWUPNWgjEt3CYA+gKsyFNtc44nDJDvIzyWcCyqu+EkNC6zu96BZw4NB8h8YPYUYWWN2diYdqkbRiiT8fw4d6Ew==}
+
+  '@knocklabs/react-core@0.10.7':
+    resolution: {integrity: sha512-N/Nlb8hSS8wR4ln+PPJup2qo05sUeXO2NbRbJupluT34Sy/lN7rjl5fh5StbXOBmh4Yr3wWQhLNqYM/x/ZOwtg==}
+    peerDependencies:
+      react: ^19.2.1
+
+  '@knocklabs/react@0.8.11':
+    resolution: {integrity: sha512-FpHOHJFfVFiPCRW5XcqfjRvxBJ4GAS0p7TrleAZpmSsPNab/XaSWD77+H+vEs5bS0wuh3DZ5f5z5K4z7Nk2BOA==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@knocklabs/types@0.1.5':
+    resolution: {integrity: sha512-Wu/0XsrTKBM2JO2eoazhz6MWpnmm6uCUsozPyg4aeJS7vndtqLPwniW6fzVn1gSrR7upWkWThrv5ZzokZ6BAHQ==}
+
   '@kwsites/file-exists@1.1.1':
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
 
@@ -7237,6 +7306,9 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
+  '@popperjs/core@2.11.8':
+    resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
+
   '@posthog/core@1.14.1':
     resolution: {integrity: sha512-DtmJ1y1IDauX8yAZtIotRAYDRkgCCMLk5S9vFFRX7vufhWblQuRUOgn9WYSJrocJlZKm1aEjDzGQ0uyL7HcdLw==}
 
@@ -7937,6 +8009,19 @@ packages:
 
   '@radix-ui/react-visually-hidden@1.2.3':
     resolution: {integrity: sha512-pzJq12tEaaIhqjbzpCuv/OypJY/BPavOofm+dbab+MHLajy277+1lLm6JFcGgF5eskJ6mquGirhXY2GD/8u8Ug==}
+    peerDependencies:
+      '@types/react': ^19.1.11
+      '@types/react-dom': ^19.1.8
+      react: ^19.2.1
+      react-dom: ^19.2.1
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+
+  '@radix-ui/react-visually-hidden@1.2.4':
+    resolution: {integrity: sha512-kaeiyGCe844dkb9AVF+rb4yTyb1LiLN/e3es3nLiRyN4dC8AduBYPMnnNlDjX2VDOcvDEiPnRNMJeWCfsX0txg==}
     peerDependencies:
       '@types/react': ^19.1.11
       '@types/react-dom': ^19.1.8
@@ -8891,6 +8976,125 @@ packages:
   '@tanstack/store@0.7.7':
     resolution: {integrity: sha512-xa6pTan1bcaqYDS9BDpSiS63qa6EoDkPN9RsRaxHuDdVDNntzq3xNwR5YKTU/V3SkSyC9T4YVOPh2zRQN0nhIQ==}
 
+  '@telegraph/appearance@0.0.12':
+    resolution: {integrity: sha512-qPBpHa9pYFEvBMsNt8+4PzjJ/tcQFcuDoUDjgbd1dUtdggs4JWP8GmP976BY9aKm/6aFJDkXUpIlVhahpsukBQ==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/button@0.3.6':
+    resolution: {integrity: sha512-F4GB+MTz8g0xZFfETz9ZRnEdzZYCobiAGDGsvCcYAykWKit1b/0/m5Y6tFC7pVY5pzmu3gGu/LvTq79ptG8YMA==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/combobox@0.1.27':
+    resolution: {integrity: sha512-nZogIQ2rQRUd27wUVTxVa1MUCUPP/tYWF+n1wsw3NDr2JifHe8CGREKNf5+g2nKfXKymEQzlT+8nauGyvay9WQ==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/compose-refs@0.0.7':
+    resolution: {integrity: sha512-/LYH6m9oJSd7sf0OzQojW1ae2rk1cnXpowJAb02I7iDNAeZzetJgt0IRbzATlajng8VClTHn9zaPaQzWPSS8RA==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/compose-refs@0.0.8':
+    resolution: {integrity: sha512-cPqJoHg0nH/sSs9rlkYOp3L3J09Yc/wUGPv8Z6hHIP94iNBS6vHyt6wXxwfaitNT1UdFqXQd1+Jh7Qt06sitQg==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/helpers@0.0.13':
+    resolution: {integrity: sha512-mDb6r7v8IMT7NpaD7xn2Nn/QJNsbBgTaQfR1CFW6WHS02sNiCopWpeUpUGzj9u57LrYaJF5CaxNbxJA2hu/34Q==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/helpers@0.0.15':
+    resolution: {integrity: sha512-j+Q7pYcv83cdb9/lT/dfRfTZRskqUNv1clSGxFFIT7wDLUF6KAC1nsCvqpBOlGAUQYRtRqaivOnJeXBVr2YYog==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/icon@0.2.7':
+    resolution: {integrity: sha512-j2J0Y7B6T1mkh7+Gbv5onQlo6ijzfeL1N8H1gFBDF00FONgDxGBbPq5MoSNSQm2GHYOX2QK3Vvq8tEyMhODUeQ==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/icon@0.3.5':
+    resolution: {integrity: sha512-Ynhyu5dxRA8+rKJRpS/3zPwjlwlr0eGNO0w3q0Kp21GAoTkLghLvdaeTiqFyGDvKgfQPTFy5nebW8v9sA6/I1Q==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/input@0.1.7':
+    resolution: {integrity: sha512-tnzPKk7MQPC5S0EFbZq+CoO8ggyQnsAiMEgJbGZK6c7Dcp+yzb2IKMKzoO7Pm+Ko8JT6P0NV5PmW+L5aKFDxHQ==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/layout@0.2.3':
+    resolution: {integrity: sha512-7SwHE2fjOqjGU6VaCCLcAL5u81KjjHkTH2I5RNcy7lbRPF1M9uAU6AgQ9Sn347cJGFC5GzW5Ae6tI30YyTD/Qw==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/layout@0.3.3':
+    resolution: {integrity: sha512-/bJFwh4ZyReYxybGBNKb84A3M3f4v4TEfqdII52ZFoOTngg4k1ppzqfcBw8NvSzt/JinQoH0TQlab2LuAZg8bw==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/menu@0.1.20':
+    resolution: {integrity: sha512-h6ZgVYGG2bPOTGlJ6f/FEWfghxaZ9HPsfVeVA0t15KlODaIgyMLc2OzRJUAO0extFj7nwPr1XTUoPmYXd4scWg==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/style-engine@0.1.16':
+    resolution: {integrity: sha512-uqgfpKglrJgTZQ57pBZhpbA7GUsUM5jZ22qI0qOyxYlR3ySkVN30aHmcFYwxawccDOVNSCLBqAVgeor4tgUSpA==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/style-engine@0.2.2':
+    resolution: {integrity: sha512-kofss1xaPCK3yyeAMSu7gNCYbj6LgEwhoc8WnEe5ihQa1Sry39abN8sehYk7uvka60S6Tvx0/ob01ce3S4DC8A==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/tag@0.0.115':
+    resolution: {integrity: sha512-qzOXhXm01zr0yuDUa7vr+R7W19A/yz0b+Iwf13Fzeys6nAhLZ5M3mvOrNWF1o7QZICRUtBlT7zfjfnTPk8RJzw==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/tokens@0.1.3':
+    resolution: {integrity: sha512-mmoGVbTQFhxayxik1ntQFYruRgP92KfPe3Wzh7vngwuC/2TCnQe2fWkTjqVToLHYDLufOhY5qapoue8CfAoODw==}
+    peerDependencies:
+      react: ^19.2.1
+
+  '@telegraph/tooltip@0.0.62':
+    resolution: {integrity: sha512-5uZGD+WEx61kbf4WGpmRT/PR7117JSREW3TJWmH2k/tDPe5goab7NJ2uHeg7zkLLAM2ZQNVqflIxNasfBSJk7w==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/truncate@0.0.18':
+    resolution: {integrity: sha512-nCZnWZ1QJZmme/ActRxK+bIT2am5ffgWjLxIqiLINyTAVAyRy/LYFiDQeJf/BYNrVYLZW5QJlU9ELY/ZM7LUUw==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
+  '@telegraph/typography@0.1.29':
+    resolution: {integrity: sha512-VCy+7h2SmHQYUxg+ANuBx8uagukwYEiCtK1+S+F6+7e13iD20q34wgJ9hfxvRrqzCWza9uUsI72bGOfV5Ms8yw==}
+    peerDependencies:
+      react: ^19.2.1
+      react-dom: ^19.2.1
+
   '@tinyhttp/accepts@1.3.0':
     resolution: {integrity: sha512-YaJ4EMgVUI6JHzWO14lr6vn/BLJEoFN4Sqd20l0/oBcLLENkP8gnPtX1jB7OhIu0AE40VCweAqvSP+0/pgzB1g==}
     engines: {node: '>=12.4.0'}
@@ -9217,6 +9421,9 @@ packages:
 
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
+
+  '@types/phoenix@1.6.7':
+    resolution: {integrity: sha512-oN9ive//QSBkf19rfDv45M7eZPi0eEXylht2OLEXicu5b4KoQ1OzXIw+xDSGWxSxe1JmepRR/ZH283vsu518/Q==}
 
   '@types/raf@3.4.3':
     resolution: {integrity: sha512-c4YAvMedbPZ5tEyxzQdMoOhhJ4RD3rngZIdwC2/qDN3d7JpEhB6fiBRKVY1lg5B7Wk+uPBjn5f39j1/2MY1oOw==}
@@ -9841,6 +10048,11 @@ packages:
   axe-core@4.11.0:
     resolution: {integrity: sha512-ilYanEU8vxxBexpJd8cWM4ElSQq4QctCLKih0TSfjIfCQTeyH/6zVrmIJfLPrKTKJRbiG+cfnZbQIjAlJmF1jQ==}
     engines: {node: '>=4'}
+
+  axios-retry@4.5.0:
+    resolution: {integrity: sha512-aR99oXhpEDGo0UuAlYcn2iGRds30k366Zfa05XWScR9QaQD4JYiP3/1Qt1u7YlefUOK+cn0CcwoL1oefavQUlQ==}
+    peerDependencies:
+      axios: 0.x || 1.x
 
   axios@1.12.2:
     resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
@@ -11251,6 +11463,9 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  eventemitter2@6.4.9:
+    resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
+
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
@@ -11501,6 +11716,20 @@ packages:
 
   framer-motion@11.18.2:
     resolution: {integrity: sha512-5F5Och7wrvtLVElIpclDT0CBzMVg3dL22B64aZwHtsIY8RB4mXICLrkajK4G9R+ieSAGcgrLeae2SeUTg2pr6w==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^19.2.1
+      react-dom: ^19.2.1
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  framer-motion@12.33.0:
+    resolution: {integrity: sha512-ca8d+rRPcDP5iIF+MoT3WNc0KHJMjIyFAbtVLvM9eA7joGSpeqDfiNH/kCs1t4CHi04njYvWyj0jS4QlEK/rJQ==}
     peerDependencies:
       '@emotion/is-prop-valid': '*'
       react: ^19.2.1
@@ -12431,6 +12660,10 @@ packages:
     resolution: {integrity: sha512-MjYsKHO5O7mCsmRGxWcLWheFqN9DJ/2TmngvjKXihe6efViPqc274+Fx/4fYj/r03+ESvBdTXK0V6tA3rgez1g==}
     engines: {node: '>= 0.4'}
 
+  is-retry-allowed@2.2.0:
+    resolution: {integrity: sha512-XVm7LOeLpTW4jV19QSH38vkswxoLud8sQ57YwJVTPWdiaI9I8keEhGFpBlslyVsgdQy4Opg8QOLb8YRgsyZiQg==}
+    engines: {node: '>=10'}
+
   is-set@2.0.3:
     resolution: {integrity: sha512-iPAjerrse27/ygGLxw+EBR9agv9Y6uLeYVJMu+QNCoouJ1/1ri0mGrcWpfCqFZuzzx3WjtwxG098X+n4OuRkPg==}
     engines: {node: '>= 0.4'}
@@ -12557,6 +12790,9 @@ packages:
 
   jose@5.10.0:
     resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
+
+  jose@6.1.3:
+    resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
 
   jotai@2.15.0:
     resolution: {integrity: sha512-nbp/6jN2Ftxgw0VwoVnOg0m5qYM1rVcfvij+MZx99Z5IK13eGve9FJoCwGv+17JvVthTjhSmNtT5e1coJnr6aw==}
@@ -12699,6 +12935,10 @@ packages:
 
   jws@4.0.0:
     resolution: {integrity: sha512-KDncfTmOZoOMTFG4mBlG0qUIOlc03fmzH+ru6RgYVZhPkyiy/92Owlt/8UEN+a4TXR1FQetfIpJE8ApdvdVxTg==}
+
+  jwt-decode@4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
 
   katex@0.16.25:
     resolution: {integrity: sha512-woHRUZ/iF23GBP1dkDQMh1QBad9dmr8/PAwNA54VrSOVYgI12MAcE14TqnDdQOdzyEonGzMepYnqBMYdsoAr8Q==}
@@ -12952,6 +13192,11 @@ packages:
 
   lucide-react@0.542.0:
     resolution: {integrity: sha512-w3hD8/SQB7+lzU2r4VdFyzzOzKnUjTZIF/MQJGSSvni7Llewni4vuViRppfRAa2guOsY5k4jZyxw/i9DQHv+dw==}
+    peerDependencies:
+      react: ^19.2.1
+
+  lucide-react@0.544.0:
+    resolution: {integrity: sha512-t5tS44bqd825zAW45UQxpG2CvcC4urOwn2TrwSH8u+MjeE+1NnWl6QqeQ/6NdjMqdOygyiT9p3Ev0p1NJykxjw==}
     peerDependencies:
       react: ^19.2.1
 
@@ -13322,8 +13567,28 @@ packages:
   motion-dom@11.18.1:
     resolution: {integrity: sha512-g76KvA001z+atjfxczdRtw/RXOM3OMSdd1f4DL77qCTF/+avrRJiawSG4yDibEQ215sr9kpinSlX2pCTJ9zbhw==}
 
+  motion-dom@12.33.0:
+    resolution: {integrity: sha512-XRPebVypsl0UM+7v0Hr8o9UAj0S2djsQWRdHBd5iVouVpMrQqAI0C/rDAT3QaYnXnHuC5hMcwDHCboNeyYjPoQ==}
+
   motion-utils@11.18.1:
     resolution: {integrity: sha512-49Kt+HKjtbJKLtgO/LKj9Ld+6vw9BjH5d9sc40R/kVyH8GLAXgT42M2NnuPcJNuA3s9ZfZBUcwIgpmZWGEE+hA==}
+
+  motion-utils@12.29.2:
+    resolution: {integrity: sha512-G3kc34H2cX2gI63RqU+cZq+zWRRPSsNIOjpdl9TN4AQwC4sgwYPl/Q/Obf/d53nOm569T0fYK+tcoSV50BWx8A==}
+
+  motion@12.33.0:
+    resolution: {integrity: sha512-TcND7PijsrTeIA9SRVUB8TOJQ+6mJnJ5K4a9oAJZvyI0Zy47Gq5oofU+VkTxbLcvDoKXnHspQcII2mnk3TbFsQ==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^19.2.1
+      react-dom: ^19.2.1
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -13877,6 +14142,9 @@ packages:
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
     engines: {node: '>=4'}
+
+  phoenix@1.7.21:
+    resolution: {integrity: sha512-8wOvJ8pQXRxNbyFlMI+wQhK3bvX4Ps3FtUX2+0cV6lkcebe9VTIl+xS60FLAeaPieFg80djor5z/AKofnwqAUw==}
 
   picocolors@1.0.1:
     resolution: {integrity: sha512-anP1Z8qwhkbmu7MFP5iTt+wQKXgwzf7zTyGlcdzabySa9vd0Xt392U0rVmz9poOaBj0uHJKyyo9/upk0HrEQew==}
@@ -15541,6 +15809,9 @@ packages:
 
   url-join@4.0.1:
     resolution: {integrity: sha512-jk1+QP6ZJqyOiuEI9AEWQfju/nB2Pw466kbA0LEZljHwKeMgd9WrAEgEGxjPDD2+TNbbb37rTyhEfrCXfuKXnA==}
+
+  urlpattern-polyfill@10.1.0:
+    resolution: {integrity: sha512-IGjKp/o0NL3Bso1PymYURCJxMPNAf/ILOpendP9f5B6e1rTJgdgiOvgfoT8VxCAdY+Wisb9uhGaJJf3yZ2V9nw==}
 
   use-callback-ref@1.3.3:
     resolution: {integrity: sha512-jQL3lRnocaFtu3V00JToYz/4QkNWswxijDaCVNZRiRTO3HQDLsdu1ZtmIUvV4yPp+rvWm5j0y0TG/S61cuijTg==}
@@ -18102,6 +18373,61 @@ snapshots:
 
   '@jsdevtools/ono@7.1.3': {}
 
+  '@knocklabs/client@0.18.7':
+    dependencies:
+      '@babel/runtime': 7.28.4
+      '@knocklabs/types': 0.1.5
+      '@tanstack/store': 0.7.7
+      '@types/phoenix': 1.6.7
+      axios: 1.12.2
+      axios-retry: 4.5.0(axios@1.12.2)
+      eventemitter2: 6.4.9
+      jwt-decode: 4.0.0
+      nanoid: 3.3.11
+      phoenix: 1.7.21
+      urlpattern-polyfill: 10.1.0
+    transitivePeerDependencies:
+      - debug
+
+  '@knocklabs/node@1.28.0':
+    dependencies:
+      jose: 6.1.3
+
+  '@knocklabs/react-core@0.10.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@knocklabs/client': 0.18.7
+      '@tanstack/react-store': 0.7.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      date-fns: 4.1.0
+      fast-deep-equal: 3.1.3
+      react: 19.2.1
+      swr: 2.3.6(react@19.2.1)
+    transitivePeerDependencies:
+      - debug
+      - react-dom
+
+  '@knocklabs/react@0.8.11(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@knocklabs/client': 0.18.7
+      '@knocklabs/react-core': 0.10.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@popperjs/core': 2.11.8
+      '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/combobox': 0.1.27(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/icon': 0.2.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.2.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/tokens': 0.1.3(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      lodash.debounce: 4.0.8
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+      - debug
+
+  '@knocklabs/types@0.1.5': {}
+
   '@kwsites/file-exists@1.1.1':
     dependencies:
       debug: 4.4.3
@@ -19653,6 +19979,8 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
+  '@popperjs/core@2.11.8': {}
+
   '@posthog/core@1.14.1':
     dependencies:
       cross-spawn: 7.0.6
@@ -20394,6 +20722,15 @@ snapshots:
   '@radix-ui/react-visually-hidden@1.2.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    optionalDependencies:
+      '@types/react': 19.2.2
+      '@types/react-dom': 19.2.2(@types/react@19.2.2)
+
+  '@radix-ui/react-visually-hidden@1.2.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-primitive': 2.1.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
     optionalDependencies:
@@ -21513,7 +21850,6 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
       use-sync-external-store: 1.6.0(react@19.2.1)
-    optional: true
 
   '@tanstack/router-core@1.133.15':
     dependencies:
@@ -21526,8 +21862,214 @@ snapshots:
       tiny-warning: 1.0.3
     optional: true
 
-  '@tanstack/store@0.7.7':
-    optional: true
+  '@tanstack/store@0.7.7': {}
+
+  '@telegraph/appearance@0.0.12(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-slot': 1.2.4(@types/react@19.2.2)(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@types/react'
+
+  '@telegraph/button@0.3.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/icon': 0.3.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/style-engine': 0.2.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      lucide-react: 0.544.0(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/combobox@0.1.27(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-dismissable-layer': 1.1.11(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@radix-ui/react-menu': 2.1.16(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@radix-ui/react-portal': 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.2)(react@19.2.1)
+      '@radix-ui/react-visually-hidden': 1.2.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/button': 0.3.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/compose-refs': 0.0.8(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/icon': 0.3.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/input': 0.1.7(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/menu': 0.1.20(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/tag': 0.0.115(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/tooltip': 0.0.62(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/truncate': 0.0.18(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      lucide-react: 0.544.0(react@19.2.1)
+      motion: 12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+
+  '@telegraph/compose-refs@0.0.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/compose-refs@0.0.8(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/helpers@0.0.13(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/helpers@0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/icon@0.2.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/helpers': 0.0.13(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      lucide-react: 0.544.0(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/icon@0.3.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      lucide-react: 0.544.0(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/input@0.1.7(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-slot': 1.2.4(@types/react@19.2.2)(react@19.2.1)
+      '@telegraph/compose-refs': 0.0.8(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@types/react'
+
+  '@telegraph/layout@0.2.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/compose-refs': 0.0.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.13(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/style-engine': 0.1.16(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/layout@0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/compose-refs': 0.0.8(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/style-engine': 0.2.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/menu@0.1.20(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-menu': 2.1.16(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.2)(react@19.2.1)
+      '@telegraph/button': 0.3.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/icon': 0.3.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      lucide-react: 0.544.0(react@19.2.1)
+      motion: 12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+
+  '@telegraph/style-engine@0.1.16(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/tokens': 0.1.3(react@19.2.1)
+      postcss: 8.5.6
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/style-engine@0.2.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/tokens': 0.1.3(react@19.2.1)
+      postcss: 8.5.6
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@telegraph/tag@0.0.115(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/button': 0.3.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/compose-refs': 0.0.8(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/icon': 0.3.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/tooltip': 0.0.62(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      lucide-react: 0.544.0(react@19.2.1)
+      motion: 12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+
+  '@telegraph/tokens@0.1.3(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+
+  '@telegraph/tooltip@0.0.62(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@radix-ui/react-tooltip': 1.2.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.2)(react@19.2.1)
+      '@telegraph/appearance': 0.0.12(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      motion: 12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+
+  '@telegraph/truncate@0.0.18(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/tooltip': 0.0.62(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/typography': 0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - '@types/react'
+      - '@types/react-dom'
+
+  '@telegraph/typography@0.1.29(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@telegraph/helpers': 0.0.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/layout': 0.3.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@telegraph/style-engine': 0.2.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      clsx: 2.1.1
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
   '@tinyhttp/accepts@1.3.0':
     dependencies:
@@ -21926,6 +22468,8 @@ snapshots:
       '@types/node': 24.9.1
       pg-protocol: 1.10.3
       pg-types: 2.2.0
+
+  '@types/phoenix@1.6.7': {}
 
   '@types/raf@3.4.3':
     optional: true
@@ -22779,6 +23323,11 @@ snapshots:
       possible-typed-array-names: 1.1.0
 
   axe-core@4.11.0: {}
+
+  axios-retry@4.5.0(axios@1.12.2):
+    dependencies:
+      axios: 1.12.2
+      is-retry-allowed: 2.2.0
 
   axios@1.12.2:
     dependencies:
@@ -24441,6 +24990,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  eventemitter2@6.4.9: {}
+
   eventemitter3@4.0.7: {}
 
   eventemitter3@5.0.1: {}
@@ -24759,6 +25310,15 @@ snapshots:
     dependencies:
       motion-dom: 11.18.1
       motion-utils: 11.18.1
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  framer-motion@12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+    dependencies:
+      motion-dom: 12.33.0
+      motion-utils: 12.29.2
       tslib: 2.8.1
     optionalDependencies:
       react: 19.2.1
@@ -25919,6 +26479,8 @@ snapshots:
       has-tostringtag: 1.0.2
       hasown: 2.0.2
 
+  is-retry-allowed@2.2.0: {}
+
   is-set@2.0.3: {}
 
   is-shared-array-buffer@1.0.4:
@@ -26048,6 +26610,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jose@5.10.0: {}
+
+  jose@6.1.3: {}
 
   jotai@2.15.0(@babel/core@7.28.4)(@babel/template@7.27.2)(@types/react@19.2.2)(react@19.2.1):
     optionalDependencies:
@@ -26197,6 +26761,8 @@ snapshots:
     dependencies:
       jwa: 2.0.1
       safe-buffer: 5.2.1
+
+  jwt-decode@4.0.0: {}
 
   katex@0.16.25:
     dependencies:
@@ -26426,6 +26992,10 @@ snapshots:
       react: 19.2.1
 
   lucide-react@0.542.0(react@19.2.1):
+    dependencies:
+      react: 19.2.1
+
+  lucide-react@0.544.0(react@19.2.1):
     dependencies:
       react: 19.2.1
 
@@ -27081,7 +27651,21 @@ snapshots:
     dependencies:
       motion-utils: 11.18.1
 
+  motion-dom@12.33.0:
+    dependencies:
+      motion-utils: 12.29.2
+
   motion-utils@11.18.1: {}
+
+  motion-utils@12.29.2: {}
+
+  motion@12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+    dependencies:
+      framer-motion: 12.33.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
   mri@1.2.0: {}
 
@@ -27674,6 +28258,8 @@ snapshots:
       postgres-bytea: 1.0.0
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
+
+  phoenix@1.7.21: {}
 
   picocolors@1.0.1: {}
 
@@ -29660,6 +30246,8 @@ snapshots:
       punycode: 2.3.1
 
   url-join@4.0.1: {}
+
+  urlpattern-polyfill@10.1.0: {}
 
   use-callback-ref@1.3.3(@types/react@19.2.2)(react@19.2.1):
     dependencies:

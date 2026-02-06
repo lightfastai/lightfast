@@ -129,6 +129,10 @@
     "RESEND_API_KEY",
     "RESEND_EARLY_ACCESS_AUDIENCE_ID",
 
+    // Notifications
+    "KNOCK_API_KEY",
+    "NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY",
+
     // Storage & Cache
     "KV_URL",
     "KV_REST_API_TOKEN",
