@@ -3,7 +3,7 @@
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { Github, MoreVertical } from "lucide-react";
 import {
 	DropdownMenu,

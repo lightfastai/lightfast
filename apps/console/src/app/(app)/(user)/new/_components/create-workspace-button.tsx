@@ -10,7 +10,7 @@ import {
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useOrganizationList } from "@clerk/nextjs";
 import { useWorkspaceForm } from "./workspace-form-provider";
@@ -27,7 +27,6 @@ export function CreateWorkspaceButton() {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { setActive } = useOrganizationList();
   const form = useFormContext<WorkspaceFormValues>();
 
@@ -126,10 +125,8 @@ export function CreateWorkspaceButton() {
       onError: (error) => {
         console.error("Failed to link repositories:", error);
         // Note: Workspace is already created, just show warning
-        toast({
-          title: "Repositories not linked",
+        toast.error("Repositories not linked", {
           description: "Workspace created, but failed to connect repositories. You can add them later.",
-          variant: "destructive",
         });
       },
     }),
@@ -139,28 +136,22 @@ export function CreateWorkspaceButton() {
     // Trigger form validation
     const isValid = await form.trigger();
     if (!isValid) {
-      toast({
-        title: "Validation failed",
+      toast.error("Validation failed", {
         description: "Please fix the errors in the form before submitting.",
-        variant: "destructive",
       });
       return;
     }
 
     if (!selectedOrgId) {
-      toast({
-        title: "Organization required",
+      toast.error("Organization required", {
         description: "Please select an organization.",
-        variant: "destructive",
       });
       return;
     }
 
     if (!workspaceName) {
-      toast({
-        title: "Workspace name required",
+      toast.error("Workspace name required", {
         description: "Please enter a workspace name.",
-        variant: "destructive",
       });
       return;
     }
@@ -193,8 +184,7 @@ export function CreateWorkspaceButton() {
 
       // Show success toast
       const repoCount = selectedRepositories.length;
-      toast({
-        title: "Workspace created!",
+      toast.success("Workspace created!", {
         description: repoCount > 0
           ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
           : `${workspaceName} workspace is ready. Add sources to get started.`,
@@ -206,10 +196,8 @@ export function CreateWorkspaceButton() {
       router.push(`/${orgSlug}/${wsName}`);
     } catch (error) {
       console.error("Workspace creation failed:", error);
-      toast({
-        title: "Creation failed",
+      toast.error("Creation failed", {
         description: error instanceof Error ? error.message : "Failed to create workspace. Please try again.",
-        variant: "destructive",
       });
     }
   };

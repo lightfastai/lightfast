@@ -5,7 +5,7 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@repo/ui/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useConnectForm } from "./connect-form-provider";
 
 export function ConnectButton() {

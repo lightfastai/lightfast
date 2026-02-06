@@ -21,7 +21,7 @@ import {
   useMutation,
 } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";

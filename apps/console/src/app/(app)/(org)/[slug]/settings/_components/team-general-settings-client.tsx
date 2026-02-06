@@ -18,7 +18,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@repo/ui/components/ui/form";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { teamSettingsFormSchema } from "@repo/console-validation/forms";
 import type { TeamSettingsFormValues } from "@repo/console-validation/forms";
@@ -34,7 +34,6 @@ export function TeamGeneralSettingsClient({
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 	const { setActive } = useOrganizationList();
-	const { toast } = useToast();
 	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Use cached organization list from app layout (avoids Clerk 404 timing issues)
@@ -68,16 +67,13 @@ export function TeamGeneralSettingsClient({
 	const updateNameMutation = useMutation(
 		trpc.organization.updateName.mutationOptions({
 			onError: (err) => {
-				toast({
-					title: "Failed to update team name",
+				toast.error("Failed to update team name", {
 					description: err.message || "Please try again.",
-					variant: "destructive",
 				});
 			},
 
 			onSuccess: async (data) => {
-				toast({
-					title: "Team updated!",
+				toast.success("Team updated!", {
 					description: `Team name changed to "${data.name}"`,
 				});
 
@@ -115,10 +111,8 @@ export function TeamGeneralSettingsClient({
 		// Trigger validation
 		const isValid = await form.trigger();
 		if (!isValid) {
-			toast({
-				title: "Validation failed",
+			toast.error("Validation failed", {
 				description: "Please fix the errors in the form before submitting.",
-				variant: "destructive",
 			});
 			return;
 		}

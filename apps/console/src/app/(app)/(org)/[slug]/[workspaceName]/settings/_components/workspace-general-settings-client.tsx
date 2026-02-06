@@ -18,7 +18,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@repo/ui/components/ui/form";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { workspaceSettingsFormSchema } from "@repo/console-validation/forms";
 import type { WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
@@ -35,7 +35,6 @@ export function WorkspaceGeneralSettingsClient({
 	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const { toast } = useToast();
 	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Use prefetched data from server (no client-side fetch on mount)
@@ -145,16 +144,13 @@ export function WorkspaceGeneralSettingsClient({
 					);
 				}
 
-				toast({
-					title: "Failed to update workspace name",
+				toast.error("Failed to update workspace name", {
 					description: err.message || "Please try again.",
-					variant: "destructive",
 				});
 			},
 
 			onSuccess: (data) => {
-				toast({
-					title: "Workspace updated!",
+				toast.success("Workspace updated!", {
 					description: `Workspace name changed to "${data.newWorkspaceName}"`,
 				});
 
@@ -179,10 +175,8 @@ export function WorkspaceGeneralSettingsClient({
 		// Trigger validation
 		const isValid = await form.trigger();
 		if (!isValid) {
-			toast({
-				title: "Validation failed",
+			toast.error("Validation failed", {
 				description: "Please fix the errors in the form before submitting.",
-				variant: "destructive",
 			});
 			return;
 		}
