@@ -172,7 +172,9 @@ export const organizationRouter = {
 
 					if (
 						clerkError.errors?.[0]?.code === "duplicate_record" ||
-						clerkError.errors?.[0]?.message?.includes("already exists")
+						clerkError.errors?.[0]?.code === "form_identifier_exists" ||
+						clerkError.errors?.[0]?.message?.includes("already exists") ||
+						clerkError.errors?.[0]?.message?.includes("slug is taken")
 					) {
 						throw new TRPCError({
 							code: "CONFLICT",
@@ -252,8 +254,10 @@ export const organizationRouter = {
 					};
 
 					if (
-						clerkError.errors?.[0]?.code === "duplicate_record" ||
-						clerkError.errors?.[0]?.message?.includes("already exists")
+					clerkError.errors?.[0]?.code === "duplicate_record" ||
+					clerkError.errors?.[0]?.code === "form_identifier_exists" ||
+					clerkError.errors?.[0]?.message?.includes("already exists") ||
+					clerkError.errors?.[0]?.message?.includes("slug is taken")
 					) {
 						throw new TRPCError({
 							code: "CONFLICT",
