@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import { db } from "@db/console/client";
 import { workspaceKnowledgeDocuments } from "@db/console/schema";

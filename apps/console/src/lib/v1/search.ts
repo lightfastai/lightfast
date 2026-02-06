@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import { log } from "@vendor/observability/log";
 import { createRerankProvider } from "@repo/console-rerank";
