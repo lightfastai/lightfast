@@ -200,34 +200,3 @@ export function FindSimilarToolResult({
   );
 }
 
-/**
- * Render graph/relationship results (simple list view)
- */
-export function GraphToolResult({ data }: { data: unknown }): React.ReactNode {
-  // For now, render as JSON since graph structure varies
-  const jsonStr =
-    typeof data === "string" ? data : JSON.stringify(data, null, 2);
-  return (
-    <div className="text-xs bg-muted/30 p-2 rounded overflow-x-auto max-h-40 overflow-y-auto">
-      <pre className="whitespace-pre-wrap break-words text-[10px]">
-        {jsonStr}
-      </pre>
-    </div>
-  );
-}
-
-/**
- * Render related tool results
- */
-export function RelatedToolResult({ data }: { data: unknown }): React.ReactNode {
-  // For now, render as JSON since structure varies
-  const jsonStr =
-    typeof data === "string" ? data : JSON.stringify(data, null, 2);
-  return (
-    <div className="text-xs bg-muted/30 p-2 rounded overflow-x-auto max-h-40 overflow-y-auto">
-      <pre className="whitespace-pre-wrap break-words text-[10px]">
-        {jsonStr}
-      </pre>
-    </div>
-  );
-}

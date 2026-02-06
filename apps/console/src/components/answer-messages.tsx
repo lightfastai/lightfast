@@ -6,6 +6,7 @@ import type {
   UIMessage,
   TextUIPart,
   ReasoningUIPart,
+  ToolUIPart,
 } from "ai";
 import {
   Conversation,
@@ -25,13 +26,7 @@ import {
 import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  SearchToolResult,
-  ContentsToolResult,
-  FindSimilarToolResult,
-  GraphToolResult,
-  RelatedToolResult,
-} from "./answer-tool-results";
+import { ToolCallRenderer } from "./answer-tool-call-renderer";
 
 function isTextPart(part: UIMessage["parts"][number]): part is TextUIPart {
   return part.type === "text";
@@ -45,45 +40,6 @@ function isReasoningPart(
 
 function isToolPart(part: UIMessage["parts"][number]): boolean {
   return typeof part.type === "string" && part.type.startsWith("tool-");
-}
-
-// Render tool result based on tool name
-function renderToolResult(
-  toolName: string,
-  result: unknown,
-): React.ReactNode {
-  try {
-    if (toolName === "search" || toolName === "workspaceSearch") {
-      return <SearchToolResult data={result as Parameters<typeof SearchToolResult>[0]["data"]} />;
-    }
-    if (toolName === "contents" || toolName === "workspaceContents") {
-      return <ContentsToolResult data={result as Parameters<typeof ContentsToolResult>[0]["data"]} />;
-    }
-    if (toolName === "findsimilar" || toolName === "workspaceFindSimilar") {
-      return <FindSimilarToolResult data={result as Parameters<typeof FindSimilarToolResult>[0]["data"]} />;
-    }
-    if (toolName === "graph" || toolName === "workspaceGraph") {
-      return <GraphToolResult data={result} />;
-    }
-    if (toolName === "related" || toolName === "workspaceRelated") {
-      return <RelatedToolResult data={result} />;
-    }
-    // Fallback for unknown tools
-    return (
-      <div className="text-xs bg-muted/30 p-2 rounded overflow-x-auto max-h-40 overflow-y-auto">
-        <pre className="whitespace-pre-wrap break-words text-[10px]">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      </div>
-    );
-  } catch (error) {
-    console.error("Error rendering tool result:", error);
-    return (
-      <div className="text-xs text-destructive">
-        Error rendering tool result
-      </div>
-    );
-  }
 }
 
 // Simple copy hook
@@ -217,26 +173,12 @@ const AssistantMessage = memo(function AssistantMessage({
 
                 if (isToolPart(part)) {
                   const toolName = part.type.replace("tool-", "");
-                  // Extract result from tool part - the result property contains the tool output
-                  const result = (part as unknown as { result?: unknown }).result;
-
                   return (
-                    <div
-                      key={`${message.id}-tool-${index}`}
-                      className="w-full rounded-lg border border-border/50 bg-muted/30 px-3 py-2 space-y-2"
-                    >
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Tool: {toolName}
-                      </div>
-                      {result ? (
-                        <div className="mt-1">
-                          {renderToolResult(toolName, result)}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-muted-foreground italic">
-                          Executing...
-                        </div>
-                      )}
+                    <div key={`${message.id}-tool-${index}`} className="w-full">
+                      <ToolCallRenderer
+                        toolPart={part as ToolUIPart}
+                        toolName={toolName}
+                      />
                     </div>
                   );
                 }
