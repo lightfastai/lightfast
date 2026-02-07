@@ -24,6 +24,7 @@
     "dev:console:app": "turbo watch dev -F @lightfast/console --continue",
     "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
     "dev:email": "turbo run dev:email -F @lightfast/www",
+    "test:notification": "tsx scripts/test-notification.ts",
     "cms:types": "pnpm --filter @lightfast/www cms:types",
     "cms:dev": "pnpm --filter @lightfast/www cms:dev",
     "cms:analyze": "pnpm --filter @lightfast/www cms:analyze",
