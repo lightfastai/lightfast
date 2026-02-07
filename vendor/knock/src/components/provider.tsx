@@ -9,18 +9,18 @@ import type { ReactNode } from "react";
 import { env } from "../../env";
 
 const knockApiKey = env.NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY;
-const knockFeedChannelId = "lightfast-console-notifications";
-
 interface NotificationsProviderProps {
   children: ReactNode;
   userId: string;
   userToken?: string | null;
+  feedChannelId: string;
 }
 
 export const NotificationsProvider = ({
   children,
   userId,
   userToken,
+  feedChannelId,
 }: NotificationsProviderProps) => {
   if (!knockApiKey) {
     return children;
@@ -38,7 +38,7 @@ export const NotificationsProvider = ({
       userId={userId}
       userToken={userToken ?? undefined}
     >
-      <KnockFeedProvider colorMode={"dark" as ColorMode} feedId={knockFeedChannelId}>
+      <KnockFeedProvider colorMode={"dark" as ColorMode} feedId={feedChannelId}>
         {children}
       </KnockFeedProvider>
     </KnockProvider>

@@ -18,6 +18,7 @@ import {
 } from "@db/console/schema";
 import { eq, gte, and, desc, sql } from "drizzle-orm";
 import { getWorkspaceMaturity } from "./maturity";
+import { groupBy, buildRecipientsFromMembers } from "./utils";
 
 export const dailyDigest = inngest.createFunction(
   {
@@ -134,15 +135,7 @@ export const dailyDigest = inngest.createFunction(
             limit: 100,
           });
 
-        const recipients = members.data
-          .filter(
-            (m) => m.publicUserData?.userId && m.publicUserData.identifier,
-          )
-          .map((m) => ({
-            id: m.publicUserData?.userId ?? "",
-            email: m.publicUserData?.identifier ?? "",
-            name: m.publicUserData?.firstName ?? undefined,
-          }));
+        const recipients = buildRecipientsFromMembers(members.data);
 
         if (recipients.length === 0) return;
 
@@ -189,13 +182,3 @@ export const dailyDigest = inngest.createFunction(
   },
 );
 
-function groupBy<T>(arr: T[], key: keyof T): Record<string, number> {
-  return arr.reduce(
-    (acc, item) => {
-      const k = String(item[key]);
-      acc[k] = (acc[k] ?? 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-}

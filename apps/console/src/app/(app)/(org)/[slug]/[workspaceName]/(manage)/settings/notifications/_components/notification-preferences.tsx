@@ -1,7 +1,7 @@
 "use client";
 
-import { useNotificationPreferences } from "@vendor/knock/components/preferences";
-import type { CategoryPreference } from "@vendor/knock/components/preferences";
+import { useNotificationPreferences } from "~/hooks/use-notification-preferences";
+import type { CategoryPreference } from "~/hooks/use-notification-preferences";
 import type { NotificationCategoryKey } from "@repo/console-types";
 import { Card } from "@repo/ui/components/ui/card";
 import { Switch } from "@repo/ui/components/ui/switch";

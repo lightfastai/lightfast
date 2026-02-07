@@ -26,7 +26,6 @@
   "dependencies": {
     "@knocklabs/node": "^1.20.0",
     "@knocklabs/react": "^0.8.11",
-    "@repo/console-types": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "zod": "catalog:zod3"

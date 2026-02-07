@@ -28,14 +28,14 @@ export function ConsoleNotificationsProvider({
   // This ensures Knock context is available when needed
   if (!isLoaded || !user) {
     return (
-      <NotificationsProvider userId="loading" userToken={null}>
+      <NotificationsProvider userId="loading" userToken={null} feedChannelId="lightfast-console-notifications">
         {children}
       </NotificationsProvider>
     );
   }
 
   return (
-    <NotificationsProvider userId={user.id} userToken={userToken as string | null}>
+    <NotificationsProvider userId={user.id} userToken={userToken as string | null} feedChannelId="lightfast-console-notifications">
       {children}
     </NotificationsProvider>
   );
