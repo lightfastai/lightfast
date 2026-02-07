@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Build system prompt with hardcoded workspace context
-    const systemPrompt = buildAnswerSystemPrompt(HARDCODED_WORKSPACE_CONTEXT);
+    const systemPrompt = buildAnswerSystemPrompt({
+      workspace: HARDCODED_WORKSPACE_CONTEXT,
+      modelId: MODEL_ID,
+    });
 
     // 5. Extract sessionId and resourceId from URL
     const url = new URL(request.url);
@@ -237,7 +240,10 @@ export async function GET(request: NextRequest) {
     const authToken = token ?? undefined;
 
     // System prompt
-    const systemPrompt = buildAnswerSystemPrompt(HARDCODED_WORKSPACE_CONTEXT);
+    const systemPrompt = buildAnswerSystemPrompt({
+      workspace: HARDCODED_WORKSPACE_CONTEXT,
+      modelId: MODEL_ID,
+    });
 
     // Extract sessionId and resourceId from URL
     const url = new URL(request.url);
