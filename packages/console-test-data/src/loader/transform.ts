@@ -24,6 +24,9 @@ import type {
   VercelWebhookPayload,
   VercelDeploymentEvent,
 } from "@repo/console-webhooks";
+import { sentryTransformers, linearTransformers } from "../transformers/index.js";
+import type { SentryEventType } from "../transformers/sentry.js";
+import type { LinearWebhookType } from "../transformers/linear.js";
 
 export type GitHubEventType =
   | "push"
@@ -41,7 +44,7 @@ export type VercelEventType =
   | "deployment.check-rerequested";
 
 export interface WebhookPayload {
-  source: "github" | "vercel";
+  source: "github" | "vercel" | "sentry" | "linear";
   eventType: string;
   payload: unknown;
 }
@@ -56,6 +59,18 @@ export interface VercelWebhookPayloadWrapper extends WebhookPayload {
   source: "vercel";
   eventType: VercelEventType;
   payload: VercelWebhookPayload;
+}
+
+export interface SentryWebhookPayload extends WebhookPayload {
+  source: "sentry";
+  eventType: SentryEventType;
+  payload: Record<string, unknown>;
+}
+
+export interface LinearWebhookPayload extends WebhookPayload {
+  source: "linear";
+  eventType: LinearWebhookType;
+  payload: Record<string, unknown>;
 }
 
 /**
@@ -87,6 +102,18 @@ export function transformWebhook(
     case "vercel":
       return transformVercelWebhook(
         webhook as VercelWebhookPayloadWrapper,
+        context,
+        index
+      );
+    case "sentry":
+      return transformSentryWebhookPayload(
+        webhook as SentryWebhookPayload,
+        context,
+        index
+      );
+    case "linear":
+      return transformLinearWebhookPayload(
+        webhook as LinearWebhookPayload,
         context,
         index
       );
@@ -146,6 +173,46 @@ function transformVercelWebhook(
     webhook.eventType as VercelDeploymentEvent,
     context
   );
+
+  // Add test suffix to sourceId for uniqueness across runs
+  event.sourceId = `${event.sourceId}:test:${index}`;
+
+  // Mark as test data
+  event.metadata = {
+    ...event.metadata,
+    testData: true,
+  };
+
+  return event;
+}
+
+function transformSentryWebhookPayload(
+  webhook: SentryWebhookPayload,
+  context: TransformContext,
+  index: number
+): SourceEvent {
+  const transformer = sentryTransformers[webhook.eventType];
+  const event = transformer(webhook.payload, context);
+
+  // Add test suffix to sourceId for uniqueness across runs
+  event.sourceId = `${event.sourceId}:test:${index}`;
+
+  // Mark as test data
+  event.metadata = {
+    ...event.metadata,
+    testData: true,
+  };
+
+  return event;
+}
+
+function transformLinearWebhookPayload(
+  webhook: LinearWebhookPayload,
+  context: TransformContext,
+  index: number
+): SourceEvent {
+  const transformer = linearTransformers[webhook.eventType];
+  const event = transformer(webhook.payload, context);
 
   // Add test suffix to sourceId for uniqueness across runs
   event.sourceId = `${event.sourceId}:test:${index}`;

@@ -1,0 +1,3125 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-3",
+  "description": "Infrastructure, security, and observability work spanning Dec 2025 - Feb 2026, based on actual commit history.",
+  "webhooks": [
+    {
+      "source": "sentry",
+      "eventType": "issue.created",
+      "payload": {
+        "action": "created",
+        "data": {
+          "issue": {
+            "id": "6001",
+            "shortId": "SEC-182",
+            "title": "CVE-2025-55182: Next.js Server Component XSS vulnerability detected",
+            "culprit": "next/dist/server/render.js",
+            "level": "fatal",
+            "status": "unresolved",
+            "isPublic": false,
+            "platform": "node",
+            "project": {
+              "id": "201",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "type": "error",
+            "metadata": {
+              "type": "SecurityAdvisory",
+              "value": "CVE-2025-55182: Server-side XSS in Next.js Server Components allows arbitrary script execution",
+              "filename": "next/dist/server/render.js",
+              "function": "renderToHTML"
+            },
+            "numComments": 0,
+            "assignedTo": null,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": false,
+            "firstSeen": "2025-12-06T05:30:00Z",
+            "lastSeen": "2025-12-06T05:30:00Z",
+            "count": 1,
+            "userCount": 0,
+            "permalink": "https://lightfast.sentry.io/issues/6001/",
+            "annotations": []
+          }
+        },
+        "installation": {
+          "uuid": "install_sb3_001"
+        },
+        "actor": {
+          "type": "application",
+          "id": "sentry_app_001",
+          "name": "Sentry"
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "0000000000000000",
+        "after": "g1a2b3c4d5e6f7a8",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/0000000000000000...g1a2b3c4d5e6f7a8",
+        "commits": [
+          {
+            "id": "g1a2b3c4d5e6f7a8",
+            "tree_id": "tree_sb3_001",
+            "distinct": true,
+            "message": "fix(security): update Next.js and React to patch CVE-2025-55182",
+            "timestamp": "2025-12-06T05:40:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g1a2b3c4d5e6f7a8",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "package.json",
+              "pnpm-lock.yaml"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g1a2b3c4d5e6f7a8",
+          "tree_id": "tree_sb3_001",
+          "distinct": true,
+          "message": "fix(security): update Next.js and React to patch CVE-2025-55182",
+          "timestamp": "2025-12-06T05:40:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g1a2b3c4d5e6f7a8",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "package.json",
+            "pnpm-lock.yaml"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-06T00:00:00Z",
+          "pushed_at": "2025-12-06T05:40:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.resolved",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "issue": {
+            "id": "6001",
+            "shortId": "SEC-182",
+            "title": "CVE-2025-55182: Next.js Server Component XSS vulnerability detected",
+            "culprit": "next/dist/server/render.js",
+            "level": "fatal",
+            "status": "resolved",
+            "statusDetails": {
+              "inCommit": {
+                "repository": "lightfastai/lightfast",
+                "commit": "g1a2b3c4d5e6f7a8"
+              },
+              "inRelease": "v2.14.1"
+            },
+            "isPublic": false,
+            "platform": "node",
+            "project": {
+              "id": "201",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "type": "error",
+            "metadata": {
+              "type": "SecurityAdvisory",
+              "value": "CVE-2025-55182: Server-side XSS in Next.js Server Components allows arbitrary script execution",
+              "filename": "next/dist/server/render.js",
+              "function": "renderToHTML"
+            },
+            "numComments": 0,
+            "assignedTo": {
+              "id": "501",
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai"
+            },
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": true,
+            "firstSeen": "2025-12-06T05:30:00Z",
+            "lastSeen": "2025-12-06T05:45:00Z",
+            "count": 1,
+            "userCount": 0,
+            "permalink": "https://lightfast.sentry.io/issues/6001/",
+            "annotations": []
+          }
+        },
+        "installation": {
+          "uuid": "install_sb3_001"
+        },
+        "actor": {
+          "type": "user",
+          "id": "501",
+          "name": "Jeevan Pillay"
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_sb3_deploy_security",
+        "type": "deployment.succeeded",
+        "createdAt": 1765001400000,
+        "payload": {
+          "deployment": {
+            "id": "dpl_sb3_security",
+            "name": "lightfast-console",
+            "url": "lightfast-console-security-patch.vercel.app",
+            "meta": {
+              "githubCommitSha": "g1a2b3c4d5e6f7a8",
+              "githubCommitMessage": "fix(security): update Next.js and React to patch CVE-2025-55182",
+              "githubCommitRef": "main",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast"
+            }
+          },
+          "project": {
+            "id": "prj_lightfast_console"
+          }
+        },
+        "region": "us-east-1"
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g1a2b3c4d5e6f7a8",
+        "after": "g2b3c4d5e6f7a8b9",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g1a2b3c4d5e6f7a8...g2b3c4d5e6f7a8b9",
+        "commits": [
+          {
+            "id": "g2b3c4d5e6f7a8b9",
+            "tree_id": "tree_sb3_002",
+            "distinct": true,
+            "message": "feat: implement raw webhook payload storage for permanent retention",
+            "timestamp": "2025-12-11T12:45:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g2b3c4d5e6f7a8b9",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/webhook-storage.ts",
+              "packages/console-types/src/webhook.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g2b3c4d5e6f7a8b9",
+          "tree_id": "tree_sb3_002",
+          "distinct": true,
+          "message": "feat: implement raw webhook payload storage for permanent retention",
+          "timestamp": "2025-12-11T12:45:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g2b3c4d5e6f7a8b9",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "api/console/src/inngest/workflow/webhook-storage.ts",
+            "packages/console-types/src/webhook.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-11T00:00:00Z",
+          "pushed_at": "2025-12-11T12:45:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g2b3c4d5e6f7a8b9",
+        "after": "g3c4d5e6f7a8b9c0",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g2b3c4d5e6f7a8b9...g3c4d5e6f7a8b9c0",
+        "commits": [
+          {
+            "id": "g3c4d5e6f7a8b9c0",
+            "tree_id": "tree_sb3_003",
+            "distinct": true,
+            "message": "feat(neural): Day 2 search with metadata filters and LLM gating",
+            "timestamp": "2025-12-12T05:39:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g3c4d5e6f7a8b9c0",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/src/lib/neural/search.ts",
+              "api/console/src/trpc/routers/org/search.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g3c4d5e6f7a8b9c0",
+          "tree_id": "tree_sb3_003",
+          "distinct": true,
+          "message": "feat(neural): Day 2 search with metadata filters and LLM gating",
+          "timestamp": "2025-12-12T05:39:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g3c4d5e6f7a8b9c0",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "apps/console/src/lib/neural/search.ts",
+            "api/console/src/trpc/routers/org/search.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-12T00:00:00Z",
+          "pushed_at": "2025-12-12T05:39:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g3c4d5e6f7a8b9c0",
+        "after": "g4d5e6f7a8b9c0d1",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g3c4d5e6f7a8b9c0...g4d5e6f7a8b9c0d1",
+        "commits": [
+          {
+            "id": "g4d5e6f7a8b9c0d1",
+            "tree_id": "tree_sb3_004",
+            "distinct": true,
+            "message": "feat(neural): implement Day 5 multi-view embeddings and 4-path retrieval",
+            "timestamp": "2025-12-13T01:46:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g4d5e6f7a8b9c0d1",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/src/lib/neural/four-path-search.ts",
+              "packages/console-pinecone/src/client.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g4d5e6f7a8b9c0d1",
+          "tree_id": "tree_sb3_004",
+          "distinct": true,
+          "message": "feat(neural): implement Day 5 multi-view embeddings and 4-path retrieval",
+          "timestamp": "2025-12-13T01:46:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g4d5e6f7a8b9c0d1",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "apps/console/src/lib/neural/four-path-search.ts",
+            "packages/console-pinecone/src/client.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-13T00:00:00Z",
+          "pushed_at": "2025-12-13T01:46:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g4d5e6f7a8b9c0d1",
+        "after": "g5e6f7a8b9c0d1e2",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g4d5e6f7a8b9c0d1...g5e6f7a8b9c0d1e2",
+        "commits": [
+          {
+            "id": "g5e6f7a8b9c0d1e2",
+            "tree_id": "tree_sb3_005",
+            "distinct": true,
+            "message": "refactor(console-test-data): use raw webhooks with production transformers",
+            "timestamp": "2025-12-14T01:14:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g5e6f7a8b9c0d1e2",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/console-test-data/src/loader/transform.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g5e6f7a8b9c0d1e2",
+          "tree_id": "tree_sb3_005",
+          "distinct": true,
+          "message": "refactor(console-test-data): use raw webhooks with production transformers",
+          "timestamp": "2025-12-14T01:14:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g5e6f7a8b9c0d1e2",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "packages/console-test-data/src/loader/transform.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-14T00:00:00Z",
+          "pushed_at": "2025-12-14T01:14:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g5e6f7a8b9c0d1e2",
+        "after": "g6f7a8b9c0d1e2f3",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g5e6f7a8b9c0d1e2...g6f7a8b9c0d1e2f3",
+        "commits": [
+          {
+            "id": "g6f7a8b9c0d1e2f3",
+            "tree_id": "tree_sb3_006",
+            "distinct": true,
+            "message": "feat(webhooks): implement security hardening with validation and sanitization",
+            "timestamp": "2025-12-14T01:15:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g6f7a8b9c0d1e2f3",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/console-webhooks/src/validation.ts",
+              "packages/console-webhooks/src/sanitize.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g6f7a8b9c0d1e2f3",
+          "tree_id": "tree_sb3_006",
+          "distinct": true,
+          "message": "feat(webhooks): implement security hardening with validation and sanitization",
+          "timestamp": "2025-12-14T01:15:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g6f7a8b9c0d1e2f3",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "packages/console-webhooks/src/validation.ts",
+            "packages/console-webhooks/src/sanitize.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-14T00:00:00Z",
+          "pushed_at": "2025-12-14T01:15:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2025-12-15T08:00:00Z",
+        "data": {
+          "id": "issue_lf_385",
+          "identifier": "LF-385",
+          "title": "Migrate high-volume tables to BIGINT primary keys",
+          "description": "Current INT(11) primary keys on workspace_neural_observations and workspace_neural_entities will overflow at scale. Need to migrate to BIGINT before production traffic increases. Requires careful migration with zero downtime.",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "state": {
+            "id": "state_started",
+            "name": "In Progress",
+            "type": "started",
+            "color": "#f2c94c"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "branchName": "feat/bigint-migration",
+          "createdAt": "2025-12-15T08:00:00Z",
+          "updatedAt": "2025-12-15T08:00:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-385",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#0e8a16"
+            },
+            {
+              "id": "label_database",
+              "name": "Database",
+              "color": "#d93f0b"
+            }
+          ],
+          "number": 385
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1765785600000
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g6f7a8b9c0d1e2f3",
+        "after": "g7a8b9c0d1e2f3a4",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g6f7a8b9c0d1e2f3...g7a8b9c0d1e2f3a4",
+        "commits": [
+          {
+            "id": "g7a8b9c0d1e2f3a4",
+            "tree_id": "tree_sb3_007",
+            "distinct": true,
+            "message": "feat(db): migrate high-volume tables to BIGINT primary keys",
+            "timestamp": "2025-12-15T08:34:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g7a8b9c0d1e2f3a4",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "db/console/migrations/0042_bigint_pks.sql",
+              "db/console/src/schema.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g7a8b9c0d1e2f3a4",
+          "tree_id": "tree_sb3_007",
+          "distinct": true,
+          "message": "feat(db): migrate high-volume tables to BIGINT primary keys",
+          "timestamp": "2025-12-15T08:34:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g7a8b9c0d1e2f3a4",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "db/console/migrations/0042_bigint_pks.sql",
+            "db/console/src/schema.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-15T00:00:00Z",
+          "pushed_at": "2025-12-15T08:34:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2025-12-15T09:00:00Z",
+        "data": {
+          "id": "issue_lf_385",
+          "identifier": "LF-385",
+          "title": "Migrate high-volume tables to BIGINT primary keys",
+          "description": "Current INT(11) primary keys on workspace_neural_observations and workspace_neural_entities will overflow at scale. Need to migrate to BIGINT before production traffic increases. Requires careful migration with zero downtime.",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "state": {
+            "id": "state_completed",
+            "name": "Done",
+            "type": "completed",
+            "color": "#5e6ad2"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "branchName": "feat/bigint-migration",
+          "attachments": {
+            "nodes": []
+          },
+          "createdAt": "2025-12-15T08:00:00Z",
+          "updatedAt": "2025-12-15T09:00:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-385",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#0e8a16"
+            },
+            {
+              "id": "label_database",
+              "name": "Database",
+              "color": "#d93f0b"
+            }
+          ],
+          "number": 385
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1765789200000
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g7a8b9c0d1e2f3a4",
+        "after": "g8b9c0d1e2f3a4b5",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g7a8b9c0d1e2f3a4...g8b9c0d1e2f3a4b5",
+        "commits": [
+          {
+            "id": "g8b9c0d1e2f3a4b5",
+            "tree_id": "tree_sb3_008",
+            "distinct": true,
+            "message": "feat(auth): add Clerk API caching for organization membership lookups",
+            "timestamp": "2025-12-15T11:13:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g8b9c0d1e2f3a4b5",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/console-auth/src/clerk-cache.ts",
+              "api/console/src/trpc.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g8b9c0d1e2f3a4b5",
+          "tree_id": "tree_sb3_008",
+          "distinct": true,
+          "message": "feat(auth): add Clerk API caching for organization membership lookups",
+          "timestamp": "2025-12-15T11:13:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g8b9c0d1e2f3a4b5",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "packages/console-auth/src/clerk-cache.ts",
+            "api/console/src/trpc.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-15T00:00:00Z",
+          "pushed_at": "2025-12-15T11:13:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g8b9c0d1e2f3a4b5",
+        "after": "g9c0d1e2f3a4b5c6",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g8b9c0d1e2f3a4b5...g9c0d1e2f3a4b5c6",
+        "commits": [
+          {
+            "id": "g9c0d1e2f3a4b5c6",
+            "tree_id": "tree_sb3_009",
+            "distinct": true,
+            "message": "feat(api-keys): unify API key format to sk-lf- with 256-bit entropy",
+            "timestamp": "2025-12-16T09:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g9c0d1e2f3a4b5c6",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/console-api-keys/src/generate.ts",
+              "api/console/src/trpc/routers/user/api-keys.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g9c0d1e2f3a4b5c6",
+          "tree_id": "tree_sb3_009",
+          "distinct": true,
+          "message": "feat(api-keys): unify API key format to sk-lf- with 256-bit entropy",
+          "timestamp": "2025-12-16T09:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g9c0d1e2f3a4b5c6",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "packages/console-api-keys/src/generate.ts",
+            "api/console/src/trpc/routers/user/api-keys.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-16T00:00:00Z",
+          "pushed_at": "2025-12-16T09:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g9c0d1e2f3a4b5c6",
+        "after": "g10d1e2f3a4b5c6d7",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g9c0d1e2f3a4b5c6...g10d1e2f3a4b5c6d7",
+        "commits": [
+          {
+            "id": "g10d1e2f3a4b5c6d7",
+            "tree_id": "tree_sb3_010",
+            "distinct": true,
+            "message": "feat(neural): implement cross-source actor resolution and identity linking",
+            "timestamp": "2025-12-16T11:16:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g10d1e2f3a4b5c6d7",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/neural/actor-resolution.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g10d1e2f3a4b5c6d7",
+          "tree_id": "tree_sb3_010",
+          "distinct": true,
+          "message": "feat(neural): implement cross-source actor resolution and identity linking",
+          "timestamp": "2025-12-16T11:16:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g10d1e2f3a4b5c6d7",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "api/console/src/inngest/workflow/neural/actor-resolution.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-16T00:00:00Z",
+          "pushed_at": "2025-12-16T11:16:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g10d1e2f3a4b5c6d7",
+        "after": "g11e2f3a4b5c6d7e8",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g10d1e2f3a4b5c6d7...g11e2f3a4b5c6d7e8",
+        "commits": [
+          {
+            "id": "g11e2f3a4b5c6d7e8",
+            "tree_id": "tree_sb3_011",
+            "distinct": true,
+            "message": "feat(neural): integrate Braintrust + step.ai.wrap() for AI observability",
+            "timestamp": "2025-12-17T00:12:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g11e2f3a4b5c6d7e8",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "packages/console-ai/src/braintrust.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g11e2f3a4b5c6d7e8",
+          "tree_id": "tree_sb3_011",
+          "distinct": true,
+          "message": "feat(neural): integrate Braintrust + step.ai.wrap() for AI observability",
+          "timestamp": "2025-12-17T00:12:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g11e2f3a4b5c6d7e8",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "api/console/src/inngest/workflow/neural/observation-capture.ts",
+            "packages/console-ai/src/braintrust.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-17T00:00:00Z",
+          "pushed_at": "2025-12-17T00:12:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g11e2f3a4b5c6d7e8",
+        "after": "g12f3a4b5c6d7e8f9",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g11e2f3a4b5c6d7e8...g12f3a4b5c6d7e8f9",
+        "commits": [
+          {
+            "id": "g12f3a4b5c6d7e8f9",
+            "tree_id": "tree_sb3_012",
+            "distinct": true,
+            "message": "feat(neural): add actor_resolution and cluster_affinity analytics metrics",
+            "timestamp": "2025-12-17T02:10:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g12f3a4b5c6d7e8f9",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/neural/analytics.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g12f3a4b5c6d7e8f9",
+          "tree_id": "tree_sb3_012",
+          "distinct": true,
+          "message": "feat(neural): add actor_resolution and cluster_affinity analytics metrics",
+          "timestamp": "2025-12-17T02:10:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g12f3a4b5c6d7e8f9",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "api/console/src/inngest/workflow/neural/analytics.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-17T00:00:00Z",
+          "pushed_at": "2025-12-17T02:10:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2025-12-22T17:00:00Z",
+        "data": {
+          "id": "issue_lf_390",
+          "identifier": "LF-390",
+          "title": "Optimize Redis connection pooling and rate limiting",
+          "description": "Redis connection exhaustion under load causing timeouts in the early-access tier. Need to implement connection pooling and optimize rate limiting queries to reduce Redis round-trips.",
+          "priority": 2,
+          "priorityLabel": "High",
+          "state": {
+            "id": "state_started",
+            "name": "In Progress",
+            "type": "started",
+            "color": "#f2c94c"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "branchName": "perf/redis-rate-limiting",
+          "createdAt": "2025-12-22T17:00:00Z",
+          "updatedAt": "2025-12-22T17:00:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-390",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_performance",
+              "name": "Performance",
+              "color": "#0075ca"
+            },
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#0e8a16"
+            }
+          ],
+          "number": 390
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1766422800000
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 343,
+        "pull_request": {
+          "id": 3343000001,
+          "node_id": "PR_kwDO_lightfast_343",
+          "number": 343,
+          "state": "closed",
+          "locked": false,
+          "title": "perf(early-access): optimize Redis and rate limiting",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nOptimizes Redis connection pooling and rate limiting logic for the early-access tier.\n\n## Changes\n- Refactored Redis client to use connection pooling with configurable pool size\n- Implemented sliding window rate limiting with atomic Lua scripts\n- Reduced P95 latency on rate-limited endpoints by ~40%\n\n## Testing\n- [x] Load tested with 1000 concurrent connections\n- [x] Verified rate limit accuracy under high throughput\n- [x] No regression in existing Redis operations",
+          "created_at": "2025-12-22T18:00:00Z",
+          "updated_at": "2025-12-24T00:17:00Z",
+          "closed_at": "2025-12-24T00:17:00Z",
+          "merged_at": "2025-12-24T00:17:00Z",
+          "merge_commit_sha": "g13a4b5c6d7e8f9a0",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "performance",
+              "color": "0075ca",
+              "default": false
+            }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 5,
+          "additions": 142,
+          "deletions": 67,
+          "changed_files": 6,
+          "head": {
+            "label": "lightfastai:perf/redis-rate-limiting",
+            "ref": "perf/redis-rate-limiting",
+            "sha": "g13a4b5c6d7e8f9a0",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2025-12-24T00:00:00Z",
+              "pushed_at": "2025-12-24T00:17:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "g12f3a4b5c6d7e8f9",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2025-12-24T00:00:00Z",
+              "pushed_at": "2025-12-24T00:17:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/343",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/343.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/343.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2025-12-24T00:00:00Z",
+          "pushed_at": "2025-12-24T00:17:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_sb3_pr343_001",
+        "type": "deployment.created",
+        "createdAt": 1766535900000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_sb3_pr343",
+            "name": "lightfast-console",
+            "url": "lightfast-console-pr343.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "g13a4b5c6d7e8f9a0",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #343 from lightfastai/perf/redis-rate-limiting\n\nperf(early-access): optimize Redis and rate limiting",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "343",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_sb3_pr343_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1766536200000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_sb3_pr343",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "g13a4b5c6d7e8f9a0",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #343 from lightfastai/perf/redis-rate-limiting\n\nperf(early-access): optimize Redis and rate limiting",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "343",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2025-12-24T00:45:00Z",
+        "data": {
+          "id": "issue_lf_390",
+          "identifier": "LF-390",
+          "title": "Optimize Redis connection pooling and rate limiting",
+          "description": "Redis connection exhaustion under load causing timeouts in the early-access tier. Need to implement connection pooling and optimize rate limiting queries to reduce Redis round-trips.",
+          "priority": 2,
+          "priorityLabel": "High",
+          "state": {
+            "id": "state_completed",
+            "name": "Done",
+            "type": "completed",
+            "color": "#5e6ad2"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "branchName": "perf/redis-rate-limiting",
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_343",
+                "title": "PR #343: perf(early-access): optimize Redis and rate limiting",
+                "url": "https://github.com/lightfastai/lightfast/pull/343",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": {
+                  "number": 343,
+                  "state": "merged"
+                },
+                "createdAt": "2025-12-24T00:45:00Z"
+              }
+            ]
+          },
+          "createdAt": "2025-12-22T17:00:00Z",
+          "updatedAt": "2025-12-24T00:45:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-390",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_performance",
+              "name": "Performance",
+              "color": "#0075ca"
+            },
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#0e8a16"
+            }
+          ],
+          "number": 390
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1766537100000
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g13a4b5c6d7e8f9a0",
+        "after": "g14b5c6d7e8f9a0b1",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g13a4b5c6d7e8f9a0...g14b5c6d7e8f9a0b1",
+        "commits": [
+          {
+            "id": "g14b5c6d7e8f9a0b1",
+            "tree_id": "tree_sb3_016",
+            "distinct": true,
+            "message": "feat(ci): add GitHub Action for PlanetScale database migrations",
+            "timestamp": "2026-01-22T01:39:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g14b5c6d7e8f9a0b1",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              ".github/workflows/db-migrate.yml"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g14b5c6d7e8f9a0b1",
+          "tree_id": "tree_sb3_016",
+          "distinct": true,
+          "message": "feat(ci): add GitHub Action for PlanetScale database migrations",
+          "timestamp": "2026-01-22T01:39:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g14b5c6d7e8f9a0b1",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            ".github/workflows/db-migrate.yml"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-01-22T00:00:00Z",
+          "pushed_at": "2026-01-22T01:39:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "g14b5c6d7e8f9a0b1",
+        "after": "g15c6d7e8f9a0b1c2",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/g14b5c6d7e8f9a0b1...g15c6d7e8f9a0b1c2",
+        "commits": [
+          {
+            "id": "g15c6d7e8f9a0b1c2",
+            "tree_id": "tree_sb3_017",
+            "distinct": true,
+            "message": "feat(docs): migrate search to Mixedbread native integration",
+            "timestamp": "2026-01-22T02:57:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/g15c6d7e8f9a0b1c2",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jeevan@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/docs/src/search/mixedbread.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "g15c6d7e8f9a0b1c2",
+          "tree_id": "tree_sb3_017",
+          "distinct": true,
+          "message": "feat(docs): migrate search to Mixedbread native integration",
+          "timestamp": "2026-01-22T02:57:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/g15c6d7e8f9a0b1c2",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "apps/docs/src/search/mixedbread.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-01-22T00:00:00Z",
+          "pushed_at": "2026-01-22T02:57:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "pusher": {
+          "name": "jeevanpillay",
+          "email": "jeevan@lightfast.ai"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 350,
+        "pull_request": {
+          "id": 3350000001,
+          "node_id": "PR_kwDO_lightfast_350",
+          "number": 350,
+          "state": "closed",
+          "locked": false,
+          "title": "feat(www): upgrade to Next.js 16 with pnpm named catalogs",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nUpgrades the www app to Next.js 16 and migrates shared dependencies to pnpm named catalogs for better version management across the monorepo.\n\n## Changes\n- Upgraded `apps/www` to Next.js 16\n- Migrated shared deps to `catalog:` protocol in workspace packages\n- Updated turbo pipeline for new Next.js build output\n\n## Testing\n- [x] Full build passes across all workspaces\n- [x] Verified www app renders correctly on Next.js 16\n- [x] No breaking changes in shared packages",
+          "created_at": "2026-01-27T14:00:00Z",
+          "updated_at": "2026-01-29T02:34:00Z",
+          "closed_at": "2026-01-29T02:34:00Z",
+          "merged_at": "2026-01-29T02:34:00Z",
+          "merge_commit_sha": "g16d7e8f9a0b1c2d3",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "enhancement",
+              "color": "a2eeef",
+              "default": false
+            },
+            {
+              "id": 106,
+              "node_id": "L_106",
+              "name": "infrastructure",
+              "color": "0e8a16",
+              "default": false
+            }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 8,
+          "additions": 234,
+          "deletions": 178,
+          "changed_files": 15,
+          "head": {
+            "label": "lightfastai:feat/nextjs-16-upgrade",
+            "ref": "feat/nextjs-16-upgrade",
+            "sha": "g16d7e8f9a0b1c2d3",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-01-29T00:00:00Z",
+              "pushed_at": "2026-01-29T02:34:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "g15c6d7e8f9a0b1c2",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-01-29T00:00:00Z",
+              "pushed_at": "2026-01-29T02:34:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/350",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/350.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/350.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 2,
+          "review_comments": 1,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-01-29T00:00:00Z",
+          "pushed_at": "2026-01-29T02:34:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_sb3_pr350_001",
+        "type": "deployment.created",
+        "createdAt": 1769654400000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_sb3_pr350",
+            "name": "lightfast-console",
+            "url": "lightfast-console-pr350.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "g16d7e8f9a0b1c2d3",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #350 from lightfastai/feat/nextjs-16-upgrade\n\nfeat(www): upgrade to Next.js 16 with pnpm named catalogs",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "350",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_sb3_pr350_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1769654700000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_sb3_pr350",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "g16d7e8f9a0b1c2d3",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #350 from lightfastai/feat/nextjs-16-upgrade\n\nfeat(www): upgrade to Next.js 16 with pnpm named catalogs",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "350",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "event_alert",
+      "payload": {
+        "action": "triggered",
+        "data": {
+          "event": {
+            "event_id": "evt_sb3_p95_001",
+            "project": 201,
+            "timestamp": "2026-02-06T14:00:00Z",
+            "received": "2026-02-06T14:00:01Z",
+            "platform": "node",
+            "title": "Slow Transaction: /api/trpc/search.query (p95 > 4500ms)",
+            "message": "Transaction /api/trpc/search.query exceeded p95 latency threshold of 2000ms",
+            "location": "packages/console-search/src/providers/search-provider.ts",
+            "culprit": "packages/console-search/src/providers/search-provider.ts in executeSearch",
+            "type": "error",
+            "metadata": {
+              "type": "PerformanceRegression",
+              "value": "Search P95 latency exceeded 4500ms on /api/trpc/search.query",
+              "filename": "packages/console-search/src/providers/search-provider.ts",
+              "function": "executeSearch"
+            },
+            "tags": [
+              {
+                "key": "environment",
+                "value": "production"
+              },
+              {
+                "key": "transaction",
+                "value": "/api/trpc/search.query"
+              },
+              {
+                "key": "release",
+                "value": "v2.15.0"
+              }
+            ],
+            "web_url": "https://lightfast.sentry.io/performance/trace/trace_sb3_p95/"
+          },
+          "triggered_rule": "Search P95 Latency > 2000ms"
+        },
+        "installation": {
+          "uuid": "install_sb3_001"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-06T15:00:00Z",
+        "data": {
+          "id": "issue_lf_395",
+          "identifier": "LF-395",
+          "title": "Investigate and resolve search P95 latency regression",
+          "description": "Sentry performance monitoring detected /api/trpc/search.query P95 latency exceeding 4500ms (threshold: 2000ms). Likely related to the docs search provider - Mixedbread native integration should resolve the external API dependency bottleneck.",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "state": {
+            "id": "state_started",
+            "name": "In Progress",
+            "type": "started",
+            "color": "#f2c94c"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "createdAt": "2026-02-06T15:00:00Z",
+          "updatedAt": "2026-02-06T15:00:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-395",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_performance",
+              "name": "Performance",
+              "color": "#0075ca"
+            },
+            {
+              "id": "label_search",
+              "name": "Search",
+              "color": "#7c3aed"
+            }
+          ],
+          "number": 395
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770390000000
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 358,
+        "pull_request": {
+          "id": 3358000001,
+          "node_id": "PR_kwDO_lightfast_358",
+          "number": 358,
+          "state": "closed",
+          "locked": false,
+          "title": "fix: enable env validation on Vercel production builds",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nEnables environment variable validation during Vercel production builds to catch missing or misconfigured env vars before deployment.\n\n## Changes\n- Added build-time env validation using `@t3-oss/env-nextjs`\n- Configured validation to run in Vercel CI environment\n- Added fallback handling for optional env vars\n\n## Testing\n- [x] Verified build passes with all required env vars\n- [x] Verified build fails with clear error when required vars missing\n- [x] Tested in preview and production Vercel environments",
+          "created_at": "2026-02-05T20:00:00Z",
+          "updated_at": "2026-02-07T03:33:00Z",
+          "closed_at": "2026-02-07T03:33:00Z",
+          "merged_at": "2026-02-07T03:33:00Z",
+          "merge_commit_sha": "g17e8f9a0b1c2d3e4",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            {
+              "id": 107,
+              "node_id": "L_107",
+              "name": "fix",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 106,
+              "node_id": "L_106",
+              "name": "infrastructure",
+              "color": "0e8a16",
+              "default": false
+            }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 3,
+          "additions": 45,
+          "deletions": 12,
+          "changed_files": 4,
+          "head": {
+            "label": "lightfastai:fix/env-validation-vercel",
+            "ref": "fix/env-validation-vercel",
+            "sha": "g17e8f9a0b1c2d3e4",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-07T00:00:00Z",
+              "pushed_at": "2026-02-07T03:33:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "g16d7e8f9a0b1c2d3",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-07T00:00:00Z",
+              "pushed_at": "2026-02-07T03:33:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/358",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/358.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/358.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 1,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-07T00:00:00Z",
+          "pushed_at": "2026-02-07T03:33:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [
+            "ai",
+            "agents",
+            "mcp",
+            "neural-memory",
+            "typescript"
+          ],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "metric_alert",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "metric_alert": {
+            "id": "metric_alert_search_p95_001",
+            "alert_rule": {
+              "id": 84722,
+              "name": "Search P95 Latency",
+              "organization_id": "org_lightfastai",
+              "status": 0,
+              "query": "event.type:transaction transaction:neural-search",
+              "threshold_type": 0,
+              "resolve_threshold": 500,
+              "time_window": 10,
+              "aggregate": "p95(transaction.duration)"
+            },
+            "date_started": "2026-02-06T12:00:00Z",
+            "date_detected": "2026-02-07T03:40:00Z",
+            "date_closed": "2026-02-07T03:40:00Z"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-07T03:50:00Z",
+        "data": {
+          "id": "issue_lf_395",
+          "identifier": "LF-395",
+          "title": "Investigate and resolve search P95 latency regression",
+          "description": "Sentry performance monitoring detected /api/trpc/search.query P95 latency exceeding 4500ms (threshold: 2000ms). Resolved by Mixedbread native integration removing the external API dependency bottleneck.",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "state": {
+            "id": "state_completed",
+            "name": "Done",
+            "type": "completed",
+            "color": "#5e6ad2"
+          },
+          "team": {
+            "id": "team_engineering",
+            "key": "LF",
+            "name": "Engineering"
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_sentry_p95",
+                "title": "Search P95 Latency Alert - Resolved",
+                "url": "https://lightfast.sentry.io/alerts/rules/84722/",
+                "source": "sentry",
+                "sourceType": "sentryIssue",
+                "metadata": {
+                  "shortId": "PERF-P95",
+                  "status": "resolved"
+                },
+                "createdAt": "2026-02-07T03:50:00Z"
+              }
+            ]
+          },
+          "createdAt": "2026-02-06T15:00:00Z",
+          "updatedAt": "2026-02-07T03:50:00Z",
+          "url": "https://linear.app/lightfast/issue/LF-395",
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "subscriberIds": [
+            "user_jeevan_linear"
+          ],
+          "labels": [
+            {
+              "id": "label_performance",
+              "name": "Performance",
+              "color": "#0075ca"
+            },
+            {
+              "id": "label_search",
+              "name": "Search",
+              "color": "#7c3aed"
+            }
+          ],
+          "number": 395
+        },
+        "organizationId": "org_lightfast_001",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770436200000
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "ProjectUpdate",
+      "payload": {
+        "action": "create",
+        "type": "ProjectUpdate",
+        "createdAt": "2026-02-07T03:55:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770436500000,
+        "data": {
+          "id": "update_infra_phase1_complete",
+          "body": "## Phase 1 Infrastructure Complete\n\nMajor infrastructure milestones delivered over the past two months:\n\n**Security**\n- Updated Next.js/React to patch CVE-2025-55182 (Sentry SEC-182 resolved same day)\n- Implemented webhook payload validation and sanitization\n- Unified API key format to `sk-lf-` with 256-bit entropy\n- Enabled env validation on Vercel production builds (#358)\n\n**Database & Performance**\n- Migrated high-volume tables to BIGINT primary keys (LF-385)\n- Optimized Redis connection pooling and rate limiting (LF-390, PR #343)\n- Added Clerk API caching for org membership lookups\n- Added GitHub Action for PlanetScale database migrations\n\n**Neural Memory Pipeline**\n- Day 2 search with metadata filters and LLM gating\n- Day 5 multi-view embeddings and 4-path retrieval\n- Cross-source actor resolution and identity linking\n- Braintrust integration for AI observability\n- Analytics metrics for actor_resolution and cluster_affinity\n\n**Observability & Infra**\n- Raw webhook payload storage for permanent retention\n- Migrated docs search to Mixedbread native integration\n- Search P95 latency regression investigated and resolved (LF-395, Sentry PERF-P95)\n- Upgraded www app to Next.js 16 with pnpm named catalogs (#350)\n\nAll 3 critical Linear issues (LF-385, LF-390, LF-395) completed. All systems stable. Ready to begin Phase 2 work.",
+          "createdAt": "2026-02-07T03:55:00Z",
+          "updatedAt": "2026-02-07T03:55:00Z",
+          "url": "https://linear.app/lightfastai/project/neural-memory-v1/updates/update_infra_phase1_complete",
+          "health": "onTrack",
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jeevan@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          }
+        }
+      }
+    }
+  ]
+}

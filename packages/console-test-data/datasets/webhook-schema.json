@@ -32,7 +32,7 @@
       "properties": {
         "source": {
           "type": "string",
-          "enum": ["github", "vercel"],
+          "enum": ["github", "vercel", "sentry", "linear"],
           "description": "Webhook source platform"
         },
         "eventType": {
@@ -53,6 +53,22 @@
                 "deployment.check-rerequested"
               ],
               "description": "Vercel event types"
+            },
+            {
+              "enum": [
+                "issue.created",
+                "issue.resolved",
+                "issue.assigned",
+                "issue.ignored",
+                "error",
+                "event_alert",
+                "metric_alert"
+              ],
+              "description": "Sentry event types"
+            },
+            {
+              "enum": ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
+              "description": "Linear event types"
             }
           ]
         },
