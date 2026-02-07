@@ -4,10 +4,5 @@ export { contentsLogic, type ContentsLogicInput, type ContentsLogicOutput } from
 export { findsimilarLogic, type FindSimilarLogicInput, type FindSimilarLogicOutput } from "./findsimilar";
 export { relatedLogic, type RelatedLogicInput, type RelatedLogicOutput } from "./related";
 
-/** Auth context available to all v1 logic functions */
-export interface V1AuthContext {
-  workspaceId: string;
-  userId: string;
-  authType: "api-key" | "session";
-  apiKeyId?: string;
-}
+// Re-export V1AuthContext from the extracted search package
+export type { V1AuthContext } from "@repo/console-search";
