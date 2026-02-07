@@ -86,7 +86,14 @@ export const backfillOrchestrator = inngest.createFunction(
       requestedBy,
     } = event.data;
 
-    const startTime = Date.now();
+    // Generate replay-safe timestamps so they're memoized across retries.
+    const { startTime, since } = await step.run("generate-replay-safe-timestamps", () => {
+      const now = Date.now();
+      return {
+        startTime: now,
+        since: new Date(now - depth * 24 * 60 * 60 * 1000).toISOString(),
+      };
+    });
 
     // =========================================================================
     // Step 1: Validate integration
@@ -137,8 +144,6 @@ export const backfillOrchestrator = inngest.createFunction(
       throw new NonRetriableError(`No backfill connector for provider: ${provider}`);
     }
 
-    const since = new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString();
-
     const config: BackfillConfig = {
       integrationId,
       workspaceId,
@@ -174,7 +179,7 @@ export const backfillOrchestrator = inngest.createFunction(
       return createJob({
         clerkOrgId,
         workspaceId,
-        inngestRunId: event.id ?? `backfill-${integrationId}-${Date.now()}`,
+        inngestRunId: event.id ?? `backfill-${integrationId}-${startTime}`,
         inngestFunctionId: "backfill.orchestrator",
         name: `Backfill ${provider} (${depth} days)`,
         trigger: "manual",

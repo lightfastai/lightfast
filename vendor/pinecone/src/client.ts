@@ -8,7 +8,7 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import type { RecordMetadata } from "@pinecone-database/pinecone";
 
 import { env } from "../env";
-import type { QueryRequest, QueryResponse, UpsertRequest, UpsertResponse } from "./types";
+import type { QueryRequest, QueryResponse, UpsertRequest, UpsertResponse, FetchResponse, UpdateRequest } from "./types";
 import {
   PineconeConnectionError,
   PineconeError,
@@ -238,6 +238,68 @@ export class PineconeClient {
           metadata: match.metadata as T,
         })) ?? [],
       };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Fetch vectors by IDs
+   *
+   * @param indexName - Name of the index
+   * @param vectorIds - Array of vector IDs to fetch
+   * @param namespace - Optional namespace for data isolation
+   */
+  async fetchVectors<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    vectorIds: string[],
+    namespace?: string
+  ): Promise<FetchResponse<T>> {
+    if (vectorIds.length === 0) return { records: {} };
+
+    const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
+
+    try {
+      const result = await targetNamespace.fetch(vectorIds);
+
+      const records: FetchResponse<T>["records"] = {};
+      for (const [id, record] of Object.entries(result.records ?? {})) {
+        if (record && record.values) {
+          records[id] = {
+            id: record.id,
+            values: record.values,
+            metadata: record.metadata as T,
+          };
+        }
+      }
+
+      return { records };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Update a vector's metadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Update request with vector ID and metadata
+   * @param namespace - Optional namespace for data isolation
+   */
+  async updateVectorMetadata<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    request: UpdateRequest<T>,
+    namespace?: string
+  ): Promise<void> {
+    const index = this.client.index(indexName);
+    const targetNamespace = namespace ? index.namespace(namespace) : index;
+
+    try {
+      await targetNamespace.update({
+        id: request.id,
+        metadata: request.metadata,
+      });
     } catch (error) {
       this.handleError(error);
     }

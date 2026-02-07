@@ -33,9 +33,7 @@ export function SearchToolResult({ data }: { data: V1SearchResponse }) {
 
   if (resultCount === 0) {
     return (
-      <p className="py-2 text-sm text-muted-foreground">
-        No results found.
-      </p>
+      <p className="py-2 text-sm text-muted-foreground">No results found.</p>
     );
   }
 
@@ -100,10 +98,10 @@ export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <Card key={item.id} className="border-border/50">
-          <CardContent className="p-3 space-y-2">
+        <Card key={item.id} className="border-border/50 p-2">
+          <CardContent className="space-y-2 py-1 px-2 rounded-xs overflow-hidden">
             <div className="flex items-start justify-between gap-2">
-              <h4 className="font-medium text-sm">{item.id}</h4>
+              <h4 className="font-medium text-sm hidden">{item.id}</h4>
               {item.metadata &&
                 typeof item.metadata === "object" &&
                 "url" in item.metadata &&
@@ -119,7 +117,7 @@ export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
                 )}
             </div>
             {item.content && (
-              <pre className="text-xs bg-muted/30 p-2 rounded overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap break-words">
+              <pre className="text-xs bg-muted/30 p-2 rounded-sm overflow-x-auto max-h-[400px] scrollbar-thin overflow-y-auto whitespace-pre-wrap break-words">
                 {String(item.content)}
               </pre>
             )}
@@ -185,4 +183,3 @@ export function FindSimilarToolResult({
     </div>
   );
 }
-
