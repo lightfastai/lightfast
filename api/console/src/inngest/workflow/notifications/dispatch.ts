@@ -7,12 +7,14 @@
  * This workflow acts as the bridge between Inngest events and Knock's
  * notification orchestration. It:
  * 1. Filters events by significance threshold
- * 2. Triggers the appropriate Knock workflow with organization context
+ * 2. Fetches organization members from Clerk
+ * 3. Triggers the appropriate Knock workflow with individual recipients
  */
 
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { notifications } from "@vendor/knock";
+import { clerkClient } from "@clerk/nextjs/server";
 
 /** Minimum significance score to trigger a notification */
 const NOTIFICATION_SIGNIFICANCE_THRESHOLD = 70;
@@ -64,13 +66,53 @@ export const notificationDispatch = inngest.createFunction(
       return { status: "skipped", reason: "missing_clerk_org_id" };
     }
 
-    // Trigger Knock workflow with organization as tenant
-    // Knock will route the notification to all organization members
+    // Fetch organization members from Clerk
+    const orgMembers = await step.run("fetch-org-members", async () => {
+      const clerk = await clerkClient();
+      const membershipList = await clerk.organizations.getOrganizationMembershipList({
+        organizationId: clerkOrgId,
+      });
+
+      // Map members to recipient format with email addresses
+      const recipients = membershipList.data
+        .filter((membership) =>
+          membership.publicUserData?.userId &&
+          membership.publicUserData?.identifier
+        )
+        .map((membership) => {
+          const userData = membership.publicUserData!;
+          return {
+            id: userData.userId!,
+            email: userData.identifier!,
+            name: userData.firstName && userData.lastName
+              ? `${userData.firstName} ${userData.lastName}`
+              : userData.firstName || undefined,
+          };
+        });
+
+      log.info("Fetched org members for notification", {
+        clerkOrgId,
+        memberCount: recipients.length,
+      });
+
+      return recipients;
+    });
+
+    // Guard: Must have at least one member to notify
+    if (orgMembers.length === 0) {
+      return {
+        status: "skipped",
+        reason: "no_org_members",
+        clerkOrgId,
+      };
+    }
+
+    // Trigger Knock workflow with individual members as recipients
     await step.run("trigger-knock-workflow", async () => {
       if (!notifications) return; // TypeScript guard
 
       await notifications.workflows.trigger(OBSERVATION_WORKFLOW_KEY, {
-        recipients: [{ id: clerkOrgId }],
+        recipients: orgMembers,
         tenant: clerkOrgId,
         data: {
           observationId,
@@ -86,6 +128,7 @@ export const notificationDispatch = inngest.createFunction(
         workspaceId,
         observationId,
         clerkOrgId,
+        recipientCount: orgMembers.length,
         significanceScore,
       });
     });
