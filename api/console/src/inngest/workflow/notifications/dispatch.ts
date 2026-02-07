@@ -68,35 +68,53 @@ export const notificationDispatch = inngest.createFunction(
 
     // Fetch organization members from Clerk
     const orgMembers = await step.run("fetch-org-members", async () => {
-      const clerk = await clerkClient();
-      const membershipList = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: clerkOrgId,
-      });
-
-      // Map members to recipient format with email addresses
-      const recipients = membershipList.data
-        .filter((membership) =>
-          membership.publicUserData?.userId &&
-          membership.publicUserData?.identifier
-        )
-        .map((membership) => {
-          const userData = membership.publicUserData!;
-          return {
-            id: userData.userId!,
-            email: userData.identifier!,
-            name: userData.firstName && userData.lastName
-              ? `${userData.firstName} ${userData.lastName}`
-              : userData.firstName || undefined,
-          };
+      try {
+        const clerk = await clerkClient();
+        const membershipList = await clerk.organizations.getOrganizationMembershipList({
+          organizationId: clerkOrgId,
         });
 
-      log.info("Fetched org members for notification", {
-        clerkOrgId,
-        memberCount: recipients.length,
-      });
+        // Map members to recipient format with email addresses
+        const recipients = membershipList.data
+          .filter((membership) =>
+            membership.publicUserData?.userId &&
+            membership.publicUserData?.identifier
+          )
+          .map((membership) => {
+            const userData = membership.publicUserData!;
+            return {
+              id: userData.userId!,
+              email: userData.identifier!,
+              name: userData.firstName && userData.lastName
+                ? `${userData.firstName} ${userData.lastName}`
+                : userData.firstName || undefined,
+            };
+          });
 
-      return recipients;
+        log.info("Fetched org members for notification", {
+          clerkOrgId,
+          memberCount: recipients.length,
+        });
+
+        return recipients;
+      } catch (error) {
+        log.error("Failed to fetch org members from Clerk", {
+          clerkOrgId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Re-throw to fail the step and prevent workflow continuation
+        throw error;
+      }
     });
+
+    // Guard: Validate org members result
+    if (!orgMembers || !Array.isArray(orgMembers)) {
+      return {
+        status: "failed",
+        reason: "invalid_org_members_result",
+        clerkOrgId,
+      };
+    }
 
     // Guard: Must have at least one member to notify
     if (orgMembers.length === 0) {
