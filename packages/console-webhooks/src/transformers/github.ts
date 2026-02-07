@@ -3,6 +3,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalGitHubEvent } from "@repo/console-types";
 import type {
   PushEvent,
   PullRequestEvent,
@@ -10,7 +11,7 @@ import type {
   ReleaseEvent,
   DiscussionEvent,
 } from "@octokit/webhooks-types";
-import { toInternalGitHubEvent } from "../event-mapping.js";
+export type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent };
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
@@ -69,7 +70,7 @@ export function transformGitHubPush(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: toInternalGitHubEvent("push") ?? "push",
+    sourceType: toInternalGitHubEvent("push") ?? "github:push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
@@ -208,7 +209,7 @@ export function transformGitHubPullRequest(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `pull-request.${effectiveAction}`,
+    sourceType: internalType ?? `github:pull-request.${effectiveAction}`,
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -300,7 +301,7 @@ export function transformGitHubIssue(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `issue.${payload.action}`,
+    sourceType: internalType ?? `github:issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -365,7 +366,7 @@ export function transformGitHubRelease(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `release.${payload.action}`,
+    sourceType: internalType ?? `github:release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
     title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
     body: sanitizeBody(rawBody),
@@ -435,7 +436,7 @@ export function transformGitHubDiscussion(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `discussion.${payload.action}`,
+    sourceType: internalType ?? `github:discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -515,3 +516,8 @@ export const githubTransformers = {
   release: transformGitHubRelease,
   discussion: transformGitHubDiscussion,
 };
+
+/**
+ * GitHub webhook event types supported by our transformers.
+ */
+export type GitHubWebhookEventType = keyof typeof githubTransformers;

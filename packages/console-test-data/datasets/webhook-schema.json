@@ -1,9 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "_generated": "AUTO-GENERATED from EVENT_REGISTRY. Do not edit manually. Run: pnpm --filter @repo/console-test-data generate-schema",
   "title": "Webhook Test Dataset",
   "description": "Test dataset containing raw webhook payloads that flow through production transformers",
   "type": "object",
-  "required": ["name", "webhooks"],
+  "required": [
+    "name",
+    "webhooks"
+  ],
   "additionalProperties": false,
   "properties": {
     "$schema": {
@@ -20,39 +24,78 @@
     },
     "webhooks": {
       "type": "array",
-      "items": { "$ref": "#/definitions/WebhookPayload" },
+      "items": {
+        "$ref": "#/definitions/WebhookPayload"
+      },
       "minItems": 1
     }
   },
   "definitions": {
     "WebhookPayload": {
       "type": "object",
-      "required": ["source", "eventType", "payload"],
+      "required": [
+        "source",
+        "eventType",
+        "payload"
+      ],
       "additionalProperties": false,
       "properties": {
         "source": {
           "type": "string",
-          "enum": ["github", "vercel"],
+          "enum": [
+            "github",
+            "vercel",
+            "sentry",
+            "linear"
+          ],
           "description": "Webhook source platform"
         },
         "eventType": {
           "type": "string",
-          "description": "Event type identifier",
+          "description": "Event type identifier (auto-derived from EVENT_REGISTRY)",
           "oneOf": [
             {
-              "enum": ["push", "pull_request", "issues", "release", "discussion"],
-              "description": "GitHub event types"
+              "enum": [
+                "push",
+                "pull_request",
+                "issues",
+                "release",
+                "discussion"
+              ],
+              "description": "GitHub event types (X-GitHub-Event header values)"
             },
             {
               "enum": [
                 "deployment.created",
                 "deployment.succeeded",
                 "deployment.ready",
-                "deployment.canceled",
                 "deployment.error",
+                "deployment.canceled",
                 "deployment.check-rerequested"
               ],
               "description": "Vercel event types"
+            },
+            {
+              "enum": [
+                "issue.created",
+                "issue.resolved",
+                "issue.assigned",
+                "issue.ignored",
+                "error",
+                "event_alert",
+                "metric_alert"
+              ],
+              "description": "Sentry event types"
+            },
+            {
+              "enum": [
+                "Issue",
+                "Comment",
+                "Project",
+                "Cycle",
+                "ProjectUpdate"
+              ],
+              "description": "Linear event types (entity types)"
             }
           ]
         },

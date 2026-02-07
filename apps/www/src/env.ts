@@ -64,7 +64,7 @@ export const env = createEnv({
 	},
 	// Server variables don't need to be in experimental__runtimeEnv
 	skipValidation:
-		!!process.env.CI || process.env.npm_lifecycle_event === "lint",
+		!!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
 
 	/**
 	 * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and

@@ -62,8 +62,5 @@ export * from "./validation.js";
 // Sanitization utilities
 export * from "./sanitize.js";
 
-// Event mapping utilities
-export * from "./event-mapping.js";
-
 // Transformers
 export * from "./transformers/index.js";

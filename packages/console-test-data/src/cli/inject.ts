@@ -47,7 +47,7 @@ Required:
   --workspace, -w   Workspace ID
 
 Options:
-  --scenario, -s    Dataset name or path (default: security)
+  --scenario, -s    Dataset name or path (default: sandbox-1)
                     Available: ${datasets.join(", ")}, balanced, stress
   --count, -c       Event count for balanced/stress (default: 6)
   --help, -h        Show this help
@@ -69,7 +69,7 @@ async function main() {
   }
 
   const workspaceId = (args.workspace ?? args.w) as string;
-  const scenarioName = (args.scenario ?? args.s ?? "security") as string;
+  const scenarioName = (args.scenario ?? args.s ?? "sandbox-1") as string;
   const count = parseInt((args.count ?? args.c ?? "6") as string, 10);
 
   if (!workspaceId) {

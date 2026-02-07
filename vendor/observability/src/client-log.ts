@@ -33,7 +33,7 @@ export function useLogger(): ClientLogger {
   return useMemo(() => {
     // Check if BetterStack is configured by checking if the logger has a proper config
     // When not configured, Logtail returns a logger but it won't actually send logs
-    const isBetterStackConfigured = process.env.NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN;
+    const isBetterStackConfigured = process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN;
     
     if (!isBetterStackConfigured) {
       return consoleLogger;

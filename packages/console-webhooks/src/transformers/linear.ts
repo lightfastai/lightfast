@@ -12,6 +12,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalLinearEvent } from "@repo/console-types";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
@@ -26,7 +27,7 @@ import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
  */
 export interface LinearWebhookBase {
   action: "create" | "update" | "remove";
-  type: LinearWebhookType;
+  type: LinearWebhookEventType;
   createdAt: string; // ISO timestamp
   organizationId: string;
   webhookId: string;
@@ -35,14 +36,9 @@ export interface LinearWebhookBase {
 
 /**
  * Linear webhook event types supported by our transformers.
- * Note: IssueLabel is omitted as it's not needed for demo scenarios.
+ * Derived from linearTransformers map — add new entity types there.
  */
-export type LinearWebhookType =
-  | "Issue"
-  | "Comment"
-  | "Project"
-  | "Cycle"
-  | "ProjectUpdate";
+export type LinearWebhookEventType = keyof typeof linearTransformers;
 
 /**
  * Linear Issue Webhook
@@ -456,7 +452,7 @@ export function transformLinearIssue(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toInternalLinearEvent("Issue", payload.action) ?? `linear:issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -542,7 +538,7 @@ export function transformLinearComment(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toInternalLinearEvent("Comment", payload.action) ?? `linear:comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -631,7 +627,7 @@ export function transformLinearProject(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toInternalLinearEvent("Project", payload.action) ?? `linear:project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -719,7 +715,7 @@ export function transformLinearCycle(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toInternalLinearEvent("Cycle", payload.action) ?? `linear:cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -790,7 +786,7 @@ export function transformLinearProjectUpdate(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toInternalLinearEvent("ProjectUpdate", payload.action) ?? `linear:project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
