@@ -14,7 +14,6 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { Search, Circle, ChevronDown, ChevronRight, Plus, AlertTriangle } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import { useSearchParams, useRouter } from "next/navigation";
