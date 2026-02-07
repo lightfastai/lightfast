@@ -62,6 +62,19 @@
     "eval": {
       "cache": false,
       "interactive": true
+    },
+    "lint:deps": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "lint:unused": {
+      "outputs": [],
+      "cache": false
+    },
+    "arch-eval": {
+      "cache": false,
+      "dependsOn": ["^build"]
     }
   },
   "globalEnv": [

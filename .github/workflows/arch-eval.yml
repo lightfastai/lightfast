@@ -1,0 +1,35 @@
+name: Architecture Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  boundary-check:
+    name: Boundary Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run dependency boundary check
+        run: pnpm lint:deps
+        continue-on-error: true  # Non-blocking initially
+
+      - name: Run turbo boundaries
+        run: npx turbo boundaries
+        continue-on-error: true  # Non-blocking initially
+
+      - name: Run unused code detection
+        run: pnpm lint:unused
+        continue-on-error: true  # Non-blocking initially
