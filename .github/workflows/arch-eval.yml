@@ -26,6 +26,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Build arch-eval package
+        run: pnpm --filter @repo/arch-eval build
+
       - name: Run dependency boundary check
         run: pnpm lint:deps
         continue-on-error: true  # Non-blocking initially
