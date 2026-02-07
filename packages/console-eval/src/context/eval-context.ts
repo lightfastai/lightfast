@@ -1,53 +1,6 @@
-import type { V1AuthContext } from "@repo/console-search";
+import type { EvalWorkspaceConfig } from "../types";
 
-/**
- * Infrastructure credentials for eval execution.
- * All fields are explicit — no implicit env var usage.
- */
-export interface EvalInfraConfig {
-  /** PlanetScale eval branch credentials (postgres-js over TCP/PgBouncer) */
-  db: {
-    host: string;
-    username: string;
-    password: string;
-  };
-  /** Pinecone API key (same key, eval namespace isolation is per-call) */
-  pinecone: {
-    apiKey: string;
-  };
-  /** Cohere API key for embeddings + reranking */
-  cohere: {
-    apiKey: string;
-  };
-  /** Braintrust (optional — omit for noSendLogs mode) */
-  braintrust?: {
-    apiKey: string;
-  };
-}
-
-/**
- * Eval-specific workspace configuration.
- * Controls which Pinecone namespace the pipeline queries.
- */
-export interface EvalWorkspaceConfig {
-  workspaceId: string;
-  indexName: string;
-  namespaceName: string;
-  embeddingModel: string;
-  embeddingDim: number;
-  enableClusters: boolean;
-  enableActors: boolean;
-}
-
-/**
- * Complete eval context — everything needed to run searchLogic() in isolation.
- */
-export interface EvalContext {
-  auth: V1AuthContext;
-  workspaceConfig: EvalWorkspaceConfig;
-  infra: EvalInfraConfig;
-  runId: string;
-}
+export type { EvalInfraConfig, EvalWorkspaceConfig, EvalContext } from "../types";
 
 /**
  * Safety guard: validate that eval config does NOT point to production.

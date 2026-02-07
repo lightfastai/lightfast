@@ -1,4 +1,4 @@
-import type { EvalInfraConfig } from "../context/eval-context";
+import type { EvalInfraConfig } from "../types";
 
 /**
  * Configure the process environment for eval execution.

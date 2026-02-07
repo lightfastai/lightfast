@@ -1,40 +1,16 @@
 import { workspaceNeuralObservations, workspaceNeuralEntities } from "@db/console/schema";
 import { createCohereEmbedding } from "@vendor/embed";
 import { log } from "@vendor/observability/log";
-import type { EvalInfraConfig, EvalWorkspaceConfig } from "../context/eval-context";
+import type { EvalInfraConfig, EvalWorkspaceConfig, SeedResult } from "../types";
+import type { SeedCorpus } from "../schemas";
 import { assertEvalSafety } from "../context/eval-context";
+import { configurePineconeEnvironment, createEvalPineconeClient } from "../env-setup";
 import { createEvalDbClient } from "./db";
 import { ensureEvalWorkspace } from "./workspace-setup";
 import { EmbeddingCache } from "./embedding-cache";
 
-export interface SeedObservation {
-  externalId: string;
-  title: string;
-  content: string;
-  source: string;
-  sourceType: string;
-  sourceId: string;
-  observationType: string;
-  occurredAt: string;
-  metadata?: Record<string, unknown>;
-  entities?: Array<{
-    category: string;
-    key: string;
-    value?: string;
-  }>;
-  embedding?: number[];
-}
-
-export interface SeedCorpus {
-  observations: SeedObservation[];
-}
-
-export interface SeedResult {
-  observationsInserted: number;
-  entitiesExtracted: number;
-  vectorsUpserted: number;
-  durationMs: number;
-}
+export type { SeedObservation, SeedCorpus } from "../schemas";
+export type { SeedResult } from "../types";
 
 /**
  * Seed eval data directly into DB + Pinecone.
@@ -59,12 +35,8 @@ export async function seedEvalData(
   // 1. Safety check
   assertEvalSafety(workspace);
 
-  // 2. Set Pinecone env before importing client
-  process.env.PINECONE_API_KEY = infra.pinecone.apiKey;
-  process.env.SKIP_ENV_VALIDATION = "true";
-
-  // Dynamic import to ensure env is set before PineconeClient singleton reads it
-  const { PineconeClient } = await import("@vendor/pinecone");
+  // 2. Configure Pinecone env before importing client
+  configurePineconeEnvironment(infra);
 
   // 3. Create eval DB client
   const { db, close } = createEvalDbClient(infra);
@@ -186,7 +158,7 @@ export async function seedEvalData(
       namespace: workspace.namespaceName,
     });
 
-    const pinecone = new PineconeClient();
+    const pinecone = await createEvalPineconeClient();
     await pinecone.upsertVectors(
       workspace.indexName,
       { ids: vectorIds, vectors: vectorValues, metadata: vectorMetadata },

@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import { createDefaultEvalConfig } from "../config/eval-config";
-import { seedEvalData, type SeedCorpus } from "../seed/seeder";
+import { seedEvalData } from "../seed/seeder";
+import { seedCorpusSchema } from "../schemas";
 
 const program = new Command();
 
@@ -29,9 +30,9 @@ program
     console.log(`  Workspace: ${config.workspace.workspaceId}`);
     console.log(`  Namespace: ${config.workspace.namespaceName}`);
 
-    // Load corpus
+    // Load and validate corpus
     const corpusJson = readFileSync(opts.corpus, "utf-8");
-    const corpus: SeedCorpus = JSON.parse(corpusJson);
+    const corpus = seedCorpusSchema.parse(JSON.parse(corpusJson));
     console.log(`  Observations: ${corpus.observations.length}`);
 
     // Seed

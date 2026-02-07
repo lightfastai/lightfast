@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./metrics": "./src/metrics/index.ts",
-    "./scorers": "./src/scorers/index.ts",
     "./env": "./src/env.ts",
     "./context": "./src/context/eval-context.ts",
     "./config": "./src/config/eval-config.ts",

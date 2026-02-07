@@ -1,31 +1,8 @@
 import { evalEnv } from "../env";
-import type { EvalInfraConfig, EvalWorkspaceConfig } from "../context/eval-context";
+import type { EvalConfig } from "../types";
 import { loadEvalInfraConfig } from "./infra";
 
-/**
- * Complete eval configuration — combines all settings needed for a run.
- */
-export interface EvalConfig {
-  runId: string;
-  infra: EvalInfraConfig;
-  workspace: EvalWorkspaceConfig;
-  braintrust: {
-    project: string;
-    experiment: string;
-    sendLogs: boolean;
-  };
-  execution: {
-    searchMode: "fast" | "balanced" | "thorough";
-    maxConcurrency: number;
-    timeout: number;
-    kValues: number[];
-  };
-  dataset: {
-    casesPath: string;
-    corpusPath: string;
-    embeddingCachePath: string;
-  };
-}
+export type { EvalConfig } from "../types";
 
 /**
  * Create eval config with sensible defaults.

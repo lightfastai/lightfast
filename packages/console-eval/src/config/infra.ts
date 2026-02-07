@@ -1,12 +1,14 @@
 import { evalEnv } from "../env";
-import type { EvalInfraConfig } from "../context/eval-context";
+import type { EvalInfraConfig } from "../types";
+import { evalInfraConfigSchema } from "../schemas";
 
 /**
  * Load eval infrastructure config from validated environment variables.
  * All EVAL_* env vars have already been validated by evalEnv.
+ * Zod schema provides runtime shape validation as a second layer.
  */
 export function loadEvalInfraConfig(): EvalInfraConfig {
-  return {
+  const raw = {
     db: {
       host: evalEnv.EVAL_DATABASE_HOST,
       username: evalEnv.EVAL_DATABASE_USERNAME,
@@ -22,4 +24,5 @@ export function loadEvalInfraConfig(): EvalInfraConfig {
       ? { apiKey: evalEnv.EVAL_BRAINTRUST_API_KEY }
       : undefined,
   };
+  return evalInfraConfigSchema.parse(raw);
 }

@@ -5,8 +5,9 @@ import {
   workspaceNeuralEntities,
 } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
-import type { EvalInfraConfig, EvalWorkspaceConfig } from "../context/eval-context";
+import type { EvalInfraConfig, EvalWorkspaceConfig } from "../types";
 import { assertEvalSafety } from "../context/eval-context";
+import { configurePineconeEnvironment, createEvalPineconeClient } from "../env-setup";
 import { createEvalDbClient } from "./db";
 
 /**
@@ -25,11 +26,8 @@ export async function cleanupEvalData(
     namespace: workspace.namespaceName,
   });
 
-  process.env.PINECONE_API_KEY = infra.pinecone.apiKey;
-  process.env.SKIP_ENV_VALIDATION = "true";
-
-  const { PineconeClient } = await import("@vendor/pinecone");
-  const pinecone = new PineconeClient();
+  configurePineconeEnvironment(infra);
+  const pinecone = await createEvalPineconeClient();
   await pinecone.deleteByMetadata(
     workspace.indexName,
     { workspaceId: workspace.workspaceId },
