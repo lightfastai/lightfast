@@ -10,6 +10,7 @@
     },
     "./components/provider": "./src/components/provider.tsx",
     "./components/trigger": "./src/components/trigger.tsx",
+    "./components/preferences": "./src/components/preferences.tsx",
     "./styles": "./src/styles.css",
     "./env": "./env.ts"
   },

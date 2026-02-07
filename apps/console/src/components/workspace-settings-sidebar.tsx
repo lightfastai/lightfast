@@ -10,6 +10,10 @@ const workspaceSettingsNavigation = [
 		name: "General",
 		path: "",
 	},
+	{
+		name: "Notifications",
+		path: "notifications",
+	},
 ];
 
 interface WorkspaceSettingsSidebarProps {

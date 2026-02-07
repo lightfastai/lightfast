@@ -69,14 +69,15 @@ export function TRPCReactProvider({
         // Split link routes calls to correct endpoint based on procedure
         splitLink({
           condition: (op) => {
-            // User-scoped procedures: organization.*, account.*, workspaceAccess.*
+            // User-scoped procedures: organization.*, account.*, workspaceAccess.*, notifications.*
             const path = op.path;
             return (
               path.startsWith("organization.") ||
               path.startsWith("account.") ||
               path.startsWith("workspaceAccess.") ||
               path.startsWith("userSources.") ||
-              path.startsWith("userApiKeys.")
+              path.startsWith("userApiKeys.") ||
+              path.startsWith("notifications.")
             );
           },
           // True branch: user-scoped endpoint

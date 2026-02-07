@@ -16,6 +16,7 @@ import { accountRouter } from "./router/user/account";
 import { workspaceAccessRouter } from "./router/user/workspace";
 import { userApiKeysRouter } from "./router/user/user-api-keys";
 import { userSourcesRouter } from "./router/user/user-sources";
+import { notificationsRouter } from "./router/user/notifications";
 
 // Org-scoped routers (active org required)
 import { searchRouter } from "./router/org/search";
@@ -51,6 +52,7 @@ export const userRouter = createTRPCRouter({
   userApiKeys: userApiKeysRouter,
   userSources: userSourcesRouter,
   workspaceAccess: workspaceAccessRouter,
+  notifications: notificationsRouter,
 });
 
 /**
