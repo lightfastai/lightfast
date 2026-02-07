@@ -1,0 +1,46 @@
+{
+  "name": "@repo/console-eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./metrics": "./src/metrics/index.ts",
+    "./scorers": "./src/scorers/index.ts"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
+    "generate-dataset": "pnpm with-env tsx src/cli/generate-dataset.ts",
+    "run": "pnpm with-env tsx src/cli/run.ts",
+    "compare": "pnpm with-env tsx src/cli/compare.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
+    "@db/console": "workspace:*",
+    "@octokit/webhooks-types": "^7.6.1",
+    "@repo/console-config": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/console-webhooks": "workspace:*",
+    "@vendor/braintrust": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "ai": "catalog:",
+    "commander": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "eslint": "catalog:",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  }
+}
