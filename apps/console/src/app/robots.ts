@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { env } from "~/env";
 
 export default function robots(): MetadataRoute.Robots {
   // Block all crawlers on non-production environments (preview, development)
   // VERCEL_ENV is "production" only for production deployments, "preview" for preview branches
-  const isProduction = process.env.VERCEL_ENV === "production";
+  const isProduction = env.NEXT_PUBLIC_VERCEL_ENV === "production";
 
   if (!isProduction) {
     return {

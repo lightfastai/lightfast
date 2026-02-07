@@ -12,5 +12,5 @@ export const env = createEnv({
     NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY: process.env.NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY,
   },
   skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
 });

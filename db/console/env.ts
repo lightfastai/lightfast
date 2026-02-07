@@ -12,5 +12,5 @@ export const env = createEnv({
     DATABASE_USERNAME: process.env.DATABASE_USERNAME,
     DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
   },
-  skipValidation: !!process.env.CI || !!process.env.SKIP_ENV_VALIDATION,
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
 });
