@@ -10,7 +10,8 @@
     "./context": "./src/context/eval-context.ts",
     "./config": "./src/config/eval-config.ts",
     "./runner": "./src/runner/in-process.ts",
-    "./seed": "./src/seed/seeder.ts"
+    "./seed": "./src/seed/seeder.ts",
+    "./adapter": "./src/seed/adapter.ts"
   },
   "scripts": {
     "build": "tsup",

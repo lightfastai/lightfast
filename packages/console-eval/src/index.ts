@@ -54,5 +54,15 @@ export { runEvalInProcess } from "./runner/in-process";
 
 // Data seeding
 export type { SeedObservation, SeedCorpus, SeedResult } from "./seed/seeder";
+export type { SeedActor, SeedReference } from "./schemas";
 export { seedEvalData } from "./seed/seeder";
 export { cleanupEvalData } from "./seed/cleanup";
+
+// SourceEvent -> SeedObservation adapter
+export {
+  sourceEventToSeedObservation,
+  sourceEventsToCorpus,
+  deriveObservationType,
+  deterministicExternalId,
+  validateCorpusEventTypes,
+} from "./seed/adapter";

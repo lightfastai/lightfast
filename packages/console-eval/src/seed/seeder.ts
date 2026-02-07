@@ -64,6 +64,8 @@ export async function seedEvalData(
           observationType: obs.observationType,
           occurredAt: obs.occurredAt,
           metadata: obs.metadata,
+          actor: obs.actor ?? null,
+          sourceReferences: obs.references ?? null,
         })
         .onConflictDoNothing()
         .returning({
