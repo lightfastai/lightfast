@@ -3,6 +3,10 @@ name: Architecture Evaluation
 on:
   pull_request:
     branches: [main]
+  schedule:
+    # Run every Monday at 9am UTC to detect architecture drift
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   boundary-check:
@@ -33,3 +37,84 @@ jobs:
       - name: Run unused code detection
         run: pnpm lint:unused
         continue-on-error: true  # Non-blocking initially
+
+      - name: Run full pipeline and capture output
+        id: arch-eval
+        run: |
+          pnpm arch-eval > arch-eval-output.txt 2>&1 || true
+          cat arch-eval-output.txt
+        continue-on-error: true
+
+      - name: Generate PR comment
+        if: github.event_name == 'pull_request'
+        run: |
+          # Read the latest markdown summary
+          SUMMARY_FILE=$(ls -t thoughts/shared/evaluations/summaries/*.md | head -1)
+
+          if [ -f "$SUMMARY_FILE" ]; then
+            # Extract key metrics from summary
+            TIER1=$(grep "Tier 1 (Critical):" "$SUMMARY_FILE" | grep -oE '[0-9]+' | head -1)
+            TIER2=$(grep "Tier 2 (Important):" "$SUMMARY_FILE" | grep -oE '[0-9]+' | head -1)
+            TIER3=$(grep "Tier 3 (Informational):" "$SUMMARY_FILE" | grep -oE '[0-9]+' | head -1)
+
+            # Create comment body
+            cat > pr-comment.md <<EOF
+          ## 🏗️ Architecture Evaluation Results
+
+          **Finding Distribution:**
+          - 🔴 Tier 1 (Critical): ${TIER1:-0} findings
+          - 🟡 Tier 2 (Important): ${TIER2:-0} findings
+          - 🔵 Tier 3 (Informational): ${TIER3:-0} findings
+
+          <details>
+          <summary>📊 View Tier 1 Findings</summary>
+
+          $(sed -n '/## Tier 1 Findings/,/^---$/p' "$SUMMARY_FILE" | head -50)
+
+          </details>
+
+          **Note:** This check is currently **non-blocking**. Findings are informational only.
+
+          📄 [View Full Report](https://github.com/${{ github.repository }}/blob/${{ github.head_ref }}/thoughts/shared/evaluations/summaries/$(basename "$SUMMARY_FILE"))
+          EOF
+
+            echo "PR_COMMENT_CREATED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request' && env.PR_COMMENT_CREATED == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const commentBody = fs.readFileSync('pr-comment.md', 'utf8');
+
+            // Check if comment already exists
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Architecture Evaluation Results')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }

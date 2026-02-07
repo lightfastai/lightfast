@@ -1,0 +1,124 @@
+{
+  "timestamp": "2026-02-07T04:06:58.908Z",
+  "git_sha": "7c3f42da4b05a4db0f639fdcc6ba405d90171529",
+  "branch": "feat/arch-eval-pipeline-phase-2",
+  "findings": [
+    {
+      "id": "BND-001",
+      "tier": 1,
+      "dimension": "boundary_integrity",
+      "title": "Packages importing from API layer (6 violations)",
+      "description": "6 violation(s) detected:\n- packages/chat-trpc/src/server.tsx → api/chat/src/index.ts\n- packages/chat-api-services/src/usage.ts → api/chat/src/index.ts\n- packages/console-trpc/src/server.tsx → api/console/src/index.ts\n- packages/chat-trpc/dist/server.jsx → api/chat/src/index.ts\n- packages/console-test-data/src/trigger/trigger.ts → api/console/src/inngest/client/client.ts\n... and 1 more",
+      "file": "packages/chat-trpc/src/server.tsx",
+      "rule": "no-package-to-api-imports",
+      "tool": "dependency-cruiser",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.747Z"
+    },
+    {
+      "id": "BND-002",
+      "tier": 1,
+      "dimension": "boundary_integrity",
+      "title": "Apps importing from DB directly (31 violations)",
+      "description": "31 violation(s) detected:\n- apps/chat/src/env.ts → db/chat/env.ts\n- apps/chat/src/hooks/use-create-session.ts → db/chat/src/constants.ts\n- apps/console/src/env.ts → db/console/env.ts\n- apps/console/src/app/(api)/v1/lib/with-dual-auth.ts → db/console/src/client.ts\n- apps/console/src/app/(api)/v1/lib/with-dual-auth.ts → db/console/src/schema/index.ts\n... and 26 more",
+      "file": "apps/chat/src/env.ts",
+      "rule": "no-app-to-db-imports",
+      "tool": "dependency-cruiser",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.747Z"
+    },
+    {
+      "id": "TYP-001",
+      "tier": 1,
+      "dimension": "type_safety",
+      "title": "Missing strict mode in 64 tsconfig files",
+      "description": "64 tsconfig.json files do not have \"strict\": true:\n- api/chat/tsconfig.json\n- api/console/tsconfig.json\n- core/ai-sdk/tsconfig.json\n- core/cli/tsconfig.json\n- core/lightfast/tsconfig.json\n... and 59 more",
+      "rule": "missing-strict-mode",
+      "tool": "tsconfig-checker",
+      "auto_fixable": true,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    },
+    {
+      "id": "TYP-002",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in apps (21 occurrences)",
+      "description": "apps has 21 'any' type usages (threshold: 5)",
+      "file": "apps",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    },
+    {
+      "id": "TYP-003",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in api (2088 occurrences)",
+      "description": "api has 2088 'any' type usages (threshold: 5)",
+      "file": "api",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    },
+    {
+      "id": "TYP-004",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in packages (16 occurrences)",
+      "description": "packages has 16 'any' type usages (threshold: 5)",
+      "file": "packages",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    },
+    {
+      "id": "TYP-005",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in vendor (21 occurrences)",
+      "description": "vendor has 21 'any' type usages (threshold: 5)",
+      "file": "vendor",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    },
+    {
+      "id": "TYP-006",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in core (40 occurrences)",
+      "description": "core has 40 'any' type usages (threshold: 5)",
+      "file": "core",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T04:06:58.748Z"
+    }
+  ],
+  "summary": {
+    "total_findings": 8,
+    "tier1_count": 3,
+    "tier2_count": 5,
+    "tier3_count": 0,
+    "signal_ratio": 1,
+    "packages_evaluated": 2138,
+    "packages_total": 2138,
+    "tools_used": [
+      "dependency-cruiser",
+      "turbo-boundaries",
+      "knip"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "description": "Architecture evaluation suppression list - use to mark intentional violations as accepted technical debt",
+  "suppressions": []
+}

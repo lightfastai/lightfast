@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { resolve } from "node:path";
 import type { CollectorOutput, RawFinding, PipelineConfig } from "../types.js";
+import { filterSuppressedFindings } from "../suppressions.js";
 
 export function collectTurboBoundaries(
   config: PipelineConfig
@@ -46,9 +47,12 @@ export function collectTurboBoundaries(
 
     const duration_ms = Math.round(performance.now() - startTime);
 
+    // Filter out suppressed findings
+    const filtered_findings = filterSuppressedFindings(raw_findings);
+
     return {
       tool: "turbo-boundaries",
-      raw_findings,
+      raw_findings: filtered_findings,
       duration_ms,
     };
   } catch (error) {
@@ -74,9 +78,12 @@ export function collectTurboBoundaries(
 
     const duration_ms = Math.round(performance.now() - startTime);
 
+    // Filter out suppressed findings
+    const filtered_findings = filterSuppressedFindings(raw_findings);
+
     return {
       tool: "turbo-boundaries",
-      raw_findings,
+      raw_findings: filtered_findings,
       duration_ms,
     };
   }

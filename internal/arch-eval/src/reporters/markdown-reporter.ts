@@ -149,47 +149,67 @@ function compareWithPreviousRun(
   monorepoRoot: string
 ): string | null {
   try {
-    const resultsDir = resolve(
+    // Compare against established baseline, not just previous run
+    const baselinesDir = resolve(
       monorepoRoot,
-      "thoughts/shared/evaluations/results"
+      "thoughts/shared/evaluations/baselines"
     );
-    const files = readdirSync(resultsDir)
+    const baselineFiles = readdirSync(baselinesDir)
       .filter((f) => f.endsWith(".json"))
       .sort()
       .reverse();
 
-    // Get the second most recent (current is the most recent)
-    if (files.length < 2) {
-      return "*This is the initial baseline — no previous run to compare against.*";
+    if (baselineFiles.length === 0) {
+      return "*No baseline found — run pipeline to establish baseline.*";
     }
 
-    const previousFile = files[1];
-    if (!previousFile) {
-      return "*This is the initial baseline — no previous run to compare against.*";
+    // Get most recent baseline
+    const baselineFile = baselineFiles[0];
+    if (!baselineFile) {
+      return "*No baseline found — run pipeline to establish baseline.*";
     }
-    const previousPath = resolve(resultsDir, previousFile);
-    const previous: EvaluationResult = JSON.parse(
-      readFileSync(previousPath, "utf-8")
+    const baselinePath = resolve(baselinesDir, baselineFile);
+    const baseline: EvaluationResult = JSON.parse(
+      readFileSync(baselinePath, "utf-8")
     );
 
-    // Compare findings by ID
+    // Also get previous run for additional context
+    const resultsDir = resolve(
+      monorepoRoot,
+      "thoughts/shared/evaluations/results"
+    );
+    const resultFiles = readdirSync(resultsDir)
+      .filter((f) => f.endsWith(".json"))
+      .sort()
+      .reverse();
+
+    let previous: EvaluationResult | null = null;
+    if (resultFiles.length >= 2) {
+      const previousFile = resultFiles[1];
+      if (previousFile) {
+        const previousPath = resolve(resultsDir, previousFile);
+        previous = JSON.parse(readFileSync(previousPath, "utf-8"));
+      }
+    }
+
+    // Compare findings by ID against baseline
     const currentIds = new Set(current.findings.map((f) => f.id));
-    const previousIds = new Set(previous.findings.map((f) => f.id));
+    const baselineIds = new Set(baseline.findings.map((f) => f.id));
 
     const newFindings = current.findings.filter(
-      (f) => !previousIds.has(f.id)
+      (f) => !baselineIds.has(f.id)
     );
-    const resolvedFindings = previous.findings.filter(
+    const resolvedFindings = baseline.findings.filter(
       (f) => !currentIds.has(f.id)
     );
 
-    let diff = "";
+    let diff = `### Compared to Baseline (\`${baselineFile}\`)\n\n`;
 
     if (newFindings.length === 0 && resolvedFindings.length === 0) {
-      diff += "*No changes since last run.*\n";
+      diff += "*No changes since baseline.*\n\n";
     } else {
       if (newFindings.length > 0) {
-        diff += `**New Findings** (${newFindings.length}):\n`;
+        diff += `**New Findings Since Baseline** (${newFindings.length}):\n`;
         for (const f of newFindings.slice(0, 5)) {
           diff += `- ${f.id}: ${f.title}\n`;
         }
@@ -200,7 +220,7 @@ function compareWithPreviousRun(
       }
 
       if (resolvedFindings.length > 0) {
-        diff += `**Resolved Findings** (${resolvedFindings.length}):\n`;
+        diff += `**Resolved Since Baseline** (${resolvedFindings.length}):\n`;
         for (const f of resolvedFindings.slice(0, 5)) {
           diff += `- ${f.id}: ${f.title}\n`;
         }
@@ -211,11 +231,33 @@ function compareWithPreviousRun(
       }
     }
 
-    // Summary comparison
-    diff += `**Summary**:\n`;
-    diff += `- Total findings: ${previous.summary.total_findings} → ${current.summary.total_findings} (${current.summary.total_findings - previous.summary.total_findings > 0 ? "+" : ""}${current.summary.total_findings - previous.summary.total_findings})\n`;
-    diff += `- Tier 1: ${previous.summary.tier1_count} → ${current.summary.tier1_count} (${current.summary.tier1_count - previous.summary.tier1_count > 0 ? "+" : ""}${current.summary.tier1_count - previous.summary.tier1_count})\n`;
-    diff += `- Signal ratio: ${Math.round(previous.summary.signal_ratio * 100)}% → ${Math.round(current.summary.signal_ratio * 100)}%\n`;
+    // Baseline comparison summary
+    diff += `**Baseline Comparison**:\n`;
+    diff += `- Total findings: ${baseline.summary.total_findings} → ${current.summary.total_findings} (${current.summary.total_findings - baseline.summary.total_findings > 0 ? "+" : ""}${current.summary.total_findings - baseline.summary.total_findings})\n`;
+    diff += `- Tier 1: ${baseline.summary.tier1_count} → ${current.summary.tier1_count} (${current.summary.tier1_count - baseline.summary.tier1_count > 0 ? "+" : ""}${current.summary.tier1_count - baseline.summary.tier1_count})\n`;
+    diff += `- Signal ratio: ${Math.round(baseline.summary.signal_ratio * 100)}% → ${Math.round(current.summary.signal_ratio * 100)}%\n`;
+
+    // Also show previous run comparison if available
+    if (previous) {
+      diff += `\n### Compared to Previous Run\n\n`;
+      const prevNewFindings = current.findings.filter(
+        (f) => !new Set(previous.findings.map((pf) => pf.id)).has(f.id)
+      );
+      const prevResolvedFindings = previous.findings.filter(
+        (f) => !currentIds.has(f.id)
+      );
+
+      if (prevNewFindings.length === 0 && prevResolvedFindings.length === 0) {
+        diff += "*No changes since previous run.*\n";
+      } else {
+        if (prevNewFindings.length > 0) {
+          diff += `- ${prevNewFindings.length} new finding(s)\n`;
+        }
+        if (prevResolvedFindings.length > 0) {
+          diff += `- ${prevResolvedFindings.length} resolved finding(s)\n`;
+        }
+      }
+    }
 
     return diff;
   } catch {
