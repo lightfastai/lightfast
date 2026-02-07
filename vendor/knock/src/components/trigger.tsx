@@ -6,7 +6,7 @@ import {
 } from "@knocklabs/react";
 import type { RefObject } from "react";
 import { useRef, useState, Suspense } from "react";
-import { env } from "../env";
+import { env } from "../../env";
 
 import "@knocklabs/react/dist/index.css";
 import "../styles.css";

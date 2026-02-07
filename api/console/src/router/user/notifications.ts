@@ -4,10 +4,10 @@ import { env } from "@vendor/knock/env";
 
 export const notificationsRouter = createTRPCRouter({
   getToken: userScopedProcedure.query(async ({ ctx }) => {
-    // Knock API key must be configured to sign tokens
-    if (!env.KNOCK_API_KEY) return null;
-
-    const token = await signUserToken(ctx.auth.userId);
+    // Sign user token with Knock signing key for enhanced security
+    const token = await signUserToken(ctx.auth.userId, {
+      signingKey: env.KNOCK_SIGNING_KEY,
+    });
     return token;
   }),
 });

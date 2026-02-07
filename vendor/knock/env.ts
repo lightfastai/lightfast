@@ -4,6 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     KNOCK_API_KEY: z.string().min(1),
+    KNOCK_SIGNING_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY: z.string().min(1),

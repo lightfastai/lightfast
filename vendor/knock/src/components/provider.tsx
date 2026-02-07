@@ -6,7 +6,7 @@ import {
   KnockProvider,
 } from "@knocklabs/react";
 import type { ReactNode } from "react";
-import { env } from "../env";
+import { env } from "../../env";
 
 const knockApiKey = env.NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY;
 const knockFeedChannelId = "lightfast-console-notifications";

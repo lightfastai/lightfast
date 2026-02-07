@@ -1,7 +1,7 @@
 import { Knock, signUserToken as knockSignUserToken } from "@knocklabs/node";
 
-// Import from relative path to get the internal env configuration
-import { env } from "./env";
+// Import from root env configuration
+import { env } from "../env";
 
 const key = env.KNOCK_API_KEY;
 

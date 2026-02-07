@@ -1,24 +1,17 @@
 "use client";
 
-import {
-	useNotificationPreferences,
-	type ChannelPreference,
-} from "@vendor/knock/components/preferences";
+import { useNotificationPreferences } from "@vendor/knock/components/preferences";
+import type { ChannelPreference } from "@vendor/knock/components/preferences";
 import { Card } from "@repo/ui/components/ui/card";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Label } from "@repo/ui/components/ui/label";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Bell, Mail } from "lucide-react";
 
-interface NotificationPreferencesProps {
-	userId: string;
-}
-
-export function NotificationPreferences({
-	userId,
-}: NotificationPreferencesProps) {
+export function NotificationPreferences() {
 	const {
-		preferences,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		preferences: _preferences,
 		loading,
 		updating,
 		updateChannelPreference,
@@ -30,6 +23,9 @@ export function NotificationPreferences({
 		return <PreferencesSkeleton />;
 	}
 
+	// Knock client should always be available when Knock provider is configured
+	// This check is defensive for edge cases during initialization
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!knockClient) {
 		return (
 			<Card className="p-6">

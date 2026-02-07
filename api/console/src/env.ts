@@ -13,6 +13,14 @@ export const env = createEnv({
   shared: {},
   server: {
     /**
+     * Knock API key for server-side notification client
+     */
+    KNOCK_API_KEY: z.string().min(1),
+    /**
+     * Knock signing key for HMAC-signed user tokens (enhanced security)
+     */
+    KNOCK_SIGNING_KEY: z.string().min(1),
+    /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/console to encrypt tokens
      *
