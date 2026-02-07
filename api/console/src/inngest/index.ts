@@ -41,7 +41,11 @@ import {
 } from "./workflow/neural";
 
 // Notification workflows
-import { notificationDispatch } from "./workflow/notifications";
+import {
+  notificationDispatch,
+  dailyDigest,
+  weeklySummary,
+} from "./workflow/notifications";
 
 // Export Inngest client
 export { inngest };
@@ -65,7 +69,7 @@ export { recordActivity };
 export { observationCapture, profileUpdate, clusterSummaryCheck, llmEntityExtractionWorkflow };
 
 // Export notification workflows
-export { notificationDispatch };
+export { notificationDispatch, dailyDigest, weeklySummary };
 
 /**
  * Create the route context for Next.js API routes
@@ -136,6 +140,8 @@ export function createInngestRouteContext() {
 
       // Notifications
       notificationDispatch,
+      dailyDigest,
+      weeklySummary,
     ],
     servePath: "/api/inngest",
   });

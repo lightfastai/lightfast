@@ -645,6 +645,10 @@ const eventsMap = {
       clusterId: z.string().optional(),
       /** Whether cluster was newly created */
       clusterIsNew: z.boolean().optional(),
+      /** Actor who performed the action (for notification targeting) */
+      actorSourceId: z.string().optional(),
+      /** Actor display name */
+      actorName: z.string().optional(),
     }),
   },
 

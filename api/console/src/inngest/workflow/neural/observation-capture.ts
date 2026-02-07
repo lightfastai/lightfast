@@ -1064,6 +1064,8 @@ export const observationCapture = inngest.createFunction(
           entitiesExtracted: extractedEntities.length,
           clusterId: String(clusterResult.clusterId), // Convert BIGINT to string for events
           clusterIsNew: clusterResult.isNew,
+          actorSourceId: resolvedActor.actorId ?? undefined,
+          actorName: resolvedActor.sourceActor?.name ?? undefined,
         },
       },
       // Profile update (if actor resolved)

@@ -13,3 +13,6 @@ export * from "./neural";
 
 // Integration types
 export * from "./integrations";
+
+// Notification types
+export * from "./notifications";
