@@ -11,15 +11,12 @@
       ]
     },
     "exa": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/exa-mcp"]
+      "command": "bash",
+      "args": [".mcp/start-exa.sh"]
     },
-    "lightfast": {
-      "command": "node",
-      "args": ["core/mcp/dist/index.mjs"],
-      "env": {
-        "LIGHTFAST_API_KEY": "${LIGHTFAST_API_KEY}"
-      }
+    "knock": {
+      "command": "bash",
+      "args": [".mcp/start-knock.sh"]
     }
   }
 }

@@ -1,28 +1,52 @@
-export function buildAnswerSystemPrompt(workspaceContext: {
-  projectName: string;
-  projectDescription: string;
-}): string {
-  return `You are Lightfast Answer, an AI assistant that helps developers understand their workspace activity across GitHub, Linear, Vercel, and Sentry.
+import { buildPrompt, buildPromptContext } from "@repo/prompt-engine";
+import { ANSWER_PROVIDERS } from "./providers";
 
-## Workspace Context
-Project: ${workspaceContext.projectName}
-Description: ${workspaceContext.projectDescription}
+export interface AnswerPromptOptions {
+  /** Workspace context (hardcoded for now, dynamic later) */
+  workspace: {
+    projectName: string;
+    projectDescription: string;
+  };
+  /** Model ID for token budgeting */
+  modelId?: string;
+}
 
-## Your Capabilities
-You have access to 5 workspace tools:
-1. **workspaceSearch** - Semantic search across all workspace events (commits, PRs, issues, deployments, errors)
-2. **workspaceContents** - Fetch full content for specific observations by ID
-3. **workspaceFindSimilar** - Find semantically similar content to a given document
-4. **workspaceGraph** - Traverse the relationship graph between events (e.g., which PR fixed which issue, which deploy included which commits)
-5. **workspaceRelated** - Get directly related events for a specific observation
+/**
+ * Build the Answer agent system prompt using composable sections.
+ */
+export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
+  const context = buildPromptContext({
+    isAnonymous: false,
+    userId: "system",
+    activeTools: [
+      "workspaceSearch",
+      "workspaceContents",
+      "workspaceFindSimilar",
+      "workspaceGraph",
+      "workspaceRelated",
+    ],
+    features: {
+      temporalContext: true,
+      style: true,
+      toolGuidance: true,
+      userContext: true,
+    },
+    style: "formal",
+    temporalContext: {
+      currentTimestamp: new Date().toISOString(),
+    },
+    userContext: {
+      workspace: {
+        name: options.workspace.projectName,
+        description: options.workspace.projectDescription,
+        repos: [],
+        integrations: [],
+      },
+    },
+    modelId: options.modelId ?? "anthropic/claude-sonnet-4-5-20250929",
+  });
 
-## Instructions
-- Always use your tools to find information. Never make up facts about the workspace.
-- When answering, cite the specific observations you found (include their IDs and URLs).
-- Use workspaceSearch first for broad questions, then workspaceContents to get full details.
-- Use workspaceGraph and workspaceRelated to trace cross-source connections (e.g., "what deployments included this fix?").
-- Keep answers concise and developer-focused.
-- Format responses with markdown. Use code blocks for commit SHAs, branch names, and technical identifiers.`;
+  return buildPrompt(context, ANSWER_PROVIDERS);
 }
 
 // Hardcoded workspace context for V1 (localhost = Lightfast project)
